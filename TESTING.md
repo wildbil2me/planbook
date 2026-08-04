@@ -97,12 +97,15 @@ out — so if WO-1.6's checks are green and WO-1.5's are not, the phase is not g
 
 ### WO-1.1 — Repo skeleton & docs spine
 
-- [ ] `git log` shows a first commit on `main` and a phase branch cut from it.
+- [x] `git log` shows a first commit on `main` and a phase branch cut from it.
       (`git log --oneline --all`, `git branch -a`.)
-- [ ] `TESTING.md` exists with an environment section naming iPad Safari explicitly.
-- [ ] `CHANGELOG.md` exists with `## [Unreleased]` and one real entry.
-- [ ] No dependency manifest of any kind exists in the repo. (`git ls-files` lists no
+- [x] `TESTING.md` exists with an environment section naming iPad Safari explicitly.
+- [x] `CHANGELOG.md` exists with `## [Unreleased]` and one real entry.
+- [x] No dependency manifest of any kind exists in the repo. (`git ls-files` lists no
       `package.json`, no `package-lock.json`, no `node_modules/`.)
+
+*Ticked 2026-08-04 against commit `0a77f38`. No 👤 items — every line here is a command, and all
+four were run twice: once by `work-order-verifier`, once again by hand.*
 
 *WO-1.2 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*

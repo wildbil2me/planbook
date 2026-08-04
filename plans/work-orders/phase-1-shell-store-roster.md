@@ -12,7 +12,7 @@ after it. No feature that writes student data ships before the path that gets it
 
 ## WO-1.1 — Repo skeleton & docs spine
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** everything
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** S · **Depends on** nothing · **Blocks** everything
 **Closes roadmap** Phase 1 → "Start `TESTING.md` and `CHANGELOG.md`"
 
 **Why it exists.** The maintenance protocol demands a testing checklist and a changelog from the
@@ -31,10 +31,10 @@ first commit is the cheapest one to get the conventions right in.
 **Out of scope** — any app code, any styling. This is the container.
 
 **Acceptance**
-- [ ] `git log` shows a first commit on `main` and a phase branch cut from it.
-- [ ] `TESTING.md` exists with an environment section naming iPad Safari explicitly.
-- [ ] `CHANGELOG.md` exists with `## [Unreleased]` and one real entry.
-- [ ] No dependency manifest of any kind exists in the repo.
+- [x] `git log` shows a first commit on `main` and a phase branch cut from it.
+- [x] `TESTING.md` exists with an environment section naming iPad Safari explicitly.
+- [x] `CHANGELOG.md` exists with `## [Unreleased]` and one real entry.
+- [x] No dependency manifest of any kind exists in the repo.
 
 **Traps** — Don't create a `package.json` "just for scripts." That is how a bundler arrives six
 weeks later. Anything scripted lives in `tools/*.mjs` and runs under bare Node.
