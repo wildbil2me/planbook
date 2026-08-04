@@ -191,8 +191,8 @@ correct. Debounce saves, but flush on `visibilitychange` — iOS kills backgroun
 
 ## WO-1.5 — Backup & restore
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.4
-**Blocks** WO-1.6 and every work order after it
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** M · 🚩 · **Depends on** WO-1.4
+**Blocks** WO-1.6 and every work order after it — **unblocked as of 2026-08-04**
 **Closes roadmap** Phase 1 → "Backup: one-click JSON download…" and "Restore: drop a backup file…"
 
 **Why it exists.** This is the gate. *No feature that writes student data lands before the path
@@ -218,17 +218,33 @@ sync will happily overwrite.
 **Out of scope** — automatic scheduled backups (no background execution exists), and Drive.
 
 **Acceptance**
-- [ ] Download → wipe browser storage → restore: the document is byte-identical in content.
-- [ ] The restore confirm names the outgoing document and the incoming one, with counts, before
-      anything is replaced.
-- [ ] Cancelling the confirm leaves the existing document untouched.
-- [ ] A malformed or non-Planbook JSON file is refused with a message saying what was wrong, and
-      does not partially apply.
-- [ ] A backup from a different `schemaVersion` either migrates or refuses — never half-loads.
-- [ ] The nag appears when the last backup is >7 days old and clears on a successful download.
-- [ ] The backup UI says what sensitive data the file contains.
-- [ ] A document `boot()` refuses — one from a newer `schemaVersion` — leaves the teacher a
+- [x] Download → wipe browser storage → restore: the document is byte-identical in content.
+      *("In content" is load-bearing: `rev` and `updatedAt` move on a restore, by design. The
+      restored document takes `max(this device's rev, the file's rev) + 1` so `rev` never goes
+      backwards for a year on a device — reasoning at `src/store.js:550-557`.)*
+- [x] The restore confirm names the outgoing document and the incoming one, with counts, before
+      anything is replaced. *(The outgoing side is read raw off disk, so it also describes a
+      document `boot()` refuses.)*
+- [x] Cancelling the confirm leaves the existing document untouched.
+- [x] A malformed or non-Planbook JSON file is refused with a message saying what was wrong, and
+      does not partially apply. *(Six fixtures, six distinct messages, all ending "Nothing on this
+      device has been changed.")*
+- [x] A backup from a different `schemaVersion` either migrates or refuses — never half-loads.
+- [x] The nag appears when the last backup is >7 days old and clears on a successful download.
+      *(It stays down for a document holding nothing the teacher typed — nagging about an empty
+      gradebook on day one is the dismissal-training this work order warns against.)*
+- [x] The backup UI says what sensitive data the file contains. *(And the file genuinely still
+      contains it — there is a check asserting the sensitive fields are in the downloaded bytes,
+      so a later work order cannot quietly filter them "for safety" without a red run.)*
+- [x] A document `boot()` refuses — one from a newer `schemaVersion` — leaves the teacher a
       reachable way to restore from a backup file, rather than a loading screen with no exit.
+      *(Download correctly reads "Nothing open to back up" and is disabled in that state.)*
+
+*Verified 2026-08-04. `node tools/verify-shell.mjs` 79/79 (was 54 before this work order), run three
+times; the 👤 halves — a real download landing in Files, a real drag out of the Files app, and a
+thumb on all of it — run on the iPad the same day. **A restore replaces the year named in the file,
+not the year that is open**, and then switches to it; the confirm says so explicitly when they
+differ.*
 
 **Traps** — Restore is the most destructive operation in the app. Never restore into the open
 document in place; build the new document, validate it, then swap. A restore that fails halfway is

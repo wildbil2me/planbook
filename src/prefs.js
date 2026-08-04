@@ -36,6 +36,20 @@ export const PREF_DEFAULTS = {
      here — no roster, no grades, nothing from inside the document. src/store.js reads it on
      boot and writes it on a year switch. */
   openYear: '',
+
+  /* Epoch ms of the last time a backup download was STARTED from this browser; 0 means never.
+     A date and nothing else: no filename, no year, no counts, nothing lifted out of the
+     document — which is what makes a fact about a gradebook full of students legal in
+     localStorage at all. src/backup.js writes it when a download starts and reads it to decide
+     whether to nag.
+
+     Two things it deliberately is not. It is not proof the file reached the disk — a browser
+     download can still be cancelled at the save dialog, and there is no event that tells a page
+     otherwise, so this is "she was offered the file" and the nag is built to be cheap to satisfy
+     rather than exact. And it is per-browser, not per-year and not synced: the backup that
+     matters is the one for the device in front of you, and a file downloaded on the laptop does
+     nothing for the iPad whose storage is the one iOS will evict. */
+  lastBackupAt: 0,
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

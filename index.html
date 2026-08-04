@@ -14,6 +14,12 @@
   chip shows real save state. There is still nothing on this page that WRITES to a document —
   that arrives with classes and the roster.
 
+  WO-1.5 added the way out and the way back: the backup panel in the header, the nag strip under
+  the install banner, the restore confirm, and the "Restore from a backup file" button inside the
+  loading screen's error block. That last one is not a convenience — WO-1.4 deliberately holds
+  the loading screen up on a document this build cannot read, and until now that screen had no
+  exit at all.
+
   Deliberately still absent, so that nothing here has to be un-built later:
     - Classes, terms, roster — WO-1.6 and WO-1.7. The class tab row is styled and empty.
 
@@ -80,6 +86,14 @@
       out of space.
     </p>
     <p class="loading-error-detail" id="loadingErrorDetail"></p>
+    <!-- The way out, added at WO-1.5. Refusing to open a document Planbook cannot read whole is
+         right — a gradebook that silently discards what is typed into it is the worse lie — but
+         a refusal with no exit is a teacher looking at a spinner with a term of grades behind
+         it. Restore IS the exit, so it is reachable from here. The modal tier sits at z-index
+         1000, above this screen's 999, which is what lets it open over the top. -->
+    <button class="loading-error-btn" data-backup-panel aria-haspopup="dialog">
+      Restore from a backup file
+    </button>
   </div>
 </div>
 
@@ -104,6 +118,17 @@
         <span class="sr-only">School year: </span>
         <span id="yearButtonLabel">—</span>
         <span aria-hidden="true">▾</span>
+      </button>
+      <!-- Backup & restore, in the header rather than on the shelf: it is the one control in
+           this build that has to still be reachable at a touch when everything else has gone
+           wrong, and the shelf goes away at WO-1.10. -->
+      <button class="hdr-icon-btn" data-backup-panel title="Backup and restore"
+              aria-label="Backup and restore" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
       </button>
       <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -150,6 +175,27 @@
     </p>
   </div>
   <button class="install-banner-dismiss" data-install-dismiss>Not now</button>
+</aside>
+
+<!-- The backup nag. Same amber caution grammar as the banner above and shown the same way —
+     `hidden` in the markup, revealed only by src/backup.js, which also fills the one line that
+     changes. The copy is here for the same reason the install banner's is: it is the part a
+     teacher reads, and it should be revisable without opening a JavaScript file.
+
+     No "Not now" on this one, deliberately. The install banner can be snoozed because acting on
+     it means installing an app; the way to clear this strip is to tap the button beside it, and
+     that always works. A snooze here would be a snooze on the only copy of a term of grades. -->
+<aside class="backup-nag hidden" id="backupNag" aria-labelledby="backupNagHeading">
+  <div class="backup-nag-text">
+    <p><strong id="backupNagHeading"><span aria-hidden="true">⚠</span> <span id="backupNagLead"></span></strong></p>
+    <p>
+      Everything Planbook holds is in this browser's storage. A file you download and keep is the
+      only copy that survives a wiped browser, a lost iPad, or a laptop that will not start —
+      Google Drive sync is not a backup, because it holds one live copy that the next sync
+      overwrites. It takes one tap.
+    </p>
+  </div>
+  <button class="backup-nag-btn" data-backup-panel aria-haspopup="dialog">Back up now</button>
 </aside>
 
 <main class="main">
@@ -350,8 +396,9 @@
       <p>
         <strong>There is nowhere to enter anything yet.</strong> This build has the frame and
         the storage behind it — one document per school year, kept in this browser — but no
-        classes, no roster, and no gradebook. Those come next, and the backup file that gets
-        everything back out of the browser comes with them.
+        classes, no roster, and no gradebook. Those come next. The backup file that gets
+        everything back out of the browser is already here, under the ⤓ button in the header,
+        because nothing that stores a student's name ships before the way to get it back.
       </p>
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Close</button>
@@ -389,6 +436,91 @@
         the year it was earned in.
       </p>
       <p class="year-error hidden" id="yearError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Backup & restore. src/backup.js owns the behavior; everything a teacher reads is here.
+
+     The paragraph under "What is in this file" is a deliverable of WO-1.5 rather than a
+     courtesy. The backup carries accommodation, medical and behavior-plan data — from WO-1.8 it
+     will hold IEP and 504 details — and it carries them because a backup that filtered them out
+     would restore a gradebook that had quietly lost the things a teacher is legally obliged to
+     implement. CLAUDE.md's rule that no export emits that data governs merge fields, print
+     surfaces and outreach: the places where it reaches somebody else. This file goes to the
+     teacher, and the price of the exception is saying so in words she will actually read.
+     Do not soften it, and do not filter the file to make it go away. -->
+<div class="modal-overlay hidden" id="backupModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
+    <div class="modal-header">
+      <h2 id="backupModalTitle">Backup &amp; restore</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook keeps each school year in this browser's own storage. That storage can be
+        erased — by iPadOS after a week away, by a browser reset, by a laptop that stops
+        starting — so a file you download and keep somewhere safe is the real safety net.
+        Download one at the end of every week.
+      </p>
+
+      <div class="modal-section-label">Download a backup</div>
+      <div class="backup-actions">
+        <button class="class-action-btn primary" id="backupDownloadBtn" data-backup-download>Download backup</button>
+      </div>
+      <p class="backup-last" id="backupLast"></p>
+
+      <div class="backup-notice">
+        <p>
+          <strong>What is in this file.</strong> Everything Planbook holds for that school year:
+          your classes, your roster, guardian and counselor contacts, attendance, grades, and
+          your record of who you have contacted. <strong>It also contains the support details
+          you keep on students — accommodations, IEP and 504 plans, medical needs, and behavior
+          plans.</strong> That is on purpose: a backup that left them out would not bring your
+          gradebook back.
+        </p>
+        <p>
+          It is plain text, so anyone who opens the file can read all of it. Keep it the way you
+          keep a paper folder of the same information — somewhere only you can reach, and not in
+          an email.
+        </p>
+      </div>
+
+      <div class="modal-section-label">Restore from a backup</div>
+      <p>
+        Restoring replaces one whole school year with the copy in the file — the year named
+        inside the file, not whichever year you happen to have open. Planbook shows you what is
+        being replaced and asks before it changes anything.
+      </p>
+      <div class="backup-drop" id="backupDrop" data-backup-drop>
+        <p class="backup-drop-hint">Drag a backup file here, or choose one:</p>
+        <input class="backup-file" type="file" id="backupFile" accept=".json,application/json"
+               data-backup-file aria-label="Choose a backup file to restore">
+      </div>
+      <p class="backup-status hidden" id="backupStatus"></p>
+    </div>
+  </div>
+</div>
+
+<!-- The restore confirm. It sits on top of the panel above — src/modal.js keeps a stack, so
+     Escape closes this one and leaves that one open. The three empty elements are filled by
+     src/backup.js with facts read out of the file and off the disk: which year, how many
+     classes, how many students, and when each was last saved. They are empty here because a
+     hand-written specimen would be a second truth to keep in step with the real one. -->
+<div class="modal-overlay hidden" id="restoreConfirmModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
+    <div class="modal-header">
+      <h2 id="restoreConfirmTitle">Replace this school year?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="restoreConfirmLead"></p>
+      <div class="restore-compare" id="restoreCompare"></div>
+      <p class="restore-note hidden" id="restoreConfirmNote"></p>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>
+        <button class="class-action-btn" data-backup-cancel>Cancel</button>
+      </div>
     </div>
   </div>
 </div>

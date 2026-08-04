@@ -28,8 +28,11 @@
   ── WHAT IS NOT HERE ──
 
   No Drive, no conflict handling, and nothing ever sets the chip's `syncing` state — Phase 7
-  owns all of it. No backup or restore either: that is WO-1.5, and it is the gate that has to
-  land before any other feature writes student data.
+  owns all of it.
+
+  Backup and restore live in src/backup.js, which owns the file format, the validation, and the
+  teacher-facing copy. Only two things about them are the store's business and they are at the
+  bottom of this file: reading a stored record without opening it, and the swap itself.
 */
 
 import { showSaveState } from './save-indicator.js';
@@ -513,6 +516,66 @@ export async function boot() {
   const year = years.indexOf(preferred) >= 0 ? preferred : years[years.length - 1];
   if (year) await openYear(year);
   else await createYear(currentSchoolYear());
+  return current;
+}
+
+/* ────────────────────────────── restore ────────────────────────────── */
+
+/* The stored record for a year, exactly as it sits on disk — NOT migrated, NOT opened, and not
+   made current. It exists for the restore confirm, which has to describe the document it is
+   about to overwrite, and that document is sometimes one openYear() refuses: a year written by
+   a newer build is precisely the case the boot-failure exit is for, and it still has a year, a
+   date, and a roster worth counting before it is replaced. Returns undefined when there is no
+   record for that year. */
+export function readStoredDocument(year) { return readYear(year); }
+
+/*
+  Replace one year's document with a validated one, and open it. This is the swap, and the
+  order of the lines below is the whole of WO-1.5's Traps line.
+
+  The caller has already read the file, parsed it, walked it up the migration ladder and checked
+  its shape (src/backup.js). Nothing here touches the open document until IndexedDB has said the
+  new record is on disk — writeDocument() resolves on the transaction's `complete`, never on the
+  request's `success` — so there is no state in which half a restore has happened. If the write
+  throws, this throws, and the open document, the header, and the stored record are all exactly
+  as they were.
+
+  WHICH YEAR IS REPLACED: the one named in the file, never the one that happens to be open. A
+  backup of 2025-2026 dropped in while 2026-2027 is on screen must not overwrite 2026-2027, and
+  it must not be quietly re-labelled either — `year` is the record's primary key and the
+  document's identity, so a renamed restore would be two years of grades in one record. It
+  replaces (or creates) the record for its own year and Planbook switches to it. The confirm
+  dialog says which year that is, and says so before any of this runs.
+
+  WHAT rev BECOMES: this device's count continues rather than reverting to the file's. A backup
+  at rev 12 restored over a year that had reached rev 50 here is the 51st save of that year on
+  this device, and saying so is what keeps rev usable as the sync ordering key (docs/sync.md).
+  rev never goes backwards for a year, so a later sync can never find itself comparing against a
+  rev this document never had — and a teacher who restores an old file on purpose gets a document
+  that legitimately supersedes the one in Drive, rather than one that quietly loses to it. The
+  teacher's data is restored exactly as the file holds it; rev and updatedAt are save
+  bookkeeping, not content.
+
+  The save chip is left alone. A restore is not a save, the same way a year switch is not one —
+  it reports in its own dialog, which is where the teacher is looking (src/save-indicator.js).
+*/
+export async function restoreDocument(incoming) {
+  /* Whatever is pending belongs to the document that is about to stop being current, and if it
+     would not write, this refuses for the same reason a year switch does. It also means a
+     restore of the SAME year does not race a debounced write of the document it replaces. */
+  await leaveCurrent();
+
+  const existing = await readYear(incoming.year);
+  const priorRev = Math.max(Number(existing && existing.rev) || 0, Number(incoming.rev) || 0);
+  incoming.rev = priorRev + 1;
+  incoming.updatedAt = new Date().toISOString();
+
+  await writeDocument(incoming);
+
+  current = incoming;
+  dirty = false;
+  setPref('openYear', current.year);
+  notify();
   return current;
 }
 

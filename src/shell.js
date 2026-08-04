@@ -25,6 +25,12 @@
       data-year-picker                renders the year list, then opens the year modal
       data-year-switch="<year>"       opens that year document
       data-year-create                on a <form>: creates the year typed into it
+      data-backup-panel               fills the backup panel, then opens it
+      data-backup-download            downloads the open year document as a file
+      data-backup-file                on an <input type=file>: reads the chosen backup
+      data-backup-drop                on a container: accepts a dropped backup file
+      data-backup-confirm             carries out the restore the confirm dialog describes
+      data-backup-cancel              abandons it, having written nothing
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -43,6 +49,7 @@ import { getPref, setPref } from './prefs.js';
 import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './install-banner.js';
 import * as store from './store.js';
 import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } from './year-picker.js';
+import * as backup from './backup.js';
 
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
@@ -72,6 +79,13 @@ document.addEventListener('click', (e) => {
 
   const yearRow = e.target.closest('[data-year-switch]');
   if (yearRow) { switchYear(yearRow.getAttribute('data-year-switch')); return; }
+
+  const backupPanel = e.target.closest('[data-backup-panel]');
+  if (backupPanel) { backup.openBackupPanel(backupPanel); return; }
+
+  if (e.target.closest('[data-backup-download]')) { backup.downloadBackup(); return; }
+  if (e.target.closest('[data-backup-confirm]')) { backup.confirmRestore(); return; }
+  if (e.target.closest('[data-backup-cancel]')) { backup.cancelRestore(); return; }
 
   const speak = e.target.closest('[data-announce]');
   if (speak) { announce(speak.getAttribute('data-announce')); return; }
@@ -103,6 +117,39 @@ document.addEventListener('submit', (e) => {
   createYearFromForm();
 });
 
+/* The file input. A `change` listener rather than a click one for the obvious reason, and
+   delegated from the document for the same reason every other hook here is: the control lives
+   inside a modal, and binding at load time means binding to markup that may be re-rendered. */
+document.addEventListener('change', (e) => {
+  const chooser = e.target.closest('[data-backup-file]');
+  if (chooser) backup.handleChosenFile(chooser);
+});
+
+/*
+  Drag and drop for the restore target. Three listeners, and the reason they are on `document`
+  rather than on the drop zone is not delegation this time — it is that a browser handed a file
+  it was not offered NAVIGATES to it. A backup dropped an inch wide of the target would replace
+  the running app with a page of raw JSON, taking the year document that is live in memory with
+  it. So the default is cancelled everywhere on the page, and only the zone does anything with
+  what was dropped.
+*/
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  backup.setDropActive(!!(e.target.closest && e.target.closest('[data-backup-drop]')));
+});
+/* A dragleave with no relatedTarget is the pointer leaving the window entirely; every other one
+   is the pointer crossing between children of the zone, where clearing the highlight would make
+   it flicker. */
+document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) backup.setDropActive(false); });
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  backup.setDropActive(false);
+  const zone = e.target.closest && e.target.closest('[data-backup-drop]');
+  if (!zone) return;
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) backup.handleDropped(file);
+});
+
 /* Boot. The loading screen is up from the first paint and comes down here, once the year
    document is out of IndexedDB and in memory — which is what it was put there for (WO-1.2
    left it hiding immediately, with a comment saying so). Hidden on DOMContentLoaded rather
@@ -112,12 +159,16 @@ document.addEventListener('submit', (e) => {
    A boot failure leaves the loading screen UP, and that is deliberate. Planbook without
    storage is an app that accepts grades and forgets them; showing the shell with an empty
    header would look like a working app with an empty gradebook, which is the worse of the
-   two lies. The copy behind #loadingError says what to do about it. */
+   two lies. The copy behind #loadingError says what to do about it — and since WO-1.5 it also
+   carries the way out, because a screen with no exit is not a recovery path either. */
 document.addEventListener('DOMContentLoaded', async () => {
   refreshInstallBanner();
   try {
     await store.boot();
     refreshYearButton();
+    /* At boot and after a backup or a restore, which is everywhere the answer can change —
+       src/backup.js explains why it is not re-evaluated on every save. */
+    backup.refreshBackupNag();
     document.getElementById('loadingScreen').classList.add('hidden');
   } catch (e) {
     showBootFailure(e);
@@ -183,6 +234,12 @@ if ('serviceWorker' in navigator) {
    are what exercise them. This goes when the shelf goes. */
 window.planbook = {
   showSaveState, demoSaveCycle, announce, openModal, closeModal, getPref, setPref, store,
+  /* `backup` is here for a reason the others are not: a page cannot be handed a real file by a
+     script, so no harness can put one through the file input or the drop target. Everything
+     after the read is the same code either way, and backup.restoreFromText() is that seam —
+     tools/verify-shell.mjs drives the round trip, the refusals and the confirm through it. The
+     real file paths stay owed to a human on an iPad. This goes when the shelf goes. */
+  backup,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

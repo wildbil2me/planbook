@@ -793,6 +793,397 @@ if (!storeSeam) {
       : 'nothing was logged at error level');
 }
 
+/* ───────────────── backup & restore ─────────────────
+ *
+ * WO-1.5's acceptance lines, all of which are about what happens to a file and to storage and
+ * none of which a person looking at the app can settle. They are driven through
+ * window.planbook.backup for one specific reason: a script cannot hand a page a real File, so
+ * no harness can put a file through the file input or the drop target. Everything AFTER the
+ * read is the same code either way, and restoreFromText() is that seam. The real drop, the real
+ * Files-app download, and a thumb on a 44px target stay owed to a human.
+ *
+ * The confirm dialog is driven by clicking its actual buttons rather than by calling
+ * confirmRestore(), because "the confirm names what is being replaced" and "cancelling changes
+ * nothing" are claims about controls a teacher touches.
+ */
+
+console.log('\n--- backup & restore ---');
+
+/* Downloads land in the throwaway profile dir, which is deleted at the bottom of this file. A
+   real <a download> click is the only mechanism that works in an installed PWA, so the check
+   drives the real one — and without this it would leave a Planbook backup in whoever-ran-it's
+   Downloads folder. */
+let downloadsRedirected = false;
+try {
+  await send('Browser.setDownloadBehavior',
+    { behavior: 'allow', downloadPath: path.join(udd, 'downloads') }, false);
+  downloadsRedirected = true;
+} catch { /* older build without the Browser domain; the file lands in Downloads instead */ }
+
+/* The store section above ends by leaving the in-memory document permanently unwritable, on
+   purpose. A reload clears it, and the backup checks need a document that can be saved. */
+await send('Page.reload');
+await new Promise(r => setTimeout(r, 600));
+const backupBooted = await waitForBoot();
+await evalJs(KILL_ANIM);
+await evalJs(INSTALL_WALKER);
+
+const backupSeam = await evalJs("!!(window.planbook && window.planbook.backup"
+  + " && typeof window.planbook.backup.restoreFromText === 'function')");
+
+if (!backupBooted || !backupSeam) {
+  skip('backup & restore: round trip, refusals, the confirm, the nag, the boot-failure exit',
+    backupBooted ? 'no window.planbook.backup seam on the page (expected once the WO-1.2 shelf is gone)'
+      : 'the app did not boot before this section');
+} else {
+  check('downloads were redirected into the throwaway profile (else this litters Downloads)',
+    downloadsRedirected, downloadsRedirected ? path.join(udd, 'downloads') : 'Browser.setDownloadBehavior refused');
+
+  /* Seeded with the two kinds of data the file has to carry: ordinary roster fields, and the
+     support details CLAUDE.md calls the most sensitive data in the app. The backup is the ONE
+     surface that is allowed to contain the second kind, and a check that it is still in there
+     is the check that stops a later work order from "fixing" the file for safety. */
+  const YEAR = await evalJs('window.planbook.store.getDoc().year');
+  const built = await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(d){
+      d.teacher.name = 'Backup Probe';
+      d.classes = [{ id:'c_b1', name:'Period 3 — Biology' }];
+      d.students = [
+        { id:'s_b1', first:'Ada', last:'Probe',
+          supports:{ plan:'IEP', medical:'epi-pen in the nurse office', accommodations:[{ kind:'extended-time' }] } },
+        { id:'s_b2', first:'Bo', last:'Probe', supports:{ plan:'none' } }];
+    });
+    await s.flush();
+    var file = await window.planbook.backup.buildBackup();
+    var doc = s.getDoc();
+    return { name:file.name, text:file.text, rev:doc.rev, docId:doc.docId,
+             whole: JSON.stringify(JSON.parse(file.text)) === JSON.stringify(doc) }; })()`);
+  const TEXT = JSON.stringify(built.text);
+
+  check('the backup file is the whole year document, and its name carries the year and the date',
+    built.whole && built.name === 'Planbook ' + YEAR + ' backup '
+      + new Date().toISOString().slice(0, 10) + '.json',
+    built.name + ' · ' + built.text.length + ' bytes');
+  check('and it still contains the support data — a backup that filtered it out is not a recovery path',
+    /epi-pen in the nurse office/.test(built.text) && /"plan": "IEP"/.test(built.text),
+    'medical and plan fields present in the file');
+
+  const copy = await evalJs(`(function(){ var m = document.getElementById('backupModal');
+    return m ? m.textContent.replace(/\\s+/g, ' ') : ''; })()`);
+  check('the backup UI says in words what sensitive data the file contains',
+    /accommodation/i.test(copy) && /medical/i.test(copy) && /IEP/.test(copy)
+      && /504/.test(copy) && /behavior plan/i.test(copy),
+    copy ? 'panel copy is ' + copy.length + ' characters and names accommodations, IEP/504, medical, behavior plans'
+      : 'no #backupModal on the page');
+
+  /* The nag, at four ages. A single "it appeared" sample cannot tell a working threshold from a
+     strip that is always up. */
+  const nag = await evalJs(`(async function(){ var b = window.planbook.backup, p = window.planbook;
+    var el = document.getElementById('backupNag'), day = 24*60*60*1000;
+    function state(){ return !el.classList.contains('hidden'); }
+    p.setPref('lastBackupAt', Date.now() - 2*day); b.refreshBackupNag();
+    var atTwoDays = state();
+    p.setPref('lastBackupAt', Date.now() - 8*day); b.refreshBackupNag();
+    var atEightDays = state();
+    var lead = (document.getElementById('backupNagLead')||{}).textContent;
+    p.setPref('lastBackupAt', 0); b.refreshBackupNag();
+    var never = state();
+    await b.downloadBackup();
+    return { atTwoDays:atTwoDays, atEightDays:atEightDays, lead:lead, never:never,
+             afterDownload: state(), pref: p.getPref('lastBackupAt'),
+             status: document.getElementById('backupStatus').textContent }; })()`);
+  check('the nag appears when the last backup is over 7 days old, and says how long ago',
+    nag.atEightDays === true && /8 days ago/.test(nag.lead || ''),
+    'at 8 days: shown=' + nag.atEightDays + ' lead=' + JSON.stringify(nag.lead));
+  check('and it stays down at 2 days, and comes up when there has never been one',
+    nag.atTwoDays === false && nag.never === true,
+    'at 2 days shown=' + nag.atTwoDays + ', never-backed-up shown=' + nag.never);
+  check('a successful download clears the nag and stamps the planbook_ preference',
+    nag.afterDownload === false && Math.abs(Date.now() - nag.pref) < 120000,
+    'planbook_lastBackupAt = ' + nag.pref + ', nag shown = ' + nag.afterDownload);
+
+  /* Every refusal, and the two things each one has to be true of: it says what was wrong, and
+     it did not touch storage. A file that parses as JSON and is a shopping list has to be
+     refused by name rather than by a stack trace. */
+  const beforeRefusals = await evalJs(`(async function(){ var d = window.planbook.store.getDoc();
+    return { rev:d.rev, docId:d.docId, students:d.students.length }; })()`);
+  const refusals = await evalJs(`(async function(){ var b = window.planbook.backup;
+    var good = ${TEXT}, out = [];
+    async function tryIt(label, text, name){
+      var ok = await b.restoreFromText(text, name);
+      var st = document.getElementById('backupStatus');
+      out.push({ label:label, ok:ok, msg:st.textContent, cls:st.className,
+        confirmOpen: !document.getElementById('restoreConfirmModal').classList.contains('hidden') });
+    }
+    await tryIt('empty', '   ', 'empty.json');
+    await tryIt('not JSON', '{ "year": "2026-2027", ', 'truncated.json');
+    await tryIt('a shopping list', JSON.stringify({ milk:2, eggs:12 }), 'shopping.json');
+    var newer = JSON.parse(good); newer.schemaVersion = 99;
+    await tryIt('a newer schemaVersion', JSON.stringify(newer), 'future.json');
+    var partial = JSON.parse(good); delete partial.students; delete partial.scores;
+    await tryIt('half a document', JSON.stringify(partial), 'partial.json');
+    var wrongKind = JSON.parse(good); wrongKind.students = 'Ada, Bo';
+    await tryIt('students as text', JSON.stringify(wrongKind), 'wrong.json');
+    return out; })()`);
+  const afterRefusals = await evalJs(`(async function(){ var d = window.planbook.store.getDoc();
+    return { rev:d.rev, docId:d.docId, students:d.students.length }; })()`);
+
+  const refusedProperly = refusals.filter(r => r.ok === false && !r.confirmOpen
+    && / error$| error /.test(' ' + r.cls + ' ')
+    && /Nothing on this device has been changed\./.test(r.msg));
+  check('every malformed or non-Planbook file is refused, with a message, and never reaches the confirm',
+    refusedProperly.length === refusals.length,
+    refusals.map(r => r.label + ': ' + (refusedProperly.includes(r) ? 'refused' : 'NOT REFUSED — ' + JSON.stringify(r))).join(' | '));
+  check('and each refusal says what was actually wrong with that file, not one generic message',
+    /not valid JSON|could not be read as JSON/i.test(refusals[1].msg)
+      && /no school year in it/i.test(refusals[2].msg)
+      && /newer version of Planbook/i.test(refusals[3].msg)
+      && /missing students, scores/i.test(refusals[4].msg)
+      && /students holds text where Planbook expects a list/i.test(refusals[5].msg),
+    refusals.map(r => r.label + ' → ' + r.msg.slice(0, 60)).join(' | '));
+  check('a refused file changes nothing — no partial apply, not even a rev',
+    afterRefusals.rev === beforeRefusals.rev && afterRefusals.docId === beforeRefusals.docId
+      && afterRefusals.students === beforeRefusals.students,
+    JSON.stringify(beforeRefusals) + ' -> ' + JSON.stringify(afterRefusals));
+
+  /* The confirm, named and cancellable. The live document is moved on first, so the two sides
+     of the comparison genuinely differ and a dialog that printed the same document twice would
+     fail this. */
+  const confirmShown = await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(d){ d.students.push({ id:'s_b3', first:'Cy', last:'Probe' }); });
+    await s.flush();
+    await window.planbook.backup.restoreFromText(${TEXT}, 'Planbook backup.json');
+    var m = document.getElementById('restoreConfirmModal');
+    return { open: !m.classList.contains('hidden'),
+             lead: document.getElementById('restoreConfirmLead').textContent,
+             compare: document.getElementById('restoreCompare').textContent.replace(/\\s+/g,' '),
+             button: document.getElementById('restoreConfirmBtn').textContent,
+             storedRev: s.getDoc().rev, storedStudents: s.getDoc().students.length }; })()`);
+  check('the restore confirm names the outgoing document and the incoming one, with counts and dates',
+    confirmShown.open
+      && /On this device now/.test(confirmShown.compare)
+      && /In the backup file/.test(confirmShown.compare)
+      && /3 students/.test(confirmShown.compare) && /2 students/.test(confirmShown.compare)
+      && (confirmShown.compare.match(/Last saved/g) || []).length === 2
+      && (confirmShown.compare.match(new RegExp(YEAR, 'g')) || []).length === 2
+      && confirmShown.button === 'Replace ' + YEAR,
+    confirmShown.compare.slice(0, 220));
+
+  await clickSel('[data-backup-cancel]');
+  const cancelled = await evalJs(`(async function(){ var s = window.planbook.store;
+    var stored = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(s.getDoc().year);
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    return { confirmOpen: !document.getElementById('restoreConfirmModal').classList.contains('hidden'),
+             panelOpen: !document.getElementById('backupModal').classList.contains('hidden'),
+             status: document.getElementById('backupStatus').textContent,
+             memoryStudents: s.getDoc().students.length, storedStudents: stored.students.length,
+             storedRev: stored.rev }; })()`);
+  check('cancelling the confirm leaves the existing document untouched, in memory and on disk',
+    !cancelled.confirmOpen && cancelled.memoryStudents === 3 && cancelled.storedStudents === 3
+      && cancelled.storedRev === confirmShown.storedRev && /cancelled/i.test(cancelled.status),
+    JSON.stringify(cancelled));
+
+  /* Accepting it. The document that comes back has to be the file's content exactly — rev and
+     updatedAt excepted, which src/store.js's restoreDocument() moves on purpose and explains
+     at length. */
+  const restored = await evalJs(`(async function(){
+    await window.planbook.backup.restoreFromText(${TEXT}, 'Planbook backup.json'); return 1; })()`);
+  await clickSel('[data-backup-confirm]');
+  await new Promise(r => setTimeout(r, 600));
+  const applied = await evalJs(`(async function(){ var s = window.planbook.store;
+    var stored = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(${JSON.stringify(YEAR)});
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    var file = JSON.parse(${TEXT});
+    function content(d){ var c = Object.assign({}, d); delete c.rev; delete c.updatedAt;
+      return JSON.stringify(c); }
+    return { identical: content(stored) === content(file),
+             storedRev: stored.rev, fileRev: file.rev, memoryRev: s.getDoc().rev,
+             students: stored.students.length, docId: stored.docId,
+             medical: !!(stored.students[0].supports && stored.students[0].supports.medical),
+             label: (document.getElementById('yearButtonLabel')||{}).textContent,
+             status: document.getElementById('backupStatus').textContent,
+             confirmOpen: !document.getElementById('restoreConfirmModal').classList.contains('hidden') }; })()`);
+  check('accepting the confirm restores the file byte-for-byte in content, support data included',
+    restored === 1 && applied.identical && applied.students === 2 && applied.medical
+      && applied.docId === built.docId && !applied.confirmOpen && applied.label === YEAR,
+    JSON.stringify({ identical: applied.identical, students: applied.students, label: applied.label }));
+  check('and the restored document continues this device\'s rev rather than reverting to the file\'s',
+    applied.storedRev === cancelled.storedRev + 1 && applied.storedRev > applied.fileRev
+      && applied.memoryRev === applied.storedRev,
+    'file rev ' + applied.fileRev + ', device was at ' + cancelled.storedRev
+      + ', restored document is rev ' + applied.storedRev);
+
+  /* The two entry points a teacher actually uses, driven as closely as a script can get. A page
+     cannot be handed a File by a script — but it can be handed a DataTransfer holding one,
+     which is exactly what a drop and a file picker deliver, so everything from the event inward
+     is the real path including the read. A REAL drag out of Finder, and the iPad's Files sheet,
+     stay owed to a human. */
+  const entry = await evalJs(`(async function(){ var text = ${TEXT};
+    function dt(){ var d = new DataTransfer();
+      d.items.add(new File([text], 'Planbook backup.json', { type:'application/json' }));
+      return d; }
+    var confirmEl = document.getElementById('restoreConfirmModal');
+    function confirmOpen(){ return !confirmEl.classList.contains('hidden'); }
+    var zone = document.getElementById('backupDrop');
+
+    zone.dispatchEvent(new DragEvent('dragover', { bubbles:true, cancelable:true, dataTransfer: dt() }));
+    var highlighted = zone.classList.contains('active');
+    zone.dispatchEvent(new DragEvent('drop', { bubbles:true, cancelable:true, dataTransfer: dt() }));
+    await new Promise(function(r){ setTimeout(r, 350); });
+    var dropped = confirmOpen();
+    window.planbook.backup.cancelRestore();
+
+    var input = document.getElementById('backupFile');
+    input.files = dt().files;
+    input.dispatchEvent(new Event('change', { bubbles:true }));
+    await new Promise(function(r){ setTimeout(r, 350); });
+    var chosen = confirmOpen();
+    window.planbook.backup.cancelRestore();
+
+    /* A file dropped an inch wide of the target must do nothing — and must not navigate the
+       browser to it, which would take the year document in memory with it. */
+    var strayEvent = new DragEvent('drop', { bubbles:true, cancelable:true, dataTransfer: dt() });
+    document.body.dispatchEvent(strayEvent);
+    await new Promise(function(r){ setTimeout(r, 250); });
+    return { highlighted:highlighted, dropped:dropped, chosen:chosen,
+             stray: confirmOpen(), strayCancelled: strayEvent.defaultPrevented,
+             inputCleared: input.value === '', dropStillActive: zone.classList.contains('active') }; })()`);
+  check('a dropped backup file highlights the target and goes through the same confirm',
+    entry.highlighted && entry.dropped && !entry.dropStillActive,
+    JSON.stringify({ highlighted: entry.highlighted, reachedConfirm: entry.dropped }));
+  check('choosing a file with the file input does too, and the input is cleared so the same file can be re-chosen',
+    entry.chosen && entry.inputCleared, JSON.stringify({ reachedConfirm: entry.chosen, cleared: entry.inputCleared }));
+  check('a file dropped anywhere else does nothing, and the browser is stopped from opening it',
+    entry.stray === false && entry.strayCancelled === true,
+    'confirm opened = ' + entry.stray + ', default prevented = ' + entry.strayCancelled);
+
+  /* Download → wipe → restore, the acceptance line in full. The record is deleted out from
+     under the app and the page reloaded, which is what a teacher's evicted iPad looks like from
+     inside the browser: boot() finds a different year, or none. */
+  await evalJs(`(async function(){ return new Promise(function(res, rej){
+    var open = indexedDB.open('planbook');
+    open.onerror = function(){ rej(open.error); };
+    open.onsuccess = function(){ var db = open.result;
+      var t = db.transaction('years','readwrite');
+      t.objectStore('years').delete(${JSON.stringify(YEAR)});
+      t.oncomplete = function(){ db.close(); res(1); };
+      t.onerror = function(){ rej(t.error); }; }; }); })()`);
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  const wiped = await evalJs(`(async function(){
+    await window.planbook.backup.restoreFromText(${TEXT}, 'Planbook backup.json');
+    return { openYear: window.planbook.store.getDoc().year,
+             lead: document.getElementById('restoreConfirmLead').textContent,
+             note: document.getElementById('restoreConfirmNote').textContent,
+             button: document.getElementById('restoreConfirmBtn').textContent }; })()`);
+  check('with the year gone from storage, the confirm says nothing is being overwritten and names the switch',
+    wiped.openYear !== YEAR
+      && new RegExp('no ' + YEAR + ' school year on this device').test(wiped.lead || '')
+      && new RegExp('The year you have open, ' + wiped.openYear + ', is not touched').test(wiped.note || '')
+      && wiped.button === 'Add ' + YEAR,
+    JSON.stringify(wiped));
+  await clickSel('[data-backup-confirm]');
+  await new Promise(r => setTimeout(r, 600));
+  const back = await evalJs(`(async function(){ var s = window.planbook.store;
+    var stored = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(${JSON.stringify(YEAR)});
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    var file = JSON.parse(${TEXT});
+    function content(d){ var c = Object.assign({}, d); delete c.rev; delete c.updatedAt;
+      return JSON.stringify(c); }
+    return { identical: stored ? content(stored) === content(file) : false,
+             rev: stored && stored.rev, fileRev: file.rev, open: s.getDoc().year,
+             label: (document.getElementById('yearButtonLabel')||{}).textContent }; })()`);
+  check('download → wipe the year out of storage → restore gives the document back, identical in content',
+    back.identical && back.open === YEAR && back.label === YEAR && back.rev === back.fileRev + 1,
+    'restored ' + back.open + ' at rev ' + back.rev + ' from a file at rev ' + back.fileRev);
+
+  /* The boot-failure exit. WO-1.4 holds the loading screen up on a document written by a newer
+     build, deliberately — and until WO-1.5 that screen had no way out at all. The document is
+     poisoned in storage the way a newer build would have left it, and the whole recovery is
+     driven from the screen the teacher would actually be looking at. */
+  await evalJs(`(async function(){ window.planbook.setPref('openYear', ${JSON.stringify(YEAR)});
+    return new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var t = db.transaction('years','readwrite'), s = t.objectStore('years');
+        var q = s.get(${JSON.stringify(YEAR)});
+        q.onsuccess = function(){ var d = q.result; d.schemaVersion = 99; s.put(d); };
+        t.oncomplete = function(){ db.close(); res(1); };
+        t.onerror = function(){ rej(t.error); }; }; }); })()`);
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  /* Poll for the failure, rather than sleeping and hoping: boot is asynchronous, and a single
+     early sample cannot tell "refused" from "still loading". */
+  let refusedBoot = null;
+  for (let i = 0; i < 40 && !refusedBoot; i++) {
+    try {
+      refusedBoot = await evalJs(`(function(){ var box = document.getElementById('loadingError');
+        if (!box || box.classList.contains('hidden')) return null;
+        return { stuck: !document.getElementById('loadingScreen').classList.contains('hidden'),
+                 detail: document.getElementById('loadingErrorDetail').textContent,
+                 exits: document.querySelectorAll('#loadingError [data-backup-panel]').length }; })()`);
+    } catch { /* the document is still swapping under us */ }
+    if (!refusedBoot) await new Promise(r => setTimeout(r, 150));
+  }
+  await evalJs(KILL_ANIM);
+  check('a document from a newer schemaVersion still stops boot, and says why',
+    !!refusedBoot && refusedBoot.stuck && /newer version of Planbook/.test(refusedBoot.detail || ''),
+    refusedBoot ? refusedBoot.detail.slice(0, 110) : 'the loading error never appeared');
+  if (!refusedBoot) {
+    skip('the boot-failure screen offers a reachable way back in from a backup file',
+      'boot did not fail, so there was no failure screen to escape from');
+  } else {
+    await clickSel('#loadingError [data-backup-panel]');
+    const exit = await evalJs(`(function(){ var m = document.getElementById('backupModal');
+      return { panelOpen: !!m && !m.classList.contains('hidden'),
+               downloadDisabled: document.getElementById('backupDownloadBtn').disabled,
+               downloadLabel: document.getElementById('backupDownloadBtn').textContent }; })()`);
+    check('the boot-failure screen offers a reachable way back in from a backup file',
+      refusedBoot.exits === 1 && exit.panelOpen && exit.downloadDisabled === true,
+      'exits on the screen = ' + refusedBoot.exits + ', panel opened = ' + exit.panelOpen
+        + ', download button says "' + exit.downloadLabel + '"');
+
+    await evalJs(`(async function(){
+      await window.planbook.backup.restoreFromText(${TEXT}, 'Planbook backup.json'); return 1; })()`);
+    await clickSel('[data-backup-confirm]');
+    await new Promise(r => setTimeout(r, 700));
+    const recovered = await evalJs(`(async function(){ var s = window.planbook.store;
+      var stored = await new Promise(function(res, rej){
+        var open = indexedDB.open('planbook');
+        open.onerror = function(){ rej(open.error); };
+        open.onsuccess = function(){ var db = open.result;
+          var q = db.transaction('years','readonly').objectStore('years').get(${JSON.stringify(YEAR)});
+          q.onsuccess = function(){ res(q.result); db.close(); };
+          q.onerror = function(){ rej(q.error); }; }; });
+      return { loadingHidden: document.getElementById('loadingScreen').classList.contains('hidden'),
+               storedVersion: stored.schemaVersion, students: stored.students.length,
+               open: s.getDoc().year,
+               label: (document.getElementById('yearButtonLabel')||{}).textContent }; })()`);
+    check('and restoring from there replaces the unreadable document and starts the app',
+      recovered.loadingHidden && recovered.storedVersion === 1 && recovered.students === 2
+        && recovered.open === YEAR && recovered.label === YEAR,
+      JSON.stringify(recovered));
+  }
+}
+
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
  *
  * Emulation.setEmulatedMedia's `features` list does not reach `pointer`. It needs touch
@@ -879,6 +1270,62 @@ if (coarse !== true) {
         'measured ' + ym.length + '; under = ' + JSON.stringify(ym.filter(m => m.h < 44 || m.w < 44)));
     }
     if (seam) await evalJs("window.planbook.closeModal('yearModal');1");
+  }
+
+  /* The backup panel and the restore confirm, for the same reason as the year picker above:
+     everything in them sits inside a hidden overlay, where it measures 0x0 and the sweep skips
+     it. The file input is the one that matters — a 44px <input type=file> wrapped around a 20px
+     native button is the WO-1.2 `.search-box` defect exactly, so both are measured. */
+  if (await has('[data-backup-panel]')) {
+    if (seam) await evalJs("window.planbook.closeModal('yearModal');window.planbook.closeModal('aboutModal');1");
+    /* Scoped to the header. The first [data-backup-panel] in the document is the exit inside
+       the loading screen, which is display:none on a healthy boot — clicking it measures 0x0
+       and the click lands at the top-left corner of the viewport instead, on whatever is there.
+       Same viewport-coordinate trap as clickSel's own comment, one level up. */
+    await clickSel('header [data-backup-panel]');
+    await new Promise(r => setTimeout(r, 400));
+    /* The confirm is opened over the top through the seam, so both panels are measured in one
+       pass — there is no file to put through the input from here. */
+    if (seam) {
+      await evalJs("(async function(){ var s = window.planbook.store; var d = s.getDoc();"
+        + " if (!d) return 0; var f = await window.planbook.backup.buildBackup();"
+        + " await window.planbook.backup.restoreFromText(f.text, 'measure.json'); return 1; })()");
+      await new Promise(r => setTimeout(r, 400));
+    }
+    const bm = await evalJs(`(function(){ var out = [];
+      document.querySelectorAll('.modal-overlay:not(.hidden) button, .modal-overlay:not(.hidden) input')
+        .forEach(function(e){ var r = e.getBoundingClientRect();
+          out.push({ t:(e.className||e.tagName), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100 }); });
+      return out; })()`);
+    if (bm.length < 5) {
+      check('the backup panel and restore confirm opened, so there is something to measure',
+        false, 'controls found = ' + bm.length);
+    } else {
+      check('every backup and restore control measures >=44px on a coarse pointer',
+        bm.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + bm.length + '; under = ' + JSON.stringify(bm.filter(m => m.h < 44 || m.w < 44)));
+    }
+    /* The native ::file-selector-button, which is a separate box inside the input and is the
+       part a thumb actually lands on. */
+    const fileBtn = await evalJs(`(function(){ var i = document.getElementById('backupFile');
+      if (!i) return null; var s = getComputedStyle(i, '::file-selector-button');
+      return { minHeight: s.minHeight, padding: s.padding }; })()`);
+    check('the file input\'s own native button carries a 44px minimum, not just the input around it',
+      !!fileBtn && parseFloat(fileBtn.minHeight) >= 44,
+      fileBtn ? 'min-height = ' + fileBtn.minHeight + ', padding = ' + fileBtn.padding : 'no #backupFile');
+
+    /* The boot-failure exit is the one control that cannot be measured here: it only exists on
+       screen when boot has failed, and this section needs an app that booted. Its rule is read
+       instead — weaker than a measurement, and said so, but it still catches the control being
+       added without its line in the touch pass. */
+    const exitRule = await evalJs(`(function(){ var b = document.querySelector('.loading-error-btn');
+      return b ? getComputedStyle(b).minHeight : null; })()`);
+    check('the boot-failure exit button declares 44px under a coarse pointer (rule, not a measurement)',
+      parseFloat(exitRule) >= 44, 'computed min-height = ' + exitRule);
+    if (seam) {
+      await evalJs("window.planbook.backup.cancelRestore();"
+        + "window.planbook.closeModal('backupModal');1");
+    }
   }
 }
 

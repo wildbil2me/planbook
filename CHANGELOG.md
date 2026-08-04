@@ -15,6 +15,66 @@ records what someone remembered.
 
 ### Added
 
+- **The teacher can get the year back out, and back in** (WO-1.5). One tap downloads the open year
+  as plain JSON, named for the year and the date; a file input and a drop target read one back.
+  This is the gate the whole phase was ordered around — *no feature that writes student data lands
+  before the path that gets it back out* — and it is open. WO-1.6 onward may now create data.
+
+  **A file the teacher holds is the only recovery path that survives everything.** Not the browser,
+  which iOS empties after about a week of an uninstalled site; not the laptop; and specifically not
+  sync, because Drive holds one live copy that sync will happily overwrite. Sync is not a backup and
+  never becomes one, which is why this shipped in Phase 1 rather than as a Phase 8 formality.
+
+  **The restore confirm names both documents before anything is replaced** — the year, the class and
+  student counts, and when each was last saved, outgoing beside incoming. The outgoing side is read
+  raw off disk rather than from the open document, so it can also describe a document `boot()`
+  refuses; the whole point of that path is that the app could not open the thing being replaced. A
+  restore replaces the year named in the file rather than the year on screen, and says so in a
+  separate line whenever those differ, because renaming the incoming document to the open year would
+  fold two years of grades into one record.
+
+  **Nothing is written until a validated document exists in memory.** The migration ladder runs
+  first — so an older backup is legitimately allowed to be missing whatever a later version added —
+  then the shape check, then the swap. Six kinds of bad file were driven through it: empty,
+  truncated, a shopping list, a newer `schemaVersion`, a document with its `students` deleted, and
+  one with `students` as a string. Each is refused by its own fault rather than a generic message,
+  and each says *"Nothing on this device has been changed."* A restore that fails halfway is worse
+  than no restore.
+
+  **`rev` continues this device's count instead of reverting to the file's.** A restored document
+  takes `max(this device's rev for that year, the file's rev) + 1`, so `rev` never moves backwards
+  for a year on a device and Phase 7 can never compare against a version that existed nowhere. The
+  consequence is deliberate: restoring a two-week-old file legitimately supersedes the Drive copy
+  rather than quietly losing to it. Everything the teacher typed, `docId` included, comes back
+  exactly.
+
+  **The nag appears after seven days and goes down when a backup is taken** — and does not appear at
+  all for a document holding nothing the teacher typed. Nagging about an empty gradebook on day one
+  is how a warning becomes wallpaper, and this one has no snooze, because the way to clear it is the
+  button beside it and a snooze here is a snooze on the only copy of a term of grades.
+
+  **The backup panel says what is in the file, in the teacher's words.** Accommodations, IEP and 504
+  plans, medical needs, behavior plans — named, plus that the file is plain text and should be kept
+  like a paper folder rather than emailed. The file is genuinely unfiltered, and there is now a check
+  asserting the sensitive fields are still in the downloaded bytes, so no later work order can
+  quietly strip them "for safety" and leave a backup that does not bring the gradebook back.
+
+  **The boot-failure screen has an exit.** WO-1.4 made `boot()` hold the loading screen up rather
+  than reveal a gradebook it cannot write to, which was right and left the teacher nowhere to go.
+  Restore *is* the way out, so it is reachable from that screen — over the top of it — and the
+  download button beside it reads "Nothing open to back up" and is disabled, because a button that
+  fails on tap is worse than one that says why it can't.
+
+  The file is pretty-printed at some cost in size. It is the artifact a teacher opens when everything
+  else has gone wrong, sometimes in a text editor to prove her students are still in there, and one
+  four-megabyte line proves nothing.
+
+  Verified on iPadOS 26.5.2 on an iPad (A16), installed to the home screen: the download lands in
+  Files → On My iPad and opens readable with the roster in it, the JSON is selectable in the picker
+  rather than greyed out, a drag out of Files in Split View reaches the confirm, a cancel leaves the
+  year alone, and the boot-failure screen's restore button was staged and tapped on a real screen.
+  `tools/verify-shell.mjs` is now 79 of 79.
+
 - **The app holds a year of work, and gives it back after the app is closed** (WO-1.4). One JSON
   document per school year in IndexedDB — classes, roster, attendance and grades together — loaded
   when the app opens and written back on a debounce as the teacher works. This is the first work
