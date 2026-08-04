@@ -60,7 +60,16 @@ The brief contains, in this order:
 ### 5. Dispatch
 
 **To Claude** — spawn the `work-order-implementer` subagent with the brief file path and the work
-order ID. If you cannot spawn a subagent, do the work yourself following the same brief.
+order ID. Tell it to write its report to `.claude/dispatch/<WO-ID>-result.md` as its last act, and
+confirm that file exists before you move on. If you cannot spawn a subagent, do the work yourself
+following the same brief — and write the result file yourself, because the reason for it does not
+change with who did the work.
+
+**Why the result file on both routes.** Codex gets one for free via `-o` below, because it is an
+external process and its output has nowhere else to go. A subagent's report comes back in-band, so
+for a long stretch the Claude route wrote no result file at all — and the half of the audit trail
+that records *what was done* survived only in a chat transcript, which ages out. The brief is what
+was asked; the result is what came back. Both are the record, on both routes.
 
 **To Codex** — pipe the brief in via stdin so nothing has to survive PowerShell quoting:
 
@@ -108,8 +117,9 @@ Return to the user:
 - What landed, as file paths.
 - The verifier's verdict and its Acceptance list, marked ✅ / ❌ / 🙋.
 - The 🙋 items as a single iPad checklist the teacher can run in one sitting.
-- The maintenance protocol that is now **owed but not done**: tick the work order status, tick the
-  roadmap box, update the README dashboard, add `TESTING.md` lines, add the `CHANGELOG.md` entry.
+- The maintenance protocol, split into **what you can apply** and **what is owed to a human**: the
+  work order status line, the roadmap box, the README dashboard, the `TESTING.md` lines, the
+  `CHANGELOG.md` entry.
 - **What's next**, from the verifier: the next work order's ID, title, size, 🚩 status, and whether
   its dependencies are now satisfied.
 
@@ -117,9 +127,31 @@ Then **ask whether to continue, and stop there.** Do not roll into the next work
 Two reasons, both real: a `PASS WITH MANUAL CHECKS` is not done until someone picks up an iPad, and
 the maintenance protocol is owed on this one before the next one starts.
 
-**You never perform that maintenance yourself.** The project's rule is that nothing is ticked until
-it is verified, and the 🙋 items are precisely the ones no agent can verify. Hand the user a
-ready-to-apply list and let them make the call.
+### Applying the maintenance
+
+On a verifier **PASS**, and only after the user says go, apply the ticks whose evidence is a command
+the verifier actually ran: the work order `Status` line, the roadmap box, the README dashboard
+counts and bar, and the 👤-free `TESTING.md` lines. Then say what you applied, in file:line form.
+
+Three things stay out of your hands:
+
+- **Anything marked 👤.** Those need an iPad in the teacher's hands. They stay `- [ ]` no matter how
+  confident the desk-side evidence looks. This is the whole reason the mark exists.
+- **The `CHANGELOG.md` entry.** It is prose about what the change means, not a box. Draft it in your
+  report if you like; the teacher decides what goes in.
+- **Anything on a `FAIL`, or on a `PASS` the user has not answered yet.** No verdict, no tick.
+
+**Why this is yours and not the verifier's.** The rule in `plans/ROADMAP.md` is that nothing is
+ticked until it is **verified** — it was never about which hand holds the pen. But look at a phase
+file: the acceptance criterion and its checkbox are the *same line of text*. An agent with write
+access there could reword the criterion it just failed, in the same edit. So the verifier keeps its
+read-only tool grant, which is the structural guarantee that the thing being judged cannot be
+altered by its judge. You never inspected the work, so recording someone else's verdict is
+transcription, not grading — `ROUTING.md`'s "does not grade its own dispatch" still holds.
+
+The failure this replaced was real and quiet: WO-1.1 sat verified-and-untracked, with the dashboard
+reading `0` done, because five hand edits are easy to postpone. A tracking system that lies about
+what is finished is the exact thing the protocol was written to prevent.
 
 ---
 

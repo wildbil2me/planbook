@@ -50,3 +50,11 @@ Against the Acceptance list, item by item: what you verified and how, what you c
 (anything needing a real iPad or human eyes — say so rather than assuming), and anything you left
 undone with the reason. List the files you changed. If you hit a decision the work order didn't
 settle, name it and say which way you went and why.
+
+**Write that report to `.claude/dispatch/<WO-ID>-result.md` as your last act, then return it
+in-band as well.** Both copies matter and neither substitutes for the other: the returned text is
+what the orchestrator relays now, and the file is what survives after this conversation is gone.
+The dispatch folder is tracked in git precisely so that a work order questioned six months from
+now has both halves — the brief that asked, and your report of what came back. This is also where
+the notes you were told not to act on belong: an out-of-scope temptation you declined, a convention
+you set because nothing existed yet. Those are worthless in a transcript nobody can find.

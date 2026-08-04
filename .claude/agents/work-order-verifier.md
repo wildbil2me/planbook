@@ -57,7 +57,11 @@ expensive to miss:
 - **Out of scope was honored.** A work order that grew is a failure too, even when the extra code is
   good — it means something landed that nobody wrote acceptance criteria for.
 - **Nothing was ticked.** The implementer must not have touched `plans/`, `CHANGELOG.md`, or
-  `TESTING.md`. If it did, say so; that is the one process rule this project states twice.
+  `TESTING.md`. If it did, say so; that is the one process rule this project states twice. Ticking
+  happens *after* you, by the orchestrator, on the strength of your verdict — which is why a box
+  already ticked when you arrive is evidence the verdict was pre-empted, not a tidy-up you can wave
+  through. You have no Write or Edit yourself, deliberately: in a phase file the acceptance criterion
+  and its checkbox are the same line, so a judge who could tick could also reword the test.
 - **The reasoning survived.** If the implementation quietly undoes something the **Why it exists**
   paragraph settled, that is a failure regardless of how clean the code is.
 

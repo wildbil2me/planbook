@@ -15,7 +15,7 @@ Three agents, each with a different job and deliberately different powers.
 
 | Agent | Does | Can write? |
 |---|---|---|
-| **work-order-orchestrator** | Checks gates, routes, writes the brief, dispatches, relays | yes |
+| **work-order-orchestrator** | Checks gates, routes, writes the brief, dispatches, relays, applies verified ticks | yes |
 | **work-order-implementer** *or* **Codex** | Builds the one work order it was handed | yes |
 | **work-order-verifier** | Reads the work order cold, walks the Acceptance list, names what's next | **no** |
 
@@ -27,11 +27,23 @@ than what someone meant.
 The orchestrator does not grade its own dispatch. It chose the route and wrote the brief, which
 makes it the wrong party to mark the homework.
 
-**Nobody ticks anything.** Not the implementer, not the verifier, not the orchestrator. The
-verifier's 🙋 marks are the acceptance lines that need a real iPad, and those are exactly the ones no
-agent can close. You get a ready-to-apply maintenance list and you make the call. That is the
-project's own rule — *do not tick a work order that is written but unverified* — enforced by giving
-no agent the authority to do it.
+**Ticking follows the verdict, and only the orchestrator holds the pen.** On a verifier PASS, and
+once you say go, the orchestrator applies the ticks whose evidence is a command the verifier ran:
+the work order `Status`, the roadmap box, the dashboard counts, and the 👤-free `TESTING.md` lines.
+The implementer never ticks — it is marking its own homework. The verifier never ticks either, for a
+sharper reason: in a phase file the acceptance criterion **is** the checkbox, one line of text, so
+write access there would let the judge reword the test it just failed. Its read-only grant is what
+makes that impossible rather than merely discouraged.
+
+Two things no agent closes. **👤 lines** need a real iPad and stay `- [ ]` however good the desk-side
+evidence looks. **The `CHANGELOG.md` entry** is prose about what a change means, so it stays yours.
+
+The rule this serves is the project's own — *do not tick a work order that is written but
+unverified* ([`../ROADMAP.md`](../ROADMAP.md) → maintenance protocol). Note what it actually
+conditions on: **verified**, not *human*. An earlier version of this pipeline read it as "no agent
+may tick," which cost nothing until WO-1.1 passed clean and then sat with the dashboard reading `0`
+done, because five hand edits are easy to postpone. A tracker that lies about what is finished is
+the failure the rule was written to prevent, so the enforcement moved to where the evidence is.
 
 ---
 
