@@ -47,7 +47,8 @@ button, input, select, textarea { font-family: inherit; }
 
 /* One grouped selector for every tappable class in the app. Add each new control
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
-button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn {
+button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
+.install-banner-dismiss {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -145,6 +146,35 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .q-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); color: #fff; }
 .q-btn.active { background: #fff; color: #1a3c5e; }
+
+/* ── INSTALL BANNER ── */
+/* The eviction warning, styled as the style guide's caution banner (§1, "Caution banner
+   (offline/stale)") and lifted from Roll Call!'s `#staleBanner` — same amber, same border,
+   same outline button — because it is the same kind of message: a standing condition the
+   teacher should act on, not an error that just happened.
+
+   In normal flow under the header rather than fixed. A fixed strip would have to fight the
+   safe-area inset the header already owns, and it would cover content on an iPad in landscape
+   where vertical space is the scarce thing. It is shown on every launch until Planbook is
+   installed, which is what makes scrolling past it harmless. */
+.install-banner {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
+  padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+/* `flex: 1 1 320px` rather than a fixed width: below ~380px of usable width the button drops
+   to its own line instead of squeezing the prose into a column two words wide. */
+.install-banner-text { flex: 1 1 320px; min-width: 0; }
+.install-banner p + p { margin-top: 6px; }
+.install-banner-dismiss {
+  border: 1.5px solid #c9a83f; background: transparent; color: #8a6d1a;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
+}
+.install-banner-dismiss:hover { background: #f5e8bd; }
 
 /* ── MAIN / PANEL ── */
 .main {
@@ -337,6 +367,8 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .pill { padding: 10px 16px; font-size: 12px; min-height: 44px; }
   .batch-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
   .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
+  .install-banner { font-size: 13.5px; }
+  .install-banner-dismiss { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .modal-close { width: 44px; height: 44px; font-size: 15px; }
   /* The 44px belongs to the <input>, not to the box around it. Giving `.search-box` the
      min-height and leaving its 7px vertical padding in place makes a 44px box holding a
@@ -368,6 +400,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .header-bottom {
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  .install-banner {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
   .header-title p { display: none; }
 }

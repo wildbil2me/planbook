@@ -15,17 +15,20 @@
   something the code cannot violate without someone first adding the key to a list whose
   name says what belongs in it.
 
-  PREF_DEFAULTS is deliberately empty today. WO-1.2 ships chrome and has no preference to
-  remember; the first real entry is WO-1.3's install-banner dismissal. Adding one is one
-  line here plus a default, and the defaults-merge below means an older device missing the
-  key reads the default rather than undefined — the pattern is lifted from Roll Call!'s
-  loadConfig() (portable-components.md §8).
+  Adding a preference is one line below plus a default, and the defaults-merge means an
+  older device missing the key reads the default rather than undefined — the pattern is
+  lifted from Roll Call!'s loadConfig() (portable-components.md §8).
 */
 
 export const PREFIX = 'planbook_';
 
 /* key → default value. A key absent from this map cannot be written. */
-export const PREF_DEFAULTS = {};
+export const PREF_DEFAULTS = {
+  /* Epoch ms of the last "Not now" on the install banner; 0 means never dismissed. A fact
+     about this browser's chrome, not about a student — see src/install-banner.js, which owns
+     how long the dismissal lasts and why. */
+  installBannerDismissedAt: 0,
+};
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,
    and a missing preference must degrade to the default rather than take the app down. */

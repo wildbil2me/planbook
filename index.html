@@ -11,15 +11,16 @@
   screen replaces it.
 
   Deliberately still absent, so that nothing here has to be un-built later:
-    - <link rel="manifest"> and navigator.serviceWorker.register() — WO-1.3 owns the install
-      path, the icon set, and the theme colors. manifest.webmanifest and sw.js exist as
-      WO-1.1 placeholders and are untouched.
     - IndexedDB and the year document — WO-1.4.
     - Classes, terms, roster — WO-1.6 and WO-1.7. The class tab row is styled and empty.
 
-  The iOS meta tags below ARE this work order's: viewport with maximum-scale=1.0,
-  apple-mobile-web-app-capable, and the status-bar style. src/shell.css carries the
-  matching env(safe-area-inset-*) padding.
+  WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
+  service worker registration in src/shell.js, and the eviction banner below the header.
+  Two of the meta tags changed with it and the change is load-bearing rather than cosmetic —
+  `viewport-fit=cover` plus `black-translucent` are what make every env(safe-area-inset-*)
+  in src/shell.css resolve to anything but 0 on iOS. Without the pair the header's top
+  padding is inert, the navy gradient stops short of the screen edge in a home-screen
+  launch, and a safe-area test passes by having nothing to test (see TESTING.md, WO-1.2).
 
   Two things in src/shell.css read like oversights and are neither: colors are declared
   inline rather than as CSS custom properties, and there is no dark theme of any kind. Both
@@ -28,12 +29,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- `black-translucent` lets the web view run under the status bar, which is the only way
+       env(safe-area-inset-top) is ever non-zero; the header's padding-top then clears it and
+       the navy gradient reaches the top edge. `default` insets the view below the status bar
+       instead, leaving a pale strip above a navy header and every inset at 0. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d2137">
+  <!-- The home-screen label, pinned here so a later, longer <title> cannot change it. -->
+  <meta name="apple-mobile-web-app-title" content="Planbook">
   <title>Planbook</title>
-  <!-- Emoji favicon, per portable-components.md §1. WO-1.3 adds the manifest icon set. -->
+  <!-- Emoji favicon for a browser tab, per portable-components.md §1. The home-screen icons
+       are real PNGs — iOS will not take an SVG for apple-touch-icon and falls back to a
+       screenshot of the page if you give it one. tools/make-icons.mjs draws them. -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="src/shell.css">
 </head>
 <body>
@@ -75,6 +90,34 @@
     </nav>
   </div>
 </header>
+
+<!-- The eviction warning. It ships `hidden` and is revealed only by src/install-banner.js, so
+     a home-screen launch cannot flash it on the way past.
+
+     The copy lives here rather than in the module on purpose: it is the part of this feature a
+     teacher actually reads, and it should be revisable without opening a JavaScript file. It
+     says the three things the work order asks for and stops — what is lost, why, and the exact
+     taps. Amber caution styling, not red: the risk is real, and a strip that looks like an
+     error every single launch is a strip that gets tuned out by October. -->
+<aside class="install-banner hidden" id="installBanner" aria-labelledby="installBannerHeading">
+  <div class="install-banner-text">
+    <p><strong id="installBannerHeading"><span aria-hidden="true">⚠</span> Planbook is not installed on this device.</strong></p>
+    <p>
+      iPad Safari erases the stored data of any site you have not opened in about a week.
+      Everything Planbook keeps — your roster, your attendance, your grades — is in that
+      storage, so one quiet week over a holiday can take a term of work with it. Apps added to
+      the home screen are exempt from that, which is the whole reason to add it.
+    </p>
+    <p>
+      <strong>On an iPad:</strong> tap the Share button in Safari's toolbar — the square with
+      an arrow coming out of the top — then choose <strong>Add to Home Screen</strong> and tap
+      <strong>Add</strong>. Open Planbook from that icon from now on.<br>
+      <strong>On a computer:</strong> use the install button at the right-hand end of the
+      address bar, or the browser menu → Install Planbook.
+    </p>
+  </div>
+  <button class="install-banner-dismiss" data-install-dismiss>Not now</button>
+</aside>
 
 <main class="main">
   <div class="panel">

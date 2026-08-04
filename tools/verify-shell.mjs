@@ -305,9 +305,15 @@ if (!(await has(MODAL)) || openerCount < 2) {
   ].join('\n');
   await evalJs(INSTALL);
 
+  /* Input.dispatchMouseEvent takes VIEWPORT coordinates, so a target below the fold is not
+     clicked — the event lands on whatever is at that spot on screen, or on nothing, and the
+     failure reads as "the modal stopped opening". Scroll it into view first, then measure.
+     WO-1.3's install banner is what exposed this: it added ~150px above the shelf and pushed
+     the second modal opener off an 800x600 headless window. */
   const clickSel = async (sel, nth) => {
     const box = await evalJs('(function(){var e=document.querySelectorAll(' + JSON.stringify(sel) + ')['
-      + nth + '];var r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()');
+      + nth + '];e.scrollIntoView({block:"center"});var r=e.getBoundingClientRect();'
+      + 'return {x:r.x+r.width/2,y:r.y+r.height/2}})()');
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: box.x, y: box.y, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: box.x, y: box.y, button: 'left', clickCount: 1 });
     await new Promise(r => setTimeout(r, 150));
@@ -439,7 +445,12 @@ if (coarse !== true) {
   /* Measured after opening, not read off min-height: the search-box defect was a compliant
      declaration on the wrong element. */
   if (await has('[data-modal-open]')) {
-    const box = await evalJs("(function(){var e=document.querySelector('[data-modal-open]');var r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()");
+    /* Same viewport-coordinate rule as clickSel above, and one extra reason to obey it here:
+       Chrome restores the previous scroll offset across Page.reload, so this click can start
+       from wherever the section before it left the page. */
+    const box = await evalJs("(function(){var e=document.querySelector('[data-modal-open]');"
+      + "e.scrollIntoView({block:'center'});var r=e.getBoundingClientRect();"
+      + "return {x:r.x+r.width/2,y:r.y+r.height/2}})()");
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: box.x, y: box.y, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: box.x, y: box.y, button: 'left', clickCount: 1 });
     await new Promise(r => setTimeout(r, 200));

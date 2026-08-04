@@ -23,6 +23,13 @@ scratchpad/
 *.local.*
 *.log
 
+# Local HTTPS certificates, from tools/make-cert.mjs. Two private keys and a CA root that this
+# machine's browsers may be told to trust — a committed one is a signing key for any site,
+# handed to anyone who clones. They are per-machine and cost one command to regenerate, so
+# there is nothing here worth keeping. This is the one exception to tools/README.md's rule
+# that generated output gets committed; that rule is about assets the app serves.
+certs/
+
 # Deliberately NOT ignored: .claude/dispatch/.
 # It looks like agent scratch and it is not. Each work order leaves a <WO-ID>-brief.md (what was
 # asked) and a <WO-ID>-result.md (what came back) — together the audit trail for why a work order
