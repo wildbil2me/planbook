@@ -1,34 +1,287 @@
 <!doctype html>
 <!--
-  Planbook — placeholder front door.
+  Planbook — the app shell.
 
-  This is NOT the app shell. WO-1.1 only makes the layout real so the first commit has
-  something at the root; WO-1.2 (App shell & design frame) builds the header, panels, modal
-  system, save indicator, and the @media (pointer: coarse) touch pass, and WO-1.3 (PWA install
-  path) links the manifest and registers the service worker.
+  Lifted from Roll Call!'s design/starter-template.html and design/portable-components.md;
+  every value comes from design/style-guide.md. See CLAUDE.md → "Reference implementation".
 
-  Deliberately absent, so that nothing here has to be un-built later:
-    - the viewport / apple-mobile-web-app / safe-area meta tags — WO-1.2 owns iOS chrome
-    - <link rel="manifest"> and any navigator.serviceWorker.register() — WO-1.3
-    - any CSS at all, and any script
+  What this file is, as of WO-1.2: chrome and a component shelf. There is no data, no store,
+  and no real screen behind it. The shelf inside <main> is temporary by intent — it exists so
+  the frame can be seen and touched before there is anything to show — and WO-1.10's home
+  screen replaces it.
 
-  When the styling does arrive: colors are declared inline from design/style-guide.md, not as
-  CSS variables, and there is no dark mode. Both read like oversights and are neither — see
-  CLAUDE.md before tidying either one.
+  Deliberately still absent, so that nothing here has to be un-built later:
+    - <link rel="manifest"> and navigator.serviceWorker.register() — WO-1.3 owns the install
+      path, the icon set, and the theme colors. manifest.webmanifest and sw.js exist as
+      WO-1.1 placeholders and are untouched.
+    - IndexedDB and the year document — WO-1.4.
+    - Classes, terms, roster — WO-1.6 and WO-1.7. The class tab row is styled and empty.
+
+  The iOS meta tags below ARE this work order's: viewport with maximum-scale=1.0,
+  apple-mobile-web-app-capable, and the status-bar style. src/shell.css carries the
+  matching env(safe-area-inset-*) padding.
+
+  Two things in src/shell.css read like oversights and are neither: colors are declared
+  inline rather than as CSS custom properties, and there is no dark theme of any kind. Both
+  are deliberate suite conventions. Read CLAUDE.md before tidying either one.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Planbook</title>
+  <!-- Emoji favicon, per portable-components.md §1. WO-1.3 adds the manifest icon set. -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <link rel="stylesheet" href="src/shell.css">
 </head>
 <body>
-  <h1>Planbook</h1>
-  <p>
-    Nothing is built yet. This file is the repo skeleton from WO-1.1; the app shell arrives in
-    WO-1.2 and the installable offline app in WO-1.3.
-  </p>
-  <p>
-    <code>plans/work-orders/README.md</code> says what lands next and in what order.
-  </p>
+
+<!-- Covers the app until boot finishes. Hidden immediately today; WO-1.4 hides it once the
+     year document is out of IndexedDB. -->
+<div id="loadingScreen">
+  <div class="spinner" aria-hidden="true"></div>
+  <h2>Planbook</h2>
+  <p>Loading…</p>
+</div>
+
+<!-- Two rows: identity + actions on top, class navigation below. -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo" aria-hidden="true">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p id="headerSubtitle">Grades, attendance, and the outreach that follows</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <!-- WO-1.6 fills this with .cls-tab buttons and adds the term nav to the right, behind
+         .hdr-divider. .hdr-empty stands in meanwhile, because a blank navy strip reads as a
+         bug and "No classes yet." is the truth. -->
+    <nav class="hdr-class-tabs" id="classTabBar" aria-label="Classes">
+      <span class="hdr-empty">No classes yet.</span>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Component shelf</h2>
+          <p>Every piece of the frame, so it can be seen and touched before there is data. Nothing on this page is wired to anything.</p>
+        </div>
+      </div>
+      <!-- Specimens: the search row's real home is a panel header, so it is shown in one. -->
+      <div class="search-row">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" placeholder="Search…" aria-label="Search (specimen — nothing to search yet)">
+        </div>
+        <div class="pills" role="group" aria-label="Filters (specimen)" data-pill-group>
+          <button class="pill active" aria-pressed="true">All</button>
+          <button class="pill" aria-pressed="false">Concern</button>
+          <button class="pill" aria-pressed="false">Praise</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- The inset toolbar, and the save chip's real home. The five buttons are the stub that
+         drives it: each one's wash color is the color of the state it shows. WO-1.4 replaces
+         them with real save state. The chip carries no role="status" on purpose — the
+         aria-live channel is announce(), and doubling them would announce twice. -->
+    <div class="date-batch-bar">
+      <span class="save-indicator" id="saveIndicator"></span>
+      <div class="shelf-row">
+        <button class="batch-btn w" data-save-state="saving">Saving</button>
+        <button class="batch-btn p" data-save-state="saved">Saved</button>
+        <button class="batch-btn a" data-save-state="error">Error</button>
+        <button class="batch-btn i" data-save-state="syncing">Syncing</button>
+        <button class="batch-btn w" data-save-state="retry">Retry</button>
+        <button class="class-action-btn" data-save-cycle>Cycle all five</button>
+      </div>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Save indicator — the five states at once</div>
+      <div class="shelf-row">
+        <span class="save-indicator saving">⏳ Saving…</span>
+        <span class="save-indicator saved">✓ Saved</span>
+        <span class="save-indicator error">✕ Save failed</span>
+        <span class="save-indicator syncing">↻ Syncing…</span>
+        <span class="save-indicator retry">↻ Retrying…</span>
+      </div>
+      <p class="shelf-note">
+        Roll Call!'s sixth state, <code>queued</code>, is deliberately absent: it means
+        "waiting on the Apps Script outbox", and Planbook writes to the device it is running
+        on. A write that has not landed here has failed, not queued.
+      </p>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Modal</div>
+      <div class="shelf-row">
+        <button class="class-action-btn" data-modal-open="aboutModal">Open from here</button>
+        <button class="class-action-btn primary" data-modal-open="aboutModal">Open from here instead</button>
+      </div>
+      <p class="shelf-note">
+        Two openers, so focus-return is testable: Escape or a backdrop click has to put focus
+        back on whichever button opened the modal, not on the first one on the page.
+      </p>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">On-dark controls</div>
+      <div class="shelf-dark">
+        <button class="cls-tab active">Period 1</button>
+        <button class="cls-tab">Period 2</button>
+        <div class="hdr-divider"></div>
+        <div class="hdr-right-controls">
+          <button class="q-btn active">Q1</button>
+          <button class="q-btn">Q2</button>
+        </div>
+        <button class="hdr-icon-btn" title="Icon button specimen" aria-label="Icon button specimen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
+          </svg>
+        </button>
+      </div>
+      <p class="shelf-note">
+        These live in the header in the real app. They are shown against the header gradient
+        because that is the surface they were designed for — on white they are invisible.
+      </p>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Buttons</div>
+      <div class="shelf-row">
+        <button class="class-action-btn">Outline</button>
+        <button class="class-action-btn primary">Primary</button>
+      </div>
+      <p class="shelf-note">
+        Wash background + strong text for chips; a solid strong fill is reserved for the
+        active state and for one primary action per surface.
+      </p>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Avatars — ten classes by id % 10</div>
+      <div class="shelf-row">
+        <div class="avatar av0">AB</div>
+        <div class="avatar av1">CD</div>
+        <div class="avatar av2">EF</div>
+        <div class="avatar av3">GH</div>
+        <div class="avatar av4">IJ</div>
+        <div class="avatar av5">KL</div>
+        <div class="avatar av6">MN</div>
+        <div class="avatar av7">OP</div>
+        <div class="avatar av8">QR</div>
+        <div class="avatar av9">ST</div>
+      </div>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Screen reader channel</div>
+      <div class="shelf-row">
+        <button class="class-action-btn" data-announce="Planbook's live region is working.">Announce a message</button>
+      </div>
+      <p class="shelf-note">
+        Sends text to the <code>aria-live</code> region at the bottom of this page through
+        <code>announce()</code>. Nothing changes on screen — that is the point. Save failures
+        and offline states go through here, because the chip that shows them visually is not
+        something a screen-reader user has any reason to be looking at.
+      </p>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Empty state</div>
+      <div class="empty-state">
+        Nothing to show yet. This is what a panel looks like with no rows in it.
+      </div>
+    </div>
+
+    <div class="shelf-section">
+      <div class="shelf-label">Palette — diff this against design/style-guide.md §1</div>
+      <div class="shelf-swatches">
+        <div class="swatch"><span style="background:#0d2137"></span><b>#0d2137</b></div>
+        <div class="swatch"><span style="background:#1a3c5e"></span><b>#1a3c5e</b></div>
+        <div class="swatch"><span style="background:#2a2a6e"></span><b>#2a2a6e</b></div>
+        <div class="swatch"><span style="background:#1a1a2e"></span><b>#1a1a2e</b></div>
+        <div class="swatch"><span style="background:#f0f2f5"></span><b>#f0f2f5</b></div>
+        <div class="swatch"><span style="background:#f8f9fb"></span><b>#f8f9fb</b></div>
+        <div class="swatch"><span style="background:#eef0f4"></span><b>#eef0f4</b></div>
+        <div class="swatch"><span style="background:#e0e4ea"></span><b>#e0e4ea</b></div>
+        <div class="swatch"><span style="background:#6b7a8d"></span><b>#6b7a8d</b></div>
+        <div class="swatch"><span style="background:#8a9bb0"></span><b>#8a9bb0</b></div>
+        <div class="swatch"><span style="background:#a0aab8"></span><b>#a0aab8</b></div>
+        <div class="swatch"><span style="background:#27ae60"></span><b>#27ae60</b></div>
+        <div class="swatch"><span style="background:#eafaf1"></span><b>#eafaf1</b></div>
+        <div class="swatch"><span style="background:#5b6fcc"></span><b>#5b6fcc</b></div>
+        <div class="swatch"><span style="background:#eef2ff"></span><b>#eef2ff</b></div>
+        <div class="swatch"><span style="background:#e67e22"></span><b>#e67e22</b></div>
+        <div class="swatch"><span style="background:#fef5ea"></span><b>#fef5ea</b></div>
+        <div class="swatch"><span style="background:#e74c3c"></span><b>#e74c3c</b></div>
+        <div class="swatch"><span style="background:#fdeaea"></span><b>#fdeaea</b></div>
+      </div>
+      <p class="shelf-note">
+        Every hex in <code>src/shell.css</code> appears in the style guide, and each one is
+        written out where it is used rather than behind a custom property. That reads like an
+        oversight and is a suite convention — the whole suite would have to migrate at once.
+      </p>
+    </div>
+  </div>
+</main>
+
+<!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
+     gradient header. Semantics live here; src/modal.js owns behavior only. -->
+<div class="modal-overlay hidden" id="aboutModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+    <div class="modal-header">
+      <h2 id="aboutModalTitle">About Planbook</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook is a gradebook and communication assistant. It tracks grades and attendance,
+        surfaces the students who need attention in both directions — concern and praise — and
+        drafts the outreach that follows.
+      </p>
+      <p>
+        Everything stays on this device. There is no account and no server: your data lives in
+        this browser's own storage, and Google Drive sync is an opt-in extra you can ignore
+        entirely.
+      </p>
+      <div class="modal-section-label">This build</div>
+      <p>
+        <strong>Nothing is stored yet.</strong> This build is the app shell only — the frame,
+        the modal system, and the save indicator. Storage arrives with the year document, and
+        the backup file that gets it back out arrives right behind it.
+      </p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The one aria-live region. Everything spoken to a screen reader goes through
+     announce() in src/live-region.js and lands here. -->
+<div class="sr-only" aria-live="polite" id="srLive"></div>
+
+<script type="module" src="src/shell.js"></script>
 </body>
 </html>

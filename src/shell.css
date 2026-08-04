@@ -1,0 +1,373 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — app shell stylesheet.
+
+   Lifted from Roll Call!'s design/starter-template.html and design/style-guide.md
+   (see CLAUDE.md → "Reference implementation"). This is a lift, not a design: every
+   value below is quoted from the style guide. If a value here disagrees with the
+   guide, the guide wins.
+
+   Three things read like mistakes and are not:
+
+     1. Colors are declared inline, literally, and never as CSS custom properties.
+        Suite convention. A custom property for the navy is not an improvement, it is a
+        divergence — the whole suite would have to migrate at once. Don't tidy it.
+
+     2. There is no dark mode: no theme-preference media query, no theme attribute
+        selector, no dark variant of anything anywhere in the suite. The navy header IS
+        the light theme, not a dark skin of it. (The tokens are spelled out in CLAUDE.md
+        and src/README.md; they are deliberately not spelled out in any stylesheet, so
+        that grepping a stylesheet for them returns nothing.)
+
+     3. The stylesheet is one file with banner-commented sections and its responsive
+        blocks last, in the order design/style-guide.md §6 names: (pointer: coarse),
+        then 1024px, then 640px. That order is load-bearing — the touch pass has to be
+        able to override the base rules it re-states.
+
+   Convention for the work orders that follow this one: a screen that needs styles of
+   its own gets `src/<screen>.css`, loaded after this file, styling only its own class
+   names, with its own `@media (pointer: coarse)` block at its end. Two stylesheets must
+   never style the same class — that is the only way per-file touch passes stay safe from
+   the cascade.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── BASE ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  min-height: 100vh;
+  font-size: 14px;
+  /* Stops the whole page rubber-banding behind the header on iOS. */
+  overscroll-behavior-y: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* Controls inherit the body font rather than the platform's form-control font. */
+button, input, select, textarea { font-family: inherit; }
+
+/* One grouped selector for every tappable class in the app. Add each new control
+   here in the same pass that adds it — same rule as the (pointer: coarse) block. */
+button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* A consistent keyboard focus ring on every interactive element. :focus-visible only shows
+   for keyboard and AT users, so a pointer click never draws it — which is why nothing in
+   this repo ever needs to suppress an outline, and why nothing in this repo does. The
+   suppressing declaration is not written out even inside a comment, so that grepping the
+   stylesheet for it returns nothing. Never remove this ring, and never style bare :focus. */
+:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }
+
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* The show/hide mechanism everywhere in the app. */
+.hidden { display: none !important; }
+
+/* ── LOADING ── */
+/* Covers the app until boot finishes. Today boot has nothing to wait for and hides it
+   immediately; WO-1.4 hides it once the year document is out of IndexedDB. */
+#loadingScreen {
+  position: fixed; inset: 0; background: #0d2137;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; gap: 16px;
+}
+#loadingScreen h2 { color: #fff; font-size: 20px; font-weight: 700; }
+#loadingScreen p  { color: rgba(255,255,255,0.5); font-size: 13px; }
+.spinner {
+  width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: #27ae60; border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HEADER ── */
+/* Two rows: identity + actions on top, class navigation below. The gradient is the
+   suite's identity; the bottom row's black wash is what separates the two rows without
+   a border. `padding-top` clears the iOS status bar in a home-screen install — the
+   gradient still runs edge to edge, only the content is inset. */
+.header {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 52px; gap: 12px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.header-bottom {
+  display: flex; align-items: center; gap: 4px;
+  min-height: 48px;
+  background: rgba(0,0,0,0.15);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.header-logo {
+  width: 34px; height: 34px; background: rgba(255,255,255,0.12);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.header-title h1 { color: #fff; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.header-title p  { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 1px; }
+.hdr-icon-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 7px; color: rgba(255,255,255,0.6);
+  cursor: pointer; transition: all 0.15s; text-decoration: none; flex-shrink: 0;
+}
+.hdr-icon-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
+
+/* The class tab row. Empty until WO-1.6 creates classes; `.hdr-empty` is what stands
+   in, because a blank navy strip reads as a bug and "No classes yet." is the truth. */
+.hdr-class-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; align-items: center; }
+.hdr-empty { color: rgba(255,255,255,0.45); font-size: 12px; }
+.cls-tab {
+  padding: 4px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55);
+}
+.cls-tab:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.cls-tab.active { background: #1a1a2e; color: #fff; }
+/* Styled now, instanced by WO-1.6: the right-hand term nav and its divider. */
+.hdr-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.18); margin: 0 8px; flex-shrink: 0; }
+.hdr-right-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.q-btn {
+  padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+}
+.q-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); color: #fff; }
+.q-btn.active { background: #fff; color: #1a3c5e; }
+
+/* ── MAIN / PANEL ── */
+.main {
+  padding: 20px; max-width: 1300px; margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.panel { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+.panel-header { padding: 16px 20px 0; }
+.panel-title-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.panel-title h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.panel-title p  { font-size: 11px; color: #8a9bb0; margin-top: 2px; }
+.search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; }
+.search-box {
+  flex: 0 0 360px; display: flex; align-items: center; gap: 7px;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 7px 11px;
+}
+/* The source template suppresses the focus outline on this input. That is dropped rather
+   than lifted: the box draws no focus affordance of its own, so losing the ring would leave
+   a keyboard user with no idea where they are. */
+.search-box input { border: none; font-size: 13px; width: 100%; background: transparent; color: #1a1a2e; }
+.search-box input::placeholder { color: #a0aab8; }
+.pills { display: flex; gap: 5px; position: absolute; left: 50%; transform: translateX(-50%); }
+.pill {
+  padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d; cursor: pointer; white-space: nowrap;
+}
+.pill.active { background: #27ae60; border-color: #27ae60; color: #fff; }
+.empty-state { padding: 48px 20px; text-align: center; color: #a0aab8; font-size: 13px; }
+
+/* ── INSET TOOLBAR ── */
+/* portable-components.md §4's `.date-batch-bar`: the gray inset strip under a panel
+   header, hairlined top and bottom, that holds wash-colored `.batch-btn` chips and the
+   save indicator. It is lifted now rather than later because it is the documented home of
+   the save chip — Roll Call! puts the chip nowhere else, and a wash chip needs a light
+   surface to read against. WO-2.1's marking screen is what fills it with a date. */
+.date-batch-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 20px; background: #f8f9fb;
+  border-top: 1px solid #eef0f4; border-bottom: 1px solid #eef0f4; font-size: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── BUTTONS ── */
+/* Two shapes, both from the style guide's wash/strong grammar: `.class-action-btn` is
+   the outline button (solid fill only for a primary action), `.batch-btn` is the wash
+   chip. Solid strong-color fills are reserved for active states and primary CTAs. */
+.class-action-btn {
+  padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.class-action-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.class-action-btn.primary { background: #5b6fcc; border-color: #5b6fcc; color: #fff; }
+.class-action-btn.primary:hover { background: #4a5fbb; border-color: #4a5fbb; color: #fff; }
+.batch-btn {
+  border: none; border-radius: 6px; padding: 4px 11px;
+  font-size: 11px; font-weight: 700; cursor: pointer; transition: opacity 0.1s;
+}
+.batch-btn:hover { opacity: 0.8; }
+.batch-btn.p { background: #eafaf1; color: #27ae60; }
+.batch-btn.a { background: #fdeaea; color: #e74c3c; }
+.batch-btn.i { background: #eef2ff; color: #5b6fcc; }
+.batch-btn.w { background: #fef5ea; color: #e67e22; }
+
+/* ── COMPONENT SHELF ── */
+/* Planbook-only, and temporary by intent: the shelf is what WO-1.2 ships instead of a
+   screen, so the frame can be seen and touched before there is data. Work orders from
+   WO-1.10 on replace the contents of `.main`; when the last shelf row goes, these seven
+   rules go with it. */
+.shelf-section { padding: 14px 20px; border-top: 1px solid #eef0f4; }
+.shelf-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;
+}
+.shelf-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.shelf-note { font-size: 12px; color: #6b7a8d; margin-top: 8px; line-height: 1.5; }
+/* Half the suite's controls are on-dark — header tabs, context buttons, icon buttons —
+   and on a white panel they are invisible. The shelf borrows the header gradient so they
+   can be looked at on the surface they were designed for. */
+.shelf-dark {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  border-radius: 8px; padding: 10px 12px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+/* Palette proof row. Each swatch carries its own hex in a `style` attribute and prints the
+   same hex as its label, so design/style-guide.md §1 can be diffed against the running app
+   by eye. Inline is the convention here too — the alternative is one class per color. */
+.shelf-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatch {
+  width: 74px; border-radius: 6px; border: 1px solid #e0e4ea; overflow: hidden;
+  font-size: 9px; font-weight: 700; color: #6b7a8d; text-align: center;
+}
+.swatch span { display: block; height: 26px; }
+.swatch b { display: block; padding: 3px 0; background: #fff; font-weight: 700; }
+
+/* ── SAVE INDICATOR ── */
+/* Five states, per the style guide: saving and retry orange, saved green, error red,
+   syncing indigo. Roll Call!'s sixth state (`queued`) is deliberately absent — it means
+   "waiting on the Apps Script outbox", and Planbook has no outbox to wait on. */
+.save-indicator {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
+  transition: all 0.2s; opacity: 0; white-space: nowrap;
+}
+.save-indicator.saving  { background: #fef5ea; color: #e67e22; opacity: 1; }
+.save-indicator.saved   { background: #eafaf1; color: #27ae60; opacity: 1; }
+.save-indicator.error   { background: #fdeaea; color: #e74c3c; opacity: 1; }
+.save-indicator.syncing { background: #eef2ff; color: #5b6fcc; opacity: 1; }
+.save-indicator.retry   { background: #fef5ea; color: #e67e22; opacity: 1; }
+
+/* ── AVATAR ── */
+/* Ten fixed classes assigned by `id % 10`, so a student keeps the same color everywhere
+   in the app without anything being stored. Instanced by WO-1.7. */
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.av0{background:#5b6fcc}.av1{background:#27ae60}.av2{background:#e67e22}
+.av3{background:#e74c3c}.av4{background:#8e44ad}.av5{background:#0097a7}
+.av6{background:#c0392b}.av7{background:#1a6b3a}.av8{background:#2471a3}.av9{background:#d4ac0d}
+
+/* ── MODAL ── */
+/* z-index ladder, kept from Roll Call! so fixes stay portable across the suite:
+   content banners 90 · loading 999 · modals 1000 · setup screens 1001 · hero 1100. */
+/* The overlay scrolls, and the panel is centered by `margin: auto` rather than by
+   align-items alone. Centering a too-tall flex child clips its top edge with no way to
+   scroll back to it — an iPad in landscape is 704px of usable height, which any modal
+   with a form in it will pass. This is an addition to the lift, not part of it. */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.modal-panel {
+  background: #fff; border-radius: 14px; width: 480px; max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25); overflow: hidden;
+  margin: auto; animation: srIn 0.18s ease;
+}
+@keyframes srIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 100%);
+  padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.modal-header h2 { color: #fff; font-size: 15px; font-weight: 700; }
+.modal-close {
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.modal-close:hover { background: rgba(255,255,255,0.22); }
+.modal-body { padding: 20px; }
+.modal-body p { font-size: 13px; color: #6b7a8d; line-height: 1.6; }
+.modal-body p + p { margin-top: 10px; }
+.modal-section-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;
+}
+/* Roll Call! spaces this with an inline `style="margin-top:18px"` at each use site
+   (dashboard.html ~1394). Here it is a rule, because a label following prose always wants
+   the gap and a stylesheet is a better place to say so once. */
+.modal-body p + .modal-section-label { margin-top: 16px; }
+/* Left-aligned, because that is what `.modal-actions` is in Roll Call! (dashboard.html
+   ~651). The right-aligned footer over there is `.config-actions` and belongs to the
+   settings modal tier, which Planbook has no instance of yet. Shared class names are what
+   make a fix portable between the two apps, so the name keeps its meaning and only the
+   top margin is added. */
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 4px; }
+
+/* ── RESPONSIVE ── */
+/* Declaration order is from design/style-guide.md §6 and is not alphabetical or
+   arbitrary: coarse pointer first, then 1024, then 640. */
+
+/* The touch pass. EVERY interactive control appears here with a 44px minimum, added in
+   the same pass that adds the control — there is no later touch-up pass. The bare
+   `button` rule is a floor for anything that slips through, not a substitute for
+   listing the control by class. */
+@media (pointer: coarse) {
+  button { min-height: 44px; }
+  .header-top { min-height: 60px; }
+  .header-bottom { min-height: 52px; }
+  .hdr-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
+  .hdr-icon-btn svg { width: 18px; height: 18px; }
+  .hdr-empty { font-size: 13px; }
+  .cls-tab { padding: 10px 16px; font-size: 14px; min-height: 44px; }
+  .q-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }
+  .pill { padding: 10px 16px; font-size: 12px; min-height: 44px; }
+  .batch-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
+  .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
+  .modal-close { width: 44px; height: 44px; font-size: 15px; }
+  /* The 44px belongs to the <input>, not to the box around it. Giving `.search-box` the
+     min-height and leaving its 7px vertical padding in place makes a 44px box holding a
+     19px input: the strip above and below the text looks tappable, does nothing, and the
+     teacher taps twice. So the padding goes horizontal-only and the input carries the
+     height, which is also what makes the caret land on the first tap. */
+  .search-box { min-height: 44px; padding: 0 11px; }
+  .search-box input { min-height: 44px; font-size: 14px; }
+  .date-batch-bar { font-size: 13px; }
+  .modal-body p { font-size: 14px; }
+  .shelf-note { font-size: 13px; }
+}
+@media (max-width: 1024px) {
+  .search-box { flex: 1 1 auto; max-width: none; }
+  .pills { position: static; transform: none; flex-wrap: wrap; }
+  .search-row { flex-wrap: wrap; gap: 6px; }
+}
+@media (max-width: 640px) {
+  .main {
+    padding: 10px;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+  .modal-panel { width: 95vw; }
+  .header-top {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+  .header-bottom {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  .header-title p { display: none; }
+}
