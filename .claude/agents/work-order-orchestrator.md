@@ -92,7 +92,7 @@ Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the 
 whether it is healthy is one command that takes seconds.
 
 ```powershell
-& codex doctor --summary compact
+& codex doctor --summary --no-color
 ```
 
 It is purpose-built for this — "diagnose local Codex installation, config, auth, and runtime
@@ -100,6 +100,14 @@ health" — and ends with a tally like `16 ok · 1 idle · 2 notes · 1 warn · 
 `fail` count and the `sandbox` line.** Notes and warns are normal and are not your problem; a
 non-zero `fail`, or a `sandbox` line that is not `✓`, means re-route to Claude before writing
 anything and say so in the routing sentence. The brief does not change; only who receives it does.
+
+**`--summary` is a boolean, and takes no value.** This step was written as `--summary compact` on
+the strength of the shape of the tally line, and that form does not parse: Codex v0.146.0 answers
+`error: unexpected argument 'compact' found` and exits non-zero. Read literally — a probe that
+always fails is a probe that always re-routes — that would have sent every Codex work order to
+Claude while reporting the install as broken. Corrected at WO-1.6, where it cost one round trip.
+If a future build moves the flag again, run `codex doctor --help` and fix this block rather than
+inferring the health verdict from a usage error.
 
 **Do not probe by looking for a specific file in `bin/`.** The first version of this step checked
 for `codex-windows-sandbox-setup.exe` beside `codex.exe`, on the strength of an error message
