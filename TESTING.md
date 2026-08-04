@@ -79,7 +79,7 @@ here, so the slot exists before the work does.
 |---|---|
 | Desktop browser + version | Chrome 150.0.7871.187. *The desk-side headless pass on WO-1.2 ran Edge 151.0.4129.59 over CDP.* |
 | Local server used | `python -m http.server 8000 --bind 127.0.0.1` (Python 3.14) for desktop, at `http://localhost:8000`. **From WO-1.3 on, the iPad half needs `node tools/serve-https.mjs` instead** — see below. |
-| iPad model | iPad A12 *(WO-1.2's pass recorded "iPad (A16)"; the device in hand reports A12. The A12 is the older, lower-memory end of what iPadOS 26 supports, which makes it the better device to hold offline behavior against.)* |
+| iPad model | iPad (A16) |
 | **iPadOS version** | **26.5.2** |
 | Installed to home screen? | Yes — Share → Add to Home Screen, launched standalone with no browser chrome |
 | Served from (URL) | iPad: `https://192.168.50.142:8443` over the LAN, from `node tools/serve-https.mjs`. WO-1.2's pass used `http://192.168.50.142:8000`, which cannot register a service worker. |
@@ -197,7 +197,7 @@ silent when they fail:
       reload — it is back. A dismissal that never returns is the failure mode this design
       exists to avoid, and nothing on screen would show it.
 
-*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad A12, installed to the home screen and served over
+*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad (A16), installed to the home screen and served over
 HTTPS. The four 👤 acceptance lines plus the iPad line were run by hand in one sitting. Line 5 was
 verified headless, which the line itself permits.*
 

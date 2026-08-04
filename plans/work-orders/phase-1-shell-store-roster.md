@@ -127,14 +127,9 @@ iPad is the target that matters.
 - [x] Verified on a real iPad, not a desktop emulator. *(This one cannot be faked — record the
       iPadOS version in `TESTING.md`.)*
 
-*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad A12, installed to the home screen and served over
+*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad (A16), installed to the home screen and served over
 HTTPS from `tools/serve-https.mjs`. Line 5 was verified headless; the other five were run by hand
 on the tablet in one sitting.*
-
-*The A12 is worth recording rather than the iPadOS version alone. It is the low end of what
-iPadOS 26 still supports, so it is the device most likely to be evicted from memory between
-launches — which makes the offline relaunch a stronger result there than the same check on
-current hardware would have been.*
 
 **Traps** — The service worker won't register from `file://`; you need a static server locally.
 Don't cache the year document in the service worker — IndexedDB owns data, the cache owns the shell.

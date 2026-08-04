@@ -40,7 +40,7 @@ records what someone remembered.
   tick passed because there were no insets to sit under. `tools/verify-shell.mjs` is now 28 of 28;
   the check that failed by design was this precondition.
 
-  Verified on iPadOS 26.5.2 on an iPad A12, installed to the home screen: launches without browser
+  Verified on iPadOS 26.5.2 on an iPad (A16), installed to the home screen: launches without browser
   chrome, opens with the radios off after being swiped out of the app switcher, and the banner
   appears uninstalled and is absent installed. One line is still open — that nothing sits under a
   now-non-zero safe-area inset, which needs a sweep of the edges rather than the status-bar check
