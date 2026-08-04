@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "allow": [
+      "Bash(codex exec:*)",
+      "Bash(cat:*)",
+      "PowerShell(codex exec:*)",
+      "PowerShell(Get-Content:*)"
+    ]
+  }
+}

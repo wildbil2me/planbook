@@ -1,0 +1,144 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+**Planbook** — a gradebook and communication assistant for classroom teachers. It tracks grades
+and attendance, surfaces the students who need attention **in both directions** — concern
+(falling grades, serially low scores, missing work, absences, behavior) and praise (improvement,
+turnarounds, strong streaks) — and drafts the outreach to guardians, counselors, and admin.
+
+The praise half is not decoration. It is what makes this a teacher's assistant rather than a
+gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADMAP.md` Phase 4.
+
+Built first for its author's own five classes, but intended to be marketable to other teachers.
+That second goal is what drives the architecture below.
+
+**Status: pre-code, Phase 0 complete.** The data model and sync design are settled; no app code
+exists yet. The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its maintenance
+protocol and delivery plan before working a phase. The roadmap is cut into work orders in
+[`plans/work-orders/`](plans/work-orders/README.md); **that is where to start when building
+something.** Each carries its own dependencies and testable acceptance criteria.
+
+**This app goes live in a real classroom in late August 2026** (decided 2026-08-03, risk stated and
+accepted). Roll Call! is the fallback and **stays deployed until Planbook survives a full term**.
+The governing rule for the sprint: *no feature that writes student data lands before the backup and
+restore path that gets it back out.*
+
+## The architecture, and the reasoning you must not undo
+
+**Local-first PWA. No account, no permissions, no backend.** The app installs to the home screen,
+works offline, and stores everything in the browser's own storage. Google Drive sync is an
+**opt-in** extra that carries the year document between the teacher's laptop and iPad.
+
+This shape was chosen deliberately over two alternatives, both of which will look tempting again:
+
+- **An Apps Script bridge** (what the predecessor app uses — see below). Each teacher deploys
+  their own script, which means each teacher is their own unverified developer and the "Google
+  hasn't verified this app" warning can never be cleared. Plus a seven-step, ten-minute setup.
+  Fatal for adoption. **Do not reintroduce Apps Script.**
+- **A backend of our own** (Cloudflare, Supabase, anything). Solves sync cleanly and destroys the
+  "no vendor server ever touches student data" position, which is a real asset with principals and
+  district IT — and turns us into a FERPA data processor with breach liability. **Not a technical
+  decision to revisit casually.**
+
+Consequences that follow, and that keep the consent screen clean:
+
+| Rule | Why |
+|---|---|
+| **`drive.file` is the only scope, ever** | Anything more is a sensitive-scope escalation the teacher sees and fears. Details in [`docs/sync.md`](docs/sync.md) |
+| **Outreach goes out via `mailto:`** | A mail scope reads "Send email as you." No scope, no fear, and the teacher's own sent-mail record stays intact |
+| **No dependencies, no framework, no bundler** | Inherited suite rule; a service worker is the only build-adjacent piece |
+| **The app must work fully signed-out** | Sync is a feature, not a prerequisite. A teacher whose Workspace admin blocks third-party apps is still a customer |
+
+## Reference implementation: Roll Call!
+
+```
+C:\Users\WildB\OneDrive\Documents\Coding Projects\Attendance App
+```
+
+**Roll Call!** (v0.9.0-beta, in daily classroom use) is the author's attendance app and Planbook's
+predecessor. Read its `CLAUDE.md` and `design/README.md` before writing code here.
+
+**Take from it:** the design system (`design/style-guide.md`, `design/portable-components.md`,
+`design/starter-template.html`) — visual identity, modal patterns, touch targets, the setup-flow
+skeleton. The at-risk threshold model. The FERPA stance in `docs/FERPA.md`, which Planbook
+strengthens rather than weakens. Its `CLAUDE.md` is also a model of the kind of documentation this
+project wants: every gotcha carries the scar that produced it.
+
+**Do not take from it:** `src/bridge.gs`, JSONP reads, the GET-only outbox, the per-teacher deploy,
+or any Google Sheets storage. All of that exists to work around `file://` CORS and Apps Script
+constraints. Planbook is served over HTTPS and talks to no bridge, so none of it applies.
+
+Planbook **absorbs attendance** rather than integrating with Roll Call — reading its sheets would
+require the `spreadsheets` scope we're specifically avoiding. Migration is a one-time file import
+(export the class sheet, drop it on a file input, zero permissions). See
+[`docs/data-model.md`](docs/data-model.md).
+
+## Data
+
+One JSON document per school year, in IndexedDB. Full schema and grade math:
+[`docs/data-model.md`](docs/data-model.md). Sync protocol: [`docs/sync.md`](docs/sync.md).
+
+The classes run on a rotation that also **changes at random** — assemblies, delays, drills. There is
+deliberately **no schedule model**: a class met if it has an attendance record without an exception,
+and the teacher taps *dropped* on the ones that didn't. A cycle model was designed and removed the
+same day; the decision record is [`plans/rotating-schedule.md`](plans/rotating-schedule.md), and it
+exists because the next session will want to build one.
+
+Four things that will bite:
+
+- **iOS evicts IndexedDB after ~7 days of non-use for non-installed sites.** Installed PWAs are
+  exempt. A teacher who bookmarks instead of installing can lose a term of grades over a holiday.
+  The install prompt is data safety, and the downloadable JSON backup is mandatory.
+- **Taken · dropped · not-taken-yet are three states, not two.** "Did the class not meet, or did I
+  forget?" is the question the home screen exists to answer. Everything counts *recorded meetings*,
+  never calendar days.
+- **`late` and `missing` are marked by the teacher, never inferred from a due date.** Blank means
+  ungraded and affects nothing. The grade must never change because a date rolled over.
+- **Empty categories redistribute their weight.** Otherwise every grade is wrong until each
+  category has an assignment.
+
+## Accommodations are the most sensitive data here
+
+IEP/504 plans, medical needs, and behavior plans live on the roster, because a teacher is legally
+obligated to implement them and a list nobody opens protects nobody. Three rules that are not
+negotiable and are easy to break by accident:
+
+- **Discreet by default, and a global presentation mode.** Teachers project these screens onto
+  classroom walls. IEP status on that wall is a disclosure to thirty students.
+- **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
+  paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
+- **Backups now contain this data.** The backup UI says so, and `docs/FERPA.md` addresses it
+  directly rather than only discussing grades.
+
+## Commands
+
+No code yet, so nothing to build or test. The intended toolchain is nearly nothing, by suite
+convention (`plans/b-hygiene.md` in Roll Call!): **no dependencies, no linter, no test framework.**
+
+| Task | Command |
+|---|---|
+| Run locally | Any static server (a service worker won't register from `file://`) |
+| Deploy | Push static files to a static host |
+| Test | Manual checklist, following Roll Call!'s `plans/TESTING.md` pattern |
+
+## Conventions
+
+- **Visual language:** `design/style-guide.md`. Colors inline, not CSS variables — deliberate.
+  **No dark mode**; the suite is light-theme only. 44px touch targets under `@media (pointer: coarse)`.
+- **Components:** lift from Roll Call!'s `design/portable-components.md` rather than hand-designing.
+- **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
+- **Git:** not yet initialized. Roll Call!'s convention is one integration branch `main`, phase
+  branches `phase/<letter>-<slug>`, short imperative commit summaries.
+
+## Working agreements with the teacher
+
+- The school's SIS remains the official record. It has **no usable export**, so rosters are pasted
+  and grades are re-keyed there by hand. Don't design around a sync that cannot exist.
+- Grades are entered once or twice a week; attendance is marked at the start of every class. The
+  attendance flow is on the critical path — it has to be fast enough to do while students arrive.
+- Five classes, reachable at a touch. The roster turns over every year; nothing may assume a fixed
+  class list.
+- Grading is **weighted categories**, configurable per class, since the five classes differ.

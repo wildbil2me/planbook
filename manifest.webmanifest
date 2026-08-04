@@ -1,0 +1,7 @@
+{
+  "$comment": "Placeholder from WO-1.1 — valid JSON, minimum viable fields, and nothing links to it yet. WO-1.3 writes the real manifest: theme_color and background_color from design/style-guide.md, the icon set including the sizes iOS actually uses, and the <link rel=manifest> in index.html. Left out here rather than guessed, so WO-1.3 has nothing to undo.",
+  "name": "Planbook",
+  "short_name": "Planbook",
+  "start_url": "./",
+  "display": "standalone"
+}

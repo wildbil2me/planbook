@@ -1,0 +1,29 @@
+# Planbook has no build, so there is nothing generated to ignore. Everything below is
+# machine noise or local scratch.
+
+# OS cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local scratch — anything you don't intend to keep goes in one of these
+scratch/
+scratchpad/
+*.local.*
+*.log
+
+# Deliberately NOT ignored: package.json, package-lock.json, node_modules/.
+# They cannot legitimately exist here (no dependencies, no bundler — see CLAUDE.md), and an
+# ignore rule would hide one from `git status` instead of surfacing it. If one appears,
+# delete it; don't ignore it. Anything scripted lives in tools/*.mjs under bare Node.
