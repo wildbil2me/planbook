@@ -156,22 +156,79 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 
 /* The class tab row. Empty until WO-1.6 creates classes; `.hdr-empty` is what stands
    in, because a blank navy strip reads as a bug and "No classes yet." is the truth. */
-.hdr-class-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; align-items: center; }
+/*
+  `flex: 1 1 auto` and a floor, not `flex: 1`, and the difference is the whole class bar at phone
+  width. `flex: 1` means a flex-BASIS of 0, and when a flex row is over-full the browser distributes
+  the shrinking in proportion to each item's basis — so a basis of 0 shrinks by nothing and simply
+  stays at 0. Beside a term nav whose basis is its content, that is exactly what happened: at 390px
+  the strip holding every class measured zero pixels wide, tabs and all, and the row looked like a
+  term nav with nothing to its left. Measured by tools/verify-shell.mjs; not visible on an iPad,
+  because an iPad in portrait is wider than the width where the strip runs out.
+
+  With both strips sized from their content, the over-full row shrinks both of them in proportion
+  and each scrolls its own overflow. `min-width` is the floor that keeps either from being crushed
+  to nothing by the other — one class named at length, or eight terms, cannot take the row.
+*/
+.hdr-class-tabs {
+  display: flex; gap: 2px; align-items: center;
+  flex: 1 1 auto; min-width: 96px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
 .hdr-empty { color: rgba(255,255,255,0.45); font-size: 12px; }
+/*
+  `flex-shrink: 0` and `white-space: nowrap` are the fix for a defect found on the iPad, and they
+  belong to `.q-btn` below for the same reason. Both of these sit in a strip that scrolls
+  (`.hdr-class-tabs`, `.hdr-term-nav`), and a flex item shrinks by default — so with six classes on
+  a 390px screen the browser compressed each button to below the width of its own label, and the
+  label, still free to wrap, was laid out across the rounded background and past its edge. Names
+  spilling over borders is what that looks like; it is not a font-size problem, and it appears at
+  whatever name length happens to exhaust the row, which is why landscape showed it too.
+
+  Refusing to shrink puts the overflow where it was always supposed to go — into the strip's own
+  horizontal scroll — and `max-width` with an ellipsis caps the pathological single name, so one
+  class called "AP Biology Honors Section 4B" cannot push every other tab out of reach.
+*/
 .cls-tab {
   padding: 4px 14px; border-radius: 6px; border: none; cursor: pointer;
   font-size: 13px; font-weight: 700; transition: all 0.15s;
   background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55);
+  flex-shrink: 0; white-space: nowrap;
+  max-width: 40vw; overflow: hidden; text-overflow: ellipsis;
 }
 .cls-tab:hover { background: rgba(255,255,255,0.16); color: #fff; }
 .cls-tab.active { background: #1a1a2e; color: #fff; }
-/* Styled now, instanced by WO-1.6: the right-hand term nav and its divider. */
+/* The way into the class manager, at the end of the tab strip: a "+" once there are classes, and
+   the words "Add a class" when there are none, because a lone + on a fresh install is a puzzle.
+   Dashed rather than filled so it reads as a slot instead of as a class named "+". */
+.cls-tab-add {
+  background: transparent; border: 1.5px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.6); flex-shrink: 0;
+}
+.cls-tab-add:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.5); color: #fff; }
+/* The right-hand term nav and its divider — styled at WO-1.2, instanced at WO-1.6. */
 .hdr-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.18); margin: 0 8px; flex-shrink: 0; }
 .hdr-right-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+/* The term nav is its own scroller and a sibling of `.hdr-right-controls` rather than a child of
+   it, because that container is `flex-shrink: 0` by declaration and the terms are the one thing in
+   this row whose width is teacher-typed: four terms called "Quarter 1"…"Quarter 4" are ~360px of
+   buttons, and on a 390px screen an unshrinkable nav puts the whole page into horizontal overflow.
+   Both strips shrink and both scroll, so the row cannot overflow whatever is in it.
+
+   `min-width` is the floor added alongside `.hdr-class-tabs`'s — see the comment there for what a
+   strip with no floor beside a strip with content does at phone width. It replaces `min-width: 0`,
+   which was doing nothing that `overflow-x: auto` was not already doing for it. */
+.hdr-term-nav {
+  display: flex; align-items: center; gap: 4px;
+  flex: 0 1 auto; min-width: 96px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+/* Same shrink-and-spill fix as `.cls-tab`, and term labels are teacher-typed too: "Quarter 1" is
+   the seed, "1st Quarter (progress reports 10/9)" is what someone will eventually type. */
 .q-btn {
   padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
   font-size: 13px; font-weight: 700; transition: all 0.15s;
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  flex-shrink: 0; white-space: nowrap;
+  max-width: 40vw; overflow: hidden; text-overflow: ellipsis;
 }
 .q-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); color: #fff; }
 .q-btn.active { background: #fff; color: #1a3c5e; }
@@ -293,8 +350,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    "OK". Style guide §1, danger. */
 .class-action-btn.danger { background: #e74c3c; border-color: #e74c3c; color: #fff; }
 .class-action-btn.danger:hover:not(:disabled) { background: #c0392b; border-color: #c0392b; color: #fff; }
+/* Per-action hover tints, lifted from Roll Call! (dashboard.html ~641-643) so that in a row of
+   five buttons the destructive one never looks like the other four: archive takes caution amber,
+   restore takes positive green, delete takes danger red. Hover only — the resting row stays one
+   visual family, because colouring five buttons five ways is a row nobody can scan. */
+.class-action-btn.archive:hover:not(:disabled) { border-color: #e67e22; color: #e67e22; }
+.class-action-btn.restore:hover:not(:disabled) { border-color: #27ae60; color: #27ae60; }
+.class-action-btn.delete:hover:not(:disabled)  { border-color: #e74c3c; color: #e74c3c; background: #fdeaea; }
+/* The reorder arrows. One glyph wide, so the padding narrows and the glyph grows — an ↑ at the
+   button's 11px reads as a speck rather than as a direction. */
+.class-action-btn.move { padding: 4px 10px; font-size: 13px; }
 /* "Nothing open to back up", which is what the download button says when boot() refused a
-   document and the panel was opened from the loading screen. */
+   document and the panel was opened from the loading screen. Also both reorder arrows at the ends
+   of the list, which is the case a teacher meets first: the top class cannot move up. */
 .class-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .batch-btn {
   border: none; border-radius: 6px; padding: 4px 11px;
@@ -447,6 +515,104 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   background: #fdeaea; color: #c0392b; font-size: 12px; line-height: 1.5;
 }
 
+/* ── CLASSES & TERMS ── */
+/* The contents of #classesModal, #termsModal and #classDeleteModal.
+   `.class-list` / `.class-row` / `.class-row-name` / `.class-row-actions` / `.class-empty` /
+   `.rename-input` are lifted from Roll Call!'s class manager (dashboard.html ~626-667) rather
+   than designed here, names included, so that a fix to the row grammar stays portable between the
+   two apps — which is the whole point of design/portable-components.md §5.
+
+   The row wraps. Five action buttons at 44px each is 244px of the 440px inside a modal panel, and
+   the name beside them is teacher-typed and arbitrarily long; letting the actions drop to a second
+   line is what keeps a class called "Honors Biology — Period 3 (Lab)" readable instead of
+   squeezed into a column two words wide. */
+.class-list { display: flex; flex-direction: column; gap: 4px; }
+.class-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+/* An archived row is quieter and dashed, and still fully legible: it is a class the teacher chose
+   to set aside, not a disabled control. */
+.class-row.archived { background: #fff; border-style: dashed; }
+.class-row-name { flex: 1 1 120px; min-width: 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.class-row-note { font-size: 11px; font-weight: 700; color: #8a9bb0; white-space: nowrap; }
+.class-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.class-empty { font-size: 13px; color: #a0aab8; padding: 4px 2px 6px; line-height: 1.5; }
+
+/* Rename happens in place, in the row, rather than in a modal on top of a modal. The border is
+   the interactive indigo so it is obvious which name is being edited. */
+.class-rename-form { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.rename-input {
+  flex: 1 1 auto; min-width: 0;
+  border: 1.5px solid #5b6fcc; border-radius: 6px; padding: 5px 9px;
+  font-size: 13px; font-weight: 600; color: #1a1a2e; background: #fff;
+}
+
+/* "Add a class": the same field-plus-button row as the year picker's, written out separately for
+   the reason the install banner and the backup nag are written out separately — two components
+   that happen to look alike, until the day one of them changes. */
+.class-form { display: flex; align-items: center; gap: 8px; }
+.class-input {
+  flex: 1 1 auto; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 8px 11px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.class-input::placeholder { color: #a0aab8; }
+/* The term-structure choice for a new class: `.pill` chips in a `data-pill-group`, which shell.js
+   already single-selects. Pills rather than a <select> for the reason the year rows are buttons —
+   on an iPad a select is a spinning wheel over the whole screen. */
+.class-preset-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.class-preset-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+
+/* The term editor. One row per term: name, two dates, remove. The row wraps for the same reason
+   the class row does, and the dates wrap as a pair so "Starts" and its field never separate. */
+.term-list { display: flex; flex-direction: column; gap: 6px; }
+.term-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+.term-label-input {
+  flex: 1 1 140px; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 6px 9px;
+  font-size: 13px; font-weight: 600; color: #1a1a2e; background: #fff;
+}
+.term-dates { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.term-date-field { display: flex; align-items: center; gap: 5px; }
+.term-date-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.term-date {
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 5px 7px;
+  font-size: 12px; color: #1a1a2e; background: #fff;
+}
+.term-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.term-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* What a deletion destroys, in the danger wash — the one place in this feature that gets the red,
+   because it is the one thing here that cannot be undone. The counts inside are read off the open
+   document by src/classes.js. */
+.class-delete-facts {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-top: 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #f0b0b0; background: #fdeaea;
+}
+.class-delete-line { font-size: 12px; line-height: 1.5; color: #c0392b; }
+
+/* Both of these are <p> inside `.modal-body`, whose own rule is more specific than a bare class —
+   so they are qualified rather than left to lose the cascade, exactly as `.year-hint` and
+   `.year-error` are above. */
+.modal-body .class-hint { font-size: 11px; color: #8a9bb0; margin-top: 10px; line-height: 1.5; }
+.modal-body .class-error {
+  margin-top: 10px; padding: 8px 11px; border-radius: 8px;
+  background: #fdeaea; color: #c0392b; font-size: 12px; line-height: 1.5;
+}
+
 /* ── BACKUP & RESTORE ── */
 /* The contents of #backupModal and #restoreConfirmModal. Two things here are not decoration:
    the notice block, which is where the app says out loud that the file contains accommodation
@@ -534,11 +700,18 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .hdr-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-icon-btn svg { width: 18px; height: 18px; }
   .hdr-empty { font-size: 13px; }
-  .cls-tab { padding: 10px 16px; font-size: 14px; min-height: 44px; }
-  .q-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }
+  /* `min-width` alongside `min-height` on these three, added at WO-1.6 when they stopped being
+     shelf specimens with two-word labels: a class called "A", a term called "1", and a reorder
+     arrow are all one glyph wide, and 44px of height around a 30px-wide target is half a touch
+     target. The guideline is 44 in both directions. */
+  .cls-tab { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
+  .cls-tab-add { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
+  .q-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
   .pill { padding: 10px 16px; font-size: 12px; min-height: 44px; }
   .batch-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
-  .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
+  .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
+  .class-action-btn.move { padding: 8px 10px; font-size: 15px; }
+  .hdr-term-nav { gap: 6px; }
   .install-banner { font-size: 13.5px; }
   .install-banner-dismiss { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .hdr-year-btn { padding: 10px 14px; font-size: 14px; min-height: 44px; }
@@ -549,6 +722,21 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .year-input { min-height: 44px; font-size: 14px; padding: 0 12px; }
   .modal-body .year-hint { font-size: 12px; }
   .modal-body .year-error { font-size: 13px; }
+  /* Classes & terms. Every input here carries the 44px itself with its vertical padding zeroed,
+     which is the `.search-box` defect's lesson: a 44px wrapper around a 19px field looks tappable
+     above and below the text, does nothing there, and the teacher taps twice. */
+  .class-row-name { font-size: 14px; }
+  .class-row-note { font-size: 12px; }
+  .class-empty { font-size: 14px; }
+  .class-input { min-height: 44px; font-size: 14px; padding: 0 12px; }
+  .rename-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  .class-preset-label { font-size: 11px; }
+  .term-label-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  .term-date { min-height: 44px; min-width: 44px; font-size: 14px; padding: 0 8px; }
+  .term-date-label { font-size: 11px; }
+  .class-delete-line { font-size: 13px; }
+  .modal-body .class-hint { font-size: 12px; }
+  .modal-body .class-error { font-size: 13px; }
   .modal-close { width: 44px; height: 44px; font-size: 15px; }
   .loading-error-btn { min-height: 44px; padding: 12px 20px; font-size: 14px; }
   .backup-nag { font-size: 13.5px; }

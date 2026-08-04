@@ -62,6 +62,29 @@ export const PREF_DEFAULTS = {
      one as "no year has been backed up", which nags once too often rather than once too few —
      the only direction a data-safety default may round. */
   lastBackupAt: {},
+
+  /* The id of the class whose tab is selected, e.g. "c_3f9a1b2c4d"; '' means "no preference, open
+     the first one". An ID and never a name: a class name is teacher-typed content that belongs in
+     the year document, and the whole point of this file is that nothing from inside a document
+     comes near localStorage. It is a fact about this browser rather than about a student — the
+     iPad can sit on Period 1 while the laptop sits on Period 5 without either being wrong, which
+     is the same reason `openYear` is here. src/classes.js resolves it against the open document on
+     every read, so an id that names an archived or deleted class costs nothing. */
+  openClassId: '',
+
+  /* The term selected within each class: { "c_3f9a1b2c4d": "tm_88ab01cc9f" }. An empty object
+     means no preference for any class.
+
+     WHY IT IS A MAP AND NOT ONE ID, which is the lesson `lastBackupAt` above paid for. Term ids
+     are opaque and belong to one class — Period 1's second quarter and Period 5's second quarter
+     are two different ids — so a single value for the browser would be wrong for every class
+     except the one it was set from, and switching class would silently answer "which term" with a
+     term that class does not have. Ids on both sides of the map, and nothing else.
+
+     Entries for classes that no longer exist are left where they are: src/classes.js falls back to
+     the first term the class actually has, so a stale key is inert, and a preference file that
+     prunes itself is a preference file that needs to know what a class is. */
+  openTermIds: {},
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

@@ -62,9 +62,15 @@ const RETRY_AFTER_MS = 400;
 /* ────────────────────────────── ids ────────────────────────────── */
 
 /* Prefixes come from docs/data-model.md: c_ class, k_ category, s_ student, a_ assignment,
-   l_ log, e_ event, t_ template. Short and base36 rather than a UUID because these ids are
-   read by a human exactly once — in a backup file they are trying to understand — and a line
-   of hyphenated hex tells that person nothing. */
+   l_ log, e_ event, t_ template — plus tm_ term, added at WO-1.6. Short and base36 rather than a
+   UUID because these ids are read by a human exactly once — in a backup file they are trying to
+   understand — and a line of hyphenated hex tells that person nothing.
+
+   `tm_` is two characters because `t_` was already template, and a term needed a prefix that reads
+   as "term" in that backup file rather than one that reads as nothing. docs/data-model.md sketches
+   a term as `{ "id": "Q1", … }`; that is illustrative shorthand in a schema sketch, and the term id
+   is opaque like every other id here — src/classes.js generates every one of them from newId('tm')
+   and nothing anywhere compares one against a literal. */
 export function newId(prefix) {
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);

@@ -102,11 +102,16 @@ stylesheet review calls that line compliant. Measuring it does not.
 still closes no 👤 item: it drives a page, not an installed app, and it has never seen a service
 worker.
 
-**It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 79 at WO-1.5.** Update this line when
-you add checks — a stale count here reads as "the harness has not been touched since WO-1.3", which
-is the opposite of true and makes a green run look smaller than it is.
+**It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6.** Update
+this line when you add checks — a stale count here reads as "the harness has not been touched since
+WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
-### Driving a browser over CDP — four traps, all of which first look like app defects
+*(This line said 79 for WO-1.5 and the real number was 82: the three checks added with the per-year
+backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash` and a run on the
+WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
+thirty seconds.)*
+
+### Driving a browser over CDP — six traps, all of which first look like app defects
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
@@ -147,6 +152,21 @@ down here. That is the entire reason this section exists.
    This is the same shape as the four traps above — a check that reports green while measuring
    nothing — except that here the check was *believed* to be the broken part, which bought the
    underlying behavior another round of not being looked at.
+6. **`Page.reload` does not wait for a debounced write, and the loss reads as a store defect.**
+   Every save in `src/store.js` is debounced, so an edit made a moment before a reload is still
+   sitting on a timer when the page goes away — and the document that comes back is the one from
+   before the edit. What that looks like from the check is "the class I just created did not
+   persist", which is a persistence bug in every respect except being one.
+
+   It cost three runs at WO-1.6 to see, because the shape is so convincing: the write path is
+   exactly what is under test, so the first suspect is the code the check was written for. Call
+   `await window.planbook.store.flush()` before **every** reload — `verify-shell.mjs` does, at each
+   of its reload points — and treat an unflushed reload as a defect in the check rather than a
+   timing quirk to retry.
+
+   Note the difference from trap 5: sleeping longer would in fact fix this one, which is what makes
+   it dangerous. A sleep that is long enough today is a race that fails on a slower machine, and the
+   flush is a fact rather than a bet.
 
 ### Two rules that follow from those
 

@@ -1249,6 +1249,654 @@ if (!backupBooted || !backupSeam) {
   }
 }
 
+/* ───────────────── classes & terms ─────────────────
+ *
+ * WO-1.6's acceptance lines, driven through the controls a teacher touches: the classes are
+ * created by typing into the real form and clicking its real Create button, reordered by clicking
+ * the real arrows, and deleted through the real confirm. The window.planbook.classes seam is used
+ * only to READ the answer — which class and which term are open, what the document holds — because
+ * the alternative is a second copy of "resolve the stored id against the document" living in this
+ * file, where it could agree with itself and disagree with the app.
+ *
+ * What is NOT here, and is owed to a human: a thumb on a 44px arrow, the iPadOS date picker that
+ * `<input type="date">` opens, and whether six tabs and four terms are actually reachable on a
+ * physical iPad in portrait. The touch section below measures the boxes; it cannot press them.
+ */
+
+console.log('\n--- classes & terms ---');
+
+/* The section above finishes with a modal open over the header. A reload starts from the app as a
+   teacher finds it — and it also proves the class bar draws itself from IndexedDB at boot rather
+   than from whatever happened to be in memory. */
+await send('Page.reload');
+await new Promise(r => setTimeout(r, 600));
+const classesBooted = await waitForBoot();
+await evalJs(KILL_ANIM);
+await evalJs(INSTALL_WALKER);
+
+/* Everything this section reads, in one page-side helper, so that a check is one round trip and
+   the reads cannot drift between checks. Re-installed after every reload, like the walker. */
+const INSTALL_CLASS_READER = `(function(){
+  window.__cls = function(){
+    var doc = window.planbook.store.getDoc();
+    var c = window.planbook.classes;
+    var bar = document.getElementById('classTabBar');
+    var nav = document.getElementById('termNav');
+    var tabs = Array.prototype.slice.call(bar.querySelectorAll('[data-class-tab]'));
+    return {
+      names: doc.classes.map(function(x){ return x.name; }),
+      ids: doc.classes.map(function(x){ return x.id; }),
+      archived: doc.classes.map(function(x){ return !!x.archived; }),
+      termCounts: doc.classes.map(function(x){ return (x.terms||[]).length; }),
+      termIds: doc.classes.map(function(x){ return (x.terms||[]).map(function(t){ return t.id; }); }),
+      termLabels: doc.classes.map(function(x){ return (x.terms||[]).map(function(t){ return t.label; }); }),
+      termDates: doc.classes.map(function(x){ return (x.terms||[]).map(function(t){ return [t.start, t.end]; }); }),
+      rosters: doc.classes.map(function(x){ return (x.roster||[]).length; }),
+      categories: doc.classes.map(function(x){ return (x.categories||[]).length; }),
+      tabNames: tabs.map(function(b){ return b.textContent; }),
+      tabIds: tabs.map(function(b){ return b.getAttribute('data-class-tab'); }),
+      addTab: !!bar.querySelector('.cls-tab-add'),
+      injectedInBar: bar.querySelectorAll('b, script, i').length,
+      tabChildren: tabs.reduce(function(n, b){ return n + b.children.length; }, 0),
+      navLabels: Array.prototype.slice.call(nav.querySelectorAll('button')).map(function(b){ return b.textContent; }),
+      navActive: Array.prototype.slice.call(nav.querySelectorAll('button.active')).map(function(b){ return b.getAttribute('data-term-select'); }),
+      rows: document.querySelectorAll('#classList .class-row').length,
+      archivedRows: document.querySelectorAll('#classArchivedList .class-row').length,
+      archivedHidden: document.getElementById('classArchivedSection').classList.contains('hidden'),
+      selectedClass: c.getSelectedClassId(),
+      selectedTerm: c.getSelectedTermId(),
+      rev: doc.rev,
+      attendance: doc.attendance.length,
+      assignments: doc.assignments.length,
+      scoreColumns: Object.keys(doc.scores).length,
+      students: doc.students.length,
+      classError: (document.getElementById('classError')||{}).textContent,
+      termError: (document.getElementById('termError')||{}).textContent,
+      prefClass: window.planbook.getPref('openClassId'),
+      prefTerms: window.planbook.getPref('openTermIds')
+    };
+  }; return 1; })()`;
+
+const classSeam = await evalJs("!!(window.planbook && window.planbook.classes"
+  + " && typeof window.planbook.classes.getSelectedTermId === 'function')");
+
+if (!classesBooted || !classSeam) {
+  skip('classes & terms: create, reorder, rename, per-class term structures, archive, delete',
+    classesBooted ? 'no window.planbook.classes seam on the page (expected once the WO-1.2 shelf is gone)'
+      : 'the app did not boot before this section');
+} else {
+  await evalJs(INSTALL_CLASS_READER);
+
+  /* The document restored by the section above holds one class written WITHOUT a `terms` array,
+     which is exactly the shape a class arrives in from another build, or from a document older
+     than this work order. The header has to survive it rather than throw on `cls.terms.length`,
+     and the term nav's answer has to be a way to fix it rather than a blank strip. */
+  const legacy = await evalJs('window.__cls()');
+  check('a class stored with no terms at all still renders, and the term nav offers to add them',
+    legacy.tabNames.length === 1 && legacy.addTab && legacy.navLabels.length === 1
+      && legacy.navLabels[0] === 'Add terms' && legacy.selectedTerm === ''
+      && legacy.selectedClass === legacy.ids[0],
+    JSON.stringify({ tabs: legacy.tabNames, nav: legacy.navLabels, selectedTerm: legacy.selectedTerm }));
+
+  /* Six, because the owner teaches five and the acceptance line says six: the sixth is what proves
+     nothing here is sized to five. One of them carries markup in its name — class names in this app
+     are typed by a teacher and pasted out of a school system, and `Honors Bio <b>lab</b>` has to
+     stay those characters rather than become bold. */
+  const NEW_CLASSES = ['Period 1 — Biology', 'Period 2 — Chemistry', 'Period 4 — Physics',
+    'Honors Bio <b>lab</b>', 'AP Bio', 'Homeroom'];
+  await clickSel('header [data-class-manage]');
+  for (const name of NEW_CLASSES) {
+    await evalJs('(function(){document.getElementById("classNewInput").value='
+      + JSON.stringify(name) + ';return 1})()');
+    await clickSel('[data-class-create] button[type="submit"]');
+  }
+  const made = await evalJs('window.__cls()');
+  const expectedNames = [legacy.names[0]].concat(NEW_CLASSES);
+  check('six classes created through the form are in the document and on the tab bar, in that order',
+    JSON.stringify(made.names) === JSON.stringify(expectedNames)
+      && JSON.stringify(made.tabNames) === JSON.stringify(expectedNames)
+      && JSON.stringify(made.tabIds) === JSON.stringify(made.ids)
+      && made.rows === 7,
+    JSON.stringify(made.tabNames));
+  check('each one arrives with a term structure, and with its other collections present and empty',
+    made.termCounts.slice(1).every(n => n === 4) && made.rosters.every(n => n === 0)
+      && made.categories.every(n => n === 0),
+    'terms per class = ' + JSON.stringify(made.termCounts) + ', rosters = '
+      + JSON.stringify(made.rosters) + ', categories = ' + JSON.stringify(made.categories));
+  check('a class name containing markup is rendered as text — createElement, never innerHTML',
+    made.tabNames.indexOf('Honors Bio <b>lab</b>') >= 0 && made.injectedInBar === 0
+      && made.tabChildren === 0,
+    'elements injected into the tab bar = ' + made.injectedInBar
+      + ', child elements inside the tabs = ' + made.tabChildren);
+
+  /* Reorder, by the explicit controls rather than by drag: HTML5 drag-and-drop does not fire for
+     touch on iPadOS at all, and the acceptance line reads "by drag OR by explicit up/down
+     controls". The document order IS the tab order — there is no order field — so both halves of
+     that claim come out of one read. */
+  await clickSel('#classList .class-row:nth-child(1) [data-class-move-down]');
+  const down = await evalJs('window.__cls()');
+  check('the down control moves a class one place later, in the document and on the bar together',
+    down.ids[0] === made.ids[1] && down.ids[1] === made.ids[0]
+      && JSON.stringify(down.tabIds) === JSON.stringify(down.ids),
+    JSON.stringify(down.tabNames.slice(0, 3)));
+  await clickSel('#classList .class-row:nth-child(2) [data-class-move-up]');
+  const up = await evalJs('window.__cls()');
+  check('the up control puts it back, and the tab order follows the document exactly',
+    JSON.stringify(up.ids) === JSON.stringify(made.ids)
+      && JSON.stringify(up.tabIds) === JSON.stringify(up.ids),
+    JSON.stringify(up.tabNames.slice(0, 3)));
+  const ends = await evalJs(`(function(){ var rows = document.querySelectorAll('#classList .class-row');
+    var first = rows[0], last = rows[rows.length-1];
+    return { firstUp: first.querySelector('[data-class-move-up]').disabled,
+             firstDown: first.querySelector('[data-class-move-down]').disabled,
+             lastUp: last.querySelector('[data-class-move-up]').disabled,
+             lastDown: last.querySelector('[data-class-move-down]').disabled }; })()`);
+  check('the arrows are disabled at the ends of the list rather than being live and doing nothing',
+    ends.firstUp === true && ends.lastDown === true
+      && ends.firstDown === false && ends.lastUp === false,
+    JSON.stringify(ends));
+
+  /* Rename, in place in the row. The field is a <form>, so Enter submits it; the click below is the
+     other half of the same path. */
+  await clickSel('#classList .class-row:nth-child(3) [data-class-rename]');
+  const renaming = await evalJs(`(function(){ var i = document.querySelector('#classList .rename-input');
+    return { present: !!i, value: i ? i.value : '', focused: i === document.activeElement }; })()`);
+  await evalJs('(function(){var i=document.querySelector("#classList .rename-input");'
+    + 'i.value="Period 2 — Chem (renamed)";return 1})()');
+  await clickSel('#classList .class-rename-form button[type="submit"]');
+  const renamed = await evalJs('window.__cls()');
+  check('renaming happens in the row, starts from the old name, and lands on the tab as well',
+    renaming.present && renaming.value === 'Period 2 — Chemistry' && renaming.focused
+      && renamed.names[2] === 'Period 2 — Chem (renamed)'
+      && renamed.tabNames[2] === 'Period 2 — Chem (renamed)'
+      && renamed.ids[2] === made.ids[2]
+      && renamed.names.indexOf('Period 2 — Chemistry') === -1,
+    'the field held ' + JSON.stringify(renaming.value) + ', the document now says '
+      + JSON.stringify(renamed.names[2]));
+
+  /*
+    Two classes, two different term structures, both working — the acceptance line that fails the
+    instant anything in this app treats terms as a property of the year rather than of the class.
+    `Homeroom` is given one term for the whole year; the class above it keeps its four quarters.
+  */
+  await clickSel('#classList .class-row:nth-child(7) [data-term-manage]');
+  const termsPanel = await evalJs(`(function(){ var m = document.getElementById('termsModal');
+    return { open: !!m && !m.classList.contains('hidden'),
+             className: (document.getElementById('termsClassName')||{}).textContent,
+             rows: document.querySelectorAll('#termList .term-row').length,
+             stacked: !document.getElementById('classesModal').classList.contains('hidden') }; })()`);
+  await clickSel('[data-term-preset="fullYear"]');
+  const single = await evalJs('window.__cls()');
+  check('the term editor opens over the manager, for the class whose row was tapped',
+    termsPanel.open && termsPanel.stacked && termsPanel.className === 'Homeroom'
+      && termsPanel.rows === 4,
+    JSON.stringify(termsPanel));
+  check('a class can be given a single year-long term while its neighbour keeps four',
+    single.termCounts[6] === 1 && single.termLabels[6][0] === 'Full year'
+      && single.termCounts[1] === 4 && single.termLabels[1].length === 4,
+    'Homeroom = ' + JSON.stringify(single.termLabels[6]) + ', Period 1 = '
+      + JSON.stringify(single.termLabels[1]));
+
+  /* The dates on that one term, put through the two real date fields. Setting `.value` and
+     dispatching `input` is the path a keystroke takes — the delegated listener in shell.js reads
+     the element, not the event's provenance. The iPadOS date picker itself is owed to a human. */
+  await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-date');
+    f[0].value = '2026-08-26'; f[0].dispatchEvent(new Event('input', { bubbles:true }));
+    f[1].value = '2027-06-11'; f[1].dispatchEvent(new Event('input', { bubbles:true }));
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 300));
+  const dated = await evalJs('window.__cls()');
+  check('and that term can carry the whole school year, stored exactly as it was typed',
+    JSON.stringify(dated.termDates[6]) === JSON.stringify([['2026-08-26', '2027-06-11']]),
+    JSON.stringify(dated.termDates[6]));
+
+  /*
+    Messy dates, which is an acceptance line stated as a promise about what does NOT happen: term 2
+    starts before term 1 ends (an overlap), term 3 has no dates at all (a gap, and two blanks), and
+    term 4 ends months before it starts (backwards). Nothing may sort them, repair them, warn about
+    them or refuse them — plans/rotating-schedule.md deleted the schedule model, and validating
+    these into a contiguous calendar is how it comes back.
+  */
+  await clickSel('#termsModal [data-modal-close]');
+  await clickSel('#classList .class-row:nth-child(2) [data-term-manage]');
+  const messyBefore = await evalJs('window.__cls()');
+  const MESSY = [['2026-08-26', '2026-11-06'], ['2026-10-15', '2027-01-22'], ['', ''],
+    ['2027-06-10', '2027-03-25']];
+  await evalJs(`(function(){ var rows = document.querySelectorAll('#termList .term-row');
+    var want = ${JSON.stringify(MESSY)};
+    for (var i = 0; i < rows.length; i++) {
+      var f = rows[i].querySelectorAll('.term-date');
+      f[0].value = want[i][0]; f[0].dispatchEvent(new Event('input', { bubbles:true }));
+      f[1].value = want[i][1]; f[1].dispatchEvent(new Event('input', { bubbles:true }));
+    }
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 300));
+  const messy = await evalJs('window.__cls()');
+  check('overlapping, backwards and empty term dates are all stored exactly as they were typed',
+    JSON.stringify(messy.termDates[1]) === JSON.stringify(MESSY),
+    JSON.stringify(messy.termDates[1]));
+  check('and nothing sorted, repaired, refused or warned about them',
+    JSON.stringify(messy.termIds[1]) === JSON.stringify(messyBefore.termIds[1])
+      && JSON.stringify(messy.termLabels[1]) === JSON.stringify(messyBefore.termLabels[1])
+      && messy.termCounts[1] === 4 && messy.termError === '' && messy.classError === '',
+    'term order and labels unchanged, term error = ' + JSON.stringify(messy.termError));
+
+  /*
+    Clearing a date and then choosing the SAME date again, which is the iPadOS defect the first
+    device sitting found: the date popover keeps its own selection after the field is cleared, so
+    re-tapping the day that was just cleared is a no-op the picker never reports. classes.js answers
+    it by throwing a cleared field away and building a fresh one, which is what this measures —
+    element identity, not just the stored value.
+
+    Chrome cannot reproduce the picker's stale state, so this does not prove the tablet is fixed.
+    What it does prove is the mechanism the fix rests on, and that it is still there next month.
+
+    Run on term 1's start date and then put it back, so MESSY is intact for the reload check
+    further down that asserts these same dates survived a restart.
+  */
+  await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    f.__pbStale = 1;
+    f.value = ''; f.dispatchEvent(new Event('input', { bubbles:true }));
+    f.dispatchEvent(new Event('change', { bubbles:true }));
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 200));
+  const cleared = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    return { rebuilt: !f.__pbStale, value: f.value, type: f.type,
+             label: (f.closest('.term-date-field')||{}).textContent,
+             stored: window.planbook.store.getDoc().classes[1].terms[0].start }; })()`);
+  check('a cleared term date is stored empty, and its field is rebuilt so the picker keeps no stale selection',
+    cleared.rebuilt && cleared.value === '' && cleared.stored === '' && cleared.type === 'date'
+      && cleared.label === 'Starts',
+    JSON.stringify(cleared));
+
+  await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    f.value = '2026-08-26'; f.dispatchEvent(new Event('input', { bubbles:true }));
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 300));
+  /* Named for what this can actually prove here. Chrome will accept a re-set value whether or not
+     the element was rebuilt, so "works on the first tap" is not what is being measured — what is,
+     is that the REBUILT field is still wired to the term and field it replaced. A rebuild that
+     dropped or mistyped `data-term-id` would write this date to the wrong term, or nowhere, and the
+     stored dates would not come back to MESSY. */
+  const repicked = await evalJs('window.__cls()');
+  check('and the rebuilt field still writes to the term and field it replaced',
+    JSON.stringify(repicked.termDates[1]) === JSON.stringify(MESSY),
+    JSON.stringify(repicked.termDates[1][0]));
+
+  /* The other half of that fix, and the regression it could easily become. A desktop date field
+     reports '' while a date is part-typed, so the rebuild is bound to `change` and must NOT happen
+     on `input` — rebuilding there would replace the element under the teacher's caret partway
+     through typing. Term 3 carries no dates in MESSY, so an empty `input` here changes nothing. */
+  const typing = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[2]
+      .querySelectorAll('.term-date')[0];
+    f.__pbTyping = 1;
+    f.value = ''; f.dispatchEvent(new Event('input', { bubbles:true }));
+    var now = document.querySelectorAll('#termList .term-row')[2].querySelectorAll('.term-date')[0];
+    return { survived: !!now.__pbTyping, same: now === f }; })()`);
+  check('an empty date field being typed into is not rebuilt underneath the caret',
+    typing.survived && typing.same, JSON.stringify(typing));
+
+  /*
+    The one refusal this feature has, and the only place it reads anything grade-shaped: removing a
+    term that still holds an assignment. WO-3.x owns moving an assignment between terms; until that
+    exists, cascading the removal would leave a grade pointing at a term that is gone, and a grade
+    that quietly stops counting is the worst failure this app has. There is no assignment screen
+    yet, so the fixture is written through the store — and taken back out afterwards, so the counts
+    the delete confirm prints further down stay the ones this file states.
+  */
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(d){ d.assignments.push({ id:'a_guard',
+      classId:${JSON.stringify(messyBefore.ids[1])},
+      termId:${JSON.stringify(messyBefore.termIds[1][1])}, name:'Unit test', points:100 }); });
+    await s.flush(); return 1; })()`);
+  await clickSel('#termList .term-row:nth-child(2) [data-term-remove]');
+  const refused = await evalJs('window.__cls()');
+  check('removing a term that still holds an assignment is refused, and says what is in the way',
+    refused.termCounts[1] === 4 && /still holds 1 assignment/.test(refused.termError || '')
+      && /has not been removed/.test(refused.termError || ''),
+    JSON.stringify(refused.termError));
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(d){ d.assignments = d.assignments.filter(function(a){ return a.id !== 'a_guard'; }); });
+    await s.flush(); return 1; })()`);
+
+  /* Selecting a class and a term from the header, which is the control every later screen reads
+     through. Both panels are closed first: an overlay is fixed at inset 0, so a click aimed at a
+     header button underneath one lands on the scrim — the same viewport-coordinate trap clickSel's
+     own comment describes, one level up. */
+  await clickSel('#termsModal [data-modal-close]');
+  await clickSel('#classesModal [data-modal-close]');
+  await clickSel('[data-class-tab]', 1);
+  const onClass = await evalJs('window.__cls()');
+  check('tapping a class tab opens it, and the term nav switches to THAT class\'s terms',
+    onClass.selectedClass === onClass.ids[1]
+      && JSON.stringify(onClass.navLabels) === JSON.stringify(messyBefore.termLabels[1])
+      && onClass.selectedTerm === onClass.termIds[1][0],
+    'open class = ' + JSON.stringify(onClass.names[1]) + ', nav = ' + JSON.stringify(onClass.navLabels));
+  await clickSel('[data-term-select]', 1);
+  const onTerm = await evalJs('window.__cls()');
+  check('and tapping a term opens that one, with one active tab in the nav',
+    onTerm.selectedTerm === onTerm.termIds[1][1] && onTerm.navActive.length === 1
+      && onTerm.navActive[0] === onTerm.termIds[1][1],
+    'open term = ' + onTerm.selectedTerm);
+
+  /*
+    A full reload, which settles three things at once: that a document holding those messy dates
+    still boots (a date this app could not read would take the whole year down at load), that the
+    header draws itself out of IndexedDB, and that the open class and term are remembered.
+
+    Which class and which term are open is a UI fact, so it lives in a `planbook_` preference —
+    ids on both sides and nothing else. A class NAME there would be teacher-typed content sitting
+    outside IndexedDB, which is the line src/prefs.js exists to hold.
+
+    FLUSHED FIRST, deliberately, and this is the one place in this file where that needs saying.
+    Every write above went through the store's debounce, and a CDP `Page.reload` tears the
+    execution context down without waiting for an IndexedDB transaction to complete — which is
+    exactly the limit src/store.js's own header comment admits it cannot survive. Reloading on an
+    unflushed document made this check fail for a reason with nothing to do with classes and terms:
+    the document came back without the six classes, and it read like a store defect. That the store
+    starts a pending write the moment the page stops being visible has its own check further up,
+    where it is measured with a dispatched `visibilitychange` and a poll rather than a race.
+  */
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  const rememberedBoot = await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_CLASS_READER);
+  const remembered = await evalJs('window.__cls()');
+  check('the app boots again on those dates, and the header comes back with them',
+    rememberedBoot && JSON.stringify(remembered.termDates[1]) === JSON.stringify(MESSY)
+      && remembered.tabNames.length === 7 && remembered.navLabels.length === 4,
+    rememberedBoot ? 'reopened with ' + remembered.navLabels.length + ' terms in the nav'
+      : 'the loading screen never came down');
+  check('the open class and the open term survive the reload',
+    remembered.selectedClass === onTerm.selectedClass
+      && remembered.selectedTerm === onTerm.selectedTerm
+      && remembered.navActive.length === 1 && remembered.navActive[0] === onTerm.selectedTerm,
+    'class ' + remembered.selectedClass + ', term ' + remembered.selectedTerm);
+  const prefTermPairs = Object.keys(remembered.prefTerms || {})
+    .map((k) => k + ' → ' + remembered.prefTerms[k]);
+  check('and only ids are remembered — no class name, nothing else out of the document',
+    /^c_[0-9a-z]{10}$/.test(remembered.prefClass || '')
+      && Object.keys(remembered.prefTerms || {}).length > 0
+      && Object.keys(remembered.prefTerms || {}).every(k => /^c_[0-9a-z]{10}$/.test(k))
+      && Object.keys(remembered.prefTerms || {}).every(k => /^tm_[0-9a-z]{10}$/.test(remembered.prefTerms[k])),
+    'planbook_openClassId = ' + remembered.prefClass + ', planbook_openTermIds = '
+      + JSON.stringify(prefTermPairs));
+  /* The WO-1.4 defect, which shipped and looked like it worked: setPref refuses any key that is
+     not declared in PREF_DEFAULTS, and it refuses it by logging to the console and returning
+     false. A new preference that was never declared writes nothing, forever, silently. */
+  const declared = await evalJs("(function(){ var p = window.planbook;"
+    + " return p.setPref('openClassId', p.getPref('openClassId'))"
+    + " && p.setPref('openTermIds', p.getPref('openTermIds')); })()");
+  check('both new preferences are declared in PREF_DEFAULTS, so setPref writes instead of refusing',
+    declared === true, 'setPref returned ' + declared);
+
+  /* The Traps line, from both ends. Every id in the document is generated and opaque, and no
+     module in src/ contains the literal the schema sketch shows — because the day one does,
+     something is comparing against it. */
+  const termIds = remembered.termIds.reduce((all, list) => all.concat(list), []);
+  const uniqueTermIds = new Set(termIds);
+  /* Twenty is the guard against a vacuous pass, not the expected number: five classes on quarters
+     and one on a single year-long term is 21, and `every` over an empty list is true. */
+  check('every term id is generated and opaque: tm_ prefixed, unique, and never a label',
+    termIds.length >= 20 && termIds.every(id => /^tm_[0-9a-z]{10}$/.test(id))
+      && uniqueTermIds.size === termIds.length,
+    termIds.length + ' term ids across ' + remembered.ids.length + ' classes, e.g. ' + termIds[0]);
+
+  /* Static, and comment-stripped rather than a raw grep: src/classes.js's own explanation of this
+     trap names the literal, as does the note in src/store.js, and a check that flagged those is
+     one nobody could keep green. The strip is naive — block comments, then line comments — so the
+     length assertion beside it is the guard against a stripper that ate a file and passed. */
+  {
+    const files = (await fs.readdir(path.join(ROOT, 'src'))).filter(f => f.endsWith('.js'));
+    const offenders = [];
+    let shortest = Infinity;
+    for (const f of files) {
+      const raw = await fs.readFile(path.join(ROOT, 'src', f), 'utf8');
+      const code = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1');
+      shortest = Math.min(shortest, code.replace(/\s+/g, '').length);
+      if (/['"]Q[1-4]['"]/.test(code)) offenders.push(f);
+    }
+    /* index.html as well, which this sweep did not read until WO-1.6's maintenance pass. The seed
+       structures are CHOSEN IN MARKUP — `data-preset="quarters"`, `data-term-preset="fullYear"` —
+       so the markup is exactly where a term literal gets reintroduced, and `data-term-preset="Q1"`
+       is the same defect as the string in a module. Quoted-literal only, like the pattern above:
+       matching a bare Q1 would flag ordinary prose in a hint, and a check that fails on English is
+       a check someone deletes. HTML comments come out first, because index.html explains this trap
+       in a comment that names it. */
+    const html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8');
+    const markup = html.replace(/<!--[\s\S]*?-->/g, '');
+    if (/['"]Q[1-4]['"]/.test(markup)) offenders.push('index.html');
+    check('no module in src/ and no attribute in index.html carries a term literal like the schema sketch\'s Q1',
+      files.length >= 8 && offenders.length === 0 && shortest > 200 && markup.length > 2000,
+      (files.length + 1) + ' files read, the smallest module holding ' + shortest
+        + ' characters of code, markup ' + markup.length + ' characters'
+        + (offenders.length ? ', OFFENDERS: ' + offenders.join(', ') : ''));
+  }
+
+  /*
+    Archive, then delete. Two operations, and the difference between them is the whole of this work
+    order's Trap 6: archive keeps every record and takes the class off the bar, delete destroys
+    them. The fixture below is written through the store rather than through a screen because
+    attendance and grades have no screen yet — WO-2.x and WO-3.x own those — and the point of it is
+    that the confirm counts real records rather than printing zeroes.
+
+    A neighbouring class gets records of its own, so "it deleted the right one" is falsifiable.
+  */
+  const victimId = remembered.ids[6];
+  const neighbourId = remembered.ids[1];
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(d){
+      d.students = [{ id:'s_v1', first:'Ada', last:'Probe' }, { id:'s_v2', first:'Bo', last:'Probe' }];
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-09', marks:{ s_v1:'A' } });
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-10', marks:{} });
+      /* A day the class did not meet. It is destroyed too, and it is NOT a meeting — everything in
+         this app counts recorded meetings (plans/rotating-schedule.md), so the confirm names the
+         two kinds separately and this record is what makes that falsifiable. */
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-11', exception:'dropped' });
+      d.attendance.push({ classId:${JSON.stringify(neighbourId)}, date:'2026-09-09', marks:{ s_v1:'T' } });
+      d.assignments.push({ id:'a_v1', classId:${JSON.stringify(victimId)}, name:'Quiz', points:100 });
+      d.assignments.push({ id:'a_n1', classId:${JSON.stringify(neighbourId)}, name:'Lab', points:50 });
+      d.scores['a_v1'] = { s_v1:{ v:87 }, s_v2:{ v:null, flag:'missing' } };
+      d.scores['a_n1'] = { s_v1:{ v:50 } };
+      var victim = d.classes.filter(function(c){ return c.id === ${JSON.stringify(victimId)}; })[0];
+      victim.roster = ['s_v1', 's_v2'];
+    });
+    await s.flush(); return 1; })()`);
+
+  await clickSel('header [data-class-manage]');
+  await clickSel('#classList .class-row:nth-child(7) [data-class-archive]');
+  const archived = await evalJs('window.__cls()');
+  check('archiving takes the class off the tab bar and destroys nothing at all',
+    archived.tabNames.length === 6 && archived.tabNames.indexOf('Homeroom') === -1
+      && archived.names.length === 7 && archived.archived[6] === true
+      && archived.rows === 6 && archived.archivedRows === 1 && !archived.archivedHidden
+      && archived.attendance === 4 && archived.assignments === 2 && archived.scoreColumns === 2,
+    'tabs = ' + archived.tabNames.length + ', archived rows = ' + archived.archivedRows
+      + ', attendance records still there = ' + archived.attendance);
+  await clickSel('#classArchivedList [data-class-restore]');
+  const unarchived = await evalJs('window.__cls()');
+  check('and restoring puts it back on the bar, in the place it had',
+    JSON.stringify(unarchived.tabIds) === JSON.stringify(remembered.ids)
+      && unarchived.archivedHidden && unarchived.archivedRows === 0,
+    JSON.stringify(unarchived.tabNames));
+
+  /* Delete is offered on an archived row only, and that is the safety this design buys: getting a
+     class out of the way costs one tap and nothing at all, and destroying a term of attendance
+     costs an archive, a second tap, and a dialog that counts what goes. */
+  const deleteOnActive = await evalJs(
+    "document.querySelectorAll('#classList [data-class-delete]').length");
+  check('no delete control on an active class — archive is how a class leaves the bar',
+    deleteOnActive === 0, 'delete buttons in the active list = ' + deleteOnActive);
+
+  /* And the teacher is told why, at the moment she is looking for the control that is not there.
+     The full explanation lives in the Archived section, which ships `hidden` and stays hidden until
+     something has been archived — so until WO-1.6's maintenance pass, the answer to "where is
+     Delete?" was only readable by someone who had already stopped needing to ask. Asserted here
+     precisely because nothing is archived at this point in the run. */
+  const whyNoDelete = await evalJs(`(function(){
+    var modal = document.getElementById('classesModal');
+    var stowed = document.getElementById('classArchivedSection');
+    var hints = Array.prototype.slice.call(modal.querySelectorAll('.class-hint'));
+    var visible = hints.filter(function(p){ return p.offsetParent !== null && !stowed.contains(p); });
+    var explains = visible.filter(function(p){ var t = p.textContent.toLowerCase();
+      return t.indexOf('archiv') !== -1 && t.indexOf('delet') !== -1; });
+    return { archivedSectionHidden: stowed.classList.contains('hidden'),
+             visibleHints: visible.length, explaining: explains.length,
+             text: explains.length ? explains[0].textContent.replace(/\\s+/g, ' ').trim() : '' };
+    })()`);
+  check('the reason an active class has no Delete is readable before anything has been archived',
+    whyNoDelete.archivedSectionHidden === true && whyNoDelete.explaining >= 1,
+    JSON.stringify(whyNoDelete));
+
+  await clickSel('#classList .class-row:nth-child(7) [data-class-archive]');
+  await clickSel('#classArchivedList [data-class-delete]');
+  const confirmText = await evalJs(`(function(){ var m = document.getElementById('classDeleteModal');
+    return { open: !!m && !m.classList.contains('hidden'),
+             lead: (document.getElementById('classDeleteLead')||{}).textContent,
+             facts: (document.getElementById('classDeleteFacts')||{}).textContent.replace(/\\s+/g,' '),
+             button: (document.getElementById('classDeleteBtn')||{}).textContent }; })()`);
+  check('the delete confirm names the class and counts the attendance, grades and roster it destroys',
+    confirmText.open && /Homeroom/.test(confirmText.lead)
+      && /cannot be undone/.test(confirmText.lead) && /archived/.test(confirmText.lead)
+      && /2 recorded meetings/.test(confirmText.facts)
+      && /1 day marked as not meeting/.test(confirmText.facts)
+      && /1 assignment and 2 scores/.test(confirmText.facts)
+      && /1 term/.test(confirmText.facts) && /2 students/.test(confirmText.facts)
+      && confirmText.button === 'Delete Homeroom',
+    confirmText.facts.slice(0, 240));
+
+  /* Flushed first, so that `rev` is settled before the cancel: a debounced save still in the air
+     would land between the two reads below and read as the cancel having written something. */
+  const beforeCancel = await evalJs(
+    '(async function(){ await window.planbook.store.flush(); return window.__cls(); })()');
+  await clickSel('[data-class-delete-cancel]');
+  const afterCancel = await evalJs(`(async function(){ var s = window.planbook.store;
+    await s.flush();
+    var stored = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(s.getDoc().year);
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    var live = window.__cls();
+    live.confirmOpen = !document.getElementById('classDeleteModal').classList.contains('hidden');
+    live.storedClasses = stored.classes.length;
+    live.storedAttendance = stored.attendance.length;
+    return live; })()`);
+  check('cancelling the delete leaves the class and every record of it exactly as they were',
+    afterCancel.confirmOpen === false && afterCancel.names.length === 7
+      && afterCancel.attendance === beforeCancel.attendance
+      && afterCancel.assignments === beforeCancel.assignments
+      && afterCancel.scoreColumns === beforeCancel.scoreColumns
+      && afterCancel.rev === beforeCancel.rev
+      && afterCancel.storedClasses === 7 && afterCancel.storedAttendance === 4,
+    'classes ' + afterCancel.names.length + ', attendance ' + afterCancel.attendance
+      + ', rev ' + beforeCancel.rev + ' -> ' + afterCancel.rev
+      + ' (nothing written, so rev cannot move)');
+
+  await clickSel('#classArchivedList [data-class-delete]');
+  await clickSel('[data-class-delete-confirm]');
+  await new Promise(r => setTimeout(r, 400));
+  const deleted = await evalJs(`(async function(){ var s = window.planbook.store; await s.flush();
+    var d = s.getDoc(); var live = window.__cls();
+    live.victimAttendance = d.attendance.filter(function(r){ return r.classId === ${JSON.stringify(victimId)}; }).length;
+    live.neighbourAttendance = d.attendance.filter(function(r){ return r.classId === ${JSON.stringify(neighbourId)}; }).length;
+    live.victimAssignments = d.assignments.filter(function(a){ return a.classId === ${JSON.stringify(victimId)}; }).length;
+    live.victimScores = !!d.scores['a_v1'];
+    live.neighbourScores = !!d.scores['a_n1'];
+    live.confirmOpen = !document.getElementById('classDeleteModal').classList.contains('hidden');
+    return live; })()`);
+  check('deleting takes the class, its attendance, its assignments and their scores — and only those',
+    deleted.names.length === 6 && deleted.names.indexOf('Homeroom') === -1
+      && deleted.victimAttendance === 0 && deleted.victimAssignments === 0
+      && deleted.victimScores === false && !deleted.confirmOpen
+      && deleted.neighbourAttendance === 1 && deleted.neighbourScores === true
+      && deleted.attendance === 1 && deleted.assignments === 1 && deleted.scoreColumns === 1,
+    'classes ' + deleted.names.length + ', attendance left ' + deleted.attendance
+      + ', assignments left ' + deleted.assignments + ', score columns left ' + deleted.scoreColumns);
+  check('and both students stay — a student belongs to the school year, not to one class',
+    deleted.students === 2, 'students in the document = ' + deleted.students);
+
+  /*
+    The first-run header, which nothing above has seen: every class on this device belongs to the
+    year that has been open all along, and a teacher opening Planbook for the first time sees
+    neither a tab nor a term. An empty year is one year switch away — and the switch is worth
+    driving for its own sake, because the class bar is refreshed from shell.js's year-switch chain
+    rather than from inside year-picker.js, and a chain nothing exercises is a chain that goes stale
+    the next time someone edits that file.
+  */
+  await evalJs("window.planbook.closeModal('classesModal');1");
+  /* A year that genuinely has no classes, found by reading each stored record rather than by
+     picking the first other key: the run has three years on the device by now and one of them is
+     the migration fixture, which arrives holding a class. Choosing by name gave a year with a tab
+     in it and failed this check for the wrong reason. */
+  const emptyYear = await evalJs(`(async function(){ var s = window.planbook.store;
+    var years = await s.listYears(), open = s.getDoc().year;
+    for (var i = 0; i < years.length; i++) {
+      if (years[i] === open) continue;
+      var d = await s.readStoredDocument(years[i]);
+      if (d && (!d.classes || d.classes.length === 0)) return years[i];
+    }
+    return ''; })()`);
+  if (!emptyYear) {
+    skip('a year with no classes says so on the bar, and offers the way to add the first one',
+      'only one year exists on the device at this point in the run');
+  } else {
+    const homeYear = await evalJs('window.planbook.store.getDoc().year');
+    await clickSel('[data-year-picker]');
+    await clickSel('#yearList [data-year-switch=' + JSON.stringify(emptyYear) + ']');
+    await new Promise(r => setTimeout(r, 800));
+    const bare = await evalJs(`(function(){ var bar = document.getElementById('classTabBar');
+      var add = bar.querySelector('.cls-tab-add');
+      return { year: window.planbook.store.getDoc().year,
+               tabs: bar.querySelectorAll('[data-class-tab]').length,
+               emptyText: (bar.querySelector('.hdr-empty')||{}).textContent,
+               addText: add ? add.textContent : '',
+               dividerHidden: document.getElementById('headerDivider').classList.contains('hidden'),
+               navButtons: document.getElementById('termNav').querySelectorAll('button').length,
+               manageReachable: !!document.querySelector('#headerRightControls [data-class-manage]')
+                 && !document.getElementById('headerRightControls').classList.contains('hidden'),
+               selectedClass: window.planbook.classes.getSelectedClassId(),
+               selectedTerm: window.planbook.classes.getSelectedTermId() }; })()`);
+    check('a year with no classes says so on the bar, and offers the way to add the first one',
+      bare.year === emptyYear && bare.tabs === 0 && bare.emptyText === 'No classes yet.'
+        && bare.addText === 'Add a class' && bare.dividerHidden && bare.navButtons === 0
+        && bare.manageReachable && bare.selectedClass === '' && bare.selectedTerm === '',
+      JSON.stringify(bare));
+    await clickSel('[data-year-picker]');
+    await clickSel('#yearList [data-year-switch=' + JSON.stringify(homeYear) + ']');
+    await new Promise(r => setTimeout(r, 800));
+    const backHome = await evalJs('window.__cls()');
+    check('and switching back brings that year\'s classes and its open term back to the bar',
+      backHome.tabNames.length === 6 && backHome.selectedClass === backHome.ids[1]
+        && backHome.navLabels.length === 4,
+      backHome.tabNames.length + ' tabs and ' + backHome.navLabels.length + ' terms back on '
+        + homeYear);
+    await clickSel('header [data-class-manage]');
+  }
+
+  /* One class is left archived on purpose. The delete confirm has nothing to open from otherwise,
+     and the touch section below has to be able to measure it. Flushed for the reason the reload
+     above gives — that section reloads too, and an unflushed archive would arrive there as a
+     missing fixture rather than as a failed check. */
+  await clickSel('#classList .class-row:nth-child(5) [data-class-archive]');
+  const leftover = await evalJs(`(async function(){ var live = window.__cls();
+    window.planbook.closeModal('classesModal');
+    await window.planbook.store.flush();
+    return live; })()`);
+  check('the archived section shows what is in it, and the bar shows what is left',
+    leftover.archivedRows === 1 && leftover.rows === 5 && leftover.tabNames.length === 5
+      && !leftover.archivedHidden,
+    'active ' + leftover.rows + ', archived ' + leftover.archivedRows);
+}
+
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
  *
  * Emulation.setEmulatedMedia's `features` list does not reach `pointer`. It needs touch
@@ -1378,7 +2026,90 @@ if (coarse !== true) {
     check('the file input\'s own native button carries a 44px minimum, not just the input around it',
       !!fileBtn && parseFloat(fileBtn.minHeight) >= 44,
       fileBtn ? 'min-height = ' + fileBtn.minHeight + ', padding = ' + fileBtn.padding : 'no #backupFile');
+  }
 
+  /* The classes manager, the term editor and the delete confirm, for the same reason as the year
+     picker and the backup panel above: every control in them is built at open time inside a hidden
+     overlay, where it measures 0x0 and the sweep skips it. Three of them are the ones this work
+     order could plausibly get wrong — the reorder arrows are one glyph wide, the rename field is
+     an input inside a row, and `<input type="date">` is a control whose height nobody sets by
+     accident — so all three are opened and measured rather than read off a rule. */
+  if (await has('[data-class-manage]')) {
+    /* Everything the section above left open comes down first, the restore confirm included: an
+       overlay is fixed at inset 0, so a click aimed at the header button underneath one lands on
+       the scrim — and a press-and-release on a scrim is a backdrop dismissal, which would read as
+       "the manager stopped opening". */
+    if (seam) {
+      await evalJs("window.planbook.backup.cancelRestore();"
+        + "window.planbook.closeModal('backupModal');"
+        + "window.planbook.closeModal('yearModal');window.planbook.closeModal('aboutModal');1");
+    }
+    await clickSel('header [data-class-manage]');
+    await new Promise(r => setTimeout(r, 400));
+    /* Rename first, so the field and its two buttons are on screen and inside the sweep. */
+    await clickSel('#classList .class-row:nth-child(1) [data-class-rename]');
+    const cm = await evalJs(`(function(){ var out = [];
+      document.querySelectorAll('#classesModal button, #classesModal input').forEach(function(e){
+        var r = e.getBoundingClientRect();
+        out.push({ t:(e.className||e.tagName), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100 }); });
+      return out; })()`);
+    if (cm.length < 12) {
+      check('the classes manager opened with its rows, so there is something to measure',
+        false, 'controls found = ' + cm.length);
+    } else {
+      check('every control in the classes manager measures >=44px on a coarse pointer, arrows included',
+        cm.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + cm.length + '; under = ' + JSON.stringify(cm.filter(m => m.h < 44 || m.w < 44)));
+    }
+
+    await clickSel('[data-class-rename-cancel]');
+    /* The SECOND row, not the first: the first is the class the backup section restored, which has
+       no terms at all, and its editor is four preset buttons with nothing under them. Measuring
+       that would report green while measuring none of the controls this section is here for. */
+    await clickSel('#classList .class-row:nth-child(2) [data-term-manage]');
+    await new Promise(r => setTimeout(r, 300));
+    const tm = await evalJs(`(function(){ var m = document.getElementById('termsModal');
+      if (!m || m.classList.contains('hidden')) return null;
+      return Array.prototype.slice.call(m.querySelectorAll('button, input')).map(function(e){
+        var r = e.getBoundingClientRect();
+        return { t:(e.className||e.tagName), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100 }; }); })()`);
+    if (!tm || tm.length < 8) {
+      check('the term editor opened with its rows, so there is something to measure',
+        false, 'controls found = ' + (tm ? tm.length : 'modal never opened'));
+    } else {
+      check('every control in the term editor measures >=44px, date fields included',
+        tm.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + tm.length + '; under = ' + JSON.stringify(tm.filter(m => m.h < 44 || m.w < 44)));
+    }
+    await clickSel('#termsModal [data-modal-close]');
+
+    /* The delete confirm, opened from the archived row the section above left behind on purpose. */
+    const archivedRows = await evalJs("document.querySelectorAll('#classArchivedList [data-class-delete]').length");
+    if (!archivedRows) {
+      skip('every control in the delete confirm measures >=44px on a coarse pointer',
+        'no archived class on the device to open the confirm from');
+    } else {
+      await clickSel('#classArchivedList [data-class-delete]');
+      await new Promise(r => setTimeout(r, 300));
+      const dm = await evalJs(`(function(){ var m = document.getElementById('classDeleteModal');
+        if (!m || m.classList.contains('hidden')) return null;
+        return Array.prototype.slice.call(m.querySelectorAll('button, input')).map(function(e){
+          var r = e.getBoundingClientRect();
+          return { t:(e.className||e.tagName), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100 }; }); })()`);
+      if (!dm || dm.length < 3) {
+        check('the delete confirm opened, so there is something to measure', false,
+          'controls found = ' + (dm ? dm.length : 'modal never opened'));
+      } else {
+        check('every control in the delete confirm measures >=44px on a coarse pointer',
+          dm.every(m => m.h >= 44 && m.w >= 44),
+          'measured ' + dm.length + '; under = ' + JSON.stringify(dm.filter(m => m.h < 44 || m.w < 44)));
+      }
+      await clickSel('[data-class-delete-cancel]');
+    }
+    if (seam) await evalJs("window.planbook.closeModal('classesModal');1");
+  }
+
+  if (await has('[data-backup-panel]')) {
     /* The boot-failure exit is the one control that cannot be measured here: it only exists on
        screen when boot has failed, and this section needs an app that booted. Its rule is read
        instead — weaker than a measurement, and said so, but it still catches the control being
@@ -1402,6 +2133,78 @@ for (const [w, h, dsf] of [[1024, 768, 2], [768, 1024, 2], [390, 844, 3]]) {
   await new Promise(r => setTimeout(r, 400));
   const o = await evalJs('({sw:document.documentElement.scrollWidth, iw:window.innerWidth})');
   check('no horizontal overflow at ' + w + 'x' + h, o.sw <= o.iw, JSON.stringify(o));
+
+  /*
+    The page not overflowing is not the same as the header being readable, which is what the first
+    device sitting found: the two strips scrolled correctly and the buttons inside them were
+    compressed to narrower than their own labels, so the names were laid out across the rounded
+    background and over its edge. `flex-shrink: 0` in shell.css is the fix and this is the
+    measurement — a button whose label does not fit inside it, at the width where it was seen.
+
+    A button sitting at its `max-width` cap is exempt: that one is ellipsised on purpose, and an
+    ellipsis is the label not fitting by design rather than by accident.
+  */
+  const spill = await evalJs(`(function(){
+    var els = document.querySelectorAll('#classTabBar .cls-tab, #termNav .q-btn');
+    var out = [];
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i], cs = getComputedStyle(e);
+      var cap = parseFloat(cs.maxWidth);
+      var capped = !isNaN(cap) && e.getBoundingClientRect().width >= cap - 1;
+      if (!capped && e.scrollWidth > e.clientWidth + 1) {
+        out.push({ text: e.textContent, scrollW: e.scrollWidth, clientW: e.clientWidth });
+      }
+      if (cs.flexShrink !== '0' || cs.whiteSpace !== 'nowrap') {
+        out.push({ text: e.textContent, flexShrink: cs.flexShrink, whiteSpace: cs.whiteSpace });
+      }
+    }
+    return { measured: els.length, bad: out }; })()`);
+  check('no class tab or term button is squeezed narrower than its own label at ' + w + 'x' + h,
+    spill.measured > 0 && spill.bad.length === 0,
+    'measured ' + spill.measured + '; bad = ' + JSON.stringify(spill.bad));
+
+  /*
+    The other half of that fix, and a defect it introduced. Once the tabs stopped squeezing they
+    started scrolling, and refreshClassBar() rebuilds the strip's children on every call — which
+    resets `scrollLeft` to 0. So the teacher whose open class is the last of six got a header
+    scrolled to the left with no tab on it looking selected, which reads as the app having forgotten
+    which class she was in.
+
+    Measured on the LAST class, because the first one is visible whether or not anything works.
+  */
+  /* Read off the DOM rather than through `window.__cls`: that reader is re-installed after each
+     reload for the sections that use it, and this one runs past the last of them. */
+  const tabScroll = await evalJs(`(function(){
+    var strip = document.getElementById('classTabBar');
+    var tabs = strip.querySelectorAll('[data-class-tab]');
+    if (!tabs.length) return { noTabs: true };
+    window.planbook.classes.selectClass(tabs[tabs.length - 1].getAttribute('data-class-tab'));
+    var el = strip.querySelector('.cls-tab.active');
+    if (!el) return { noActive: true };
+    var s = strip.getBoundingClientRect(), e = el.getBoundingClientRect();
+    return { overflows: strip.scrollWidth > strip.clientWidth + 1,
+             inView: e.left >= s.left - 1 && e.right <= s.right + 1,
+             scrollLeft: strip.scrollLeft, text: el.textContent,
+             strip: { left: Math.round(s.left), right: Math.round(s.right),
+                      scrollW: strip.scrollWidth, clientW: strip.clientWidth },
+             tab: { left: Math.round(e.left), right: Math.round(e.right) } }; })()`);
+  if (tabScroll.noTabs) {
+    skip('the open class is scrolled into view on the tab strip at ' + w + 'x' + h,
+      'no classes on the bar at this point in the run');
+  } else {
+    /* Asserted before the scroll question, because a strip of zero width answers that question
+       "no" for a reason that has nothing to do with scrolling — and it is a whole class bar the
+       teacher cannot see. This is how the 390px flex-basis defect was found. */
+    check('the class tab strip has real width to scroll at ' + w + 'x' + h,
+      tabScroll.strip.clientW >= 96, JSON.stringify(tabScroll.strip));
+    if (tabScroll.overflows === false) {
+      skip('the open class is scrolled into view on the tab strip at ' + w + 'x' + h,
+        'the strip fits every tab at this width, so there is nothing to scroll');
+    } else {
+      check('the open class is scrolled into view on the tab strip at ' + w + 'x' + h,
+        tabScroll.inView === true, JSON.stringify(tabScroll));
+    }
+  }
 }
 
 /* ────────────────────────────── summary ────────────────────────────── */

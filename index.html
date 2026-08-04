@@ -20,8 +20,14 @@
   the loading screen up on a document this build cannot read, and until now that screen had no
   exit at all.
 
+  WO-1.6 filled the class tab row: classes and their terms are real, they are the first thing on
+  this page that writes to a year document, and the header's bottom row is now the app's navigation
+  rather than a styled strip. Three modals arrived with it — the manager, the term editor, and the
+  delete confirm that counts what a deletion destroys.
+
   Deliberately still absent, so that nothing here has to be un-built later:
-    - Classes, terms, roster — WO-1.6 and WO-1.7. The class tab row is styled and empty.
+    - The roster — WO-1.7. A class has an empty `roster` and nowhere to fill it.
+    - Categories and weights — WO-3.1. A class has an empty `categories` for the same reason.
 
   WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
   service worker registration in src/shell.js, and the eviction banner below the header.
@@ -140,12 +146,32 @@
     </div>
   </div>
   <div class="header-bottom">
-    <!-- WO-1.6 fills this with .cls-tab buttons and adds the term nav to the right, behind
-         .hdr-divider. .hdr-empty stands in meanwhile, because a blank navy strip reads as a
-         bug and "No classes yet." is the truth. -->
+    <!-- Filled by WO-1.6: a .cls-tab per class on the left, the term nav of whichever class is
+         open on the right behind .hdr-divider, and the way into the manager at the end.
+
+         All three containers are empty in the markup and rendered by src/classes.js from the open
+         document — a hand-written specimen row here would be a second truth to keep in step with
+         the real one, which is the same reason #yearList below is empty. The .hdr-empty span is
+         the one exception: it is what a teacher sees before the first paint of a fresh install,
+         and a blank navy strip reads as a bug where "No classes yet." is the truth.
+
+         The divider and the right-hand controls ship `hidden` and are revealed by that module,
+         because an empty divider on a first run is furniture explaining nothing. -->
     <nav class="hdr-class-tabs" id="classTabBar" aria-label="Classes">
       <span class="hdr-empty">No classes yet.</span>
     </nav>
+    <div class="hdr-divider hidden" id="headerDivider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" id="termNav" aria-label="Terms in the open class"></nav>
+    <div class="hdr-right-controls hidden" id="headerRightControls">
+      <button class="hdr-icon-btn" data-class-manage title="Classes and terms"
+              aria-label="Classes and terms" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -394,11 +420,12 @@
       </p>
       <div class="modal-section-label">This build</div>
       <p>
-        <strong>There is nowhere to enter anything yet.</strong> This build has the frame and
-        the storage behind it — one document per school year, kept in this browser — but no
-        classes, no roster, and no gradebook. Those come next. The backup file that gets
-        everything back out of the browser is already here, under the ⤓ button in the header,
-        because nothing that stores a student's name ships before the way to get it back.
+        <strong>Classes and their terms are the only things you can enter so far.</strong> The
+        frame and the storage behind it are real — one document per school year, kept in this
+        browser — and so is the class bar at the top. There is no roster and no gradebook yet;
+        those come next. The backup file that gets everything back out of the browser is already
+        here, under the ⤓ button in the header, because nothing that stores a student's name ships
+        before the way to get it back.
       </p>
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Close</button>
@@ -436,6 +463,142 @@
         the year it was earned in.
       </p>
       <p class="year-error hidden" id="yearError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Classes & terms. src/classes.js owns the behavior and renders every row; the copy a teacher
+     reads is here, for the same reason the install banner's is — it should be revisable without
+     opening a JavaScript file.
+
+     Two things in here are load-bearing rather than decorative. The hint under the term
+     structures says out loud that Planbook does not check term dates: they may overlap, leave
+     gaps, or be empty. That is not a limitation being apologised for, it is the decision in
+     plans/rotating-schedule.md — the app has no schedule model, and a term is a label on a range.
+     And the hint in the Archived block says which of archive and delete is the destructive one,
+     because that is the distinction a teacher has to get right on a tired afternoon. -->
+<div class="modal-overlay hidden" id="classesModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classesModalTitle">
+    <div class="modal-header">
+      <h2 id="classesModalTitle">Classes &amp; terms</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Your classes fill the bar across the top of Planbook, in the order they are listed here.
+        Tapping one opens it. Put the class you reach for most at the front — that order is what
+        keeps every class one tap away.
+      </p>
+
+      <div class="modal-section-label">Your classes</div>
+      <div class="class-list" id="classList"></div>
+
+      <div class="modal-section-label">Add a class</div>
+      <form class="class-form" data-class-create>
+        <input class="class-input" id="classNewInput" type="text" placeholder="Period 3 — Biology"
+               aria-label="Name for the new class" autocomplete="off">
+        <button class="class-action-btn primary" type="submit">Create</button>
+      </form>
+      <div class="class-preset-row" id="classNewPresets" data-pill-group role="group"
+           aria-label="Term structure for the new class">
+        <span class="class-preset-label">Terms</span>
+        <button type="button" class="pill active" data-preset="quarters" aria-pressed="true">Quarters</button>
+        <button type="button" class="pill" data-preset="semesters" aria-pressed="false">Semesters</button>
+        <button type="button" class="pill" data-preset="trimesters" aria-pressed="false">Trimesters</button>
+        <button type="button" class="pill" data-preset="fullYear" aria-pressed="false">One term</button>
+      </div>
+      <p class="class-hint">
+        Call it whatever you call it out loud — “Period 3 — Biology”, “AP Bio”, “3rd hour”. Four
+        quarters unless you choose otherwise, and every term can be renamed, dated, added to, or
+        removed afterwards: a new class arrives usable rather than correct. Terms belong to the
+        class, so one class on semesters and another on quarters is an ordinary thing here.
+      </p>
+      <p class="class-error hidden" id="classError"></p>
+
+      <!-- Why there is no Delete on the rows above, said where a teacher looking for one is
+           standing. The fuller version of this lives in the Archived section below, which is
+           exactly the problem: that section ships `hidden` and stays hidden until something has
+           been archived, so the explanation for the missing control only appeared once you had
+           already found your way past needing it. -->
+      <p class="class-hint">
+        A class is archived rather than deleted: archiving keeps everything in it and only takes it
+        off the class bar. Deleting is offered on an archived class, once it is out of your way.
+      </p>
+
+      <div class="hidden" id="classArchivedSection">
+        <div class="modal-section-label">Archived</div>
+        <div class="class-list" id="classArchivedList"></div>
+        <p class="class-hint">
+          An archived class keeps everything in it — attendance, assignments, grades — and only
+          leaves the class bar. Restoring it puts it back where it was. Deleting is the one that
+          destroys what is in it, which is why it is offered here rather than up there.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The term editor for one class, opened over the panel above — src/modal.js keeps a stack, so
+     Escape closes this and leaves that open. #termList is rendered by src/classes.js. -->
+<div class="modal-overlay hidden" id="termsModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+    <div class="modal-header">
+      <h2 id="termsModalTitle">Terms</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        How <strong id="termsClassName"></strong> divides its year. Every class has its own set, so
+        one class can run on quarters while another runs on semesters or on a single term for the
+        whole year — Planbook never makes them match.
+      </p>
+
+      <div class="modal-section-label">Start from</div>
+      <div class="term-presets">
+        <button class="class-action-btn" type="button" data-term-preset="quarters">Four quarters</button>
+        <button class="class-action-btn" type="button" data-term-preset="semesters">Two semesters</button>
+        <button class="class-action-btn" type="button" data-term-preset="trimesters">Three trimesters</button>
+        <button class="class-action-btn" type="button" data-term-preset="fullYear">One year-long term</button>
+      </div>
+      <p class="class-hint">
+        Choosing one replaces the terms below with a fresh set, so it is for setting a class up
+        rather than for changing one you have been grading in.
+      </p>
+
+      <div class="modal-section-label">Terms in this class</div>
+      <div class="term-list" id="termList"></div>
+      <div class="term-actions">
+        <button class="class-action-btn" type="button" data-term-add>Add a term</button>
+      </div>
+      <p class="class-hint">
+        The dates are for your own reference and Planbook does not check them. Terms may overlap,
+        leave gaps between them, or carry no dates at all — a real school calendar does all three,
+        and a term whose dates you have not been given yet still needs to exist.
+      </p>
+      <p class="class-error hidden" id="termError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- The delete confirm. Same tier and the same job as the restore confirm above: it names what
+     is about to be destroyed, with counts read off the open document, because "delete this class"
+     and "destroy a term of attendance" are the same gesture and the only thing separating them is
+     what is on screen when the teacher taps yes. The two empty elements are filled by
+     src/classes.js; a specimen here would be a second truth. -->
+<div class="modal-overlay hidden" id="classDeleteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classDeleteTitle">
+    <div class="modal-header">
+      <h2 id="classDeleteTitle">Delete this class?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="classDeleteLead"></p>
+      <div class="modal-section-label">What goes with it</div>
+      <div class="class-delete-facts" id="classDeleteFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="classDeleteBtn" data-class-delete-confirm>Delete</button>
+        <button class="class-action-btn" data-class-delete-cancel>Cancel</button>
+      </div>
     </div>
   </div>
 </div>

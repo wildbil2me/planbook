@@ -31,6 +31,26 @@
       data-backup-drop                on a container: accepts a dropped backup file
       data-backup-confirm             carries out the restore the confirm dialog describes
       data-backup-cancel              abandons it, having written nothing
+      data-class-manage               fills the classes panel, then opens it
+      data-class-tab="<classId>"      makes that class the open one
+      data-class-create               on a <form>: creates the class typed into it
+      data-class-rename="<classId>"   turns that row into a rename field
+      data-class-rename-save="<id>"   on a <form>: saves the name typed into that row
+      data-class-rename-cancel        abandons the rename
+      data-class-move-up="<classId>"  moves that class one place earlier in the tab order
+      data-class-move-down="<id>"     one place later
+      data-class-archive="<classId>"  takes it off the tab bar, keeping everything in it
+      data-class-restore="<classId>"  puts an archived class back
+      data-class-delete="<classId>"   opens the confirm that counts what deleting destroys
+      data-class-delete-confirm       carries out that deletion
+      data-class-delete-cancel        abandons it, having written nothing
+      data-term-manage="<classId>"    opens the term editor for that class (empty = the open one)
+      data-term-select="<termId>"     makes that term the open one in the open class
+      data-term-add                   adds a term to the class the editor is open for
+      data-term-remove="<termId>"     removes it, unless it holds an assignment
+      data-term-preset="<key>"        replaces the term list with a starting structure
+      data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
+                                      and on `change` rebuilds a date field that was cleared
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -50,6 +70,17 @@ import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './insta
 import * as store from './store.js';
 import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } from './year-picker.js';
 import * as backup from './backup.js';
+import * as classes from './classes.js';
+
+/* The two things that are facts about the open year rather than about a save, so they are
+   re-evaluated wherever the open year can change: the backup nag (src/backup.js explains why it is
+   not on every save) and the class bar, which is describing another year's classes the instant the
+   document underneath it is replaced. Chained from the hooks below rather than called from inside
+   year-picker.js, so that neither of those modules has to import the other two. */
+function afterYearChange() {
+  backup.refreshBackupNag();
+  classes.refreshClassBar();
+}
 
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
@@ -85,7 +116,7 @@ document.addEventListener('click', (e) => {
        would close the loop. Refreshed whether or not the switch took: a refusal leaves the old
        year open, and re-asking about the year that is still open is the right answer anyway. */
     switchYear(yearRow.getAttribute('data-year-switch'))
-      .then(backup.refreshBackupNag, backup.refreshBackupNag);
+      .then(afterYearChange, afterYearChange);
     return;
   }
 
@@ -93,8 +124,60 @@ document.addEventListener('click', (e) => {
   if (backupPanel) { backup.openBackupPanel(backupPanel); return; }
 
   if (e.target.closest('[data-backup-download]')) { backup.downloadBackup(); return; }
-  if (e.target.closest('[data-backup-confirm]')) { backup.confirmRestore(); return; }
   if (e.target.closest('[data-backup-cancel]')) { backup.cancelRestore(); return; }
+  if (e.target.closest('[data-backup-confirm]')) {
+    /* A restore replaces the whole document, so the class bar and the term nav are describing a
+       year that no longer exists the moment it lands. Chained here rather than called from inside
+       backup.js for the reason the nag is chained onto a year switch above: backup.js would then
+       import classes.js, classes.js imports the store, and the reverse import that would follow
+       the first time a class needed the backup panel closes a loop this repo has already refused
+       once. Refreshed whether or not the restore took — a refusal leaves the old document open,
+       and re-describing the document that is still open is the right answer anyway. */
+    backup.confirmRestore().then(classes.refreshClassBar, classes.refreshClassBar);
+    return;
+  }
+
+  /* ── classes and terms ── */
+
+  const classManage = e.target.closest('[data-class-manage]');
+  if (classManage) { classes.openClassManager(classManage); return; }
+
+  const classTab = e.target.closest('[data-class-tab]');
+  if (classTab) { classes.selectClass(classTab.getAttribute('data-class-tab')); return; }
+
+  const rename = e.target.closest('[data-class-rename]');
+  if (rename) { classes.startRename(rename.getAttribute('data-class-rename')); return; }
+  if (e.target.closest('[data-class-rename-cancel]')) { classes.cancelRename(); return; }
+
+  const moveUp = e.target.closest('[data-class-move-up]');
+  if (moveUp) { classes.moveClassUp(moveUp.getAttribute('data-class-move-up')); return; }
+  const moveDown = e.target.closest('[data-class-move-down]');
+  if (moveDown) { classes.moveClassDown(moveDown.getAttribute('data-class-move-down')); return; }
+
+  const archive = e.target.closest('[data-class-archive]');
+  if (archive) { classes.archiveClass(archive.getAttribute('data-class-archive')); return; }
+  const restore = e.target.closest('[data-class-restore]');
+  if (restore) { classes.restoreClass(restore.getAttribute('data-class-restore')); return; }
+
+  const del = e.target.closest('[data-class-delete]');
+  if (del) { classes.openDeleteConfirm(del.getAttribute('data-class-delete'), del); return; }
+  if (e.target.closest('[data-class-delete-confirm]')) { classes.confirmDelete(); return; }
+  if (e.target.closest('[data-class-delete-cancel]')) { classes.cancelDelete(); return; }
+
+  const termManage = e.target.closest('[data-term-manage]');
+  if (termManage) {
+    /* An empty value means "the class that is open", which is what the header's own button says
+       and what the class row's button overrides with an id. */
+    classes.openTermEditor(termManage.getAttribute('data-term-manage'), termManage);
+    return;
+  }
+  const termSelect = e.target.closest('[data-term-select]');
+  if (termSelect) { classes.selectTerm(termSelect.getAttribute('data-term-select')); return; }
+  if (e.target.closest('[data-term-add]')) { classes.addTerm(); return; }
+  const termRemove = e.target.closest('[data-term-remove]');
+  if (termRemove) { classes.removeTerm(termRemove.getAttribute('data-term-remove')); return; }
+  const termPreset = e.target.closest('[data-term-preset]');
+  if (termPreset) { classes.applyPreset(termPreset.getAttribute('data-term-preset')); return; }
 
   const speak = e.target.closest('[data-announce]');
   if (speak) { announce(speak.getAttribute('data-announce')); return; }
@@ -118,14 +201,34 @@ document.addEventListener('click', (e) => {
    association between the field and the button, and the fact that iPadOS shows a "go" key on
    the software keyboard all come free with it — and none of them come free without it. */
 document.addEventListener('submit', (e) => {
-  const create = e.target.closest('[data-year-create]');
-  if (!create) return;
+  const form = e.target.closest('form');
+  if (!form) return;
   /* Nothing in this app ever navigates: a submit that reloads the page would throw away the
-     year document that is live in memory. */
+     year document that is live in memory. Cancelled for every form here, before the routing
+     below, so that a form added later cannot reload the page by being forgotten. */
   e.preventDefault();
-  /* A newly created year has never been backed up, so the strip's answer changes here too — and
-     this is the path that produces the second year the per-year timestamps exist for. */
-  createYearFromForm().then(backup.refreshBackupNag, backup.refreshBackupNag);
+
+  if (form.hasAttribute('data-year-create')) {
+    /* A newly created year has never been backed up, so the strip's answer changes here too — and
+       this is the path that produces the second year the per-year timestamps exist for. It is also
+       an empty document, so the class bar is describing classes that are no longer there. */
+    createYearFromForm().then(afterYearChange, afterYearChange);
+    return;
+  }
+  if (form.hasAttribute('data-class-create')) { classes.createClassFromForm(); return; }
+  if (form.hasAttribute('data-class-rename-save')) {
+    classes.saveRename(form.getAttribute('data-class-rename-save'));
+  }
+});
+
+/* Term labels and dates, saved as they are typed. `input` rather than `change`: `change` on a text
+   field waits for a blur, so a teacher who types a term name and then taps a button elsewhere in
+   the dialog is relying on the blur order to have saved it, and the header tab beside her would
+   not follow along as she typed either. The store debounces the burst into one save
+   (src/store.js) — which is exactly what the debounce is for. */
+document.addEventListener('input', (e) => {
+  const field = e.target.closest('[data-term-field]');
+  if (field) classes.editTermField(field);
 });
 
 /* The file input. A `change` listener rather than a click one for the obvious reason, and
@@ -134,6 +237,12 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('change', (e) => {
   const chooser = e.target.closest('[data-backup-file]');
   if (chooser) backup.handleChosenFile(chooser);
+  /* A committed term date, which matters only when it was committed EMPTY — see
+     classes.termDateCommitted(). This is the same element the `input` listener above already saved;
+     the second hook exists because a cleared date on iPadOS needs its field rebuilt, and `input`
+     fires with an empty value mid-typing where `change` does not. */
+  const field = e.target.closest('[data-term-field]');
+  if (field) classes.termDateCommitted(field);
 });
 
 /*
@@ -180,6 +289,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* At boot and after a backup or a restore, which is everywhere the answer can change —
        src/backup.js explains why it is not re-evaluated on every save. */
     backup.refreshBackupNag();
+    /* The class bar and the term nav, drawn from the document that just came out of IndexedDB.
+       Boot is the only place they are drawn from outside src/classes.js and the two chains above:
+       every other change to a class is made inside that module, which redraws its own header. */
+    classes.refreshClassBar();
     document.getElementById('loadingScreen').classList.add('hidden');
   } catch (e) {
     showBootFailure(e);
@@ -251,6 +364,14 @@ window.planbook = {
      tools/verify-shell.mjs drives the round trip, the refusals and the confirm through it. The
      real file paths stay owed to a human on an iPad. This goes when the shelf goes. */
   backup,
+  /* `classes` joined at WO-1.6, and unlike the others it is NOT here because the feature is
+     unreachable — every control it owns is on the page and a teacher can touch all of them. It is
+     here so tools/verify-shell.mjs can READ the answers: which class and which term are open, what
+     a term id looks like, and what a document holds after six classes have been created through
+     the form. The acceptance lines are driven by clicking the real controls; this is how the
+     result is inspected without a second copy of the resolution logic in the harness. Nothing in
+     the app reads window.planbook, and this goes when the shelf goes. */
+  classes,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,
