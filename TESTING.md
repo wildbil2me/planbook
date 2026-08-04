@@ -187,7 +187,7 @@ this check live for the first time — re-run it there.*
 Two more that belong to this work order rather than to the acceptance list, because both are
 silent when they fail:
 
-- [ ] **Carried over from WO-1.2, and live for the first time here.** On an iPad, nothing sits
+- [x] **Carried over from WO-1.2, and live for the first time here.** On an iPad, nothing sits
       under the safe-area inset: with `viewport-fit=cover` and `black-translucent` both set,
       the ten `env(safe-area-inset-*)` declarations in `src/shell.css` finally resolve
       non-zero, the navy header runs to the top edge under the status bar, and the status-bar
@@ -209,13 +209,18 @@ reload and at two days; and it is back at four days and at seven. **The two-day 
 that earns its keep** — without it the check passes just as well on a banner that returns
 immediately, which is the opposite defect and equally invisible.*
 
-*Still open: the safe-area carry-over above.* Status-bar legibility was confirmed on the tablet
-**while scrolled**, which is the half most likely to fail — `.header` is not sticky, so white
-status-bar text can end up over the `#f0f2f5` page background. The rest of the line — that no
-control or panel edge sits under a now-non-zero inset — was not swept, and is left unticked
-rather than inferred from the legibility pass. **WO-1.2 ticked this exact line against insets
-that were all `0`; a second soft tick would repeat that.* It needs one look down the left and
-right edges in landscape and portrait.
+*The safe-area carry-over closed on a second look, portrait and landscape: the navy header runs
+to the top edge with no pale band above it, the status-bar text is legible both at rest and
+scrolled — the scrolled case being the one that can fail, since `.header` is not sticky and white
+text can land over the `#f0f2f5` page background — and nothing is clipped at the bottom by the
+home indicator. This is the first pass where the check was live at all; WO-1.2 ticked the same
+line against insets that were uniformly `0`.*
+
+*One caveat on what that tick covers, so the next reader doesn't over-read it: it was confirmed
+visually, not measured. The four `env()` values were never read back as numbers. **On a bezelled
+iPad the left and right insets are `0` anyway** — no notch, no intruding corner — so top and
+bottom are the whole of this check on this hardware, and both were looked at directly. A device
+with side insets would need this run again rather than inherited.*
 
 *WO-1.4 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*
