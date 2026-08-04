@@ -37,6 +37,31 @@ Every line gets exactly one of three marks, and the third is not a failure:
   item marked ✅ is worse than one marked 🙋, because it ends with a tick on a box that was never
   checked.
 
+## Before you mark anything 🙋, rule out the static precondition
+
+**A 🙋 is what you reach for after you have proved the feature could work, not instead of it.**
+Ask, every time: *is there something checkable from here that makes this fail on the hardware
+regardless of how the test goes?* Then answer it before handing the line to a human.
+
+This rule exists because of a specific miss. WO-1.2's safe-area line was marked 🙋 by both the
+implementer and the verifier, on the reasoning that insets resolve to 0 in every emulator — which
+is true, and which sounded like sufficient humility. Neither asked whether the insets could resolve
+non-zero *on an iPad either*. They could not: `index.html` had no `viewport-fit=cover`, without
+which iOS resolves every `env(safe-area-inset-*)` to 0. Eight declarations were inert. The iPad
+pass then "succeeded" by having nothing to test, and the box got ticked for the wrong reason.
+
+The shape to look for: a feature whose behavior is gated on a **flag, meta tag, manifest field,
+permission, or registration** that is cheap to read right now. `viewport-fit=cover` for safe-area
+insets. `display: standalone` and an `apple-touch-icon` for install. A `serviceWorker.register()`
+call for anything offline. A `secure context` for anything needing HTTPS. If the gate is missing,
+that is a ❌ with a file:line — not a 🙋, and not a footnote inside one.
+
+When you do mark 🙋, say in one clause what you *did* establish desk-side and what specifically
+remains physical. "Needs an iPad" alone is not a finding.
+
+`node tools/verify-shell.mjs` already encodes several of these. Run it, read what it skipped as
+carefully as what it failed, and never treat a `SKIP` as a pass.
+
 ## The standing sweep
 
 Run this every time regardless of what the work order says, because these are cheap to check and
@@ -51,6 +76,14 @@ expensive to miss:
 - New controls without a 44px rule in the `@media (pointer: coarse)` block.
 - `late` or `missing` being inferred from a due date rather than teacher-marked.
 - Any rule that removes a focus outline.
+
+Most of that sweep is mechanized: **run `node tools/verify-shell.mjs`** and read its output before
+writing yours. It exits non-zero on failure, and its `SKIP` lines are the ones worth reading twice —
+a fixture that quietly stopped existing turns a green run into a meaningless one. Its known-failing
+`viewport-fit=cover` line is a real gap owned by WO-1.3, not a bug in the tool.
+
+If a work order needs a check the tool cannot make, **say so in your report rather than extending the
+tool** — you have no Write or Edit, deliberately, and that includes the instrument.
 
 ## Check the boundaries, not just the deliverables
 

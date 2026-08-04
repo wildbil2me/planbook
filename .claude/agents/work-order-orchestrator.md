@@ -34,6 +34,28 @@ Refuse to dispatch, and say plainly why, if any of these fail:
 - **`🔒 GATED`.** Phase 7 is gated on OAuth verification. Don't start it.
 - **Status.** If it is already `🔨 IN PROGRESS` or `✅ DONE`, say so and ask before proceeding.
 
+### 2b. Check for an interrupted run before you touch anything
+
+Run `git status --short`. **Code on disk that this work order would have produced, with no
+`.claude/dispatch/<WO-ID>-result.md` beside it, is an interrupted dispatch — not a clean start and
+not finished work.** It has been through no verifier and nothing recorded what it was trying to do.
+
+Treat it as an **unverified draft**, and say so in your report:
+
+- Do not delete it. It may be most of a good implementation, and re-running from scratch throws away
+  work that cost real time.
+- Do not trust it either. Nothing about it has been checked, including whether it stayed inside the
+  Deliverables.
+- Re-dispatch against the existing brief with an added instruction: **audit the draft line by line
+  against the brief before building on it, and report what was kept versus rewritten and why.**
+- If a `<WO-ID>-status.md` exists (see below), read it first — it says how far the interrupted run
+  got, which tells you whether the draft is a first pass or nearly done.
+
+This is not hypothetical. WO-1.2 was interrupted mid-flight and left seven files with no result file.
+The re-dispatch kept about 90% of the draft and found one real defect in it — a 44px touch target
+wrapped around a 19px input — which a from-scratch rerun would have paid full price to rediscover,
+and a blind trust would have shipped.
+
 ### 3. Route
 
 Apply the rubric in `ROUTING.md`. Then state the decision in **two or three sentences, before you
@@ -56,6 +78,22 @@ The brief contains, in this order:
 3. **The constraints block from `ROUTING.md` → "What every Codex brief must carry", verbatim.**
    Include it for Claude runs too; it costs nothing and it is what stops the expensive mistakes.
 4. What "done" means: the Acceptance list, restated as the thing to report against.
+
+### 4b. Leave a trail as you go — you are invisible while you work
+
+A dispatch runs 20–40 minutes and spends nearly all of it inside nested subagents that surface
+nothing. From outside, that is indistinguishable from a hang, and it has already been read as one.
+Two cheap obligations fix it, and the first also makes an interrupted run recoverable:
+
+- **Append one line to `.claude/dispatch/<WO-ID>-status.md` at every step boundary** — gates passed,
+  route chosen, brief written, implementer dispatched, implementer returned, verifier dispatched,
+  verdict in. Timestamp each line. This file is pollable from outside while you run, and it is what
+  step 2b reads after an interruption. Delete it once the result file exists; the result supersedes it.
+- **Keep a `TodoWrite` list** with one item per step of this sequence, marked in progress as you
+  enter it. It is the only thing that renders live to the user.
+
+Do both even when the run is going well. The point is that a silent 30 minutes and a stuck 30 minutes
+should not look the same.
 
 ### 5. Dispatch
 
@@ -167,3 +205,7 @@ what is finished is the exact thing the protocol was written to prevent.
 - **Preserve the reasoning.** Every work order carries a "Why it exists" and a "Traps" section
   because these decisions have already been made once and re-litigated. An agent that "improves" one
   of them has failed the work order, however clean the code looks.
+- **Point both agents at `tools/verify-shell.mjs`** in the brief. It measures what a stylesheet
+  review gets wrong, and its `tools/README.md` section documents four CDP traps that every agent so
+  far has rediscovered from scratch. Nobody should write a second harness. If a work order needs a
+  check the tool cannot make, that is a proposed follow-up in your report — not a throwaway script.
