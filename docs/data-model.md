@@ -51,7 +51,12 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
   "classes": [{
     "id": "c_…",
     "name": "Period 3 — Biology",
-    "terms": [{ "id": "Q1", "label": "Quarter 1", "start": "…", "end": "…" }],
+    "archived": false,        // true = keeps everything, leaves the class tab bar
+    // The term id is OPAQUE — `tm_…`, never "Q1". The label is the only place a quarter is
+    // named, and a teacher edits it. See the shape decisions under this sketch; these two lines
+    // read "Q1" until WO-1.6 shipped and the sketch was caught contradicting the code it
+    // documents. A sketch that disagrees with the code undoes the rule in good faith.
+    "terms": [{ "id": "tm_…", "label": "Quarter 1", "start": "…", "end": "…" }],
     "categories": [{ "id": "k_…", "name": "Tests", "weight": 40 }],
     "letterScale": null,      // null = use the document default below
     "roster": ["s_…"]
@@ -87,7 +92,7 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
   }],
 
   "assignments": [{
-    "id": "a_…", "classId": "c_…", "termId": "Q1", "categoryId": "k_…",
+    "id": "a_…", "classId": "c_…", "termId": "tm_…", "categoryId": "k_…",
     "name": "", "points": 100, "assigned": "2026-09-02", "due": "2026-09-09"
   }],
 
@@ -125,8 +130,20 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
 }
 ```
 
-Four shape decisions that matter:
+Seven shape decisions that matter:
 
+- **Term ids are opaque.** `tm_…`, generated, unique, and never derived from a label — the same
+  rule as `c_`, `s_`, `a_` and `k_`. No code anywhere compares a term id to a literal, switches on
+  one, or parses meaning out of one, and `"Q1"` appears nowhere in `src/`; a check sweeps for it.
+  A term's **label** is the only place a quarter is named, it is seeded as a whole word a teacher
+  edits ("Quarter 1"), and renaming it changes nothing but the word. This matters because a
+  hardcoded `Q1`–`Q4` is unsellable to a teacher on semesters or trimesters, and because an id that
+  means something is an id someone eventually parses.
+- **`archived` keeps a class and hides it.** An archived class keeps every attendance record,
+  assignment and score and only leaves the tab bar. It is not deletion and it is not a soft delete
+  pending cleanup — nothing ever collects it. Deletion is a separate, explicit operation offered
+  only on an archived class, which is what keeps "get this out of my way" one cheap tap and
+  "destroy a term of attendance" a dialog that counts what goes.
 - **`scores` is keyed by assignment, then student**, so adding an assignment touches one key and
   entering a column of grades is one object.
 - **A score cell is always an object**, never a bare number. Polymorphic cells (`87` here,

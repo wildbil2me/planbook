@@ -240,8 +240,8 @@ sync will happily overwrite.
       reachable way to restore from a backup file, rather than a loading screen with no exit.
       *(Download correctly reads "Nothing open to back up" and is disabled in that state.)*
 
-*Verified 2026-08-04. `node tools/verify-shell.mjs` 79/79 (was 54 before this work order), run three
-times; the 👤 halves — a real download landing in Files, a real drag out of the Files app, and a
+*Verified 2026-08-04. `node tools/verify-shell.mjs` 82/82 (was 54 before this work order), run three
+times — this line read "79/79" until WO-1.6 re-ran `HEAD` and counted; the 👤 halves — a real download landing in Files, a real drag out of the Files app, and a
 thumb on all of it — run on the iPad the same day. **A restore replaces the year named in the file,
 not the year that is open**, and then switches to it; the confirm says so explicitly when they
 differ.*
@@ -254,7 +254,7 @@ worse than no restore.
 
 ## WO-1.6 — Classes & terms
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.5
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** M · 🚩 · **Depends on** WO-1.5
 **Closes roadmap** Phase 1 → "Class management: create/rename/reorder five-plus classes; term
 structure per class."
 
@@ -271,12 +271,39 @@ to a teacher on semesters or trimesters.
 **Out of scope** — categories and weights (WO-3.1); anything grade-shaped.
 
 **Acceptance**
-- [ ] Six classes can be created, reordered by drag or by explicit up/down controls, and renamed.
-- [ ] Two classes in the same document can have different term structures, and both work.
-- [ ] A class can be given a single year-long term.
-- [ ] Term dates can overlap or leave gaps without the app breaking — real calendars are messy.
-- [ ] Deleting a class warns about the attendance and grade data it takes with it, and can be
-      cancelled.
+- [x] Six classes can be created, reordered by drag or by explicit up/down controls, and renamed.
+      *(Up/down controls, not drag: a drag handle on a scrolling strip fights the scroll on a
+      tablet, and the arrows are what the 44px pass can measure. They disable at the ends.)*
+- [x] Two classes in the same document can have different term structures, and both work.
+      *(`Homeroom = ["Full year"]` beside `Period 1 = 4 terms`, in one document.)*
+- [x] A class can be given a single year-long term.
+- [x] Term dates can overlap or leave gaps without the app breaking — real calendars are messy.
+      *(Verified as an **absence**: no `min`, no `max`, no `required`, no `.sort(` and no `new Date`
+      anywhere in `src/classes.js`. Nothing validates these into a calendar, which is how
+      `plans/rotating-schedule.md`'s deleted schedule model stays deleted.)*
+- [x] Deleting a class warns about the attendance and grade data it takes with it, and can be
+      cancelled. *(Counts are read off the open document, and delete is offered only on an archived
+      row — archiving is the one tap that costs nothing. Cancelling leaves `rev` unmoved.)*
+
+*Verified 2026-08-04. `node tools/verify-shell.mjs` 130/130, zero skips — 48 checks added by this
+work order. **The baseline was 82, not the 79 this file recorded at WO-1.5**; the real number was
+confirmed by extracting `HEAD` into a scratch tree and running there, and `CHANGELOG.md` had it
+right all along. `git diff --numstat tools/verify-shell.mjs` shows no deletions: no existing check
+was loosened to make this green.*
+
+*The 👤 halves ran on the iPad the same day and found four defects, all fixed and all now pinned by
+checks. Two were visible on the tablet: **the iPadOS date popover keeps its own selection after a
+field is cleared**, so re-choosing the date just cleared is a no-op the picker never reports — the
+teacher's workaround is to tap a neighbouring day and back, which writes a date she never wanted
+into the document on the way past; and the class tabs, being ordinary flex items, were **compressed
+below the width of their own labels**, which then laid out across the rounded background and past
+its edge. The other two were found by the checks written for the first pair, and neither was
+reachable from an iPad: nothing scrolled the open class back into view after the bar was rebuilt —
+`scrollLeft` resets when a scroller's children are replaced, so the teacher whose class was fifth of
+six got a header with nothing on it looking selected — and at 390px the entire class strip measured
+**zero pixels wide**, because `flex: 1` means a basis of 0 and an over-full flex row distributes
+shrinking in proportion to basis, so the strip beside a content-sized term nav shrank by nothing and
+stayed at nothing. An iPad in portrait is wider than the width where that happens.*
 
 **Traps** — Never write `Q1` as a literal anywhere outside seed data. The term id is opaque.
 

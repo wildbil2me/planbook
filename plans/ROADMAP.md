@@ -158,8 +158,13 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 - [x] Lift the frame from Roll Call!'s `design/starter-template.html` and
       `design/portable-components.md`: navy gradient header, white rounded panels, two-row header,
       modal system, save indicator. Rename, `planbook_` prefix.
-- [ ] 🚩 Class management: create/rename/reorder five-plus classes; term structure per class
-      (quarters / semesters / trimesters — never hardcode Q1–Q4).
+- [x] 🚩 Class management: create/rename/reorder five-plus classes; term structure per class
+      (quarters / semesters / trimesters — never hardcode Q1–Q4). *(Reorder is explicit up/down
+      arrows rather than drag — a drag handle fights the scroll of the strip it lives on, and
+      arrows are measurable by the 44px pass. Archive and delete are separate operations: archive
+      keeps everything and only leaves the tab bar, and delete is offered only on an archived row.
+      Term dates are labels on a range — never sorted, never validated, and an empty one is valid,
+      which is `plans/rotating-schedule.md` staying deleted.)*
 - [ ] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
 - [ ] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
       plan, case manager, review date. Per [`../docs/data-model.md`](../docs/data-model.md).

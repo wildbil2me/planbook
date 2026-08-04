@@ -48,9 +48,10 @@ Three things it does not do, and this file is where that matters:
   counted separately. Read the skip list as carefully as the failure list; a run that is mostly
   skips proves nothing.
 - **It cannot see the service worker or the install path.** It drives a page, not an installed
-  app; nothing it does closes a WO-1.3 line. *(As of WO-1.5 the run is 79 of 79. It was 28 of 28
+  app; nothing it does closes a WO-1.3 line. *(As of WO-1.6 the run is 130 of 130. It was 28 of 28
   at WO-1.3, when the `viewport-fit=cover` precondition that used to fail by design started
-  passing, and 54 at WO-1.4.)*
+  passing, 54 at WO-1.4, and 82 at WO-1.5 — a number this line and the phase file both recorded as
+  79 until WO-1.6 re-ran `HEAD` in a scratch tree and counted. A remembered count is not a count.)*
 
 Why it exists and the rules that keep it a script rather than a test framework:
 [`plans/verification-tooling.md`](plans/verification-tooling.md).
@@ -327,12 +328,81 @@ before a teacher runs two live years.*
 *2026-08-04, follow-up: the third limit above turned out to be a defect rather than a limit, and is
 fixed. `lastBackupAt` is per-year now, the nag asks about the open year and names it, and the panel
 names any year that has never been downloaded. The harness runs the case at the desk — two years,
-one downloaded, the other's nag still up — and is 82 of 82. **One 👤 line is owed and is not
+one downloaded, the other's nag still up — and is 82 of 82. **One 👤 line was owed and is not
 closed by that run:*** *on an installed iPad, with two years on the device, confirm the panel's
 amber line is legible and says something a teacher would act on, and that the nag names the year
 after a switch. Everything else about this fix is desk-measurable; that sentence is not.*
 
-*WO-1.6 through WO-1.10 append their own subsections here as they land, in work-order order.
+- [x] The backup panel's amber line is legible on an installed iPad and names the year. 👤
+
+*Closed 2026-08-04, on the same tablet and in the same session as the WO-1.6 sitting below —
+the line is there and reads correctly. That is the last 👤 item outstanding from WO-1.5.*
+
+### WO-1.6 — Classes & terms
+
+- [x] Six classes can be created, reordered by explicit up/down controls, and renamed. 👤
+- [x] Two classes in the same document can have different term structures, and both work.
+- [x] A class can be given a single year-long term.
+- [x] Term dates can overlap, run backwards, or be left empty without the app breaking.
+- [x] Deleting a class warns about the attendance and grade data it takes with it, and can be
+      cancelled.
+- [x] The class tabs, the term nav and the reorder arrows are thumbable, and the header reads
+      correctly in both orientations. 👤
+- [x] The iPadOS date sheet sets a term date, and a date can be cleared back to empty. 👤
+- [x] The open class survives a force-quit and relaunch — visible on the bar and highlighted. 👤
+- [x] Offline launch with the network off, `classes.js` served from the precache. 👤
+- [x] The delete confirm and the two "Planbook does not check term dates" hints read correctly on
+      the tablet. 👤
+
+*Ticked 2026-08-04, same hardware and same day as WO-1.4 and WO-1.5 — iPadOS 26.5.2 on an iPad
+(A16), installed to the home screen, served over HTTPS from `tools/serve-https.mjs`. The Environment
+table above stands unchanged.*
+
+*The desk half is `verify-shell.mjs`, **130 of 130** with zero skips, 48 checks added here. The
+baseline it was added to is 82, not the 79 this file recorded — see the note above. No existing
+check was loosened: `git diff --numstat tools/verify-shell.mjs` has no deletions.*
+
+*The sitting found four defects, which is the most any pass has produced, and the two the tablet
+could see were the smaller pair.*
+
+1. ***The iPadOS date popover keeps its own selection after the field is cleared.*** *Clear a term
+   date holding 9/4 and the calendar still has the 4th highlighted, so tapping it again is a no-op
+   the picker never reports and the field stays empty. The workaround a teacher finds — tap the 3rd,
+   then the 4th — writes a date she never wanted into the year document on the way past. A cleared
+   date field is now thrown away and rebuilt, because a fresh element has no picker state. Bound to
+   `change` rather than `input`: a desktop date field reads as empty while a date is part-typed, and
+   rebuilding on that would replace the element under the caret.*
+2. ***Class tabs were compressed below the width of their own labels***, *and the labels then laid
+   out across the rounded background and over its edge. Ordinary flex items shrink; these live in a
+   strip that scrolls, so they must not. Seen at 390px as an 85px label inside a 44px button.*
+3. ***Nothing scrolled the open class back into view.*** *Replacing a scroller's children resets
+   `scrollLeft`, and the bar is rebuilt on every change — so with six classes the teacher whose
+   class was fifth got a header scrolled to the left with no tab on it looking selected. Found by a
+   check written for defect 2.*
+4. ***At 390px the class strip measured zero pixels wide.*** *`flex: 1` is a basis of 0, and an
+   over-full flex row distributes shrinking in proportion to basis — so a strip with basis 0 beside
+   a content-sized term nav shrinks by nothing and stays at nothing. Present in WO-1.6 as delivered
+   and **not findable on this hardware**: an iPad in portrait is wider than the width where it
+   happens. Both strips are now sized from their content with a floor under each.*
+
+*Defects 3 and 4 are the argument for writing the check before believing the fix. Neither was
+reachable from the tablet, and both came out of checks added for something else.*
+
+*The touch-target standing check was re-run for this phase, as it is every phase. WO-1.6's new
+controls are the class tabs, the term nav buttons, the up/down arrows, and every control in the
+manager, the term editor and the delete confirm — 32, 22 and 3 of them measured respectively, plus
+the date fields, which carry their 44px on the `<input>` itself with vertical padding zeroed rather
+than on a wrapper around it. That is the WO-1.2 `.search-box` defect's lesson, and it is why the
+arrows also carry `min-width` and not only `min-height`: a one-glyph button 44px tall and 30px wide
+is half a touch target.*
+
+*One limit worth carrying forward. The counted form of the delete confirm — "attendance for 46
+recorded meetings, 31 assignments, 620 scores" — cannot be read on a real document yet, because
+nothing writes attendance or assignments until Phases 2 and 3. On the tablet it necessarily shows
+the "nothing has been recorded in this class yet" wording. The counted string is exercised at the
+desk against fixtures, and is owed a human read once there is real data to count.*
+
+*WO-1.7 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*
 
 ---

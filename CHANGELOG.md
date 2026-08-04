@@ -15,6 +15,44 @@ records what someone remembered.
 
 ### Fixed
 
+- **Four defects in the class bar and the term editor, found by the first iPad sitting and by the
+  checks written for it.** Two were visible on the tablet; two were not, and came out of checks
+  added for the first pair.
+
+  **A term date, once cleared, would not accept the same date again.** The iPadOS date popover keeps
+  its own selection separate from the field's value, so clearing a field holding 9/4 leaves the
+  calendar still showing the 4th selected — and tapping it again changes nothing the picker will
+  report. The workaround a teacher finds is to tap the 3rd and come back, which is worse than an
+  annoyance: it writes a date she never chose into the year document on the way past. A cleared date
+  field is now discarded and rebuilt, since a fresh element carries no picker state. The rebuild is
+  bound to `change` rather than `input`, because a date field reads as empty while a date is being
+  typed and rebuilding there would replace the element under the caret — there is a check for each
+  half, and each fails without its fix.
+
+  **Class tabs were squeezed narrower than their own labels**, which then wrapped across the rounded
+  background and past its edge. They are ordinary flex items in a strip that scrolls, and a flex
+  item shrinks by default; at 390px this was an 85px label inside a 44px button. They no longer
+  shrink, so the overflow goes where it was always meant to — the strip's own scroll — and a
+  `max-width` with an ellipsis stops one very long class name from pushing every other tab out of
+  reach.
+
+  **The open class was never scrolled back into view.** Replacing a scroller's children resets
+  `scrollLeft`, and the bar is rebuilt on every change, so a teacher whose class was fifth of six
+  got a header scrolled to the left with no tab on it looking selected — which reads as the app
+  having forgotten which class she was in. The strip's own `scrollLeft` is corrected after each
+  rebuild, rather than `scrollIntoView`, which would also be free to scroll every ancestor.
+
+  **At 390px the class strip measured zero pixels wide** — the entire bar, tabs and all. `flex: 1`
+  means a flex-basis of 0, and an over-full flex row distributes shrinking in proportion to basis,
+  so a strip with basis 0 beside a term nav sized from its content shrank by nothing and simply
+  stayed at nothing. Both strips are now sized from their content with a floor under each. This one
+  shipped in the work order as delivered and was **not findable on the hardware it affects**: an
+  iPad in portrait is wider than the width where it happens.
+
+  `verify-shell.mjs` is 130 of 130, up from a baseline of 82 — a number the phase file and
+  `TESTING.md` both recorded as 79 until it was re-counted by extracting `HEAD` into a scratch tree
+  and running there. A remembered count is not a count.
+
 - **The backup nag no longer goes quiet for a year that was never backed up.** `lastBackupAt` was
   one timestamp for the whole browser, so downloading the open year marked every other year on the
   device as backed up too. A teacher part-way through a rollover — 2027-2028 started, 2026-2027 kept
@@ -39,6 +77,35 @@ records what someone remembered.
   this bug is invisible, so it drives two — and is now 82 of 82.
 
 ### Added
+
+- **Classes and terms — the first screen that writes to a year document.** Create, rename, reorder,
+  archive and delete classes; give each its own term structure. The class tabs and the term nav in
+  the header are live, and every later screen reads which class and which term are open from here.
+
+  **Reorder is explicit up/down arrows, not drag.** The tab strip scrolls, and a drag handle on a
+  scrolling strip fights the scroll on a tablet — the gesture that reorders and the gesture that
+  scrolls are the same one. Arrows are also measurable by the 44px pass, and they carry `min-width`
+  as well as `min-height`, because a one-glyph button 44px tall and 30px wide is half a touch
+  target.
+
+  **Archive and delete are different operations, and delete is offered only on an archived row.**
+  Archiving keeps every attendance record, assignment and score and only takes the class off the
+  bar; deleting destroys them. So getting a class out of the way is one tap that costs nothing, and
+  destroying a term of attendance is two taps and a dialog that counts what goes — read off the open
+  document, never from a specimen. Cancelling leaves `rev` unmoved, which is the check that proves
+  nothing was written.
+
+  **Term dates are labels on a range and nothing else.** They are never sorted, never repaired,
+  never checked for gaps or overlaps, never used to decide which term is current, and an empty date
+  is valid — a teacher setting up in August has not been given the school calendar yet, and a term
+  she cannot create until she has it is a term she creates wrong. There is no `min`, no `max`, no
+  `required`, no `.sort(` and no `new Date` in `src/classes.js`, and a check asserts that absence.
+  This is `plans/rotating-schedule.md` staying deleted: the moment anything validates these into a
+  contiguous calendar, the app has a schedule model again.
+
+  Term ids are opaque (`tm_…`) and no code anywhere reads meaning out of a term label. Seed
+  structures use whole words a teacher edits — "Quarter 1", not `Q1` — and a check sweeps the source
+  for the literal.
 
 - **The teacher can get the year back out, and back in** (WO-1.5). One tap downloads the open year
   as plain JSON, named for the year and the date; a file input and a drop target read one back.
