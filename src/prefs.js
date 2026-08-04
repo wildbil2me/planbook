@@ -37,19 +37,31 @@ export const PREF_DEFAULTS = {
      boot and writes it on a year switch. */
   openYear: '',
 
-  /* Epoch ms of the last time a backup download was STARTED from this browser; 0 means never.
-     A date and nothing else: no filename, no year, no counts, nothing lifted out of the
-     document — which is what makes a fact about a gradebook full of students legal in
-     localStorage at all. src/backup.js writes it when a download starts and reads it to decide
-     whether to nag.
+  /* When a backup download was last STARTED from this browser, keyed by school year:
+     { "2026-2027": 1754336000000 }. An empty object means never, for any year.
 
-     Two things it deliberately is not. It is not proof the file reached the disk — a browser
-     download can still be cancelled at the save dialog, and there is no event that tells a page
-     otherwise, so this is "she was offered the file" and the nag is built to be cheap to satisfy
-     rather than exact. And it is per-browser, not per-year and not synced: the backup that
-     matters is the one for the device in front of you, and a file downloaded on the laptop does
-     nothing for the iPad whose storage is the one iOS will evict. */
-  lastBackupAt: 0,
+     Dates and year labels and nothing else — no filename, no counts, nothing lifted out of a
+     document. The year label is already here in `openYear` for the same reason: it names a
+     document, it is not content from inside one. That is what makes a fact about a gradebook
+     full of students legal in localStorage at all.
+
+     WHY PER-YEAR, which it was not until 2026-08-04. It was one timestamp for the whole
+     browser, and the reasoning was sound as far as it went: the backup that matters is the one
+     for the device in front of you, and a file downloaded on the laptop does nothing for the
+     iPad whose storage iOS will evict. But a teacher part-way through a rollover has two live
+     years, and one number meant that downloading 2026-2027 marked 2027-2028 as backed up too —
+     the nag went quiet for a year that had never been written to a file. A warning that
+     silences itself for the year you did not save is worse than no warning, because it also
+     answers the question. Per-browser survives, per-year is added underneath it.
+
+     It is still not proof the file reached the disk. A download can be cancelled at the save
+     dialog and no event tells a page so; this is "she was offered the file", and the nag is
+     built to be cheap to satisfy rather than exact. Still not synced, for the reason above.
+
+     A value written before that date is a bare number rather than a map. src/backup.js treats
+     one as "no year has been backed up", which nags once too often rather than once too few —
+     the only direction a data-safety default may round. */
+  lastBackupAt: {},
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

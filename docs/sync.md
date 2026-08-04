@@ -48,6 +48,34 @@ remote.rev >  baseRev   → remote is ahead     → download (if local is unchan
 both changed            → conflict            → keep both, never discard
 ```
 
+### What a restore does to `rev`
+
+A restore is the one operation that puts a document on the device without a save producing it, so
+it has to answer to the ordering above. It does, and the rule is already implemented in
+`src/store.js` (`restoreDocument()`, and the reasoning block above it):
+
+```
+restored.rev = max(this device's rev for that year, the file's rev) + 1
+```
+
+**`rev` never goes backwards for a year on a device.** A backup taken at rev 12 and restored over a
+year that had reached rev 50 here becomes rev 51, not rev 12. Reverting to the file's number would
+let a later sync compare against a rev the document on this device never had, which is the one thing
+the table above cannot survive.
+
+The consequence is deliberate and is the behavior a teacher restoring on purpose expects: the
+restored document is **ahead of `baseRev`**, so it uploads, and an old file restored knowingly
+**supersedes** the Drive copy rather than quietly losing to it. A restore is a decision; sync must
+not overturn it on the next poll.
+
+`updatedAt` becomes now, for the same reason — both are save bookkeeping, not content. Everything
+the teacher typed comes back exactly as the file holds it.
+
+**Open for Phase 7, not decided here:** a backup restored from a *different device* brings that
+file's `docId` with it, and `docId` is what `files.list` matches on. Whatever builds sync has to
+decide what that means — most likely re-point `baseRev` and re-match the remote file rather than
+assume the local pairing still holds. Write the answer here when it exists.
+
 **A conflict is not resolvable by guessing.** Write the losing side to Drive as
 `Planbook 2026-2027 (conflict from iPad 2026-11-14).json`, keep the winner active, and tell the
 teacher plainly what happened and where the other copy is. Silent merge of two gradebooks is how

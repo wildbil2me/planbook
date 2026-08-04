@@ -13,6 +13,31 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The backup nag no longer goes quiet for a year that was never backed up.** `lastBackupAt` was
+  one timestamp for the whole browser, so downloading the open year marked every other year on the
+  device as backed up too. A teacher part-way through a rollover — 2027-2028 started, 2026-2027 kept
+  for reporting she has not finished — could download one, watch the strip disappear, and reasonably
+  read that as "Planbook is backed up." The strip is the only thing standing between a set-aside year
+  and silence, and a warning that silences itself for the year you did not save is worse than no
+  warning, because it also answers the question.
+
+  The preference is now a map of year to timestamp, the nag asks about the **open** year and names
+  it, and a year switch joins boot, backup and restore as a moment the answer is re-evaluated. Still
+  per-browser underneath: a file downloaded on the laptop does nothing for the iPad whose storage
+  iOS will evict. A device holding the old bare-number value reads as "no year has been backed up",
+  which nags once too often rather than once too few — the only direction a data-safety default may
+  round.
+
+  The backup panel also names any year on the device that has never been downloaded, because the nag
+  only fires on the year that is open: a teacher who never switches back was otherwise never told.
+  Backing every year up in one tap is WO-1.11; this is the half that stops the gap from being
+  silent, which is the half that matters.
+
+  `verify-shell.mjs` gains the check that would have caught it — one year is exactly the case where
+  this bug is invisible, so it drives two — and is now 82 of 82.
+
 ### Added
 
 - **The teacher can get the year back out, and back in** (WO-1.5). One tap downloads the open year

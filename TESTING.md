@@ -324,6 +324,14 @@ checked as they are produced, never read back off disk. And `planbook_lastBackup
 browser rather than one per year, so downloading year A clears the nag for year B — worth knowing
 before a teacher runs two live years.*
 
+*2026-08-04, follow-up: the third limit above turned out to be a defect rather than a limit, and is
+fixed. `lastBackupAt` is per-year now, the nag asks about the open year and names it, and the panel
+names any year that has never been downloaded. The harness runs the case at the desk — two years,
+one downloaded, the other's nag still up — and is 82 of 82. **One 👤 line is owed and is not
+closed by that run:*** *on an installed iPad, with two years on the device, confirm the panel's
+amber line is legible and says something a teacher would act on, and that the nag names the year
+after a switch. Everything else about this fix is desk-measurable; that sentence is not.*
+
 *WO-1.6 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*
 

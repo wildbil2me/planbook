@@ -469,6 +469,10 @@
         <button class="class-action-btn primary" id="backupDownloadBtn" data-backup-download>Download backup</button>
       </div>
       <p class="backup-last" id="backupLast"></p>
+      <!-- Filled and unhidden by src/backup.js only when a year on this device has never been
+           downloaded. A teacher with one year never sees it; a teacher part-way through a
+           rollover needs to be told that this button backs up the year she has open. -->
+      <p class="backup-other-years hidden" id="backupOtherYears"></p>
 
       <div class="backup-notice">
         <p>

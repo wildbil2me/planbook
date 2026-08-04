@@ -879,28 +879,93 @@ if (!backupBooted || !backupSeam) {
   /* The nag, at four ages. A single "it appeared" sample cannot tell a working threshold from a
      strip that is always up. */
   const nag = await evalJs(`(async function(){ var b = window.planbook.backup, p = window.planbook;
+    var y = window.planbook.store.getDoc().year;
     var el = document.getElementById('backupNag'), day = 24*60*60*1000;
     function state(){ return !el.classList.contains('hidden'); }
-    p.setPref('lastBackupAt', Date.now() - 2*day); b.refreshBackupNag();
+    /* The preference is a map of year → epoch ms, so every age below is set for the year that
+       is actually open. Writing a bare number here is what the old shape did, and it is the
+       shape the cross-year check further down exists to keep out. */
+    function stamp(ms){ var m = {}; if (ms) { m[y] = ms; } p.setPref('lastBackupAt', m); }
+    stamp(Date.now() - 2*day); b.refreshBackupNag();
     var atTwoDays = state();
-    p.setPref('lastBackupAt', Date.now() - 8*day); b.refreshBackupNag();
+    stamp(Date.now() - 8*day); b.refreshBackupNag();
     var atEightDays = state();
     var lead = (document.getElementById('backupNagLead')||{}).textContent;
-    p.setPref('lastBackupAt', 0); b.refreshBackupNag();
+    stamp(0); b.refreshBackupNag();
     var never = state();
     await b.downloadBackup();
-    return { atTwoDays:atTwoDays, atEightDays:atEightDays, lead:lead, never:never,
-             afterDownload: state(), pref: p.getPref('lastBackupAt'),
+    return { year:y, atTwoDays:atTwoDays, atEightDays:atEightDays, lead:lead, never:never,
+             afterDownload: state(), pref: (p.getPref('lastBackupAt')||{})[y],
              status: document.getElementById('backupStatus').textContent }; })()`);
   check('the nag appears when the last backup is over 7 days old, and says how long ago',
     nag.atEightDays === true && /8 days ago/.test(nag.lead || ''),
     'at 8 days: shown=' + nag.atEightDays + ' lead=' + JSON.stringify(nag.lead));
+  check('and it names the year it is talking about',
+    new RegExp(nag.year).test(nag.lead || ''),
+    'lead = ' + JSON.stringify(nag.lead));
   check('and it stays down at 2 days, and comes up when there has never been one',
     nag.atTwoDays === false && nag.never === true,
     'at 2 days shown=' + nag.atTwoDays + ', never-backed-up shown=' + nag.never);
-  check('a successful download clears the nag and stamps the planbook_ preference',
+  check('a successful download clears the nag and stamps the planbook_ preference for that year',
     nag.afterDownload === false && Math.abs(Date.now() - nag.pref) < 120000,
-    'planbook_lastBackupAt = ' + nag.pref + ', nag shown = ' + nag.afterDownload);
+    'planbook_lastBackupAt[' + nag.year + '] = ' + nag.pref + ', nag shown = ' + nag.afterDownload);
+
+  /*
+    The cross-year check, and the reason it exists rather than the reason it is thorough.
+
+    Until 2026-08-04 the timestamp was one number for the whole browser, so downloading the open
+    year marked every other year on the device as backed up too and the strip went quiet for a
+    year that had never been written to a file. Nothing caught it: every check above samples one
+    year, and one year is exactly the case where the bug is invisible. A second year, with
+    something in it to lose, is the whole of the fixture.
+
+    It runs against the year the store already has from the year-switching checks, so it creates
+    nothing — and it puts the open year back afterwards, because everything below assumes it.
+  */
+  const otherYear = await evalJs(`(async function(){ var s = window.planbook.store,
+      b = window.planbook.backup, was = s.getDoc().year;
+    var years = (await s.listYears()).filter(function(y){ return y !== was; });
+    if (!years.length) return { skipped:true };
+    await s.openYear(years[0]);
+    /* A year with nothing typed into it never nags, by design — so give it something first. */
+    s.update(function(d){ d.students.push({ id:'s-cross', first:'Cross', last:'Year' }); });
+    await s.flush();
+    b.refreshBackupNag();
+    var shown = !document.getElementById('backupNag').classList.contains('hidden');
+    var lead = (document.getElementById('backupNagLead')||{}).textContent;
+    await s.openYear(was);
+    b.refreshBackupNag();
+    return { skipped:false, other:years[0], was:was, shown:shown, lead:lead,
+             backHome: s.getDoc().year }; })()`);
+  if (otherYear.skipped) {
+    skip('downloading one year does not silence the nag for another',
+      'only one year exists on the device at this point in the run');
+  } else {
+    check('downloading one year does not silence the nag for another',
+      otherYear.shown === true && new RegExp(otherYear.other).test(otherYear.lead || '')
+        && otherYear.backHome === otherYear.was,
+      otherYear.was + ' was just downloaded; with ' + otherYear.other
+        + ' open the nag is shown=' + otherYear.shown + ' saying ' + JSON.stringify(otherYear.lead));
+
+    /* And the panel says so out loud, because the nag only fires on the year that is open: a
+       teacher who never switches to the other year is never told it is unbacked-up otherwise. */
+    const otherLine = await evalJs(`(async function(){ var el, tries = 0;
+      window.planbook.backup.openBackupPanel(document.querySelector('[data-backup-panel]'));
+      /* The line is filled after the panel opens, on purpose (src/backup.js: a recovery screen
+         does not wait on the store). Poll rather than sleep — a fixed wait here would assert a
+         presence too early and a stale absence forever. */
+      while (tries++ < 60) {
+        el = document.getElementById('backupOtherYears');
+        if (el && !el.classList.contains('hidden') && el.textContent) break;
+        await new Promise(function(r){ setTimeout(r, 25); });
+      }
+      return { hidden: !el || el.classList.contains('hidden'),
+               text: el ? el.textContent.replace(/\\s+/g,' ') : '' }; })()`);
+    check('and the panel says the download covers only the open year, naming the one it does not',
+      otherLine.hidden === false && new RegExp(otherYear.other).test(otherLine.text)
+        && /year you have open/i.test(otherLine.text),
+      otherLine.hidden ? 'the line stayed hidden' : JSON.stringify(otherLine.text));
+  }
 
   /* Every refusal, and the two things each one has to be true of: it says what was wrong, and
      it did not touch storage. A file that parses as JSON and is a shopping list has to be

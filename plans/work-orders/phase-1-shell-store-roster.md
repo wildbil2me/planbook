@@ -426,3 +426,55 @@ not a refactor.
 
 **Traps** — Don't build the Phase 6 glance page here. Build the *frame* that accretes into it. The
 roadmap is explicit: build the glance page before the things it glances at and you build it twice.
+
+---
+
+## WO-1.11 — Back up every year in one tap
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.5
+**Not a go-live blocker.** Added 2026-08-04, out of WO-1.5's verification.
+
+**Why it exists.** WO-1.5's download backs up the **open** year, because the open document is what
+`getDoc()` returns. That is right for one year and wrong at a rollover: a teacher who has started
+2027-2028 while still holding 2026-2027 for reporting she has not finished takes a backup, sees the
+date update, and reasonably reads it as "Planbook is backed up." One of her two years is on disk.
+
+Two halves of this were closed on 2026-08-04 rather than deferred, because they were the silent
+half: `planbook_lastBackupAt` is now **per-year**, so downloading one year no longer clears the nag
+for another, and the backup panel names any year on the device that has never been downloaded. What
+is left is the convenience — and the convenience is what makes it actually get done.
+
+**Deliverables**
+- A second control on the backup panel that writes out every year on the device, shown only when
+  there is more than one.
+- The last-backup timestamp stamped for **each** year the button actually wrote.
+- Panel copy that says how many years it covers, and the nag left alone — it stays a per-year strip.
+
+**The decision this work order has to make first**, because it reaches into restore and restore is
+the most destructive thing the app does:
+
+- **One file holding an array of year documents** — one tap, one artifact, and restore has to learn
+  a second top-level shape and decide what "replace" means for three years at once. That is a real
+  change to the validation path WO-1.5 got verified, and it wants its own acceptance lines.
+- **Or one file per year, downloaded in sequence** — restore stays exactly as it is, and every file
+  is a file WO-1.5 already reads. The cost is iOS Safari, which is unreliable about several
+  programmatic downloads from a single gesture and may prompt per file.
+
+The second is the smaller change and keeps the recovery path single-shaped; it is the one to try
+first, and the iPad decides whether it survives. Do not widen restore without saying so out loud.
+
+**Out of scope** — Drive, scheduled backups, and restoring a single class or student out of a file.
+The unit of recovery is the year, deliberately (`docs/data-model.md`).
+
+**Acceptance**
+- [ ] With two years on the device, one tap produces a readable backup of both.
+- [ ] The control is absent with only one year, and no teacher who never rolls over ever sees it.
+- [ ] Each year written gets its own `lastBackupAt` stamp; the nag is down for both afterwards.
+- [ ] Restore still accepts every file this produces, and the WO-1.5 refusal checks still pass
+      unchanged.
+- [ ] 👤 On an installed iPad: every file lands in Files, and the run is not silently truncated to
+      the first year by Safari's download handling.
+
+**Traps** — A "back up everything" button that quietly writes one year is worse than no button,
+because it answers the question the nag was asking. If sequential downloads are cut short on iOS,
+say so on screen rather than stamping the years that never landed.

@@ -78,7 +78,16 @@ document.addEventListener('click', (e) => {
   if (picker) { openYearPicker(picker); return; }
 
   const yearRow = e.target.closest('[data-year-switch]');
-  if (yearRow) { switchYear(yearRow.getAttribute('data-year-switch')); return; }
+  if (yearRow) {
+    /* The nag is a fact about the open year (src/backup.js), so a year switch is one of the four
+       moments its answer can change. Chained here rather than inside switchYear() because
+       backup.js already imports year-picker.js for refreshYearButton, and the reverse import
+       would close the loop. Refreshed whether or not the switch took: a refusal leaves the old
+       year open, and re-asking about the year that is still open is the right answer anyway. */
+    switchYear(yearRow.getAttribute('data-year-switch'))
+      .then(backup.refreshBackupNag, backup.refreshBackupNag);
+    return;
+  }
 
   const backupPanel = e.target.closest('[data-backup-panel]');
   if (backupPanel) { backup.openBackupPanel(backupPanel); return; }
@@ -114,7 +123,9 @@ document.addEventListener('submit', (e) => {
   /* Nothing in this app ever navigates: a submit that reloads the page would throw away the
      year document that is live in memory. */
   e.preventDefault();
-  createYearFromForm();
+  /* A newly created year has never been backed up, so the strip's answer changes here too — and
+     this is the path that produces the second year the per-year timestamps exist for. */
+  createYearFromForm().then(backup.refreshBackupNag, backup.refreshBackupNag);
 });
 
 /* The file input. A `change` listener rather than a click one for the obvious reason, and

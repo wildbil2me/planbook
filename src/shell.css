@@ -454,6 +454,13 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    from a gesture into a decision. */
 .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .modal-body .backup-last { font-size: 11px; color: #8a9bb0; margin-top: 8px; }
+/* Louder than .backup-last and quieter than .backup-notice: it names something not done yet,
+   which is a nudge rather than the standing warning about what the file holds. Same amber the
+   nag and the install banner use, so "act on this" reads the same everywhere. */
+.modal-body .backup-other-years {
+  font-size: 12px; line-height: 1.5; color: #8a6d1a; margin-top: 8px;
+  padding: 8px 10px; border-radius: 8px; background: #fff8e6; border: 1px solid #f0dfa8;
+}
 /* Caution wash, not danger: the file is not a problem, it is a thing to handle carefully. Same
    amber as the two strips at the top of the page, so "pay attention to this" reads the same
    everywhere in the app. */
@@ -554,6 +561,7 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .backup-file { min-height: 44px; font-size: 13px; }
   .backup-file::file-selector-button { min-height: 44px; padding: 8px 14px; font-size: 12px; }
   .modal-body .backup-last { font-size: 12px; }
+  .modal-body .backup-other-years { font-size: 13px; }
   .modal-body .backup-status { font-size: 13px; }
   .modal-body .restore-note { font-size: 13px; }
   .restore-side-line { font-size: 13px; }

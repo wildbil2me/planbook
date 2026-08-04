@@ -32,7 +32,7 @@
 */
 
 import {
-  getDoc, flush, newYearDocument, migrateDocument, normalizeYear,
+  getDoc, flush, listYears, newYearDocument, migrateDocument, normalizeYear,
   readStoredDocument, restoreDocument, SCHEMA_VERSION,
 } from './store.js';
 import { openModal, closeModal } from './modal.js';
@@ -45,6 +45,7 @@ const CONFIRM_ID = 'restoreConfirmModal';
 const NAG_ID = 'backupNag';
 const STATUS_ID = 'backupStatus';
 const LAST_ID = 'backupLast';
+const OTHER_YEARS_ID = 'backupOtherYears';
 const DROP_ID = 'backupDrop';
 const FILE_ID = 'backupFile';
 const DOWNLOAD_ID = 'backupDownloadBtn';
@@ -144,9 +145,47 @@ export async function buildBackup() {
     throw new Error('There is no school year open, so there is nothing to back up yet.');
   }
   return {
+    year: doc.year,
     name: 'Planbook ' + doc.year + ' backup ' + dateStamp(new Date()) + '.json',
     text: JSON.stringify(doc, null, 2),
   };
+}
+
+/* ────────────────────────── when each year was last written out ──────────────────────────
+
+   One timestamp per year, in one preference (see PREF_DEFAULTS.lastBackupAt for why it is not
+   one number for the browser). Read through here rather than directly, because a device that
+   ran the build before 2026-08-04 has a bare number in that key: an unrecognised shape reads as
+   "nothing has been backed up", which costs one redundant download and never the reverse. */
+function backupTimes() {
+  const raw = getPref('lastBackupAt');
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+}
+
+function lastBackupFor(year) {
+  return Number(backupTimes()[year]) || 0;
+}
+
+function recordBackupFor(year) {
+  const times = backupTimes();
+  times[year] = Date.now();
+  setPref('lastBackupAt', times);
+}
+
+/* Years on this device that have never been downloaded from this browser. Year *labels* only —
+   listYears() reads keys with getAllKeys and opens no documents, so asking this question costs
+   nothing and, more to the point, cannot be answered with "and it has 3 students in it": that
+   would need the document, and the panel has no business loading three other years of rosters
+   to render a sentence. */
+async function yearsNeverBackedUp() {
+  let years = [];
+  try {
+    years = await listYears();
+  } catch (e) {
+    return [];
+  }
+  const times = backupTimes();
+  return years.filter((y) => !times[y]);
 }
 
 /*
@@ -175,10 +214,12 @@ export async function downloadBackup() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 
-  /* Recorded as "she was offered the file". A page is never told whether the save dialog was
-     confirmed, and the alternative — never clearing the nag — is a strip that is permanent and
-     therefore invisible by October. See PREF_DEFAULTS.lastBackupAt. */
-  setPref('lastBackupAt', Date.now());
+  /* Recorded as "she was offered the file", against the year that is actually in it — never the
+     year on screen, which for a download are the same thing today and would stop being one the
+     moment anything backs up a year it does not have open. A page is never told whether the save
+     dialog was confirmed, and the alternative — never clearing the nag — is a strip that is
+     permanent and therefore invisible by October. See PREF_DEFAULTS.lastBackupAt. */
+  recordBackupFor(file.year);
   refreshLastBackupLine();
   refreshBackupNag();
   showStatus('Saved ' + file.name + '. Keep it somewhere only you can reach — it holds '
@@ -394,6 +435,9 @@ export async function confirmRestore() {
   refreshYearButton();
   refreshBackupNag();
   refreshLastBackupLine();
+  /* A restore can switch the open year and can create one that was not on the device a moment
+     ago, so the list of years that have never been downloaded is stale by definition here. */
+  refreshOtherYearsLine();
 
   /* The exit from the boot-failure screen, and the reason it is done here rather than in
      shell.js: this is the only path that can end with a working document after boot() refused
@@ -490,10 +534,45 @@ export function handleChosenFile(input) {
 function refreshLastBackupLine() {
   const el = document.getElementById(LAST_ID);
   if (!el) return;
-  const at = getPref('lastBackupAt') || 0;
+  const doc = getDoc();
+  if (!doc) {
+    /* The boot-failure case: this panel is the exit from a year that would not open, so there is
+       no "this year" to date. Restore is the control that matters here, not this line. */
+    el.textContent = 'No school year is open, so there is nothing to date here.';
+    return;
+  }
+  const at = lastBackupFor(doc.year);
   el.textContent = at
-    ? 'Last backup downloaded from this browser: ' + whenSaved(new Date(at).toISOString()) + '.'
-    : 'No backup has ever been downloaded from this browser.';
+    ? 'Last ' + doc.year + ' backup downloaded from this browser: '
+      + whenSaved(new Date(at).toISOString()) + '.'
+    : 'No ' + doc.year + ' backup has ever been downloaded from this browser.';
+}
+
+/*
+  One line, and only when it has something to say: a teacher who has just one year — which is
+  every teacher until the first rollover — never sees it.
+
+  It exists because "Download backup" backs up the year that is open, and nothing on this panel
+  used to say so. A teacher who has rolled over to 2027-2028 and still keeps 2026-2027 for the
+  gradebook she has not finished reporting can take a backup, see the date update, and reasonably
+  read that as "Planbook is backed up." Downloading the other one is a year switch away, and the
+  only thing missing was the sentence that says to go and do it. Backing both up in one tap is
+  WO-1.11; this is the half that is true either way, and it is the half that stops the gap from
+  being silent.
+*/
+async function refreshOtherYearsLine() {
+  const el = document.getElementById(OTHER_YEARS_ID);
+  if (!el) return;
+  const doc = getDoc();
+  const pending = (await yearsNeverBackedUp()).filter((y) => !doc || y !== doc.year);
+  el.classList.toggle('hidden', pending.length === 0);
+  if (pending.length === 0) return;
+  el.textContent = 'This backs up the year you have open. '
+    + (pending.length === 1
+      ? pending[0] + ' is also on this device and has never been downloaded — switch to it from '
+        + 'the year button to back it up too.'
+      : pending.length + ' other years on this device have never been downloaded ('
+        + pending.join(', ') + ') — switch to each from the year button to back them up too.');
 }
 
 /* Anything that would be lost. A brand-new document is not empty of meaning — it has a year and
@@ -515,16 +594,23 @@ function hasSomethingToLose(doc) {
   to make this one go away is to take the backup, that is one tap from the button in the strip,
   and it always works — a snooze here would be a snooze on the only copy of a term of grades.
 
-  Evaluated at boot and after a backup or a restore, and not on every save: the answer can only
-  change when one of those happens, and a strip that appears mid-sentence while a teacher is
-  typing a roster is a strip she will learn to ignore.
+  Evaluated at boot, after a backup or a restore, and on a year switch — and not on every save:
+  the answer can only change when one of those happens, and a strip that appears mid-sentence
+  while a teacher is typing a roster is a strip she will learn to ignore. The year switch joined
+  that list on 2026-08-04, when the timestamp became per-year: the answer is now a fact about the
+  open year, so changing which year is open changes it.
+
+  IT ASKS ABOUT THE OPEN YEAR, which is the whole of that fix. One timestamp for the browser
+  meant a teacher part-way through a rollover could download the year on screen and watch the
+  strip go quiet for both — including the one that had never been written to a file at all. This
+  strip is the only thing standing between a set-aside year and silence.
 */
 export function refreshBackupNag() {
   const el = document.getElementById(NAG_ID);
   if (!el) return;
 
   const doc = getDoc();
-  const at = getPref('lastBackupAt') || 0;
+  const at = doc ? lastBackupFor(doc.year) : 0;
   const age = Date.now() - at;
   const due = hasSomethingToLose(doc) && (!at || age > NAG_AFTER_MS);
   el.classList.toggle('hidden', !due);
@@ -533,9 +619,12 @@ export function refreshBackupNag() {
   const lead = document.getElementById('backupNagLead');
   if (lead) {
     const days = Math.floor(age / (24 * 60 * 60 * 1000));
+    /* Named, not "your last Planbook backup". The strip is about the year on screen, and a
+       teacher holding two years needs to read which one it means without doing the arithmetic
+       herself. With one year it costs four words and reads as ordinary. */
     lead.textContent = at
-      ? 'Your last Planbook backup was ' + plural(days, 'day', 'days') + ' ago.'
-      : 'You have never downloaded a Planbook backup.';
+      ? 'Your last ' + doc.year + ' backup was ' + plural(days, 'day', 'days') + ' ago.'
+      : 'You have never downloaded a ' + doc.year + ' backup.';
   }
 }
 
@@ -560,4 +649,12 @@ export function openBackupPanel(opener) {
   if (input) input.value = '';
 
   openModal(PANEL_ID, opener);
+
+  /* Deliberately after the panel is up, and deliberately not awaited. Every other fact here is
+     in place before it opens, for the no-flicker reason above — this one needs IndexedDB, and
+     this panel is the way out of a boot that already failed. Holding a recovery screen closed
+     behind a read of the store that may be exactly what is broken trades a line that fills in
+     for a panel that never appears. The line starts hidden, so nothing moves unless it has
+     something to say. */
+  refreshOtherYearsLine();
 }
