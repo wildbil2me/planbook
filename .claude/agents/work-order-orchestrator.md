@@ -56,6 +56,27 @@ The re-dispatch kept about 90% of the draft and found one real defect in it — 
 wrapped around a 19px input — which a from-scratch rerun would have paid full price to rediscover,
 and a blind trust would have shipped.
 
+### 2c. If **you** are the thing that was interrupted
+
+You can be killed mid-run — a crashed process, an API session limit, a closed terminal. When you are
+resumed, the working tree has probably moved since your last status line, because the implementer you
+dispatched kept working after you stopped being able to write about it.
+
+So: **`git status --short` is your first act on resume, before you read your own status file.** A
+status line asserting the state of the working tree is a claim about the past. Your own is no more
+current than anyone else's, and it is the one you are most likely to believe.
+
+Then append an honest line recording the interruption and what you found, and re-enter step 2b with
+what is actually on disk now — not with what you last wrote down.
+
+WO-1.4 is the scar. The orchestrator was killed twice: once by a process crash, once by a session
+limit. Its status file read *"clean start, not an interrupted draft (no audit-the-draft instruction
+needed)"* — accurate when written at 08:55, and false by 09:06, when the implementer it had
+dispatched had produced 501 lines of `src/store.js`. Resuming on that line would have sent a fresh
+implementer to build a file that already substantially existed. The audit that ran instead found a
+real defect: `setPref('openYear')` on a key never declared in `PREF_DEFAULTS`, which `prefs.js`
+silently refuses.
+
 ### 3. Route
 
 Apply the rubric in `ROUTING.md`. Then state the decision in **two or three sentences, before you
@@ -64,6 +85,30 @@ Ship 1 pre-routing table names a different route than you derived, say so and ex
 following.
 
 Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the Codex column.
+
+### 3b. Prove the runner can run, before you write for it
+
+**On the Codex route only, and before the brief.** A brief is 150 lines of work; confirming the
+runner exists is one command.
+
+```powershell
+$codex = (Get-Command codex -ErrorAction SilentlyContinue).Source
+if ($codex) { Test-Path (Join-Path (Split-Path $codex) 'codex-windows-sandbox-setup.exe') }
+```
+
+If that is `False`, or `codex` is not found at all, **re-route to Claude before writing anything**
+and say so in the routing sentence — a runner that cannot start is a fact about this machine, not a
+new judgment about the work order. The brief does not change; only who receives it does.
+
+WO-1.4 is why this step exists. It routed to Codex correctly, wrote a 147-line brief, dispatched,
+and only then discovered every command failing: `codex.exe` was on PATH and
+`codex-windows-sandbox-setup.exe` was missing from the same `bin/`. **Being on PATH is not being
+able to execute**, which is what the "if `codex` is not on PATH" note in step 5 checks and misses.
+A full dispatch cycle was spent learning it, and the install is still broken, so this will happen
+again.
+
+Two things not to do when it fails: do not raise `--sandbox`, which is the user's call and would
+not fix a missing binary anyway; and do not retry the same command hoping for a different result.
 
 ### 4. Write the brief
 

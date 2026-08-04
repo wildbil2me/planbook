@@ -127,6 +127,22 @@ down here. That is the entire reason this section exists.
    cleanly, and the failure reads as "the app broke." Pass `--remote-debugging-port=0` and read
    the chosen port from `<user-data-dir>/DevToolsActivePort` (line 1 is the port, line 2 is the
    websocket path).
+5. **A fixed sleep before a measurement is a race, and it hides defects rather than only causing
+   flakes.** Wait on the condition — poll for the state you expect, with a timeout — and where the
+   state can be transient, require it to *hold* for a beat. A single sample cannot tell a finished
+   operation from the gap between two attempts.
+
+   The forced-save-failure check slept `setTimeout(150)` and then read the chip. It failed
+   intermittently on a green build, was investigated once, and was written off as "a flaky check,
+   not a store defect." That was half right. Replacing the sleep with a poll made it fail
+   *consistently*, which is how the actual behavior surfaced: a stale max-wait timer restarts a
+   permanently-failed write about five seconds later, and `MAX_WAIT_MS` is 5000, so the first
+   poll deadline landed exactly on it. The 150 ms sleep had been sampling before the defect
+   became visible.
+
+   This is the same shape as the four traps above — a check that reports green while measuring
+   nothing — except that here the check was *believed* to be the broken part, which bought the
+   underlying behavior another round of not being looked at.
 
 ### Two rules that follow from those
 
