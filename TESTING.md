@@ -29,6 +29,30 @@ means not yet run, or nothing built yet for it to run against.
 printer, a screen reader, ears. No headless run and no desktop device emulator closes one of
 these, and marking one passed from a desktop is how a claim becomes a lie.
 
+## Before running the desktop half, run the script
+
+```
+node tools/verify-shell.mjs
+```
+
+It drives the real page in headless Edge or Chrome and **measures** things this checklist can
+only assert — rendered geometry, resolved styles, real focus movement, runtime storage state. It
+is the executable version of several standing checks below; when one of them changes, change it
+in both places or delete one. It exits non-zero on failure.
+
+Three things it does not do, and this file is where that matters:
+
+- **It closes no boxes.** Not one. It produces evidence; you tick. A green run in particular
+  closes **no 👤 item ever** — no emulator has a thumb or a safe-area inset.
+- **A `SKIP` is not a pass.** When a fixture stops existing the check announces itself and is
+  counted separately. Read the skip list as carefully as the failure list; a run that is mostly
+  skips proves nothing.
+- **One check fails on purpose** until WO-1.3 lands — the `viewport-fit=cover` precondition,
+  without which every `env(safe-area-inset-*)` in `src/shell.css` resolves to 0 on iOS.
+
+Why it exists and the rules that keep it a script rather than a test framework:
+[`plans/verification-tooling.md`](plans/verification-tooling.md).
+
 ---
 
 ## Environment

@@ -15,6 +15,24 @@ records what someone remembered.
 
 ### Added
 
+- **A verification script, and a fence around it.** `tools/verify-shell.mjs` drives the real page
+  in headless Edge or Chrome and measures 28 things a stylesheet review gets wrong — rendered
+  geometry, resolved styles, focus movement under dispatched input, runtime storage state. It came
+  out of a retrospective on WO-1.2 rather than from a Deliverable, after two agents independently
+  built the same throwaway harness and discarded it. Zero dependencies, one `.mjs` run by hand,
+  per `tools/README.md`.
+
+  It found one thing immediately: eight rules declare `env(safe-area-inset-*)` while `index.html`
+  carries no `viewport-fit=cover`, without which iOS resolves every one of them to `0`. That check
+  fails on purpose until WO-1.3 owns the fix. Both the implementer and the verifier had marked
+  that acceptance line "needs a real iPad" and stopped there, so the iPad pass succeeded by having
+  nothing to test.
+
+  `plans/verification-tooling.md` records why it exists and the rules that keep it a script rather
+  than a test framework — one file, no config, gates nothing, closes no checklist box and no 👤
+  item ever. `tools/README.md` documents four CDP traps that all present as app defects, two of
+  which were diagnosed twice by two different agents before being written down.
+
 - **App shell and design frame** (WO-1.2). The suite's visual language, lifted from Roll Call!'s
   `design/starter-template.html` and `design/portable-components.md` rather than designed again:
   two-row navy-gradient header, `#f0f2f5` page, white 14px-radius panels, the wash/strong chip

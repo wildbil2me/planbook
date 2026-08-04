@@ -363,14 +363,26 @@ now and grown, rather than built twice.
   Phase 2's today-state, Phase 3's ungraded count, and Phase 4's attention count will fill.
 - Header: current term, teacher name, presentation-mode toggle, save indicator, backup nag.
 - An honest empty state on a fresh document that leads to creating the first class.
+- **Re-point `tools/verify-shell.mjs` at this screen.** Replacing `<main>` deletes the WO-1.2
+  component shelf and with it `#aboutModal`, `[data-modal-open]`, and the `window.planbook`
+  console seam — every fixture the script's modal, live-region, and preference checks depend on.
+  They degrade to announced `SKIP`s rather than false passes, which is correct and still
+  worthless: a run that is mostly skips proves nothing. Point them at a real modal and real
+  controls in the same commit that removes the shelf. Read
+  [`../verification-tooling.md`](../verification-tooling.md) first — the script is deliberately
+  one file and stays one file.
 
 **Out of scope** — anything that glances at data that doesn't exist yet. Do not stub fake counts.
+Do not grow the verification script beyond re-pointing it; new kinds of check are a conversation,
+not a refactor.
 
 **Acceptance**
 - [ ] Six classes fit on an iPad screen in portrait without scrolling, at 44px+ touch targets.
 - [ ] Every class is exactly one tap from the home screen.
 - [ ] A fresh document shows a real empty state, not five blank cards.
 - [ ] Adding the Phase 2 today-state line requires touching only the card renderer.
+- [ ] `node tools/verify-shell.mjs` runs against this screen with **no `SKIP` caused by a deleted
+      shelf fixture**, and its check count has not fallen.
 
 **Traps** — Don't build the Phase 6 glance page here. Build the *frame* that accretes into it. The
 roadmap is explicit: build the glance page before the things it glances at and you build it twice.
