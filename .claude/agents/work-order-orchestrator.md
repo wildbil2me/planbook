@@ -88,27 +88,37 @@ Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the 
 
 ### 3b. Prove the runner can run, before you write for it
 
-**On the Codex route only, and before the brief.** A brief is 150 lines of work; confirming the
-runner exists is one command.
+**On the Codex route only, and before the brief.** A brief is 150 lines of work; asking the runner
+whether it is healthy is one command that takes seconds.
 
 ```powershell
-$codex = (Get-Command codex -ErrorAction SilentlyContinue).Source
-if ($codex) { Test-Path (Join-Path (Split-Path $codex) 'codex-windows-sandbox-setup.exe') }
+& codex doctor --summary compact
 ```
 
-If that is `False`, or `codex` is not found at all, **re-route to Claude before writing anything**
-and say so in the routing sentence — a runner that cannot start is a fact about this machine, not a
-new judgment about the work order. The brief does not change; only who receives it does.
+It is purpose-built for this — "diagnose local Codex installation, config, auth, and runtime
+health" — and ends with a tally like `16 ok · 1 idle · 2 notes · 1 warn · 0 fail`. **Read the
+`fail` count and the `sandbox` line.** Notes and warns are normal and are not your problem; a
+non-zero `fail`, or a `sandbox` line that is not `✓`, means re-route to Claude before writing
+anything and say so in the routing sentence. The brief does not change; only who receives it does.
 
-WO-1.4 is why this step exists. It routed to Codex correctly, wrote a 147-line brief, dispatched,
-and only then discovered every command failing: `codex.exe` was on PATH and
-`codex-windows-sandbox-setup.exe` was missing from the same `bin/`. **Being on PATH is not being
-able to execute**, which is what the "if `codex` is not on PATH" note in step 5 checks and misses.
-A full dispatch cycle was spent learning it, and the install is still broken, so this will happen
-again.
+**Do not probe by looking for a specific file in `bin/`.** The first version of this step checked
+for `codex-windows-sandbox-setup.exe` beside `codex.exe`, on the strength of an error message
+naming it. That file is not part of the standalone build's layout at all, so the check would have
+been `False` on a perfectly healthy install and silently re-routed every Codex work order forever.
+Also note that `codex.exe` on `PATH` is a launcher: the real package lives under
+`~\.codex\packages\standalone\releases\<version>\bin`, so directory listings taken beside the
+resolved executable are not the install.
 
-Two things not to do when it fails: do not raise `--sandbox`, which is the user's call and would
-not fix a missing binary anyway; and do not retry the same command hoping for a different result.
+WO-1.4 is why this step exists at all. It routed to Codex correctly, wrote a 147-line brief,
+dispatched, and only then hit a wall of failing execs. **The failure was transient** — `codex
+doctor` later reported the sandbox healthy with zero failures, and a `--sandbox workspace-write`
+run completed normally. That is the more useful lesson than "the install is broken," which is what
+it looked like at the time: a runner can be unavailable for ten minutes and fine afterwards.
+
+So on failure: re-route, and record it as a transient condition rather than a standing fact about
+the machine. Do not raise `--sandbox` — the user's call, and it would not have helped. Do not retry
+the same command hoping for a different result inside the same run. And do not write the runner off
+for future work orders; re-probe next time.
 
 ### 4. Write the brief
 
