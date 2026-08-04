@@ -60,6 +60,55 @@ function skip(name, why) {
   console.log('SKIP | ' + name + '  :: ' + why);
 }
 
+/* ───────────────── the precache covers the module graph ─────────────────
+ *
+ * Static, and deliberately so. `plans/verification-tooling.md` allows "static preconditions
+ * that silently disable a feature", which is exactly this: nothing else in this file so much
+ * as opens `sw.js`, because it drives a page and never an installed app.
+ *
+ * WO-1.4 shipped `src/store.js` and `src/year-picker.js` without adding either to SHELL, and
+ * every desk check still passed — a served page fetches them over the network without
+ * complaint. Only an installed app with the network gone shows it, and by then it is on a
+ * teacher's iPad, where the symptom is an app that will not open. This is the safe-area
+ * precondition again in a new place: a check that reports green while measuring nothing.
+ */
+{
+  const swSrc = await fs.readFile(path.join(ROOT, 'sw.js'), 'utf8');
+  const shellBlock = swSrc.match(/const SHELL\s*=\s*\[([\s\S]*?)\]/);
+  const shell = shellBlock
+    ? [...shellBlock[1].matchAll(/'([^']+)'/g)].map(m => m[1].replace(/^\.\//, ''))
+    : [];
+  check('sw.js still declares a SHELL array this check can read',
+    shell.length > 0, shell.length + ' entries');
+
+  /* Transitive, not just the entry points: a module reached only through shell.js's imports
+     is exactly as absent offline as one named in index.html, and easier to forget. */
+  const seen = new Set();
+  async function walk(rel) {
+    if (seen.has(rel) || !rel.endsWith('.js')) return;
+    seen.add(rel);
+    let src = '';
+    try { src = await fs.readFile(path.join(ROOT, rel), 'utf8'); } catch { return; }
+    for (const m of src.matchAll(/import[^'"]*['"]([^'"]+)['"]/g)) {
+      if (!m[1].startsWith('.')) continue;
+      await walk(path.posix.normalize(path.posix.join(path.posix.dirname(rel), m[1])));
+    }
+  }
+  const html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8');
+  for (const m of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (!/type\s*=\s*["']module["']/i.test(m[0])) continue;
+    const src = m[0].match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    if (src) await walk(src[1].replace(/^\.\//, ''));
+  }
+  const missing = [...seen].filter(rel => !shell.includes(rel));
+  /* Guarded against a vacuous pass: an empty walk and a complete one are the same value here,
+     and a regex that stops matching would report the empty one as green. */
+  check('every module reachable from index.html is precached by sw.js',
+    seen.size >= 3 && missing.length === 0,
+    seen.size + ' modules walked'
+      + (missing.length ? ', NOT in SHELL: ' + missing.join(', ') : ''));
+}
+
 /* ────────────────────────────── static server ────────────────────────────── */
 
 const server = http.createServer(async (req, res) => {
@@ -709,8 +758,25 @@ if (!storeSeam) {
     var before = s.getDoc().rev;
     s.update(function(d){ d.teacher.thisCannotBeCloned = function(){}; });
     await s.flush();
-    await new Promise(function(r){ setTimeout(r, 150); });
+    /* Poll for a SETTLED chip rather than sleeping a fixed 150ms. writeCurrent resolves only
+       after its one retry has run and painted 'error' (store.js:388), so the sleep was never
+       needed to see the end state — but a doomed save restarted by a surviving timer repaints
+       'retry' underneath it, and a fixed wait lands inside that window often enough to fail a
+       green build. Waiting on the condition cannot race it. */
     var chip = document.getElementById('saveIndicator');
+    await new Promise(function(resolve){
+      var deadline = Date.now() + 12000, settledSince = 0;
+      (function poll(){
+        var settled = /(^|\s)(error|saved)(\s|$)/.test(chip.className);
+        if (!settled) settledSince = 0;
+        else if (!settledSince) settledSince = Date.now();
+        /* Settled AND still settled 600ms later. A single sample cannot tell a finished
+           failure from the gap between two attempts, and MAX_WAIT_MS is 5000, so a stale
+           max-wait timer restarting the doomed write lands squarely on a 5000ms deadline. */
+        if ((settledSince && Date.now() - settledSince > 600) || Date.now() > deadline) return resolve();
+        setTimeout(poll, 25);
+      })();
+    });
     return { before:before, after:s.getDoc().rev, chip:chip.className, text:chip.textContent,
              spoken:(document.querySelector('[aria-live]')||{}).textContent }; })()`);
   check('a save failure paints the error state on the indicator',

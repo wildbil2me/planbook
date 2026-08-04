@@ -129,7 +129,7 @@ it is the check WO-1.2 passed while shipping `.search-box { min-height: 44px }` 
 input. WO-1.4's new controls are the year picker's — the year rows, the year input, the Create
 button, and the modal close — and all four were thumbed on the iPad, including deliberately tapping
 above the input's text, which is where the WO-1.2 defect hid. `verify-shell.mjs` measures the same
-targets headlessly and is 52/52, but a headless run has no thumb and closes no 👤 line.*
+targets headlessly and is 54/54, but a headless run has no thumb and closes no 👤 line.*
 
 ---
 

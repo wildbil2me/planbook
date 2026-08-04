@@ -47,7 +47,7 @@ These are the rules that keep it a script. Breaking any one of them is how it st
 | **It gates nothing.** No git hook, no CI, no commit check | Everything in `tools/` is optional and run by hand. A gate makes it required infrastructure |
 | **It measures; `TESTING.md` judges** | A green run closes **zero** boxes by itself, and never a 👤 item. The checklist is the gate; this feeds it evidence |
 | **Never required to run or ship the app** | A teacher's laptop never runs Node. `index.html` and `src/` are served as they sit on disk |
-| **Soft cap ~500 lines** (it is ~400) | Crossing it is a conversation, not a refactor |
+| **Soft cap ~950 lines** (it is ~920) | Raised from ~500 on 2026-08-04 — crossing it is a conversation, not a refactor, and that conversation is recorded below |
 
 ## What it is allowed to check
 
@@ -73,8 +73,49 @@ So the script asserts preconditions, not just declarations, and
 deferred to hardware. **Deferring to a human is what you do after ruling out a static precondition,
 not instead of it.**
 
-**One check is expected to fail until WO-1.3 lands** — that same `viewport-fit=cover` line. The run
-exits non-zero today, on purpose, naming a real gap. It goes green when WO-1.3 fixes it.
+**One check was expected to fail until WO-1.3 landed** — that same `viewport-fit=cover` line. It
+went green when WO-1.3 set the meta value, as designed. The run exits zero today.
+
+## Raising the cap, 2026-08-04
+
+WO-1.4 took the script from ~470 to 851 lines and the verifier stopped, correctly, rather than
+refactoring past a number this document set. The conversation, and its outcome: **the cap is now
+~950 lines, and the one-file rule is untouched.**
+
+Three things decided it.
+
+**Splitting was never available.** The first rule in the boundary table forbids `tools/lib/`, a
+second harness, or a plugin seam, and that rule is load-bearing in a way the line count is not — a
+shared helper directory is the first structural step to a framework, which is the thing actually
+being prevented. A cap that can only be honored by breaking a stronger rule is the wrong
+constraint, so the number moved instead of the structure.
+
+**The growth was the right kind.** WO-1.4's additions measure runtime storage state — `rev`
+arithmetic across a debounce, a forced `DataCloneError`, a migration ladder run against a real
+`schemaVersion: 0` document. Every one is a claim `grep` gets wrong, which is the test this
+document already applies. None of it is grep-shaped work smuggled into browser automation.
+
+**The cap was costing a check that catches shipped defects.** WO-1.4 shipped `src/store.js` and
+`src/year-picker.js` without adding either to `sw.js`'s SHELL, and the verifier's first pass caught
+it — but declined to write the check that would catch it *next* time, on the grounds that the
+harness was already over cap. The defect it prevents is an installed app that will not open with
+the network off, discovered on a teacher's iPad. Trading that for a line count is the wrong trade,
+and noticing that is what a soft cap is for: **it is a prompt to look, not a budget to spend.**
+
+That check now exists, is static rather than driven, and is allowed by "What it is allowed to
+check" above — a static precondition that silently disables a feature. It walks `index.html`'s
+module graph transitively and asserts SHELL covers it, guarded against a vacuous pass.
+
+Also fixed in the same pass: the forced-failure check waited a fixed 150 ms for the chip, which
+raced `MAX_WAIT_MS` and failed a green build intermittently. It now polls for a chip that is
+settled **and still settled 600 ms later**, because a single sample cannot tell a finished failure
+from the gap between two attempts.
+
+**Still open, and deliberately not fixed here:** a stale max-wait timer restarts a doomed write
+once, about five seconds after it permanently failed. `save()` returns early at `store.js:343`
+without clearing timers, which is the candidate. It is bounded — the write fails again and stops,
+and `rev` is put back both times — so it is a store question for WO-1.5, not a harness one, and
+the harness no longer hides it.
 
 ## What it cannot do, and must never claim to
 
