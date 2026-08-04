@@ -383,8 +383,16 @@ async function writeCurrent(doc) {
       /* The change is still in memory and still unsaved, which is what `dirty` means. It is
          NOT rescheduled: a write that fails for a permanent reason fails again in 800ms, and
          a chip flapping red every second is worse than a chip that stays red. The next edit,
-         or the next flush, tries again. */
+         or the next flush, tries again.
+
+         `clearTimers()` is what makes that true. Without it a timer armed BEFORE this write
+         outlives the failure and restarts it: `save()` returns early at the `saving` guard
+         without clearing anything, so an edit that arrived mid-write leaves `maxWaitTimer`
+         running, and it fires MAX_WAIT_MS after it was set — five seconds after a permanent
+         failure — into a `dirty` document that fails again. Bounded, and `rev` is put back
+         both times, but it is exactly the flapping this comment says it is avoiding. */
       dirty = true;
+      clearTimers();
       showSaveState('error');
       console.error('store: the year document for ' + doc.year + ' could not be saved, and the '
         + 'last change is only in memory. Storage may be full, or this may be a private '

@@ -111,11 +111,23 @@ raced `MAX_WAIT_MS` and failed a green build intermittently. It now polls for a 
 settled **and still settled 600 ms later**, because a single sample cannot tell a finished failure
 from the gap between two attempts.
 
-**Still open, and deliberately not fixed here:** a stale max-wait timer restarts a doomed write
-once, about five seconds after it permanently failed. `save()` returns early at `store.js:343`
-without clearing timers, which is the candidate. It is bounded — the write fails again and stops,
-and `rev` is put back both times — so it is a store question for WO-1.5, not a harness one, and
-the harness no longer hides it.
+**Fixed in the store, and knowingly left without a regression check.** A stale max-wait timer
+restarted a doomed write once, about five seconds after it permanently failed: an edit arriving
+mid-write armed `maxWaitTimer`, `save()` returned early at its `saving` guard without clearing it,
+and nothing on the failure path did either. `store.js` now clears timers when a write fails
+permanently, which is what its own comment already claimed ("it is NOT rescheduled ... a chip
+flapping red every second is worse than a chip that stays red").
+
+A check for it was written and then removed. Reproducing it needs an edit that lands *while* a
+write is in the air, and that choreography — start a flush, mutate mid-flight, then watch the chip
+across a 5-second timer — repeatedly hung the page under CDP for reasons that were never pinned
+down. **A check that can stall the run is worse than the defect it looks for**, and chasing it
+further was building harness machinery for a behavior that is not on any Acceptance list, which is
+the same line the verifier declined to cross for the boot-failure screen.
+
+So this one is recorded rather than guarded. If it regresses, the symptom is a save chip that
+flashes red, recovers to a spinner, and goes red again about five seconds later on a document that
+cannot be written — and the fix is one `clearTimers()` on the permanent-failure path.
 
 ## What it cannot do, and must never claim to
 

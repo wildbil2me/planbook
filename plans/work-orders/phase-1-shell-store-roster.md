@@ -209,6 +209,11 @@ sync will happily overwrite.
   count, and the date of the document being overwritten versus the one coming in.
 - Backup UI copy stating plainly that the file contains accommodation and medical data, because
   from WO-1.8 it will.
+- **A way out of the boot-failure screen.** WO-1.4 made `boot()` refuse a document written by a
+  newer build and hold the loading screen up, deliberately — a gradebook that looks like it works
+  and silently discards what is typed into it is the worse lie. But there is currently no exit: the
+  teacher sees a stuck loading screen and can do nothing. Restore *is* the exit, so it is reachable
+  from that screen or it is not really a recovery path. Added 2026-08-04 after WO-1.4's verification.
 
 **Out of scope** — automatic scheduled backups (no background execution exists), and Drive.
 
@@ -222,6 +227,8 @@ sync will happily overwrite.
 - [ ] A backup from a different `schemaVersion` either migrates or refuses — never half-loads.
 - [ ] The nag appears when the last backup is >7 days old and clears on a successful download.
 - [ ] The backup UI says what sensitive data the file contains.
+- [ ] A document `boot()` refuses — one from a newer `schemaVersion` — leaves the teacher a
+      reachable way to restore from a backup file, rather than a loading screen with no exit.
 
 **Traps** — Restore is the most destructive operation in the app. Never restore into the open
 document in place; build the new document, validate it, then swap. A restore that fails halfway is
