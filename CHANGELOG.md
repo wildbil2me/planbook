@@ -15,6 +15,48 @@ records what someone remembered.
 
 ### Added
 
+- **The app holds a year of work, and gives it back after the app is closed** (WO-1.4). One JSON
+  document per school year in IndexedDB — classes, roster, attendance and grades together — loaded
+  when the app opens and written back on a debounce as the teacher works. This is the first work
+  order where Planbook keeps anything, and everything after it depends on the document being there
+  when the app comes back.
+
+  **One object store, keyed by year, one record per document.** Splitting it across stores would
+  read as the efficient choice and would quietly delete the property that makes whole-document
+  last-writer-wins sync correct later. The shape is the sync design, not a storage detail.
+
+  **`rev` advances exactly once per save, and is put back when a write never lands.** That second
+  half is the part worth stating plainly: a `rev` that moved on a save storage never saw would
+  leave memory claiming a version that exists nowhere, and the backup in WO-1.5 and the sync in
+  Phase 7 both compare against it. A retry of a failed write is the same save and does not bump
+  again.
+
+  **Saves are debounced, and flushed on both `visibilitychange` and `pagehide`.** iOS kills
+  backgrounded tabs without warning, and a debounce timer that has not fired dies with the tab —
+  a period of grades the teacher already typed, gone with no error and nothing on screen to
+  suggest it. Both events are wired because they fire in different situations, and the write lands
+  in one to two milliseconds against an eight-hundred-millisecond debounce.
+
+  **A save failure says so.** The indicator from WO-1.2 is wired to real state, and the error names
+  the year, says the last change is only in memory, and offers the two causes a teacher can act on
+  — storage full, or a private browsing window. Silence was the alternative, and silence here means
+  a teacher who believes the grades are saved.
+
+  **Years are switchable, and switching refuses while a change is unsaved.** The roster turns over
+  every year and nothing may assume a fixed class list, so creating, listing and opening years is
+  in from the start. The picker is its own module (`src/year-picker.js`), keeping `store.js` free
+  of the DOM. A migration ladder keyed on `schemaVersion` is present and empty: it refuses a
+  document from a newer build and refuses a gap, so adding a step later is not a refactor.
+
+  **If the store cannot open, the loading screen stays up and explains itself** rather than
+  revealing a shell that looks like a working gradebook it cannot write to. Showing the teacher a
+  gradebook that silently discards what they enter is the worse of the two lies available.
+
+  Verified on iPadOS 26.5.2 on an iPad (A16), installed to the home screen: a year created through
+  the picker survived a force-quit and relaunch, and then survived it again with Wi-Fi fully off —
+  where a new year could still be created with no network at all, which is the difference between
+  a cached shell and a store that genuinely does not need the network.
+
 - **The app installs, and warns the teacher who hasn't installed it** (WO-1.3). A real
   `manifest.webmanifest` — standalone display, palette theme colors, and five committed PNG icons
   drawn by `tools/make-icons.mjs` in the sizes iOS actually reaches for. A service worker that

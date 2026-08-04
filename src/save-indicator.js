@@ -15,9 +15,14 @@
   queued. Reintroducing `queued` would be reintroducing the outbox, which CLAUDE.md rules
   out. See portable-components.md §6 for the original pair.
 
-  Nothing is wired to a store yet — that is WO-1.4, which replaces the stub below with real
-  save state. Until then showSaveState() is called by the component shelf's demo buttons
-  and by hand from the console.
+  WO-1.4 wired it: src/store.js calls showSaveState() around every write of the year
+  document — `saving` before, `saved` on the transaction completing, `retry` for the one
+  retry, `error` when that fails too. Nothing sets `syncing`; Phase 7 owns it.
+
+  demoSaveCycle() below is the WO-1.2 stub and is still here, still called only by the
+  component shelf's demo buttons and by hand from the console. It goes when the shelf goes
+  (WO-1.10) rather than now: removing it early would leave the shelf's five state buttons and
+  "Cycle all five" wired to nothing, which is a broken fixture rather than a removed one.
 
   `error` and `retry` also go through announce(): the chip is the only signal that a save
   failed, and a screen-reader user has no reason to be looking at it. `saving`/`saved` are
@@ -62,9 +67,10 @@ export function showSaveState(state) {
   }
 }
 
-/* The stub. WO-1.2 has no store, so this is what proves the chip works: one pass through
+/* The stub. WO-1.2 had no store, so this is what proved the chip works: one pass through
    all five states, at a pace a human can read. Called by the shelf's "Cycle all five"
-   button; deleted when WO-1.4 wires the real thing. */
+   button, and it is now the only caller that can paint `syncing` — see the header comment
+   for why it outlives WO-1.4. */
 export function demoSaveCycle() {
   const order = ['saving', 'saved', 'syncing', 'retry', 'error'];
   order.forEach((state, i) => setTimeout(() => showSaveState(state), i * 1100));

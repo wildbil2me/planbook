@@ -146,7 +146,7 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 
 - [x] 🚩 PWA shell: manifest, service worker, offline app shell, home-screen install. Verify on
       **iPad Safari** — that's the install target that matters.
-- [ ] 🚩 IndexedDB store: one year document, load-on-open, save-on-change, `rev` increment.
+- [x] 🚩 IndexedDB store: one year document, load-on-open, save-on-change, `rev` increment.
 - [ ] 🚩 **Backup: one-click JSON download**, plus a nag when the last one is >7 days old.
 - [ ] 🚩 **Restore: drop a backup file**, with a confirm step naming what's being replaced.
       *Nothing that writes student data lands before this works.*

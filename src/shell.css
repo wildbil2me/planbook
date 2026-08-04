@@ -48,7 +48,7 @@ button, input, select, textarea { font-family: inherit; }
 /* One grouped selector for every tappable class in the app. Add each new control
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
-.install-banner-dismiss {
+.install-banner-dismiss, .hdr-year-btn, .year-row {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -78,6 +78,13 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 #loadingScreen h2 { color: #fff; font-size: 20px; font-weight: 700; }
 #loadingScreen p  { color: rgba(255,255,255,0.5); font-size: 13px; }
+/* The storage-failure copy, shown in place of the spinner when boot cannot open the year
+   document. Brighter than the "Loading…" line because it is the only thing left on screen,
+   and centered at a readable measure rather than running the width of an iPad. */
+.loading-error { max-width: 460px; text-align: center; padding: 0 24px; }
+#loadingScreen .loading-error p { color: rgba(255,255,255,0.85); line-height: 1.6; }
+#loadingScreen .loading-error p + p { margin-top: 10px; }
+#loadingScreen .loading-error-detail { color: rgba(255,255,255,0.45); font-size: 11px; }
 .spinner {
   width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15);
   border-top-color: #27ae60; border-radius: 50%; animation: spin 0.8s linear infinite;
@@ -124,6 +131,20 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   cursor: pointer; transition: all 0.15s; text-decoration: none; flex-shrink: 0;
 }
 .hdr-icon-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
+
+/* The open school year, in the header actions. Same on-dark grammar as `.hdr-icon-btn`
+   (style guide §1, "On-dark controls") but text-shaped, because the year is the label — a
+   glyph for "2026-2027" does not exist. `flex-shrink: 0` keeps it whole when the title beside
+   it runs out of room; the title is the thing that should give way, since it says the same
+   word on every screen. */
+.hdr-year-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 7px;
+  background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.hdr-year-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
 
 /* The class tab row. Empty until WO-1.6 creates classes; `.hdr-empty` is what stands
    in, because a blank navy strip reads as a bug and "No classes yet." is the truth. */
@@ -347,6 +368,40 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    top margin is added. */
 .modal-actions { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 4px; }
 
+/* ── YEAR PICKER ── */
+/* The contents of #yearModal. A row per year document on this device, and a field to start
+   another. Rows are full-width buttons rather than a <select>: on an iPad a select is a
+   spinning wheel over the whole screen, and there are never more than a handful of years.
+   The open one takes the interactive wash + tinted border rather than the solid fill, because
+   solid is reserved for a primary action and this row is not one — it is where you already
+   are (style guide §1). */
+.year-list { display: flex; flex-direction: column; gap: 6px; }
+.year-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; text-align: left; cursor: pointer; transition: all 0.15s;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 13px; font-weight: 600; color: #1a1a2e;
+}
+.year-row:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.year-row.current { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+.year-row-note { font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.year-row.current .year-row-note { color: #5b6fcc; }
+.year-form { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.year-input {
+  flex: 1 1 auto; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 8px 11px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.year-input::placeholder { color: #a0aab8; }
+/* Both of these are <p> inside `.modal-body`, whose own rule is more specific than a bare
+   class — so they are qualified rather than left to lose the cascade. */
+.modal-body .year-hint { font-size: 11px; color: #8a9bb0; margin-top: 10px; line-height: 1.5; }
+.modal-body .year-error {
+  margin-top: 10px; padding: 8px 11px; border-radius: 8px;
+  background: #fdeaea; color: #c0392b; font-size: 12px; line-height: 1.5;
+}
+
 /* ── RESPONSIVE ── */
 /* Declaration order is from design/style-guide.md §6 and is not alphabetical or
    arbitrary: coarse pointer first, then 1024, then 640. */
@@ -369,6 +424,14 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
   .install-banner { font-size: 13.5px; }
   .install-banner-dismiss { padding: 8px 16px; font-size: 13px; min-height: 44px; }
+  .hdr-year-btn { padding: 10px 14px; font-size: 14px; min-height: 44px; }
+  .year-row { padding: 12px 14px; font-size: 14px; min-height: 44px; }
+  .year-row-note { font-size: 12px; }
+  /* The height belongs to the <input>, not to a wrapper around it — the WO-1.2 `.search-box`
+     defect. Vertical padding goes to zero so the 44px is all caret. */
+  .year-input { min-height: 44px; font-size: 14px; padding: 0 12px; }
+  .modal-body .year-hint { font-size: 12px; }
+  .modal-body .year-error { font-size: 13px; }
   .modal-close { width: 44px; height: 44px; font-size: 15px; }
   /* The 44px belongs to the <input>, not to the box around it. Giving `.search-box` the
      min-height and leaving its 7px vertical padding in place makes a 44px box holding a

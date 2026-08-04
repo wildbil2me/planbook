@@ -53,7 +53,7 @@ starts to sprawl.
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 10 | 3 | 🔨 IN PROGRESS |
+| 1 — Shell, store, roster | 10 | 4 | 🔨 IN PROGRESS |
 | 2 — Attendance | 7 | 0 | ⬜ NOT STARTED |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -62,7 +62,7 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 0 | ⬜ NOT STARTED |
-| | **53** | **3** | `[░░░░░░░░░░] 6%` |
+| | **53** | **4** | `[░░░░░░░░░░] 8%` |
 
 ---
 

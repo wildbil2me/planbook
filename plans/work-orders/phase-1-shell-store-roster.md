@@ -147,7 +147,7 @@ same requirement.
 
 ## WO-1.4 — Year document store
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.3
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** M · 🚩 · **Depends on** WO-1.3
 **Closes roadmap** Phase 1 → "IndexedDB store: one year document, load-on-open, save-on-change,
 `rev` increment."
 
@@ -172,12 +172,16 @@ settled, implement it as written.
 **Out of scope** — sync, conflict handling, anything touching Drive. Phase 7.
 
 **Acceptance**
-- [ ] A change persists across a full reload, and across an app relaunch on iPad.
-- [ ] `rev` increases by exactly one per save; two rapid edits inside the debounce window are one
+- [x] A change persists across a full reload, and across an app relaunch on iPad. 👤 *(Reload half
+      measured with the server stopped entirely; the relaunch half run by hand on the iPad —
+      installed, force-quit from the app switcher, relaunched.)*
+- [x] `rev` increases by exactly one per save; two rapid edits inside the debounce window are one
       save and one `rev`.
-- [ ] A save failure surfaces the error state on the indicator and does not silently swallow.
-- [ ] Two year documents coexist; switching between them shows the right data.
-- [ ] A document written before a schema bump loads through the migration hook without loss.
+- [x] A save failure surfaces the error state on the indicator and does not silently swallow.
+      *(Forced with a real `DataCloneError`, not a stub. `rev` is put back when the write never
+      lands, so memory never claims a version storage does not have.)*
+- [x] Two year documents coexist; switching between them shows the right data.
+- [x] A document written before a schema bump loads through the migration hook without loss.
 
 **Traps** — Don't split the document into multiple object stores for "efficiency." The single-
 document shape is the sync design; splitting it quietly removes the property that makes sync

@@ -28,6 +28,14 @@ export const PREF_DEFAULTS = {
      about this browser's chrome, not about a student — see src/install-banner.js, which owns
      how long the dismissal lasts and why. */
   installBannerDismissedAt: 0,
+
+  /* The year label this browser had open last, e.g. "2026-2027"; '' means "no preference,
+     open the most recent one". A fact about this browser and not about a student: the year
+     documents themselves live in IndexedDB, and the iPad and the laptop are each allowed to
+     sit on a different year without either of them being wrong. Nothing but the label is
+     here — no roster, no grades, nothing from inside the document. src/store.js reads it on
+     boot and writes it on a year switch. */
+  openYear: '',
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,
