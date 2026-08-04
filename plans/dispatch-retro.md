@@ -1,0 +1,160 @@
+# Dispatch retrospectives — the scars behind the pipeline's rules
+
+**Read this when a step fails, not before every dispatch.**
+
+The three agent definitions in [`../.claude/agents/`](../.claude/agents/) carry the *rules*. This
+file carries the *stories* — what went wrong, what it cost, and why the rule is shaped the way it
+is. They were split on 2026-08-04 for a measured reason: `work-order-orchestrator.md` grew from 169
+to 274 lines in a single day as each retro appended full paragraphs, and every dispatch paid to read
+all of them. Orchestration output per dispatch went **6,965 → 15,561 → 11,985 → 20,507 → 14,629 →
+30,825** across WO-1.1 to WO-1.6. The last one is larger than the entire WO-1.1 dispatch.
+
+**The rule for anything moved here: the imperative stays in the definition, only the narrative
+moves.** "`--summary` is a boolean and takes no value" is an instruction and stays where the agent
+reads it. The three paragraphs about how that was discovered are here. If you find yourself
+deleting an instruction rather than a story, stop — you are removing the thing the story was
+written to protect.
+
+Run `node tools/wo-cost.mjs` for the current numbers before deciding this file was a good idea or a
+bad one.
+
+---
+
+## Interrupted runs — why step 2b audits rather than trusts or deletes
+
+**WO-1.2 was interrupted mid-flight and left seven files with no result file.** Nothing had been
+through a verifier, and nothing recorded what it was trying to do. The re-dispatch was told to audit
+the draft line by line against the brief before building on it. It kept about 90% and found one real
+defect in the rest: a 44px touch target wrapped around a 19px input. A from-scratch rerun would have
+paid full price to rediscover that; blind trust would have shipped it.
+
+The two implementer runs that were interrupted cost 38,313 and 31,745 output tokens; the audit
+re-dispatch cost 48,115. WO-1.2 came to 171,092 output in total, 2.1× the WO-1.5 baseline, almost
+all of it attributable to one interruption. The `git status --short` check that now opens every
+dispatch costs one Bash call.
+
+## When the orchestrator itself is what was interrupted
+
+**WO-1.4's orchestrator was killed twice** — once by a process crash, once by a session limit. Its
+own status file read *"clean start, not an interrupted draft (no audit-the-draft instruction
+needed)"*. That was accurate when written at 08:55 and false by 09:06, because the implementer it
+had dispatched kept working after the orchestrator stopped being able to write about it: 501 lines
+of `src/store.js` existed by then.
+
+Resuming on that line would have sent a fresh implementer to build a file that already substantially
+existed. The audit that ran instead found a real defect — `setPref('openYear')` against a key never
+declared in `PREF_DEFAULTS`, which `prefs.js` silently refuses.
+
+**A status line asserting the state of the working tree is a claim about the past. Your own is no
+more current than anyone else's, and it is the one you are most likely to believe.** Hence: `git
+status --short` first on resume, before reading your own status file.
+
+`tools/wo-sweep.mjs` now checks the specific defect — every `getPref`/`setPref` key against
+`PREF_DEFAULTS` — because the enforcement in `prefs.js` is silent by design and a silent refusal is
+invisible to everything except an audit.
+
+## Codex — three probes, and what each one was wrong about
+
+**Do not probe by looking for a file in `bin/`.** The first version checked for
+`codex-windows-sandbox-setup.exe` beside `codex.exe`, on the strength of an error message naming it.
+That file is not part of the standalone build's layout at all, so the check would have been `False`
+on a perfectly healthy install and silently re-routed every Codex work order forever. Note also that
+`codex.exe` on `PATH` is a launcher: the real package lives under
+`~\.codex\packages\standalone\releases\<version>\bin`, so a directory listing taken beside the
+resolved executable is not the install.
+
+**`--summary` is a boolean and takes no value.** The step was written as `--summary compact` on the
+strength of the shape of the tally line. That form does not parse — Codex v0.146.0 answers
+`error: unexpected argument 'compact' found` and exits non-zero. A probe that always fails is a
+probe that always re-routes, so this would have sent every Codex work order to Claude while
+reporting the install as broken. Corrected at WO-1.6, where it cost one round trip. If a future
+build moves the flag again, run `codex doctor --help` and fix the block rather than inferring a
+health verdict from a usage error.
+
+**And then the corrected probe still did not predict the failure.** At WO-1.6, `codex doctor
+--summary --no-color` reported `16 ok · 0 fail · sandbox ✓` at 15:18. At 15:24 `codex exec` exited
+**zero** having written nothing: `codex-windows-sandbox-setup.exe: program not found`, 31 helper
+failures across read, `apply_patch`, and exec. The worktree was untouched, so there was nothing to
+audit — a clean re-route, but a whole brief and probe cycle spent first.
+
+That is the finding that matters: **`doctor` reports installation health, not exec-time helper
+health, and only the second one is what a dispatch depends on.** So step 3b now writes a file with
+`codex exec` under the real sandbox flags and asserts the file exists. It exercises helper spawn and
+`apply_patch`, which is exactly what failed both times.
+
+**Codex is 0 for 2.** WO-1.4 and WO-1.6 both routed to it correctly by the rubric and both died at
+exec time. Both failures look transient — `codex doctor` was healthy afterwards, and at WO-1.4 a
+`--sandbox workspace-write` run completed normally later. **Record it as a transient condition, not
+a standing fact about the machine.** Do not raise `--sandbox` (the user's call, and it would not
+have helped either time). Do not retry the same command inside the same run. Do not write the runner
+off for future work orders — re-probe next time.
+
+**A dispatch-level bug from the same run, worth one line:** an unset `$TMPDIR` made the Codex log
+redirect fail, and the first WO-1.6 dispatch aborted before Codex started. Use an absolute log path.
+
+## Ticking — why the orchestrator holds the pen
+
+The rule in [`ROADMAP.md`](ROADMAP.md) is that nothing is ticked until it is **verified**. It was
+never about which hand holds the pen. An earlier version of this pipeline read it as "no agent may
+tick," which cost nothing until WO-1.1 passed clean and then sat with the dashboard reading `0`
+done, because five hand edits are easy to postpone. **A tracking system that lies about what is
+finished is the exact thing the protocol was written to prevent**, so enforcement moved to where the
+evidence is.
+
+The verifier still cannot tick, for a sharper reason than politeness: in a phase file the acceptance
+criterion and its checkbox are the *same line of text*. An agent with write access there could
+reword the criterion it just failed, in the same edit. Its read-only tool grant is what makes that
+impossible rather than merely discouraged.
+
+`tools/wo-gate.mjs --tick` now applies the mechanical half and recomputes the dashboard from the
+phase files rather than trusting the number already sitting there.
+
+## Static preconditions — the miss that produced the rule
+
+**WO-1.2's safe-area acceptance line was marked 🙋 by both the implementer and the verifier**, on
+the true observation that safe-area insets resolve to 0 in every desktop emulator. Both stopped
+there. Neither asked whether the insets could resolve non-zero *on an iPad either*.
+
+They could not. `index.html` had no `viewport-fit=cover`, without which iOS resolves every
+`env(safe-area-inset-*)` to 0. Eight declarations were inert. The iPad pass then "succeeded" by
+having nothing to test, and the box was ticked for the wrong reason.
+
+**Deferring to a human is what you do after ruling out a static precondition, not instead of it.**
+The shape to look for is a feature gated on something cheap to read right now — a flag, meta tag,
+manifest field, permission, or registration. `viewport-fit=cover` for safe-area insets.
+`display: standalone` and an `apple-touch-icon` for install. A `serviceWorker.register()` call for
+anything offline. A secure context for anything needing HTTPS. If the gate is missing, that is a ❌
+with a `file:line` — not a 🙋, and not a footnote inside one.
+
+## Fixture assumptions — the three defects that escaped a green run
+
+Six verification rounds across WO-1.1 to WO-1.6 caught one hard defect (WO-1.4's missing `sw.js`
+precache, which would have meant an installed iPad could not boot offline and would not receive the
+build at all) and two riders. Three defects escaped and needed their own commits afterwards. All
+three have the same shape: **invisible to the harness as seeded.**
+
+- **The safe-area gap** — nothing asserted the precondition, so there was no fixture that could fail.
+- **A stale max-wait timer** restarted a doomed write about five seconds after it permanently failed
+  (`36adbf5`). Reproducing it needs an edit landing *while* a write is in the air; the check was
+  written and then removed because it repeatedly hung the page under CDP, and a check that can stall
+  the run is worse than the defect it looks for. Recorded in
+  [`verification-tooling.md`](verification-tooling.md) rather than guarded.
+- **The per-year backup nag** (`9bcfdc9`) — `planbook_lastBackupAt` was one timestamp for the whole
+  browser, so downloading one year marked every other year as backed up. The fixture held **one
+  year**, which is precisely the case where the bug cannot manifest. Seventy-nine checks were green.
+  The fix drives two.
+
+Hence the standing question in the verifier's definition: *name the fixture assumption that would
+hide a bug in this surface, and say whether the harness breaks it.* A green run over a fixture that
+cannot express the failure is not evidence.
+
+## What the pipeline costs, as of WO-1.6
+
+Six dispatches: **549,554 output tokens of implementation, 100,472 of orchestration, 178,902 of
+verification** — a 51% premium over implementation alone, and 131.2 M in cached reads. Against that
+it bought one prevented bricked install, two caught recurrences, a 2,232-line regression harness,
+six durable result documents, and thirteen sessions with zero compactions.
+
+The number to watch is orchestration per dispatch, because it is the one that grows on its own: each
+retro adds prose that every future dispatch pays to read. That is what this file exists to stop.
+`node tools/wo-cost.mjs` prints the current trend.

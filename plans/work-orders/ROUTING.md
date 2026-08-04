@@ -99,6 +99,27 @@ Not because Codex is worse, but because the cost is asymmetric. A Codex run that
 architectural decision costs more to find and unwind than the Claude run costs to sit through. 🚩
 go-live blockers in particular default to Claude unless they land squarely in the Codex column.
 
+## The runner's actual record: 0 for 2
+
+**WO-1.4 and WO-1.6 both routed to Codex correctly by this rubric, and both died at exec time** —
+`codex-windows-sandbox-setup.exe: program not found`, helper failures across read, `apply_patch`,
+and exec. Neither produced a line of code. The table below is unchanged, because the routing was
+right both times; what failed was the runner.
+
+**Treat this as a transient condition, not a standing fact about the machine.** `codex doctor`
+reported healthy after WO-1.4, and a `--sandbox workspace-write` run completed normally later. The
+orchestrator re-probes every dispatch rather than writing the route off.
+
+But **`codex doctor` does not predict it**. At WO-1.6 it reported `16 ok · 0 fail · sandbox ✓` six
+minutes before the exec that wrote nothing. Doctor reports *installation* health; a dispatch depends
+on *exec-time helper* health. So the gate is now a real write — a `codex exec` that creates a file in
+a temp directory under the same sandbox flags, checked for existence. The full account is in
+[`../dispatch-retro.md`](../dispatch-retro.md) § Codex.
+
+**If a third Codex dispatch fails at exec time**, the orchestrator says so in its report and proposes
+moving the pre-routed table below to Claude until one run lands. That is the teacher's call, not the
+orchestrator's — but two failures is a pattern and three is a decision.
+
 ---
 
 ## Ship 1 — pre-routed

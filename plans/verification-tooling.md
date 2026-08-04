@@ -129,6 +129,57 @@ So this one is recorded rather than guarded. If it regresses, the symptom is a s
 flashes red, recovers to a spinner, and goes red again about five seconds later on a document that
 cannot be written — and the fix is one `clearTimers()` on the permanent-failure path.
 
+## The grep half moves out, 2026-08-04
+
+`tools/wo-sweep.mjs` now runs the verifier's standing sweep — the checks a `grep` settles correctly.
+This section records why that is not the second harness the boundary table forbids.
+
+**The one-file rule protects `verify-shell.mjs` from becoming a framework; it was never a cap on the
+number of scripts in `tools/`,** which already holds four others. What the rule prevents is a
+`tools/lib/`, a plugin seam, a config file, and a runner — a shared structure that turns scripts into
+infrastructure. `wo-sweep.mjs` imports nothing from `verify-shell.mjs` and nothing from it; the two
+share a print format and no code. Either can be deleted without touching the other.
+
+**This document already directed the work there.** "What it is allowed to check" says: *"Anything a
+`grep` settles correctly should be settled by `grep`, in the verifier's standing sweep. Adding a
+grep-shaped check here trades a one-line command for 400 lines of browser automation."* The sweep
+existed already — it was just being hand-rolled from prose by a fresh Opus context every run, which
+is how its allowlists came to be re-derived each time. WO-1.2's verifier had to reason out that every
+`prefers-color-scheme` hit in the repo was documentation *stating the prohibition*. That reasoning is
+now a comment in the file.
+
+It obeys the same boundary as its sibling: one file, no config, no dependencies, gates nothing, never
+required to run or ship the app, and **closes no 👤 item**. It adds a third state, `REVIEW`, for
+evidence that needs a human decision — sensitive field names outside `src/backup.js`, a due date on
+the same line as a late/missing flag. A `REVIEW` never fails the run. It narrows what the verifier
+must read rather than pretending to have decided it, which is the honest form of a check that cannot
+be mechanized without lying.
+
+## The cap is at 2,232 lines and the conversation is overdue
+
+**Unresolved, and deliberately left that way.** The cap was raised to ~950 on 2026-08-04 with the
+reasoning recorded above. `verify-shell.mjs` is now **2,232 lines — 135% past it.** It went 851 →
+1,364 at WO-1.5 (backup and restore, +447 in one work order), 1,429 at the per-year nag fix, and
+**1,429 → 2,232 at WO-1.6** (`33bab80`), which is the largest single jump the file has taken and
+larger than the entire file was three work orders ago.
+
+Nobody stopped at ~950. The verifier stopped at the cap once, at WO-1.4, and that produced the
+conversation recorded above; nothing has stopped since. That is worth stating plainly: **the control
+has not bound in three consecutive work orders.**
+
+The rule this document sets is that crossing the cap is *"a conversation, not a refactor"* and that
+the number is *"a prompt to look, not a budget to spend."* Nobody has looked. Three things are true
+at once and the teacher decides between them:
+
+- **Splitting is still forbidden** by a stronger rule, and that rule is still load-bearing. So the
+  options are: raise the number again, trim, or accept the file is what it is and retire the cap as
+  a control that never binds.
+- **The growth still looks like the right kind** — runtime storage state, static preconditions,
+  measured geometry. No grep-shaped work has been smuggled in, and moving the sweep out makes that
+  easier to keep true.
+- **A cap that gets raised every time it binds is not a constraint**, it is a comment. If it is
+  raised a second time, say what would actually have to happen for it to be enforced instead.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

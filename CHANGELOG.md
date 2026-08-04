@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Changed
+
+- **`verify-shell.mjs` is 2,232 lines against a soft cap of ~950, and the conversation that owes is
+  overdue.** `plans/verification-tooling.md` says crossing the cap is "a conversation, not a
+  refactor" and that the number is "a prompt to look, not a budget to spend." Nobody has looked since
+  WO-1.4. The file went 851 → 1,364 at WO-1.5, → 1,429 at the per-year nag fix, and **1,429 → 2,232
+  at WO-1.6** — the largest single jump it has taken, and larger than the whole file was three work
+  orders ago. Splitting is still forbidden by a stronger rule that is still load-bearing, so the
+  options are raise, trim, or retire a control that has not bound in three consecutive work orders.
+  Recorded rather than decided; the number in that document was itself stale, which is how a cap
+  stops being one.
+
 ### Fixed
 
 - **Four defects in the class bar and the term editor, found by the first iPad sitting and by the
@@ -77,6 +89,83 @@ records what someone remembered.
   this bug is invisible, so it drives two — and is now 82 of 82.
 
 ### Added
+
+- **Four scripts for the dispatch pipeline, and a measurement that says why they exist.** Six work
+  orders have gone through the orchestrator → implementer → verifier chain, and the transcripts put
+  a number on what that costs: **549,554 output tokens of implementation, 100,472 of orchestration,
+  178,902 of verification** — a 51% premium over implementation alone. Most of the premium buys
+  something real. One prevented a bricked install: WO-1.4's verifier caught two new modules missing
+  from `sw.js`'s precache, which would have meant an installed iPad that could not open offline and
+  would never receive the build. Thirteen sessions have run with zero compactions, because the
+  implementer's context is discarded rather than accumulated into the conversation.
+
+  But three parts of it were waste, and all three were the same kind: **work that was re-derived
+  from prose every single run.** `tools/wo-gate.mjs` parses the work order header line — status,
+  size, `Depends on`, the `🔒 GATED` and WO-1.5-before-WO-1.6 checks — which the orchestrator was
+  doing in eight to thirteen tool calls plus the reasoning to interpret them. `tools/wo-brief.mjs`
+  assembles the verbatim two-thirds of a brief: the work order, the constraints block from
+  `ROUTING.md`, the referenced files, the acceptance list restated. WO-1.5's brief was 15 KB of
+  largely-existing text against 14,629 output tokens spent producing it. `tools/wo-sweep.mjs` runs
+  the standing sweep as greps, **with its allowlists written down** — WO-1.2's verifier had to
+  reason out from scratch that every `prefers-color-scheme` hit in the repo was documentation
+  stating the prohibition, and every verifier since would have had to do it again.
+
+  `tools/wo-cost.mjs` is the fourth, and it is the one that names the pattern. The analysis above
+  was rebuilt from scratch four times in one afternoon, in a scratchpad, and thrown away each time —
+  which is exactly how two throwaway browser harnesses preceded `verify-shell.mjs`. It prints
+  orchestration output per dispatch as a trend, because that is the number that grows on its own:
+  **6,965 → 15,561 → 11,985 → 20,507 → 14,629 → 30,825**. WO-1.6's orchestration cost more than the
+  entire WO-1.1 dispatch.
+
+  **`wo-gate.mjs --tick` is the only one that writes**, and only into `plans/`. It sets the work
+  order status, ticks the roadmap boxes named in `Closes roadmap`, and **recomputes** the dashboard
+  counts and progress bar from the phase files rather than trusting the number already sitting
+  there. It refuses a work order that is not open, refuses to run without an explicit ID, prints the
+  exact diff under `--dry-run`, and never touches a 👤 line or `CHANGELOG.md` — those stay owed to a
+  human, which is the whole reason the mark exists.
+
+  The sweep adds a third state beside pass and fail: **`REVIEW`, for greppable evidence that needs a
+  human decision.** Whether a mention of `supports` in a file actually *emits* accommodation data is
+  a reading question, and a check that guessed would either cry wolf on the roster editor or wave
+  through the one line that matters. A `REVIEW` never fails the run; it narrows what the verifier
+  must read instead of pretending to have decided it.
+
+- **The scars moved out of the agent definitions** into `plans/dispatch-retro.md`, read when a step
+  fails rather than on every dispatch. `work-order-orchestrator.md` had grown 169 → 274 lines in a
+  single day, one retrospective paragraph at a time, and every dispatch paid to read all of them.
+  The rule for the move: **the imperative stays, only the narrative goes.** "`--summary` is a boolean
+  and takes no value" is an instruction and stayed put; the three paragraphs on how that was
+  discovered are now next door. It came to 201 lines, not the ~120 aimed for — what is left is
+  procedure, and cutting further would have meant cutting instructions to hit a number.
+
+- **The Codex probe is a real write now, not a health report.** `codex doctor` reported
+  `16 ok · 0 fail · sandbox ✓` six minutes before WO-1.6's `codex exec` exited **zero** having
+  written nothing — `codex-windows-sandbox-setup.exe: program not found`, 31 helper failures. Doctor
+  reports *installation* health; a dispatch depends on *exec-time helper* health, and only the second
+  one matters. So the gate is a `codex exec` that creates a file in a temp directory under the real
+  sandbox flags, checked for existence. It exercises helper spawn and `apply_patch`, which is what
+  failed both times.
+
+  **Codex is 0 for 2** — WO-1.4 and WO-1.6, both routed correctly by the rubric, both dead at exec
+  time, neither producing a line of code. `ROUTING.md` records that as a transient condition rather
+  than a standing fact about the machine, because doctor was healthy afterwards both times. If a
+  third fails, the orchestrator proposes moving the pre-routed table to Claude until one run lands.
+  The smoke test itself is **unexercised**: it needs a working sandbox, and the sandbox is the broken
+  thing.
+
+- **The verifier now has to name the fixture assumption.** For each surface a work order adds:
+  *what would have to be true of the test fixture for a bug here to be invisible, and does the
+  harness break it?* This is the question that would have caught all three defects that escaped a
+  green run. The backup nag shipped with `lastBackupAt` as one browser-wide timestamp against a
+  fixture holding **one year** — precisely the case where that bug cannot manifest, with 79 checks
+  green. A green run over a fixture that cannot express the failure is not evidence.
+
+  The same discipline was applied to the sweep's own checks while writing them. The coarse-block
+  check first reported an empty block on a stylesheet with fifty rules in it, because `findIndex`
+  matched a header comment discussing `` `@media (pointer: coarse)` `` in backticks twenty lines in
+  — a green-looking wrong answer. Every check was then run against a planted violation and confirmed
+  to fail, including inside an inline `<style>` block, and against a control (`<!--note: x-->`)
+  confirming it does not fire on markup that only looks like CSS.
 
 - **Classes and terms — the first screen that writes to a year document.** Create, rename, reorder,
   archive and delete classes; give each its own term structure. The class tabs and the term nav in

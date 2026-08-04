@@ -6,6 +6,17 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
+| `wo-sweep.mjs` | The verifier's standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down. `node tools/wo-sweep.mjs` |
+| `wo-gate.mjs` | Work order gates, "what's next", and the maintenance ticks with a recomputed dashboard. `node tools/wo-gate.mjs next` |
+| `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
+| `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
+
+The four `wo-*.mjs` scripts are **dispatch plumbing**, not app tooling — they read `plans/` and the
+agent transcripts, and none of them touches `src/`. They exist because the pipeline was re-deriving
+the same work every run: gate parsing, brief assembly, sweep allowlists, and a cost analysis that was
+rebuilt from scratch four times in one afternoon and thrown away each time. Same failure mode as the
+two throwaway browser harnesses that became `verify-shell.mjs`. `wo-gate.mjs --tick` is the only one
+that writes, it only writes to `plans/`, and it refuses to touch a 👤 line or `CHANGELOG.md`.
 
 The demo build lands in Phase 8 (WO-8.2), modelled on Roll Call!'s `tools/build-demo.mjs`.
 
