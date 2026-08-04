@@ -144,13 +144,13 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 
 **Goal:** the app installs, holds data, survives everything, and can hand that data back.
 
-- [ ] 🚩 PWA shell: manifest, service worker, offline app shell, home-screen install. Verify on
+- [x] 🚩 PWA shell: manifest, service worker, offline app shell, home-screen install. Verify on
       **iPad Safari** — that's the install target that matters.
 - [ ] 🚩 IndexedDB store: one year document, load-on-open, save-on-change, `rev` increment.
 - [ ] 🚩 **Backup: one-click JSON download**, plus a nag when the last one is >7 days old.
 - [ ] 🚩 **Restore: drop a backup file**, with a confirm step naming what's being replaced.
       *Nothing that writes student data lands before this works.*
-- [ ] 🚩 Install detection + plain-language warning when running uninstalled — the iOS eviction
+- [x] 🚩 Install detection + plain-language warning when running uninstalled — the iOS eviction
       hazard is data loss, not a nicety.
 - [x] Lift the frame from Roll Call!'s `design/starter-template.html` and
       `design/portable-components.md`: navy gradient header, white rounded panels, two-row header,

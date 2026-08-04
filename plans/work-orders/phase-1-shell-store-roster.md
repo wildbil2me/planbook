@@ -92,7 +92,7 @@ Don't tidy it. Light theme only means the dark header *is* the light theme, not 
 
 ## WO-1.3 — PWA install path & eviction warning
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.2
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** M · 🚩 · **Depends on** WO-1.2
 **Closes roadmap** Phase 1 → "PWA shell: manifest, service worker…" and "Install detection +
 plain-language warning…"
 
@@ -118,17 +118,35 @@ being a polish item later.
 iPad is the target that matters.
 
 **Acceptance**
-- [ ] Installs to the iPad home screen from Safari and launches without browser chrome.
-- [ ] With the network disabled, the installed app opens and every built screen works.
-- [ ] Run uninstalled in Safari: the warning appears, names the risk in plain language, and gives
+- [x] Installs to the iPad home screen from Safari and launches without browser chrome.
+- [x] With the network disabled, the installed app opens and every built screen works.
+- [x] Run uninstalled in Safari: the warning appears, names the risk in plain language, and gives
       the install steps.
-- [ ] Run installed: the warning does not appear.
-- [ ] Deploying a new version updates the service worker and clears the previous cache.
-- [ ] Verified on a real iPad, not a desktop emulator. *(This one cannot be faked — record the
+- [x] Run installed: the warning does not appear.
+- [x] Deploying a new version updates the service worker and clears the previous cache.
+- [x] Verified on a real iPad, not a desktop emulator. *(This one cannot be faked — record the
       iPadOS version in `TESTING.md`.)*
+
+*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad A12, installed to the home screen and served over
+HTTPS from `tools/serve-https.mjs`. Line 5 was verified headless; the other five were run by hand
+on the tablet in one sitting.*
+
+*The A12 is worth recording rather than the iPadOS version alone. It is the low end of what
+iPadOS 26 still supports, so it is the device most likely to be evicted from memory between
+launches — which makes the offline relaunch a stronger result there than the same check on
+current hardware would have been.*
 
 **Traps** — The service worker won't register from `file://`; you need a static server locally.
 Don't cache the year document in the service worker — IndexedDB owns data, the cache owns the shell.
+
+*A third trap, found in the doing and worth more than the two above.* **`localhost` is a secure
+context; a LAN address is not.** So the server WO-1.2 used — `python -m http.server` on
+`http://192.168.50.142:8000` — cannot register a service worker on the iPad at all, and the
+failure is not visible: Safari's own HTTP cache re-serves the pages once the Wi-Fi is off, so the
+offline check passes while proving only that Safari has a cache. `tools/make-cert.mjs` and
+`tools/serve-https.mjs` exist for this, and send `no-store` on everything so the worker is the
+only thing that can answer. Anything after this that tests offline behavior on a device has the
+same requirement.
 
 ---
 

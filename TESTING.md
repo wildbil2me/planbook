@@ -47,8 +47,9 @@ Three things it does not do, and this file is where that matters:
 - **A `SKIP` is not a pass.** When a fixture stops existing the check announces itself and is
   counted separately. Read the skip list as carefully as the failure list; a run that is mostly
   skips proves nothing.
-- **One check fails on purpose** until WO-1.3 lands — the `viewport-fit=cover` precondition,
-  without which every `env(safe-area-inset-*)` in `src/shell.css` resolves to 0 on iOS.
+- **It cannot see the service worker or the install path.** It drives a page, not an installed
+  app; nothing it does closes a WO-1.3 line. *(As of WO-1.3 the run is 28 of 28 — the
+  `viewport-fit=cover` precondition that used to fail by design now passes.)*
 
 Why it exists and the rules that keep it a script rather than a test framework:
 [`plans/verification-tooling.md`](plans/verification-tooling.md).
@@ -77,12 +78,21 @@ here, so the slot exists before the work does.
 | Field | Value |
 |---|---|
 | Desktop browser + version | Chrome 150.0.7871.187. *The desk-side headless pass on WO-1.2 ran Edge 151.0.4129.59 over CDP.* |
-| Local server used | `python -m http.server 8000 --bind 127.0.0.1` (Python 3.14) for desktop, at `http://localhost:8000` |
-| iPad model | iPad (A16) |
+| Local server used | `python -m http.server 8000 --bind 127.0.0.1` (Python 3.14) for desktop, at `http://localhost:8000`. **From WO-1.3 on, the iPad half needs `node tools/serve-https.mjs` instead** — see below. |
+| iPad model | iPad A12 *(WO-1.2's pass recorded "iPad (A16)"; the device in hand reports A12. The A12 is the older, lower-memory end of what iPadOS 26 supports, which makes it the better device to hold offline behavior against.)* |
 | **iPadOS version** | **26.5.2** |
 | Installed to home screen? | Yes — Share → Add to Home Screen, launched standalone with no browser chrome |
-| Served from (URL) | iPad: `http://192.168.50.142:8000` over the LAN, from `python -m http.server 8000` on the laptop |
+| Served from (URL) | iPad: `https://192.168.50.142:8443` over the LAN, from `node tools/serve-https.mjs`. WO-1.2's pass used `http://192.168.50.142:8000`, which cannot register a service worker. |
 | Date of pass · who ran it | 2026-08-04 · Bill Toomey |
+
+**The iPad half must be served over HTTPS, and this is not a preference.** A service worker
+requires a secure context. `localhost` is specifically exempted from that rule; a LAN address is
+not. So the URL WO-1.2 used registers nothing — and says nothing, because **Safari's own HTTP
+cache re-serves the pages after the Wi-Fi goes off.** The offline check passes, the box gets
+ticked, and what was proven is that Safari has a cache. `tools/make-cert.mjs` mints a root the
+iPad can trust and `tools/serve-https.mjs` serves under it with `no-store` on everything, so the
+service worker is the only thing left that can answer. Setup and the four ways it fails silently
+are in [`tools/README.md`](tools/README.md).
 
 ---
 
@@ -161,7 +171,53 @@ web view below the status bar rather than under it. Nothing sat under an inset b
 insets. The five `env()` declarations remain unexercised. WO-1.3 owns both settings and will make
 this check live for the first time — re-run it there.*
 
-*WO-1.3 through WO-1.10 append their own subsections here as they land, in work-order order.
+### WO-1.3 — PWA install path & eviction warning
+
+- [x] Installs to the iPad home screen from Safari and launches without browser chrome. 👤
+- [x] With the network disabled, the installed app opens and every built screen works. 👤
+- [x] Run uninstalled in Safari: the warning appears, names the risk in plain language, and
+      gives the install steps. 👤
+- [x] Run installed: the warning does not appear. 👤
+- [x] Deploying a new version updates the service worker and clears the previous cache.
+      *(Desktop is enough: bump `CACHE` in `sw.js`, reload twice, and confirm in DevTools →
+      Application that Cache Storage holds the new name and only the new name.)*
+- [x] Verified on a real iPad, not a desktop emulator — iPadOS version recorded in the
+      Environment table above. 👤
+
+Two more that belong to this work order rather than to the acceptance list, because both are
+silent when they fail:
+
+- [ ] **Carried over from WO-1.2, and live for the first time here.** On an iPad, nothing sits
+      under the safe-area inset: with `viewport-fit=cover` and `black-translucent` both set,
+      the ten `env(safe-area-inset-*)` declarations in `src/shell.css` finally resolve
+      non-zero, the navy header runs to the top edge under the status bar, and the status-bar
+      text is legible over it. WO-1.2 ticked this line against insets that were all 0. 👤
+- [x] The banner returns after a dismissal. Tap **Not now**; it goes. Then set
+      `localStorage.planbook_installBannerDismissedAt` to four days ago in the console and
+      reload — it is back. A dismissal that never returns is the failure mode this design
+      exists to avoid, and nothing on screen would show it.
+
+*Ticked 2026-08-04, iPadOS 26.5.2 on an iPad A12, installed to the home screen and served over
+HTTPS. The four 👤 acceptance lines plus the iPad line were run by hand in one sitting. Line 5 was
+verified headless, which the line itself permits.*
+
+*The banner-return line was driven headlessly over CDP rather than by hand — it carries no 👤,
+because it is a `localStorage` clock rather than anything a thumb decides. Six assertions, all
+green: the banner shows undismissed; a real click on **Not now** (through the delegated handler,
+not a direct call to `dismissInstallBanner`) hides it and writes the timestamp; it stays hidden on
+reload and at two days; and it is back at four days and at seven. **The two-day case is the one
+that earns its keep** — without it the check passes just as well on a banner that returns
+immediately, which is the opposite defect and equally invisible.*
+
+*Still open: the safe-area carry-over above.* Status-bar legibility was confirmed on the tablet
+**while scrolled**, which is the half most likely to fail — `.header` is not sticky, so white
+status-bar text can end up over the `#f0f2f5` page background. The rest of the line — that no
+control or panel edge sits under a now-non-zero inset — was not swept, and is left unticked
+rather than inferred from the legibility pass. **WO-1.2 ticked this exact line against insets
+that were all `0`; a second soft tick would repeat that.* It needs one look down the left and
+right edges in landscape and portrait.
+
+*WO-1.4 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*
 
 ---

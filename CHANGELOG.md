@@ -15,6 +15,54 @@ records what someone remembered.
 
 ### Added
 
+- **The app installs, and warns the teacher who hasn't installed it** (WO-1.3). A real
+  `manifest.webmanifest` — standalone display, palette theme colors, and five committed PNG icons
+  drawn by `tools/make-icons.mjs` in the sizes iOS actually reaches for. A service worker that
+  precaches the shell under a versioned cache name, serves it cache-first, and deletes every older
+  cache on `activate`. The app runs with the network off once it is on the home screen.
+
+  `src/install-banner.js` detects an uninstalled launch through `display-mode: standalone` and
+  `navigator.standalone` — the second for the older iPads a school still has in a cart — and
+  reveals a banner that says what can be lost and exactly which taps prevent it. The copy lives in
+  `index.html` rather than a template literal, because it is the part a teacher actually reads.
+  Neither `minimal-ui` nor `fullscreen` counts as installed: a false "you're installed" stops the
+  warning and is discovered at the end of a holiday.
+
+  **The banner is dismissible but returns after three days,** and the number is derived rather
+  than chosen. It has to be strictly under half the ~7-day eviction window so at least one warning
+  always falls between a dismissal and the earliest moment data could be erased. Seven days is the
+  intuitive number and exactly the wrong one — the banner would come back the week after the
+  grades were already gone.
+
+  `index.html` finally carries `viewport-fit=cover`, with `apple-mobile-web-app-status-bar-style`
+  set to `black-translucent`. Until this, the ten `env(safe-area-inset-*)` declarations in
+  `src/shell.css` resolved to `0` on iOS and the padding WO-1.2 shipped was inert — WO-1.2's iPad
+  tick passed because there were no insets to sit under. `tools/verify-shell.mjs` is now 28 of 28;
+  the check that failed by design was this precondition.
+
+  Verified on iPadOS 26.5.2 on an iPad A12, installed to the home screen: launches without browser
+  chrome, opens with the radios off after being swiped out of the app switcher, and the banner
+  appears uninstalled and is absent installed. One line is still open — that nothing sits under a
+  now-non-zero safe-area inset, which needs a sweep of the edges rather than the status-bar check
+  that was run.
+
+- **A local HTTPS server, because `localhost` is a secure context and a LAN address is not.**
+  `tools/make-cert.mjs` mints a local CA and a server certificate; `tools/serve-https.mjs` serves
+  the repo under it. Both are bare-Node `.mjs` with no dependencies, and `certs/` is gitignored —
+  the one thing `tools/` writes that is not committed, because it holds private keys.
+
+  This is not convenience. WO-1.2's iPad pass ran on `http://192.168.50.142:8000`, where a service
+  worker cannot register at all — and the failure is invisible, because **Safari's own HTTP cache
+  re-serves the pages once the Wi-Fi is off.** The offline check passes and proves only that
+  Safari has a cache. The server sends `no-store` on everything so the worker is the only thing
+  left that can answer, and it refuses to serve the app over its plain-HTTP port at all: that port
+  carries the certificate and the setup page and nothing else, since a working HTTP copy beside
+  the HTTPS one is how the wrong port gets tested at nine at night.
+
+  `tools/README.md` documents the four ways this fails closed while saying nothing useful —
+  chiefly that installing a root on iOS is not trusting it, and that Safari will let you past the
+  interstitial to read a page but never to register a service worker.
+
 - **A verification script, and a fence around it.** `tools/verify-shell.mjs` drives the real page
   in headless Edge or Chrome and measures 28 things a stylesheet review gets wrong — rendered
   geometry, resolved styles, focus movement under dispatched input, runtime storage state. It came
