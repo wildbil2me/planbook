@@ -43,7 +43,7 @@ weeks later. Anything scripted lives in `tools/*.mjs` and runs under bare Node.
 
 ## WO-1.2 — App shell & design frame
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.1
+**Ship** 1 · **Status** ✅ DONE — 2026-08-04 · **Size** M · **Depends on** WO-1.1
 **Closes roadmap** Phase 1 → "Lift the frame from Roll Call!'s `design/starter-template.html`…"
 
 **Why it exists.** Every visible element in this app comes from the suite design system. Hand-
@@ -74,14 +74,16 @@ design exercise.
 **Out of scope** — any data, any real screen. This is chrome and a component shelf.
 
 **Acceptance**
-- [ ] Colors match `design/style-guide.md` literally, declared inline — no CSS variables.
-- [ ] No dark-mode rules exist anywhere: no `prefers-color-scheme`, no `[data-theme]`.
-- [ ] A modal opens, traps focus, closes on Escape and on backdrop click, and returns focus to
+- [x] Colors match `design/style-guide.md` literally, declared inline — no CSS variables.
+- [x] No dark-mode rules exist anywhere: no `prefers-color-scheme`, no `[data-theme]`.
+- [x] A modal opens, traps focus, closes on Escape and on backdrop click, and returns focus to
       the element that opened it.
-- [ ] `:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }` is global and no rule
+- [x] `:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }` is global and no rule
       removes an outline anywhere.
-- [ ] On an iPad, no control is under 44px and nothing sits under the safe-area inset.
-- [ ] No `planbook_` key holds anything but a UI preference.
+- [x] On an iPad, no control is under 44px and nothing sits under the safe-area inset.
+      *(iPadOS 26.5.2. The safe-area half is not yet a real check — no `viewport-fit=cover`, so the
+      insets resolve to 0 on iOS. WO-1.3 owns that and re-runs this. See `TESTING.md`.)*
+- [x] No `planbook_` key holds anything but a UI preference.
 
 **Traps** — The style guide's "colors inline, not CSS variables" reads like a mistake and is not.
 Don't tidy it. Light theme only means the dark header *is* the light theme, not a dark variant.

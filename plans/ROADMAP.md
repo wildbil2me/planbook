@@ -152,7 +152,7 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
       *Nothing that writes student data lands before this works.*
 - [ ] 🚩 Install detection + plain-language warning when running uninstalled — the iOS eviction
       hazard is data loss, not a nicety.
-- [ ] Lift the frame from Roll Call!'s `design/starter-template.html` and
+- [x] Lift the frame from Roll Call!'s `design/starter-template.html` and
       `design/portable-components.md`: navy gradient header, white rounded panels, two-row header,
       modal system, save indicator. Rename, `planbook_` prefix.
 - [ ] 🚩 Class management: create/rename/reorder five-plus classes; term structure per class
