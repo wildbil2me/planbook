@@ -16,6 +16,17 @@
        missing the first time a teacher opens the app on a plane. Add the file to SHELL and
        bump CACHE in the same commit that creates it.
 
+       That goes for STYLESHEETS too, not just modules, and the stylesheet is the one that gets
+       missed: tools/verify-shell.mjs walks the module graph transitively and would catch a
+       forgotten .js, and it does not read the <link> tags at all. A per-screen sheet left out of
+       this list is an app that opens offline, works, and is unstyled from the panel down.
+
+       WRITE NO APOSTROPHE INSIDE THE ARRAY BELOW, comments included. That check reads SHELL by
+       matching single-quoted strings out of the array text, so one apostrophe in a comment pairs
+       with the next one and swallows every real entry between them — and what it reports is every
+       module in the app suddenly missing from the precache. Found the honest way, at WO-1.10, by
+       writing this very note in the wrong place.
+
   A service worker will not register from `file://`. Run a static server locally; that is the
   only reason the "no build step" repo needs a server at all.
 */
@@ -23,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v11';
+const CACHE = 'planbook-shell-v12';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -33,7 +44,9 @@ const SHELL = [
   './index.html',
   './manifest.webmanifest',
   './src/shell.css',
+  './src/home.css',
   './src/shell.js',
+  './src/home.js',
   './src/modal.js',
   './src/live-region.js',
   './src/save-indicator.js',

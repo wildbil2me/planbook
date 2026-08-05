@@ -376,10 +376,14 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 
 /* ── INSET TOOLBAR ── */
 /* portable-components.md §4's `.date-batch-bar`: the gray inset strip under a panel
-   header, hairlined top and bottom, that holds wash-colored `.batch-btn` chips and the
-   save indicator. It is lifted now rather than later because it is the documented home of
-   the save chip — Roll Call! puts the chip nowhere else, and a wash chip needs a light
-   surface to read against. WO-2.1's marking screen is what fills it with a date. */
+   header, hairlined top and bottom, that holds wash-colored `.batch-btn` chips.
+
+   IT HAS NO INSTANCE IN THE APP as of WO-1.10 — the shelf was the only one, and the save chip
+   it used to hold is pinned to the viewport corner instead (see `#saveIndicator` below), because
+   every edit in this app happens inside a modal that covers a panel. Kept rather than deleted
+   with the shelf: WO-2.1's marking screen is what fills it with a date, and re-lifting a
+   component from Roll Call! is more work than leaving the lift in place. Same for `.search-box`
+   above — the first screen with something to search is what instances it. */
 .date-batch-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 8px 20px; background: #f8f9fb;
@@ -429,36 +433,11 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .batch-btn.i { background: #eef2ff; color: #5b6fcc; }
 .batch-btn.w { background: #fef5ea; color: #e67e22; }
 
-/* ── COMPONENT SHELF ── */
-/* Planbook-only, and temporary by intent: the shelf is what WO-1.2 ships instead of a
-   screen, so the frame can be seen and touched before there is data. Work orders from
-   WO-1.10 on replace the contents of `.main`; when the last shelf row goes, these seven
-   rules go with it. */
-.shelf-section { padding: 14px 20px; border-top: 1px solid #eef0f4; }
-.shelf-label {
-  font-size: 10px; font-weight: 700; color: #8a9bb0;
-  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;
-}
-.shelf-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.shelf-note { font-size: 12px; color: #6b7a8d; margin-top: 8px; line-height: 1.5; }
-/* Half the suite's controls are on-dark — header tabs, context buttons, icon buttons —
-   and on a white panel they are invisible. The shelf borrows the header gradient so they
-   can be looked at on the surface they were designed for. */
-.shelf-dark {
-  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
-  border-radius: 8px; padding: 10px 12px;
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-}
-/* Palette proof row. Each swatch carries its own hex in a `style` attribute and prints the
-   same hex as its label, so design/style-guide.md §1 can be diffed against the running app
-   by eye. Inline is the convention here too — the alternative is one class per color. */
-.shelf-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
-.swatch {
-  width: 74px; border-radius: 6px; border: 1px solid #e0e4ea; overflow: hidden;
-  font-size: 9px; font-weight: 700; color: #6b7a8d; text-align: center;
-}
-.swatch span { display: block; height: 26px; }
-.swatch b { display: block; padding: 3px 0; background: #fff; font-weight: 700; }
+/* The seven `.shelf-*` / `.swatch` rules that used to sit here went at WO-1.10, with the
+   component shelf they styled — the rule above them said they would, and the home screen is
+   what replaced it. The palette proof row went with them: design/style-guide.md §1 is still
+   diffable against this file by grepping it for hexes, which is what that row was for.
+   Nothing else in the app ever used one of them. */
 
 /* ── SAVE INDICATOR ── */
 /* Five states, per the style guide: saving and retry orange, saved green, error red,
@@ -468,8 +447,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
   transition: all 0.2s; opacity: 0; white-space: nowrap;
 }
-/* The LIVE indicator floats above the modal layer; the five swatches below it stay inline,
-   because they are static samples rather than the element the store paints.
+/* The one live indicator floats above the modal layer. `#saveIndicator` rather than
+   `.save-indicator` because the shelf used to show all five states as static samples inline;
+   they went at WO-1.10 and the id stays, so that a second chip on a later screen is styled by
+   choosing it rather than by inheriting a fixed position it did not ask for.
    Found on the WO-1.7 iPad sitting: every edit to a student or a guardian happens inside a
    modal, and a modal covers the header. The teacher changed a guardian's email, closed the
    panel, and had nothing telling her it landed. The save was real — the store flushes on
@@ -1067,7 +1048,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .search-box input { min-height: 44px; font-size: 14px; }
   .date-batch-bar { font-size: 13px; }
   .modal-body p { font-size: 14px; }
-  .shelf-note { font-size: 13px; }
+  /* `.panel-title p` rather than the `.shelf-note` that used to be here: the shelf's notes went
+     with it at WO-1.10, and the panel subtitle is the 11px line that a screen now carries in the
+     same place — the home screen's is a sentence rather than a caption. */
+  .panel-title p { font-size: 13px; }
 }
 @media (max-width: 1024px) {
   .search-box { flex: 1 1 auto; max-width: none; }

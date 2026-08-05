@@ -19,10 +19,16 @@
   document — `saving` before, `saved` on the transaction completing, `retry` for the one
   retry, `error` when that fails too. Nothing sets `syncing`; Phase 7 owns it.
 
-  demoSaveCycle() below is the WO-1.2 stub and is still here, still called only by the
-  component shelf's demo buttons and by hand from the console. It goes when the shelf goes
-  (WO-1.10) rather than now: removing it early would leave the shelf's five state buttons and
-  "Cycle all five" wired to nothing, which is a broken fixture rather than a removed one.
+  WO-1.10 removed demoSaveCycle(), the WO-1.2 stub that ran one pass through all five states at a
+  pace a human can read. Its only callers were the component shelf's five state buttons and the
+  console, the shelf went, and a demo with no fixture is dead code the next reader has to prove is
+  dead. One consequence, recorded rather than fixed: `syncing` now has NO caller in the app at all —
+  Phase 7's Drive sync is what will paint it, and until then it is a state in the table below and
+  nothing more.
+
+  The chip is declared in <header> since WO-1.10, having lived in the shelf's inset toolbar before
+  that. src/shell.css pins it to the top-right corner of the viewport either way, above the modal
+  tier, because every edit in this app happens inside a modal that covers the header.
 
   `error` and `retry` also go through announce(): the chip is the only signal that a save
   failed, and a screen-reader user has no reason to be looking at it. `saving`/`saved` are
@@ -65,13 +71,4 @@ export function showSaveState(state) {
       if (el.className === 'save-indicator saved') el.className = 'save-indicator';
     }, 2000);
   }
-}
-
-/* The stub. WO-1.2 had no store, so this is what proved the chip works: one pass through
-   all five states, at a pace a human can read. Called by the shelf's "Cycle all five"
-   button, and it is now the only caller that can paint `syncing` — see the header comment
-   for why it outlives WO-1.4. */
-export function demoSaveCycle() {
-  const order = ['saving', 'saved', 'syncing', 'retry', 'error'];
-  order.forEach((state, i) => setTimeout(() => showSaveState(state), i * 1100));
 }

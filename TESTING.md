@@ -142,6 +142,17 @@ toggle flips is redrawn by a hand-maintained call list in `flipPresentationMode(
 render helper itself. Re-check this line the moment Phase 4 puts a signal card on screen — that is
 exactly the shape the acceptance line's own re-verify note was written to catch.*
 
+*2026-08-05, re-run for WO-1.10: the touch-target 👤 line was re-run on the iPad against this work
+order's new controls — the class cards and the empty state's "Add your first class" — and passed.
+`verify-shell.mjs` measures the same targets headlessly at 0 under 44px, but note that the empty
+state is hidden whenever the coarse section runs, so that one button is covered **by rule**
+(`src/shell.css`'s bare `button { min-height: 44px }`) rather than by measurement. That is precisely
+the reasoning this checklist exists to distrust, which is why it was thumbed rather than asserted.
+The presentation-mode line stays ticked without new work: the home screen carries no `supports`
+field at all, asks `supportsVisible()` nowhere, and is deliberately absent from
+`flipPresentationMode()`'s redraw list — with the condition that ends that exemption named in both
+files, namely WO-4.x quoting a behavior note into a card's signals slot.*
+
 ---
 
 ## Phase 1 — Shell, store, roster
@@ -505,6 +516,41 @@ always allow, but it would have become a silent data-loss path the moment WO-1.9
 mode made it return `false`. Fixed 2026-08-05 by adding the same guard the other three paths
 already carry; `verify-shell.mjs` stayed 184/184 after, since no check yet exercises
 `supportsVisible() === false` — that harness arrives with WO-1.9 itself.*
+
+### WO-1.10 — Home screen v0
+
+- [x] Six classes fit on an iPad screen in portrait without scrolling, at 44px+ touch targets. 👤
+- [x] Every class is exactly one tap from the home screen.
+- [x] A fresh document shows a real empty state, not five blank cards.
+- [x] Adding the Phase 2 today-state line requires touching only the card renderer.
+- [x] `node tools/verify-shell.mjs` runs against this screen with no `SKIP` caused by a deleted
+      shelf fixture, and its check count has not fallen.
+
+*Ticked 2026-08-05. The desk half is `verify-shell.mjs`, **209 of 209, 0 skipped**, up from 201 at
+`HEAD` — the before-count was re-derived from a pristine `git archive HEAD` extract by the verifier
+rather than taken from the implementer's report, because "the count has not fallen" is unanswerable
+after the fact. `wo-sweep.mjs` is 10 passed, 1 to review (reviewed: the 170 sensitive-name mentions
+now include `src/home.js`, and all of its hits are in the header comment explaining why this screen
+carries no support data), exit 0.*
+
+*The portrait fit is measured at 768×1024 under touch emulation, behind a gate asserting the pointer
+really is coarse — without that gate the fit is the desktop pass and proves nothing about glass. Six
+cards in three columns, last card ending at 476px of 1024px. The 👤 line was run on a real iPad in
+one sitting the same day and passed: six cards read as six classes at a glance in portrait with the
+backup nag up, the reserved-but-empty slots read as "not built yet" rather than "failed to load",
+"Add your first class" is thumbable from the empty state, and three columns is the right density.*
+
+*Two things the harness cannot see, recorded because a green run over a fixture that cannot express
+the failure is the recurring defect in this project.* **The home screen's redraw on a class mutation
+is unguarded:** `src/shell.js` calls `afterClassChange()` from eight sites, the list is complete
+today and was matched against every exported mutator in `classes.js`, but the run reads `#homeGrid`
+before the archive step and never again — so a missing line in the archive, restore, delete,
+reorder, create or rename branch would leave all 209 checks green and show the teacher a class she
+just archived. **And `wo-sweep.mjs`'s coarse-block grep went vacuous for the new stylesheet:** it
+reads `git diff HEAD -- src/*.css`, which cannot see an untracked file, so none of `src/home.css`'s
+nine selectors were evaluated by it. The substantive rule holds anyway — they are all in that
+file's own coarse block and `verify-shell.mjs` measured 0 targets under 44px — but the grep half
+proved nothing here, and it will go vacuous for every per-screen stylesheet from now on.
 
 ---
 

@@ -17,9 +17,6 @@
     The hooks, all handled by the one listener below:
       data-modal-open="<overlayId>"   opens that overlay
       data-modal-close                closes the overlay it sits inside
-      data-save-state="<state>"       shows that save-indicator state
-      data-save-cycle                 runs the five-state demo
-      data-announce="<message>"       sends a message to the aria-live region
       data-pill-group                 on a container: its .pill children single-select
       data-install-dismiss            snoozes the install banner
       data-presentation-toggle        turns presentation mode on or off — on the header button and
@@ -34,7 +31,9 @@
       data-backup-confirm             carries out the restore the confirm dialog describes
       data-backup-cancel              abandons it, having written nothing
       data-class-manage               fills the classes panel, then opens it
-      data-class-tab="<classId>"      makes that class the open one
+      data-class-tab="<classId>"      makes that class the open one — carried by the header's tab
+                                      row AND by the home screen's cards, which are two views of
+                                      one selection and share this one route
       data-class-create               on a <form>: creates the class typed into it
       data-class-rename="<classId>"   turns that row into a rename field
       data-class-rename-save="<id>"   on a <form>: saves the name typed into that row
@@ -99,26 +98,58 @@
 
 import { openModal, closeModal } from './modal.js';
 import { announce } from './live-region.js';
-import { showSaveState, demoSaveCycle } from './save-indicator.js';
 import { getPref, setPref } from './prefs.js';
 import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './install-banner.js';
 import * as store from './store.js';
 import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } from './year-picker.js';
 import * as backup from './backup.js';
 import * as classes from './classes.js';
+import * as home from './home.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
 import * as teacher from './teacher.js';
 
-/* The two things that are facts about the open year rather than about a save, so they are
-   re-evaluated wherever the open year can change: the backup nag (src/backup.js explains why it is
-   not on every save) and the class bar, which is describing another year's classes the instant the
-   document underneath it is replaced. Chained from the hooks below rather than called from inside
-   year-picker.js, so that neither of those modules has to import the other two. */
+/* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
+   open year can change: the backup nag (src/backup.js explains why it is not on every save), the
+   class bar and the home screen, both of which are describing another year's classes the instant
+   the document underneath them is replaced, and the teacher's own name in the header, which lives
+   in the year document rather than in this browser (src/teacher.js). Chained from the hooks below
+   rather than called from inside year-picker.js, so that none of those modules has to import the
+   others. */
 function afterYearChange() {
   backup.refreshBackupNag();
   classes.refreshClassBar();
+  afterClassChange();
+  teacher.refreshHeaderIdentity();
+}
+
+/*
+  The home screen redrawn behind whatever just changed a class.
+
+  THE CARDS AND THE TAB ROW ARE TWO VIEWS OF ONE LIST, and only one of them redraws itself.
+  src/classes.js ends every mutation with its own refreshClassBar(), and it deliberately does not
+  reach the home screen: src/home.js imports IT — for the read point its header comment exists to
+  provide — and the reverse import would close a loop this repo has refused twice already
+  (afterYearChange above, and src/classes.js's own header comment). So the second view is redrawn
+  from here, which is where this app states the order things happen in.
+
+  A CLASS MUTATION ADDED LATER ADDS ITS LINE HERE. The cost of forgetting is a home screen showing
+  a class the teacher has just archived, sitting behind the dialog she archived it in — visible the
+  moment she closes it, and invisible in a desk check of the module she edited.
+*/
+function afterClassChange() {
+  home.refreshHome();
+}
+
+/* A restore replaces the whole document, so everything drawn from one is redrawn — the class bar
+   and the term nav, the cards behind the dialog, and the teacher's name in the header, which is in
+   the document rather than in this browser. Not the backup nag: src/backup.js re-evaluates that
+   itself on the path that just wrote the file. */
+function afterRestore() {
+  classes.refreshClassBar();
+  afterClassChange();
+  teacher.refreshHeaderIdentity();
 }
 
 /*
@@ -140,6 +171,11 @@ function afterYearChange() {
 function flipPresentationMode() {
   presentation.togglePresentationMode();
   roster.refreshSupportSurfaces();
+  /* The home screen is deliberately NOT in this list. Nothing on a class card comes out of a
+     student's `supports` block — a class name and a colour are not a student's file — so there is
+     nothing on it for the flip to suppress. src/home.js's header comment carries the same note and
+     the condition under which it stops being true, because WO-4.x putting a behavior note into a
+     card's signals slot is exactly how this list goes quietly out of date. */
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -157,11 +193,6 @@ document.addEventListener('click', (e) => {
     if (overlay) closeModal(overlay);
     return;
   }
-
-  const saveState = e.target.closest('[data-save-state]');
-  if (saveState) { showSaveState(saveState.getAttribute('data-save-state')); return; }
-
-  if (e.target.closest('[data-save-cycle]')) { demoSaveCycle(); return; }
 
   if (e.target.closest('[data-install-dismiss]')) { dismissInstallBanner(); return; }
 
@@ -199,7 +230,7 @@ document.addEventListener('click', (e) => {
        the first time a class needed the backup panel closes a loop this repo has already refused
        once. Refreshed whether or not the restore took — a refusal leaves the old document open,
        and re-describing the document that is still open is the right answer anyway. */
-    backup.confirmRestore().then(classes.refreshClassBar, classes.refreshClassBar);
+    backup.confirmRestore().then(afterRestore, afterRestore);
     return;
   }
 
@@ -208,26 +239,46 @@ document.addEventListener('click', (e) => {
   const classManage = e.target.closest('[data-class-manage]');
   if (classManage) { classes.openClassManager(classManage); return; }
 
+  /* The header tab and the home screen's card both land here — see the hook list above. Selecting
+     a class moves the mark on both views, so both are redrawn. */
   const classTab = e.target.closest('[data-class-tab]');
-  if (classTab) { classes.selectClass(classTab.getAttribute('data-class-tab')); return; }
+  if (classTab) {
+    classes.selectClass(classTab.getAttribute('data-class-tab'));
+    afterClassChange();
+    return;
+  }
 
   const rename = e.target.closest('[data-class-rename]');
   if (rename) { classes.startRename(rename.getAttribute('data-class-rename')); return; }
   if (e.target.closest('[data-class-rename-cancel]')) { classes.cancelRename(); return; }
 
+  /* Each of the five below changes which classes are on the bar, or their order, so each redraws
+     the second view as well — see afterClassChange(). Two lines apiece rather than this file's
+     usual one, because the pair reads as one thing and a 110-character line hides the second
+     half of it. */
   const moveUp = e.target.closest('[data-class-move-up]');
-  if (moveUp) { classes.moveClassUp(moveUp.getAttribute('data-class-move-up')); return; }
+  if (moveUp) {
+    classes.moveClassUp(moveUp.getAttribute('data-class-move-up')); afterClassChange(); return;
+  }
   const moveDown = e.target.closest('[data-class-move-down]');
-  if (moveDown) { classes.moveClassDown(moveDown.getAttribute('data-class-move-down')); return; }
+  if (moveDown) {
+    classes.moveClassDown(moveDown.getAttribute('data-class-move-down')); afterClassChange(); return;
+  }
 
   const archive = e.target.closest('[data-class-archive]');
-  if (archive) { classes.archiveClass(archive.getAttribute('data-class-archive')); return; }
+  if (archive) {
+    classes.archiveClass(archive.getAttribute('data-class-archive')); afterClassChange(); return;
+  }
   const restore = e.target.closest('[data-class-restore]');
-  if (restore) { classes.restoreClass(restore.getAttribute('data-class-restore')); return; }
+  if (restore) {
+    classes.restoreClass(restore.getAttribute('data-class-restore')); afterClassChange(); return;
+  }
 
   const del = e.target.closest('[data-class-delete]');
   if (del) { classes.openDeleteConfirm(del.getAttribute('data-class-delete'), del); return; }
-  if (e.target.closest('[data-class-delete-confirm]')) { classes.confirmDelete(); return; }
+  if (e.target.closest('[data-class-delete-confirm]')) {
+    classes.confirmDelete(); afterClassChange(); return;
+  }
   if (e.target.closest('[data-class-delete-cancel]')) { classes.cancelDelete(); return; }
 
   const termManage = e.target.closest('[data-term-manage]');
@@ -315,9 +366,6 @@ document.addEventListener('click', (e) => {
   if (teacherPanel) { teacher.openTeacherSettings(teacherPanel); return; }
   if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
 
-  const speak = e.target.closest('[data-announce]');
-  if (speak) { announce(speak.getAttribute('data-announce')); return; }
-
   /* Filter pills are single-select within their group. `aria-pressed` moves with the class
      — a visually active pill that still reads "not pressed" is the standard way this
      component goes wrong. */
@@ -351,10 +399,13 @@ document.addEventListener('submit', (e) => {
     createYearFromForm().then(afterYearChange, afterYearChange);
     return;
   }
-  if (form.hasAttribute('data-class-create')) { classes.createClassFromForm(); return; }
+  if (form.hasAttribute('data-class-create')) {
+    classes.createClassFromForm(); afterClassChange(); return;
+  }
   if (form.hasAttribute('data-roster-create')) { roster.createStudentFromForm(); return; }
   if (form.hasAttribute('data-class-rename-save')) {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
+    afterClassChange();
   }
 });
 
@@ -459,6 +510,14 @@ document.addEventListener('DOMContentLoaded', async () => {
        Boot is the only place they are drawn from outside src/classes.js and the two chains above:
        every other change to a class is made inside that module, which redraws its own header. */
     classes.refreshClassBar();
+    /* The home screen, from the same document and the same open-class preference the bar just
+       resolved — so the cards and the tabs cannot disagree about which class is open on the first
+       paint. Boot is the only place either is drawn from outside the chains above. */
+    afterClassChange();
+    /* And whose planbook this is. It comes out of the year document rather than out of this
+       browser's preferences (src/teacher.js), so it is read here rather than beside presentation
+       mode above. */
+    teacher.refreshHeaderIdentity();
     document.getElementById('loadingScreen').classList.add('hidden');
   } catch (e) {
     showBootFailure(e);
@@ -508,27 +567,47 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* A console seam, and the reason it exists: WO-1.2 ships no store, so the five save states
-   and the live region are only reachable by hand. Later work orders import these modules
-   directly — nothing in the app should ever read `window.planbook`, and when the shelf goes
-   this goes with it.
+/*
+  A READ SEAM FOR tools/verify-shell.mjs, and the one decision on this page that reversed a
+  standing plan — so it is written out at length rather than left as a surprise.
 
-   getPref/setPref are here for the same reason and one more: setPref refusing an undeclared
-   key is the check behind "no planbook_ key holds anything but a UI preference", and it is
-   only runnable by hand until there is a preference to set.
+  WO-1.2 put this here as a console seam, because that build had no store and the five save states
+  and the live region were reachable no other way. Every comment on it, in this file and in
+  plans/verification-tooling.md, said it would go when the component shelf went. WO-1.10 removed the
+  shelf and KEPT this, deliberately.
 
-   `store` joined them at WO-1.4 with the same justification: the store now saves, retries,
-   and reports on the chip, but nothing on screen writes to a year document until WO-1.6 and
-   WO-1.7 give the app a class and a roster. Until then store.update() is reachable only from
-   here, and so is every acceptance line about `rev` — the console and tools/verify-shell.mjs
-   are what exercise them. This goes when the shelf goes. */
+  WHY. What accumulated on it between WO-1.4 and WO-1.9 is not a set of buttons with no home — it is
+  the way the harness READS the app's own answers: which class and which term are open, what a
+  document holds after six classes were created through the real form, what src/supports.js answers
+  about visibility, what came back out of IndexedDB after a reload. Every acceptance line is
+  still DRIVEN through the controls a teacher touches; this is only how the result is inspected.
+  Delete it and the harness needs its own copy of "resolve the stored id against the document", its
+  own parser, and its own copy of the visibility rule — where each one could agree with itself
+  perfectly and disagree with the app, which is the exact failure every one of these entries exists
+  to prevent. Roughly three quarters of a 200-check run reads through here. The alternative
+  was not a smaller seam, it was a suite of announced SKIPs, which
+  plans/verification-tooling.md calls out by name: a run that is mostly skips proves nothing.
+
+  WHAT WENT INSTEAD: the entries whose only caller was the shelf. showSaveState and demoSaveCycle
+  are gone from here and demoSaveCycle is gone from src/save-indicator.js — src/store.js paints the
+  chip on every real write now, and the harness reads #saveIndicator off the page.
+
+  THE RULE THAT HAS NOT CHANGED, and it is the one that matters: nothing in the app may read
+  `window.planbook`. It is a one-way window for a tool, not a bus. A module that needs another
+  module imports it, and the day something in src/ reaches for this object the seam has become
+  architecture and should be deleted instead.
+
+  getPref/setPref have a second reason to be here: setPref refusing an undeclared key IS the check
+  behind "no planbook_ key holds anything but a UI preference", and nothing on screen can be made to
+  attempt an undeclared write.
+*/
 window.planbook = {
-  showSaveState, demoSaveCycle, announce, openModal, closeModal, getPref, setPref, store,
+  announce, openModal, closeModal, getPref, setPref, store,
   /* `backup` is here for a reason the others are not: a page cannot be handed a real file by a
      script, so no harness can put one through the file input or the drop target. Everything
      after the read is the same code either way, and backup.restoreFromText() is that seam —
      tools/verify-shell.mjs drives the round trip, the refusals and the confirm through it. The
-     real file paths stay owed to a human on an iPad. This goes when the shelf goes. */
+     real file paths stay owed to a human on an iPad. */
   backup,
   /* `classes` joined at WO-1.6, and unlike the others it is NOT here because the feature is
      unreachable — every control it owns is on the page and a teacher can touch all of them. It is
@@ -536,30 +615,30 @@ window.planbook = {
      a term id looks like, and what a document holds after six classes have been created through
      the form. The acceptance lines are driven by clicking the real controls; this is how the
      result is inspected without a second copy of the resolution logic in the harness. Nothing in
-     the app reads window.planbook, and this goes when the shelf goes. */
+     the app reads window.planbook — see the block above for why the seam outlived the shelf. */
   classes,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a
      second copy of the parser living in the harness where it could agree with itself and disagree
      with the app. parseRosterLine() is exported for that reason and for no other: nothing in the
-     app calls it from outside src/roster.js. This goes when the shelf goes. */
+     app calls it from outside src/roster.js. */
   roster,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that
      function what it answers, and to read a student's block back out of the document to prove a
      round trip, without keeping a second copy of either in the harness where it could agree with
-     itself and disagree with the app. Nothing in the app reads window.planbook, and this goes when
-     the shelf goes. */
+     itself and disagree with the app. Nothing in the app reads window.planbook — see the
+     block above for why the seam outlived the shelf. */
   supports,
   /* `presentation` joined at WO-1.9, and like `classes` it is NOT here because the feature is
      unreachable — the toggle is a button in the header a teacher can touch. It is here so
      tools/verify-shell.mjs can READ the mode without a second copy of the preference name in the
      harness, and can put it back afterwards: the acceptance lines are driven by clicking the real
      control, and a run that left the browser in presentation mode would quietly suppress the
-     fixtures of every check after it. Nothing in the app reads window.planbook, and this goes when
-     the shelf goes. */
+     fixtures of every check after it. Nothing in the app reads window.planbook — see the
+     block above for why the seam outlived the shelf. */
   presentation,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */

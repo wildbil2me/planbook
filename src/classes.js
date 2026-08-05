@@ -382,8 +382,14 @@ function showClassError(message) {
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
 /* Initials for the row avatar. "Period 3 — Biology" reads as P3, which is what the teacher calls
-   it; a single letter for every "Period n" class would make all five look alike. */
-function initials(name) {
+   it; a single letter for every "Period n" class would make all five look alike.
+
+   Exported at WO-1.10 for src/home.js, and that is not a convenience: the card and the manager row
+   are two pictures of one class, and a class that reads "P3" on one and "PE" on the other is a
+   class the teacher has to look at twice. src/roster.js keeps its OWN pair of these functions and
+   the comment there says why — it reads a student's first and last name off a different shape over
+   a different id space. Same shape and same id space here, so one copy. */
+export function initials(name) {
   const words = String(name || '').trim().split(/[\s—–_/-]+/).filter(Boolean);
   if (!words.length) return '?';
   const second = words.length > 1 ? words[1][0] : (words[0][1] || '');
@@ -392,8 +398,10 @@ function initials(name) {
 
 /* The ten avatar colors are assigned by `id % 10` in Roll Call!, where a class id is a number.
    Planbook's ids are base36 strings (src/store.js), so the same ten are picked by summing the
-   characters: stable for the life of the class, identical on every device, and stored nowhere. */
-function avatarClass(id) {
+   characters: stable for the life of the class, identical on every device, and stored nowhere.
+   Exported at WO-1.10 alongside initials() above, for the reason given there — the colour is part
+   of how a teacher recognises a class, so there is one answer per class and not one per screen. */
+export function avatarClass(id) {
   let sum = 0;
   for (let i = 0; i < id.length; i++) sum += id.charCodeAt(i);
   return 'av' + (sum % 10);

@@ -427,7 +427,7 @@ card quotes a behavior note. Build the choke point.
 
 ## WO-1.10 — Home screen v0
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.6
+**Ship** 1 · **Status** ✅ DONE — 2026-08-05 · **Size** M · 🚩 · **Depends on** WO-1.6
 **Closes roadmap** Phase 1 → "Home screen v0: every class in one tap."
 
 **Why it exists.** Every class reachable in one tap is the owner's founding requirement. This screen
@@ -454,12 +454,43 @@ Do not grow the verification script beyond re-pointing it; new kinds of check ar
 not a refactor.
 
 **Acceptance**
-- [ ] Six classes fit on an iPad screen in portrait without scrolling, at 44px+ touch targets.
-- [ ] Every class is exactly one tap from the home screen.
-- [ ] A fresh document shows a real empty state, not five blank cards.
-- [ ] Adding the Phase 2 today-state line requires touching only the card renderer.
-- [ ] `node tools/verify-shell.mjs` runs against this screen with **no `SKIP` caused by a deleted
-      shelf fixture**, and its check count has not fallen.
+- [x] Six classes fit on an iPad screen in portrait without scrolling, at 44px+ touch targets.
+      *(Measured at 768×1024 with touch emulation and a gate asserting the pointer really is
+      coarse — without that gate the fit is the desktop pass. 6 cards in 3 columns, last card ends
+      at 476px of 1024px, 0 targets under 44px. The install banner is hidden for the measurement
+      and the check says so: that banner is on screen exactly while the app is not installed, and
+      this line is about an installed iPad. Confirmed on a real iPad 2026-08-05, with the backup
+      nag up.)*
+- [x] Every class is exactly one tap from the home screen. *(The card carries the header tab row's
+      own `data-class-tab` hook through one route to `classes.selectClass()`, so the card and the
+      tab cannot disagree about which class is open. Driven on a card that was NOT already open —
+      tapping the open card would pass whether or not the tap does anything — asserting the
+      selection, the preference, the card and the header tab. The tap lands on real state rather
+      than a placeholder screen: `src/home.js` documents why, since nothing it will eventually
+      open exists yet.)*
+- [x] A fresh document shows a real empty state, not five blank cards. *(Asserted on a genuinely
+      empty year created through the real year picker mid-run, and it asserts all three halves —
+      zero cards, a 249-character explanation on screen, and the route out to the first class. A
+      grid that renders nothing and an empty state that says nothing are the same picture.)*
+- [x] Adding the Phase 2 today-state line requires touching only the card renderer. *(One renderer,
+      `classCard(cls, isOpen)` in `src/home.js`, one caller. Both slots measured `42px reserved,
+      empty` on all six cards — asserted empty of text AND of child elements AND load-bearing in
+      height, because a slot with no height reflows the grid the day it is filled. Two honest
+      widenings of the literal claim, both recorded in the code: the boundary is really the
+      renderer **and its stylesheet**, since the reserved 18px/20px is a guess about how tall one
+      line is; and a second **interactive** control would turn the card from a `<button>` into a
+      container, which is a Phase 4 concern. Freshness is outside the renderer too — a today-state
+      that must update when attendance is marked needs a line in `src/shell.js`'s
+      `afterClassChange()` chain. Re-verify at every later phase.)*
+- [x] `node tools/verify-shell.mjs` runs against this screen with **no `SKIP` caused by a deleted
+      shelf fixture**, and its check count has not fallen. *(201 → 209 checks, 0 skips both ways.
+      The "before" number was re-derived independently by the verifier from a pristine `HEAD`
+      extract rather than taken from the implementer's record. The one genuinely shelf-coupled
+      fixture was the modal block, re-pointed from `#aboutModal` to `#classesModal` driven through
+      `header [data-class-manage]` — scoped to `header` because that hook now also appears inside
+      the hidden empty state, where an unscoped selector hands the driver a 0×0 element. The
+      `window.planbook` seams were kept deliberately and survived; `plans/verification-tooling.md`
+      predicted they would go with the shelf and that prediction was wrong — see the note there.)*
 
 **Traps** — Don't build the Phase 6 glance page here. Build the *frame* that accretes into it. The
 roadmap is explicit: build the glance page before the things it glances at and you build it twice.

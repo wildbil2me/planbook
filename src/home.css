@@ -1,0 +1,145 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — the home screen (WO-1.10).
+
+   THE FIRST PER-SCREEN STYLESHEET, and it exists because src/shell.css's own header
+   says the next screen gets one: "a screen that needs styles of its own gets
+   src/<screen>.css, loaded after this file, styling only its own class names, with its
+   own @media (pointer: coarse) block at its end. Two stylesheets must never style the
+   same class — that is the only way per-file touch passes stay safe from the cascade."
+   Everything in shell.css so far belongs to the shell or to a modal; this is the first
+   actual screen, so this is the first time that rule applies. It is obeyed literally:
+   no selector below names anything shell.css styles.
+
+   The values are shell.css's and design/style-guide.md's, not new ones:
+
+     - The card is the style guide's subdued card — #f8f9fb on the white panel with an
+       #eef0f4 hairline — which is `.class-row` and `.roster-row`'s surface, because a
+       card holding one class should read as the same kind of object as a row holding one.
+     - 10px radius: §3's "feature cards", the one radius in the guide above a button's 8
+       and below a panel's 14.
+     - The OPEN card takes the interactive wash (#eef2ff / #b0bcf0 / #5b6fcc), not a solid
+       fill. §1 reserves solid for a primary action, and `.year-row.current` already made
+       this exact call for the same meaning: this is not an action, it is where you
+       already are.
+
+   Two things read like mistakes here and are the same two that read like mistakes in
+   shell.css: colors are written out inline rather than as custom properties, and there is
+   no dark variant of anything. Both are deliberate suite conventions — read CLAUDE.md
+   before tidying either one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE CARD GRID ── */
+/* auto-fill rather than a column count, so the same rule gives three columns on an iPad in
+   portrait, four in landscape and one on a phone without a breakpoint per shape. The 200px
+   floor is what stops a sixth class from squeezing a name into two words: past that the
+   grid drops a column and the cards get taller instead of narrower.
+
+   Padded to match `.panel-header` above it (16px 20px 0), so the cards line up with the
+   panel title rather than with the panel edge. */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 0 20px 20px;
+}
+
+/*
+  One class. A <button> and not a container, for the reason src/home.js's classCard() gives:
+  the whole card is the tap. `text-align: left` and `font-family: inherit` are what a button
+  needs to stop looking like a platform control on a page.
+
+  touch-action and user-select are restated here rather than only inherited from shell.css's
+  grouped selector, which already covers this control through its bare `button` term. Named
+  by class for the reason `.hdr-mode-btn` is named in shell.css's coarse block: a control
+  that is only covered by another selector's rule is a control the next reader has to go and
+  prove is covered. A grouped selector of one is not written out; the day this sheet has a
+  second tappable class, it gets one at the top, the way shell.css has.
+*/
+.class-card {
+  display: flex; flex-direction: column; gap: 8px;
+  min-width: 0;
+  padding: 12px 14px; border-radius: 10px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+  font-family: inherit; text-align: left;
+  cursor: pointer; transition: all 0.15s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Lifts to white on hover — the card comes forward off the panel's own wash, which is what
+   says it is the thing being pointed at rather than a region of the page. */
+.class-card:hover { border-color: #5b6fcc; background: #fff; }
+.class-card.open { background: #eef2ff; border-color: #b0bcf0; }
+
+.class-card-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* Capped by the grid track and ellipsised, never wrapped: two lines of class name on one
+   card and one on the next is a grid of cards that no longer line up. The whole name is on
+   the card's `title`, and the class manager shows it in full. */
+.class-card-name {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 14px; font-weight: 700; color: #1a1a2e;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.class-card.open .class-card-name { color: #5b6fcc; }
+
+/*
+  THE TWO RESERVED SLOTS, and `min-height` is the entire point of both rules.
+
+  They are empty today — src/home.js explains why a placeholder would be worse than nothing —
+  and they hold their own height so that the day WO-2.1 writes a line of text into
+  `.class-card-state`, every card on the page is already the size it will be. Without the
+  reserved height the first real datum reflows the whole grid, which is how "six classes fit
+  on an iPad in portrait" stops being true in a work order that never touched this file.
+
+  The heights are one line of `.class-card-state`'s own type and one row of chips: 12px text
+  at 1.5 line-height is 18px, and a `.pill`-shaped count is 24. Neither is a guess about what
+  the content will SAY, only about how tall one line of it is.
+*/
+.class-card-state {
+  display: block; min-height: 18px;
+  font-size: 12px; line-height: 1.5; color: #6b7a8d;
+}
+.class-card-signals { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+
+/* ── THE EMPTY STATE ── */
+/* Inside shell.css's `.empty-state`, which supplies the centred 48px-padded zero-data block;
+   these three are the children it does not have, because that component was written for a
+   panel with no rows and this one has to lead somewhere. The lead line takes secondary text
+   rather than the container's `#a0aab8`: an empty state that a teacher is meant to act on
+   should not be styled like a disabled control. */
+.home-empty-lead { font-size: 14px; font-weight: 700; color: #6b7a8d; }
+/* Capped and centred at a readable measure rather than run across an iPad, the same call
+   `.loading-error` makes in shell.css over the same kind of paragraph. */
+.home-empty-text {
+  max-width: 460px; margin: 8px auto 0;
+  font-size: 13px; line-height: 1.6; color: #8a9bb0;
+}
+.home-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+
+/* ── RESPONSIVE ── */
+/* Same order design/style-guide.md §6 names and shell.css follows: (pointer: coarse) first,
+   then the width blocks. */
+
+/* The touch pass for this screen's own controls. `.class-card` is a <button>, so shell.css's
+   coarse block already floors it at 44px through the bare `button` rule — it is named here
+   anyway, with the padding a thumb wants, for the reason given at `.class-card` above. */
+@media (pointer: coarse) {
+  .home-grid { gap: 12px; padding: 0 20px 20px; }
+  .class-card { min-height: 44px; padding: 14px; }
+  /* 12px between a 44px avatar-and-name row and the slots below it, so the card does not
+     read as one dense block once there is something in them. */
+  .class-card-head { gap: 12px; }
+  .class-card-name { font-size: 15px; }
+  /* The reserved heights follow the fonts up: 13px text at 1.5 is 20px, and a chip with a
+     44px-tall touch target inside it needs the row, not the line. */
+  .class-card-state { min-height: 20px; font-size: 13px; }
+  .class-card-signals { min-height: 26px; }
+  .home-empty-lead { font-size: 15px; }
+  .home-empty-text { font-size: 14px; }
+  .home-empty-actions { gap: 10px; }
+}
+@media (max-width: 640px) {
+  /* `.main` drops to 10px of gutter at this width, so the grid's own 20px would make 30px of
+     margin on a 390px screen — a card 60px narrower than the page it is on. */
+  .home-grid { padding: 0 12px 12px; }
+}

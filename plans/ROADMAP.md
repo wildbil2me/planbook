@@ -171,7 +171,7 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 - [x] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus
       discreet-by-default display of accommodations (indicator only; details on deliberate tap).
       Teachers project these screens onto classroom walls.
-- [ ] 🚩 Home screen v0: **every class in one tap** — the owner's founding requirement. This screen
+- [x] 🚩 Home screen v0: **every class in one tap** — the owner's founding requirement. This screen
       accretes through every later phase and becomes Phase 6's glance page.
 - [x] **Start `TESTING.md` and `CHANGELOG.md`.** The maintenance protocol above demands both from
       the very first ticked box, so they cannot wait for Phase 8. Both accrete: every phase adds

@@ -5,9 +5,10 @@
   Lifted from Roll Call!'s design/starter-template.html and design/portable-components.md;
   every value comes from design/style-guide.md. See CLAUDE.md → "Reference implementation".
 
-  What this file is, as of WO-1.2: chrome and a component shelf. There is no real screen
-  behind it. The shelf inside <main> is temporary by intent — it exists so the frame can be
-  seen and touched before there is anything to show — and WO-1.10's home screen replaces it.
+  What this file was, as of WO-1.2: chrome and a component shelf. There was no real screen
+  behind it. The shelf inside <main> was temporary by intent — it existed so the frame could be
+  seen and touched before there was anything to show — and WO-1.10 spent it, as planned. See
+  that work order's paragraph below for what is there now and what went with the shelf.
 
   WO-1.4 put a store behind the chrome: the loading screen now waits for a real year document
   out of IndexedDB, the header carries the year and the picker that switches it, and the save
@@ -36,6 +37,25 @@
   including the roster's indicator dot, whose mere presence is a disclosure on a projected screen.
   The suppression itself is not here and is not per screen: src/supports.js answers one question
   for the whole app, and this work order changed the answer.
+
+  WO-1.10 spent the shelf and put the home screen in its place: the panel inside <main> is now
+  every active class as a card, one tap each, with the empty state that leads to the first class
+  on a fresh document. Read src/home.js before changing a card — the two spans at the bottom of
+  each one are EMPTY ON PURPOSE and hold their own height, because WO-2.x's today-state, WO-3.x's
+  ungraded count and WO-4.x's attention count land in them, and a dash or a zero there today
+  would be a card that looks finished and is lying. The panel's subtitle says as much in words a
+  teacher reads, and that sentence is the one thing on this screen written to be deleted: it
+  describes what has not arrived yet, so it goes when the last slot is filled.
+
+  Three things went with the shelf and are worth knowing about by name. The save chip moved into
+  <header>, where the work order says it belongs and where it always appeared anyway — it is
+  position: fixed to the top-right corner, so the move is about where it is DECLARED rather than
+  where it is seen. The five save-state demo buttons, "Cycle all five" and the announce button
+  went whole, with their hooks and demoSaveCycle() in src/save-indicator.js; nothing outside the
+  shelf ever called them. And `window.planbook` STAYED, against every comment in src/shell.js
+  that said it would go — tools/verify-shell.mjs reads the open document through it, and the
+  alternative is a second copy of the app's own resolution logic living in the harness. Its
+  shelf-only members are what went.
 
   Deliberately still absent, so that nothing here has to be un-built later:
     - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
@@ -76,6 +96,11 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="src/shell.css">
+  <!-- The home screen's own sheet, loaded after the shell's. src/shell.css's header sets this
+       convention for every screen after it: one file per screen, styling only its own class
+       names, with its own (pointer: coarse) block. Order matters — a per-screen sheet has to be
+       able to override the shell, and never the other way round. -->
+  <link rel="stylesheet" href="src/home.css">
 </head>
 <body>
 
@@ -121,6 +146,12 @@
       <div class="header-logo" aria-hidden="true">📓</div>
       <div class="header-title">
         <h1>Planbook</h1>
+        <!-- The second line is the strapline until the teacher has entered her own name, and then
+             it is "Ms Toomey · St John's High School" — WO-1.10's "Header: … teacher name".
+             src/teacher.js swaps it and captures the sentence below as the fallback, so this is the
+             only place that sentence is written. It says the same eleven words on every screen of
+             the app, which is what makes it the line a name can have: the top row has no width to
+             spare for another control (see the 390px comments further down this file). -->
         <p id="headerSubtitle">Grades, attendance, and the outreach that follows</p>
       </div>
     </div>
@@ -138,7 +169,7 @@
       </button>
       <!-- Backup & restore, in the header rather than on the shelf: it is the one control in
            this build that has to still be reachable at a touch when everything else has gone
-           wrong, and the shelf goes away at WO-1.10. -->
+           wrong, and the shelf it would otherwise have sat on is gone (WO-1.10). -->
       <button class="hdr-icon-btn" data-backup-panel title="Backup and restore"
               aria-label="Backup and restore" aria-haspopup="dialog">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -229,6 +260,18 @@
       </button>
     </div>
   </div>
+
+  <!-- The save chip. It lived in the component shelf's inset toolbar until WO-1.10, which is where
+       portable-components.md §4 puts it and where a chip needs a light surface to read against —
+       but src/shell.css pins THIS one to the top-right corner of the viewport (position: fixed,
+       z-index 1050, above the modal tier) because every edit in this app happens inside a modal and
+       a modal covers the header. So it is declared in the header, which is what the work order asks
+       for and what it has always looked like, and it is drawn nowhere near where this markup sits.
+
+       No role="status" on purpose: the aria-live channel is announce() in src/live-region.js, and
+       doubling them would announce every save twice. src/store.js paints it — saving → saved on
+       every write, retry and then error when one fails. -->
+  <span class="save-indicator" id="saveIndicator"></span>
 </header>
 
 <!-- Presentation mode's standing state (WO-1.9). Ships `hidden` and is revealed only by
@@ -307,177 +350,73 @@
   <button class="backup-nag-btn" data-backup-panel aria-haspopup="dialog">Back up now</button>
 </aside>
 
+<!--
+  THE HOME SCREEN (WO-1.10). Every active class as a card, one tap each, and the empty state that
+  leads to the first one on a fresh document. This replaced the WO-1.2 component shelf, which is
+  what stood here to let the frame be seen and touched before there was any data to show.
+
+  src/home.js renders every card and owns the reasoning; three things about the markup below.
+
+  IT IS A .panel WITH A GRID IN IT, not cards loose on the page. .panel / .panel-header /
+  .panel-title are the lifted frame from portable-components.md §4, and the shelf was their only
+  instance in the app — a screen that dropped them would have retired a suite component by
+  accident. The grid and the empty state are the only new things here.
+
+  #homeGrid IS EMPTY IN THE MARKUP, like #classTabBar and #yearList above it, and for the same
+  reason: it is drawn from the open document, and a hand-written specimen card here would be a
+  second truth to keep in step with the real one.
+
+  THE SUBTITLE UNDER “Your classes” IS WRITTEN TO BE DELETED. It says what the empty space on each
+  card is for, because a card with two blank lines at the bottom otherwise reads as a card that
+  failed to load. Once WO-2.x, WO-3.x and WO-4.x have filled those two spans the sentence is a lie
+  about a build that has moved on — delete it then, rather than editing it into something vaguer.
+-->
 <main class="main">
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
-          <h2>Component shelf</h2>
-          <p>Every piece of the frame, so it can be seen and touched before there is data. Nothing on this page is wired to anything.</p>
-        </div>
-      </div>
-      <!-- Specimens: the search row's real home is a panel header, so it is shown in one. -->
-      <div class="search-row">
-        <div class="search-box">
-          <span aria-hidden="true">🔍</span>
-          <input type="text" placeholder="Search…" aria-label="Search (specimen — nothing to search yet)">
-        </div>
-        <div class="pills" role="group" aria-label="Filters (specimen)" data-pill-group>
-          <button class="pill active" aria-pressed="true">All</button>
-          <button class="pill" aria-pressed="false">Concern</button>
-          <button class="pill" aria-pressed="false">Praise</button>
+          <h2>Your classes</h2>
+          <p>
+            Tap a class to open it. Each card will grow to carry that class's attendance for today,
+            the work waiting to be graded, and the students who need attention, as those parts of
+            Planbook arrive — the space on it is already theirs.
+          </p>
         </div>
       </div>
     </div>
 
-    <!-- The inset toolbar, and the save chip's real home. The chip carries no role="status"
-         on purpose — the aria-live channel is announce(), and doubling them would announce
-         twice.
+    <div class="home-grid" id="homeGrid"></div>
 
-         As of WO-1.4 the chip is driven by the store: every save to the year document shows
-         saving → saved here, and a failed write shows retry and then error. The five buttons
-         and "Cycle all five" are the WO-1.2 stub and still work, so pressing one now paints a
-         state the store did not put there. They stay because they are shelf fixtures and
-         WO-1.10 removes the shelf whole; nothing outside this shelf calls them. -->
-    <div class="date-batch-bar">
-      <span class="save-indicator" id="saveIndicator"></span>
-      <div class="shelf-row">
-        <button class="batch-btn w" data-save-state="saving">Saving</button>
-        <button class="batch-btn p" data-save-state="saved">Saved</button>
-        <button class="batch-btn a" data-save-state="error">Error</button>
-        <button class="batch-btn i" data-save-state="syncing">Syncing</button>
-        <button class="batch-btn w" data-save-state="retry">Retry</button>
-        <button class="class-action-btn" data-save-cycle>Cycle all five</button>
-      </div>
-    </div>
+    <!-- The empty state, shown by src/home.js only when the open document has no active class.
+         It borrows shell.css's `.empty-state` for the centred zero-data block and adds the three
+         things that component has no opinion about: what is missing, why that is not a problem,
+         and the one control that fixes it.
 
-    <div class="shelf-section">
-      <div class="shelf-label">Save indicator — the five states at once</div>
-      <div class="shelf-row">
-        <span class="save-indicator saving">⏳ Saving…</span>
-        <span class="save-indicator saved">✓ Saved</span>
-        <span class="save-indicator error">✕ Save failed</span>
-        <span class="save-indicator syncing">↻ Syncing…</span>
-        <span class="save-indicator retry">↻ Retrying…</span>
-      </div>
-      <p class="shelf-note">
-        Roll Call!'s sixth state, <code>queued</code>, is deliberately absent: it means
-        "waiting on the Apps Script outbox", and Planbook writes to the device it is running
-        on. A write that has not landed here has failed, not queued.
+         The button carries `data-class-manage` — the class manager's own hook, the same one the
+         header's gear and the “Add a class” tab carry — so this is a third door onto one route
+         rather than a second way of creating a class.
+
+         Two sentences, one shown at a time, for the same reason the support panel's two hints are
+         written out here: the copy is the part a teacher reads, and it should be revisable without
+         opening a JavaScript file. The second is defensive — boot leaves the loading screen up
+         when there is no document at all — and it is said rather than left blank because a page
+         with nothing on it and no explanation is indistinguishable from a broken one. -->
+    <div class="empty-state hidden" id="homeEmpty">
+      <p class="home-empty-lead" id="homeEmptyLead">No classes yet.</p>
+      <p class="home-empty-text" id="homeEmptyClasses">
+        Planbook keeps one school year's classes at a time, and this year has none in it so far.
+        Add the classes you teach — whatever you call them out loud is the right name — and each
+        one gets a card here, one tap from anywhere in the app.
       </p>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Modal</div>
-      <div class="shelf-row">
-        <button class="class-action-btn" data-modal-open="aboutModal">Open from here</button>
-        <button class="class-action-btn primary" data-modal-open="aboutModal">Open from here instead</button>
-      </div>
-      <p class="shelf-note">
-        Two openers, so focus-return is testable: Escape or a backdrop click has to put focus
-        back on whichever button opened the modal, not on the first one on the page.
+      <p class="home-empty-text hidden" id="homeEmptyNoYear">
+        There is no school year open, so there is nowhere to put a class yet. Choose or start one
+        with the year button at the top of the page.
       </p>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">On-dark controls</div>
-      <div class="shelf-dark">
-        <button class="cls-tab active">Period 1</button>
-        <button class="cls-tab">Period 2</button>
-        <div class="hdr-divider"></div>
-        <div class="hdr-right-controls">
-          <button class="q-btn active">Q1</button>
-          <button class="q-btn">Q2</button>
-        </div>
-        <button class="hdr-icon-btn" title="Icon button specimen" aria-label="Icon button specimen">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
-          </svg>
-        </button>
+      <div class="home-empty-actions" id="homeEmptyActions">
+        <button class="class-action-btn primary" type="button" data-class-manage
+                aria-haspopup="dialog">Add your first class</button>
       </div>
-      <p class="shelf-note">
-        These live in the header in the real app. They are shown against the header gradient
-        because that is the surface they were designed for — on white they are invisible.
-      </p>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Buttons</div>
-      <div class="shelf-row">
-        <button class="class-action-btn">Outline</button>
-        <button class="class-action-btn primary">Primary</button>
-      </div>
-      <p class="shelf-note">
-        Wash background + strong text for chips; a solid strong fill is reserved for the
-        active state and for one primary action per surface.
-      </p>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Avatars — ten classes by id % 10</div>
-      <div class="shelf-row">
-        <div class="avatar av0">AB</div>
-        <div class="avatar av1">CD</div>
-        <div class="avatar av2">EF</div>
-        <div class="avatar av3">GH</div>
-        <div class="avatar av4">IJ</div>
-        <div class="avatar av5">KL</div>
-        <div class="avatar av6">MN</div>
-        <div class="avatar av7">OP</div>
-        <div class="avatar av8">QR</div>
-        <div class="avatar av9">ST</div>
-      </div>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Screen reader channel</div>
-      <div class="shelf-row">
-        <button class="class-action-btn" data-announce="Planbook's live region is working.">Announce a message</button>
-      </div>
-      <p class="shelf-note">
-        Sends text to the <code>aria-live</code> region at the bottom of this page through
-        <code>announce()</code>. Nothing changes on screen — that is the point. Save failures
-        and offline states go through here, because the chip that shows them visually is not
-        something a screen-reader user has any reason to be looking at.
-      </p>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Empty state</div>
-      <div class="empty-state">
-        Nothing to show yet. This is what a panel looks like with no rows in it.
-      </div>
-    </div>
-
-    <div class="shelf-section">
-      <div class="shelf-label">Palette — diff this against design/style-guide.md §1</div>
-      <div class="shelf-swatches">
-        <div class="swatch"><span style="background:#0d2137"></span><b>#0d2137</b></div>
-        <div class="swatch"><span style="background:#1a3c5e"></span><b>#1a3c5e</b></div>
-        <div class="swatch"><span style="background:#2a2a6e"></span><b>#2a2a6e</b></div>
-        <div class="swatch"><span style="background:#1a1a2e"></span><b>#1a1a2e</b></div>
-        <div class="swatch"><span style="background:#f0f2f5"></span><b>#f0f2f5</b></div>
-        <div class="swatch"><span style="background:#f8f9fb"></span><b>#f8f9fb</b></div>
-        <div class="swatch"><span style="background:#eef0f4"></span><b>#eef0f4</b></div>
-        <div class="swatch"><span style="background:#e0e4ea"></span><b>#e0e4ea</b></div>
-        <div class="swatch"><span style="background:#6b7a8d"></span><b>#6b7a8d</b></div>
-        <div class="swatch"><span style="background:#8a9bb0"></span><b>#8a9bb0</b></div>
-        <div class="swatch"><span style="background:#a0aab8"></span><b>#a0aab8</b></div>
-        <div class="swatch"><span style="background:#27ae60"></span><b>#27ae60</b></div>
-        <div class="swatch"><span style="background:#eafaf1"></span><b>#eafaf1</b></div>
-        <div class="swatch"><span style="background:#5b6fcc"></span><b>#5b6fcc</b></div>
-        <div class="swatch"><span style="background:#eef2ff"></span><b>#eef2ff</b></div>
-        <div class="swatch"><span style="background:#e67e22"></span><b>#e67e22</b></div>
-        <div class="swatch"><span style="background:#fef5ea"></span><b>#fef5ea</b></div>
-        <div class="swatch"><span style="background:#e74c3c"></span><b>#e74c3c</b></div>
-        <div class="swatch"><span style="background:#fdeaea"></span><b>#fdeaea</b></div>
-      </div>
-      <p class="shelf-note">
-        Every hex in <code>src/shell.css</code> appears in the style guide, and each one is
-        written out where it is used rather than behind a custom property. That reads like an
-        oversight and is a suite convention — the whole suite would have to migrate at once.
-      </p>
     </div>
   </div>
 </main>

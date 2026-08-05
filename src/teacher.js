@@ -30,6 +30,17 @@ import { announce } from './live-region.js';
 const MODAL_ID = 'teacherModal';
 const CC_BTN_ID = 'teacherCcBtn';
 const HINT_ID = 'teacherCcState';
+const SUBTITLE_ID = 'headerSubtitle';
+
+/* What the header's second line says before the teacher has told Planbook who she is — the app's
+   strapline, which is the honest answer to "whose planbook is this?" when nobody has said.
+
+   NOT WRITTEN OUT HERE. It is whatever index.html put in that line, captured the first time
+   refreshHeaderIdentity() runs, which is at boot and before anything has replaced it. A copy of the
+   sentence in this file would be a second truth to keep in step with the markup, and the convention
+   in this repo is that the words a teacher reads live in index.html where they can be revised
+   without opening a JavaScript file. */
+let strapline = null;
 
 /* The fields this screen may write, by name — an allowlist rather than a pass-through, for the
    same reason src/roster.js keeps one: the hook carries the field name out of the markup, and a
@@ -71,6 +82,42 @@ function renderCc(teacher) {
   }
 }
 
+/*
+  Whose planbook this is, in the header — WO-1.10's "Header: … teacher name".
+
+  IT REPLACES THE STRAPLINE RATHER THAN ADDING A CONTROL, and that is a measurement rather than a
+  preference. index.html's own comments record that the top row has no width left at 390px: WO-1.7
+  put the roster and teacher buttons on the BOTTOM row for that reason, and WO-1.9 measured 15px of
+  slack there before moving the whole title block out of the layout below 640px. A name needs no
+  width of its own if it is said in a line that is already there — and `#headerSubtitle` is a line
+  that says the same eleven words on every screen of the app, which is the cheapest thing in that
+  row.
+
+  So below 640px the name is not visible at all, because the block holding it is `.sr-only` by then
+  (src/shell.css's 640px block, and the reasoning is written out there). That is a phone, and the
+  iPad this app is built for never reaches the rule. Recorded rather than worked around: the place
+  the name is always reachable is the panel it is typed into.
+
+  Called at boot, after a year switch and after a restore — `doc.teacher` lives in the year document
+  rather than in this browser, so all three replace it — and on every keystroke into the name or
+  school field, because a header that catches up on the next reload is a header a teacher watches
+  not change while she types her own name into it.
+*/
+export function refreshHeaderIdentity() {
+  const el = document.getElementById(SUBTITLE_ID);
+  if (!el) return;
+  if (strapline === null) strapline = el.textContent;
+  const teacher = teacherOf(getDoc());
+  const name = teacher ? String(teacher.name || '').trim() : '';
+  const school = teacher ? String(teacher.school || '').trim() : '';
+  /* The school only ever appears behind a name. "· St John's High School" on its own reads as a
+     fragment of something that failed to load. */
+  const said = name ? (school ? name + ' · ' + school : name) : '';
+  /* textContent, not innerHTML: both halves are typed by the teacher, and this is the header of
+     every screen in the app. */
+  el.textContent = said || strapline;
+}
+
 export function openTeacherSettings(opener) {
   const teacher = teacherOf(getDoc());
   if (!teacher) return;
@@ -93,6 +140,10 @@ export function editTeacherField(input) {
   if (!teacher || TEACHER_FIELDS.indexOf(field) < 0) return;
   const value = input.value;
   update(() => { teacher[field] = value; });
+  /* The two fields the header says. Refreshed as they are typed, the same way the class bar follows
+     a term label being renamed (src/classes.js) — the panel is a modal, but the header shows above
+     and behind it. */
+  if (field === 'name' || field === 'school') refreshHeaderIdentity();
 }
 
 export function toggleDefaultCc() {

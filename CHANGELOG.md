@@ -15,6 +15,40 @@ records what someone remembered.
 
 ### Added
 
+- **The home screen — every class in one tap, and a frame built to be grown rather than rebuilt.**
+  All classes on one screen as cards, six of them fitting an iPad portrait screen with 548px to
+  spare, each one tap from the class it names. This is the owner's founding requirement and the
+  screen that becomes Phase 6's glance page, which is why it is built now and grown: build the
+  glance page before the things it glances at and you build it twice.
+
+  **The cards are deliberately unfinished, and that is the deliverable.** Each one reserves 42px
+  of empty space for Phase 2's today-state, Phase 3's ungraded count and Phase 4's attention
+  count — no dash, no zero, no skeleton, nothing that looks like data that isn't there. The
+  reserved *height* is the load-bearing part: a slot with no height reflows the grid the day it is
+  filled, and the six-cards-in-portrait promise quietly stops being true in a work order that
+  never touches this file. One renderer, `classCard()`, is the only place a card is built.
+
+  A tap makes that class the open class through the header tab row's own hook, so the cards and
+  the tabs are two views of one selection and cannot disagree about which class is open. A fresh
+  document gets a real empty state that leads to the first class, not five blank cards — a grid
+  that renders nothing and an empty state that says nothing are the same picture to a teacher on
+  day one. The header gained the teacher's name in place of the strapline, which is the only one
+  of its five required items that was actually missing; the other four were already there, and
+  the save chip moved out of the deleted shelf rather than being added twice.
+
+### Changed
+
+- **`verify-shell.mjs` is re-pointed off the WO-1.2 component shelf, and the count went up rather
+  than down.** Replacing `<main>` deleted the shelf that the modal, focus-trap and live-region
+  checks were anchored to. Re-pointed at `#classesModal` driven through the real header control,
+  201 → 209 checks with **zero skips** — the number that mattered was not the passes but the
+  skips, because a run that degrades to announced skips is honest and still worthless. The
+  `window.planbook` seam was kept rather than deleted: without it the harness has to keep its own
+  copy of the id resolution, the parser and the visibility rule, which is a second truth to
+  maintain against the first.
+
+### Added
+
 - **The roster — paste a class list, and keep the contacts that outreach will need.** The school's
   SIS has no usable export, so a roster arrives as text on a clipboard. That is the supported path
   rather than a fallback, and the paste box is built for what real paste sources actually contain:
