@@ -546,3 +546,56 @@ The unit of recovery is the year, deliberately (`docs/data-model.md`).
 **Traps** — A "back up everything" button that quietly writes one year is worse than no button,
 because it answers the question the nag was asking. If sequential downloads are cut short on iOS,
 say so on screen rather than stamping the years that never landed.
+
+---
+
+## WO-1.12 — Close two harness blind spots found at WO-1.10
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.10
+**Not a go-live blocker.** Added 2026-08-05, out of WO-1.10's verification.
+
+**Why it exists.** WO-1.10's verifier found two places where the verification tooling would report
+a clean run while missing the exact thing it exists to catch. Neither is an app defect today —
+both are the instrument, not the target — but both degrade silently, which is the failure mode
+`plans/verification-tooling.md` and `plans/dispatch-retro.md` keep naming as worse than no check at
+all: a confident pass over nothing.
+
+**The two gaps**
+- **`tools/wo-sweep.mjs`'s coarse-block check is blind to untracked stylesheets.** It finds new CSS
+  selectors with `git diff -U0 HEAD -- src\*.css`, which sees nothing in a file that isn't tracked
+  yet. At WO-1.10 this meant all nine selectors in the new `src/home.css` were invisible to it, and
+  it reported "1 new selector(s), all covered" about a selector from `shell.css` alone — a true
+  statement about the wrong file. `src/README.md` makes one stylesheet per screen the convention, so
+  every future screen trips this the same way.
+- **The home screen's redraw depends on a hand-maintained list.** `src/shell.js`'s
+  `afterClassChange()` calls `home.js`'s renderer from eight sites — archive, restore, delete,
+  reorder, create, rename, and two more — and is complete today, verified against every exported
+  mutator in `src/classes.js`. But `tools/verify-shell.mjs` only reads `#homeGrid` before the archive
+  step and never again, so a future work order that adds a mutator and forgets its line in that list
+  would leave all checks green while a teacher watches an archived class stay on the grid.
+
+**Deliverables**
+- Widen `wo-sweep.mjs`'s coarse-block check so it sees selectors in untracked `src/*.css` files, not
+  only ones already known to git — a change to what the check looks at, not a new check.
+- Add reads of `#homeGrid` in `verify-shell.mjs` after enough of the eight `afterClassChange()`
+  branches that a missing call site would fail a check, not just after the archive step it already
+  covers.
+
+**Out of scope** — no new script, no `tools/lib/`, no new *kind* of check. This closes blind spots
+in the two scripts that already exist; read
+[`../verification-tooling.md`](../verification-tooling.md) before touching either file, since both
+stay one file each by rule.
+
+**Acceptance**
+- [ ] A planted, untracked `src/*.css` file with an uncovered coarse-pointer selector is caught by
+      `wo-sweep.mjs`, not silently passed because the diff against `HEAD` is empty.
+- [ ] Deleting one line from `afterClassChange()`'s call list makes `verify-shell.mjs` fail at least
+      one check, for as many of the eight branches as can be driven without new app-side hooks.
+- [ ] Both scripts still run clean against the real repo afterward — no regression in `wo-sweep.mjs`'s
+      9-passed baseline or `verify-shell.mjs`'s 209/209/0-skips baseline, beyond checks this work
+      order adds on purpose.
+
+**Traps** — Per `verification-tooling.md`'s precondition rule, a check that could not have caught the
+gap it's named for is not evidence. Prove each fix by planting the violation first and watching it
+fail, the way the coarse-block check itself was proven at WO-1.7 — don't ship a mechanism change
+without demonstrating it actually catches something.

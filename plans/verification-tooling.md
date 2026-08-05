@@ -216,6 +216,17 @@ must re-point this harness** — `#aboutModal`, `[data-modal-open]`, and the `wi
 go with it, and every check depending on them degrades to an announced `SKIP` if nobody does the
 work. See "What it cannot do" below.
 
+> **Superseded on 2026-08-05, at WO-1.10 — wrong on all three counts.** None of `#aboutModal`,
+> `[data-modal-open]`, or the `window.planbook` seam lived in the shelf that got deleted. The About
+> modal and its `data-modal-open` hook were always header markup, never inside `<main>` — deleting
+> the shelf never touched them. `window.planbook` was kept on purpose, not lost: `src/shell.js`
+> carries the reasoning at the seam itself now, because the harness needs an independent read on the
+> app's state rather than a second copy of its own id resolution and visibility rules. What WO-1.10
+> actually did was re-point the checks that *were* shelf-coupled at the real header controls they now
+> drive through, and the count went up, not down — 201 → 209 checks, 0 skips. Kept in full below
+> because it is the record of what this document expected going in; the prediction being wrong is
+> itself worth keeping.
+
 That is the first occasion this file gets read end to end, and it is the right one: each
 shelf-coupled check is re-pointed or retired on its own merits, by someone who has to touch it
 anyway. **Trimming before then would be a refactor for its own sake** — precisely what the one-file
@@ -230,6 +241,11 @@ rule exists to prevent, and what the WO-1.4 conversation declined to do for the 
   checks then degrade to announced `SKIP`s rather than false passes, which is correct behavior and
   still worthless: **a run that is mostly skips proves nothing.** WO-1.10 carries the task of
   re-pointing it at real screens.
+
+  **Superseded on 2026-08-05 — false on all three counts; see "The trim happens at WO-1.10" above.**
+  `#aboutModal` and `[data-modal-open]` were header markup, not shelf content, and `window.planbook`
+  was kept deliberately. Nothing here degraded to `SKIP`; the shelf-coupled checks were re-pointed at
+  real header controls instead, 201 → 209 checks, 0 skips.
 - **Windows browser paths only.** It exits with a clear message elsewhere. Fine while the author is
   the only developer; a thing to fix if that changes.
 

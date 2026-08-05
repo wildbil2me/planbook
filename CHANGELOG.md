@@ -13,7 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Changed
+
+- **`plans/verification-tooling.md` corrected two claims WO-1.10 proved wrong, in place rather than
+  deleted.** The document predicted that deleting the WO-1.2 component shelf would take
+  `#aboutModal`, `[data-modal-open]`, and the `window.planbook` seam with it. None of the three
+  lived in the shelf: the About modal and its `data-modal-open` hook were header markup all along,
+  and `window.planbook` was kept on purpose — `src/shell.js` now carries that reasoning at the seam
+  itself. Both wrong passages are marked "Superseded" with the correction beside them and the
+  original prediction kept intact below, the same pattern the retired line cap already uses in this
+  file. A decision record that is wrong about the architecture it describes is worse than silence
+  about it.
+
 ### Added
+
+- **WO-1.12 opened: two harness blind spots the WO-1.10 verifier found, neither an app defect.**
+  `tools/wo-sweep.mjs`'s coarse-block check reads `git diff -U0 HEAD -- src\*.css`, which cannot see
+  an untracked file — it missed all nine selectors in the new `src/home.css` at WO-1.10 and reported
+  a pass based on `shell.css` alone, true about the wrong file. And `verify-shell.mjs` only re-reads
+  `#homeGrid` after one of the eight `afterClassChange()` call sites, so a future missed wire-up on
+  delete, reorder, create or rename would leave every check green while a screen goes stale. Neither
+  is an app defect today; WO-1.12 exists so the gap is a plan rather than a memory.
 
 - **The home screen — every class in one tap, and a frame built to be grown rather than rebuilt.**
   All classes on one screen as cards, six of them fitting an iPad portrait screen with 548px to
