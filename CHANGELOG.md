@@ -67,16 +67,35 @@ records what someone remembered.
   keeping: **a gate that cannot pass is worse than no gate, because it produces confident wrong
   answers instead of obvious silence.**
 
-- **`verify-shell.mjs` is 2,921 lines against a soft cap of ~950, and the conversation that owes is
-  now two work orders overdue.** `plans/verification-tooling.md` says crossing the cap is "a
-  conversation, not a refactor" and that the number is "a prompt to look, not a budget to spend."
-  Nobody has looked since WO-1.4. The file went 851 → 1,364 at WO-1.5, → 1,429 at the per-year nag
-  fix, → 2,232 at WO-1.6, and **2,232 → 2,921 at WO-1.7**. It is now three times the cap, and the
-  last two work orders each added more than the whole file contained at WO-1.4. Splitting is still
-  forbidden by a stronger rule that is still load-bearing, so the options remain raise, trim, or
-  retire a control that has not bound in several consecutive work orders. Recorded rather than
-  decided, for the second time — a cap that is only ever recorded is a cap that has already stopped
-  being one, and that is the actual finding here.
+- **`verify-shell.mjs`'s ~950-line soft cap is retired, and two metrics that can actually bind
+  replace it.** The conversation that `plans/verification-tooling.md` had owed since WO-1.4 was
+  finally held, and its outcome is not a second raise: the number goes away entirely.
+
+  Measuring settled it. The file is 2,938 lines across 164 checks — **17.9 lines per check**, against
+  17.2 at WO-1.6. It is not bloating; it is accreting at constant density, growing because the app's
+  surface grows, with no grep-shaped work smuggled in. **A total-line cap on a file that grows
+  linearly with coverage is structurally guaranteed to bind every work order and lose every one** —
+  raised once at WO-1.4, then ignored at WO-1.5, WO-1.6 and WO-1.7. That is not a neglected control,
+  it is a disproved one, and keeping it meant writing "recorded rather than decided" into this file
+  at every work order until 1.0.0.
+
+  The cap was aimed at a real risk: a harness so large that checks rot, duplicate, or go vacuous.
+  Line count was a proxy for it, and the proxy broke — the file passed three times the cap while its
+  density held and its checks stayed honest. What replaces it is **lines per check** (~17.9; catches
+  400 lines buying five checks, ignores 700 buying forty) and **wall-clock runtime** (58s; a harness
+  that stops being run before a commit is how one actually dies, which the line count never
+  modelled). Both fall out of a run, so neither costs anything to check.
+
+  Recorded against the decision, not argued away: retiring a control because it never binds is also
+  how a control quietly disappears. If both replacements sit flat for three work orders while the
+  file doubles again, that is the signal to reopen this — and the document says so in the place
+  someone would look.
+
+  **The trim itself happens at WO-1.10**, which deletes the WO-1.2 component shelf and must re-point
+  the harness regardless — every check bound to `#aboutModal`, `[data-modal-open]` or the
+  `window.planbook` seam degrades to an announced `SKIP` if nobody does. That is the first occasion
+  the file gets read end to end, and doing it sooner would be a refactor for its own sake, which is
+  the thing the one-file rule exists to prevent.
 
 ### Fixed
 

@@ -27,6 +27,15 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+/* The two controls that replaced the ~950-line soft cap on 2026-08-05, retired after binding once
+   in four work orders — it could not tell coverage from bloat on a file that grows with the app's
+   surface. `plans/verification-tooling.md` § "Retiring the line cap" holds the reasoning, and says
+   these get reported beside the check count so that neither is a number nobody computes. Lines per
+   check catches 400 lines buying five checks; runtime catches the harness quietly becoming too slow
+   to run before a commit, which is how one actually dies. Neither gates anything — this file gates
+   nothing, by the first rule in that document. They are printed to be looked at. */
+const RUN_STARTED = Date.now();
+
 /* Derived, not hardcoded. This script gets run once every few months by someone who has
    forgotten it exists, possibly from a clone at a different path. */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -2903,6 +2912,13 @@ const skips = results.filter(r => r.state === 'skip');
 console.log('\n================ SUMMARY ================');
 console.log(results.length + ' checks · ' + results.filter(r => r.state === 'pass').length
   + ' passed · ' + fails.length + ' failed · ' + skips.length + ' skipped');
+
+/* Read from disk rather than tracked as a constant, so it cannot drift from the file it describes. */
+const ownLines = (await fs.readFile(fileURLToPath(import.meta.url), 'utf8')).split('\n').length;
+const perCheck = results.length ? (ownLines / results.length) : 0;
+console.log(ownLines.toLocaleString() + ' lines · ' + perCheck.toFixed(1) + ' lines per check · '
+  + ((Date.now() - RUN_STARTED) / 1000).toFixed(0) + 's');
+console.log('(health, not a gate — see plans/verification-tooling.md § "Retiring the line cap")');
 if (skips.length) {
   console.log('\nSKIPPED (a skip is not a pass):');
   skips.forEach(s => console.log('  - ' + s.name + '  :: ' + s.detail));

@@ -47,7 +47,7 @@ These are the rules that keep it a script. Breaking any one of them is how it st
 | **It gates nothing.** No git hook, no CI, no commit check | Everything in `tools/` is optional and run by hand. A gate makes it required infrastructure |
 | **It measures; `TESTING.md` judges** | A green run closes **zero** boxes by itself, and never a 👤 item. The checklist is the gate; this feeds it evidence |
 | **Never required to run or ship the app** | A teacher's laptop never runs Node. `index.html` and `src/` are served as they sit on disk |
-| **Soft cap ~950 lines** (it is ~920) | Raised from ~500 on 2026-08-04 — crossing it is a conversation, not a refactor, and that conversation is recorded below |
+| **No line cap.** Watch **lines per check** (~17.9) and **runtime** (58s) instead | The ~950-line cap was retired on 2026-08-05 after binding once in four work orders. It could not tell coverage from bloat on a file that grows with the app's surface. The reasoning, and the two controls that replace it, are recorded below |
 
 ## What it is allowed to check
 
@@ -77,6 +77,11 @@ not instead of it.**
 went green when WO-1.3 set the meta value, as designed. The run exits zero today.
 
 ## Raising the cap, 2026-08-04
+
+> **Superseded on 2026-08-05 — the cap was retired outright. See "Retiring the line cap" below.**
+> Kept in full because it is the record of a decision made on the day, and because its third
+> argument — a cap is *a prompt to look, not a budget to spend* — is the reasoning that retired it a
+> work order later. History, not current rule.
 
 WO-1.4 took the script from ~470 to 851 lines and the verifier stopped, correctly, rather than
 refactoring past a number this document set. The conversation, and its outcome: **the cap is now
@@ -155,30 +160,66 @@ the same line as a late/missing flag. A `REVIEW` never fails the run. It narrows
 must read rather than pretending to have decided it, which is the honest form of a check that cannot
 be mechanized without lying.
 
-## The cap is at 2,232 lines and the conversation is overdue
+## Retiring the line cap, 2026-08-05
 
-**Unresolved, and deliberately left that way.** The cap was raised to ~950 on 2026-08-04 with the
-reasoning recorded above. `verify-shell.mjs` is now **2,232 lines — 135% past it.** It went 851 →
-1,364 at WO-1.5 (backup and restore, +447 in one work order), 1,429 at the per-year nag fix, and
-**1,429 → 2,232 at WO-1.6** (`33bab80`), which is the largest single jump the file has taken and
-larger than the entire file was three work orders ago.
+**Decided.** The overdue conversation was held at WO-1.7. Outcome: **the line cap is retired, not
+raised.** Two metrics replace it, and the one-file rule is untouched — again.
 
-Nobody stopped at ~950. The verifier stopped at the cap once, at WO-1.4, and that produced the
-conversation recorded above; nothing has stopped since. That is worth stating plainly: **the control
-has not bound in three consecutive work orders.**
+This section supersedes the one it replaced, which asked the teacher to choose between raising,
+trimming, and retiring, and demanded that anyone raising it a second time *"say what would actually
+have to happen for it to be enforced instead."* That question turned out to have an answer, and the
+answer is **nothing would**.
 
-The rule this document sets is that crossing the cap is *"a conversation, not a refactor"* and that
-the number is *"a prompt to look, not a budget to spend."* Nobody has looked. Three things are true
-at once and the teacher decides between them:
+### What the measurement showed
 
-- **Splitting is still forbidden** by a stronger rule, and that rule is still load-bearing. So the
-  options are: raise the number again, trim, or accept the file is what it is and retire the cap as
-  a control that never binds.
-- **The growth still looks like the right kind** — runtime storage state, static preconditions,
-  measured geometry. No grep-shaped work has been smuggled in, and moving the sweep out makes that
-  easier to keep true.
-- **A cap that gets raised every time it binds is not a constraint**, it is a comment. If it is
-  raised a second time, say what would actually have to happen for it to be enforced instead.
+At WO-1.7: **2,938 lines, 164 checks, 58s runtime.** That is **17.9 lines per check.** At WO-1.6 it
+was 2,232 lines across 130 checks — **17.2**.
+
+**The file is not bloating. It is accreting at a constant density.** It grows because the app's
+surface grows, at a stable ~18 lines per check, and the growth has stayed the right kind throughout:
+runtime storage state, static preconditions, measured geometry. Moving the grep half out to
+`wo-sweep.mjs` made that easier to keep true rather than harder.
+
+### Why the number was the wrong control
+
+A total-line cap on a file that grows linearly with coverage is **structurally guaranteed to bind at
+every work order and lose at every one.** It was raised once, at WO-1.4, and ignored at WO-1.5,
+WO-1.6 and WO-1.7. That is not a control being neglected; that is a control being disproved. Keeping
+it means writing *"recorded rather than decided"* into `CHANGELOG.md` at every work order between
+here and 1.0.0, which is a ritual wearing a control's clothes.
+
+The cap was aimed at a real risk — a harness so large that checks rot, duplicate, or quietly go
+vacuous. Line count was a proxy for that risk, and the proxy broke: **the file passed 3× the cap
+while its density held constant and its checks stayed honest.** A proxy that cannot distinguish
+coverage from bloat is measuring the wrong axis.
+
+### The two controls that replace it
+
+| Control | Now | Binds when |
+|---|---|---|
+| **Lines per check** | ~17.9 | A work order's additions come in materially above the running average — 400 lines and five checks is bloat; 700 lines and 40 is coverage |
+| **Wall-clock runtime** | 58s | It approaches the point where the run stops being made before a commit. That is how a verification tool actually dies, and it is the failure the line cap never modelled |
+
+Both fall out of a run, so neither costs anything to check. **Report both in the verifier's line
+alongside the check count**, the way the check count is reported now.
+
+**The honest objection, recorded rather than argued away:** retiring a control because it never binds
+is also exactly how a control quietly disappears. The defense is that the replacements are cheaper to
+evaluate than the thing they replace — if *they* never bind either, that is evidence about the file
+rather than neglect by the reader. If both sit flat for three work orders while the file doubles
+again, that is the signal to come back here, and this paragraph is the instruction to.
+
+### The trim happens at WO-1.10, and is real work rather than a refactor
+
+Retiring the cap is not a decision to stop looking. **WO-1.10 deletes the WO-1.2 component shelf and
+must re-point this harness** — `#aboutModal`, `[data-modal-open]`, and the `window.planbook` seam all
+go with it, and every check depending on them degrades to an announced `SKIP` if nobody does the
+work. See "What it cannot do" below.
+
+That is the first occasion this file gets read end to end, and it is the right one: each
+shelf-coupled check is re-pointed or retired on its own merits, by someone who has to touch it
+anyway. **Trimming before then would be a refactor for its own sake** — precisely what the one-file
+rule exists to prevent, and what the WO-1.4 conversation declined to do for the same reason.
 
 ## What it cannot do, and must never claim to
 
