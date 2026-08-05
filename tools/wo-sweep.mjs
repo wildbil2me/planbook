@@ -205,6 +205,31 @@ function report(hits) {
   }
 }
 
+/* ══════════════════════════ 5b. one place decides whether support data is on screen ═══════════
+   WO-1.8 routes every sensitive render through src/supports.js, and WO-1.9's presentation mode is
+   built on that being true: its Traps line says per-screen conditionals pass that work order and
+   fail in Phase 4. A grep settles this one exactly — the rule is "supportsVisible is DEFINED once
+   and CALLED from the screens", and the failure it catches is a second copy of the test appearing
+   in the file that needed it, which is the shape the mistake actually takes. */
+
+{
+  const OWNER = 'src/supports.js';
+  const ownerFile = path.join(REPO, 'src', 'supports.js');
+  if (!fs.existsSync(ownerFile)) {
+    check('the support-visibility rule is defined in exactly one place', true,
+      'src/supports.js does not exist yet — nothing renders support data');
+  } else {
+    const defs = grepLines(CODE, /function\s+supportsVisible\b/);
+    const calls = grepLines(CODE.filter(f => rel(f) !== OWNER), /\bsupportsVisible\s*\(/);
+    const callers = [...new Set(calls.map(h => h.file))];
+    check('the support-visibility rule is defined in exactly one place',
+      defs.length === 1 && defs[0].file === OWNER,
+      defs.length === 1 && defs[0].file === OWNER
+        ? `defined in ${OWNER}, asked by ${callers.length} other file(s): ${callers.join(', ') || 'none yet'}`
+        : `${defs.length} definition(s): ${report(defs) || 'none'} — WO-1.9 flips one switch, not several`);
+  }
+}
+
 /* ══════════════════════════ 6. new controls carry 44px ══════════════════════════
    verify-shell.mjs measures this properly, under an emulated coarse pointer, and that measurement
    is the real check. What a grep adds is the diff view: a control added in this working tree whose

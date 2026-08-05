@@ -9,8 +9,10 @@
   path that survives all of that, which is why no feature that writes student data ships before
   this one does.
 
-  THE FILE CONTAINS EVERYTHING, ON PURPOSE. From WO-1.8 the year document carries IEP and 504
-  accommodations, medical needs, and behavior plans, and the backup carries them too. A backup
+  THE FILE CONTAINS EVERYTHING, ON PURPOSE. Since WO-1.8 the year document carries IEP and 504
+  accommodations, a case manager, a review date, medical needs, and behavior plans on every
+  student who has any — `students[].supports`, src/supports.js — and the backup carries them too,
+  today rather than eventually: this file is the one place that data is written out. A backup
   that filtered them out would restore a gradebook that had quietly lost the things a teacher is
   legally obliged to implement — that is not a recovery path, it is a trap. CLAUDE.md's rule
   that no export emits accommodation data governs merge fields, print surfaces and outreach:

@@ -463,6 +463,38 @@ about the right value, not looser about the wrong one.*
   future `.foo` control is cleared by any existing `.foo-label`. Pre-existing, and left alone
   deliberately rather than fixed inside a roster work order.*
 
+### WO-1.8 — Accommodations & supports
+
+- [x] Every field in the data model's `supports` block is editable from the panel and round-trips
+      through a save and a reload.
+- [x] No list view shows plan status, accommodation detail, medical, or behavior text without a
+      deliberate tap — the roster carries a dot and no words; the editor's panel arrives shut on
+      every open and its fields are emptied, not merely hidden, while shut.
+- [x] The indicator dot does not itself encode the plan type by color or shape — one dot, one
+      glyph, one generic label, for every student and every plan.
+- [x] `reviewDate` is stored and readable, whether or not anything consumes it yet.
+- [x] The backup UI names accommodation, IEP/504, medical, and behavior-plan data as present in
+      the file, and the downloaded file really carries them.
+- [x] Set a review date, clear it from the picker, and re-pick the same date — it takes on the
+      first tap. 👤
+- [x] The roster support dot and the accommodation-kind picker are thumbable; the kind picker
+      opens iPadOS's own wheel. 👤
+- [x] The support panel's projection sentence reads as this app, and the dot is discoverable but
+      quiet on a screen meant to be projected. 👤
+
+*Ticked 2026-08-05. The desk half is `verify-shell.mjs`, **184 of 184**, 20 new checks in a
+`--- support details ---` section plus one touch-pass check; `wo-sweep.mjs` is 9 passed, 2 to
+review (both reviewed — see `.claude/dispatch/WO-1.8-result.md`), exit 0. The three 👤 lines were
+run by hand on iPadOS in one sitting and all three passed, including the WebKit re-pick quirk on
+the new `reviewDate` field, which mirrors the WO-1.6 fix on `classes.js`'s term date and had not
+been exercised on hardware before this sitting.*
+
+*One thing carried forward rather than fixed here: `supportDateCommitted()` — the review-date
+write path — is the one of the four support write paths that does not consult `supportsVisible()`
+before writing. Harmless today because that function is hardcoded to always allow, but it becomes
+a silent data-loss path the moment WO-1.9's presentation mode makes it return `false`. That is a
+WO-1.9 line, not a defect in this one.*
+
 ---
 
 ## Phase 2 — Attendance

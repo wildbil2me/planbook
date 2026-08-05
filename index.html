@@ -746,12 +746,15 @@
   </div>
 </div>
 
-<!-- One student: names, contacts, and which classes they are in. src/roster.js fills every field
-     when the dialog opens and writes each one as it is typed, the same way the term editor does.
+<!-- One student: names, contacts, which classes they are in, and — behind a deliberate tap at the
+     bottom — the support details. src/roster.js fills every field when the dialog opens and writes
+     each one as it is typed, the same way the term editor does.
 
-     The guardian cards and the class buttons are rendered rather than written out here, because
-     both are lists whose length is the teacher's business. Everything else is real markup, so the
-     copy stays revisable without opening a JavaScript file. -->
+     The guardian cards, the accommodation cards and the class buttons are rendered rather than
+     written out here, because all three are lists whose length is the teacher's business.
+     Everything else is real markup, so the copy stays revisable without opening a JavaScript
+     file — which matters most for the support panel's own copy, since what it says about
+     projection is the feature. -->
 <div class="modal-overlay hidden" id="studentModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
     <div class="modal-header">
@@ -824,6 +827,100 @@
       <div class="modal-section-label">Notes</div>
       <textarea class="student-notes" id="studentNotes" rows="3" data-student-field="notes"
                 aria-label="Notes about this student"></textarea>
+
+      <!-- Support details, and the reason this block is last, boxed, and shut.
+
+           docs/data-model.md § Accommodations rule 1: never visible by default on a screen that
+           might be projected. This dialog is opened over a roster in front of a class often
+           enough that "it is only one student" is not an argument — so the panel arrives
+           collapsed on every open, every time, and opening it is a deliberate tap. That is not a
+           preference and there is nowhere to set it: src/supports.js holds the one visibility
+           rule the whole app asks, and WO-1.9's presentation mode changes that function alone.
+
+           Last in the dialog and inside its own box because the work order asks for it to be
+           "clearly separated from ordinary fields" — a guardian's phone number and a 504 plan
+           should not read as two rows of the same form. src/roster.js fills every field here and
+           renders the accommodation cards, which are a list whose length is the teacher's
+           business, the same way the guardian cards are. -->
+      <div class="modal-section-label">Support details</div>
+      <div class="supports-panel">
+        <p class="supports-hint">
+          Accommodations, plan details, medical needs and behavior plans stay out of sight until
+          you ask for them, because this screen gets projected. They are on file either way.
+        </p>
+        <div class="roster-actions">
+          <button class="class-action-btn" type="button" id="supportsRevealBtn"
+                  data-supports-reveal aria-expanded="false" aria-controls="supportsBody">
+            Show support details
+          </button>
+        </div>
+
+        <div class="supports-body hidden" id="supportsBody">
+          <!-- These four are the four values src/supports.js enumerates, in that order and spelled
+               that way, because setPlan() refuses anything isPlan() does not recognise — two lists
+               that drift apart show up as a button that silently does nothing. tools/verify-shell.mjs
+               compares them. -->
+          <div class="modal-section-label">Plan</div>
+          <div class="roster-actions" id="supportsPlanRow">
+            <button class="toggle-btn" type="button" data-support-plan="none"
+                    aria-pressed="true">No plan</button>
+            <button class="toggle-btn" type="button" data-support-plan="IEP"
+                    aria-pressed="false">IEP</button>
+            <button class="toggle-btn" type="button" data-support-plan="504"
+                    aria-pressed="false">504</button>
+            <button class="toggle-btn" type="button" data-support-plan="ELL"
+                    aria-pressed="false">ELL</button>
+          </div>
+
+          <div class="modal-section-label">Case manager</div>
+          <div class="student-grid">
+            <label class="student-field">
+              <span class="student-label">Name</span>
+              <input class="student-input" id="supportsCaseManagerName" type="text"
+                     autocomplete="off" data-student-field="caseManager.name"
+                     aria-label="Case manager name">
+            </label>
+            <label class="student-field">
+              <span class="student-label">Email</span>
+              <input class="student-input" id="supportsCaseManagerEmail" type="email"
+                     autocomplete="off" spellcheck="false" data-student-field="caseManager.email"
+                     aria-label="Case manager email address">
+            </label>
+            <label class="student-field">
+              <span class="student-label">Review date</span>
+              <input class="student-date" id="supportsReviewDate" type="date"
+                     data-student-field="supports.reviewDate" data-support-date
+                     aria-label="Plan review date">
+            </label>
+          </div>
+          <p class="roster-hint">
+            The review date is the annual review or re-evaluation you are expected to prepare for.
+            It is stored so the calendar can carry it later; nothing reads it yet.
+          </p>
+
+          <div class="modal-section-label">Accommodations</div>
+          <div class="accommodation-list" id="accommodationList"></div>
+          <div class="roster-actions">
+            <button class="class-action-btn" type="button" data-accommodation-add>
+              Add an accommodation
+            </button>
+          </div>
+          <p class="roster-hint">
+            Leave “Applies to” empty for something that applies to everything. Otherwise name the
+            work it applies to — tests, quizzes, homework — separated by commas.
+          </p>
+
+          <div class="modal-section-label">Medical</div>
+          <textarea class="student-notes" id="supportsMedical" rows="2"
+                    data-student-field="supports.medical"
+                    aria-label="Medical needs for this student"></textarea>
+
+          <div class="modal-section-label">Behavior plan</div>
+          <textarea class="student-notes" id="supportsBehaviorPlan" rows="2"
+                    data-student-field="supports.behaviorPlan"
+                    aria-label="Behavior plan for this student"></textarea>
+        </div>
+      </div>
 
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Done</button>
@@ -916,8 +1013,9 @@
 <!-- Backup & restore. src/backup.js owns the behavior; everything a teacher reads is here.
 
      The paragraph under "What is in this file" is a deliverable of WO-1.5 rather than a
-     courtesy. The backup carries accommodation, medical and behavior-plan data — from WO-1.8 it
-     will hold IEP and 504 details — and it carries them because a backup that filtered them out
+     courtesy. The backup carries accommodation, medical and behavior-plan data — since WO-1.8
+     that includes IEP and 504 details, a case manager and a review date, all of them really in
+     the file rather than promised — and it carries them because a backup that filtered them out
      would restore a gradebook that had quietly lost the things a teacher is legally obliged to
      implement. CLAUDE.md's rule that no export emits that data governs merge fields, print
      surfaces and outreach: the places where it reaches somebody else. This file goes to the
@@ -952,9 +1050,9 @@
           <strong>What is in this file.</strong> Everything Planbook holds for that school year:
           your classes, your roster, guardian and counselor contacts, attendance, grades, and
           your record of who you have contacted. <strong>It also contains the support details
-          you keep on students — accommodations, IEP and 504 plans, medical needs, and behavior
-          plans.</strong> That is on purpose: a backup that left them out would not bring your
-          gradebook back.
+          you keep on students — accommodations, IEP and 504 plans, case managers and review
+          dates, medical needs, and behavior plans.</strong> That is on purpose: a backup that
+          left them out would not bring your gradebook back.
         </p>
         <p>
           It is plain text, so anyone who opens the file can read all of it. Keep it the way you

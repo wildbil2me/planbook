@@ -49,7 +49,7 @@ button, input, select, textarea { font-family: inherit; }
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
-.toggle-btn {
+.toggle-btn, .support-dot {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -744,6 +744,61 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .guardian-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .guardian-label { flex: 1 1 120px; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; }
+/* The support indicator on a roster row: one dot, one size, one colour, for every student who has
+   anything on file at all.
+
+   NOTHING ABOUT IT VARIES, and that is the rule rather than a simplification. This list gets
+   projected onto a classroom wall; an amber dot for a 504 beside an indigo one for an IEP is a
+   legible key that discloses thirty students' plan status in one glance. So no variant class
+   exists to be added later — see src/roster.js's decision 5 and docs/data-model.md § Accommodations.
+
+   Quiet on purpose: the hairline border and the secondary-text glyph of a `.roster-row-note`, not
+   an accent. It brightens to the interactive indigo on hover like every other control here, which
+   is what says it can be tapped. */
+.support-dot {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0;
+  border: 1.5px solid #d0d8e4; border-radius: 50%;
+  background: #fff; color: #8a9bb0;
+  font-family: inherit; font-size: 15px; line-height: 1;
+  cursor: pointer; transition: all 0.15s;
+}
+.support-dot:hover { border-color: #5b6fcc; color: #5b6fcc; background: #eef2ff; }
+
+/* The support panel inside the student editor. The subdued card from the style guide (§1) rather
+   than a caution or a danger wash: amber means "act on this" everywhere else in this app and red
+   means "this destroys something", and neither is what a 504 plan is. What this box says is "these
+   are not the same kind of field as the ones above", which is the work order's "clearly separated
+   from ordinary fields". */
+.supports-panel {
+  margin-top: 4px; padding: 12px; border-radius: 10px;
+  border: 1.5px solid #e0e4f0; background: #f8f9fc;
+}
+/* Qualified for the reason `.roster-hint` is: it is a <p> inside `.modal-body`, whose own rule is
+   more specific than a bare class. */
+.modal-body .supports-hint { font-size: 12px; color: #6b7a8d; line-height: 1.5; }
+.accommodation-list { display: flex; flex-direction: column; gap: 8px; }
+.accommodation-card {
+  padding: 10px; border-radius: 8px;
+  border: 1.5px solid #e0e4f0; background: #fff;
+}
+.accommodation-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.accommodation-label { flex: 1 1 120px; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; }
+/* The kind picker and the review date. Both are shaped like `.student-input` and are separate
+   classes rather than qualified variants of it, because a <select> and an <input type=date> are
+   two controls a browser draws its own way and the touch pass has to name each of them. */
+.student-select {
+  width: 100%; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 7px 9px;
+  font-family: inherit; font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.student-date {
+  width: 100%; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 6px 9px;
+  font-family: inherit; font-size: 13px; color: #1a1a2e; background: #fff;
+}
+
 /* What deleting a student destroys, in the danger wash — the same grammar as the class delete
    confirm, because it is the same kind of sentence and has to read the same way. */
 .student-delete-facts {
@@ -909,6 +964,20 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .student-notes { min-height: 88px; font-size: 14px; }
   .student-classes { gap: 8px; }
   .guardian-label { font-size: 13px; }
+  /* Support details. The dot is an icon button, so it takes 44 in both directions rather than only
+     in height — a 22px circle inside a 44px-tall row is half a touch target, which is the same
+     lesson `.cls-tab` learned at WO-1.6. The picker and the date field carry their own 44 with the
+     vertical padding zeroed, the `.search-box` defect's lesson again: a <select> and an
+     <input type=date> are drawn by the browser, and neither inherits a height from the box it sits
+     in. `.accommodation-head` gets the 8px `.guardian-head` gets, and for the same reason — it is
+     the other place in this feature where a Remove sits shoulder to shoulder with something
+     harmless. */
+  .support-dot { width: 44px; height: 44px; font-size: 18px; }
+  .modal-body .supports-hint { font-size: 13px; }
+  .accommodation-head { gap: 8px; }
+  .accommodation-label { font-size: 13px; }
+  .student-select { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  .student-date { min-height: 44px; min-width: 44px; font-size: 14px; padding: 0 8px; }
   .student-delete-line { font-size: 13px; }
   .modal-close { width: 44px; height: 44px; font-size: 15px; }
   .loading-error-btn { min-height: 44px; padding: 12px 20px; font-size: 14px; }

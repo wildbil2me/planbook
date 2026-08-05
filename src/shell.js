@@ -72,6 +72,15 @@
       data-guardian-add               adds a guardian to the open student
       data-guardian-remove="<index>"  removes one
       data-guardian-preferred="<i>"   makes that guardian the one to contact first
+      data-supports-open="<id>"       the roster row's support dot: opens that student's editor
+                                      with the support panel already showing
+      data-supports-reveal            shows or hides the support panel inside the open editor
+      data-support-plan="<value>"     sets the open student's plan — IEP, 504, ELL or none
+      data-accommodation-add          adds an accommodation to the open student
+      data-accommodation-remove="<i>" removes one
+      data-support-kind + data-accommodation-index: a <select>; sets that accommodation's kind on
+                                      `change` rather than on `input`, which is what a <select> is
+      data-support-date               on the review-date input: rebuilds a field cleared on iPadOS
       data-teacher-panel              fills the teacher's own details, then opens them
       data-teacher-field="<name>"     an input; edits that field as it is typed
       data-teacher-cc                 toggles whether outreach drafts copy the teacher
@@ -96,6 +105,7 @@ import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } fro
 import * as backup from './backup.js';
 import * as classes from './classes.js';
 import * as roster from './roster.js';
+import * as supports from './supports.js';
 import * as teacher from './teacher.js';
 
 /* The two things that are facts about the open year rather than about a save, so they are
@@ -252,6 +262,25 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  /* ── support details ──
+     The dot opens the editor the same way [data-student-edit] does and passes one extra argument:
+     the tap on the dot is the deliberate one docs/data-model.md § Accommodations rule 1 asks for,
+     so the panel inside arrives open. Every other route into that editor leaves it shut. */
+  const supportsOpen = e.target.closest('[data-supports-open]');
+  if (supportsOpen) {
+    roster.openStudentEditor(supportsOpen.getAttribute('data-supports-open'), supportsOpen, true);
+    return;
+  }
+  if (e.target.closest('[data-supports-reveal]')) { roster.toggleSupports(); return; }
+  const supportPlan = e.target.closest('[data-support-plan]');
+  if (supportPlan) { roster.setPlan(supportPlan.getAttribute('data-support-plan')); return; }
+  if (e.target.closest('[data-accommodation-add]')) { roster.addAccommodation(); return; }
+  const accommodationRemove = e.target.closest('[data-accommodation-remove]');
+  if (accommodationRemove) {
+    roster.removeAccommodation(accommodationRemove.getAttribute('data-accommodation-remove'));
+    return;
+  }
+
   const teacherPanel = e.target.closest('[data-teacher-panel]');
   if (teacherPanel) { teacher.openTeacherSettings(teacherPanel); return; }
   if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
@@ -335,6 +364,16 @@ document.addEventListener('change', (e) => {
      fires with an empty value mid-typing where `change` does not. */
   const field = e.target.closest('[data-term-field]');
   if (field) classes.termDateCommitted(field);
+  /* The review date, which is the same iPadOS quirk on a different field — roster.js's own comment
+     points at the long version rather than repeating it. */
+  const supportDate = e.target.closest('[data-support-date]');
+  if (supportDate) roster.supportDateCommitted(supportDate);
+  /* The accommodation kind picker, which is read HERE and not in the `input` listener above: a
+     <select> commits on `change`, and hooking both would write the same value twice and move `rev`
+     twice for one tap. It carries `data-support-kind` rather than `data-student-field` so that the
+     other listener cannot see it at all. */
+  const kind = e.target.closest('[data-support-kind]');
+  if (kind) roster.editAccommodationKind(kind);
 });
 
 /*
@@ -471,6 +510,14 @@ window.planbook = {
      with the app. parseRosterLine() is exported for that reason and for no other: nothing in the
      app calls it from outside src/roster.js. This goes when the shelf goes. */
   roster,
+  /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
+     rather than a convenience. The work order's claim is that support data is discreet by default
+     and that one function decides it — so tools/verify-shell.mjs has to be able to ask that
+     function what it answers, and to read a student's block back out of the document to prove a
+     round trip, without keeping a second copy of either in the harness where it could agree with
+     itself and disagree with the app. Nothing in the app reads window.planbook, and this goes when
+     the shelf goes. */
+  supports,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

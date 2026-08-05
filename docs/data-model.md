@@ -83,6 +83,7 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
       "accommodations": [{
         "kind": "extended-time|separate-setting|read-aloud|calculator|reference-sheet|
                  preferential-seating|breaks|scribe|large-print|chunked|check-ins|other",
+                 // "" = not yet chosen; a fresh card is never seeded to a real value
         "detail": "1.5× on tests and quizzes",
         "appliesTo": ["tests","quizzes"]  // empty = everything
       }],

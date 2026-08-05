@@ -46,6 +46,20 @@ records what someone remembered.
   the most sensitive data in the app is a shape someone later has to migrate, and a placeholder is
   exactly the kind of thing that gets wired to a merge field by accident.
 
+- **Accommodations, medical needs, and behavior plans — on the roster, and discreet by
+  construction.** A `supports` block per student: plan (IEP/504/ELL), a case manager, a review
+  date, repeatable accommodation cards, medical needs, and a behavior plan. None of it shows on a
+  list view without a deliberate tap — the roster carries a single generic dot for "something is on
+  file" and nothing else, the same dot for every plan and every student, because a class roster
+  gets projected onto a classroom wall and a color-coded plan indicator would turn that wall into a
+  legible chart of who has what. The student editor's panel opens shut every time, including via
+  Edit, and its fields are emptied rather than hidden while shut — a `display: none` block still
+  full of data is readable from the DOM and the accessibility tree, which is the same disclosure
+  with the painting turned off. One function, `supportsVisible()`, is the single choke point every
+  read and write path consults; WO-1.9's presentation mode changes that function alone. The backup
+  file and its UI now name this data as present, truthfully — it was always going to be backed up,
+  and the notice said so before it was true.
+
 ### Changed
 
 - **Codex is 0 for 3, and its pending work orders are suspended to Claude until one run lands.**

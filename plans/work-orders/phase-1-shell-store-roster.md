@@ -345,7 +345,7 @@ show the split in the preview so a wrong guess is caught before it commits, not 
 
 ## WO-1.8 — Accommodations on the roster
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.7
+**Ship** 1 · **Status** ✅ DONE — 2026-08-05 · **Size** M · 🚩 · **Depends on** WO-1.7
 **Closes roadmap** Phase 1 → "Accommodations on the roster."
 
 **Why it exists.** A teacher is legally obligated to implement accommodations from day one, which

@@ -41,12 +41,27 @@
      order the teacher pasted or typed. Sorting by surname would be one line and it would also be
      a second opinion about an order she can see — WO-2.1's marking screen is where an order that
      is not hers gets decided, and it can decide it there.
+
+  5. A ROSTER ROW SHOWS A DOT AND NEVER A WORD about what is behind it. Support details — IEP and
+     504 plans, medical needs, behavior plans — are the most consequential data in this app if
+     they leak, and this list gets projected onto a classroom wall. So the row carries one
+     indicator: the same dot, the same shape and the same colour for every student who has
+     anything on file, saying only "there is something here". A dot that were amber for a 504 and
+     indigo for an IEP would be a legible key on that wall, which is why nothing about it varies.
+     The details are one deliberate tap away and arrive in a panel that is shut on every open, and
+     whether any of it may be on screen at all is src/supports.js's single question — not a test
+     this file makes for itself. See docs/data-model.md § Accommodations.
 */
 
 import { getDoc, update, newId } from './store.js';
 import { openModal, closeModal } from './modal.js';
 import { announce } from './live-region.js';
 import { getSelectedClass, getActiveClasses } from './classes.js';
+import {
+  ACCOMMODATION_KINDS, accommodationsOf, appliesToText, hasSupports, isKind, isPlan, kindLabel,
+  newAccommodation, newSupports, parseAppliesTo, sensitiveValue, setSensitiveText, supportsOf,
+  supportsVisible,
+} from './supports.js';
 
 const ROSTER_MODAL_ID = 'rosterModal';
 const PASTE_MODAL_ID = 'rosterPasteModal';
@@ -73,6 +88,11 @@ const STUDENT_TITLE_ID = 'studentModalTitle';
 const GUARDIAN_LIST_ID = 'guardianList';
 const STUDENT_CLASSES_ID = 'studentClasses';
 
+const SUPPORTS_BODY_ID = 'supportsBody';
+const SUPPORTS_REVEAL_ID = 'supportsRevealBtn';
+const SUPPORTS_PLAN_ROW_ID = 'supportsPlanRow';
+const ACCOMMODATION_LIST_ID = 'accommodationList';
+
 const DELETE_LEAD_ID = 'studentDeleteLead';
 const DELETE_FACTS_ID = 'studentDeleteFacts';
 const DELETE_BTN_ID = 'studentDeleteBtn';
@@ -83,6 +103,14 @@ const DELETE_BTN_ID = 'studentDeleteBtn';
    reference to a student who is no longer in any document. */
 let editingId = '';
 let pendingDeleteId = '';
+
+/* Whether the support panel is open inside the editor that is on screen. It is a fact about this
+   dialog and nothing else: it resets to false in openStudentEditor() every single time, it is
+   never persisted, and there is no setting for it. "Discreet by default is not a preference
+   setting" is the work order's Traps line, and a remembered `true` in localStorage would be
+   exactly the preference it forbids — the panel would be open on the wall the morning after the
+   one afternoon a teacher left it open. */
+let supportsShown = false;
 
 /* The paste preview, and the class it is being pasted into. `pasteRows` is the model the review
    list renders from and the commit reads — the inputs on screen write into it as they are typed,
@@ -290,9 +318,12 @@ function nameKey(first, last) {
   A new student, carrying the shape docs/data-model.md settles, with every collection present and
   empty rather than absent — the reason is at src/store.js:102-104.
 
-  The fields WO-1.8 owns are not here and are not stubbed. A key written now would be a shape
-  that work order has to either accept or migrate, and an empty one sitting in the document would
-  read as a feature that exists and holds nothing.
+  `supports` is written here as of WO-1.8, which is what the note in this place used to say would
+  happen: the block is real now, its shape is src/supports.js's newSupports(), and it seeds to a
+  plan of `none` and no accommodations. A student who has nothing on file carries an empty block
+  rather than no block, so nothing anywhere has to ask whether the key exists before reading it —
+  and src/supports.js's supportsOf() repairs the one case that still arrives without it, a record
+  restored from a backup written before this work order.
 */
 function newStudent(first, last) {
   return {
@@ -305,6 +336,7 @@ function newStudent(first, last) {
     guardians: [],
     counselor: { name: '', email: '' },
     notes: '',
+    supports: newSupports(),
   };
 }
 
@@ -356,6 +388,35 @@ function studentRow(student, cls) {
   name.className = 'roster-row-name';
   name.textContent = rosterName(student) + (student.nickname ? ' “' + student.nickname + '”' : '');
   row.append(name);
+
+  /*
+    The support indicator. Present only when there is something on file, identical for every
+    student who has anything, and it says nothing about what — see decision 5 in the header.
+
+    It is a button rather than a decorative span because the details have to be reachable from
+    here by a deliberate tap, and because a 22px circle with no accessible name is a thing a
+    screen reader reads as nothing at all. Its label is deliberately the same generic sentence for
+    everyone: "Support details for Ada Probe" discloses that there are some, which the dot already
+    does, and no more than that. No `title` beyond the same words, and nothing keyed to the plan.
+
+    supportsVisible() is asked here rather than tested here — when WO-1.9 turns presentation mode
+    on, this dot is one of the things that has to go, because on a projected roster the dot IS the
+    disclosure.
+  */
+  if (supportsVisible() && hasSupports(student)) {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'support-dot';
+    dot.setAttribute('data-supports-open', student.id);
+    dot.setAttribute('aria-haspopup', 'dialog');
+    dot.setAttribute('aria-label', 'Support details for ' + fullName(student));
+    dot.title = 'Support details for ' + fullName(student);
+    const glyph = document.createElement('span');
+    glyph.setAttribute('aria-hidden', 'true');
+    glyph.textContent = '•';
+    dot.append(glyph);
+    row.append(dot);
+  }
 
   /* The other classes this student is on, which is the one fact about a roster row that cannot be
      seen from anywhere else — and the visible proof that a student in two classes is one student
@@ -536,6 +597,14 @@ export function addToOpenClass(studentId) {
 const STUDENT_FIELDS = ['first', 'last', 'nickname', 'gradYear', 'email', 'notes'];
 const GUARDIAN_FIELDS = ['name', 'relation', 'email', 'phone', 'language'];
 const COUNSELOR_FIELDS = ['name', 'email'];
+/* The support block's own three allowlists, and they are separate from the ones above rather than
+   folded into them for a reason worth the extra line: an attribute copied off a support field onto
+   an ordinary one, or the reverse, then writes nothing instead of writing into the wrong half of a
+   student's record. `plan` and `kind` are on neither list — both are enumerated, so both are
+   written by their own function against src/supports.js's list rather than from a typed value. */
+const SUPPORT_FIELDS = ['reviewDate', 'medical', 'behaviorPlan'];
+const CASE_MANAGER_FIELDS = ['name', 'email'];
+const ACCOMMODATION_FIELDS = ['detail', 'appliesTo'];
 
 function guardiansOf(student) {
   return student && Array.isArray(student.guardians) ? student.guardians : [];
@@ -661,6 +730,308 @@ function renderStudentClasses(student) {
   });
 }
 
+/* ────────────────────────────── support details ──────────────────────────────
+   IEP and 504 plans, a case manager, a review date, accommodations, medical needs and behavior
+   plans. The shape, the two enumerated lists and the one visibility question all live in
+   src/supports.js; what is here is the editor for them.
+
+   Every string below that comes out of `supports` reaches the page through sensitiveValue() or
+   setSensitiveText(), and the panel is only openable when supportsVisible() says so. Those three
+   are one switch (src/supports.js), and WO-1.9 flips it. Nothing in this section decides for
+   itself whether it may be on screen — a screen that decides for itself is a screen presentation
+   mode does not reach. */
+
+/* One accommodation, repeatable, and the same card the guardians editor already solved: a head
+   with a caption and a Remove, then a grid of fields. Rebuilt only when a row is added or removed
+   or its kind is picked — never while one is being typed into, which would take the caret with
+   it. */
+function accommodationCard(accommodation, index, student) {
+  const card = document.createElement('div');
+  card.className = 'accommodation-card';
+
+  const head = document.createElement('div');
+  head.className = 'accommodation-head';
+
+  /* The label is the kind's own words, which is support data, so it goes through the choke point
+     rather than onto the element directly. A row with no kind picked yet reads as its number. */
+  const label = document.createElement('span');
+  label.className = 'accommodation-label';
+  setSensitiveText(label, kindLabel(accommodation.kind) || 'Accommodation ' + (index + 1));
+  head.append(label);
+
+  const remove = actionButton('Remove', 'data-accommodation-remove', String(index), 'delete');
+  remove.setAttribute('aria-label', 'Remove accommodation ' + (index + 1) + ' from '
+    + fullName(student));
+  head.append(remove);
+  card.append(head);
+
+  const grid = document.createElement('div');
+  grid.className = 'student-grid';
+  grid.append(
+    kindField(accommodation, index),
+    accommodationField('Detail', 'detail', index, accommodation.detail,
+      '1.5× on tests and quizzes'),
+    accommodationField('Applies to', 'appliesTo', index, appliesToText(accommodation.appliesTo),
+      'tests, quizzes — empty means everything')
+  );
+  card.append(grid);
+  return card;
+}
+
+/*
+  The kind picker. A native <select> rather than a row of twelve buttons: twelve toggles is a wall
+  on a phone, and a select is the one control iPadOS gives its own wheel to. It is the only control
+  in this editor NOT hooked to `data-student-field`, and that is deliberate — a <select> is read on
+  `change` (src/shell.js), and carrying the field hook as well would have the `input` listener
+  write the same value a second time and move `rev` twice for one tap.
+
+  The empty first option is what a new row holds, and it says "Choose one" rather than naming an
+  accommodation nobody has chosen. src/supports.js's newAccommodation() explains why.
+*/
+function kindField(accommodation, index) {
+  const wrap = document.createElement('label');
+  wrap.className = 'student-field';
+
+  const label = document.createElement('span');
+  label.className = 'student-label';
+  label.textContent = 'Kind';
+  wrap.append(label);
+
+  const select = document.createElement('select');
+  select.className = 'student-select';
+  select.setAttribute('data-support-kind', '');
+  select.setAttribute('data-accommodation-index', String(index));
+  select.setAttribute('aria-label', 'Kind — accommodation ' + (index + 1));
+
+  const blank = document.createElement('option');
+  blank.value = '';
+  blank.textContent = 'Choose one…';
+  select.append(blank);
+  ACCOMMODATION_KINDS.forEach((kind) => {
+    const option = document.createElement('option');
+    option.value = kind.value;
+    option.textContent = kind.label;
+    select.append(option);
+  });
+  select.value = sensitiveValue(isKind(accommodation.kind) ? accommodation.kind : '');
+  wrap.append(select);
+  return wrap;
+}
+
+function accommodationField(caption, field, index, value, placeholder) {
+  const wrap = document.createElement('label');
+  wrap.className = 'student-field';
+
+  const label = document.createElement('span');
+  label.className = 'student-label';
+  label.textContent = caption;
+  wrap.append(label);
+
+  const input = document.createElement('input');
+  input.className = 'student-input';
+  input.type = 'text';
+  input.value = sensitiveValue(value);
+  input.setAttribute('data-student-field', 'accommodation.' + field);
+  input.setAttribute('data-accommodation-index', String(index));
+  input.setAttribute('autocomplete', 'off');
+  input.setAttribute('aria-label', caption + ' — accommodation ' + (index + 1));
+  input.placeholder = placeholder || '';
+  wrap.append(input);
+  return wrap;
+}
+
+function renderAccommodations(student) {
+  const list = document.getElementById(ACCOMMODATION_LIST_ID);
+  if (!list) return;
+  list.textContent = '';
+  if (!supportsVisible()) return;
+  const rows = accommodationsOf(supportsOf(student));
+  if (!rows.length) {
+    list.append(emptyLine('No accommodations recorded. Add the ones you have to implement.'));
+    return;
+  }
+  rows.forEach((a, i) => list.append(accommodationCard(a, i, student)));
+}
+
+/* May a support field be on this screen, right now: the app-wide rule from src/supports.js and the
+   local one about this dialog, in one place so that no renderer below asks half the question. */
+function supportsOnScreen() {
+  return supportsVisible() && supportsShown;
+}
+
+/* The four plan buttons, updated in place rather than by re-rendering, the same way the preferred
+   guardian's are: one plan, not several, and `aria-pressed` moves with the fill because a visually
+   active button that still reads "not pressed" is the standard way this component goes wrong.
+
+   None of them is pressed while the panel is shut. A `.active` fill and an `aria-pressed="true"`
+   sitting inside a `display: none` block would still be the student's plan status, readable from
+   the accessibility tree and out of the DOM — which is the disclosure with the painting turned
+   off rather than no disclosure. */
+function renderPlanRow(student) {
+  const row = document.getElementById(SUPPORTS_PLAN_ROW_ID);
+  if (!row) return;
+  const plan = supportsOnScreen() ? supportsOf(student).plan : '';
+  row.querySelectorAll('[data-support-plan]').forEach((btn) => {
+    const on = btn.getAttribute('data-support-plan') === plan;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('aria-label', btn.textContent.trim() + ' — plan on file for '
+      + fullName(student));
+  });
+}
+
+/*
+  Fill, or deliberately un-fill. When the support panel is shut, or when WO-1.9's presentation mode
+  has said no, every field here is emptied rather than left holding its value behind a
+  `display: none` — a hidden element is still an element that a find-in-page, a screenshot tool or
+  the accessibility tree can reach, and "it is not painted" is not the same claim as "it is not
+  there". The document is untouched either way; this only ever writes into the DOM.
+*/
+function renderSupportFields(student) {
+  const supports = supportsOf(student);
+  const show = supportsOnScreen();
+  const value = (v) => (show ? sensitiveValue(v) : '');
+  const manager = supports.caseManager || {};
+
+  fieldValue('supportsCaseManagerName', value(manager.name));
+  fieldValue('supportsCaseManagerEmail', value(manager.email));
+  fieldValue('supportsReviewDate', value(supports.reviewDate));
+  fieldValue('supportsMedical', value(supports.medical));
+  fieldValue('supportsBehaviorPlan', value(supports.behaviorPlan));
+
+  renderPlanRow(student);
+  if (show) renderAccommodations(student);
+  else {
+    const list = document.getElementById(ACCOMMODATION_LIST_ID);
+    if (list) list.textContent = '';
+  }
+}
+
+/* The panel's own state: shut, open, or — once WO-1.9 exists — not openable at all. */
+function renderSupportsPanel(student) {
+  const body = document.getElementById(SUPPORTS_BODY_ID);
+  const button = document.getElementById(SUPPORTS_REVEAL_ID);
+  const allowed = supportsVisible();
+  const show = supportsOnScreen();
+  if (body) body.classList.toggle('hidden', !show);
+  if (button) {
+    button.disabled = !allowed;
+    button.setAttribute('aria-expanded', show ? 'true' : 'false');
+    button.textContent = show ? 'Hide support details' : 'Show support details';
+  }
+  renderSupportFields(student);
+}
+
+/* Open, or shut again. Announced because the whole point of the control is that the screen just
+   changed in a way that matters, and a teacher who cannot see the screen is the one who most needs
+   telling. What is announced is that they are showing — never a word of what they say. */
+export function toggleSupports() {
+  const student = findStudent(editingId);
+  if (!student || !supportsVisible()) return;
+  supportsShown = !supportsShown;
+  renderSupportsPanel(student);
+  const body = document.getElementById(SUPPORTS_BODY_ID);
+  if (supportsShown && body) body.scrollIntoView({ block: 'nearest' });
+  announce(supportsShown
+    ? 'Support details for ' + fullName(student) + ' are now on screen.'
+    : 'Support details are hidden again.');
+}
+
+/* The plan, from the enumerated list and from nowhere else. */
+export function setPlan(planValue) {
+  const student = findStudent(editingId);
+  if (!student || !isPlan(planValue) || !supportsVisible()) return;
+  const supports = supportsOf(student);
+  const had = hasSupports(student);
+  update(() => { supports.plan = planValue; });
+  renderPlanRow(student);
+  refreshSupportDot(student, had);
+}
+
+/* The kind of one accommodation, read on `change` — see kindField(). An unknown value writes
+   nothing rather than being stored: the <option> list is built from src/supports.js, so a value
+   that is not on it did not come from a teacher. */
+export function editAccommodationKind(select) {
+  const student = findStudent(editingId);
+  if (!student || !supportsVisible()) return;
+  const index = Number(select.getAttribute('data-accommodation-index'));
+  const row = accommodationsOf(supportsOf(student))[index];
+  if (!row) return;
+  const chosen = select.value;
+  if (chosen !== '' && !isKind(chosen)) return;
+  const had = hasSupports(student);
+  update(() => { row.kind = chosen; });
+  /* The card's caption is the kind's own words, so it follows — and only the caption, because
+     rebuilding the card would replace the two text fields beside this picker. */
+  const card = select.closest('.accommodation-card');
+  const label = card && card.querySelector('.accommodation-label');
+  if (label) setSensitiveText(label, kindLabel(chosen) || 'Accommodation ' + (index + 1));
+  refreshSupportDot(student, had);
+}
+
+export function addAccommodation() {
+  const student = findStudent(editingId);
+  if (!student || !supportsVisible()) return;
+  const supports = supportsOf(student);
+  update(() => {
+    if (!Array.isArray(supports.accommodations)) supports.accommodations = [];
+    supports.accommodations.push(newAccommodation());
+  });
+  renderAccommodations(student);
+  announce('Added accommodation ' + accommodationsOf(supports).length + ' for '
+    + fullName(student) + '.');
+}
+
+export function removeAccommodation(indexValue) {
+  const student = findStudent(editingId);
+  const index = Number(indexValue);
+  if (!student || !supportsVisible()) return;
+  const supports = supportsOf(student);
+  if (!accommodationsOf(supports)[index]) return;
+  const had = hasSupports(student);
+  update(() => {
+    supports.accommodations = accommodationsOf(supports).filter((a, i) => i !== index);
+  });
+  renderAccommodations(student);
+  refreshSupportDot(student, had);
+  /* The announcement counts rather than naming what went. "Removed extended time from Ada Probe"
+     is the sentence that reads back the accommodation out loud, in a room. */
+  announce('Removed accommodation ' + (index + 1) + ' from ' + fullName(student) + '.');
+}
+
+/*
+  Clearing the review date on iPadOS. Identical quirk, identical fix and identical reasoning to
+  src/classes.js's termDateCommitted() — the date popover keeps its own selection, so a cleared
+  field cannot be re-set to the value it just held until the element is thrown away. Read that
+  comment; it is not repeated here.
+
+  Cloned rather than rebuilt from a template, because unlike a term date this field is real markup
+  in index.html: a clone carries every attribute and hook it was authored with, and the value
+  PROPERTY — the thing the picker set — is what a clone does not carry, which is exactly the state
+  being discarded.
+*/
+export function supportDateCommitted(input) {
+  const student = findStudent(editingId);
+  if (!student || input.value) return;
+  const supports = supportsOf(student);
+  const had = hasSupports(student);
+  /* Conditional for the same reason the term version is: not saving the document over an identical
+     copy of itself, and not moving `rev` for a date that was already empty (docs/sync.md). */
+  if (supports.reviewDate) update(() => { supports.reviewDate = ''; });
+  const fresh = input.cloneNode(true);
+  fresh.value = '';
+  input.replaceWith(fresh);
+  refreshSupportDot(student, had);
+}
+
+/* The roster behind the dialog carries the dot, so an edit that turns "nothing on file" into
+   "something on file" — or back — has to reach it. Re-rendered only when the ANSWER changed, not
+   on every keystroke into a medical note: the roster is 25 rows and rebuilding it per character
+   would be work nobody asked for, and the dot looks identical either way. */
+function refreshSupportDot(student, had) {
+  if (hasSupports(student) !== had) renderRoster();
+}
+
 function renderStudentEditor() {
   const student = findStudent(editingId);
   const title = document.getElementById(STUDENT_TITLE_ID);
@@ -679,11 +1050,20 @@ function renderStudentEditor() {
 
   renderGuardians(student);
   renderStudentClasses(student);
+  renderSupportsPanel(student);
 }
 
-export function openStudentEditor(studentId, opener) {
+/*
+  `reveal` is true only when the roster row's support dot was the thing that was tapped — that tap
+  IS the deliberate one the data model's rule 1 asks for, so making the teacher tap a second time
+  inside the dialog would be ceremony rather than protection. Every other way into this editor
+  (Edit, the orphan list, the console) opens with the panel shut, and it is shut again the next
+  time the dialog opens however it was left.
+*/
+export function openStudentEditor(studentId, opener, reveal) {
   if (!findStudent(studentId)) return;
   editingId = studentId;
+  supportsShown = !!reveal && supportsVisible();
   renderStudentEditor();
   openModal(STUDENT_MODAL_ID, opener);
 }
@@ -729,6 +1109,48 @@ export function editStudentField(input) {
     const counselor = counselorOf(student);
     const value = input.value;
     update(() => { counselor[field] = value; });
+    return;
+  }
+
+  /* The support block's three paths. Each one refuses while support data is suppressed rather than
+     trusting that the fields cannot be reached: WO-1.9 hides the panel, and a hidden panel is
+     still in the DOM. A write from one would store the emptied field over the real value. */
+  if (path.indexOf('supports.') === 0) {
+    const field = path.slice('supports.'.length);
+    if (SUPPORT_FIELDS.indexOf(field) < 0 || !supportsVisible()) return;
+    const supports = supportsOf(student);
+    const had = hasSupports(student);
+    const value = input.value;
+    update(() => { supports[field] = value; });
+    refreshSupportDot(student, had);
+    return;
+  }
+
+  if (path.indexOf('caseManager.') === 0) {
+    const field = path.slice('caseManager.'.length);
+    if (CASE_MANAGER_FIELDS.indexOf(field) < 0 || !supportsVisible()) return;
+    const supports = supportsOf(student);
+    const had = hasSupports(student);
+    const value = input.value;
+    update(() => { supports.caseManager[field] = value; });
+    refreshSupportDot(student, had);
+    return;
+  }
+
+  if (path.indexOf('accommodation.') === 0) {
+    const field = path.slice('accommodation.'.length);
+    if (ACCOMMODATION_FIELDS.indexOf(field) < 0 || !supportsVisible()) return;
+    const index = Number(input.getAttribute('data-accommodation-index'));
+    const row = accommodationsOf(supportsOf(student))[index];
+    if (!row) return;
+    const had = hasSupports(student);
+    const value = input.value;
+    /* `appliesTo` is an array in the document and a comma-separated line in the field — the split
+       is src/supports.js's, and it happens on the way in rather than on the way out so the caret
+       is never chased by a re-rendered field. Empty stays an empty array, which is the data
+       model's "applies to everything". */
+    update(() => { row[field] = field === 'appliesTo' ? parseAppliesTo(value) : value; });
+    refreshSupportDot(student, had);
   }
 }
 

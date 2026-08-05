@@ -2036,9 +2036,10 @@ const INSTALL_ROSTER_READER = `(function(){
              counselor: { name: (s.counselor||{}).name, email: (s.counselor||{}).email },
              inClasses: doc.classes.filter(function(c){ return (c.roster||[]).indexOf(s.id) >= 0; })
                .map(function(c){ return c.id; }),
-             /* WO-1.7's Out of scope line, asserted rather than assumed: the supports group
-                belongs to WO-1.8, and a key stubbed here now is a shape that work order has to
-                accept or migrate. This is what catches one being added. */
+             /* Enumerated rather than sampled. It began as WO-1.7's Out of scope line — no
+                supports stub before the work order that owns the shape — and at WO-1.8 it is the
+                other half of the same claim: the block is there now, spelled the one way
+                docs/data-model.md spells it, and nothing else has crept into the record. */
              keys: Object.keys(s).sort() };
   };
   return 1; })()`;
@@ -2255,11 +2256,12 @@ if (!rosterBooted || !rosterSeam) {
       ? 'in ' + twoClasses.inClasses.length + ' classes, ' + afterJoin.students
         + ' students in the year, ' + twoClasses.guardians.length + ' guardian(s)'
       : 'the student the editor was open on is no longer in the document');
-  /* WO-1.7's Out of scope line. `supports` is WO-1.8's, and a stub written now is a shape it has
-     to accept or migrate — so the fields this editor creates are enumerated, not sampled. */
-  check('and the record carries only the fields this work order owns — no supports stub',
+  /* The whole record, enumerated rather than sampled: ten keys and no eleventh. `supports` is
+     WO-1.8's and is now one of them; the check that used to assert its ABSENCE is the same check,
+     which is why it is worth spelling every key out rather than testing for the one in question. */
+  check('and the record carries exactly the fields the data model gives a student, supports included',
     JSON.stringify(twoClasses.keys) === JSON.stringify(['counselor', 'email', 'first', 'gradYear',
-      'guardians', 'id', 'last', 'nickname', 'notes']),
+      'guardians', 'id', 'last', 'nickname', 'notes', 'supports']),
     JSON.stringify(twoClasses.keys));
 
   const otherClass = await openRosterOn(1);
@@ -2473,6 +2475,448 @@ if (!rosterBooted || !rosterSeam) {
   await closeAll();
   await clickSel('[data-class-tab]', 1);
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+}
+
+/* ───────────────── support details ─────────────────
+ *
+ * WO-1.8's five acceptance lines, driven through the real controls the way the section above
+ * drives the roster's. Two of them are unlike anything else in this file, and both are unlike it
+ * in the same way: they are claims about what is NOT on the screen.
+ *
+ * That shape is where a vacuous pass hides. "The roster does not show the word IEP" is true of a
+ * roster with no students on it, of a roster that failed to render, and of a build where the
+ * feature was never wired up — so every absence check below is paired with the presence check that
+ * proves the fixture was really there: the same string, in the same document, read back out after
+ * a reload. An absence with nothing behind it is not evidence.
+ *
+ * The third is the dot. A dot that encoded the plan type would still be one dot per student and
+ * would still pass any check that counted them, so the dots are compared to EACH OTHER — computed
+ * colour, radius, border, size, glyph and label, across three students with three different things
+ * on file. That is the only form of this check that can fail.
+ */
+
+console.log('\n--- support details ---');
+
+const supportSeam = await evalJs("!!(window.planbook && window.planbook.supports"
+  + " && typeof window.planbook.supports.supportsVisible === 'function'"
+  + " && typeof window.planbook.roster === 'object')");
+
+if (!supportSeam) {
+  skip('support details: the block round-trips, the roster stays quiet, and the dot says nothing',
+    'no window.planbook.supports seam on the page (expected once the WO-1.2 shelf is gone)');
+} else {
+  /* Three page-side readers, re-installed after every reload like the walker: the document's own
+     copy of a support block, everything the editor panel is showing, and every dot on the roster
+     with the computed style a projector would actually paint. */
+  const INSTALL_SUPPORT_READER = `(function(){
+    window.__sup = function(id){
+      var doc = window.planbook.store.getDoc();
+      var s = doc.students.filter(function(x){ return x.id === id; })[0];
+      if (!s) return null;
+      return { keys: Object.keys(s).sort(),
+               supports: s.supports ? JSON.parse(JSON.stringify(s.supports)) : null,
+               dot: window.planbook.supports.hasSupports(s) };
+    };
+    window.__panel = function(){
+      var body = document.getElementById('supportsBody');
+      var btn = document.getElementById('supportsRevealBtn');
+      function val(id){ var e = document.getElementById(id); return e ? e.value : null; }
+      function all(sel){ return Array.prototype.map.call(
+        document.querySelectorAll('#accommodationList ' + sel), function(e){ return e.value; }); }
+      var pressed = document.querySelectorAll('#supportsPlanRow [aria-pressed="true"]');
+      return {
+        hidden: !!body && body.classList.contains('hidden'),
+        expanded: btn ? btn.getAttribute('aria-expanded') : null,
+        label: btn ? btn.textContent.replace(/\\s+/g, ' ').trim() : null,
+        plan: Array.prototype.map.call(pressed, function(b){
+          return b.getAttribute('data-support-plan'); }),
+        caseName: val('supportsCaseManagerName'), caseEmail: val('supportsCaseManagerEmail'),
+        reviewDate: val('supportsReviewDate'),
+        medical: val('supportsMedical'), behaviorPlan: val('supportsBehaviorPlan'),
+        cards: document.querySelectorAll('#accommodationList .accommodation-card').length,
+        kinds: all('[data-support-kind]'),
+        details: all('[data-student-field="accommodation.detail"]'),
+        applies: all('[data-student-field="accommodation.appliesTo"]'),
+        /* The whole dialog as a reader would hear it, so an absence claim covers rendered text and
+           not only the fields this reader happens to name. */
+        text: (document.getElementById('studentModal') || { textContent: '' })
+          .textContent.replace(/\\s+/g, ' ')
+      };
+    };
+    window.__dots = function(){
+      var out = [];
+      Array.prototype.forEach.call(document.querySelectorAll('#rosterList [data-supports-open]'),
+        function(d){
+          var cs = getComputedStyle(d), box = d.getBoundingClientRect();
+          out.push({ id: d.getAttribute('data-supports-open'),
+                     text: d.textContent, cls: d.className,
+                     label: d.getAttribute('aria-label'), title: d.getAttribute('title'),
+                     look: [cs.backgroundColor, cs.color, cs.borderTopColor, cs.borderTopWidth,
+                            cs.borderTopLeftRadius, cs.fontSize,
+                            Math.round(box.width) + 'x' + Math.round(box.height)].join(' | ') });
+        });
+      return out;
+    };
+    window.__rosterText = function(){
+      var m = document.getElementById('rosterModal');
+      return { rows: document.querySelectorAll('#rosterList .roster-row').length,
+               dots: document.querySelectorAll('#rosterList [data-supports-open]').length,
+               text: (m ? m.textContent : '').replace(/\\s+/g, ' ') };
+    };
+    return 1; })()`;
+  await evalJs(INSTALL_SUPPORT_READER);
+
+  const closeAllSupport = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
+    + "'rosterPasteModal','rosterModal','teacherModal','classesModal','backupModal','yearModal',"
+    + "'aboutModal'].forEach(function(m){ window.planbook.closeModal(m); }); return 1; })()");
+  /* Found rather than assumed, exactly as the touch section does it: the section above leaves the
+     open class wherever its last check left it, and an empty roster would make every absence check
+     below true for the wrong reason. */
+  const openFullestRoster = async () => {
+    await closeAllSupport();
+    const fullest = await evalJs(`(function(){
+      var doc = window.planbook.store.getDoc();
+      var tabs = Array.prototype.slice.call(
+        document.querySelectorAll('#classTabBar [data-class-tab]'));
+      var best = -1, n = -1;
+      tabs.forEach(function(t, i){
+        var c = doc.classes.filter(function(x){
+          return x.id === t.getAttribute('data-class-tab'); })[0];
+        var len = c && c.roster ? c.roster.length : 0;
+        if (len > n) { n = len; best = i; }
+      });
+      return { tab: best, students: n }; })()`);
+    if (fullest.tab >= 0) await clickSel('[data-class-tab]', fullest.tab);
+    await clickSel('header [data-roster-manage]');
+    return fullest;
+  };
+  const typeField = (id, text) => evalJs('(function(){ var e = document.getElementById('
+    + JSON.stringify(id) + '); if (!e) return 0; e.value = ' + JSON.stringify(text)
+    + '; e.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+
+  /*
+    The fixture. Three students with three different things on file, because acceptance line 3 is
+    about the dots DIFFERING and one student cannot differ from anybody. Every value is a phrase
+    that appears nowhere else in the app, so searching a screen for it cannot match furniture:
+    "Peanut" is not a word in any copy in this repo, and neither is "Ramirez" or "1.5x on tests".
+  */
+  const CASE_NAME = 'K. Ramirez';
+  const CASE_EMAIL = 'k.ramirez@example.edu';
+  const REVIEW_DATE = '2027-02-11';
+  const DETAIL_ONE = '1.5x on tests and quizzes';
+  const DETAIL_TWO = 'Noise-cancelling headphones';
+  const MEDICAL = 'Peanut allergy, EpiPen in the office';
+  const BEHAVIOR = 'Check in at the door, two-minute break on request';
+  const MEDICAL_TWO = 'Type 1 diabetes, tests before lunch';
+  /*
+    Two needle lists, and the difference between them is the whole reason this is not one.
+
+    A STUDENT'S support data is every phrase above plus the rendered name of an accommodation kind.
+    None of it may appear on a list view, in the editor before the panel is opened, or in
+    localStorage — searched case-sensitively, so a surname like "Ellen" cannot be mistaken for the
+    plan value "ELL".
+
+    The plan words themselves — IEP, 504, ELL — are on the LIST-VIEW needle list only. Inside the
+    editor they are the four buttons that name the options, present in the markup whether or not
+    any of them is chosen, and a check that called that furniture a leak would be a check that can
+    only pass by deleting the picker. What proves the student's plan is not on screen there is that
+    none of those four reads as pressed, which the panel reader above reports.
+  */
+  const VALUE_NEEDLES = [CASE_NAME, CASE_EMAIL, REVIEW_DATE, DETAIL_ONE, DETAIL_TWO, MEDICAL,
+    BEHAVIOR, MEDICAL_TWO, 'Extended time', 'extended-time', 'Something else'];
+  const NEEDLES = [...VALUE_NEEDLES, 'IEP', '504', 'ELL'];
+  const foundIn = (text) => NEEDLES.filter(n => text.indexOf(n) >= 0);
+  const foundValueIn = (text) => VALUE_NEEDLES.filter(n => text.indexOf(n) >= 0);
+
+  const before = await openFullestRoster();
+  const ids = await evalJs("(function(){ var doc = window.planbook.store.getDoc();"
+    + " var open = window.planbook.classes.getSelectedClassId();"
+    + " var c = doc.classes.filter(function(x){ return x.id === open; })[0];"
+    + " return (c && c.roster ? c.roster : []).slice(0, 3); })()");
+
+  if (!ids || ids.length < 3) {
+    check('support details: a roster with three students to put support details on',
+      false, 'the open class arrived with ' + (ids ? ids.length : 0)
+        + ' students, so nothing below was driven');
+  } else {
+    /* ── acceptance 1: every field in the block is editable, through the real controls ── */
+
+    await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
+    const shutOnOpen = await evalJs('window.__panel()');
+    check('the support panel is shut when the editor opens by the ordinary route, showing nothing',
+      shutOnOpen.hidden === true && shutOnOpen.expanded === 'false'
+        && shutOnOpen.label === 'Show support details'
+        && shutOnOpen.plan.length === 0 && shutOnOpen.cards === 0
+        && [shutOnOpen.caseName, shutOnOpen.caseEmail, shutOnOpen.reviewDate,
+          shutOnOpen.medical, shutOnOpen.behaviorPlan].every(v => v === ''),
+      'hidden = ' + shutOnOpen.hidden + ', plan buttons pressed = ' + shutOnOpen.plan.length
+        + ', accommodation cards = ' + shutOnOpen.cards);
+
+    await clickSel('[data-supports-reveal]');
+    /* The four plan buttons are real markup in index.html and the four plan values live in
+       src/supports.js, which is two lists that have to agree — and when they stop agreeing the
+       symptom is a button that does nothing, because setPlan() refuses a value isPlan() does not
+       know. Compared rather than trusted, in the order the data model writes them. */
+    const planButtons = await evalJs(`(function(){
+      return { markup: Array.prototype.map.call(
+                 document.querySelectorAll('#supportsPlanRow [data-support-plan]'),
+                 function(b){ return b.getAttribute('data-support-plan'); }),
+               module: window.planbook.supports.PLANS.map(function(p){ return p.value; }) }; })()`);
+    check('the plan buttons in the markup are exactly the plan values src/supports.js enumerates',
+      JSON.stringify(planButtons.markup) === JSON.stringify(planButtons.module)
+        && JSON.stringify(planButtons.module) === JSON.stringify(['none', 'IEP', '504', 'ELL']),
+      'markup ' + JSON.stringify(planButtons.markup) + ' · module '
+        + JSON.stringify(planButtons.module));
+    await clickSel('#supportsPlanRow [data-support-plan="IEP"]');
+    await typeField('supportsCaseManagerName', CASE_NAME);
+    await typeField('supportsCaseManagerEmail', CASE_EMAIL);
+    await typeField('supportsReviewDate', REVIEW_DATE);
+    await typeField('supportsMedical', MEDICAL);
+    await typeField('supportsBehaviorPlan', BEHAVIOR);
+    await clickSel('[data-accommodation-add]');
+    await clickSel('[data-accommodation-add]');
+    /* The kind picker commits on `change`, which is what a <select> does and why src/shell.js
+       routes it from the change listener rather than from the input one. */
+    await evalJs(`(function(){
+      var sel = document.querySelectorAll('#accommodationList [data-support-kind]');
+      function pick(i, v){ sel[i].value = v;
+        sel[i].dispatchEvent(new Event('change', { bubbles: true })); }
+      pick(0, 'extended-time'); pick(1, 'other');
+      var d = document.querySelectorAll('#accommodationList [data-student-field="accommodation.detail"]');
+      var a = document.querySelectorAll('#accommodationList [data-student-field="accommodation.appliesTo"]');
+      function set(e, v){ e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }
+      set(d[0], ${JSON.stringify(DETAIL_ONE)}); set(a[0], 'tests, quizzes');
+      set(d[1], ${JSON.stringify(DETAIL_TWO)});
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+
+    const filled = await evalJs('window.__panel()');
+    const stored = await evalJs('window.__sup(' + JSON.stringify(ids[0]) + ')');
+    check('every field in the supports block is editable from the panel and lands in the document',
+      !!stored && !!stored.supports
+        && stored.supports.plan === 'IEP'
+        && stored.supports.caseManager.name === CASE_NAME
+        && stored.supports.caseManager.email === CASE_EMAIL
+        && stored.supports.reviewDate === REVIEW_DATE
+        && stored.supports.medical === MEDICAL
+        && stored.supports.behaviorPlan === BEHAVIOR
+        && stored.supports.accommodations.length === 2
+        && stored.supports.accommodations[0].kind === 'extended-time'
+        && stored.supports.accommodations[0].detail === DETAIL_ONE
+        && filled.plan.length === 1 && filled.plan[0] === 'IEP' && filled.cards === 2,
+      stored && stored.supports
+        ? 'plan ' + stored.supports.plan + ', ' + stored.supports.accommodations.length
+          + ' accommodation(s), case manager, review date, medical and behavior plan all stored'
+        : 'no supports block on the student the editor was open on');
+    check('`appliesTo` is an array of the words typed, and an empty one means everything',
+      !!stored && Array.isArray(stored.supports.accommodations[0].appliesTo)
+        && JSON.stringify(stored.supports.accommodations[0].appliesTo)
+          === JSON.stringify(['tests', 'quizzes'])
+        && Array.isArray(stored.supports.accommodations[1].appliesTo)
+        && stored.supports.accommodations[1].appliesTo.length === 0,
+      stored && stored.supports
+        ? JSON.stringify(stored.supports.accommodations.map(a => a.appliesTo))
+        : 'no supports block to read');
+    check('and the record still carries exactly the keys the data model gives a student',
+      !!stored && JSON.stringify(stored.keys) === JSON.stringify(['counselor', 'email', 'first',
+        'gradYear', 'guardians', 'id', 'last', 'nickname', 'notes', 'supports']),
+      stored ? JSON.stringify(stored.keys) : 'no student');
+
+    /* Two more students, so the dots have something to differ by if they are going to. */
+    await evalJs("window.planbook.closeModal('studentModal');1");
+    await clickSel('#rosterList .roster-row:nth-child(2) [data-student-edit]');
+    await clickSel('[data-supports-reveal]');
+    await clickSel('#supportsPlanRow [data-support-plan="504"]');
+    await evalJs("window.planbook.closeModal('studentModal');1");
+    await clickSel('#rosterList .roster-row:nth-child(3) [data-student-edit]');
+    await clickSel('[data-supports-reveal]');
+    await typeField('supportsMedical', MEDICAL_TWO);
+    await new Promise(r => setTimeout(r, 200));
+    await evalJs("window.planbook.closeModal('studentModal');1");
+
+    /* ── acceptance 4: reviewDate is stored and readable, through a save and a reload ── */
+
+    await closeAllSupport();
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 600));
+    const supportReboot = await waitForBoot();
+    await evalJs(KILL_ANIM);
+    await evalJs(INSTALL_WALKER);
+    await evalJs(INSTALL_CLASS_READER);
+    await evalJs(INSTALL_ROSTER_READER);
+    await evalJs(INSTALL_SUPPORT_READER);
+    const reloadedSupport = await evalJs('window.__sup(' + JSON.stringify(ids[0]) + ')');
+    check('the whole supports block comes back out of IndexedDB after a save and a reload',
+      supportReboot && !!reloadedSupport && !!reloadedSupport.supports
+        && JSON.stringify(reloadedSupport.supports) === JSON.stringify(stored.supports),
+      supportReboot
+        ? (reloadedSupport && reloadedSupport.supports
+          ? 'identical to what was written, field for field'
+          : 'the student came back without a supports block')
+        : 'the loading screen never came down');
+    check('reviewDate is stored and readable whether or not anything consumes it yet',
+      !!reloadedSupport && reloadedSupport.supports
+        && reloadedSupport.supports.reviewDate === REVIEW_DATE,
+      reloadedSupport && reloadedSupport.supports
+        ? 'reviewDate = ' + JSON.stringify(reloadedSupport.supports.reviewDate)
+          + ' — no calendar reads it; WO-6.1 owns that'
+        : 'no supports block to read');
+
+    /* ── acceptance 2: no list view shows any of it without a deliberate tap ── */
+
+    await openFullestRoster();
+    const list = await evalJs('window.__rosterText()');
+    check('the roster list shows a dot for each student who has something on file, and nothing else',
+      list.rows >= 3 && list.dots === 3 && foundIn(list.text).length === 0,
+      list.rows + ' rows, ' + list.dots + ' dot(s), leaked: '
+        + JSON.stringify(foundIn(list.text)));
+
+    await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
+    const editorShut = await evalJs('window.__panel()');
+    check('and opening the editor by Edit shows no plan, no accommodation, no medical, no behavior text',
+      editorShut.hidden === true && editorShut.plan.length === 0 && editorShut.cards === 0
+        && [editorShut.caseName, editorShut.caseEmail, editorShut.reviewDate, editorShut.medical,
+          editorShut.behaviorPlan].every(v => v === '')
+        && foundValueIn(editorShut.text).length === 0,
+      'panel hidden = ' + editorShut.hidden + ', no plan button pressed, leaked into the dialog: '
+        + JSON.stringify(foundValueIn(editorShut.text)));
+
+    await clickSel('[data-supports-reveal]');
+    const editorOpen = await evalJs('window.__panel()');
+    check('one deliberate tap on that panel is what puts them on screen — and it really is them',
+      editorOpen.hidden === false && editorOpen.expanded === 'true'
+        && editorOpen.label === 'Hide support details'
+        && JSON.stringify(editorOpen.plan) === JSON.stringify(['IEP'])
+        && editorOpen.caseName === CASE_NAME && editorOpen.caseEmail === CASE_EMAIL
+        && editorOpen.reviewDate === REVIEW_DATE && editorOpen.medical === MEDICAL
+        && editorOpen.behaviorPlan === BEHAVIOR
+        && editorOpen.cards === 2
+        && JSON.stringify(editorOpen.kinds) === JSON.stringify(['extended-time', 'other'])
+        && editorOpen.details[0] === DETAIL_ONE && editorOpen.applies[0] === 'tests, quizzes',
+      'plan ' + JSON.stringify(editorOpen.plan) + ', cards ' + editorOpen.cards
+        + ', kinds ' + JSON.stringify(editorOpen.kinds));
+    await clickSel('[data-supports-reveal]');
+    const editorShutAgain = await evalJs('window.__panel()');
+    check('and tapping it again takes them back off, fields emptied rather than merely unpainted',
+      editorShutAgain.hidden === true && editorShutAgain.plan.length === 0
+        && editorShutAgain.cards === 0
+        && [editorShutAgain.caseName, editorShutAgain.medical, editorShutAgain.behaviorPlan]
+          .every(v => v === ''),
+      'hidden = ' + editorShutAgain.hidden + ', cards = ' + editorShutAgain.cards);
+
+    await evalJs("window.planbook.closeModal('studentModal');1");
+    await clickSel('#rosterList .roster-row:nth-child(1) [data-supports-open]');
+    const viaDot = await evalJs('window.__panel()');
+    check('the dot is that deliberate tap: it opens the editor with the panel already showing',
+      viaDot.hidden === false && viaDot.expanded === 'true'
+        && JSON.stringify(viaDot.plan) === JSON.stringify(['IEP'])
+        && viaDot.medical === MEDICAL,
+      'panel hidden = ' + viaDot.hidden + ', plan = ' + JSON.stringify(viaDot.plan));
+    await evalJs("window.planbook.closeModal('studentModal');1");
+    const reopened = await evalJs("(function(){ window.planbook.roster.openStudentEditor("
+      + JSON.stringify(ids[0]) + "); return window.__panel(); })()");
+    check('and the next open is shut again — it is not a setting that stays where it was left',
+      reopened.hidden === true && reopened.expanded === 'false' && reopened.plan.length === 0,
+      'hidden = ' + reopened.hidden + ', expanded = ' + reopened.expanded);
+    await evalJs("window.planbook.closeModal('studentModal');1");
+
+    /* ── acceptance 3: the dot encodes nothing ── */
+
+    /*
+      The pointer is parked somewhere harmless first, and that is not housekeeping — it is what
+      this check found on its first run. The last thing clicked above was row 1's dot, so the
+      cursor was still resting on it: getComputedStyle returned that dot's `:hover` rule and the
+      other two returned their resting one, and the run reported three dots that did not match.
+      Which is exactly what a plan-coded dot would look like. A check whose failure mode is
+      indistinguishable from the defect it exists for has to rule the artifact out rather than
+      tolerate it, so the mouse goes to the corner instead of the hover properties coming out of
+      the comparison — dropping background and border colour would leave this measuring almost
+      nothing, which is the whole subject of tools/README.md's CDP section.
+    */
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });
+    await new Promise(r => setTimeout(r, 100));
+    const dots = await evalJs('window.__dots()');
+    const looks = [...new Set(dots.map(d => d.look))];
+    const glyphs = [...new Set(dots.map(d => d.text))];
+    const classes = [...new Set(dots.map(d => d.cls))];
+    check('three students with three different things on file get three identical dots',
+      dots.length === 3 && looks.length === 1 && glyphs.length === 1 && classes.length === 1,
+      dots.length + ' dot(s); distinct looks = ' + JSON.stringify(looks)
+        + '; distinct glyphs = ' + JSON.stringify(glyphs));
+    /* The label is the other half of the dot. A dot that said nothing and was announced as "IEP"
+       would be a disclosure to the room the moment VoiceOver is on. */
+    const PLAN_WORDS = /IEP|504|ELL|accommodat|medical|behavio|allerg|diabet/i;
+    check('and neither its label nor its tooltip names a plan, a need, or an accommodation',
+      dots.length === 3 && dots.every(d => d.label && d.title
+        && d.label === d.title
+        && /^Support details for /.test(d.label)
+        && !PLAN_WORDS.test(d.label.replace(/^Support details for /, ''))),
+      JSON.stringify(dots.map(d => d.label)));
+    /* The row with nothing on file has no dot at all, which is what makes the dot mean anything —
+       and is also the reason presentation mode has to be able to take it away (WO-1.9). */
+    const bare = await evalJs("(function(){ var rows = document.querySelectorAll("
+      + "'#rosterList .roster-row'); var n = 0;"
+      + " Array.prototype.forEach.call(rows, function(r){"
+      + "   if (!r.querySelector('[data-supports-open]')) n++; }); return n; })()");
+    check('a student with nothing on file carries no indicator at all',
+      bare === list.rows - 3, bare + ' of ' + list.rows + ' rows have no dot');
+
+    /* ── acceptance 5: the backup names what it holds, and holds it ── */
+
+    await closeAllSupport();
+    await clickSel('header [data-backup-panel]');
+    await new Promise(r => setTimeout(r, 300));
+    const notice = await evalJs("(function(){ var m = document.getElementById('backupModal');"
+      + " return { open: !!m && !m.classList.contains('hidden'),"
+      + " text: (m ? m.textContent : '').replace(/\\s+/g, ' ') }; })()");
+    check('the backup panel names accommodation, IEP/504, medical and behavior-plan data as being in the file',
+      notice.open && /accommodation/i.test(notice.text) && /\bIEP\b/.test(notice.text)
+        && /\b504\b/.test(notice.text) && /medical/i.test(notice.text)
+        && /behavio(u)?r plan/i.test(notice.text),
+      notice.open
+        ? (notice.text.match(/It also contains[^.]*\./) || ['no "It also contains" sentence'])[0]
+        : 'the backup panel did not open');
+    /* And the claim is true. A notice that named data the file did not carry would be the same
+       defect the other way round: the teacher would keep a backup she believed was complete. */
+    const inFile = await evalJs(`(async function(){
+      var f = await window.planbook.backup.buildBackup();
+      var doc = JSON.parse(f.text);
+      var s = doc.students.filter(function(x){ return x.id === ${JSON.stringify(ids[0])}; })[0] || {};
+      var sup = s.supports || {};
+      return { plan: sup.plan, medical: sup.medical, behaviorPlan: sup.behaviorPlan,
+               reviewDate: sup.reviewDate,
+               caseManager: (sup.caseManager || {}).name,
+               accommodations: (sup.accommodations || []).length }; })()`);
+    check('and the file really does carry them, so the notice is a fact rather than a promise',
+      inFile.plan === 'IEP' && inFile.medical === MEDICAL && inFile.behaviorPlan === BEHAVIOR
+        && inFile.reviewDate === REVIEW_DATE && inFile.caseManager === CASE_NAME
+        && inFile.accommodations === 2,
+      'plan ' + JSON.stringify(inFile.plan) + ', ' + inFile.accommodations
+        + ' accommodation(s), medical and behavior plan present in the downloaded JSON');
+    await closeAllSupport();
+
+    /* Nothing sensitive may reach localStorage, which is where a "remember the panel was open"
+       preference would have gone if anyone had written one. Read out of the browser rather than
+       out of prefs.js, because what is being asserted is what is in the browser. */
+    const supportLocal = await evalJs(`(function(){ var out = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i); out[k] = String(localStorage.getItem(k)).slice(0, 400); }
+      return out; })()`);
+    const supportBlob = JSON.stringify(supportLocal);
+    check('no support detail, and no memory of the panel being open, reached localStorage',
+      Object.keys(supportLocal).length > 0
+        && Object.keys(supportLocal).every(k => k.indexOf('planbook_') === 0)
+        && foundIn(supportBlob).length === 0
+        && !/supports|accommodat|reveal/i.test(supportBlob),
+      Object.keys(supportLocal).join(', '));
+  }
+
+  await closeAllSupport();
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  /* The open class is left where the roster section left it, for the reason that section gives:
+     the overflow sweep at the bottom measures the term nav of whatever is open. */
+  if (before && before.tab !== 1) await clickSel('[data-class-tab]', 1);
 }
 
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
@@ -2789,6 +3233,47 @@ if (coarse !== true) {
         check('every control in the student editor measures >=44px, the notes box and guardian card included',
           sm.every(m => m.h >= 44 && m.w >= 44), report(sm));
       }
+
+      /*
+        The support panel, opened, with an accommodation card in it. Everything in it is inside a
+        block that is `.hidden` until a deliberate tap, where it measures 0x0 and every sweep above
+        skips it — and two of its controls are shapes nobody sets the height of by accident: a
+        <select>, which measureIn's own selector does not even name, and an <input type="date">,
+        which is the control the term editor already had to be told about twice.
+      */
+      const revealable = await has('#studentModal [data-supports-reveal]');
+      if (!revealable) {
+        check('the support panel opened with an accommodation card, so there is something to measure',
+          false, 'no [data-supports-reveal] control in the student editor');
+      } else {
+        await clickSel('#studentModal [data-supports-reveal]');
+        await new Promise(r => setTimeout(r, 200));
+        const noCard = await evalJs(
+          "document.querySelectorAll('#accommodationList .accommodation-card').length === 0");
+        if (noCard) await clickSel('#studentModal [data-accommodation-add]');
+        await new Promise(r => setTimeout(r, 200));
+        const spm = await evalJs(`(function(){ var b = document.getElementById('supportsBody');
+          if (!b || b.classList.contains('hidden')) return null;
+          return Array.prototype.slice.call(
+            b.querySelectorAll('button, input, textarea, select'))
+            .filter(function(e){ var r = e.getBoundingClientRect(); return r.width || r.height; })
+            .map(function(e){ var r = e.getBoundingClientRect();
+              return { t:(e.className || e.tagName), w:Math.round(r.width*100)/100,
+                       h:Math.round(r.height*100)/100 }; }); })()`);
+        const selects = await evalJs(
+          "document.querySelectorAll('#accommodationList [data-support-kind]').length");
+        if (!spm || spm.length < 8 || !selects) {
+          check('the support panel opened with an accommodation card, so there is something to measure',
+            false, 'controls found = ' + (spm ? spm.length : 'panel never opened')
+              + ', kind pickers = ' + selects);
+        } else {
+          check('every control in the support panel measures >=44px, the kind picker and review date included',
+            spm.every(m => m.h >= 44 && m.w >= 44), report(spm));
+        }
+      }
+      /* The support dot on the roster row behind this dialog is a `.support-dot` button and is
+         measured by the roster-panel sweep above, which collects every button in that overlay. It
+         is named here so that a reader looking for it does not conclude it was missed. */
     }
 
     await closeStack();

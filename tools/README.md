@@ -114,7 +114,8 @@ still closes no 👤 item: it drives a page, not an installed app, and it has ne
 worker.
 
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
-WO-1.7.** Update
+WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at
+WO-1.8.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
@@ -123,7 +124,7 @@ backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash`
 WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
 thirty seconds.)*
 
-### Driving a browser over CDP — six traps, all of which first look like app defects
+### Driving a browser over CDP — seven traps, all of which first look like app defects
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
@@ -179,6 +180,19 @@ down here. That is the entire reason this section exists.
    Note the difference from trap 5: sleeping longer would in fact fix this one, which is what makes
    it dangerous. A sleep that is long enough today is a race that fails on a slower machine, and the
    flush is a fact rather than a bet.
+7. **The pointer stays where you last clicked, so `getComputedStyle` reads a `:hover` rule.**
+   `Input.dispatchMouseEvent` leaves the cursor at the release coordinates, and a check that
+   measures the thing it just clicked measures it hovered. Every other element of the same class
+   measures resting — so a comparison across several of them reports that one of them differs.
+
+   Found at WO-1.8, by the check that compares the roster's support dots to each other to prove
+   none of them encodes a plan type. It failed on its first run with two distinct colour sets, and
+   the difference was real: the dot the harness had tapped a moment earlier was indigo, the other
+   two were grey. That is *precisely* what a dot coded by plan would look like, which is what makes
+   this worth a numbered entry — the artifact is indistinguishable from the defect the check exists
+   for, so the answer is to park the pointer (`Input.dispatchMouseEvent` with `type: 'mouseMoved'`
+   at a corner) rather than to drop the hover-sensitive properties from the comparison. Dropping
+   them would have left the check measuring almost nothing, and it would have gone green.
 
 ### Two rules that follow from those
 
