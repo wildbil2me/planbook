@@ -90,6 +90,8 @@ const STUDENT_CLASSES_ID = 'studentClasses';
 
 const SUPPORTS_BODY_ID = 'supportsBody';
 const SUPPORTS_REVEAL_ID = 'supportsRevealBtn';
+const SUPPORTS_HINT_ID = 'supportsHint';
+const SUPPORTS_HINT_PRESENTATION_ID = 'supportsHintPresentation';
 const SUPPORTS_PLAN_ROW_ID = 'supportsPlanRow';
 const ACCOMMODATION_LIST_ID = 'accommodationList';
 
@@ -399,9 +401,10 @@ function studentRow(student, cls) {
     everyone: "Support details for Ada Probe" discloses that there are some, which the dot already
     does, and no more than that. No `title` beyond the same words, and nothing keyed to the plan.
 
-    supportsVisible() is asked here rather than tested here — when WO-1.9 turns presentation mode
-    on, this dot is one of the things that has to go, because on a projected roster the dot IS the
-    disclosure.
+    supportsVisible() is asked here rather than tested here — with presentation mode on, this dot
+    is one of the things that has to go, because on a projected roster the dot IS the disclosure.
+    It goes by not being built, not by being painted out: WO-1.9's acceptance is that the data is
+    absent from the DOM rather than hidden in it.
   */
   if (supportsVisible() && hasSupports(student)) {
     const dot = document.createElement('button');
@@ -737,9 +740,9 @@ function renderStudentClasses(student) {
 
    Every string below that comes out of `supports` reaches the page through sensitiveValue() or
    setSensitiveText(), and the panel is only openable when supportsVisible() says so. Those three
-   are one switch (src/supports.js), and WO-1.9 flips it. Nothing in this section decides for
-   itself whether it may be on screen — a screen that decides for itself is a screen presentation
-   mode does not reach. */
+   are one switch (src/supports.js), and presentation mode is the hand on it. Nothing in this
+   section decides for itself whether it may be on screen — a screen that decides for itself is a
+   screen presentation mode does not reach. */
 
 /* One accommodation, repeatable, and the same card the guardians editor already solved: a head
    with a caption and a Remove, then a grid of fields. Rebuilt only when a row is added or removed
@@ -881,8 +884,8 @@ function renderPlanRow(student) {
 }
 
 /*
-  Fill, or deliberately un-fill. When the support panel is shut, or when WO-1.9's presentation mode
-  has said no, every field here is emptied rather than left holding its value behind a
+  Fill, or deliberately un-fill. When the support panel is shut, or when presentation mode has said
+  no, every field here is emptied rather than left holding its value behind a
   `display: none` — a hidden element is still an element that a find-in-page, a screenshot tool or
   the accessibility tree can reach, and "it is not painted" is not the same claim as "it is not
   there". The document is untouched either way; this only ever writes into the DOM.
@@ -907,19 +910,53 @@ function renderSupportFields(student) {
   }
 }
 
-/* The panel's own state: shut, open, or — once WO-1.9 exists — not openable at all. */
+/* The panel's own state: shut, open, or — while presentation mode is on — not openable at all.
+
+   The hint above the button swaps with the third of those, and that is not politeness. A greyed-out
+   button over an empty panel is what a teacher meets in sixth period after turning presentation
+   mode on in first, and "her accommodations are gone" is the reasonable reading of it. Both
+   sentences are written out in index.html; what happens here is choosing which one is on screen,
+   from the same one question every other line in this section asks. */
 function renderSupportsPanel(student) {
   const body = document.getElementById(SUPPORTS_BODY_ID);
   const button = document.getElementById(SUPPORTS_REVEAL_ID);
+  const hint = document.getElementById(SUPPORTS_HINT_ID);
+  const presentationHint = document.getElementById(SUPPORTS_HINT_PRESENTATION_ID);
   const allowed = supportsVisible();
   const show = supportsOnScreen();
   if (body) body.classList.toggle('hidden', !show);
+  if (hint) hint.classList.toggle('hidden', !allowed);
+  if (presentationHint) presentationHint.classList.toggle('hidden', allowed);
   if (button) {
     button.disabled = !allowed;
     button.setAttribute('aria-expanded', show ? 'true' : 'false');
     button.textContent = show ? 'Hide support details' : 'Show support details';
   }
   renderSupportFields(student);
+}
+
+/*
+  EVERYTHING ON SCREEN THAT CAN CARRY SUPPORT DATA, REDRAWN. Called from src/shell.js when
+  presentation mode is flipped, and from nowhere else.
+
+  Suppression that only applied to the next render would leave the roster the teacher is looking at
+  covered in indicator dots until something else happened to redraw it — and she flipped the switch
+  because she is about to plug in the projector, so the screen already in front of her is exactly
+  the one that has to go quiet. This function is the answer to "and what about what is already on
+  the glass"; whether any of it MAY be shown is still src/supports.js's question and is asked, not
+  re-decided, in every renderer below.
+
+  The reveal state is dropped rather than remembered across the flip. A panel that sprang back open
+  the moment presentation mode came off would be putting a student's plan on screen without the
+  deliberate tap docs/data-model.md § Accommodations rule 1 asks for — and the teacher coming out of
+  presentation mode is a teacher who has just finished projecting.
+*/
+export function refreshSupportSurfaces() {
+  if (!supportsVisible()) supportsShown = false;
+  const student = findStudent(editingId);
+  if (student) renderSupportsPanel(student);
+  /* The list behind the dialog, whose dots are a disclosure of their own — the row is the wall. */
+  renderRoster();
 }
 
 /* Open, or shut again. Announced because the whole point of the control is that the screen just
@@ -1113,8 +1150,9 @@ export function editStudentField(input) {
   }
 
   /* The support block's three paths. Each one refuses while support data is suppressed rather than
-     trusting that the fields cannot be reached: WO-1.9 hides the panel, and a hidden panel is
-     still in the DOM. A write from one would store the emptied field over the real value. */
+     trusting that the fields cannot be reached: presentation mode hides the panel, and a hidden
+     panel is still in the DOM. A write from one would store the emptied field over the real
+     value. */
   if (path.indexOf('supports.') === 0) {
     const field = path.slice('supports.'.length);
     if (SUPPORT_FIELDS.indexOf(field) < 0 || !supportsVisible()) return;

@@ -179,8 +179,10 @@ function report(hits) {
       undeclared.length ? undeclared.map(([k, w]) => `${k} (${w})`).join(', ')
         : `${declared.size} declared, ${used.size} used, all accounted for`);
 
-    // Raw localStorage access outside prefs.js bypasses the enforcement entirely.
-    const raw = grepLines(CODE.filter(f => rel(f) !== 'src/prefs.js'), /localStorage\s*\./);
+    // Raw localStorage access outside prefs.js bypasses the enforcement entirely. Matches both
+    // dot access (localStorage.getItem) and bracket access (localStorage['x']) — a regex anchored
+    // on the dot alone lets bracket notation through unseen.
+    const raw = grepLines(CODE.filter(f => rel(f) !== 'src/prefs.js'), /localStorage\s*[.[]/);
     check('no localStorage access outside src/prefs.js', !raw.length,
       raw.length ? report(raw) : 'prefs.js is the only door');
   }

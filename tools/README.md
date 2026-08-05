@@ -115,7 +115,7 @@ worker.
 
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
 WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at
-WO-1.8.** Update
+WO-1.8, 201 at WO-1.9.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
@@ -124,7 +124,7 @@ backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash`
 WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
 thirty seconds.)*
 
-### Driving a browser over CDP — seven traps, all of which first look like app defects
+### Driving a browser over CDP — eight traps, all of which first look like app defects
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
@@ -193,6 +193,28 @@ down here. That is the entire reason this section exists.
    for, so the answer is to park the pointer (`Input.dispatchMouseEvent` with `type: 'mouseMoved'`
    at a corner) rather than to drop the hover-sensitive properties from the comparison. Dropping
    them would have left the check measuring almost nothing, and it would have gone green.
+
+8. **The browser can write into the page's `localStorage` too**, and the check that notices reads
+   as "the app is storing student data under a key nobody declared." Two runs at WO-1.9 went red on
+   `shopifySelectors` and `debug` — keys no line in this repo could have written, since
+   `src/prefs.js` is the only door and it prefixes everything. Suspected to be Edge's, on a
+   throwaway profile, on a page served from 127.0.0.1, appearing part-way through a 60-second run
+   and never on a shorter probe of the same page.
+
+   The first response dropped the assertion — the two localStorage checks stopped asserting
+   *"every key here is ours"*, on the reasoning that a check going red about the environment
+   cannot be made green by fixing the app. That was trap 5's shape but not its lesson: trap 7 is
+   the actual precedent, and it says the opposite. Dropping a sensitive-feeling assertion because
+   the harness looks unreliable leaves the check measuring almost nothing — it goes green whether
+   or not a leak is present, same as trap 7's hover-sensitive properties would have. The fix
+   belongs in the environment, not in the assertion: `--disable-extensions` and
+   `--disable-component-extensions-with-background-pages` went on the launch line as the suspected
+   source, and *that* is what makes the strict assertion trustworthy again. So the checks assert
+   **every key present starts with `planbook_`**, kept alongside the half that was always about
+   the app — every key and every value, ours or not, is searched for the fixture's own phrases,
+   and a foreign key is printed rather than ignored, so a future red still shows what was in the
+   store. If the strict assertion goes red again on a clean environment, that is real signal, not
+   noise to route around a second time.
 
 ### Two rules that follow from those
 

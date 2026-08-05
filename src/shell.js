@@ -22,6 +22,8 @@
       data-announce="<message>"       sends a message to the aria-live region
       data-pill-group                 on a container: its .pill children single-select
       data-install-dismiss            snoozes the install banner
+      data-presentation-toggle        turns presentation mode on or off — on the header button and
+                                      on the strip's own "Turn it off", which are the same flip
       data-year-picker                renders the year list, then opens the year modal
       data-year-switch="<year>"       opens that year document
       data-year-create                on a <form>: creates the year typed into it
@@ -106,6 +108,7 @@ import * as backup from './backup.js';
 import * as classes from './classes.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
+import * as presentation from './presentation.js';
 import * as teacher from './teacher.js';
 
 /* The two things that are facts about the open year rather than about a save, so they are
@@ -116,6 +119,27 @@ import * as teacher from './teacher.js';
 function afterYearChange() {
   backup.refreshBackupNag();
   classes.refreshClassBar();
+}
+
+/*
+  Presentation mode flipped, and everything on screen that could be holding support data redrawn
+  behind it.
+
+  THE REDRAW IS THE POINT, and it is the part of this feature that is easy to leave out and
+  impossible to notice in a desk check. Suppression that only applies to the NEXT render leaves the
+  roster the teacher is looking at full of indicator dots until something else happens to redraw
+  it — and she flipped this switch precisely because she is about to plug in the projector, so the
+  screen already in front of her is exactly the one that has to go quiet.
+
+  Chained here rather than called from inside src/presentation.js, for the reason afterYearChange()
+  above is: that module would then import src/roster.js, and shell.js is where this app states the
+  order things happen in. A LATER SCREEN THAT CAN SHOW SUPPORT DATA ADDS ITS REDRAW TO THIS
+  FUNCTION — and only its redraw. Whether it may show the data at all it already inherits, because
+  it asks src/supports.js like everything else; this line is about what is on the glass right now.
+*/
+function flipPresentationMode() {
+  presentation.togglePresentationMode();
+  roster.refreshSupportSurfaces();
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -140,6 +164,12 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-save-cycle]')) { demoSaveCycle(); return; }
 
   if (e.target.closest('[data-install-dismiss]')) { dismissInstallBanner(); return; }
+
+  /* Both controls that carry this hook — the header button and the strip's "Turn it off" — flip
+     the same switch, because the strip is only on screen while the mode is on and so its tap can
+     only ever mean off. High in this listener rather than low: it is the control a teacher reaches
+     for with a class already in the room. */
+  if (e.target.closest('[data-presentation-toggle]')) { flipPresentationMode(); return; }
 
   const picker = e.target.closest('[data-year-picker]');
   if (picker) { openYearPicker(picker); return; }
@@ -414,6 +444,11 @@ document.addEventListener('drop', (e) => {
    carries the way out, because a screen with no exit is not a recovery path either. */
 document.addEventListener('DOMContentLoaded', async () => {
   refreshInstallBanner();
+  /* Before the store, and deliberately outside the try: presentation mode is a fact about this
+     browser rather than about the year document, it is read from localStorage, and it has to be
+     painted whether or not IndexedDB opens. This is also the whole of "it survives a reload and an
+     app relaunch" — nothing else remembers, because the preference is the memory. */
+  presentation.refreshPresentationChrome();
   try {
     await store.boot();
     refreshYearButton();
@@ -518,6 +553,14 @@ window.planbook = {
      itself and disagree with the app. Nothing in the app reads window.planbook, and this goes when
      the shelf goes. */
   supports,
+  /* `presentation` joined at WO-1.9, and like `classes` it is NOT here because the feature is
+     unreachable — the toggle is a button in the header a teacher can touch. It is here so
+     tools/verify-shell.mjs can READ the mode without a second copy of the preference name in the
+     harness, and can put it back afterwards: the acceptance lines are driven by clicking the real
+     control, and a run that left the browser in presentation mode would quietly suppress the
+     fixtures of every check after it. Nothing in the app reads window.planbook, and this goes when
+     the shelf goes. */
+  presentation,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

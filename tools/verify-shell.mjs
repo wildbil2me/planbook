@@ -69,6 +69,40 @@ function skip(name, why) {
   console.log('SKIP | ' + name + '  :: ' + why);
 }
 
+/* ────────────────── reading localStorage, and whose keys are whose ──────────────────
+ *
+ * THE BROWSER CAN WRITE INTO THE PAGE'S LOCALSTORAGE TOO, which took two red runs at WO-1.9 to
+ * believe. `shopifySelectors` and `debug` appeared mid-run — intermittently, on a throwaway
+ * profile, on a page served from 127.0.0.1 that nothing but this app touches, and never on a
+ * shorter probe of the same page. They were suspected to be Edge's, not Planbook's, and
+ * `--disable-extensions` plus `--disable-component-extensions-with-background-pages` went on the
+ * launch line as the fix (see below).
+ *
+ * The two checks that read localStorage assert "every key here starts with planbook_" — this
+ * was dropped once, on the reasoning that the environment noise made the assertion unreliable,
+ * but trap 7 in tools/README.md is the precedent against exactly that move: dropping a
+ * sensitive-feeling assertion because the harness looks unreliable leaves the check measuring
+ * almost nothing, and it goes green whether or not a leak is present. The environment gets
+ * fixed instead (the two flags above), and the assertion is kept and trusted. src/prefs.js is
+ * the only door to localStorage in this repo and it prefixes everything it writes, which
+ * tools/wo-sweep.mjs settles statically by grep as well — both catch a key written outside the
+ * door, one at the source and one in the browser.
+ *
+ * Every key, ours or not, and every value, is still searched for the fixture's own phrases: what
+ * makes a key a leak is what is in it as much as what it's named. And a foreign key is always
+ * PRINTED when the check fails, so a reader can see what was in the store.
+ */
+function readLocalStore(evaluate, limit) {
+  return evaluate(`(function(){ var out = {};
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i); out[k] = String(localStorage.getItem(k)).slice(0, ` + limit + `); }
+    return out; })()`);
+}
+const oursIn = (store) => Object.keys(store).filter(k => k.indexOf('planbook_') === 0);
+const foreignIn = (store) => Object.keys(store).filter(k => k.indexOf('planbook_') !== 0);
+const storeDetail = (store) => oursIn(store).join(', ')
+  + (foreignIn(store).length ? ' · not ours, and searched anyway: ' + foreignIn(store).join(', ') : '');
+
 /* ───────────────── the precache covers the module graph ─────────────────
  *
  * Static, and deliberately so. `plans/verification-tooling.md` allows "static preconditions
@@ -153,9 +187,15 @@ const udd = await fs.mkdtemp(path.join(os.tmpdir(), 'pb-verify-'));
 /* Port 0 lets the browser choose, and it writes the choice to DevToolsActivePort. A fixed
    port collides with a previous run that did not shut down cleanly, and the failure looks
    like "the app broke" rather than "something else owns 9333". */
+/* The two extension flags are the suspected source of the foreign localStorage keys described at
+   readLocalStore() above — Edge ships features as bundled component extensions, and a content
+   script of one of them is the only thing on this machine that could be writing into the store of
+   a page served from 127.0.0.1. Suspected, not proven: the injection was intermittent and could
+   not be reproduced on demand, so the assertions below do not depend on these flags working. */
 const proc = spawn(exe, [
   '--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + udd,
   '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--hide-scrollbars',
+  '--disable-extensions', '--disable-component-extensions-with-background-pages',
   'about:blank',
 ], { stdio: 'ignore' });
 proc.on('error', e => bail('could not spawn the browser: ' + e.message));
@@ -2323,16 +2363,13 @@ if (!rosterBooted || !rosterSeam) {
   /* Neither a student's contacts nor the teacher's own name is a UI preference, and src/prefs.js
      is the only door to localStorage precisely so this stays true. Read out of the browser rather
      than out of prefs.js, because what is being asserted is what is in the browser. */
-  const localKeys = await evalJs(`(function(){ var out = {};
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i); out[k] = String(localStorage.getItem(k)).slice(0, 300); }
-    return out; })()`);
+  const localKeys = await readLocalStore(evalJs, 300);
   const localBlob = JSON.stringify(localKeys);
-  check('nothing a teacher typed about herself or a student reached localStorage',
-    Object.keys(localKeys).length > 0
-      && Object.keys(localKeys).every(k => k.indexOf('planbook_') === 0)
+  check('nothing a teacher typed about herself or a student reached localStorage, and every key present is ours',
+    oursIn(localKeys).length > 0
+      && foreignIn(localKeys).length === 0
       && !/Van Dyke|Mimi|elena\.vandyke|r\.ochoa|Ms Toomey|Probe High/.test(localBlob),
-    Object.keys(localKeys).join(', '));
+    storeDetail(localKeys));
 
   /* ── acceptance 5: through a save and a reload ── */
 
@@ -2638,6 +2675,11 @@ if (!supportSeam) {
     check('support details: a roster with three students to put support details on',
       false, 'the open class arrived with ' + (ids ? ids.length : 0)
         + ' students, so nothing below was driven');
+    /* Announced rather than silently absent. WO-1.9's checks are driven against the fixture this
+       section builds, so a fixture that never arrived takes them with it — and a suite that
+       quietly shrinks still prints green (tools/README.md). */
+    skip('presentation mode: the toggle, the suppression, and what survives a reload',
+      'the support-details fixture never arrived, so there was nothing to suppress');
   } else {
     /* ── acceptance 1: every field in the block is editable, through the real controls ── */
 
@@ -2899,17 +2941,280 @@ if (!supportSeam) {
     /* Nothing sensitive may reach localStorage, which is where a "remember the panel was open"
        preference would have gone if anyone had written one. Read out of the browser rather than
        out of prefs.js, because what is being asserted is what is in the browser. */
-    const supportLocal = await evalJs(`(function(){ var out = {};
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i); out[k] = String(localStorage.getItem(k)).slice(0, 400); }
-      return out; })()`);
+    const supportLocal = await readLocalStore(evalJs, 400);
     const supportBlob = JSON.stringify(supportLocal);
-    check('no support detail, and no memory of the panel being open, reached localStorage',
-      Object.keys(supportLocal).length > 0
-        && Object.keys(supportLocal).every(k => k.indexOf('planbook_') === 0)
+    check('no support detail, and no memory of the panel being open, reached localStorage, and every key present is ours',
+      oursIn(supportLocal).length > 0
+        && foreignIn(supportLocal).length === 0
         && foundIn(supportBlob).length === 0
         && !/supports|accommodat|reveal/i.test(supportBlob),
-      Object.keys(supportLocal).join(', '));
+      storeDetail(supportLocal));
+
+    /* ───────────────── WO-1.9: presentation mode ─────────────────
+     *
+     * Driven here, inside the support-details section, and sharing its fixture on purpose: what
+     * presentation mode has to suppress is three students with an IEP, a 504, two accommodations,
+     * a case manager, a review date, a medical note and a behavior plan, all of it already in the
+     * document above. A second fixture would be a second thing to keep in step, and — worse — a
+     * fixture built after the switch was thrown could be empty for the wrong reason and every
+     * absence check below would pass over nothing.
+     *
+     * Four things these checks are shaped to be able to fail:
+     *
+     *   1. ABSENT, NOT HIDDEN. The claim is not that support data stops being painted, it is that
+     *      it stops being in the page — `display: none` is still reachable by a screenshot tool,
+     *      a find-in-page and the accessibility tree. So the sweep is over the WHOLE document's
+     *      text plus the value of every input, select and textarea in it, hidden ones included,
+     *      and it runs with dialogs open rather than closed.
+     *   2. WHAT IS ALREADY ON SCREEN. The roster panel is left open across the flip and is never
+     *      reopened, because suppression that only reaches the next render leaves the screen the
+     *      teacher is looking at exactly as it was — which is the screen she flipped the switch
+     *      for.
+     *   3. AN ABSENCE WITH NOTHING BEHIND IT IS NOT EVIDENCE. The mode is turned back off at the
+     *      end and the same data is required to come back. Without that, a build that had simply
+     *      lost the fixture would report a clean pass.
+     *   4. THE STATE IS VISIBLE. Measured rather than asserted: the button's own computed fill is
+     *      read off in both states and required to differ and to be the solid white the header's
+     *      active grammar uses. The pointer is parked first — trap 7 in tools/README.md, found by
+     *      the dots check above, and this check would have walked into it the same way.
+     */
+
+    console.log('\n--- presentation mode ---');
+
+    /* One page-side reader for the mode, re-installed after the reload below like every other. It
+       reads the CHROME and the SWITCH, never the preference name twice: the harness asks the app
+       what it thinks the mode is, so a check cannot agree with itself and disagree with the app. */
+    const INSTALL_PRESENTATION_READER = `(function(){
+      window.__pres = function(){
+        var b = document.getElementById('presentationBtn');
+        var strip = document.getElementById('presentationStrip');
+        var box = b ? b.getBoundingClientRect() : null;
+        var cs = b ? getComputedStyle(b) : null;
+        return {
+          hasButton: !!b,
+          inHeader: !!(b && b.closest('header')),
+          hook: b ? b.hasAttribute('data-presentation-toggle') : false,
+          pressed: b ? b.getAttribute('aria-pressed') : null,
+          label: b ? b.getAttribute('aria-label') : null,
+          title: b ? b.getAttribute('title') : null,
+          look: cs ? [cs.backgroundColor, cs.color, cs.borderTopColor].join(' | ') : null,
+          size: box ? Math.round(box.width) + 'x' + Math.round(box.height) : null,
+          stripShown: !!(strip && !strip.classList.contains('hidden')),
+          stripText: strip ? strip.textContent.replace(/\\s+/g, ' ').trim() : null,
+          stripHasOff: !!(strip && strip.querySelector('[data-presentation-toggle]')),
+          visible: window.planbook.supports.supportsVisible(),
+          stored: localStorage.getItem('planbook_presentationMode')
+        };
+      };
+      /* The absence claim, over the whole document rather than over the elements this harness
+         happens to know the names of — including every hidden one, which is the entire point. */
+      window.__leak = function(){
+        var vals = Array.prototype.map.call(
+          document.querySelectorAll('input, textarea, select'), function(e){ return e.value; });
+        return { text: document.documentElement.textContent.replace(/\\s+/g, ' '),
+                 values: vals.join(' | '),
+                 dots: document.querySelectorAll('[data-supports-open]').length };
+      };
+      return 1; })()`;
+    await evalJs(INSTALL_PRESENTATION_READER);
+
+    /* Park the pointer before every read of the button's fill. The last thing clicked is otherwise
+       sitting under the cursor and measures its :hover rule, which is how a colour comparison
+       reports a difference that is not there — or hides one that is. */
+    const park = async () => {
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });
+      await new Promise(r => setTimeout(r, 100));
+    };
+
+    /* Every dialog down first, and that is not tidiness: a `.modal-overlay` is fixed at inset 0
+       over the whole viewport, so a click aimed at the header while one is open lands on the scrim
+       and is a backdrop dismissal instead. The classes-manager block further down hits the same
+       thing and says so. It is also true of the app — a teacher cannot reach the header toggle
+       without closing the dialog she is in — which is exactly why the redraw checks below matter
+       for the screens Phase 2 puts in <main> rather than in a modal. */
+    await closeAllSupport();
+    await park();
+    const modeOff = await evalJs('window.__pres()');
+    check('presentation mode ships off, and its toggle is a header control with a state to read',
+      modeOff.hasButton && modeOff.inHeader && modeOff.hook
+        && modeOff.pressed === 'false' && modeOff.visible === true
+        && modeOff.stripShown === false
+        && !!modeOff.label && modeOff.label === modeOff.title,
+      'in header = ' + modeOff.inHeader + ', aria-pressed = ' + modeOff.pressed
+        + ', strip shown = ' + modeOff.stripShown);
+
+    /* The flip, through the real header button with a real mouse. */
+    await clickSel('header [data-presentation-toggle]');
+    await park();
+    const modeOn = await evalJs('window.__pres()');
+    check('one tap on it turns every support field in the app off at the one switch',
+      modeOn.pressed === 'true' && modeOn.visible === false,
+      'aria-pressed = ' + modeOn.pressed + ', supportsVisible() = ' + modeOn.visible);
+    check('the toggle says so without being hunted for: a different fill, a changed label, and a strip',
+      modeOn.look !== modeOff.look && modeOn.look.indexOf('rgb(255, 255, 255)') === 0
+        && modeOn.label !== modeOff.label && modeOn.label === modeOn.title
+        && modeOn.stripShown === true && modeOn.stripHasOff === true
+        && /Presentation mode is on/.test(modeOn.stripText),
+      'off = ' + modeOff.look + ' · on = ' + modeOn.look + ' · strip: '
+        + (modeOn.stripText || '').slice(0, 80));
+
+    /* A roster opened while the mode is already on. */
+    await openFullestRoster();
+    const rosterUnderMode = await evalJs('window.__rosterText()');
+    check('a roster opened while it is on arrives with no indicator dots and no support text',
+      rosterUnderMode.rows >= 3 && rosterUnderMode.dots === 0
+        && foundIn(rosterUnderMode.text).length === 0,
+      rosterUnderMode.rows + ' rows, ' + rosterUnderMode.dots + ' dot(s), leaked: '
+        + JSON.stringify(foundIn(rosterUnderMode.text)));
+
+    /*
+      AND THE SCREEN THAT IS ALREADY ON THE GLASS, flipped both ways with the panel never reopened.
+
+      Driven with element.click() rather than a mouse, for the reason the closeAllSupport() above
+      gives: the roster panel has to STAY open for this check to mean anything, and while it is
+      open no physical click can reach the header at all. What el.click() skips is the browser's
+      hit testing, which the real tap above already proved; what it goes through is the same
+      delegated listener in src/shell.js that a thumb goes through, which is the path under test.
+    */
+    const flipFromHeader = () => evalJs(
+      "document.querySelector('header [data-presentation-toggle]').click(); 1");
+    await flipFromHeader();
+    await new Promise(r => setTimeout(r, 200));
+    const rosterLit = await evalJs('window.__rosterText()');
+    check('flipping it off redraws the roster that is already open — the dots come back, no reopen',
+      rosterLit.rows === rosterUnderMode.rows && rosterLit.dots === 3,
+      rosterLit.rows + ' rows, ' + rosterLit.dots + ' dot(s) back on a panel nobody reopened');
+    await flipFromHeader();
+    await new Promise(r => setTimeout(r, 200));
+    const rosterAfter = await evalJs('window.__rosterText()');
+    check('and flipping it on takes them off the screen she is looking at, without a reopen',
+      rosterAfter.rows === rosterUnderMode.rows && rosterAfter.dots === 0
+        && foundIn(rosterAfter.text).length === 0,
+      rosterAfter.rows + ' rows still listed, ' + rosterAfter.dots + ' dot(s), leaked: '
+        + JSON.stringify(foundIn(rosterAfter.text)));
+
+    /* The editor, opened the only way left — the dot it used to be reachable by is gone. */
+    await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
+    const panelUnderMode = await evalJs('window.__panel()');
+    const revealState = await evalJs(`(function(){
+      var b = document.getElementById('supportsRevealBtn');
+      var hint = document.getElementById('supportsHint');
+      var alt = document.getElementById('supportsHintPresentation');
+      return { disabled: !!(b && b.disabled),
+               ordinaryHintShown: !!(hint && !hint.classList.contains('hidden')),
+               modeHintShown: !!(alt && !alt.classList.contains('hidden')),
+               modeHint: alt ? alt.textContent.replace(/\\s+/g, ' ').trim() : null }; })()`);
+    check('the support panel cannot be opened at all, and says why rather than looking broken',
+      panelUnderMode.hidden === true && panelUnderMode.plan.length === 0
+        && panelUnderMode.cards === 0
+        && [panelUnderMode.caseName, panelUnderMode.caseEmail, panelUnderMode.reviewDate,
+          panelUnderMode.medical, panelUnderMode.behaviorPlan].every(v => v === '')
+        && revealState.disabled === true
+        && revealState.modeHintShown === true && revealState.ordinaryHintShown === false
+        && /nothing has been deleted/i.test(revealState.modeHint || ''),
+      'reveal disabled = ' + revealState.disabled + ', mode hint shown = '
+        + revealState.modeHintShown + ' :: ' + (revealState.modeHint || '').slice(0, 60));
+    /* And tapping it anyway does nothing — the control is refused in the module, not only greyed
+       out in the stylesheet. A disabled attribute is one line away from being removed by a later
+       work order's CSS, and the refusal has to survive that. */
+    await evalJs("document.getElementById('supportsRevealBtn').removeAttribute('disabled');"
+      + "window.planbook.roster.toggleSupports(); 1");
+    const forced = await evalJs('window.__panel()');
+    check('and forcing the control open anyway still shows nothing — the refusal is in the module',
+      forced.hidden === true && forced.plan.length === 0 && forced.cards === 0
+        && forced.medical === '' && forced.behaviorPlan === '',
+      'panel hidden = ' + forced.hidden + ', cards = ' + forced.cards);
+
+    /* THE ABSENCE CLAIM, over the whole document with the editor open. */
+    const leak = await evalJs('window.__leak()');
+    check('none of it is anywhere in the DOM — not hidden in it, absent from it',
+      foundValueIn(leak.text).length === 0 && foundValueIn(leak.values).length === 0
+        && leak.dots === 0,
+      'document text leaked: ' + JSON.stringify(foundValueIn(leak.text))
+        + ' · control values leaked: ' + JSON.stringify(foundValueIn(leak.values))
+        + ' · indicator dots anywhere on the page: ' + leak.dots);
+
+    /* A SCREEN WRITTEN AFTER THIS WORK ORDER inherits the suppression, and this is the form of
+       that claim a harness can actually falsify: the two funnels every renderer hands its strings
+       to are driven directly, with no screen involved. A screen that uses them is suppressed
+       whether or not its author knew presentation mode existed — which is the whole reason the
+       rule lives at the render helper rather than in a conditional per screen. */
+    const funnels = await evalJs(`(function(){
+      var s = window.planbook.supports;
+      var el = document.createElement('span');
+      s.setSensitiveText(el, ${JSON.stringify(MEDICAL)});
+      return { value: s.sensitiveValue(${JSON.stringify(CASE_NAME)}),
+               text: el.textContent,
+               visible: s.supportsVisible() }; })()`);
+    check('a screen built later inherits it: both render funnels return nothing while the mode is on',
+      funnels.visible === false && funnels.value === '' && funnels.text === '',
+      'sensitiveValue() = ' + JSON.stringify(funnels.value)
+        + ', setSensitiveText() wrote ' + JSON.stringify(funnels.text));
+
+    /* ── acceptance 3: it survives a reload and an app relaunch ── */
+
+    await closeAllSupport();
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 600));
+    const modeReboot = await waitForBoot();
+    await evalJs(KILL_ANIM);
+    await evalJs(INSTALL_WALKER);
+    await evalJs(INSTALL_CLASS_READER);
+    await evalJs(INSTALL_ROSTER_READER);
+    await evalJs(INSTALL_SUPPORT_READER);
+    await evalJs(INSTALL_PRESENTATION_READER);
+    await park();
+    const afterReload = await evalJs('window.__pres()');
+    check('it survives a reload: the mode, the pressed toggle, and the strip all come back on',
+      modeReboot && afterReload.visible === false && afterReload.pressed === 'true'
+        && afterReload.stripShown === true && afterReload.stored === 'true',
+      modeReboot
+        ? 'supportsVisible() = ' + afterReload.visible + ', aria-pressed = ' + afterReload.pressed
+          + ', planbook_presentationMode = ' + afterReload.stored
+        : 'the loading screen never came down');
+    await openFullestRoster();
+    const rosterReloaded = await evalJs('window.__rosterText()');
+    check('and the roster comes back up already quiet, rather than quiet only after a redraw',
+      rosterReloaded.rows >= 3 && rosterReloaded.dots === 0
+        && foundIn(rosterReloaded.text).length === 0,
+      rosterReloaded.rows + ' rows, ' + rosterReloaded.dots + ' dot(s), leaked: '
+        + JSON.stringify(foundIn(rosterReloaded.text)));
+
+    /* ── and back off again, which is what makes every absence above evidence ── */
+
+    /* Through the strip's own "Turn it off", with a real mouse — so the second of the two controls
+       that carry the hook is driven the way a teacher drives it, and not only the header one.
+       Dialogs down first, for the scrim reason above. */
+    await closeAllSupport();
+    await clickSel('#presentationStrip [data-presentation-toggle]');
+    await park();
+    const modeBackOff = await evalJs('window.__pres()');
+    await openFullestRoster();
+    const rosterBack = await evalJs('window.__rosterText()');
+    check('the strip\'s own control turns it back off, and every dot returns',
+      modeBackOff.visible === true && modeBackOff.pressed === 'false'
+        && modeBackOff.stripShown === false && modeBackOff.stored === 'false'
+        && rosterBack.dots === 3,
+      'supportsVisible() = ' + modeBackOff.visible + ', dots back = ' + rosterBack.dots);
+    await clickSel('#rosterList .roster-row:nth-child(1) [data-supports-open]');
+    const restored = await evalJs('window.__panel()');
+    check('and the data behind the absence was never touched — it is all still on the student',
+      restored.hidden === false && JSON.stringify(restored.plan) === JSON.stringify(['IEP'])
+        && restored.medical === MEDICAL && restored.behaviorPlan === BEHAVIOR
+        && restored.caseName === CASE_NAME && restored.reviewDate === REVIEW_DATE
+        && restored.cards === 2,
+      'plan ' + JSON.stringify(restored.plan) + ', ' + restored.cards
+        + ' accommodation card(s), medical and behavior plan back exactly as they were');
+    await evalJs("window.planbook.closeModal('studentModal');1");
+
+    /* The preference is a switch position and nothing else. `planbook_presentationMode` is the one
+       key WO-1.9 adds, and what it may hold is `true` or `false` — anything longer is somebody
+       having stored a state instead of a state's name. */
+    const modePref = await evalJs("localStorage.getItem('planbook_presentationMode')");
+    check('the preference it persists is a bare boolean, not a state carried in localStorage',
+      modePref === 'true' || modePref === 'false',
+      'planbook_presentationMode = ' + JSON.stringify(modePref));
   }
 
   await closeAllSupport();
@@ -3290,6 +3595,43 @@ if (coarse !== true) {
     await closeStack();
     if (fullest.was) await evalJs('window.planbook.classes.selectClass('
       + JSON.stringify(fullest.was) + ');1');
+  }
+
+  /*
+    Presentation mode's two controls, and the reason they need their own block: one of them does
+    not exist in the state that matters. The strip under the header is only on screen while the
+    mode is ON, where the sweep at the top of this section has already run and where an off strip
+    measures 0x0 and is skipped — the same shape as every modal above, with the switch standing in
+    for the opener. So the mode goes on, both controls are measured, and it goes off again, because
+    a run that walked away leaving support data suppressed would take the fixtures of everything
+    after it with it.
+  */
+  if (seam && await has('header [data-presentation-toggle]')) {
+    await clickSel('header [data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 200));
+    const pm = await evalJs(`(function(){
+      var strip = document.getElementById('presentationStrip');
+      if (!strip || strip.classList.contains('hidden')) return null;
+      var out = [];
+      Array.prototype.forEach.call(
+        document.querySelectorAll('#presentationBtn, #presentationStrip button'), function(e){
+          var r = e.getBoundingClientRect();
+          out.push({ t: (e.id || e.className || e.tagName), w: Math.round(r.width * 100) / 100,
+                     h: Math.round(r.height * 100) / 100 }); });
+      return out; })()`);
+    if (!pm || pm.length < 2) {
+      check('presentation mode turned on, so its two controls are on screen to be measured',
+        false, 'controls found = ' + (pm ? pm.length : 'the strip never appeared'));
+    } else {
+      check('the presentation toggle and the strip\'s own button both measure >=44px on a coarse pointer',
+        pm.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + pm.length + '; under = ' + JSON.stringify(pm.filter(m => m.h < 44 || m.w < 44)));
+    }
+    await clickSel('#presentationStrip [data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 200));
+    const leftOff = await evalJs('window.planbook.supports.supportsVisible()');
+    check('and the run leaves presentation mode off, so nothing after this measures a suppressed app',
+      leftOff === true, 'supportsVisible() = ' + leftOff);
   }
 
   if (await has('[data-backup-panel]')) {

@@ -114,7 +114,7 @@ tied to a phase; run them over the screens that exist when you run the pass.
       `localStorage`. *(WO-1.2 declares no keys at all; `src/prefs.js` refuses undeclared ones.)*
 - [ ] No merge field, log line, print surface, or export emits accommodation, medical, or plan
       data. The JSON backup is the only exception, and its own UI says so.
-- [ ] Presentation mode, once it exists, suppresses every `supports` field on every screen built
+- [x] Presentation mode, once it exists, suppresses every `supports` field on every screen built
       since the last pass — including any screen added by this phase.
 - [ ] `late` and `missing` are teacher-marked, never inferred from a date. Blank is ungraded and
       changes no grade.
@@ -132,6 +132,15 @@ input. WO-1.4's new controls are the year picker's — the year rows, the year i
 button, and the modal close — and all four were thumbed on the iPad, including deliberately tapping
 above the input's text, which is where the WO-1.2 defect hid. `verify-shell.mjs` measures the same
 targets headlessly and is 54/54, but a headless run has no thumb and closes no 👤 line.*
+
+*2026-08-05, presentation mode lands with WO-1.9: `verify-shell.mjs` walks the roster with the mode
+on and finds every support dot, panel, and field absent from the DOM — not hidden in it — across
+the whole document text and every form control's value, including hidden ones. The suppression is
+qualified, not unconditional: it holds for every screen that exists today because `roster.js` never
+reads the preference and only asks `supportsVisible()`, but a screen already on the glass when the
+toggle flips is redrawn by a hand-maintained call list in `flipPresentationMode()`, not by the
+render helper itself. Re-check this line the moment Phase 4 puts a signal card on screen — that is
+exactly the shape the acceptance line's own re-verify note was written to catch.*
 
 ---
 

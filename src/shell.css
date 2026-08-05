@@ -49,7 +49,7 @@ button, input, select, textarea { font-family: inherit; }
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
-.toggle-btn, .support-dot {
+.toggle-btn, .support-dot, .hdr-mode-btn, .presentation-strip-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -155,6 +155,25 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .hdr-year-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
 
+/* Presentation mode's header control (WO-1.9). It wears `.hdr-icon-btn` for its shape and this
+   class for one thing only: the ON state.
+
+   Solid white with the header's own navy inside it — the same inversion `.q-btn.active` uses, and
+   design/style-guide.md §5's rule for an active control on a dark surface. It is the loudest thing
+   available in a 32px square, which is what the work order's "obviously on when it's on" needs from
+   a control with no room for a word beside it. The strip under the header is the rest of that
+   answer.
+
+   The hover rule is restated rather than inherited: `.hdr-icon-btn:hover` brightens a translucent
+   white wash, and applied on top of a solid white fill it does nothing visible, which reads as a
+   button that has stopped responding. */
+.hdr-mode-btn.active {
+  background: #fff; border-color: #fff; color: #1a3c5e;
+}
+.hdr-mode-btn.active:hover {
+  background: #fff; border-color: #fff; color: #0d2137;
+}
+
 /* The class tab row. Empty until WO-1.6 creates classes; `.hdr-empty` is what stands
    in, because a blank navy strip reads as a bug and "No classes yet." is the truth. */
 /*
@@ -233,6 +252,41 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .q-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); color: #fff; }
 .q-btn.active { background: #fff; color: #1a3c5e; }
+
+/* ── PRESENTATION STRIP ── */
+/* Shown only while presentation mode is on. Same place in the flow and the same shape as the two
+   caution strips below it — in normal flow under the header rather than fixed, for the reasons the
+   install banner's comment gives — and written out separately rather than sharing their class,
+   which is the decision `.backup-nag` already made: they are components that happen to look alike,
+   and the day one of them changes is the day sharing a class name costs more than it saved.
+
+   Purple, from design/style-guide.md §1's "special state" row, and that is the one thing here that
+   is not copied from the strips below. Amber in this app means "act on this" — an app that is not
+   installed, a year that has never been backed up — and this is not something to act on: it is a
+   state the teacher deliberately chose and can see the effect of. Red would be worse still.
+
+   One line rather than the paragraph the other two carry, and `align-items: center` rather than
+   `flex-start` because there is nothing to align to the top of. This strip is on screen exactly
+   while a class is looking at the screen, so its height is lesson space. */
+.presentation-strip {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #f3eaff; color: #7c3aed; border-bottom: 1px solid #c8a0f0;
+  padding: 8px 20px; font-size: 12.5px; line-height: 1.55;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+/* `flex: 1 1 320px`, as on both strips below: under about 380px of usable width the button drops
+   to its own line instead of squeezing the sentence into a column two words wide. */
+.presentation-strip-text { flex: 1 1 320px; min-width: 0; }
+/* Solid rather than an outline, like `.backup-nag-btn`: this is the action, not a dismissal —
+   there is no dismissing a mode, only leaving it. */
+.presentation-strip-btn {
+  border: 1.5px solid #7c3aed; background: #7c3aed; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
+}
+.presentation-strip-btn:hover { background: #6d28d9; border-color: #6d28d9; }
 
 /* ── INSTALL BANNER ── */
 /* The eviction warning, styled as the style guide's caution banner (§1, "Caution banner
@@ -894,6 +948,14 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .header-bottom { min-height: 52px; }
   .hdr-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-icon-btn svg { width: 18px; height: 18px; }
+  /* Presentation mode's button takes its 44x44 from `.hdr-icon-btn` above, which it also wears.
+     It is named here anyway, with the radius the coarse pass gives every icon button, so that the
+     control appears in this block by name — the rule this stylesheet's own header states is that
+     every interactive control does, and a control that is only covered by another class's rule is
+     a control the next reader has to go and prove is covered. */
+  .hdr-mode-btn { width: 44px; height: 44px; border-radius: 10px; }
+  .presentation-strip { font-size: 13.5px; }
+  .presentation-strip-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .hdr-empty { font-size: 13px; }
   /* `min-width` alongside `min-height` on these three, added at WO-1.6 when they stopped being
      shelf specimens with two-word labels: a class called "A", a term called "1", and a reorder
@@ -1031,5 +1093,29 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
     padding-left: max(12px, env(safe-area-inset-left, 0px));
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
-  .header-title p { display: none; }
+  .presentation-strip {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+  /*
+    The whole title block steps aside at phone width, not just the strapline it used to be.
+
+    That is a measurement taken at WO-1.9 rather than a taste: at 390px under a coarse pointer the
+    top row measured 375px of content against 390px of viewport, so it had 15px of slack and the
+    presentation-mode button needs 52 (44 plus the row's 8px gap). Something had to give, and the
+    word "Planbook" on the one screen where the app is already the only thing on the display is the
+    cheapest thing in that row — the 📓 beside it keeps the identity, and every other control there
+    is a control. Anything narrower than 640px is a phone; the iPad this app is built for never
+    reaches this rule.
+
+    Taken out of the LAYOUT and not out of the document: these are `.sr-only`'s own declarations,
+    written out again because there is no JavaScript involved in this and a class cannot be added
+    by a media query. `display: none` would have been one line and would also have left the page
+    with no <h1> at all on a phone, which is a screen reader arriving at an app that will not say
+    what it is.
+  */
+  .header-title {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
 }

@@ -168,7 +168,7 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 - [x] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
 - [x] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
       plan, case manager, review date. Per [`../docs/data-model.md`](../docs/data-model.md).
-- [ ] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus
+- [x] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus
       discreet-by-default display of accommodations (indicator only; details on deliberate tap).
       Teachers project these screens onto classroom walls.
 - [ ] 🚩 Home screen v0: **every class in one tap** — the owner's founding requirement. This screen

@@ -60,6 +60,27 @@ records what someone remembered.
   file and its UI now name this data as present, truthfully — it was always going to be backed up,
   and the notice said so before it was true.
 
+- **Presentation mode — one toggle in the header, hit before the projector goes on, that
+  suppresses every `supports` field app-wide.** Teachers project attendance and gradebook screens
+  onto classroom walls; IEP status on that wall is a disclosure to thirty students, and remembering
+  which screens are safe is not a plan. The toggle is obviously on when it's on — a filled button,
+  `aria-pressed`, and a purple strip naming the mode, all readable from arm's length without
+  reading the strip text. It changes exactly one function, `supportsVisible()` (the choke point
+  WO-1.8 built), so every screen suppresses at the render helper rather than by a per-screen
+  conditional — a roster opened while the mode is on shows no dots, no support text, and refuses to
+  let the panel open at all, and none of the underlying data is touched by any of it. The state is
+  a bare `planbook_presentationMode` boolean, nothing more, and it survives both a reload and a real
+  app relaunch on iPad — installed, toggled on, force-quit from the app switcher, relaunched from
+  the home screen icon, verified 2026-08-05.
+
+  **The inheritance is real but not unconditional.** A screen that doesn't exist yet gets
+  suppression for free the moment it asks `supportsVisible()`, which is the whole point of the
+  render-helper approach. But a screen already on the glass when the toggle is flipped is redrawn
+  by a short, hand-maintained call list in `flipPresentationMode()`, not by the render helper
+  itself — so a screen Phase 4 adds needs its own line in that list, or a signal card quoting a
+  behavior note stays on screen after the switch is hit. Re-check this the moment Phase 4 puts
+  something on screen; the acceptance line was written expecting exactly this trap.
+
 ### Changed
 
 - **Codex is 0 for 3, and its pending work orders are suspended to Claude until one run lands.**
@@ -110,6 +131,21 @@ records what someone remembered.
   `window.planbook` seam degrades to an announced `SKIP` if nobody does. That is the first occasion
   the file gets read end to end, and doing it sooner would be a refactor for its own sake, which is
   the thing the one-file rule exists to prevent.
+
+- **The two `verify-shell.mjs` localStorage checks had their strict assertion put back, after WO-1.9
+  dropped it once.** Two runs at WO-1.9 went red on `shopifySelectors` and `debug` — keys nothing in
+  this repo could have written, since `src/prefs.js` is the only door to `localStorage` and prefixes
+  everything. The first response dropped the assertion that every key present starts with
+  `planbook_`, on the reasoning that a check going red about the browser's own noise can't be made
+  green by fixing the app — which is trap 5's shape but the wrong lesson from it. Trap 7 in
+  `tools/README.md` is the actual precedent, and it says the opposite: dropping a sensitive-feeling
+  assertion because the harness looks unreliable leaves the check measuring almost nothing, and it
+  goes green whether or not a leak is present. The fix belongs in the environment — the
+  `--disable-extensions` flags already on the launch line — not in the assertion, so the strict check
+  is back in both places it was removed from, `tools/README.md` trap 8 now records the reversal and
+  why, and `tools/wo-sweep.mjs`'s static grep was widened at the same time to catch bracket-access
+  `localStorage['x']`, which the dot-anchored pattern had been letting through unseen. Both tools
+  reran clean with the stricter checks live: 201/201 and 9 passed/0 failed/2 review, unchanged.
 
 ### Fixed
 

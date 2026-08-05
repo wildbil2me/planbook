@@ -31,6 +31,12 @@
   header's bottom row gained two buttons — the roster and the teacher's details — because the top
   row has no width left at 390px.
 
+  WO-1.9 added presentation mode: the 🖥 button in the header's top row, and the strip under the
+  header that says so while it is on. It suppresses every support field in the app at once —
+  including the roster's indicator dot, whose mere presence is a disclosure on a projected screen.
+  The suppression itself is not here and is not per screen: src/supports.js answers one question
+  for the whole app, and this work order changed the answer.
+
   Deliberately still absent, so that nothing here has to be un-built later:
     - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
 
@@ -141,6 +147,30 @@
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </button>
+      <!-- Presentation mode (WO-1.9). In the TOP row rather than beside the roster and class
+           buttons below, because those three are ways into the class that is open and this is a
+           mode for the whole app — the same kind of control as the year and the backup beside it.
+
+           It is a monitor rather than a crossed-out eye on purpose: the icon names the mode, which
+           is true whichever way the switch is, where an eye-with-a-slash reads as "things are
+           hidden" on a button that is currently hiding nothing. The state is carried by the fill —
+           solid white on the navy header when it is on, which is the suite's on-dark active
+           grammar — and by the strip below the header, which is the half a teacher sees without
+           looking at the header at all. src/presentation.js owns both.
+
+           Icon-only, and that is a measurement rather than a preference: at 390px under a coarse
+           pointer this row has 46px of slack once the title steps aside (see src/shell.css's
+           640px block), which pays for a 44px control and not for a label beside it.
+           tools/verify-shell.mjs measures that width on every run. -->
+      <button class="hdr-icon-btn hdr-mode-btn" id="presentationBtn" data-presentation-toggle
+              aria-pressed="false"
+              title="Presentation mode is off. Tap to hide every support detail before you project."
+              aria-label="Presentation mode is off. Tap to hide every support detail before you project.">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </button>
       <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"/>
@@ -200,6 +230,33 @@
     </div>
   </div>
 </header>
+
+<!-- Presentation mode's standing state (WO-1.9). Ships `hidden` and is revealed only by
+     src/presentation.js, from a preference — so a launch with the mode off cannot flash it on the
+     way past, and a launch with the mode ON shows it before anything is on screen to be hidden.
+
+     WHY THERE IS A STRIP AT ALL, and it is not decoration. Two jobs. The first is the work order's
+     "obviously on when it's on": a filled header button is unmistakable once you look at the
+     header, and this is what says so when you are not. The second is the failure this feature
+     invites — a teacher who turned it on in first period opens a student in sixth, finds the
+     support panel shut and greyed out, and reads that as her accommodations having been lost. The
+     sentence below is the answer, and it is here rather than in a JavaScript file for the reason
+     the install banner's copy is: it is the part a teacher actually reads.
+
+     One line, deliberately. This strip is on screen exactly while the projector is, so every extra
+     line of it is a line of the lesson pushed down the wall. The longer version lives where the
+     absence is actually met — inside the student editor, in the support panel's own hint.
+
+     Purple rather than the amber of the two strips below it: amber in this app means "act on
+     this" and red means "this destroys something". This is a standing state the teacher chose,
+     which is design/style-guide.md §1's "special state". -->
+<aside class="presentation-strip hidden" id="presentationStrip" aria-labelledby="presentationStripHeading">
+  <p class="presentation-strip-text">
+    <strong id="presentationStripHeading"><span aria-hidden="true">🖥</span> Presentation mode is on.</strong>
+    Support details are hidden everywhere — nothing has been deleted. Grades and names are not affected.
+  </p>
+  <button class="presentation-strip-btn" data-presentation-toggle>Turn it off</button>
+</aside>
 
 <!-- The eviction warning. It ships `hidden` and is revealed only by src/install-banner.js, so
      a home-screen launch cannot flash it on the way past.
@@ -835,7 +892,8 @@
            enough that "it is only one student" is not an argument — so the panel arrives
            collapsed on every open, every time, and opening it is a deliberate tap. That is not a
            preference and there is nowhere to set it: src/supports.js holds the one visibility
-           rule the whole app asks, and WO-1.9's presentation mode changes that function alone.
+           rule the whole app asks, and WO-1.9's presentation mode is a second hand on that same
+           function rather than a second rule.
 
            Last in the dialog and inside its own box because the work order asks for it to be
            "clearly separated from ordinary fields" — a guardian's phone number and a 504 plan
@@ -844,9 +902,22 @@
            business, the same way the guardian cards are. -->
       <div class="modal-section-label">Support details</div>
       <div class="supports-panel">
-        <p class="supports-hint">
+        <!-- Two hints, one shown at a time, both written out here rather than built in
+             JavaScript so the copy stays revisable without opening a module — the same reason the
+             install banner's words live in this file.
+
+             The second one is what a teacher meets when presentation mode is on: the panel is shut
+             and its button is greyed out, and without a sentence saying why, "her accommodations
+             are gone" is the reasonable reading. src/roster.js swaps them from the one visibility
+             question every screen asks; nothing here decides for itself. -->
+        <p class="supports-hint" id="supportsHint">
           Accommodations, plan details, medical needs and behavior plans stay out of sight until
           you ask for them, because this screen gets projected. They are on file either way.
+        </p>
+        <p class="supports-hint hidden" id="supportsHintPresentation">
+          <strong>Presentation mode is on, so these cannot be opened here.</strong> Nothing has
+          been deleted — everything on file for this student is still on file. Turn presentation
+          mode off with the 🖥 button in the header when you are away from the projector.
         </p>
         <div class="roster-actions">
           <button class="class-action-btn" type="button" id="supportsRevealBtn"

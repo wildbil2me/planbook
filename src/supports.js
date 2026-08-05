@@ -17,12 +17,13 @@
   ONE function whether it may — `supportsVisible()`, below — and no screen anywhere decides for
   itself.
 
-  That is not tidiness. WO-1.9 adds presentation mode, a global suppression the teacher flips before
-  she plugs in the projector, and its whole design rests on there being a single place to flip. A
-  per-screen `if` reads identically today, passes today, and fails the first time Phase 4 adds a
-  screen whose author did not know the `if` existed. So:
+  That is not tidiness. WO-1.9 added presentation mode, the global suppression the teacher flips
+  before she plugs in the projector, and its whole design rested on there being a single place to
+  flip — which there was, so the work order changed one function body and nothing else. A per-screen
+  `if` reads identically today, passes today, and fails the first time Phase 4 adds a screen whose
+  author did not know the `if` existed. So:
 
-    - `supportsVisible()` is the switch. WO-1.9 changes its body and nothing else.
+    - `supportsVisible()` is the switch, and presentation mode is the hand on it.
     - `sensitiveValue()` is how a support field reaches a form control.
     - `setSensitiveText()` is how a support field reaches rendered text.
 
@@ -35,6 +36,12 @@
   later work order needs a summary sentence out of here for an outreach draft, the answer is no —
   that is the disclosure the rule exists to make impossible by construction.
 */
+
+/* The preference presentation mode lives in, and the only import this file has. src/prefs.js is
+   the only door to localStorage in the app; what is stored is a switch position and nothing else,
+   and the comment on `presentationMode` there says why that is a fact about the browser rather
+   than about a student. */
+import { getPref, setPref } from './prefs.js';
 
 /*
   The plan values are the literals docs/data-model.md enumerates — "IEP|504|ELL|none" — and the
@@ -74,18 +81,50 @@ export const ACCOMMODATION_KINDS = [
 /*
   MAY A SUPPORT FIELD BE ON THE SCREEN RIGHT NOW. The only question, asked in the only place.
 
-  It answers yes today because WO-1.8 ships no global toggle — the discreet-by-default behavior a
-  teacher sees comes from the roster showing a dot instead of the details, and from the editor's
-  support section arriving collapsed. Neither of those is a preference and neither is what this
-  function is about.
+  It answers no while presentation mode is on, and that is the whole of WO-1.9: one preference,
+  read here, and every screen in the app goes quiet at once — including the roster dot, whose mere
+  presence says the student has something on file. Nothing else about the app's discreet-by-default
+  behavior is a preference: the roster showing a dot instead of the details, and the editor's
+  support section arriving collapsed, are how this works with the switch OFF.
 
-  WO-1.9 IS THE WORK ORDER THAT CHANGES THIS BODY. It reads a `planbook_`-prefixed preference and
-  returns false while presentation mode is on, and every screen in the app goes quiet at once —
-  including the roster dot, whose mere presence says the student has something on file. Do not add
-  a second copy of this test anywhere; add the screen's call to this function instead.
+  DO NOT ADD A SECOND COPY OF THIS TEST ANYWHERE. A screen that needs to know asks this function;
+  a screen that renders a support field hands it to sensitiveValue() or setSensitiveText() below
+  and gets the answer for free. That is what makes a screen written in Phase 4 or Phase 6 inherit
+  presentation mode without its author having heard of it, and a per-screen `if` is the failure
+  the work order predicted by name.
 */
 export function supportsVisible() {
-  return true;
+  return !presentationMode();
+}
+
+/*
+  IS PRESENTATION MODE ON. The preference, read fresh every time rather than cached: a cached copy
+  is a copy that can disagree with the switch, and the disagreement that costs something is the one
+  where the app thinks it is hidden and the projector disagrees.
+
+  `!== false` rather than `=== true`, deliberately. An absent key reads as the declared default —
+  `false`, so a browser that has never seen the switch shows support data as it always has. Any
+  OTHER value is a preference somebody hand-edited or a half-written write, and the safe way to
+  round an unreadable answer is toward hiding: a teacher who finds the details missing taps the
+  header control once and has them back, where a teacher who finds them on the wall cannot take
+  them back at all.
+*/
+export function presentationMode() {
+  return getPref('presentationMode') !== false;
+}
+
+/*
+  Turn it on or off, and return where it ended up — which is read back through the same function
+  every screen asks rather than echoed from the argument, so a refused write (Safari in a private
+  window can make localStorage throw) reports the truth instead of the intention.
+
+  src/presentation.js is the only caller: it owns the header control and the strip that say the
+  mode is on. This file owns no DOM and does no re-rendering, so nothing on screen changes because
+  of this call — src/shell.js chains the redraws, the way it does for a year switch.
+*/
+export function setPresentationMode(on) {
+  setPref('presentationMode', !!on);
+  return presentationMode();
 }
 
 /*

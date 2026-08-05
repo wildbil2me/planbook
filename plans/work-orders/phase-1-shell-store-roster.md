@@ -381,7 +381,7 @@ needs it." That screen gets projected. Discreet by default is not a preference s
 
 ## WO-1.9 — Presentation mode
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-1.8
+**Ship** 1 · **Status** ✅ DONE — 2026-08-05 · **Size** S · 🚩 · **Depends on** WO-1.8
 **Closes roadmap** Phase 1 → "Presentation mode."
 
 **Why it exists.** Teachers project attendance and gradebook screens onto classroom walls. IEP
@@ -402,13 +402,23 @@ safe is not a plan.
 **Out of scope** — hiding grades or names. Presentation mode protects `supports`, not the gradebook.
 
 **Acceptance**
-- [ ] With it on, no screen in the app displays plan, accommodation, medical, behavior, or case
-      manager data — verified by walking every built screen.
-- [ ] The toggle state is visible without hunting for it.
-- [ ] It survives a reload and an app relaunch.
-- [ ] A screen added after this work order inherits suppression without touching the toggle code.
-      *(Re-verify this claim at every later phase; it is the whole reason for the render-helper
-      approach.)*
+- [x] With it on, no screen in the app displays plan, accommodation, medical, behavior, or case
+      manager data — verified by walking every built screen. *(`verify-shell.mjs`: the data is
+      absent from the DOM, not hidden in it — checked against whole-document text and every
+      form-control value, including hidden ones, with the editor open.)*
+- [x] The toggle state is visible without hunting for it. *(Header button, `aria-pressed`, and a
+      measured fill difference in both states.)*
+- [x] It survives a reload and an app relaunch. 👤 *(Reload half verified with a real `Page.reload`
+      — the preference, the pressed toggle, and the strip all come back. Relaunch half verified on
+      a real iPad 2026-08-05: installed, toggled on, force-quit from the app switcher, relaunched
+      from the home screen icon — the button stayed filled white and the strip stayed shown. Also
+      confirmed the filled button reads as "on" from arm's length without reading the strip text.)*
+- [x] A screen added after this work order inherits suppression without touching the toggle code.
+      *(Holds today: `roster.js` never reads the preference, only asks `supportsVisible()`. But
+      re-verify this claim at every later phase — it is the whole reason for the render-helper
+      approach, and the inheritance is qualified: a screen already on-glass when the toggle flips
+      is redrawn by a hand-maintained call list in `flipPresentationMode()`, not by the render
+      helper itself. Watch for exactly this at Phase 4, when a signal card is on screen.)*
 
 **Traps** — Per-screen conditionals will pass this work order and fail in Phase 4, when a signal
 card quotes a behavior note. Build the choke point.

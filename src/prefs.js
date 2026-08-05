@@ -85,6 +85,30 @@ export const PREF_DEFAULTS = {
      the first term the class actually has, so a stale key is inert, and a preference file that
      prunes itself is a preference file that needs to know what a class is. */
   openTermIds: {},
+
+  /* Presentation mode: true while every support field in the app is suppressed — the switch a
+     teacher hits before she plugs in the projector (WO-1.9).
+
+     A FACT ABOUT THIS BROWSER AND THIS ROOM, not about a student, which is what makes it legal
+     here at all: what is stored is a switch position, and a switch position says nothing about
+     whether any student has a plan. The accommodations it hides never move — they stay in the year
+     document in IndexedDB either way, and turning the switch back reveals exactly what was there.
+     It is also right for it to differ per device: the laptop wired to the projector can be in
+     presentation mode while the iPad in the teacher's hand is not, and neither is wrong. Same
+     reasoning as `openYear` and `openClassId` above.
+
+     WHY IT IS PERSISTED AT ALL, since "discreet by default is not a preference setting" is the
+     rule the roster's own reveal state obeys by NOT being stored (src/roster.js's supportsShown).
+     The two are opposite questions. The reveal state remembers that support data was on screen,
+     and a remembered `true` would put a student's plan on the wall the morning after one afternoon
+     it was left open. This remembers that support data is HIDDEN, and forgetting it is the failure:
+     a teacher who turned it on before first period must not find it off after lunch. Persistence
+     rounds toward less disclosure here and toward less disclosure there; that is the same rule
+     twice, not two rules.
+
+     src/supports.js is the only reader — its one visibility switch is where this becomes an
+     answer — and src/presentation.js owns the header control that writes it. */
+  presentationMode: false,
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,
