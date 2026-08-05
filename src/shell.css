@@ -48,7 +48,8 @@ button, input, select, textarea { font-family: inherit; }
 /* One grouped selector for every tappable class in the app. Add each new control
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
-.install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn {
+.install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
+.toggle-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -413,6 +414,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
   transition: all 0.2s; opacity: 0; white-space: nowrap;
 }
+/* The LIVE indicator floats above the modal layer; the five swatches below it stay inline,
+   because they are static samples rather than the element the store paints.
+   Found on the WO-1.7 iPad sitting: every edit to a student or a guardian happens inside a
+   modal, and a modal covers the header. The teacher changed a guardian's email, closed the
+   panel, and had nothing telling her it landed. The save was real — the store flushes on
+   visibility change — but an app holding a term of grades cannot answer "did that save?"
+   with silence. `pointer-events: none` because at rest this is an invisible chip
+   (`opacity: 0`) sitting over the top-right corner, and it must never eat a tap. */
+#saveIndicator {
+  position: fixed; z-index: 1050; pointer-events: none;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+}
 .save-indicator.saving  { background: #fef5ea; color: #e67e22; opacity: 1; }
 .save-indicator.saved   { background: #eafaf1; color: #27ae60; opacity: 1; }
 .save-indicator.error   { background: #fdeaea; color: #e74c3c; opacity: 1; }
@@ -433,7 +447,12 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 
 /* ── MODAL ── */
 /* z-index ladder, kept from Roll Call! so fixes stay portable across the suite:
-   content banners 90 · loading 999 · modals 1000 · setup screens 1001 · hero 1100. */
+   content banners 90 · loading 999 · modals 1000 · setup screens 1001 · hero 1100.
+   Planbook adds one rung Roll Call! does not have: the save indicator at 1050, above the
+   modal layer. Roll Call! never needed it because its saves are announced by its own
+   dialogs; Planbook edits students and guardians inside modals, and the confirmation has
+   to be legible from in there (WO-1.7 iPad sitting). If this ladder is ever synced back to
+   the suite, that rung is the deliberate divergence — not drift. */
 /* The overlay scrolls, and the panel is centered by `margin: auto` rather than by
    align-items alone. Centering a too-tall flex child clips its top edge with no way to
    scroll back to it — an iPad in landscape is 704px of usable height, which any modal
@@ -613,6 +632,127 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   background: #fdeaea; color: #c0392b; font-size: 12px; line-height: 1.5;
 }
 
+/* ── ROSTER & CONTACTS ── */
+/* The contents of #rosterModal, #rosterPasteModal, #studentModal, #studentDeleteModal and
+   #teacherModal.
+
+   `.roster-row` is the class row's grammar with a student in it — avatar, name, quiet note,
+   actions pushed right, and the whole thing wrapping rather than squeezing, for the reason
+   `.class-row` gives above. It is written out rather than sharing that class because the two hold
+   different things and the day one of them changes is the day sharing cost more than it saved:
+   the same call the install banner and the backup nag make. */
+.roster-list { display: flex; flex-direction: column; gap: 4px; }
+.roster-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+.roster-row-name { flex: 1 1 140px; min-width: 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
+/* "also in Period 5" — the one fact about a roster row that cannot be seen from anywhere else. */
+.roster-row-note { font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.roster-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.roster-empty { font-size: 13px; color: #a0aab8; padding: 4px 2px 6px; line-height: 1.5; }
+.modal-body .roster-count { font-size: 11px; font-weight: 700; color: #8a9bb0; margin-bottom: 6px; }
+.roster-form { display: flex; align-items: center; gap: 8px; }
+.roster-input {
+  flex: 1 1 auto; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 8px 11px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.roster-input::placeholder { color: #a0aab8; }
+.roster-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* Both are <p> inside `.modal-body`, whose own rule is more specific than a bare class — so they
+   are qualified rather than left to lose the cascade, exactly as `.class-hint` is above. */
+.modal-body .roster-hint { font-size: 11px; color: #8a9bb0; margin-top: 10px; line-height: 1.5; }
+.modal-body .roster-error {
+  margin-top: 10px; padding: 8px 11px; border-radius: 8px;
+  background: #fdeaea; color: #c0392b; font-size: 12px; line-height: 1.5;
+}
+
+/* An on/off button with `aria-pressed` moving with the class — used for a guardian's "contact
+   first", for which classes a student is in, and for the copy-me toggle. Not `.pill`, which is
+   single-select inside a `data-pill-group` (shell.js) and would fight these; and not a checkbox,
+   which is 16px of target that no padding makes bigger. Active takes the interactive indigo wash
+   rather than a solid fill, because solid is reserved for a primary action (style guide §1). */
+.toggle-btn {
+  padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.toggle-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.toggle-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+
+/* The paste box and its preview. The textarea is a real one rather than a growing div: a paste of
+   thirty names has to be scrollable, selectable and undoable, and every one of those comes free. */
+.paste-box {
+  display: block; width: 100%; margin-top: 10px;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 10px 11px;
+  font-family: inherit; font-size: 13px; line-height: 1.5; color: #1a1a2e; background: #fff;
+  resize: vertical;
+}
+.paste-box::placeholder { color: #a0aab8; }
+/* Capped and scrolled: twenty-five rows at 44px each is taller than an iPad in landscape, and a
+   preview you have to scroll the whole dialog to reach is one nobody reads to the end of. */
+.paste-list {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 320px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.paste-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  padding: 6px 8px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+/* Amber for a row Planbook guessed at or already has — the same caution wash as the two strips at
+   the top of the page, so "look at this one" reads the same everywhere. */
+.paste-row.warn { background: #fff8e6; border-color: #f0dfa8; }
+.paste-fields { display: flex; flex: 1 1 220px; min-width: 0; gap: 6px; }
+.paste-field { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
+.paste-input {
+  width: 100%; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 5px 8px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+/* The note wraps onto its own line under the fields rather than squeezing them into two words. */
+.paste-row-note { flex-basis: 100%; font-size: 11px; line-height: 1.45; color: #8a6d1a; }
+.modal-body .paste-count { font-size: 12px; font-weight: 700; color: #6b7a8d; margin: 10px 0 6px; }
+
+/* The student editor. Two columns of labelled fields that become one below ~420px, which is what
+   `flex: 1 1 180px` buys — a first-name field two words wide is worse than a stacked form. */
+.student-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.student-field { display: flex; flex-direction: column; gap: 3px; flex: 1 1 180px; min-width: 0; }
+.student-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.student-input {
+  width: 100%; min-width: 0;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 7px 9px;
+  font-family: inherit; font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.student-input::placeholder { color: #a0aab8; }
+.student-notes {
+  display: block; width: 100%;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 8px 10px;
+  font-family: inherit; font-size: 13px; line-height: 1.5; color: #1a1a2e; background: #fff;
+  resize: vertical;
+}
+.student-classes { display: flex; flex-wrap: wrap; gap: 6px; }
+.guardian-list { display: flex; flex-direction: column; gap: 8px; }
+.guardian-card {
+  padding: 10px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+.guardian-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.guardian-label { flex: 1 1 120px; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; }
+/* What deleting a student destroys, in the danger wash — the same grammar as the class delete
+   confirm, because it is the same kind of sentence and has to read the same way. */
+.student-delete-facts {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-top: 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #f0b0b0; background: #fdeaea;
+}
+.student-delete-line { font-size: 12px; line-height: 1.5; color: #c0392b; }
+
 /* ── BACKUP & RESTORE ── */
 /* The contents of #backupModal and #restoreConfirmModal. Two things here are not decoration:
    the notice block, which is where the app says out loud that the file contains accommodation
@@ -737,6 +877,39 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .class-delete-line { font-size: 13px; }
   .modal-body .class-hint { font-size: 12px; }
   .modal-body .class-error { font-size: 13px; }
+  /* Roster & contacts. Every field here carries the 44px itself with its vertical padding zeroed,
+     which is the `.search-box` defect's lesson again — and there are more fields in this feature
+     than in every other one put together, which is exactly how one of them gets missed. The two
+     multi-line boxes get more than 44: a paste of a class list and a note about a student are both
+     things a teacher has to be able to see while she types them. */
+  .roster-row-name { font-size: 14px; }
+  .roster-row-note { font-size: 12px; }
+  .roster-empty { font-size: 14px; }
+  /* The two rows in this feature that put a destructive control shoulder to shoulder with a
+     harmless one — Edit beside Remove, and "Contact first" beside the button that deletes a
+     guardian. 6px between two 44px targets is a mis-tap that costs a guardian's phone number, so
+     they get the 8px `.paste-fields` and `.student-classes` already take below. Every other
+     container in this block is left alone: a wrapper is not a touch target, and putting the
+     height on one instead of on the control inside it is the WO-1.2 `.search-box` defect. */
+  .roster-row-actions { gap: 8px; }
+  .guardian-head { gap: 8px; }
+  .roster-input { min-height: 44px; font-size: 14px; padding: 0 12px; }
+  .modal-body .roster-count { font-size: 12px; }
+  .modal-body .roster-hint { font-size: 12px; }
+  .modal-body .roster-error { font-size: 13px; }
+  .toggle-btn { padding: 8px 16px; font-size: 12px; min-height: 44px; min-width: 44px; }
+  .paste-box { min-height: 176px; font-size: 14px; }
+  .paste-list { max-height: 360px; }
+  .paste-fields { gap: 8px; }
+  .paste-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  .paste-row-note { font-size: 12px; }
+  .modal-body .paste-count { font-size: 13px; }
+  .student-label { font-size: 11px; }
+  .student-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  .student-notes { min-height: 88px; font-size: 14px; }
+  .student-classes { gap: 8px; }
+  .guardian-label { font-size: 13px; }
+  .student-delete-line { font-size: 13px; }
   .modal-close { width: 44px; height: 44px; font-size: 15px; }
   .loading-error-btn { min-height: 44px; padding: 12px 20px; font-size: 14px; }
   .backup-nag { font-size: 13.5px; }

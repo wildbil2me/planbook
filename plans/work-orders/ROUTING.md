@@ -99,12 +99,17 @@ Not because Codex is worse, but because the cost is asymmetric. A Codex run that
 architectural decision costs more to find and unwind than the Claude run costs to sit through. 🚩
 go-live blockers in particular default to Claude unless they land squarely in the Codex column.
 
-## The runner's actual record: 0 for 2
+## The runner's actual record: 0 for 3
 
-**WO-1.4 and WO-1.6 both routed to Codex correctly by this rubric, and both died at exec time** —
-`codex-windows-sandbox-setup.exe: program not found`, helper failures across read, `apply_patch`,
-and exec. Neither produced a line of code. The table below is unchanged, because the routing was
-right both times; what failed was the runner.
+**WO-1.4, WO-1.6 and WO-1.7 all routed to Codex correctly by this rubric, and all three died at exec
+time** — `codex-windows-sandbox-setup.exe: program not found`, helper failures across read,
+`apply_patch`, and exec. None produced a line of code. The routing was right all three times; what
+failed was the runner.
+
+At WO-1.7 the failure was the cleanest of the three, and the most alarming: **`codex exec` exited
+zero having written nothing.** A non-zero exit is a runner that failed. A zero exit with an empty
+tree is a runner that failed and said it succeeded — which is why the probe checks for a file that
+must exist rather than for an exit code.
 
 **Treat this as a transient condition, not a standing fact about the machine.** `codex doctor`
 reported healthy after WO-1.4, and a `--sandbox workspace-write` run completed normally later. The
@@ -119,6 +124,30 @@ a temp directory under the same sandbox flags, checked for existence. The full a
 **If a third Codex dispatch fails at exec time**, the orchestrator says so in its report and proposes
 moving the pre-routed table below to Claude until one run lands. That is the teacher's call, not the
 orchestrator's — but two failures is a pattern and three is a decision.
+
+### The decision, taken 2026-08-05
+
+**The third failure came at WO-1.7, and the teacher made the call: every pending Codex row moves to
+Claude until one Codex run lands.** The rows are marked *suspended* rather than rewritten, and each
+one keeps the reasoning that put it in the Codex column, because **the rubric is not what failed and
+must not be quietly edited to match a broken runner.** Restoring the table is a one-pass revert once
+a probe writes a file.
+
+The three completed rows are left exactly as they were routed. They are a record of a decision made
+on the day, not a plan; rewriting them would erase the evidence this section is built on.
+
+**What would end the suspension:** one `codex exec` that creates a file in a temp directory under the
+dispatch sandbox flags. That is the probe the orchestrator already runs every dispatch, so the
+suspension lifts itself the first time it passes — nobody has to remember to check.
+
+**A probe bug found in the same run, and worth more than the routing decision.** The WO-1.7 probe
+failed its first attempt on its *own* defect: it built a bare temp directory, and Codex refuses to
+run outside a trusted directory, so it died with `Not inside a trusted directory` before exec was
+ever reached. A probe that always fails is a probe that always re-routes — it would have condemned a
+healthy runner forever while reporting it as broken, and the report would have looked exactly like
+the three real failures above. The probe now runs `git init` in the temp directory first. This is the
+third variant of that failure mode recorded in [`../dispatch-retro.md`](../dispatch-retro.md);
+**a gate that cannot pass is worse than no gate, because it produces confident wrong answers.**
 
 ---
 
@@ -140,14 +169,19 @@ table it says so and explains why.
 | 9 | WO-1.9 Presentation mode | **Claude** | Sensitive surface; failure mode is disclosure to a classroom wall |
 | 10 | WO-1.10 Home screen v0 | **Claude** | Answers "did the class not meet, or did I forget?" — judgment about what to surface |
 | 11 | WO-2.1 Attendance marking screen | **Claude** | Size L, on the critical path, speed-of-use is a design problem |
-| 12 | WO-2.2 Marking a past date | **Codex** | Small, bounded, follows WO-2.1's pattern |
-| 13 | WO-2.3 Days off & pre-drops | **Codex** | Three-state logic, fully specified in `plans/rotating-schedule.md` |
-| 14 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
+| 12 | WO-2.2 Marking a past date | **Claude** ⏸ | *Rubric says Codex* — small, bounded, follows WO-2.1's pattern. Suspended, 0 for 3 |
+| 13 | WO-2.3 Days off & pre-drops | **Claude** ⏸ | *Rubric says Codex* — three-state logic, fully specified in `plans/rotating-schedule.md`. Suspended, 0 for 3 |
+| 14 | WO-2.4 Counts & attendance % | **Claude** ⏸ | *Rubric says Codex* — pure arithmetic over recorded meetings. Suspended, 0 for 3 |
 | 15 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
 
+**⏸ means suspended, not re-rubriced.** The Because column still holds the reasoning that put the row
+in the Codex column, and that reasoning still stands. Revert the Route cell when a Codex run lands.
+
 **Later phases, at a glance:** WO-3.4 grade engine and WO-4.1 signal engine are the strongest Codex
-candidates in the project — both are specified arithmetic with testable output. WO-3.8, WO-3.10,
-all of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only.
+candidates in the project — both are specified arithmetic with testable output, and both are far
+enough out that the suspension will likely have lifted or hardened long before them. WO-3.8, WO-3.10,
+all of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only —
+that is a property of the work, and no runner's record changes it.
 
 ---
 

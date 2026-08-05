@@ -405,6 +405,64 @@ desk against fixtures, and is owed a human read once there is real data to count
 *WO-1.7 through WO-1.10 append their own subsections here as they land, in work-order order.
 Append; don't restructure.*
 
+### WO-1.7 — Roster & contacts
+
+- [x] Pasting 25 names produces 25 students with names split correctly, and the preview matched.
+- [x] Re-pasting the same list warns about duplicates rather than silently doubling the roster.
+- [x] A student added to two classes is one student record with one set of contacts.
+- [x] Removing a student from a class does not delete the student from the other class.
+- [x] Guardian, counselor, and student emails round-trip through save and reload.
+- [x] A **real SIS roster** splits correctly — suffixes, hyphenated surnames, surnames containing
+      spaces, reversed entries, and lines with no comma at all. 👤
+- [x] The paste box is usable with the iPadOS keyboard up. 👤
+- [x] A 26-row preview scrolls inside the modal, down to its last row and its commit button. 👤
+- [x] Every roster, paste-preview and student-editor control is thumbable — including the
+      three-abreast Add/Skip, ⇄ and field row. 👤
+- [x] A wrong split can be corrected with the per-row ⇄ or by typing into the fields, and the
+      correction survives the commit. 👤
+- [x] VoiceOver reads the paste preview rows and the guardian cards. 👤
+- [x] Offline launch with the network off, `roster.js` and `teacher.js` served from the v9
+      precache. 👤
+
+*Ticked 2026-08-05, iPadOS 26.5.2 on an iPad (A16), installed to the home screen, served over HTTPS
+from `tools/serve-https.mjs`. The Environment table above stands unchanged. The sitting ran past
+local midnight, which is also how the desk half found the date bug below.*
+
+*The desk half is `verify-shell.mjs`, **164 of 164** with zero skips, 40 checks added here — 38 for
+the roster and contacts themselves, 2 for the defect the sitting found. The parser is never called
+by the harness, so the fixture expectations cannot agree with a broken parser by construction.*
+
+*One check was repaired rather than added, and it is worth recording because it cost a re-route.
+The backup-filename check compared against `new Date().toISOString().slice(0,10)` — the **UTC**
+date — while `src/backup.js:121` names the file with the **local** date. It passes 20 hours a day
+and fails in the evening, which is when this sitting happened. Both conjuncts were kept: stricter
+about the right value, not looser about the wrong one.*
+
+*The sitting found one defect, and it was not a defect any check was looking for.*
+
+1. ***A save inside a modal was invisible.*** *Every student and guardian edit happens in a modal;
+   modals are `z-index: 1000` and the save indicator sat at `999` — and, separately, its only live
+   mount was inside the WO-1.2 demo shelf, never the real header. So the teacher changed a
+   guardian's email, closed the panel with the ✕, and had nothing at all telling her it landed. The
+   data was never at risk — the store flushes a pending edit on visibility change, and the desk half
+   proves it on disk within 3ms — but an app holding a term of grades cannot answer "did that save?"
+   with silence. The live indicator now floats at `1050`, above the modal layer, with
+   `pointer-events: none` so an invisible chip never eats a corner tap. **WO-1.10 still owns mounting
+   it in the real header**; this fixes the stacking, not the home.*
+
+*Two limits worth carrying forward.*
+
+- *`Smith, Mike Jr.` splits to last `Smith`, first `Mike Jr.` — correct for `Last, First`, since
+  everything past the comma is the given name, and confirmed on the tablet against real data. But
+  the suffix now rides on the first name, so a Phase 5 merge field would render "Dear Mike Jr." The
+  `nickname` field is the escape hatch and is already on the student record. Not a defect; a thing
+  to remember when templates get written.*
+- *`tools/wo-sweep.mjs:245` matches new CSS selectors by substring, so `.paste-field` is silently
+  cleared by a pre-existing `.paste-fields` rule, and `.roster-row` by `.roster-row-name`. Harmless
+  in this pass — all three are wrappers, and the touch targets were measured directly — but any
+  future `.foo` control is cleared by any existing `.foo-label`. Pre-existing, and left alone
+  deliberately rather than fixed inside a roster work order.*
+
 ---
 
 ## Phase 2 — Attendance

@@ -51,6 +51,30 @@
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
+      data-roster-manage              fills the roster panel for the open class, then opens it
+      data-roster-create              on a <form>: adds the student typed into it
+      data-roster-paste               opens the paste box over the roster panel
+      data-roster-preview             reads the paste box into the preview list
+      data-roster-paste-back          back from the preview to the paste box
+      data-roster-commit              adds the students the preview lists
+      data-paste-include="<index>"    adds or skips that preview row
+      data-paste-swap="<index>"       swaps first and last on that row
+      data-paste-swap-all             swaps first and last on every row
+      data-paste-field="first|last" + data-paste-index: an input; edits that preview row
+      data-student-edit="<id>"        opens the editor for that student
+      data-student-remove="<id>"      takes that student off the open class's roster
+      data-student-add-to-class="<id>" puts a student who is in no class onto the open one
+      data-student-delete="<id>"      opens the confirm that counts what deleting destroys
+      data-student-delete-confirm     carries out that deletion
+      data-student-delete-cancel      abandons it, having written nothing
+      data-student-class="<classId>"  puts the open student into that class, or takes them out
+      data-student-field="<path>" + data-guardian-index: an input; edits that field as it is typed
+      data-guardian-add               adds a guardian to the open student
+      data-guardian-remove="<index>"  removes one
+      data-guardian-preferred="<i>"   makes that guardian the one to contact first
+      data-teacher-panel              fills the teacher's own details, then opens them
+      data-teacher-field="<name>"     an input; edits that field as it is typed
+      data-teacher-cc                 toggles whether outreach drafts copy the teacher
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -71,6 +95,8 @@ import * as store from './store.js';
 import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } from './year-picker.js';
 import * as backup from './backup.js';
 import * as classes from './classes.js';
+import * as roster from './roster.js';
+import * as teacher from './teacher.js';
 
 /* The two things that are facts about the open year rather than about a save, so they are
    re-evaluated wherever the open year can change: the backup nag (src/backup.js explains why it is
@@ -179,6 +205,57 @@ document.addEventListener('click', (e) => {
   const termPreset = e.target.closest('[data-term-preset]');
   if (termPreset) { classes.applyPreset(termPreset.getAttribute('data-term-preset')); return; }
 
+  /* ── roster, contacts, and the teacher's own details ── */
+
+  const rosterManage = e.target.closest('[data-roster-manage]');
+  if (rosterManage) { roster.openRoster(rosterManage); return; }
+
+  const paste = e.target.closest('[data-roster-paste]');
+  if (paste) { roster.openPaste(paste); return; }
+  if (e.target.closest('[data-roster-preview]')) { roster.previewPaste(); return; }
+  if (e.target.closest('[data-roster-paste-back]')) { roster.backToPasteEdit(); return; }
+  if (e.target.closest('[data-roster-commit]')) { roster.commitPaste(); return; }
+  if (e.target.closest('[data-paste-swap-all]')) { roster.swapAllPasteRows(); return; }
+
+  const pasteInclude = e.target.closest('[data-paste-include]');
+  if (pasteInclude) { roster.togglePasteRow(pasteInclude.getAttribute('data-paste-include')); return; }
+  const pasteSwap = e.target.closest('[data-paste-swap]');
+  if (pasteSwap) { roster.swapPasteRow(pasteSwap.getAttribute('data-paste-swap')); return; }
+
+  const studentEdit = e.target.closest('[data-student-edit]');
+  if (studentEdit) {
+    roster.openStudentEditor(studentEdit.getAttribute('data-student-edit'), studentEdit);
+    return;
+  }
+  const studentRemove = e.target.closest('[data-student-remove]');
+  if (studentRemove) { roster.removeFromClass(studentRemove.getAttribute('data-student-remove')); return; }
+  const studentAdd = e.target.closest('[data-student-add-to-class]');
+  if (studentAdd) { roster.addToOpenClass(studentAdd.getAttribute('data-student-add-to-class')); return; }
+
+  const studentDelete = e.target.closest('[data-student-delete]');
+  if (studentDelete) {
+    roster.openStudentDeleteConfirm(studentDelete.getAttribute('data-student-delete'), studentDelete);
+    return;
+  }
+  if (e.target.closest('[data-student-delete-confirm]')) { roster.confirmStudentDelete(); return; }
+  if (e.target.closest('[data-student-delete-cancel]')) { roster.cancelStudentDelete(); return; }
+
+  const studentClass = e.target.closest('[data-student-class]');
+  if (studentClass) { roster.toggleStudentClass(studentClass.getAttribute('data-student-class')); return; }
+
+  if (e.target.closest('[data-guardian-add]')) { roster.addGuardian(); return; }
+  const guardianRemove = e.target.closest('[data-guardian-remove]');
+  if (guardianRemove) { roster.removeGuardian(guardianRemove.getAttribute('data-guardian-remove')); return; }
+  const guardianPreferred = e.target.closest('[data-guardian-preferred]');
+  if (guardianPreferred) {
+    roster.setPreferredGuardian(guardianPreferred.getAttribute('data-guardian-preferred'));
+    return;
+  }
+
+  const teacherPanel = e.target.closest('[data-teacher-panel]');
+  if (teacherPanel) { teacher.openTeacherSettings(teacherPanel); return; }
+  if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
+
   const speak = e.target.closest('[data-announce]');
   if (speak) { announce(speak.getAttribute('data-announce')); return; }
 
@@ -216,6 +293,7 @@ document.addEventListener('submit', (e) => {
     return;
   }
   if (form.hasAttribute('data-class-create')) { classes.createClassFromForm(); return; }
+  if (form.hasAttribute('data-roster-create')) { roster.createStudentFromForm(); return; }
   if (form.hasAttribute('data-class-rename-save')) {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
   }
@@ -228,7 +306,21 @@ document.addEventListener('submit', (e) => {
    (src/store.js) — which is exactly what the debounce is for. */
 document.addEventListener('input', (e) => {
   const field = e.target.closest('[data-term-field]');
-  if (field) classes.editTermField(field);
+  if (field) { classes.editTermField(field); return; }
+
+  /* The roster's fields, saved as they are typed for the same reason and by the same debounce.
+     Three hooks rather than one: a student's fields carry a path and a guardian index, the
+     teacher's carry a field name, and a preview row is not in the document at all — it is a model
+     this module hands back to src/roster.js, which is what lets a wrong split be corrected before
+     anything is written. */
+  const studentField = e.target.closest('[data-student-field]');
+  if (studentField) { roster.editStudentField(studentField); return; }
+
+  const pasteField = e.target.closest('[data-paste-field]');
+  if (pasteField) { roster.editPasteField(pasteField); return; }
+
+  const teacherField = e.target.closest('[data-teacher-field]');
+  if (teacherField) teacher.editTeacherField(teacherField);
 });
 
 /* The file input. A `change` listener rather than a click one for the obvious reason, and
@@ -372,6 +464,13 @@ window.planbook = {
      result is inspected without a second copy of the resolution logic in the harness. Nothing in
      the app reads window.planbook, and this goes when the shelf goes. */
   classes,
+  /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
+     acceptance lines are driven by typing into the real paste box and clicking the real controls;
+     this is how the result is READ — what the document holds, how a line was split — without a
+     second copy of the parser living in the harness where it could agree with itself and disagree
+     with the app. parseRosterLine() is exported for that reason and for no other: nothing in the
+     app calls it from outside src/roster.js. This goes when the shelf goes. */
+  roster,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

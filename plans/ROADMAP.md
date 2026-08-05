@@ -165,7 +165,7 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
       keeps everything and only leaves the tab bar, and delete is offered only on an archived row.
       Term dates are labels on a range — never sorted, never validated, and an empty one is valid,
       which is `plans/rotating-schedule.md` staying deleted.)*
-- [ ] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
+- [x] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
 - [ ] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
       plan, case manager, review date. Per [`../docs/data-model.md`](../docs/data-model.md).
 - [ ] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus

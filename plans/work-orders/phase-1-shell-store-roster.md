@@ -311,7 +311,7 @@ stayed at nothing. An iPad in portrait is wider than the width where that happen
 
 ## WO-1.7 — Roster & contacts
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.6
+**Ship** 1 · **Status** ✅ DONE — 2026-08-05 · **Size** M · 🚩 · **Depends on** WO-1.6
 **Closes roadmap** Phase 1 → "Roster: paste `Last, First`; guardian, counselor, and email fields."
 
 **Why it exists.** The school's SIS has no usable export, so rosters are pasted. That is the

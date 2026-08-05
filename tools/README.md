@@ -113,7 +113,8 @@ stylesheet review calls that line compliant. Measuring it does not.
 still closes no 👤 item: it drives a page, not an installed app, and it has never seen a service
 worker.
 
-**It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6.** Update
+**It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
+WO-1.7.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

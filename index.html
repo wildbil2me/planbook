@@ -25,9 +25,14 @@
   rather than a styled strip. Three modals arrived with it — the manager, the term editor, and the
   delete confirm that counts what a deletion destroys.
 
+  WO-1.7 filled the roster: the students in the open class, the paste box that reads a list out of
+  a school system and shows the split before it commits, the editor that holds a student's
+  guardians and counselor, and the teacher's own details. Five modals arrived with it, and the
+  header's bottom row gained two buttons — the roster and the teacher's details — because the top
+  row has no width left at 390px.
+
   Deliberately still absent, so that nothing here has to be un-built later:
-    - The roster — WO-1.7. A class has an empty `roster` and nowhere to fill it.
-    - Categories and weights — WO-3.1. A class has an empty `categories` for the same reason.
+    - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
 
   WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
   service worker registration in src/shell.js, and the eviction banner below the header.
@@ -162,13 +167,34 @@
     </nav>
     <div class="hdr-divider hidden" id="headerDivider" aria-hidden="true"></div>
     <nav class="hdr-term-nav" id="termNav" aria-label="Terms in the open class"></nav>
+    <!-- Three ways in, all of them about the class that is open. WO-1.7 added the first and the
+         third: the roster of the open class, and the teacher's own details.
+
+         Both are here rather than in the row above, and that is a measurement rather than a
+         preference — the top row already carries the year, the backup button and About beside a
+         title, and a fourth control there puts the page into horizontal overflow at 390px.
+         tools/verify-shell.mjs measures that width on every run. -->
     <div class="hdr-right-controls hidden" id="headerRightControls">
+      <button class="hdr-icon-btn" data-roster-manage title="Roster and contacts"
+              aria-label="Roster and contacts" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </button>
       <button class="hdr-icon-btn" data-class-manage title="Classes and terms"
               aria-label="Classes and terms" aria-haspopup="dialog">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
           <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
           <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+      <button class="hdr-icon-btn" data-teacher-panel title="Your details"
+              aria-label="Your details" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
         </svg>
       </button>
     </div>
@@ -420,12 +446,12 @@
       </p>
       <div class="modal-section-label">This build</div>
       <p>
-        <strong>Classes and their terms are the only things you can enter so far.</strong> The
-        frame and the storage behind it are real — one document per school year, kept in this
-        browser — and so is the class bar at the top. There is no roster and no gradebook yet;
-        those come next. The backup file that gets everything back out of the browser is already
-        here, under the ⤓ button in the header, because nothing that stores a student's name ships
-        before the way to get it back.
+        <strong>Classes, terms and your roster are what you can enter so far.</strong> The frame
+        and the storage behind it are real — one document per school year, kept in this browser —
+        and so are the class bar at the top and the students behind it. There is no gradebook and
+        no attendance yet; those come next. The backup file that gets everything back out of the
+        browser is already here, under the ⤓ button in the header, because nothing that stores a
+        student's name ships before the way to get it back.
       </p>
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Close</button>
@@ -598,6 +624,290 @@
       <div class="modal-actions">
         <button class="class-action-btn danger" id="classDeleteBtn" data-class-delete-confirm>Delete</button>
         <button class="class-action-btn" data-class-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The roster of the open class. src/roster.js owns the behavior and renders every row; the copy
+     a teacher reads is here, for the same reason the class manager's is.
+
+     One sentence in here is load-bearing rather than decorative: a student belongs to the school
+     year and a class holds a list of students. That is not an implementation note — it is the
+     difference between "Remove" taking a student off this class and deleting a person's contacts,
+     and the teacher has to be able to predict which one she is about to do. -->
+<div class="modal-overlay hidden" id="rosterModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
+    <div class="modal-header">
+      <h2 id="rosterModalTitle">Roster &amp; contacts</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        A student belongs to the school year, and a class holds a list of students. So a student
+        you teach twice is one student with one set of contacts, and taking someone off this
+        class's roster leaves everything about them exactly where it was.
+      </p>
+
+      <div class="modal-section-label">In <span id="rosterClassName"></span></div>
+      <p class="roster-count" id="rosterCount"></p>
+      <div class="roster-list" id="rosterList"></div>
+
+      <div class="modal-section-label">Add students</div>
+      <form class="roster-form" data-roster-create>
+        <input class="roster-input" id="rosterNewInput" type="text" placeholder="Van Dyke, Mary"
+               aria-label="Name for the new student" autocomplete="off">
+        <button class="class-action-btn primary" type="submit">Add</button>
+      </form>
+      <div class="roster-actions">
+        <button class="class-action-btn" type="button" data-roster-paste aria-haspopup="dialog">
+          Paste a list of names
+        </button>
+      </div>
+      <p class="roster-hint">
+        Type a name either way round — “Van Dyke, Mary” or “Mary Van Dyke” — and Planbook will
+        show you which half it read as the surname. For a whole class, paste the list instead:
+        it shows you every split before it adds anybody.
+      </p>
+      <p class="roster-error hidden" id="rosterError"></p>
+
+      <div class="hidden" id="rosterOrphanSection">
+        <div class="modal-section-label">Not in any class</div>
+        <div class="roster-list" id="rosterOrphanList"></div>
+        <p class="roster-hint">
+          Removing a student from a class leaves them here rather than deleting them, so a name
+          put in the wrong class costs nothing. Add them to the class you meant, or delete the
+          record if it should not be in this school year at all.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The paste box and its preview, opened over the roster panel — src/modal.js keeps a stack, so
+     Escape closes this and leaves that open.
+
+     The preview is the whole point of this dialog and not a confirmation step. A pasted roster
+     arrives as “Last, First” from one system and “First Last” from another, sometimes in the same
+     list, so every line's split is shown in two editable fields with the guess already in them.
+     A preview that only counted the rows would be counting the mistakes about to be committed. -->
+<div class="modal-overlay hidden" id="rosterPasteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterPasteTitle">
+    <div class="modal-header">
+      <h2 id="rosterPasteTitle">Paste a roster</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rosterPasteEdit">
+        <p>
+          One student per line, into <strong id="rosterPasteClassName"></strong>. Paste straight
+          out of your school system — “Van Dyke, Mary” or “Mary Van Dyke”, tabs between columns,
+          a heading row, and a blank line at the end are all fine.
+        </p>
+        <textarea class="paste-box" id="rosterPasteBox" rows="8" spellcheck="false"
+                  aria-label="Paste your roster, one student per line"
+                  placeholder="Van Dyke, Mary&#10;Okonkwo, Chidi&#10;Robert Smith Jr"></textarea>
+        <div class="roster-actions">
+          <button class="class-action-btn primary" type="button" data-roster-preview>
+            Check the names
+          </button>
+          <button class="class-action-btn" type="button" data-modal-close>Cancel</button>
+        </div>
+        <p class="roster-hint">
+          Nothing is added until you have seen the list split into first and last names and said
+          so. Names already in this school year are recognised rather than duplicated.
+        </p>
+        <p class="roster-error hidden" id="rosterPasteError"></p>
+      </div>
+
+      <div class="hidden" id="rosterPasteReview">
+        <p>
+          Check the split before these are added. Each row shows the surname on the left and the
+          first name on the right — tap <span aria-hidden="true">⇄</span> on any row that came out
+          the wrong way round, or fix the fields directly.
+        </p>
+        <p class="paste-count" id="rosterPasteCount"></p>
+        <div class="paste-list" id="rosterPasteList"></div>
+        <div class="roster-actions">
+          <button class="class-action-btn primary" type="button" id="rosterPasteCommitBtn"
+                  data-roster-commit>Add these students</button>
+          <button class="class-action-btn" type="button" data-paste-swap-all>
+            Swap every row
+          </button>
+          <button class="class-action-btn" type="button" data-roster-paste-back>Back</button>
+        </div>
+        <p class="roster-hint">
+          “Swap every row” is for a list that came out of a system writing names the other way
+          round — one tap instead of twenty-five. Rows marked in amber are the ones Planbook was
+          least sure about, or that it already has.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- One student: names, contacts, and which classes they are in. src/roster.js fills every field
+     when the dialog opens and writes each one as it is typed, the same way the term editor does.
+
+     The guardian cards and the class buttons are rendered rather than written out here, because
+     both are lists whose length is the teacher's business. Everything else is real markup, so the
+     copy stays revisable without opening a JavaScript file. -->
+<div class="modal-overlay hidden" id="studentModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
+    <div class="modal-header">
+      <h2 id="studentModalTitle">Student</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">Name</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">First</span>
+          <input class="student-input" id="studentFirst" type="text" autocomplete="off"
+                 data-student-field="first" aria-label="First name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Last</span>
+          <input class="student-input" id="studentLast" type="text" autocomplete="off"
+                 data-student-field="last" aria-label="Last name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Goes by</span>
+          <input class="student-input" id="studentNickname" type="text" autocomplete="off"
+                 placeholder="Mimi" data-student-field="nickname" aria-label="Nickname">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Class of</span>
+          <input class="student-input" id="studentGradYear" type="text" inputmode="numeric"
+                 autocomplete="off" placeholder="2029" data-student-field="gradYear"
+                 aria-label="Graduation year">
+        </label>
+      </div>
+
+      <div class="modal-section-label">Student email</div>
+      <input class="student-input" id="studentEmail" type="email" autocomplete="off"
+             spellcheck="false" data-student-field="email" aria-label="Student email address">
+
+      <div class="modal-section-label">Guardians</div>
+      <div class="guardian-list" id="guardianList"></div>
+      <div class="roster-actions">
+        <button class="class-action-btn" type="button" data-guardian-add>Add a guardian</button>
+      </div>
+      <p class="roster-hint">
+        Add as many as you need. Mark the one to contact first — that is who Planbook addresses a
+        draft to when there is more than one, and the rest stay here to reach when you need them.
+      </p>
+
+      <div class="modal-section-label">Counselor</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">Name</span>
+          <input class="student-input" id="studentCounselorName" type="text" autocomplete="off"
+                 data-student-field="counselor.name" aria-label="Counselor name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Email</span>
+          <input class="student-input" id="studentCounselorEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-student-field="counselor.email"
+                 aria-label="Counselor email address">
+        </label>
+      </div>
+
+      <div class="modal-section-label">Classes</div>
+      <div class="student-classes" id="studentClasses"></div>
+      <p class="roster-hint">
+        Tap a class to put this student in it or take them out. Moving a student between two
+        classes is those two taps, and nothing about them is copied or lost on the way — there is
+        only ever one of this student in the school year.
+      </p>
+
+      <div class="modal-section-label">Notes</div>
+      <textarea class="student-notes" id="studentNotes" rows="3" data-student-field="notes"
+                aria-label="Notes about this student"></textarea>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The delete confirm for a student. Same tier and the same job as the one for a class: it names
+     what is about to be destroyed, with counts read off the open document, because a teacher who
+     meant "take them out of this class" and a teacher who meant "this person is not mine this
+     year" make the same gesture. The two empty elements are filled by src/roster.js. -->
+<div class="modal-overlay hidden" id="studentDeleteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentDeleteTitle">
+    <div class="modal-header">
+      <h2 id="studentDeleteTitle">Delete this student?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="studentDeleteLead"></p>
+      <div class="modal-section-label">What goes with them</div>
+      <div class="student-delete-facts" id="studentDeleteFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="studentDeleteBtn" data-student-delete-confirm>Delete</button>
+        <button class="class-action-btn" data-student-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The teacher's own details. src/teacher.js owns the behavior; these five fields are what
+     Phase 5 signs and addresses a draft with, which is why they are worth a screen before there
+     is any outreach to send. They live in the year document rather than in this browser's
+     preferences: a name is not a UI preference, and it has to survive a new device. -->
+<div class="modal-overlay hidden" id="teacherModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
+    <div class="modal-header">
+      <h2 id="teacherModalTitle">Your details</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook signs and addresses outreach with these. Nothing here is sent anywhere by
+        itself — every message is drafted in your own mail app, where you read it before it goes.
+      </p>
+
+      <div class="modal-section-label">You</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">Name</span>
+          <input class="student-input" id="teacherName" type="text" autocomplete="off"
+                 placeholder="Ms Toomey" data-teacher-field="name" aria-label="Your name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">School</span>
+          <input class="student-input" id="teacherSchool" type="text" autocomplete="off"
+                 data-teacher-field="school" aria-label="Your school">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Your email</span>
+          <input class="student-input" id="teacherEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-teacher-field="email" aria-label="Your email address">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Admin email</span>
+          <input class="student-input" id="teacherAdminEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-teacher-field="adminEmail"
+                 aria-label="Administrator email address">
+        </label>
+      </div>
+      <p class="roster-hint">
+        The admin address is the one you copy when something has to go up the building as well as
+        home — a dean, a department head, whoever that is for you.
+      </p>
+
+      <div class="modal-section-label">Outreach</div>
+      <div class="roster-actions">
+        <button class="toggle-btn" type="button" id="teacherCcBtn" data-teacher-cc
+                aria-pressed="true">Copy me: on</button>
+      </div>
+      <p class="roster-hint" id="teacherCcState"></p>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Done</button>
       </div>
     </div>
   </div>

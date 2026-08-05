@@ -131,6 +131,13 @@ function findClass(id) {
    key has to be written again in every screen that asks. */
 export function getTerms(classId) { return termsOf(findClass(classId)); }
 
+/* The classes on the tab bar, in tab order — the same list refreshClassBar() draws, exported at
+   WO-1.7 for the same reason getTerms() is above it. The roster editor has to offer "which
+   classes is this student in", and a screen that filtered doc.classes itself would be a second
+   opinion about what `archived` means: an archived class is one the teacher has put away, and
+   offering to file a student into one is offering to file them somewhere she cannot see. */
+export function getActiveClasses() { return activeClasses(getDoc()); }
+
 /*
   THE READ POINT — the two accessors every later screen imports.
 

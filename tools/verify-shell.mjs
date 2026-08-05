@@ -442,6 +442,26 @@ if (!(await has(MODAL)) || openerCount < 2) {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: bd.x, y: bd.y, button: 'left', clickCount: 1 });
   await new Promise(r => setTimeout(r, 200));
   check('press inside + release on the backdrop does NOT close it', await isOpen());
+
+  /* From the WO-1.7 iPad sitting. Every student and guardian edit happens inside a modal, and
+     a modal covers the header the indicator lives in — so the teacher changed a guardian's
+     email, closed the panel, and had nothing telling her it landed. The save was real; the
+     silence was the defect. Measured rather than reviewed, because a stacking bug reads as
+     perfectly correct in the stylesheet. Asserted with a modal actually open, so it is the
+     painted result and not the declared value. */
+  const stack = await evalJs(`(function(){
+    var i = getComputedStyle(document.getElementById('saveIndicator'));
+    var o = getComputedStyle(document.querySelector('${MODAL}'));
+    return { ind: parseInt(i.zIndex, 10), overlay: parseInt(o.zIndex, 10),
+             pos: i.position, taps: i.pointerEvents }; })()`);
+  check('the save indicator outranks the modal overlay, so a save is visible from inside a panel',
+    stack.ind > stack.overlay && stack.pos === 'fixed',
+    'indicator z-index ' + stack.ind + ' (' + stack.pos + ') vs overlay ' + stack.overlay);
+  /* At rest the chip is `opacity: 0` and still occupies its corner. Without this it would be an
+     invisible tap target sitting over the top-right of every screen in the app. */
+  check('and at rest it cannot swallow a tap in the corner it occupies',
+    stack.taps === 'none', 'pointer-events: ' + stack.taps);
+
   await key('Escape', 'Escape', 27);
 }
 
@@ -860,9 +880,20 @@ if (!backupBooted || !backupSeam) {
              whole: JSON.stringify(JSON.parse(file.text)) === JSON.stringify(doc) }; })()`);
   const TEXT = JSON.stringify(built.text);
 
+  /* The date on the file is the LOCAL one, and this check has to derive it the same way
+     src/backup.js does or it is testing a different fact. It compared against
+     `toISOString().slice(0,10)` until WO-1.7 — that is UTC, so from 8pm EDT onward it demanded
+     tomorrow's date and failed on a correct build. It passed at every other hour, which is how it
+     survived three work orders. The app is right: a teacher in EDT downloading at 8pm expects
+     today's date on her file, so `dateStamp()` builds it from getFullYear/getMonth/getDate and so
+     does this. Stricter about the right value rather than looser about the wrong one. */
+  const localStamp = (() => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  })();
   check('the backup file is the whole year document, and its name carries the year and the date',
-    built.whole && built.name === 'Planbook ' + YEAR + ' backup '
-      + new Date().toISOString().slice(0, 10) + '.json',
+    built.whole && built.name === 'Planbook ' + YEAR + ' backup ' + localStamp + '.json',
     built.name + ' · ' + built.text.length + ' bytes');
   check('and it still contains the support data — a backup that filtered it out is not a recovery path',
     /epi-pen in the nurse office/.test(built.text) && /"plan": "IEP"/.test(built.text),
@@ -1897,6 +1928,544 @@ if (!classesBooted || !classSeam) {
     'active ' + leftover.rows + ', archived ' + leftover.archivedRows);
 }
 
+/* ───────────────── roster & contacts ─────────────────
+ *
+ * The five acceptance lines of WO-1.7, each driven through the real controls rather than through
+ * src/roster.js's exports. The parser is exported on `window.planbook.roster` and this section
+ * deliberately never calls it: a check that asked parseRosterLine() what it thought of a line
+ * would agree with itself perfectly while the paste box wrote something else. Everything below
+ * types into the box a teacher types into, reads the split out of the fields she reads it out of,
+ * and then compares BOTH against the document — which is what "the preview matched" means.
+ */
+
+console.log('\n--- roster & contacts ---');
+
+/* Flushed, then reloaded, for the reason the classes section gives at length (tools/README.md,
+   trap 6) and for one that belongs to this feature: every screen here is filled from the document
+   when its dialog opens, so a roster that renders only because the module still holds what it just
+   wrote is a roster that is empty on the teacher's next launch. */
+await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+await send('Page.reload');
+await new Promise(r => setTimeout(r, 600));
+const rosterBooted = await waitForBoot();
+await evalJs(KILL_ANIM);
+await evalJs(INSTALL_WALKER);
+
+/* Three page-side readers, for the reason window.__cls exists: one round trip per check, and the
+   reads cannot drift apart between them. Re-installed after every reload, like the walker. */
+const INSTALL_ROSTER_READER = `(function(){
+  function pair(s){ return s ? [s.last, s.first] : null; }
+  window.__ros = function(){
+    var doc = window.planbook.store.getDoc();
+    var openId = window.planbook.classes.getSelectedClassId();
+    var open = doc.classes.filter(function(c){ return c.id === openId; })[0] || null;
+    function byId(id){ return doc.students.filter(function(s){ return s.id === id; })[0] || null; }
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#rosterList .roster-row'));
+    var orphans = Array.prototype.slice.call(document.querySelectorAll('#rosterOrphanList .roster-row'));
+    function controls(r){
+      return { name: (r.querySelector('.roster-row-name')||{}).textContent,
+               edit: !!r.querySelector('[data-student-edit]'),
+               remove: !!r.querySelector('[data-student-remove]'),
+               add: !!r.querySelector('[data-student-add-to-class]'),
+               del: !!r.querySelector('[data-student-delete]') };
+    }
+    return {
+      students: doc.students.length,
+      docPairs: doc.students.map(pair),
+      openClass: open ? open.id : '',
+      openName: open ? open.name : '',
+      tabNames: Array.prototype.slice.call(
+        document.querySelectorAll('#classTabBar [data-class-tab]')).map(function(b){ return b.textContent; }),
+      rosterIds: open ? (open.roster || []).slice() : [],
+      rosterPairs: open ? (open.roster || []).map(function(id){ return pair(byId(id)); }) : [],
+      rowNames: rows.map(function(r){ return (r.querySelector('.roster-row-name')||{}).textContent; }),
+      rowNotes: rows.map(function(r){ return (r.querySelector('.roster-row-note')||{}).textContent; }),
+      rowControls: rows.map(controls),
+      /* A student's name is pasted out of a school system, so the same claim src/classes.js makes
+         about a class name has to hold here: rendered as text, never as markup. */
+      injectedInList: document.querySelectorAll('#rosterList b, #rosterList i, #rosterList script').length,
+      countLine: (document.getElementById('rosterCount')||{}).textContent,
+      orphanHidden: document.getElementById('rosterOrphanSection').classList.contains('hidden'),
+      orphanControls: orphans.map(controls),
+      rosterError: (document.getElementById('rosterError')||{}).textContent,
+      teacher: JSON.parse(JSON.stringify(doc.teacher || {})),
+      ccPressed: (document.getElementById('teacherCcBtn')||{}).getAttribute
+        ? document.getElementById('teacherCcBtn').getAttribute('aria-pressed') : '',
+      ccHint: (document.getElementById('teacherCcState')||{}).textContent,
+      rev: doc.rev
+    };
+  };
+  /* The preview, read off the fields on screen rather than out of src/roster.js's model — the
+     Traps line is about what the teacher can SEE before she commits, and a model she cannot see
+     proves nothing about that. */
+  window.__preview = function(){
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#rosterPasteList .paste-row'));
+    var btn = document.getElementById('rosterPasteCommitBtn') || {};
+    return {
+      rows: rows.length,
+      pairs: rows.map(function(r){ var f = r.querySelectorAll('.paste-input');
+        return [f[0] ? f[0].value : null, f[1] ? f[1].value : null]; }),
+      include: rows.map(function(r){ var t = r.querySelector('[data-paste-include]');
+        return t ? t.getAttribute('aria-pressed') === 'true' : null; }),
+      labels: rows.map(function(r){ var t = r.querySelector('[data-paste-include]');
+        return t ? t.textContent : ''; }),
+      notes: rows.map(function(r){ return (r.querySelector('.paste-row-note')||{}).textContent; }),
+      warn: rows.map(function(r){ return r.classList.contains('warn'); }),
+      count: (document.getElementById('rosterPasteCount')||{}).textContent,
+      commitText: btn.textContent || '', commitDisabled: !!btn.disabled
+    };
+  };
+  window.__student = function(id){
+    var doc = window.planbook.store.getDoc();
+    var s = doc.students.filter(function(x){ return x.id === id; })[0];
+    if (!s) return null;
+    return { id: s.id, first: s.first, last: s.last, nickname: s.nickname, gradYear: s.gradYear,
+             email: s.email, notes: s.notes,
+             guardians: (s.guardians || []).map(function(g){
+               return { name:g.name, relation:g.relation, email:g.email, phone:g.phone,
+                        language:g.language, preferred:!!g.preferred }; }),
+             counselor: { name: (s.counselor||{}).name, email: (s.counselor||{}).email },
+             inClasses: doc.classes.filter(function(c){ return (c.roster||[]).indexOf(s.id) >= 0; })
+               .map(function(c){ return c.id; }),
+             /* WO-1.7's Out of scope line, asserted rather than assumed: the supports group
+                belongs to WO-1.8, and a key stubbed here now is a shape that work order has to
+                accept or migrate. This is what catches one being added. */
+             keys: Object.keys(s).sort() };
+  };
+  return 1; })()`;
+
+const rosterSeam = await evalJs("!!(window.planbook && window.planbook.roster"
+  + " && typeof window.planbook.roster.parseRosterLine === 'function')");
+
+if (!rosterBooted || !rosterSeam) {
+  skip('roster & contacts: paste, duplicates, one student in two classes, remove, contacts round-trip',
+    rosterBooted ? 'no window.planbook.roster seam on the page (expected once the WO-1.2 shelf is gone)'
+      : 'the app did not boot before this section');
+} else {
+  await evalJs(INSTALL_ROSTER_READER);
+  const closeAll = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
+    + "'rosterPasteModal','rosterModal','teacherModal','classesModal','aboutModal']"
+    + ".forEach(function(m){ window.planbook.closeModal(m); }); return 1; })()");
+  const openRosterOn = async (tab) => {
+    await closeAll();
+    await clickSel('[data-class-tab]', tab);
+    await clickSel('header [data-roster-manage]');
+    return evalJs('window.__ros()');
+  };
+
+  /*
+    The fixture, and every line of it is a shape a real paste arrives in. `Last, First` with and
+    without stray whitespace, two spreadsheet columns separated by a tab, `First Last` with nothing
+    to read the split from, a surname made of particles, two spellings of a suffix, and the column
+    heading a copied range brings along with it. The expected split beside each line is written out
+    rather than computed, because a check that derived the answer from the same parser it is
+    checking would agree with itself no matter what the parser did.
+  */
+  const PASTE_LINES = [
+    ['Last Name\tFirst Name', null, null],
+    ['Van Dyke, Mary', 'Van Dyke', 'Mary'],
+    ['Okonkwo, Chidi', 'Okonkwo', 'Chidi'],
+    ['  Nakamura ,  Yuki  ', 'Nakamura', 'Yuki'],
+    ["O'Brien, Siobhan", "O'Brien", 'Siobhan'],
+    ['Álvarez, José', 'Álvarez', 'José'],
+    ['Washington, Dee Dee', 'Washington', 'Dee Dee'],
+    ['Delgado, Robert, Jr.', 'Delgado Jr.', 'Robert'],
+    ['Chen, Wei-Lin', 'Chen', 'Wei-Lin'],
+    ['de la Cruz, Ana', 'de la Cruz', 'Ana'],
+    ['Park, Min', 'Park', 'Min'],
+    ['Ito\tHaruki', 'Ito', 'Haruki'],
+    ['Bauer\t\tGreta', 'Bauer', 'Greta'],
+    ['Novak\tPetra  ', 'Novak', 'Petra'],
+    ['Marcus Aurelio', 'Aurelio', 'Marcus'],
+    ['Jonas Van Der Berg', 'Van Der Berg', 'Jonas'],
+    ['Anh Le', 'Le', 'Anh'],
+    ['Robert Smith Jr', 'Smith Jr', 'Robert'],
+    ['Grace Hopper', 'Hopper', 'Grace'],
+    ['Ada Lovelace', 'Lovelace', 'Ada'],
+    ['Katherine Johnson', 'Johnson', 'Katherine'],
+    ['Bo <b>x</b>, Mae', 'Bo <b>x</b>', 'Mae'],
+    ['Curie, Marie', 'Curie', 'Marie'],
+    ['Franklin, Rosalind', 'Franklin', 'Rosalind'],
+    ['Tharp, Marie', 'Tharp', 'Marie'],
+    ['Ochoa, Ellen', 'Ochoa', 'Ellen'],
+  ];
+  const EXPECTED = PASTE_LINES.slice(1).map(l => [l[1], l[2]]);
+  /* A blank line in the middle is what a copy out of two ranges looks like, and the two at the end
+     are what every copy out of a spreadsheet looks like. All three have to disappear rather than
+     arrive as empty rows the teacher unticks one at a time. */
+  const PASTE_TEXT = [
+    ...PASTE_LINES.slice(0, 6).map(l => l[0]), '',
+    ...PASTE_LINES.slice(6).map(l => l[0]), '', '',
+  ].join('\n');
+  const typeInto = (id, text) => evalJs('(function(){ var e = document.getElementById('
+    + JSON.stringify(id) + '); e.value = ' + JSON.stringify(text)
+    + '; e.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+
+  const start = await openRosterOn(0);
+  check('the roster opens on the class that is open, empty, with the class-less students listed apart',
+    start.tabNames.length >= 2 && start.openName === start.tabNames[0]
+      && start.rosterIds.length === 0
+      && start.rowNames.length === 0 && start.orphanHidden === false
+      && start.orphanControls.length === start.students
+      && start.orphanControls.every(c => c.add && c.del && !c.remove),
+    'open class = ' + JSON.stringify(start.openName) + ', on its roster = '
+      + start.rosterIds.length + ', in the year and in no class = ' + start.orphanControls.length);
+
+  /* ── acceptance 1: 25 names, split correctly, and the preview matched ── */
+
+  await clickSel('#rosterModal [data-roster-paste]');
+  await typeInto('rosterPasteBox', PASTE_TEXT);
+  await clickSel('[data-roster-preview]');
+  const preview = await evalJs('window.__preview()');
+  const previewPairs = preview.pairs.slice(1);
+  check('26 pasted lines preview as 26 rows, each split into a first and a last you can see and edit',
+    preview.rows === 26 && JSON.stringify(previewPairs) === JSON.stringify(EXPECTED),
+    preview.rows === 26
+      ? 'every row matched the expected split'
+      : previewPairs.length + ' name rows; first mismatch = ' + JSON.stringify(
+          previewPairs.find((p, i) => JSON.stringify(p) !== JSON.stringify(EXPECTED[i])) || null));
+  check('the blank lines are gone and the column heading is ticked off rather than added',
+    preview.include[0] === false && preview.labels[0] === 'Skip'
+      && /Column heading/.test(preview.notes[0]) && preview.warn[0] === true
+      && preview.include.slice(1).every(v => v === true),
+    JSON.stringify(preview.pairs[0]) + ' — ' + JSON.stringify(preview.notes[0]));
+  check('and the preview says how many will be added, out of how many lines',
+    preview.count === '25 new students — out of 26 lines.'
+      && preview.commitText === 'Add 25 students' && preview.commitDisabled === false,
+    JSON.stringify(preview.count) + ' · button ' + JSON.stringify(preview.commitText));
+
+  await clickSel('[data-roster-commit]');
+  const pasted = await evalJs('window.__ros()');
+  check('committing adds exactly 25 students to this class, split exactly as the preview showed',
+    pasted.students === start.students + 25 && pasted.rosterIds.length === 25
+      && JSON.stringify(pasted.rosterPairs) === JSON.stringify(previewPairs)
+      && pasted.rowNames.length === 25,
+    'students in the year ' + start.students + ' -> ' + pasted.students + ', on this roster '
+      + pasted.rosterIds.length + ', document split === preview split');
+  check('a pasted name carrying markup stays those characters — createElement, never innerHTML',
+    pasted.rowNames.indexOf('Bo <b>x</b>, Mae') >= 0 && pasted.injectedInList === 0,
+    'elements injected into the roster list = ' + pasted.injectedInList);
+
+  /* ── the Traps line: the split is a guess, and the preview is where it gets caught ── */
+
+  await clickSel('#rosterModal [data-roster-paste]');
+  await typeInto('rosterPasteBox', 'Fitzgerald Ellen\nBhatt Priya\n');
+  await clickSel('[data-roster-preview]');
+  const guessed = await evalJs('window.__preview()');
+  check('a line with no separator is read as First Last, shown split, and flagged as a guess',
+    JSON.stringify(guessed.pairs) === JSON.stringify([['Ellen', 'Fitzgerald'], ['Priya', 'Bhatt']])
+      && guessed.warn.every(w => w === true)
+      && guessed.notes.every(n => /Read as .First Last./.test(n) && /check the split/.test(n)),
+    JSON.stringify(guessed.pairs) + ' — ' + JSON.stringify(guessed.notes[0]));
+  await clickSel('[data-paste-swap-all]');
+  const swappedAll = await evalJs('window.__preview()');
+  check('one tap puts every row the other way round, in the fields on screen',
+    JSON.stringify(swappedAll.pairs) === JSON.stringify([['Fitzgerald', 'Ellen'], ['Bhatt', 'Priya']])
+      && swappedAll.warn.every(w => w === false)
+      && swappedAll.include.every(v => v === true),
+    JSON.stringify(swappedAll.pairs));
+  await clickSel('[data-paste-swap]', 1);
+  const swappedOne = await evalJs('window.__preview()');
+  check('and the per-row swap moves that row and only that row',
+    JSON.stringify(swappedOne.pairs) === JSON.stringify([['Fitzgerald', 'Ellen'], ['Priya', 'Bhatt']]),
+    JSON.stringify(swappedOne.pairs));
+  await clickSel('[data-paste-swap]', 1);
+  await clickSel('[data-roster-commit]');
+  const corrected = await evalJs('window.__ros()');
+  check('and the corrected split is what gets written, not the guess',
+    corrected.rosterIds.length === 27
+      && JSON.stringify(corrected.rosterPairs.slice(25))
+        === JSON.stringify([['Fitzgerald', 'Ellen'], ['Bhatt', 'Priya']]),
+    JSON.stringify(corrected.rosterPairs.slice(25)));
+
+  /* ── acceptance 2: the same list again ── */
+
+  await clickSel('#rosterModal [data-roster-paste]');
+  await typeInto('rosterPasteBox', PASTE_TEXT);
+  await clickSel('[data-roster-preview]');
+  const again = await evalJs('window.__preview()');
+  check('re-pasting the same list warns on every line instead of silently doubling the roster',
+    again.rows === 26 && again.include.every(v => v === false)
+      && again.labels.slice(1).every(l => l === 'Skip')
+      && again.notes.slice(1).every(n => /Already in this class/.test(n))
+      && again.warn.slice(1).every(w => w === true)
+      && again.count === '0 new students · 25 names already in this class, skipped — out of 26 lines.',
+    JSON.stringify(again.count));
+  check('and the Add control refuses rather than being live and doubling it',
+    again.commitDisabled === true && again.commitText === 'Nothing to add',
+    'button ' + JSON.stringify(again.commitText) + ', disabled = ' + again.commitDisabled);
+  /* Clicked anyway: a disabled button fires no click, so this is the same gesture a teacher who
+     did not read the count line makes, and the counts below are what she gets for it. */
+  await clickSel('[data-roster-commit]');
+  await evalJs("window.planbook.closeModal('rosterPasteModal');1");
+  const afterRepaste = await evalJs('window.__ros()');
+  check('so a second paste of the same 25 names writes nothing at all',
+    afterRepaste.students === corrected.students && afterRepaste.rosterIds.length === 27,
+    'students in the year = ' + afterRepaste.students + ', on this roster = '
+      + afterRepaste.rosterIds.length);
+
+  /* ── acceptance 3: one student, two classes, one set of contacts ── */
+
+  const maryId = afterRepaste.rosterIds[0];
+  await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
+  await evalJs(`(function(){
+    function set(id, v){ var e = document.getElementById(id); e.value = v;
+      e.dispatchEvent(new Event('input', { bubbles: true })); }
+    set('studentNickname', 'Mimi');
+    set('studentGradYear', '2029');
+    set('studentEmail', 'mary.vandyke@student.example.edu');
+    set('studentCounselorName', 'R. Ochoa');
+    set('studentCounselorEmail', 'r.ochoa@example.edu');
+    return 1; })()`);
+  await clickSel('#studentModal [data-guardian-add]');
+  await evalJs(`(function(){ var list = document.getElementById('guardianList');
+    function set(field, v){
+      var e = list.querySelector('[data-student-field="guardian.' + field + '"]');
+      e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }
+    set('name', 'Elena Van Dyke'); set('relation', 'Mother');
+    set('email', 'elena.vandyke@example.com'); set('phone', '555-0142'); set('language', 'es');
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 200));
+  /* The second class, turned on from the editor — which is the whole of "move a student between
+     classes": the class takes the id, and the record is not touched at all. */
+  await clickSel('#studentClasses [data-student-class]', 1);
+  const twoClasses = await evalJs('window.__student(' + JSON.stringify(maryId) + ')');
+  const afterJoin = await evalJs('window.__ros()');
+  check('a student put into a second class is still one record, with one set of contacts',
+    !!twoClasses && twoClasses.inClasses.length === 2
+      && afterJoin.students === afterRepaste.students
+      && afterJoin.docPairs.filter(p => p[0] === 'Van Dyke' && p[1] === 'Mary').length === 1
+      && twoClasses.guardians.length === 1
+      && twoClasses.guardians[0].email === 'elena.vandyke@example.com'
+      && twoClasses.guardians[0].preferred === true
+      && twoClasses.counselor.email === 'r.ochoa@example.edu',
+    /* Reported rather than dereferenced. A mutation that copies the student instead of referencing
+       her makes this read null, and a check that throws on a defect is a check that took the run
+       down instead of naming it. */
+    twoClasses
+      ? 'in ' + twoClasses.inClasses.length + ' classes, ' + afterJoin.students
+        + ' students in the year, ' + twoClasses.guardians.length + ' guardian(s)'
+      : 'the student the editor was open on is no longer in the document');
+  /* WO-1.7's Out of scope line. `supports` is WO-1.8's, and a stub written now is a shape it has
+     to accept or migrate — so the fields this editor creates are enumerated, not sampled. */
+  check('and the record carries only the fields this work order owns — no supports stub',
+    JSON.stringify(twoClasses.keys) === JSON.stringify(['counselor', 'email', 'first', 'gradYear',
+      'guardians', 'id', 'last', 'nickname', 'notes']),
+    JSON.stringify(twoClasses.keys));
+
+  const otherClass = await openRosterOn(1);
+  check('and the other class shows the same record on its roster rather than a copy of her',
+    otherClass.rosterIds.length === 1 && otherClass.rosterIds[0] === maryId
+      && /Van Dyke, Mary/.test(otherClass.rowNames[0]) && /Mimi/.test(otherClass.rowNames[0])
+      && /^also in /.test(otherClass.rowNotes[0]),
+    JSON.stringify(otherClass.rowNames[0]) + ' · ' + JSON.stringify(otherClass.rowNotes[0]));
+
+  /* ── acceptance 4: off one roster, and nowhere else ── */
+
+  await clickSel('#rosterList .roster-row:nth-child(1) [data-student-remove]');
+  const afterRemove = await evalJs('window.__ros()');
+  const survivor = await evalJs('window.__student(' + JSON.stringify(maryId) + ')');
+  check('removing her from this class takes her off this roster and touches nothing else',
+    afterRemove.rosterIds.length === 0 && !!survivor && survivor.inClasses.length === 1
+      && afterRemove.students === afterJoin.students
+      && survivor.email === 'mary.vandyke@student.example.edu'
+      && survivor.guardians.length === 1
+      && survivor.guardians[0].email === 'elena.vandyke@example.com'
+      && survivor.counselor.email === 'r.ochoa@example.edu',
+    survivor
+      ? 'on this roster now = ' + afterRemove.rosterIds.length + ', still in '
+        + survivor.inClasses.length + ' class, contacts intact'
+      : 'REMOVE DESTROYED THE RECORD: she is off this roster and out of the school year');
+  const backOnFirst = await openRosterOn(0);
+  check('and the class she is still in has her, and all 27, exactly as before',
+    backOnFirst.rosterIds.length === 27 && backOnFirst.rosterIds[0] === maryId
+      && JSON.stringify(backOnFirst.rosterPairs) === JSON.stringify(afterRepaste.rosterPairs),
+    backOnFirst.rosterIds.length + ' on the roster, in the order they were pasted');
+
+  /* ── the teacher's own details, which are the other half of this work order's deliverables ── */
+
+  await closeAll();
+  await clickSel('header [data-teacher-panel]');
+  await evalJs(`(function(){
+    function set(id, v){ var e = document.getElementById(id); e.value = v;
+      e.dispatchEvent(new Event('input', { bubbles: true })); }
+    set('teacherName', 'Ms Toomey'); set('teacherSchool', 'Probe High School');
+    set('teacherEmail', 'toomey@example.edu'); set('teacherAdminEmail', 'dean@example.edu');
+    return 1; })()`);
+  await new Promise(r => setTimeout(r, 200));
+  await clickSel('[data-teacher-cc]');
+  const teacherOff = await evalJs('window.__ros()');
+  check('the teacher\'s five details are written to the year document, the cc flag included',
+    teacherOff.teacher.name === 'Ms Toomey' && teacherOff.teacher.school === 'Probe High School'
+      && teacherOff.teacher.email === 'toomey@example.edu'
+      && teacherOff.teacher.adminEmail === 'dean@example.edu'
+      && teacherOff.teacher.defaultCc === false && teacherOff.ccPressed === 'false'
+      && /will not copy you/.test(teacherOff.ccHint),
+    JSON.stringify(teacherOff.teacher));
+  await clickSel('[data-teacher-cc]');
+  const teacherOn = await evalJs('window.__ros()');
+  check('and the cc toggle says which way it is in words, not only in a fill colour',
+    teacherOn.teacher.defaultCc === true && teacherOn.ccPressed === 'true'
+      && /copied in/.test(teacherOn.ccHint),
+    JSON.stringify(teacherOn.ccHint));
+
+  /* Neither a student's contacts nor the teacher's own name is a UI preference, and src/prefs.js
+     is the only door to localStorage precisely so this stays true. Read out of the browser rather
+     than out of prefs.js, because what is being asserted is what is in the browser. */
+  const localKeys = await evalJs(`(function(){ var out = {};
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i); out[k] = String(localStorage.getItem(k)).slice(0, 300); }
+    return out; })()`);
+  const localBlob = JSON.stringify(localKeys);
+  check('nothing a teacher typed about herself or a student reached localStorage',
+    Object.keys(localKeys).length > 0
+      && Object.keys(localKeys).every(k => k.indexOf('planbook_') === 0)
+      && !/Van Dyke|Mimi|elena\.vandyke|r\.ochoa|Ms Toomey|Probe High/.test(localBlob),
+    Object.keys(localKeys).join(', '));
+
+  /* ── acceptance 5: through a save and a reload ── */
+
+  await closeAll();
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  const rosterReboot = await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_CLASS_READER);
+  await evalJs(INSTALL_ROSTER_READER);
+  const reloaded = await evalJs('window.__student(' + JSON.stringify(maryId) + ')');
+  check('the student, guardian and counselor emails all come back after a save and a reload',
+    rosterReboot && !!reloaded && reloaded.email === 'mary.vandyke@student.example.edu'
+      && reloaded.guardians.length === 1
+      && reloaded.guardians[0].email === 'elena.vandyke@example.com'
+      && reloaded.guardians[0].name === 'Elena Van Dyke'
+      && reloaded.guardians[0].relation === 'Mother'
+      && reloaded.guardians[0].phone === '555-0142'
+      && reloaded.guardians[0].language === 'es'
+      && reloaded.guardians[0].preferred === true
+      && reloaded.counselor.name === 'R. Ochoa'
+      && reloaded.counselor.email === 'r.ochoa@example.edu'
+      && reloaded.nickname === 'Mimi' && reloaded.gradYear === '2029',
+    rosterReboot ? 'student, guardian and counselor addresses all present out of IndexedDB'
+      : 'the loading screen never came down');
+  const reloadedRoster = await openRosterOn(0);
+  check('and so does the whole roster, in its pasted order, with the teacher\'s details',
+    reloadedRoster.rosterIds.length === 27
+      && JSON.stringify(reloadedRoster.rosterPairs) === JSON.stringify(backOnFirst.rosterPairs)
+      && reloadedRoster.teacher.name === 'Ms Toomey'
+      && reloadedRoster.teacher.adminEmail === 'dean@example.edu'
+      && reloadedRoster.teacher.defaultCc === true,
+    reloadedRoster.rosterIds.length + ' students back on the roster, teacher = '
+      + JSON.stringify(reloadedRoster.teacher.name));
+
+  /* The recovery path carries contacts too, which is the half of acceptance 5 that a reload cannot
+     answer: IndexedDB is what iOS evicts, and the file is what survives it. Built rather than
+     restored — the swap has its own checks further up, and this one is about what is in the file. */
+  const inBackup = await evalJs(`(async function(){
+    var f = await window.planbook.backup.buildBackup();
+    var doc = JSON.parse(f.text);
+    var mary = doc.students.filter(function(s){ return s.id === ${JSON.stringify(maryId)}; })[0] || {};
+    return { students: doc.students.length,
+             email: mary.email,
+             guardian: ((mary.guardians || [])[0] || {}).email,
+             counselor: (mary.counselor || {}).email,
+             teacher: (doc.teacher || {}).email }; })()`);
+  check('and the backup file carries the students, their contacts and the teacher\'s address',
+    inBackup.students === reloadedRoster.students
+      && inBackup.email === 'mary.vandyke@student.example.edu'
+      && inBackup.guardian === 'elena.vandyke@example.com'
+      && inBackup.counselor === 'r.ochoa@example.edu'
+      && inBackup.teacher === 'toomey@example.edu',
+    inBackup.students + ' students in the file, all three addresses present');
+
+  /* ── remove and delete are different operations ── */
+
+  /*
+    Gated on the fixture this arc drives, rather than clicking into it and hoping. Everything below
+    taps a specific row and then a specific orphan by id, and clickSel THROWS when it finds nothing
+    — so a defect upstream that shortened the roster would end the run here instead of reporting,
+    taking the touch and overflow sections with it. That is a harness bug wearing an app defect's
+    clothes, which is the whole subject of tools/README.md's CDP section. A missing fixture is one
+    honest failure, and the run goes on.
+  */
+  const priyaId = reloadedRoster.rosterIds[26];
+  /* Gated on the RENDERED rows as well as on the stored ids, because those two can disagree and
+     the arc below taps rows. A roster id naming a student who is no longer in the document renders
+     as nothing at all — src/roster.js calls that the harmless failure and it is — so a defect that
+     destroyed a record while leaving its id on a roster leaves 27 ids and 26 rows, and a gate that
+     counted only ids would wave the arc through into a row that is not there. */
+  if (reloadedRoster.rosterIds.length !== 27 || reloadedRoster.rowNames.length !== 27 || !priyaId) {
+    check('remove leaves the record, delete destroys it, and the confirm counts what goes',
+      false, 'this arc needs the 27-name roster the checks above build; it arrived with '
+        + reloadedRoster.rosterIds.length + ' ids and ' + reloadedRoster.rowNames.length
+        + ' rows, so it was not driven');
+  } else {
+  await clickSel('#rosterList .roster-row:nth-child(27) [data-student-remove]');
+  const orphaned = await evalJs('window.__ros()');
+  check('a student removed from her only class lands in "Not in any class" rather than being deleted',
+    orphaned.rosterIds.length === 26 && orphaned.students === reloadedRoster.students
+      && orphaned.orphanHidden === false
+      && orphaned.orphanControls.some(c => c.name === 'Bhatt, Priya' && c.add && c.del && !c.remove)
+      && orphaned.rowControls.every(c => c.remove && !c.del),
+    'on the roster ' + orphaned.rosterIds.length + ', in the year ' + orphaned.students
+      + ', class-less ' + orphaned.orphanControls.length
+      + ' — Delete is offered there and nowhere else');
+
+  /* Mary, who has contacts, so the confirm has something to count. Removed first because Delete is
+     only offered on a student who is in no class at all — which is the safety this design buys:
+     "wrong class" is one cheap tap and "destroy a person's contacts" is a deliberate one. */
+  await clickSel('#rosterList .roster-row:nth-child(1) [data-student-remove]');
+  await clickSel('#rosterOrphanList [data-student-delete="' + maryId + '"]');
+  const confirmText = await evalJs(`(function(){ var m = document.getElementById('studentDeleteModal');
+    return { open: !!m && !m.classList.contains('hidden'),
+             lead: (document.getElementById('studentDeleteLead')||{}).textContent,
+             facts: (document.getElementById('studentDeleteFacts')||{}).textContent.replace(/\\s+/g,' '),
+             button: (document.getElementById('studentDeleteBtn')||{}).textContent }; })()`);
+  check('the delete confirm names the student and counts the contacts it would destroy',
+    confirmText.open && /Mary Van Dyke/.test(confirmText.lead)
+      && /cannot be undone/.test(confirmText.lead)
+      && /2 contacts — guardian and counselor details/.test(confirmText.facts)
+      && confirmText.button === 'Delete Mary Van Dyke',
+    confirmText.facts.slice(0, 160));
+  const beforeCancelStudent = await evalJs(
+    '(async function(){ await window.planbook.store.flush(); return window.__ros(); })()');
+  await clickSel('[data-student-delete-cancel]');
+  const afterCancelStudent = await evalJs(
+    '(async function(){ await window.planbook.store.flush(); return window.__ros(); })()');
+  const cancelled = await evalJs('window.__student(' + JSON.stringify(maryId) + ')');
+  check('cancelling it writes nothing — she and her contacts are exactly as they were',
+    afterCancelStudent.students === beforeCancelStudent.students
+      && afterCancelStudent.rev === beforeCancelStudent.rev
+      && !!cancelled && cancelled.guardians.length === 1
+      && cancelled.counselor.email === 'r.ochoa@example.edu',
+    'students ' + afterCancelStudent.students + ', rev ' + beforeCancelStudent.rev + ' -> '
+      + afterCancelStudent.rev + ' (nothing written, so rev cannot move)');
+  /* Back onto the roster she goes, which is the repair that "Not in any class" exists for. */
+  await clickSel('#rosterOrphanList [data-student-add-to-class="' + maryId + '"]');
+
+  await clickSel('#rosterOrphanList [data-student-delete="' + priyaId + '"]');
+  await clickSel('[data-student-delete-confirm]');
+  await new Promise(r => setTimeout(r, 300));
+  const deletedStudent = await evalJs('window.__ros()');
+  check('confirming it destroys that one record and leaves every other student alone',
+    deletedStudent.students === beforeCancelStudent.students - 1
+      && (await evalJs('window.__student(' + JSON.stringify(priyaId) + ')')) === null
+      && deletedStudent.rosterIds.length === 26
+      && deletedStudent.rosterIds.indexOf(maryId) === 25,
+    'students in the year ' + beforeCancelStudent.students + ' -> ' + deletedStudent.students
+      + ', on the roster ' + deletedStudent.rosterIds.length);
+  }
+
+  /* The open class is put back where the classes section left it. The overflow section at the
+     bottom measures the tab strip AND the term nav of whatever is open, and the class this section
+     works in is the one the backup section restored — which has no terms at all, so leaving it
+     open would quietly halve what that sweep measures without failing anything. */
+  await closeAll();
+  await clickSel('[data-class-tab]', 1);
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+}
+
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
  *
  * Emulation.setEmulatedMedia's `features` list does not reach `pointer`. It needs touch
@@ -2107,6 +2676,126 @@ if (coarse !== true) {
       await clickSel('[data-class-delete-cancel]');
     }
     if (seam) await evalJs("window.planbook.closeModal('classesModal');1");
+  }
+
+  /*
+    The roster's four screens, for the same reason as the ones above: every control in them is
+    built at open time inside a hidden overlay, where it measures 0x0 and the sweep at the top of
+    this section skips it. This feature has more fields than every other one put together, which is
+    exactly how one of them gets missed — and three of them are shapes nobody sets the height of by
+    accident: a <textarea>, a preview row whose two name fields sit side by side, and the
+    "Contact first" toggle, which is a pill rather than a checkbox precisely because a checkbox is
+    16px of target that no padding makes bigger.
+
+    The wrapper classes the sweep flagged — .roster-list, .roster-form, .student-grid, .guardian-card
+    and the rest — carry no rule and are not measured here, because they are not targets. What is
+    measured is the control INSIDE each of them, which is the WO-1.2 .search-box lesson: a 44px
+    declaration on a wrapper is what a stylesheet review calls compliant and a thumb calls broken.
+  */
+  if (seam && await has('header [data-roster-manage]')) {
+    const closeStack = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
+      + "'rosterPasteModal','rosterModal','teacherModal','classesModal','backupModal',"
+      + "'yearModal','aboutModal'].forEach(function(m){ window.planbook.closeModal(m); });"
+      + " return 1; })()");
+    const measureIn = (id) => evalJs(`(function(){ var m = document.getElementById(`
+      + JSON.stringify(id) + `);
+      if (!m || m.classList.contains('hidden')) return null;
+      return Array.prototype.slice.call(m.querySelectorAll('button, input, textarea'))
+        .filter(function(e){ var r = e.getBoundingClientRect(); return r.width || r.height; })
+        .map(function(e){ var r = e.getBoundingClientRect();
+          return { t:(e.className || e.tagName), w:Math.round(r.width*100)/100,
+                   h:Math.round(r.height*100)/100 }; }); })()`);
+    const report = (list) => 'measured ' + list.length + '; under = '
+      + JSON.stringify(list.filter(m => m.h < 44 || m.w < 44));
+
+    await closeStack();
+    /* Onto the class that actually has a roster, found rather than assumed: the panel renders one
+       row per student, and measuring an empty one would report green having measured the two
+       controls the markup ships with. The overflow section below wants the class the roster
+       section left open, so it is put back at the end of this block. */
+    const fullest = await evalJs(`(function(){
+      var doc = window.planbook.store.getDoc();
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('#classTabBar [data-class-tab]'));
+      var best = -1, n = -1;
+      tabs.forEach(function(t, i){
+        var c = doc.classes.filter(function(x){ return x.id === t.getAttribute('data-class-tab'); })[0];
+        var len = c && c.roster ? c.roster.length : 0;
+        if (len > n) { n = len; best = i; }
+      });
+      return { tab: best, students: n, was: window.planbook.classes.getSelectedClassId() }; })()`);
+    if (fullest.tab >= 0) await clickSel('[data-class-tab]', fullest.tab);
+    await clickSel('header [data-roster-manage]');
+    await new Promise(r => setTimeout(r, 300));
+    const rm = await measureIn('rosterModal');
+    if (!rm || rm.length < 5) {
+      check('the roster panel opened with its rows, so there is something to measure', false,
+        'controls found = ' + (rm ? rm.length : 'panel never opened'));
+    } else {
+      check('every control on the roster panel measures >=44px on a coarse pointer',
+        rm.every(m => m.h >= 44 && m.w >= 44), report(rm));
+    }
+
+    await clickSel('#rosterModal [data-roster-paste]');
+    await new Promise(r => setTimeout(r, 200));
+    await evalJs('(function(){ var b = document.getElementById("rosterPasteBox");'
+      + ' b.value = "Measured, Ann\\nBeta Gamma\\n";'
+      + ' b.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+    await clickSel('[data-roster-preview]');
+    await new Promise(r => setTimeout(r, 200));
+    const pm = await measureIn('rosterPasteModal');
+    if (!pm || pm.length < 6) {
+      check('the paste preview opened with its rows, so there is something to measure', false,
+        'controls found = ' + (pm ? pm.length : 'panel never opened'));
+    } else {
+      check('every control in the paste preview measures >=44px, the per-row swap included',
+        pm.every(m => m.h >= 44 && m.w >= 44), report(pm));
+    }
+    await evalJs("window.planbook.closeModal('rosterPasteModal');1");
+
+    /* The first roster row's student, with a guardian card open: the card is the only place in
+       this feature where a toggle, a delete and five fields share one box.
+
+       Guarded rather than clicked straight, because there is no student to open when the roster
+       section above ended on a failure — and clickSel throws when it finds nothing, which would
+       take the whole run down at the point where a report is what is wanted. Failing to have a
+       fixture is a failed check here, never a crash and never a silent pass. */
+    const editable = await has('#rosterList .roster-row [data-student-edit]');
+    if (!editable) {
+      check('the student editor opened with a guardian card, so there is something to measure',
+        false, 'no student on the open class\'s roster to open an editor from');
+    } else {
+      await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
+      await new Promise(r => setTimeout(r, 200));
+      const noGuardian = await evalJs(
+        "document.querySelectorAll('#guardianList .guardian-card').length === 0");
+      if (noGuardian) await clickSel('#studentModal [data-guardian-add]');
+      await new Promise(r => setTimeout(r, 200));
+      const sm = await measureIn('studentModal');
+      const cards = await evalJs("document.querySelectorAll('#guardianList .guardian-card').length");
+      if (!sm || sm.length < 10 || !cards) {
+        check('the student editor opened with a guardian card, so there is something to measure',
+          false, 'controls found = ' + (sm ? sm.length : 'panel never opened')
+            + ', guardian cards = ' + cards);
+      } else {
+        check('every control in the student editor measures >=44px, the notes box and guardian card included',
+          sm.every(m => m.h >= 44 && m.w >= 44), report(sm));
+      }
+    }
+
+    await closeStack();
+    await clickSel('header [data-teacher-panel]');
+    await new Promise(r => setTimeout(r, 300));
+    const tp = await measureIn('teacherModal');
+    if (!tp || tp.length < 5) {
+      check('the teacher panel opened, so there is something to measure', false,
+        'controls found = ' + (tp ? tp.length : 'panel never opened'));
+    } else {
+      check('every control on the teacher panel measures >=44px on a coarse pointer',
+        tp.every(m => m.h >= 44 && m.w >= 44), report(tp));
+    }
+    await closeStack();
+    if (fullest.was) await evalJs('window.planbook.classes.selectClass('
+      + JSON.stringify(fullest.was) + ');1');
   }
 
   if (await has('[data-backup-panel]')) {

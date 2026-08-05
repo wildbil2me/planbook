@@ -63,20 +63,35 @@ So probe with a real write, under the real flags, into an absolute temp path:
 ```powershell
 $probe = Join-Path $env:TEMP "codex-smoke-$(Get-Random)"
 New-Item -ItemType Directory $probe | Out-Null
+git -C $probe init --quiet          # REQUIRED — see below
 'Create a file named ok.txt containing the word ok. Do nothing else.' |
   & codex exec --cd $probe --sandbox workspace-write -
 if (Test-Path (Join-Path $probe 'ok.txt')) { 'SMOKE OK' } else { 'SMOKE FAILED' }
 Remove-Item $probe -Recurse -Force
 ```
 
+**The `git init` is load-bearing and was missing until 2026-08-05.** Codex refuses to run outside a
+trusted directory, and a bare temp folder is not one — so the probe died with `Not inside a trusted
+directory` before exec was ever reached, and reported `SMOKE FAILED` for a runner it had never
+tested. **A probe that cannot pass re-routes every work order forever while reporting a healthy
+runner as broken**, and its output is indistinguishable from a real failure. If you ever change this
+block, verify the probe can still report `SMOKE OK` on a working runner before trusting a
+`SMOKE FAILED` from it.
+
 `SMOKE FAILED`, a non-zero exit, or an empty file means **re-route to Claude before writing
 anything**, and say so in the routing sentence. The brief does not change; only who receives it does.
+Distinguish the two failures in your report: *the probe could not run* is a harness bug you should
+fix; *the probe ran and Codex wrote nothing* is the runner.
 
 Record a failure as a **transient condition, not a standing fact about the machine** — re-probe next
 dispatch. Do not raise `--sandbox`; that is the user's call and it would not have helped. Do not
-retry the same command inside the same run. **Codex is 0 for 2** (WO-1.4, WO-1.6), both at exec
-time; if it fails a third, propose in your report that `ROUTING.md`'s pre-routed table move to
-Claude until one run lands.
+retry the same command inside the same run.
+
+**Codex is 0 for 3** (WO-1.4, WO-1.6, WO-1.7), all three at exec time. The teacher took the decision
+on 2026-08-05: `ROUTING.md`'s pending Codex rows are **suspended to Claude until one Codex run
+lands**. Keep probing anyway on any row whose rubric still derives to Codex — the suspension lifts
+itself the moment a probe writes a file, and a `SMOKE OK` is the one thing that ends it. Say in your
+report when a probe passes, even though you still route to Claude that dispatch.
 
 ### 3. Write the brief
 

@@ -13,19 +13,91 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Added
+
+- **The roster — paste a class list, and keep the contacts that outreach will need.** The school's
+  SIS has no usable export, so a roster arrives as text on a clipboard. That is the supported path
+  rather than a fallback, and the paste box is built for what real paste sources actually contain:
+  `Last, First` and `First Last` mixed in one list, tabs, ragged whitespace, trailing blank lines.
+  The format is detected **per line**, not per paste.
+
+  **The preview is the feature, not a confirmation step.** A per-line guess between `Van Dyke, Mary`
+  and `Mary Van Dyke` is going to be wrong sometimes — both are real names and both are real
+  formats — so the preview shows the split it chose as separate, editable first and last values.
+  A wrong guess is caught before it commits, by the one person who knows which is the surname. Any
+  row can be swapped with a single control, or typed over, or skipped. A count alone would have
+  looked like it implemented this and would have caught nothing.
+
+  **Re-pasting last week's list is a no-op, not a doubled roster.** Every preview row is one of
+  three things and says which: new to the year, already in the year but not this class, or already
+  on this class's roster. The third is off by default. The middle one is the case that matters
+  structurally — a student already in the document is *linked* to the second class rather than
+  copied into it, so a student in two classes stays one record with one set of contacts, and
+  removing them from one class leaves the other untouched. That is a property of how students are
+  stored, not a de-duplication pass afterwards.
+
+  Each student carries nickname, graduation year, email and notes; repeatable guardians with
+  relation, email, phone, language and a *contact first* flag; and a counselor. Phase 5's audience
+  picker reads all of it from here, which is why it lives on the roster rather than waiting for the
+  phase that sends the mail. Teacher settings — name, school, email, admin email, default-cc —
+  land alongside it.
+
+  Accommodations are deliberately **absent rather than stubbed**, and WO-1.8 adds them. A stub for
+  the most sensitive data in the app is a shape someone later has to migrate, and a placeholder is
+  exactly the kind of thing that gets wired to a merge field by accident.
+
 ### Changed
 
-- **`verify-shell.mjs` is 2,232 lines against a soft cap of ~950, and the conversation that owes is
-  overdue.** `plans/verification-tooling.md` says crossing the cap is "a conversation, not a
-  refactor" and that the number is "a prompt to look, not a budget to spend." Nobody has looked since
-  WO-1.4. The file went 851 → 1,364 at WO-1.5, → 1,429 at the per-year nag fix, and **1,429 → 2,232
-  at WO-1.6** — the largest single jump it has taken, and larger than the whole file was three work
-  orders ago. Splitting is still forbidden by a stronger rule that is still load-bearing, so the
-  options are raise, trim, or retire a control that has not bound in three consecutive work orders.
-  Recorded rather than decided; the number in that document was itself stale, which is how a cap
-  stops being one.
+- **Codex is 0 for 3, and its pending work orders are suspended to Claude until one run lands.**
+  WO-1.4, WO-1.6 and WO-1.7 all routed to Codex correctly by the rubric in
+  `plans/work-orders/ROUTING.md`, and all three died at exec time on the same missing sandbox
+  helper. The WO-1.7 failure was the worst-behaved of the three: **`codex exec` exited zero having
+  written nothing**, which is a runner that failed and then reported success. The rows are marked
+  suspended and keep the reasoning that put them in the Codex column, because the rubric is not what
+  failed and editing it to match a broken runner would lose the only record of why those routes were
+  right. The orchestrator still probes every dispatch, so the suspension lifts itself the first time
+  a probe writes a file.
+
+- **The Codex smoke probe was itself broken, and would have condemned a healthy runner forever.**
+  It created a bare temp directory and ran `codex exec` in it — but Codex refuses to run outside a
+  trusted directory, so it died with `Not inside a trusted directory` before exec was reached and
+  reported `SMOKE FAILED` for a runner it had never actually tested. Its output was
+  indistinguishable from the three real failures above. The probe now runs `git init` first. This is
+  the third variant of this failure mode in `plans/dispatch-retro.md`, and the general form is worth
+  keeping: **a gate that cannot pass is worse than no gate, because it produces confident wrong
+  answers instead of obvious silence.**
+
+- **`verify-shell.mjs` is 2,921 lines against a soft cap of ~950, and the conversation that owes is
+  now two work orders overdue.** `plans/verification-tooling.md` says crossing the cap is "a
+  conversation, not a refactor" and that the number is "a prompt to look, not a budget to spend."
+  Nobody has looked since WO-1.4. The file went 851 → 1,364 at WO-1.5, → 1,429 at the per-year nag
+  fix, → 2,232 at WO-1.6, and **2,232 → 2,921 at WO-1.7**. It is now three times the cap, and the
+  last two work orders each added more than the whole file contained at WO-1.4. Splitting is still
+  forbidden by a stronger rule that is still load-bearing, so the options remain raise, trim, or
+  retire a control that has not bound in several consecutive work orders. Recorded rather than
+  decided, for the second time — a cap that is only ever recorded is a cap that has already stopped
+  being one, and that is the actual finding here.
 
 ### Fixed
+
+- **A save inside a modal was invisible, so the app answered "did that save?" with silence.** Every
+  student and guardian edit happens in a modal; modals sit at `z-index: 1000` and the save indicator
+  sat at `999` — and its only live mount was inside the WO-1.2 component shelf, never the real
+  header. Change a guardian's email, close the panel with the ✕, and nothing anywhere confirmed it
+  landed.
+
+  Nothing was ever at risk: the store debounces and then flushes a pending edit when the page stops
+  being visible, and the desk half proves it on disk within 3ms of that, with 800ms still left on
+  the debounce. But an app a teacher trusts with a term of grades cannot be silent about it, and
+  "probably saved" is a thing she would reasonably check by re-opening the panel every time.
+
+  The live indicator now floats above the modal layer at `1050`, with `pointer-events: none` — at
+  rest it is a fully transparent chip occupying a screen corner, and without that it would have
+  silently eaten taps there. This is a rung Roll Call!'s shared z-index ladder does not have, and it
+  is marked in the stylesheet as a deliberate divergence so a later sync reads it as intent rather
+  than drift. **WO-1.10 still owns giving the indicator a real home in the header**; this fixes the
+  stacking, not the mount. Found on the WO-1.7 iPad sitting, by using the app rather than by testing
+  it.
 
 - **Four defects in the class bar and the term editor, found by the first iPad sitting and by the
   checks written for it.** Two were visible on the tablet; two were not, and came out of checks
