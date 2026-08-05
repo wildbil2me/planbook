@@ -1012,7 +1012,7 @@ export function removeAccommodation(indexValue) {
 */
 export function supportDateCommitted(input) {
   const student = findStudent(editingId);
-  if (!student || input.value) return;
+  if (!student || input.value || !supportsVisible()) return;
   const supports = supportsOf(student);
   const had = hasSupports(student);
   /* Conditional for the same reason the term version is: not saving the document over an identical

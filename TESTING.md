@@ -489,11 +489,13 @@ run by hand on iPadOS in one sitting and all three passed, including the WebKit 
 the new `reviewDate` field, which mirrors the WO-1.6 fix on `classes.js`'s term date and had not
 been exercised on hardware before this sitting.*
 
-*One thing carried forward rather than fixed here: `supportDateCommitted()` — the review-date
-write path — is the one of the four support write paths that does not consult `supportsVisible()`
-before writing. Harmless today because that function is hardcoded to always allow, but it becomes
-a silent data-loss path the moment WO-1.9's presentation mode makes it return `false`. That is a
-WO-1.9 line, not a defect in this one.*
+*One gap was found after the tick and closed the same day: `supportDateCommitted()` — the
+review-date write path — was the one of the four support write paths that did not consult
+`supportsVisible()` before writing. Harmless at the time because that function was hardcoded to
+always allow, but it would have become a silent data-loss path the moment WO-1.9's presentation
+mode made it return `false`. Fixed 2026-08-05 by adding the same guard the other three paths
+already carry; `verify-shell.mjs` stayed 184/184 after, since no check yet exercises
+`supportsVisible() === false` — that harness arrives with WO-1.9 itself.*
 
 ---
 
