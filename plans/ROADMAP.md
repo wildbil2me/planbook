@@ -49,7 +49,7 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | Phase | What | Status | Progress |
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
-| 1 | Shell, store, roster | ⬜ NOT STARTED | 0/12 `[░░░░░░░░░░] 0%` |
+| 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
 | 2 | Attendance | ⬜ NOT STARTED | 0/11 `[░░░░░░░░░░] 0%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
@@ -57,7 +57,7 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **4/77 `[░░░░░░░░░░] 5%`** |
+| | | **Overall** | **15/77 `[█░░░░░░░░░] 19%`** |
 
 ---
 

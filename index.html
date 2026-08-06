@@ -57,6 +57,16 @@
   alternative is a second copy of the app's own resolution logic living in the harness. Its
   shelf-only members are what went.
 
+  WO-1.11 put a second control on the backup panel: "Back up all N years", in the markup hidden,
+  because a teacher who has never rolled over must never see it. It was built first as one file per
+  school year, downloaded in sequence — and failed on a real installed iPad, where the OS's own
+  "Open in…" sheet is a context switch the page's JS does not resume after, so the loop could never
+  reach file two. It now writes one zip holding every year instead: one download, one hand-off, no
+  loop to survive — src/backup.js and src/zip.js state that decision and its history at length.
+  Restore still only ever reads one loose JSON file, whether it came from the single-year button or
+  from unzipping this one. Nothing about the nag strip above changed: it still asks about the year
+  that is open.
+
   Deliberately still absent, so that nothing here has to be un-built later:
     - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
 
@@ -1048,11 +1058,27 @@
       <div class="modal-section-label">Download a backup</div>
       <div class="backup-actions">
         <button class="class-action-btn primary" id="backupDownloadBtn" data-backup-download>Download backup</button>
+        <!-- WO-1.11's control, and it is hidden here rather than rendered conditionally because
+             src/backup.js has to count the years in IndexedDB before it can be labelled, and this
+             panel is also the exit from a boot that failed — it opens without waiting for the
+             store. It stays hidden unless there is more than one year on the device, so a teacher
+             who has never rolled over never meets it. backup.js rewrites the label with the count
+             in the same call that reveals it — the words here are the fallback, true but uncounted,
+             so that a button with no accessible name can never reach the screen. -->
+        <button class="class-action-btn hidden" id="backupDownloadAllBtn"
+                data-backup-download-all>Back up every year</button>
       </div>
+      <!-- The one sentence that says what "Back up all N years" hands over: one zip file, which
+           unzips to a backup per year that restores on its own. It is not decoration — a download
+           a teacher cannot feed straight back into restore is one she is entitled to be
+           suspicious of, and this is where that is answered. Filled and unhidden with the button
+           above. -->
+      <p class="backup-all-note hidden" id="backupAllNote"></p>
       <p class="backup-last" id="backupLast"></p>
       <!-- Filled and unhidden by src/backup.js only when a year on this device has never been
            downloaded. A teacher with one year never sees it; a teacher part-way through a
-           rollover needs to be told that this button backs up the year she has open. -->
+           rollover needs to be told that the primary button backs up the year she has open, and
+           which control writes the others out. -->
       <p class="backup-other-years hidden" id="backupOtherYears"></p>
 
       <div class="backup-notice">

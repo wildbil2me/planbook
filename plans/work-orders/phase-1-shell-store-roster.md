@@ -499,7 +499,7 @@ roadmap is explicit: build the glance page before the things it glances at and y
 
 ## WO-1.11 — Back up every year in one tap
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.5
+**Ship** — · **Status** ✅ DONE — 2026-08-05 · **Size** S · **Depends on** WO-1.5
 **Not a go-live blocker.** Added 2026-08-04, out of WO-1.5's verification.
 
 **Why it exists.** WO-1.5's download backs up the **open** year, because the open document is what
@@ -535,17 +535,56 @@ first, and the iPad decides whether it survives. Do not widen restore without sa
 The unit of recovery is the year, deliberately (`docs/data-model.md`).
 
 **Acceptance**
-- [ ] With two years on the device, one tap produces a readable backup of both.
-- [ ] The control is absent with only one year, and no teacher who never rolls over ever sees it.
-- [ ] Each year written gets its own `lastBackupAt` stamp; the nag is down for both afterwards.
-- [ ] Restore still accepts every file this produces, and the WO-1.5 refusal checks still pass
+- [x] With two years on the device, one tap produces a readable backup of both.
+- [x] The control is absent with only one year, and no teacher who never rolls over ever sees it.
+- [x] Each year written gets its own `lastBackupAt` stamp; the nag is down for both afterwards.
+- [x] Restore still accepts every file this produces, and the WO-1.5 refusal checks still pass
       unchanged.
-- [ ] 👤 On an installed iPad: every file lands in Files, and the run is not silently truncated to
+- [x] 👤 On an installed iPad: every file lands in Files, and the run is not silently truncated to
       the first year by Safari's download handling.
 
 **Traps** — A "back up everything" button that quietly writes one year is worse than no button,
 because it answers the question the nag was asking. If sequential downloads are cut short on iOS,
 say so on screen rather than stamping the years that never landed.
+
+*Desk pass ticked 2026-08-05: `verify-shell.mjs` **224 of 224, 0 skipped**, headless Chrome only.
+Lines 2-4 hold. Line 1 and line 5 were then run by hand on an installed iPad the same day and
+**failed** — not a truncation the harness's timing model anticipated, but a hard stop after the
+first file. Mechanism, confirmed with the teacher: on an installed home-screen PWA, the native
+"Open in…" sheet that iOS shows for each `<a download>` is a full context switch away from the page,
+and returning from it does not resume the JS that was mid-loop — the second and third
+`handToBrowser()` calls never run, and neither does the code that would have shown "Saved 1 of 3."
+No delay between files fixes this; the interruption happens on leaving the page, not after a
+timeout, so the one-file-per-download-event architecture this work order tried first cannot produce
+more than one file per tap on the device that matters. The good half held anyway:
+`recordBackupFor()` only runs after its own file's hand-off, so the years that never got a file were
+never stamped and the nag stayed honest — confirmed on the device, not just in the harness.
+**Correction round dispatched 2026-08-05**: bundle every year into a single `.zip` (one file, one
+download, one "Open in" dialog, no loop to survive a reload). Restore is unaffected either way — it
+only ever reads one loose JSON file, whether that file came from the single-year button or from
+unzipping this one.*
+
+*The zip rebuild landed 2026-08-05 (`src/zip.js`, hand-written, no dependency — CRC-32 table,
+local file headers, central directory, end-of-central-directory record, all by hand). Survived a
+machine crash mid-round with the app code intact; the implementer re-verified from scratch after
+resuming. `verify-shell.mjs` **224 of 224, 0 skipped**; `wo-sweep.mjs` 10 passed, 1 pre-existing
+unrelated review. Independently cross-validated by the verifier against three readers sharing no
+code with this repo — Python `zipfile`, `tar.exe`, .NET `ZipArchive` — all extracting byte-identical
+JSON with every CRC verified, plus a negative control (a corrupted byte injected and reverted)
+confirming the harness genuinely rejects a bad archive rather than passing by construction. One
+stale decision-record paragraph in `index.html`'s header comment (still describing the abandoned
+sequential-download shape) was caught by the verifier and corrected. Restore, the single-year
+button, and the stamping/nag behavior are all confirmed untouched or correctly adapted to the new
+single-hand-off shape. `sw.js` `CACHE` bumped `v13` → `v14` for the genuinely new `src/zip.js` file,
+confirmed present in `SHELL`. Desk verification is done; lines 1 and 5 stayed unticked pending a
+second real-hardware session.*
+
+*Retest run 2026-08-05 on the installed iPad, against the zip build: one tap produced exactly one
+"Open in…" sheet for the zip; the status line naming the file was on screen after saving; the zip
+unzipped in Files to N loose per-year JSON files; one of those files reached restore's "Replace
+`<year>`" confirm; the nag was down for every year, not just the one on screen. All five acceptance
+lines close. The architecture this work order shipped with is the zip, not the sequential-download
+shape it started with — the reversal and why is recorded above rather than edited away.*
 
 ---
 

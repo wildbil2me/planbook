@@ -26,6 +26,7 @@
       data-year-create                on a <form>: creates the year typed into it
       data-backup-panel               fills the backup panel, then opens it
       data-backup-download            downloads the open year document as a file
+      data-backup-download-all        downloads every year on the device, in one zip file
       data-backup-file                on an <input type=file>: reads the chosen backup
       data-backup-drop                on a container: accepts a dropped backup file
       data-backup-confirm             carries out the restore the confirm dialog describes
@@ -221,6 +222,10 @@ document.addEventListener('click', (e) => {
   if (backupPanel) { backup.openBackupPanel(backupPanel); return; }
 
   if (e.target.closest('[data-backup-download]')) { backup.downloadBackup(); return; }
+  /* Not awaited, like the one above it: it reports into the panel's own status line and disables
+     its own control while it runs, and there is nothing here to chain onto the end of it —
+     a backup writes a file and changes no screen but that panel. */
+  if (e.target.closest('[data-backup-download-all]')) { backup.downloadAllBackups(); return; }
   if (e.target.closest('[data-backup-cancel]')) { backup.cancelRestore(); return; }
   if (e.target.closest('[data-backup-confirm]')) {
     /* A restore replaces the whole document, so the class bar and the term nav are describing a

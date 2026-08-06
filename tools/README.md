@@ -115,7 +115,14 @@ worker.
 
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
 WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at
-WO-1.8, 201 at WO-1.9.** Update
+WO-1.8, 201 at WO-1.9, 222 at WO-1.11, 224 once WO-1.11's correction round added the fixture that
+would have caught its one defect — fifteen of those last are WO-1.11's own, and the rest came
+with WO-1.10, whose own figure was never written down here. Still 224 after WO-1.11's *second*
+correction round on 2026-08-05, and that flat number is the interesting part: the iPad rejected
+one-download-per-year outright, so "Back up all N years" was rebuilt on a hand-written zip
+(`src/zip.js`) and six of those fifteen checks were rewritten around the new mechanism —
+same claims, same count, different evidence, including a minimal ZIP reader in this harness
+because Node has none and this repo will not take a dependency to get one.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
@@ -124,7 +131,7 @@ backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash`
 WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
 thirty seconds.)*
 
-### Driving a browser over CDP — eight traps, all of which first look like app defects
+### Driving a browser over CDP — nine traps, all of which first look like app defects
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
@@ -215,6 +222,24 @@ down here. That is the entire reason this section exists.
    and a foreign key is printed rather than ignored, so a future red still shows what was in the
    store. If the strict assertion goes red again on a clean environment, that is real signal, not
    noise to route around a second time.
+
+9. **A download check that diffs file NAMES reads a second run as a run that wrote nothing.** The
+   backup file's name carries the year and the date, so tapping "Back up all 3 years" twice in one
+   sitting writes the same three names — and whether the browser uniquifies them, overwrites them,
+   or refuses a second burst of downloads from the same page is the browser's business. Found at
+   WO-1.11: the check that proves an unreadable year is skipped ran the loop a second time and
+   reported `0 file(s)` on a build whose status line, stamps and directory were all correct. Answer
+   what "this run wrote it" means with a new name **or a moved mtime**, and keep the assertion on the
+   file the app decided about — Chrome's own multiple-download blocking is the same class of behavior
+   iPadOS is suspected of, and a check that requires the browser to cooperate twice is a check that
+   goes red about the environment (trap 8).
+
+   **It outlived the architecture that produced it.** That control now writes ONE zip file per tap
+   rather than one .json per year, and the trap is unchanged: the archive's name carries the date
+   too, so a second tap in the same sitting still writes the same name. What did get better is the
+   second half — with one hand-off per tap, the browser only has to cooperate once, so the second
+   run's check can assert what is *inside* the archive instead of narrowing itself to the one file
+   the app decided about. Keep the mtime rule; the narrowing was a cost of the old shape.
 
 ### Two rules that follow from those
 

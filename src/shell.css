@@ -849,6 +849,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    and medical data, and the two-column compare in the confirm, which is what turns "restore"
    from a gesture into a decision. */
 .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* The sentence under "Back up all N years" (WO-1.11). Quiet grey like `.backup-last` rather than
+   the amber `.backup-other-years` gets: it explains what a control does, it is not asking for
+   anything. Tighter to the buttons than `.backup-last` is, because it belongs to them. */
+.modal-body .backup-all-note { font-size: 11px; color: #8a9bb0; line-height: 1.5; margin-top: 6px; }
 .modal-body .backup-last { font-size: 11px; color: #8a9bb0; margin-top: 8px; }
 /* Louder than .backup-last and quieter than .backup-notice: it names something not done yet,
    which is a nudge rather than the standing warning about what the file holds. Same amber the
@@ -1034,6 +1038,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .backup-file { min-height: 44px; font-size: 13px; }
   .backup-file::file-selector-button { min-height: 44px; padding: 8px 14px; font-size: 12px; }
   .modal-body .backup-last { font-size: 12px; }
+  /* Prose, not a control — the 44px it sits next to belongs to `.class-action-btn` above, which
+     both backup buttons are. This is here for the same reason every other line in this block is:
+     11px is unreadable at arm's length on a tablet. */
+  .modal-body .backup-all-note { font-size: 12px; }
   .modal-body .backup-other-years { font-size: 13px; }
   .modal-body .backup-status { font-size: 13px; }
   .modal-body .restore-note { font-size: 13px; }

@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Added
+
+- **WO-1.11 — back up every year on the device in one tap, not just the open one.** A second
+  control on the backup panel, shown only when there's more than one year, downloads a single
+  `.zip` holding one JSON file per school year — hand-written zip writer (`src/zip.js`), no
+  dependency. Each year gets its own `lastBackupAt` stamp, so backing up one year no longer
+  silences the nag for another. A year a newer Planbook build wrote gets no file, no stamp, and is
+  named on screen with the reason instead of failing silently. The single-year download stays the
+  fast path for the common case and is untouched. **Shipped as a zip, not the original design.**
+  The first build downloaded one file per year in sequence; it failed completely on a real
+  installed iPad, because iOS's native "Open in…" sheet is a context switch the page's JS does not
+  resume after, so a download loop can never reach its second file. The single-hand-off zip design
+  survived the same hardware test the sequential version failed.
+
 ### Changed
 
 - **`plans/verification-tooling.md` corrected two claims WO-1.10 proved wrong, in place rather than

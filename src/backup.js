@@ -38,6 +38,7 @@ import {
   readStoredDocument, restoreDocument, SCHEMA_VERSION,
 } from './store.js';
 import { openModal, closeModal } from './modal.js';
+import { zipStored } from './zip.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
 import { refreshYearButton } from './year-picker.js';
@@ -51,6 +52,8 @@ const OTHER_YEARS_ID = 'backupOtherYears';
 const DROP_ID = 'backupDrop';
 const FILE_ID = 'backupFile';
 const DOWNLOAD_ID = 'backupDownloadBtn';
+const DOWNLOAD_ALL_ID = 'backupDownloadAllBtn';
+const ALL_NOTE_ID = 'backupAllNote';
 
 /* Seven days, the number the work order names, and it is the same seven as the iOS eviction
    window rather than a coincidence — a backup older than the window that erases the browser is
@@ -61,6 +64,11 @@ const NAG_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
    files, it is a guard against reading a 2 GB video into a string because it landed on the drop
    target by accident, which on an iPad reads as the app freezing. */
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
+
+/* True while downloadAllBackups() is building the archive. Two runs at once would hand the
+   browser two copies of it and stamp each year twice; the button is disabled for the duration,
+   and this is the half of that which does not depend on a button existing. */
+let runningAll = false;
 
 /* The file that has been parsed and validated and is waiting for the teacher to say yes.
    Nothing else in this module writes, so a stale value here can do nothing on its own: only
@@ -146,11 +154,30 @@ export async function buildBackup() {
   if (!doc) {
     throw new Error('There is no school year open, so there is nothing to back up yet.');
   }
+  return fileFor(doc);
+}
+
+/* The name and the text, from a document already in hand. Split out of buildBackup() at WO-1.11,
+   which writes out every year on the device: every year after the first is a year this browser
+   does not have open, so the part that turns a document into a file cannot be the part that
+   decides which document that is.
+
+   It is also what names the entries INSIDE the archive downloadAllBackups() builds, deliberately
+   and not incidentally — a teacher who unzips it gets exactly the files she would have got by
+   tapping the one-year button once per year, same name and same bytes. */
+function fileFor(doc) {
   return {
     year: doc.year,
     name: 'Planbook ' + doc.year + ' backup ' + dateStamp(new Date()) + '.json',
     text: JSON.stringify(doc, null, 2),
   };
+}
+
+/* The archive's own name. Same "Planbook … backup <date>" family as the per-year files, so the
+   whole set sorts together in a Files listing and reads as one thing; "all years" rather than a
+   count, because the count is on the button and a name is a thing she reads next June. */
+function zipNameFor() {
+  return 'Planbook all years backup ' + dateStamp(new Date()) + '.zip';
 }
 
 /* ────────────────────────── when each year was last written out ──────────────────────────
@@ -178,14 +205,13 @@ function recordBackupFor(year) {
    listYears() reads keys with getAllKeys and opens no documents, so asking this question costs
    nothing and, more to the point, cannot be answered with "and it has 3 students in it": that
    would need the document, and the panel has no business loading three other years of rosters
-   to render a sentence. */
-async function yearsNeverBackedUp() {
-  let years = [];
-  try {
-    years = await listYears();
-  } catch (e) {
-    return [];
-  }
+   to render a sentence.
+
+   The list is passed in rather than read here as of WO-1.11: the panel asks two questions of the
+   same list — which years have never been written out, and whether there is more than one year at
+   all — and two reads of the store to answer one question about one list is how two answers on
+   one screen drift apart. */
+function yearsNeverBackedUp(years) {
   const times = backupTimes();
   return years.filter((y) => !times[y]);
 }
@@ -197,7 +223,25 @@ async function yearsNeverBackedUp() {
 
   The object URL is revoked on the next turn rather than immediately — Safari has historically
   cancelled the download if the URL is revoked in the same task as the click.
+
+  Its own function since WO-1.11, and it is deliberately the ONLY one: the control that writes
+  out every year hands over its archive through exactly the mechanism the one-year button was
+  proven with on the teacher's own iPad. That is why it takes a ready-made `blob` as an
+  alternative to `text` rather than growing a second copy of these six lines for the zip — the
+  bytes and the media type differ, and nothing else about handing a file to iOS may.
 */
+function handToBrowser(file) {
+  const url = URL.createObjectURL(
+    file.blob || new Blob([file.text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 export async function downloadBackup() {
   let file;
   try {
@@ -207,26 +251,229 @@ export async function downloadBackup() {
     return false;
   }
 
-  const url = URL.createObjectURL(new Blob([file.text], { type: 'application/json' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = file.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  handToBrowser(file);
 
   /* Recorded as "she was offered the file", against the year that is actually in it — never the
-     year on screen, which for a download are the same thing today and would stop being one the
-     moment anything backs up a year it does not have open. A page is never told whether the save
-     dialog was confirmed, and the alternative — never clearing the nag — is a strip that is
-     permanent and therefore invisible by October. See PREF_DEFAULTS.lastBackupAt. */
+     year on screen. For this button the two are the same thing; for downloadAllBackups() below
+     they stopped being one, which is why the stamp was written this way before there was anything
+     that needed it. A page is never told whether the save dialog was confirmed, and the
+     alternative — never clearing the nag — is a strip that is permanent and therefore invisible
+     by October. See PREF_DEFAULTS.lastBackupAt. */
   recordBackupFor(file.year);
   refreshLastBackupLine();
   refreshBackupNag();
   showStatus('Saved ' + file.name + '. Keep it somewhere only you can reach — it holds '
     + 'everything, including the support details on your roster.', 'ok');
   return true;
+}
+
+/* ───────────────────────── every year on the device, in one tap ─────────────────────────
+ *
+ * WO-1.11. The one-file button above backs up the year that is OPEN, because the open document is
+ * what getDoc() returns. That is right for one year and wrong at a rollover: a teacher holding
+ * 2026-2027 for reporting she has not finished while she teaches 2027-2028 takes a backup, sees
+ * the date move, and reasonably reads it as "Planbook is backed up" with one of her two years on
+ * disk. The per-year timestamp and the line that names an un-downloaded year closed the silent
+ * half of that on 2026-08-04; this is the convenience, and the convenience is what makes it
+ * actually get done.
+ *
+ * ONE ZIP HOLDING ONE JSON PER YEAR, and the route to that shape is worth writing down because it
+ * looks like the thing the work order told this work order not to do.
+ *
+ * The work order named two shapes — one file per year in sequence, or one artifact holding an
+ * array of year documents — and said to try the sequential one first, because restore then does
+ * not change at all. That is what shipped on 2026-08-05. **The iPad refused it**, and not by
+ * degrees: on the installed home-screen PWA a download opens the native "Open in…" sheet, which
+ * is a full context switch away from the page, and returning from it does not resume the JS that
+ * was in flight. The loop's second hand-off never happened and neither did the status line after
+ * it. One file, no message, and a nag still up for the year that never arrived — which is at
+ * least the failure the Traps line asked for, since nothing was stamped that was not written. No
+ * delay fixes it: the page goes away at the first hand-off, not when a timer expires. One tap in
+ * an installed PWA gets ONE download event, structurally.
+ *
+ * So the N files go inside one download event. src/zip.js writes the archive out of raw bytes —
+ * no library, no build step — with one STORED entry per year, named exactly what the one-year
+ * button would have named it. What that buys is the property the original decision was protecting:
+ * RESTORE STILL DOES NOT CHANGE. It has never seen a zip and still does not; the teacher taps the
+ * archive in Files, iOS unpacks it, and what she is left with is loose .json files that
+ * parseBackup() has read since WO-1.5. The confirm still names one outgoing year and one incoming
+ * year, and the unit of recovery is still the year (docs/data-model.md). The array-of-year-
+ * documents artifact — the shape that would have taught the most destructive path in the app a
+ * second top-level shape — was NOT built, and is still the thing that would want its own
+ * acceptance lines.
+ *
+ * The one-year button above is untouched by all of this. It is hardware-proven, it is the fast
+ * path for the common case, and it stays exactly one download of exactly one file.
+ */
+
+/* The document to write for one year, or the reason there will not be a file for it.
+ *
+ * THE OPEN YEAR COMES FROM MEMORY, and that is not a shortcut. flush() resolves even when the
+ * write failed (src/store.js), so the record on disk can be one edit behind the document on
+ * screen — and the file has to carry what the teacher typed, which is exactly what buildBackup()
+ * promises for the same year.
+ *
+ * EVERY OTHER YEAR IS READ WITHOUT BEING OPENED. readStoredDocument() is a raw get: it does not
+ * make the year current, does not touch `openYear`, and does not migrate. Taking a backup must not
+ * move the teacher off the class she was looking at, so openYear() is deliberately not called here.
+ *
+ * WHAT AN OFF-VERSION RECORD PRODUCES, decided rather than inherited. The check is one call to
+ * parseBackup() — the code on the other side of the round trip — on the very text that would be
+ * written. Whatever a restore would refuse, this refuses to write, which is what makes "restore
+ * accepts every file this produces" true by construction rather than by inspection. A year this
+ * build cannot place (a document from a NEWER Planbook is the only such case that exists today,
+ * since MIGRATIONS is empty and SCHEMA_VERSION is 1) is named on screen and left unstamped: a file
+ * the teacher's own app will not read is not a way back, and it would have answered the nag anyway.
+ * The stored bytes are what goes in the file — a document from an OLDER schema is written as it
+ * sits, not migrated on the way out, because parseBackup() walks the ladder on the way IN and says
+ * so in the confirm, and a copy that has been rewritten by a migration the teacher never saw run
+ * is a copy whose original no longer exists anywhere. Today the two are the same bytes; the
+ * difference only starts to matter when the first migration lands, which is when nobody will be
+ * reading this decision fresh.
+ *
+ * Note what stays reachable either way: the button above does NOT validate, so the open year can
+ * still be downloaded on its own even in the state where this one would leave it out of the
+ * archive.
+ *
+ * The check costs one extra parse of one year per year, on a tap that is already writing several
+ * megabytes to a disk. Worth it: the alternative is a copy of the shape rules living here, where it
+ * could agree with itself and disagree with the restore it is supposed to be predicting. */
+async function documentForBackup(year, open) {
+  let doc = open && open.year === year ? open : null;
+  if (!doc) {
+    try {
+      doc = await readStoredDocument(year);
+    } catch (e) {
+      return { year: year, reason: 'Planbook could not read it out of this browser’s storage ('
+        + readable(e) + ').' };
+    }
+    if (!doc) return { year: year, reason: 'there is no longer a document for it on this device.' };
+  }
+  const file = fileFor(doc);
+  try {
+    parseBackup(file.text, file.name);
+  } catch (e) {
+    /* The refusal's own words, minus the tail about nothing on this device having been changed —
+       true here, and about a file, which this is not yet. The one refusal that happens in practice
+       comes from migrateDocument() and names the year and what to do about it. */
+    return { year: year, reason: readable(e).split(UNCHANGED).join('') };
+  }
+  return { year: year, file: file };
+}
+
+/*
+  The whole device, in the order listYears() gives it — chronological, the same order the year
+  picker lists and the order the entries sit in the archive, so they land in a Files listing in
+  the order a teacher thinks about them.
+
+  WHAT IS STAMPED, and this is the whole of the work order's Traps line. It got SIMPLER when the
+  loop of downloads became one archive, which is worth saying because the Traps line was written
+  against the harder version: there is now exactly one hand-off, so there is exactly one moment
+  after which a stamp can be honest. Every year that made it into the archive is stamped after
+  handToBrowser() returns without throwing, and never before. A year that could not be read is not
+  an entry, is not stamped, and is named on screen with the reason — so its nag stays up and the
+  line below still says it has never been downloaded. A button that says it backed up three years
+  and wrote two is worse than no button, because it answers the question the nag was asking.
+  What is gone is the middle case the sequential version had to reason about: a run cannot be
+  half-delivered any more, because there is nothing to truncate.
+
+  WHAT A PAGE STILL CANNOT KNOW, said out loud rather than assumed away: no event tells a page
+  that a download reached the disk (PREF_DEFAULTS.lastBackupAt says the same thing about the
+  one-year button). One file makes that a smaller claim than it was — "did the one thing you asked
+  for arrive" rather than "did all three" — but it is the same claim, so the status still names the
+  file and asks her to check.
+*/
+export async function downloadAllBackups() {
+  if (runningAll) return false;
+  runningAll = true;
+  const button = document.getElementById(DOWNLOAD_ALL_ID);
+  if (button) button.disabled = true;
+
+  try {
+    await flush();
+
+    let years;
+    try {
+      years = await listYears();
+    } catch (e) {
+      showStatus('Planbook could not list the school years on this device, so no file was written ('
+        + readable(e) + '). Nothing has been marked as backed up.', 'error');
+      return false;
+    }
+    if (!years.length) {
+      showStatus('There are no school years on this device, so there is nothing to back up yet.',
+        'error');
+      return false;
+    }
+
+    showStatus('Reading ' + plural(years.length, 'school year', 'school years')
+      + ' and packing them into one zip file…', 'ok');
+
+    /* Read and validate every year FIRST, then build, then hand over once. Nothing is stamped
+       inside this loop — see below; the whole point of the shape is that there is one moment when
+       the teacher has been offered the file, and it is after all of this. */
+    const open = getDoc();
+    const entries = [];
+    const skipped = [];
+    for (let i = 0; i < years.length; i++) {
+      const one = await documentForBackup(years[i], open);
+      if (one.reason) skipped.push(one);
+      else entries.push(one.file);
+    }
+
+    const why = skipped.map((s) => s.year + ' is not in it: ' + s.reason).join(' ');
+    if (!entries.length) {
+      showStatus('No file was written. ' + why + ' No year has been marked as backed up, and '
+        + 'nothing on this device has been changed.', 'error');
+      return false;
+    }
+
+    const name = zipNameFor();
+    try {
+      /* src/zip.js, hand-written, no dependency. It throws rather than producing an archive it
+         cannot vouch for, and a throw here has to read as "no file" rather than as a stamp: the
+         catch is around the build AND the hand-off for that reason. */
+      const bytes = zipStored(entries.map((f) => ({ name: f.name, text: f.text })));
+      handToBrowser({ name: name, blob: new Blob([bytes], { type: 'application/zip' }) });
+    } catch (e) {
+      showStatus('Planbook could not put the backup together, so no file was written ('
+        + String(e.message || e) + '). No year has been marked as backed up, and nothing on this '
+        + 'device has been changed.', 'error');
+      return false;
+    }
+
+    /* Only now, and only for the years that are actually entries in the file she was just
+       offered. Everything above this line can fail. */
+    entries.forEach((f) => recordBackupFor(f.year));
+
+    refreshLastBackupLine();
+    refreshBackupNag();
+    /* The count and the never-downloaded line are both stale now: years were stamped, and a run
+       that left one out has left it in the list this sentence is about. */
+    refreshYearCoverage();
+
+    const inside = entries.map((f) => f.name).join(', ');
+    if (skipped.length) {
+      showStatus('Saved ' + name + ', holding ' + entries.length + ' of ' + years.length
+        + ' school years: ' + inside + '. ' + why + ' '
+        + (skipped.length === 1 ? 'That year is' : 'Those years are') + ' still marked '
+        + 'as never backed up, so Planbook keeps asking about '
+        + (skipped.length === 1 ? 'it' : 'them') + '.', 'error');
+      return false;
+    }
+    showStatus('Saved ' + name + ' — one zip file holding every school year on this device: '
+      + inside + '. Tap it in Files to unzip it, and each year is a backup on its own that '
+      + 'restores by itself. Check that it arrived: a page is never told whether a download '
+      + 'finished. Keep it somewhere only you can reach — it holds everything, including the '
+      + 'support details on your roster.', 'ok');
+    return true;
+  } finally {
+    runningAll = false;
+    /* Re-enabled from here rather than from the refresh above, so a throw on the way through
+       cannot leave the control dead until the panel is reopened. */
+    const b = document.getElementById(DOWNLOAD_ALL_ID);
+    if (b) b.disabled = false;
+  }
 }
 
 /* ────────────────────────────── validating a file ────────────────────────────── */
@@ -438,8 +685,10 @@ export async function confirmRestore() {
   refreshBackupNag();
   refreshLastBackupLine();
   /* A restore can switch the open year and can create one that was not on the device a moment
-     ago, so the list of years that have never been downloaded is stale by definition here. */
-  refreshOtherYearsLine();
+     ago, so the list of years that have never been downloaded is stale by definition here — and
+     since WO-1.11 so is the count on "Back up all N years", which a restore that adds the second
+     year on this device brings onto the screen for the first time. */
+  refreshYearCoverage();
 
   /* The exit from the boot-failure screen, and the reason it is done here rather than in
      shell.js: this is the only path that can end with a working document after boot() refused
@@ -551,30 +800,120 @@ function refreshLastBackupLine() {
 }
 
 /*
+  The two facts on this panel that are about the OTHER years on the device — the control that
+  writes them all out, and the line that names one that never has been. Both need the year list
+  and neither is worth a second read of the store to get it, so one read answers both.
+
+  Not awaited by openBackupPanel(), on purpose, and the reason is in that function: this panel is
+  the exit from a boot that already failed, and holding a recovery screen closed behind a read of
+  the store that may be exactly what is broken trades a control that fills in for a panel that
+  never appears. Both start hidden in the markup, so nothing moves unless there is something to
+  say.
+*/
+async function refreshYearCoverage() {
+  let years = [];
+  try {
+    years = await listYears();
+  } catch (e) {
+    /* A store that will not list its years cannot answer either question, and a guess here would
+       either hide a control the teacher needs or offer one that writes nothing. Both stay away. */
+    years = [];
+  }
+  refreshBackupAllControl(years);
+  refreshOtherYearsLine(years);
+}
+
+/*
+  The second control, and its one sentence of prose.
+
+  SHOWN ONLY WHEN THERE IS MORE THAN ONE YEAR, which is the deliverable and also the whole of "no
+  teacher who never rolls over ever sees it": until her first August rollover this panel is exactly
+  the panel WO-1.5 verified, with one button on it. The count is in the label rather than only in
+  the prose, because the label is the part that gets read — "Back up all 3 years" says what will
+  happen without the teacher having to trust a sentence underneath it.
+
+  Outline rather than solid: the primary action on this panel is still the one-file button. A
+  teacher who has not rolled over never sees this one, and a teacher who has still wants the year
+  she is teaching backed up first and fastest.
+*/
+function refreshBackupAllControl(years) {
+  const many = years.length > 1;
+  const button = document.getElementById(DOWNLOAD_ALL_ID);
+  if (button) {
+    button.classList.toggle('hidden', !many);
+    if (many) button.textContent = 'Back up all ' + plural(years.length, 'year', 'years');
+  }
+  const note = document.getElementById(ALL_NOTE_ID);
+  if (note) {
+    note.classList.toggle('hidden', !many);
+    if (many) {
+      /* Rewritten on 2026-08-05, when the control stopped writing one file per year: it used to
+         promise "N separate files" and an iPad that asks about each one, which is exactly what the
+         installed PWA turned out not to do. The sentence now says what the teacher will be handed
+         and what to do with it, because "one zip file" is a thing she has to act on — a download
+         she cannot restore from directly is a download she is entitled to be suspicious of. */
+      note.textContent = 'That downloads one zip file holding all '
+        + plural(years.length, 'school year', 'school years') + '. Tap it in Files to unzip it, '
+        + 'and each year is a backup on its own that restores by itself.';
+    }
+  }
+}
+
+/*
   One line, and only when it has something to say: a teacher who has just one year — which is
   every teacher until the first rollover — never sees it.
 
   It exists because "Download backup" backs up the year that is open, and nothing on this panel
   used to say so. A teacher who has rolled over to 2027-2028 and still keeps 2026-2027 for the
   gradebook she has not finished reporting can take a backup, see the date update, and reasonably
-  read that as "Planbook is backed up." Downloading the other one is a year switch away, and the
-  only thing missing was the sentence that says to go and do it. Backing both up in one tap is
-  WO-1.11; this is the half that is true either way, and it is the half that stops the gap from
-  being silent.
+  read that as "Planbook is backed up." That silence is what this closed on 2026-08-04, before
+  there was a button to point at.
+
+  WHAT WO-1.11 CHANGED HERE IS THE SECOND HALF OF THE SENTENCE, and nothing else. It used to send
+  the teacher to the year button to switch and download again, which was the only answer there was;
+  it now names the control that does it in one tap. What the line asks about — a year on this device
+  that has never been written to a file — is untouched, and so is the strip on the home screen.
+
+  AND SO THE YEAR COUNT IS NOW A CONDITION OF SHOWING THIS LINE, in code rather than in a comment.
+  The first pass of WO-1.11 asserted here that the line "is only ever shown when there is more than
+  one year, so the control it names is always on screen beside it" and did not enforce it: the test
+  below was only ever about whether some year was un-downloaded, while the control is hidden by
+  refreshBackupAllControl() whenever the device holds exactly one year. One state satisfies both at
+  once — the boot-failure screen (getDoc() is null, so the filter below keeps every year instead of
+  excluding the open one) on a device holding a single year that has never been downloaded — and
+  there this line named a button that was not on the screen, under the label "Back up all 1 year"
+  that the function above is written specifically never to show anybody.
+
+  THE GATE IS ON THE COUNT, AND THE `!doc ||` FILTER BELOW IS LEFT ALONE, which is the part worth
+  saying out loud because the filter looks like the culprit. It is not: it is what makes this line
+  work on the boot-failure screen at all. With several years on the device and none of them open,
+  every un-downloaded year is one to name, the control IS on screen, and the advice is good.
+  Requiring an open document would have taken the line away from the case it earns its keep in, to
+  fix a case that is really about there being nothing to compare against.
+
+  So the one-year boot-failure screen now says nothing about coverage, and that is the honest answer
+  there rather than a gap: the one-file button is disabled because nothing is open, this control is
+  hidden because there is one year, and a document this build refuses to open is one
+  downloadAllBackups() refuses to write. There is no action for a sentence to point at.
 */
-async function refreshOtherYearsLine() {
+function refreshOtherYearsLine(years) {
   const el = document.getElementById(OTHER_YEARS_ID);
   if (!el) return;
   const doc = getDoc();
-  const pending = (await yearsNeverBackedUp()).filter((y) => !doc || y !== doc.year);
+  /* One year on the device means there are no OTHER years, whatever getDoc() returns, and it means
+     the control named below is not on screen. Both reasons point the same way. */
+  const pending = years.length > 1
+    ? yearsNeverBackedUp(years).filter((y) => !doc || y !== doc.year)
+    : [];
   el.classList.toggle('hidden', pending.length === 0);
   if (pending.length === 0) return;
+  const control = '“Back up all ' + plural(years.length, 'year', 'years') + '”';
   el.textContent = 'This backs up the year you have open. '
     + (pending.length === 1
-      ? pending[0] + ' is also on this device and has never been downloaded — switch to it from '
-        + 'the year button to back it up too.'
+      ? pending[0] + ' is also on this device and has never been downloaded — ' + control
+        + ' writes it out too.'
       : pending.length + ' other years on this device have never been downloaded ('
-        + pending.join(', ') + ') — switch to each from the year button to back them up too.');
+        + pending.join(', ') + ') — ' + control + ' writes them out too.');
 }
 
 /* Anything that would be lost. A brand-new document is not empty of meaning — it has a year and
@@ -647,16 +986,26 @@ export function openBackupPanel(opener) {
     button.textContent = doc ? 'Download ' + doc.year + ' backup' : 'Nothing open to back up';
   }
 
+  /* The multi-year control is not touched here beyond clearing a disable that a previous run left
+     behind. It is hidden in the markup and revealed by the read below, and it is deliberately NOT
+     re-hidden first: a second open would then blink it off and on for no reason, which is the
+     flicker this whole function is arranged to avoid. Nor is it disabled-and-relabelled the way the
+     button above is when there is nothing open — a control that is only right for a teacher who has
+     rolled over does not belong on the screen of one who has not, and "Back up all 1 years" is not
+     a thing to show anybody. */
+  const all = document.getElementById(DOWNLOAD_ALL_ID);
+  if (all) all.disabled = false;
+
   const input = document.getElementById(FILE_ID);
   if (input) input.value = '';
 
   openModal(PANEL_ID, opener);
 
   /* Deliberately after the panel is up, and deliberately not awaited. Every other fact here is
-     in place before it opens, for the no-flicker reason above — this one needs IndexedDB, and
+     in place before it opens, for the no-flicker reason above — these two need IndexedDB, and
      this panel is the way out of a boot that already failed. Holding a recovery screen closed
-     behind a read of the store that may be exactly what is broken trades a line that fills in
-     for a panel that never appears. The line starts hidden, so nothing moves unless it has
-     something to say. */
-  refreshOtherYearsLine();
+     behind a read of the store that may be exactly what is broken trades a control that fills in
+     for a panel that never appears. Both start hidden, so nothing moves unless there is something
+     to say. */
+  refreshYearCoverage();
 }

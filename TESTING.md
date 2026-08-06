@@ -552,6 +552,70 @@ nine selectors were evaluated by it. The substantive rule holds anyway — they 
 file's own coarse block and `verify-shell.mjs` measured 0 targets under 44px — but the grep half
 proved nothing here, and it will go vacuous for every per-screen stylesheet from now on.
 
+### WO-1.11 — Back up every year in one tap
+
+- [x] With two years on the device, one tap produces a readable backup of both.
+- [x] The control is absent with only one year, and no teacher who never rolls over ever sees it.
+- [x] Each year written gets its own `lastBackupAt` stamp; the nag is down for both afterwards.
+- [x] Restore still accepts every file this produces, and the WO-1.5 refusal checks still pass
+      unchanged.
+- [x] 👤 On an installed iPad: every file lands in Files, and the run is not silently truncated to
+      the first year by Safari's download handling. **Failed on the first (sequential-download)
+      build, real hardware, 2026-08-05; passed on the zip rebuild the same day — see retest below.**
+
+*Desk pass 2026-08-05: `verify-shell.mjs` **224 of 224, 0 skipped**, up from 209 at WO-1.10 — 15 new
+checks. Files read back off disk, not asked of the page: three years produce three files with
+distinct `docId`s and rosters, round-trip through the real restore path, and a Traps fixture proves a
+poisoned year is skipped, unstamped, and named on screen without corrupting the other two.
+`wo-sweep.mjs` is 10 passed, 1 to review (the standing sensitive-field-name line, unaffected). A
+first verification pass also failed line 2 in a different way — the never-downloaded strip could name
+the hidden "Back up all N years" control in prose on the boot-failure screen — fixed and confirmed
+non-vacuous by mutation before this hardware session.*
+
+*Then run by hand on an installed iPad the same day, and **it failed**, in a way the desk harness had
+no way to anticipate: tapping "Back up all 2 years" produced the native "Open in…" sheet for the
+first file only. Saving it and returning to Planbook showed the identical panel — no second dialog,
+no status message, nothing. The nag for the un-downloaded year was still up, in both the backup panel
+and on the year screens, which means `recordBackupFor()` correctly never ran for it — no false stamp,
+the one thing this line exists to prevent stayed prevented. But the feature itself did not survive
+contact with the device it was built for.*
+
+*Root cause, worked out with the teacher present: on an installed home-screen PWA, iOS's "Open in…"
+sheet is a full context switch, and the page does not resume its JS afterward — the loop inside
+`downloadAllBackups()` (`BETWEEN_FILES_MS` wait, then the next `handToBrowser()` call) simply never
+continues, and neither does the code that would print "Saved 1 of 2." No delay between files fixes
+this, because the interruption happens on leaving the page, not after a timeout — the
+one-download-event-per-file architecture cannot produce more than one file per tap on iPadOS, full
+stop. Correction round dispatched 2026-08-05: bundle every year into a single `.zip`, so the whole
+run is one download event and there is no loop to survive a reload. The single-year button (WO-1.5,
+already hardware-proven) is untouched and stays the fast path for the common case.*
+
+*The zip rebuild (`src/zip.js`, hand-written, no dependency) landed 2026-08-05, survived a machine
+crash mid-round with the app code intact, and was verified twice: `verify-shell.mjs` **224 of 224, 0
+skipped**, plus independent cross-validation of a produced archive against three readers sharing no
+code with this repo — Python `zipfile`, `tar.exe` (libarchive), and .NET `ZipArchive` — all three
+extracting byte-identical JSON, every CRC verified. A negative control (one corrupted byte injected,
+then reverted) confirmed the harness actually catches a bad archive rather than passing by
+construction. One stale decision-record comment in `index.html` was caught by the verifier and fixed;
+nothing else needed correction. The desk half is done. What's left is the same shape of test as
+before, run against the new mechanism:*
+
+**The 👤 retest, run 2026-08-05 in one sitting on the installed home-screen app:**
+- [x] Tap "Back up all N years." The "Open in…" sheet appears **once**, for one `.zip` file.
+- [x] Save it, return to Planbook, and confirm the status line is on screen naming the file —
+      the old build could never reach this line; if it's there, the hand-off completed.
+- [x] Tap the saved `.zip` in Files. It unpacks to N loose `Planbook <year> backup <date>.json`
+      files.
+- [x] Drop one of those into Planbook's restore. It reaches the "Replace `<year>`" confirm
+      (cancel is fine — this checks restore accepts it, not that you want to replace anything).
+- [x] Confirm the backup nag is down for every year, not just the one on screen.
+- [ ] Largest-real-dataset run — **not exercised this sitting**; the device did not yet hold more
+      than a small amount of data. The in-memory build size risk (`src/backup.js`, `src/zip.js`
+      decision records) stays a thing to watch as real classroom data accumulates over the term,
+      not a gate WO-1.11 needed to clear before shipping.
+
+All five acceptance lines close on this pass. WO-1.11 is done.
+
 ---
 
 ## Phase 2 — Attendance
