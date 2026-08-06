@@ -389,10 +389,16 @@ timestamp on every render; never accumulate. Same class of bug as the eviction h
 
 ---
 
-## WO-2.10 — `U` for unconfirmed: per-student attendance state
+## WO-2.10 — Mark cells: unconfirmed, timed, and noted
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1
-**Closes roadmap** Phase 2 → amends "Marking screen, exceptions-only" *(see below)*
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** L · 🚩 · **Depends on** WO-2.1
+**Closes roadmap** Phase 2 → amends "Marking screen, exceptions-only", closes "`U` for unconfirmed"
+and "Timestamps on tardies and dismissals" *(see below)*
+
+**This work order reshapes what a `marks` cell IS.** It carries two changes that arrived separately
+and must land together, because both rewrite every reader and writer of `marks` and doing them in
+sequence would mean migrating live student data twice — the second time over a real term, weeks
+after go-live. They are folded deliberately, on 2026-08-06, with that reason.
 
 **Why it exists.** The owner used the registry and found the marking model backwards for how she
 stands in a room. Two specific complaints, 2026-08-06:
@@ -415,6 +421,32 @@ temporary mark that sorts itself out as the real record is taken.
 | *(no entry)* | present | `P` |
 | `U` | unconfirmed — **counts as absent** | `?` |
 | `A` `E` `T` `D` | as today | their letter |
+
+**The second change: a mark cell becomes an object, and `T` and `D` carry the time.** Roll Call!
+captures the moment a mark settles on tardy or dismissed — `preTardyLog[si] = {time, dateStr}`,
+flushed as `{last, first, type, time}` with a note, and surfaced as a "Tardy & Dismissal History"
+section on the student report. **Planbook records only that a student was tardy, never when.** That
+was never specified: `plans/` mentions "tardy" nowhere outside WO-2.1's cycle line, so no work order
+could have produced it and no check could have failed it. Found by the owner, 2026-08-06.
+
+It matters past completeness. Twenty minutes late and two minutes late are different conversations
+with a guardian, and Phase 5's templates want the difference. Dismissal time is closer to a safety
+record — when the student actually left the room. Phase 4 ranks by pattern, which is much weaker if
+every tardy looks identical.
+
+```jsonc
+"marks": {
+  "s_1": { "code": "T", "at": "2026-09-09T08:14:00-04:00", "note": "missed the bus" },
+  "s_2": { "code": "A" },
+  "s_3": { "code": "U" }
+}
+```
+
+**Every cell is an object, including `U` and the untimed codes.** This is not decoration — it is
+[`../../docs/data-model.md`](../../docs/data-model.md)'s own rule, one datatype over: *"A score cell
+is always an object, never a bare number. Polymorphic cells (`87` here, `{v:87}` there) are where
+grade bugs live."* A `marks` cell that is `"A"` sometimes and `{code:"T",…}` other times is exactly
+that mistake. `at` and `note` are simply absent where they do not apply.
 
 - **`P` is still never stored.** The exceptions-only rule is not repealed, it is re-pointed: the
   document holds exceptions to *present* exactly as it does now, plus `U` for students not yet
@@ -443,6 +475,17 @@ once tapped a cell never returns to it. From `?` the first tap gives `P`.
   `(P+T+E+D)/(P+T+A+E+D)` — in the denominator, not the numerator.
 - **The home card says how many are unconfirmed** when a class holds any `U`. A half-taken class
   must be loud, not silent — see Traps.
+- **Every `marks` cell is an object**, uniformly, per the shape above. One migration, run once, over
+  documents that today hold bare code strings — including restored backups written before this
+  work order. A restore of an old backup must come out right, not half-converted.
+- **`at` is captured at the moment a cell settles on `T` or `D`**, from the device clock, stored as
+  a full ISO timestamp with offset. Cycling *past* `T` on the way to something else must not leave a
+  stray time behind — Roll Call!'s `_trackTardyMark()` handles exactly this case and is worth
+  reading before writing it.
+- **A note is editable on any mark**, reachable without leaving the row. Roll Call! offers it on
+  tardies and dismissals; here it costs nothing to allow on all of them.
+- **The time is visible where the mark is** — a tardy cell shows its time, or reveals it on the row,
+  without needing a report to be run.
 - Un-confirm is reachable: a student cycled by mistake can be returned to `?`, or the class reset,
   without leaving the screen.
 
@@ -464,6 +507,19 @@ cycle once WO-2.8 lands: that is WO-2.8's call, and this work order keeps `D` wh
 - [ ] The cycle from `?` reads `P → A → E → T → D` and returns to `P`, never to `?`.
 - [ ] A student added to the roster after a class was taken does not acquire a mark for it
       retroactively.
+- [ ] Marking a student tardy stores an `at` timestamp; the marking screen shows the time without
+      running a report.
+- [ ] Cycling `P → A → E → T → D` past `T` and landing on `D` leaves **one** time — the dismissal's
+      — and no orphaned tardy time. Verify in the document.
+- [ ] Cycling all the way back to `P` clears the entry entirely: no code, no `at`, no note left
+      behind.
+- [ ] A note typed on a mark survives a reload and appears on the same student, date and class.
+- [ ] **Every cell in the document is an object.** Not one bare string anywhere, including `U`s and
+      including untimed codes. Inspect the document, not the UI.
+- [ ] **Restoring a backup written before this work order produces object cells**, with the codes
+      intact and no `at` invented for marks that never had one. *(WO-1.5's restore path is the one
+      thing standing between a teacher and a lost term — this is the acceptance line that says the
+      migration did not eat it.)*
 
 **Traps** — **Opening the screen must still write nothing.** `src/attendance.js` says so and the
 reason stands: if arriving on a class wrote 25 `U`s, "not taken yet" would be unreachable the moment
@@ -478,3 +534,14 @@ that makes it visible.
 
 And **`U` is not a sixth attendance code to a teacher.** It never appears on a button, never appears
 in a total, and never reaches a report. It is scaffolding that the finished record does not contain.
+
+**The migration is the dangerous half of this work order, not the cell shape.** Every document in
+existence holds bare strings, and so does every backup file already on the teacher's disk. A
+migration that runs twice, runs halfway, or runs on read without being written back is how a term of
+attendance turns into `{"code": {"code": "A"}}` or vanishes. Convert on load, write back once,
+and make a restored pre-WO-2.10 backup an acceptance line rather than an assumption — it is one of
+the three things `CLAUDE.md` says must be right before students walk in.
+
+**Do not put the time anywhere but the cell.** A `log` entry mirroring each tardy would reuse
+machinery that already exists and would immediately create two records of one event, which is the
+second-source-of-truth pattern this project has refused four times. The cell is the record.

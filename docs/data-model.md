@@ -108,7 +108,10 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
   },
 
   "attendance": [
-    { "classId": "c_…", "date": "2026-09-09", "marks": { "s_…": "A" } },
+    { "classId": "c_…", "date": "2026-09-09",
+      "marks": { "s_1": { "code": "T", "at": "2026-09-09T08:14:00-04:00", "note": "missed the bus" },
+                 "s_2": { "code": "A" },
+                 "s_3": { "code": "U" } } },
     { "classId": "c_…", "date": "2026-09-09", "exception": "dropped" }
     /* exception absent = the class met. No record at all = not taken yet. */
   ],
@@ -161,6 +164,13 @@ Seven shape decisions that matter:
   on a button, in a total, or in a report — it is scaffolding the finished record does not contain.)*
 - **A class with no record at all is not a class of absences.** It is *not taken yet*, and it counts
   toward nothing. The `U`-is-absent rule applies only inside a class someone has started taking.
+- **A mark cell is always an object**, never a bare code string — the same rule as a score cell, and
+  for the same reason. `T` and `D` carry `at`, the moment the mark settled, from the device clock;
+  any mark may carry a `note`. Both are simply absent where they do not apply. *(Added 2026-08-06,
+  WO-2.10. Planbook recorded that a student was tardy and never when — never specified, so nothing
+  could have caught it. Twenty minutes late and two minutes late are different conversations with a
+  guardian, and Phase 5's templates want the difference.)* **The time lives in the cell and nowhere
+  else** — a mirrored `log` entry would make one event into two records.
 - **There is no schedule model.** A class met if it has an attendance record without an
   `exception`. Three distinct states — *met* · *dropped* · *not taken yet* — and the third is not
   the second. See [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).

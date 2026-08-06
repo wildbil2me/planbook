@@ -14,7 +14,7 @@ with the risk stated and accepted — reorders everything below. See
 
 ## Work orders
 
-Every phase below is cut into work orders in [`work-orders/`](work-orders/) — 53 of them, each with
+Every phase below is cut into work orders in [`work-orders/`](work-orders/) — 58 of them, each with
 its own dependencies, deliverables, and testable acceptance criteria. **Start there when you sit
 down to build something**; this roadmap says what and why, the work orders say how the work is cut
 and in what order.
@@ -50,14 +50,14 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
-| 2 | Attendance | ⬜ NOT STARTED | 0/11 `[░░░░░░░░░░] 0%` |
+| 2 | Attendance | ⬜ NOT STARTED | 0/15 `[░░░░░░░░░░] 0%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **15/77 `[█░░░░░░░░░] 19%`** |
+| | | **Overall** | **15/81 `[█░░░░░░░░░] 19%`** |
 
 ---
 
@@ -198,6 +198,10 @@ meet is a second source of truth that's wrong by first period.)*
       deleted as its student is confirmed. *(Added 2026-08-06 — WO-2.10. The owner found the
       original model backwards for how she stands in a room: confirming a student present cost four
       taps round the cycle, and one tap silently resolved everyone.)*
+- [ ] 🚩 **Timestamps on tardies and dismissals**, and a note on any mark. A mark cell is an object;
+      `T` and `D` record the moment they settled. *(Added 2026-08-06, folded into WO-2.10. Planbook
+      recorded that a student was tardy and never when — Roll Call! has captured it all along.
+      Twenty minutes late and two minutes late are different conversations with a guardian.)*
 - [ ] 🚩 Marks `P / T / A / E / D`, matching Roll Call!'s vocabulary so the owner's habits carry over.
 - [ ] 🚩 **One-tap drop.** The day loads showing all five classes; the ones that didn't meet get
       marked dropped and are done. No setup, nothing to maintain when the rotation shifts.
