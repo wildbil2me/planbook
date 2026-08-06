@@ -27,16 +27,20 @@ than what someone meant.
 The orchestrator does not grade its own dispatch. It chose the route and wrote the brief, which
 makes it the wrong party to mark the homework.
 
-**Ticking follows the verdict, and only the orchestrator holds the pen.** On a verifier PASS, and
-once you say go, the orchestrator applies the ticks whose evidence is a command the verifier ran:
-the work order `Status`, the roadmap box, the dashboard counts, and the 👤-free `TESTING.md` lines.
-The implementer never ticks — it is marking its own homework. The verifier never ticks either, for a
-sharper reason: in a phase file the acceptance criterion **is** the checkbox, one line of text, so
-write access there would let the judge reword the test it just failed. Its read-only grant is what
-makes that impossible rather than merely discouraged.
+**Ticking follows the verdict.** On a verifier PASS, and once you say go, the orchestrator applies
+the ticks whose evidence is a command the verifier ran: the work order `Status`, the roadmap box,
+the dashboard counts, and the 👤-free `TESTING.md` lines.
 
-Two things no agent closes. **👤 lines** need a real iPad and stay `- [ ]` however good the desk-side
-evidence looks. **The `CHANGELOG.md` entry** is prose about what a change means, so it stays yours.
+**The implementer may also tick as it goes, as of 2026-08-06** — see § "Implementers may tick" below
+for what changed and why. **The verifier still never ticks**, and that is not the same rule wearing
+a different hat: in a phase file the acceptance criterion **is** the checkbox, one line of text, so
+write access there would let the judge reword the test it just failed. Its read-only tool grant is
+what makes that impossible rather than merely discouraged.
+
+Two things nobody closes on evidence they do not have. **👤 lines** need a real iPad and stay
+`- [ ]` however good the desk-side evidence looks — a rule about hardware rather than about
+authority, so retiring the implementer's tick ban left it untouched. **The `CHANGELOG.md` entry** is
+prose about what a change means; draft it freely, but it lands on the teacher's say-so.
 
 The rule this serves is the project's own — *do not tick a work order that is written but
 unverified* ([`../ROADMAP.md`](../ROADMAP.md) → maintenance protocol). Note what it actually
@@ -44,6 +48,39 @@ conditions on: **verified**, not *human*. An earlier version of this pipeline re
 may tick," which cost nothing until WO-1.1 passed clean and then sat with the dashboard reading `0`
 done, because five hand edits are easy to postpone. A tracker that lies about what is finished is
 the failure the rule was written to prevent, so the enforcement moved to where the evidence is.
+
+---
+
+## Implementers may tick — the rule that was retired, 2026-08-06
+
+Every brief used to carry this, verbatim: *"Do not tick roadmap boxes, edit `plans/`, or touch
+`CHANGELOG.md` / `TESTING.md` — the teacher does maintenance, after the verifier reports."* The
+`work-order-implementer` definition stated it twice and called it "the one process rule this project
+states twice." The verifier had a standing check enforcing it: *"Nothing was ticked. A box already
+ticked when you arrive is evidence the verdict was pre-empted."*
+
+**It was ignored by every implementer that had the opportunity, and enforcing it never once caught a
+defect.** WO-1.7's commit ticked the full set. WO-1.8's did the same and drew a **FAIL** for it — a
+FAIL whose own opening line reads *"All five Acceptance lines verify clean. The failure is on the
+boundary rule, not the code."* That is a verifier run, and the correction round behind it, spent on
+bookkeeping instead of on the accommodations screen it existed to grade.
+
+The verifier that raised it asked for the decision to be taken once rather than re-litigated every
+dispatch: *"either the brief's rule holds and this gets reverted, or the rule is retired and my
+'nothing was ticked' check is retired with it."* **Retired 2026-08-06.** Implementers tick as they
+go. A tracker that is current is worth more than a tracker that is ceremonially clean, and the
+ceremony was generating FAILs that said the code was fine.
+
+**What did not move with it, and must not be assumed to have:**
+
+- **👤 lines still need a real iPad.** No agent has one. That is a claim about hardware, not about
+  authority, and it survives this change completely.
+- **The verifier still cannot write at all.** Different rule, sharper reason — see the pipeline
+  table above.
+- **A tick still has to be true.** WO-1.8's three 👤 lines were ticked by an implementer whose own
+  result file listed them under "what I could not verify." That is the failure this ban was actually
+  aimed at, and it is the part worth remembering. Those three stood only because the teacher
+  confirmed on 2026-08-06 that she had run them by hand — had she not, they would have come back off.
 
 ---
 
@@ -273,5 +310,8 @@ into every brief, verbatim:
 - Empty categories redistribute their weight.
 - Taken · dropped · not-taken-yet are three states. Everything counts recorded meetings, never
   calendar days.
-- Stay inside the work order's **Out of scope** line. Do not tick roadmap boxes, edit `plans/`, or
-  touch `CHANGELOG.md` / `TESTING.md` — the teacher does maintenance, after the verifier reports.
+- Stay inside the work order's **Out of scope** line.
+- You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go. Two
+  exceptions: **never tick a 👤 line** — it needs a real iPad and you do not have one — and leave the
+  `CHANGELOG.md` entry to the teacher, who decides what a change means. Anything you do tick must be
+  something you actually checked; a tick you cannot point at evidence for is worse than a blank box.

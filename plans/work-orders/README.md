@@ -53,7 +53,7 @@ starts to sprawl.
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 12 | 12 | 🔨 IN PROGRESS |
+| 1 — Shell, store, roster | 12 | 12 | ✅ DONE — 2026-08-06 |
 | 2 — Attendance | 7 | 0 | ⬜ NOT STARTED |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |

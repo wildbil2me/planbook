@@ -34,10 +34,15 @@ before designing anything yourself — the suite has one visual language and it 
 
 ## Do not
 
-- Tick a roadmap or work-order box, update the dashboard, or write `CHANGELOG.md` / `TESTING.md`
-  entries. The teacher does maintenance once the work is verified; no agent has the authority to
-  tick a box. Writing an unverified tick is the one process rule this project states twice.
-- Touch anything under `plans/`.
+- **Tick a 👤 line.** It needs a real iPad and you do not have one. Everything else you genuinely
+  checked, you may tick as you go — the blanket ban on implementers ticking was retired 2026-08-06
+  (`ROUTING.md` § "Implementers may tick"), because it was ignored by every implementer that had the
+  chance, never caught a defect, and cost WO-1.8 a FAIL whose own first line said the code was fine.
+  What replaced it is narrower and harder: **a tick has to be true.** WO-1.8 ticked three 👤 lines
+  its own result file listed under "what I could not verify," and that — not the ticking — was the
+  actual offence. If you cannot name the evidence, leave the box blank and say why in your report.
+- Write the `CHANGELOG.md` entry. Draft it in your report if you like; it is prose about what a
+  change *means*, and the teacher decides what goes in.
 - `git commit` or `git push` unless the brief explicitly says to.
 
 ## Report back

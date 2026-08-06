@@ -332,11 +332,19 @@ roster because Phase 5's audience picker reads them from here.
 **Out of scope** — `supports` / accommodations (WO-1.8), the Roll Call! importer (WO-2.7).
 
 **Acceptance**
-- [ ] Pasting 25 names produces 25 students with names split correctly, and the preview matched.
-- [ ] Re-pasting the same list warns about duplicates rather than silently doubling the roster.
-- [ ] A student added to two classes is one student record with one set of contacts.
-- [ ] Removing a student from a class does not delete the student from the other class.
-- [ ] Guardian, counselor, and student emails round-trip through save and reload.
+- [x] Pasting 25 names produces 25 students with names split correctly, and the preview matched.
+- [x] Re-pasting the same list warns about duplicates rather than silently doubling the roster.
+- [x] A student added to two classes is one student record with one set of contacts.
+- [x] Removing a student from a class does not delete the student from the other class.
+- [x] Guardian, counselor, and student emails round-trip through save and reload.
+
+*Verifier PASS 2026-08-05, all five lines ✅ with no 🙋. `verify-shell.mjs` 162/162, `wo-sweep.mjs`
+8 PASS / 0 FAIL / 2 REVIEW, both exit 0. `TESTING.md` carries twelve lines for this work order —
+these five plus a real-SIS-roster split and the 👤 iPad halves — and all twelve are ticked there.
+**These boxes were mirrored from `TESTING.md` on 2026-08-06**, at the phase close, having sat
+unticked here while `TESTING.md` recorded them done since the day of. Two trackers disagreeing about
+one work order is the failure the maintenance protocol exists to prevent, and it went unnoticed for
+a day because nothing compares them — worth a check if this recurs.*
 
 **Traps** — `Last, First` and `First Last` both appear in real paste sources. Detect per line, and
 show the split in the preview so a wrong guess is caught before it commits, not after.
@@ -366,13 +374,35 @@ the most consequential data in the app if it leaks — read
 **Out of scope** — surfacing at point of use (WO-3.8), calendar surfacing of `reviewDate` (WO-6.1).
 
 **Acceptance**
-- [ ] Every field in the data model's `supports` block is editable and round-trips.
-- [ ] No list view shows plan status, accommodation detail, medical, or behavior text without a
+- [x] Every field in the data model's `supports` block is editable and round-trips.
+- [x] No list view shows plan status, accommodation detail, medical, or behavior text without a
       deliberate tap.
-- [ ] The indicator dot does not itself encode the plan type by color or shape — a projected dot
+- [x] The indicator dot does not itself encode the plan type by color or shape — a projected dot
       that means "IEP" is still a disclosure.
-- [ ] `reviewDate` is stored and readable, whether or not anything consumes it yet.
-- [ ] The backup UI names accommodation and medical data as present in the file.
+- [x] `reviewDate` is stored and readable, whether or not anything consumes it yet.
+- [x] The backup UI names accommodation and medical data as present in the file.
+
+*The verifier returned **FAIL** on 2026-08-05 and all five lines above are nonetheless ✅ — read that
+carefully, because it is the most easily misread record in this file. Its own opening: "All five
+Acceptance lines verify clean. The failure is on the **boundary rule**, not the code." It objected
+that the implementing commit `e6df8eb` ticked `plans/`, `ROADMAP.md`, the dashboard, `CHANGELOG.md`
+and `TESTING.md`, which every brief forbade at the time; that three 👤 iPad lines were ticked while
+the same commit's result file listed them under "what I could not verify"; and that
+`docs/data-model.md` was amended inside the commit whose acceptance line grades against it.*
+
+*Both objections are resolved on 2026-08-06, and neither by waving it through. **The teacher confirms
+she ran the three 👤 lines by hand on the iPad in one sitting** — the verifier's stated condition was
+"the teacher must confirm or the three ticks come back off," and she has, so they stand. And **the
+boundary rule the FAIL was raised under has since been retired** (see `ROUTING.md` § "Implementers
+may tick"), which retires this objection with it. The `data-model.md` amendment is ratified rather
+than reverted: seeding `kind` to a real value would let a mis-tap claim a student has extended time,
+and the verifier said on the merits it was right. `verify-shell.mjs` 184/184, 0 skipped.*
+
+*One real defect was found after the tick and closed the same day (`9491f1c`):
+`supportDateCommitted()` was the one of four support write paths that did not consult
+`supportsVisible()` before writing. Harmless while that function always returned true, and a silent
+data-loss path the moment WO-1.9 landed presentation mode — which is exactly the trap this work
+order's own Traps section is about, arriving through the one door nobody was watching.*
 
 **Traps** — It is tempting to show the accommodation list inline on the roster "because the teacher
 needs it." That screen gets projected. Discreet by default is not a preference setting.
@@ -626,13 +656,24 @@ in the two scripts that already exist; read
 stay one file each by rule.
 
 **Acceptance**
-- [ ] A planted, untracked `src/*.css` file with an uncovered coarse-pointer selector is caught by
+- [x] A planted, untracked `src/*.css` file with an uncovered coarse-pointer selector is caught by
       `wo-sweep.mjs`, not silently passed because the diff against `HEAD` is empty.
-- [ ] Deleting one line from `afterClassChange()`'s call list makes `verify-shell.mjs` fail at least
+- [x] Deleting one line from `afterClassChange()`'s call list makes `verify-shell.mjs` fail at least
       one check, for as many of the eight branches as can be driven without new app-side hooks.
-- [ ] Both scripts still run clean against the real repo afterward — no regression in `wo-sweep.mjs`'s
+- [x] Both scripts still run clean against the real repo afterward — no regression in `wo-sweep.mjs`'s
       9-passed baseline or `verify-shell.mjs`'s 209/209/0-skips baseline, beyond checks this work
       order adds on purpose.
+
+*Verifier PASS 2026-08-06, all three lines ✅, no 🙋 — and each fix proven by planting the violation
+first and watching the script fail, which is what this work order's Traps section demands and the only
+evidence that counts for a mechanism change. `wo-sweep.mjs` 11 checks · 10 passed · 1 REVIEW;
+`verify-shell.mjs` 224 → **231 of 231, 0 skipped**. The two baselines quoted in the Acceptance text
+above (9-passed and 209/209) were already stale when this work order was written — the live numbers
+at dispatch were 10-passed and 224/224, flagged by the orchestrator in the brief rather than
+discovered mid-run. Seven of the eight `afterClassChange()` branches can be driven red; the eighth
+(delete, offered only on an archived class already off the grid) was confirmed undrivable rather than
+assumed so. Boxes mirrored here 2026-08-06 at the phase close; this work order has no `TESTING.md`
+section, being harness-of-the-harness work with nothing a teacher can check by hand.*
 
 **Traps** — Per `verification-tooling.md`'s precondition rule, a check that could not have caught the
 gap it's named for is not evidence. Prove each fix by planting the violation first and watching it

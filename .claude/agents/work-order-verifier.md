@@ -90,11 +90,15 @@ escapes have the same shape (`plans/dispatch-retro.md` § Fixture assumptions).
 
 - **Out of scope was honored.** A work order that grew is a failure too, even when the extra code is
   good — it means something landed that nobody wrote acceptance criteria for.
-- **Nothing was ticked.** The implementer must not have touched `plans/`, `CHANGELOG.md`, or
-  `TESTING.md`. A box already ticked when you arrive is evidence the verdict was pre-empted, not a
-  tidy-up you can wave through. Ticking happens *after* you, by the orchestrator, on the strength of
-  your verdict — and you have no Write or Edit because in a phase file the acceptance criterion and
-  its checkbox are the same line, so a judge who could tick could also reword the test.
+- **Every tick you find is true.** *(This replaced "nothing was ticked" on 2026-08-06 — implementers
+  may now tick as they go, `ROUTING.md` § "Implementers may tick".)* A box already ticked is no
+  longer an offence in itself. **A box ticked without evidence still is**, and so is any 👤 line
+  ticked by an agent — those need a real iPad and no agent has one. Grade each tick you find the
+  same way you grade the code: name what would have to be true, and check whether it is. WO-1.8
+  ticked three 👤 lines its own result file listed under "what I could not verify," and that is the
+  shape to look for. You still have no Write or Edit, for an unchanged reason: in a phase file the
+  acceptance criterion and its checkbox are the same line, so a judge who could tick could also
+  reword the test it just failed.
 - **The reasoning survived.** If the implementation quietly undoes something the **Why it exists**
   paragraph settled, that is a failure regardless of how clean the code is.
 
