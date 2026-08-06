@@ -53,6 +53,15 @@
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
+      data-attendance-open="<classId>" makes that class the open one, then opens the marking screen
+                                      for today — the card's state line and the card's own tap are
+                                      two routes onto one selection
+      data-attendance-mark="<code>" + data-attendance-student: marks that student P/T/A/E/D. `P`
+                                      clears the entry rather than writing one
+      data-attendance-take            records the open class as met with everyone present
+      data-attendance-untake          takes that back — offered only while nothing is marked
+      data-attendance-drop            one tap: the class did not meet
+      data-attendance-undrop          one tap back, leaving the day not taken yet
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
       data-roster-paste               opens the paste box over the roster panel
@@ -106,6 +115,7 @@ import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } fro
 import * as backup from './backup.js';
 import * as classes from './classes.js';
 import * as home from './home.js';
+import * as attendance from './attendance.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
@@ -140,6 +150,24 @@ function afterYearChange() {
   moment she closes it, and invisible in a desk check of the module she edited.
 */
 function afterClassChange() {
+  home.refreshHome();
+}
+
+/*
+  Today's attendance changed, and the card behind the dialog redrawn.
+
+  THE SAME SHAPE AS afterClassChange() ABOVE, AND THE SAME COST OF FORGETTING. src/attendance.js
+  repaints its own screen after every write and deliberately does not reach the home screen: that
+  module is imported BY src/home.js, for the state predicate the card's line is made of, and the
+  reverse import would close a loop this repo has refused three times already. So the second view
+  is redrawn from here, which is where this app states the order things happen in.
+
+  A tap that changes what happened to a class today adds its line here. Every one of them is a
+  hook in the listener below, and the cost of missing one is a teacher who marks a class taken,
+  closes the dialog, and finds the card behind it still saying "Not taken yet" — the exact
+  question this whole work order exists to answer, answered wrong.
+*/
+function afterAttendanceChange() {
   home.refreshHome();
 }
 
@@ -300,6 +328,57 @@ document.addEventListener('click', (e) => {
   if (termRemove) { classes.removeTerm(termRemove.getAttribute('data-term-remove')); return; }
   const termPreset = e.target.closest('[data-term-preset]');
   if (termPreset) { classes.applyPreset(termPreset.getAttribute('data-term-preset')); return; }
+
+  /* ── attendance ──
+     High in this listener, above the roster and the teacher's details: these are the taps a
+     teacher makes with a class walking through the door, and the five below her are taps she makes
+     sitting down. Nothing here is awaited and nothing here confirms — src/attendance.js writes on
+     the tap, src/store.js debounces the write, and the chip in the corner says so. */
+
+  const attendanceOpen = e.target.closest('[data-attendance-open]');
+  if (attendanceOpen) {
+    /* The selection first, through the same route the card's own tap and the header's tab take, so
+       the screen that opens is describing the class the rest of the app agrees is open. Then the
+       home screen is redrawn, because the open mark has just moved onto this card.
+
+       AND THEN THE BUTTON IS FOUND AGAIN, WHICH IS NOT BELT AND BRACES. refreshHome() empties the
+       grid and rebuilds every card, so the node this handler was given is detached by the time the
+       dialog goes up — and modal.js takes the opener to give focus BACK to on close. Focusing a
+       detached node is not an error; it silently sends focus to the body, so the failure is a
+       keyboard user closing attendance and landing at the top of the page instead of on the class
+       they were marking. Nothing on screen looks wrong. Every other opener in this listener is a
+       header control that survives its own redraw, which is why this is the first place it bites. */
+    const classId = attendanceOpen.getAttribute('data-attendance-open');
+    classes.selectClass(classId);
+    afterClassChange();
+    const live = document.querySelector('#homeGrid [data-attendance-open="' + classId + '"]');
+    attendance.openAttendance(live || attendanceOpen);
+    return;
+  }
+
+  const mark = e.target.closest('[data-attendance-mark]');
+  if (mark) {
+    attendance.setMark(mark.getAttribute('data-attendance-student'),
+      mark.getAttribute('data-attendance-mark'));
+    afterAttendanceChange();
+    return;
+  }
+
+  /* Four class-level taps, each one line, each redrawing the card behind the dialog. Two of them
+     are the one-tap drop and its one-tap undo; the other two are the pair that makes "taken with
+     everyone present" a thing a teacher can say. */
+  if (e.target.closest('[data-attendance-take]')) {
+    attendance.takeClass(); afterAttendanceChange(); return;
+  }
+  if (e.target.closest('[data-attendance-untake]')) {
+    attendance.untakeClass(); afterAttendanceChange(); return;
+  }
+  if (e.target.closest('[data-attendance-drop]')) {
+    attendance.dropClass(); afterAttendanceChange(); return;
+  }
+  if (e.target.closest('[data-attendance-undrop]')) {
+    attendance.undropClass(); afterAttendanceChange(); return;
+  }
 
   /* ── roster, contacts, and the teacher's own details ── */
 
@@ -629,6 +708,16 @@ window.planbook = {
      with the app. parseRosterLine() is exported for that reason and for no other: nothing in the
      app calls it from outside src/roster.js. */
   roster,
+  /* `attendance` joined at WO-2.1, and like `classes` it is NOT here because the feature is
+     unreachable — every control it owns is on the page and a teacher can touch all of them. It is
+     here so tools/verify-shell.mjs can READ the answers: what the document holds after a class has
+     been marked, what stateOf() calls a class that has no record, and what today's date is
+     according to the app rather than according to the harness. The acceptance lines are driven by
+     tapping the real buttons; this is how the result is inspected without a second copy of "is
+     this class taken" living in the harness, where it could agree with itself and disagree with
+     the app — which is the exact failure the three states exist to prevent. Nothing in the app
+     reads window.planbook — see the block above for why the seam outlived the shelf. */
+  attendance,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

@@ -14,7 +14,7 @@ and land in Ship 2.
 
 ## WO-2.1 — Attendance marking screen
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** L · 🚩 · **Depends on** WO-1.7, WO-1.10
+**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** L · 🚩 · **Depends on** WO-1.7, WO-1.10
 **Closes roadmap** Phase 2 → "Marking screen, exceptions-only", "Marks `P / T / A / E / D`",
 "One-tap drop", "Three distinct states per class per day"
 
@@ -40,16 +40,22 @@ live term of attendance in a three-week-old app.
 **Out of scope** — percentages (WO-2.4), the keyboard path (WO-2.5), history views (WO-2.6).
 
 **Acceptance**
-- [ ] A mark lands and survives a reload. *(One of the three things that must be right before
+- [x] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
-- [ ] A dropped class and an untaken class are visually distinguishable without reading fine print,
-      and are distinguishable in the stored document.
-- [ ] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
+- [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
+      and are distinguishable in the stored document. *(Measured: the three state lines differ in
+      words, fill, edge colour and type colour, and the dropped one alone is dashed. "Without
+      reading fine print" is finally a human's call — the desk half proves the difference is there
+      and carried by more than one channel, not that it lands across a classroom.)*
+- [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
       everyone present" is indistinguishable from "forgot."
-- [ ] One tap drops a class; one tap undoes it.
-- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad.
-- [ ] All five marks are reachable without a submenu.
-- [ ] The document after a full day of five classes contains no `P` entries.
+- [x] One tap drops a class; one tap undoes it.
+- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+      *(Needs a real iPad and a stopwatch. The desk half measures what a desk can: the path is two
+      taps from the home screen with nothing to submit, and all 132 controls on a 26-name marking
+      screen clear 44px under a coarse pointer.)*
+- [x] All five marks are reachable without a submenu.
+- [x] The document after a full day of five classes contains no `P` entries.
 
 **Traps** — Storing `P` for present will pass every test here and quietly triple the document. The
 absence of a mark *is* the mark. And do not add a "submit"/"finalize" step: a mark is saved when

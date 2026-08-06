@@ -153,6 +153,19 @@ field at all, asks `supportsVisible()` nowhere, and is deliberately absent from
 `flipPresentationMode()`'s redraw list — with the condition that ends that exemption named in both
 files, namely WO-4.x quoting a behavior note into a card's signals slot.*
 
+*2026-08-06, WO-2.1: **the touch-target line is owed again and was not thumbed for this phase.** The
+box stays ticked because it records WO-1.2 through WO-1.10's sittings, not this one — what is
+outstanding for WO-2.1's controls is listed under Phase 2 below, and it is the largest set of new
+controls any work order has added (five per student, twenty-five students to a class). The desk half
+is as good as a desk gets: `wo-sweep.mjs` finds all eleven new selectors inside their own
+`@media (pointer: coarse)` block, and `verify-shell.mjs` measures 132 controls on a 26-name marking
+screen with none under 44px in either dimension. Neither has a thumb. The presentation-mode line
+stays ticked without new work, on the same reasoning WO-1.10's note gives and for a screen with more
+reason to need it: the marking screen is the one most likely to be projected, it carries no
+`supports` field at all, it asks `supportsVisible()` nowhere, and it is deliberately absent from
+`flipPresentationMode()`'s redraw list. The condition that ends that exemption is named in
+`src/attendance.js`'s header — Phase 4 surfacing a plan at a fourth absence.*
+
 ---
 
 ## Phase 1 — Shell, store, roster
@@ -622,12 +635,61 @@ All five acceptance lines close on this pass. WO-1.11 is done.
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*
 
-Nothing here yet — WO-2.1 through WO-2.7 append their acceptance lines as they land.
+WO-2.2 through WO-2.7 append their acceptance lines here as they land.
 
-When they do, three of them are the ones that decide whether a term of attendance is
-trustworthy, and they need a real class rather than a test document: a mark lands and survives a
-reload, a dropped class is distinguishable from a not-taken-yet one, and the percentage matches
-a hand count. 👤
+Three lines in this phase are the ones that decide whether a term of attendance is trustworthy,
+and they need a real class rather than a test document: a mark lands and survives a reload, a
+dropped class is distinguishable from a not-taken-yet one, and the percentage matches a hand
+count. 👤 The first two land with WO-2.1 below; the third is WO-2.4's.
+
+### WO-2.1 — Attendance marking screen
+
+- [x] A mark lands and survives a reload.
+- [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
+      and are distinguishable in the stored document.
+- [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
+      everyone present" is indistinguishable from "forgot."
+- [x] One tap drops a class; one tap undoes it.
+- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+- [x] All five marks are reachable without a submenu.
+- [x] The document after a full day of five classes contains no `P` entries.
+
+*Desk pass 2026-08-06: `verify-shell.mjs` **260 of 260, 0 skipped**, up from 231 at WO-1.12 — 29 new
+checks, 26 of them the attendance section and three in the touch and home-card blocks. Everything is
+driven through the controls a teacher touches: the screen is opened by tapping a card's state line,
+marks are made by tapping the letters, the class is dropped and un-dropped with its own buttons. The
+`window.planbook.attendance` seam is read-only, so the harness never gets to hold a second opinion
+about whether a class was taken. `wo-sweep.mjs` is 10 passed, 0 failed, 1 to review (the standing
+sensitive-field-name line — the new mentions are all in `src/attendance.js`'s header comment
+explaining what is deliberately absent from that screen; no code path there reads `supports`).*
+
+*The three claims that are about an ABSENCE were proved non-vacuous by mutation before this was
+written, because an absence check with nothing behind it goes green whatever the build does. Making
+`setMark()` store `P` instead of deleting turned five checks red, including acceptance line 7's.
+Repainting `.class-card-state.dropped` in the untaken palette turned the three-state comparison red.
+Handing the dialog the opener node the click handler was given — which `refreshHome()` has already
+detached — sent focus to `<body>` on close and turned the focus-return check red. All three
+mutations were reverted and the run is green on the shipped tree.*
+
+**The 👤 iPad sitting this work order still owes.** Run these on the installed home-screen app,
+against a class with a real 25-name roster:
+
+- [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
+      the card's state line. This is the acceptance line, and it is the only one that decides
+      whether the flow survives contact with a period starting. 👤
+- [ ] The three states are readable **from where you stand** — dropped vs not-taken-yet, at arm's
+      length, in a lit classroom, without leaning in to read the words. 👤
+- [ ] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still
+      there. *(There is no submit step by design; this is what makes that safe rather than
+      reckless.)* 👤
+- [ ] Every control on the marking screen takes a thumb: the five letters on a row, "Everyone's
+      here", "Didn't meet", and the card's own state line. Tap the letters at the edges, not the
+      middle — that is where the WO-1.2 defect hid. 👤
+- [ ] The row does not spill sideways in portrait, and the list scrolls as one surface (no
+      scroller-inside-a-scroller stealing the flick). 👤
+- [ ] VoiceOver reads a mark button as the word and the student's name, not as a bare letter. 👤
+- [ ] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
+      precache and the screen still marks. 👤
 
 ---
 

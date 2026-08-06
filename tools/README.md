@@ -133,7 +133,16 @@ those seven are one check repeated after seven class mutations: the home screen'
 tab bar's second view and only the bar redraws itself, so until this work order, dropping one of
 `src/shell.js`'s eleven `afterClassChange()` call sites left six of the eight drivable branches
 green — three sites were already caught by existing checks, and the eighth (delete, offered only
-on archived classes already off the grid) cannot be driven red at all.** Update
+on archived classes already off the grid) cannot be driven red at all. 260 at WO-2.1, measured on
+the shipped tree — twenty-six of those twenty-nine are the attendance section, and the other
+three are in the touch block: a home card that stopped being one button and became a container
+with two, the marking screen's own coarse-pointer sweep, and the row that must not spill sideways
+at 44px a mark. Three of the attendance checks assert an ABSENCE — no `P` anywhere in the
+document, no control that commits anything, and focus that must not end up on the body — so each
+was proved non-vacuous by mutation before the count went in here: storing `P` instead of deleting
+it turns five checks red, repainting the dropped state in the untaken palette turns the
+three-state comparison red, and handing the modal the detached opener sends focus to `<body>`.**
+Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

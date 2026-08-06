@@ -153,15 +153,21 @@ function classesFor(studentId) {
 
 /* `Last, First` is how a roster reads in every school system the owner has used, so it is how a
    row reads here. The fallbacks matter more than they look: a student typed in as one name, or
-   half-typed and left, still has to be a row a teacher can find and finish. */
-function rosterName(s) {
+   half-typed and left, still has to be a row a teacher can find and finish.
+
+   Exported since WO-2.1, along with fullName() below, and for one reason: the marking screen lists
+   the same students and speaks the same names, and a second copy of these eight lines over there
+   could be right about a hyphen, a suffix or a half-typed name in a way this one is not. That is
+   the second opinion this file's header spends five paragraphs refusing elsewhere. Nothing else is
+   exported for src/attendance.js's benefit — it resolves its own roster, in its own order. */
+export function rosterName(s) {
   if (!s) return '';
   if (s.last && s.first) return s.last + ', ' + s.first;
   return s.last || s.first || 'Unnamed student';
 }
 
 /* Spoken and printed in sentences, where "Probe, Ada" reads as a filing cabinet. */
-function fullName(s) {
+export function fullName(s) {
   if (!s) return '';
   return (s.first + ' ' + s.last).trim() || 'this student';
 }

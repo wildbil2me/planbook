@@ -111,6 +111,9 @@
        names, with its own (pointer: coarse) block. Order matters — a per-screen sheet has to be
        able to override the shell, and never the other way round. -->
   <link rel="stylesheet" href="src/home.css">
+  <!-- The marking screen's own sheet (WO-2.1), second instance of the same convention. Order
+       matters for the same reason: a per-screen sheet has to be able to override the shell. -->
+  <link rel="stylesheet" href="src/attendance.css">
 </head>
 <body>
 
@@ -377,9 +380,11 @@
   second truth to keep in step with the real one.
 
   THE SUBTITLE UNDER “Your classes” IS WRITTEN TO BE DELETED. It says what the empty space on each
-  card is for, because a card with two blank lines at the bottom otherwise reads as a card that
-  failed to load. Once WO-2.x, WO-3.x and WO-4.x have filled those two spans the sentence is a lie
-  about a build that has moved on — delete it then, rather than editing it into something vaguer.
+  card is for, because a card with a blank line at the bottom otherwise reads as a card that failed
+  to load. WO-2.1 filled the first of the two spans and narrowed the sentence to the one that is
+  still empty — narrowed rather than made vaguer, which is the thing the original note was warning
+  against. Once WO-3.x and WO-4.x have filled that one too, the sentence is a lie about a build that
+  has moved on: delete it then.
 -->
 <main class="main">
   <div class="panel">
@@ -388,9 +393,9 @@
         <div class="panel-title">
           <h2>Your classes</h2>
           <p>
-            Tap a class to open it. Each card will grow to carry that class's attendance for today,
-            the work waiting to be graded, and the students who need attention, as those parts of
-            Planbook arrive — the space on it is already theirs.
+            Tap a class to open it, or tap its attendance line to mark today. Each card will also
+            grow to carry the work waiting to be graded and the students who need attention, as
+            those parts of Planbook arrive — the space on it is already theirs.
           </p>
         </div>
       </div>
@@ -1132,6 +1137,50 @@
         <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>
         <button class="class-action-btn" data-backup-cancel>Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  ATTENDANCE, for the open class, today (WO-2.1). The critical-path screen: it runs while students
+  walk in, and it is the one thing the owner does every single period.
+
+  THERE IS NO SUBMIT BUTTON IN HERE, AND THERE MUST NEVER BE ONE. Every tap writes immediately —
+  src/attendance.js's header says why at length, and the short version is that the teacher is
+  interrupted mid-class every week and a screen that loses what she tapped because she never
+  reached the bottom of it is a screen she stops trusting. The ✕ closes a dialog; it commits
+  nothing, because there is nothing waiting to be committed.
+
+  Everything below the two labels is empty in the markup and rendered by src/attendance.js from the
+  open document — the same call #homeGrid, #classTabBar and #yearList make, and for the same reason:
+  a hand-written specimen row here would be a second truth to keep in step with the real one.
+
+  The date is text today. WO-2.2 replaces #attendanceDate with a control and re-renders this whole
+  panel for the chosen day; nothing else in here has an opinion about which date it is showing.
+
+  The hint at the bottom is the copy a teacher reads, which is why it lives here rather than in a
+  JavaScript file — the same call the install banner and the backup nag make. It answers the one
+  question this screen reliably provokes: "why is nobody marked present?"
+-->
+<div class="modal-overlay hidden" id="attendanceModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceModalTitle">
+    <div class="modal-header">
+      <h2 id="attendanceModalTitle">Attendance</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">
+        <span id="attendanceClassName"></span> · <span id="attendanceDate"></span>
+      </div>
+      <p class="attendance-state" id="attendanceState"></p>
+      <div class="attendance-actions" id="attendanceActions"></div>
+      <p class="attendance-note hidden" id="attendanceNote"></p>
+      <div class="attendance-list" id="attendanceList"></div>
+      <p class="attendance-hint">
+        Present is the default, so you only tap the exceptions — a tardy, an absence, a student at
+        an event, one dismissed. Nothing is stored for the students who were simply here. Every tap
+        saves as you make it; there is nothing to submit.
+      </p>
     </div>
   </div>
 </div>
