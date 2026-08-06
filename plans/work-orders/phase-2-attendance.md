@@ -386,3 +386,95 @@ without losing any of it.
 will read "2 minutes" after twenty, and it will do it silently. Compute elapsed from the stored
 timestamp on every render; never accumulate. Same class of bug as the eviction hazard in
 `CLAUDE.md` — correct on a desktop, wrong on the device this ships to.
+
+---
+
+## WO-2.10 — `U` for unconfirmed: per-student attendance state
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1
+**Closes roadmap** Phase 2 → amends "Marking screen, exceptions-only" *(see below)*
+
+**Why it exists.** The owner used the registry and found the marking model backwards for how she
+stands in a room. Two specific complaints, 2026-08-06:
+
+1. A cell starts on `?`, and the first tap jumps to `A` — so confirming a student **present** costs
+   four taps round the cycle. The first tap should mean *"I see you, you're here."*
+2. Tapping one student takes the whole class, so every other cell flips from `?` to `P` at once.
+   You cannot tell who you have actually looked at.
+
+Underneath both: **an unmarked student should read as absent, not present.** If the teacher is
+pulled out mid-period, the honest record is "I had not accounted for these students", and the safe
+default for the ones she never reached is absent rather than a silent room full of `P`.
+
+**The design, in the owner's own construction.** A new code **`U` — unconfirmed** is written for
+every student when a class is first touched, and deleted as each student is confirmed. It is a
+temporary mark that sorts itself out as the real record is taken.
+
+| Stored | Means | Drawn as |
+|---|---|---|
+| *(no entry)* | present | `P` |
+| `U` | unconfirmed — **counts as absent** | `?` |
+| `A` `E` `T` `D` | as today | their letter |
+
+- **`P` is still never stored.** The exceptions-only rule is not repealed, it is re-pointed: the
+  document holds exceptions to *present* exactly as it does now, plus `U` for students not yet
+  reached. Clearing a mark still means present.
+- **At rest the document is unchanged.** A finished class holds only its real exceptions, because
+  every `U` has been deleted on the way. The `U` entries exist only between starting a class and
+  finishing it, and they shrink as the teacher works.
+- **A class left half-taken keeps its `U`s**, which is the point: that is an accurate record of an
+  unfinished class rather than a fabricated complete one.
+
+**The cycle** is `P → A → E → T → D → P`. `U` is **not a step** — it is where a cell starts, and
+once tapped a cell never returns to it. From `?` the first tap gives `P`.
+
+**Deliverables**
+- `U` added to the vocabulary in [`../../src/attendance.js`](../../src/attendance.js) and to
+  [`../../docs/data-model.md`](../../docs/data-model.md), described as temporary.
+- **Initialization on the first attendance button pressed**, and never on merely opening the screen
+  — see Traps. Two entry points, and they differ deliberately:
+  - **Tapping a single cell** creates the record, writes `U` for every student in the class, and
+    moves that one student to `P`. **Every other cell still reads `?`.** Nothing else on the screen
+    changes.
+  - **"Everyone's here"** creates the record and resolves *all* students to present at once. This
+    is the one control allowed to change every row, because that is what it says it does.
+- The cycle reordered to `P → A → E → T → D`, entered at `P` from `?`.
+- **`U` counts as absent** wherever attendance is counted. WO-2.4 must treat it as `A` in
+  `(P+T+E+D)/(P+T+A+E+D)` — in the denominator, not the numerator.
+- **The home card says how many are unconfirmed** when a class holds any `U`. A half-taken class
+  must be loud, not silent — see Traps.
+- Un-confirm is reachable: a student cycled by mistake can be returned to `?`, or the class reset,
+  without leaving the screen.
+
+**Out of scope** — hall passes (WO-2.8), compact view, the name-column width. Whether `D` leaves the
+cycle once WO-2.8 lands: that is WO-2.8's call, and this work order keeps `D` where the owner put it.
+
+**Acceptance**
+- [ ] Tapping one student's cell moves that cell to `P` and **changes no other cell on the screen**.
+      Verify by reading every other cell, not by looking at one.
+- [ ] "Everyone's here" resolves every student to `P` in one tap, and the document holds no `U`
+      afterwards.
+- [ ] A class with 25 students, two of them absent, is **two entries** in the finished document —
+      no `U`, no `P`. Storage at rest is unchanged from WO-2.1.
+- [ ] Tapping one cell, then reloading, still shows one `P` and twenty-four `?` — the unconfirmed
+      state survives, which is the whole reason it is stored.
+- [ ] A class nobody has touched has **no record at all** and reads "not taken yet". It is not a
+      class of 25 absences. *(The single most damaging way to get this wrong.)*
+- [ ] The home card names the number of unconfirmed students on a half-taken class.
+- [ ] The cycle from `?` reads `P → A → E → T → D` and returns to `P`, never to `?`.
+- [ ] A student added to the roster after a class was taken does not acquire a mark for it
+      retroactively.
+
+**Traps** — **Opening the screen must still write nothing.** `src/attendance.js` says so and the
+reason stands: if arriving on a class wrote 25 `U`s, "not taken yet" would be unreachable the moment
+a teacher browsed, and the home screen's only question would stop having an answer. Initialization
+is an act, not a visit.
+
+**A class holding `U`s is a meeting, and every `U` in it is an absence.** That is correct and it is
+also dangerous: one stray tap creates a meeting with 24 absences in it. This is why the home card
+must announce unconfirmed counts — the failure mode is silent, looks like data, and is only
+discovered when a percentage is wrong in November. Do not ship the `U` state without the surface
+that makes it visible.
+
+And **`U` is not a sixth attendance code to a teacher.** It never appears on a button, never appears
+in a total, and never reaches a report. It is scaffolding that the finished record does not contain.

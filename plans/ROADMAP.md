@@ -191,6 +191,13 @@ meet is a second source of truth that's wrong by first period.)*
 
 - [ ] 🚩 Marking screen, **exceptions-only** (present is the default; you tap absences and
       tardies). This runs while students walk in — it is the critical-path flow.
+- [ ] 🚩 **`U` for unconfirmed.** A student stays `?` until their own button is tapped, and until
+      then they count **absent** — the first tap means "I see you, you're here" and gives `P`, then
+      the cycle runs `P → A → E → T → D`. Tapping one student never changes another student's
+      display; only "Everyone's here" does that. The document at rest is unchanged: every `U` is
+      deleted as its student is confirmed. *(Added 2026-08-06 — WO-2.10. The owner found the
+      original model backwards for how she stands in a room: confirming a student present cost four
+      taps round the cycle, and one tap silently resolved everyone.)*
 - [ ] 🚩 Marks `P / T / A / E / D`, matching Roll Call!'s vocabulary so the owner's habits carry over.
 - [ ] 🚩 **One-tap drop.** The day loads showing all five classes; the ones that didn't meet get
       marked dropped and are done. No setup, nothing to maintain when the rotation shifts.

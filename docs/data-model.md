@@ -151,6 +151,16 @@ Seven shape decisions that matter:
   `{v:87}` there) are where grade bugs live.
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
   absences is two entries, not 25 — which is also why marking attendance is fast.
+- **`U` means unconfirmed, and it is temporary.** Writing the first mark in a class also writes `U`
+  for every student in it; confirming a student present deletes their entry. So a class you are
+  part-way through holds a `U` for everyone you have not reached, and a class you have finished
+  holds none — the rule above still describes the document at rest. **A `U` counts as an absence**
+  wherever attendance is counted. *(Added 2026-08-06, WO-2.10. The owner's reasoning: an unmarked
+  student should read as absent rather than present, so that a class interrupted mid-period records
+  "I had not accounted for these students" instead of a silent room full of `P`. `U` never appears
+  on a button, in a total, or in a report — it is scaffolding the finished record does not contain.)*
+- **A class with no record at all is not a class of absences.** It is *not taken yet*, and it counts
+  toward nothing. The `U`-is-absent rule applies only inside a class someone has started taking.
 - **There is no schedule model.** A class met if it has an attendance record without an
   `exception`. Three distinct states — *met* · *dropped* · *not taken yet* — and the third is not
   the second. See [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
