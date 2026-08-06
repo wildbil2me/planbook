@@ -53,7 +53,7 @@ starts to sprawl.
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 12 | 12 | ✅ DONE — 2026-08-06 |
+| 1 — Shell, store, roster | 13 | 12 | 🔨 IN PROGRESS — reopened 2026-08-06 |
 | 2 — Attendance | 6 | 0 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -62,16 +62,24 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 0 | ⬜ NOT STARTED |
-| | **54** | **12** | `[██░░░░░░░░] 22%` |
+| | **55** | **12** | `[██░░░░░░░░] 22%` |
+
+*Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
+in and found that `<main>` has no navigation — the header class row sets a preference and repaints
+itself, and nothing swaps the panel underneath. That is a Phase 1 gap discovered by Phase 2, so it
+is booked where it belongs (WO-1.13) rather than smuggled into an attendance work order to keep a
+dashboard tidy. The work lands on `phase/2-attendance`, because that is where the tree is.*
 
 ---
 
 ## Ship 1 — the three weeks that matter
 
-Fourteen work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
+Fifteen work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
 is genuinely tight, so it is written out day by day rather than left to be discovered.
-*(Was fifteen: WO-2.2 merged into WO-2.1 on 2026-08-06 — splitting today from past dates is what
-produced a marking screen worse than Roll Call!'s. The tombstone in the phase file says why.)*
+*(Two changes on 2026-08-06, both from the same root cause — building a screen without checking it
+against Roll Call! first. WO-2.2 merged into WO-2.1, because splitting today from past dates
+produced a marking screen worse than the app it replaces; the tombstone in the phase file says why.
+And WO-1.13 was added, because that screen then had nowhere to live but a modal. Net still fifteen.)*
 
 | # | Work order | Size | 🚩 | Suggested |
 |---|---|---|---|---|
@@ -86,9 +94,10 @@ produced a marking screen worse than Roll Call!'s. The tombstone in the phase fi
 | 9 | [WO-1.9](phase-1-shell-store-roster.md#wo-19--presentation-mode) Presentation mode | S | 🚩 | Aug 13 |
 | 10 | [WO-1.10](phase-1-shell-store-roster.md#wo-110--home-screen-v0) Home screen v0 | M | 🚩 | Aug 14 |
 | 11 | [WO-2.1](phase-2-attendance.md#wo-21--attendance-registry-students--recent-days) Attendance registry: students × recent days | L | 🚩 | Aug 17–19 |
-| 12 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20 |
-| 13 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
-| 14 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
+| 12 | [WO-1.13](phase-1-shell-store-roster.md#wo-113--main-area-views-make-the-header-actually-navigate) Main-area views | M | 🚩 | Aug 19–20 |
+| 13 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20 |
+| 14 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
+| 15 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
 
 **The hard ordering constraint:** WO-1.5 ships before WO-1.6. Nothing that writes student data
 lands before the path that gets it back out. Everything else in the table can shuffle.

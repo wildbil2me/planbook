@@ -679,3 +679,82 @@ section, being harness-of-the-harness work with nothing a teacher can check by h
 gap it's named for is not evidence. Prove each fix by planting the violation first and watching it
 fail, the way the coarse-block check itself was proven at WO-1.7 — don't ship a mechanism change
 without demonstrating it actually catches something.
+
+---
+
+## WO-1.13 — Main-area views: make the header actually navigate
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.10
+**Closes roadmap** Phase 1 → *(no roadmap line; this closes a gap the roadmap assumed closed —
+see "Why it exists")*
+
+**Why it exists.** The shell has no navigation. `selectClass()` in
+[`../../src/classes.js`](../../src/classes.js) writes the `openClassId` preference and repaints the
+tab strip — and that is all it does, because there is nowhere in `<main>` to go. `<main>` holds one
+panel, "Your classes", and nothing ever swaps it. WO-1.6's own note in `index.html` calls the header
+class row "the app's navigation rather than a styled strip"; it was never navigation, and no work
+order since has noticed.
+
+The cost landed at WO-2.1. Attendance needed somewhere to live, the only established pattern was
+`openModal()`, so the marking screen opens as a dialog **on top of** the class cards it just made
+irrelevant — and the app now has *two* class selectors, the header tabs and the home cards, both
+feeding one invisible variable and neither one going anywhere. The owner found this immediately and
+asked the obvious question: why is the panel not the screen?
+
+**This is a divergence from Roll Call!, and that is what makes it a defect rather than a taste.**
+Roll Call!'s `<main class="main">` holds `#registryView` and `#compactGridView` as sibling views
+toggled by `.hidden`, with the header switching between them; its modals — `#manageModal`, the
+config editor, the student report — live *outside* `<main>` and are management-only. We lifted its
+modal components and its visual language and left its view architecture behind. `CLAUDE.md` says to
+lift from Roll Call! rather than hand-design; this is the second defect in one day traceable to not
+having done that.
+
+**Why now and not later.** Phase 3 is ten gradebook work orders, and Phases 4 and 5 add signals and
+outreach. Every one of them needs a main-area surface. If attendance stays a modal, they all land as
+modals and the shape is permanent. WO-2.1's grid is built and unverified-on-hardware, so its
+rendering ports at the lowest cost it will ever have.
+
+**Deliverables**
+- **`<main>` holds swappable views**, one visible at a time, in the shape Roll Call! uses: siblings
+  toggled by `.hidden`, not a router and not a framework. The home grid becomes `#homeView` — one
+  view among several rather than the only thing there is.
+- **The header class row navigates.** Selecting a class puts that class's working surface in the
+  main area. `selectClass()` keeps writing `openClassId` — the preference is right and is what
+  survives a reload — and gains the repaint that the preference was always implying.
+- **A way back to the home grid** that is obvious and always reachable.
+- **WO-2.1's attendance grid moves out of `attendanceModal` and into a main-area view**, rendering
+  unchanged. This is a re-parenting, not a redesign; if the grid's markup needs rewriting to fit,
+  stop and say so rather than redesigning it in passing.
+- **Retire the redundant selector.** Two controls that set one variable is the defect the owner
+  reported. Either the home cards navigate and the header tabs switch within a class, or one of them
+  goes — decide, write down which and why, and do not ship both meaning the same thing.
+- **Modals keep what they are good at**: the class manager, the term editor, the roster paste box,
+  the student editor, the delete confirms. A modal is right for a task you finish and dismiss and
+  wrong for the surface a teacher works in all period. Do not convert them.
+- **`tools/verify-shell.mjs` follows.** `attendanceModal` appears in it 10 times; the harness drives
+  the screen by opening the dialog. Those checks must drive the view instead, and the count must not
+  drop — a check deleted because its selector moved is a check that stopped being run.
+
+**Out of scope** — any change to what the attendance grid *shows* or *stores* (that is WO-2.1, and
+it is settled). Deep-linking or URL routing. A back-button history stack. Phase 6's calendar view.
+
+**Acceptance**
+- [ ] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
+- [ ] Attendance is marked in the main area, with no overlay above the class cards.
+- [ ] There is exactly one control in the app that means "work on this class now", and a second
+      control that means something different can be told apart from it in words.
+- [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
+      told where it is. 👤
+- [ ] `verify-shell.mjs` runs green with **no fewer checks than before**, and every check that used
+      to open `attendanceModal` now drives the view. Verify the count, don't assume it.
+- [ ] The class manager, term editor, roster paste, and student editor still open as modals and
+      still work.
+- [ ] Reloading with a class selected returns to that class's view, not to a blank main area —
+      `openClassId` already persists and must keep meaning something.
+- [ ] Presentation mode still suppresses every support field on every view, including the new ones.
+
+**Traps** — The tempting shortcut is to leave `attendanceModal` in place and hide its chrome, which
+produces a dialog pretending to be a page: focus trapping, an Escape key that navigates, and a
+screen reader announcing a dialog that never closes. Move it or leave it, but do not disguise it.
+And **do not build a router.** Roll Call! switches views with `.hidden` and a class name; the suite
+rule is no dependencies, no framework, and a hand-rolled URL router is a framework with one user.

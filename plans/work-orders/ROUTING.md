@@ -273,9 +273,10 @@ table it says so and explains why.
 | 9 | WO-1.9 Presentation mode | **Claude** | Sensitive surface; failure mode is disclosure to a classroom wall |
 | 10 | WO-1.10 Home screen v0 | **Claude** | Answers "did the class not meet, or did I forget?" — judgment about what to surface |
 | 11 | WO-2.1 Attendance registry: students × recent days | **Claude** | Size L, on the critical path, speed-of-use is a design problem |
-| 12 | WO-2.3 Days off & pre-drops | **Codex** | Three-state logic, fully specified in `plans/rotating-schedule.md` |
-| 13 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
-| 14 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
+| 12 | WO-1.13 Main-area views | **Claude** | Another design-system lift from Roll Call!, and it re-parents a screen the harness drives |
+| 13 | WO-2.3 Days off & pre-drops | **Codex** | Three-state logic, fully specified in `plans/rotating-schedule.md` |
+| 14 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
+| 15 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
 
 *(WO-2.2 was merged into WO-2.1 on 2026-08-06 and its row retired. It had routed **Codex** on
 "small, bounded, follows WO-2.1's pattern" — reasoning that was sound for the work order as written
