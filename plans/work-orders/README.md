@@ -38,7 +38,7 @@ starts to sprawl.
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.10 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.12 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.7 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.10 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -53,7 +53,7 @@ starts to sprawl.
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 10 | 0 | ⬜ NOT STARTED |
+| 1 — Shell, store, roster | 12 | 12 | ✅ DONE — 2026-08-06 |
 | 2 — Attendance | 7 | 0 | ⬜ NOT STARTED |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -62,7 +62,7 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 0 | ⬜ NOT STARTED |
-| | **53** | **0** | `[░░░░░░░░░░] 0%` |
+| | **55** | **12** | `[██░░░░░░░░] 22%` |
 
 ---
 
@@ -91,6 +91,7 @@ is genuinely tight, so it is written out day by day rather than left to be disco
 
 **The hard ordering constraint:** WO-1.5 ships before WO-1.6. Nothing that writes student data
 lands before the path that gets it back out. Everything else in the table can shuffle.
+**Satisfied 2026-08-04** — WO-1.5 verified, iPad half included. WO-1.6 is clear to start.
 
 **If the schedule slips**, cut in this order: WO-1.9 presentation mode degrades to
 "accommodations are collapsed by default and there's a hide-everything toggle in the header" ·

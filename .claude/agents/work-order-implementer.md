@@ -34,10 +34,15 @@ before designing anything yourself — the suite has one visual language and it 
 
 ## Do not
 
-- Tick a roadmap or work-order box, update the dashboard, or write `CHANGELOG.md` / `TESTING.md`
-  entries. The teacher does maintenance once the work is verified; no agent has the authority to
-  tick a box. Writing an unverified tick is the one process rule this project states twice.
-- Touch anything under `plans/`.
+- **Tick a 👤 line.** It needs a real iPad and you do not have one. Everything else you genuinely
+  checked, you may tick as you go — the blanket ban on implementers ticking was retired 2026-08-06
+  (`ROUTING.md` § "Implementers may tick"), because it was ignored by every implementer that had the
+  chance, never caught a defect, and cost WO-1.8 a FAIL whose own first line said the code was fine.
+  What replaced it is narrower and harder: **a tick has to be true.** WO-1.8 ticked three 👤 lines
+  its own result file listed under "what I could not verify," and that — not the ticking — was the
+  actual offence. If you cannot name the evidence, leave the box blank and say why in your report.
+- Write the `CHANGELOG.md` entry. Draft it in your report if you like; it is prose about what a
+  change *means*, and the teacher decides what goes in.
 - `git commit` or `git push` unless the brief explicitly says to.
 
 ## Report back
@@ -50,3 +55,11 @@ Against the Acceptance list, item by item: what you verified and how, what you c
 (anything needing a real iPad or human eyes — say so rather than assuming), and anything you left
 undone with the reason. List the files you changed. If you hit a decision the work order didn't
 settle, name it and say which way you went and why.
+
+**Write that report to `.claude/dispatch/<WO-ID>-result.md` as your last act, then return it
+in-band as well.** Both copies matter and neither substitutes for the other: the returned text is
+what the orchestrator relays now, and the file is what survives after this conversation is gone.
+The dispatch folder is tracked in git precisely so that a work order questioned six months from
+now has both halves — the brief that asked, and your report of what came back. This is also where
+the notes you were told not to act on belong: an out-of-scope temptation you declined, a convention
+you set because nothing existed yet. Those are worthless in a transcript nobody can find.

@@ -49,7 +49,7 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | Phase | What | Status | Progress |
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
-| 1 | Shell, store, roster | ⬜ NOT STARTED | 0/12 `[░░░░░░░░░░] 0%` |
+| 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
 | 2 | Attendance | ⬜ NOT STARTED | 0/11 `[░░░░░░░░░░] 0%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
@@ -57,7 +57,7 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **4/77 `[░░░░░░░░░░] 5%`** |
+| | | **Overall** | **15/77 `[█░░░░░░░░░] 19%`** |
 
 ---
 
@@ -144,28 +144,36 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
 
 **Goal:** the app installs, holds data, survives everything, and can hand that data back.
 
-- [ ] 🚩 PWA shell: manifest, service worker, offline app shell, home-screen install. Verify on
+- [x] 🚩 PWA shell: manifest, service worker, offline app shell, home-screen install. Verify on
       **iPad Safari** — that's the install target that matters.
-- [ ] 🚩 IndexedDB store: one year document, load-on-open, save-on-change, `rev` increment.
-- [ ] 🚩 **Backup: one-click JSON download**, plus a nag when the last one is >7 days old.
-- [ ] 🚩 **Restore: drop a backup file**, with a confirm step naming what's being replaced.
-      *Nothing that writes student data lands before this works.*
-- [ ] 🚩 Install detection + plain-language warning when running uninstalled — the iOS eviction
+- [x] 🚩 IndexedDB store: one year document, load-on-open, save-on-change, `rev` increment.
+- [x] 🚩 **Backup: one-click JSON download**, plus a nag when the last one is >7 days old.
+      *(The nag stays down for a document with nothing in it yet.)*
+- [x] 🚩 **Restore: drop a backup file**, with a confirm step naming what's being replaced.
+      *Nothing that writes student data lands before this works.* *(Reached from a header button
+      rather than the component shelf, and from the boot-failure screen — a recovery path that
+      disappears when the app won't boot is not one. The gate is open as of 2026-08-04.)*
+- [x] 🚩 Install detection + plain-language warning when running uninstalled — the iOS eviction
       hazard is data loss, not a nicety.
-- [ ] Lift the frame from Roll Call!'s `design/starter-template.html` and
+- [x] Lift the frame from Roll Call!'s `design/starter-template.html` and
       `design/portable-components.md`: navy gradient header, white rounded panels, two-row header,
       modal system, save indicator. Rename, `planbook_` prefix.
-- [ ] 🚩 Class management: create/rename/reorder five-plus classes; term structure per class
-      (quarters / semesters / trimesters — never hardcode Q1–Q4).
-- [ ] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
-- [ ] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
+- [x] 🚩 Class management: create/rename/reorder five-plus classes; term structure per class
+      (quarters / semesters / trimesters — never hardcode Q1–Q4). *(Reorder is explicit up/down
+      arrows rather than drag — a drag handle fights the scroll of the strip it lives on, and
+      arrows are measurable by the 44px pass. Archive and delete are separate operations: archive
+      keeps everything and only leaves the tab bar, and delete is offered only on an archived row.
+      Term dates are labels on a range — never sorted, never validated, and an empty one is valid,
+      which is `plans/rotating-schedule.md` staying deleted.)*
+- [x] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
+- [x] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
       plan, case manager, review date. Per [`../docs/data-model.md`](../docs/data-model.md).
-- [ ] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus
+- [x] 🚩 **Presentation mode** — a global toggle suppressing every sensitive field at once, plus
       discreet-by-default display of accommodations (indicator only; details on deliberate tap).
       Teachers project these screens onto classroom walls.
-- [ ] 🚩 Home screen v0: **every class in one tap** — the owner's founding requirement. This screen
+- [x] 🚩 Home screen v0: **every class in one tap** — the owner's founding requirement. This screen
       accretes through every later phase and becomes Phase 6's glance page.
-- [ ] **Start `TESTING.md` and `CHANGELOG.md`.** The maintenance protocol above demands both from
+- [x] **Start `TESTING.md` and `CHANGELOG.md`.** The maintenance protocol above demands both from
       the very first ticked box, so they cannot wait for Phase 8. Both accrete: every phase adds
       its checks and its entries as it goes.
 

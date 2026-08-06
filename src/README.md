@@ -16,6 +16,7 @@ browser doesn't fetch.
 | The suite visual language | `design/` |
 | Anything you run from a terminal | `tools/` (`.mjs`, bare Node) |
 | `index.html`, `sw.js`, `manifest.webmanifest` | The repo root — a service worker's scope is its own directory, so `sw.js` cannot move into `src/` without losing control of the pages above it |
+| Images the browser fetches — the home-screen icons | `icons/`, at the root. `src/` is code; a binary in it is a binary nobody diffs. The icons are drawn by `tools/make-icons.mjs` and committed, so nothing regenerates them to serve the app |
 
 ## The convention
 

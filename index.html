@@ -1,34 +1,1145 @@
 <!doctype html>
 <!--
-  Planbook — placeholder front door.
+  Planbook — the app shell.
 
-  This is NOT the app shell. WO-1.1 only makes the layout real so the first commit has
-  something at the root; WO-1.2 (App shell & design frame) builds the header, panels, modal
-  system, save indicator, and the @media (pointer: coarse) touch pass, and WO-1.3 (PWA install
-  path) links the manifest and registers the service worker.
+  Lifted from Roll Call!'s design/starter-template.html and design/portable-components.md;
+  every value comes from design/style-guide.md. See CLAUDE.md → "Reference implementation".
 
-  Deliberately absent, so that nothing here has to be un-built later:
-    - the viewport / apple-mobile-web-app / safe-area meta tags — WO-1.2 owns iOS chrome
-    - <link rel="manifest"> and any navigator.serviceWorker.register() — WO-1.3
-    - any CSS at all, and any script
+  What this file was, as of WO-1.2: chrome and a component shelf. There was no real screen
+  behind it. The shelf inside <main> was temporary by intent — it existed so the frame could be
+  seen and touched before there was anything to show — and WO-1.10 spent it, as planned. See
+  that work order's paragraph below for what is there now and what went with the shelf.
 
-  When the styling does arrive: colors are declared inline from design/style-guide.md, not as
-  CSS variables, and there is no dark mode. Both read like oversights and are neither — see
-  CLAUDE.md before tidying either one.
+  WO-1.4 put a store behind the chrome: the loading screen now waits for a real year document
+  out of IndexedDB, the header carries the year and the picker that switches it, and the save
+  chip shows real save state. There is still nothing on this page that WRITES to a document —
+  that arrives with classes and the roster.
+
+  WO-1.5 added the way out and the way back: the backup panel in the header, the nag strip under
+  the install banner, the restore confirm, and the "Restore from a backup file" button inside the
+  loading screen's error block. That last one is not a convenience — WO-1.4 deliberately holds
+  the loading screen up on a document this build cannot read, and until now that screen had no
+  exit at all.
+
+  WO-1.6 filled the class tab row: classes and their terms are real, they are the first thing on
+  this page that writes to a year document, and the header's bottom row is now the app's navigation
+  rather than a styled strip. Three modals arrived with it — the manager, the term editor, and the
+  delete confirm that counts what a deletion destroys.
+
+  WO-1.7 filled the roster: the students in the open class, the paste box that reads a list out of
+  a school system and shows the split before it commits, the editor that holds a student's
+  guardians and counselor, and the teacher's own details. Five modals arrived with it, and the
+  header's bottom row gained two buttons — the roster and the teacher's details — because the top
+  row has no width left at 390px.
+
+  WO-1.9 added presentation mode: the 🖥 button in the header's top row, and the strip under the
+  header that says so while it is on. It suppresses every support field in the app at once —
+  including the roster's indicator dot, whose mere presence is a disclosure on a projected screen.
+  The suppression itself is not here and is not per screen: src/supports.js answers one question
+  for the whole app, and this work order changed the answer.
+
+  WO-1.10 spent the shelf and put the home screen in its place: the panel inside <main> is now
+  every active class as a card, one tap each, with the empty state that leads to the first class
+  on a fresh document. Read src/home.js before changing a card — the two spans at the bottom of
+  each one are EMPTY ON PURPOSE and hold their own height, because WO-2.x's today-state, WO-3.x's
+  ungraded count and WO-4.x's attention count land in them, and a dash or a zero there today
+  would be a card that looks finished and is lying. The panel's subtitle says as much in words a
+  teacher reads, and that sentence is the one thing on this screen written to be deleted: it
+  describes what has not arrived yet, so it goes when the last slot is filled.
+
+  Three things went with the shelf and are worth knowing about by name. The save chip moved into
+  <header>, where the work order says it belongs and where it always appeared anyway — it is
+  position: fixed to the top-right corner, so the move is about where it is DECLARED rather than
+  where it is seen. The five save-state demo buttons, "Cycle all five" and the announce button
+  went whole, with their hooks and demoSaveCycle() in src/save-indicator.js; nothing outside the
+  shelf ever called them. And `window.planbook` STAYED, against every comment in src/shell.js
+  that said it would go — tools/verify-shell.mjs reads the open document through it, and the
+  alternative is a second copy of the app's own resolution logic living in the harness. Its
+  shelf-only members are what went.
+
+  WO-1.11 put a second control on the backup panel: "Back up all N years", in the markup hidden,
+  because a teacher who has never rolled over must never see it. It was built first as one file per
+  school year, downloaded in sequence — and failed on a real installed iPad, where the OS's own
+  "Open in…" sheet is a context switch the page's JS does not resume after, so the loop could never
+  reach file two. It now writes one zip holding every year instead: one download, one hand-off, no
+  loop to survive — src/backup.js and src/zip.js state that decision and its history at length.
+  Restore still only ever reads one loose JSON file, whether it came from the single-year button or
+  from unzipping this one. Nothing about the nag strip above changed: it still asks about the year
+  that is open.
+
+  Deliberately still absent, so that nothing here has to be un-built later:
+    - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
+
+  WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
+  service worker registration in src/shell.js, and the eviction banner below the header.
+  Two of the meta tags changed with it and the change is load-bearing rather than cosmetic —
+  `viewport-fit=cover` plus `black-translucent` are what make every env(safe-area-inset-*)
+  in src/shell.css resolve to anything but 0 on iOS. Without the pair the header's top
+  padding is inert, the navy gradient stops short of the screen edge in a home-screen
+  launch, and a safe-area test passes by having nothing to test (see TESTING.md, WO-1.2).
+
+  Two things in src/shell.css read like oversights and are neither: colors are declared
+  inline rather than as CSS custom properties, and there is no dark theme of any kind. Both
+  are deliberate suite conventions. Read CLAUDE.md before tidying either one.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- `black-translucent` lets the web view run under the status bar, which is the only way
+       env(safe-area-inset-top) is ever non-zero; the header's padding-top then clears it and
+       the navy gradient reaches the top edge. `default` insets the view below the status bar
+       instead, leaving a pale strip above a navy header and every inset at 0. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d2137">
+  <!-- The home-screen label, pinned here so a later, longer <title> cannot change it. -->
+  <meta name="apple-mobile-web-app-title" content="Planbook">
   <title>Planbook</title>
+  <!-- Emoji favicon for a browser tab, per portable-components.md §1. The home-screen icons
+       are real PNGs — iOS will not take an SVG for apple-touch-icon and falls back to a
+       screenshot of the page if you give it one. tools/make-icons.mjs draws them. -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="src/shell.css">
+  <!-- The home screen's own sheet, loaded after the shell's. src/shell.css's header sets this
+       convention for every screen after it: one file per screen, styling only its own class
+       names, with its own (pointer: coarse) block. Order matters — a per-screen sheet has to be
+       able to override the shell, and never the other way round. -->
+  <link rel="stylesheet" href="src/home.css">
 </head>
 <body>
-  <h1>Planbook</h1>
-  <p>
-    Nothing is built yet. This file is the repo skeleton from WO-1.1; the app shell arrives in
-    WO-1.2 and the installable offline app in WO-1.3.
+
+<!-- Covers the app until boot finishes. WO-1.4 made that real: it comes down in src/shell.js
+     once the year document is out of IndexedDB and in memory.
+
+     The error block below it stays up instead of coming down, because an app that cannot
+     reach its storage cannot be used — showing the shell with an empty header would read as a
+     working gradebook with nothing in it. The copy lives here rather than in the module for
+     the same reason the install banner's does: it is the part a teacher actually reads, and
+     it should be revisable without opening a JavaScript file. #loadingErrorDetail is filled
+     with the store's own message, which names the year and the cause. -->
+<div id="loadingScreen">
+  <div class="spinner" aria-hidden="true"></div>
+  <h2>Planbook</h2>
+  <p id="loadingStatus">Loading…</p>
+  <div class="loading-error hidden" id="loadingError">
+    <p>
+      Planbook could not open its storage on this device, so it has not started. Nothing you
+      have entered before now has been deleted — it is still where it was.
+    </p>
+    <p>
+      The usual cause is a private browsing window, which gives a site no storage at all. Open
+      Planbook in an ordinary window. If this is already an ordinary window, the device may be
+      out of space.
+    </p>
+    <p class="loading-error-detail" id="loadingErrorDetail"></p>
+    <!-- The way out, added at WO-1.5. Refusing to open a document Planbook cannot read whole is
+         right — a gradebook that silently discards what is typed into it is the worse lie — but
+         a refusal with no exit is a teacher looking at a spinner with a term of grades behind
+         it. Restore IS the exit, so it is reachable from here. The modal tier sits at z-index
+         1000, above this screen's 999, which is what lets it open over the top. -->
+    <button class="loading-error-btn" data-backup-panel aria-haspopup="dialog">
+      Restore from a backup file
+    </button>
+  </div>
+</div>
+
+<!-- Two rows: identity + actions on top, class navigation below. -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo" aria-hidden="true">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <!-- The second line is the strapline until the teacher has entered her own name, and then
+             it is "Ms Toomey · St John's High School" — WO-1.10's "Header: … teacher name".
+             src/teacher.js swaps it and captures the sentence below as the fallback, so this is the
+             only place that sentence is written. It says the same eleven words on every screen of
+             the app, which is what makes it the line a name can have: the top row has no width to
+             spare for another control (see the 390px comments further down this file). -->
+        <p id="headerSubtitle">Grades, attendance, and the outreach that follows</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <!-- The open school year, and the way to change it. It is a button rather than a label
+           because there is always more than one year eventually and the switch has to be
+           reachable at a touch. The visible text is the year alone; the `.sr-only` span in
+           front of it is what makes it read as "School year: 2026-2027" rather than as a
+           number a screen reader has no name for. -->
+      <button class="hdr-year-btn" id="yearButton" data-year-picker aria-haspopup="dialog"
+              title="Choose or start a school year">
+        <span class="sr-only">School year: </span>
+        <span id="yearButtonLabel">—</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      <!-- Backup & restore, in the header rather than on the shelf: it is the one control in
+           this build that has to still be reachable at a touch when everything else has gone
+           wrong, and the shelf it would otherwise have sat on is gone (WO-1.10). -->
+      <button class="hdr-icon-btn" data-backup-panel title="Backup and restore"
+              aria-label="Backup and restore" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <!-- Presentation mode (WO-1.9). In the TOP row rather than beside the roster and class
+           buttons below, because those three are ways into the class that is open and this is a
+           mode for the whole app — the same kind of control as the year and the backup beside it.
+
+           It is a monitor rather than a crossed-out eye on purpose: the icon names the mode, which
+           is true whichever way the switch is, where an eye-with-a-slash reads as "things are
+           hidden" on a button that is currently hiding nothing. The state is carried by the fill —
+           solid white on the navy header when it is on, which is the suite's on-dark active
+           grammar — and by the strip below the header, which is the half a teacher sees without
+           looking at the header at all. src/presentation.js owns both.
+
+           Icon-only, and that is a measurement rather than a preference: at 390px under a coarse
+           pointer this row has 46px of slack once the title steps aside (see src/shell.css's
+           640px block), which pays for a 44px control and not for a label beside it.
+           tools/verify-shell.mjs measures that width on every run. -->
+      <button class="hdr-icon-btn hdr-mode-btn" id="presentationBtn" data-presentation-toggle
+              aria-pressed="false"
+              title="Presentation mode is off. Tap to hide every support detail before you project."
+              aria-label="Presentation mode is off. Tap to hide every support detail before you project.">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </button>
+      <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <!-- Filled by WO-1.6: a .cls-tab per class on the left, the term nav of whichever class is
+         open on the right behind .hdr-divider, and the way into the manager at the end.
+
+         All three containers are empty in the markup and rendered by src/classes.js from the open
+         document — a hand-written specimen row here would be a second truth to keep in step with
+         the real one, which is the same reason #yearList below is empty. The .hdr-empty span is
+         the one exception: it is what a teacher sees before the first paint of a fresh install,
+         and a blank navy strip reads as a bug where "No classes yet." is the truth.
+
+         The divider and the right-hand controls ship `hidden` and are revealed by that module,
+         because an empty divider on a first run is furniture explaining nothing. -->
+    <nav class="hdr-class-tabs" id="classTabBar" aria-label="Classes">
+      <span class="hdr-empty">No classes yet.</span>
+    </nav>
+    <div class="hdr-divider hidden" id="headerDivider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" id="termNav" aria-label="Terms in the open class"></nav>
+    <!-- Three ways in, all of them about the class that is open. WO-1.7 added the first and the
+         third: the roster of the open class, and the teacher's own details.
+
+         Both are here rather than in the row above, and that is a measurement rather than a
+         preference — the top row already carries the year, the backup button and About beside a
+         title, and a fourth control there puts the page into horizontal overflow at 390px.
+         tools/verify-shell.mjs measures that width on every run. -->
+    <div class="hdr-right-controls hidden" id="headerRightControls">
+      <button class="hdr-icon-btn" data-roster-manage title="Roster and contacts"
+              aria-label="Roster and contacts" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </button>
+      <button class="hdr-icon-btn" data-class-manage title="Classes and terms"
+              aria-label="Classes and terms" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+      <button class="hdr-icon-btn" data-teacher-panel title="Your details"
+              aria-label="Your details" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- The save chip. It lived in the component shelf's inset toolbar until WO-1.10, which is where
+       portable-components.md §4 puts it and where a chip needs a light surface to read against —
+       but src/shell.css pins THIS one to the top-right corner of the viewport (position: fixed,
+       z-index 1050, above the modal tier) because every edit in this app happens inside a modal and
+       a modal covers the header. So it is declared in the header, which is what the work order asks
+       for and what it has always looked like, and it is drawn nowhere near where this markup sits.
+
+       No role="status" on purpose: the aria-live channel is announce() in src/live-region.js, and
+       doubling them would announce every save twice. src/store.js paints it — saving → saved on
+       every write, retry and then error when one fails. -->
+  <span class="save-indicator" id="saveIndicator"></span>
+</header>
+
+<!-- Presentation mode's standing state (WO-1.9). Ships `hidden` and is revealed only by
+     src/presentation.js, from a preference — so a launch with the mode off cannot flash it on the
+     way past, and a launch with the mode ON shows it before anything is on screen to be hidden.
+
+     WHY THERE IS A STRIP AT ALL, and it is not decoration. Two jobs. The first is the work order's
+     "obviously on when it's on": a filled header button is unmistakable once you look at the
+     header, and this is what says so when you are not. The second is the failure this feature
+     invites — a teacher who turned it on in first period opens a student in sixth, finds the
+     support panel shut and greyed out, and reads that as her accommodations having been lost. The
+     sentence below is the answer, and it is here rather than in a JavaScript file for the reason
+     the install banner's copy is: it is the part a teacher actually reads.
+
+     One line, deliberately. This strip is on screen exactly while the projector is, so every extra
+     line of it is a line of the lesson pushed down the wall. The longer version lives where the
+     absence is actually met — inside the student editor, in the support panel's own hint.
+
+     Purple rather than the amber of the two strips below it: amber in this app means "act on
+     this" and red means "this destroys something". This is a standing state the teacher chose,
+     which is design/style-guide.md §1's "special state". -->
+<aside class="presentation-strip hidden" id="presentationStrip" aria-labelledby="presentationStripHeading">
+  <p class="presentation-strip-text">
+    <strong id="presentationStripHeading"><span aria-hidden="true">🖥</span> Presentation mode is on.</strong>
+    Support details are hidden everywhere — nothing has been deleted. Grades and names are not affected.
   </p>
-  <p>
-    <code>plans/work-orders/README.md</code> says what lands next and in what order.
-  </p>
+  <button class="presentation-strip-btn" data-presentation-toggle>Turn it off</button>
+</aside>
+
+<!-- The eviction warning. It ships `hidden` and is revealed only by src/install-banner.js, so
+     a home-screen launch cannot flash it on the way past.
+
+     The copy lives here rather than in the module on purpose: it is the part of this feature a
+     teacher actually reads, and it should be revisable without opening a JavaScript file. It
+     says the three things the work order asks for and stops — what is lost, why, and the exact
+     taps. Amber caution styling, not red: the risk is real, and a strip that looks like an
+     error every single launch is a strip that gets tuned out by October. -->
+<aside class="install-banner hidden" id="installBanner" aria-labelledby="installBannerHeading">
+  <div class="install-banner-text">
+    <p><strong id="installBannerHeading"><span aria-hidden="true">⚠</span> Planbook is not installed on this device.</strong></p>
+    <p>
+      iPad Safari erases the stored data of any site you have not opened in about a week.
+      Everything Planbook keeps — your roster, your attendance, your grades — is in that
+      storage, so one quiet week over a holiday can take a term of work with it. Apps added to
+      the home screen are exempt from that, which is the whole reason to add it.
+    </p>
+    <p>
+      <strong>On an iPad:</strong> tap the Share button in Safari's toolbar — the square with
+      an arrow coming out of the top — then choose <strong>Add to Home Screen</strong> and tap
+      <strong>Add</strong>. Open Planbook from that icon from now on.<br>
+      <strong>On a computer:</strong> use the install button at the right-hand end of the
+      address bar, or the browser menu → Install Planbook.
+    </p>
+  </div>
+  <button class="install-banner-dismiss" data-install-dismiss>Not now</button>
+</aside>
+
+<!-- The backup nag. Same amber caution grammar as the banner above and shown the same way —
+     `hidden` in the markup, revealed only by src/backup.js, which also fills the one line that
+     changes. The copy is here for the same reason the install banner's is: it is the part a
+     teacher reads, and it should be revisable without opening a JavaScript file.
+
+     No "Not now" on this one, deliberately. The install banner can be snoozed because acting on
+     it means installing an app; the way to clear this strip is to tap the button beside it, and
+     that always works. A snooze here would be a snooze on the only copy of a term of grades. -->
+<aside class="backup-nag hidden" id="backupNag" aria-labelledby="backupNagHeading">
+  <div class="backup-nag-text">
+    <p><strong id="backupNagHeading"><span aria-hidden="true">⚠</span> <span id="backupNagLead"></span></strong></p>
+    <p>
+      Everything Planbook holds is in this browser's storage. A file you download and keep is the
+      only copy that survives a wiped browser, a lost iPad, or a laptop that will not start —
+      Google Drive sync is not a backup, because it holds one live copy that the next sync
+      overwrites. It takes one tap.
+    </p>
+  </div>
+  <button class="backup-nag-btn" data-backup-panel aria-haspopup="dialog">Back up now</button>
+</aside>
+
+<!--
+  THE HOME SCREEN (WO-1.10). Every active class as a card, one tap each, and the empty state that
+  leads to the first one on a fresh document. This replaced the WO-1.2 component shelf, which is
+  what stood here to let the frame be seen and touched before there was any data to show.
+
+  src/home.js renders every card and owns the reasoning; three things about the markup below.
+
+  IT IS A .panel WITH A GRID IN IT, not cards loose on the page. .panel / .panel-header /
+  .panel-title are the lifted frame from portable-components.md §4, and the shelf was their only
+  instance in the app — a screen that dropped them would have retired a suite component by
+  accident. The grid and the empty state are the only new things here.
+
+  #homeGrid IS EMPTY IN THE MARKUP, like #classTabBar and #yearList above it, and for the same
+  reason: it is drawn from the open document, and a hand-written specimen card here would be a
+  second truth to keep in step with the real one.
+
+  THE SUBTITLE UNDER “Your classes” IS WRITTEN TO BE DELETED. It says what the empty space on each
+  card is for, because a card with two blank lines at the bottom otherwise reads as a card that
+  failed to load. Once WO-2.x, WO-3.x and WO-4.x have filled those two spans the sentence is a lie
+  about a build that has moved on — delete it then, rather than editing it into something vaguer.
+-->
+<main class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Your classes</h2>
+          <p>
+            Tap a class to open it. Each card will grow to carry that class's attendance for today,
+            the work waiting to be graded, and the students who need attention, as those parts of
+            Planbook arrive — the space on it is already theirs.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-grid" id="homeGrid"></div>
+
+    <!-- The empty state, shown by src/home.js only when the open document has no active class.
+         It borrows shell.css's `.empty-state` for the centred zero-data block and adds the three
+         things that component has no opinion about: what is missing, why that is not a problem,
+         and the one control that fixes it.
+
+         The button carries `data-class-manage` — the class manager's own hook, the same one the
+         header's gear and the “Add a class” tab carry — so this is a third door onto one route
+         rather than a second way of creating a class.
+
+         Two sentences, one shown at a time, for the same reason the support panel's two hints are
+         written out here: the copy is the part a teacher reads, and it should be revisable without
+         opening a JavaScript file. The second is defensive — boot leaves the loading screen up
+         when there is no document at all — and it is said rather than left blank because a page
+         with nothing on it and no explanation is indistinguishable from a broken one. -->
+    <div class="empty-state hidden" id="homeEmpty">
+      <p class="home-empty-lead" id="homeEmptyLead">No classes yet.</p>
+      <p class="home-empty-text" id="homeEmptyClasses">
+        Planbook keeps one school year's classes at a time, and this year has none in it so far.
+        Add the classes you teach — whatever you call them out loud is the right name — and each
+        one gets a card here, one tap from anywhere in the app.
+      </p>
+      <p class="home-empty-text hidden" id="homeEmptyNoYear">
+        There is no school year open, so there is nowhere to put a class yet. Choose or start one
+        with the year button at the top of the page.
+      </p>
+      <div class="home-empty-actions" id="homeEmptyActions">
+        <button class="class-action-btn primary" type="button" data-class-manage
+                aria-haspopup="dialog">Add your first class</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
+     gradient header. Semantics live here; src/modal.js owns behavior only. -->
+<div class="modal-overlay hidden" id="aboutModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+    <div class="modal-header">
+      <h2 id="aboutModalTitle">About Planbook</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook is a gradebook and communication assistant. It tracks grades and attendance,
+        surfaces the students who need attention in both directions — concern and praise — and
+        drafts the outreach that follows.
+      </p>
+      <p>
+        Everything stays on this device. There is no account and no server: your data lives in
+        this browser's own storage, and Google Drive sync is an opt-in extra you can ignore
+        entirely.
+      </p>
+      <div class="modal-section-label">This build</div>
+      <p>
+        <strong>Classes, terms and your roster are what you can enter so far.</strong> The frame
+        and the storage behind it are real — one document per school year, kept in this browser —
+        and so are the class bar at the top and the students behind it. There is no gradebook and
+        no attendance yet; those come next. The backup file that gets everything back out of the
+        browser is already here, under the ⤓ button in the header, because nothing that stores a
+        student's name ships before the way to get it back.
+      </p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The year picker. Same modal tier as the one above; src/year-picker.js fills #yearList at
+     open time and owns the behavior. The list is empty in the markup on purpose — it is read
+     out of IndexedDB, and a hand-written specimen row here would be a second truth to keep in
+     step with the real one. -->
+<div class="modal-overlay hidden" id="yearModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle">
+    <div class="modal-header">
+      <h2 id="yearModalTitle">School year</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook keeps one document per school year — classes, roster, attendance, and grades
+        together. Everything else in the app shows the year you have open here.
+      </p>
+      <div class="modal-section-label">On this device</div>
+      <div class="year-list" id="yearList"></div>
+      <div class="modal-section-label">Start another year</div>
+      <form class="year-form" data-year-create>
+        <input class="year-input" id="yearNewInput" type="text" placeholder="2027-2028"
+               aria-label="New school year" autocomplete="off" spellcheck="false">
+        <button class="class-action-btn primary" type="submit">Create</button>
+      </form>
+      <p class="year-hint">
+        Write it as 2027-2028. The new year starts empty: nothing is carried over from the
+        year you have open, because a roster is different in September and a grade belongs to
+        the year it was earned in.
+      </p>
+      <p class="year-error hidden" id="yearError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Classes & terms. src/classes.js owns the behavior and renders every row; the copy a teacher
+     reads is here, for the same reason the install banner's is — it should be revisable without
+     opening a JavaScript file.
+
+     Two things in here are load-bearing rather than decorative. The hint under the term
+     structures says out loud that Planbook does not check term dates: they may overlap, leave
+     gaps, or be empty. That is not a limitation being apologised for, it is the decision in
+     plans/rotating-schedule.md — the app has no schedule model, and a term is a label on a range.
+     And the hint in the Archived block says which of archive and delete is the destructive one,
+     because that is the distinction a teacher has to get right on a tired afternoon. -->
+<div class="modal-overlay hidden" id="classesModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classesModalTitle">
+    <div class="modal-header">
+      <h2 id="classesModalTitle">Classes &amp; terms</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Your classes fill the bar across the top of Planbook, in the order they are listed here.
+        Tapping one opens it. Put the class you reach for most at the front — that order is what
+        keeps every class one tap away.
+      </p>
+
+      <div class="modal-section-label">Your classes</div>
+      <div class="class-list" id="classList"></div>
+
+      <div class="modal-section-label">Add a class</div>
+      <form class="class-form" data-class-create>
+        <input class="class-input" id="classNewInput" type="text" placeholder="Period 3 — Biology"
+               aria-label="Name for the new class" autocomplete="off">
+        <button class="class-action-btn primary" type="submit">Create</button>
+      </form>
+      <div class="class-preset-row" id="classNewPresets" data-pill-group role="group"
+           aria-label="Term structure for the new class">
+        <span class="class-preset-label">Terms</span>
+        <button type="button" class="pill active" data-preset="quarters" aria-pressed="true">Quarters</button>
+        <button type="button" class="pill" data-preset="semesters" aria-pressed="false">Semesters</button>
+        <button type="button" class="pill" data-preset="trimesters" aria-pressed="false">Trimesters</button>
+        <button type="button" class="pill" data-preset="fullYear" aria-pressed="false">One term</button>
+      </div>
+      <p class="class-hint">
+        Call it whatever you call it out loud — “Period 3 — Biology”, “AP Bio”, “3rd hour”. Four
+        quarters unless you choose otherwise, and every term can be renamed, dated, added to, or
+        removed afterwards: a new class arrives usable rather than correct. Terms belong to the
+        class, so one class on semesters and another on quarters is an ordinary thing here.
+      </p>
+      <p class="class-error hidden" id="classError"></p>
+
+      <!-- Why there is no Delete on the rows above, said where a teacher looking for one is
+           standing. The fuller version of this lives in the Archived section below, which is
+           exactly the problem: that section ships `hidden` and stays hidden until something has
+           been archived, so the explanation for the missing control only appeared once you had
+           already found your way past needing it. -->
+      <p class="class-hint">
+        A class is archived rather than deleted: archiving keeps everything in it and only takes it
+        off the class bar. Deleting is offered on an archived class, once it is out of your way.
+      </p>
+
+      <div class="hidden" id="classArchivedSection">
+        <div class="modal-section-label">Archived</div>
+        <div class="class-list" id="classArchivedList"></div>
+        <p class="class-hint">
+          An archived class keeps everything in it — attendance, assignments, grades — and only
+          leaves the class bar. Restoring it puts it back where it was. Deleting is the one that
+          destroys what is in it, which is why it is offered here rather than up there.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The term editor for one class, opened over the panel above — src/modal.js keeps a stack, so
+     Escape closes this and leaves that open. #termList is rendered by src/classes.js. -->
+<div class="modal-overlay hidden" id="termsModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+    <div class="modal-header">
+      <h2 id="termsModalTitle">Terms</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        How <strong id="termsClassName"></strong> divides its year. Every class has its own set, so
+        one class can run on quarters while another runs on semesters or on a single term for the
+        whole year — Planbook never makes them match.
+      </p>
+
+      <div class="modal-section-label">Start from</div>
+      <div class="term-presets">
+        <button class="class-action-btn" type="button" data-term-preset="quarters">Four quarters</button>
+        <button class="class-action-btn" type="button" data-term-preset="semesters">Two semesters</button>
+        <button class="class-action-btn" type="button" data-term-preset="trimesters">Three trimesters</button>
+        <button class="class-action-btn" type="button" data-term-preset="fullYear">One year-long term</button>
+      </div>
+      <p class="class-hint">
+        Choosing one replaces the terms below with a fresh set, so it is for setting a class up
+        rather than for changing one you have been grading in.
+      </p>
+
+      <div class="modal-section-label">Terms in this class</div>
+      <div class="term-list" id="termList"></div>
+      <div class="term-actions">
+        <button class="class-action-btn" type="button" data-term-add>Add a term</button>
+      </div>
+      <p class="class-hint">
+        The dates are for your own reference and Planbook does not check them. Terms may overlap,
+        leave gaps between them, or carry no dates at all — a real school calendar does all three,
+        and a term whose dates you have not been given yet still needs to exist.
+      </p>
+      <p class="class-error hidden" id="termError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- The delete confirm. Same tier and the same job as the restore confirm above: it names what
+     is about to be destroyed, with counts read off the open document, because "delete this class"
+     and "destroy a term of attendance" are the same gesture and the only thing separating them is
+     what is on screen when the teacher taps yes. The two empty elements are filled by
+     src/classes.js; a specimen here would be a second truth. -->
+<div class="modal-overlay hidden" id="classDeleteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classDeleteTitle">
+    <div class="modal-header">
+      <h2 id="classDeleteTitle">Delete this class?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="classDeleteLead"></p>
+      <div class="modal-section-label">What goes with it</div>
+      <div class="class-delete-facts" id="classDeleteFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="classDeleteBtn" data-class-delete-confirm>Delete</button>
+        <button class="class-action-btn" data-class-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The roster of the open class. src/roster.js owns the behavior and renders every row; the copy
+     a teacher reads is here, for the same reason the class manager's is.
+
+     One sentence in here is load-bearing rather than decorative: a student belongs to the school
+     year and a class holds a list of students. That is not an implementation note — it is the
+     difference between "Remove" taking a student off this class and deleting a person's contacts,
+     and the teacher has to be able to predict which one she is about to do. -->
+<div class="modal-overlay hidden" id="rosterModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
+    <div class="modal-header">
+      <h2 id="rosterModalTitle">Roster &amp; contacts</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        A student belongs to the school year, and a class holds a list of students. So a student
+        you teach twice is one student with one set of contacts, and taking someone off this
+        class's roster leaves everything about them exactly where it was.
+      </p>
+
+      <div class="modal-section-label">In <span id="rosterClassName"></span></div>
+      <p class="roster-count" id="rosterCount"></p>
+      <div class="roster-list" id="rosterList"></div>
+
+      <div class="modal-section-label">Add students</div>
+      <form class="roster-form" data-roster-create>
+        <input class="roster-input" id="rosterNewInput" type="text" placeholder="Van Dyke, Mary"
+               aria-label="Name for the new student" autocomplete="off">
+        <button class="class-action-btn primary" type="submit">Add</button>
+      </form>
+      <div class="roster-actions">
+        <button class="class-action-btn" type="button" data-roster-paste aria-haspopup="dialog">
+          Paste a list of names
+        </button>
+      </div>
+      <p class="roster-hint">
+        Type a name either way round — “Van Dyke, Mary” or “Mary Van Dyke” — and Planbook will
+        show you which half it read as the surname. For a whole class, paste the list instead:
+        it shows you every split before it adds anybody.
+      </p>
+      <p class="roster-error hidden" id="rosterError"></p>
+
+      <div class="hidden" id="rosterOrphanSection">
+        <div class="modal-section-label">Not in any class</div>
+        <div class="roster-list" id="rosterOrphanList"></div>
+        <p class="roster-hint">
+          Removing a student from a class leaves them here rather than deleting them, so a name
+          put in the wrong class costs nothing. Add them to the class you meant, or delete the
+          record if it should not be in this school year at all.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The paste box and its preview, opened over the roster panel — src/modal.js keeps a stack, so
+     Escape closes this and leaves that open.
+
+     The preview is the whole point of this dialog and not a confirmation step. A pasted roster
+     arrives as “Last, First” from one system and “First Last” from another, sometimes in the same
+     list, so every line's split is shown in two editable fields with the guess already in them.
+     A preview that only counted the rows would be counting the mistakes about to be committed. -->
+<div class="modal-overlay hidden" id="rosterPasteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterPasteTitle">
+    <div class="modal-header">
+      <h2 id="rosterPasteTitle">Paste a roster</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rosterPasteEdit">
+        <p>
+          One student per line, into <strong id="rosterPasteClassName"></strong>. Paste straight
+          out of your school system — “Van Dyke, Mary” or “Mary Van Dyke”, tabs between columns,
+          a heading row, and a blank line at the end are all fine.
+        </p>
+        <textarea class="paste-box" id="rosterPasteBox" rows="8" spellcheck="false"
+                  aria-label="Paste your roster, one student per line"
+                  placeholder="Van Dyke, Mary&#10;Okonkwo, Chidi&#10;Robert Smith Jr"></textarea>
+        <div class="roster-actions">
+          <button class="class-action-btn primary" type="button" data-roster-preview>
+            Check the names
+          </button>
+          <button class="class-action-btn" type="button" data-modal-close>Cancel</button>
+        </div>
+        <p class="roster-hint">
+          Nothing is added until you have seen the list split into first and last names and said
+          so. Names already in this school year are recognised rather than duplicated.
+        </p>
+        <p class="roster-error hidden" id="rosterPasteError"></p>
+      </div>
+
+      <div class="hidden" id="rosterPasteReview">
+        <p>
+          Check the split before these are added. Each row shows the surname on the left and the
+          first name on the right — tap <span aria-hidden="true">⇄</span> on any row that came out
+          the wrong way round, or fix the fields directly.
+        </p>
+        <p class="paste-count" id="rosterPasteCount"></p>
+        <div class="paste-list" id="rosterPasteList"></div>
+        <div class="roster-actions">
+          <button class="class-action-btn primary" type="button" id="rosterPasteCommitBtn"
+                  data-roster-commit>Add these students</button>
+          <button class="class-action-btn" type="button" data-paste-swap-all>
+            Swap every row
+          </button>
+          <button class="class-action-btn" type="button" data-roster-paste-back>Back</button>
+        </div>
+        <p class="roster-hint">
+          “Swap every row” is for a list that came out of a system writing names the other way
+          round — one tap instead of twenty-five. Rows marked in amber are the ones Planbook was
+          least sure about, or that it already has.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- One student: names, contacts, which classes they are in, and — behind a deliberate tap at the
+     bottom — the support details. src/roster.js fills every field when the dialog opens and writes
+     each one as it is typed, the same way the term editor does.
+
+     The guardian cards, the accommodation cards and the class buttons are rendered rather than
+     written out here, because all three are lists whose length is the teacher's business.
+     Everything else is real markup, so the copy stays revisable without opening a JavaScript
+     file — which matters most for the support panel's own copy, since what it says about
+     projection is the feature. -->
+<div class="modal-overlay hidden" id="studentModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
+    <div class="modal-header">
+      <h2 id="studentModalTitle">Student</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">Name</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">First</span>
+          <input class="student-input" id="studentFirst" type="text" autocomplete="off"
+                 data-student-field="first" aria-label="First name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Last</span>
+          <input class="student-input" id="studentLast" type="text" autocomplete="off"
+                 data-student-field="last" aria-label="Last name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Goes by</span>
+          <input class="student-input" id="studentNickname" type="text" autocomplete="off"
+                 placeholder="Mimi" data-student-field="nickname" aria-label="Nickname">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Class of</span>
+          <input class="student-input" id="studentGradYear" type="text" inputmode="numeric"
+                 autocomplete="off" placeholder="2029" data-student-field="gradYear"
+                 aria-label="Graduation year">
+        </label>
+      </div>
+
+      <div class="modal-section-label">Student email</div>
+      <input class="student-input" id="studentEmail" type="email" autocomplete="off"
+             spellcheck="false" data-student-field="email" aria-label="Student email address">
+
+      <div class="modal-section-label">Guardians</div>
+      <div class="guardian-list" id="guardianList"></div>
+      <div class="roster-actions">
+        <button class="class-action-btn" type="button" data-guardian-add>Add a guardian</button>
+      </div>
+      <p class="roster-hint">
+        Add as many as you need. Mark the one to contact first — that is who Planbook addresses a
+        draft to when there is more than one, and the rest stay here to reach when you need them.
+      </p>
+
+      <div class="modal-section-label">Counselor</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">Name</span>
+          <input class="student-input" id="studentCounselorName" type="text" autocomplete="off"
+                 data-student-field="counselor.name" aria-label="Counselor name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Email</span>
+          <input class="student-input" id="studentCounselorEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-student-field="counselor.email"
+                 aria-label="Counselor email address">
+        </label>
+      </div>
+
+      <div class="modal-section-label">Classes</div>
+      <div class="student-classes" id="studentClasses"></div>
+      <p class="roster-hint">
+        Tap a class to put this student in it or take them out. Moving a student between two
+        classes is those two taps, and nothing about them is copied or lost on the way — there is
+        only ever one of this student in the school year.
+      </p>
+
+      <div class="modal-section-label">Notes</div>
+      <textarea class="student-notes" id="studentNotes" rows="3" data-student-field="notes"
+                aria-label="Notes about this student"></textarea>
+
+      <!-- Support details, and the reason this block is last, boxed, and shut.
+
+           docs/data-model.md § Accommodations rule 1: never visible by default on a screen that
+           might be projected. This dialog is opened over a roster in front of a class often
+           enough that "it is only one student" is not an argument — so the panel arrives
+           collapsed on every open, every time, and opening it is a deliberate tap. That is not a
+           preference and there is nowhere to set it: src/supports.js holds the one visibility
+           rule the whole app asks, and WO-1.9's presentation mode is a second hand on that same
+           function rather than a second rule.
+
+           Last in the dialog and inside its own box because the work order asks for it to be
+           "clearly separated from ordinary fields" — a guardian's phone number and a 504 plan
+           should not read as two rows of the same form. src/roster.js fills every field here and
+           renders the accommodation cards, which are a list whose length is the teacher's
+           business, the same way the guardian cards are. -->
+      <div class="modal-section-label">Support details</div>
+      <div class="supports-panel">
+        <!-- Two hints, one shown at a time, both written out here rather than built in
+             JavaScript so the copy stays revisable without opening a module — the same reason the
+             install banner's words live in this file.
+
+             The second one is what a teacher meets when presentation mode is on: the panel is shut
+             and its button is greyed out, and without a sentence saying why, "her accommodations
+             are gone" is the reasonable reading. src/roster.js swaps them from the one visibility
+             question every screen asks; nothing here decides for itself. -->
+        <p class="supports-hint" id="supportsHint">
+          Accommodations, plan details, medical needs and behavior plans stay out of sight until
+          you ask for them, because this screen gets projected. They are on file either way.
+        </p>
+        <p class="supports-hint hidden" id="supportsHintPresentation">
+          <strong>Presentation mode is on, so these cannot be opened here.</strong> Nothing has
+          been deleted — everything on file for this student is still on file. Turn presentation
+          mode off with the 🖥 button in the header when you are away from the projector.
+        </p>
+        <div class="roster-actions">
+          <button class="class-action-btn" type="button" id="supportsRevealBtn"
+                  data-supports-reveal aria-expanded="false" aria-controls="supportsBody">
+            Show support details
+          </button>
+        </div>
+
+        <div class="supports-body hidden" id="supportsBody">
+          <!-- These four are the four values src/supports.js enumerates, in that order and spelled
+               that way, because setPlan() refuses anything isPlan() does not recognise — two lists
+               that drift apart show up as a button that silently does nothing. tools/verify-shell.mjs
+               compares them. -->
+          <div class="modal-section-label">Plan</div>
+          <div class="roster-actions" id="supportsPlanRow">
+            <button class="toggle-btn" type="button" data-support-plan="none"
+                    aria-pressed="true">No plan</button>
+            <button class="toggle-btn" type="button" data-support-plan="IEP"
+                    aria-pressed="false">IEP</button>
+            <button class="toggle-btn" type="button" data-support-plan="504"
+                    aria-pressed="false">504</button>
+            <button class="toggle-btn" type="button" data-support-plan="ELL"
+                    aria-pressed="false">ELL</button>
+          </div>
+
+          <div class="modal-section-label">Case manager</div>
+          <div class="student-grid">
+            <label class="student-field">
+              <span class="student-label">Name</span>
+              <input class="student-input" id="supportsCaseManagerName" type="text"
+                     autocomplete="off" data-student-field="caseManager.name"
+                     aria-label="Case manager name">
+            </label>
+            <label class="student-field">
+              <span class="student-label">Email</span>
+              <input class="student-input" id="supportsCaseManagerEmail" type="email"
+                     autocomplete="off" spellcheck="false" data-student-field="caseManager.email"
+                     aria-label="Case manager email address">
+            </label>
+            <label class="student-field">
+              <span class="student-label">Review date</span>
+              <input class="student-date" id="supportsReviewDate" type="date"
+                     data-student-field="supports.reviewDate" data-support-date
+                     aria-label="Plan review date">
+            </label>
+          </div>
+          <p class="roster-hint">
+            The review date is the annual review or re-evaluation you are expected to prepare for.
+            It is stored so the calendar can carry it later; nothing reads it yet.
+          </p>
+
+          <div class="modal-section-label">Accommodations</div>
+          <div class="accommodation-list" id="accommodationList"></div>
+          <div class="roster-actions">
+            <button class="class-action-btn" type="button" data-accommodation-add>
+              Add an accommodation
+            </button>
+          </div>
+          <p class="roster-hint">
+            Leave “Applies to” empty for something that applies to everything. Otherwise name the
+            work it applies to — tests, quizzes, homework — separated by commas.
+          </p>
+
+          <div class="modal-section-label">Medical</div>
+          <textarea class="student-notes" id="supportsMedical" rows="2"
+                    data-student-field="supports.medical"
+                    aria-label="Medical needs for this student"></textarea>
+
+          <div class="modal-section-label">Behavior plan</div>
+          <textarea class="student-notes" id="supportsBehaviorPlan" rows="2"
+                    data-student-field="supports.behaviorPlan"
+                    aria-label="Behavior plan for this student"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The delete confirm for a student. Same tier and the same job as the one for a class: it names
+     what is about to be destroyed, with counts read off the open document, because a teacher who
+     meant "take them out of this class" and a teacher who meant "this person is not mine this
+     year" make the same gesture. The two empty elements are filled by src/roster.js. -->
+<div class="modal-overlay hidden" id="studentDeleteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentDeleteTitle">
+    <div class="modal-header">
+      <h2 id="studentDeleteTitle">Delete this student?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="studentDeleteLead"></p>
+      <div class="modal-section-label">What goes with them</div>
+      <div class="student-delete-facts" id="studentDeleteFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="studentDeleteBtn" data-student-delete-confirm>Delete</button>
+        <button class="class-action-btn" data-student-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The teacher's own details. src/teacher.js owns the behavior; these five fields are what
+     Phase 5 signs and addresses a draft with, which is why they are worth a screen before there
+     is any outreach to send. They live in the year document rather than in this browser's
+     preferences: a name is not a UI preference, and it has to survive a new device. -->
+<div class="modal-overlay hidden" id="teacherModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
+    <div class="modal-header">
+      <h2 id="teacherModalTitle">Your details</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook signs and addresses outreach with these. Nothing here is sent anywhere by
+        itself — every message is drafted in your own mail app, where you read it before it goes.
+      </p>
+
+      <div class="modal-section-label">You</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">Name</span>
+          <input class="student-input" id="teacherName" type="text" autocomplete="off"
+                 placeholder="Ms Toomey" data-teacher-field="name" aria-label="Your name">
+        </label>
+        <label class="student-field">
+          <span class="student-label">School</span>
+          <input class="student-input" id="teacherSchool" type="text" autocomplete="off"
+                 data-teacher-field="school" aria-label="Your school">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Your email</span>
+          <input class="student-input" id="teacherEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-teacher-field="email" aria-label="Your email address">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Admin email</span>
+          <input class="student-input" id="teacherAdminEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-teacher-field="adminEmail"
+                 aria-label="Administrator email address">
+        </label>
+      </div>
+      <p class="roster-hint">
+        The admin address is the one you copy when something has to go up the building as well as
+        home — a dean, a department head, whoever that is for you.
+      </p>
+
+      <div class="modal-section-label">Outreach</div>
+      <div class="roster-actions">
+        <button class="toggle-btn" type="button" id="teacherCcBtn" data-teacher-cc
+                aria-pressed="true">Copy me: on</button>
+      </div>
+      <p class="roster-hint" id="teacherCcState"></p>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-modal-close>Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backup & restore. src/backup.js owns the behavior; everything a teacher reads is here.
+
+     The paragraph under "What is in this file" is a deliverable of WO-1.5 rather than a
+     courtesy. The backup carries accommodation, medical and behavior-plan data — since WO-1.8
+     that includes IEP and 504 details, a case manager and a review date, all of them really in
+     the file rather than promised — and it carries them because a backup that filtered them out
+     would restore a gradebook that had quietly lost the things a teacher is legally obliged to
+     implement. CLAUDE.md's rule that no export emits that data governs merge fields, print
+     surfaces and outreach: the places where it reaches somebody else. This file goes to the
+     teacher, and the price of the exception is saying so in words she will actually read.
+     Do not soften it, and do not filter the file to make it go away. -->
+<div class="modal-overlay hidden" id="backupModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
+    <div class="modal-header">
+      <h2 id="backupModalTitle">Backup &amp; restore</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook keeps each school year in this browser's own storage. That storage can be
+        erased — by iPadOS after a week away, by a browser reset, by a laptop that stops
+        starting — so a file you download and keep somewhere safe is the real safety net.
+        Download one at the end of every week.
+      </p>
+
+      <div class="modal-section-label">Download a backup</div>
+      <div class="backup-actions">
+        <button class="class-action-btn primary" id="backupDownloadBtn" data-backup-download>Download backup</button>
+        <!-- WO-1.11's control, and it is hidden here rather than rendered conditionally because
+             src/backup.js has to count the years in IndexedDB before it can be labelled, and this
+             panel is also the exit from a boot that failed — it opens without waiting for the
+             store. It stays hidden unless there is more than one year on the device, so a teacher
+             who has never rolled over never meets it. backup.js rewrites the label with the count
+             in the same call that reveals it — the words here are the fallback, true but uncounted,
+             so that a button with no accessible name can never reach the screen. -->
+        <button class="class-action-btn hidden" id="backupDownloadAllBtn"
+                data-backup-download-all>Back up every year</button>
+      </div>
+      <!-- The one sentence that says what "Back up all N years" hands over: one zip file, which
+           unzips to a backup per year that restores on its own. It is not decoration — a download
+           a teacher cannot feed straight back into restore is one she is entitled to be
+           suspicious of, and this is where that is answered. Filled and unhidden with the button
+           above. -->
+      <p class="backup-all-note hidden" id="backupAllNote"></p>
+      <p class="backup-last" id="backupLast"></p>
+      <!-- Filled and unhidden by src/backup.js only when a year on this device has never been
+           downloaded. A teacher with one year never sees it; a teacher part-way through a
+           rollover needs to be told that the primary button backs up the year she has open, and
+           which control writes the others out. -->
+      <p class="backup-other-years hidden" id="backupOtherYears"></p>
+
+      <div class="backup-notice">
+        <p>
+          <strong>What is in this file.</strong> Everything Planbook holds for that school year:
+          your classes, your roster, guardian and counselor contacts, attendance, grades, and
+          your record of who you have contacted. <strong>It also contains the support details
+          you keep on students — accommodations, IEP and 504 plans, case managers and review
+          dates, medical needs, and behavior plans.</strong> That is on purpose: a backup that
+          left them out would not bring your gradebook back.
+        </p>
+        <p>
+          It is plain text, so anyone who opens the file can read all of it. Keep it the way you
+          keep a paper folder of the same information — somewhere only you can reach, and not in
+          an email.
+        </p>
+      </div>
+
+      <div class="modal-section-label">Restore from a backup</div>
+      <p>
+        Restoring replaces one whole school year with the copy in the file — the year named
+        inside the file, not whichever year you happen to have open. Planbook shows you what is
+        being replaced and asks before it changes anything.
+      </p>
+      <div class="backup-drop" id="backupDrop" data-backup-drop>
+        <p class="backup-drop-hint">Drag a backup file here, or choose one:</p>
+        <input class="backup-file" type="file" id="backupFile" accept=".json,application/json"
+               data-backup-file aria-label="Choose a backup file to restore">
+      </div>
+      <p class="backup-status hidden" id="backupStatus"></p>
+    </div>
+  </div>
+</div>
+
+<!-- The restore confirm. It sits on top of the panel above — src/modal.js keeps a stack, so
+     Escape closes this one and leaves that one open. The three empty elements are filled by
+     src/backup.js with facts read out of the file and off the disk: which year, how many
+     classes, how many students, and when each was last saved. They are empty here because a
+     hand-written specimen would be a second truth to keep in step with the real one. -->
+<div class="modal-overlay hidden" id="restoreConfirmModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
+    <div class="modal-header">
+      <h2 id="restoreConfirmTitle">Replace this school year?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="restoreConfirmLead"></p>
+      <div class="restore-compare" id="restoreCompare"></div>
+      <p class="restore-note hidden" id="restoreConfirmNote"></p>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>
+        <button class="class-action-btn" data-backup-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The one aria-live region. Everything spoken to a screen reader goes through
+     announce() in src/live-region.js and lands here. -->
+<div class="sr-only" aria-live="polite" id="srLive"></div>
+
+<script type="module" src="src/shell.js"></script>
 </body>
 </html>

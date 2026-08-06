@@ -23,6 +23,21 @@ scratchpad/
 *.local.*
 *.log
 
+# Local HTTPS certificates, from tools/make-cert.mjs. Two private keys and a CA root that this
+# machine's browsers may be told to trust — a committed one is a signing key for any site,
+# handed to anyone who clones. They are per-machine and cost one command to regenerate, so
+# there is nothing here worth keeping. This is the one exception to tools/README.md's rule
+# that generated output gets committed; that rule is about assets the app serves.
+certs/
+
+# Deliberately NOT ignored: .claude/dispatch/.
+# It looks like agent scratch and it is not. Each work order leaves a <WO-ID>-brief.md (what was
+# asked) and a <WO-ID>-result.md (what came back) — together the audit trail for why a work order
+# was routed where it was and what the implementer actually claimed. A work order questioned in
+# February needs both halves, and the chat transcript that held the second half will be gone.
+# It will grow to ~40 file pairs by Phase 8; that is a few hundred KB of plain text, which is a
+# cheap price for a decision record.
+
 # Deliberately NOT ignored: package.json, package-lock.json, node_modules/.
 # They cannot legitimately exist here (no dependencies, no bundler — see CLAUDE.md), and an
 # ignore rule would hide one from `git status` instead of surfacing it. If one appears,

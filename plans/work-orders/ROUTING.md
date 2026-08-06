@@ -15,7 +15,7 @@ Three agents, each with a different job and deliberately different powers.
 
 | Agent | Does | Can write? |
 |---|---|---|
-| **work-order-orchestrator** | Checks gates, routes, writes the brief, dispatches, relays | yes |
+| **work-order-orchestrator** | Checks gates, routes, writes the brief, dispatches, relays, applies verified ticks | yes |
 | **work-order-implementer** *or* **Codex** | Builds the one work order it was handed | yes |
 | **work-order-verifier** | Reads the work order cold, walks the Acceptance list, names what's next | **no** |
 
@@ -27,11 +27,60 @@ than what someone meant.
 The orchestrator does not grade its own dispatch. It chose the route and wrote the brief, which
 makes it the wrong party to mark the homework.
 
-**Nobody ticks anything.** Not the implementer, not the verifier, not the orchestrator. The
-verifier's 🙋 marks are the acceptance lines that need a real iPad, and those are exactly the ones no
-agent can close. You get a ready-to-apply maintenance list and you make the call. That is the
-project's own rule — *do not tick a work order that is written but unverified* — enforced by giving
-no agent the authority to do it.
+**Ticking follows the verdict.** On a verifier PASS, and once you say go, the orchestrator applies
+the ticks whose evidence is a command the verifier ran: the work order `Status`, the roadmap box,
+the dashboard counts, and the 👤-free `TESTING.md` lines.
+
+**The implementer may also tick as it goes, as of 2026-08-06** — see § "Implementers may tick" below
+for what changed and why. **The verifier still never ticks**, and that is not the same rule wearing
+a different hat: in a phase file the acceptance criterion **is** the checkbox, one line of text, so
+write access there would let the judge reword the test it just failed. Its read-only tool grant is
+what makes that impossible rather than merely discouraged.
+
+Two things nobody closes on evidence they do not have. **👤 lines** need a real iPad and stay
+`- [ ]` however good the desk-side evidence looks — a rule about hardware rather than about
+authority, so retiring the implementer's tick ban left it untouched. **The `CHANGELOG.md` entry** is
+prose about what a change means; draft it freely, but it lands on the teacher's say-so.
+
+The rule this serves is the project's own — *do not tick a work order that is written but
+unverified* ([`../ROADMAP.md`](../ROADMAP.md) → maintenance protocol). Note what it actually
+conditions on: **verified**, not *human*. An earlier version of this pipeline read it as "no agent
+may tick," which cost nothing until WO-1.1 passed clean and then sat with the dashboard reading `0`
+done, because five hand edits are easy to postpone. A tracker that lies about what is finished is
+the failure the rule was written to prevent, so the enforcement moved to where the evidence is.
+
+---
+
+## Implementers may tick — the rule that was retired, 2026-08-06
+
+Every brief used to carry this, verbatim: *"Do not tick roadmap boxes, edit `plans/`, or touch
+`CHANGELOG.md` / `TESTING.md` — the teacher does maintenance, after the verifier reports."* The
+`work-order-implementer` definition stated it twice and called it "the one process rule this project
+states twice." The verifier had a standing check enforcing it: *"Nothing was ticked. A box already
+ticked when you arrive is evidence the verdict was pre-empted."*
+
+**It was ignored by every implementer that had the opportunity, and enforcing it never once caught a
+defect.** WO-1.7's commit ticked the full set. WO-1.8's did the same and drew a **FAIL** for it — a
+FAIL whose own opening line reads *"All five Acceptance lines verify clean. The failure is on the
+boundary rule, not the code."* That is a verifier run, and the correction round behind it, spent on
+bookkeeping instead of on the accommodations screen it existed to grade.
+
+The verifier that raised it asked for the decision to be taken once rather than re-litigated every
+dispatch: *"either the brief's rule holds and this gets reverted, or the rule is retired and my
+'nothing was ticked' check is retired with it."* **Retired 2026-08-06.** Implementers tick as they
+go. A tracker that is current is worth more than a tracker that is ceremonially clean, and the
+ceremony was generating FAILs that said the code was fine.
+
+**What did not move with it, and must not be assumed to have:**
+
+- **👤 lines still need a real iPad.** No agent has one. That is a claim about hardware, not about
+  authority, and it survives this change completely.
+- **The verifier still cannot write at all.** Different rule, sharper reason — see the pipeline
+  table above.
+- **A tick still has to be true.** WO-1.8's three 👤 lines were ticked by an implementer whose own
+  result file listed them under "what I could not verify." That is the failure this ban was actually
+  aimed at, and it is the part worth remembering. Those three stood only because the teacher
+  confirmed on 2026-08-06 that she had run them by hand — had she not, they would have come back off.
 
 ---
 
@@ -87,6 +136,123 @@ Not because Codex is worse, but because the cost is asymmetric. A Codex run that
 architectural decision costs more to find and unwind than the Claude run costs to sit through. 🚩
 go-live blockers in particular default to Claude unless they land squarely in the Codex column.
 
+## Which Claude — the tier is a second question
+
+**"Claude" is not one destination, and treating it as one is what made Phase 1 more expensive than it
+had to be.** WO-1.4, WO-1.6 and WO-1.7 all landed in the Claude column *by fallback, not by rubric* —
+every one was classified Codex on its own merits and moved only because the runner was down. They ran
+on Opus anyway, because the fallback had exactly one address. That is **433,460 output tokens of
+implementation, 36% of the phase's total**, spent at the top tier on work this file had already
+judged not to need it.
+
+So the route is two questions, and the second reads off the answer to the first:
+
+| The work order… | Implementer | Because |
+|---|---|---|
+| routes to **Codex**, probe passes | Codex | unchanged |
+| routes to **Codex**, probe fails | **Claude Sonnet** | the rubric already found no judgment in it; a down runner does not change the work |
+| routes to **Claude** on its own merits | **Claude Opus** | it is there for one of the six reasons above, and every one of them is a judgment call |
+
+The distinction to hold onto: **a fallback is not a re-rubricing.** A work order that reaches Sonnet
+this way still has its Codex reasoning intact in the Because column, exactly as the ⏸ suspension kept
+it. If a Sonnet fallback produces work the verifier fails twice, that is the signal to re-read the
+rubric — not to quietly raise the tier and try again.
+
+**The verifier is always Opus, and this is not a cost decision to revisit.** It is 23% of output and
+looks like box-ticking, which is precisely what makes it the tempting place to save and the wrong
+one. This pipeline's documented failure mode is *a confident pass over nothing* — three defects
+escaped a green run in Phase 1 with Opus already reading them, and every real verifier catch was the
+subtle kind: the fixture assumption that could not fail, the sweep blind to untracked stylesheets,
+the zip cross-validated against three foreign readers. Noticing what is *absent* is the first thing
+to degrade. The audit function is the last thing to make cheaper.
+
+**The orchestrator stays Opus too**, for a duller reason: it is 10% of output, `wo-gate.mjs` and
+`wo-brief.mjs` already took its mechanical half, and what remains is the one decision the entire
+dispatch branches on. Small saving, concentrated risk.
+
+**Mechanically, the tier is a spawn-time override, not a file edit.**
+`.claude/agents/work-order-implementer.md` stays `model: opus` — the safe default — and a fallback
+dispatch passes `model: sonnet` on the Agent call, which takes precedence over the frontmatter. A
+downgrade should be a deliberate act named in the routing sentence, never a default someone forgot to
+raise back.
+
+## The runner's actual record: 0 for 4, then a fix
+
+**WO-1.4, WO-1.6 and WO-1.7 all routed to Codex correctly by this rubric, and all three died at exec
+time** — `codex-windows-sandbox-setup.exe: program not found`, helper failures across read,
+`apply_patch`, and exec. None produced a line of code. The routing was right all three times; what
+failed was the runner. The WO-1.12 probe (below) made it four, failing before a brief was even
+written.
+
+**Root cause found and fixed 2026-08-06.** `codex-windows-sandbox-setup.exe` and
+`codex-command-runner.exe` live in `codex-resources\`, a directory sitting beside `bin\` inside every
+installed standalone release — and that directory was never on `PATH`. `codex.exe` resolving on
+`PATH` (from a separate launcher install) said nothing about whether its own helper spawns could
+resolve by name, which is consistent with all four failures above. The fix is one line, set inline in
+every Codex invocation rather than persisted to the registry (a persisted `PATH` write does not reach
+a session already running when it was made, and a dispatch cannot tell whether it was):
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
+```
+
+The `current` junction is used rather than a version string so the fix survives Codex's own
+auto-updates. Verified with the project's own exec-time probe, twice, cleanly: **2 for 2 `SMOKE OK`**
+on 2026-08-06, immediately after the run of 4 straight failures above. The fix and the probe both now
+live in one script, `node tools/codex-invoke.mjs` (`--probe` / `--brief`/`--out`), so the same `PATH`
+prepend backs the health check and the real dispatch instead of being retyped at each call site. Full
+account in [`../dispatch-retro.md`](../dispatch-retro.md) § Codex; the orchestrator instructions that
+invoke the script are
+[`../../.claude/agents/work-order-orchestrator.md`](../../.claude/agents/work-order-orchestrator.md)
+step 2b.
+
+**This is what ended the suspension below.** That section had already written down its own exit
+condition — one probe that writes a file — so the passing probe lifted it without anyone having to
+remember to check, and the Ship 1 table's ⏸ marks came off in the same pass on 2026-08-06.
+
+At WO-1.7 the failure was the cleanest of the three, and the most alarming: **`codex exec` exited
+zero having written nothing.** A non-zero exit is a runner that failed. A zero exit with an empty
+tree is a runner that failed and said it succeeded — which is why the probe checks for a file that
+must exist rather than for an exit code.
+
+**Treat this as a transient condition, not a standing fact about the machine.** `codex doctor`
+reported healthy after WO-1.4, and a `--sandbox workspace-write` run completed normally later. The
+orchestrator re-probes every dispatch rather than writing the route off.
+
+But **`codex doctor` does not predict it**. At WO-1.6 it reported `16 ok · 0 fail · sandbox ✓` six
+minutes before the exec that wrote nothing. Doctor reports *installation* health; a dispatch depends
+on *exec-time helper* health. So the gate is now a real write — a `codex exec` that creates a file in
+a temp directory under the same sandbox flags, checked for existence. The full account is in
+[`../dispatch-retro.md`](../dispatch-retro.md) § Codex.
+
+**If a third Codex dispatch fails at exec time**, the orchestrator says so in its report and proposes
+moving the pre-routed table below to Claude until one run lands. That is the teacher's call, not the
+orchestrator's — but two failures is a pattern and three is a decision.
+
+### The decision, taken 2026-08-05
+
+**The third failure came at WO-1.7, and the teacher made the call: every pending Codex row moves to
+Claude until one Codex run lands.** The rows are marked *suspended* rather than rewritten, and each
+one keeps the reasoning that put it in the Codex column, because **the rubric is not what failed and
+must not be quietly edited to match a broken runner.** Restoring the table is a one-pass revert once
+a probe writes a file.
+
+The three completed rows are left exactly as they were routed. They are a record of a decision made
+on the day, not a plan; rewriting them would erase the evidence this section is built on.
+
+**What would end the suspension:** one `codex exec` that creates a file in a temp directory under the
+dispatch sandbox flags. That is the probe the orchestrator already runs every dispatch, so the
+suspension lifts itself the first time it passes — nobody has to remember to check.
+
+**A probe bug found in the same run, and worth more than the routing decision.** The WO-1.7 probe
+failed its first attempt on its *own* defect: it built a bare temp directory, and Codex refuses to
+run outside a trusted directory, so it died with `Not inside a trusted directory` before exec was
+ever reached. A probe that always fails is a probe that always re-routes — it would have condemned a
+healthy runner forever while reporting it as broken, and the report would have looked exactly like
+the three real failures above. The probe now runs `git init` in the temp directory first. This is the
+third variant of that failure mode recorded in [`../dispatch-retro.md`](../dispatch-retro.md);
+**a gate that cannot pass is worse than no gate, because it produces confident wrong answers.**
+
 ---
 
 ## Ship 1 — pre-routed
@@ -112,9 +278,19 @@ table it says so and explains why.
 | 14 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
 | 15 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
 
+**Suspension lifted 2026-08-06.** The three rows above sat as **Claude** ⏸ from 2026-08-05, when
+Codex was 0 for 3 (then 0 for 4, counting the WO-1.12 probe), until the `codex-resources\` `PATH` fix
+landed and the exec-time probe went 2 for 2 — full account in
+[`../dispatch-retro.md`](../dispatch-retro.md) § Codex. The Because column never changed while
+suspended, and it does not change now either: the reasoning that put these rows in the Codex column
+was correct the whole time. Only the Route cell moved, both times. If a future Codex dispatch dies at
+exec time again, the same mechanism applies — re-suspend the affected rows, mark them ⏸, and leave
+the Because column alone.
+
 **Later phases, at a glance:** WO-3.4 grade engine and WO-4.1 signal engine are the strongest Codex
-candidates in the project — both are specified arithmetic with testable output. WO-3.8, WO-3.10,
-all of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only.
+candidates in the project — both are specified arithmetic with testable output. WO-3.8, WO-3.10, all
+of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only — that is a
+property of the work, not a runner's record.
 
 ---
 
@@ -134,5 +310,8 @@ into every brief, verbatim:
 - Empty categories redistribute their weight.
 - Taken · dropped · not-taken-yet are three states. Everything counts recorded meetings, never
   calendar days.
-- Stay inside the work order's **Out of scope** line. Do not tick roadmap boxes, edit `plans/`, or
-  touch `CHANGELOG.md` / `TESTING.md` — the teacher does maintenance, after the verifier reports.
+- Stay inside the work order's **Out of scope** line.
+- You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go. Two
+  exceptions: **never tick a 👤 line** — it needs a real iPad and you do not have one — and leave the
+  `CHANGELOG.md` entry to the teacher, who decides what a change means. Anything you do tick must be
+  something you actually checked; a tick you cannot point at evidence for is worse than a blank box.
