@@ -141,7 +141,19 @@ at 44px a mark. Three of the attendance checks assert an ABSENCE — no `P` anyw
 document, no control that commits anything, and focus that must not end up on the body — so each
 was proved non-vacuous by mutation before the count went in here: storing `P` instead of deleting
 it turns five checks red, repainting the dropped state in the untaken palette turns the
-three-state comparison red, and handing the modal the detached opener sends focus to `<body>`.**
+three-state comparison red, and handing the modal the detached opener sends focus to `<body>`.
+274 at WO-2.1's rebuild, and the fourteen is a net figure rather than a count of additions: that
+work order replaced the one-day marking screen with a six-day registry, so the attendance section
+was rewritten rather than extended and three of its old checks had nothing left to ask. Two of the
+new ones are worth knowing about. The column window is compared against a list this harness derives
+from the CALENDAR in Node — the same "two runtimes, one clock, one answer" posture the local-date
+check already used — because a window built from the records that exist would pass any check that
+asked the app which dates it had picked, and omitting a forgotten day is the one failure that
+screen exists to prevent. And the future-date refusal is the only place in this file that WRITES
+through the `window.planbook` seam: there is no control to click, by construction, which is the
+claim. Four mutations, all reverted: storing `P` turns seven red, painting an untaken cell in the
+taken palette turns the three-state comparison red, dropping the `<= today` clause turns two red,
+and dropping the past-column unlock takes tappable-cells-per-row from one to five.**
 Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.

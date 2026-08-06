@@ -4257,35 +4257,43 @@ if (!supportSeam) {
 
 /* ───────────────── attendance ─────────────────
  *
- * WO-2.1's seven acceptance lines, driven through the controls a teacher touches: the screen is
- * opened by clicking the state line on a real card, the marks are made by clicking the real
- * letters, and the class is dropped and un-dropped with the real buttons. The
- * window.planbook.attendance seam is used only to READ — what stateOf() says about a class, what
- * the app thinks today is — because the alternative is a second copy of "is this class taken"
- * living in this file, where it could agree with itself and disagree with the app. That is
- * precisely the failure the three states exist to prevent.
+ * WO-2.1's twelve acceptance lines, driven through the controls a teacher touches: the screen is
+ * opened by clicking the state line on a real card, marks are made by tapping real cells, past
+ * days are unlocked with the real pencil, and the class is dropped and un-dropped with the real
+ * column head. The window.planbook.attendance seam is used only to READ — what stateOf() says
+ * about a class, what the app thinks today is — because the alternative is a second copy of "is
+ * this class taken" living in this file, where it could agree with itself and disagree with the
+ * app. That is precisely the failure the three states exist to prevent.
  *
- * TWO CLAIMS HERE ARE ABOUT WHAT IS *NOT* IN THE DOCUMENT, and an absence check with nothing
+ * ONE EXCEPTION TO READ-ONLY, and it is named here because it is the only one: acceptance line 9
+ * says future dates are blocked, and a blocked path has no control to click. The check that proves
+ * it calls setMark() through the seam with tomorrow's date and asserts nothing lands. Driving it
+ * from the UI is impossible by construction, which is the claim.
+ *
+ * THREE CLAIMS HERE ARE ABOUT WHAT IS *NOT* IN THE DOCUMENT, and an absence check with nothing
  * behind it is not evidence — so each is paired with the presence that proves the fixture was
  * real. "No P is stored" is asserted over a class of 26 with four exceptions on it, counted; the
  * twenty-two silent students are the claim, and the four loud ones are what makes the silence mean
  * something. "No submit step" is asserted as the absence of a form and of any button whose label
  * is save/submit/finalize/apply, on a dialog whose other controls are enumerated in the same read.
+ * "No future column" is asserted against a window whose six dates this file computes for itself.
  *
- * WHAT IS NOT HERE, AND IS OWED TO A HUMAN: acceptance line 5. Twenty-five students and two
- * absences in under fifteen seconds needs a thumb, a real iPad and a stopwatch. This section
- * measures the two things a desk can measure about it — that the path is two taps after the card
- * with nothing to submit, and that every control on it clears 44px under a coarse pointer — and
- * neither of those is the line. It stays a 👤 item in TESTING.md.
+ * WHAT IS NOT HERE, AND IS OWED TO A HUMAN: acceptance lines 2, 6 and 8. Six columns readable on
+ * the iPad the owner actually holds, twenty-five students in under fifteen seconds, and a
+ * "not today" strip legible across a lit classroom all need a thumb, a device and eyes. This
+ * section measures what a desk can measure about them — six columns rendered and no sideways
+ * scroll at 800px and at an emulated coarse 1024px, a path that is one tap per absence with
+ * nothing to submit, and a banner that is on screen and carries the date in words — and none of
+ * those three is the line. They stay 👤 items in TESTING.md.
  */
 
 console.log('\n--- attendance ---');
 
 /* Flushed then reloaded, for the reason every section here reloads (tools/README.md trap 6) and
-   for one that belongs to this feature: the marking screen is filled from the document when its
-   dialog opens, and a screen that renders only because the module still holds what it just wrote
-   is a screen that is empty on the teacher's next launch — which for attendance is a period of a
-   term gone. */
+   for one that belongs to this feature: the registry is filled from the document when its dialog
+   opens, and a screen that renders only because the module still holds what it just wrote is a
+   screen that is empty on the teacher's next launch — which for attendance is a period of a term
+   gone. */
 await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
@@ -4307,17 +4315,64 @@ const nodeToday = (() => {
   return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
 })();
 
+/*
+  And the COLUMNS, computed here too, for the same reason and for a second one.
+
+  The work order's rule is "the last N weekdays, Mon-Fri, by calendar" — deliberately not "the
+  dates this class has records for", because a day you forgot has no record and a window built from
+  records would omit exactly the column you opened the screen to find. A check that asked the app
+  which dates it had chosen could not tell those two rules apart; it would agree with either. So
+  this file derives the window from the calendar and compares.
+
+  Today is always index 0, whatever day of the week it is — the app's own documented divergence
+  from a literal reading of "weekday", matching Roll Call!'s "today plus the five preceding
+  weekdays". On the five days that matter the two readings are the same list.
+*/
+const nodeColumns = (count, offset) => {
+  const p = (x) => (x < 10 ? '0' : '') + x;
+  const iso = (x) => x.getFullYear() + '-' + p(x.getMonth() + 1) + '-' + p(x.getDate());
+  const d = new Date();
+  const out = [];
+  while (out.length < count * (offset + 1)) {
+    const dow = d.getDay();
+    if (!out.length || (dow !== 0 && dow !== 6)) out.push(iso(d));
+    d.setDate(d.getDate() - 1);
+  }
+  return out.slice(offset * count, offset * count + count);
+};
+const thisWeek = nodeColumns(6, 0);
+const lastWeek = nodeColumns(6, 1);
+const daysApart = (a, b) => Math.round(
+  (new Date(a.slice(0, 4), Number(a.slice(5, 7)) - 1, a.slice(8, 10))
+    - new Date(b.slice(0, 4), Number(b.slice(5, 7)) - 1, b.slice(8, 10))) / 86400000);
+const tomorrow = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const p = (x) => (x < 10 ? '0' : '') + x;
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+})();
+
 /* One page-side reader for the whole section, for the reason window.__cls and window.__ros exist:
    one round trip per check, and the reads cannot drift apart between them. */
 const INSTALL_ATT_READER = `(function(){
+  function hookOf(b){
+    var out = '';
+    Array.prototype.slice.call(b.attributes).forEach(function(x){
+      if (x.name.indexOf('data-attendance-') === 0) out = x.name + (x.value ? '=' + x.value : '');
+    });
+    return out;
+  }
   window.__att = function(){
     var doc = window.planbook.store.getDoc();
     var a = window.planbook.attendance;
     var openId = window.planbook.classes.getSelectedClassId();
     var open = doc.classes.filter(function(c){ return c.id === openId; })[0] || null;
     var active = doc.classes.filter(function(c){ return !c.archived; });
-    var rows = Array.prototype.slice.call(document.querySelectorAll('#attendanceList .attendance-row'));
     var modal = document.getElementById('attendanceModal');
+    var heads = Array.prototype.slice.call(
+      document.querySelectorAll('#attendanceHead th[data-attendance-col]'));
+    var rows = Array.prototype.slice.call(
+      document.querySelectorAll('#attendanceBody tr[data-attendance-row]'));
     var actions = Array.prototype.slice.call(document.querySelectorAll('#attendanceActions button'));
     var cards = Array.prototype.slice.call(document.querySelectorAll('#homeGrid .class-card'));
     function studentById(id){ return doc.students.filter(function(s){ return s.id === id; })[0] || null; }
@@ -4333,14 +4388,12 @@ const INSTALL_ATT_READER = `(function(){
         return { classId: r.classId, date: r.date, exception: r.exception,
                  keys: Object.keys(r).sort().join(','),
                  marks: r.marks ? JSON.parse(JSON.stringify(r.marks)) : null }; }),
-      /* Today's, separately, and EVERY CLAIM THIS SECTION MAKES ABOUT WHAT IT JUST WROTE READS
-         THIS ONE. The document arrives here already holding one record on 2026-09-09: the class
-         manager section pushes a fixture onto a class it is about to delete and onto a neighbour
-         it is not, so that "it deleted the right one" is falsifiable, and the neighbour's survives.
-         That residue is kept rather than cleaned away, because it is the only thing in the run
-         that can catch a screen which writes onto the wrong date or reads the array without
-         filtering — a build where every class shared one record would pass an unfiltered check.
-         (No backticks in this comment: it is inside a template literal.) */
+      /* Today's, separately. The document arrives here already holding records on 2026-09-09 and
+         after: the class manager section pushes a fixture onto a class it is about to delete and
+         onto a neighbour it is not, so that "it deleted the right one" is falsifiable, and the
+         neighbour's survives. That residue is kept rather than cleaned away, because it is the only
+         thing in the run that can catch a screen which writes onto the wrong date or reads the
+         array without filtering. (No backticks in this comment: it is inside a template literal.) */
       today: doc.attendance.filter(function(r){ return r.date === a.todayISO(); })
         .map(function(r){
           return { classId: r.classId, date: r.date, exception: r.exception,
@@ -4354,14 +4407,18 @@ const INSTALL_ATT_READER = `(function(){
           Object.keys(r.marks || {}).forEach(function(k){ out[r.marks[k]] = (out[r.marks[k]] || 0) + 1; });
         });
         return out; })(),
-      /* And the same count over today alone, which is what lets the exact tally below be exact:
-         the whole document also holds the one mark the fixture above put on another date. */
       todayValues: (function(){ var out = {};
         doc.attendance.filter(function(r){ return r.date === a.todayISO(); }).forEach(function(r){
           Object.keys(r.marks || {}).forEach(function(k){ out[r.marks[k]] = (out[r.marks[k]] || 0) + 1; });
         });
         return out; })(),
       states: active.map(function(c){ return c.id + '=' + a.stateOf(c.id, a.todayISO()); }).join(' '),
+      /* What the OPEN class's state is on each date the grid is showing, asked of the predicate
+         rather than read off the screen — so "the header says Taken" and "the document says taken"
+         are two facts that can disagree and be caught disagreeing. */
+      colStates: open ? heads.map(function(th){
+        var d = th.getAttribute('data-attendance-col');
+        return d + '=' + a.stateOf(open.id, d); }).join(' ') : '',
       /* The open class roster as pairs, so this file can derive the order it expects rather than
          asking the app what order it chose. */
       roster: open ? (open.roster || []).map(function(id){
@@ -4373,34 +4430,65 @@ const INSTALL_ATT_READER = `(function(){
       stateClass: (document.getElementById('attendanceState') || {}).className,
       note: (function(){ var n = document.getElementById('attendanceNote');
         return n && !n.classList.contains('hidden') ? n.textContent : ''; })(),
+      /* The "you are not on today" strip: whether it is up, and what it says. */
+      banner: (function(){ var b = document.getElementById('attendanceBanner');
+        return { shown: !!(b && !b.classList.contains('hidden')),
+                 text: b ? (b.textContent || '').trim() : '' }; })(),
       actions: actions.map(function(b){
-        return { text: (b.textContent || '').trim(),
-                 hook: Array.prototype.slice.call(b.attributes).map(function(x){ return x.name; })
-                   .filter(function(n){ return n.indexOf('data-attendance-') === 0; }).join(','),
+        return { text: (b.textContent || '').trim(), hook: hookOf(b),
                  pressed: b.getAttribute('aria-pressed') }; }),
+      /* One entry per column: the date it will write, the word above it, the classes that paint it,
+         and the one control that belongs to that day. */
+      columns: heads.map(function(th){
+        var btn = th.querySelector('button');
+        return { date: th.getAttribute('data-attendance-col'),
+                 dow: ((th.querySelector('.attendance-day-dow') || {}).textContent || '').trim(),
+                 shown: ((th.querySelector('.attendance-day-date') || {}).textContent || '').trim(),
+                 chip: ((th.querySelector('.attendance-day-state') || {}).textContent || '').trim(),
+                 cls: th.className,
+                 btn: btn ? hookOf(btn) : '',
+                 btnText: btn ? (btn.textContent || '').trim() : '' }; }),
+      pager: Array.prototype.slice.call(document.querySelectorAll('#attendancePager button'))
+        .map(function(b){ return { text: (b.textContent || '').trim(),
+                                   value: b.getAttribute('data-attendance-page'),
+                                   disabled: !!b.disabled, title: b.title || '' }; }),
+      pills: Array.prototype.slice.call(document.querySelectorAll('#attendancePills .pill'))
+        .map(function(b){ return { code: b.getAttribute('data-attendance-filter'),
+                                   active: b.classList.contains('active'),
+                                   pressed: b.getAttribute('aria-pressed') }; }),
+      sorts: Array.prototype.slice.call(document.querySelectorAll('#attendanceSort button'))
+        .map(function(b){ return { which: b.getAttribute('data-attendance-sort'),
+                                   active: b.classList.contains('active') }; }),
       rowCount: rows.length,
-      /* Per row: whose it is, every code offered on it, which one is on, and how many of them carry
-         an accessible name. A build that hid three of the five behind a menu would show a shorter
-         codes string here, which is the shape acceptance line 6 is actually about. */
+      /* Per row: whose it is, the name as drawn, and the glyph in every column of that row read
+         left to right — "P?PP-P" is a whole row's story in six characters, and it is what makes a
+         hole in the grid a thing this file can see rather than infer. */
       rows: rows.map(function(r){
-        var btns = Array.prototype.slice.call(r.querySelectorAll('[data-attendance-mark]'));
-        return { name: (r.querySelector('.attendance-row-name') || {}).textContent,
+        var tds = Array.prototype.slice.call(r.querySelectorAll('td[data-attendance-col]'));
+        return { name: ((r.querySelector('.attendance-name') || {}).textContent || '').trim(),
                  student: r.getAttribute('data-attendance-row'),
-                 codes: btns.map(function(b){ return b.getAttribute('data-attendance-mark'); }).join(''),
-                 on: btns.filter(function(b){ return b.classList.contains('on'); })
-                   .map(function(b){ return b.getAttribute('data-attendance-mark'); }).join(''),
-                 pressed: btns.filter(function(b){ return b.getAttribute('aria-pressed') === 'true'; }).length,
-                 named: btns.filter(function(b){ return !!b.getAttribute('aria-label'); }).length,
-                 marked: r.classList.contains('marked') }; }),
+                 codes: tds.map(function(td){ return (td.textContent || '').trim(); }).join(''),
+                 dates: tds.map(function(td){ return td.getAttribute('data-attendance-col'); }).join(' '),
+                 tappable: tds.filter(function(td){
+                   return !!td.querySelector('button[data-attendance-cell]'); }).length,
+                 named: tds.filter(function(td){
+                   var c = td.firstElementChild;
+                   return !!(c && c.getAttribute('aria-label')); }).length }; }),
       /* Anything that would turn one tap into two, or one screen into two. */
-      submenus: document.querySelectorAll('#attendanceList select, #attendanceList [aria-expanded], #attendanceList details').length,
+      submenus: document.querySelectorAll('#attendanceGridWrap select, #attendanceGridWrap [aria-expanded], #attendanceGridWrap details').length,
       /* The Traps line, as a structure rather than as a promise: no form to submit, and no control
          whose label says it commits anything. */
       forms: document.querySelectorAll('#attendanceModal form').length,
       submitish: Array.prototype.slice.call(document.querySelectorAll('#attendanceModal button'))
         .map(function(b){ return (b.textContent || '').trim(); })
         .filter(function(t){ return /save|submit|finali|apply|^done$|^ok$/i.test(t); }),
-      injected: document.querySelectorAll('#attendanceList b, #attendanceList i, #attendanceList script').length,
+      injected: document.querySelectorAll('#attendanceBody b, #attendanceBody i, #attendanceBody script').length,
+      /* Does the grid fit, or does it want a sideways swipe? The desk half of acceptance line 2. */
+      fit: (function(){ var w = document.getElementById('attendanceGridWrap');
+        if (!w) return null;
+        return { over: w.scrollWidth - w.clientWidth,
+                 page: document.documentElement.scrollWidth - window.innerWidth,
+                 viewport: window.innerWidth }; })(),
       /* The home screen behind the dialog: what each card says about today, and the tap on it. */
       cards: cards.map(function(c){
         var s = c.querySelector('.class-card-state');
@@ -4421,6 +4509,22 @@ const INSTALL_ATT_READER = `(function(){
     return { text: (b.textContent || '').trim(), bg: s.backgroundColor, border: s.borderTopColor,
              style: s.borderTopStyle, color: s.color };
   };
+  /* And the same question asked of a COLUMN — the head and a cell under it together, because the
+     work order says the three states have to be distinguishable in the header AND in the cells. */
+  window.__colLook = function(date){
+    var th = document.querySelector('#attendanceHead th[data-attendance-col="' + date + '"]');
+    var td = document.querySelector('#attendanceBody td[data-attendance-col="' + date + '"]');
+    if (!th || !td || !td.firstElementChild) return null;
+    var chip = th.querySelector('.attendance-day-state');
+    var hs = getComputedStyle(th);
+    var cs = getComputedStyle(td.firstElementChild);
+    return { chip: chip ? (chip.textContent || '').trim() : '',
+             chipColor: chip ? getComputedStyle(chip).color : '',
+             headBg: hs.backgroundColor, headEdge: hs.borderBottomColor,
+             headStyle: hs.borderBottomStyle,
+             glyph: (td.firstElementChild.textContent || '').trim(),
+             cellBg: cs.backgroundColor, cellEdge: cs.borderTopColor,
+             cellStyle: cs.borderTopStyle, cellColor: cs.color }; };
   return 1; })()`;
 
 const attSeam = await evalJs("!!(window.planbook && window.planbook.attendance"
@@ -4428,7 +4532,7 @@ const attSeam = await evalJs("!!(window.planbook && window.planbook.attendance"
   + " && typeof window.planbook.attendance.todayISO === 'function')");
 
 if (!attBooted || !attSeam) {
-  skip('attendance: three states, exceptions-only marking, one-tap drop, and no P in the document',
+  skip('attendance: the registry, three states in a grid, and no P in the document',
     attBooted ? 'no window.planbook.attendance seam on the page — it is kept deliberately for this file to read through, so its absence is a defect and not a stage of the build; see the window.planbook block at the foot of src/shell.js'
       : 'the app did not boot before this section');
 } else {
@@ -4445,6 +4549,18 @@ if (!attBooted || !attSeam) {
     await clickSel('#homeGrid .class-card-state[data-attendance-open="' + id + '"]');
     return read();
   };
+  /* One cell, by student and by date — the same selector src/attendance.js writes, so a check that
+     cannot find it is a check reporting that the hook moved. */
+  const cellSel = (student, date) => '#attendanceBody [data-attendance-cell="' + student
+    + '"][data-attendance-date="' + date + '"]';
+  const tapCell = (student, date) => clickSel(cellSel(student, date));
+  const park = async () => {
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });
+    await new Promise(r => setTimeout(r, 100));
+  };
+  /* Every record this section writes on a date that is not today, counted as it goes, so the
+     "nothing else was disturbed" clause at the bottom is arithmetic rather than a guess. */
+  let pastWrites = 0;
 
   /*
     A SIXTH CLASS, MADE HERE, THROUGH THE CONTROL A TEACHER MAKES ONE WITH.
@@ -4472,11 +4588,11 @@ if (!attBooted || !attSeam) {
 
   /*
     `start.today` rather than `start.records`: the residue named in the reader above sits on
-    2026-09-09, and a section that demanded an empty attendance array would be asserting that no
-    earlier section left anything behind rather than that this screen has written nothing yet. The
-    residue is also why this is worth stating as a precondition at all — if a run ever happens to
-    fall on 2026-09-09 the two dates collide, and this line is where that says so out loud instead
-    of turning into six confusing failures further down.
+    2026-09-09 and after, and a section that demanded an empty attendance array would be asserting
+    that no earlier section left anything behind rather than that this screen has written nothing
+    yet. The residue is also why this is worth stating as a precondition at all — if a run ever
+    happens to fall on one of those dates the two collide, and this line is where that says so out
+    loud instead of turning into six confusing failures further down.
   */
   check('every class on the home screen carries today\'s state, and a day nobody has marked is six untaken classes',
     ids.length === 6 && start.cards.length === 6 && start.today.length === 0
@@ -4491,7 +4607,7 @@ if (!attBooted || !attSeam) {
 
   const marking = ids[0];
   const opened = await openCard(marking);
-  check('the state line on a card opens the marking screen for that class — and opening it writes nothing',
+  check('the state line on a card opens the registry for that class — and opening it writes nothing',
     opened.modalOpen && opened.openClass === marking && opened.today.length === 0
       && opened.records.length === start.records.length
       && opened.rev === start.rev && opened.className !== '' && opened.dateText !== ''
@@ -4506,48 +4622,126 @@ if (!attBooted || !attSeam) {
     'the app says ' + opened.appToday + ', this process says ' + nodeToday
       + ', the screen says ' + JSON.stringify(opened.dateText));
 
-  /* ── acceptance 6: all five marks, on every row, with no submenu ── */
+  /* ── the columns are a CALENDAR fact, not a record fact ── */
+
+  check('the columns are the last six weekdays by calendar, most recent first, today at the front',
+    opened.columns.length === 6
+      && opened.columns.map((c) => c.date).join(' ') === thisWeek.join(' ')
+      && opened.columns[0].date === nodeToday
+      && / attendance-col-today\b/.test(opened.columns[0].cls)
+      && opened.columns.every((c) => c.dow.length === 3 && c.shown.indexOf('/') > 0),
+    'rendered ' + JSON.stringify(opened.columns.map((c) => c.dow + ' ' + c.date))
+      + '; this process expected ' + JSON.stringify(thisWeek));
+
+  /* The precondition that keeps the rest of this section honest: none of the six dates on screen
+     may already carry a record for this class, or every claim below about what a tap wrote is a
+     claim about somebody else's fixture. */
+  const preexisting = opened.records.filter((r) => r.classId === marking && thisWeek.indexOf(r.date) >= 0);
+  check('and none of those six dates already holds a record for this class, so what follows is this section\'s own',
+    preexisting.length === 0,
+    preexisting.length + ' record(s) already on ' + JSON.stringify(thisWeek)
+      + ' for the class about to be marked: ' + JSON.stringify(preexisting));
+
+  /* ── the grid itself: 26 rows, six columns, no submenu, nothing to submit ── */
 
   const expectedOrder = opened.roster.slice()
     .sort((a, b) => String(a[0]).localeCompare(String(b[0])) || String(a[1]).localeCompare(String(b[1])))
     .map((p) => p[0] + ', ' + p[1]);
-  check('every student\'s row offers all five marks at once — no menu, no long press, no second screen',
-    opened.rowCount === 26 && opened.rows.every((r) => r.codes === 'PTAED')
-      && opened.rows.every((r) => r.on === 'P' && r.pressed === 1 && r.named === 5)
+  check('a class of 26 draws 26 rows against six days, in surname order, with every cell named for a screen reader',
+    opened.rowCount === 26
+      && JSON.stringify(opened.rows.map((r) => r.name)) === JSON.stringify(expectedOrder)
+      && opened.rows.every((r) => r.dates === thisWeek.join(' ') && r.named === 6)
       && opened.submenus === 0 && opened.injected === 0,
-    opened.rowCount + ' row(s), codes per row = '
-      + JSON.stringify([...new Set(opened.rows.map((r) => r.codes))])
-      + ', rows starting on P = ' + opened.rows.filter((r) => r.on === 'P').length
+    opened.rowCount + ' row(s) of ' + expectedOrder.length + ' — first three '
+      + JSON.stringify(opened.rows.slice(0, 3).map((r) => r.name))
       + ', submenu-shaped controls = ' + opened.submenus);
-  check('the list is that class\'s own roster, in surname order rather than the order it was typed',
-    opened.rowCount === expectedOrder.length
-      && JSON.stringify(opened.rows.map((r) => r.name)) === JSON.stringify(expectedOrder),
-    opened.rowCount + ' of ' + expectedOrder.length + ' — first three rendered '
-      + JSON.stringify(opened.rows.slice(0, 3).map((r) => r.name)) + ', expected '
-      + JSON.stringify(expectedOrder.slice(0, 3)));
 
-  /* ── the Traps line, as structure: there is nothing on this dialog that commits anything ── */
+  /* The desk half of acceptance line 2. It is not the line — the line needs an iPad in the owner's
+     hands — but a grid that already wants a sideways swipe at 800px would fail it on any device. */
+  check('six columns for a class of 26 fit without a sideways swipe, and the page gains no horizontal scroll',
+    !!opened.fit && opened.fit.over <= 0 && opened.fit.page <= 0,
+    opened.fit ? 'the grid overflows its box by ' + opened.fit.over + 'px and the page by '
+      + opened.fit.page + 'px in a ' + opened.fit.viewport + 'px viewport'
+      : 'no grid to measure');
 
-  check('there is no submit step on the marking screen — no form, and no control that says it saves',
+  check('there is no submit step on the registry — no form, and no control that says it saves',
     opened.forms === 0 && opened.submitish.length === 0,
     'forms = ' + opened.forms + ', controls whose label reads as a commit = '
       + JSON.stringify(opened.submitish) + '; class-level controls present = '
       + JSON.stringify(opened.actions.map((a) => a.text)));
 
-  /* ── acceptance 2 (the document half) and the Traps line: two absences, two entries ── */
+  /* ── acceptance 9: there is no tomorrow, on screen or in the storage layer ── */
 
-  if (opened.rowCount !== 26) {
-    check('two taps mark two exceptions, and a class of 26 puts two entries in the document',
-      false, 'this arc needs the 26-name roster the roster section builds; it arrived with '
-        + opened.rowCount + ' rows, so it was not driven');
-  } else {
+  const laterBtn = opened.pager.filter((b) => b.value === 'later')[0] || {};
+  check('no column is later than today, and the control that would go there is disabled and says why',
+    opened.columns.every((c) => c.date <= nodeToday)
+      && laterBtn.disabled === true && /tomorrow/i.test(laterBtn.title || ''),
+    'latest column = ' + opened.columns[0].date + ' against a today of ' + nodeToday
+      + '; the pager reads ' + JSON.stringify(opened.pager.map((b) => b.text
+        + (b.disabled ? ' (disabled)' : ''))));
+
+  /*
+    And the same rule asked of the storage layer, which is the only check in this section that
+    WRITES through the seam. There is no control to click, because a blocked path has none; the
+    claim is that the refusal is in the writer rather than in the rendering, so a keyboard path
+    added in WO-2.5 inherits it.
+  */
+  const futureTry = await evalJs('(async function(){'
+    + ' var before = window.planbook.store.getDoc().attendance.length;'
+    + ' window.planbook.attendance.setMark(' + JSON.stringify(opened.rows[0].student)
+    + ", 'A', " + JSON.stringify(tomorrow) + ');'
+    + ' window.planbook.attendance.takeClass(' + JSON.stringify(tomorrow) + ');'
+    + ' window.planbook.attendance.dropClass(' + JSON.stringify(tomorrow) + ');'
+    + ' await window.planbook.store.flush();'
+    + ' var doc = window.planbook.store.getDoc();'
+    + ' return { before: before, after: doc.attendance.length,'
+    + '   onTomorrow: doc.attendance.filter(function(r){ return r.date === '
+    + JSON.stringify(tomorrow) + '; }).length }; })()');
+  check('marking, taking or dropping TOMORROW writes nothing at all — the refusal is in the writer',
+    futureTry.before === futureTry.after && futureTry.onTomorrow === 0,
+    'three writes aimed at ' + tomorrow + ': records ' + futureTry.before + ' -> '
+      + futureTry.after + ', records on that date = ' + futureTry.onTomorrow);
+
+  /* ── acceptance 11: all five marks out of one cell, no submenu, no leaving the row ── */
+
+  const cycler = opened.rows[0].student;
+  const seen = [];
+  for (let i = 0; i < 5; i++) {
+    await tapCell(cycler, nodeToday);
+    const step = await read();
+    seen.push(step.rows.filter((r) => r.student === cycler)[0].codes.charAt(0));
+  }
+  const cycled = await read();
+  check('all five marks come out of one cell, in one row, with no menu and no second screen',
+    seen.join('') === 'ATEDP'
+      && cycled.submenus === 0 && cycled.rowCount === 26
+      && (cycled.today.filter((r) => r.classId === marking)[0] || {}).marks
+      && Object.keys(cycled.today.filter((r) => r.classId === marking)[0].marks).length === 0,
+    'five taps on one cell walked ' + JSON.stringify(seen)
+      + ' (present is the wrap-around, and it is stored as nothing at all); marks left on the record = '
+      + JSON.stringify((cycled.today.filter((r) => r.classId === marking)[0] || {}).marks));
+
+  /* And the first of those taps is what took the class: an untaken column is question marks, and
+     one mark turns the whole column into a taken one. */
+  check('the first tap on an untaken column takes the class — the column flips from question marks to present',
+    opened.rows.every((r) => r.codes.charAt(0) === '?')
+      && opened.columns[0].chip === 'Not taken'
+      && cycled.rows.filter((r) => r.student !== cycler).every((r) => r.codes.charAt(0) === 'P')
+      && cycled.columns[0].chip === 'Taken',
+    'before: column head said ' + JSON.stringify(opened.columns[0].chip) + ' over '
+      + JSON.stringify(opened.rows[0].codes) + '; after: ' + JSON.stringify(cycled.columns[0].chip)
+      + ' over ' + JSON.stringify(cycled.rows[0].codes));
+
+  /* ── two absences on a class of 26 is two entries, and P is not one of them ── */
+
   const absent = opened.rows[2].student;
   const tardy = opened.rows[7].student;
-  await clickSel('[data-attendance-row="' + absent + '"] [data-attendance-mark="A"]');
-  await clickSel('[data-attendance-row="' + tardy + '"] [data-attendance-mark="T"]');
+  await tapCell(absent, nodeToday);                       /* one tap  -> A */
+  await tapCell(tardy, nodeToday);
+  await tapCell(tardy, nodeToday);                        /* two taps -> T */
   const twoTaps = await read();
-  const rec = twoTaps.today[0] || {};
-  check('two taps on a class of 26 put TWO entries in the document, not 26 — present is stored nowhere',
+  const rec = twoTaps.today.filter((r) => r.classId === marking)[0] || {};
+  check('one absence and one tardy on a class of 26 put TWO entries in the document, not 26',
     twoTaps.today.length === 1 && rec.classId === marking && rec.date === nodeToday
       && rec.keys === 'classId,date,marks'
       && Object.keys(rec.marks || {}).length === 2
@@ -4557,14 +4751,11 @@ if (!attBooted || !attSeam) {
       + ' for ' + twoTaps.rowCount + ' students; mark values today = '
       + JSON.stringify(twoTaps.todayValues) + ', in the whole document = '
       + JSON.stringify(twoTaps.values));
-  check('and the two rows say so while the other twenty-four still read as present',
-    twoTaps.rows.filter((r) => r.marked).length === 2
-      && twoTaps.rows.filter((r) => r.student === absent)[0].on === 'A'
-      && twoTaps.rows.filter((r) => r.student === tardy)[0].on === 'T'
-      && twoTaps.rows.filter((r) => r.on === 'P').length === 24
-      && twoTaps.rows.every((r) => r.pressed === 1),
-    twoTaps.rows.filter((r) => r.marked).length + ' row(s) marked, '
-      + twoTaps.rows.filter((r) => r.on === 'P').length + ' still on P');
+  check('and those two cells say so while the other twenty-four read as present',
+    twoTaps.rows.filter((r) => r.codes.charAt(0) === 'A').length === 1
+      && twoTaps.rows.filter((r) => r.codes.charAt(0) === 'T').length === 1
+      && twoTaps.rows.filter((r) => r.codes.charAt(0) === 'P').length === 24,
+    'today\'s column reads ' + JSON.stringify(twoTaps.rows.map((r) => r.codes.charAt(0)).join('')));
 
   /* ── acceptance 1: a mark lands and survives a reload ── */
 
@@ -4588,42 +4779,42 @@ if (!attBooted || !attSeam) {
     JSON.stringify(afterReload.cards.map((c) => c.state)));
 
   const reopened = await openCard(marking);
-  check('and the screen it reopens to shows those two marks on those two rows',
+  check('and the grid it reopens to shows those two marks in today\'s column, on those two rows',
     reopened.rowCount === 26
-      && reopened.rows.filter((r) => r.student === absent)[0].on === 'A'
-      && reopened.rows.filter((r) => r.student === tardy)[0].on === 'T'
-      && reopened.rows.filter((r) => r.marked).length === 2
-      && reopened.stateText === 'Taken · 1 absent, 1 tardy',
-    'state line = ' + JSON.stringify(reopened.stateText) + ', marked rows = '
-      + reopened.rows.filter((r) => r.marked).length);
+      && reopened.rows.filter((r) => r.student === absent)[0].codes.charAt(0) === 'A'
+      && reopened.rows.filter((r) => r.student === tardy)[0].codes.charAt(0) === 'T'
+      && reopened.stateText === 'Taken · 1 absent, 1 tardy'
+      && reopened.columns[0].date === nodeToday,
+    'state line = ' + JSON.stringify(reopened.stateText) + ', today\'s column reads '
+      + JSON.stringify(reopened.rows.map((r) => r.codes.charAt(0)).join('')));
 
-  /* ── un-marking, and the write that does not happen ── */
+  /* ── cycling back to present deletes rather than storing, and costs one rev, not two ── */
 
-  const undone = opened.rows[4].student;
-  await clickSel('[data-attendance-row="' + undone + '"] [data-attendance-mark="E"]');
+  const undone = reopened.rows[4].student;
+  await tapCell(undone, nodeToday);
+  await tapCell(undone, nodeToday);
+  await tapCell(undone, nodeToday);                       /* A, T, E */
   const three = await read();
-  await clickSel('[data-attendance-row="' + undone + '"] [data-attendance-mark="P"]');
+  await tapCell(undone, nodeToday);
+  await tapCell(undone, nodeToday);                       /* D, then back to present */
   const backToTwo = await read();
-  check('P un-marks a student rather than storing a P — the entry goes and the record stays',
+  check('cycling back to present un-marks a student rather than storing a P — the entry goes and the record stays',
     Object.keys((three.today[0] || {}).marks || {}).length === 3
+      && (three.today[0] || {}).marks[undone] === 'E'
       && Object.keys((backToTwo.today[0] || {}).marks || {}).length === 2
       && !((backToTwo.today[0] || {}).marks || {})[undone]
       && backToTwo.today.length === 1 && !backToTwo.values.P
-      && backToTwo.rows.filter((r) => r.student === undone)[0].on === 'P'
+      && backToTwo.rows.filter((r) => r.student === undone)[0].codes.charAt(0) === 'P'
       && backToTwo.rev > three.rev,
     'marks ' + JSON.stringify(three.today[0].marks) + ' -> '
       + JSON.stringify(backToTwo.today[0].marks) + ', rev ' + three.rev + ' -> ' + backToTwo.rev);
 
-  await clickSel('[data-attendance-row="' + undone + '"] [data-attendance-mark="P"]');
-  const noop = await read();
-  check('and tapping a mark a student already has writes nothing at all — a double tap costs no rev',
-    noop.rev === backToTwo.rev && Object.keys(noop.today[0].marks).length === 2,
-    'rev ' + backToTwo.rev + ' -> ' + noop.rev + ' (nothing written, so rev cannot move)');
-
   /* All four stored codes on one class, which is what makes the no-P claim below say something:
      every letter this app can store is in the document, and P is not one of them. */
-  await clickSel('[data-attendance-row="' + opened.rows[11].student + '"] [data-attendance-mark="E"]');
-  await clickSel('[data-attendance-row="' + opened.rows[19].student + '"] [data-attendance-mark="D"]');
+  const eventStudent = reopened.rows[11].student;
+  const dismissed = reopened.rows[19].student;
+  for (let i = 0; i < 3; i++) await tapCell(eventStudent, nodeToday);   /* A, T, E */
+  for (let i = 0; i < 4; i++) await tapCell(dismissed, nodeToday);      /* A, T, E, D */
   const fourCodes = await read();
   check('all four stored codes reach the document, and the fifth never does',
     JSON.stringify(fourCodes.todayValues) === JSON.stringify({ A: 1, T: 1, E: 1, D: 1 })
@@ -4633,13 +4824,12 @@ if (!attBooted || !attSeam) {
     'mark values written today = ' + JSON.stringify(fourCodes.todayValues)
       + ', in the whole document = ' + JSON.stringify(fourCodes.values)
       + ', card says ' + JSON.stringify(fourCodes.cards.filter((c) => c.id === marking)[0].state));
-  }
 
-  /* ── acceptance 3: taken with zero exceptions is still a record ── */
+  /* ── acceptance 4: taken with zero exceptions is still a record ── */
 
   const allPresent = ids[1];
   const beforeTake = await openCard(allPresent);
-  await clickSel('[data-attendance-take]');
+  await clickSel('#attendanceActions [data-attendance-take]');
   const taken = await read();
   const takenRec = taken.today.filter((r) => r.classId === allPresent)[0] || {};
   check('one tap records a class as met with everyone present, and it is a record rather than a silence',
@@ -4647,8 +4837,10 @@ if (!attBooted || !attSeam) {
       && JSON.stringify(takenRec.marks) === '{}'
       && taken.states.indexOf(allPresent + '=taken') >= 0
       && taken.stateText === 'Taken · all present'
+      && taken.columns[0].chip === 'Taken'
       && taken.today.length === beforeTake.today.length + 1,
-    'record = ' + JSON.stringify(takenRec) + '; state line = ' + JSON.stringify(taken.stateText));
+    'record = ' + JSON.stringify(takenRec) + '; state line = ' + JSON.stringify(taken.stateText)
+      + ', column head = ' + JSON.stringify(taken.columns[0].chip));
   check('and "taken with everyone present" is a different thing in the document from "not taken yet"',
     taken.states.indexOf(allPresent + '=taken') >= 0
       && taken.states.indexOf(ids[5] + '=not-taken') >= 0
@@ -4658,10 +4850,10 @@ if (!attBooted || !attSeam) {
     taken.states);
 
   /* The same control, now pressed, taking it back — offered only while there is nothing to lose. */
-  await clickSel('[data-attendance-untake]');
+  await clickSel('#attendanceActions [data-attendance-untake]');
   const untaken = await read();
-  /* The other half of this one is quiet and worth naming: `allPresent` is the class the fixture
-     residue belongs to, so an un-take that removed by classId alone — rather than by class AND
+  /* The other half of this one is quiet and worth naming: `allPresent` is a class the fixture
+     residue may belong to, so an un-take that removed by classId alone — rather than by class AND
      date — would take a record off another day with it. That is a period of a term gone, and it
      would leave no trace on this screen. Hence the baseline comparison rather than a zero. */
   const otherDays = (r) => r.classId === allPresent && r.date !== nodeToday;
@@ -4676,84 +4868,232 @@ if (!attBooted || !attSeam) {
       + ' (on other dates ' + start.records.filter(otherDays).length + ' -> '
       + untaken.records.filter(otherDays).length + ', which the un-take must not have touched)'
       + ', state line = ' + JSON.stringify(untaken.stateText));
-  /* The refusal that makes the toggle safe, read off the class that is carrying marks: with an
-     exception on the record the un-take is not offered at all, so nothing on this screen can
-     destroy a mark by being tapped a second time. src/attendance.js's untakeClass() states the
-     same rule again in code, where it cannot be skipped. */
+  /* The refusal that makes the toggle safe, read off the class that is carrying marks: with marks
+     on the record the un-take is not offered at all, so nothing on this screen can destroy a mark
+     by being tapped a second time. src/attendance.js's untakeClass() states the same rule again in
+     code, where it cannot be skipped. */
   const withMarks = await openCard(ids[0]);
   const marksOnIt = Object.keys((withMarks.today.filter((r) => r.classId === ids[0])[0] || {}).marks || {}).length;
   check('the un-take is offered on a class with nothing on it and withheld from one with marks on it',
-    untaken.actions.some((a) => a.hook === 'data-attendance-take')
-      && !untaken.actions.some((a) => a.hook === 'data-attendance-untake')
+    untaken.actions.some((a) => a.hook.indexOf('data-attendance-take=') === 0)
+      && !untaken.actions.some((a) => a.hook.indexOf('data-attendance-untake=') === 0)
       && marksOnIt > 0
-      && !withMarks.actions.some((a) => a.hook === 'data-attendance-untake')
-      && withMarks.actions.some((a) => a.hook === 'data-attendance-drop'),
+      && !withMarks.actions.some((a) => a.hook.indexOf('data-attendance-untake=') === 0)
+      && withMarks.actions.some((a) => a.hook.indexOf('data-attendance-drop=') === 0),
     'on the untaken class: ' + JSON.stringify(untaken.actions.map((a) => a.text))
       + '; on the class carrying ' + marksOnIt + ' marks: '
       + JSON.stringify(withMarks.actions.map((a) => a.text)));
 
   /* Left taken, so the full-day document below has a class recorded with nobody absent in it. */
   await openCard(allPresent);
-  await clickSel('[data-attendance-take]');
+  await clickSel('#attendanceActions [data-attendance-take]');
 
-  /* ── acceptance 4: one tap drops a class, one tap undoes it ── */
+  /* ── acceptance 5: one tap drops a class, one tap undoes it — from today's column head ── */
 
+  /*
+    Driven on a class with NO ROSTER, deliberately. "The class can still be marked as met, or as
+    not meeting" is a deliverable, and a class whose names have not been pasted yet is exactly the
+    case where a screen that hides its table would hide the only two controls that could say so.
+    What the cells of a dropped column look like is a separate claim and is measured further down,
+    against the twenty-six-name class, where `rows.every(...)` is not vacuously true.
+  */
   const dropped = ids[2];
-  await openCard(dropped);
-  await clickSel('[data-attendance-drop]');
+  const emptyClass = await openCard(dropped);
+  await clickSel('#attendanceHead [data-attendance-drop]');
   const isDropped = await read();
   const dropRec = isDropped.today.filter((r) => r.classId === dropped)[0] || {};
-  check('one tap says a class did not meet, and writes exactly classId, date and exception',
+  check('one tap on today\'s column head says the class did not meet, and writes exactly classId, date and exception',
     dropRec.keys === 'classId,date,exception' && dropRec.exception === 'dropped'
       && dropRec.marks === null && dropRec.date === nodeToday
       && isDropped.states.indexOf(dropped + '=dropped') >= 0
-      && isDropped.rowCount === 0 && isDropped.note !== ''
-      && isDropped.stateText === 'Didn’t meet',
-    'record = ' + JSON.stringify(dropRec) + '; the student list is '
-      + isDropped.rowCount + ' rows and the screen says ' + JSON.stringify(isDropped.stateText));
+      && isDropped.columns[0].chip === 'Didn’t meet'
+      && isDropped.note !== '' && isDropped.stateText === 'Didn’t meet'
+      && emptyClass.rowCount === 0 && isDropped.columns.length === 6,
+    'record = ' + JSON.stringify(dropRec) + '; the column head says '
+      + JSON.stringify(isDropped.columns[0].chip) + ' over a roster of '
+      + emptyClass.rowCount + ' student(s), with ' + isDropped.columns.length
+      + ' column head(s) still reachable');
 
-  await clickSel('[data-attendance-undrop]');
+  await clickSel('#attendanceHead [data-attendance-undrop]');
   const unDropped = await read();
   check('and one tap undoes it, leaving the day not taken yet rather than claiming everyone was there',
     unDropped.today.filter((r) => r.classId === dropped).length === 0
       && unDropped.states.indexOf(dropped + '=not-taken') >= 0
       && unDropped.stateText === 'Not taken yet' && unDropped.note === ''
+      && unDropped.columns[0].chip === 'Not taken'
       && unDropped.cards.filter((c) => c.id === dropped)[0].state === 'Not taken yet',
     'records for that class today = '
       + unDropped.today.filter((r) => r.classId === dropped).length
-      + ', state line = ' + JSON.stringify(unDropped.stateText));
+      + ', column head = ' + JSON.stringify(unDropped.columns[0].chip));
 
   /* Dropped again, and left that way: the full day below needs one of each state. */
-  await clickSel('[data-attendance-drop]');
+  await clickSel('#attendanceHead [data-attendance-drop]');
 
-  /* ── acceptance 2 (the screen half): dropped and untaken are not the same thing to look at ── */
+  /* ── acceptances 3 and 10: three states in ONE grid, and a hole you can see ──
+     Every column of this class's week is acted on except ONE, which is the day "deliberately left"
+     that the teacher then has to find without remembering which it was. Each past column takes its
+     ✏ first, because a past column that accepted a tap without one would be the deliberate-unlock
+     deliverable missing. */
 
-  await closeAll();
-  /* The pointer goes to the corner first (tools/README.md trap 7). The last thing clicked was a
-     button inside the dialog that has just closed, so the cursor is left sitting somewhere over
-     the grid — and `.class-card-state:hover` changes the border, which is one of the three
-     properties this comparison is about. One card measured hovered and two measured resting is
-     indistinguishable from three states painted differently, which is the defect being looked for.
-     Found here the same way WO-1.8's support dots found it. */
-  await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });
-  await new Promise(r => setTimeout(r, 100));
-  const lookDropped = await evalJs('window.__look(' + JSON.stringify(dropped) + ')');
-  const lookUntaken = await evalJs('window.__look(' + JSON.stringify(ids[5]) + ')');
-  const lookTaken = await evalJs('window.__look(' + JSON.stringify(allPresent) + ')');
-  /* Four ways apart, not one: the words, the fill, the edge colour and the type colour. "Without
-     reading fine print" is the acceptance line, and one differing property would satisfy a build
-     where the only difference is a shade of grey nobody notices across a desk. The edge is in here
-     because the pointer is parked above; it could not have been trusted otherwise. */
-  const distinct = (a, b) => a.text !== b.text && a.bg !== b.bg && a.border !== b.border
-    && a.color !== b.color;
-  check('a dropped class, an untaken one and a taken one differ in words, in fill and in edge — not in fine print',
-    !!lookDropped && !!lookUntaken && !!lookTaken
-      && distinct(lookDropped, lookUntaken) && distinct(lookDropped, lookTaken)
-      && distinct(lookUntaken, lookTaken)
-      && lookDropped.style === 'dashed' && lookUntaken.style === 'solid'
-      && lookTaken.style === 'solid',
-    'dropped ' + JSON.stringify(lookDropped) + ' · untaken ' + JSON.stringify(lookUntaken)
-      + ' · taken ' + JSON.stringify(lookTaken));
+  const holeAt = 3;
+  await openCard(marking);
+  for (let i = 1; i < 6; i++) {
+    if (i === holeAt) continue;
+    const date = thisWeek[i];
+    await clickSel('[data-attendance-edit="' + date + '"]');
+    await clickSel(i === 5 ? '#attendanceActions [data-attendance-drop]'
+      : '#attendanceActions [data-attendance-take]');
+    pastWrites += 1;
+  }
+  await clickSel('[data-attendance-page="today"]');
+  const week = await read();
+
+  const wantColStates = thisWeek.map((d, i) =>
+    d + '=' + (i === holeAt ? 'not-taken' : (i === 5 ? 'dropped' : 'taken'))).join(' ');
+  check('a past column takes its unlock, then accepts the same taps today does — and lands on that date',
+    week.colStates === wantColStates
+      && week.columns.map((c) => c.chip).join('|')
+        === ['Taken', 'Taken', 'Taken', 'Not taken', 'Taken', 'Didn’t meet'].join('|')
+      /* And with nothing unlocked, exactly ONE of the six cells in a row is a button: today's.
+         A past column that took a tap without its ✏ would show six here, and the deliberate
+         unlock would be a decoration rather than a gate. */
+      && week.rows.every((r) => r.tappable === 1),
+    'the document says ' + week.colStates + '; the column heads say '
+      + JSON.stringify(week.columns.map((c) => c.chip)) + '; tappable cells per row = '
+      + JSON.stringify([...new Set(week.rows.map((r) => r.tappable))]));
+
+  /* Parked first (tools/README.md trap 7). The last thing clicked was inside this grid, so the
+     cursor is sitting over a cell — and `.attendance-cell:hover` moves the border colour, which is
+     one of the properties this comparison is about. One column measured hovered and two measured
+     resting is indistinguishable from three states painted differently, which is the defect being
+     looked for. */
+  await park();
+  const lookTakenCol = await evalJs('window.__colLook(' + JSON.stringify(thisWeek[1]) + ')');
+  const lookHoleCol = await evalJs('window.__colLook(' + JSON.stringify(thisWeek[holeAt]) + ')');
+  const lookDropCol = await evalJs('window.__colLook(' + JSON.stringify(thisWeek[5]) + ')');
+  const apart = (a, b) => a.chip !== b.chip && a.chipColor !== b.chipColor
+    && a.glyph !== b.glyph && a.cellBg !== b.cellBg && a.cellColor !== b.cellColor;
+  check('a taken day, an untaken one and a dropped one differ in the column head AND in every cell under it',
+    !!lookTakenCol && !!lookHoleCol && !!lookDropCol
+      && apart(lookTakenCol, lookHoleCol) && apart(lookHoleCol, lookDropCol)
+      && apart(lookTakenCol, lookDropCol)
+      && lookTakenCol.glyph === 'P' && lookHoleCol.glyph === '?' && lookDropCol.glyph === '–'
+      && lookDropCol.cellStyle === 'dashed' && lookHoleCol.cellStyle === 'solid'
+      && lookTakenCol.cellStyle === 'solid'
+      && lookDropCol.headStyle === 'dashed',
+    'taken ' + JSON.stringify(lookTakenCol) + ' · untaken ' + JSON.stringify(lookHoleCol)
+      + ' · dropped ' + JSON.stringify(lookDropCol));
+
+  /* And in the document, which is the other half of acceptance 3: a dropped day is a record with
+     an exception on it and an untaken day is no record at all. Not two flavours of the same shape. */
+  const holeRec = week.records.filter((r) => r.classId === marking && r.date === thisWeek[holeAt]);
+  const dropDayRec = week.records.filter((r) => r.classId === marking && r.date === thisWeek[5])[0] || {};
+  check('and the same two days are different in the stored document — an exception, against no record at all',
+    holeRec.length === 0 && dropDayRec.keys === 'classId,date,exception'
+      && dropDayRec.exception === 'dropped',
+    'the untaken day holds ' + holeRec.length + ' record(s); the dropped day holds '
+      + JSON.stringify(dropDayRec));
+
+  /* Acceptance 10, stated the way a teacher meets it: one glance at the grid, and exactly one
+     column is the amber one. Every row agrees, because the wash is on the column and not on a cell. */
+  const holeCols = week.columns.filter((c) => c.chip === 'Not taken').map((c) => c.date);
+  check('a hole left three days earlier is the one amber column in the grid — found by looking, not by remembering',
+    holeCols.length === 1 && holeCols[0] === thisWeek[holeAt]
+      && week.rows.every((r) => r.codes.charAt(holeAt) === '?')
+      && week.rows.every((r) => r.codes.split('').filter((ch) => ch === '?').length === 1),
+    'columns reading "Not taken" = ' + JSON.stringify(holeCols) + ', expected '
+      + JSON.stringify([thisWeek[holeAt]]) + '; a row reads '
+      + JSON.stringify(week.rows[0].codes));
+
+  /* ── acceptance 7: a date two weeks back, reached from this screen, landing on that date ── */
+
+  await clickSel('[data-attendance-page="earlier"]');
+  const paged = await read();
+  const twoWeeks = lastWeek[lastWeek.length - 1];
+  check('one tap of Earlier reaches the week before, and its oldest column is a fortnight back',
+    paged.columns.map((c) => c.date).join(' ') === lastWeek.join(' ')
+      && daysApart(nodeToday, twoWeeks) >= 14
+      && paged.banner.shown && paged.banner.text.indexOf('not on screen') > 0,
+    'showing ' + JSON.stringify(paged.columns.map((c) => c.date)) + '; the oldest is '
+      + daysApart(nodeToday, twoWeeks) + ' calendar days back; the strip says '
+      + JSON.stringify(paged.banner.text));
+
+  await clickSel('[data-attendance-edit="' + twoWeeks + '"]');
+  const unlocked = await read();
+  /* The desk half of acceptance 8. Whether it reads across a classroom is a 👤 line; whether it is
+     on screen, in words, naming the day, is not. */
+  check('unlocking a past day puts a strip on screen that says which day it is, in words, and offers the way back',
+    unlocked.banner.shown
+      && /You are editing /.test(unlocked.banner.text)
+      && unlocked.banner.text.indexOf('not today') > 0
+      && unlocked.banner.text.indexOf(String(Number(twoWeeks.slice(8, 10)))) > 0
+      && unlocked.dateText.indexOf(String(Number(twoWeeks.slice(8, 10)))) >= 0
+      && / attendance-col-editing\b/.test(
+        (unlocked.columns.filter((c) => c.date === twoWeeks)[0] || {}).cls || ''),
+    'the strip says ' + JSON.stringify(unlocked.banner.text) + '; the column carries '
+      + JSON.stringify((unlocked.columns.filter((c) => c.date === twoWeeks)[0] || {}).cls));
+
+  const backThen = unlocked.rows[1].student;
+  await tapCell(backThen, twoWeeks);
+  pastWrites += 1;
+  const marked = await read();
+  const backRec = marked.records.filter((r) => r.classId === marking && r.date === twoWeeks)[0] || {};
+  check('and a tap there lands on THAT date — not on today, and not on the column beside it',
+    backRec.date === twoWeeks && backRec.keys === 'classId,date,marks'
+      && backRec.marks[backThen] === 'A'
+      && Object.keys(backRec.marks).length === 1
+      && marked.records.filter((r) => r.classId === marking && r.date === nodeToday)[0].marks[backThen] === undefined
+      && marked.records.filter((r) => r.classId === marking && r.date === lastWeek[4]).length === 0,
+    'the record on ' + twoWeeks + ' is ' + JSON.stringify(backRec)
+      + '; today\'s is still ' + JSON.stringify(
+        marked.records.filter((r) => r.classId === marking && r.date === nodeToday)[0].marks));
+
+  /* Back where a teacher would leave it. "Back to today" is the control on the strip itself, which
+     is the one a teacher reaches for, so it is the one driven here. */
+  await clickSel('#attendanceBanner [data-attendance-page="today"]');
+  const home = await read();
+  check('the way back is one tap on the strip, and it lands on today with the strip gone',
+    !home.banner.shown && home.columns.map((c) => c.date).join(' ') === thisWeek.join(' ')
+      && home.dateText.indexOf(String(Number(nodeToday.slice(8, 10)))) >= 0
+      && home.columns.filter((c) => / attendance-col-editing\b/.test(c.cls)).length === 0,
+    'showing ' + JSON.stringify(home.columns.map((c) => c.date)) + ', strip up = '
+      + home.banner.shown);
+
+  /* ── search, the filter pills and the sort pair ── */
+
+  /* The term is taken out of the roster on screen rather than written in here: a literal that
+     happens not to be in this class's twenty-six names makes the check fail with an empty result,
+     which is indistinguishable from a search that does not work. */
+  const typed = String(home.rows[1].name.split(',')[0] || '').toLowerCase();
+  const searchHit = home.rows.filter((r) => r.name.toLowerCase().indexOf(typed) >= 0).length;
+  await evalJs('(function(){ var e = document.getElementById("attendanceSearch");'
+    + ' e.value = ' + JSON.stringify(typed) + ';'
+    + ' e.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+  const searched = await read();
+  await evalJs('(function(){ var e = document.getElementById("attendanceSearch"); e.value = "";'
+    + ' e.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+  await clickSel('[data-attendance-filter="A"]');
+  const filtered = await read();
+  await clickSel('[data-attendance-filter="all"]');
+  await clickSel('[data-attendance-sort="first"]');
+  const sorted = await read();
+  await clickSel('[data-attendance-sort="last"]');
+  const byFirst = home.roster.slice()
+    .sort((a, b) => String(a[1]).localeCompare(String(b[1])) || String(a[0]).localeCompare(String(b[0])))
+    .map((p) => p[0] + ', ' + p[1]);
+  check('search narrows the rows, a pill shows only that mark, and First/Last reorders the whole class',
+    typed.length >= 3 && searchHit > 0 && searchHit < 26 && searched.rowCount === searchHit
+      && searched.rows.every((r) => r.name.toLowerCase().indexOf(typed) >= 0)
+      && filtered.rowCount === filtered.rows.filter((r) => r.codes.charAt(0) === 'A').length
+      && filtered.rowCount > 0 && filtered.pills.filter((p) => p.active).length === 1
+      && filtered.pills.filter((p) => p.code === 'A')[0].active
+      && sorted.rowCount === 26
+      && JSON.stringify(sorted.rows.map((r) => r.name)) === JSON.stringify(byFirst)
+      && sorted.sorts.filter((s) => s.active).map((s) => s.which).join('') === 'first',
+    'search for ' + JSON.stringify(typed) + ' left ' + searched.rowCount + ' of 26 ('
+      + JSON.stringify(searched.rows.map((r) => r.name)) + '); the absent pill left '
+      + filtered.rowCount + '; sorted by first name the top three are '
+      + JSON.stringify(sorted.rows.slice(0, 3).map((r) => r.name)));
 
   /* ── a second class with a roster, so the full day has marks in more than one place ── */
 
@@ -4761,7 +5101,7 @@ if (!attBooted || !attSeam) {
   await closeAll();
   await clickSel('[data-class-tab]', 3);
   await clickSel('header [data-roster-manage]');
-  /* Deliberately not in alphabetical order: the marking list's own order is the claim below. */
+  /* Deliberately not in alphabetical order: the grid's own order is the claim below. */
   for (const name of ['Zeta, Ada', 'Alpha, Bo', 'Mid, Cy']) {
     await evalJs('(function(){ var e = document.getElementById("rosterNewInput"); e.value = '
       + JSON.stringify(name) + '; return 1; })()');
@@ -4771,18 +5111,18 @@ if (!attBooted || !attSeam) {
   check('a second class marks its own roster, in its own order, without touching the first',
     secondOpen.rowCount === 3
       && JSON.stringify(secondOpen.rows.map((r) => r.name)) === JSON.stringify(['Alpha, Bo', 'Mid, Cy', 'Zeta, Ada'])
-      && secondOpen.rows.every((r) => r.codes === 'PTAED' && r.on === 'P')
+      && secondOpen.rows.every((r) => r.codes === '??????')
       && Object.keys(secondOpen.today.filter((r) => r.classId === ids[0])[0].marks).length === 4,
     secondOpen.rowCount + ' row(s) ' + JSON.stringify(secondOpen.rows.map((r) => r.name))
       + '; the first class still holds '
       + Object.keys(secondOpen.today.filter((r) => r.classId === ids[0])[0].marks).length + ' marks');
 
-  await clickSel('[data-attendance-row="' + secondOpen.rows[2].student + '"] [data-attendance-mark="A"]');
+  await tapCell(secondOpen.rows[2].student, nodeToday);
   /* One more class taken with nobody absent, so the day is five classes. */
   await openCard(ids[4]);
-  await clickSel('[data-attendance-take]');
+  await clickSel('#attendanceActions [data-attendance-take]');
 
-  /* ── acceptance 7: a full day of five classes, and no P anywhere in it ── */
+  /* ── acceptance 12: a full day of five classes, and no P anywhere in it ── */
 
   await closeAll();
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
@@ -4796,22 +5136,23 @@ if (!attBooted || !attSeam) {
 
   const wantStates = [ids[0] + '=taken', ids[1] + '=taken', ids[2] + '=dropped',
     ids[3] + '=taken', ids[4] + '=taken', ids[5] + '=not-taken'].join(' ');
-  /* Five records for today, and the document is otherwise exactly as this section found it: five
-     written, nothing else edited, nothing on another date disturbed. The second clause is what
-     makes the first mean "the app wrote five" rather than "there are five here now". */
-  check('after a full day of five classes the document holds five records and every one of the three states',
+  /* Five records for today, and the document is otherwise exactly as this section found it plus
+     the past days it wrote on purpose, counted as it went. The second clause is what makes the
+     first mean "the app wrote five" rather than "there are five here now". */
+  check('after a full day of five classes the document holds five records for today and every one of the three states',
     dayReboot && day.today.length === 5 && day.states === wantStates
-      && day.records.length === start.records.length + 5
+      && day.records.length === start.records.length + 5 + pastWrites
       && day.today.filter((r) => r.exception).length === 1
       && day.today.filter((r) => r.keys === 'classId,date,marks').length === 4
       && day.today.filter((r) => r.classId === ids[5]).length === 0,
     dayReboot ? day.today.length + ' record(s) on ' + nodeToday + ': ' + day.states
       + '; records in the whole document ' + start.records.length + ' -> ' + day.records.length
+      + ' against ' + pastWrites + ' deliberate write(s) on past dates'
       : 'the loading screen never came down');
   /* The exact tally is asked of today, where this section knows every tap it made. The no-P claim
      is asked of the WHOLE document, where a stray P written on any date by anything would show —
      and it is asked twice, once as an absent key and once as the complete key set. */
-  check('and there is no P in it — not one, across five classes and every student in them',
+  check('and there is no P in it — not one, across five classes, six days and every student in them',
     !day.values.P && Object.keys(day.values).sort().join('') === 'ADET'
       && JSON.stringify(day.todayValues) === JSON.stringify({ A: 2, T: 1, E: 1, D: 1 })
       && day.today.filter((r) => r.marks).reduce((n, r) => n + Object.keys(r.marks).length, 0) === 5,
@@ -4823,6 +5164,27 @@ if (!attBooted || !attSeam) {
       'Taken · 4 marked', 'Taken · all present', 'Didn’t meet', 'Taken · 1 absent',
       'Taken · all present', 'Not taken yet']),
     JSON.stringify(day.cards.map((c) => c.state)));
+
+  /* ── every open starts on today ──
+     The screen is opened with a class walking through the door, and finding it where it was left
+     an hour ago — paged back, filtered to tardies, with Tuesday unlocked — would cost exactly the
+     seconds this whole design is about. Left until after the reload above so that the state being
+     checked is the one a fresh open produces rather than one a reload cleared for free. */
+  const reFiltered = await openCard(marking);
+  await clickSel('[data-attendance-page="earlier"]');
+  await clickSel('[data-attendance-filter="A"]');
+  await closeAll();
+  const reopenedFresh = await openCard(marking);
+  check('every open starts on today, unpaged, unfiltered and with no past day left unlocked',
+    reopenedFresh.columns.map((c) => c.date).join(' ') === thisWeek.join(' ')
+      && !reopenedFresh.banner.shown
+      && reopenedFresh.pills.filter((p) => p.active).map((p) => p.code).join('') === 'all'
+      && reopenedFresh.sorts.filter((s) => s.active).map((s) => s.which).join('') === 'last'
+      && reopenedFresh.rowCount === 26,
+    'reopened on ' + JSON.stringify(reopenedFresh.columns.map((c) => c.date))
+      + ' with ' + reopenedFresh.rowCount + ' row(s), pills '
+      + JSON.stringify(reopenedFresh.pills.filter((p) => p.active).map((p) => p.code))
+      + ' (it had been left on ' + JSON.stringify(reFiltered.columns[0].date) + ' paged back)');
 
   /* ── the way back out ──
      Focus returns to the control that opened the dialog, and this is the one opener in the app
@@ -4842,7 +5204,7 @@ if (!attBooted || !attSeam) {
     return { tag: a ? a.tagName : null, cls: a ? String(a.className) : null,
              hook: a && a.getAttribute ? a.getAttribute('data-attendance-open') : null,
              stillOpen: !!(m && !m.classList.contains('hidden')) }; })()`);
-  check('closing the marking screen hands focus back to the card that opened it, not to the top of the page',
+  check('closing the registry hands focus back to the card that opened it, not to the top of the page',
     focusBack.hook === focusHome && !focusBack.stillOpen,
     'focus went to <' + focusBack.tag + ' class=' + JSON.stringify(focusBack.cls)
       + '> for class ' + JSON.stringify(focusBack.hook) + ', expected the state line of '
@@ -5259,13 +5621,13 @@ if (coarse !== true) {
   }
 
   /*
-    THE MARKING SCREEN, which is the one screen in this app whose touch targets are the feature.
+    THE REGISTRY, which is the one screen in this app whose touch targets are the feature.
 
-    It carries more controls than everything measured above put together — five per student, and a
-    class is twenty-five of them — and each one is a single letter, which is the shape shell.css's
-    coarse block already had to be told about twice (`.cls-tab`, `.class-action-btn`): a one-glyph
-    button given 44px of height and its natural width is half a touch target, so min-WIDTH is
-    asserted here as hard as min-height.
+    It carries more controls than everything measured above put together — one per student per day,
+    and a class is a hundred and fifty-six of them — and each one is a single glyph, which is the
+    shape shell.css's coarse block already had to be told about twice (`.cls-tab`,
+    `.class-action-btn`): a one-glyph button given 44px of height and its natural width is half a
+    touch target, so min-WIDTH is asserted here as hard as min-height.
 
     The state line on the card is measured too, and it is measured before the dialog opens, because
     it is the control that opens it: a home screen where the fix is a 20px strip of text is a home
@@ -5273,7 +5635,7 @@ if (coarse !== true) {
   */
   if (seam && await has('#homeGrid .class-card-state')) {
     /* Remembered here rather than borrowed from the block above, whose `fullest` is scoped to it.
-       Opening the marking screen moves the selection — that is the whole point of the control —
+       Opening the registry moves the selection — that is the whole point of the control —
        and the overflow sweep below measures the term nav of whatever is open. */
     const openWas = await evalJs('window.planbook.classes.getSelectedClassId()');
     await evalJs("(function(){ ['attendanceModal','rosterModal','studentModal','classesModal',"
@@ -5312,33 +5674,45 @@ if (coarse !== true) {
         .map(function(e){ var r = e.getBoundingClientRect();
           return { t: (e.className || e.tagName), w: Math.round(r.width*100)/100,
                    h: Math.round(r.height*100)/100 }; }); })()`);
-    const markCount = await evalJs(
-      "document.querySelectorAll('#attendanceList [data-attendance-mark]').length");
-    if (!am || markCount < 25) {
-      check('the marking screen opened with a class on it, so there is something to measure', false,
-        'controls found = ' + (am ? am.length : 'panel never opened') + ', mark buttons = '
-          + markCount + ' for a roster of ' + biggest.students);
+    const cellCount = await evalJs(
+      "document.querySelectorAll('#attendanceBody [data-attendance-cell]').length");
+    const dayCount = await evalJs(
+      "document.querySelectorAll('#attendanceHead th[data-attendance-col]').length");
+    if (!am || cellCount < 25) {
+      check('the registry opened with a class on it, so there is something to measure', false,
+        'controls found = ' + (am ? am.length : 'panel never opened') + ', tappable cells = '
+          + cellCount + ' for a roster of ' + biggest.students);
     } else {
-      check('every control on the marking screen measures >=44px on a coarse pointer, all five marks per row',
+      check('every control on the registry measures >=44px on a coarse pointer, cells and column heads alike',
         am.every(m => m.h >= 44 && m.w >= 44),
-        'measured ' + am.length + ' (' + markCount + ' of them mark buttons, for a roster of '
-          + biggest.students + '); under = ' + JSON.stringify(am.filter(m => m.h < 44 || m.w < 44)));
+        'measured ' + am.length + ' (' + cellCount + ' of them cells in ' + dayCount
+          + ' day column(s), for a roster of ' + biggest.students + '); under = '
+          + JSON.stringify(am.filter(m => m.h < 44 || m.w < 44)));
     }
-    /* And the row does not spill sideways at 44px a mark: the name gives way, the marks do not.
-       A row wider than the panel is a horizontal scrollbar inside a dialog, which on an iPad is a
-       teacher swiping the list left instead of scrolling it down. */
+    /*
+      And six columns of 44px cells still fit, on the device this screen is for. This is the desk
+      half of acceptance line 2 — the line itself needs the owner's own iPad in the orientation she
+      holds it, and no emulator has that — but a grid that already wants a sideways swipe under an
+      emulated coarse pointer at 1024px would fail it on any device. Measured three ways, because a
+      grid can escape in three: past its own box, past the panel, and past the page.
+    */
     const spill = await evalJs(`(function(){
-      var rows = Array.prototype.slice.call(document.querySelectorAll('#attendanceList .attendance-row'));
+      var wrap = document.getElementById('attendanceGridWrap');
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#attendanceBody tr'));
       var panel = document.querySelector('#attendanceModal .modal-panel');
-      if (!rows.length || !panel) return null;
+      if (!wrap || !rows.length || !panel) return null;
       var pr = panel.getBoundingClientRect();
       return { rows: rows.length,
+               days: document.querySelectorAll('#attendanceHead th[data-attendance-col]').length,
                over: rows.filter(function(r){ var b = r.getBoundingClientRect();
                  return b.right > pr.right + 0.5 || b.left < pr.left - 0.5; }).length,
+               wrapOver: wrap.scrollWidth - wrap.clientWidth,
                scrollW: document.documentElement.scrollWidth, inner: window.innerWidth }; })()`);
-    check('no row on the marking screen spills out of the panel, and the page still has no sideways scroll',
-      !!spill && spill.over === 0 && spill.scrollW <= spill.inner,
-      spill ? spill.rows + ' row(s), ' + spill.over + ' wider than the panel; page '
+    check('six days of columns for a full class fit the panel with no sideways scroll anywhere',
+      !!spill && spill.days === 6 && spill.over === 0 && spill.wrapOver <= 0
+        && spill.scrollW <= spill.inner,
+      spill ? spill.rows + ' row(s) across ' + spill.days + ' day column(s), ' + spill.over
+        + ' wider than the panel, grid over its own box by ' + spill.wrapOver + 'px; page '
         + spill.scrollW + 'px in a ' + spill.inner + 'px viewport' : 'no rows to measure');
     await evalJs("window.planbook.closeModal('attendanceModal');1");
     if (openWas) await evalJs('window.planbook.classes.selectClass('

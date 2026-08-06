@@ -701,6 +701,90 @@ against a class with a real 25-name roster:
 - [ ] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
       precache and the screen still marks. 👤
 
+### WO-2.1 — Attendance registry: students × recent days
+
+**This is the section that governs.** The one above records commit `11f0780` and is kept because
+the ticks in it were real; nothing in it is a claim about the current tree. The screen shipping now
+is a grid — students down, the last six weekdays across, tap a cell to cycle — and its twelve
+acceptance lines are the ones in the rewritten work order.
+
+- [x] A mark lands and survives a reload.
+- [ ] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
+      iPad**, in the orientation the owner actually holds it. 👤
+- [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
+      and are distinguishable in the stored document — in the column header and in the cells under it.
+- [x] Marking a class taken with zero exceptions still creates a record.
+- [x] One tap drops a class; one tap undoes it.
+- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+- [x] **Attendance can be recorded for a date two weeks back and it lands on that date**, reached
+      from this screen without a separate view.
+- [ ] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
+- [x] **Future dates are either blocked or clearly flagged.**
+- [x] **A hole deliberately left three days earlier is findable by looking at the grid.**
+- [x] All five marks are reachable from a cell without opening a submenu or leaving the row.
+- [x] The document after a full day of five classes contains no `P` entries.
+
+*Desk pass 2026-08-06: `verify-shell.mjs` **274 of 274, 0 skipped**, up from 260 on the one-day
+build — fourteen net new checks, and the attendance section rewritten around the grid rather than
+extended. Everything is driven through the controls a teacher touches: the screen is opened by
+tapping a card's state line, marks are made by tapping cells, a past day is unlocked with its own
+✏, and the class is dropped and un-dropped from today's column head. The `window.planbook.attendance`
+seam is read-only with ONE stated exception — acceptance line 9's "future dates are blocked" has no
+control to click, by construction, so the writer is called directly with tomorrow's date and asserted
+to write nothing. `wo-sweep.mjs` is 10 passed, 0 failed, 1 to review (the standing sensitive-field-name
+line — the new mentions are the two in `src/attendance.js`'s header comment explaining what is
+deliberately absent from this screen; no code path there reads `supports`).*
+
+*The columns are asserted against a window this harness derives from the calendar in Node, not
+against whatever the app chose — the same "two runtimes, one clock, one answer" posture the local-date
+check already used. A window built from records rather than from the calendar would pass a check that
+asked the app, and it is exactly the mistake that would hide a forgotten day.*
+
+*Four mutation proofs, run before this was written, because a check about an absence goes green
+whatever the build does unless it has been seen to go red:*
+
+| Mutation | Result |
+|---|---|
+| `setMark()` stores `P` instead of deleting the entry | **7 checks red**, including acceptance 12's |
+| an untaken cell painted in the taken palette | **1 red** — the three-state header-and-cells comparison |
+| the `<= today` clause dropped from `writableDate()` | **2 red** — the future-date refusal and the full-day tally |
+| the unlock gate dropped, so past columns take taps directly | **1 red** — tappable cells per row went 1 → 5 |
+
+*All four were reverted and the run is green on the shipped tree.*
+
+**The 👤 iPad sitting this work order owes.** Run these on the installed home-screen app, against a
+class with a real 25-name roster. The first three are the acceptance lines; the rest are what the
+desk pass could not reach.
+
+- [ ] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
+      sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
+- [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
+      the card's state line. Acceptance line 6, and the only one that decides whether the flow
+      survives contact with a period starting. 👤
+- [ ] Unlock a past column and look at the screen **from where you stand at the front of the room**.
+      The strip saying which day you are on is legible without leaning in. Acceptance line 8. 👤
+- [ ] The three column states are readable at that same distance — the amber "not taken" stripe,
+      the dashed grey "didn't meet", and a taken day — without reading the words. 👤
+- [ ] Every control takes a thumb: a cell, the ✏ and 🚫 in a column head, the filter pills, the
+      First/Last pair, Earlier/Today/Later, "Everyone's here", "Didn't meet", and the card's own
+      state line. Tap the cells at their edges, not the middle — that is where the WO-1.2 defect hid. 👤
+- [ ] Tap the same cell five times fast. It walks absent → tardy → event → dismissed → present and
+      nothing is double-counted or skipped by the touch handler. 👤
+- [ ] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still there.
+      *(There is no submit step by design; this is what makes that safe rather than reckless.)* 👤
+- [ ] The grid scrolls as one surface — the overlay, not a scroller inside it — and a flick down the
+      list does not get handed between two scrollers. 👤
+- [ ] Type into the search box with the software keyboard up and confirm the field keeps focus as the
+      rows narrow underneath it. 👤
+- [ ] VoiceOver reads a cell as the student's name, the day and the mark — not as a bare letter — and
+      says what the next tap will do. 👤
+- [ ] Rotate from portrait to landscape with the screen open. The grid is still readable; it keeps
+      the columns it had until the next open. *(Known and deliberate — see the result file.)* 👤
+- [ ] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
+      precache and the screen still marks. 👤
+- [ ] **The owner opens it and says whether it beats Roll Call!.** This is the line the first build
+      failed, and no harness can ask it. 👤
+
 ---
 
 ## Phase 3 — Gradebook

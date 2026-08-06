@@ -53,15 +53,25 @@
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
-      data-attendance-open="<classId>" makes that class the open one, then opens the marking screen
-                                      for today — the card's state line and the card's own tap are
+      data-attendance-open="<classId>" makes that class the open one, then opens the registry for
+                                      that class — the card's state line and the card's own tap are
                                       two routes onto one selection
-      data-attendance-mark="<code>" + data-attendance-student: marks that student P/T/A/E/D. `P`
-                                      clears the entry rather than writing one
-      data-attendance-take            records the open class as met with everyone present
-      data-attendance-untake          takes that back — offered only while nothing is marked
-      data-attendance-drop            one tap: the class did not meet
-      data-attendance-undrop          one tap back, leaving the day not taken yet
+      data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
+                                      that day — present → A → T → E → D → present. `P` is not a
+                                      step in the cycle because present is never stored
+      data-attendance-take="<iso>"    records the open class as met on that day, everyone present
+      data-attendance-untake="<iso>"  takes that back — offered only while nothing is marked
+      data-attendance-drop="<iso>"    one tap: the class did not meet that day
+      data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
+      data-attendance-edit="<iso>"    the deliberate unlock on a past column, one column at a time
+      data-attendance-lock            closes it again and puts the screen back on today
+      data-attendance-page="earlier|later|today"  moves the six-weekday window; `later` is disabled
+                                      at the window that ends today, because there is no tomorrow
+                                      column and there is not going to be one
+      data-attendance-filter="all|P|T|A|E|D"      shows only students with that mark on the day
+                                      being edited
+      data-attendance-sort="first|last"           sorts the rows by that name
+      data-attendance-search          on an <input>: narrows the rows as it is typed
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
       data-roster-paste               opens the paste box over the roster panel
@@ -356,29 +366,53 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  const mark = e.target.closest('[data-attendance-mark]');
-  if (mark) {
-    attendance.setMark(mark.getAttribute('data-attendance-student'),
-      mark.getAttribute('data-attendance-mark'));
+  /* A cell. The date comes off the element rather than out of a module variable, because a grid
+     has six of them on screen at once and "which day did that tap land on" must not be a question
+     two files can answer differently. src/attendance.js refuses a date it should not write. */
+  const cell = e.target.closest('[data-attendance-cell]');
+  if (cell) {
+    attendance.cycleMark(cell.getAttribute('data-attendance-cell'),
+      cell.getAttribute('data-attendance-date'));
     afterAttendanceChange();
     return;
   }
 
-  /* Four class-level taps, each one line, each redrawing the card behind the dialog. Two of them
-     are the one-tap drop and its one-tap undo; the other two are the pair that makes "taken with
-     everyone present" a thing a teacher can say. */
-  if (e.target.closest('[data-attendance-take]')) {
-    attendance.takeClass(); afterAttendanceChange(); return;
+  /* Four class-level taps, each one line, each carrying the day it acts on and each redrawing the
+     card behind the dialog. Two of them are the one-tap drop and its one-tap undo — offered both
+     in the column head and in the action row above the grid, one hook, one writer; the other two
+     are the pair that makes "taken with everyone present" a thing a teacher can say. */
+  const take = e.target.closest('[data-attendance-take]');
+  if (take) {
+    attendance.takeClass(take.getAttribute('data-attendance-take'));
+    afterAttendanceChange(); return;
   }
-  if (e.target.closest('[data-attendance-untake]')) {
-    attendance.untakeClass(); afterAttendanceChange(); return;
+  const untake = e.target.closest('[data-attendance-untake]');
+  if (untake) {
+    attendance.untakeClass(untake.getAttribute('data-attendance-untake'));
+    afterAttendanceChange(); return;
   }
-  if (e.target.closest('[data-attendance-drop]')) {
-    attendance.dropClass(); afterAttendanceChange(); return;
+  const drop = e.target.closest('[data-attendance-drop]');
+  if (drop) {
+    attendance.dropClass(drop.getAttribute('data-attendance-drop'));
+    afterAttendanceChange(); return;
   }
-  if (e.target.closest('[data-attendance-undrop]')) {
-    attendance.undropClass(); afterAttendanceChange(); return;
+  const undrop = e.target.closest('[data-attendance-undrop]');
+  if (undrop) {
+    attendance.undropClass(undrop.getAttribute('data-attendance-undrop'));
+    afterAttendanceChange(); return;
   }
+
+  /* And five taps that move the view without writing anything, so none of them touches the home
+     screen: unlocking a past column, closing it again, paging the window, filtering, sorting. */
+  const editPast = e.target.closest('[data-attendance-edit]');
+  if (editPast) { attendance.editPastDay(editPast.getAttribute('data-attendance-edit')); return; }
+  if (e.target.closest('[data-attendance-lock]')) { attendance.lockPastDay(); return; }
+  const page = e.target.closest('[data-attendance-page]');
+  if (page) { attendance.pageDays(page.getAttribute('data-attendance-page')); return; }
+  const attFilter = e.target.closest('[data-attendance-filter]');
+  if (attFilter) { attendance.setFilter(attFilter.getAttribute('data-attendance-filter')); return; }
+  const attSort = e.target.closest('[data-attendance-sort]');
+  if (attSort) { attendance.setSort(attSort.getAttribute('data-attendance-sort')); return; }
 
   /* ── roster, contacts, and the teacher's own details ── */
 
@@ -501,6 +535,14 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('input', (e) => {
   const field = e.target.closest('[data-term-field]');
   if (field) { classes.editTermField(field); return; }
+
+  /* The registry's search box, which is the one hook on this listener that writes NOTHING — it
+     narrows the rows on screen. It is here rather than on `keyup` for the reason the fields below
+     are: `input` is the event that fires for a paste, for dictation, and for the software
+     keyboard's own suggestions, and a search that misses those is a search that feels broken on
+     the device this screen is for. */
+  const attSearch = e.target.closest('[data-attendance-search]');
+  if (attSearch) { attendance.setSearch(attSearch.value); return; }
 
   /* The roster's fields, saved as they are typed for the same reason and by the same debounce.
      Three hooks rather than one: a student's fields carry a path and a guardian index, the

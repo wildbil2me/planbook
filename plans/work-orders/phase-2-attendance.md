@@ -71,27 +71,32 @@ and are already verified by 260 harness checks. The rendering half is what chang
 print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen will read them later.
 
 **Acceptance**
-- [ ] A mark lands and survives a reload. *(One of the three things that must be right before
+- [x] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
 - [ ] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
       iPad**, in the orientation the owner actually holds it. 👤
-- [ ] A dropped class and an untaken class are visually distinguishable without reading fine print,
+- [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — **in the column header and in the cells
       under it.**
-- [ ] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
+- [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
       everyone present" is indistinguishable from "forgot."
-- [ ] One tap drops a class; one tap undoes it.
+- [x] One tap drops a class; one tap undoes it.
 - [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
       *(Needs a real iPad and a stopwatch.)*
-- [ ] **Attendance can be recorded for a date two weeks back and it lands on that date** — reached
+- [x] **Attendance can be recorded for a date two weeks back and it lands on that date** — reached
       from this screen, without a separate view.
 - [ ] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
-- [ ] **Future dates are either blocked or clearly flagged** — marking Friday's attendance on
+- [x] **Future dates are either blocked or clearly flagged** — marking Friday's attendance on
       Wednesday is a mistake, not a feature.
-- [ ] **A hole deliberately left three days earlier is findable by looking at the grid**, without
+- [x] **A hole deliberately left three days earlier is findable by looking at the grid**, without
       remembering which day it was.
-- [ ] All five marks are reachable from a cell without opening a submenu or leaving the row.
-- [ ] The document after a full day of five classes contains no `P` entries.
+- [x] All five marks are reachable from a cell without opening a submenu or leaving the row.
+- [x] The document after a full day of five classes contains no `P` entries.
+
+*Nine of twelve closed on the desk pass of 2026-08-06 — `verify-shell.mjs` 274 of 274, `wo-sweep.mjs`
+10 passed / 0 failed / 1 standing review — with four mutation proofs behind the absence claims. The
+status line above stays 🔨 IN PROGRESS on purpose: the three 👤 lines need the owner's own iPad, and
+`TESTING.md` § WO-2.1 (the grid) lists the sitting they are owed.*
 
 **Traps** — Storing `P` for present will pass every test here and quietly triple the document. The
 absence of a mark *is* the mark. Do not add a "submit"/"finalize" step: a mark is saved when tapped,

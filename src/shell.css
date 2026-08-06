@@ -378,12 +378,15 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 /* portable-components.md §4's `.date-batch-bar`: the gray inset strip under a panel
    header, hairlined top and bottom, that holds wash-colored `.batch-btn` chips.
 
-   IT HAS NO INSTANCE IN THE APP as of WO-1.10 — the shelf was the only one, and the save chip
-   it used to hold is pinned to the viewport corner instead (see `#saveIndicator` below), because
-   every edit in this app happens inside a modal that covers a panel. Kept rather than deleted
-   with the shelf: WO-2.1's marking screen is what fills it with a date, and re-lifting a
-   component from Roll Call! is more work than leaving the lift in place. Same for `.search-box`
-   above — the first screen with something to search is what instances it. */
+   IT STILL HAS NO INSTANCE IN THE APP. The shelf was the only one, and the save chip it used to
+   hold is pinned to the viewport corner instead (see `#saveIndicator` below), because every edit
+   in this app happens inside a modal that covers a panel. WO-1.10 kept it on the expectation that
+   WO-2.1's marking screen would fill it with a date; WO-2.1 shipped a registry grid instead, where
+   the dates are column heads and the day being edited is named in a strip of that screen's own —
+   so this is still a lift waiting for its first use. Kept rather than deleted, for the reason it
+   was kept before: re-lifting a component from Roll Call! is more work than leaving the lift in
+   place. `.search-box` above is no longer in that position — WO-2.1's registry is the first screen
+   with something to search, and it wears it as it sits. */
 .date-batch-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 8px 20px; background: #f8f9fb;

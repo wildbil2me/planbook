@@ -1142,8 +1142,9 @@
 </div>
 
 <!--
-  ATTENDANCE, for the open class, today (WO-2.1). The critical-path screen: it runs while students
-  walk in, and it is the one thing the owner does every single period.
+  ATTENDANCE — the registry for one class: students down, the last six weekdays across (WO-2.1).
+  The critical-path screen: it runs while students walk in, and it is the one thing the owner does
+  every single period.
 
   THERE IS NO SUBMIT BUTTON IN HERE, AND THERE MUST NEVER BE ONE. Every tap writes immediately —
   src/attendance.js's header says why at length, and the short version is that the teacher is
@@ -1151,19 +1152,23 @@
   reached the bottom of it is a screen she stops trusting. The ✕ closes a dialog; it commits
   nothing, because there is nothing waiting to be committed.
 
-  Everything below the two labels is empty in the markup and rendered by src/attendance.js from the
-  open document — the same call #homeGrid, #classTabBar and #yearList make, and for the same reason:
-  a hand-written specimen row here would be a second truth to keep in step with the real one.
+  The table is empty in the markup and rendered by src/attendance.js from the open document — the
+  same call #homeGrid, #classTabBar and #yearList make, and for the same reason: a hand-written
+  specimen row here would be a second truth to keep in step with the real one.
 
-  The date is text today. WO-2.2 replaces #attendanceDate with a control and re-renders this whole
-  panel for the chosen day; nothing else in here has an opinion about which date it is showing.
+  THE THREE CONTROLS THAT ARE MARKUP ARE THE THREE THAT MUST NOT BE RE-CREATED: the search field,
+  the filter pills and the sort pair. A renderer that rebuilt the search box would take the field's
+  focus out from under a teacher mid-word, so those live here and only their pressed state is
+  painted from the module. Everything that changes with the document is built there.
 
   The hint at the bottom is the copy a teacher reads, which is why it lives here rather than in a
-  JavaScript file — the same call the install banner and the backup nag make. It answers the one
-  question this screen reliably provokes: "why is nobody marked present?"
+  JavaScript file — the same call the install banner and the backup nag make. It answers the two
+  questions this screen reliably provokes: "why is nobody marked present?" and "why doesn't the
+  cycle start with P like Roll Call!'s does?"
 -->
 <div class="modal-overlay hidden" id="attendanceModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceModalTitle">
+  <div class="modal-panel attendance-panel" role="dialog" aria-modal="true"
+       aria-labelledby="attendanceModalTitle">
     <div class="modal-header">
       <h2 id="attendanceModalTitle">Attendance</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -1172,14 +1177,64 @@
       <div class="modal-section-label">
         <span id="attendanceClassName"></span> · <span id="attendanceDate"></span>
       </div>
+
+      <!-- "You are not on today", shown only when that is true. src/attendance.js fills it. -->
+      <p class="attendance-banner hidden" id="attendanceBanner"></p>
+
       <p class="attendance-state" id="attendanceState"></p>
       <div class="attendance-actions" id="attendanceActions"></div>
       <p class="attendance-note hidden" id="attendanceNote"></p>
-      <div class="attendance-list" id="attendanceList"></div>
+
+      <div class="attendance-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" id="attendanceSearch" data-attendance-search
+                 placeholder="Search students…" aria-label="Search students by name">
+        </div>
+        <div class="attendance-pills" id="attendancePills" role="group"
+             aria-label="Show only students with one mark on the day being edited">
+          <button type="button" class="pill active" data-attendance-filter="all"
+                  aria-pressed="true" title="Show the whole class">All</button>
+          <button type="button" class="pill" data-attendance-filter="P"
+                  aria-pressed="false" title="Show only students with no mark">Present</button>
+          <button type="button" class="pill" data-attendance-filter="T"
+                  aria-pressed="false" title="Show only tardy students">Tardy</button>
+          <button type="button" class="pill" data-attendance-filter="A"
+                  aria-pressed="false" title="Show only absent students">Absent</button>
+          <button type="button" class="pill" data-attendance-filter="E"
+                  aria-pressed="false" title="Show only students at an event">Event</button>
+          <button type="button" class="pill" data-attendance-filter="D"
+                  aria-pressed="false" title="Show only dismissed students">Dismissed</button>
+        </div>
+        <div class="attendance-sort" id="attendanceSort" role="group"
+             aria-label="Sort the list by name">
+          <span class="attendance-sort-label">Sort</span>
+          <button type="button" class="attendance-sort-btn" data-attendance-sort="first"
+                  aria-pressed="false" title="Sort by first name">First</button>
+          <button type="button" class="attendance-sort-btn active" data-attendance-sort="last"
+                  aria-pressed="true" title="Sort by last name">Last</button>
+        </div>
+      </div>
+
+      <!-- Earlier · Today · Later, above the columns they move. -->
+      <div class="attendance-pager" id="attendancePager"></div>
+
+      <div class="attendance-grid-wrap" id="attendanceGridWrap">
+        <table class="attendance-grid">
+          <caption class="sr-only" id="attendanceCaption"></caption>
+          <thead id="attendanceHead"></thead>
+          <tbody id="attendanceBody"></tbody>
+        </table>
+      </div>
+      <p class="attendance-empty hidden" id="attendanceEmpty"></p>
+
       <p class="attendance-hint">
-        Present is the default, so you only tap the exceptions — a tardy, an absence, a student at
-        an event, one dismissed. Nothing is stored for the students who were simply here. Every tap
-        saves as you make it; there is nothing to submit.
+        Tap a cell to cycle it: <strong>absent → tardy → event → dismissed → back to present</strong>.
+        Roll Call! starts that cycle with P; this one doesn’t, because present is never stored — an
+        empty cell on a day you have taken <em>is</em> present, and it is drawn as a P so it can’t be
+        confused with a day nobody took. A column of amber question marks is a day you haven’t taken
+        yet. Past days need their ✏ before they accept a tap; today’s column is always live, and its
+        🚫 says the class didn’t meet. Every tap saves as you make it; there is nothing to submit.
       </p>
     </div>
   </div>

@@ -1,13 +1,15 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   Planbook — the attendance marking screen (WO-2.1).
+   Planbook — the attendance registry (WO-2.1): one class, students down, the last
+   six weekdays across.
 
    The second per-screen stylesheet, following the rule src/shell.css's header sets
    and src/home.css instanced first: one file per screen, loaded after the shell's,
    styling only its own class names, with its own @media (pointer: coarse) block at
    the end. No selector below names anything shell.css or home.css styles — the
-   controls here that ARE shell components (`.class-action-btn`, `.modal-*`) are worn
-   as-is and never restyled from here, and the one place this screen needs a state
-   shell.css does not have gets a name of its own (`.attendance-toggle-on`).
+   controls here that ARE shell components (`.class-action-btn`, `.pill`,
+   `.search-box`, `.modal-*`) are worn as-is and never restyled from here, and the
+   two places this screen needs something shell.css has no name for get names of
+   their own (`.attendance-toggle-on`, `.attendance-panel`).
 
    THE THREE STATES HAVE THREE PALETTES, and they are chosen rather than picked:
 
@@ -19,15 +21,20 @@
                    `.class-row.archived` uses in shell.css for a class the teacher
                    set aside. A dropped class is settled: there is nothing to do.
 
-   Three fills, three borders, three sentences and a dashed edge — the work order's
-   line is that a dropped class and an untaken one are distinguishable without
-   reading fine print, and colour alone was never going to carry that.
+   AND EACH ONE IS SAID TWICE — in the column head, in words, and again as a wash
+   down the whole column and a glyph in every cell under it. That is not belt and
+   braces. In a grid an empty cell means "present" on a day that was taken and "no
+   data at all" on a day that wasn't, and if those two look alike the teacher reads
+   a forgotten Tuesday as a Tuesday when everybody showed up. So no cell is ever
+   empty: `P` on the green wash, `?` on the amber, `–` on the dashed grey. An
+   untaken column is a stripe you see from across the room, which is the whole
+   answer to "which day did I forget?".
 
-   THE MARK BUTTONS: one of five is on per row, P by default. P's ON state is the
-   pale wash and the other four are solid fills, which is design/style-guide.md §1
-   read literally — solid is for a state the teacher CHOSE, the wash is for where
-   you already are (`.year-row.current`, `.class-card.open`). src/attendance.js's
-   markButtons() carries the longer version.
+   TODAY AND AN UNLOCKED PAST DAY are marked differently on purpose. Today gets a
+   pale rail down each side and an indigo date — it is where you are, not something
+   you chose. An unlocked past column gets a solid indigo rail, and the banner above
+   the grid says which day in words, because "you are not on today" has to survive
+   being read at arm's length in a lit classroom.
 
    The two things that read like mistakes here are the same two that read like
    mistakes in shell.css and home.css: colours are written out inline rather than as
@@ -38,16 +45,44 @@
 /* One grouped selector for this sheet's tappable classes, the way shell.css has one for the app
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
-.attendance-mark, .attendance-toggle-on {
+.attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
 
+/* ── THE PANEL ── */
+/* Wider than the app's other dialogs, and it is the one dialog that has earned it: everything
+   else in Planbook is a form or a list, and this is a table whose argument is that you can see six
+   days at once. `.modal-panel` keeps its 480px for every other screen; this is a modifier worn
+   beside it, so shell.css still owns the shape and this sheet owns only the width.
+
+   720 rather than as wide as the dialog will go. Six columns of 54px are 324px, and every pixel
+   past what the names need is empty floor between a student's name and the cell you are aiming at
+   on their row — which is a longer eye-track and a longer thumb-track on the one screen where both
+   are being counted in seconds. */
+.attendance-panel { width: 720px; max-width: 95vw; }
+
+/* ── "YOU ARE NOT ON TODAY" ── */
+/* A band, not a tint. The acceptance line is that this is visible in a glance, on an iPad, in a
+   classroom, and a tint is exactly the fine print this screen keeps refusing. Interactive indigo
+   rather than caution amber: being on a past day is a state the teacher CHOSE, and amber in this
+   app means "something needs doing". */
+.modal-body .attendance-banner {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 10px; padding: 10px 14px;
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; border-radius: 8px;
+  background: #eef2ff; color: #3a4a8a;
+  font-size: 14px; font-weight: 700; line-height: 1.4;
+}
+.attendance-banner-text { flex: 1 1 220px; }
+.attendance-banner-btn { flex: 0 0 auto; }
+
 /* ── THE STATE LINE ── */
 /* A <p> inside `.modal-body`, whose own rule is more specific than a bare class — so it is
    qualified rather than left to lose the cascade, exactly as `.roster-hint` and `.class-error`
-   are in shell.css. */
+   are in shell.css. It describes the ONE day that accepts edits, which is today unless a past
+   column has been unlocked. */
 .modal-body .attendance-state {
   display: block; margin: 2px 0 10px;
   padding: 8px 12px; border-radius: 8px;
@@ -76,97 +111,226 @@
 
 /* Two <p>s inside `.modal-body`, qualified for the reason `.attendance-state` is. The note is
    what a dropped day says instead of a list of students; the hint is the standing sentence about
-   what this screen stores, and it is the answer to "why is nobody marked present?" */
+   what this screen stores and how the cycle runs, and it is the answer to both "why is nobody
+   marked present?" and "why doesn't this start with P?" */
 .modal-body .attendance-note {
   margin: 0 0 10px; padding: 8px 12px; border-radius: 8px;
   background: #f8f9fb; border: 1.5px solid #eef0f4;
   font-size: 12px; line-height: 1.5; color: #6b7a8d;
 }
-.modal-body .attendance-hint { font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.5; }
+.modal-body .attendance-hint { font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.6; }
+.modal-body .attendance-empty { font-size: 13px; color: #a0aab8; padding: 10px 2px; line-height: 1.5; }
 
-/* ── THE LIST ── */
-/* Unbounded and not an inner scroller, deliberately, and it is the same call `.roster-list` makes
-   over the same twenty-five rows: the overlay already scrolls (`.modal-overlay { overflow-y:auto }`),
-   and a scroller inside a scroller on iOS hands momentum between the two in a way that costs a
-   teacher the row she was aiming at. One surface, one flick. `.paste-list` is capped because it is
-   a preview under a form that has to stay reachable; this is the screen itself. */
-.attendance-list { display: flex; flex-direction: column; gap: 4px; }
-
-/* One student. Does NOT wrap, which is the one place this row disagrees with `.roster-row` and
-   `.class-row`: those wrap so a long name keeps its actions legible, and here a wrapped row would
-   move every row below it down the screen between the moment the teacher aims and the moment she
-   taps. The name takes the squeeze instead, capped and ellipsised, with the whole of it on `title`. */
-.attendance-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 8px; border-radius: 8px;
-  border: 1.5px solid #eef0f4; background: #f8f9fb;
+/* ── SEARCH, FILTER, SORT ── */
+/* Roll Call!'s `.search-row` un-centred: over there the pill row is absolutely positioned in the
+   middle of a full-width panel, which is a layout that only works when the row has a middle to
+   spare. In a dialog the three groups sit in flow and wrap, and shell.css's `.search-box` and
+   `.pill` are worn exactly as they are. */
+.attendance-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.attendance-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.attendance-sort { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.attendance-sort-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
 }
-/* A row that carries an exception, lifted off the list so that "who is not here" is answerable by
-   scrolling past rather than by reading every row. White rather than a colour: the mark button
-   beside it is already carrying the colour, and a red row plus a red button is a row that shouts. */
-.attendance-row.marked { background: #fff; border-color: #d0d8e4; }
-.attendance-row-name {
-  flex: 1 1 60px; min-width: 0;
+/* Roll Call!'s `.sort-btn`, under a name of this app's own because shell.css never lifted that
+   one — the first screen with something to sort is what instances it, and this is it. */
+.attendance-sort-btn {
+  padding: 3px 9px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #8a9bb0;
+  font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.attendance-sort-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.attendance-sort-btn.active { background: #5b6fcc; border-color: #5b6fcc; color: #fff; }
+
+/* ── THE PAGER ── */
+/* Earlier · range · Today · Later, immediately above the columns it moves. "Later" sits disabled
+   at the window that ends today rather than disappearing: a control that is there and greyed says
+   there is no tomorrow to go to, and a control that is absent says nothing at all. */
+.attendance-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.attendance-pager-range {
+  font-size: 11px; font-weight: 700; color: #8a9bb0; margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE GRID ── */
+/* `overflow-x: auto` is a SAFETY VALVE and not the design. src/attendance.js drops columns on a
+   narrow viewport precisely so this never engages; it is here because a table whose fixed columns
+   outgrow their box would otherwise put a horizontal scrollbar on the whole page, and a page that
+   scrolls sideways on an iPad is a teacher swiping the app instead of the list. Vertical scrolling
+   still belongs to the overlay alone — one surface, one flick — which is why there is no
+   max-height here. */
+.attendance-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Fixed layout, so the day columns keep the width they are given and the name column takes what is
+   left — which is also what makes an over-long name ellipsise instead of widening the table and
+   squeezing the cells that are the point of the screen. */
+.attendance-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+.attendance-corner {
+  text-align: left; padding: 6px 8px 6px 2px;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  border-bottom: 1.5px solid #eef0f4; white-space: nowrap;
+}
+.attendance-name {
+  text-align: left; padding: 3px 8px 3px 2px;
   font-size: 13px; font-weight: 600; color: #1a1a2e;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-bottom: 1px solid #f3f4f6;
 }
-/* Never shrinks. Five 44px targets are 236px of a 480px panel and they are the point of the
-   screen; it is the name that gives way. */
-.attendance-marks { display: flex; gap: 4px; flex: 0 0 auto; }
 
-/* The five letters. Resting is the quiet outline every unselected control in this app wears; ON is
-   the accent — see the header comment for why P's is a wash and the other four are solid. */
-.attendance-mark {
+/* ── ONE COLUMN HEAD ── */
+.attendance-day {
+  width: 52px; padding: 5px 3px; text-align: center; vertical-align: top;
+  border-bottom: 1.5px solid #eef0f4;
+}
+.attendance-day-dow {
+  display: block; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.5px; color: #a0aab8;
+}
+.attendance-day-date {
+  display: block; font-size: 12px; font-weight: 800; color: #3a4a5a;
+  font-variant-numeric: tabular-nums;
+}
+/* The state, in words, above every column. Wraps to two lines rather than truncating: "Didn't
+   meet" abbreviated to fit is the fine print this line exists to avoid. */
+/* The min-height is what keeps the control under it on one line across all six columns: "Didn't
+   meet" wraps to two lines where "Taken" does not, and a row of pencils that steps up and down is
+   a row of pencils the thumb has to aim at individually. */
+.attendance-day-state {
+  display: block; margin: 2px 0 3px; min-height: 2.3em;
+  font-size: 9px; font-weight: 700; line-height: 1.15; white-space: normal;
+}
+/* One glyph, so it needs width as much as height under a coarse pointer — the lesson `.cls-tab`
+   and `.class-action-btn` in shell.css already paid for. */
+.attendance-day-btn {
+  padding: 2px 4px; border-radius: 6px; line-height: 1;
+  border: 1.5px solid transparent; background: transparent; color: #6b7a8d;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.attendance-day-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.attendance-day-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+
+/* ── ONE CELL ── */
+.attendance-cell-td { padding: 3px 4px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+.attendance-cell {
+  display: inline-flex; align-items: center; justify-content: center;
   width: 34px; height: 34px; padding: 0; border-radius: 8px;
   border: 1.5px solid #e0e4ea; background: #fff;
   font-size: 13px; font-weight: 800; color: #6b7a8d;
-  cursor: pointer; transition: all 0.15s;
+  font-family: inherit; cursor: pointer; transition: all 0.15s;
 }
-.attendance-mark:hover:not(.on) { border-color: #5b6fcc; color: #5b6fcc; }
-/* Present: the wash, because it is where every student already is. */
-.attendance-mark.mP.on { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
-.attendance-mark.mT.on { background: #e67e22; border-color: #e67e22; color: #fff; }
-.attendance-mark.mA.on { background: #e74c3c; border-color: #e74c3c; color: #fff; }
-/* Event takes the deep danger tone rather than absent's, so the two reds beside each other are two
-   colours and not one — Roll Call! draws its Event stat cell in this same #c0392b. */
-.attendance-mark.mE.on { background: #c0392b; border-color: #c0392b; color: #fff; }
-/* Dismissed is the style guide's "special state", which is the example that table names. */
-.attendance-mark.mD.on { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+/* A past column that has not been unlocked, and every cell of a day the class did not meet. A
+   plain <span> rather than a disabled <button>: a disabled control reads as something broken, and
+   this is a record. */
+.attendance-cell.locked { cursor: default; }
+.attendance-cell:hover:not(.locked) { border-color: #5b6fcc; }
 
-.attendance-empty { font-size: 13px; color: #a0aab8; padding: 4px 2px 6px; line-height: 1.5; }
+/* Present: the wash, because it is where every student already is — and because twenty-six solid
+   green cells would read as twenty-six things having been done, which is the opposite of true. */
+.attendance-cell-P { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
+.attendance-cell-T { background: #fef5ea; border-color: #e67e22; color: #e67e22; }
+.attendance-cell-A { background: #fdeaea; border-color: #e74c3c; color: #e74c3c; }
+/* Event takes the deep danger tone rather than absent's, so the two reds beside each other are two
+   colours and not one — Roll Call! draws its Event cell in this same #c0392b. */
+.attendance-cell-E { background: #fdeaea; border-color: #c0392b; color: #c0392b; }
+/* Dismissed is the style guide's "special state", which is the example that table names. */
+.attendance-cell-D { background: #f3eaff; border-color: #7c3aed; color: #7c3aed; }
+/* The hole. Amber, and a question mark, and repeated down the whole column — see the header. */
+.attendance-cell-untaken { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
+/* The class did not meet: dashed and quiet, because there is nothing to do about it. */
+.attendance-cell-none { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #c0cad5; }
+
+/* ── THE COLUMN, AS A COLUMN ── */
+/* Worn by the <th> and by every <td> under it, from one function in src/attendance.js, which is
+   what keeps "said in the header" and "said in the cells" one fact rather than two that drift. */
+.attendance-col-not-taken { background: #fffdf5; }
+.attendance-col-dropped { background: #fbfcfd; }
+.attendance-day.attendance-col-taken { border-bottom-color: #a3e4bc; }
+.attendance-day.attendance-col-not-taken { border-bottom-color: #f0dfa8; }
+.attendance-day.attendance-col-dropped { border-bottom-style: dashed; border-bottom-color: #d0d8e4; }
+.attendance-col-taken .attendance-day-state { color: #27ae60; }
+.attendance-col-not-taken .attendance-day-state { color: #8a6d1a; }
+.attendance-col-dropped .attendance-day-state { color: #a0aab8; font-style: italic; }
+/* Today: a pale rail down each side and an indigo date. Where you are, not something you chose. */
+.attendance-col-today { box-shadow: inset 1px 0 0 #e0e4ea, inset -1px 0 0 #e0e4ea; }
+.attendance-col-today .attendance-day-date { color: #5b6fcc; }
+/* An unlocked past column: a solid indigo rail down both sides, so the column the taps are landing
+   in is obvious without reading the banner — which is there too, saying the date in words. */
+.attendance-col-editing { box-shadow: inset 2px 0 0 #5b6fcc, inset -2px 0 0 #5b6fcc; }
 
 /* ── RESPONSIVE ── */
 /* Same order design/style-guide.md §6 names and both other sheets follow: (pointer: coarse)
    first, then the width blocks. */
 
 /* The touch pass for this screen's controls, in the same pass that adds them — there is no later
-   one. The mark buttons are the reason this block exists: they are one glyph wide, so they need
-   min-width as much as min-height, which is the lesson `.cls-tab` and `.class-action-btn` in
-   shell.css already paid for. */
+   one. The cells are the reason this block exists: they are one glyph wide, so they need min-width
+   as much as min-height, and the column has to widen with them or the row spills. */
 @media (pointer: coarse) {
+  .attendance-panel { width: 720px; }
+  .modal-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
+  .attendance-banner-text { flex-basis: 200px; }
+  /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
+     named here so the control appears in this block rather than being covered somewhere else. */
+  .attendance-banner-btn { min-height: 44px; min-width: 44px; }
   .modal-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
-  /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
-     named here so the control appears in this block rather than being covered by another class's
-     rule somewhere else. */
   .attendance-toggle-on { min-height: 44px; min-width: 44px; }
   .modal-body .attendance-note { font-size: 13px; }
   .modal-body .attendance-hint { font-size: 12px; }
-  .attendance-list { gap: 6px; }
-  /* 6px of gap between rows and 6px between two 44px marks: the mis-tap this spacing is bought
-     against is marking the wrong student absent, which is a phone call home about a child who was
-     in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css. */
-  .attendance-row { gap: 8px; padding: 4px 8px; }
-  .attendance-row-name { font-size: 14px; }
-  .attendance-marks { gap: 6px; }
-  .attendance-mark { width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 15px; }
-  .attendance-empty { font-size: 14px; }
+  .modal-body .attendance-empty { font-size: 14px; }
+  .attendance-toolbar { gap: 10px; }
+  .attendance-pills { gap: 6px; }
+  .attendance-sort { gap: 6px; }
+  .attendance-sort-label { font-size: 11px; }
+  .attendance-sort-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
+  .attendance-pager { gap: 10px; }
+  .attendance-pager-range { font-size: 12px; }
+  .attendance-grid-wrap { margin-top: 2px; }
+  .attendance-grid { font-variant-numeric: tabular-nums; }
+  .attendance-corner { font-size: 11px; }
+  .attendance-name { font-size: 14px; padding: 4px 8px 4px 2px; }
+  /* 54px of column for a 44px cell and 5px either side: the mis-tap this spacing is bought against
+     is marking the wrong student absent on the wrong day, which is a phone call home about a child
+     who was in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css. */
+  .attendance-day { width: 54px; padding: 6px 3px; }
+  .attendance-day-dow { font-size: 10px; }
+  .attendance-day-date { font-size: 13px; }
+  .attendance-day-state { font-size: 10px; }
+  .attendance-day-btn { min-height: 44px; min-width: 44px; font-size: 15px; padding: 2px; }
+  .attendance-cell-td { padding: 4px 5px; }
+  .attendance-cell { width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 15px; }
+  /* Every tone one step louder, because a touch device is the one that gets held at arm's length
+     and stood in front of a class. A 1.5px edge that reads fine on a laptop 50cm away is the edge
+     that stops carrying the difference between an absence and an event across a room. */
+  .attendance-cell-P, .attendance-cell-T, .attendance-cell-A,
+  .attendance-cell-E, .attendance-cell-D,
+  .attendance-cell-untaken, .attendance-cell-none { border-width: 2px; }
+  /* And the same for the column, which is the half of the three-state distinction that is read
+     without looking at any single cell. */
+  .attendance-col-taken { background: #fff; }
+  .attendance-col-not-taken { background: #fff8e6; }
+  .attendance-col-dropped { background: #f8f9fb; }
+  .attendance-col-today { box-shadow: inset 2px 0 0 #d0d8e4, inset -2px 0 0 #d0d8e4; }
+  .attendance-col-editing { box-shadow: inset 3px 0 0 #5b6fcc, inset -3px 0 0 #5b6fcc; }
 }
 
-/* The phone. Five 44px targets and their gaps are 244px of a 95vw panel at 390px, which leaves the
-   name about 60px — readable as two or three characters and an ellipsis. That is the honest
-   trade: the marks are what the screen is for, and this is not the device it is for. */
+/* The tablet. The panel is deliberately NOT widened to 95vw here, which is what every other dialog
+   in the suite does at this breakpoint: 95vw of an iPad in landscape is 970px against 324px of
+   columns, and the 640px left over is empty floor between a name and the cell on its row. The
+   720px above already fits six columns and a long name on both orientations, so the rule this
+   block needs is the one about the toolbar, not the one about width. */
+@media (max-width: 1024px) {
+  .attendance-sort { margin-left: 0; }
+}
+
+/* The phone. Three columns rather than six (src/attendance.js drops them; this block only makes
+   the row that is left readable), and the honest trade is the same one the marks made before:
+   the grid is what the screen is for, and this is not the device it is for. */
 @media (max-width: 640px) {
-  .attendance-row { padding: 4px 6px; }
-  .attendance-row-name { flex-basis: 40px; }
+  .attendance-name { font-size: 12px; padding-right: 4px; }
+  /* The column keeps its width here on purpose. Narrowing it below the 54px a 44px cell needs is
+     how a row spills sideways, and dropping a column is the answer this screen already has. */
+  .attendance-cell-td { padding-left: 3px; padding-right: 3px; }
+  .attendance-pager-range { display: none; }
 }
