@@ -635,14 +635,24 @@ All five acceptance lines close on this pass. WO-1.11 is done.
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*
 
-WO-2.2 through WO-2.7 append their acceptance lines here as they land.
+WO-2.3 through WO-2.7 append their acceptance lines here as they land.
+*(WO-2.2 was merged into WO-2.1 on 2026-08-06 — see the tombstone in
+[`plans/work-orders/phase-2-attendance.md`](plans/work-orders/phase-2-attendance.md).)*
 
 Three lines in this phase are the ones that decide whether a term of attendance is trustworthy,
 and they need a real class rather than a test document: a mark lands and survives a reload, a
 dropped class is distinguishable from a not-taken-yet one, and the percentage matches a hand
 count. 👤 The first two land with WO-2.1 below; the third is WO-2.4's.
 
-### WO-2.1 — Attendance marking screen
+### ~~WO-2.1 — Attendance marking screen~~ · superseded 2026-08-06, kept as a record
+
+**These ticks verified commit `11f0780`, not the shipping screen.** That build was a one-class,
+one-day marking screen; it satisfied every line below and was still worse for the owner than Roll
+Call!'s six-day registry view, so WO-2.1 was rewritten around the grid and WO-2.2 folded into it.
+The pass recorded here was real and is left intact — the harness evidence and the three mutation
+proofs below still hold for the storage layer, which survives the rewrite. **The acceptance list
+that governs is the one in the rewritten work order**, and it gets its own section here when the
+grid lands. Nothing below is a claim about the current tree.
 
 - [x] A mark lands and survives a reload.
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,

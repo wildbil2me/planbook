@@ -12,81 +12,116 @@ and land in Ship 2.
 
 ---
 
-## WO-2.1 — Attendance marking screen
+## WO-2.1 — Attendance registry: students × recent days
 
 **Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** L · 🚩 · **Depends on** WO-1.7, WO-1.10
 **Closes roadmap** Phase 2 → "Marking screen, exceptions-only", "Marks `P / T / A / E / D`",
-"One-tap drop", "Three distinct states per class per day"
+"One-tap drop", "Three distinct states per class per day", "Mark a **past** date"
 
 **Why it exists.** This is the critical-path flow — it runs while students walk in, and it is the
 one thing the owner does every single class period. It is also *the riskiest thing on day one*: a
 live term of attendance in a three-week-old app.
 
+**Read this before building.** A first pass at this work order shipped a one-class, one-day screen
+with five explicit `P T A E D` buttons per student. It passed every acceptance line it had, and it
+was **wrong for the owner** — she came from Roll Call!'s registry view, which shows six days of
+columns at once, and going back to one day at a time is a step down from the app she is replacing.
+The fault was in this work order, not the build: the original cut split Roll Call!'s single surface
+across three work orders (today here, past dates in WO-2.2, history in WO-2.6), so the multi-day
+view was partitioned away before anyone wrote a line of it. **WO-2.2 has been merged into this
+work order** for that reason — see its tombstone below. The commit holding that first pass is
+`11f0780`; its storage layer and predicate survive, its rendering does not.
+
+**The reference is Roll Call!'s registry view** — `src/dashboard.html`, `#registryView`, and
+`renderHead()` / `getWindowedDays()`. Read it before designing anything here.
+
 **Deliverables**
-- The day loads showing **all classes**, each in one of three states: **taken · dropped · not taken
-  yet**. The third is not the second, and the distinction is visible at a glance.
-- Exceptions-only marking: present is the default and is not stored. You tap the absences and
-  tardies. A class of 25 with two absences is two entries in the document, not 25.
-- Marks `P / T / A / E / D`, using Roll Call!'s vocabulary so the owner's habits carry over.
-- **One-tap drop** on a class that didn't meet — writes
-  `{ classId, date, exception: "dropped" }` and the class is done. No setup, nothing to maintain
-  when the rotation shifts.
-- Un-drop, and un-mark, without leaving the screen.
+- **The default surface is a table for one class: students are rows, recent dates are columns,**
+  most recent first. `DEFAULT_DAY_COLS = 6` in Roll Call!; match it, and show fewer on a narrow
+  viewport rather than scrolling sideways.
+- **Which dates are columns:** the last N **weekdays**, Mon–Fri, by calendar. *Not* the dates this
+  class has records for — a day you forgot has no record, and a hole you cannot see is a hole you
+  cannot fill. This is a calendar fact, not a schedule model; nothing here predicts which classes
+  meet. Re-read [`../rotating-schedule.md`](../rotating-schedule.md) if that feels like a loophole.
+- **Tap a cell to cycle the mark.** Roll Call!'s cycle is `'' → P → A → T → E`. Ours is
+  **`'' → A → T → E → D → ''`** — `P` is skipped because present is never stored, and `D` joins the
+  cycle because Planbook has no hall-pass flow to log it from. That is a deliberate divergence from
+  the owner's habit and the only one; name it in the UI, not just here.
+- **Every column header carries that class's state for that date** — taken · dropped · not taken
+  yet — because in a grid an empty cell is ambiguous on its own (see Traps).
+- **Per-column controls, as in Roll Call!:** today's column marks the class dropped in one tap; a
+  past column takes a deliberate unlock before it accepts edits, and says so while unlocked.
+- **Past dates are markable and land on that date**, with unmissable indication that you are not on
+  today. Future dates are blocked or clearly flagged.
+- **Finding the holes:** untaken columns are visually distinct at a glance, so "which day did I
+  forget?" is answered by looking rather than remembering.
+- Class-level **"Everyone's here"** (writes `{ classId, date, marks: {} }`) and **un-drop**, both
+  without leaving the screen. "Everyone's here" is what replaces Roll Call!'s `'' → P` step.
+- Search, filter-by-mark pills, and sort by first/last name, per Roll Call!'s `#registryView`.
 - Storage exactly per [`../../docs/data-model.md`](../../docs/data-model.md): one record per class
   per date; `marks` holding only exceptions; `exception` present means the class did not meet.
 - The home-screen card slot from WO-1.10 filled with today's state per class, each with a one-tap
-  fix.
+  fix. The home screen stays the all-five-classes view; this screen is one class in depth.
 
-**Out of scope** — percentages (WO-2.4), the keyboard path (WO-2.5), history views (WO-2.6).
+**Reuse from `11f0780`, do not rewrite:** `stateOf()`, `setMark()`, `dropClass()`, `ensureRecord()`,
+and the exceptions-only guard in [`../../src/attendance.js`](../../src/attendance.js) are model code
+and are already verified by 260 harness checks. The rendering half is what changes.
+
+**Out of scope** — percentages (WO-2.4), the keyboard path (WO-2.5), per-student history and
+print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen will read them later.
 
 **Acceptance**
-- [x] A mark lands and survives a reload. *(One of the three things that must be right before
+- [ ] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
-- [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
-      and are distinguishable in the stored document. *(Measured: the three state lines differ in
-      words, fill, edge colour and type colour, and the dropped one alone is dashed. "Without
-      reading fine print" is finally a human's call — the desk half proves the difference is there
-      and carried by more than one channel, not that it lands across a classroom.)*
-- [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
+- [ ] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
+      iPad**, in the orientation the owner actually holds it. 👤
+- [ ] A dropped class and an untaken class are visually distinguishable without reading fine print,
+      and are distinguishable in the stored document — **in the column header and in the cells
+      under it.**
+- [ ] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
       everyone present" is indistinguishable from "forgot."
-- [x] One tap drops a class; one tap undoes it.
+- [ ] One tap drops a class; one tap undoes it.
 - [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
-      *(Needs a real iPad and a stopwatch. The desk half measures what a desk can: the path is two
-      taps from the home screen with nothing to submit, and all 132 controls on a 26-name marking
-      screen clear 44px under a coarse pointer.)*
-- [x] All five marks are reachable without a submenu.
-- [x] The document after a full day of five classes contains no `P` entries.
+      *(Needs a real iPad and a stopwatch.)*
+- [ ] **Attendance can be recorded for a date two weeks back and it lands on that date** — reached
+      from this screen, without a separate view.
+- [ ] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
+- [ ] **Future dates are either blocked or clearly flagged** — marking Friday's attendance on
+      Wednesday is a mistake, not a feature.
+- [ ] **A hole deliberately left three days earlier is findable by looking at the grid**, without
+      remembering which day it was.
+- [ ] All five marks are reachable from a cell without opening a submenu or leaving the row.
+- [ ] The document after a full day of five classes contains no `P` entries.
 
 **Traps** — Storing `P` for present will pass every test here and quietly triple the document. The
-absence of a mark *is* the mark. And do not add a "submit"/"finalize" step: a mark is saved when
-tapped, because the teacher will be interrupted mid-class.
+absence of a mark *is* the mark. Do not add a "submit"/"finalize" step: a mark is saved when tapped,
+because the teacher will be interrupted mid-class. And **the grid creates a new way to be
+ambiguous** that the one-day screen did not have: an empty cell means "present" on a date the class
+was taken, and "no data at all" on a date it wasn't. Those must not look alike, or the teacher will
+read a forgotten day as a day everyone showed up.
 
 ---
 
-## WO-2.2 — Marking a past date
+### ~~WO-2.2 — Marking a past date~~ · merged into WO-2.1 on 2026-08-06
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-2.1
-**Closes roadmap** Phase 2 → "Mark a **past** date."
+**This is a tombstone, not a work order.** It is deliberately demoted out of `##` so
+`tools/wo-gate.mjs` no longer parses it; there is nothing here to start, and the ID is retired
+rather than reused.
 
-**Why it exists.** A forgotten day is more common than a dropped one. Without this, the first day
-the owner gets pulled into a meeting produces a hole in the ledger that can never be filled, and
-the percentage silently stops matching a hand count.
+WO-2.2 asked for a date control, a not-today indication, past dates in the same three states, and a
+list of recent dates with untaken classes. **Every one of those is now a WO-2.1 deliverable**, and
+they are there because separating them was the mistake. Roll Call!'s registry view answers "what
+did I forget?" by *showing six days at once* — the question never needs a date picker, a separate
+view, or a list, because the hole is a blank column you can see. Cutting that surface into
+"today" and "past dates" produced a WO-2.1 that shipped a one-day screen and satisfied its own
+acceptance criteria while being worse than the app it replaces.
 
-**Deliverables**
-- A date control on the marking screen; the whole screen re-renders for that date.
-- Clear, unmissable indication when you are not on today. This is where a wrong-day mark comes from.
-- The three states apply to past dates identically — a past date with no record reads "not taken",
-  not "dropped".
-- A short list of recent dates with untaken classes, so the hole is findable rather than remembered.
+**Do not re-split this.** If a future session finds WO-2.1 large and looks for a seam, the seam
+between today and yesterday is the one place there isn't one.
 
-**Out of scope** — a month view (WO-6.3). A date stepper and a picker are enough.
-
-**Acceptance**
-- [ ] Attendance can be recorded for a date two weeks back and it lands on that date.
-- [ ] The "not today" indication is visible in a glance, on an iPad, in a classroom.
-- [ ] Future dates are either blocked or clearly flagged — marking attendance for Friday on
-      Wednesday is a mistake, not a feature.
-- [ ] The recent-untaken list finds a hole deliberately left three days earlier.
+*(The `Ship 1` table in [`README.md`](README.md) and the route in [`ROUTING.md`](ROUTING.md) were
+renumbered to match. `CHANGELOG.md` carries the entry. Historical mentions of WO-2.2 in
+`CHANGELOG.md` and `plans/dispatch-retro.md` describe events that happened and are left alone.)*
 
 ---
 
