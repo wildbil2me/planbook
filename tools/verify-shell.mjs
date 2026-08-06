@@ -2826,17 +2826,23 @@ if (!classesBooted || !classSeam) {
         var b = c.querySelector('.class-card-open');
         return b && b.getAttribute('aria-current') === 'true'; }).length,
       selected: window.planbook.classes.getSelectedClassId(),
-      /* The two slots, per card. The state slot was filled by WO-2.1 and now says today's state
-         and carries the tap that fixes it; the signals slot is still reserved, empty of text AND of
-         elements, and holding real height. A reserved slot with nothing in it and no height is a
-         slot that reflows the grid the day it is filled, which is the failure WO-1.10's fourth
-         acceptance line is actually about — and the state slot is the proof it did not, because
-         this run measures the portrait fit again below with the taller card in place. */
+      /* The two slots, per card. The state slot was filled by WO-2.1 and says today's state; the
+         signals slot is still reserved, empty of text AND of elements, and holding real height. A
+         reserved slot with nothing in it and no height is a slot that reflows the grid the day it
+         is filled, which is the failure WO-1.10's fourth acceptance line is actually about.
+
+         inControl replaced a hook attribute at WO-1.13, when the card went back to being one
+         control: the state line is a span INSIDE the button that opens the class, so what has to be
+         true is that the line describing a class sits inside the tap that opens that class. A line
+         rendered onto the wrong card, or loose in the grid, answers false.
+         (No backticks in this comment: it is inside a template literal.) */
       slots: els.map(function(c){
         var s = c.querySelector('.class-card-state'), g = c.querySelector('.class-card-signals');
+        var b = c.querySelector('.class-card-open');
         return { both: !!(s && g),
                  state: s ? s.textContent.trim() : '',
-                 stateHook: s ? s.getAttribute('data-attendance-open') : null,
+                 inControl: !!(s && b && b.contains(s)),
+                 controls: c.querySelectorAll('button').length,
                  said: (g ? g.textContent : '').trim(),
                  kids: g ? g.children.length : 0,
                  h: (s ? s.getBoundingClientRect().height : 0)
@@ -2856,10 +2862,10 @@ if (!classesBooted || !classSeam) {
     'marked = ' + JSON.stringify(cards.marked) + ', getSelectedClassId() = ' + cards.selected
       + ', aria-current = ' + cards.current);
   check('every card carries today\'s attendance state and the tap that fixes it, and still reserves Phase 3 and 4\'s space',
-    cards.slots.length === 6 && cards.slots.every(s => s.both && s.state !== '' && !!s.stateHook
-      && s.said === '' && s.kids === 0 && s.h > 0)
-      && cards.slots.map(s => s.stateHook).join(',') === cards.activeIds.join(','),
+    cards.slots.length === 6 && cards.slots.every(s => s.both && s.state !== '' && s.inControl
+      && s.controls === 1 && s.said === '' && s.kids === 0 && s.h > 0),
     JSON.stringify(cards.slots.map(s => Math.round(s.h) + 'px, state ' + JSON.stringify(s.state)
+      + ', ' + s.controls + ' control(s), line inside it = ' + s.inControl
       + ', signals ' + (s.said === '' && s.kids === 0 ? 'reserved and empty'
         : 'HOLDS ' + JSON.stringify(s.said)))));
 
@@ -2876,15 +2882,33 @@ if (!classesBooted || !classSeam) {
     var btn = document.querySelector('#homeGrid .class-card-open[data-class-tab=' + JSON.stringify(want) + ']');
     var card = btn ? btn.closest('.class-card') : null;
     var tab = document.querySelector('#classTabBar [data-class-tab=' + JSON.stringify(want) + ']');
+    var view = document.getElementById('classView'), home = document.getElementById('homeView');
     return { selected: window.planbook.classes.getSelectedClassId(),
              pref: window.planbook.getPref('openClassId'),
              cardMarked: !!(card && card.classList.contains('open')),
              tabMarked: !!(tab && tab.classList.contains('active')),
-             marked: document.querySelectorAll('#homeGrid .class-card.open').length }; })()`);
+             marked: document.querySelectorAll('#homeGrid .class-card.open').length,
+             /* WO-1.13: the tap is navigation as well as a selection. */
+             classView: !!(view && !view.classList.contains('hidden')),
+             homeView: !!(home && !home.classList.contains('hidden')),
+             dialogs: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
+               .filter(function(m){ return !m.classList.contains('hidden'); }).map(function(m){ return m.id; }),
+             onScreen: (document.getElementById('attendanceClassName') || {}).textContent }; })()`);
   check('one tap on a card makes that class the open class, on the card AND on the header tab',
     tapped.selected === other && tapped.pref === other && tapped.cardMarked
       && tapped.tabMarked && tapped.marked === 1,
     JSON.stringify(tapped));
+  /* The same tap, asked the other question — WO-1.13's first acceptance line, driven from the card
+     rather than from the header. The class grid goes, that class's working surface arrives, and
+     nothing opened a dialog to do it. The name on the surface is read too: a view that swapped but
+     went on describing the class before it would satisfy every clause above this one. */
+  check('and it swaps what is in <main> for that class\'s own screen, with no dialog opened',
+    tapped.classView && !tapped.homeView && tapped.dialogs.length === 0
+      && tapped.onScreen === cards.activeNames[cards.ids.indexOf(other)],
+    'class view up = ' + tapped.classView + ', class grid up = ' + tapped.homeView
+      + ', dialogs open = ' + JSON.stringify(tapped.dialogs) + ', the screen says '
+      + JSON.stringify(tapped.onScreen) + ' for '
+      + JSON.stringify(cards.activeNames[cards.ids.indexOf(other)]));
 
   /*
     Six classes on an iPad in portrait, without scrolling, at 44px.
@@ -2903,6 +2927,12 @@ if (!classesBooted || !classSeam) {
     the run left it and is reported in the detail, because that one CAN be on screen on an installed
     iPad and it is fair for it to have to fit.
   */
+  /* Back to the class grid before the reload below, through the control a teacher taps. Two reasons
+     and both are WO-1.13's: the cards cannot be measured while `#homeView` is hidden — they measure
+     0x0, which is a green run that measured nothing — and the view is a preference now, so a reload
+     taken from a class comes back on that class. Which is a fact this file asserts on purpose in the
+     attendance section, and would otherwise trip over here. */
+  await clickSel('#classTabBar [data-view-home]');
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Emulation.setDeviceMetricsOverride', { width: 768, height: 1024, deviceScaleFactor: 2, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -2928,9 +2958,11 @@ if (!classesBooted || !classSeam) {
       scrollH: document.documentElement.scrollHeight,
       lastBottom: last ? Math.round(last.bottom) : 0,
       columns: getComputedStyle(grid).gridTemplateColumns.split(/\\s+/).length,
-      /* The CONTROLS on a card, not the card. WO-2.1 made the card a container with two buttons in
-         it, and measuring the container would report 44px about a box nobody taps — the WO-1.2
-         search-box defect exactly, arriving in a check rather than in a stylesheet.
+      /* The CONTROLS on a card, not the card. The card is a container with a button in it, and
+         measuring the container would report 44px about a box nobody taps — the WO-1.2 search-box
+         defect exactly, arriving in a check rather than in a stylesheet. One per card since WO-1.13
+         where WO-2.1 had two; the count below is asserted, so a card that grows a second control
+         has to come back through here.
          (No backticks in this comment: it is inside a template literal.) */
       controls: grid.querySelectorAll('.class-card button').length,
       under44: Array.prototype.slice.call(grid.querySelectorAll('.class-card button'))
@@ -2946,7 +2978,7 @@ if (!classesBooted || !classSeam) {
       'the coarse pointer never engaged, so nothing below it can be trusted');
   } else {
     check('six classes fit on an iPad screen in portrait without scrolling, at 44px+ targets',
-      fit.cards === 6 && fit.controls === 12 && fit.under44 === 0 && fit.lastBottom <= fit.viewport
+      fit.cards === 6 && fit.controls === 6 && fit.under44 === 0 && fit.lastBottom <= fit.viewport
         && fit.scrollH <= fit.viewport,
       fit.cards + ' cards in ' + fit.columns + ' column(s); last card ends at ' + fit.lastBottom
         + 'px of ' + fit.viewport + 'px, page is ' + fit.scrollH + 'px tall; '
@@ -4368,7 +4400,13 @@ const INSTALL_ATT_READER = `(function(){
     var openId = window.planbook.classes.getSelectedClassId();
     var open = doc.classes.filter(function(c){ return c.id === openId; })[0] || null;
     var active = doc.classes.filter(function(c){ return !c.archived; });
-    var modal = document.getElementById('attendanceModal');
+    /* The registry is a VIEW in <main> since WO-1.13, not a dialog over the cards. So "is it up" is
+       a question about #classView, and "did anything open a dialog to get here" is a separate
+       question with its own answer below — the two used to be one field, and the acceptance line
+       that says a class opens WITHOUT a dialog cannot be asked of a build where they still are.
+       (No backticks in this comment: it is inside a template literal.) */
+    var view = document.getElementById('classView');
+    var home = document.getElementById('homeView');
     var heads = Array.prototype.slice.call(
       document.querySelectorAll('#attendanceHead th[data-attendance-col]'));
     var rows = Array.prototype.slice.call(
@@ -4423,7 +4461,27 @@ const INSTALL_ATT_READER = `(function(){
          asking the app what order it chose. */
       roster: open ? (open.roster || []).map(function(id){
         var s = studentById(id); return s ? [s.last, s.first] : null; }).filter(Boolean) : [],
-      modalOpen: !!(modal && !modal.classList.contains('hidden')),
+      /* Which view is in <main>, read off the DOM rather than off the preference: the preference is
+         what a reload restores and this is what a teacher is looking at, and a check that asked the
+         preference could not tell those two apart. */
+      viewShown: !!(view && !view.classList.contains('hidden')),
+      homeShown: !!(home && !home.classList.contains('hidden')),
+      /* Every overlay on the page that is currently up. Zero is the claim: opening a class is
+         navigation now, and a registry that arrived by opening a dialog would be the Traps line's
+         first failure mode wearing the new markup. */
+      dialogs: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
+        .filter(function(m){ return !m.classList.contains('hidden'); }).map(function(m){ return m.id; }),
+      /* And what the view IS, in the markup sense: a page-level surface with no dialog semantics
+         left on it. A dialog role, an aria-modal, or a close control are what the Traps line calls a
+         dialog pretending to be a page. */
+      viewRoles: view ? Array.prototype.slice.call(view.querySelectorAll('[role],[aria-modal]'))
+        .map(function(e){ return (e.getAttribute('role') || '') + (e.getAttribute('aria-modal') ? '/modal' : ''); })
+        .filter(function(r){ return r === 'dialog' || r.indexOf('/modal') >= 0; }) : ['no view'],
+      viewCloses: view ? view.querySelectorAll('[data-modal-close]').length : -1,
+      /* The way back out, and there are two doors on one hook — the tab at the head of the class
+         row and the button in the view's own panel header. */
+      homeDoors: Array.prototype.slice.call(document.querySelectorAll('[data-view-home]'))
+        .map(function(b){ return (b.textContent || '').trim(); }),
       className: (document.getElementById('attendanceClassName') || {}).textContent,
       dateText: (document.getElementById('attendanceDate') || {}).textContent,
       stateText: (document.getElementById('attendanceState') || {}).textContent,
@@ -4478,8 +4536,8 @@ const INSTALL_ATT_READER = `(function(){
       submenus: document.querySelectorAll('#attendanceGridWrap select, #attendanceGridWrap [aria-expanded], #attendanceGridWrap details').length,
       /* The Traps line, as a structure rather than as a promise: no form to submit, and no control
          whose label says it commits anything. */
-      forms: document.querySelectorAll('#attendanceModal form').length,
-      submitish: Array.prototype.slice.call(document.querySelectorAll('#attendanceModal button'))
+      forms: document.querySelectorAll('#classView form').length,
+      submitish: Array.prototype.slice.call(document.querySelectorAll('#classView button'))
         .map(function(b){ return (b.textContent || '').trim(); })
         .filter(function(t){ return /save|submit|finali|apply|^done$|^ok$/i.test(t); }),
       injected: document.querySelectorAll('#attendanceBody b, #attendanceBody i, #attendanceBody script').length,
@@ -4489,21 +4547,29 @@ const INSTALL_ATT_READER = `(function(){
         return { over: w.scrollWidth - w.clientWidth,
                  page: document.documentElement.scrollWidth - window.innerWidth,
                  viewport: window.innerWidth }; })(),
-      /* The home screen behind the dialog: what each card says about today, and the tap on it. */
+      /* The home screen, and what each card says about today. The hook is the class its state line
+         belongs to, answered by asking which control the line is INSIDE — since WO-1.13 the card is
+         one button and the state line is a span in it, so "this line describes the class this tap
+         opens" is a containment question rather than an attribute one. A line rendered onto the
+         wrong card, or loose in the grid, reads as null here. */
       cards: cards.map(function(c){
         var s = c.querySelector('.class-card-state');
         var b = c.querySelector('.class-card-open');
         return { id: b ? b.getAttribute('data-class-tab') : null,
                  state: s ? (s.textContent || '').trim() : '',
                  cls: s ? s.className : '',
-                 hook: s ? s.getAttribute('data-attendance-open') : null }; })
+                 controls: c.querySelectorAll('button').length,
+                 hook: (s && b && b.contains(s)) ? b.getAttribute('data-class-tab') : null }; })
     };
   };
   /* How a card's state line is actually PAINTED, for the claim that a dropped class and an untaken
      one are told apart without reading fine print. Computed style rather than declared, because
      what a projector shows is the computed one. */
   window.__look = function(id){
-    var b = document.querySelector('#homeGrid .class-card-state[data-attendance-open="' + id + '"]');
+    /* The line inside the card that opens that class. It carried a hook of its own until WO-1.13
+       made the card one control; it is a span now, found through the control it sits in. */
+    var c = document.querySelector('#homeGrid .class-card-open[data-class-tab="' + id + '"]');
+    var b = c ? c.querySelector('.class-card-state') : null;
     if (!b) return null;
     var s = getComputedStyle(b);
     return { text: (b.textContent || '').trim(), bg: s.backgroundColor, border: s.borderTopColor,
@@ -4537,16 +4603,37 @@ if (!attBooted || !attSeam) {
       : 'the app did not boot before this section');
 } else {
   await evalJs(INSTALL_ATT_READER);
-  const closeAll = () => evalJs("(function(){ ['attendanceModal','studentDeleteModal','studentModal',"
+  /* Every dialog in the app, shut. `attendanceModal` is not on this list because there is no such
+     thing since WO-1.13 — the registry is a view, and leaving it is navigation rather than a close,
+     which is what goHome() below does through the control a teacher taps. */
+  const closeAll = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
     + "'rosterPasteModal','rosterModal','teacherModal','termsModal','classDeleteModal','classesModal',"
     + "'backupModal','restoreConfirmModal','yearModal','aboutModal']"
     + ".forEach(function(m){ window.planbook.closeModal(m); }); return 1; })()");
+  /* Back to the class grid, through the tab a teacher taps rather than through the seam — the
+     acceptance line is that this control exists and works, so every route this section takes into a
+     card goes through it. The header's door is used rather than the panel's because it is on screen
+     from either view. */
+  const goHome = async () => {
+    await closeAll();
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
+  };
   /* Flushed before every read that compares `rev`: the number only moves when a write lands, and a
      read taken while one is still on src/store.js's 800ms debounce reports the rev before it. */
   const read = () => evalJs('(async function(){ await window.planbook.store.flush(); return window.__att(); })()');
+  /* One class, opened the way a teacher opens one: back to the grid, then a tap on its card. The
+     card is one control since WO-1.13 — the state line inside it is a span — so the tap lands on
+     `.class-card-open`, which is the same hook the header tab carries. */
   const openCard = async (id) => {
+    await goHome();
+    await clickSel('#homeGrid .class-card-open[data-class-tab="' + id + '"]');
+    return read();
+  };
+  /* And the same class opened from the header instead, for the checks that are about the header
+     being navigation. Same hook, same route, different door. */
+  const openTab = async (id) => {
     await closeAll();
-    await clickSel('#homeGrid .class-card-state[data-attendance-open="' + id + '"]');
+    await clickSel('#classTabBar [data-class-tab="' + id + '"]');
     return read();
   };
   /* One cell, by student and by date — the same selector src/attendance.js writes, so a check that
@@ -4607,12 +4694,15 @@ if (!attBooted || !attSeam) {
 
   const marking = ids[0];
   const opened = await openCard(marking);
-  check('the state line on a card opens the registry for that class — and opening it writes nothing',
-    opened.modalOpen && opened.openClass === marking && opened.today.length === 0
+  check('one tap on a card puts that class\'s registry in the main area — and opening it writes nothing',
+    opened.viewShown && !opened.homeShown && opened.dialogs.length === 0
+      && opened.openClass === marking && opened.today.length === 0
       && opened.records.length === start.records.length
       && opened.rev === start.rev && opened.className !== '' && opened.dateText !== ''
       && opened.stateText === 'Not taken yet',
     'open on ' + JSON.stringify(opened.className) + ' for ' + JSON.stringify(opened.dateText)
+      + '; class view up = ' + opened.viewShown + ', class grid up = ' + opened.homeShown
+      + ', dialogs open = ' + JSON.stringify(opened.dialogs)
       + '; records on ' + nodeToday + ' = ' + opened.today.length + ', records in the document '
       + start.records.length + ' -> ' + opened.records.length
       + ', rev ' + start.rev + ' -> ' + opened.rev);
@@ -4713,7 +4803,7 @@ if (!attBooted || !attSeam) {
   }
   const cycled = await read();
   check('all five marks come out of one cell, in one row, with no menu and no second screen',
-    seen.join('') === 'ATEDP'
+    seen.join('') === 'AETDP'
       && cycled.submenus === 0 && cycled.rowCount === 26
       && (cycled.today.filter((r) => r.classId === marking)[0] || {}).marks
       && Object.keys(cycled.today.filter((r) => r.classId === marking)[0].marks).length === 0,
@@ -4736,9 +4826,11 @@ if (!attBooted || !attSeam) {
 
   const absent = opened.rows[2].student;
   const tardy = opened.rows[7].student;
-  await tapCell(absent, nodeToday);                       /* one tap  -> A */
+  await tapCell(absent, nodeToday);                       /* one tap    -> A */
   await tapCell(tardy, nodeToday);
-  await tapCell(tardy, nodeToday);                        /* two taps -> T */
+  await tapCell(tardy, nodeToday);
+  await tapCell(tardy, nodeToday);                        /* three taps -> T, since the owner
+                                                             reordered the cycle to A E T D */
   const twoTaps = await read();
   const rec = twoTaps.today.filter((r) => r.classId === marking)[0] || {};
   check('one absence and one tardy on a class of 26 put TWO entries in the document, not 26',
@@ -4792,11 +4884,11 @@ if (!attBooted || !attSeam) {
 
   const undone = reopened.rows[4].student;
   await tapCell(undone, nodeToday);
-  await tapCell(undone, nodeToday);
-  await tapCell(undone, nodeToday);                       /* A, T, E */
+  await tapCell(undone, nodeToday);                       /* A, E */
   const three = await read();
   await tapCell(undone, nodeToday);
-  await tapCell(undone, nodeToday);                       /* D, then back to present */
+  await tapCell(undone, nodeToday);
+  await tapCell(undone, nodeToday);                       /* T, D, then back to present */
   const backToTwo = await read();
   check('cycling back to present un-marks a student rather than storing a P — the entry goes and the record stays',
     Object.keys((three.today[0] || {}).marks || {}).length === 3
@@ -4813,8 +4905,8 @@ if (!attBooted || !attSeam) {
      every letter this app can store is in the document, and P is not one of them. */
   const eventStudent = reopened.rows[11].student;
   const dismissed = reopened.rows[19].student;
-  for (let i = 0; i < 3; i++) await tapCell(eventStudent, nodeToday);   /* A, T, E */
-  for (let i = 0; i < 4; i++) await tapCell(dismissed, nodeToday);      /* A, T, E, D */
+  for (let i = 0; i < 2; i++) await tapCell(eventStudent, nodeToday);   /* A, E */
+  for (let i = 0; i < 4; i++) await tapCell(dismissed, nodeToday);      /* A, E, T, D */
   const fourCodes = await read();
   check('all four stored codes reach the document, and the fifth never does',
     JSON.stringify(fourCodes.todayValues) === JSON.stringify({ A: 1, T: 1, E: 1, D: 1 })
@@ -5165,6 +5257,60 @@ if (!attBooted || !attSeam) {
       'Taken · all present', 'Not taken yet']),
     JSON.stringify(day.cards.map((c) => c.state)));
 
+  /*
+    And the three states are told apart ON THE CARD without reading the words — the same claim the
+    column heads answer above, asked of the surface WO-1.13 changed. It matters more now than it did
+    at WO-2.1: the state line stopped being a control of its own, so if it had also stopped carrying
+    its palette it would have quietly become a grey sentence on a grey card.
+
+    Parked first (tools/README.md trap 7): the last click landed on a card, and a card under the
+    cursor is a card wearing `.class-card:hover` — one measured hovered and two measured resting is
+    indistinguishable from three states painted differently, which is the defect being looked for.
+  */
+  await park();
+  const cardTaken = await evalJs('window.__look(' + JSON.stringify(ids[1]) + ')');
+  const cardDropped = await evalJs('window.__look(' + JSON.stringify(ids[2]) + ')');
+  const cardUntaken = await evalJs('window.__look(' + JSON.stringify(ids[5]) + ')');
+  const cardsApart = (a, b) => a.text !== b.text && a.bg !== b.bg && a.color !== b.color;
+  check('and a taken class, a dropped one and an untaken one are three different cards to look at, not three sentences to read',
+    !!cardTaken && !!cardDropped && !!cardUntaken
+      && cardsApart(cardTaken, cardDropped) && cardsApart(cardDropped, cardUntaken)
+      && cardsApart(cardTaken, cardUntaken)
+      && cardDropped.style === 'dashed' && cardTaken.style === 'solid'
+      && cardUntaken.style === 'solid',
+    'taken ' + JSON.stringify(cardTaken) + ' · dropped ' + JSON.stringify(cardDropped)
+      + ' · untaken ' + JSON.stringify(cardUntaken));
+
+  /* ── WO-1.13: the reload above was taken from a class, so it comes back to that class ──
+     `openClassId` has always survived a reload and until now it meant nothing on screen; this is
+     the other half. The class is ids[4], which is where the last tap of the day left the app, and
+     what has to come back is BOTH: that class open, and its working surface in <main> rather than
+     the grid. The reload is the one already being taken for the day's tally above, so this costs
+     no second boot.
+
+     It is also where the class view's markup is asserted to be a page and not a dialog wearing new
+     class names — no `role="dialog"`, no `aria-modal`, no close control anywhere inside it. That is
+     the Traps line, and the moment to ask it is after a reload, when everything on screen was built
+     from the markup rather than from whatever the run had done to it. */
+  check('a reload taken from a class comes back to that class\'s view, not to a blank main area or the grid',
+    day.viewShown && !day.homeShown && day.openClass === ids[4]
+      && day.className !== '' && day.dialogs.length === 0
+      /* Painted, not merely revealed: the six day columns are built by the renderer at boot, and an
+         empty grid under a visible view would be a view restored without its screen. Columns rather
+         than rows, because the class this reload lands on legitimately has an empty roster and the
+         grid keeps its head for exactly that case (renderRows in src/attendance.js). */
+      && day.columns.length === 6 && day.colStates !== '',
+    'class view up = ' + day.viewShown + ', class grid up = ' + day.homeShown
+      + ', open class = ' + JSON.stringify(day.openClass) + ' of ' + JSON.stringify(ids[4])
+      + ', the screen says ' + JSON.stringify(day.className) + ' over '
+      + day.columns.length + ' day column(s) and ' + day.rowCount + ' row(s)'
+      + ', dialogs open = ' + JSON.stringify(day.dialogs));
+  check('and that view is a page rather than a dialog wearing a new name — no dialog role, no aria-modal, no close control',
+    day.viewRoles.length === 0 && day.viewCloses === 0 && day.homeDoors.length === 2,
+    'dialog semantics found inside the view = ' + JSON.stringify(day.viewRoles)
+      + ', close controls = ' + day.viewCloses + ', ways back to the grid = '
+      + JSON.stringify(day.homeDoors));
+
   /* ── every open starts on today ──
      The screen is opened with a class walking through the door, and finding it where it was left
      an hour ago — paged back, filtered to tardies, with Tuesday unlocked — would cost exactly the
@@ -5186,29 +5332,85 @@ if (!attBooted || !attSeam) {
       + JSON.stringify(reopenedFresh.pills.filter((p) => p.active).map((p) => p.code))
       + ' (it had been left on ' + JSON.stringify(reFiltered.columns[0].date) + ' paged back)');
 
-  /* ── the way back out ──
-     Focus returns to the control that opened the dialog, and this is the one opener in the app
-     that cannot be taken for granted: tapping a card's state line redraws the whole grid before
-     the dialog goes up, so the node the click handler was holding is detached by then. Focusing a
-     detached node throws nothing and does nothing — focus lands on the body — so the failure is
-     silent, and it is a teacher on a keyboard closing attendance and finding herself at the top of
-     the page. Every other opener in src/shell.js is a header control that survives its own redraw,
-     which is why this check exists here and nowhere else. */
-  const focusHome = ids[5];
-  await closeAll();
-  await clickSel('#homeGrid .class-card-state[data-attendance-open="' + focusHome + '"]');
-  await clickSel('#attendanceModal [data-modal-close]');
-  const focusBack = await evalJs(`(function(){
-    var a = document.activeElement;
-    var m = document.getElementById('attendanceModal');
-    return { tag: a ? a.tagName : null, cls: a ? String(a.className) : null,
-             hook: a && a.getAttribute ? a.getAttribute('data-attendance-open') : null,
-             stillOpen: !!(m && !m.classList.contains('hidden')) }; })()`);
-  check('closing the registry hands focus back to the card that opened it, not to the top of the page',
-    focusBack.hook === focusHome && !focusBack.stillOpen,
-    'focus went to <' + focusBack.tag + ' class=' + JSON.stringify(focusBack.cls)
-      + '> for class ' + JSON.stringify(focusBack.hook) + ', expected the state line of '
-      + JSON.stringify(focusHome));
+  /*
+    ── WO-1.13 acceptance 8: presentation mode covers the view that moved ──
+
+    The registry holds no support data of any kind, on purpose (src/attendance.js: it is the screen
+    most likely to be on a projector, with a whole class on it). That claim was made about a dialog;
+    this asks it of the same screen as a page, with a full roster on it, in BOTH modes — because
+    "the new view inherits presentation mode" is only meaningful if what it inherits is enforced
+    where the data would otherwise be.
+
+    The strings searched for are read out of the document rather than written here, so a fixture
+    changed in the roster section cannot quietly make this check vacuous — and there being some of
+    them is asserted, for the same reason. The mode is put back off before anything else runs: a run
+    that walked away in presentation mode would suppress the fixtures of every check after it.
+  */
+  const supportStrings = await evalJs(`(function(){
+    var out = [];
+    function walk(v){
+      if (typeof v === 'string') { if (v.trim().length > 3) out.push(v.trim()); return; }
+      if (Array.isArray(v)) { v.forEach(walk); return; }
+      if (v && typeof v === 'object') { Object.keys(v).forEach(function(k){ walk(v[k]); }); }
+    }
+    window.planbook.store.getDoc().students.forEach(function(s){ walk(s.supports); });
+    return out; })()`);
+  const onRoster = await openCard(marking);
+  const quietOff = await evalJs("(function(){ var v = document.getElementById('classView');"
+    + " return { text: v ? (v.textContent || '') : '',"
+    + " hooks: v ? v.querySelectorAll('[data-support-plan],[data-supports-open],[data-supports-reveal],.support-dot').length : -1 }; })()");
+  await clickSel('header [data-presentation-toggle]');
+  await new Promise(r => setTimeout(r, 200));
+  const quietOn = await evalJs("(function(){ var v = document.getElementById('classView');"
+    + " return { on: !window.planbook.supports.supportsVisible(), text: v ? (v.textContent || '') : '',"
+    + " hooks: v ? v.querySelectorAll('[data-support-plan],[data-supports-open],[data-supports-reveal],.support-dot').length : -1 }; })()");
+  await clickSel('header [data-presentation-toggle]');
+  await new Promise(r => setTimeout(r, 200));
+  const modeLeftOff = await evalJs('window.planbook.supports.supportsVisible()');
+  const leaked = (text) => supportStrings.filter((s) => text.indexOf(s) >= 0);
+  check('the registry in the main area carries no support data in either mode, on a class of 26 with plans on file',
+    supportStrings.length > 0 && onRoster.rowCount === 26
+      && quietOff.hooks === 0 && quietOn.hooks === 0 && quietOn.on === true
+      && leaked(quietOff.text).length === 0 && leaked(quietOn.text).length === 0
+      && modeLeftOff === true,
+    supportStrings.length + ' support string(s) on file, searched for on a ' + onRoster.rowCount
+      + '-row grid; leaked with the mode off = ' + JSON.stringify(leaked(quietOff.text))
+      + ', with it on = ' + JSON.stringify(leaked(quietOn.text))
+      + '; support-shaped controls in the view = ' + quietOff.hooks + '/' + quietOn.hooks
+      + '; mode really engaged = ' + quietOn.on + ', left off = ' + modeLeftOff);
+
+  /* ── the way back out (WO-1.13) ──
+     It used to be a ✕ on a dialog, and the check here was that closing it handed focus back to the
+     card that opened it — the one opener in the app that could not be taken for granted, because
+     the grid was rebuilt under it before the dialog went up. There is no dialog and no ✕ now:
+     leaving the registry is navigation, so what has to be true is that the control is there, that
+     it puts the class grid back without opening anything, and that WHICH CLASS IS OPEN survives the
+     trip. That last clause is the one with teeth — a "back" that quietly cleared the selection
+     would leave the header with nothing marked and the next screen describing no class. */
+  const backFrom = ids[5];
+  await openCard(backFrom);
+  await clickSel('#classView [data-view-home]');
+  const back = await read();
+  check('one tap on "All classes" puts the grid back, opens no dialog, and keeps the class it was on open',
+    back.homeShown && !back.viewShown && back.dialogs.length === 0
+      && back.openClass === backFrom && back.cards.length === 6
+      && back.homeDoors.length === 2,
+    'class grid up = ' + back.homeShown + ', class view up = ' + back.viewShown
+      + ', dialogs open = ' + JSON.stringify(back.dialogs) + ', open class still '
+      + JSON.stringify(back.openClass) + ' of ' + JSON.stringify(backFrom)
+      + '; doors back = ' + JSON.stringify(back.homeDoors));
+
+  /* And the same door from the header, which is the one that has to work from either view — the
+     panel's own is inside the screen it leaves. Driven separately rather than assumed to be the
+     same code path, because two doors onto one route is only true while both are wired to it. */
+  await openTab(ids[1]);
+  await clickSel('#classTabBar [data-view-home]');
+  const backHdr = await read();
+  check('and so does the "All classes" tab in the header, from a class opened off the header tab row',
+    backHdr.homeShown && !backHdr.viewShown && backHdr.dialogs.length === 0
+      && backHdr.openClass === ids[1],
+    'class grid up = ' + backHdr.homeShown + ', class view up = ' + backHdr.viewShown
+      + ', open class = ' + JSON.stringify(backHdr.openClass));
 
   /* Handed back the way the section before this one left it: the overflow sweep at the bottom
      measures the term nav of whatever class is open, and this section has been walking across
@@ -5629,30 +5831,45 @@ if (coarse !== true) {
     `.class-action-btn`): a one-glyph button given 44px of height and its natural width is half a
     touch target, so min-WIDTH is asserted here as hard as min-height.
 
-    The state line on the card is measured too, and it is measured before the dialog opens, because
-    it is the control that opens it: a home screen where the fix is a 20px strip of text is a home
-    screen where the fastest route into attendance is unusable on the device it was built for.
+    The card's own control is measured too, and it is measured before the view swaps, because it is
+    the control that swaps it: a home screen whose route into attendance is a 20px strip is a home
+    screen unusable on the device it was built for. Since WO-1.13 that is ONE control per card
+    rather than two — the state line inside it reports and is not tapped — so what is asserted is
+    that every card carries exactly one button and that it is a target.
   */
-  if (seam && await has('#homeGrid .class-card-state')) {
+  if (seam && await has('#homeGrid .class-card-open')) {
     /* Remembered here rather than borrowed from the block above, whose `fullest` is scoped to it.
        Opening the registry moves the selection — that is the whole point of the control —
        and the overflow sweep below measures the term nav of whatever is open. */
     const openWas = await evalJs('window.planbook.classes.getSelectedClassId()');
-    await evalJs("(function(){ ['attendanceModal','rosterModal','studentModal','classesModal',"
+    await evalJs("(function(){ ['rosterModal','studentModal','classesModal',"
       + "'teacherModal','backupModal','yearModal','aboutModal']"
       + ".forEach(function(m){ window.planbook.closeModal(m); }); return 1; })()");
+    /* Back to the grid first, through the control a teacher taps: the section above leaves the app
+       on a class, and a card measured while `#homeView` is hidden measures 0x0 — which is the shape
+       of a green run that measured nothing (tools/README.md trap 3's lesson, one screen further
+       in). */
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
+    await new Promise(r => setTimeout(r, 200));
     const cardBtns = await evalJs(`(function(){
-      return Array.prototype.slice.call(document.querySelectorAll('#homeGrid .class-card button'))
-        .map(function(e){ var r = e.getBoundingClientRect();
-          return { t: e.className, w: Math.round(r.width*100)/100, h: Math.round(r.height*100)/100 }; }); })()`);
-    if (cardBtns.length < 2) {
-      check('both controls on a class card measure >=44px on a coarse pointer', false,
-        'controls found on the grid = ' + cardBtns.length);
+      var cards = document.querySelectorAll('#homeGrid .class-card');
+      var loose = 0;
+      Array.prototype.forEach.call(cards, function(c){
+        if (c.querySelectorAll('button').length !== 1) loose++; });
+      return { cards: cards.length, oddCards: loose,
+        btns: Array.prototype.slice.call(document.querySelectorAll('#homeGrid .class-card button'))
+          .map(function(e){ var r = e.getBoundingClientRect();
+            return { t: e.className, w: Math.round(r.width*100)/100, h: Math.round(r.height*100)/100 }; }) }; })()`);
+    if (!cardBtns.cards || !cardBtns.btns.length) {
+      check('the one control on a class card measures >=44px on a coarse pointer', false,
+        'cards on the grid = ' + cardBtns.cards + ', controls found = ' + cardBtns.btns.length);
     } else {
-      check('both controls on a class card measure >=44px on a coarse pointer — the state line included',
-        cardBtns.every(m => m.h >= 44 && m.w >= 44),
-        'measured ' + cardBtns.length + '; under = '
-          + JSON.stringify(cardBtns.filter(m => m.h < 44 || m.w < 44)));
+      check('the one control on a class card measures >=44px on a coarse pointer, and there is exactly one per card',
+        cardBtns.oddCards === 0 && cardBtns.btns.length === cardBtns.cards
+          && cardBtns.btns.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + cardBtns.btns.length + ' control(s) on ' + cardBtns.cards + ' card(s), '
+          + cardBtns.oddCards + ' card(s) not carrying exactly one; under = '
+          + JSON.stringify(cardBtns.btns.filter(m => m.h < 44 || m.w < 44)));
     }
 
     /* Onto the class with the biggest roster, found rather than assumed, for the reason the roster
@@ -5665,9 +5882,9 @@ if (coarse !== true) {
         var len = c.roster ? c.roster.length : 0;
         if (len > n) { n = len; best = c.id; } });
       return { id: best, students: n }; })()`);
-    await clickSel('#homeGrid .class-card-state[data-attendance-open="' + biggest.id + '"]');
+    await clickSel('#homeGrid .class-card-open[data-class-tab="' + biggest.id + '"]');
     await new Promise(r => setTimeout(r, 300));
-    const am = await evalJs(`(function(){ var m = document.getElementById('attendanceModal');
+    const am = await evalJs(`(function(){ var m = document.getElementById('classView');
       if (!m || m.classList.contains('hidden')) return null;
       return Array.prototype.slice.call(m.querySelectorAll('button, input, select, textarea'))
         .filter(function(e){ var r = e.getBoundingClientRect(); return r.width || r.height; })
@@ -5680,7 +5897,7 @@ if (coarse !== true) {
       "document.querySelectorAll('#attendanceHead th[data-attendance-col]').length");
     if (!am || cellCount < 25) {
       check('the registry opened with a class on it, so there is something to measure', false,
-        'controls found = ' + (am ? am.length : 'panel never opened') + ', tappable cells = '
+        'controls found = ' + (am ? am.length : 'the class view never came up') + ', tappable cells = '
           + cellCount + ' for a roster of ' + biggest.students);
     } else {
       check('every control on the registry measures >=44px on a coarse pointer, cells and column heads alike',
@@ -5699,7 +5916,7 @@ if (coarse !== true) {
     const spill = await evalJs(`(function(){
       var wrap = document.getElementById('attendanceGridWrap');
       var rows = Array.prototype.slice.call(document.querySelectorAll('#attendanceBody tr'));
-      var panel = document.querySelector('#attendanceModal .modal-panel');
+      var panel = document.querySelector('#classView .attendance-panel');
       if (!wrap || !rows.length || !panel) return null;
       var pr = panel.getBoundingClientRect();
       return { rows: rows.length,
@@ -5714,7 +5931,10 @@ if (coarse !== true) {
       spill ? spill.rows + ' row(s) across ' + spill.days + ' day column(s), ' + spill.over
         + ' wider than the panel, grid over its own box by ' + spill.wrapOver + 'px; page '
         + spill.scrollW + 'px in a ' + spill.inner + 'px viewport' : 'no rows to measure');
-    await evalJs("window.planbook.closeModal('attendanceModal');1");
+    /* Back to the grid through the control again rather than through the seam — and the selection
+       restored under it, because the overflow sweep below measures the term nav of whatever class
+       is open. selectClass() navigates since WO-1.13, so the order is: leave, then select. */
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
     if (openWas) await evalJs('window.planbook.classes.selectClass('
       + JSON.stringify(openWas) + ');1');
   }

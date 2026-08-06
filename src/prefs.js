@@ -86,6 +86,21 @@ export const PREF_DEFAULTS = {
      prunes itself is a preference file that needs to know what a class is. */
   openTermIds: {},
 
+  /* Which of the main area's views this browser was last looking at: 'home' for the class grid,
+     'class' for the open class's working surface (WO-1.13). src/views.js is the only reader and
+     the only writer, and it holds the list of names this may legally be.
+
+     A VIEW NAME AND NOT AN ELEMENT ID. The markup is allowed to be renamed; a preference holding
+     `#classView` would make an id in index.html a storage format. Nor is it a class id — WHICH
+     class is open is `openClassId` above, which was always the right preference and is what a
+     reload resolves the class from. This one only says which of two screens was on the glass.
+
+     A fact about this browser and this moment, like every key here: the laptop can sit on the class
+     grid while the iPad sits on Period 3's registry, and neither is wrong. An unknown value — from
+     an older build, or a view a later work order removed — falls back to the class grid rather than
+     to a blank main area. */
+  openView: 'home',
+
   /* Presentation mode: true while every support field in the app is suppressed — the switch a
      teacher hits before she plugs in the projector (WO-1.9).
 

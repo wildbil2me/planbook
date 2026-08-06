@@ -217,6 +217,14 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .cls-tab:hover { background: rgba(255,255,255,0.16); color: #fff; }
 .cls-tab.active { background: #1a1a2e; color: #fff; }
+/* "All classes" — the way back to the class grid, at the head of the row (WO-1.13). It is a
+   `.cls-tab` and it takes `.active` the same way, because exactly one tab on this strip is where
+   you are and the grid is one of the places the strip goes. This class adds one thing: the gap that
+   separates the VIEW from the classes in it, so the row reads as "here, then your five classes"
+   rather than as six things of one kind. No second colour and no glyph — the words are what tell it
+   apart from a class tab (src/classes.js's homeTab()), and a sixth on-dark treatment in a 48px strip
+   is a thing to learn rather than a thing to read. */
+.cls-tab-home { margin-right: 10px; }
 /* The way into the class manager, at the end of the tab strip: a "+" once there are classes, and
    the words "Add a class" when there are none, because a lone + on a fresh install is a puzzle.
    Dashed rather than filled so it reads as a slot instead of as a class named "+". */
@@ -951,6 +959,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
      target. The guideline is 44 in both directions. */
   .cls-tab { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
   .cls-tab-add { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
+  /* The way back takes its 44px from `.cls-tab` above, which it also wears. Named here anyway, for
+     the reason `.hdr-mode-btn` is: every control appears in this block by its own name, and one
+     covered only by another class's rule is one the next reader has to go and prove is covered. */
+  .cls-tab-home { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
   .q-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; min-width: 44px; }
   .pill { padding: 10px 16px; font-size: 12px; min-height: 44px; }
   .batch-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }

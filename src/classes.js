@@ -47,6 +47,11 @@ import { getDoc, update, newId } from './store.js';
 import { openModal, closeModal } from './modal.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
+/* WO-1.13. Selecting a class has to put that class's working surface in <main>, which is the half
+   this module has been missing since WO-1.6 — see selectClass() at the bottom of this section.
+   src/views.js imports nothing but src/prefs.js, precisely so that the modules which navigate can
+   import it without closing a loop. */
+import { showView, currentView } from './views.js';
 
 const CLASS_MODAL_ID = 'classesModal';
 const TERM_MODAL_ID = 'termsModal';
@@ -236,6 +241,17 @@ export function refreshClassBar() {
   const doc = getDoc();
   const list = activeClasses(doc);
   const selectedId = getSelectedClassId();
+  /*
+    EXACTLY ONE TAB ON THIS STRIP IS ACTIVE, AND IT MEANS "THIS IS WHAT IS IN <main>" — which is
+    what makes the row navigation rather than a styled strip (WO-1.13). Before that it meant "this
+    is the open class", on a strip where selecting a class changed nothing you could see.
+
+    So on the class view the open class's tab is active, and on the home view it is "All classes"
+    that is — never both. Which class is open is still true and still visible while the grid is
+    showing: it is the card wearing `.class-card.open`, and the term nav, the roster button and the
+    gear beside it all go on describing it. The preference is untouched by which view is up.
+  */
+  const onClassView = currentView() === 'class';
 
   bar.textContent = '';
   if (!list.length) {
@@ -247,12 +263,19 @@ export function refreshClassBar() {
     bar.append(empty);
     if (doc) bar.append(addClassTab('Add a class'));
   } else {
+    /* The way back to the class grid, at the head of the row a teacher navigates with. It is drawn
+       only when there ARE classes, because with none of them the grid is the only view there is and
+       a tab back to where you already are is furniture. The class view's own panel header carries
+       the second door onto this same hook — see index.html for why "always reachable" needs two at
+       390px, and why two doors onto one route is not two controls. */
+    bar.append(homeTab(!onClassView));
     list.forEach((cls) => {
+      const isOpen = cls.id === selectedId && onClassView;
       const tab = document.createElement('button');
       tab.type = 'button';
-      tab.className = 'cls-tab' + (cls.id === selectedId ? ' active' : '');
+      tab.className = 'cls-tab' + (isOpen ? ' active' : '');
       tab.setAttribute('data-class-tab', cls.id);
-      if (cls.id === selectedId) tab.setAttribute('aria-current', 'true');
+      if (isOpen) tab.setAttribute('aria-current', 'true');
       /* textContent, not innerHTML, and this is the file where that stops being hypothetical:
          the string below is typed by a teacher and pasted from a school system, and a class
          called "Bio <3" has to be a class called "Bio <3" rather than markup. */
@@ -329,6 +352,28 @@ function keepInView(strip, el) {
   else if (e.right > s.right) strip.scrollLeft += (e.right - s.right) + 8;
 }
 
+/*
+  "All classes" — the way back to the home grid, and the first tab on the row (WO-1.13).
+
+  It wears `.cls-tab` because it is one of the places this row can take you, and it takes `.active`
+  the same way a class tab does: exactly one tab on the strip is where you are. `.cls-tab-home` adds
+  nothing but the gap that separates the view from the classes in it.
+
+  The words are the point. Acceptance line 3 asks that the control which means something OTHER than
+  "work on this class now" be tellable apart from those in words, and "All classes" beside "Period 3
+  — Biology" is that — where an icon of a grid would be a second thing to learn.
+*/
+function homeTab(active) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'cls-tab cls-tab-home' + (active ? ' active' : '');
+  btn.setAttribute('data-view-home', '');
+  if (active) btn.setAttribute('aria-current', 'true');
+  btn.textContent = 'All classes';
+  btn.title = 'Every class, on one screen';
+  return btn;
+}
+
 function addClassTab(label) {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -341,11 +386,30 @@ function addClassTab(label) {
   return btn;
 }
 
-/* Said out loud, because selecting a class or a term changes two words in the header and nothing
-   else — there is no reason for a screen-reader user to be reading the header at that moment. */
+/*
+  SELECTING A CLASS IS NAVIGATION SINCE WO-1.13, and that is the one line in this file that work
+  order was written for. It used to write the preference, repaint the strip, and stop — on an app
+  where <main> held one panel and nothing ever swapped it, so the header row was navigation in name
+  only and attendance had to open as a dialog over the cards.
+
+  The preference is unchanged and is still the thing that survives a reload; what is added is the
+  repaint it was always implying. `showView` comes BEFORE `refreshClassBar` because the strip's own
+  active mark is read off which view is up (see refreshClassBar), so painting it first would paint
+  it from the view being left.
+
+  WHAT THIS DELIBERATELY DOES NOT DO is render the class view's contents. That is src/attendance.js
+  today and a gradebook tomorrow, and this module knows about neither: src/shell.js chains the paint,
+  the way it chains every other order-of-operations question in this app. It is also why a caller
+  that only wants the preference moved — the harness restoring a selection between sections — gets a
+  view that follows along rather than a header that disagrees with the screen.
+
+  Said out loud, because selecting a class changes two words in the header and a screen a
+  screen-reader user cannot see change.
+*/
 export function selectClass(id) {
   if (!findClass(id)) return;
   setPref('openClassId', id);
+  showView('class');
   refreshClassBar();
   const cls = findClass(id);
   const term = getSelectedTerm();

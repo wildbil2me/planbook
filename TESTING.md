@@ -629,6 +629,56 @@ before, run against the new mechanism:*
 
 All five acceptance lines close on this pass. WO-1.11 is done.
 
+### WO-1.13 — Main-area views: make the header actually navigate
+
+- [x] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
+- [x] Attendance is marked in the main area, with no overlay above the class cards.
+- [x] There is exactly one control in the app that means "work on this class now", and a second
+      control that means something different can be told apart from it in words.
+- [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
+      told where it is. 👤 *(The one tap is measured — both doors are driven in the harness. Whether
+      a teacher finds it without being told is the half no harness can ask.)*
+- [x] `verify-shell.mjs` runs green with no fewer checks than before, and every check that used to
+      open `attendanceModal` now drives the view.
+- [x] The class manager, term editor, roster paste and student editor still open as modals and still
+      work.
+- [x] Reloading with a class selected returns to that class's view, not to a blank main area.
+- [x] Presentation mode still suppresses every support field on every view, including the new ones.
+
+*Desk pass 2026-08-06: `verify-shell.mjs` **280 of 280, 0 skipped**, up from 274 at WO-2.1 — six net
+new checks and ten re-pointed ones. The ten that used to open `attendanceModal` now drive `#classView`
+through the controls a teacher touches: a card, a header tab, and the two "All classes" doors.
+`wo-sweep.mjs` is 10 passed, 0 failed, 1 to review (the standing sensitive-field-name line,
+unaffected), and its "every control added in the working tree appears in the coarse block" line
+covers this work order's five new selectors.*
+
+*What moved. `<main>` holds `#homeView` and `#classView` as siblings toggled by `.hidden` —
+Roll Call!'s own shape, no router, no history stack. WO-2.1's registry was **re-parented** into the
+second one: same ids, same renderer, same grid, a `.panel` frame instead of a `.modal-panel` one,
+and the dialog semantics deleted rather than hidden (asserted: no `role="dialog"`, no `aria-modal`,
+no close control anywhere inside the view). The redundant selector retired is `data-attendance-open`
+— the class card is one control again, and the state line inside it is a `<span>` that reports.*
+
+*Three things this desk pass cannot answer and are listed here rather than assumed: whether the
+"All classes" tab is findable without being told (the 👤 line above), whether the registry still
+marks fast enough on a real iPad now that it sits on a page instead of in a dialog, and whether the
+720px panel left-aligned in a 1300px main area reads as deliberate or as a layout bug on a wide
+screen. The first two belong to the sitting below; the third is a taste call for the owner.*
+
+**The 👤 iPad sitting WO-1.13 owes**, on the installed home-screen app:
+
+- [ ] Open the app, tap a class card, and confirm the class's screen replaces the grid with no
+      dialog and no overlay — then find your way back **without being told how**. 👤
+- [ ] Do the same from the header's class row, with six classes on it, in portrait: the row scrolls,
+      so check that "All classes" is still reachable and that the second door in the panel header is
+      where you look for it. 👤
+- [ ] Force-quit and relaunch while a class is open. It comes back on that class's screen. 👤
+- [ ] The page scrolls as one surface now that the grid is not in an overlay — a flick down a
+      26-name list does not get handed between two scrollers, and the header scrolls away as
+      expected. 👤
+- [ ] VoiceOver: leaving the class view announces the class grid, and nothing announces a dialog
+      that never closes. 👤
+
 ---
 
 ## Phase 2 — Attendance
@@ -759,21 +809,25 @@ desk pass could not reach.
 - [ ] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
       sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
 - [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
-      the card's state line. Acceptance line 6, and the only one that decides whether the flow
-      survives contact with a period starting. 👤
+      the class's card. Acceptance line 6, and the only one that decides whether the flow
+      survives contact with a period starting. *(The card's state line was the tap until WO-1.13
+      made the whole card one control; the clock starts on the same gesture either way.)* 👤
 - [ ] Unlock a past column and look at the screen **from where you stand at the front of the room**.
       The strip saying which day you are on is legible without leaning in. Acceptance line 8. 👤
 - [ ] The three column states are readable at that same distance — the amber "not taken" stripe,
       the dashed grey "didn't meet", and a taken day — without reading the words. 👤
 - [ ] Every control takes a thumb: a cell, the ✏ and 🚫 in a column head, the filter pills, the
-      First/Last pair, Earlier/Today/Later, "Everyone's here", "Didn't meet", and the card's own
-      state line. Tap the cells at their edges, not the middle — that is where the WO-1.2 defect hid. 👤
-- [ ] Tap the same cell five times fast. It walks absent → tardy → event → dismissed → present and
+      First/Last pair, Earlier/Today/Later, "Everyone's here", "Didn't meet", and the card that
+      opens the screen. Tap the cells at their edges, not the middle — that is where the WO-1.2
+      defect hid. *(The card's state line was its own control until WO-1.13; the card is the target
+      now.)* 👤
+- [ ] Tap the same cell five times fast. It walks absent → event → tardy → dismissed → present and
       nothing is double-counted or skipped by the touch handler. 👤
 - [ ] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still there.
       *(There is no submit step by design; this is what makes that safe rather than reckless.)* 👤
-- [ ] The grid scrolls as one surface — the overlay, not a scroller inside it — and a flick down the
-      list does not get handed between two scrollers. 👤
+- [ ] The grid scrolls as one surface and a flick down the list does not get handed between two
+      scrollers. *(It was the modal overlay that scrolled until WO-1.13 moved this screen into
+      `<main>`; it is the page now, which is a different thing to feel on the device.)* 👤
 - [ ] Type into the search box with the software keyboard up and confirm the field keeps focus as the
       rows narrow underneath it. 👤
 - [ ] VoiceOver reads a cell as the student's name, the day and the mark — not as a bare letter — and

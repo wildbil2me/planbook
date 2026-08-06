@@ -67,6 +67,19 @@
   from unzipping this one. Nothing about the nag strip above changed: it still asks about the year
   that is open.
 
+  WO-1.13 made the header row above actually navigate, which is the sentence the WO-1.6 paragraph
+  above has been claiming since June and could not back: selecting a class wrote a preference,
+  repainted the strip, and changed nothing in <main>, because <main> held one panel and nothing ever
+  swapped it. It now holds two views — #homeView, which is the class grid that used to be the only
+  thing here, and #classView, which is the open class's working surface — as siblings toggled by
+  `.hidden`, in the shape Roll Call! has used for both of its views all along. WO-2.1's attendance
+  registry moved out of #attendanceModal and into that second view whole: same ids, same renderer,
+  same grid, a panel frame instead of a dialog frame, and no `role="dialog"` left behind on a screen
+  that no longer closes. Two things went with it — the ✕ (leaving a screen is navigation, not a
+  decision) and the card's second control, because "open this class" and "mark its attendance" had
+  become the same tap. The way back to the class grid is the "All classes" tab at the head of the
+  class row, with a second door in the class view's own panel header.
+
   Deliberately still absent, so that nothing here has to be un-built later:
     - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
 
@@ -364,7 +377,25 @@
 </aside>
 
 <!--
-  THE HOME SCREEN (WO-1.10). Every active class as a card, one tap each, and the empty state that
+  THE MAIN AREA, AND THE ONE THING WO-1.13 CHANGED ABOUT IT.
+
+  <main> holds SWAPPABLE VIEWS now — siblings, one visible at a time, switched by `.hidden` and
+  nothing else. That is Roll Call!'s own shape (`src/dashboard.html`: `#registryView` and
+  `#compactGridView` inside `<main class="main">`, with its modals outside it), and lifting it is
+  what this work order was for. Until then this element held one panel and nothing ever swapped it,
+  so the header's class row wrote a preference that changed nothing on screen and the marking
+  screen had to open as a dialog on top of the cards it had just made irrelevant.
+
+  There is no router, no history stack and no hash, deliberately — src/views.js's header says why
+  at length and names the two later views already expected. The modals below <main> are untouched
+  and stay modals: a modal is right for a task you finish and dismiss, and wrong for the surface a
+  teacher works in all period.
+-->
+<main class="main">
+
+<!--
+  THE HOME SCREEN (WO-1.10), which is `#homeView` since WO-1.13 — one view among several rather
+  than the only thing there is. Every active class as a card, one tap each, and the empty state that
   leads to the first one on a fresh document. This replaced the WO-1.2 component shelf, which is
   what stood here to let the frame be seen and touched before there was any data to show.
 
@@ -385,17 +416,24 @@
   still empty — narrowed rather than made vaguer, which is the thing the original note was warning
   against. Once WO-3.x and WO-4.x have filled that one too, the sentence is a lie about a build that
   has moved on: delete it then.
+
+  THE CARD IS ONE CONTROL AGAIN SINCE WO-1.13, and that is "retire the redundant selector" landing
+  here. WO-2.1 split it in two — a head that opened the class and a state line that opened the
+  marking dialog — because a control cannot be nested inside a control. Now that a class's working
+  surface IS the marking screen, those two taps mean the same thing, so the state line went back to
+  being a <span> that reports, inside the one button that opens the class. src/home.js carries the
+  reasoning; the subtitle below says the shorter version to a teacher.
 -->
-<main class="main">
+<div id="homeView">
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
           <h2>Your classes</h2>
           <p>
-            Tap a class to open it, or tap its attendance line to mark today. Each card will also
-            grow to carry the work waiting to be graded and the students who need attention, as
-            those parts of Planbook arrive — the space on it is already theirs.
+            Tap a class to open it — its line says whether today's attendance is done. Each card
+            will also grow to carry the work waiting to be graded and the students who need
+            attention, as those parts of Planbook arrive — the space on it is already theirs.
           </p>
         </div>
       </div>
@@ -434,6 +472,134 @@
       </div>
     </div>
   </div>
+</div>
+
+<!--
+  THE CLASS VIEW — one class's working surface, and today that is WO-2.1's attendance registry:
+  students down, the last six weekdays across. The critical-path screen: it runs while students walk
+  in, and it is the one thing the owner does every single period.
+
+  IT MOVED HERE FROM A DIALOG AT WO-1.13, and the move is a RE-PARENTING rather than a redesign.
+  Every element below is the one WO-2.1 shipped, with the same id, filled by the same call in
+  src/attendance.js; what changed is the frame around them. The dialog's `.modal-panel` /
+  `role="dialog"` / `aria-modal` / `.modal-header` / `.modal-body` became this app's main-area frame
+  — `.panel` / `.panel-header` / `.panel-title` from portable-components.md §4, plus this screen's
+  own `.attendance-body` in place of `.modal-body`'s padding. The dialog semantics are GONE rather
+  than hidden: a `role="dialog"` left on a page-level view is a screen reader announcing a dialog
+  that never closes, and an Escape key that navigates.
+
+  Two ids kept their jobs and changed their element. `#attendanceClassName` is the panel's own <h2>
+  now — a main-area screen has to say which class it is on in its title, where the dialog said
+  "Attendance" and named the class inside it — and `#attendanceDate` sits in the subtitle under it.
+  src/attendance.js writes both exactly as it did.
+
+  THERE IS NO SUBMIT BUTTON IN HERE, AND THERE MUST NEVER BE ONE. Every tap writes immediately —
+  src/attendance.js's header says why at length, and the short version is that the teacher is
+  interrupted mid-class every week and a screen that loses what she tapped because she never reached
+  the bottom of it is a screen she stops trusting. There is nothing waiting to be committed, which
+  is also why nothing on this screen closes: leaving it is navigation, not a decision.
+
+  The table is empty in the markup and rendered by src/attendance.js from the open document — the
+  same call #homeGrid, #classTabBar and #yearList make, and for the same reason: a hand-written
+  specimen row here would be a second truth to keep in step with the real one.
+
+  THE THREE CONTROLS THAT ARE MARKUP ARE THE THREE THAT MUST NOT BE RE-CREATED: the search field,
+  the filter pills and the sort pair. A renderer that rebuilt the search box would take the field's
+  focus out from under a teacher mid-word, so those live here and only their pressed state is
+  painted from the module. Everything that changes with the document is built there.
+
+  The hint at the bottom is the copy a teacher reads, which is why it lives here rather than in a
+  JavaScript file — the same call the install banner and the backup nag make. It answers the two
+  questions this screen reliably provokes: "why is nobody marked present?" and "why doesn't the
+  cycle start with P like Roll Call!'s does?"
+-->
+<div id="classView" class="hidden">
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2 id="attendanceClassName"></h2>
+          <p>Attendance · <span id="attendanceDate"></span></p>
+        </div>
+        <!-- The way back to the class grid, and the second of the two doors onto it — the first is
+             the "All classes" tab at the head of the class row, which src/classes.js draws. Both
+             carry `data-view-home`, so they are one route with two doors rather than two controls
+             that mean the same thing, exactly as `data-class-manage` has three (the header's gear,
+             the "Add a class" tab, and the home screen's empty state).
+
+             It is here as well as in the header because "always reachable" has to survive a 390px
+             screen, where six class tabs and this one do not fit the strip at once and the strip
+             scrolls the open class into view. This door is where a teacher who has just finished
+             taking attendance is already looking. -->
+        <button class="class-action-btn" type="button" data-view-home>
+          <span aria-hidden="true">←</span> All classes
+        </button>
+      </div>
+    </div>
+
+    <div class="attendance-body">
+      <!-- "You are not on today", shown only when that is true. src/attendance.js fills it. -->
+      <p class="attendance-banner hidden" id="attendanceBanner"></p>
+
+      <p class="attendance-state" id="attendanceState"></p>
+      <div class="attendance-actions" id="attendanceActions"></div>
+      <p class="attendance-note hidden" id="attendanceNote"></p>
+
+      <div class="attendance-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" id="attendanceSearch" data-attendance-search
+                 placeholder="Search students…" aria-label="Search students by name">
+        </div>
+        <div class="attendance-pills" id="attendancePills" role="group"
+             aria-label="Show only students with one mark on the day being edited">
+          <button type="button" class="pill active" data-attendance-filter="all"
+                  aria-pressed="true" title="Show the whole class">All</button>
+          <button type="button" class="pill" data-attendance-filter="P"
+                  aria-pressed="false" title="Show only students with no mark">Present</button>
+          <button type="button" class="pill" data-attendance-filter="T"
+                  aria-pressed="false" title="Show only tardy students">Tardy</button>
+          <button type="button" class="pill" data-attendance-filter="A"
+                  aria-pressed="false" title="Show only absent students">Absent</button>
+          <button type="button" class="pill" data-attendance-filter="E"
+                  aria-pressed="false" title="Show only students at an event">Event</button>
+          <button type="button" class="pill" data-attendance-filter="D"
+                  aria-pressed="false" title="Show only dismissed students">Dismissed</button>
+        </div>
+        <div class="attendance-sort" id="attendanceSort" role="group"
+             aria-label="Sort the list by name">
+          <span class="attendance-sort-label">Sort</span>
+          <button type="button" class="attendance-sort-btn" data-attendance-sort="first"
+                  aria-pressed="false" title="Sort by first name">First</button>
+          <button type="button" class="attendance-sort-btn active" data-attendance-sort="last"
+                  aria-pressed="true" title="Sort by last name">Last</button>
+        </div>
+      </div>
+
+      <!-- Earlier · Today · Later, above the columns they move. -->
+      <div class="attendance-pager" id="attendancePager"></div>
+
+      <div class="attendance-grid-wrap" id="attendanceGridWrap">
+        <table class="attendance-grid">
+          <caption class="sr-only" id="attendanceCaption"></caption>
+          <thead id="attendanceHead"></thead>
+          <tbody id="attendanceBody"></tbody>
+        </table>
+      </div>
+      <p class="attendance-empty hidden" id="attendanceEmpty"></p>
+
+      <p class="attendance-hint">
+        Tap a cell to cycle it: <strong>absent → event → tardy → dismissed → back to present</strong>.
+        Roll Call! starts that cycle with P; this one doesn’t, because present is never stored — an
+        empty cell on a day you have taken <em>is</em> present, and it is drawn as a P so it can’t be
+        confused with a day nobody took. A column of amber question marks is a day you haven’t taken
+        yet. Past days need their ✏ before they accept a tap; today’s column is always live, and its
+        🚫 says the class didn’t meet. Every tap saves as you make it; there is nothing to submit.
+      </p>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
@@ -1137,105 +1303,6 @@
         <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>
         <button class="class-action-btn" data-backup-cancel>Cancel</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!--
-  ATTENDANCE — the registry for one class: students down, the last six weekdays across (WO-2.1).
-  The critical-path screen: it runs while students walk in, and it is the one thing the owner does
-  every single period.
-
-  THERE IS NO SUBMIT BUTTON IN HERE, AND THERE MUST NEVER BE ONE. Every tap writes immediately —
-  src/attendance.js's header says why at length, and the short version is that the teacher is
-  interrupted mid-class every week and a screen that loses what she tapped because she never
-  reached the bottom of it is a screen she stops trusting. The ✕ closes a dialog; it commits
-  nothing, because there is nothing waiting to be committed.
-
-  The table is empty in the markup and rendered by src/attendance.js from the open document — the
-  same call #homeGrid, #classTabBar and #yearList make, and for the same reason: a hand-written
-  specimen row here would be a second truth to keep in step with the real one.
-
-  THE THREE CONTROLS THAT ARE MARKUP ARE THE THREE THAT MUST NOT BE RE-CREATED: the search field,
-  the filter pills and the sort pair. A renderer that rebuilt the search box would take the field's
-  focus out from under a teacher mid-word, so those live here and only their pressed state is
-  painted from the module. Everything that changes with the document is built there.
-
-  The hint at the bottom is the copy a teacher reads, which is why it lives here rather than in a
-  JavaScript file — the same call the install banner and the backup nag make. It answers the two
-  questions this screen reliably provokes: "why is nobody marked present?" and "why doesn't the
-  cycle start with P like Roll Call!'s does?"
--->
-<div class="modal-overlay hidden" id="attendanceModal">
-  <div class="modal-panel attendance-panel" role="dialog" aria-modal="true"
-       aria-labelledby="attendanceModalTitle">
-    <div class="modal-header">
-      <h2 id="attendanceModalTitle">Attendance</h2>
-      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-section-label">
-        <span id="attendanceClassName"></span> · <span id="attendanceDate"></span>
-      </div>
-
-      <!-- "You are not on today", shown only when that is true. src/attendance.js fills it. -->
-      <p class="attendance-banner hidden" id="attendanceBanner"></p>
-
-      <p class="attendance-state" id="attendanceState"></p>
-      <div class="attendance-actions" id="attendanceActions"></div>
-      <p class="attendance-note hidden" id="attendanceNote"></p>
-
-      <div class="attendance-toolbar">
-        <div class="search-box">
-          <span aria-hidden="true">🔍</span>
-          <input type="text" id="attendanceSearch" data-attendance-search
-                 placeholder="Search students…" aria-label="Search students by name">
-        </div>
-        <div class="attendance-pills" id="attendancePills" role="group"
-             aria-label="Show only students with one mark on the day being edited">
-          <button type="button" class="pill active" data-attendance-filter="all"
-                  aria-pressed="true" title="Show the whole class">All</button>
-          <button type="button" class="pill" data-attendance-filter="P"
-                  aria-pressed="false" title="Show only students with no mark">Present</button>
-          <button type="button" class="pill" data-attendance-filter="T"
-                  aria-pressed="false" title="Show only tardy students">Tardy</button>
-          <button type="button" class="pill" data-attendance-filter="A"
-                  aria-pressed="false" title="Show only absent students">Absent</button>
-          <button type="button" class="pill" data-attendance-filter="E"
-                  aria-pressed="false" title="Show only students at an event">Event</button>
-          <button type="button" class="pill" data-attendance-filter="D"
-                  aria-pressed="false" title="Show only dismissed students">Dismissed</button>
-        </div>
-        <div class="attendance-sort" id="attendanceSort" role="group"
-             aria-label="Sort the list by name">
-          <span class="attendance-sort-label">Sort</span>
-          <button type="button" class="attendance-sort-btn" data-attendance-sort="first"
-                  aria-pressed="false" title="Sort by first name">First</button>
-          <button type="button" class="attendance-sort-btn active" data-attendance-sort="last"
-                  aria-pressed="true" title="Sort by last name">Last</button>
-        </div>
-      </div>
-
-      <!-- Earlier · Today · Later, above the columns they move. -->
-      <div class="attendance-pager" id="attendancePager"></div>
-
-      <div class="attendance-grid-wrap" id="attendanceGridWrap">
-        <table class="attendance-grid">
-          <caption class="sr-only" id="attendanceCaption"></caption>
-          <thead id="attendanceHead"></thead>
-          <tbody id="attendanceBody"></tbody>
-        </table>
-      </div>
-      <p class="attendance-empty hidden" id="attendanceEmpty"></p>
-
-      <p class="attendance-hint">
-        Tap a cell to cycle it: <strong>absent → tardy → event → dismissed → back to present</strong>.
-        Roll Call! starts that cycle with P; this one doesn’t, because present is never stored — an
-        empty cell on a day you have taken <em>is</em> present, and it is drawn as a P so it can’t be
-        confused with a day nobody took. A column of amber question marks is a day you haven’t taken
-        yet. Past days need their ✏ before they accept a tap; today’s column is always live, and its
-        🚫 says the class didn’t meet. Every tap saves as you make it; there is nothing to submit.
-      </p>
     </div>
   </div>
 </div>

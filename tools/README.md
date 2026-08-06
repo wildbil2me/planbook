@@ -153,7 +153,21 @@ screen exists to prevent. And the future-date refusal is the only place in this 
 through the `window.planbook` seam: there is no control to click, by construction, which is the
 claim. Four mutations, all reverted: storing `P` turns seven red, painting an untaken cell in the
 taken palette turns the three-state comparison red, dropping the `<= today` clause turns two red,
-and dropping the past-column unlock takes tappable-cells-per-row from one to five.**
+and dropping the past-column unlock takes tappable-cells-per-row from one to five. 280 at WO-1.13,
+and six is a small number for a work order that moved a whole screen because ten checks were
+RE-POINTED rather than added: the registry became a view in `<main>`, so everything that used to
+open `attendanceModal` now drives `#classView` through a card, a header tab, or one of the two "All
+classes" doors. Seven were added and one retired, which is where the net six comes from. The seven:
+a card tap swapping what is in `<main>` with "no dialog opened" as its own clause, the way back
+through the panel's door, the way back through the header's, a reload coming back to the class
+rather than to the grid, the view carrying no dialog semantics at all, the registry carrying no
+support data in either presentation mode, and the three states told apart ON A CARD rather than only
+in a column head — that last one revived `window.__look`, which had been dead since WO-2.1 and was
+still naming a hook that no longer exists. The one retired is the focus-return check: it asserted
+that closing the dialog handed focus back to the card that opened it, and there is no dialog and no
+close to hand it back from. The two "way back" checks are what stand in its place. Three mutations, all reverted: dropping
+`showView` from `selectClass()` turns six red, leaving `role="dialog"` on the view turns one red, and
+booting to the grid instead of the saved view turns one red.**
 Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.

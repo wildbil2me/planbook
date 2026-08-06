@@ -47,6 +47,14 @@ work order** for that reason — see its tombstone below. The commit holding tha
   **`'' → A → T → E → D → ''`** — `P` is skipped because present is never stored, and `D` joins the
   cycle because Planbook has no hall-pass flow to log it from. That is a deliberate divergence from
   the owner's habit and the only one; name it in the UI, not just here.
+
+  > **Amended 2026-08-06, under WO-1.13.** The owner reordered the two middle steps: the cycle
+  > shipped as `'' → A → E → T → D → ''`, event before tardy, because the second-commonest mark in
+  > her rooms is a student pulled out for an event rather than one arriving late. The line above is
+  > left as written because it is the decision this work order was built from; this is what changed
+  > after it. Nothing else about the cycle moved — `P` is still the never-stored wrap-around, and a
+  > resting cell is still drawn as `P`. `src/attendance.js`'s `CYCLE`, the hint under the grid, the
+  > harness's five-tap check and `TESTING.md`'s 👤 line all say the new order.
 - **Every column header carries that class's state for that date** — taken · dropped · not taken
   yet — because in a grid an empty cell is ambiguous on its own (see Traps).
 - **Per-column controls, as in Roll Call!:** today's column marks the class dropped in one tap; a

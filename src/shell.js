@@ -32,9 +32,14 @@
       data-backup-confirm             carries out the restore the confirm dialog describes
       data-backup-cancel              abandons it, having written nothing
       data-class-manage               fills the classes panel, then opens it
-      data-class-tab="<classId>"      makes that class the open one — carried by the header's tab
-                                      row AND by the home screen's cards, which are two views of
-                                      one selection and share this one route
+      data-view-home                  puts the class grid back in <main> — the way back, carried by
+                                      the "All classes" tab at the head of the class row and by the
+                                      class view's own panel header, which are two doors onto one
+                                      route rather than two controls
+      data-class-tab="<classId>"      makes that class the open one AND puts its working surface in
+                                      <main> — carried by the header's tab row AND by the home
+                                      screen's cards, which are two renderings of one control and
+                                      share this one route
       data-class-create               on a <form>: creates the class typed into it
       data-class-rename="<classId>"   turns that row into a rename field
       data-class-rename-save="<id>"   on a <form>: saves the name typed into that row
@@ -53,11 +58,8 @@
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
-      data-attendance-open="<classId>" makes that class the open one, then opens the registry for
-                                      that class — the card's state line and the card's own tap are
-                                      two routes onto one selection
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
-                                      that day — present → A → T → E → D → present. `P` is not a
+                                      that day — present → A → E → T → D → present. `P` is not a
                                       step in the cycle because present is never stored
       data-attendance-take="<iso>"    records the open class as met on that day, everyone present
       data-attendance-untake="<iso>"  takes that back — offered only while nothing is marked
@@ -130,6 +132,7 @@ import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
 import * as teacher from './teacher.js';
+import * as views from './views.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -158,9 +161,41 @@ function afterYearChange() {
   A CLASS MUTATION ADDED LATER ADDS ITS LINE HERE. The cost of forgetting is a home screen showing
   a class the teacher has just archived, sitting behind the dialog she archived it in — visible the
   moment she closes it, and invisible in a desk check of the module she edited.
+
+  SINCE WO-1.13 IT ALSO REPAINTS THE MAIN AREA, and that is the same failure one view further in.
+  The class view is drawn from the class src/classes.js resolves, so archiving the open class,
+  deleting it, or renaming it leaves a registry describing a class that is gone — behind the dialog
+  it was done in, and visible the moment that dialog closes. Repainted only when the class view is
+  the thing on screen: from the home screen there is nothing to repaint, and painting a hidden
+  screen is a hundred and fifty cells nobody is looking at.
+
+  AND IT IS WHERE THE LAST CLASS GOING AWAY LANDS THE TEACHER SOMEWHERE. With no active class there
+  is no working surface to be on — getSelectedClassId() answers '' — so the class grid is the only
+  honest view, and it is also the one carrying the empty state that leads to a first class.
 */
 function afterClassChange() {
   home.refreshHome();
+  if (!classes.getSelectedClassId()) showHome();
+  else if (views.currentView() === 'class') attendance.renderAttendance();
+}
+
+/*
+  THE WAY BACK TO THE CLASS GRID. Both doors — the "All classes" tab at the head of the class row
+  and the button in the class view's own panel header — land here, because they are one route.
+
+  Three calls and each one is a fact about a different part of the screen: the view swaps, the tab
+  strip repaints because the active mark has just moved off the open class and onto "All classes"
+  (src/classes.js's refreshClassBar reads which view is up), and the cards redraw because the state
+  line on each of them is today's attendance and the teacher has probably just changed one.
+
+  Said out loud for the same reason selectClass() is: this moves a screen a screen-reader user
+  cannot see move.
+*/
+function showHome() {
+  views.showView('home');
+  classes.refreshClassBar();
+  home.refreshHome();
+  announce('Your classes.');
 }
 
 /*
@@ -282,11 +317,25 @@ document.addEventListener('click', (e) => {
   const classManage = e.target.closest('[data-class-manage]');
   if (classManage) { classes.openClassManager(classManage); return; }
 
-  /* The header tab and the home screen's card both land here — see the hook list above. Selecting
-     a class moves the mark on both views, so both are redrawn. */
+  /* The way back to the class grid. High here, beside the control that leaves it: these two are
+     the app's navigation, and everything below them is something you do once you have arrived. */
+  if (e.target.closest('[data-view-home]')) { showHome(); return; }
+
+  /*
+    THE ONE CONTROL THAT MEANS "WORK ON THIS CLASS NOW". The header tab and the home screen's card
+    both land here — see the hook list above — and since WO-1.13 it is navigation: the preference
+    moves, the main area swaps to that class's working surface, and the strip's active mark follows.
+
+    Three calls, in this order and for three different reasons. selectClass() writes the preference,
+    swaps the view and repaints the strip. resetRegistry() puts the marking screen back to today,
+    unpaged and unfiltered, BEFORE it is painted — the class is walking through the door, and
+    finding the screen where it was left an hour ago costs the seconds this design is about.
+    afterClassChange() then paints: the cards behind, and the registry itself.
+  */
   const classTab = e.target.closest('[data-class-tab]');
   if (classTab) {
     classes.selectClass(classTab.getAttribute('data-class-tab'));
+    attendance.resetRegistry();
     afterClassChange();
     return;
   }
@@ -345,26 +394,12 @@ document.addEventListener('click', (e) => {
      sitting down. Nothing here is awaited and nothing here confirms — src/attendance.js writes on
      the tap, src/store.js debounces the write, and the chip in the corner says so. */
 
-  const attendanceOpen = e.target.closest('[data-attendance-open]');
-  if (attendanceOpen) {
-    /* The selection first, through the same route the card's own tap and the header's tab take, so
-       the screen that opens is describing the class the rest of the app agrees is open. Then the
-       home screen is redrawn, because the open mark has just moved onto this card.
-
-       AND THEN THE BUTTON IS FOUND AGAIN, WHICH IS NOT BELT AND BRACES. refreshHome() empties the
-       grid and rebuilds every card, so the node this handler was given is detached by the time the
-       dialog goes up — and modal.js takes the opener to give focus BACK to on close. Focusing a
-       detached node is not an error; it silently sends focus to the body, so the failure is a
-       keyboard user closing attendance and landing at the top of the page instead of on the class
-       they were marking. Nothing on screen looks wrong. Every other opener in this listener is a
-       header control that survives its own redraw, which is why this is the first place it bites. */
-    const classId = attendanceOpen.getAttribute('data-attendance-open');
-    classes.selectClass(classId);
-    afterClassChange();
-    const live = document.querySelector('#homeGrid [data-attendance-open="' + classId + '"]');
-    attendance.openAttendance(live || attendanceOpen);
-    return;
-  }
+  /* There is no [data-attendance-open] hook any more, and its absence is the deliverable rather
+     than an omission. It meant "make this class the open one, then open the registry for it", which
+     is what [data-class-tab] above means now that the registry is where a class opens TO — two
+     hooks for one act, on two controls sitting on one card. WO-1.13 retired the second; src/home.js
+     carries the reasoning, and the focus-return dance that used to live here went with the dialog
+     that needed somewhere to hand focus back to. */
 
   /* A cell. The date comes off the element rather than out of a module variable, because a grid
      has six of them on screen at once and "which day did that tap land on" must not be a question
@@ -632,13 +667,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* At boot and after a backup or a restore, which is everywhere the answer can change —
        src/backup.js explains why it is not re-evaluated on every save. */
     backup.refreshBackupNag();
+    /*
+      WHICH VIEW WAS UP, BEFORE ANYTHING IS DRAWN FROM IT (WO-1.13). The preference is this
+      browser's own (src/views.js), and restoring it is what makes "reloading with a class selected
+      returns to that class's view" true — `openClassId` says which class, `openView` says whether
+      she was looking at it.
+
+      The one thing src/views.js cannot decide is decided here, because it would have to import
+      src/classes.js to know it: a stored `class` on a document with no active class is a blank
+      main area, so it falls back to the grid. This runs BEFORE refreshClassBar() because the
+      strip's active mark is read off which view is up.
+    */
+    views.showView(views.savedView() === 'class' && classes.getSelectedClassId() ? 'class' : 'home');
     /* The class bar and the term nav, drawn from the document that just came out of IndexedDB.
        Boot is the only place they are drawn from outside src/classes.js and the two chains above:
        every other change to a class is made inside that module, which redraws its own header. */
     classes.refreshClassBar();
-    /* The home screen, from the same document and the same open-class preference the bar just
-       resolved — so the cards and the tabs cannot disagree about which class is open on the first
-       paint. Boot is the only place either is drawn from outside the chains above. */
+    /* The home screen and — if that is where this browser left off — the open class's working
+       surface, from the same document and the same open-class preference the bar just resolved, so
+       nothing on the first paint can disagree about which class is open. Boot is the only place any
+       of the three is drawn from outside the chains above. */
+    attendance.resetRegistry();
     afterClassChange();
     /* And whose planbook this is. It comes out of the year document rather than out of this
        browser's preferences (src/teacher.js), so it is read here rather than beside presentation

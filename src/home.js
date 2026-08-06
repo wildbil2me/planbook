@@ -19,22 +19,25 @@
   reflowing every card on the page.
 
   THE FIRST SLOT WAS FILLED BY WO-2.1, and it cost this card its shape — which was foreseen here
-  and is worth reading before the next one is filled. The state slot is not a line of text: the
-  work order asks for today's state "with a one-tap fix", and a control cannot be nested inside
-  another control, because a <button>'s content model is phrasing content and an interactive
-  element is not phrasing content. So the card is now a <span> CONTAINER holding a full-bleed
-  primary button — this file's paragraph below predicted exactly that, for exactly this reason —
-  plus the state button beside it. WO-1.10's own acceptance line said adding the Phase 2 line
-  should touch only the card renderer, and it did: this function and its stylesheet, and nothing
-  else on the screen.
+  and paid for twice, so the whole of it is worth reading before the next slot is filled. The state
+  slot is not a line of text: the work order asked for today's state "with a one-tap fix", and a
+  control cannot be nested inside another control, because a <button>'s content model is phrasing
+  content and an interactive element is not phrasing content. So the card became a <span> CONTAINER
+  holding two buttons — the head, which opened the class, and the state line, which opened the
+  marking dialog.
 
-  WHAT A TAP DOES, and why there are now two of them. Tapping the card's head makes that class the
-  OPEN class — the same state the header's tab row already owns, through the same `data-class-tab`
-  hook, resolved by the same src/classes.js. The cards and the tabs are two views of one selection
-  and there is deliberately no second answer to "which class is open" anywhere in this file. The
-  state button is not a second answer either: it carries `data-attendance-open`, and src/shell.js
-  routes that through the SAME selection before it opens the marking screen — so the card, the tab
-  and the state line all mean "this class" and one module resolves all three.
+  WO-1.13 TOOK THAT BACK, and the reason is the whole of "retire the redundant selector". Once the
+  open class's working surface IS the marking screen, "open Period 3" and "mark Period 3's
+  attendance" are the same act — two controls, side by side on one card, meaning one thing. So the
+  state line is a <span> again, reporting rather than acting, inside the ONE button that opens the
+  class. The one-tap fix WO-2.1 asked for is not lost: it is the card's own tap, which lands on the
+  grid, and the target is now the whole card rather than the strip at the bottom of it.
+
+  WHAT A TAP DOES. It makes that class the OPEN class and puts its working surface in <main> —
+  the same act the header's tab row performs, through the same `data-class-tab` hook, resolved by
+  the same src/classes.js. The cards and the tabs are two renderings of ONE control, the way the
+  class manager has three doors onto one route; there is deliberately no second answer to "which
+  class is open" anywhere in this file, and since WO-1.13 no second hook either.
 
   NO SUPPORT DATA REACHES THIS SCREEN, which is why this module never asks src/supports.js its one
   visibility question and is deliberately absent from shell.js's flipPresentationMode() redraw
@@ -100,12 +103,20 @@ export function refreshHome() {
 
 /*
   THE CARD RENDERER. One function builds one card, and WO-1.10's fourth acceptance line is the
-  claim that a later phase's line lands here and nowhere else. WO-2.1 collected on that claim.
+  claim that a later phase's line lands here and nowhere else. WO-2.1 collected on that claim and
+  WO-1.13 collected on it again, in the other direction.
 
-  The card is a <span> container with two buttons in it — the head, which opens the class, and the
-  state line, which opens the marking screen. Everything inside a button is a <span>, because a
-  <button>'s content model is phrasing content and a <div> or a <p> in there would be invalid
-  markup that happens to render.
+  The card is a <span> container with ONE button in it, and that button holds everything a teacher
+  reads: the head, the state line, and the reserved slot. Everything inside it is a <span>, because
+  a <button>'s content model is phrasing content and a <div> or a <p> in there would be invalid
+  markup that happens to render — which is also why the state line cannot be a control and be
+  inside this one.
+
+  THE CONTAINER SURVIVED THE COLLAPSE BACK TO ONE CONTROL, on purpose. The border, the fill and the
+  hover belong to the card as an object and the button fills it exactly, so the two are the same
+  rectangle either way; keeping the container means the day a later phase needs a second control
+  with a MEANING of its own — a "3 to grade" chip that opens the gradebook, say — it goes in beside
+  this button rather than round it, and the card is not rebuilt a third time.
 
   createElement and textContent throughout, never innerHTML: a class name is typed by a teacher and
   pasted out of a school system, and a class called "Bio <3" has to be a class called "Bio <3"
@@ -115,18 +126,24 @@ function classCard(cls, isOpen) {
   const card = document.createElement('span');
   card.className = 'class-card' + (isOpen ? ' open' : '');
 
-  /* The primary tap: full-bleed across the card, and it is what used to be the whole card. */
-  const head = document.createElement('button');
-  head.type = 'button';
-  head.className = 'class-card-open';
-  /* The header tab row's own hook, deliberately. Both controls mean "make this the open class", so
-     they share one route through src/shell.js and one implementation in src/classes.js. A second
-     hook here would be a second answer to which class is open. */
-  head.setAttribute('data-class-tab', cls.id);
-  if (isOpen) head.setAttribute('aria-current', 'true');
+  /* The one tap: full-bleed across the card, and the whole card is what it covers. */
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'class-card-open';
+  /* The header tab row's own hook, deliberately. The card and the tab mean "work on this class
+     now", so they share one route through src/shell.js and one implementation in src/classes.js.
+     A second hook here would be a second answer to which class is open — which is exactly what
+     `data-attendance-open` had become by WO-1.13, and why it is gone. */
+  open.setAttribute('data-class-tab', cls.id);
+  if (isOpen) open.setAttribute('aria-current', 'true');
   /* The name is capped and ellipsised on the card (src/home.css), so `title` is where the whole one
      stays reachable — the same arrangement as a header tab. */
-  head.title = cls.name;
+  open.title = cls.name;
+
+  /* The avatar and the name, on one row. A <span> of their own rather than loose in the button,
+     because that row is a flex line and the two slots under it are not. */
+  const head = document.createElement('span');
+  head.className = 'class-card-head';
 
   /* The same initials and the same one of ten colours the class wears in the manager, imported
      from src/classes.js rather than recomputed: a class that is teal in one place and amber in
@@ -141,9 +158,9 @@ function classCard(cls, isOpen) {
   name.className = 'class-card-name';
   name.textContent = cls.name;
   head.append(name);
-  card.append(head);
+  open.append(head);
 
-  card.append(stateControl(cls));
+  open.append(stateLine(cls));
 
   /* ── the slot that is still reserved ──
      Appended empty, and it stays empty until the work order that owns it fills it. Its space is
@@ -151,37 +168,36 @@ function classCard(cls, isOpen) {
      would be worse than nothing. */
   const signals = document.createElement('span');
   signals.className = 'class-card-signals';
-  card.append(signals);
+  open.append(signals);
 
+  card.append(open);
   return card;
 }
 
 /*
-  TODAY'S ATTENDANCE FOR ONE CLASS, AND THE TAP THAT FIXES IT (WO-2.1).
+  TODAY'S ATTENDANCE FOR ONE CLASS (WO-2.1), reporting rather than acting since WO-1.13.
 
-  Three states, three sentences, three palettes, and it is a button in all three — including the two
-  where there is nothing wrong. "Each with a one-tap fix" reads most obviously as a route out of
-  "not taken yet", but the mistake a teacher actually makes is dropping the wrong class or marking
-  the wrong one taken, and a card that only offered the fix when Planbook thought one was needed
-  would be a card with no way back from either. One control, always the same control, always one
-  tap from the same place on the grid.
+  Three states, three sentences, three palettes, on every card including the two where there is
+  nothing wrong — because the mistake a teacher actually makes is dropping the wrong class or
+  marking the wrong one taken, and a card that only spoke up when Planbook thought something was
+  wrong would be a card she could not check.
+
+  "Each with a one-tap fix" is still true and is now the card's own tap: the class's working surface
+  is the marking grid, so one tap on this card lands on the column this line is describing. That is
+  why this is a <span> and not a button — see the header comment. It needs no accessible name of its
+  own for the same reason: it is INSIDE the button that opens the class, so the control reads as
+  "Period 3 — Biology, Taken · 2 absent" rather than as one of six buttons all called "Not taken
+  yet", which is what the WO-2.1 arrangement had to work around.
 
   It does NOT decide what the state is. src/attendance.js does, once, for this card and for the
   screen it opens — see the import at the top of this file.
 */
-function stateControl(cls) {
+function stateLine(cls) {
   const summary = stateSummary(cls.id, todayISO());
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'class-card-state ' + summary.state;
-  btn.setAttribute('data-attendance-open', cls.id);
-  btn.setAttribute('aria-haspopup', 'dialog');
-  /* The visible text says the state; the accessible name has to say the state AND whose, because a
-     grid of six cards otherwise reads as six buttons all called "Not taken yet". Style guide §7. */
-  btn.setAttribute('aria-label', summary.text + ' — attendance for ' + cls.name);
-  btn.title = summary.text + ' — take attendance for ' + cls.name;
-  btn.textContent = summary.text;
-  return btn;
+  const line = document.createElement('span');
+  line.className = 'class-card-state ' + summary.state;
+  line.textContent = summary.text;
+  return line;
 }
 
 /*

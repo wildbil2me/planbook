@@ -684,7 +684,8 @@ without demonstrating it actually catches something.
 
 ## WO-1.13 — Main-area views: make the header actually navigate
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.10
+**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 ·
+**Depends on** WO-1.10
 **Closes roadmap** Phase 1 → *(no roadmap line; this closes a gap the roadmap assumed closed —
 see "Why it exists")*
 
@@ -728,6 +729,25 @@ rendering ports at the lowest cost it will ever have.
 - **Retire the redundant selector.** Two controls that set one variable is the defect the owner
   reported. Either the home cards navigate and the header tabs switch within a class, or one of them
   goes — decide, write down which and why, and do not ship both meaning the same thing.
+
+  **DECIDED BY THE OWNER, 2026-08-06: the first option. Cards enter, tabs switch.** The class tab
+  strip is **not drawn on the home view at all** — on that screen the cards are how you enter a
+  class, and a tab row that duplicates them is the defect. On the class view the strip is the fast
+  switcher between classes, which is the job it can do that the cards cannot, because the cards are
+  not on screen then. The two are never visible at once meaning the same thing, which is what this
+  line has always asked for.
+
+  *The first pass answered a third way — retiring WO-2.1's `data-attendance-open` state-line button
+  and recasting cards-and-tabs as "two renderings of one control", by analogy with
+  `data-class-manage`'s three doors. That analogy is where it went wrong: three doors onto a modal
+  are three ways to reach one **task**, while cards and tabs were two ways to reach one **place**,
+  both on screen simultaneously. The implementer then ticked its own box on it. The verifier failed
+  the line and referred it up, correctly — it is a product call, not a build call.*
+
+  Two consequences to handle rather than discover: on the home view the header's bottom row must not
+  read as a blank navy strip (`refreshClassBar()` already calls that out as looking like a bug), and
+  the harness checks that currently navigate by tapping a header class tab **from the home view** no
+  longer have a control to tap. Re-point them through the cards; do not delete them.
 - **Modals keep what they are good at**: the class manager, the term editor, the roster paste box,
   the student editor, the delete confirms. A modal is right for a task you finish and dismiss and
   wrong for the surface a teacher works in all period. Do not convert them.
@@ -739,19 +759,35 @@ rendering ports at the lowest cost it will ever have.
 it is settled). Deep-linking or URL routing. A back-button history stack. Phase 6's calendar view.
 
 **Acceptance**
-- [ ] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
-- [ ] Attendance is marked in the main area, with no overlay above the class cards.
-- [ ] There is exactly one control in the app that means "work on this class now", and a second
+- [x] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
+- [x] Attendance is marked in the main area, with no overlay above the class cards.
+- [x] There is exactly one control in the app that means "work on this class now", and a second
       control that means something different can be told apart from it in words.
 - [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
       told where it is. 👤
-- [ ] `verify-shell.mjs` runs green with **no fewer checks than before**, and every check that used
+- [x] `verify-shell.mjs` runs green with **no fewer checks than before**, and every check that used
       to open `attendanceModal` now drives the view. Verify the count, don't assume it.
-- [ ] The class manager, term editor, roster paste, and student editor still open as modals and
+- [x] The class manager, term editor, roster paste, and student editor still open as modals and
       still work.
-- [ ] Reloading with a class selected returns to that class's view, not to a blank main area —
+- [x] Reloading with a class selected returns to that class's view, not to a blank main area —
       `openClassId` already persists and must keep meaning something.
-- [ ] Presentation mode still suppresses every support field on every view, including the new ones.
+- [x] Presentation mode still suppresses every support field on every view, including the new ones.
+
+**What shipped, and the decision this work order left open.** `<main>` holds `#homeView` and
+`#classView`, siblings toggled by `.hidden` (`src/views.js`, ~85 lines, imports only `src/prefs.js`).
+The redundant selector retired is **`data-attendance-open`**: the class card is one control again —
+`data-class-tab`, the header tab's own hook — and the state line inside it is a `<span>` that
+reports. The second control that means something else is **"All classes"**, in words, with two doors
+onto one hook (`data-view-home`): the tab at the head of the class row and a button in the class
+view's panel header. Exactly one tab on the class row is `.active` at a time and it means "this is
+what is in `<main>`" rather than "this is the open class" — which class is open is still shown by
+the card's `.open` wash and by the term nav. `planbook_openView` (UI preference, view name only) is
+what makes a reload come back to the class rather than to the grid. Desk pass: `verify-shell.mjs`
+**280 of 280**, up from 274; `wo-sweep.mjs` 10 passed, 0 failed, 1 to review (the standing line).
+*(This paragraph said 279 until the verifier measured 280 twice, deterministically, and found
+`tools/README.md` already saying 280 — three documents in one uncommitted change, two of them
+wrong. The implementer was killed by an API session limit before it could reconcile them, which is
+also why there is no result file to link: the run that would have written it never finished.)*
 
 **Traps** — The tempting shortcut is to leave `attendanceModal` in place and hide its chrome, which
 produces a dialog pretending to be a page: focus trapping, an Escape key that navigates, and a

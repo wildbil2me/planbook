@@ -6,6 +6,15 @@
   single period, on an iPad, standing up, and it is measured in seconds. Every decision below that
   looks like an omission is a decision about that clock.
 
+  ── WHERE THIS SCREEN LIVES (WO-1.13) ──
+
+  In <main>, as `#classView` — the open class's working surface, alongside `#homeView`'s class grid,
+  one visible at a time. It shipped at WO-2.1 as a dialog over the home screen because there was no
+  main area to put it in; there is one now. Nothing about what it shows or stores changed in the
+  move, and nothing in this file renders the frame around it: index.html holds the markup, and
+  src/views.js decides which view is up. What went with the dialog is named where it mattered — the
+  ✕ (see "there is no submit"), and the card's second control (src/home.js).
+
   ── WHY THIS SCREEN IS A GRID AND NOT A DAY ──
 
   It shipped once as one class on one day: a list of names with five P/T/A/E/D buttons on each
@@ -77,7 +86,7 @@
   different order (cyclePastAttendance, dashboard.html:3802). Planbook has one cycle and one
   writer, and the order is
 
-      present → A → T → E → D → present
+      present → A → E → T → D → present
 
   `P` is not a step because present is never stored — clearing a mark IS present. `D` is a step
   because Planbook has no hall-pass flow to log a dismissal from, so the grid is the only place it
@@ -91,7 +100,9 @@
   "Save attendance", no "Finalize", no pending-edits buffer, and there must never be one: the
   teacher is interrupted mid-class every day of the week — a phone call, a nurse, a fire drill —
   and a screen that loses what she tapped because she never reached the bottom of it is a screen
-  she stops trusting in week two. The ✕ in the corner closes a screen; it does not commit anything.
+  she stops trusting in week two. Nothing on this screen closes it: since WO-1.13 it is a view in
+  <main> rather than a dialog, and leaving it is navigation rather than a decision — which is the
+  same fact said in the architecture instead of in a ✕ that had to be explained.
 
   Two consequences worth naming, because both look like bugs from the outside:
 
@@ -157,7 +168,6 @@
 */
 
 import { getDoc, update } from './store.js';
-import { openModal } from './modal.js';
 import { announce } from './live-region.js';
 import { getSelectedClass } from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
@@ -169,7 +179,6 @@ import { getSelectedClass } from './classes.js';
    initials() because those two read different shapes and answer different questions.) */
 import { rosterName, fullName } from './roster.js';
 
-const MODAL_ID = 'attendanceModal';
 const CLASS_NAME_ID = 'attendanceClassName';
 const DATE_ID = 'attendanceDate';
 const BANNER_ID = 'attendanceBanner';
@@ -214,8 +223,16 @@ export const STORED_MARKS = MARKS.filter((m) => m.code !== PRESENT).map((m) => m
 
   Absent is FIRST because it is the common case: the two-absence class is two taps. Present is the
   wrap-around rather than a step, because present is not a value here — it is the absence of one.
+
+  EVENT COMES BEFORE TARDY, which reversed WO-2.1's order on 2026-08-06 at the owner's request —
+  she is the one whose fingers run this five times a day, and the second-commonest mark in her rooms
+  is a student pulled out for an event rather than one arriving late. The order is hers to set; the
+  two rules around it are not, and neither moved: P is still the never-stored wrap-around, and a
+  resting cell is still DRAWN as "P" so that an empty-looking cell on a taken day cannot be confused
+  with a day nobody took. The screen says the new order in words (the hint under the grid), because
+  the divergence from her Roll Call! habit is named on the screen and not only in this comment.
 */
-export const CYCLE = [PRESENT].concat(['A', 'T', 'E', 'D']);
+export const CYCLE = [PRESENT].concat(['A', 'E', 'T', 'D']);
 
 /* The only exception this work order writes. plans/rotating-schedule.md names three more —
    `no school`, `snow day`, `holiday` — and WO-2.3 authors those as calendar EVENTS that this
@@ -321,10 +338,12 @@ function dayColumns(count, offset, today) {
   FEWER COLUMNS rather than scrolling sideways, because a grid you have to swipe horizontally to
   read is a grid whose whole argument — see it all at once — has been given away.
 
-  Measured off the viewport rather than off the panel, because the panel is `display: none` when
-  this is asked (the screen is rendered before the dialog is shown, so it never flickers) and a
-  hidden element measures zero. The panel tracks the viewport below 905px, so the two agree
-  wherever the answer is not simply six.
+  Measured off the viewport rather than off the panel, and it stays that way after WO-1.13 moved
+  this screen out of a dialog: a hidden element measures zero, this screen can legitimately be
+  painted while `#classView` is still `.hidden` (boot restores the view and the paint in one pass),
+  and a column count of three because the answer was asked a frame early is a defect nobody would
+  look for here. The panel tracks the viewport below 905px, so the two agree wherever the answer is
+  not simply six.
 */
 function dayColumnCount(width) {
   const w = typeof width === 'number' ? width : window.innerWidth;
@@ -430,9 +449,9 @@ function stateChip(state) {
 function openClass() { return getSelectedClass(); }
 
 /* ── THE VIEW STATE ──
-   Five values, none of them student data and none of them persisted. They are reset at every open
-   (see openAttendance): a teacher who left a past column unlocked yesterday should not find it
-   still unlocked when she opens the screen with a class walking in. */
+   Five values, none of them student data and none of them persisted. They are reset on every
+   arrival (see resetRegistry): a teacher who left a past column unlocked yesterday should not find
+   it still unlocked when she opens the screen with a class walking in. */
 let editingPast = null;    /* an ISO date, or null for "today" */
 let pageOffset = 0;        /* whole windows back from today; 0 is the window ending at today */
 let searchText = '';
@@ -1198,19 +1217,22 @@ export function renderAttendance() {
 }
 
 /*
-  The way in, from the state line on a class card. Opened through its own hook rather than
-  data-modal-open for the reason src/year-picker.js gives: the panel is filled from the document,
-  and a modal that opens and then fills in is a modal that flickers.
+  ARRIVING AT THE SCREEN. Called by src/shell.js when a class is opened — from a card or from a
+  header tab, which are one control in two places — immediately before the paint.
 
-  src/shell.js makes that class the OPEN class on the way past — the card's state line and the
-  card's own tap are two routes onto one selection, and this screen then works on the open class the
-  way every other class-scoped screen does. There is no second answer to which class is open.
+  IT NO LONGER OPENS ANYTHING (WO-1.13). Until then this screen was a dialog and this function
+  ended in openModal(); it is a view in <main> now, so arriving is navigation and src/views.js does
+  it. What is left is the half that was always this module's: putting the screen back to its
+  starting state. It does not render either — src/shell.js paints it in the same chain that redraws
+  the cards behind it, so a class change is one repaint rather than two.
 
-  EVERY OPEN STARTS ON TODAY, unpaged, unfiltered and unsearched. The screen is opened with a class
-  walking through the door; finding it still showing last Tuesday filtered to tardies, because that
-  is where it was left an hour ago, would cost the seconds this whole design is about.
+  EVERY ARRIVAL STARTS ON TODAY, unpaged, unfiltered and unsearched. The screen is opened with a
+  class walking through the door; finding it still showing last Tuesday filtered to tardies, because
+  that is where it was left an hour ago, would cost the seconds this whole design is about. That is
+  why this is called on every arrival and NOT on a repaint: a mark made half way down the list must
+  not put the screen back to the top of it.
 */
-export function openAttendance(opener) {
+export function resetRegistry() {
   editingPast = null;
   pageOffset = 0;
   searchText = '';
@@ -1218,6 +1240,4 @@ export function openAttendance(opener) {
   sortBy = 'last';
   const search = document.getElementById(SEARCH_ID);
   if (search) search.value = '';
-  renderAttendance();
-  openModal(MODAL_ID, opener);
 }

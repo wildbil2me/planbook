@@ -7,9 +7,16 @@
    styling only its own class names, with its own @media (pointer: coarse) block at
    the end. No selector below names anything shell.css or home.css styles — the
    controls here that ARE shell components (`.class-action-btn`, `.pill`,
-   `.search-box`, `.modal-*`) are worn as-is and never restyled from here, and the
-   two places this screen needs something shell.css has no name for get names of
-   their own (`.attendance-toggle-on`, `.attendance-panel`).
+   `.search-box`, `.panel*`) are worn as-is and never restyled from here, and the
+   three places this screen needs something shell.css has no name for get names of
+   their own (`.attendance-toggle-on`, `.attendance-panel`, `.attendance-body`).
+
+   WHERE THIS SCREEN SITS CHANGED AT WO-1.13 and none of the values below did. It
+   was a dialog over the home screen and is now `#classView` in <main>, so the frame
+   is `.panel` / `.panel-header` / `.panel-title` instead of `.modal-panel` /
+   `.modal-header` / `.modal-body` — which is why the four <p> rules further down are
+   qualified by `.attendance-body` where they used to say `.modal-body`. Same
+   specificity, same cascade posture, same screen.
 
    THE THREE STATES HAVE THREE PALETTES, and they are chosen rather than picked:
 
@@ -52,23 +59,45 @@
 }
 
 /* ── THE PANEL ── */
-/* Wider than the app's other dialogs, and it is the one dialog that has earned it: everything
-   else in Planbook is a form or a list, and this is a table whose argument is that you can see six
-   days at once. `.modal-panel` keeps its 480px for every other screen; this is a modifier worn
-   beside it, so shell.css still owns the shape and this sheet owns only the width.
+/* A modifier on shell.css's `.panel`, which is the main area's frame — it was a modifier on
+   `.modal-panel` until WO-1.13 moved this screen out of a dialog, and the number below is the one
+   thing about it that did not change.
 
-   720 rather than as wide as the dialog will go. Six columns of 54px are 324px, and every pixel
-   past what the names need is empty floor between a student's name and the cell you are aiming at
-   on their row — which is a longer eye-track and a longer thumb-track on the one screen where both
-   are being counted in seconds. */
-.attendance-panel { width: 720px; max-width: 95vw; }
+   IT WAS 720px UNTIL 2026-08-06, AND THE OWNER OVERRULED THAT. The argument for the cap was real
+   and is kept here because it is the thing being traded away: six columns of 54px are 324px, and
+   every pixel past what the names need is empty floor between a student's name and the cell you
+   are aiming at on their row — a longer eye-track and a longer thumb-track on the one screen where
+   both are counted in seconds.
+
+   What the argument missed is that 720 was a DIALOG's width, and it survived the move out of the
+   dialog unchanged. Sitting in a 1300px `.main` it does not read as a wide panel, it reads as a
+   window that never closed — which is exactly what the owner reported, twice, having come from
+   Roll Call!'s registry view, which fills its main area. `plans/work-orders/README.md` says a work
+   order that contradicts the roadmap is wrong; the same goes for a stylesheet that contradicts the
+   person using it every period.
+
+   Do not put the cap back without asking her. If the row ever does feel too wide, the fix is a
+   wider name column or a `max-width` in the four figures — not a return to dialog dimensions. Note
+   also that WO-2.8's hall-pass column takes ~160px of this width the moment it lands, which is
+   width that does not exist under a 720px cap.
+
+   `max-width: 100%` rather than the 95vw a centred dialog needed: this sits inside `.main`, which
+   already carries the page gutters and the safe-area insets. */
+.attendance-panel { width: 100%; max-width: 100%; }
+
+/* The body of that panel, under `.panel-header` — the padding `.modal-body` used to supply, in
+   this screen's own name because two stylesheets never style one class (src/shell.css's header).
+   Its left and right match `.panel-header`'s 20px and `.home-grid`'s, so the toolbar, the grid and
+   the panel title all line up on one edge; the top is zero because the header above it already
+   ends in a gap. */
+.attendance-body { padding: 0 20px 20px; }
 
 /* ── "YOU ARE NOT ON TODAY" ── */
 /* A band, not a tint. The acceptance line is that this is visible in a glance, on an iPad, in a
    classroom, and a tint is exactly the fine print this screen keeps refusing. Interactive indigo
    rather than caution amber: being on a past day is a state the teacher CHOSE, and amber in this
    app means "something needs doing". */
-.modal-body .attendance-banner {
+.attendance-body .attendance-banner {
   display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
   margin: 0 0 10px; padding: 10px 14px;
   border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; border-radius: 8px;
@@ -79,21 +108,21 @@
 .attendance-banner-btn { flex: 0 0 auto; }
 
 /* ── THE STATE LINE ── */
-/* A <p> inside `.modal-body`, whose own rule is more specific than a bare class — so it is
-   qualified rather than left to lose the cascade, exactly as `.roster-hint` and `.class-error`
-   are in shell.css. It describes the ONE day that accepts edits, which is today unless a past
+/* Qualified by the container rather than left bare, which is the posture `.roster-hint` and
+   `.class-error` take in shell.css — the qualifier was `.modal-body` until WO-1.13 and is this
+   screen's own body now. It describes the ONE day that accepts edits, which is today unless a past
    column has been unlocked. */
-.modal-body .attendance-state {
+.attendance-body .attendance-state {
   display: block; margin: 2px 0 10px;
   padding: 8px 12px; border-radius: 8px;
   border: 1.5px solid #eef0f4; background: #f8f9fb;
   font-size: 13px; font-weight: 700; color: #6b7a8d; line-height: 1.4;
 }
-.modal-body .attendance-state.taken { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
-.modal-body .attendance-state.not-taken { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
+.attendance-body .attendance-state.taken { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
+.attendance-body .attendance-state.not-taken { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
 /* Dashed, for the reason given in the header: this is the "set aside" grammar the class manager
    already uses, and it is the half of the distinction that survives being read at arm's length. */
-.modal-body .attendance-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
+.attendance-body .attendance-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
 
 /* ── THE CLASS-LEVEL CONTROLS ── */
 /* "Everyone's here" and "Didn't meet", side by side and wrapping rather than squeezing — the same
@@ -109,17 +138,17 @@
 .attendance-toggle-on { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
 .attendance-toggle-on:hover:not(:disabled) { background: #dfe6ff; border-color: #5b6fcc; color: #5b6fcc; }
 
-/* Two <p>s inside `.modal-body`, qualified for the reason `.attendance-state` is. The note is
+/* Two <p>s inside the panel body, qualified for the reason `.attendance-state` is. The note is
    what a dropped day says instead of a list of students; the hint is the standing sentence about
    what this screen stores and how the cycle runs, and it is the answer to both "why is nobody
    marked present?" and "why doesn't this start with P?" */
-.modal-body .attendance-note {
+.attendance-body .attendance-note {
   margin: 0 0 10px; padding: 8px 12px; border-radius: 8px;
   background: #f8f9fb; border: 1.5px solid #eef0f4;
   font-size: 12px; line-height: 1.5; color: #6b7a8d;
 }
-.modal-body .attendance-hint { font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.6; }
-.modal-body .attendance-empty { font-size: 13px; color: #a0aab8; padding: 10px 2px; line-height: 1.5; }
+.attendance-body .attendance-hint { font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.6; }
+.attendance-body .attendance-empty { font-size: 13px; color: #a0aab8; padding: 10px 2px; line-height: 1.5; }
 
 /* ── SEARCH, FILTER, SORT ── */
 /* Roll Call!'s `.search-row` un-centred: over there the pill row is absolutely positioned in the
@@ -268,17 +297,17 @@
    as much as min-height, and the column has to widen with them or the row spills. */
 @media (pointer: coarse) {
   .attendance-panel { width: 720px; }
-  .modal-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
+  .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
   .attendance-banner-text { flex-basis: 200px; }
   /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
      named here so the control appears in this block rather than being covered somewhere else. */
   .attendance-banner-btn { min-height: 44px; min-width: 44px; }
-  .modal-body .attendance-state { font-size: 14px; padding: 10px 14px; }
+  .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
   .attendance-toggle-on { min-height: 44px; min-width: 44px; }
-  .modal-body .attendance-note { font-size: 13px; }
-  .modal-body .attendance-hint { font-size: 12px; }
-  .modal-body .attendance-empty { font-size: 14px; }
+  .attendance-body .attendance-note { font-size: 13px; }
+  .attendance-body .attendance-hint { font-size: 12px; }
+  .attendance-body .attendance-empty { font-size: 14px; }
   .attendance-toolbar { gap: 10px; }
   .attendance-pills { gap: 6px; }
   .attendance-sort { gap: 6px; }

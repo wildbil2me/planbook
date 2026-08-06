@@ -43,25 +43,26 @@
   padding: 0 20px 20px;
 }
 
-/* The day this sheet had a second tappable class it got a grouped selector, the way shell.css
-   has one for the app — this is that day (WO-2.1). Written out by class rather than left to
-   shell.css's bare `button` term for the reason `.hdr-mode-btn` is named in its coarse block:
-   a control that is only covered by another selector's rule is a control the next reader has
-   to go and prove is covered. */
-.class-card-open, .class-card-state {
+/* This sheet's one tappable class, written out rather than left to shell.css's bare `button`
+   term for the reason `.hdr-mode-btn` is named in its coarse block: a control that is only
+   covered by another selector's rule is a control the next reader has to go and prove is
+   covered. It was a pair between WO-2.1 and WO-1.13, while the state line was a control of its
+   own; it is one again because the card is one control again (src/home.js). */
+.class-card-open {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
 
 /*
-  One class. A <span> container since WO-2.1, and not a button: the state line inside it is a
-  control now, and a control cannot be nested inside a control. src/home.js's classCard()
-  carries the reasoning and predicted the change. The card still LOOKS like one object,
-  because the border, the fill and the hover all still belong to this element.
+  One class. A <span> container rather than the button itself — which it has been since WO-2.1,
+  and stays now that WO-1.13 has collapsed the card back to a single control: the border, the
+  fill and the hover belong to the card as an object, the button fills it exactly, and the day a
+  later phase adds a second control that MEANS something else it goes in beside that button
+  rather than round it. src/home.js's classCard() carries the reasoning in both directions.
 */
 .class-card {
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex;
   min-width: 0;
   padding: 12px 14px; border-radius: 10px;
   border: 1.5px solid #eef0f4; background: #f8f9fb;
@@ -74,12 +75,14 @@
 .class-card:hover { border-color: #5b6fcc; background: #fff; }
 .class-card.open { background: #eef2ff; border-color: #b0bcf0; }
 
-/* The primary tap. Full-bleed across the card and transparent, so it is the card's own surface
-   that shows through and the head sits exactly where it did when the card was the button.
-   `text-align: left` and `font-family: inherit` are what a button needs to stop looking like a
-   platform control on a page. */
+/* The tap. Full-bleed across the card and transparent, so it is the card's own surface that shows
+   through and everything on it sits exactly where it did when the card was three loose pieces. It
+   is the column now — the head, the state line and the reserved slot are its children — because
+   since WO-1.13 the whole card is the one control. `text-align: left` and `font-family: inherit`
+   are what a button needs to stop looking like a platform control on a page. */
 .class-card-open {
-  display: block; width: 100%; min-width: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%; min-width: 0;
   padding: 0; border: none; background: none;
   font-family: inherit; text-align: left;
   cursor: pointer;
@@ -96,25 +99,25 @@
 .class-card.open .class-card-name { color: #5b6fcc; }
 
 /*
-  TODAY'S ATTENDANCE, AND THE ONE TAP THAT FIXES IT (WO-2.1). This is the slot the rule below
-  it still holds open for Phase 3 and 4, filled.
+  TODAY'S ATTENDANCE (WO-2.1). This is the slot the rule below it still holds open for Phase 3
+  and 4, filled.
 
-  It is a button in all three states, and the three palettes are src/attendance.css's own — the
-  same three fills, the same dashed edge on a class that did not meet — because the card and
-  the screen it opens are one answer about one class and they must not say it two ways. The
-  values are repeated rather than shared for the reason every colour in this repo is repeated:
-  there are no custom properties here, deliberately (CLAUDE.md).
+  A <span> since WO-1.13 rather than a button of its own: it reports, and the tap that fixes what
+  it reports is the card it sits inside (src/home.js). Everything visual about it is unchanged —
+  the three palettes are src/attendance.css's own, the same three fills and the same dashed edge on
+  a class that did not meet, because the card and the screen it opens are one answer about one
+  class and they must not say it two ways. The values are repeated rather than shared for the
+  reason every colour in this repo is repeated: there are no custom properties here, deliberately
+  (CLAUDE.md).
 
-  Full width, and it takes the whole line: at 200px of card the state is the only thing on it,
-  and a control narrower than its card is a control a thumb has to aim at.
+  Full width, and it takes the whole line: at 200px of card the state is the only thing on it, and
+  a line indented inside a card reads as a second object rather than as this one's own news.
 */
 .class-card-state {
   display: block; width: 100%;
   padding: 5px 9px; border-radius: 8px;
   border: 1.5px solid #eef0f4; background: #fff;
-  font-family: inherit; text-align: left;
   font-size: 12px; font-weight: 700; line-height: 1.5; color: #6b7a8d;
-  cursor: pointer; transition: all 0.15s;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .class-card-state.taken { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
@@ -122,7 +125,6 @@
 /* Dashed and quiet: the "set aside" grammar `.class-row.archived` uses in shell.css, and the
    half of taken-vs-dropped-vs-untaken that survives being read from across a desk. */
 .class-card-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
-.class-card-state:hover { border-color: #5b6fcc; }
 
 /*
   THE SLOT THAT IS STILL RESERVED, and `min-height` is the entire point of the rule.
@@ -157,11 +159,11 @@
 /* Same order design/style-guide.md §6 names and shell.css follows: (pointer: coarse) first,
    then the width blocks. */
 
-/* The touch pass for this screen's own controls. Both buttons on the card are <button>s, so
-   shell.css's coarse block already floors them at 44px through its bare `button` rule — they
-   are named here anyway, with the padding a thumb wants, for the reason given at
-   `.class-card-open` above. `.class-card` itself is a container now and keeps its min-height
-   only so that a card can never be shorter than one touch target. */
+/* The touch pass for this screen's own control. The card's button is a <button>, so shell.css's
+   coarse block already floors it at 44px through its bare `button` rule — it is named here
+   anyway, with the padding a thumb wants, for the reason given at `.class-card-open` above.
+   `.class-card` itself is a container and keeps its min-height only so that a card can never be
+   shorter than one touch target. */
 @media (pointer: coarse) {
   .home-grid { gap: 12px; padding: 0 20px 20px; }
   .class-card { min-height: 44px; padding: 14px; }
@@ -170,10 +172,11 @@
      read as one dense block once there is something in them. */
   .class-card-head { gap: 12px; }
   .class-card-name { font-size: 15px; }
-  /* The state line is a control, so it takes a control's floor rather than a line of text's
-     reserved height. That is +24px per card against the WO-1.10 layout, which the portrait
-     fit measurement in tools/verify-shell.mjs re-checks on every run. */
-  .class-card-state { min-height: 44px; font-size: 13px; padding: 8px 12px; }
+  /* NOT a 44px floor, and the change is deliberate rather than an omission. Between WO-2.1 and
+     WO-1.13 this line was a control and took a control's floor; it is a line of text now, and
+     44px of reserved height for a sentence nobody taps is 24px of every card spent saying
+     nothing. The target it used to be is the whole card, above. */
+  .class-card-state { font-size: 13px; padding: 8px 12px; }
   .class-card-signals { min-height: 26px; }
   .home-empty-lead { font-size: 15px; }
   .home-empty-text { font-size: 14px; }
