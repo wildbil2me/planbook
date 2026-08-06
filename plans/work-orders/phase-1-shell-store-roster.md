@@ -590,7 +590,7 @@ shape it started with — the reversal and why is recorded above rather than edi
 
 ## WO-1.12 — Close two harness blind spots found at WO-1.10
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.10
+**Ship** — · **Status** ✅ DONE — 2026-08-06 · **Size** S · **Depends on** WO-1.10
 **Not a go-live blocker.** Added 2026-08-05, out of WO-1.10's verification.
 
 **Why it exists.** WO-1.10's verifier found two places where the verification tooling would report

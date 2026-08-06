@@ -2091,6 +2091,16 @@ const INSTALL_CLASS_READER = `(function(){
       tabChildren: tabs.reduce(function(n, b){ return n + b.children.length; }, 0),
       navLabels: Array.prototype.slice.call(nav.querySelectorAll('button')).map(function(b){ return b.textContent; }),
       navActive: Array.prototype.slice.call(nav.querySelectorAll('button.active')).map(function(b){ return b.getAttribute('data-term-select'); }),
+      /* The home screen's cards, read in the same round trip as the tab bar because they are the
+         SECOND VIEW OF THE SAME LIST and only the bar redraws itself — src/shell.js's
+         afterClassChange() is what redraws these, from a hand-maintained call list. See
+         homeVsDoc() in this file for what a missing line off that list looks like from here. */
+      homeIds: Array.prototype.slice.call(
+        document.querySelectorAll('#homeGrid .class-card')).map(function(c){ return c.getAttribute('data-class-tab'); }),
+      homeNames: Array.prototype.slice.call(
+        document.querySelectorAll('#homeGrid .class-card')).map(function(c){ return (c.querySelector('.class-card-name')||{}).textContent; }),
+      homeOpen: Array.prototype.slice.call(
+        document.querySelectorAll('#homeGrid .class-card.open')).map(function(c){ return c.getAttribute('data-class-tab'); }),
       rows: document.querySelectorAll('#classList .class-row').length,
       archivedRows: document.querySelectorAll('#classArchivedList .class-row').length,
       archivedHidden: document.getElementById('classArchivedSection').classList.contains('hidden'),
@@ -2107,6 +2117,43 @@ const INSTALL_CLASS_READER = `(function(){
       prefTerms: window.planbook.getPref('openTermIds')
     };
   }; return 1; })()`;
+
+/*
+  Does the home screen still agree with the document — right now, after whatever just changed a
+  class?
+
+  WHY THIS EXISTS AS ITS OWN READ, repeated after each mutation instead of once at the end. The
+  cards and the header tabs are two views of one list and only the tabs redraw themselves:
+  src/classes.js ends every mutator with its own refreshClassBar(), and the cards are redrawn from
+  src/shell.js's afterClassChange(), which is a HAND-MAINTAINED LIST OF CALL SITES. That list is
+  complete today. The failure it has no guard against is a work order adding a mutator — or editing
+  one of the eight branches that already call it — and forgetting its line, which leaves every check
+  in this file green while a teacher watches an archived class sit on the grid behind the dialog she
+  archived it in. Read once, before the archive step, that gap was invisible (WO-1.12).
+
+  THE VACUOUS PASS THIS GUARDS AGAINST is the obvious one: an empty grid agrees with a document that
+  has no classes, and a check that only asked "is the archived class gone from the grid" would pass
+  hardest on a grid that renders nothing at all. So the assertion is equality against the ACTIVE
+  classes in the document — order, ids and names — plus a non-zero count, plus the open mark landing
+  on the class src/classes.js resolves. `live` is one window.__cls() read; the active list is derived
+  here from the document it already carries rather than asked for separately.
+*/
+function homeVsDoc(live) {
+  const activeIds = live.ids.filter((_, i) => !live.archived[i]);
+  const activeNames = live.names.filter((_, i) => !live.archived[i]);
+  /* An archived or deleted class can be the one the preference still names, and it has no card —
+     so "no card is marked" is the right answer then, and only then. */
+  const wantOpen = activeIds.indexOf(live.selectedClass) === -1 ? [] : [live.selectedClass];
+  return {
+    ok: live.homeIds.length > 0
+      && JSON.stringify(live.homeIds) === JSON.stringify(activeIds)
+      && JSON.stringify(live.homeNames) === JSON.stringify(activeNames)
+      && JSON.stringify(live.homeOpen) === JSON.stringify(wantOpen),
+    detail: live.homeIds.length + ' card(s) ' + JSON.stringify(live.homeNames) + ' for '
+      + activeIds.length + ' active class(es) ' + JSON.stringify(activeNames)
+      + '; open card ' + JSON.stringify(live.homeOpen) + ', expected ' + JSON.stringify(wantOpen)
+  };
+}
 
 const classSeam = await evalJs("!!(window.planbook && window.planbook.classes"
   + " && typeof window.planbook.classes.getSelectedTermId === 'function')");
@@ -2159,6 +2206,11 @@ if (!classesBooted || !classSeam) {
       && made.tabChildren === 0,
     'elements injected into the tab bar = ' + made.injectedInBar
       + ', child elements inside the tabs = ' + made.tabChildren);
+  /* And the home screen's cards followed all six creations — the first of the six mutations below
+     that each carry one line of src/shell.js's afterClassChange() list. See homeVsDoc(). */
+  const madeHome = homeVsDoc(made);
+  check('the home screen gains a card when a class is created through the form', madeHome.ok,
+    madeHome.detail);
 
   /* Reorder, by the explicit controls rather than by drag: HTML5 drag-and-drop does not fire for
      touch on iPadOS at all, and the acceptance line reads "by drag OR by explicit up/down
@@ -2170,12 +2222,19 @@ if (!classesBooted || !classSeam) {
     down.ids[0] === made.ids[1] && down.ids[1] === made.ids[0]
       && JSON.stringify(down.tabIds) === JSON.stringify(down.ids),
     JSON.stringify(down.tabNames.slice(0, 3)));
+  const downHome = homeVsDoc(down);
+  check('and the cards reorder with it — the grid is the tab bar\'s second view, not a stale copy',
+    downHome.ok, downHome.detail);
   await clickSel('#classList .class-row:nth-child(2) [data-class-move-up]');
   const up = await evalJs('window.__cls()');
   check('the up control puts it back, and the tab order follows the document exactly',
     JSON.stringify(up.ids) === JSON.stringify(made.ids)
       && JSON.stringify(up.tabIds) === JSON.stringify(up.ids),
     JSON.stringify(up.tabNames.slice(0, 3)));
+  /* The up arrow is its own line in that list, and its own check for that reason: the down arrow
+     above having redrawn the grid is exactly what would let a missing line here read as green. */
+  const upHome = homeVsDoc(up);
+  check('and the cards go back with it, in the document\'s order', upHome.ok, upHome.detail);
   const ends = await evalJs(`(function(){ var rows = document.querySelectorAll('#classList .class-row');
     var first = rows[0], last = rows[rows.length-1];
     return { firstUp: first.querySelector('[data-class-move-up]').disabled,
@@ -2204,6 +2263,10 @@ if (!classesBooted || !classSeam) {
       && renamed.names.indexOf('Period 2 — Chemistry') === -1,
     'the field held ' + JSON.stringify(renaming.value) + ', the document now says '
       + JSON.stringify(renamed.names[2]));
+  const renamedHome = homeVsDoc(renamed);
+  check('and the card carries the new name too, not the one it was rendered with',
+    renamedHome.ok && renamed.homeNames.indexOf('Period 2 — Chem (renamed)') >= 0,
+    renamedHome.detail);
 
   /*
     Two classes, two different term structures, both working — the acceptance line that fails the
@@ -2510,12 +2573,22 @@ if (!classesBooted || !classSeam) {
       && archived.attendance === 4 && archived.assignments === 2 && archived.scoreColumns === 2,
     'tabs = ' + archived.tabNames.length + ', archived rows = ' + archived.archivedRows
       + ', attendance records still there = ' + archived.attendance);
+  /* The card goes with the tab, and it goes NOW rather than at the next redraw — this is the
+     literal picture src/shell.js's afterClassChange() comment describes: a class the teacher has
+     just archived, still on the grid behind the dialog she archived it in. */
+  const archivedHome = homeVsDoc(archived);
+  check('and the card goes off the grid with it, while the dialog is still open',
+    archivedHome.ok && archived.homeNames.indexOf('Homeroom') === -1, archivedHome.detail);
   await clickSel('#classArchivedList [data-class-restore]');
   const unarchived = await evalJs('window.__cls()');
   check('and restoring puts it back on the bar, in the place it had',
     JSON.stringify(unarchived.tabIds) === JSON.stringify(remembered.ids)
       && unarchived.archivedHidden && unarchived.archivedRows === 0,
     JSON.stringify(unarchived.tabNames));
+  const unarchivedHome = homeVsDoc(unarchived);
+  check('and its card comes back to the grid in that same place',
+    unarchivedHome.ok && JSON.stringify(unarchived.homeIds) === JSON.stringify(remembered.ids),
+    unarchivedHome.detail);
 
   /* Delete is offered on an archived row only, and that is the safety this design buys: getting a
      class out of the way costs one tap and nothing at all, and destroying a term of attendance
@@ -2614,6 +2687,19 @@ if (!classesBooted || !classSeam) {
       + ', assignments left ' + deleted.assignments + ', score columns left ' + deleted.scoreColumns);
   check('and both students stay — a student belongs to the school year, not to one class',
     deleted.students === 2, 'students in the document = ' + deleted.students);
+  /*
+    The grid after a delete, and this one is HONEST ABOUT BEING WEAKER than the five above it.
+    Delete is offered on an ARCHIVED row only (src/classes.js), so the class whose record is being
+    destroyed already has no card — the active list does not change, and dropping
+    afterClassChange() from this branch of src/shell.js would not move anything on screen. So this
+    asserts the invariant rather than the redraw: the grid must still agree with the document, and
+    in particular must not have regained a card for a class that no longer exists. Making the
+    redraw itself falsifiable here would need delete to be reachable on an active class, which is
+    the safety WO-1.6 deliberately bought and is not a thing to add for a check's convenience.
+  */
+  const deletedHome = homeVsDoc(deleted);
+  check('the grid still matches the document after a class is destroyed',
+    deletedHome.ok && deleted.homeNames.indexOf('Homeroom') === -1, deletedHome.detail);
 
   /*
     The first-run header, which nothing above has seen: every class on this device belongs to the

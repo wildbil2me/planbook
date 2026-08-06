@@ -13,6 +13,30 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Changed
+
+- **WO-1.12 closed the two harness blind spots WO-1.10's verifier found, and corrected a claim
+  about the harness that turned out to be wrong.** `tools/wo-sweep.mjs`'s coarse-block check now
+  reads `git ls-files --others` alongside `git diff HEAD`, so an untracked stylesheet — the exact
+  shape `src/home.css` took at WO-1.10 — is read in full instead of silently skipped. `verify-shell.mjs`
+  gains a `homeVsDoc()` helper driven after all eleven `afterClassChange()` call sites — create,
+  rename, reorder (up/down), archive, restore-from-archive, delete — 224 → 231 checks, zero skips.
+  Six of the eleven were genuinely uncovered before this work order; three were already caught by
+  existing checks, and the eleventh (delete) is offered only on an archived class already off the
+  grid, so no `#homeGrid` read can tell the difference. `tools/README.md` had claimed a dropped call
+  site "left every check in here green," which overstated the gap this closes, and is corrected to
+  name the six branches instead.
+
+  Both proofs were independently re-driven by the verifier rather than trusted from the
+  implementer's report: a planted untracked CSS fixture with an uncovered coarse selector is now
+  caught, and was not before; deleting each call site one at a time turns seven of eight drivable
+  branches red, and the eighth was confirmed undrivable rather than assumed so.
+
+  `afterRestore()` (`src/shell.js`) is not covered by the new checks — the restore fixture and the
+  document it replaces hold the same single class, so a dropped redraw there is invisible to
+  `homeVsDoc()` too. Left as a follow-up rather than folded in, since this work order's scope was
+  the two blind spots named at WO-1.10, not a general audit.
+
 ### Added
 
 - **WO-1.11 — back up every year on the device in one tap, not just the open one.** A second

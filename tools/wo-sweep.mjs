@@ -262,21 +262,66 @@ function report(hits) {
   check('a @media (pointer: coarse) block exists and has selectors', coarseFound && coarseSelectors.size > 0,
     coarseFound ? `${coarseSelectors.size} selector(s) in the coarse block` : 'no @media (pointer: coarse) block found');
 
+  /*
+    "New" was `git diff HEAD` alone until WO-1.12, and a diff against HEAD sees NOTHING in a file
+    git has never been told about. At WO-1.10 that meant all nine selectors in the brand-new
+    src/home.css were invisible here, and this check printed "1 new selector(s), all covered" about
+    a selector from shell.css — a true sentence about the wrong file. src/README.md makes one
+    stylesheet per screen the convention, so every screen after that one trips it the same way.
+
+    So the two sources are asked separately, because they are two different questions. A TRACKED
+    stylesheet's new lines are the `+` side of its diff. An UNTRACKED stylesheet is new in its
+    entirety — every selector in it is an added selector — and `git ls-files --others` is what names
+    those. Comments are stripped out of the untracked half first: a stylesheet header in this repo
+    quotes its own selectors by name (src/home.css does it four times), and a prose mention would
+    otherwise arrive here as a selector that does not exist.
+  */
   let diff = '';
-  try { diff = execFileSync('git', ['diff', '-U0', 'HEAD', '--', 'src/*.css'], { cwd: REPO, encoding: 'utf8' }); } catch {}
-  const added = new Set();
+  let untracked = [];
+  let gitAnswered = true;
+  try {
+    const git = (args) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8' });
+    diff = git(['diff', '-U0', 'HEAD', '--', 'src/*.css']);
+    untracked = git(['ls-files', '--others', '--exclude-standard', '--', 'src/*.css'])
+      .split('\n').map(s => s.trim()).filter(Boolean);
+  } catch { gitAnswered = false; }
+
+  const newLines = [];
+  let addedLines = 0;
   for (const line of diff.split('\n')) {
     if (!line.startsWith('+') || line.startsWith('+++')) continue;
-    for (const m of line.slice(1).matchAll(/(^|,)\s*(\.[\w-]+)/g)) added.add(m[2]);
+    newLines.push(line.slice(1));
+    addedLines++;
+  }
+  for (const f of untracked) {
+    let text = '';
+    try { text = fs.readFileSync(path.join(REPO, f), 'utf8'); } catch { continue; }
+    for (const line of text.replace(/\/\*[\s\S]*?\*\//g, '\n').split('\n')) newLines.push(line);
+  }
+  // A class name cannot start with a digit, and requiring a letter is what keeps `rgba(0,0,0,.5)`
+  // out: the comma in a declaration value otherwise reads as the comma in a selector list, and the
+  // check REVIEWs a selector called `.5`. A check that cries wolf gets ignored.
+  const added = new Set();
+  for (const line of newLines) {
+    for (const m of line.matchAll(/(^|,)\s*(\.[A-Za-z_-][\w-]*)/g)) added.add(m[2]);
   }
   const missing = [...added].filter(sel => ![...coarseSelectors].some(c => c.includes(sel)));
-  if (!added.size) {
-    check('every control added in this diff appears in the coarse block', true, 'no new CSS selectors in the working diff');
+  // The sources are reported even when the answer is "nothing new", because "this check looked and
+  // found nothing" and "this check could not see anything" print identically otherwise — which is
+  // exactly how the blind spot above survived a whole work order.
+  const looked = `${addedLines} added line(s) in tracked src/*.css, ${untracked.length} untracked stylesheet(s)`;
+  if (!gitAnswered) {
+    review('CSS selectors added in the working tree with no coarse-block rule',
+      'git could not be asked what is new here, so this check saw nothing — which is not the same as nothing being new. Run the 44px pass by hand.');
+  } else if (!added.size) {
+    check('every control added in the working tree appears in the coarse block', true,
+      `no new CSS selectors — ${looked}`);
   } else if (!missing.length) {
-    check('every control added in this diff appears in the coarse block', true, `${added.size} new selector(s), all covered`);
+    check('every control added in the working tree appears in the coarse block', true,
+      `${added.size} new selector(s), all covered — ${looked}`);
   } else {
-    review('CSS selectors added in this diff with no coarse-block rule',
-      `${missing.join(', ')} — confirm each is not a touch target, or add the 44px rule in the same pass`);
+    review('CSS selectors added in the working tree with no coarse-block rule',
+      `${missing.join(', ')} — confirm each is not a touch target, or add the 44px rule in the same pass (${looked})`);
   }
 }
 

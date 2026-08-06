@@ -122,7 +122,12 @@ correction round on 2026-08-05, and that flat number is the interesting part: th
 one-download-per-year outright, so "Back up all N years" was rebuilt on a hand-written zip
 (`src/zip.js`) and six of those fifteen checks were rewritten around the new mechanism —
 same claims, same count, different evidence, including a minimal ZIP reader in this harness
-because Node has none and this repo will not take a dependency to get one.** Update
+because Node has none and this repo will not take a dependency to get one. 231 at WO-1.12, and
+those seven are one check repeated after seven class mutations: the home screen's cards are the
+tab bar's second view and only the bar redraws itself, so until this work order, dropping one of
+`src/shell.js`'s eleven `afterClassChange()` call sites left six of the eight drivable branches
+green — three sites were already caught by existing checks, and the eighth (delete, offered only
+on archived classes already off the grid) cannot be driven red at all.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
