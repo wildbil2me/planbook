@@ -684,7 +684,7 @@ without demonstrating it actually catches something.
 
 ## WO-1.13 — Main-area views: make the header actually navigate
 
-**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 ·
+**Ship** 1 · **Status** ✅ DONE — 2026-08-06 · **Size** M · 🚩 ·
 **Depends on** WO-1.10
 **Closes roadmap** Phase 1 → *(no roadmap line; this closes a gap the roadmap assumed closed —
 see "Why it exists")*
@@ -765,7 +765,7 @@ it is settled). Deep-linking or URL routing. A back-button history stack. Phase 
       control that means something different can be told apart from it in words. *(Ticked once
       unearned, failed by the verifier, and reopened. It is the owner's decision above that closed
       it — evidence in "The correction" note below.)*
-- [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
+- [x] Returning to the class grid is one tap from any view, and the tap is findable without being
       told where it is. 👤
 - [x] `verify-shell.mjs` runs green with **no fewer checks than before**, and every check that used
       to open `attendanceModal` now drives the view. Verify the count, don't assume it.

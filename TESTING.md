@@ -636,7 +636,7 @@ All five acceptance lines close on this pass. WO-1.11 is done.
 - [x] There is exactly one control in the app that means "work on this class now", and a second
       control that means something different can be told apart from it in words. *(Failed at the
       first pass and reopened; closed on the correction below — **cards enter, tabs switch**.)*
-- [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
+- [x] Returning to the class grid is one tap from any view, and the tap is findable without being
       told where it is. 👤 *(The one tap is measured — both doors are driven in the harness. Whether
       a teacher finds it without being told is the half no harness can ask.)*
 - [x] `verify-shell.mjs` runs green with no fewer checks than before, and every check that used to
@@ -691,7 +691,7 @@ screen. The first two belong to the sitting below; the third is a taste call for
 - [ ] Do the same from the header's class row, with six classes on it, in portrait: the row scrolls,
       so check that "All classes" is still reachable and that the second door in the panel header is
       where you look for it. 👤
-- [ ] On the grid, look at the header's bottom row with a teacher's eye rather than a reader's: it
+- [x] On the grid, look at the header's bottom row with a teacher's eye rather than a reader's: it
       carries no class tabs there, only the words "Your classes" beside the term nav. Does it read as
       a caption, or does it read as a strip that failed to load? That is the one call in this work
       order a harness measured (63×16px, inside its strip) and cannot answer. 👤
@@ -782,16 +782,16 @@ is a grid — students down, the last six weekdays across, tap a cell to cycle �
 acceptance lines are the ones in the rewritten work order.
 
 - [x] A mark lands and survives a reload.
-- [ ] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
+- [x] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
       iPad**, in the orientation the owner actually holds it. 👤
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — in the column header and in the cells under it.
 - [x] Marking a class taken with zero exceptions still creates a record.
 - [x] One tap drops a class; one tap undoes it.
-- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+- [x] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
 - [x] **Attendance can be recorded for a date two weeks back and it lands on that date**, reached
       from this screen without a separate view.
-- [ ] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
+- [x] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
 - [x] **Future dates are either blocked or clearly flagged.**
 - [x] **A hole deliberately left three days earlier is findable by looking at the grid.**
 - [x] All five marks are reachable from a cell without opening a submenu or leaving the row.

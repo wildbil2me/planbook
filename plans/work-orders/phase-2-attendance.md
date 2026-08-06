@@ -14,7 +14,7 @@ and land in Ship 2.
 
 ## WO-2.1 — Attendance registry: students × recent days
 
-**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** L · 🚩 · **Depends on** WO-1.7, WO-1.10
+**Ship** 1 · **Status** ✅ DONE — 2026-08-06 · **Size** L · 🚩 · **Depends on** WO-1.7, WO-1.10
 **Closes roadmap** Phase 2 → "Marking screen, exceptions-only", "Marks `P / T / A / E / D`",
 "One-tap drop", "Three distinct states per class per day", "Mark a **past** date"
 
@@ -81,7 +81,7 @@ print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen w
 **Acceptance**
 - [x] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
-- [ ] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
+- [x] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
       iPad**, in the orientation the owner actually holds it. 👤
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — **in the column header and in the cells
@@ -89,11 +89,11 @@ print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen w
 - [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
       everyone present" is indistinguishable from "forgot."
 - [x] One tap drops a class; one tap undoes it.
-- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+- [x] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
       *(Needs a real iPad and a stopwatch.)*
 - [x] **Attendance can be recorded for a date two weeks back and it lands on that date** — reached
       from this screen, without a separate view.
-- [ ] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
+- [x] **The "not today" indication is visible in a glance, on an iPad, in a classroom.** 👤
 - [x] **Future dates are either blocked or clearly flagged** — marking Friday's attendance on
       Wednesday is a mistake, not a feature.
 - [x] **A hole deliberately left three days earlier is findable by looking at the grid**, without

@@ -189,7 +189,7 @@ proposes a cycle, a rotation, or a meeting pattern. *(A cycle model was designed
 same day, 2026-08-03: the owner's rotation changes randomly, so a model that predicts which classes
 meet is a second source of truth that's wrong by first period.)*
 
-- [ ] 🚩 Marking screen, **exceptions-only** (present is the default; you tap absences and
+- [x] 🚩 Marking screen, **exceptions-only** (present is the default; you tap absences and
       tardies). This runs while students walk in — it is the critical-path flow.
 - [ ] 🚩 **`U` for unconfirmed.** A student stays `?` until their own button is tapped, and until
       then they count **absent** — the first tap means "I see you, you're here" and gives `P`, then
@@ -202,13 +202,13 @@ meet is a second source of truth that's wrong by first period.)*
       `T` and `D` record the moment they settled. *(Added 2026-08-06, folded into WO-2.10. Planbook
       recorded that a student was tardy and never when — Roll Call! has captured it all along.
       Twenty minutes late and two minutes late are different conversations with a guardian.)*
-- [ ] 🚩 Marks `P / T / A / E / D`, matching Roll Call!'s vocabulary so the owner's habits carry over.
-- [ ] 🚩 **One-tap drop.** The day loads showing all five classes; the ones that didn't meet get
+- [x] 🚩 Marks `P / T / A / E / D`, matching Roll Call!'s vocabulary so the owner's habits carry over.
+- [x] 🚩 **One-tap drop.** The day loads showing all five classes; the ones that didn't meet get
       marked dropped and are done. No setup, nothing to maintain when the rotation shifts.
-- [ ] 🚩 **Three distinct states per class per day: taken · dropped · not taken yet.** The third is
+- [x] 🚩 **Three distinct states per class per day: taken · dropped · not taken yet.** The third is
       not the second. "Did the class not meet, or did I forget?" is the question the home screen
       exists to answer.
-- [ ] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one.
+- [x] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one.
 - [ ] 🚩 **Hall passes**: bathroom, nurse, quick. One tap out, one tap back, an append-only log keyed
       by student id. **An open pass survives a force-quit** — the app must never lose track of a
       student who is out of the room, which is the one place this deliberately does not copy Roll
