@@ -762,7 +762,9 @@ it is settled). Deep-linking or URL routing. A back-button history stack. Phase 
 - [x] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
 - [x] Attendance is marked in the main area, with no overlay above the class cards.
 - [x] There is exactly one control in the app that means "work on this class now", and a second
-      control that means something different can be told apart from it in words.
+      control that means something different can be told apart from it in words. *(Ticked once
+      unearned, failed by the verifier, and reopened. It is the owner's decision above that closed
+      it — evidence in "The correction" note below.)*
 - [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
       told where it is. 👤
 - [x] `verify-shell.mjs` runs green with **no fewer checks than before**, and every check that used
@@ -781,13 +783,35 @@ reports. The second control that means something else is **"All classes"**, in w
 onto one hook (`data-view-home`): the tab at the head of the class row and a button in the class
 view's panel header. Exactly one tab on the class row is `.active` at a time and it means "this is
 what is in `<main>`" rather than "this is the open class" — which class is open is still shown by
-the card's `.open` wash and by the term nav. `planbook_openView` (UI preference, view name only) is
+the card's `.open` wash and by the term nav. *(That sentence was written of a strip drawn on both
+views; the correction below took it off the home view, where there is now no tab to be active.)*
+`planbook_openView` (UI preference, view name only) is
 what makes a reload come back to the class rather than to the grid. Desk pass: `verify-shell.mjs`
 **280 of 280**, up from 274; `wo-sweep.mjs` 10 passed, 0 failed, 1 to review (the standing line).
 *(This paragraph said 279 until the verifier measured 280 twice, deterministically, and found
 `tools/README.md` already saying 280 — three documents in one uncommitted change, two of them
 wrong. The implementer was killed by an API session limit before it could reconcile them, which is
 also why there is no result file to link: the run that would have written it never finished.)*
+
+**The correction, 2026-08-06 — acceptance line 3 closed.** The class tab strip is drawn on the class
+view only. `refreshClassBar()` already knew which view was up (it used the answer to decide which tab
+read active); it now uses it to decide whether to draw the class tabs at all, and on the home view it
+draws a caption instead — "Your classes", the home panel's own title, in the same muted `.hdr-empty`
+voice as "No classes yet.", because that row already has a way of saying "nothing to select here" and
+a blank navy band reads as a bug. The strip is not hidden and the row is not collapsed: the divider,
+the term nav and the three icon buttons belong to both views, and a control that moves between views
+is worse than an empty patch of navy. `homeTab()` lost its `active` argument with the view it was
+active on — "All classes" is only ever the way OUT of a class now, never a tab you are standing on.
+Desk pass: `verify-shell.mjs` **282 of 282, 0 skipped**, measured three times, up from 280 with
+nothing dropped; `wo-sweep.mjs` unchanged. The two added checks count the controls a teacher could
+tap **right now** in each view — 6 cards and 0 header tabs on the grid, 6 header tabs and 0 cards on
+a class, one active tab, both "All classes" doors on the class view only, and the caption drawn at
+63×16px inside its own strip. Both were proved by mutation and reverted: drawing the tabs on the home
+view again turns two red, blanking the caption turns one red. Five checks in the classes section now
+read the strip from the class view, arriving through a card the way a teacher does; the year-switch
+check moved its "the classes came back" clause onto the cards and keeps the term nav as the proof
+that `refreshClassBar()` ran at all. *(What is still owed to the iPad: whether that caption reads as
+a caption or as a strip that failed to load. It is on the sitting list in `TESTING.md`.)*
 
 **Traps** — The tempting shortcut is to leave `attendanceModal` in place and hide its chrome, which
 produces a dialog pretending to be a page: focus trapping, an Escape key that navigates, and a

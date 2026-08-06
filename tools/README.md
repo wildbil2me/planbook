@@ -167,7 +167,16 @@ still naming a hook that no longer exists. The one retired is the focus-return c
 that closing the dialog handed focus back to the card that opened it, and there is no dialog and no
 close to hand it back from. The two "way back" checks are what stand in its place. Three mutations, all reverted: dropping
 `showView` from `selectClass()` turns six red, leaving `role="dialog"` on the view turns one red, and
-booting to the grid instead of the saved view turns one red.**
+booting to the grid instead of the saved view turns one red. 282 at WO-1.13's correction, and the two
+are the acceptance line that work order failed the first time: the class tab strip is no longer drawn
+on the home view at all, so the added pair counts the controls a teacher could tap RIGHT NOW in each
+view — visible ones, by `offsetParent`, because both sets live in the DOM at all times and a count of
+the markup would report the same number from either screen. Nothing was deleted for it: five checks
+in the classes section now take their reading of the strip from the class view, arriving through a
+card the way a teacher does, and the year-switch check moved one clause onto the cards while keeping
+the term nav as its proof that `refreshClassBar()` ran. Two mutations, both reverted: drawing the
+tabs on the home view again turns two red, and blanking the caption that replaced them turns one
+red.**
 Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.

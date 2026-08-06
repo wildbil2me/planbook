@@ -194,7 +194,13 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   flex: 1 1 auto; min-width: 96px;
   overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
-.hdr-empty { color: rgba(255,255,255,0.45); font-size: 12px; }
+/* The strip's own voice, for the two states where it holds no tabs: "No classes yet." on a fresh
+   install, and "Your classes" on the home view, where WO-1.13 took the class tabs off entirely
+   (src/classes.js's refreshClassBar). Not a control and styled so it cannot be read as one — muted,
+   small, and no background at all, where every tab on this row has one. `nowrap` because this strip
+   scrolls: at 390px it measures ~109px beside a term nav, and a caption that wrapped would push the
+   header down over the screen rather than being cut. */
+.hdr-empty { color: rgba(255,255,255,0.45); font-size: 12px; white-space: nowrap; }
 /*
   `flex-shrink: 0` and `white-space: nowrap` are the fix for a defect found on the iPad, and they
   belong to `.q-btn` below for the same reason. Both of these sit in a strip that scrolls

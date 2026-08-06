@@ -242,14 +242,27 @@ export function refreshClassBar() {
   const list = activeClasses(doc);
   const selectedId = getSelectedClassId();
   /*
-    EXACTLY ONE TAB ON THIS STRIP IS ACTIVE, AND IT MEANS "THIS IS WHAT IS IN <main>" — which is
-    what makes the row navigation rather than a styled strip (WO-1.13). Before that it meant "this
-    is the open class", on a strip where selecting a class changed nothing you could see.
+    CARDS ENTER, TABS SWITCH — the owner's call on WO-1.13's "retire the redundant selector", and
+    the reason this strip is drawn differently on each view.
 
-    So on the class view the open class's tab is active, and on the home view it is "All classes"
-    that is — never both. Which class is open is still true and still visible while the grid is
-    showing: it is the card wearing `.class-card.open`, and the term nav, the roster button and the
-    gear beside it all go on describing it. The preference is untouched by which view is up.
+    The class tabs are NOT DRAWN AT ALL on the home view. There, the cards ARE how you enter a
+    class, and a tab row beside them saying the same thing in smaller type is the defect the owner
+    reported: two controls, on screen together, setting one variable. On the class view the cards
+    are not on screen, so the strip is the fast switcher between classes — the job it can do that
+    they cannot — and that is the whole of what it is for.
+
+    (The first pass answered a third way: keep both and call them "two renderings of one control",
+    by analogy with the class manager's three doors. The analogy fails because three doors reach one
+    TASK, while cards and tabs reach one PLACE and were on screen at the same time.)
+
+    So on the class view exactly one tab is active and it means "this is what is in <main>", which
+    is what makes the row navigation rather than a styled strip. Which class is open is still true
+    and still visible while the grid is showing: it is the card wearing `.class-card.open`, and the
+    term nav, the roster button and the gear beside it all go on describing it. The preference is
+    untouched by which view is up, and so is `openClassId`.
+
+    Repainted on every view change because src/shell.js and selectClass() below both call this
+    after showView(), which is also why showView comes first at both call sites.
   */
   const onClassView = currentView() === 'class';
 
@@ -262,15 +275,40 @@ export function refreshClassBar() {
     empty.textContent = doc ? 'No classes yet.' : 'No school year open.';
     bar.append(empty);
     if (doc) bar.append(addClassTab('Add a class'));
+  } else if (!onClassView) {
+    /*
+      THE HOME VIEW, WHERE THIS STRIP HAS NO CLASSES ON IT AND MUST STILL NOT LOOK BROKEN.
+
+      What it carries instead is a caption in the same `.hdr-empty` idiom as "No classes yet." —
+      because this row already has one way of saying "there is nothing to select here", and a sixth
+      on-dark treatment in a 48px strip is a thing to learn rather than a thing to read. It is a
+      <span>: not a control, nothing to tap, nothing that could be mistaken for a disabled tab's
+      twin. The words are the home panel's own title, so the header names the screen that is up and
+      the panel below it agrees — which is the same job the active tab does on the class view.
+
+      Short on purpose. At 390px this strip measures ~109px with a term nav beside it
+      (tools/verify-shell.mjs measures it on every run), and a caption that scrolls out of its own
+      strip is worse than no caption. `.hdr-empty` carries `white-space: nowrap` for the same
+      reason — a second line here would push the header down over the screen.
+
+      NOT the row collapsed to nothing, and not the strip hidden: the divider, the term nav and the
+      three icon buttons on the right of this row belong to both views, and hiding the strip would
+      let them slide out of the corner they live in. A control that moves between views is worse
+      than an empty patch of navy.
+    */
+    const here = document.createElement('span');
+    here.className = 'hdr-empty';
+    here.textContent = 'Your classes';
+    bar.append(here);
   } else {
-    /* The way back to the class grid, at the head of the row a teacher navigates with. It is drawn
-       only when there ARE classes, because with none of them the grid is the only view there is and
-       a tab back to where you already are is furniture. The class view's own panel header carries
-       the second door onto this same hook — see index.html for why "always reachable" needs two at
-       390px, and why two doors onto one route is not two controls. */
-    bar.append(homeTab(!onClassView));
+    /* The way back to the class grid, at the head of the row a teacher navigates with, and only
+       ever on the class view — on the home view it would be a way back to where you already are.
+       The class view's own panel header carries the second door onto this same hook — see
+       index.html for why "always reachable" needs two at 390px, and why two doors onto one route
+       is not two controls. */
+    bar.append(homeTab());
     list.forEach((cls) => {
-      const isOpen = cls.id === selectedId && onClassView;
+      const isOpen = cls.id === selectedId;
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.className = 'cls-tab' + (isOpen ? ' active' : '');
@@ -355,20 +393,21 @@ function keepInView(strip, el) {
 /*
   "All classes" — the way back to the home grid, and the first tab on the row (WO-1.13).
 
-  It wears `.cls-tab` because it is one of the places this row can take you, and it takes `.active`
-  the same way a class tab does: exactly one tab on the strip is where you are. `.cls-tab-home` adds
-  nothing but the gap that separates the view from the classes in it.
+  It wears `.cls-tab` because it is one of the places this row can take you, and `.cls-tab-home`
+  adds nothing but the gap that separates the view from the classes in it. It never takes `.active`:
+  it is drawn only on the class view, where the active tab is the class in <main> and this is the
+  way out of it. (It did take `.active` on the home view until the owner's call above took the whole
+  strip off that screen — there is nothing left there for it to be active among.)
 
   The words are the point. Acceptance line 3 asks that the control which means something OTHER than
   "work on this class now" be tellable apart from those in words, and "All classes" beside "Period 3
   — Biology" is that — where an icon of a grid would be a second thing to learn.
 */
-function homeTab(active) {
+function homeTab() {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'cls-tab cls-tab-home' + (active ? ' active' : '');
+  btn.className = 'cls-tab cls-tab-home';
   btn.setAttribute('data-view-home', '');
-  if (active) btn.setAttribute('aria-current', 'true');
   btn.textContent = 'All classes';
   btn.title = 'Every class, on one screen';
   return btn;

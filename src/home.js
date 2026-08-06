@@ -35,9 +35,15 @@
 
   WHAT A TAP DOES. It makes that class the OPEN class and puts its working surface in <main> —
   the same act the header's tab row performs, through the same `data-class-tab` hook, resolved by
-  the same src/classes.js. The cards and the tabs are two renderings of ONE control, the way the
-  class manager has three doors onto one route; there is deliberately no second answer to "which
-  class is open" anywhere in this file, and since WO-1.13 no second hook either.
+  the same src/classes.js. There is deliberately no second answer to "which class is open" anywhere
+  in this file, and since WO-1.13 no second hook either.
+
+  AND THE HEADER'S TAB ROW IS NOT ON SCREEN WHILE THIS ONE IS — cards enter, tabs switch, which is
+  the owner's call on WO-1.13's "retire the redundant selector" and the thing to preserve here.
+  These cards are the ONE way into a class from the grid; the tab row is drawn on the class view
+  only, where it does the job the cards cannot, because by then they are not on screen. Two controls
+  meaning one thing, side by side, is the defect that reopened Phase 1. If a later phase wants a
+  class switcher on this screen, it already has one: the cards.
 
   NO SUPPORT DATA REACHES THIS SCREEN, which is why this module never asks src/supports.js its one
   visibility question and is deliberately absent from shell.js's flipPresentationMode() redraw

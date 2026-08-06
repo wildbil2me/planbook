@@ -37,9 +37,10 @@
                                       class view's own panel header, which are two doors onto one
                                       route rather than two controls
       data-class-tab="<classId>"      makes that class the open one AND puts its working surface in
-                                      <main> — carried by the header's tab row AND by the home
-                                      screen's cards, which are two renderings of one control and
-                                      share this one route
+                                      <main> — carried by the home screen's cards, which is how you
+                                      ENTER a class, and by the header's tab row, which is how you
+                                      SWITCH between them. The two are never on screen together:
+                                      the tab row is drawn on the class view only (src/classes.js)
       data-class-create               on a <form>: creates the class typed into it
       data-class-rename="<classId>"   turns that row into a rename field
       data-class-rename-save="<id>"   on a <form>: saves the name typed into that row
@@ -184,9 +185,10 @@ function afterClassChange() {
   and the button in the class view's own panel header — land here, because they are one route.
 
   Three calls and each one is a fact about a different part of the screen: the view swaps, the tab
-  strip repaints because the active mark has just moved off the open class and onto "All classes"
-  (src/classes.js's refreshClassBar reads which view is up), and the cards redraw because the state
-  line on each of them is today's attendance and the teacher has probably just changed one.
+  strip repaints because it takes the class tabs OFF on the home view and puts a caption there
+  instead (src/classes.js's refreshClassBar reads which view is up, and says why at length), and the
+  cards redraw because the state line on each of them is today's attendance and the teacher has
+  probably just changed one.
 
   Said out loud for the same reason selectClass() is: this moves a screen a screen-reader user
   cannot see move.
@@ -322,9 +324,14 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-view-home]')) { showHome(); return; }
 
   /*
-    THE ONE CONTROL THAT MEANS "WORK ON THIS CLASS NOW". The header tab and the home screen's card
-    both land here — see the hook list above — and since WO-1.13 it is navigation: the preference
-    moves, the main area swaps to that class's working surface, and the strip's active mark follows.
+    "WORK ON THIS CLASS NOW", and since WO-1.13 it is navigation: the preference moves, the main
+    area swaps to that class's working surface, and the strip's active mark follows.
+
+    Two controls carry it and they are never on screen at the same time — cards enter, tabs switch
+    (src/classes.js's refreshClassBar, and the work order's own decision record). A card is what a
+    teacher taps to go INTO a class from the grid; a header tab is what she taps to move from the
+    class she is in to the next one, which the cards cannot do because they are not on screen then.
+    One hook, one route, one implementation, because it is one act either way.
 
     Three calls, in this order and for three different reasons. selectClass() writes the preference,
     swaps the view and repaints the strip. resetRegistry() puts the marking screen back to today,

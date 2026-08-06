@@ -247,6 +247,13 @@
          the one exception: it is what a teacher sees before the first paint of a fresh install,
          and a blank navy strip reads as a bug where "No classes yet." is the truth.
 
+         WHAT IS IN THE LEFT-HAND STRIP DEPENDS ON THE VIEW, since WO-1.13 and the owner's call on
+         it: the class tabs are drawn on the class view only, where they are the fast switcher
+         between classes, and NOT on the home view, where the cards in <main> are how you enter a
+         class and a tab row beside them would be the same control twice. On the home view this
+         strip carries a caption in that same .hdr-empty voice. The divider, the term nav and the
+         three buttons on the right belong to both views and do not move between them.
+
          The divider and the right-hand controls ship `hidden` and are revealed by that module,
          because an empty divider on a first run is furniture explaining nothing. -->
     <nav class="hdr-class-tabs" id="classTabBar" aria-label="Classes">

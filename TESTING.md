@@ -634,7 +634,8 @@ All five acceptance lines close on this pass. WO-1.11 is done.
 - [x] Selecting a class from the header changes what is in `<main>`, without opening a dialog.
 - [x] Attendance is marked in the main area, with no overlay above the class cards.
 - [x] There is exactly one control in the app that means "work on this class now", and a second
-      control that means something different can be told apart from it in words.
+      control that means something different can be told apart from it in words. *(Failed at the
+      first pass and reopened; closed on the correction below — **cards enter, tabs switch**.)*
 - [ ] Returning to the class grid is one tap from any view, and the tap is findable without being
       told where it is. 👤 *(The one tap is measured — both doors are driven in the harness. Whether
       a teacher finds it without being told is the half no harness can ask.)*
@@ -651,6 +652,24 @@ through the controls a teacher touches: a card, a header tab, and the two "All c
 `wo-sweep.mjs` is 10 passed, 0 failed, 1 to review (the standing sensitive-field-name line,
 unaffected), and its "every control added in the working tree appears in the coarse block" line
 covers this work order's five new selectors.*
+
+*Correction pass 2026-08-06, and it is the third line above: `verify-shell.mjs` **282 of 282, 0
+skipped**, measured three times deterministically, up from 280 and with nothing dropped.
+`wo-sweep.mjs` unchanged at 10 passed, 0 failed, 1 to review. **The class tab strip is no longer
+drawn on the home view at all** — there the cards are how you enter a class, and on the class view
+the strip is the switcher between classes, which is the job the cards cannot do because they are not
+on screen then. The two are never visible at once meaning the same thing, which is what the
+acceptance line has always asked for. On the grid that strip carries a caption ("Your classes", the
+home panel's own title, in the same muted voice as "No classes yet.") so the row is not a blank navy
+band, and the term nav, the divider and the three icon buttons beside it do not move between views.
+The two new checks count the controls a teacher could tap **right now** in each view — 6 cards and 0
+header tabs on the grid, 6 header tabs and 0 cards on a class, one active tab, and both "All
+classes" doors on the class view only. Both were proved non-vacuous by mutation and reverted:
+drawing the tabs on the home view again turns two checks red, and blanking the caption turns one
+red. Five checks in the classes section now take their reading of the strip from the class view,
+through a card tap rather than through the seam, because that is where the strip lives; none was
+deleted, and the year-switch check moved its "the classes came back" clause onto the cards while
+keeping the term nav as proof that `refreshClassBar()` ran.*
 
 *What moved. `<main>` holds `#homeView` and `#classView` as siblings toggled by `.hidden` —
 Roll Call!'s own shape, no router, no history stack. WO-2.1's registry was **re-parented** into the
@@ -672,6 +691,10 @@ screen. The first two belong to the sitting below; the third is a taste call for
 - [ ] Do the same from the header's class row, with six classes on it, in portrait: the row scrolls,
       so check that "All classes" is still reachable and that the second door in the panel header is
       where you look for it. 👤
+- [ ] On the grid, look at the header's bottom row with a teacher's eye rather than a reader's: it
+      carries no class tabs there, only the words "Your classes" beside the term nav. Does it read as
+      a caption, or does it read as a strip that failed to load? That is the one call in this work
+      order a harness measured (63×16px, inside its strip) and cannot answer. 👤
 - [ ] Force-quit and relaunch while a class is open. It comes back on that class's screen. 👤
 - [ ] The page scrolls as one surface now that the grid is not in an overlay — a flick down a
       26-name list does not get handed between two scrollers, and the header scrolls away as

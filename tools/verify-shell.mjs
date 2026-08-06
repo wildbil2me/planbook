@@ -2170,6 +2170,24 @@ if (!classesBooted || !classSeam) {
 } else {
   await evalJs(INSTALL_CLASS_READER);
 
+  /*
+    ONTO THE CLASS VIEW BEFORE ANYTHING IS READ OFF THE TAB STRIP, because since WO-1.13 that strip
+    is a class-view control: cards enter, tabs switch, and the home grid draws no class tabs at all
+    (src/classes.js's refreshClassBar). Every tabNames / tabIds check below is asking what the
+    SWITCHER shows, so it has to be asked where the switcher is — and the way onto it is the card a
+    teacher taps rather than the seam.
+
+    Guarded rather than unconditional: which view a reload lands on is a preference now, so where
+    this section starts depends on where the one above it finished, and the guard is what stops that
+    mattering. Every check below is about a mutation made AFTER this point, so arriving here does
+    not paint any of the answers they read.
+  */
+  const toClassView = async () => {
+    if (await has('#classTabBar [data-class-tab]')) return;
+    await clickSel('#homeGrid .class-card-open');
+  };
+  await toClassView();
+
   /* The document restored by the section above holds one class written WITHOUT a `terms` array,
      which is exactly the shape a class arrives in from another build, or from a document older
      than this work order. The header has to survive it rather than throw on `cls.terms.length`,
@@ -2779,10 +2797,16 @@ if (!classesBooted || !classSeam) {
     await clickSel('#yearList [data-year-switch=' + JSON.stringify(homeYear) + ']');
     await new Promise(r => setTimeout(r, 800));
     const backHome = await evalJs('window.__cls()');
-    check('and switching back brings that year\'s classes and its open term back to the bar',
-      backHome.tabNames.length === 6 && backHome.selectedClass === backHome.ids[1]
+    /* Read on the class GRID, which is where a year switch lands and where the tab strip carries no
+       classes at all since WO-1.13. The year with no classes had no working surface to be on, so
+       the app went home for it (src/shell.js's afterClassChange) and switching back leaves it
+       there. So "that year's classes are back" is counted on the cards — and the bar's own repaint
+       is still proved, by the term nav: refreshClassBar draws both halves of that row, and a
+       year-switch chain that skipped it would leave the nav empty whichever view was up. */
+    check('and switching back brings that year\'s classes and its open term back — the cards on the grid, the terms on the bar',
+      backHome.homeIds.length === 6 && backHome.selectedClass === backHome.ids[1]
         && backHome.navLabels.length === 4,
-      backHome.tabNames.length + ' tabs and ' + backHome.navLabels.length + ' terms back on '
+      backHome.homeIds.length + ' cards and ' + backHome.navLabels.length + ' terms back on '
         + homeYear);
 
   /* ───────────────── the home screen ─────────────────
@@ -2991,6 +3015,10 @@ if (!classesBooted || !classSeam) {
   await send('Emulation.clearDeviceMetricsOverride');
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await new Promise(r => setTimeout(r, 300));
+  /* Back onto the class view for the archive below, for the reason given at the top of this
+     section: the measurement above was taken on the grid, and the check under the archive is about
+     what the SWITCHER shows once a class has left it. */
+  await toClassView();
     await clickSel('header [data-class-manage]');
   }
 
@@ -4479,8 +4507,13 @@ const INSTALL_ATT_READER = `(function(){
         .filter(function(r){ return r === 'dialog' || r.indexOf('/modal') >= 0; }) : ['no view'],
       viewCloses: view ? view.querySelectorAll('[data-modal-close]').length : -1,
       /* The way back out, and there are two doors on one hook — the tab at the head of the class
-         row and the button in the view's own panel header. */
+         row and the button in the view's own panel header. ON SCREEN ONLY, which is the whole point
+         since WO-1.13: both live in the markup at all times, one of them inside the view that is
+         hidden and one of them on a strip that is not drawn on the grid, so a count of the DOM would
+         report the same number from either screen and could not tell "two ways back from a class"
+         from "a way back offered on the screen you are already on". */
       homeDoors: Array.prototype.slice.call(document.querySelectorAll('[data-view-home]'))
+        .filter(function(b){ return b.offsetParent !== null; })
         .map(function(b){ return (b.textContent || '').trim(); }),
       className: (document.getElementById('attendanceClassName') || {}).textContent,
       dateText: (document.getElementById('attendanceDate') || {}).textContent,
@@ -4629,10 +4662,14 @@ if (!attBooted || !attSeam) {
     await clickSel('#homeGrid .class-card-open[data-class-tab="' + id + '"]');
     return read();
   };
-  /* And the same class opened from the header instead, for the checks that are about the header
-     being navigation. Same hook, same route, different door. */
+  /* And the same class reached from the header's tab row instead, for the checks that are about the
+     header being navigation. Same hook, same route, different door — but a different GESTURE, and
+     that is the owner's call on WO-1.13: cards enter, tabs switch. The row is drawn on the class
+     view only, so there is no such thing as tapping a class tab from the grid; what this does is
+     what a teacher does, which is arrive on some other class and then switch to this one. */
   const openTab = async (id) => {
-    await closeAll();
+    await goHome();
+    await clickSel('#homeGrid .class-card-open:not([data-class-tab="' + id + '"])');
     await clickSel('#classTabBar [data-class-tab="' + id + '"]');
     return read();
   };
@@ -5394,11 +5431,68 @@ if (!attBooted || !attSeam) {
   check('one tap on "All classes" puts the grid back, opens no dialog, and keeps the class it was on open',
     back.homeShown && !back.viewShown && back.dialogs.length === 0
       && back.openClass === backFrom && back.cards.length === 6
-      && back.homeDoors.length === 2,
+      /* And no way back offered on the screen it lands on: both doors go with the class view they
+         belong to, which is the same rule that takes the class tabs off this screen. Asserted on
+         the class view instead, where the two of them are, by the reload check further up. */
+      && back.homeDoors.length === 0,
     'class grid up = ' + back.homeShown + ', class view up = ' + back.viewShown
       + ', dialogs open = ' + JSON.stringify(back.dialogs) + ', open class still '
       + JSON.stringify(back.openClass) + ' of ' + JSON.stringify(backFrom)
-      + '; doors back = ' + JSON.stringify(back.homeDoors));
+      + '; doors back offered here = ' + JSON.stringify(back.homeDoors));
+
+  /*
+    ── WO-1.13 acceptance 3, as a measurement: cards enter, tabs switch ──
+
+    "Exactly one control means work on this class now" was the line this work order failed the first
+    time, and it failed on a build where the header's class tabs and the home screen's cards were
+    both on screen, both carrying `data-class-tab`, both landing on the same branch of src/shell.js.
+    The owner's call is that the tab row is not drawn on the grid at all: there the cards are how you
+    enter a class, and on the class view the row is the switcher between classes — a job the cards
+    cannot do, because by then they are not on screen.
+
+    So it is counted as CONTROLS A TEACHER COULD TAP RIGHT NOW rather than as markup. Both sets are
+    in the DOM at all times — the hidden view keeps its own — and `offsetParent` is null for anything
+    inside a `.hidden` view or absent from a strip, which is what makes "never both at once" a
+    question this file can answer at all.
+
+    The first read is taken on the grid the check above just landed on; the second after one tap on a
+    card, which is the gesture being asserted.
+  */
+  const visibleSelectors = () => evalJs(`(function(){
+    function shown(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel))
+      .filter(function(e){ return e.offsetParent !== null; }); }
+    var cap = document.querySelector('#classTabBar .hdr-empty');
+    var strip = document.getElementById('classTabBar');
+    var sr = strip.getBoundingClientRect();
+    var cr = cap && cap.offsetParent !== null ? cap.getBoundingClientRect() : null;
+    return { headerTabs: shown('#classTabBar [data-class-tab]').length,
+             cards: shown('#homeGrid .class-card-open').length,
+             activeTabs: shown('#classTabBar .cls-tab.active').map(function(b){ return b.textContent; }),
+             doors: shown('[data-view-home]').map(function(b){ return (b.textContent || '').trim(); }),
+             caption: cr ? (cap.textContent || '').trim() : '',
+             /* Drawn, not merely present: a caption clipped to nothing is the blank navy strip the
+                work order says must not happen, and it would answer this check green on text alone.
+                Read inside the strip it is supposed to be in, too — one line of it, at its top. */
+             capW: cr ? Math.round(cr.width) : 0, capH: cr ? Math.round(cr.height) : 0,
+             capIn: !!(cr && cr.left >= sr.left - 1 && cr.right <= sr.right + 1
+               && cr.height <= sr.height + 1) }; })()`);
+  const onGrid = await visibleSelectors();
+  check('on the class grid the only control that opens a class is the card — the header row draws no class tabs, and does not read as a blank strip',
+    onGrid.cards === 6 && onGrid.headerTabs === 0 && onGrid.activeTabs.length === 0
+      && onGrid.doors.length === 0 && onGrid.caption !== ''
+      && onGrid.capW > 20 && onGrid.capH > 0 && onGrid.capIn,
+    onGrid.cards + ' card(s) and ' + onGrid.headerTabs + ' header class tab(s) on screen; the strip '
+      + (onGrid.caption ? 'says ' + JSON.stringify(onGrid.caption) + ' in ' + onGrid.capW + 'x'
+        + onGrid.capH + 'px, inside the strip = ' + onGrid.capIn : 'is EMPTY')
+      + ', ways back offered = ' + JSON.stringify(onGrid.doors));
+  await clickSel('#homeGrid .class-card-open[data-class-tab="' + ids[0] + '"]');
+  const inClass = await visibleSelectors();
+  check('and on a class the only control that opens a class is the header tab — the cards are gone, one tab is active, and "All classes" says in words what the other one does',
+    inClass.headerTabs === 6 && inClass.cards === 0 && inClass.activeTabs.length === 1
+      && inClass.doors.length === 2 && inClass.doors.every((t) => /All classes/.test(t))
+      && inClass.caption === '',
+    inClass.headerTabs + ' header class tab(s) and ' + inClass.cards + ' card(s) on screen; active = '
+      + JSON.stringify(inClass.activeTabs) + ', ways back = ' + JSON.stringify(inClass.doors));
 
   /* And the same door from the header, which is the one that has to work from either view — the
      panel's own is inside the screen it leaves. Driven separately rather than assumed to be the
