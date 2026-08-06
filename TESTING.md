@@ -757,7 +757,7 @@ mutations were reverted and the run is green on the shipped tree.*
 **The 👤 iPad sitting this work order still owes.** Run these on the installed home-screen app,
 against a class with a real 25-name roster:
 
-- [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
+- [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the card's state line. This is the acceptance line, and it is the only one that decides
       whether the flow survives contact with a period starting. 👤
 - [ ] The three states are readable **from where you stand** — dropped vs not-taken-yet, at arm's
@@ -829,7 +829,7 @@ whatever the build does unless it has been seen to go red:*
 class with a real 25-name roster. The first three are the acceptance lines; the rest are what the
 desk pass could not reach.
 
-- [ ] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
+- [x] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
       sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
 - [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the class's card. Acceptance line 6, and the only one that decides whether the flow
