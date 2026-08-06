@@ -53,7 +53,7 @@ status --short` first on resume, before reading your own status file.
 `PREF_DEFAULTS` — because the enforcement in `prefs.js` is silent by design and a silent refusal is
 invisible to everything except an audit.
 
-## Codex — three probes, and what each one was wrong about
+## Codex — four probes, a fix, and what each one was wrong about
 
 **Do not probe by looking for a file in `bin/`.** The first version checked for
 `codex-windows-sandbox-setup.exe` beside `codex.exe`, on the strength of an error message naming it.
@@ -91,6 +91,44 @@ off for future work orders — re-probe next time.
 
 **A dispatch-level bug from the same run, worth one line:** an unset `$TMPDIR` made the Codex log
 redirect fail, and the first WO-1.6 dispatch aborted before Codex started. Use an absolute log path.
+
+**The record kept getting worse before it got better.** WO-1.7 died the same way (0 for 3), and the
+teacher suspended every pending Codex row to Claude on 2026-08-05. The WO-1.12 probe — run after the
+suspension, just to keep checking — died too (0 for 4), with the same `program not found`. Four
+failures in, every single one had reported the identical missing piece, and nobody had gone looking
+for it as a piece rather than as "the runner is down again."
+
+**Found 2026-08-06: `codex-windows-sandbox-setup.exe` and `codex-command-runner.exe` were never
+missing. They were sitting in `codex-resources\`, a directory beside `bin\` in every installed
+standalone release, and that directory was never on `PATH`.** `codex.exe` itself resolves from a
+separate launcher install on `PATH`, so the launcher starting proved nothing about whether its own
+helper spawns could find each other by name — which is exactly what "helper failures across read,
+apply_patch, and exec" and "program not found" describe, four times, without anyone naming the actual
+missing directory until a plain `Get-ChildItem` beside the resolved `codex.exe` was compared against
+where the probe was failing.
+
+The fix is one line, and it has to be set **inline, in the same command as the `codex exec` call,
+every single time**:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
+```
+
+Tried first as a persisted `[Environment]::SetEnvironmentVariable(..., 'User')` write instead — it
+landed correctly in the registry and then did nothing, because the session already running when it
+was written had already built its environment block and doesn't re-read the registry for child
+processes. A dispatch has no way to tell from the inside whether its session happens to postdate a
+registry change, so the persisted version is not safe to depend on; the inline version is, because it
+is set in the exact command that needs it. The `current` junction under
+`~\.codex\packages\standalone\` is used instead of a version string so the fix does not go stale the
+next time Codex auto-updates itself — exactly the kind of silent staleness this file exists to warn
+about elsewhere.
+
+Verified with the same exec-time probe this section already describes, run twice in a row: **2 for 2
+`SMOKE OK`**, immediately following the 0 for 4 above. Both the probe (step 2b) and the real dispatch
+(step 4) in `work-order-orchestrator.md` now carry the `$env:PATH` line inline. `ROUTING.md`'s own
+suspension text says a passing probe is what lifts it — the Ship 1 table still shows the ⏸ marks as
+of this writing, pending the teacher's go-ahead to flip them.
 
 ## Ticking — why the orchestrator holds the pen
 

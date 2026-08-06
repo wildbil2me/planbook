@@ -99,12 +99,77 @@ Not because Codex is worse, but because the cost is asymmetric. A Codex run that
 architectural decision costs more to find and unwind than the Claude run costs to sit through. 🚩
 go-live blockers in particular default to Claude unless they land squarely in the Codex column.
 
-## The runner's actual record: 0 for 3
+## Which Claude — the tier is a second question
+
+**"Claude" is not one destination, and treating it as one is what made Phase 1 more expensive than it
+had to be.** WO-1.4, WO-1.6 and WO-1.7 all landed in the Claude column *by fallback, not by rubric* —
+every one was classified Codex on its own merits and moved only because the runner was down. They ran
+on Opus anyway, because the fallback had exactly one address. That is **433,460 output tokens of
+implementation, 36% of the phase's total**, spent at the top tier on work this file had already
+judged not to need it.
+
+So the route is two questions, and the second reads off the answer to the first:
+
+| The work order… | Implementer | Because |
+|---|---|---|
+| routes to **Codex**, probe passes | Codex | unchanged |
+| routes to **Codex**, probe fails | **Claude Sonnet** | the rubric already found no judgment in it; a down runner does not change the work |
+| routes to **Claude** on its own merits | **Claude Opus** | it is there for one of the six reasons above, and every one of them is a judgment call |
+
+The distinction to hold onto: **a fallback is not a re-rubricing.** A work order that reaches Sonnet
+this way still has its Codex reasoning intact in the Because column, exactly as the ⏸ suspension kept
+it. If a Sonnet fallback produces work the verifier fails twice, that is the signal to re-read the
+rubric — not to quietly raise the tier and try again.
+
+**The verifier is always Opus, and this is not a cost decision to revisit.** It is 23% of output and
+looks like box-ticking, which is precisely what makes it the tempting place to save and the wrong
+one. This pipeline's documented failure mode is *a confident pass over nothing* — three defects
+escaped a green run in Phase 1 with Opus already reading them, and every real verifier catch was the
+subtle kind: the fixture assumption that could not fail, the sweep blind to untracked stylesheets,
+the zip cross-validated against three foreign readers. Noticing what is *absent* is the first thing
+to degrade. The audit function is the last thing to make cheaper.
+
+**The orchestrator stays Opus too**, for a duller reason: it is 10% of output, `wo-gate.mjs` and
+`wo-brief.mjs` already took its mechanical half, and what remains is the one decision the entire
+dispatch branches on. Small saving, concentrated risk.
+
+**Mechanically, the tier is a spawn-time override, not a file edit.**
+`.claude/agents/work-order-implementer.md` stays `model: opus` — the safe default — and a fallback
+dispatch passes `model: sonnet` on the Agent call, which takes precedence over the frontmatter. A
+downgrade should be a deliberate act named in the routing sentence, never a default someone forgot to
+raise back.
+
+## The runner's actual record: 0 for 4, then a fix
 
 **WO-1.4, WO-1.6 and WO-1.7 all routed to Codex correctly by this rubric, and all three died at exec
 time** — `codex-windows-sandbox-setup.exe: program not found`, helper failures across read,
 `apply_patch`, and exec. None produced a line of code. The routing was right all three times; what
-failed was the runner.
+failed was the runner. The WO-1.12 probe (below) made it four, failing before a brief was even
+written.
+
+**Root cause found and fixed 2026-08-06.** `codex-windows-sandbox-setup.exe` and
+`codex-command-runner.exe` live in `codex-resources\`, a directory sitting beside `bin\` inside every
+installed standalone release — and that directory was never on `PATH`. `codex.exe` resolving on
+`PATH` (from a separate launcher install) said nothing about whether its own helper spawns could
+resolve by name, which is consistent with all four failures above. The fix is one line, set inline in
+every Codex invocation rather than persisted to the registry (a persisted `PATH` write does not reach
+a session already running when it was made, and a dispatch cannot tell whether it was):
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
+```
+
+The `current` junction is used rather than a version string so the fix survives Codex's own
+auto-updates. Verified with the project's own exec-time probe, twice, cleanly: **2 for 2 `SMOKE OK`**
+on 2026-08-06, immediately after the run of 4 straight failures above. Full account, and the
+orchestrator instructions that now carry this inline, are in
+[`../dispatch-retro.md`](../dispatch-retro.md) § Codex and
+[`../../.claude/agents/work-order-orchestrator.md`](../../.claude/agents/work-order-orchestrator.md)
+step 2b.
+
+**This is what ends the suspension below** — the next section already says a passing probe lifts it.
+The Ship 1 table still shows the ⏸ marks as of this writing; reverting them to plain Codex routes is
+the one-pass edit the suspension section describes, pending the teacher saying go.
 
 At WO-1.7 the failure was the cleanest of the three, and the most alarming: **`codex exec` exited
 zero having written nothing.** A non-zero exit is a runner that failed. A zero exit with an empty
@@ -169,19 +234,24 @@ table it says so and explains why.
 | 9 | WO-1.9 Presentation mode | **Claude** | Sensitive surface; failure mode is disclosure to a classroom wall |
 | 10 | WO-1.10 Home screen v0 | **Claude** | Answers "did the class not meet, or did I forget?" — judgment about what to surface |
 | 11 | WO-2.1 Attendance marking screen | **Claude** | Size L, on the critical path, speed-of-use is a design problem |
-| 12 | WO-2.2 Marking a past date | **Claude** ⏸ | *Rubric says Codex* — small, bounded, follows WO-2.1's pattern. Suspended, 0 for 3 |
-| 13 | WO-2.3 Days off & pre-drops | **Claude** ⏸ | *Rubric says Codex* — three-state logic, fully specified in `plans/rotating-schedule.md`. Suspended, 0 for 3 |
-| 14 | WO-2.4 Counts & attendance % | **Claude** ⏸ | *Rubric says Codex* — pure arithmetic over recorded meetings. Suspended, 0 for 3 |
+| 12 | WO-2.2 Marking a past date | **Codex** | Small, bounded, follows WO-2.1's pattern |
+| 13 | WO-2.3 Days off & pre-drops | **Codex** | Three-state logic, fully specified in `plans/rotating-schedule.md` |
+| 14 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
 | 15 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
 
-**⏸ means suspended, not re-rubriced.** The Because column still holds the reasoning that put the row
-in the Codex column, and that reasoning still stands. Revert the Route cell when a Codex run lands.
+**Suspension lifted 2026-08-06.** The three rows above sat as **Claude** ⏸ from 2026-08-05, when
+Codex was 0 for 3 (then 0 for 4, counting the WO-1.12 probe), until the `codex-resources\` `PATH` fix
+landed and the exec-time probe went 2 for 2 — full account in
+[`../dispatch-retro.md`](../dispatch-retro.md) § Codex. The Because column never changed while
+suspended, and it does not change now either: the reasoning that put these rows in the Codex column
+was correct the whole time. Only the Route cell moved, both times. If a future Codex dispatch dies at
+exec time again, the same mechanism applies — re-suspend the affected rows, mark them ⏸, and leave
+the Because column alone.
 
 **Later phases, at a glance:** WO-3.4 grade engine and WO-4.1 signal engine are the strongest Codex
-candidates in the project — both are specified arithmetic with testable output, and both are far
-enough out that the suspension will likely have lifted or hardened long before them. WO-3.8, WO-3.10,
-all of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only —
-that is a property of the work, and no runner's record changes it.
+candidates in the project — both are specified arithmetic with testable output. WO-3.8, WO-3.10, all
+of Phase 5 (merge fields and outreach), and all of Phase 7 (OAuth scope) are Claude-only — that is a
+property of the work, not a runner's record.
 
 ---
 

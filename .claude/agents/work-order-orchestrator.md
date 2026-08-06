@@ -50,6 +50,11 @@ dispatch** — the route, the deciding signal, and the runner-up consideration y
 Ship 1 pre-routing table names a different route than you derived, say so and explain which you're
 following.
 
+The route has **two parts**: who (Codex or Claude) and, on the Claude side, which tier (Opus or
+Sonnet). See `ROUTING.md` § "Which Claude" — the tier reads off the route rather than needing its own
+judgment, but it is stated out loud in the same sentence, because a downgrade nobody named is a
+downgrade nobody can audit.
+
 Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the Codex column.
 
 ### 2b. On the Codex route only: prove the runner can actually write
@@ -61,6 +66,9 @@ Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the 
 So probe with a real write, under the real flags, into an absolute temp path:
 
 ```powershell
+$codexResources = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources"
+$env:PATH = "$codexResources;$env:PATH"   # REQUIRED — see below
+
 $probe = Join-Path $env:TEMP "codex-smoke-$(Get-Random)"
 New-Item -ItemType Directory $probe | Out-Null
 git -C $probe init --quiet          # REQUIRED — see below
@@ -70,7 +78,19 @@ if (Test-Path (Join-Path $probe 'ok.txt')) { 'SMOKE OK' } else { 'SMOKE FAILED' 
 Remove-Item $probe -Recurse -Force
 ```
 
-**The `git init` is load-bearing and was missing until 2026-08-05.** Codex refuses to run outside a
+**The `$env:PATH` prepend is load-bearing and was missing until 2026-08-06.**
+`codex-windows-sandbox-setup.exe` and `codex-command-runner.exe` live in `codex-resources\`, a
+sibling of `bin\` inside every installed standalone release — never on `PATH` by default. `codex.exe`
+resolving on `PATH` proves nothing about whether its own helper spawns can resolve by name, which is
+exactly the shape of all four prior failures. The `current` junction
+(`~\.codex\packages\standalone\current`) is used instead of a version string so this keeps working
+across Codex's own auto-updates. **Set it inline, in the same command as the `codex exec` call, every
+time** — a registry-level `setx`/`[Environment]::SetEnvironmentVariable` write does not reach a
+session that was already running when it was made, and you cannot tell from inside a dispatch whether
+this one was. Confirmed 2026-08-06: 2 for 2 clean `SMOKE OK` runs with the inline prepend, immediately
+following 0 for 4 without it.
+
+**The `git init` is also load-bearing and was missing until 2026-08-05.** Codex refuses to run outside a
 trusted directory, and a bare temp folder is not one — so the probe died with `Not inside a trusted
 directory` before exec was ever reached, and reported `SMOKE FAILED` for a runner it had never
 tested. **A probe that cannot pass re-routes every work order forever while reporting a healthy
@@ -78,20 +98,25 @@ runner as broken**, and its output is indistinguishable from a real failure. If 
 block, verify the probe can still report `SMOKE OK` on a working runner before trusting a
 `SMOKE FAILED` from it.
 
-`SMOKE FAILED`, a non-zero exit, or an empty file means **re-route to Claude before writing
-anything**, and say so in the routing sentence. The brief does not change; only who receives it does.
-Distinguish the two failures in your report: *the probe could not run* is a harness bug you should
-fix; *the probe ran and Codex wrote nothing* is the runner.
+`SMOKE FAILED`, a non-zero exit, or an empty file means **re-route to Claude Sonnet before writing
+anything** — Sonnet, not Opus, per `ROUTING.md` § "Which Claude": the rubric already found no judgment
+in this work order, and a down runner does not change what the work is. Say so in the routing
+sentence. The brief does not change; only who receives it does. Distinguish the two failures in your
+report: *the probe could not run* is a harness bug you should fix; *the probe ran and Codex wrote
+nothing* is the runner.
 
 Record a failure as a **transient condition, not a standing fact about the machine** — re-probe next
 dispatch. Do not raise `--sandbox`; that is the user's call and it would not have helped. Do not
 retry the same command inside the same run.
 
-**Codex is 0 for 3** (WO-1.4, WO-1.6, WO-1.7), all three at exec time. The teacher took the decision
-on 2026-08-05: `ROUTING.md`'s pending Codex rows are **suspended to Claude until one Codex run
-lands**. Keep probing anyway on any row whose rubric still derives to Codex — the suspension lifts
-itself the moment a probe writes a file, and a `SMOKE OK` is the one thing that ends it. Say in your
-report when a probe passes, even though you still route to Claude that dispatch.
+**Codex was 0 for 4** (WO-1.4, WO-1.6, WO-1.7 at exec time; the WO-1.12 probe before a brief was even
+written), every failure consistent with the missing `codex-resources\` directory above. The teacher
+took the suspension decision on 2026-08-05: `ROUTING.md`'s pending Codex rows moved to Claude until
+one Codex run landed. **2026-08-06: the `$env:PATH` fix landed and the probe went 2 for 2.**
+`ROUTING.md`'s suspension note says a passing probe lifts itself — say so plainly in your report, and
+route this and future rubric-eligible work orders to Codex again. Keep probing every dispatch anyway;
+one clean pair of runs after a four-run losing streak is data, not a guarantee. If it fails again,
+re-suspend and say so exactly as bluntly as this paragraph does.
 
 ### 3. Write the brief
 
@@ -129,9 +154,26 @@ confirm that file exists before you move on. If you cannot spawn a subagent, do 
 against the same brief — and write the result file yourself, because the reason for it does not
 change with who did the work.
 
+**Pick the tier on that spawn**, per `ROUTING.md` § "Which Claude":
+
+- Work order routed to Claude **on its own merits** — sensitive surface, convention, design lift,
+  teacher prose, judgment trap, size `L` — spawn with no `model` override. The agent's frontmatter is
+  `model: opus` and that is the right default.
+- Work order routed to Codex and **fell back** because the probe failed — spawn with
+  `model: sonnet`, which overrides the frontmatter.
+
+Name the tier in your routing sentence either way, and never raise a fallback back to Opus silently
+because a run looked shaky. If a Sonnet fallback fails the verifier twice, that is step 5's
+bring-the-user-in rule and probably an ambiguous work order — not a tier problem to paper over.
+
+**The verifier is spawned at Opus, always.** Do not override it, and do not treat its 23% of output
+as a saving to find. `ROUTING.md` says why: it is the only role asked to notice what is *absent*, and
+that is the first thing to degrade.
+
 **To Codex** — pipe the brief in via stdin so nothing has to survive PowerShell quoting:
 
 ```powershell
+$env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
 Get-Content .claude\dispatch\WO-1.4-brief.md -Raw | codex exec `
   --cd c:\dev\planbook `
   --sandbox workspace-write `
@@ -145,6 +187,10 @@ Get-Content .claude\dispatch\WO-1.4-brief.md -Raw | codex exec `
 - **Use an absolute path for any log redirect.** An unset `$TMPDIR` aborted a WO-1.6 dispatch before
   Codex started.
 - If `codex` is not on PATH: `C:\Users\WildB\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe`.
+- **The `$env:PATH` prepend above is required, not decorative** — see step 2b. Without it, `codex
+  exec` can still start (the launcher resolves from a separate `PATH` entry) but its own helper
+  spawns fail with `codex-windows-sandbox-setup.exe: program not found`, which reads exactly like a
+  down runner until you know to check for this one missing directory.
 
 **A result file lands on both routes.** The brief is what was asked; the result is what came back.
 A transcript ages out; both halves of the audit trail are files.
