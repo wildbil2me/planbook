@@ -195,7 +195,15 @@
    squeezing the cells that are the point of the screen. */
 .attendance-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
+/* THE NAME COLUMN IS CAPPED, AND THAT IS WHAT KEEPS THE GRID FROM READING AS RIGHT-ALIGNED.
+   Under `table-layout: fixed`, a column with no width absorbs everything the sized columns leave.
+   With the day heads pinned at 52px that meant 6 × 52 = 312px of columns and ~988px of name column
+   on a 1300px panel — so every mark cell sat in a huddle against the right edge with a continent of
+   empty floor between a student's name and the cell on their row. The owner reported it as "still
+   right aligned"; it was the table distributing badly inside a panel that was already full width.
+   Cap this instead, and the day columns below take the remainder. */
 .attendance-corner {
+  width: 260px;
   text-align: left; padding: 6px 8px 6px 2px;
   font-size: 10px; font-weight: 700; color: #8a9bb0;
   letter-spacing: 0.8px; text-transform: uppercase;
@@ -209,8 +217,13 @@
 }
 
 /* ── ONE COLUMN HEAD ── */
+/* No width, deliberately. Under `table-layout: fixed` the columns that declare none divide what is
+   left equally, so six days share whatever the capped name column does not take and the grid fills
+   its panel at any width — which is what Roll Call!'s registry does and what 52px prevented. The
+   cell inside stays 44px under a coarse pointer regardless; the column is the space it sits in, not
+   the target. Below 680px `src/attendance.js` drops columns rather than letting these get thin. */
 .attendance-day {
-  width: 52px; padding: 5px 3px; text-align: center; vertical-align: top;
+  padding: 5px 3px; text-align: center; vertical-align: top;
   border-bottom: 1.5px solid #eef0f4;
 }
 .attendance-day-dow {
@@ -357,6 +370,10 @@
    the row that is left readable), and the honest trade is the same one the marks made before:
    the grid is what the screen is for, and this is not the device it is for. */
 @media (max-width: 640px) {
+  /* The name column's 260px cap is a wide-screen answer and a phone-sized problem: at 420px with
+     three day columns it would leave ~40px each, under the 54px a 44px cell needs, and the row
+     would spill sideways — the exact failure the cap exists to prevent at the other end. */
+  .attendance-corner { width: 130px; }
   .attendance-name { font-size: 12px; padding-right: 4px; }
   /* The column keeps its width here on purpose. Narrowing it below the 54px a 44px cell needs is
      how a row spills sideways, and dropping a column is the answer this screen already has. */
