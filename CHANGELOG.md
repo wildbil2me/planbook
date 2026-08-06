@@ -15,6 +15,52 @@ records what someone remembered.
 
 ### Changed
 
+- **Four Codex failures were one missing directory, and Codex is back in the rotation.** WO-1.4,
+  WO-1.6 and WO-1.7 all died at exec time on `codex-windows-sandbox-setup.exe: program not found`,
+  and the WO-1.12 probe made it four. Every one of them named the same file, and nobody had gone
+  looking for it *as a file*: it lives in `codex-resources\`, a directory sitting beside `bin\` in
+  every installed standalone release, and that directory was never on `PATH`. `codex.exe` resolving
+  from its own separate launcher install proved nothing about whether its helper spawns could find
+  each other by name — which is exactly what "helper failures across read, `apply_patch`, and exec"
+  had been describing four times over, in a vocabulary that read as *the runner is down again*.
+
+  **The fix is set inline in the same command as every `codex exec` call, not persisted.** A
+  registry-level `SetEnvironmentVariable` write was tried first: it lands correctly and then does
+  nothing, because a session already running when it was written has already built its environment
+  block and does not re-read the registry for child processes. A dispatch cannot tell from the
+  inside whether its own session postdates the change, so the persisted form is not safe to depend
+  on and the inline one is. The `current` junction under `~\.codex\packages\standalone\` is used
+  rather than a version string, so the fix does not go stale the next time Codex updates itself —
+  the same silent staleness this repo keeps cataloguing everywhere else.
+
+  The probe went **2 for 2 immediately after 0 for 4**, which is the exit condition
+  `plans/work-orders/ROUTING.md` had already written down for the suspension, so WO-2.2, WO-2.3 and
+  WO-2.4 return to Codex. The Because column is untouched in both directions: the rubric was never
+  what failed, and the record of why those routes were right is worth more than a table that always
+  agrees with the current state of the runner.
+
+- **"Claude" was one destination where it should have been two, and Phase 1 paid for it.** The cost
+  audit that prompted the hunt above put a number on the other half: WO-1.4, WO-1.6 and WO-1.7
+  landed in the Claude column *by fallback rather than by rubric* — every one classified Codex on
+  its own merits, moved only because the runner was down — and ran on Opus anyway, because the
+  fallback had exactly one address. That is **433,460 output tokens, 36% of the phase's
+  implementation**, spent at the top tier on work `ROUTING.md` had already judged not to need it.
+
+  The route is now two questions: who, and then which tier. A Codex row that falls back goes to
+  **Sonnet**; a row that earned the Claude column on its own merits — sensitive surface, convention,
+  design lift, teacher-facing prose, a judgment trap, size `L` — still gets **Opus**. A fallback is
+  explicitly *not* a re-rubricing: the reasoning stays in the Because column exactly as the ⏸ marks
+  kept it, and a Sonnet fallback that fails the verifier twice is the signal to re-read the work
+  order rather than to quietly raise the tier and run it again.
+
+  **The verifier stays Opus, and is not a saving to go looking for.** It is 23% of pipeline output
+  and looks like box-ticking, which is precisely what makes it the tempting cut and the wrong one:
+  it is the only role asked to notice what is *absent*, and this pipeline's documented failure mode
+  is a confident pass over nothing. Three defects escaped a green run in Phase 1 with Opus already
+  reading them. The tier is a spawn-time override rather than an edit to the agent frontmatter, so
+  every downgrade stays a deliberate act in one dispatch instead of a default somebody forgets to
+  raise back.
+
 - **WO-1.12 closed the two harness blind spots WO-1.10's verifier found, and corrected a claim
   about the harness that turned out to be wrong.** `tools/wo-sweep.mjs`'s coarse-block check now
   reads `git ls-files --others` alongside `git diff HEAD`, so an untracked stylesheet — the exact
