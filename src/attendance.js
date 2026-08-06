@@ -169,7 +169,11 @@
 
 import { getDoc, update } from './store.js';
 import { announce } from './live-region.js';
-import { getSelectedClass } from './classes.js';
+/* `initials` and `avatarClass` come from here rather than being re-derived, for the reason WO-1.10
+   gives where they were exported: the colour is part of how a teacher recognises a person, so there
+   is one answer per student and not one per screen. The roster and the home cards already read
+   them; the registry is the third. */
+import { getSelectedClass, initials, avatarClass } from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
    student is one record referenced from many places; how that record READS — "Van Dyke, Mary" in a
    list, "Mary Van Dyke" in a sentence — is the same question here as it is there, off the same
@@ -1156,10 +1160,19 @@ function renderRows() {
   students.forEach((student) => {
     const row = el('tr');
     row.setAttribute('data-attendance-row', student.id);
-    const name = el('th', 'attendance-name', rosterName(student));
+    /* Roll Call!'s `.student-cell` — a flex row of avatar then name, `gap: 9px`. The avatar is
+       shell.css's `.avatar`, worn as-is and never restyled from this sheet, the same one the roster
+       row and the home card wear. It carries no information a name does not: initials and one of
+       ten colours, derived from the id and stored nowhere, which is also why presentation mode has
+       nothing to suppress here. */
+    const name = el('th', 'attendance-name');
     name.setAttribute('scope', 'row');
-    /* Capped and ellipsised by the stylesheet; the whole name stays reachable on `title`, the same
-       arrangement a class card makes. */
+    const cell = el('div', 'attendance-student-cell');
+    const avatar = el('div', 'avatar ' + avatarClass(student.id), initials(rosterName(student)));
+    avatar.setAttribute('aria-hidden', 'true');
+    cell.append(avatar, el('span', 'attendance-student-name', rosterName(student)));
+    name.append(cell);
+    /* The whole name stays reachable on `title`, the same arrangement a class card makes. */
     name.title = rosterName(student);
     row.append(name);
 

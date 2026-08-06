@@ -4556,7 +4556,15 @@ const INSTALL_ATT_READER = `(function(){
          hole in the grid a thing this file can see rather than infer. */
       rows: rows.map(function(r){
         var tds = Array.prototype.slice.call(r.querySelectorAll('td[data-attendance-col]'));
-        return { name: ((r.querySelector('.attendance-name') || {}).textContent || '').trim(),
+        /* Read .attendance-student-name, not .attendance-name. The name cell holds an avatar beside
+           the name, and the avatar's initials are part of the cell's textContent — reading the cell
+           yields "AMAurelio, Marcus" and every check that compares or searches on a name breaks on
+           two characters that are in nobody's name. Read the element that holds only the name.
+           Falls back to the cell so this still reports something if the span is ever removed.
+           NO BACKTICKS IN THIS BLOCK: it lives inside the template literal shipped to the browser,
+           and one closes it. Same trap as the apostrophe rule in sw.js, found the same way. */
+        return { name: ((r.querySelector('.attendance-student-name')
+                         || r.querySelector('.attendance-name') || {}).textContent || '').trim(),
                  student: r.getAttribute('data-attendance-row'),
                  codes: tds.map(function(td){ return (td.textContent || '').trim(); }).join(''),
                  dates: tds.map(function(td){ return td.getAttribute('data-attendance-col'); }).join(' '),

@@ -218,6 +218,20 @@
   font-size: 13px; font-weight: 600; color: #1a1a2e;
   white-space: nowrap;
 }
+/* Roll Call!'s `.student-cell`: `display: flex; align-items: center; gap: 9px`. The avatar inside
+   is shell.css's `.avatar` — 32px, round, `flex-shrink: 0` — worn as-is, because two stylesheets
+   never style one class (src/shell.css's header). This sheet owns the row around it and nothing in
+   it. */
+/* Neither of the two selectors here takes a coarse-block rule, and that is a decision rather than
+   an omission — `wo-sweep.mjs` flagged both for review, which is what that check is for. A flex
+   wrapper and a text span are not touch targets: nothing in this cell is tappable. The tappable
+   things on this row are the cells to its right, and they carry their 44px in the block at the
+   foot of this file. */
+.attendance-student-cell { display: flex; align-items: center; gap: 9px; }
+/* The name is what gives way when the column is tight, never the avatar: a 32px circle that
+   shrinks to 20px reads as a rendering fault, while a truncated name reads as a truncated name and
+   keeps its full text on the cell's `title`. */
+.attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
 
 /* ── ONE COLUMN HEAD ── */
 /* Roll Call!'s `thead th.day-th`: `text-align: center; min-width: 72px`. A MINIMUM, not a width —
