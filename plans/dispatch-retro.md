@@ -107,8 +107,8 @@ apply_patch, and exec" and "program not found" describe, four times, without any
 missing directory until a plain `Get-ChildItem` beside the resolved `codex.exe` was compared against
 where the probe was failing.
 
-The fix is one line, and it has to be set **inline, in the same command as the `codex exec` call,
-every single time**:
+The fix is one line, and the load-bearing part is *when* it is set: **on the environment of whatever
+process actually runs `codex`, at every invocation** — never persisted, never assumed:
 
 ```powershell
 $env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
@@ -118,17 +118,27 @@ Tried first as a persisted `[Environment]::SetEnvironmentVariable(..., 'User')` 
 landed correctly in the registry and then did nothing, because the session already running when it
 was written had already built its environment block and doesn't re-read the registry for child
 processes. A dispatch has no way to tell from the inside whether its session happens to postdate a
-registry change, so the persisted version is not safe to depend on; the inline version is, because it
-is set in the exact command that needs it. The `current` junction under
+registry change, so the persisted version is not safe to depend on. The `current` junction under
 `~\.codex\packages\standalone\` is used instead of a version string so the fix does not go stale the
 next time Codex auto-updates itself — exactly the kind of silent staleness this file exists to warn
 about elsewhere.
 
-Verified with the same exec-time probe this section already describes, run twice in a row: **2 for 2
-`SMOKE OK`**, immediately following the 0 for 4 above. Both the probe (step 2b) and the real dispatch
-(step 4) in `work-order-orchestrator.md` now carry the `$env:PATH` line inline. `ROUTING.md`'s own
-suspension text says a passing probe is what lifts it — the Ship 1 table still shows the ⏸ marks as
-of this writing, pending the teacher's go-ahead to flip them.
+**It shipped inline in the orchestrator's own PowerShell first, and that lasted about two hours.**
+Step 2b carried a copy of the line, step 4 carried a second, and `ROUTING.md` a third — three places
+for one fix to be right or wrong in, which is the drift this repo keeps paying for everywhere else.
+It now lives in `tools/codex-invoke.mjs` (`--probe`, or `--brief`/`--out` for a real dispatch), which
+sets the prepend on the child's environment for both paths from one function. The script also makes
+mechanical a distinction this section had been asking the orchestrator to draw by reading prose:
+**exit 1 is a runner verdict, exit 2 is a harness bug**, and a zero exit with no output file is
+exit 1 rather than a pass — the WO-1.7 failure mode, encoded rather than remembered.
+
+Verified 2026-08-06. The inline shape went **2 for 2 `SMOKE OK`** immediately after the 0 for 4
+above; the script was then re-proven on its own terms — `SMOKE OK` at exit 0, plus all three exit-2
+paths (missing argument, missing brief file, unrecognized flag) driven and confirmed to report
+distinctly, so a harness bug cannot arrive dressed as a runner failure. That last part is this
+section's own standing rule applied to its own replacement: a gate nobody has watched fail is not
+evidence that it can. `ROUTING.md`'s suspension lifted on the passing probe exactly as its text said
+it would, and WO-2.2, WO-2.3 and WO-2.4 are back on Codex routes.
 
 ## Ticking — why the orchestrator holds the pen
 

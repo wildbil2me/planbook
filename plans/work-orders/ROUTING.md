@@ -169,9 +169,9 @@ invoke the script are
 [`../../.claude/agents/work-order-orchestrator.md`](../../.claude/agents/work-order-orchestrator.md)
 step 2b.
 
-**This is what ends the suspension below** — the next section already says a passing probe lifts it.
-The Ship 1 table still shows the ⏸ marks as of this writing; reverting them to plain Codex routes is
-the one-pass edit the suspension section describes, pending the teacher saying go.
+**This is what ended the suspension below.** That section had already written down its own exit
+condition — one probe that writes a file — so the passing probe lifted it without anyone having to
+remember to check, and the Ship 1 table's ⏸ marks came off in the same pass on 2026-08-06.
 
 At WO-1.7 the failure was the cleanest of the three, and the most alarming: **`codex exec` exited
 zero having written nothing.** A non-zero exit is a runner that failed. A zero exit with an empty
