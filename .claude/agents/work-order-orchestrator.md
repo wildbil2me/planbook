@@ -65,45 +65,31 @@ Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the 
 
 So probe with a real write, under the real flags, into an absolute temp path:
 
-```powershell
-$codexResources = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources"
-$env:PATH = "$codexResources;$env:PATH"   # REQUIRED — see below
-
-$probe = Join-Path $env:TEMP "codex-smoke-$(Get-Random)"
-New-Item -ItemType Directory $probe | Out-Null
-git -C $probe init --quiet          # REQUIRED — see below
-'Create a file named ok.txt containing the word ok. Do nothing else.' |
-  & codex exec --cd $probe --sandbox workspace-write -
-if (Test-Path (Join-Path $probe 'ok.txt')) { 'SMOKE OK' } else { 'SMOKE FAILED' }
-Remove-Item $probe -Recurse -Force
+```
+node tools/codex-invoke.mjs --probe
 ```
 
-**The `$env:PATH` prepend is load-bearing and was missing until 2026-08-06.**
-`codex-windows-sandbox-setup.exe` and `codex-command-runner.exe` live in `codex-resources\`, a
-sibling of `bin\` inside every installed standalone release — never on `PATH` by default. `codex.exe`
-resolving on `PATH` proves nothing about whether its own helper spawns can resolve by name, which is
-exactly the shape of all four prior failures. The `current` junction
-(`~\.codex\packages\standalone\current`) is used instead of a version string so this keeps working
-across Codex's own auto-updates. **Set it inline, in the same command as the `codex exec` call, every
-time** — a registry-level `setx`/`[Environment]::SetEnvironmentVariable` write does not reach a
-session that was already running when it was made, and you cannot tell from inside a dispatch whether
-this one was. Confirmed 2026-08-06: 2 for 2 clean `SMOKE OK` runs with the inline prepend, immediately
-following 0 for 4 without it.
+It carries the `codex-resources\` `PATH` prepend and the `git init` inline — both were load-bearing
+and missing at different points before 2026-08-06 (`codex-windows-sandbox-setup.exe` and
+`codex-command-runner.exe` live in `codex-resources\`, a sibling of `bin\` in every standalone
+release, never on `PATH` by default; and Codex refuses to run outside a trusted directory, so a bare
+temp folder needs `git init` first). Full account in
+[`plans/dispatch-retro.md`](../../plans/dispatch-retro.md) § Codex. Read the **exit code**, not just
+the printed line:
 
-**The `git init` is also load-bearing and was missing until 2026-08-05.** Codex refuses to run outside a
-trusted directory, and a bare temp folder is not one — so the probe died with `Not inside a trusted
-directory` before exec was ever reached, and reported `SMOKE FAILED` for a runner it had never
-tested. **A probe that cannot pass re-routes every work order forever while reporting a healthy
-runner as broken**, and its output is indistinguishable from a real failure. If you ever change this
-block, verify the probe can still report `SMOKE OK` on a working runner before trusting a
-`SMOKE FAILED` from it.
+- **exit 0, `SMOKE OK`** — the runner can actually write. Route to Codex.
+- **exit 1, `SMOKE FAILED`** — codex ran and wrote nothing. **This is the runner.**
+- **exit 2** — the probe itself could not run (`codex-resources\` missing, codex not resolvable on
+  PATH or at the fallback install, `git init` failed). **This is a harness bug, not a runner
+  verdict** — fix it before trusting any verdict from this script. A probe that cannot pass re-routes
+  every work order forever while reporting a healthy runner as broken.
 
-`SMOKE FAILED`, a non-zero exit, or an empty file means **re-route to Claude Sonnet before writing
-anything** — Sonnet, not Opus, per `ROUTING.md` § "Which Claude": the rubric already found no judgment
-in this work order, and a down runner does not change what the work is. Say so in the routing
-sentence. The brief does not change; only who receives it does. Distinguish the two failures in your
-report: *the probe could not run* is a harness bug you should fix; *the probe ran and Codex wrote
-nothing* is the runner.
+Exit 1 or exit 2 both mean **re-route to Claude Sonnet before writing anything** — Sonnet, not Opus,
+per `ROUTING.md` § "Which Claude": the rubric already found no judgment in this work order, and a down
+runner does not change what the work is. Say so in the routing sentence. The brief does not change;
+only who receives it does. Distinguish the two failures in your report exactly as the exit codes
+do: *the probe could not run* (exit 2) is a harness bug you should fix; *the probe ran and Codex wrote
+nothing* (exit 1) is the runner.
 
 Record a failure as a **transient condition, not a standing fact about the machine** — re-probe next
 dispatch. Do not raise `--sandbox`; that is the user's call and it would not have helped. Do not
@@ -170,27 +156,24 @@ bring-the-user-in rule and probably an ambiguous work order — not a tier probl
 as a saving to find. `ROUTING.md` says why: it is the only role asked to notice what is *absent*, and
 that is the first thing to degrade.
 
-**To Codex** — pipe the brief in via stdin so nothing has to survive PowerShell quoting:
+**To Codex** — same script, `--brief`/`--out` mode, so the `PATH` fix from step 2b can't drift out of
+sync between the probe and the real dispatch:
 
-```powershell
-$env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources;$env:PATH"
-Get-Content .claude\dispatch\WO-1.4-brief.md -Raw | codex exec `
-  --cd c:\dev\planbook `
-  --sandbox workspace-write `
-  -o .claude\dispatch\WO-1.4-result.md `
-  -
+```
+node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .claude/dispatch/WO-1.4-result.md
 ```
 
-- `--sandbox workspace-write` is the standing authorization: reads anywhere, writes only inside
-  `c:\dev\planbook`, no network. **Do not raise it to `danger-full-access`.**
-- Codex runs long. Give the Bash call a 600000 ms timeout.
-- **Use an absolute path for any log redirect.** An unset `$TMPDIR` aborted a WO-1.6 dispatch before
-  Codex started.
-- If `codex` is not on PATH: `C:\Users\WildB\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe`.
-- **The `$env:PATH` prepend above is required, not decorative** — see step 2b. Without it, `codex
-  exec` can still start (the launcher resolves from a separate `PATH` entry) but its own helper
-  spawns fail with `codex-windows-sandbox-setup.exe: program not found`, which reads exactly like a
-  down runner until you know to check for this one missing directory.
+- It resolves both paths to absolute internally, hardcodes `--sandbox workspace-write` (reads
+  anywhere, writes only under the repo, no network — **do not raise it to `danger-full-access`**, and
+  the script gives you no flag to), and falls back to
+  `C:\Users\WildB\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe` if `codex` isn't resolvable on
+  PATH.
+- It exits 0 only if codex exited 0 **and** the result file exists — a zero exit with nothing written
+  is the WO-1.7 shape (a runner that failed and said it succeeded), and the script treats it as a
+  failure rather than a silent pass. Exit 2 means the dispatch never ran at all (see step 2b); read
+  its stderr before treating a non-zero exit as the runner's verdict.
+- Codex runs long. Give the Bash call a 600000 ms timeout — the script's own internal cap is 20
+  minutes, but the outer timeout is what actually protects the session.
 
 **A result file lands on both routes.** The brief is what was asked; the result is what came back.
 A transcript ages out; both halves of the audit trail are files.

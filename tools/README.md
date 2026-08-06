@@ -10,13 +10,19 @@
 | `wo-gate.mjs` | Work order gates, "what's next", and the maintenance ticks with a recomputed dashboard. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
+| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path>` |
 
-The four `wo-*.mjs` scripts are **dispatch plumbing**, not app tooling — they read `plans/` and the
-agent transcripts, and none of them touches `src/`. They exist because the pipeline was re-deriving
-the same work every run: gate parsing, brief assembly, sweep allowlists, and a cost analysis that was
-rebuilt from scratch four times in one afternoon and thrown away each time. Same failure mode as the
-two throwaway browser harnesses that became `verify-shell.mjs`. `wo-gate.mjs --tick` is the only one
-that writes, it only writes to `plans/`, and it refuses to touch a 👤 line or `CHANGELOG.md`.
+The four `wo-*.mjs` scripts and `codex-invoke.mjs` are **dispatch plumbing**, not app tooling — they
+read `plans/` and the agent transcripts, and none of them touches `src/`. They exist because the
+pipeline was re-deriving the same work every run: gate parsing, brief assembly, sweep allowlists, and
+a cost analysis that was rebuilt from scratch four times in one afternoon and thrown away each time.
+Same failure mode as the two throwaway browser harnesses that became `verify-shell.mjs`.
+`wo-gate.mjs --tick` is the only one that writes to the repo, and it only writes to `plans/`, refusing
+to touch a 👤 line or `CHANGELOG.md`. `codex-invoke.mjs` writes outside the repo (a temp dir for
+`--probe`, the dispatch result file for `--brief`/`--out`) and exists because the `codex-resources\`
+`PATH` fix was re-derived and re-typed at two call sites inside `work-order-orchestrator.md` — one
+file means the fix can only be right or wrong in one place. Full saga in
+[`../plans/dispatch-retro.md`](../plans/dispatch-retro.md) § Codex.
 
 The demo build lands in Phase 8 (WO-8.2), modelled on Roll Call!'s `tools/build-demo.mjs`.
 

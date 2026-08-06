@@ -161,9 +161,11 @@ $env:PATH = "$env:USERPROFILE\.codex\packages\standalone\current\codex-resources
 
 The `current` junction is used rather than a version string so the fix survives Codex's own
 auto-updates. Verified with the project's own exec-time probe, twice, cleanly: **2 for 2 `SMOKE OK`**
-on 2026-08-06, immediately after the run of 4 straight failures above. Full account, and the
-orchestrator instructions that now carry this inline, are in
-[`../dispatch-retro.md`](../dispatch-retro.md) § Codex and
+on 2026-08-06, immediately after the run of 4 straight failures above. The fix and the probe both now
+live in one script, `node tools/codex-invoke.mjs` (`--probe` / `--brief`/`--out`), so the same `PATH`
+prepend backs the health check and the real dispatch instead of being retyped at each call site. Full
+account in [`../dispatch-retro.md`](../dispatch-retro.md) § Codex; the orchestrator instructions that
+invoke the script are
 [`../../.claude/agents/work-order-orchestrator.md`](../../.claude/agents/work-order-orchestrator.md)
 step 2b.
 
