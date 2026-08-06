@@ -198,6 +198,15 @@ meet is a second source of truth that's wrong by first period.)*
       not the second. "Did the class not meet, or did I forget?" is the question the home screen
       exists to answer.
 - [ ] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one.
+- [ ] 🚩 **Hall passes**: bathroom, nurse, quick. One tap out, one tap back, an append-only log keyed
+      by student id. **An open pass survives a force-quit** — the app must never lose track of a
+      student who is out of the room, which is the one place this deliberately does not copy Roll
+      Call!, where active passes live in memory. A pass is not an attendance mark: a student at the
+      nurse was present. *(Added 2026-08-06. This was never in this roadmap — the owner found it
+      missing the first time she used the finished registry. Phase 2's goal is that she stops
+      opening Roll Call!, and she issues passes every period, so its absence made the goal
+      unreachable. WO-2.8.)*
+- [ ] Pass banner, overdue alerts, and pass history. *(Cut to Ship 2 — WO-2.9.)*
 - [ ] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
       school-wide `no-school`, or drop named classes on a future date when an assembly is known.
       Stored as calendar events and *read* by attendance — never copied. Phase 6 adds the month

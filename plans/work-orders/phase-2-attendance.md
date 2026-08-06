@@ -292,3 +292,97 @@ architecture exists to avoid. The teacher exports the file; the app never fetche
 
 **Traps** — `.xlsx` parsing without a dependency is real work; if it threatens the phase, ship
 `.csv` only and say so in `README.md`'s known limitations. Do not add a parsing library.
+
+---
+
+## WO-2.8 — Hall passes: issue, hold, return
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1, WO-1.13
+**Closes roadmap** Phase 2 → "Hall passes: bathroom, nurse, quick"
+
+**Why it exists.** The owner issues hall passes every period in Roll Call! and found them missing
+the first time she used Planbook's registry. This phase's goal is *"the owner stops opening Roll
+Call!"* — and a Planbook without passes does not meet it, because she keeps the other app open for
+this one thing.
+
+**This feature was never in the roadmap.** It is not something a work order dropped; it was never
+written down. The only two mentions anywhere in the repo — in
+[`../../docs/data-model.md`](../../docs/data-model.md) § log and
+[`phase-4-signals.md`](phase-4-signals.md) — cite Roll Call!'s pass log as a *precedent for
+append-only storage*, not as a feature Planbook would have. Found on first use, 2026-08-06.
+
+**The reference is Roll Call!'s pass flow** — `src/dashboard.html`: `startPass()` (~3328),
+`timeBack()` (~3350), `passButtonsHTML()` (~5260), `_finalizeDismissedPass()` (~5126), and the
+`col-passes` column in `renderHead()`. Read them before designing. Three types, in the owner's own
+words: **Bathroom · Nurse · Quick** (Roll Call! labels them 🚽 Bath, 🏥 Nurse, ⚡ Quick).
+
+**Deliverables**
+- **A `Passes` column in the registry**, per Roll Call!'s `col-passes` at `min-width: 160px`. Three
+  buttons per student while they are in the room; a single **Return** button while they are out.
+  *(The attendance panel's 720px cap was lifted on 2026-08-06 partly for this — see
+  `src/attendance.css`.)*
+- **Issue a pass in one tap.** Records who, which type, and the time out.
+- **Return in one tap.** Computes minutes out and appends one entry to the pass log.
+- **A concurrent cap**, as Roll Call! has (`MAX_ACTIVE_PASSES = 3`), with the buttons disabled and
+  the reason on screen rather than a dead control.
+- **An open pass SURVIVES A RELOAD, A CRASH, AND A FORCE-QUIT.** See Traps — this is the one place
+  this work order deliberately does *not* copy Roll Call!.
+- **The pass log is append-only and keyed by student id**, per
+  [`../../docs/data-model.md`](../../docs/data-model.md) § log. Never by name.
+- **`D` and an open pass agree.** Marking a student dismissed while they are out closes the open
+  pass rather than leaving one that never returns; undoing the `D` restores it. Roll Call!'s
+  `_finalizeDismissedPass()` / `cancelDismiss()` pair is the model.
+
+**Out of scope** — the elapsed-time banner, the overdue alerts, and the pass-history view, all of
+which are WO-2.9. Pass data as a Phase 4 signal. Printing a physical pass.
+
+**Acceptance**
+- [ ] Issuing a pass, force-quitting the app, and relaunching shows the student still out, with the
+      original time out — not a cleared board. 👤
+- [ ] Return writes one log entry with the right minutes, and the student's buttons come back.
+- [ ] The fourth concurrent pass is refused with a reason on screen, not by a dead button.
+- [ ] Marking a student `D` while they are out leaves no pass open, and undoing the `D` puts it back.
+- [ ] The log is keyed by student id — verify in the document, not the UI. Renaming a student after
+      the fact neither orphans nor re-attaches their passes.
+- [ ] Issuing and returning a pass creates no attendance record and changes no attendance mark. A
+      student who went to the bathroom was present.
+- [ ] Every pass control clears 44px on a coarse pointer. 👤
+
+**Traps** — **Roll Call! keeps `activePasses` in memory only, and copying that here is the one
+mistake this work order exists to prevent.** Over there the app runs a session on a machine that
+stays awake; here it is an installed iPad PWA that iOS suspends and evicts, used by a teacher who is
+interrupted every period. An in-memory pass means a force-quit loses track of a student who is
+physically out of the room, and the app cannot say so because it no longer knows. That is a safety
+property, not a convenience.
+
+And **do not infer presence from a pass.** A student on a bathroom pass is present; the mark and the
+pass are independent, and the `D` rule above is the only coupling between them.
+
+---
+
+## WO-2.9 — Pass banner, overdue alerts, and history
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.8
+
+**Why it exists.** Cut from Ship 1 deliberately: WO-2.8 makes the daily flow work, and everything
+here is what makes it comfortable. The data is recorded either way, so these views can follow
+without losing any of it.
+
+**Deliverables**
+- **The active-pass banner**, per Roll Call!'s `renderActivePassBanner()` — a card per student out,
+  with name, type, time out, and elapsed time.
+- **Two escalating overdue alerts**, per Roll Call!'s configurable `alertOneMin` / `alertTwoMin`.
+- **A pass history view**, per student and per class, reading the append-only log.
+- Presentation-mode safe: a projected banner names students who left the room, so it obeys
+  [`../../src/supports.js`](../../src/supports.js)'s answer like every other surface.
+
+**Acceptance**
+- [ ] Elapsed time is correct after the app has been backgrounded for ten minutes. 👤 *(See Traps.)*
+- [ ] Both alerts fire once each, not repeatedly, and not again after the student returns.
+- [ ] The history view's totals match the log; a hand count of one student's passes agrees.
+- [ ] Presentation mode suppresses the banner's names.
+
+**Traps** — **iOS suspends timers when Safari backgrounds a PWA.** An elapsed counter that ticks
+will read "2 minutes" after twenty, and it will do it silently. Compute elapsed from the stored
+timestamp on every render; never accumulate. Same class of bug as the eviction hazard in
+`CLAUDE.md` — correct on a desktop, wrong on the device this ships to.
