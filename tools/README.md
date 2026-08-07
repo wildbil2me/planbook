@@ -200,8 +200,33 @@ finished pass has no card and therefore no button. And the fourth is the desk ha
 rather than the line itself: Return and Cancel are measured as different SHAPES (filled against
 outline) because "they cannot be confused at speed" is the owner's call, but "they are drawn
 identically" is a thing a refactor can do by accident and a computed style can catch. Seven
-mutations, all reverted and tabulated in `TESTING.md` § WO-2.11.**
-Update
+mutations, all reverted and tabulated in `TESTING.md` § WO-2.11. 359 at WO-2.12, and **ten** of
+those are portrait showing today — but the tree WO-2.12 arrived on measures **349**, not the 344
+this line recorded at WO-2.11. That figure was five short of what shipped, and the correction is
+arithmetic rather than a re-run: `git diff` against the WO-2.11 commit adds exactly ten `check()`
+calls and re-points one, so 359 − 10 = 349 is the number the previous tree really had. The footnote
+below already describes this happening once; it has now happened twice, both times the same way —
+checks added after the count was written down. Three of the ten are worth knowing about. **The
+rotation is not simulated**: nothing between the two orientations calls `renderAttendance()`, because
+"landscape still draws six, with no reload" is a claim about a media-query listener and a harness
+that repainted the screen by hand would go green against a build with no listener in it — which is
+precisely what every other section of this file does, and why the defect could exist unnoticed. And
+the long-name check in the WO-2.10 note-panel block **changed sides** rather than being deleted: it
+used to assert that a long name in portrait wants MORE than the other columns leave (the cap being
+load-bearing was the precondition that made the note-panel measurement non-vacuous), and one day
+column reverses that arithmetic, so it now asserts the thing WO-2.12 promised in its place — the
+name is drawn in full and the ellipsis never engages. The third is the only check in that section
+that is nobody's acceptance line: an unlocked past column is module state, a rotation walks straight
+past it, and turning the iPad upright with Tuesday unlocked left today's cells read-only under a
+banner naming a day that was no longer drawn — so the check drives the ✏ in landscape and reads the
+screen after the turn. Five mutations, all reverted and tabulated in `TESTING.md` § WO-2.12.
+**361 after the rotation trigger was re-cut the same day**, and the two added checks are the ones the
+shipped build would have failed: the owner's iPad turned once, worked, and then stopped answering, so
+the section now turns the device **four more times** and asserts a count on each. The other change is
+a subtraction — the narrow-laptop-window checks no longer call `renderAttendance()` by hand, because
+the repaint hangs off `resize` now as well and a hand render would hide the loss of it a second time.
+Everything above about the rotation not being simulated still holds and now covers three signals
+rather than one.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

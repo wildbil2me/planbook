@@ -212,7 +212,11 @@ meet is a second source of truth that's wrong by first period.)*
 - [x] 🚩 **Three distinct states per class per day: taken · dropped · not taken yet.** The third is
       not the second. "Did the class not meet, or did I forget?" is the question the home screen
       exists to answer.
-- [x] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one.
+- [x] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one. *(Amended
+      2026-08-07 by WO-2.12: a past day needs a day column, and **portrait now draws only today's**,
+      so correcting last Tuesday means turning the iPad to landscape. The unlock itself is unchanged
+      and paging still works in portrait a day at a time. This is the accepted cost of the trade
+      below, not a gap to close.)*
 - [x] 🚩 **Hall passes**: bathroom, nurse, quick. One tap out, one tap back, an append-only log keyed
       by student id. **An open pass survives a force-quit** — the app must never lose track of a
       student who is out of the room, which is the one place this deliberately does not copy Roll
@@ -223,7 +227,10 @@ meet is a second source of truth that's wrong by first period.)*
       unreachable. WO-2.8.)* *(Done 2026-08-07. Two things the owner found in the first iPad sitting
       and neither is in the line above: a misclicked pass has no way out but Return, which writes a
       phantom trip into the append-only log — WO-2.11, 🚩. And the 160px column costs the portrait
-      grid a day column — WO-2.12.)*
+      grid a day column — WO-2.12.)* *(WO-2.12 settled 2026-08-07, and not the way it was framed:
+      offered four columns, five, or six bought by cutting the name to an avatar, the owner rejected
+      the question. **Portrait shows today; landscape shows the week.** The `Passes` column stops
+      competing for width in portrait, full names fit, and the grid repaints when the iPad turns.)*
 - [ ] Overdue alerts, the elapsed clock, and pass history. *(Cut to Ship 2 — WO-2.9. The banner
       itself moved to WO-2.11 on 2026-08-07; what stays here is the half that has to survive iOS
       suspending a backgrounded PWA.)*

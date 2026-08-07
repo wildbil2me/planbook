@@ -277,6 +277,24 @@
   the time out, which is the surface the owner confirmed reads as a reminder. What it is not is
   noise on the screen you are standing in front of, naming students from a room you are not in.
 
+  ── PORTRAIT SHOWS TODAY, LANDSCAPE SHOWS THE WEEK (WO-2.12) ──
+
+  The six-day window is a landscape and laptop thing. In PORTRAIT this grid draws one day column —
+  today's — because that is how the screen is used: held at the classroom door, marking the period
+  that is walking in. Reading a week is a thing done sitting down, and the iPad is turned for it.
+
+  It replaced a width budget that had been quietly taking columns away since the Passes column
+  landed (four at 768pt, five at the owner's 834pt 11″), and it is a better answer than any number
+  that budget could have produced: the name column stops competing for pixels at all, so a full
+  surname fits without an ellipsis on the one screen where names are read at a glance.
+
+  The cost, and it is real: BACKFILLING A PAST DAY NEEDS A DAY COLUMN, so correcting Tuesday means
+  turning the iPad. The unlock is unchanged — see editPastDay() — and it is landscape that shows a
+  Tuesday to unlock. Accepted with the trade on 2026-08-07.
+
+  dayColumnCount() holds the rule and the argument; the listener under it is what makes a turn
+  repaint without a reload.
+
   Out of scope and deliberately absent: percentages and counts over history (WO-2.4), the keyboard
   path (WO-2.5), per-student history and print/CSV (WO-2.6), and calendar events (WO-2.3), which
   this screen READS once they exist and never authors — plus the elapsed clock on the card, the two
@@ -305,6 +323,10 @@ import { rosterName, fullName } from './roster.js';
    DOM, reads no clock and never calls the store, so this file can hand it the live document inside
    an update() without the two modules being able to disagree about who is out of the room. */
 import * as passes from './passes.js';
+/* Which view is on glass, for the rotation repaint below and for nothing else. Imported rather than
+   read off `#classView` here, so that "is the registry showing" has one answer in this app instead
+   of two — and it costs no loop, because src/views.js imports src/prefs.js and nothing else. */
+import { currentView } from './views.js';
 
 const CLASS_NAME_ID = 'attendanceClassName';
 const DATE_ID = 'attendanceDate';
@@ -585,13 +607,23 @@ function dayColumns(count, offset, today) {
                     gives it 944px, on both pointers. */
 const DAY_COL_PX = 72;
 const PASS_COL_PX = 160;
-const NAME_COL_COARSE_PX = 232;
+const NAME_COL_COARSE_PX = 256;
 const NAME_COL_FINE_PX = 280;
 const CHROME_PX = 80;
-/* Three is the fewest this screen will draw. Below the width where three fit, the wrap's
+/* Three is the fewest the WIDTH BUDGET will draw. Below the width where three fit, the wrap's
    `overflow-x` safety valve takes over — a phone is not the device this grid is for, and dropping
-   to two columns would not make it one. */
+   to two columns would not make it one.
+
+   IT HAS EXACTLY ONE EXCEPTION AND IT IS THE NEXT CONSTANT DOWN. WO-2.12 puts PORTRAIT at one
+   column, and that is not the budget running out — it is a different question being answered before
+   the budget is ever asked (see dayColumnCount). The floor still governs everything the budget
+   decides, which is every landscape viewport and every laptop window; nothing else may go under
+   three, and a second exception here would turn the floor into a suggestion. */
 const MIN_DAY_COLS = 3;
+/* The exception. In portrait this screen is held at the classroom door to mark TODAY — the owner's
+   call, 2026-08-07 — so it draws today's column and nothing else. One rather than two: the second
+   column would be yesterday, which is neither the day being marked nor the week being read. */
+const PORTRAIT_DAY_COLS = 1;
 
 /*
   How many day columns fit. Six is the answer on a laptop and on an iPad in landscape; a narrower
@@ -609,19 +641,40 @@ const MIN_DAY_COLS = 3;
   This screen already had an answer for "not enough width" and it is the third one, so the ladder
   became the arithmetic it was always standing in for.
 
-  What that costs, said plainly: an iPad in PORTRAIT now shows four day columns instead of six.
-  Landscape, and any laptop, still shows six. If the owner would rather have the sixth column back
-  in portrait, the pixels have to come from the name column — see the cap in the stylesheet — and
-  that is her call to make, not one to make for her.
+  AND PORTRAIT NO LONGER ASKS THE BUDGET AT ALL (WO-2.12). What the budget cost was written here as
+  "an iPad in portrait now shows four day columns instead of six" — four at 768pt, five on the
+  owner's 834pt 11″, six only at 1024. That was escalated to her as a three-way choice (four, five,
+  or six bought by cutting the name column to an avatar and an ellipsis) and she rejected the
+  question on 2026-08-07: in portrait this screen is held at the classroom door to mark TODAY, and
+  the six-day window is a thing you read at a desk. So portrait draws one column and landscape keeps
+  six, and the arithmetic below is what LANDSCAPE and every laptop window run on.
+
+  ORIENTATION IS THE SIGNAL, NOT WIDTH — which is why this is a branch above the budget and not a
+  smaller number inside it. A 900px browser window is 900px wide and still LANDSCAPE, and a teacher
+  who has dragged her laptop window narrow is at a desk reading a week; a width rule would give her
+  today only and take the week off the device the week is for. The two questions are asked in the
+  order they matter: which way is the screen held, then how much of it is there.
 
   Measured off the viewport rather than off the panel, and it stays that way after WO-1.13 moved
   this screen out of a dialog: a hidden element measures zero, this screen can legitimately be
   painted while `#classView` is still `.hidden` (boot restores the view and the paint in one pass),
   and a column count of three because the answer was asked a frame early is a defect nobody would
-  look for here.
+  look for here. THE ORIENTATION QUESTION IS ASKED THE SAME WAY AND FOR THE SAME REASON: it is
+  `innerHeight` against `innerWidth`, which is a fact about the window from the first frame, and not
+  the shape of an element that may not be on screen yet.
+
+  `height` joins `width` as an optional argument for the reason `width` has one — so the pair can be
+  put to this function directly rather than only through a viewport a harness has to emulate.
+  Neither is passed by anything in the app.
 */
-function dayColumnCount(width) {
+function dayColumnCount(width, height) {
   const w = typeof width === 'number' ? width : window.innerWidth;
+  const h = typeof height === 'number' ? height : window.innerHeight;
+  /* `h >= w` is what CSS's own `(orientation: portrait)` means, down to the square case, so this
+     answer and a stylesheet's can never disagree — which matters because the name cap that pays for
+     this column lives over there. Written as arithmetic rather than as a second matchMedia call so
+     that the two optional arguments above reach it. */
+  if (h >= w) return PORTRAIT_DAY_COLS;
   /* The cap on the name column only exists under a coarse pointer, and the cells are 44px there
      rather than 34px, so the two pointers genuinely have different arithmetic. Asked at call time
      rather than at load: an emulated pointer changes under a harness, and a laptop with a
@@ -632,6 +685,118 @@ function dayColumnCount(width) {
   const fits = Math.floor(spare / DAY_COL_PX);
   return Math.max(MIN_DAY_COLS, Math.min(DEFAULT_DAY_COLS, fits));
 }
+
+/*
+  THE ROTATION REPAINT, and it is the half of WO-2.12 that is not arithmetic. The count above is read
+  when the grid is PAINTED, not when it is looked at, so an iPad turned from portrait to landscape
+  would sit there with today's column alone until something else happened to redraw — and acceptance
+  line 2 is "landscape still draws six, on the same device, WITH NO RELOAD".
+
+  THIS WAS ONE MEDIA-QUERY LISTENER AND IT DID NOT SURVIVE THE OWNER'S IPAD (2026-08-07, the same day
+  it shipped). What she saw: the first turn worked, the turn back did not, a reload restored six
+  columns, and then the next turn into portrait did nothing at all. The argument for the single
+  listener was that `(orientation: portrait)` fires exactly once on a flip while `resize` fires fifty
+  times across a laptop window drag and needs a debounce to stop being one. Both halves of that are
+  true and neither one held, because WebKit breaks it in two ways a Chrome harness cannot see:
+
+    - **A MediaQueryList with no strong reference can be collected**, and its listener goes with it.
+      The query was a `const` inside the registration block, referenced by nothing afterwards — so it
+      was collectable the moment registration returned, and "worked once, then never again, timing
+      unpredictable" is exactly the shape of a listener that a garbage collection ate. `mediaWatch`
+      below is module-scoped for that one reason and must stay that way; it looks unused and is not.
+    - **iOS reports `innerWidth`/`innerHeight` from BEFORE the turn** while the change event is being
+      delivered. dayColumnCount() then measures the orientation the device just left, repaints the
+      count that is already on screen, and the repaint is real but invisible — which is the other
+      half of what she saw, and is why one more listener would not have been enough on its own.
+
+  So the trigger is now every signal a turn produces — the media query, `resize`, and the deprecated
+  `orientationchange` — and each of them asks THREE TIMES: now, next frame, and once more after the
+  rotation animation has settled. The debounce objection is answered by the guard rather than by
+  narrowing the trigger: syncDayColumns() compares the count it would draw against the count actually
+  on screen and returns without touching the DOM when they match. A laptop window dragged across the
+  whole budget repaints on the four widths where the answer changes and does nothing on the other
+  forty-six frames, which is what the debounce was for. A duplicate signal is free by construction,
+  and that is what makes it safe to listen to all of them.
+
+  What it does NOT do is reset anything. renderAttendance() draws from the module state that is
+  already there, so the open detail panel, the filter, the search and the page offset all survive
+  the turn — which is the rest of acceptance line 3. A mark cannot be lost in flight because there
+  is no flight: a mark is stored on the tap (see setMark), and a note is written per keystroke
+  (setNote). What a repaint does cost is the caret, if the teacher is mid-word in a note when she
+  rotates; that is the same trade paintDetail() already makes everywhere else, and rotating the iPad
+  is not something done absent-mindedly mid-sentence.
+
+  THE ONE THING IT DOES HAVE TO RECONCILE IS AN UNLOCKED PAST COLUMN, and leaving it out ships a
+  broken screen rather than an untidy one. Unlock Tuesday in landscape, turn the iPad upright, and
+  Tuesday is not a column any more — but `editingPast` still names it, so `editDate()` still answers
+  Tuesday, every cell in today's column comes back NOT EDITABLE, and the banner above them says you
+  are editing a day that is nowhere on screen. A teacher at the door with a class walking in cannot
+  mark anybody. pageDays() already has this rule and states it: the strip that says WHICH day you
+  are editing is only honest while that day is on screen. A turn is the second way that day can
+  leave, so it takes the same exit — lockPastDay(), which clears it, repaints and says so out loud.
+
+  Registered here rather than in src/shell.js, which owns every other listener in this app: those are
+  delegated DOM listeners on `document`, and this is not a DOM event at all — it is this module's own
+  measurement changing its answer, and the code that decides HOW MANY COLUMNS is the code that should
+  notice. The guard is the same one shell.js's afterClassChange() applies, and for the same reason:
+  painting a hidden screen is a hundred and fifty cells nobody is looking at, and the registry is
+  repainted on arrival anyway.
+*/
+/* How many day columns are ON SCREEN right now, written by renderAttendance() at the moment it draws
+   them. The guard below reads it, so it is a record of the DOM rather than of a decision — a repaint
+   from any other cause (a class change, a page tap) keeps it honest for free, and there is no second
+   piece of state that can drift out of step with the grid. */
+let paintedDayCols = 0;
+
+/* Long enough for an iPad's rotation animation to finish and the viewport metrics to be the new
+   ones. Only ever costs a comparison if the earlier two attempts already got it right. */
+const TURN_SETTLE_MS = 400;
+let settleTimer = 0;
+
+/* The guard AND the repaint. Cheap enough to call on every resize frame: two window reads and an
+   integer compare before anything touches the DOM. */
+function syncDayColumns() {
+  if (currentView() !== 'class') return;
+  const count = dayColumnCount();
+  if (count === paintedDayCols) return;
+  /* Asked with the NEW count: is the day being edited one of the columns about to be drawn?
+     lockPastDay() repaints and announces, so it is the whole of this branch rather than a step
+     before renderAttendance(). */
+  const shown = dayColumns(count, pageOffset, todayISO());
+  if (editingPast && shown.indexOf(editingPast) < 0) lockPastDay();
+  else renderAttendance();
+}
+
+/* Now, next frame, and after the turn has settled — see the header for why one look is not enough on
+   iOS. The settle check is the only one that is debounced, because it is the only one where fifty
+   pending timers would be fifty timers rather than fifty integer compares. */
+function onTurn() {
+  syncDayColumns();
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(syncDayColumns);
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => { settleTimer = 0; syncDayColumns(); }, TURN_SETTLE_MS);
+}
+
+/* MODULE-SCOPED SO THE LISTENER LIVES. See the header: a MediaQueryList referenced by nothing is a
+   MediaQueryList WebKit may collect, taking the listener with it, and the screen that results looks
+   like an iPad that has decided today is all there is. Nothing reads this variable and nothing
+   should — holding the object IS its job. */
+let mediaWatch = null;
+if (typeof window.matchMedia === 'function') {
+  mediaWatch = window.matchMedia('(orientation: portrait)');
+  /* `addEventListener` on a MediaQueryList is Safari 14 and up; `addListener` is the deprecated
+     fallback, kept because the failure it prevents is silent. */
+  if (typeof mediaWatch.addEventListener === 'function') {
+    mediaWatch.addEventListener('change', onTurn);
+  } else if (typeof mediaWatch.addListener === 'function') {
+    mediaWatch.addListener(onTurn);
+  }
+}
+/* The two that do not depend on a media query surviving. `orientationchange` is deprecated and is
+   here anyway: it is the one iOS has always fired, this app has to work on the iPad in the room, and
+   a signal that duplicates another costs one integer compare. */
+window.addEventListener('resize', onTurn);
+window.addEventListener('orientationchange', onTurn);
 
 /* ────────────────────────────── reading the document ──────────────────────────────
 
@@ -1341,7 +1506,14 @@ export function setPassNote(studentId, text) {
    rows and which columns exist. */
 
 /* The deliberate unlock. One past column at a time — a screen where every past day is live is a
-   screen where a mis-tap two columns left is a mark on a day the teacher was not thinking about. */
+   screen where a mis-tap two columns left is a mark on a day the teacher was not thinking about.
+
+   BACKFILLING A PAST DAY NEEDS A DAY COLUMN, and in portrait there is only today's (WO-2.12). The
+   unlock itself is unchanged and so is paging — "Earlier" walks back one weekday per tap there
+   instead of six — but the way this is actually done at the door is to TURN THE IPAD, which brings
+   the week back and the ✏ with it. That is the accepted cost of portrait showing today, booked with
+   the trade on 2026-08-07 rather than discovered later. Written here because this is where someone
+   looking for last Tuesday's ✏ will arrive. */
 export function editPastDay(date) {
   if (!writableDate(date) || date === todayISO()) return;
   editingPast = date;
@@ -1369,6 +1541,11 @@ export function lockPastDay() {
   window that ends today, and that clamp is the visible half of "future dates are blocked": the
   button is there, disabled, saying why, rather than absent and unexplained.
 
+  A WINDOW IS ONE DAY WIDE IN PORTRAIT (WO-2.12), so "Earlier" walks back a weekday at a time there.
+  The arithmetic is the same arithmetic — it pages by whatever the window IS — and nothing here
+  needed changing for it; what did change is the wording each control carries, which is built from
+  the count rather than from the six it used to be able to assume.
+
   Paging away from today locks any unlocked past column, because the strip that says WHICH day you
   are editing is only honest while that day is on screen.
 */
@@ -1383,8 +1560,15 @@ export function pageDays(direction) {
   detailFor = '';
   renderAttendance();
   const shown = dayColumns(dayColumnCount(), pageOffset, todayISO());
-  announce(pageOffset === 0 ? 'Back to this week, ending today.'
-    : 'Showing ' + spokenDate(shown[shown.length - 1]) + ' to ' + spokenDate(shown[0]) + '.');
+  /* A one-column window said "Back to this week, ending today" and "Showing Tuesday to Tuesday",
+     which is the kind of sentence that makes a screen reader user go looking for the broken part.
+     One column is one date, and it is said as one. */
+  const one = shown.length === 1;
+  if (pageOffset === 0) announce(one ? 'Back to today.' : 'Back to this week, ending today.');
+  else if (one) announce('Showing ' + spokenDate(shown[0]) + '.');
+  else {
+    announce('Showing ' + spokenDate(shown[shown.length - 1]) + ' to ' + spokenDate(shown[0]) + '.');
+  }
 }
 
 /* Search, filter and sort all rebuild the ROWS and nothing else. The search field is markup in
@@ -1968,10 +2152,13 @@ function paintBanner(columns) {
   if (on === today && todayShown) { banner.classList.add('hidden'); return; }
 
   banner.classList.remove('hidden');
+  /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
+     pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
+  const range = columns.length === 1 ? spokenDate(columns[0])
+    : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
   const text = on !== today
     ? 'You are editing ' + spokenDate(on) + ' — not today.'
-    : 'Showing ' + spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0])
-      + '. Today is not on screen.';
+    : 'Showing ' + range + '. Today is not on screen.';
   banner.append(el('span', 'attendance-banner-text', text));
   const back = actionButton('Back to today', 'data-attendance-page', 'today');
   back.classList.add('attendance-banner-btn');
@@ -2114,23 +2301,33 @@ function paintPager(columns) {
   pager.textContent = '';
   if (!openClass()) return;
 
+  /* THE WORDING COMES OFF THE WINDOW, NOT OFF THE SIX IT USED TO BE (WO-2.12). Portrait draws one
+     column, so "the six weekdays before these" was a tooltip describing a screen the teacher was not
+     looking at — and it was already wrong on a narrow laptop window, where the budget draws five.
+     One number, read from the columns this paint was handed. */
+  const many = columns.length > 1;
   const earlier = actionButton('◀ Earlier', 'data-attendance-page', 'earlier');
-  earlier.title = 'The six weekdays before these';
+  earlier.title = many ? 'The ' + columns.length + ' weekdays before these' : 'The weekday before this';
   pager.append(earlier);
 
+  /* And a one-day window is one date rather than "Aug 7 – Aug 7". */
   pager.append(el('span', 'attendance-pager-range',
-    columns.length ? shortDate(columns[columns.length - 1]) + ' – ' + shortDate(columns[0]) : ''));
+    columns.length
+      ? (many ? shortDate(columns[columns.length - 1]) + ' – ' + shortDate(columns[0])
+        : shortDate(columns[0]))
+      : ''));
 
   const today = actionButton('Today', 'data-attendance-page', 'today');
   today.disabled = pageOffset === 0 && !editingPast;
-  today.title = today.disabled ? 'You are on today' : 'Back to the week ending today';
+  today.title = today.disabled ? 'You are on today'
+    : many ? 'Back to the week ending today' : 'Back to today';
   pager.append(today);
 
   const later = actionButton('Later ▶', 'data-attendance-page', 'later');
   later.disabled = pageOffset === 0;
   later.title = later.disabled
     ? 'Today is the last column there is — tomorrow’s attendance is not something to record yet'
-    : 'The six weekdays after these';
+    : many ? 'The ' + columns.length + ' weekdays after these' : 'The weekday after this';
   pager.append(later);
 }
 
@@ -2344,7 +2541,12 @@ function paintDetail() {
 export function renderAttendance() {
   const cls = openClass();
   const today = todayISO();
-  const columns = dayColumns(dayColumnCount(), pageOffset, today);
+  /* Recorded, not just used: this is the number the rotation guard compares against to decide
+     whether a turn changed anything, and taking it here means every repaint — from any cause —
+     leaves that guard describing what is actually on screen. */
+  const count = dayColumnCount();
+  paintedDayCols = count;
+  const columns = dayColumns(count, pageOffset, today);
   const nameEl = document.getElementById(CLASS_NAME_ID);
   const head = document.getElementById(HEAD_ID);
   const caption = document.getElementById(CAPTION_ID);
@@ -2358,10 +2560,16 @@ export function renderAttendance() {
   paintPager(columns);
 
   if (caption) {
+    /* The table's own description, and it has to survive a one-column window (WO-2.12): "the last 1
+       weekdays are the columns after it" is what the sentence below used to read as in portrait, to
+       the one user who cannot see the grid and check. */
+    const days = columns.length === 1
+      ? (pageOffset === 0 ? 'and today is the one day column after it.'
+        : 'and one day column follows it.')
+      : 'and the last ' + columns.length + ' weekdays are the columns after it, most recent first'
+        + (pageOffset === 0 ? ', starting with today.' : '.');
     caption.textContent = 'Attendance for ' + (cls ? cls.name : 'no class')
-      + '. Students are rows. The first column after the name holds hall passes, and the last '
-      + columns.length + ' weekdays are the columns after it, most recent first'
-      + (pageOffset === 0 ? ', starting with today.' : '.');
+      + '. Students are rows. The first column after the name holds hall passes, ' + days;
   }
 
   if (head) {

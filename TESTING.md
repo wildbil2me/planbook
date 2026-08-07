@@ -802,13 +802,15 @@ is a grid — students down, the last six weekdays across, tap a cell to cycle �
 acceptance lines are the ones in the rewritten work order.
 
 - [x] A mark lands and survives a reload.
-- [x] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
-      iPad**, in the orientation the owner actually holds it. 👤 **⚠ Qualified by WO-2.8 on
-      2026-08-07 — true in landscape, no longer true in portrait.** See § WO-2.8 below, *"The day
-      columns in portrait"*: a 160px `Passes` column joined the grid, `dayColumnCount()` budgets for
-      it, and portrait now draws **four** day columns. Nothing scrolls sideways in either
-      orientation, which is measured. The tick stays until the owner re-closes it, because she is
-      the one who closed it and the choice below is hers.
+- [ ] **Six days of columns in LANDSCAPE, today's column alone in PORTRAIT, for a class of 26, with
+      nothing scrolling sideways in either.** 👤 **Rewritten by WO-2.12 on 2026-08-07 — the owner
+      closes the new line, and § WO-2.12 below is where the sitting is listed.**
+      *The line it replaces — "six days of columns … in the orientation the owner actually holds
+      it" — was ticked on her own device on 2026-08-06 and is kept in the work order rather than
+      erased. WO-2.8's `Passes` column took portrait to four columns and to five on her 834pt 11″;
+      asked to choose four, five or six, she answered that portrait should show today. So the goal
+      changed, and a line whose goal changed is replaced rather than re-ticked. The half about
+      sideways scrolling was always true and is measured in both orientations.*
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — in the column header and in the cells under it.
 - [x] Marking a class taken with zero exceptions still creates a record.
@@ -854,11 +856,12 @@ whatever the build does unless it has been seen to go red:*
 class with a real 25-name roster. The first three are the acceptance lines; the rest are what the
 desk pass could not reach.
 
-- [x] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
-      sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
-      **⚠ Same qualification as the acceptance line above — WO-2.8, 2026-08-07.** Six columns in
-      landscape, four in portrait; no sideways swipe either way, and the leftmost column is still
-      today. § WO-2.8's *"The day columns in portrait"* is the open question and it is the owner's.
+- [ ] **Six columns and twenty-six names in landscape; today's column alone in portrait.** No
+      sideways swipe either way, and the leftmost column is today in both. This is acceptance line
+      2, **rewritten by WO-2.12 on 2026-08-07** — the same rewrite as the acceptance line above, and
+      the same reason: six-in-portrait stopped being the goal when the owner answered the question
+      § WO-2.8 put to her. The tick from 2026-08-06 is not carried over, because what she closed
+      then is not what the screen does now. § WO-2.12's own 👤 list is where this is run. 👤
 - [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the class's card. Acceptance line 6, and the only one that decides whether the flow
       survives contact with a period starting. *(The card's state line was the tap until WO-1.13
@@ -1054,7 +1057,13 @@ line, at the same 172 mentions across the same files as before this work order.*
 
 *All seven were reverted and the run is green on the shipped tree.*
 
-#### The day columns in portrait — the owner's call, and it is open
+#### The day columns in portrait — the owner's call, and it is ANSWERED
+
+> **Settled 2026-08-07 and built as WO-2.12.** The answer was none of the three options tabulated
+> below: **portrait shows today only, landscape keeps six.** Everything from here to the end of this
+> subsection is left standing as the question that was asked and the arithmetic it was asked with —
+> it is why the name cap moved 256 → 232 and then back to 256 — but the table of three options is
+> no longer a live choice. § WO-2.12 is where the answer is tested.
 
 **What happened.** Six day columns, a name column and a 160px `Passes` column do not fit an iPad in
 **portrait** (688px of grid for 848px of demand). This screen already had an answer for "not enough
@@ -1216,6 +1225,158 @@ card makes it `rgba(255,255,255,0.7)` in a faint white outline, with the red arr
 and glyph rather than hue. Confirmed readable on glass in the second sitting. If it ever stops being,
 the fix is a red at rest in the coarse block — a deliberate departure from the predecessor, and one
 that would be commented as one.
+
+### WO-2.12 — Portrait shows today, landscape shows the week
+
+**What this changes.** In **portrait** the registry draws **one day column — today's**. In
+**landscape** it draws six, exactly as before. The orientation is the signal and nothing else is:
+there is no toggle, and a laptop window dragged narrow is still landscape and still shows its week.
+Turning the iPad repaints without a reload.
+
+**Why, in one line the owner said herself:** in portrait this screen is held at the classroom door to
+mark today; the six-day window is a thing you read at a desk. It replaces the width budget that had
+been taking columns away since WO-2.8 — four at 768pt, five on her 834pt 11″ — and it is a better
+answer than any of the three that budget could have given, because the name column stops competing
+for pixels at all.
+
+**The cost, stated rather than discovered:** backfilling a past day needs a day column, so in
+portrait correcting last Tuesday means turning the iPad. Paging still works there — "Earlier" walks
+back one weekday per tap instead of six — but the rotation is the route. It is written down beside
+WO-2.1's unlock deliverable and again at `editPastDay()` in `src/attendance.js`.
+
+- [x] Portrait draws exactly **one** day column, it is **today's**, and the Passes column is still
+      there — measured on the owner's own 834×1112 with a coarse pointer.
+- [x] Landscape still draws six, **on the same device, with no reload**. *(The emulated 11″ is turned
+      from 834×1112 to 1112×834 and the grid is read without being repainted by hand — so what is
+      measured is the trigger, not the arithmetic. A real thumb on real glass is still owed below.)*
+- [x] **And it goes on turning — four more flips, no reload, each drawing the count its orientation
+      asks for.** Added 2026-08-07 after the shipped build failed on the owner's own iPad: one turn
+      worked and the next did not. Everything else in this list turns the device once, and a trigger
+      that fires once and dies passes all of it. See *the turn that only worked once* below.
+- [x] The mark made in portrait is still on the cell **and still in the document** after the turn.
+      *(The desk half of the "rotating mid-class loses nothing" line — see the 👤 list for the half
+      a desk cannot answer.)*
+- [x] The grid fits its wrap in **both** orientations, so WO-2.10's `overflow-x` valve stays shut.
+- [x] A **900px laptop window** is landscape and keeps five day columns; a 1280px one keeps six.
+      Neither falls to one.
+- [x] The longest name this harness can write — "Delacroix-Nguyen, Xiomara" — is drawn **in full**
+      in portrait, with the ellipsis never engaging.
+- [x] **Turning the iPad upright with a past column unlocked puts the screen back on today.** Not an
+      acceptance line — it is the defect this work order opens if the repaint only counts columns,
+      and it was found by asking what module state a rotation walks past. See below.
+
+*Desk pass 2026-08-07: `verify-shell.mjs` **359 of 359, 0 skipped**, up from 349 on the tree this
+work order arrived on — ten new checks, all in a section of their own, plus one existing check in
+the WO-2.10 note-panel block that changed sides (see `tools/README.md`). `wo-sweep.mjs` is 11 checks,
+10 passed, 0 failed, 1 to review — the standing sensitive-field-name line, at the same 172 mentions
+across the same files as before this work order.*
+
+*Re-cut the same day, and the desk pass is now **361 of 361, 0 skipped** — two more checks, both in
+the same section, and two existing ones that stopped being hand-rendered. See below.*
+
+#### The turn that only worked once
+
+**Reported by the owner on 2026-08-07, on her own iPad, hours after this shipped.** In her words: the
+first turn dropped the grid to one day, the turn back to landscape *stayed* at one day; a reload
+restored six; and then turning to portrait did nothing at all. Inconsistent, and inconsistent in the
+way that matters — the screen was sometimes right and never dependably so.
+
+**Nothing was wrong with the arithmetic, and nothing was wrong with the harness's model of it.** The
+count is correct at every size, which is why 359 checks were green over a build that failed at the
+classroom door. What was wrong was the trigger, and it was wrong in two WebKit-specific ways that a
+Chrome harness cannot produce:
+
+- **A `MediaQueryList` referenced by nothing can be garbage-collected, and its listener goes with
+  it.** The query was a `const` inside the registration block and nothing held it afterwards. "Worked
+  once, then never again, timing unpredictable" is the exact signature. The reference is module-scoped
+  now (`mediaWatch`), it looks unused, and it must stay.
+- **iOS reports `innerWidth`/`innerHeight` from before the turn** while the change event is being
+  delivered. `dayColumnCount()` then measures the orientation the device just left and repaints the
+  count already on screen — a real repaint that looks like no repaint at all.
+
+**The fix listens to everything and repaints almost never.** The media query, `resize` and the
+deprecated `orientationchange` all funnel into one handler that looks **three times** — now, next
+frame, and once more after the rotation animation settles at 400ms. The original argument against
+`resize` was that it fires fifty times across a window drag; that is answered by a guard rather than
+by a narrower trigger. `syncDayColumns()` compares the count it *would* draw against the count
+actually on screen and returns without touching the DOM when they match, so a drag repaints on the
+few widths where the answer changes and does nothing on the rest. A duplicate signal costs one
+integer compare, which is what makes listening to all three safe.
+
+**A side effect worth knowing:** a laptop window dragged across a budget boundary now redraws the
+grid, where before it needed a reload. Nobody asked for that; it falls out of the same guard, and it
+is the reason the two narrow-window checks no longer render by hand.
+
+*Two mutation proofs on the re-cut:*
+
+| Mutation | Result |
+|---|---|
+| the handler made one-shot — fires once, then returns forever, which is what a collected listener looks like | **6 red**, the four-flip check among them, and the single fire is spent before the first read |
+| `resize` and `orientationchange` removed, leaving only the media query (the shipped build's trigger) | **1 red** — the 1280px window, which is landscape → landscape and fires no orientation change |
+
+*Both were reverted and the run is green at 361.*
+
+**What this still cannot close.** Neither cause is reproducible in Chrome over CDP, so both checks are
+checks on the **symptom**. The 👤 list below is the only thing that closes the real one, and it now
+wants **several** turns rather than one.
+
+*The one thing this work order fixed that nothing asked for.* `editingPast` is module state and
+survives a repaint, so unlocking Tuesday in landscape and turning the iPad upright left `editDate()`
+answering Tuesday with **no Tuesday on screen**: every cell in today's column came back read-only
+and the banner above them named a day that was not there. A teacher at the door could not mark
+anybody, and nothing about it would have looked like a rotation bug. `pageDays()` already carries the
+rule — *the strip that says which day you are editing is only honest while that day is on screen* —
+and a turn is simply the second way that day can leave, so it takes the same exit through
+`lockPastDay()`.
+
+*The rotation is **not simulated**. Nothing in that section calls `renderAttendance()` between the
+two orientations: the device metrics change, `(orientation: portrait)` flips, and the grid either
+redraws itself or it does not. Every other section of the harness renders after each resize, which is
+exactly why a build with no listener in it could have passed everything before this.*
+
+*Five mutation proofs, run before this was written:*
+
+| Mutation | Result |
+|---|---|
+| the portrait branch removed from `dayColumnCount()`, leaving the width budget | **3 red** — the 834pt portrait grid comes back at four columns |
+| portrait implemented as a WIDTH rule (`w < 1024 → 1`) instead of an orientation one | **1 red** — the 900px laptop window falls to one column, which is acceptance line 6 exactly |
+| `MIN_DAY_COLS` applied to the portrait answer (`Math.max(3, 1)`) — the floor swallowing its own exception | **3 red** — portrait draws three |
+| the `(orientation: portrait)` listener removed | **3 red**, the "no reload" one among them — the turn to landscape leaves three stale columns on screen |
+| the turn repainting without locking a past column that has left the screen | **1 red** — after the turn the banner still says "not today" and today's cell is not a button |
+
+*All five were reverted and the run is green on the shipped tree.*
+
+*One mutation that did **not** go red, recorded because it changes what the third deliverable
+claims.* Putting the coarse name cap back to **232px** leaves every check green: with one day
+column the name column takes its spare either way and the 279px name is drawn in full at 232 and at
+256 alike. The cap "releases the floor" rather than truncating — which is what the rule's own
+comment has always said, and this is the first time it has been measured from both sides. So
+**256 is a revisit, not a fix**: it restores the value WO-2.8's pressure took away, it is the top of
+the 200-to-256 band and the one that truncates least where the column *is* squeezed, and nothing on
+a full-screen iPad depends on it. `NAME_COL_COARSE_PX` in `src/attendance.js` moved with it.
+
+**The 👤 iPad sitting this work order owes.** Neither the harness nor a stylesheet can answer these,
+and the first two are acceptance lines rather than extras.
+
+- [x] **Turn the iPad from portrait to landscape mid-class.** Six columns come back with no reload
+      and no tap, the scroll position down a 26-name list is not thrown away, and a mark made a
+      second earlier is still where you put it. 👤 *(Closed by the owner 2026-08-07, on the re-cut
+      build — the first build failed this on her device and is what the re-cut answers.)*
+- [x] **Then keep turning it — at least five or six times, both ways, and not in a hurry.** This is
+      the line the first build failed and the one turn above did not catch: it worked once and then
+      stopped, and a single flip looks identical either way. Leave the screen sitting for a minute
+      between two of the turns, since the failure was a listener being collected while the page was
+      idle. Every turn draws the count its orientation asks for, or this is not fixed. 👤 *(Closed by
+      the owner 2026-08-07 — "everything's working good on the iPad", against the build that added
+      `resize` and `orientationchange` to the trigger.)*
+- [ ] **The longest name on your real roster is readable in portrait, whole, with no ellipsis** —
+      at the door, at arm's length, while the room fills. 👤
+- [ ] **One column is enough at the door.** Take a full period in portrait without turning the iPad
+      and confirm nothing you reach for was on one of the five columns that are gone. 👤
+- [ ] **Backfilling still works, and the rotation is not a surprise.** Correct last Tuesday from
+      portrait: turn to landscape, unlock the column, mark, turn back. 👤
+- [ ] **Six columns and twenty-six names in landscape**, no sideways swipe, leftmost column today —
+      which is WO-2.1's acceptance line 2 as rewritten, and the line she closes to close that one. 👤
 
 ---
 

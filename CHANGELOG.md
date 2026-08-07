@@ -15,6 +15,50 @@ records what someone remembered.
 
 ### Added
 
+- **WO-2.12 — portrait shows today; landscape shows the week.** The registry now draws **one day
+  column in portrait — today's** — and six in landscape. Held at the classroom door the screen is for
+  marking the period walking in; the six-day window is something you read at a desk, and you turn the
+  iPad for it. Turning it repaints straight away: no reload, no tap, and the mark you just made stays
+  where you put it.
+
+  This replaces the width budget WO-2.8's hall-pass column forced on the grid, which had been quietly
+  taking day columns away — four on a 768pt iPad, five on an 11″. With only today's column to pay for,
+  the name column stops competing for width and full surnames fit without an ellipsis.
+
+  **The orientation is the signal and nothing else is.** A browser window dragged narrow is still
+  landscape and still shows its week, because a teacher at that window is at a desk reading days. There
+  is no toggle and there will not be one — a preference to override this is a setting nobody finds and
+  everybody has to maintain.
+
+  The cost, stated rather than discovered: **backfilling a past day needs a day column, so correcting
+  last Tuesday means turning the iPad.** Paging still works in portrait — *Earlier* walks back one
+  weekday per tap instead of six — but the rotation is the route.
+
+  *One defect this opened and closed in the same pass.* Which day you are editing is module state and
+  survives a repaint, so unlocking Tuesday in landscape and turning the iPad upright left the screen
+  editing a day that was no longer drawn: every cell in today's column read-only, under a banner naming
+  a day that is not there. A teacher at the door could not mark anybody, and nothing about it would
+  have looked like a rotation bug. A turn now takes the same exit a page-away already took — the strip
+  saying which day you are editing is only honest while that day is on screen.
+
+  *And then the turn itself had to be re-cut, hours after it shipped.* On the owner's own iPad the
+  first turn worked and the second did not; a reload restored the week, and the next turn did nothing.
+  The arithmetic was never wrong — 359 desk checks were green over a build that failed at the door —
+  and the **trigger** was, in two ways no headless Chrome can produce. A media-query listener whose
+  query object nothing holds a reference to can be garbage-collected on WebKit, taking the listener
+  with it, which is exactly "worked once, then never again"; and iOS reports the pre-turn window size
+  while the change event is being delivered, so the repaint measures the orientation the device just
+  left and redraws what is already there. The trigger is now the media query **plus** `resize` **plus**
+  `orientationchange`, each looking three times — now, next frame, and once more after the rotation
+  settles — and the cost of listening to all of them is paid by a guard that compares the count it
+  would draw against the count on screen and touches nothing when they match. That guard also answers
+  the original argument against `resize`: a window dragged across the whole budget repaints on the few
+  widths where the answer changes and does nothing on the rest. It falls out of that fix that a laptop
+  window dragged narrower now redraws the grid where before it needed a reload.
+
+  `tools/verify-shell.mjs` 349 → **361** checks, zero skipped, with seven mutation proofs behind the
+  new ones; `sw.js` cache v25 → v27.
+
 - **WO-2.11 — the pass banner, and cancelling a pass issued by mistake.** A band above the registry
   grid carries one card per student who is out of **this** room: their name, the type, the time they
   left, `✓ Return`, `✕ Cancel`, and a note field. Before this, the only way out of a mis-tapped pass

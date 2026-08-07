@@ -197,8 +197,9 @@
 }
 
 /* ── THE GRID ── */
-/* `overflow-x: auto` is a SAFETY VALVE and not the design. src/attendance.js drops columns on a
-   narrow viewport precisely so this never engages; it is here because a table whose fixed columns
+/* `overflow-x: auto` is a SAFETY VALVE and not the design. src/attendance.js draws fewer day
+   columns on a narrow viewport — and exactly one in portrait, since WO-2.12 — precisely so this
+   never engages; it is here because a table whose fixed columns
    outgrow their box would otherwise put a horizontal scrollbar on the whole page, and a page that
    scrolls sideways on an iPad is a teacher swiping the app instead of the list. Vertical scrolling
    still belongs to the overlay alone — one surface, one flick — which is why there is no
@@ -253,8 +254,12 @@
    the browser distributes the rest, and 160px is what three buttons and their labels ask for on a
    fine pointer.
    THAT 160px IS ALSO A NUMBER src/attendance.js KNOWS. dayColumnCount() reserves it before deciding
-   how many day columns to draw, because this column is the reason an iPad in portrait now shows
-   four days instead of six. Change it here and change PASS_COL_PX there in the same edit. */
+   how many day columns to draw. Change it here and change PASS_COL_PX there in the same edit.
+
+   It was this column that cost portrait its day columns at WO-2.8 — four days instead of six — and
+   WO-2.12 answered that by giving portrait TODAY ONLY, so the 160px is now spent against six day
+   columns in landscape and against one in portrait. The column itself does not move with the
+   orientation: a pass is about now, not about a date. */
 .attendance-passes {
   min-width: 160px;
   text-align: left; padding: 9px 10px;
@@ -577,7 +582,12 @@
 
      Two rules matter here and they are not interchangeable: this one gives landscape the room
      outright, and `.attendance-name`'s cap below is what clears portrait, where even the full
-     screen is 8px short. Removing either one puts the note back under the edge. */
+     screen was 8px short. Removing either one puts the note back under the edge.
+
+     WO-2.12 took portrait down to one day column, so portrait now has 200px of slack rather than
+     8px. That is why the cap below could go back up to 256 — and not a reason to drop either rule:
+     the panel still needs the whole width in landscape, and the cap is still what stops a long
+     surname widening the table past its wrap on any screen. */
   .attendance-panel { width: 100%; }
   .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
   .attendance-banner-text { flex-basis: 200px; }
@@ -642,8 +652,23 @@
      wrap. The number that decides there are FOUR day columns and not six is PASS_COL_PX in
      src/attendance.js, and it reads this cap to do it — the two move together or neither is right.
      The value is still inside the 200-to-256 band above, so nothing about what this rule proves
-     has changed. */
-  .attendance-name { max-width: 232px; }
+     has changed.
+
+     AND IT WENT BACK TO 256 AT WO-2.12, which is the pressure being taken off rather than a third
+     opinion about the number. Portrait draws ONE day column now, so the sum that forced 232 no
+     longer exists: 688 - 160 - 72 = 456px of room for a cap of 256, and 200px of that is slack.
+     Landscape is the tighter of the two and still clears it — 944 - 160 - 432 = 352 — so nothing
+     about what landscape draws moves, which WO-2.12 puts out of scope. 256 is the top of the
+     200-to-256 band and the value that truncates least, which is the only reason to prefer it: on a
+     full-screen iPad in either orientation the column takes its spare and no name is cut at all, and
+     the cap is left standing as what it always was — the FLOOR released, so a 279px surname can
+     never widen the table past its wrap.
+
+     NAME_COL_COARSE_PX in src/attendance.js is this number and must move with it in the same edit,
+     the way PASS_COL_PX and `.attendance-passes` do. What it decides there is now only the LANDSCAPE
+     column count: at 256 a coarse landscape viewport needs 928px for six day columns, and every iPad
+     in landscape is 1024 or wider. */
+  .attendance-name { max-width: 256px; }
   /* 54px of column for a 44px cell and 5px either side: the mis-tap this spacing is bought against
      is marking the wrong student absent on the wrong day, which is a phone call home about a child
      who was in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css.
@@ -753,9 +778,14 @@
   .attendance-sort { margin-left: 0; }
 }
 
-/* The phone. Three columns rather than six (src/attendance.js drops them; this block only makes
-   the row that is left readable), and the honest trade is the same one the marks made before:
-   the grid is what the screen is for, and this is not the device it is for. */
+/* The phone. Fewer columns than six (src/attendance.js drops them; this block only makes the row
+   that is left readable), and the honest trade is the same one the marks made before: the grid is
+   what the screen is for, and this is not the device it is for.
+
+   A phone under 640px is almost always being held UPRIGHT, and since WO-2.12 that means one day
+   column rather than the three the width budget used to floor at — which is the first time this
+   screen has actually fitted a phone rather than leaning on the valve below. Nothing here was
+   changed for it; it is recorded because "three columns" is what this comment used to promise. */
 @media (max-width: 640px) {
   .attendance-name { font-size: 12px; padding-right: 4px; }
   /* The column keeps its width here on purpose. Narrowing it below the 54px a 44px cell needs is
