@@ -121,6 +121,17 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
             "audience": "guardian|counselor|admin|student",
             "subject": "", "body": "" }],
 
+  /* Hall passes, in two collections — state and history. See the shape decision below. */
+  "openPasses": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
+                   "type": "bathroom|nurse|quick",
+                   "out": "2026-09-09T09:12:00-04:00" }],
+  "passes": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
+               "type": "bathroom|nurse|quick",
+               "out": "2026-09-09T09:12:00-04:00",
+               "back": "2026-09-09T09:20:00-04:00",
+               "minutes": 8,
+               "endedBy": "return|dismissed" }],
+
   "events": [{ "id": "e_…", "date": "2026-11-26", "endDate": "2026-11-28",
                "kind": "no-school|dropped|early-release|grades-due|conference|meeting|trip|reminder",
                "title": "Thanksgiving break",
@@ -179,11 +190,42 @@ Seven shape decisions that matter:
   a past day is `{ "code": "T" }` and no more.
   **A `U` carries nothing but its code.** No time, no note; it means nobody has looked at that
   student yet, and its whole entry is deleted the moment somebody does.
+  **And a `D` may carry one field more — `passId`** *(added 2026-08-06, WO-2.8)*, the hall pass that
+  dismissal closed, present only when there was one to close and never on any other code. It is on
+  the cell because the link has to die at exactly the moment the `D` does, and the cell is the only
+  record in the document whose lifetime is exactly the dismissal's; finding the pass by matching
+  student and time instead would be the `name + time` join that made Roll Call!'s rows fragile.
+  **The link is live only on today's column, in both directions** *(corrected 2026-08-07)*: a `D`
+  typed onto a past day closes nothing, and editing a past-dated `D` reopens nothing. Yesterday's
+  cell still carries yesterday's `passId`, and a past column is unlockable — so an ungated reopen
+  would push a finished pass back into `openPasses` with yesterday's time out and delete a real
+  dismissal out of the append-only history. A past-dated edit drops the field with the cell instead:
+  the pass stays in `passes` as the honest record of a trip that did happen, and stops being
+  undoable, which is the same accepted loss as the two class-level resets that wipe `marks`.
 - **There is no schedule model.** A class met if it has an attendance record without an
   `exception`. Three distinct states — *met* · *dropped* · *not taken yet* — and the third is not
   the second. See [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
 - **`log` is append-only.** Roll Call! made hall passes append-only after matching rows by
   `name + time` proved fragile. Same reasoning, same answer.
+- **Hall passes are two collections, and neither of them is `log`.** *(Added 2026-08-06, WO-2.8.)*
+  `openPasses` is **state** — who is out of the room right now — and `passes` is **history**, one
+  entry appended per pass that ended and never edited afterward. An open pass is in the document
+  rather than in a module variable because that is the entire point of that work order: Roll Call!
+  keeps `activePasses` in memory, and on an iPad PWA that iOS suspends and force-quits, that means
+  losing track of a child who is physically out of the building. `passes` is not folded into `log`
+  under a fourth `kind`, even though `log`'s append-only rule above cites hall passes as its
+  precedent: `log` is the **outreach** record that Phase 4's cooldown reads and Phase 5's
+  `{{behavior.recent}}` renders into an email, the two record shapes share no fields, and a pass in
+  there is one missing `kind` filter away from a bathroom trip going home in a message. A pass is
+  keyed by `studentId` and `classId` and holds no name, so renaming a student neither orphans nor
+  re-attaches their passes. `minutes` is computed on return from the two stamps and stored, because
+  it is the number a history view reads and it must not change if a clock does. The **local date**
+  of a pass is the first ten characters of `out` and is deliberately not a second field.
+  **A pass never touches attendance.** The one coupling runs one way: a `D` on today's column closes
+  the student's open pass and records `endedBy: "dismissed"`, and taking that `D` back retracts that
+  one entry by its id and puts the pass out again. That retraction is the only removal from
+  `passes` there is, and it exists so that a mis-tap does not leave a trip in the history that never
+  happened. The id it retracts by is on the `D` mark cell — see the cell rule above.
 
 ## Grade math — weighted categories
 

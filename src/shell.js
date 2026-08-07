@@ -83,6 +83,11 @@
                                       teacher marks, and the count is on the column head instead
       data-attendance-sort="first|last"           sorts the rows by that name
       data-attendance-search          on an <input>: narrows the rows as it is typed
+      data-pass-issue="<studentId>" + data-pass-type="bathroom|nurse|quick": sends that student out
+                                      of the room and records the time. Three at once per class,
+                                      after which these are disabled and the reason is above the grid
+      data-pass-return="<studentId>"  one tap back: computes the minutes and appends one entry to
+                                      the pass log. Neither of these touches attendance
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
       data-roster-paste               opens the paste box over the roster panel
@@ -137,6 +142,9 @@ import * as backup from './backup.js';
 import * as classes from './classes.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
+/* Imported here for the seam at the foot of this file and for nothing else — every control a hall
+   pass has is on the registry, and src/attendance.js is what drives them. */
+import * as passes from './passes.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
@@ -480,6 +488,21 @@ document.addEventListener('click', (e) => {
   if (attFilter) { attendance.setFilter(attFilter.getAttribute('data-attendance-filter')); return; }
   const attSort = e.target.closest('[data-attendance-sort]');
   if (attSort) { attendance.setSort(attSort.getAttribute('data-attendance-sort')); return; }
+
+  /* ── hall passes (WO-2.8) ──
+     Two taps, and NEITHER OF THEM CHAINS afterAttendanceChange(). That omission is the acceptance
+     line: a pass creates no attendance record and moves no mark, so there is nothing behind this
+     screen for it to redraw. A student at the bathroom was present. The one path where a pass and a
+     mark move together is a `D`, and that goes through the cell hook above, which already redraws
+     the card. */
+  const passIssue = e.target.closest('[data-pass-issue]');
+  if (passIssue) {
+    attendance.issuePass(passIssue.getAttribute('data-pass-issue'),
+      passIssue.getAttribute('data-pass-type'));
+    return;
+  }
+  const passReturn = e.target.closest('[data-pass-return]');
+  if (passReturn) { attendance.returnPass(passReturn.getAttribute('data-pass-return')); return; }
 
   /* ── roster, contacts, and the teacher's own details ── */
 
@@ -853,6 +876,14 @@ window.planbook = {
      the app — which is the exact failure the three states exist to prevent. Nothing in the app
      reads window.planbook — see the block above for why the seam outlived the shelf. */
   attendance,
+  /* `passes` joined at WO-2.8, and for the reading reason `attendance` gives rather than for a
+     driving one: both pass controls are buttons on the registry and a teacher can touch all of
+     them. What no click can show is the half this work order is about — whether an open pass is in
+     the DOCUMENT or only in a module variable — so tools/verify-shell.mjs reads openPassesIn() and
+     passesIn() straight off a document it reloaded, which is the only way to tell the shipped build
+     from the one that copied Roll Call!'s `activePasses`. Nothing in the app reads window.planbook
+     — see the block above for why the seam outlived the shelf. */
+  passes,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

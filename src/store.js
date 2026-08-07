@@ -48,8 +48,9 @@ const DB_VERSION = 1;
 const STORE = 'years';
 
 /* The document's own version, stamped into every document and read back on load. It went to 2 at
-   WO-2.10, when every `marks` cell became an object — see MIGRATIONS below. */
-export const SCHEMA_VERSION = 2;
+   WO-2.10, when every `marks` cell became an object, and to 3 at WO-2.8, when hall passes arrived
+   and the document grew two collections to hold them — see MIGRATIONS below. */
+export const SCHEMA_VERSION = 3;
 
 /* Long enough to swallow a burst of typing, short enough that "✓ Saved" appears while the
    teacher is still looking at the chip. */
@@ -63,7 +64,8 @@ const RETRY_AFTER_MS = 400;
 /* ────────────────────────────── ids ────────────────────────────── */
 
 /* Prefixes come from docs/data-model.md: c_ class, k_ category, s_ student, a_ assignment,
-   l_ log, e_ event, t_ template — plus tm_ term, added at WO-1.6. Short and base36 rather than a
+   l_ log, e_ event, t_ template — plus tm_ term, added at WO-1.6, and p_ hall pass, added at
+   WO-2.8. Short and base36 rather than a
    UUID because these ids are read by a human exactly once — in a backup file they are trying to
    understand — and a line of hyphenated hex tells that person nothing.
 
@@ -137,6 +139,17 @@ export function newYearDocument(year) {
     scores: {},
     attendance: [],
     log: [],
+    /* THE TWO HALVES OF A HALL PASS, and they are two collections rather than one because they
+       answer two different questions (WO-2.8, and src/passes.js argues it at length).
+       `openPasses` is STATE — who is out of the room right now, and since when. It is in the
+       document rather than in a module variable because that is the whole of that work order:
+       an iPad PWA gets suspended and force-quit, and a pass that only exists in memory takes
+       the app's knowledge of a child who is physically out of the building with it.
+       `passes` is HISTORY — one entry per completed pass, appended on return and never edited.
+       Neither one is `log`: that array is the outreach and behavior record, and a pass folded
+       into it would be one missing `kind` filter away from a bathroom trip in an email home. */
+    openPasses: [],
+    passes: [],
     events: [],
     templates: [],
     /* Empty, and deliberately not pre-filled with threshold keys. The defaults are tabulated
@@ -180,7 +193,8 @@ export function normalizeYear(input) {
    document into a version-2 one. The ladder, the walk, and the refusal to load a document it
    cannot place were all written before there was anything to climb, so that the first real
    migration would be one entry in this object rather than a refactor of the load path. WO-2.10
-   is that first entry, and it is exactly one entry: nothing below it changed.
+   is that first entry and WO-2.8 is the second, and each of them is exactly one entry: neither
+   changed a line of the walk, and the second did not touch the first.
 
    A step receives the document, mutates or replaces it, and returns it. It must not touch
    schemaVersion — the walk below owns that. */
@@ -228,6 +242,29 @@ export const MIGRATIONS = {
         }
       });
     });
+    return doc;
+  },
+
+  /*
+    2 → 3 (WO-2.8). Hall passes arrived, and with them two collections the document did not have:
+    `openPasses` (who is out of the room now) and `passes` (the append-only record of the ones that
+    came back). This step is one entry in this object and nothing below it changed, which is what
+    the note above promises the ladder is for.
+
+    IT ADDS NOTHING BUT TWO EMPTY ARRAYS, and that is the whole of it: there is no earlier hall-pass
+    data anywhere to convert, because before this work order Planbook had no hall passes at all.
+    A document that arrives already holding either key — hand-edited, or written by a build that
+    crashed between the two — keeps what it has if it is an array and is given an empty one if it
+    is not, so running this twice cannot empty a teacher's pass history.
+
+    The keys are seeded rather than left absent for the reason newYearDocument() states: a screen
+    that has to check whether a collection exists before reading it is a screen that will
+    eventually forget. src/passes.js reads them through one accessor apiece anyway, which is the
+    belt to this braces — but a document at rest should be the shape this build describes.
+  */
+  2: (doc) => {
+    if (!Array.isArray(doc.openPasses)) doc.openPasses = [];
+    if (!Array.isArray(doc.passes)) doc.passes = [];
     return doc;
   },
 };

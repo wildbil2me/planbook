@@ -82,7 +82,16 @@ print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen w
 - [x] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
 - [x] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
-      iPad**, in the orientation the owner actually holds it. 👤
+      iPad**, in the orientation the owner actually holds it. 👤 **⚠ Qualified by WO-2.8 on
+      2026-08-07, and no longer true in portrait.** The tick was earned on 2026-08-06 and stands for
+      **landscape**, where six columns still draw. WO-2.8 put a 160px `Passes` column into the grid
+      and `dayColumnCount()` now budgets for it, so an iPad in portrait draws **four** day columns —
+      four at 768–820px, five on an 11″ Pro, six only on a 12.9″. The half of the line about
+      *sideways scrolling* still holds in both orientations and is measured. **The tick is left
+      standing rather than pulled** because the owner closed it on her own device and only she can
+      re-close it: `TESTING.md` § WO-2.8 puts the trade to her as three options (four columns · five
+      at a ~165px name cap · six at a ~95px one), and her answer is what settles this line. Until
+      then, read it as *"six in landscape, four in portrait, nothing scrolls sideways."*
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — **in the column header and in the cells
       under it.**
@@ -297,7 +306,17 @@ architecture exists to avoid. The teacher exports the file; the app never fetche
 
 ## WO-2.8 — Hall passes: issue, hold, return
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1, WO-1.13
+**Ship** 1 · **Status** ✅ DONE — 2026-08-07 · **Size** M · 🚩 · **Depends on** WO-2.1, WO-1.13
+
+*Built 2026-08-06; correction round 1 on 2026-08-07 date-gated the `D` coupling's reopen half and
+qualified WO-2.1's six-column line, which this order made false in portrait. All seven acceptance
+lines are verified — five at the desk, the two 👤 lines on the owner's own iPad on 2026-08-07.
+**Two things came out of that sitting that are not defects in this order and are booked as their
+own:** a misclicked pass can only be undone by Return, which writes a phantom trip into the
+append-only log (**WO-2.11**, 🚩), and the portrait grid is down a day column (**WO-2.12**).
+WO-2.1's acceptance line 2 stays qualified until WO-2.12 rewrites it — the owner's answer was
+neither four nor six but "portrait should show today", which is a different line than the one
+that was ticked.*
 **Closes roadmap** Phase 2 → "Hall passes: bathroom, nurse, quick"
 
 **Why it exists.** The owner issues hall passes every period in Roll Call! and found them missing
@@ -337,16 +356,25 @@ words: **Bathroom · Nurse · Quick** (Roll Call! labels them 🚽 Bath, 🏥 Nu
 which are WO-2.9. Pass data as a Phase 4 signal. Printing a physical pass.
 
 **Acceptance**
-- [ ] Issuing a pass, force-quitting the app, and relaunching shows the student still out, with the
-      original time out — not a cleared board. 👤
-- [ ] Return writes one log entry with the right minutes, and the student's buttons come back.
-- [ ] The fourth concurrent pass is refused with a reason on screen, not by a dead button.
-- [ ] Marking a student `D` while they are out leaves no pass open, and undoing the `D` puts it back.
-- [ ] The log is keyed by student id — verify in the document, not the UI. Renaming a student after
+- [x] Issuing a pass, force-quitting the app, and relaunching shows the student still out, with the
+      original time out — not a cleared board. 👤 *(The reload half is measured: the record is read
+      back out of IndexedDB after a `Page.reload` and the time out compared character for character.
+      A force-quit of an installed PWA is not something a desk can do — run by hand on the owner's
+      iPad, 2026-08-07.)*
+- [x] Return writes one log entry with the right minutes, and the student's buttons come back.
+- [x] The fourth concurrent pass is refused with a reason on screen, not by a dead button.
+- [x] Marking a student `D` while they are out leaves no pass open, and undoing the `D` puts it back.
+      *(Both halves are gated to today, and both are measured — a `D` edited on a later day neither
+      reopens a finished pass nor retracts the dismissal from the log. The reopen half shipped
+      ungated on 2026-08-06 and was fixed in correction round 1 on 2026-08-07; the harness fixture
+      that could not express it was rebuilt in the same round.)*
+- [x] The log is keyed by student id — verify in the document, not the UI. Renaming a student after
       the fact neither orphans nor re-attaches their passes.
-- [ ] Issuing and returning a pass creates no attendance record and changes no attendance mark. A
+- [x] Issuing and returning a pass creates no attendance record and changes no attendance mark. A
       student who went to the bathroom was present.
-- [ ] Every pass control clears 44px on a coarse pointer. 👤
+- [x] Every pass control clears 44px on a coarse pointer. 👤 *(Measured under an emulated coarse
+      pointer with both shapes of the column on screen; the thumb test that is the actual line was
+      run on the owner's iPad, 2026-08-07.)*
 
 **Traps** — **Roll Call! keeps `activePasses` in memory only, and copying that here is the one
 mistake this work order exists to prevent.** Over there the app runs a session on a machine that
@@ -545,3 +573,117 @@ the three things `CLAUDE.md` says must be right before students walk in.
 **Do not put the time anywhere but the cell.** A `log` entry mirroring each tardy would reuse
 machinery that already exists and would immediately create two records of one event, which is the
 second-source-of-truth pattern this project has refused four times. The cell is the record.
+
+---
+
+## WO-2.11 — Cancel a pass issued by mistake
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-2.8
+**Closes roadmap** Phase 2 → "Cancel a pass issued by mistake, writing nothing to the log"
+
+**Why it exists.** WO-2.8 shipped three issue buttons side by side in a 160px column and no way
+back out of any of them. Found by the owner on 2026-08-07, in the first iPad sitting with the
+finished feature — the same way hall passes themselves were found.
+
+**What a misclick costs today**, which is why this carries 🚩 rather than waiting for WO-2.9:
+[`../../src/passes.js`](../../src/passes.js) exports `openPass`, `closePass` and `reopenPass` and
+nothing else. The only exit from an open pass is **Return**, which appends a permanent entry to
+`passes` — a phantom trip, `minutes: 0`, for a student who never left the room. `passes` is
+append-only, and `reopenPass()` refuses anything whose `endedBy` is not `dismissed`, so the app
+cannot remove it afterwards. Phase 4 is specified to read pass data as a signal, so these
+accumulate as real history in the record that feeds it.
+
+**The reference is Roll Call!'s pass dropdown**, which is where cancel lives over there rather than
+as a fourth button. Read it before designing — the column has no room for another control, which is
+the constraint that shapes this.
+
+**Deliverables**
+- **A cancel path on an open pass**, reachable from the pass cell. It removes the entry from
+  `openPasses` and **writes nothing to `passes`**.
+- **A `cancelPass()` in the model**, beside `closePass()` and deliberately not a variant of it —
+  cancel is not a close with a flag. `closePass()` writes history; this one is the only writer that
+  removes an open pass without leaving a record, and it says so at the definition.
+- **Distinguishable from Return under a thumb.** A cancel that can be hit while reaching for Return
+  loses a real trip's minutes, which is the mirror of the bug being fixed.
+- **Presentation-mode safe**, per the standing obligation, and 44px under `(pointer: coarse)`.
+
+**Out of scope** — cancelling a pass that has already been returned. That entry is history and the
+append-only rule protects it; getting it wrong is a job for a pass history view, which is WO-2.9.
+Also out: an undo for the `D` coupling's dismissal-close, which already has its own retraction.
+
+**Acceptance**
+- [ ] Issuing a pass and cancelling it leaves `passes` **byte-identical** to before the tap, and
+      `openPasses` back to its prior length. Verified in the document, not the UI.
+- [ ] A cancelled pass frees its slot against the per-class cap of three immediately.
+- [ ] Cancel and Return cannot be confused at speed on glass. 👤
+- [ ] Cancelling creates no attendance record and changes no attendance mark — the same silence
+      WO-2.8's acceptance line 6 measures.
+- [ ] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
+
+**Traps** — **`passes` is append-only, and this work order is the one exception being added to
+that rule, so it must not become two.** The rule protects trips that happened; a tap that sent
+nobody anywhere is not one, and that is the whole argument. The failure mode to avoid is a
+`cancelPass()` general enough to delete a *returned* entry — at which point the append-only claim
+in [`../../docs/data-model.md`](../../docs/data-model.md) is no longer true of anything and
+Phase 4's signal is reading a mutable log. Gate it on the pass being **open**, the way
+`reopenPass()` is gated on `endedBy === 'dismissed'`.
+
+And **do not implement cancel as Return with `minutes: 0`.** It reads as the smaller change and it
+is the defect: a zero-minute trip is exactly the phantom record this exists to prevent, just
+written deliberately.
+
+---
+
+## WO-2.12 — Portrait shows today, landscape shows the week
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.8
+**Amends roadmap** Phase 2 → WO-2.1's "students × recent days" grid, in portrait only
+
+**Why it exists.** WO-2.8's 160px `Passes` column joined a grid WO-2.10 had tuned to fit with
+nothing to spare, and the day columns paid for it. `dayColumnCount()` became a width budget and
+portrait lost columns: four at 768pt, **five at the owner's 834pt 11″**, six only at 1024pt.
+
+WO-2.8 escalated this as a three-way choice — four, five or six, the sixth bought by cutting the
+name column to an avatar and an ellipsis. **The owner rejected the question**, 2026-08-07: in
+portrait the screen is used at the classroom door to mark *today*, and the six-day window is a
+thing you read at a desk. So portrait should show **today only** and landscape should keep six.
+
+What that buys at 834pt: `834 − 80 chrome − 160 Passes − 72 = 522px` for the name column against
+today's 232px cap. Full names, no truncation, and the Passes column stops competing for width.
+
+**Deliverables**
+- **A portrait rule in `dayColumnCount()`** ([`../../src/attendance.js`](../../src/attendance.js)),
+  which is already a width budget and not a breakpoint ladder — this is a few lines, not a rewrite.
+- **A documented exception to `MIN_DAY_COLS = 3`**, whose comment currently reads *"Three is the
+  fewest this screen will draw."* That rule is not being deleted; it is being given its one
+  deliberate exception, and the comment has to say which.
+- **The name column's coarse cap revisited** now that it is no longer competing with five day
+  columns — it went 256 → 232 under WO-2.8's pressure and that pressure is gone in portrait.
+- **WO-2.1's acceptance line 2 rewritten**, in the work order and in
+  [`../../TESTING.md`](../../TESTING.md). It is currently qualified with a ⚠ pointing at WO-2.8.
+  Six-in-portrait stops being the goal, so the line is not re-closed as written — it is replaced,
+  with the reason, and the owner closes the new one.
+
+**Out of scope** — a portrait/landscape toggle the teacher sets by hand. The orientation is the
+signal; a preference to override it is a setting nobody will find and everybody will have to
+maintain. Also out: any change to what landscape draws.
+
+**Acceptance**
+- [ ] Portrait draws exactly one day column — today's — with the Passes column intact.
+- [ ] Landscape still draws six, on the same device, with no reload.
+- [ ] Rotating the iPad mid-class repaints without losing scroll position or an in-flight mark. 👤
+- [ ] Full student names are readable in portrait without truncation, at the owner's roster's
+      longest name. 👤
+- [ ] The grid's wrap does not overflow in either orientation — the `overflow-x` valve stays shut,
+      which is the WO-2.10 defect this must not reopen.
+- [ ] A narrow **laptop** window does not fall to one column. Orientation is the signal, not width
+      alone, and a 900px browser window is landscape.
+
+**Traps** — **`dayColumnCount()` is measured off `window.innerWidth`, not off the panel**, and the
+comment above it explains why: this screen can legitimately be painted while `#classView` is still
+hidden, and a hidden element measures zero. Whatever asks the orientation question has to survive
+being asked a frame early, the same way the width question does.
+
+**Backfilling a past day needs a day column**, so in portrait the teacher rotates to correct
+Tuesday. That is the accepted cost of this trade and it should be written down where WO-2.1's
+unlock is described, not left for someone to hit at the door.

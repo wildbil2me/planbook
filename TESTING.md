@@ -803,7 +803,12 @@ acceptance lines are the ones in the rewritten work order.
 
 - [x] A mark lands and survives a reload.
 - [x] **Six days of columns are visible at once for a class of 26 without sideways scrolling on an
-      iPad**, in the orientation the owner actually holds it. 👤
+      iPad**, in the orientation the owner actually holds it. 👤 **⚠ Qualified by WO-2.8 on
+      2026-08-07 — true in landscape, no longer true in portrait.** See § WO-2.8 below, *"The day
+      columns in portrait"*: a 160px `Passes` column joined the grid, `dayColumnCount()` budgets for
+      it, and portrait now draws **four** day columns. Nothing scrolls sideways in either
+      orientation, which is measured. The tick stays until the owner re-closes it, because she is
+      the one who closed it and the choice below is hers.
 - [x] A dropped class and an untaken class are visually distinguishable without reading fine print,
       and are distinguishable in the stored document — in the column header and in the cells under it.
 - [x] Marking a class taken with zero exceptions still creates a record.
@@ -851,6 +856,9 @@ desk pass could not reach.
 
 - [x] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
       sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
+      **⚠ Same qualification as the acceptance line above — WO-2.8, 2026-08-07.** Six columns in
+      landscape, four in portrait; no sideways swipe either way, and the leftmost column is still
+      today. § WO-2.8's *"The day columns in portrait"* is the open question and it is the owner's.
 - [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the class's card. Acceptance line 6, and the only one that decides whether the flow
       survives contact with a period starting. *(The card's state line was the tap until WO-1.13
@@ -994,6 +1002,116 @@ on all five codes, with the long name written in deliberately — reverting eith
 - [x] The wider panel has not made the row too long to aim down: the reason the 720px cap was argued
       for in the first place was eye-track and thumb-track on the one screen timed in seconds. If it
       now reads as too wide, say so — the answer is a wider name column, not the dialog width back. 👤
+
+### WO-2.8 — Hall passes: issue, hold, return
+
+**What this adds.** A `Passes` column in the registry, between the name and the day columns: 🚽 Bath
+· 🏥 Nurse · ⚡ Quick while a student is in the room, and a single **Return** with the time they left
+while they are out. Three at once per class. The open pass lives in the year document — not in a
+module variable, which is the one thing this work order deliberately does *not* copy from Roll Call!
+— so it survives a reload, a crash and a force-quit.
+
+- [x] Return writes one log entry with the right minutes, and the student's buttons come back.
+- [x] The fourth concurrent pass is refused with a reason on screen, not by a dead button.
+- [x] Marking a student `D` while they are out leaves no pass open, and undoing the `D` puts it back.
+- [x] The log is keyed by student id — verified in the document, not the UI. Renaming a student
+      afterwards neither orphans nor re-attaches their passes.
+- [x] Issuing and returning a pass creates no attendance record and changes no attendance mark.
+- [x] An open pass comes back out of IndexedDB after a full page reload, with the original time out.
+      *(This is the desk half of acceptance line 1 — see the 👤 list below for the half it is not.)*
+- [x] A document written before this build climbs the `2 → 3` rung and comes up holding both
+      collections, empty, on disk.
+- [x] **A `D` edited on a LATER day does not push its finished pass back into the corridor**, and
+      does not delete the dismissal out of the append-only history either. *(Added 2026-08-07 in
+      correction round 1 — see below.)*
+- [x] **The cap is per class:** a room with three students out leaves the class next door its own
+      three, and a student out of one room is not drawn as out of another. *(Same round.)*
+
+*Desk pass 2026-08-07 (correction round 1): `verify-shell.mjs` **330 of 330, 0 skipped**, up from
+314 at WO-2.10 — sixteen net new checks. Everything is driven through the controls a teacher
+touches: the pass goes out by clicking a real 🚽 button, comes back by clicking a real Return, and
+the `D` is reached by tapping the cell four times round the cycle rather than by calling `setMark`.
+Three exceptions to that, all named in the file: the fourth pass is asked for through the seam
+because a disabled button has no click to give; the seven-minute gap the minutes are measured
+against is wound into the open pass through the store, because every pass this harness issues
+otherwise comes back in under a second and "0 minutes" is what a broken calculation and a correct
+one both produce; and the per-class cap is asked of `atCap()` and `openPassFor()` directly, because
+issuing a pass in a second class would move the totals every check after it counts.
+`wo-sweep.mjs` is 11 checks, 10 passed, 0 failed, 1 to review — the standing sensitive-field-name
+line, at the same 172 mentions across the same files as before this work order.*
+
+*Seven mutation proofs, run before this was written:*
+
+| Mutation | Result |
+|---|---|
+| open passes kept in a module variable, the way Roll Call!'s `activePasses` are | **5 red**, the reload check among them: "the record on disk is `[]`" |
+| the `2 → 3` migration rung converts nothing | **8 red** — the rung itself, and then every backup check, because `parseBackup()` refuses a document missing a collection |
+| a `D` no longer closes an open pass | **2 red** — the cell walks `A+ E+ T+ D+` where it should end `D-` |
+| the cap guard removed from `openPass()` | **1 red** — the screen still refuses a fourth, and the model underneath it does not |
+| the `on === todayISO()` guard taken off the **reopen** half of the `D` coupling | **1 red** — a finished pass back in the corridor with yesterday's time out, and the dismissal gone from the log (`2 pass(es) open`, `1 logged`) |
+| `atCap()` counting every open pass instead of this class's | **1 red** — the class next door reads full, and its reason line names the wrong class |
+| `openPassFor()` matching on student id without the class | **1 red** — a student out of one room reads as out of the next |
+
+*All seven were reverted and the run is green on the shipped tree.*
+
+#### The day columns in portrait — the owner's call, and it is open
+
+**What happened.** Six day columns, a name column and a 160px `Passes` column do not fit an iPad in
+**portrait** (688px of grid for 848px of demand). This screen already had an answer for "not enough
+width" — draw fewer day columns rather than scroll sideways — so `dayColumnCount()` became a width
+budget and portrait shows **four** day columns. Landscape and any laptop still show six. Letting the
+grid overflow its wrap instead is exactly the defect that clipped the WO-2.10 note panel off the
+right edge, so it was not really an alternative. The coarse name cap moved 256 → 232 to suit.
+
+**What that broke on paper.** WO-2.1's acceptance line 2 — *"six days of columns … in the
+orientation the owner actually holds it"* — was ticked by the owner on her own device on 2026-08-06
+and this makes it false in portrait. It is annotated in both places rather than pulled (§ WO-2.1
+above, and `plans/work-orders/phase-2-attendance.md`), because the owner closed it and only she can
+re-close it.
+
+**The three options, with the arithmetic.** The budget is `viewport − 80px of chrome − the name
+column − 160px of Passes`, and each day column is 72px. The only lever is the name column's cap
+under `(pointer: coarse)`. Roughly 95px of that cap is furniture — a 32px avatar, the 44px ⋯, and
+padding — before a single letter of a name.
+
+| Name cap | Text before the ellipsis | 768px portrait | 820px iPad Air | 834px 11″ Pro | 1024px 12.9″ | Landscape |
+|---|---|---|---|---|---|---|
+| **232px** — what is on disk | ~17 characters | **4 days** | 4 | 5 | 6 | 6 |
+| **~165px** | ~9 characters — most surnames start truncating, not just the long ones | **5 days** | 5 | 5 | 6 | 6 |
+| **~95px** | none — the avatar and the ⋯ with nothing between them | **6 days** | 6 | 6 | 6 | 6 |
+
+The full name stays on the row's tooltip and on what VoiceOver reads at every one of these, so
+nothing is lost that cannot be recovered by looking; what changes is what can be read at a glance
+while a class walks in. **This is a taste call about the owner's own screen and it has not been
+made.** The 👤 line below is the one to answer first.
+
+**The 👤 iPad sitting this work order owes.** None of this was checked by the harness.
+
+- [x] Issue a pass, **force-quit the app from the app switcher**, relaunch, and confirm the student
+      is still out with the original time out. The harness proves the reload; only a real
+      force-quit of an installed PWA proves the line. 👤
+- [x] Every pass control clears 44px under a thumb — the three issue buttons side by side in a
+      160px column, and the Return button beside its time. The harness measures them; a thumb is
+      what tells you whether 🚽 and 🏥 can be hit apart at speed. 👤
+- [x] The icons alone are enough on a touch device. The words *Bath · Nurse · Quick* are hidden
+      under `(pointer: coarse)` to buy the column its width, and they are still on the tooltip and
+      to VoiceOver — but the owner is the one who knows whether three emoji read as three buttons
+      at arm's length. 👤
+- [x] **Four day columns in portrait instead of six — four, five or six?** Answered 2026-08-07, and
+      the answer was **none of the three**. Two corrections came out of asking it. The owner's iPad
+      is an 834pt 11″, so what is actually on that screen in portrait is **five** columns, not the
+      four this section leads with — four is the 768pt row. And the choice on offer was the wrong
+      one: rather than buy a sixth column by cutting the name column to an avatar and an ellipsis,
+      **portrait should show today only and landscape should keep six**. Booked as **WO-2.12**;
+      WO-2.1's acceptance line 2 is rewritten there rather than re-closed here, because
+      "six days in the orientation the owner holds it" stops being the goal. 👤
+- [x] A pass issued in period 2 and never returned is still open in period 3 — deliberately, because
+      nothing invents a return time. Confirm that reads as a reminder rather than as a bug. *(The
+      banner and the overdue alerts that would make it comfortable are WO-2.9.)* 👤
+- [x] VoiceOver reads a Return button as the student, the type and the time out — not as "Return". 👤
+
+*Five of the six were run on the owner's own iPad in one sitting, 2026-08-07, and ticked on the
+owner's word. The sixth — the day columns in portrait — is still open; see the note under it.*
 
 ---
 

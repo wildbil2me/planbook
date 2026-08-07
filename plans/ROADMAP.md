@@ -213,15 +213,22 @@ meet is a second source of truth that's wrong by first period.)*
       not the second. "Did the class not meet, or did I forget?" is the question the home screen
       exists to answer.
 - [x] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one.
-- [ ] 🚩 **Hall passes**: bathroom, nurse, quick. One tap out, one tap back, an append-only log keyed
+- [x] 🚩 **Hall passes**: bathroom, nurse, quick. One tap out, one tap back, an append-only log keyed
       by student id. **An open pass survives a force-quit** — the app must never lose track of a
       student who is out of the room, which is the one place this deliberately does not copy Roll
       Call!, where active passes live in memory. A pass is not an attendance mark: a student at the
       nurse was present. *(Added 2026-08-06. This was never in this roadmap — the owner found it
       missing the first time she used the finished registry. Phase 2's goal is that she stops
       opening Roll Call!, and she issues passes every period, so its absence made the goal
-      unreachable. WO-2.8.)*
+      unreachable. WO-2.8.)* *(Done 2026-08-07. Two things the owner found in the first iPad sitting
+      and neither is in the line above: a misclicked pass has no way out but Return, which writes a
+      phantom trip into the append-only log — WO-2.11, 🚩. And the 160px column costs the portrait
+      grid a day column — WO-2.12.)*
 - [ ] Pass banner, overdue alerts, and pass history. *(Cut to Ship 2 — WO-2.9.)*
+- [ ] 🚩 **Cancel a pass issued by mistake**, writing nothing to the log. The append-only rule
+      protects trips that happened; a tap that never sent anyone anywhere is not one of them.
+      *(Added 2026-08-07 — WO-2.11. Found the same way hall passes themselves were: the owner using
+      the finished thing. Roll Call! has it in the pass dropdown.)*
 - [ ] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
       school-wide `no-school`, or drop named classes on a future date when an assembly is known.
       Stored as calendar events and *read* by attendance — never copied. Phase 6 adds the month

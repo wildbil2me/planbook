@@ -13,6 +13,44 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Added
+
+- **WO-2.8 — hall passes: one tap out, one tap back, and the app does not forget who is out.** The
+  registry has a **Passes** column between the name and the day columns. 🚽 Bath · 🏥 Nurse · ⚡ Quick
+  sends a student out and records the time they left; **Return** brings them back and writes down how
+  long they were gone. Three students at a time **per class**, and at that limit the buttons grey out
+  and the screen says why in a sentence — a greyed control with no explanation is a dead control.
+
+  **An open pass is stored, not remembered.** Close the app, drop the iPad, force-quit it from the
+  app switcher, come back after lunch: whoever is out is still out, with the time they left beside
+  their name. This is the one place the feature deliberately does **not** copy Roll Call!, where
+  active passes live in a module variable and vanish on reload. Here the pass is in the year document
+  and reaches IndexedDB on the same save as everything else. It is a safety property, not a
+  convenience — an app that loses track of a child who is physically out of the room cannot say so,
+  because it no longer knows.
+
+  **A pass never changes anybody's attendance.** A student at the nurse was present. The single
+  exception is a dismissal: marking someone **D** while they are out closes their pass, and taking
+  the **D** back opens it again with the original time. Both halves only apply to today — a `D` typed
+  onto last Tuesday says nothing about who is in the corridor now.
+
+  Passes are their own two collections rather than entries in the existing `log`, and the reason is
+  disclosure rather than tidiness: `log` is the outreach record that Phase 4's cooldown and Phase 5's
+  templates read, and a bathroom trip sitting in it is one missing filter away from going home to a
+  guardian. `openPasses` holds what is happening now, `passes` is the append-only history, and both
+  are keyed by student id, so renaming a student neither orphans their passes nor attaches somebody
+  else's. `MIGRATIONS[2]` takes documents from schema 2 to 3 by seeding the two collections empty;
+  running it twice is byte-identical.
+
+  *Two things to know.* **There is no way to cancel a pass issued by mistake** — the only exit is
+  Return, which records a trip that did not happen. That is booked as WO-2.11 and is a go-live
+  blocker. And **the new column costs the portrait grid a day column**: an 11″ iPad held upright now
+  shows five days instead of six, a 10.2″ shows four, and landscape and every laptop still show six.
+  Turn it sideways for the full week. WO-2.12 replaces that trade with a better one — portrait shows
+  today, landscape shows the week.
+
+  `tools/verify-shell.mjs` 314 → 330 checks, zero skipped; `sw.js` cache v21 → v22.
+
 ### Changed
 
 - **WO-2.10 — an unmarked student now reads as absent, and the first tap means "present".** The

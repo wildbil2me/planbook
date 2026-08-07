@@ -30,8 +30,9 @@ import { fileURLToPath } from 'node:url';
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
    below which say "the document came out at the current version" are claims about a NUMBER and not
    a comparison of the app with itself. It went 1 → 2 at WO-2.10, when every `marks` cell became an
-   object; the next migration changes this line and the four assertions that use it. */
-const SCHEMA_NOW = 2;
+   object, and 2 → 3 at WO-2.8, when the document grew `openPasses` and `passes`; the next
+   migration changes this line and the assertions that use it. */
+const SCHEMA_NOW = 3;
 
 /* The two controls that replaced the ~950-line soft cap on 2026-08-05, retired after binding once
    in four work orders — it could not tell coverage from bloat on a file that grows with the app's
@@ -601,8 +602,12 @@ if (!seam) {
 
 console.log('\n--- year document store ---');
 const DOC_KEYS = ['schemaVersion', 'docId', 'year', 'rev', 'deviceId', 'updatedAt', 'teacher',
-  'classes', 'letterScale', 'students', 'assignments', 'scores', 'attendance', 'log', 'events',
-  'templates', 'signals'];
+  'classes', 'letterScale', 'students', 'assignments', 'scores', 'attendance', 'log',
+  /* WO-2.8's two, and they are both here rather than one: an open pass and a finished one are
+     separate collections on purpose (docs/data-model.md), and a build that shipped only `passes`
+     would be the in-memory `activePasses` mistake with a log bolted on. */
+  'openPasses', 'passes',
+  'events', 'templates', 'signals'];
 const storeSeam = await evalJs("!!(window.planbook && window.planbook.store"
   + " && typeof window.planbook.store.update === 'function')");
 
@@ -890,6 +895,9 @@ if (!storeSeam) {
              score:opened.scores.a_1 && opened.scores.a_1.s_1 && opened.scores.a_1.s_1.v,
              mark:opened.attendance[0] && opened.attendance[0].marks.s_1,
              storedMark: stored && stored.attendance[0] && stored.attendance[0].marks.s_1,
+             /* WO-2.8's rung, read off DISK for the reason the mark above is: a collection seeded
+                in memory and never written back is a collection the next launch does not have. */
+             storedOpen: stored && stored.openPasses, storedPasses: stored && stored.passes,
              storedVersion: stored && stored.schemaVersion, storedMarker: stored && stored.cameThroughTheHook };
   })()`);
   check('a document written under an older schema loads THROUGH the migration hook',
@@ -913,6 +921,16 @@ if (!storeSeam) {
       && Object.keys(mig.storedMark).join(',') === 'code',
     'the cell was "A" in the version-1 document and is ' + JSON.stringify(mig.storedMark)
       + ' on disk (in memory: ' + JSON.stringify(mig.mark) + ')');
+  /* WO-2.8's step, asked the same way. A document written before hall passes existed has neither
+     collection, and it has to come up the ladder holding both — empty, on disk, and as arrays
+     rather than as anything else. src/passes.js reads them through an accessor that tolerates a
+     missing key, so a build whose rung did nothing would LOOK fine on screen and would write a
+     document that every later reader has to keep guarding against. This is where that shows. */
+  check('and it comes up holding both hall-pass collections, empty, as arrays, on disk',
+    !mig.failure && Array.isArray(mig.storedOpen) && mig.storedOpen.length === 0
+      && Array.isArray(mig.storedPasses) && mig.storedPasses.length === 0,
+    'openPasses = ' + JSON.stringify(mig.storedOpen) + ', passes = ' + JSON.stringify(mig.storedPasses)
+      + ' in the version-0 document read back off disk');
   check('the migrated document is written back once, as a save (rev 7 -> 8), not on every open',
     !mig.failure && mig.rev === 8 && mig.storedVersion === SCHEMA_NOW && mig.storedMarker === true,
     'rev = ' + mig.rev + ', stored schemaVersion = ' + mig.storedVersion);
@@ -1909,7 +1927,10 @@ if (!backupBooted || !backupSeam) {
     return { schemaVersion: stored.schemaVersion, records: (stored.attendance || []).length,
              cells: cells, dropped: (stored.attendance || []).filter(function(r){ return r.exception; }).length }; })()`);
   check('restoring a backup written before WO-2.10 produces object cells, codes intact and no invented time',
-    oldConfirm.open && /older version \(1→2\)/.test(oldConfirm.compare)
+    /* Two rungs now, and the confirm names both. A file this old climbs 1 → 2 (cells became
+       objects) and then 2 → 3 (the two hall-pass collections), and the dialog says so in the words
+       the teacher reads before agreeing to anything. */
+    oldConfirm.open && /older version \(1→2, 2→3\)/.test(oldConfirm.compare)
       && converted.schemaVersion === SCHEMA_NOW && converted.records === 3 && converted.dropped === 1
       && converted.cells.length === 3
       && converted.cells.every(c => c.isObject && c.at === undefined)
@@ -4474,6 +4495,19 @@ console.log('\n--- attendance ---');
    screen that is empty on the teacher's next launch — which for attendance is a period of a term
    gone. */
 await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+/*
+  THE VIEWPORT IS PINNED HERE, AND IT WAS NOT BEFORE WO-2.8. Every claim in this section is about a
+  six-column grid, and how many columns the grid draws is a function of the viewport: src/attendance.js
+  budgets the width and shows fewer days rather than scrolling sideways. Until the Passes column
+  landed, the browser's own default window happened to be wide enough for six and nobody had to say
+  so — which is a check whose premise is an accident of the harness, and the accident stopped
+  holding the moment a 160px column joined the table. 1280 is a laptop, it is where six columns fit
+  on a fine pointer with the pass column in place, and it is now stated rather than inherited.
+  Cleared at the end of the section, before the coarse touch sweep sets its own.
+*/
+await send('Emulation.setDeviceMetricsOverride',
+  { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
 const attBooted = await waitForBoot();
@@ -4622,6 +4656,31 @@ const INSTALL_ATT_READER = `(function(){
         });
         return out; })(),
       states: active.map(function(c){ return c.id + '=' + a.stateOf(c.id, a.todayISO()); }).join(' '),
+      /* ── WO-2.8, and the first two fields are the whole work order ──
+         Both hall-pass collections, verbatim and WITH THEIR KEY SETS, read off the open document.
+         An open pass has to be IN HERE rather than in a module variable: Roll Call! keeps its
+         active passes in memory, and a build that copied that would answer every question on the
+         screen correctly and answer this one with an empty array after a reload. A pass carrying a
+         key nobody meant to write — a name, most of all — shows up in the key set rather than
+         nowhere.
+         (No backticks in this comment: it is inside a template literal.) */
+      openPasses: (doc.openPasses || []).map(function(p){
+        return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
+                 keys: Object.keys(p).sort().join(',') }; }),
+      passLog: (doc.passes || []).map(function(p){
+        return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
+                 back: p.back, minutes: p.minutes, endedBy: p.endedBy,
+                 keys: Object.keys(p).sort().join(',') }; }),
+      /* Every name in the document, so that "the log is keyed by student id, never by name" can be
+         asked as "does the serialised pass log contain any of these strings" rather than as "does
+         it contain the fields I remembered to look for". */
+      names: doc.students.map(function(s){ return s.first + ' ' + s.last; }),
+      passJson: JSON.stringify(doc.passes || []) + JSON.stringify(doc.openPasses || []),
+      /* The reason the pass buttons are off, when it is up. It is the acceptance line's "on screen
+         rather than a dead control", so it is read as text and not as a class. */
+      passNote: (function(){ var n = document.getElementById('attendancePassNote');
+        return n && !n.classList.contains('hidden') ? (n.textContent || '').trim() : ''; })(),
+      passColumn: document.querySelectorAll('#attendanceHead th.attendance-passes').length,
       /* What the OPEN class's state is on each date the grid is showing, asked of the predicate
          rather than read off the screen — so "the header says Taken" and "the document says taken"
          are two facts that can disagree and be caught disagreeing. */
@@ -4733,6 +4792,22 @@ const INSTALL_ATT_READER = `(function(){
                  tappable: tds.filter(function(td){
                    return !!td.querySelector('button[data-attendance-cell]'); }).length,
                  detail: r.querySelector('[data-attendance-detail]') ? 1 : 0,
+                 /* This row's Passes cell (WO-2.8): which types it offers, how many of them are
+                    switched off, whether it shows a Return instead, and the time out beside it.
+                    Read off the buttons rather than off the document, so "the screen says he is
+                    out" and "the document says he is out" stay two facts that can disagree.
+                    (No backticks in this block: it is inside a template literal.) */
+                 pass: (function(){
+                   var td = r.querySelector('td[data-pass-cell]');
+                   if (!td) return null;
+                   var issue = Array.prototype.slice.call(td.querySelectorAll('[data-pass-issue]'));
+                   var back = td.querySelector('[data-pass-return]');
+                   var since = td.querySelector('.attendance-pass-since');
+                   return { types: issue.map(function(b){ return b.getAttribute('data-pass-type'); }).join(','),
+                            off: issue.filter(function(b){ return b.disabled; }).length,
+                            out: !!back,
+                            since: since ? (since.textContent || '').trim() : '',
+                            label: back ? (back.getAttribute('aria-label') || '') : '' }; })(),
                  named: tds.filter(function(td){
                    var c = td.firstElementChild;
                    return !!(c && c.getAttribute('aria-label')); }).length }; }),
@@ -6063,9 +6138,492 @@ if (!attBooted || !attSeam) {
       + ' and the unconfirmed students left on the day are ' + (retaken.todayValues.U || 0)
       + ' (the other class\'s, untouched)');
 
+  /*
+    ── WO-2.8: hall passes ──
+
+    Seven acceptance lines, and the FIRST ONE IS WHY THIS FEATURE EXISTS AS A WORK ORDER AT ALL:
+    Roll Call! keeps its open passes in a module variable (`activePasses`, dashboard.html:2437), and
+    a build that copied that would pass every other check below. So the reload check here does not
+    ask the app whether the pass is still open — it reads the record straight out of IndexedDB, with
+    the page freshly reloaded, and compares the time out character for character. That is the only
+    question a desk can answer about "survives a force-quit", and it is the half of the line that is
+    not owed to a human with a real iPad.
+
+    THREE OF THESE CLAIMS ARE ABOUT WHAT DID *NOT* HAPPEN, and each is paired with the presence that
+    makes the absence mean something. "A pass creates no attendance record" is asserted over a class
+    that is genuinely taken, with the record count and the mark tally read before and after — the
+    fixture is loud, and the silence beside it is the claim. "The log holds no name" is asked by
+    searching the serialised log for every name in the document, not for the fields this file
+    happened to think of. And "undoing the D leaves nothing behind" is asserted against a log entry
+    that was seen to exist first.
+  */
+  const passClass = ids[0];
+  const beforePasses = await openCard(passClass);
+  const passRoster = beforePasses.rows.map((r) => r.student);
+  /* The fixture, asserted rather than assumed: a class of 26 that is taken with everybody present,
+     so that every claim below about attendance not moving is made against a real record with a real
+     tally, and every claim about a pass is made on a row that has one. */
+  const passBaselineRecords = beforePasses.records.length;
+  const passBaselineValues = JSON.stringify(beforePasses.values);
+  check('the registry carries a Passes column, three types per student, on a class that is already taken',
+    beforePasses.passColumn === 1 && passRoster.length === 26
+      && beforePasses.rows.every((r) => r.pass && r.pass.types === 'bathroom,nurse,quick'
+        && r.pass.off === 0 && !r.pass.out)
+      && beforePasses.openPasses.length === 0 && beforePasses.passLog.length === 0
+      && beforePasses.states.indexOf(passClass + '=taken') >= 0,
+    beforePasses.rows.length + ' row(s), the first offering '
+      + JSON.stringify(beforePasses.rows[0] && beforePasses.rows[0].pass)
+      + '; open passes = ' + beforePasses.openPasses.length + ', logged = '
+      + beforePasses.passLog.length + ', over ' + passBaselineRecords + ' attendance record(s)');
+
+  /* ── one tap out ── */
+  const outA = passRoster[0];
+  const outB = passRoster[1];
+  const outC = passRoster[2];
+  const outD = passRoster[3];
+  await clickSel('[data-pass-issue="' + outA + '"][data-pass-type="bathroom"]');
+  const issued = await read();
+  const firstPass = issued.openPasses[0] || {};
+  const rowA = issued.rows.filter((r) => r.student === outA)[0] || {};
+  check('one tap sends a student out: who, which type, and the time — and their row offers Return instead',
+    issued.openPasses.length === 1 && firstPass.studentId === outA
+      && firstPass.classId === passClass && firstPass.type === 'bathroom'
+      /* A local stamp WITH its offset, like every other time this app writes: the hour read back
+         has to be the hour the teacher's clock showed (src/attendance.js's stampNow). A `Z` here
+         would be the same instant printed as a different hour. */
+      && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/.test(firstPass.out || '')
+      && (firstPass.out || '').slice(0, 10) === nodeToday
+      && firstPass.keys === 'classId,id,out,studentId,type'
+      && !!rowA.pass && rowA.pass.out === true && /^\d+:\d{2}[ap]$/.test(rowA.pass.since)
+      /* And nobody else moved. Twenty-five rows still offering three buttons is what makes the one
+         row that changed a change rather than a repaint. */
+      && issued.rows.filter((r) => r.pass && r.pass.out).length === 1
+      && issued.rows.filter((r) => r.pass && r.pass.types === 'bathroom,nurse,quick').length === 25,
+    'openPasses = ' + JSON.stringify(issued.openPasses) + '; the row reads '
+      + JSON.stringify(rowA.pass));
+
+  /* WO-2.8 acceptance 6, on the tap that would break it. */
+  check('and it wrote no attendance: no new record, no mark moved, nobody made absent by leaving the room',
+    issued.records.length === passBaselineRecords
+      && JSON.stringify(issued.values) === passBaselineValues
+      && rowA.codes.charAt(0) === 'P',
+    issued.records.length + ' attendance record(s) (was ' + passBaselineRecords
+      + '), marks across the document = ' + JSON.stringify(issued.values)
+      + ' (was ' + passBaselineValues + '); the row that left the room still reads "'
+      + rowA.codes + '" across the week');
+
+  /*
+    ── ACCEPTANCE LINE 1, THE HALF A DESK CAN ANSWER ──
+
+    Flushed, reloaded, and then read OUT OF INDEXEDDB rather than out of the app: the question is
+    whether the open pass is a record or a variable, and only the record survives a process. The
+    time out is compared character for character against the one written before the reload, because
+    "still out" with a time re-stamped at boot would be a cleared board wearing the right shape.
+
+    The 👤 half — an actual force-quit of an installed PWA on the owner's own iPad — stays owed.
+  */
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_ATT_READER);
+  const onDisk = await evalJs(`(async function(){
+    var rec = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years')
+          .get(window.planbook.store.getDoc().year);
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    return { open: (rec && rec.openPasses) || null, log: (rec && rec.passes) || null,
+             stored: !!rec }; })()`);
+  const relaunched = await openCard(passClass);
+  const rowAgain = relaunched.rows.filter((r) => r.student === outA)[0] || {};
+  check('an open pass survives a reload: it comes back out of IndexedDB, with the original time out',
+    onDisk.stored && Array.isArray(onDisk.open) && onDisk.open.length === 1
+      && onDisk.open[0].studentId === outA && onDisk.open[0].out === firstPass.out
+      && Array.isArray(onDisk.log) && onDisk.log.length === 0
+      && relaunched.openPasses.length === 1 && relaunched.openPasses[0].out === firstPass.out
+      && !!rowAgain.pass && rowAgain.pass.out === true
+      && rowAgain.pass.since === rowA.pass.since,
+    'the record on disk is ' + JSON.stringify(onDisk.open) + ' — the same time out ('
+      + firstPass.out + ') as before the reload, and the row still reads "'
+      + (rowAgain.pass && rowAgain.pass.since) + '" beside its Return button');
+
+  /* ── the cap, and the reason for it ── */
+  await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
+  await clickSel('[data-pass-issue="' + outC + '"][data-pass-type="quick"]');
+  const capped = await read();
+  const stillIn = capped.rows.filter((r) => r.pass && !r.pass.out);
+  check('three at once is the cap: every remaining student\'s buttons are off, and the reason is on the screen',
+    capped.openPasses.length === 3
+      && capped.openPasses.map((p) => p.type).sort().join(',') === 'bathroom,nurse,quick'
+      && stillIn.length === 23 && stillIn.every((r) => r.pass.off === 3)
+      /* Not a dead control: the sentence above the grid says the number and what to do about it. */
+      && /3 students/.test(capped.passNote) && /Return/.test(capped.passNote),
+    capped.openPasses.length + ' out, ' + stillIn.length + ' rows with '
+      + (stillIn[0] ? stillIn[0].pass.off : '?') + ' of 3 buttons disabled; the line above the grid says '
+      + JSON.stringify(capped.passNote));
+
+  /* And the writer refuses too, which is the half a disabled button cannot prove. Driven through
+     the seam because a disabled control has no click to give — the same exception this section
+     already makes for the future-date block, and for the same reason: a refused path has no button
+     to press. */
+  const fourth = await evalJs(`(async function(){
+    var att = window.planbook.attendance;
+    var p = window.planbook.passes;
+    var s = window.planbook.store;
+    /* The screen's own writer first: the guard a stale tap or a keyboard path would arrive at. */
+    att.issuePass(${JSON.stringify(outD)}, 'bathroom');
+    await s.flush();
+    var afterScreen = s.getDoc().openPasses.length;
+    /* And then the model underneath it, handed the live document with the screen's guard bypassed
+       entirely. Both are asserted because they are guards against different mistakes — one is
+       about a control that should not have fired, one is about the document — and a check that
+       only drove the top one would go green with the bottom one deleted. */
+    s.update(function(d){ p.openPass(d, ${JSON.stringify(passClass)},
+      ${JSON.stringify(outD)}, 'bathroom', '2026-01-01T09:00:00-05:00'); });
+    await s.flush();
+    var out = window.__att();
+    out.afterScreen = afterScreen;
+    return out; })()`);
+  check('and a fourth pass is refused by the screen AND by the writer under it, not merely un-clickable',
+    fourth.afterScreen === 3 && fourth.openPasses.length === 3
+      && fourth.openPasses.every((p) => p.studentId !== outD),
+    'after asking the screen for a fourth, ' + fourth.afterScreen
+      + ' pass(es) were open; after asking the model directly, ' + fourth.openPasses.length + ': '
+      + JSON.stringify(fourth.openPasses.map((p) => p.studentId + ' ' + p.type)));
+
+  /*
+    ── AND THE CAP IS *THIS* CLASS'S CAP ──
+
+    A deliberate divergence from the reference, argued at src/passes.js:81-91: Roll Call! loads one
+    class at a time, so over there a global count and a per-class one are the same number. Here they
+    are not — a pass the teacher forgot to close in period 2 must not eat a third of period 3's
+    capacity for a room it has nothing to do with. EVERY OTHER PASS CHECK IN THIS SECTION RUNS
+    INSIDE ONE CLASS, so a regression to a global count, or an openPassFor() that stopped filtering
+    by classId, would leave all of them green.
+
+    Nothing is issued next door: a pass left open in a second class would move the totals every
+    check below counts. What is asked instead is the two predicates the divergence actually lives
+    in, plus the screen drawn from them.
+  */
+  /* Any other class that has students on it — this run leaves one active class with an empty
+     roster on purpose, and a check whose "next door" had no rows in it would assert nothing about
+     a screen. Which one it lands on does not matter; that it has rows is asserted below. */
+  const otherClass = await evalJs(`(function(){
+    var d = window.planbook.store.getDoc();
+    var c = d.classes.filter(function(x){ return !x.archived
+      && x.id !== ${JSON.stringify(passClass)} && (x.roster || []).length > 0; })[0];
+    return c ? c.id : ''; })()`);
+  const otherOpen = await openCard(otherClass);
+  const perClass = await evalJs(`(function(){
+    var p = window.planbook.passes, d = window.planbook.store.getDoc();
+    return { hereAtCap: p.atCap(d, ${JSON.stringify(passClass)}),
+             thereAtCap: p.atCap(d, ${JSON.stringify(otherClass)}),
+             hereOut: !!p.openPassFor(d, ${JSON.stringify(passClass)}, ${JSON.stringify(outA)}),
+             thereOut: !!p.openPassFor(d, ${JSON.stringify(otherClass)}, ${JSON.stringify(outA)}),
+             open: (d.openPasses || []).length }; })()`);
+  check('the cap is THIS class\'s cap: a room that is full leaves the class next door its own three',
+    perClass.hereAtCap === true && perClass.thereAtCap === false && perClass.open === 3
+      /* And a student who is out of one room is not out of another: openPassFor() filters by class
+         as well as by student, which is what stops the same child being drawn with a Return button
+         in a room they are sitting in. */
+      && perClass.hereOut === true && perClass.thereOut === false
+      /* The screen agrees. Not one button off next door, and no reason line, while the class this
+         section has been working is at its limit. */
+      && otherOpen.rows.length > 0
+      && otherOpen.rows.every((r) => r.pass && r.pass.off === 0 && !r.pass.out)
+      && otherOpen.passNote === '',
+    'at the cap here = ' + perClass.hereAtCap + ', next door = ' + perClass.thereAtCap
+      + ' over ' + perClass.open + ' open pass(es); that student reads out here = '
+      + perClass.hereOut + ', next door = ' + perClass.thereOut + '; '
+      + otherOpen.rows.length + ' row(s) next door with '
+      + JSON.stringify([...new Set(otherOpen.rows.map((r) => r.pass && r.pass.off))])
+      + ' button(s) off and the note line ' + JSON.stringify(otherOpen.passNote));
+  await openCard(passClass);
+
+  /*
+    ── one tap back, with the minutes it owes ──
+
+    THE GAP IS MANUFACTURED. Left alone, every pass this run issues comes back in under a second and
+    "0 minutes" is what a broken calculation and a correct one both produce. So the open pass's `out`
+    is wound back seven minutes through the store before the Return is tapped, and seven is the
+    number the entry has to carry. The wind-back is asserted before it is used.
+  */
+  const wound = await evalJs(`(async function(){
+    var s = window.planbook.store;
+    var was = '';
+    s.update(function(d){
+      d.openPasses.forEach(function(p){
+        if (p.studentId !== ${JSON.stringify(outA)}) return;
+        was = p.out;
+        var t = new Date(Date.parse(p.out) - 7 * 60000);
+        var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+        var off = -t.getTimezoneOffset(), abs = Math.abs(off);
+        p.out = t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate())
+          + 'T' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
+          + (off < 0 ? '-' : '+') + pad(Math.floor(abs/60)) + ':' + pad(abs % 60);
+      }); });
+    await s.flush();
+    return { was: was, now: (s.getDoc().openPasses.filter(function(p){
+      return p.studentId === ${JSON.stringify(outA)}; })[0] || {}).out }; })()`);
+  check('the fixture for the minutes is real: that student\'s time out was wound back seven minutes',
+    !!wound.was && !!wound.now && wound.now !== wound.was
+      && Math.round((Date.parse(wound.was) - Date.parse(wound.now)) / 60000) === 7,
+    'out went from ' + wound.was + ' to ' + wound.now);
+
+  await evalJs('window.planbook.attendance.renderAttendance();1');
+  await clickSel('[data-pass-return="' + outA + '"]');
+  const returned = await read();
+  const logged = returned.passLog[0] || {};
+  const rowBack = returned.rows.filter((r) => r.student === outA)[0] || {};
+  check('one tap back writes ONE log entry with the right minutes, and the student\'s buttons come back',
+    returned.passLog.length === 1
+      && logged.studentId === outA && logged.classId === passClass && logged.type === 'bathroom'
+      && logged.out === wound.now && logged.minutes === 7 && logged.endedBy === 'return'
+      && logged.keys === 'back,classId,endedBy,id,minutes,out,studentId,type'
+      && returned.openPasses.length === 2
+      && !!rowBack.pass && rowBack.pass.out === false
+      && rowBack.pass.types === 'bathroom,nurse,quick'
+      /* Under the cap again, so every other row's buttons come back on with it, and the reason
+         above the grid goes away because there is no longer one. */
+      && rowBack.pass.off === 0 && returned.passNote === '',
+    'the log holds ' + returned.passLog.length + ' entr(ies): ' + JSON.stringify(logged)
+      + '; the row now offers ' + JSON.stringify(rowBack.pass) + ' and the note line is '
+      + JSON.stringify(returned.passNote));
+
+  check('and the round trip still wrote no attendance — a student who went to the bathroom was present',
+    returned.records.length === passBaselineRecords
+      && JSON.stringify(returned.values) === passBaselineValues
+      && rowBack.codes.charAt(0) === 'P',
+    returned.records.length + ' attendance record(s) (was ' + passBaselineRecords
+      + '), marks across the document = ' + JSON.stringify(returned.values)
+      + ' (was ' + passBaselineValues + '), and that row reads "' + rowBack.codes + '"');
+
+  /*
+    ── the log is keyed by student id, and a rename proves it ──
+
+    Asked of the document rather than of the screen, which is the acceptance line's own wording. The
+    rename goes in through the store and the app is reloaded on top of it, so what is compared is a
+    log entry that has been through IndexedDB since the name changed.
+  */
+  const renamedTo = await evalJs(`(async function(){
+    var s = window.planbook.store;
+    var doc = s.getDoc();
+    var stu = doc.students.filter(function(x){ return x.id === ${JSON.stringify(outA)}; })[0];
+    var was = { first: stu.first, last: stu.last };
+    s.update(function(){ stu.first = 'Renamed'; stu.last = 'Afterwards'; });
+    await s.flush();
+    return was; })()`);
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_ATT_READER);
+  const afterRename = await openCard(passClass);
+  const keptEntry = afterRename.passLog.filter((p) => p.studentId === outA)[0] || {};
+  check('the pass log is keyed by student id: renaming that student afterwards neither orphans nor re-attaches their pass',
+    afterRename.names.indexOf('Renamed Afterwards') >= 0
+      && afterRename.passLog.length === 1
+      && keptEntry.id === logged.id && keptEntry.minutes === 7
+      && keptEntry.out === logged.out && keptEntry.back === logged.back
+      /* And no name is in there at all — searched for every name the document holds, rather than
+         for the fields this file thought to look at. */
+      && afterRename.names.every((n) => afterRename.passJson.indexOf(n) < 0)
+      && afterRename.passJson.indexOf('Renamed') < 0,
+    'the entry after the rename is ' + JSON.stringify(keptEntry)
+      + '; the serialised pass collections mention none of the '
+      + afterRename.names.length + ' names in the document');
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    var stu = s.getDoc().students.filter(function(x){ return x.id === ${JSON.stringify(outA)}; })[0];
+    s.update(function(){ stu.first = ${JSON.stringify(renamedTo.first)};
+      stu.last = ${JSON.stringify(renamedTo.last)}; });
+    await s.flush(); return 1; })()`);
+  await evalJs('window.planbook.attendance.renderAttendance();1');
+
+  /*
+    ── `D` and an open pass agree ──
+
+    Driven through the CELL, one tap at a time round the cycle, rather than through setMark: the
+    coupling lives in the writer every tap goes through, and a check that called the writer directly
+    would not notice a grid that had stopped reaching it. The three marks on the way to `D` are the
+    control: a student who is out and is marked absent, at an event, or tardy is still out, and only
+    the dismissal closes anything.
+  */
+  const beforeD = await read();
+  const passB = beforeD.openPasses.filter((p) => p.studentId === outB)[0] || {};
+  const onTheWay = [];
+  for (let i = 0; i < 4; i++) {
+    await tapCell(outB, nodeToday);
+    const step = await read();
+    const row = step.rows.filter((r) => r.student === outB)[0] || {};
+    onTheWay.push(row.codes.charAt(0) + (step.openPasses.some((p) => p.studentId === outB) ? '+' : '-'));
+  }
+  const dismissD = await read();
+  const dCell = ((dismissD.today.filter((r) => r.classId === passClass)[0] || {}).marks || {})[outB];
+  const closedByD = dismissD.passLog.filter((p) => p.studentId === outB)[0] || {};
+  check('marking a student D while they are out closes the pass — and A, E and T on the way there do not',
+    onTheWay.join(' ') === 'A+ E+ T+ D-'
+      && !dismissD.openPasses.some((p) => p.studentId === outB)
+      && dismissD.passLog.length === 2
+      && closedByD.endedBy === 'dismissed' && closedByD.out === passB.out
+      && typeof closedByD.minutes === 'number'
+      /* The link back, on the cell that caused it and nowhere else. A `D` that closed no pass
+         carries no such field, and no other code ever does. */
+      && !!dCell && dCell.code === 'D' && dCell.passId === closedByD.id
+      && Object.keys(dCell).sort().join(',') === 'at,code,passId',
+    'the cell walked ' + JSON.stringify(onTheWay.join(' '))
+      + ' (code, and + for still out); the D cell is ' + JSON.stringify(dCell)
+      + ' and the entry it closed is ' + JSON.stringify(closedByD));
+
+  await tapCell(outB, nodeToday);
+  const undoneD = await read();
+  const undoneRec = (undoneD.today.filter((r) => r.classId === passClass)[0] || {});
+  const backOut = undoneD.openPasses.filter((p) => p.studentId === outB)[0] || {};
+  const rowB = undoneD.rows.filter((r) => r.student === outB)[0] || {};
+  check('and undoing the D puts the pass back — same time out, and the entry it wrote is gone rather than doubled',
+    backOut.studentId === outB && backOut.out === passB.out && backOut.id === closedByD.id
+      && undoneD.openPasses.length === 2
+      && undoneD.passLog.length === 1
+      && !undoneD.passLog.some((p) => p.studentId === outB)
+      && !!rowB.pass && rowB.pass.out === true
+      /* The mark went back to present, which for this class means no entry at all — so the record
+         is exactly the one this section started from, and the dismissal left nothing behind in
+         either collection. */
+      && JSON.stringify(undoneRec.marks) === '{}'
+      && undoneD.records.length === passBaselineRecords
+      && JSON.stringify(undoneD.values) === passBaselineValues,
+    'the reopened pass is ' + JSON.stringify(backOut) + ', the log holds '
+      + undoneD.passLog.length + ' entr(ies) ' + JSON.stringify(undoneD.passLog.map((p) => p.endedBy))
+      + ', and the record is back to ' + JSON.stringify(undoneRec.marks));
+
+  /*
+    ── AND THEN THE DAY ROLLS OVER: yesterday's `D` does not put a pass back in the corridor ──
+
+    The coupling is TODAY-ONLY IN BOTH DIRECTIONS, and the undo is the half that is easy to leave
+    open — a retraction of the app's own write looks like it needs no date guard. It does. A `D`
+    marked today carries a passId; tomorrow that same cell is a past-dated cell, and a past column
+    is unlockable (WO-2.1). Ungated, editing it pushes a FINISHED pass back into `openPasses` with
+    yesterday's time out: a Return button beside a student who is sitting in the room, one of the
+    class's three slots eaten until somebody notices, and a real completed dismissal deleted out of
+    the append-only history by an edit made on a later day. That is the Traps paragraph's own
+    failure — the app asserting a child is out of the room when they are not — running backwards.
+
+    EVERY OTHER `D` IN THIS SECTION IS MARKED AND UNDONE ON THE SAME DAY, so every check above is
+    blind to it by construction. This one rolls the day over BY MOVING THE CELL RATHER THAN THE
+    CLOCK: the dismissal is made today through the grid, exactly as the checks above make it, and
+    then that cell — passId and all — is lifted onto yesterday's column with only its `at` re-dated,
+    which is precisely the state midnight leaves it in. The fixture is asserted before it is used.
+
+    IT IS MOVED ONTO THE RECORD THAT COLUMN ALREADY HAS, never onto a second record beside it, and
+    the count is asserted. This is the mistake the first version of this check made and it is worth
+    naming: yesterday is a day this section's own class was taken on, so a pushed record is a
+    DUPLICATE classId+date pair — and a duplicate is inert (src/attendance.js:618-620, "the first is
+    the one this app reads and the one every write below edits"). The D cell would have been sitting
+    somewhere the tap below could never reach, the tap would have walked an empty cell P → A → E,
+    and every assertion about a pass not reopening would have been true of a cell nothing touched.
+  */
+  const yesterday = thisWeek[1];
+  for (let i = 0; i < 4; i++) await tapCell(outB, nodeToday);
+  const dismissedAgain = await read();
+  const secondD = dismissedAgain.passLog
+    .filter((p) => p.studentId === outB && p.endedBy === 'dismissed')[0] || {};
+  const rolled = await evalJs(`(async function(){
+    var s = window.planbook.store;
+    var d = s.getDoc();
+    var cls = ${JSON.stringify(passClass)}, who = ${JSON.stringify(outB)};
+    var day = ${JSON.stringify(yesterday)};
+    var day0 = d.attendance.filter(function(r){ return r.classId === cls && r.date === day; });
+    var rec = d.attendance.filter(function(r){
+      return r.classId === cls && r.date === ${JSON.stringify(nodeToday)}; })[0];
+    var cell = rec && rec.marks[who] ? JSON.parse(JSON.stringify(rec.marks[who])) : null;
+    if (cell && cell.at) cell.at = day + cell.at.slice(10);
+    var before = day0.length === 1 ? JSON.stringify(day0[0].marks || {}) : null;
+    s.update(function(){
+      delete rec.marks[who];
+      if (day0.length === 1 && cell) day0[0].marks[who] = cell;
+    });
+    await s.flush();
+    window.planbook.attendance.renderAttendance();
+    var after = s.getDoc().attendance.filter(function(r){ return r.classId === cls && r.date === day; });
+    return { records: after.length, before: before,
+             moved: after.length === 1 ? ((after[0].marks || {})[who] || null) : null,
+             todayNow: rec.marks[who] || null,
+             open: s.getDoc().openPasses.length }; })()`);
+  check('the fixture for a day rolling over is real: that D cell, passId and all, now sits on the one record yesterday has',
+    rolled.records === 1
+      && !!rolled.moved && rolled.moved.code === 'D' && rolled.moved.passId === secondD.id
+      && (rolled.moved.at || '').slice(0, 10) === yesterday
+      && rolled.todayNow === null && rolled.open === 1
+      && dismissedAgain.passLog.length === 2 && secondD.endedBy === 'dismissed',
+    yesterday + ' holds ' + rolled.records + ' record(s) for that class, the first of them reading '
+      + JSON.stringify(rolled.moved) + ' for that student, and today holds '
+      + JSON.stringify(rolled.todayNow) + '; the pass it closed is ' + JSON.stringify(secondD)
+      + ', leaving ' + rolled.open + ' open');
+
+  await clickSel('[data-attendance-edit="' + yesterday + '"]');
+  await tapCell(outB, yesterday);          /* D -> P: the tap that would have reopened it */
+  const nextDay = await read();
+  await tapCell(outB, yesterday);          /* P -> A: and the cell comes back without the id */
+  const nextDayA = await read();
+  const yGone = (nextDay.records.filter((r) => r.classId === passClass && r.date === yesterday)[0]
+    || {}).marks || {};
+  const yRec = nextDayA.records.filter((r) => r.classId === passClass && r.date === yesterday)[0] || {};
+  const stillDone = nextDay.passLog.filter((p) => p.id === secondD.id)[0] || {};
+  check('but a D edited on a LATER day does not push its finished pass back into the corridor',
+    /* THE TAP LANDED, which is the premise the two absences below are worth nothing without: the
+       dismissal is off the cell, so the reopen was reached and refused rather than never asked. */
+    !yGone[outB]
+      /* Nobody new is out. One pass is open and it is the one that was already open. */
+      && nextDay.openPasses.length === 1 && !nextDay.openPasses.some((p) => p.studentId === outB)
+      /* And the history is intact: the dismissal that really happened is still there, unretracted,
+         which is the half that would delete a record rather than invent one. */
+      && nextDay.passLog.length === 2 && stillDone.endedBy === 'dismissed'
+      && stillDone.out === secondD.out && stillDone.back === secondD.back
+      /* The link dies with the cell instead, as the coupling's comment says it does: the rewritten
+         cell carries a code and nothing else — no passId, and no `at`, because a device clock says
+         nothing about yesterday. */
+      && nextDayA.openPasses.length === 1 && nextDayA.passLog.length === 2
+      && ((yRec.marks || {})[outB] || {}).code === 'A'
+      && Object.keys((yRec.marks || {})[outB] || {}).join(',') === 'code',
+    'after the tap on ' + yesterday + ' the cell held ' + JSON.stringify(yGone[outB] || null)
+      + ', ' + nextDay.openPasses.length + ' pass(es) open ('
+      + JSON.stringify(nextDay.openPasses.map((p) => p.studentId)) + ') and '
+      + nextDay.passLog.length + ' logged ' + JSON.stringify(nextDay.passLog.map((p) => p.endedBy))
+      + '; the rewritten cell is ' + JSON.stringify((yRec.marks || {})[outB]));
+
+  /* Put the fixture away: the past column locked, yesterday's record put back byte for byte as this
+     check found it — it is a real taken day this section borrowed, not one it invented, so it is
+     restored rather than deleted — and that student sent out again, because the section has to END
+     with two passes open for the reason below. */
+  await clickSel('#attendanceBanner [data-attendance-page="today"]');
+  await evalJs(`(async function(){
+    var s = window.planbook.store;
+    s.update(function(d){
+      var rec = d.attendance.filter(function(r){
+        return r.classId === ${JSON.stringify(passClass)}
+          && r.date === ${JSON.stringify(yesterday)}; })[0];
+      if (rec) rec.marks = JSON.parse(${JSON.stringify(rolled.before || '{}')});
+    });
+    await s.flush();
+    window.planbook.attendance.renderAttendance();
+    return 1; })()`);
+  await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
+
   /* Handed back the way the section before this one left it: the overflow sweep at the bottom
      measures the term nav of whatever class is open, and this section has been walking across
-     five of them. */
+     five of them.
+
+     TWO PASSES ARE LEFT OPEN ON PURPOSE. The coarse sweep below opens the class with the biggest
+     roster — this one — and measures every control on it, so leaving one row showing a Return
+     button and the rest showing three issue buttons is what puts both shapes of this column under
+     the 44px measurement. A run that tidied them away would measure the empty case only. */
+  await send('Emulation.clearDeviceMetricsOverride');
   await closeAll();
   await clickSel('[data-class-tab]', 1);
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
@@ -6828,17 +7386,36 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
         var dayW = days ? Math.round(document.querySelector('thead .attendance-day')
                             .getBoundingClientRect().width) : 0;
         var wrap = document.querySelector('.attendance-grid-wrap');
-        return { want: want, days: days, dayW: dayW, wrapW: wrap.clientWidth,
-                 spare: wrap.clientWidth - days * dayW,
+        /* The Passes column takes its share of the wrap before the name column sees any of it
+           (WO-2.8), so the spare the name is competing for is what is left after BOTH fixed
+           columns. Measured rather than assumed, because it is the number that decides whether
+           the cap below is still load-bearing. */
+        var passTh = document.querySelector('thead .attendance-passes');
+        var passW = passTh ? Math.round(passTh.getBoundingClientRect().width) : 0;
+        return { want: want, days: days, dayW: dayW, wrapW: wrap.clientWidth, passW: passW,
+                 spare: wrap.clientWidth - days * dayW - passW,
                  name: (cell.getAttribute('title') || '') }; })()`);
       /* Two claims, and they are separated because only one of them can be made in both
-         orientations. This first one guards the RENDER: six columns, and the long name actually on
-         the row being measured. If either slips, everything below is measuring a screen the defect
-         was never on, which is the trap this whole block exists to close. */
-      check('the grid under this measurement is six columns wide and carries the long name, iPad '
-        + label,
-        !cond.noCell && cond.days === 6 && /Delacroix-Nguyen/.test(cond.name) && cond.want >= 240,
-        cond.days + ' day columns at ' + cond.dayW + 'px; the name column wants ' + cond.want
+         orientations. This first one guards the RENDER: the right number of day columns, and the
+         long name actually on the row being measured. If either slips, everything below is
+         measuring a screen the defect was never on, which is the trap this whole block exists to
+         close.
+
+         IT WAS SIX IN BOTH ORIENTATIONS UNTIL WO-2.8, and the change is that work order's visible
+         cost rather than a slackening of this check. The Passes column asks for 160px of a 688px
+         wrap; six day columns and a name column do not fit beside it in portrait, and
+         src/attendance.js's answer to "not enough width" was already to draw fewer days rather than
+         to let the grid escape sideways — which is the very failure this block was written for.
+         So: four in portrait, six in landscape, and the count is still ASSERTED rather than
+         accepted, because a grid that quietly dropped to three would be measuring a screen with
+         room to spare. */
+      const wantDays = label === 'portrait' ? 4 : 6;
+      check('the grid under this measurement is ' + wantDays
+        + ' columns wide beside the Passes column, and carries the long name, iPad ' + label,
+        !cond.noCell && cond.days === wantDays && cond.passW >= 148
+          && /Delacroix-Nguyen/.test(cond.name) && cond.want >= 240,
+        cond.days + ' day columns at ' + cond.dayW + 'px beside a ' + cond.passW
+          + 'px Passes column; the name column wants ' + cond.want
           + 'px uncapped — "' + cond.name + '"');
 
       /* And this one is the defect condition itself, which is PORTRAIT-ONLY BY CONSTRUCTION. A name
@@ -6848,11 +7425,11 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
          had failed. Portrait is where the margin is real — 256px spare against that same 279px — so
          portrait is where the claim is made. */
       if (label === 'portrait') {
-        check('a long name in portrait genuinely wants more than the six columns leave — '
+        check('a long name in portrait genuinely wants more than the other columns leave — '
           + 'the cap is load-bearing here, not decoration',
           cond.want > cond.spare,
-          'wants ' + cond.want + 'px, ' + cond.days + ' columns leave ' + cond.spare + 'px of a '
-            + cond.wrapW + 'px wrap');
+          'wants ' + cond.want + 'px, ' + cond.days + ' day columns and a ' + cond.passW
+            + 'px Passes column leave ' + cond.spare + 'px of a ' + cond.wrapW + 'px wrap');
       }
 
       /* `P` is in the list and it is not redundant: present is stored as NO MARK, so the panel draws

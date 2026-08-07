@@ -39,7 +39,7 @@ starts to sprawl.
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.10 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.12 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.10 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -54,7 +54,7 @@ starts to sprawl.
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 9 | 2 | 🔨 IN PROGRESS |
+| 2 — Attendance | 11 | 3 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -62,7 +62,7 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 0 | ⬜ NOT STARTED |
-| | **58** | **15** | `[██░░░░░░░░] 26%` |
+| | **60** | **16** | `[███░░░░░░░] 27%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -74,7 +74,7 @@ dashboard tidy. The work lands on `phase/2-attendance`, because that is where th
 
 ## Ship 1 — the three weeks that matter
 
-Seventeen work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
+Nineteen work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
 is genuinely tight, so it is written out day by day rather than left to be discovered.
 
 *(Four changes on 2026-08-06, all from one root cause — building attendance without holding it
@@ -88,6 +88,14 @@ model itself backwards: a cell that starts on `?` and jumps to `A` makes confirm
 present cost four taps, and one tap resolved the whole room. That is the pattern worth naming: the
 harness cannot fail a feature nobody specified, and it cannot fail a model that works exactly as
 designed while being wrong for the room it ships into.)*
+
+*(Two more on 2026-08-07, both from the owner's first iPad sitting with the finished hall passes,
+and the pattern above repeating a third time. **WO-2.11 added**, 🚩, because a misclicked pass has
+no way out but Return — which writes a phantom trip into a log that is append-only by rule and read
+by Phase 4 as a signal. **WO-2.12 added**, because WO-2.8's escalation asked the wrong question:
+offered four, five or six day columns in portrait, the owner said portrait should show today and
+landscape should show the week. Neither is a defect in WO-2.8, which verified clean on all seven
+acceptance lines; both are what using it on glass revealed.)*
 
 | # | Work order | Size | 🚩 | Suggested |
 |---|---|---|---|---|
@@ -105,15 +113,18 @@ designed while being wrong for the room it ships into.)*
 | 12 | [WO-1.13](phase-1-shell-store-roster.md#wo-113--main-area-views-make-the-header-actually-navigate) Main-area views | M | 🚩 | Aug 19–20 |
 | 13 | [WO-2.10](phase-2-attendance.md#wo-210--mark-cells-unconfirmed-timed-and-noted) Mark cells: unconfirmed, timed, noted | L | 🚩 | Aug 19–20 |
 | 14 | [WO-2.8](phase-2-attendance.md#wo-28--hall-passes-issue-hold-return) Hall passes: issue, hold, return | M | 🚩 | Aug 20 |
-| 15 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20–21 |
-| 16 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
-| 17 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
+| 15 | [WO-2.11](phase-2-attendance.md#wo-211--cancel-a-pass-issued-by-mistake) Cancel a pass issued by mistake | S | 🚩 | Aug 20 |
+| 16 | [WO-2.12](phase-2-attendance.md#wo-212--portrait-shows-today-landscape-shows-the-week) Portrait shows today | S | | Aug 20 |
+| 17 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20–21 |
+| 18 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
+| 19 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
 
 **The hard ordering constraint:** WO-1.5 ships before WO-1.6. Nothing that writes student data
 lands before the path that gets it back out. Everything else in the table can shuffle.
 **Satisfied 2026-08-04** — WO-1.5 verified, iPad half included. WO-1.6 is clear to start.
 
-**If the schedule slips**, cut in this order: WO-1.9 presentation mode degrades to
+**If the schedule slips**, cut in this order: WO-2.12 portrait layout — five day columns and a
+readable name column is a worse fit than one column, not a broken screen · WO-1.9 presentation mode degrades to
 "accommodations are collapsed by default and there's a hide-everything toggle in the header" ·
 WO-2.4 percentages can be read from Roll Call! for a week · WO-1.10 home screen degrades to a class
 list. **Never cut WO-1.5, WO-1.3, or WO-G1** — those three are what make going live in three weeks

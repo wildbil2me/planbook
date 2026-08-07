@@ -53,7 +53,7 @@
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
 .attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on,
-.attendance-detail-btn {
+.attendance-detail-btn, .attendance-pass-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -152,6 +152,15 @@
   background: #f8f9fb; border: 1.5px solid #eef0f4;
   font-size: 12px; line-height: 1.5; color: #6b7a8d;
 }
+/* WHY THE PASS BUTTONS ARE OFF (WO-2.8). The caution wash rather than the note's grey: three
+   students are out of the room, and the sentence that says so is a thing to act on rather than a
+   standing explanation. It sits directly under the action row, above the toolbar, so it is between
+   the teacher's eye and the grid she is about to find a greyed-out button in. */
+.attendance-body .attendance-pass-note {
+  margin: 0 0 10px; padding: 8px 12px; border-radius: 8px;
+  background: #fff8e6; border: 1.5px solid #f0dfa8;
+  font-size: 12px; font-weight: 700; line-height: 1.5; color: #8a6d1a;
+}
 .attendance-body .attendance-hint { font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.6; }
 .attendance-body .attendance-empty { font-size: 13px; color: #a0aab8; padding: 10px 2px; line-height: 1.5; }
 
@@ -237,6 +246,55 @@
    shrinks to 20px reads as a rendering fault, while a truncated name reads as a truncated name and
    keeps its full text on the cell's `title`. */
 .attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── THE PASSES COLUMN (WO-2.8) ── */
+/* Roll Call!'s `col-passes`, at its own `min-width: 160px` (dashboard.html:3988) and in its own
+   place — between the name and the day columns. A MINIMUM, like every other column on this grid:
+   the browser distributes the rest, and 160px is what three buttons and their labels ask for on a
+   fine pointer.
+   THAT 160px IS ALSO A NUMBER src/attendance.js KNOWS. dayColumnCount() reserves it before deciding
+   how many day columns to draw, because this column is the reason an iPad in portrait now shows
+   four days instead of six. Change it here and change PASS_COL_PX there in the same edit. */
+.attendance-passes {
+  min-width: 160px;
+  text-align: left; padding: 9px 10px;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  border-bottom: 1px solid #eef0f4; white-space: nowrap;
+}
+.attendance-pass-td { padding: 9px 10px; vertical-align: middle; }
+/* Roll Call!'s `.pass-btns`: `display: flex; gap: 5px; align-items: center`. */
+.attendance-pass-cell { display: flex; align-items: center; gap: 5px; }
+/* And its `.pass-btn`: a small pill, no border, the type in the fill. The three fills are the
+   suite's own — indigo, danger red, positive green — and they are the ones Roll Call! uses for
+   these same three buttons, so the owner's eye lands on the right one without reading it. */
+.attendance-pass-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  padding: 4px 9px; border-radius: 14px; border: 1.5px solid transparent;
+  font-size: 11px; font-weight: 700; font-family: inherit;
+  cursor: pointer; white-space: nowrap; transition: all 0.15s;
+}
+.attendance-pass-btn.bathroom { background: #eef0fb; color: #5b6fcc; }
+.attendance-pass-btn.nurse    { background: #fdeaea; color: #e74c3c; }
+.attendance-pass-btn.quick    { background: #eafaf1; color: #27ae60; }
+/* Out of the room. Tardy's amber, because this is the one state on the row that is unfinished and
+   the teacher is waiting on it — and it is a filled pill rather than a wash so that one row in
+   twenty-six reads as different from across the room. */
+.attendance-pass-btn.out { background: #fef5ea; border-color: #e67e22; color: #e67e22; }
+.attendance-pass-btn:hover:not(:disabled) { border-color: #5b6fcc; }
+.attendance-pass-btn.out:hover:not(:disabled) { border-color: #e67e22; background: #fdead4; }
+/* At the cap. Faded rather than hidden, with the reason on the control's own title and again in
+   the line above the grid: a control that vanishes says nothing about why. */
+.attendance-pass-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.attendance-pass-icon { font-size: 12px; line-height: 1; }
+/* The time the student left, beside the Return button rather than under it: a caption on its own
+   line would make three rows of a twenty-six-row grid taller than the rest, and a row that changes
+   height as a pass is issued moves the target under the next thumb. Same reasoning, and the same
+   refusal, as `.attendance-cell-time` being out of flow. */
+.attendance-pass-since {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
 
 /* ── THE ⋯ AT THE END OF A NAME, AND THE PANEL IT OPENS (WO-2.10) ── */
 /* The way into one student's mark on the day being edited: the time it settled, a note, and the
@@ -438,6 +496,7 @@
   .attendance-detail-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
   .attendance-detail-hint { font-size: 12px; }
   .attendance-body .attendance-note { font-size: 13px; }
+  .attendance-body .attendance-pass-note { font-size: 13px; padding: 10px 14px; }
   .attendance-body .attendance-hint { font-size: 12px; }
   .attendance-body .attendance-empty { font-size: 14px; }
   .attendance-toolbar { gap: 10px; }
@@ -465,8 +524,17 @@
      ever made them engage.
 
      Any value from 200 to 256 measures identically, because what matters is that a cap EXISTS.
-     256 is the arithmetic above and truncates the least, so it is the one written down. */
-  .attendance-name { max-width: 256px; }
+     256 was the arithmetic above and truncated the least, so it was the one written down.
+
+     IT CAME DOWN TO 232 AT WO-2.8, and the arithmetic is the same arithmetic with one more column
+     in it. The Passes column asks for 160px and four day columns ask for 288, which leaves
+     688 - 160 - 288 = 240 in portrait; 232 takes that with 8px to spare rather than landing on it
+     exactly, because three columns rounding the same way is how a grid ends up one pixel over its
+     wrap. The number that decides there are FOUR day columns and not six is PASS_COL_PX in
+     src/attendance.js, and it reads this cap to do it — the two move together or neither is right.
+     The value is still inside the 200-to-256 band above, so nothing about what this rule proves
+     has changed. */
+  .attendance-name { max-width: 232px; }
   /* 54px of column for a 44px cell and 5px either side: the mis-tap this spacing is bought against
      is marking the wrong student absent on the wrong day, which is a phone call home about a child
      who was in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css.
@@ -478,6 +546,21 @@
      only the reading. Left as it stands because 72px is the value that was chosen on purpose and
      narrowing the column is not what the 2026-08-06 report asked for — but do the arithmetic with
      72, not 54. Doing it with 54 is what produced the tablet block's confident wrong sum below. */
+  /* THE PASS BUTTONS LOSE THEIR WORDS HERE, and that is the trade this column makes for its 44px.
+     Three targets at 44 wide, 2px between them and the cell's own 12px of padding come to 148px
+     inside a 160px column; three targets carrying "Bath", "Nurse" and "Quick" as well come to about
+     200, and the 40px difference is a day column off the far end of an iPad in portrait. The word
+     is still on the button's accessible name and on its tooltip, and the icon is the part the
+     owner's eye is already trained on — these are Roll Call!'s own three glyphs. The Return button
+     keeps its word: there is one of it, and it is the one that must not be guessed at. */
+  .attendance-pass-word { display: none; }
+  .attendance-pass-cell { gap: 2px; }
+  .attendance-pass-btn { min-height: 44px; min-width: 44px; padding: 4px 6px; font-size: 12px; }
+  .attendance-pass-btn.out { padding: 4px 10px; }
+  .attendance-pass-icon { font-size: 16px; }
+  .attendance-pass-since { font-size: 11px; }
+  .attendance-passes { font-size: 11px; padding: 6px 6px; }
+  .attendance-pass-td { padding: 9px 6px; }
   .attendance-day { width: 54px; padding: 6px 3px; }
   .attendance-day-dow { font-size: 10px; }
   .attendance-day-date { font-size: 13px; }
@@ -526,5 +609,9 @@
      how a row spills sideways, and dropping a column is the answer this screen already has. */
   .attendance-cell-td { padding-left: 4px; padding-right: 4px; }
   .attendance-corner, .attendance-name { padding-left: 4px; padding-right: 6px; }
+  /* The pass column keeps its 160px here too, for the same reason the day column keeps its width:
+     three 44px targets do not get smaller because the screen did, and a phone is where this grid
+     already leans on the wrap's sideways-scroll valve. */
+  .attendance-passes, .attendance-pass-td { padding-left: 4px; padding-right: 4px; }
   .attendance-pager-range { display: none; }
 }

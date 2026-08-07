@@ -554,6 +554,11 @@
       <p class="attendance-state" id="attendanceState"></p>
       <div class="attendance-actions" id="attendanceActions"></div>
       <p class="attendance-note hidden" id="attendanceNote"></p>
+      <!-- Why the pass buttons in the grid below have gone grey (WO-2.8). Up only at the cap: this
+           is the "reason on screen rather than a dead control" the work order asks for, and it is
+           not a standing list of who is out — that banner, with names and elapsed time and a
+           presentation-mode rule of its own, is WO-2.9's. src/attendance.js fills it. -->
+      <p class="attendance-pass-note hidden" id="attendancePassNote"></p>
 
       <div class="attendance-toolbar">
         <div class="search-box">
@@ -613,6 +618,21 @@
         name for that time, a note, or to put one student back to <strong>?</strong>. Past days need
         their ✏ before they accept a tap; today’s column is always live, and its 🚫 says the class
         didn’t meet. Every tap saves as you make it; there is nothing to submit.
+      </p>
+
+      <!-- The passes half of the same paragraph, kept separate because it answers different
+           questions: "will it still know he is out tomorrow?" and "does a bathroom pass mark him
+           absent?" Both are the ones this feature reliably provokes, and both are the ones
+           WO-2.8 exists to answer with a yes and a no. -->
+      <p class="attendance-hint">
+        <strong>Passes.</strong> 🚽 bathroom, 🏥 nurse, ⚡ quick — one tap sends a student out and
+        records the time they left; one tap on <strong>Return</strong> brings them back and writes
+        the minutes down. Three students at a time, and the buttons grey out with the reason above
+        the grid once you are at that limit. <em>An open pass is stored, not remembered</em>: close
+        the app, drop the iPad, come back after lunch, and whoever is out is still out, with the
+        time they left beside their name. A pass changes nobody’s attendance — a student at the
+        bathroom was present — with one exception: marking someone <strong>D</strong> closes their
+        pass, and taking the <strong>D</strong> back opens it again.
       </p>
     </div>
   </div>

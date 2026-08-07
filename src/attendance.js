@@ -229,9 +229,36 @@
   gives: tools/wo-sweep.mjs reports which screens ask, and a mention would report this one as one
   that does.)
 
+  ── THE PASSES COLUMN (WO-2.8) ──
+
+  A fourth thing on this row, between the name and the days: three buttons while a student is in the
+  room — 🚽 Bath, 🏥 Nurse, ⚡ Quick — and one Return button, with the time they left under it, while
+  they are out. Roll Call!'s `col-passes` (dashboard.html:3988, 4267), same grammar, same three
+  types, same 160px.
+
+  WHAT IS NOT LIFTED FROM IT is the storage, and that inversion is the whole of that work order:
+  over there an open pass is a module variable and a force-quit forgets a child who is out of the
+  room. Here it is a record in the year document. src/passes.js owns that model and argues it; this
+  file owns the column, the clock and the announcements.
+
+  THE COLUMN IS ABOUT NOW, NOT ABOUT A DATE. It does not move with the six-day window and it is not
+  affected by unlocking a past column: a pass is issued at the moment a student stands up, so there
+  is one Passes column rather than one per day, and it says the same thing whichever week is on
+  screen. The consequence to know is that it costs the grid ~160px of width, which is why
+  dayColumnCount() below now reserves it — see that function.
+
+  A PASS CHANGES NO ATTENDANCE. A student at the bathroom is present; issuing and returning writes
+  no record and moves no mark. The one coupling runs one way and lives in setMark(): a `D` on
+  TODAY's column closes the student's open pass, and taking that `D` back puts it out again. See the
+  block at that branch.
+
   Out of scope and deliberately absent: percentages and counts over history (WO-2.4), the keyboard
   path (WO-2.5), per-student history and print/CSV (WO-2.6), and calendar events (WO-2.3), which
-  this screen READS once they exist and never authors.
+  this screen READS once they exist and never authors — plus, since WO-2.8, the pass banner, the
+  overdue alerts and the pass history, which are WO-2.9's and are deliberately missing here. What is
+  on the screen is the time a student LEFT, which acceptance line 1 asks for; the elapsed count that
+  ticks beside it is the next work order's, and it is the one that has to survive iOS suspending a
+  timer.
 */
 
 import { getDoc, update } from './store.js';
@@ -249,6 +276,10 @@ import { getSelectedClass, initials, avatarClass } from './classes.js';
    (Contrast src/roster.js's initialsOf(), which is written out separately from src/classes.js's
    initials() because those two read different shapes and answer different questions.) */
 import { rosterName, fullName } from './roster.js';
+/* The hall-pass model (WO-2.8). It is imported one way and only one way: src/passes.js holds no
+   DOM, reads no clock and never calls the store, so this file can hand it the live document inside
+   an update() without the two modules being able to disagree about who is out of the room. */
+import * as passes from './passes.js';
 
 const CLASS_NAME_ID = 'attendanceClassName';
 const DATE_ID = 'attendanceDate';
@@ -265,6 +296,7 @@ const CAPTION_ID = 'attendanceCaption';
 const HEAD_ID = 'attendanceHead';
 const BODY_ID = 'attendanceBody';
 const EMPTY_ID = 'attendanceEmpty';
+const PASS_NOTE_ID = 'attendancePassNote';
 
 /* ────────────────────────────── the vocabulary ──────────────────────────────
    Roll Call!'s five letters and its five words. `phrase` is the same fact said in a sentence —
@@ -330,6 +362,21 @@ export function timeOf(cell) {
 
 export function noteOf(cell) {
   return cell && typeof cell === 'object' && typeof cell.note === 'string' ? cell.note : '';
+}
+
+/*
+  THE PASS A DISMISSAL CLOSED (WO-2.8), and the only cell that ever carries one is a `D`.
+
+  It is on the cell rather than derived because the link has to die at exactly the moment the `D`
+  does, and the cell is the only record in the document whose lifetime is exactly the dismissal's.
+  Deriving it instead — "the most recent dismissed pass for this student" — would be matching two
+  records on their contents, which is the `name + time` join that made Roll Call!'s pass rows
+  fragile and is why docs/data-model.md makes this log append-only at all.
+
+  Every other cell has no such field, and nothing ever writes one onto a code that is not `D`.
+*/
+export function passIdOf(cell) {
+  return cell && typeof cell === 'object' && typeof cell.passId === 'string' ? cell.passId : '';
 }
 
 /*
@@ -496,24 +543,68 @@ function dayColumns(count, offset, today) {
   return out.slice(offset * count, offset * count + count);
 }
 
+/* The floor under a day column, and under the two columns that are not days. Every one of these is
+   a number that also appears in src/attendance.css, which is a duplication with a reason: the
+   browser distributes the grid, and this file only has to decide HOW MANY columns to ask it to
+   distribute. They are named here so the arithmetic under dayColumnCount() can be read rather than
+   trusted, and so that changing one in the stylesheet fails visibly here instead of silently there.
+
+     DAY_COL_PX     `.attendance-day`'s min-width, lifted from Roll Call!'s `thead th.day-th`.
+     PASS_COL_PX    `.attendance-passes`'s min-width, lifted from Roll Call!'s `col-passes`.
+     NAME_COL_PX    what the name column asks for: capped on a coarse pointer (see the cap's own
+                    comment in the stylesheet), and an estimate of a long name laid flat on a fine
+                    one, where nothing caps it.
+     CHROME_PX      the panel padding and page gutters between the viewport and the grid's box.
+                    Measured, not derived: a 768px viewport gives the wrap 688px and a 1024px one
+                    gives it 944px, on both pointers. */
+const DAY_COL_PX = 72;
+const PASS_COL_PX = 160;
+const NAME_COL_COARSE_PX = 232;
+const NAME_COL_FINE_PX = 280;
+const CHROME_PX = 80;
+/* Three is the fewest this screen will draw. Below the width where three fit, the wrap's
+   `overflow-x` safety valve takes over — a phone is not the device this grid is for, and dropping
+   to two columns would not make it one. */
+const MIN_DAY_COLS = 3;
+
 /*
-  How many columns fit. Six is the answer on anything from an iPad up; a narrower viewport shows
-  FEWER COLUMNS rather than scrolling sideways, because a grid you have to swipe horizontally to
-  read is a grid whose whole argument — see it all at once — has been given away.
+  How many day columns fit. Six is the answer on a laptop and on an iPad in landscape; a narrower
+  viewport shows FEWER COLUMNS rather than scrolling sideways, because a grid you have to swipe
+  horizontally to read is a grid whose whole argument — see it all at once — has been given away.
+
+  IT IS A BUDGET NOW RATHER THAN A LADDER OF BREAKPOINTS, and WO-2.8 is why. Until the Passes column
+  landed the ladder read `<420 → 3, <540 → 4, <680 → 5, else 6`, and those numbers were tuned for a
+  grid with two columns in it: a name and six days. At 768px — an iPad in portrait, the device this
+  screen is for — that came to 256 + 6×72 = 688, which is exactly the width the wrap has, and it fit
+  with nothing to spare. A 160px Passes column does not go into nothing to spare. The choice was
+  between three things and only three: overflow the wrap and let the valve engage (which is what
+  clipped the WO-2.10 note panel off the right edge of the iPad and is the defect this screen was
+  just fixed for), shrink the name column to about 96px (unreadable), or show fewer day columns.
+  This screen already had an answer for "not enough width" and it is the third one, so the ladder
+  became the arithmetic it was always standing in for.
+
+  What that costs, said plainly: an iPad in PORTRAIT now shows four day columns instead of six.
+  Landscape, and any laptop, still shows six. If the owner would rather have the sixth column back
+  in portrait, the pixels have to come from the name column — see the cap in the stylesheet — and
+  that is her call to make, not one to make for her.
 
   Measured off the viewport rather than off the panel, and it stays that way after WO-1.13 moved
   this screen out of a dialog: a hidden element measures zero, this screen can legitimately be
   painted while `#classView` is still `.hidden` (boot restores the view and the paint in one pass),
   and a column count of three because the answer was asked a frame early is a defect nobody would
-  look for here. The panel tracks the viewport below 905px, so the two agree wherever the answer is
-  not simply six.
+  look for here.
 */
 function dayColumnCount(width) {
   const w = typeof width === 'number' ? width : window.innerWidth;
-  if (w < 420) return 3;
-  if (w < 540) return 4;
-  if (w < 680) return 5;
-  return DEFAULT_DAY_COLS;
+  /* The cap on the name column only exists under a coarse pointer, and the cells are 44px there
+     rather than 34px, so the two pointers genuinely have different arithmetic. Asked at call time
+     rather than at load: an emulated pointer changes under a harness, and a laptop with a
+     touchscreen answers this differently from one without. */
+  const coarse = typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: coarse)').matches;
+  const spare = w - CHROME_PX - (coarse ? NAME_COL_COARSE_PX : NAME_COL_FINE_PX) - PASS_COL_PX;
+  const fits = Math.floor(spare / DAY_COL_PX);
+  return Math.max(MIN_DAY_COLS, Math.min(DEFAULT_DAY_COLS, fits));
 }
 
 /* ────────────────────────────── reading the document ──────────────────────────────
@@ -789,8 +880,55 @@ export function setMark(studentId, code, date) {
      one student confirmed. */
   if (record && current === code) return;
 
+  let passSaid = '';
   update((d) => {
     const r = ensureRecord(d, cls.id, on, seedIds(cls));
+
+    /*
+      `D` AND AN OPEN PASS AGREE — the one coupling between a mark and a hall pass, and it runs one
+      way only. A student marked dismissed while they are out of the room is not coming back, so the
+      pass is CLOSED rather than left open forever; taking the `D` back puts it out again, still
+      since the same minute. Roll Call!'s _finalizeDismissedPass() / cancelDismiss() pair is the
+      model, and src/passes.js's reopenPass() explains where the two builds diverge.
+
+      IT IS INSIDE THIS update() ON PURPOSE. The mark and the pass are one act, and two update()
+      calls would be two saves and a window in which the document says a dismissed student is also
+      out of the room.
+
+      TODAY ONLY, AND BOTH HALVES OF IT. A `D` typed onto last Tuesday says nothing about who is in
+      the corridor now, and closing a live pass from a past column would be the device clock
+      deciding a fact about a day it was not there for — the same refusal as the `at` stamp two
+      lines below. THE UNDO IS GATED THE SAME WAY, and it is the half that is easy to leave open:
+      the reopen looks like a pure retraction of the app's own write, so a date guard on it feels
+      redundant. It is not. Yesterday's `D` still carries yesterday's passId, and yesterday's column
+      is unlockable (WO-2.1). Ungated, editing that cell today pushes a finished pass back into
+      `openPasses` with YESTERDAY's `out` — the registry then draws a Return button for a student
+      who is sitting in the room, the pass eats one of this class's three slots until somebody taps
+      it, and the retraction deletes a real completed dismissal out of the append-only history. That
+      is the Traps paragraph's own failure — the app asserting a child is out of the room when they
+      are not — running in the mirror direction.
+
+      What a past-dated edit does instead: nothing to either collection. The dismissal stands in
+      `passes` as the honest record of a trip that did happen, and the link dies with the cell,
+      because the cell is rewritten whole below and the passId is not carried across. The pass is
+      no longer undoable from that cell, which is the same accepted loss as the two class-level
+      resets below and for the same reason — the day it belonged to is over.
+
+      Only a `D` cell ever carries a passId, and setMark() has already refused a no-op, so a prior
+      one here means this tap is LEAVING a dismissal. Nothing has to work out which way it went.
+
+      THE TWO CLASS-LEVEL RESETS DO NOT COME THROUGH HERE, and that is a known and accepted cost.
+      "Un-confirm everyone" and "Didn't meet" both wipe `marks` wholesale — they say so, loudly,
+      counting what goes — and a `D` destroyed that way takes its passId with it, leaving the pass
+      logged as a dismissal that can no longer be un-done. That is the honest record: the pass DID
+      happen and the student DID leave. What is lost is the undo, on a path whose whole point is
+      that it discards the marks on the day.
+    */
+    const priorPass = on === todayISO() ? passIdOf(r.marks[studentId]) : '';
+    if (priorPass && passes.reopenPass(d, priorPass)) {
+      passSaid = ' Their pass is open again.';
+    }
+
     if (code === PRESENT) { delete r.marks[studentId]; return; }
     /* THE CELL IS REWRITTEN WHOLE, which is what keeps a stray time from surviving a cycle: going
        T → E builds `{ code: 'E' }` and the tardy's `at` is simply not carried across. Roll Call!
@@ -812,6 +950,18 @@ export function setMark(studentId, code, date) {
     if ((code === 'T' || code === 'D') && on === todayISO()) cell.at = stampNow();
     const note = code === UNCONFIRMED ? '' : noteOf(r.marks[studentId]);
     if (note) cell.note = note;
+    /* The other half of the dismissal rule. The pass is closed with the same stamp the cell just
+       took, so the record says the student left the corridor at the moment the `D` says they were
+       dismissed — one clock reading, not two a second apart. The id comes back onto the cell, and
+       it is the only field here that is not about the mark. */
+    if (code === 'D' && on === todayISO()) {
+      const closed = passes.closePass(d, cls.id, studentId, cell.at, passes.BY_DISMISSAL);
+      if (closed) {
+        cell.passId = closed.id;
+        passSaid = ' Their pass is closed at ' + closed.minutes
+          + (closed.minutes === 1 ? ' minute.' : ' minutes.');
+      }
+    }
     r.marks[studentId] = cell;
   });
 
@@ -823,10 +973,15 @@ export function setMark(studentId, code, date) {
   paintColumn(on);
   paintActions();
   paintDetail();
+  /* The Passes column is repainted from here because a `D` can have closed or reopened a pass, and
+     because the cap it is drawn against has moved with it. It costs one pass over the rows on a tap
+     that usually changed nothing there; the alternative is a Return button still sitting beside a
+     student the teacher has just dismissed. */
+  paintPasses();
 
   const student = findStudent(studentId);
   announce(fullName(student) + ' — ' + wordFor(code)
-    + (on === todayISO() ? '' : ' on ' + spokenDate(on)) + '.');
+    + (on === todayISO() ? '' : ' on ' + spokenDate(on)) + '.' + passSaid);
 }
 
 /*
@@ -1034,6 +1189,72 @@ export function undropClass(date) {
   paintActions();
   announce(cls.name + ' met after all on ' + spokenDate(on)
     + '. Its attendance is not taken yet.');
+}
+
+/* ────────────────────────────── hall passes ──────────────────────────────
+
+   Two writers, both one tap, both about NOW rather than about the column being edited — a student
+   stands up and leaves at the moment the button is pressed, whichever week the grid happens to be
+   showing. src/passes.js holds the rules and the shapes; these two hold the clock, the refusals
+   that belong to this screen, and the sentence a screen reader hears.
+
+   NEITHER OF THEM TOUCHES ATTENDANCE. No record is created, no mark moves, and neither calls
+   paintColumn() or paintActions() — there is nothing on those surfaces for a pass to change. A
+   student at the bathroom was present, and the only place the two features meet is the `D` branch
+   in setMark() above. */
+
+/*
+  ONE TAP OUT: who, which type, and the time they left.
+
+  The refusals repeat guards src/passes.js also makes, and that is deliberate rather than sloppy:
+  this one is about the screen (is a class open at all?) and that one is about the document (is this
+  student already out? is the room at its limit?). Neither is a substitute for the other, and the
+  one that must not be skipped is the second — the buttons are drawn disabled at the cap, but a
+  disabled button is a fact about a render and the cap is a fact about the room.
+*/
+export function issuePass(studentId, type) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return;
+  const student = findStudent(studentId);
+  if (!student) return;
+  const kind = passes.passType(type);
+  if (!kind) return;
+
+  const doc = getDoc();
+  if (passes.openPassFor(doc, cls.id, studentId)) return;
+  if (passes.atCap(doc, cls.id)) {
+    /* Said rather than silently ignored. The three buttons on every other row are disabled and the
+       line above the grid says why, so this path is only reachable from a stale tap — but a control
+       that does nothing and says nothing is the "dead control" the work order refuses by name. */
+    announce('No more passes right now — ' + passes.MAX_OPEN_PASSES + ' students from '
+      + cls.name + ' are already out.');
+    return;
+  }
+
+  const at = stampNow();
+  update((d) => { passes.openPass(d, cls.id, studentId, kind.type, at); });
+  paintPasses();
+  announce(fullName(student) + ' is out on a ' + kind.said + ' pass, since ' + clockTime(at) + '.');
+}
+
+/*
+  AND ONE TAP BACK. The minutes are computed from the two stamps in src/passes.js and the entry is
+  appended to the pass log; the student's three buttons come back with the same paint.
+*/
+export function returnPass(studentId) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return;
+  const student = findStudent(studentId);
+  if (!student) return;
+  if (!passes.openPassFor(getDoc(), cls.id, studentId)) return;
+
+  const at = stampNow();
+  let done = null;
+  update((d) => { done = passes.closePass(d, cls.id, studentId, at, passes.BY_RETURN); });
+  paintPasses();
+  if (!done) return;
+  announce(fullName(student) + ' is back after ' + done.minutes
+    + (done.minutes === 1 ? ' minute.' : ' minutes.'));
 }
 
 /* ────────────────────────────── moving around the grid ──────────────────────────────
@@ -1298,6 +1519,124 @@ function cellTime(at) {
      reader and would otherwise be read out twice, as "8:14a" — which is not a time anybody says. */
   node.setAttribute('aria-hidden', 'true');
   return node;
+}
+
+/* ── THE PASSES COLUMN (WO-2.8) ──
+   Roll Call!'s `col-passes`, lifted: the head is one word, and the cell holds three buttons while a
+   student is in the room and one while they are out. It is the same column whatever date the grid
+   is showing, because a pass is issued now. */
+
+function passHead() {
+  const th = el('th', 'attendance-passes', 'Passes');
+  th.setAttribute('scope', 'col');
+  /* Said in full to a screen reader, because "Passes" above three emoji is a column heading that
+     assumes you can see the emoji. */
+  th.title = 'Hall passes — bathroom, nurse, or a quick one';
+  return th;
+}
+
+function passButton(student, kind, disabled) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'attendance-pass-btn ' + kind.type;
+  btn.setAttribute('data-pass-issue', student.id);
+  btn.setAttribute('data-pass-type', kind.type);
+  btn.disabled = !!disabled;
+  /* The icon and the word are two elements because the word is what gives way on a touch device:
+     three 44px targets and three labels do not both fit a 160px column, and the label is on the
+     accessible name and the tooltip either way (src/attendance.css's coarse block). */
+  const icon = el('span', 'attendance-pass-icon', kind.icon);
+  icon.setAttribute('aria-hidden', 'true');
+  btn.append(icon, el('span', 'attendance-pass-word', kind.word));
+  const said = kind.said.charAt(0).toUpperCase() + kind.said.slice(1) + ' pass';
+  btn.setAttribute('aria-label', said + ' for ' + fullName(student));
+  /* WHY IT IS OFF, ON THE CONTROL ITSELF. The line above the grid says it too — a reason a teacher
+     reads without hunting for it is the acceptance line — and this is the same fact where the
+     finger already is. */
+  btn.title = disabled
+    ? passes.MAX_OPEN_PASSES + ' students are already out. Tap Return on one of them first.'
+    : said;
+  return btn;
+}
+
+/*
+  WHAT ONE STUDENT'S PASS CELL HOLDS. Out of the room: a Return button and THE TIME THEY LEFT, which
+  is on the screen rather than only in the document because that time surviving a force-quit is the
+  whole safety property this feature is built around — a teacher relaunching the app has to see who
+  is out and since when. In the room: the three types, disabled together at the cap.
+
+  The elapsed count that would tick beside that time is WO-2.9's and is deliberately not here.
+*/
+function passControls(student, classId, doc, full) {
+  const wrap = el('div', 'attendance-pass-cell');
+  const open = passes.openPassFor(doc, classId, student.id);
+
+  if (open) {
+    const kind = passes.passType(open.type);
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'attendance-pass-btn out';
+    back.setAttribute('data-pass-return', student.id);
+    const icon = el('span', 'attendance-pass-icon', kind ? kind.icon : '🚪');
+    icon.setAttribute('aria-hidden', 'true');
+    back.append(icon, el('span', 'attendance-pass-back', 'Return'));
+    const said = (kind ? kind.said : 'hall') + ' pass, out since ' + clockTime(open.out);
+    back.setAttribute('aria-label', fullName(student) + ' is back from their ' + said);
+    back.title = 'Out on a ' + said;
+    wrap.append(back);
+    /* The clock face the teacher saw when they left, in the width the column has for it. The
+       accessible name above already says it in full, so this is decoration to a screen reader. */
+    const since = el('span', 'attendance-pass-since', compactTime(open.out));
+    since.setAttribute('aria-hidden', 'true');
+    wrap.append(since);
+    return wrap;
+  }
+
+  passes.PASS_TYPES.forEach((kind) => wrap.append(passButton(student, kind, full)));
+  return wrap;
+}
+
+/*
+  THE PASSES COLUMN, REPAINTED IN PLACE, after anything that changes who is out — a pass issued or
+  returned, and a `D` that closed or reopened one. The rows are not rebuilt, for the reason
+  paintColumn() gives: a table twenty-six names long must not jump back to the top under the thumb
+  of someone half way down it.
+*/
+function paintPasses() {
+  paintPassNote();
+  const body = document.getElementById(BODY_ID);
+  const cls = openClass();
+  const doc = getDoc();
+  if (!body || !cls || !doc) return;
+  const full = passes.atCap(doc, cls.id);
+  body.querySelectorAll('td[data-pass-cell]').forEach((td) => {
+    const student = findStudent(td.getAttribute('data-pass-cell'));
+    if (!student) return;
+    td.textContent = '';
+    td.append(passControls(student, cls.id, doc, full));
+  });
+}
+
+/*
+  THE REASON, ON SCREEN. The work order asks for the fourth pass to be refused "with a reason on
+  screen, not by a dead button", and this is the half that is not on the button: twenty-five rows of
+  greyed-out controls with no sentence anywhere is exactly the dead control it names.
+
+  It is only up at the cap. A standing "2 students are out" line would be the pass banner, and the
+  pass banner is WO-2.9's — with names, types and elapsed time, and with a presentation-mode rule of
+  its own, because a projected list of who left the room is a disclosure. Nothing here names anybody.
+*/
+function paintPassNote() {
+  const el0 = document.getElementById(PASS_NOTE_ID);
+  if (!el0) return;
+  const cls = openClass();
+  const doc = getDoc();
+  const full = !!(cls && doc && passes.atCap(doc, cls.id));
+  el0.textContent = full
+    ? passes.MAX_OPEN_PASSES + ' students from ' + cls.name + ' are out on a pass — that is as many '
+      + 'as this app will let go at once. Tap Return on one of them before sending another.'
+    : '';
+  el0.classList.toggle('hidden', !full);
 }
 
 /*
@@ -1638,6 +1977,9 @@ function renderRows() {
      is read-only there — and a ⋯ that opened a panel about a date behind the teacher would be the
      only control on this screen that acted on a day she could not see. */
   const editableToday = perColumn.some((col) => col.editable);
+  /* Read once for the whole table rather than once per row: the cap is a fact about the class, and
+     asking it twenty-six times would walk `openPasses` twenty-six times. */
+  const passesFull = passes.atCap(doc, cls.id);
 
   students.forEach((student) => {
     const row = el('tr');
@@ -1662,6 +2004,14 @@ function renderRows() {
     /* The whole name stays reachable on `title`, the same arrangement a class card makes. */
     name.title = rosterName(student);
     row.append(name);
+
+    /* The Passes column, between the name and the days exactly as Roll Call! has it. It is drawn on
+       every row whatever date the window is showing: a pass is issued now, and a teacher who has
+       paged back to check last Tuesday still has a student asking to go to the nurse. */
+    const passTd = el('td', 'attendance-pass-td');
+    passTd.setAttribute('data-pass-cell', student.id);
+    passTd.append(passControls(student, cls.id, doc, passesFull));
+    row.append(passTd);
 
     perColumn.forEach((col) => {
       const td = el('td', 'attendance-cell-td '
@@ -1790,13 +2140,14 @@ export function renderAttendance() {
 
   paintBanner(columns);
   paintActions();
+  paintPassNote();
   paintToolbar();
   paintPager(columns);
 
   if (caption) {
     caption.textContent = 'Attendance for ' + (cls ? cls.name : 'no class')
-      + '. Students are rows and the last ' + columns.length
-      + ' weekdays are columns, most recent first'
+      + '. Students are rows. The first column after the name holds hall passes, and the last '
+      + columns.length + ' weekdays are the columns after it, most recent first'
       + (pageOffset === 0 ? ', starting with today.' : '.');
   }
 
@@ -1807,6 +2158,7 @@ export function renderAttendance() {
       const corner = el('th', 'attendance-corner', 'Student');
       corner.setAttribute('scope', 'col');
       row.append(corner);
+      row.append(passHead());
       const on = editDate();
       columns.forEach((date) => row.append(dayHead(date, stateOf(cls.id, date), today,
         date === on && date !== today, countsFor(cls.id, date)[UNCONFIRMED])));
