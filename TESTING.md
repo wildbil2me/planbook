@@ -1113,6 +1113,110 @@ made.** The 👤 line below is the one to answer first.
 *Five of the six were run on the owner's own iPad in one sitting, 2026-08-07, and ticked on the
 owner's word. The sixth — the day columns in portrait — is still open; see the note under it.*
 
+### WO-2.11 — The pass banner, and cancelling a pass issued by mistake
+
+**What this adds.** A band above the registry grid carrying one card per student who is out of
+**this** room: the name, the type, the time they left, `✓ Return`, `✕ Cancel` and a note field.
+Cancel takes the pass back and **writes nothing** — the student never left, so there is no trip to
+record. Before this, the only way out of a mis-tapped pass was Return, which appends a phantom
+zero-minute entry to a log that is append-only by rule and read by Phase 4 as a signal.
+
+- [x] Issuing a pass and cancelling it leaves `passes` **byte-identical** to before the tap, and
+      `openPasses` back to its prior length — read out of the document, not off the screen.
+- [x] A cancelled pass frees its slot against the per-class cap of three **immediately**: the next
+      student goes out with no reload and no repaint in between.
+- [x] Cancelling creates no attendance record and changes no attendance mark.
+- [x] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
+- [x] A note typed on the card survives the Return and is on the entry in `passes`; a pass with no
+      note carries no `note` key at all — the same shape rule a mark cell's note follows.
+- [x] A note on a **cancelled** pass is nowhere in the document afterwards — searched across the
+      whole serialised year, not just the two pass collections.
+- [x] The banner shows one card per open pass **in the class on screen**, disappears entirely when
+      that class has nobody out, and stays down next door while this class still has two. Returning
+      or cancelling from the **card** updates the row's cell; returning from the **cell** updates the
+      card.
+- [x] The banner costs the registry no day columns — same column count with two cards up as with
+      none, above the grid rather than inside it, and the overflow valve stays shut.
+- [x] **`cancelPass()` refuses a pass that has already been returned**, asked both by student and by
+      the finished entry's own id. The one exception being carved into the append-only rule does not
+      become two. *(The Traps line, as a check.)*
+
+*Desk pass 2026-08-07: `verify-shell.mjs` **344 of 344, 0 skipped**, up from 330 at WO-2.8 —
+fourteen new checks, all in the attendance section. Everything is driven through the controls a
+teacher touches: the note is typed into the card's own field with a real `input` event, the cancel
+is a click on the real `✕ Cancel`, and Return is driven once from the row and once from the card so
+both buttons carrying that hook have been pressed. One exception, named in the file: asking
+`cancelPass()` to delete a **finished** pass goes through the seam, because a finished pass has no
+card and therefore no button — which is the point of the gate. `wo-sweep.mjs` is 11 checks, 10
+passed, 0 failed, 1 to review — the standing sensitive-field-name line, at the same 172 mentions
+across the same files as before this work order.*
+
+*Seven mutation proofs, run before this was written:*
+
+| Mutation | Result |
+|---|---|
+| cancel implemented as **Return with `minutes: 0`** — the Traps line's own defect | **4 red**, the first of them reading "the log is DIFFERENT at 3 entr(ies)"; the cancelled note is left in the document and the log stops being byte-identical across the cap check too |
+| `cancelPass()` made general enough to delete a **returned** entry | **2 red** — the gate check, which gets the deleted entry handed back to it instead of `null` |
+| the banner drawn from `openPassesIn()` instead of `openPassesFor()` | **1 red** — the class next door shows this class's cards |
+| `closePass()` stops carrying the note onto the log entry | **2 red** — the note dies on the return, and the entry the gate check reads no longer holds it |
+| `notePass()` stores `""` instead of deleting the key | **1 red** — an untouched pass carries a `note` key |
+| the banner moved inside `#attendanceGridWrap` | **1 red** — above-the-grid and inside-the-grid are the two halves of that check and it fails on both |
+| `✕ Cancel` given `✓ Return`'s filled-green rule | **1 red** — the two controls measure identically on fill, text colour and border |
+
+*All seven were reverted and the run is green on the shipped tree.*
+
+**The 👤 iPad sitting this work order owes.** Neither the harness nor a stylesheet can answer these.
+
+- [x] **Cancel and Return cannot be confused at speed on glass.** They differ three ways on purpose —
+      `✓` against `✕`, the word, and filled-green against outline — and the harness measures that the
+      three differences are really there. Whether they survive a thumb moving at the speed a class
+      walks in is the owner's call and nobody else's. 👤
+- [x] The card's Return, Cancel and note field all clear 44px under a thumb, with two cards side by
+      side on an 834pt 11″ in portrait. The harness measures them; a thumb is what tells you whether
+      Return and Cancel can be hit apart. 👤
+- [x] Typing a note on the card while a class walks in: the field is reachable, the software keyboard
+      does not cover the card, and issuing another pass mid-sentence does not lose what was typed
+      (it is written per keystroke, so what is at risk is the caret, not the words). 👤
+- [x] VoiceOver reads a card as the student, the type and the time out, and reads Cancel as an act
+      that records nothing. 👤
+
+*Two sittings on the owner's iPad, both 2026-08-07. **The first** passed all four and returned a
+finding no line above asks for: the card had been **styled from scratch instead of lifted**. Roll
+Call!'s `.pass-card` — dark band, avatar, name over a quiet meta line, the elapsed clock's slot,
+then the two buttons — was already tuned by a year of classroom use, and this card had kept only its
+shape while re-deriving its palette and its layout. Re-cut against `dashboard.html:319–376`, which
+re-opened all four lines: a 👤 line is closed by a human against what shipped, and what shipped was
+no longer what she held.*
+
+***The second sitting** ran them again on the re-cut card: everything worked, and what came back was
+a layout report rather than a defect — **three open passes drew two rows of buttons in landscape and
+three in portrait**, against a desktop layout that was already correct. The whole cause was in
+`@media (pointer: coarse)`: the info block was pinned to `flex: 1 1 100%`, which leaves the buttons
+nowhere to go but downward, and a Return set to grow then took the rest of the line and put Cancel on
+a third row. Fixed by removing the wrap rules rather than by adding any, plus two things that bought
+the room back — **the emoji came off the type chip** (the row's three pass buttons need their glyphs
+because they lost their words to a 160px column; this chip kept its word, so the glyph was saying it
+twice) and the two buttons went to equal, tighter padding. The 10px between Return and Cancel did not
+give and is now asserted.*
+
+*The four lines above are ticked against the card as it stands after that tweak. The tweak is padding,
+a chip's emoji and a wrap rule — it moves nothing line 3 asks about, and line 4 is untouched by
+construction, because the emoji it removed was already `aria-hidden`.*
+
+*What the harness now holds, so this cannot come back quietly: `the pass card is ONE ROW with three
+open` at 768×1024 and 1024×768 with touch on, measuring the flex row's height against its tallest
+child; the two buttons' 44px and their 10px gap at the same three-card cap; and the chip asserted to
+be a word with no emoji. Restoring the two wrap rules turns the first red at **139px against a 47px
+tallest child** — three rows, which is exactly what was reported.*
+
+*One thing that changed and passed rather than being fixed, recorded because it is a real departure.*
+At rest on a touch device, **Cancel is no longer red** — it was red text on white, and Roll Call!'s
+card makes it `rgba(255,255,255,0.7)` in a faint white outline, with the red arriving only on
+`:hover`, which does not exist under a thumb. Two of the three differences are now carried by fill
+and glyph rather than hue. Confirmed readable on glass in the second sitting. If it ever stops being,
+the fix is a red at rest in the coarse block — a deliberate departure from the predecessor, and one
+that would be commented as one.
+
 ---
 
 ## Phase 3 — Gradebook

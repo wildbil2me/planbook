@@ -32,6 +32,13 @@
   inherits it verbatim. Nothing in this file rewrites a field of an entry in `passes`. There is one
   removal, and it is the retraction described under the dismissal rule below.
 
+  CANCELLING A PASS (WO-2.11) IS NOT A SECOND REMOVAL FROM `passes`, and the distinction is the
+  whole of that work order. cancelPass() takes an entry out of `openPasses` and writes NOTHING —
+  the history array is not read, not written, and not even named inside it. A tap that sent nobody
+  anywhere is not a trip, so there is nothing for the append-only rule to protect; what that rule
+  protects is trips that happened, and the retraction below is still the only thing in this file
+  that removes one of those.
+
   They are two arrays rather than one array with an "is it finished" field because an open pass and
   a finished one are asked about by different code at different moments: the registry asks "is this
   student out?" every render, and WO-2.9's history asks "what happened this term?" once. One array
@@ -179,6 +186,30 @@ export function openPass(d, classId, studentId, type, at) {
 }
 
 /*
+  A NOTE ON A PASS, typed on the banner card while the student is out (WO-2.11) — "went to the
+  counsellor after", "third time today".
+
+  IT IS ON THE OPEN PASS AND IT IS CARRIED INTO `passes` BY closePass() BELOW. Typed while the
+  student is out and read back long afterwards by WO-2.9's history view, which is the only thing
+  that makes it worth storing: a note that died on the return would render nowhere.
+
+  THE SHAPE RULE IS src/attendance.js's setNote() RULE, not a variant of it: the key is set when
+  the trimmed string has something in it and DELETED otherwise, so a pass nobody noted carries no
+  `note` key at all rather than an empty string. Same rule the mark cell follows, and the same
+  reason — a field that is present-but-empty is a field every reader has to test twice.
+*/
+export function notePass(d, classId, studentId, text) {
+  if (!d || !classId || !studentId) return null;
+  const open = openPassFor(d, classId, studentId);
+  if (!open) return null;
+
+  const note = String(text == null ? '' : text);
+  if (note.trim()) open.note = note;
+  else delete open.note;
+  return open;
+}
+
+/*
   AND COMES BACK. The open pass leaves `openPasses`, one entry is appended to `passes`, and the
   minutes are computed from the two stamps.
 
@@ -209,8 +240,45 @@ export function closePass(d, classId, studentId, at, endedBy) {
     minutes: minutesBetween(open.out, at),
     endedBy: endedBy === BY_DISMISSAL ? BY_DISMISSAL : BY_RETURN,
   };
+  /* The note the teacher typed while they were out, if there was one, and NO KEY AT ALL if there
+     was not — notePass() above never leaves an empty one to copy, and this is where that rule
+     reaches the permanent record. */
+  if (open.note) done.note = open.note;
   d.passes.push(done);
   return done;
+}
+
+/*
+  OR THE PASS NEVER HAPPENED (WO-2.11). The teacher's thumb landed on 🚽 aiming at the row below,
+  and the student is sitting where they were.
+
+  THIS IS THE ONLY WRITER IN THIS FILE THAT REMOVES AN OPEN PASS WITHOUT LEAVING A RECORD, and it
+  is deliberately NOT a variant of closePass() above. Cancel is not a close with a flag: a close
+  writes history, and the entry it would write here — `minutes: 0`, a phantom trip for a student
+  who never left the room — is exactly the thing this function exists to prevent. That entry
+  cannot be taken back afterwards either, because `passes` is append-only and reopenPass() refuses
+  anything that was not ended by a dismissal, so "cancel as a zero-minute return" is a permanent
+  wrong fact in the record Phase 4 reads as a signal.
+
+  IT IS GATED ON THE PASS BEING OPEN, the way reopenPass() below is gated on `endedBy` being a
+  dismissal, and the gate is structural rather than a test: this function is addressed by class and
+  student, it finds its subject through openPassFor(), which reads `openPasses` and nothing else,
+  and it never names `passes` at all. A returned trip is therefore not merely refused here — it is
+  unreachable from here. That matters more than it looks: the append-only rule is what makes the
+  pass log worth reading, and a cancel general enough to delete a FINISHED entry would repeal it
+  for every entry rather than for the one being cancelled.
+
+  A note typed on the pass goes with it, because it is a field of the record being removed and
+  there is nowhere else for it to go. That is the answer to "where does the note on a cancelled
+  pass end up": wherever the pass ends up, which is nowhere.
+*/
+export function cancelPass(d, classId, studentId) {
+  if (!d || !classId || !studentId) return null;
+  const open = openPassFor(d, classId, studentId);
+  if (!open) return null;
+
+  d.openPasses = openPassesIn(d).filter((p) => p !== open);
+  return open;
 }
 
 /*
@@ -260,6 +328,11 @@ export function reopenPass(d, passId) {
   if (!Array.isArray(d.openPasses)) d.openPasses = [];
   const open = { id: done.id, studentId: done.studentId, classId: done.classId,
     type: done.type, out: done.out };
+  /* And the note comes back with it (WO-2.11), for the same reason the time out does: this is a
+     retraction of the app's own write, so what it puts back has to be what was there. A note
+     silently dropped by an undo is a note the teacher typed and the app deleted. Absent stays
+     absent — the key is set only when there was one, which is the shape rule everywhere else. */
+  if (done.note) open.note = done.note;
   d.openPasses.push(open);
   return open;
 }

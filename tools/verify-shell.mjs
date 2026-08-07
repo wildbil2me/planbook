@@ -4666,11 +4666,51 @@ const INSTALL_ATT_READER = `(function(){
          (No backticks in this comment: it is inside a template literal.) */
       openPasses: (doc.openPasses || []).map(function(p){
         return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
-                 keys: Object.keys(p).sort().join(',') }; }),
+                 note: p.note, keys: Object.keys(p).sort().join(',') }; }),
       passLog: (doc.passes || []).map(function(p){
         return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
-                 back: p.back, minutes: p.minutes, endedBy: p.endedBy,
+                 back: p.back, minutes: p.minutes, endedBy: p.endedBy, note: p.note,
                  keys: Object.keys(p).sort().join(',') }; }),
+      /* Both collections as they SIT, byte for byte, which is the only way to ask WO-2.11's first
+         acceptance line: "cancelling leaves the pass log byte-identical" is a claim about the array
+         and not about the fields this file remembered to read.
+         (No backticks in this comment: it is inside a template literal.) */
+      passLogJson: JSON.stringify(doc.passes || []),
+      openPassJson: JSON.stringify(doc.openPasses || []),
+      /* THE WHOLE DOCUMENT, serialised. Used once, to ask where a cancelled pass's note went: the
+         answer is meant to be nowhere, and "nowhere" is a question about the document rather than
+         about the two arrays a check might think to look in. */
+      docJson: JSON.stringify(doc),
+      /* ── WO-2.11: the pass banner ──
+         One card per open pass IN THE CLASS ON SCREEN. Read off the DOM rather than off the
+         document, so "the card says he is out" and "the document says he is out" stay two facts
+         that can disagree — and the geometry with it, because the acceptance line that matters most
+         here is where the banner IS: above the grid, costing the registry no width.
+         (No backticks in this block: it is inside a template literal.) */
+      passBanner: (function(){
+        var box = document.getElementById('attendancePassBanner');
+        var wrap = document.getElementById('attendanceGridWrap');
+        if (!box) return null;
+        var shown = !box.classList.contains('hidden');
+        var br = box.getBoundingClientRect(), wr = wrap ? wrap.getBoundingClientRect() : null;
+        return { shown: shown, label: box.getAttribute('aria-label') || '',
+                 /* Inside the grid would be beside the rows by another name. */
+                 insideGrid: !!(wrap && wrap.contains(box)),
+                 aboveGrid: !!(wr && br.bottom <= wr.top + 0.5),
+                 cards: Array.prototype.slice.call(box.querySelectorAll('.attendance-pass-card'))
+                   .map(function(c){
+                     var back = c.querySelector('[data-pass-return]');
+                     var drop = c.querySelector('[data-pass-cancel]');
+                     var note = c.querySelector('[data-pass-note]');
+                     return { name: ((c.querySelector('.attendance-pass-card-name') || {}).textContent || '').trim(),
+                              type: ((c.querySelector('.attendance-pass-card-type') || {}).textContent || '').trim(),
+                              out: ((c.querySelector('.attendance-pass-card-out') || {}).textContent || '').trim(),
+                              student: back ? back.getAttribute('data-pass-return') : '',
+                              cancels: drop ? drop.getAttribute('data-pass-cancel') : '',
+                              backText: back ? (back.textContent || '').trim() : '',
+                              cancelText: drop ? (drop.textContent || '').trim() : '',
+                              cancelLabel: drop ? (drop.getAttribute('aria-label') || '') : '',
+                              note: note ? note.value : null }; }) }; })(),
       /* Every name in the document, so that "the log is keyed by student id, never by name" can be
          asked as "does the serialised pass log contain any of these strings" rather than as "does
          it contain the fields I remembered to look for". */
@@ -6615,6 +6655,343 @@ if (!attBooted || !attSeam) {
     return 1; })()`);
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
 
+  /*
+    ── WO-2.11: the banner, and cancelling a pass issued by mistake ──
+
+    NINE ACCEPTANCE LINES, AND THE FIRST OF THEM IS THE WHOLE WORK ORDER: cancelling has to leave
+    `passes` BYTE-IDENTICAL. So every claim about it below is made against `JSON.stringify` of the
+    array taken immediately before the tap, not against a count and not against the fields this file
+    thought to read — the failure this exists to prevent is a cancel implemented as a return with
+    `minutes: 0`, which would keep the count honest for one entry and leave a phantom trip in the
+    record Phase 4 reads as a signal.
+
+    FOUR OF THESE CLAIMS ARE ABOUT WHAT DID *NOT* HAPPEN, and each is paired with the presence that
+    makes the absence mean something. The pass being cancelled is issued, seen on a card and seen in
+    the document first; the note whose disappearance is the claim is typed, read back off the open
+    pass, and only then cancelled; the attendance that must not move is a class of 26 that is
+    genuinely taken; and the append-only rule is asserted on a log entry that was watched being
+    written by a Return two taps earlier.
+
+    EVERYTHING GOES THROUGH THE CONTROLS. The one exception is the model gate at the end — asking
+    cancelPass() to delete a FINISHED pass, which is the Traps paragraph's own failure mode and has
+    no button by construction, because the card that carried one is gone the moment the pass ends.
+  */
+  const banner0 = await read();
+  /* This section's own fixture, re-read rather than inherited: the WO-2.8 checks above borrowed a
+     past column and put it back, and a baseline taken before all that would be asserting their
+     tidy-up as well as this one's silence. */
+  const cancelRecords = banner0.records.length;
+  const cancelValues = JSON.stringify(banner0.values);
+  const cardB = (banner0.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
+  const cardC = (banner0.passBanner.cards || []).filter((c) => c.student === outC)[0] || {};
+  check('the banner draws one card per open pass in this class: name, type, time out, Return, Cancel and a note field',
+    !!banner0.passBanner && banner0.passBanner.shown
+      && banner0.passBanner.cards.length === 2 && banner0.openPasses.length === 2
+      && !!cardB.student && !!cardC.student
+      /* The card names the student the row does, says which type, and says when they left — the
+         three things the work order asks the card to carry, and no elapsed clock among them. */
+      && cardB.name === (banner0.rows.filter((r) => r.student === outB)[0] || {}).name
+      /* The word with NO glyph, asserted as an absence rather than left unstated: the emoji came
+         off on 2026-08-07 to buy the card's single row, and a chip that quietly grew one again
+         would cost that row back on the device where it is tightest. */
+      && /^Bathroom$/.test(cardB.type) && /^Quick$/.test(cardC.type)
+      && /^out \d+:\d{2} [AP]M$/.test(cardB.out)
+      /* Both actions on the card, and Return carries the SAME hook the row's own Return carries —
+         one writer, two surfaces. Cancel is on the card only; the cell's own controls are asserted
+         to be three issue buttons or one Return everywhere else in this section. */
+      && cardB.cancels === outB && cardB.backText === '✓ Return' && cardB.cancelText === '✕ Cancel'
+      && /Nothing is recorded/.test(cardB.cancelLabel)
+      && cardB.note === '' && cardC.note === ''
+      && /2 students are out of/.test(banner0.passBanner.label),
+    banner0.passBanner ? banner0.passBanner.cards.length + ' card(s): '
+      + JSON.stringify(banner0.passBanner.cards.map((c) => c.name + ' / ' + c.type + ' / ' + c.out))
+      + ', announced as ' + JSON.stringify(banner0.passBanner.label)
+      : 'no banner element on the page at all');
+
+  /* Acceptance line 9, and it is a claim about WHERE rather than about what: the registry's width is
+     budgeted to the pixel and WO-2.12 is about to spend it again, so a banner that took a day column
+     would be a regression nobody would attribute to this work order six weeks from now. Measured
+     three ways — the column count against the count from before any pass existed, the geometry, and
+     the containment, because a card inside the grid wrap is a panel beside the rows by another
+     name. */
+  check('and it costs the registry no day columns — it is above the grid, not inside it and not beside it',
+    banner0.columns.length === beforePasses.columns.length
+      && banner0.passBanner.insideGrid === false && banner0.passBanner.aboveGrid === true
+      && banner0.fit.over <= 0 && banner0.fit.page <= 0,
+    banner0.columns.length + ' day column(s) with two cards up, against '
+      + beforePasses.columns.length + ' with none; inside the grid = '
+      + banner0.passBanner.insideGrid + ', above it = ' + banner0.passBanner.aboveGrid
+      + ', grid over its own box by ' + banner0.fit.over + 'px, page by ' + banner0.fit.page + 'px');
+
+  /*
+    THE DESK HALF OF A 👤 LINE, AND IT DOES NOT CLOSE IT. "Cancel and Return cannot be confused at
+    speed on glass" is the owner's call on her own device and nothing here can answer it. What this
+    can answer is the half that would make the question moot: the two controls have to be drawn as
+    DIFFERENT SHAPES rather than as two buttons of one kind in two colours — filled against outline,
+    which is the difference that survives being seen out of the corner of an eye, and the one a
+    later refactor to "one button style for the card" would quietly delete.
+
+    The pointer is parked first, for the reason tools/README.md's trap 7 gives: the last thing
+    clicked measures its `:hover` rule, and a comparison between two buttons where one is hovered
+    reports a difference that is not the one being asked about.
+  */
+  await park();
+  const drawn = await evalJs(`(function(){
+    var card = document.querySelector('.attendance-pass-card');
+    if (!card) return null;
+    var b = card.querySelector('[data-pass-return]'), c = card.querySelector('[data-pass-cancel]');
+    if (!b || !c) return null;
+    /* The alpha of the computed fill, so this asks "is it filled at all" rather than naming a
+       colour. It was written against a literal white on 2026-08-07 and broke the same day the card
+       took Roll Call!'s dark palette — a check that hardcodes the surface it sits on fails on a
+       re-skin that did not touch the thing it is guarding. */
+    var alpha = function(c){ var m = /^rgba?\(([^)]*)\)/.exec(c || ''); if (!m) return 1;
+      var p = m[1].split(','); return p.length > 3 ? parseFloat(p[3]) : 1; };
+    var look = function(e){ var s = getComputedStyle(e);
+      return { bg: s.backgroundColor, fill: alpha(s.backgroundColor), color: s.color,
+               border: s.borderTopColor, text: (e.textContent || '').trim() }; };
+    return { back: look(b), cancel: look(c) }; })()`);
+  check('Return and Cancel are drawn as different SHAPES on the card — filled against outline, not one style in two colours (the desk half of a 👤 line)',
+    !!drawn && drawn.back.bg !== drawn.cancel.bg
+      && drawn.back.color !== drawn.cancel.color
+      && drawn.back.border !== drawn.cancel.border
+      /* The fill is the load-bearing half: Return is a solid button and Cancel has no fill of its
+         own at all — it shows whatever the card behind it is. */
+      && drawn.back.fill === 1 && drawn.cancel.fill === 0
+      && drawn.back.text.charAt(0) === '✓' && drawn.cancel.text.charAt(0) === '✕',
+    drawn ? 'Return is ' + JSON.stringify(drawn.back) + ' and Cancel is '
+      + JSON.stringify(drawn.cancel) : 'no card on screen to measure');
+
+  /* Acceptance line 8's hardest clause: the banner is scoped to the class ON SCREEN, which is only
+     visible on a screen whose OWN class has nobody out while another class does. `openPassesFor()`
+     against `openPassesIn()` is the whole difference, and a build that used the second would draw
+     two cards here and pass every other check in this section. */
+  const nextDoor = await openCard(otherClass);
+  check('the banner is scoped to the class on screen: nothing next door, while two students are still out of this one',
+    !!nextDoor.passBanner && nextDoor.passBanner.shown === false
+      && nextDoor.passBanner.cards.length === 0 && nextDoor.passBanner.label === ''
+      /* And the document still says two, so this is a banner that is scoped rather than a banner
+         that is broken. */
+      && nextDoor.openPasses.length === 2
+      && nextDoor.rows.length > 0 && nextDoor.rows.every((r) => r.pass && !r.pass.out),
+    'next door: banner shown = ' + (nextDoor.passBanner || {}).shown + ' with '
+      + ((nextDoor.passBanner || {}).cards || []).length + ' card(s), while the document holds '
+      + nextDoor.openPasses.length + ' open pass(es) across ' + nextDoor.rows.length + ' row(s) here');
+  const backHere = await openCard(passClass);
+  check('and it is drawn again on the class the passes belong to, unchanged by the trip next door',
+    backHere.passBanner.shown === true && backHere.passBanner.cards.length === 2
+      && backHere.passBanner.cards.map((c) => c.student).sort().join(',')
+        === [outB, outC].sort().join(','),
+    backHere.passBanner.cards.length + ' card(s) back: '
+      + JSON.stringify(backHere.passBanner.cards.map((c) => c.name)));
+
+  /*
+    ── the note, and the shape rule it has to follow ──
+
+    Typed into the card's own field, twice: whitespace first, which must leave NO KEY, and then a
+    sentence, which must leave exactly one. That is src/attendance.js's own rule for a mark's note
+    and acceptance line 6 asks for it here — a pass with no note carries no `note` key at all, not
+    an empty string.
+  */
+  const noteSel = '[data-pass-note="' + outB + '"]';
+  const typeNote = (sel, text) => evalJs('(function(){ var e = document.querySelector('
+    + JSON.stringify(sel) + '); if (!e) return 0; e.value = ' + JSON.stringify(text)
+    + '; e.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()');
+  await typeNote(noteSel, '   ');
+  const blankNote = await read();
+  await typeNote(noteSel, 'nurse said to come straight back');
+  const typedNote = await read();
+  const openB = typedNote.openPasses.filter((p) => p.studentId === outB)[0] || {};
+  check('a note typed on the card lands on the open pass — and whitespace alone leaves no key at all',
+    (blankNote.openPasses.filter((p) => p.studentId === outB)[0] || {}).keys
+      === 'classId,id,out,studentId,type'
+      && openB.note === 'nurse said to come straight back'
+      && openB.keys === 'classId,id,note,out,studentId,type'
+      /* On the open pass and nowhere else. Nothing is finished, so nothing may have reached the
+         history. */
+      && typedNote.passLogJson === banner0.passLogJson,
+    'the entry carried ' + JSON.stringify((blankNote.openPasses
+      .filter((p) => p.studentId === outB)[0] || {}).keys) + ' after whitespace and '
+      + JSON.stringify(openB.keys) + ' after a sentence; the log is unchanged at '
+      + typedNote.passLog.length + ' entr(ies)');
+
+  /*
+    ── THE TAP THIS WORK ORDER EXISTS FOR ──
+
+    Cancel, from the card, on a pass that is open and carries a note. Four things have to be true
+    afterwards and they fail separately: the history is byte-identical, the open pass is gone, the
+    ROW that issued it has its three buttons back (card → cell), and the note is nowhere in the
+    document — not in either collection and not anywhere else either, which is why the whole
+    serialised document is searched rather than the two arrays.
+  */
+  const beforeCancel = typedNote.passLogJson;
+  await clickSel('[data-pass-cancel="' + outB + '"]');
+  const cancelled = await read();
+  const rowCancelled = cancelled.rows.filter((r) => r.student === outB)[0] || {};
+  check('cancelling from the card leaves `passes` BYTE-IDENTICAL and takes the open pass with it',
+    cancelled.passLogJson === beforeCancel
+      && cancelled.passLog.length === typedNote.passLog.length
+      && cancelled.openPasses.length === typedNote.openPasses.length - 1
+      && !cancelled.openPasses.some((p) => p.studentId === outB)
+      /* The card is gone and the row it came from offers the three types again — the two surfaces
+         moving together is acceptance line 8's second clause, in the card-to-cell direction. */
+      && cancelled.passBanner.cards.length === 1
+      && cancelled.passBanner.cards[0].student === outC
+      && !!rowCancelled.pass && rowCancelled.pass.out === false
+      && rowCancelled.pass.types === 'bathroom,nurse,quick' && rowCancelled.pass.off === 0,
+    'the log is ' + (cancelled.passLogJson === beforeCancel ? 'byte-identical' : 'DIFFERENT')
+      + ' at ' + cancelled.passLog.length + ' entr(ies), ' + cancelled.openPasses.length
+      + ' pass(es) still open, ' + cancelled.passBanner.cards.length
+      + ' card(s) on the banner, and that row now offers ' + JSON.stringify(rowCancelled.pass));
+
+  check('a note on a cancelled pass goes where the pass goes — nowhere in the document at all',
+    typedNote.docJson.indexOf('nurse said to come straight back') >= 0
+      && cancelled.docJson.indexOf('nurse said to come straight back') < 0,
+    'the phrase was in the document before the cancel = '
+      + (typedNote.docJson.indexOf('nurse said to come straight back') >= 0)
+      + ', after it = ' + (cancelled.docJson.indexOf('nurse said to come straight back') >= 0));
+
+  check('and cancelling wrote no attendance either: no record, no mark moved, nobody made absent by a mis-tap',
+    cancelled.records.length === cancelRecords
+      && JSON.stringify(cancelled.values) === cancelValues
+      && rowCancelled.codes.charAt(0) === 'P',
+    cancelled.records.length + ' attendance record(s) (was ' + cancelRecords
+      + '), marks across the document = ' + JSON.stringify(cancelled.values)
+      + ' (was ' + cancelValues + '); that row still reads "' + rowCancelled.codes + '"');
+
+  /*
+    ── acceptance line 2: the slot comes back IMMEDIATELY ──
+
+    Taken to the cap, cancelled from the card, and then a FOURTH student is sent out with no reload
+    and no repaint in between. A build that freed the slot in the document but not on the screen
+    would leave the buttons grey; a build that did neither would refuse the issue outright, and the
+    document is read after it either way.
+  */
+  const outE = passRoster[4];
+  const outF = passRoster[5];
+  await clickSel('[data-pass-issue="' + outD + '"][data-pass-type="nurse"]');
+  await clickSel('[data-pass-issue="' + outE + '"][data-pass-type="bathroom"]');
+  const atCapAgain = await read();
+  await clickSel('[data-pass-cancel="' + outD + '"]');
+  const freed = await read();
+  await clickSel('[data-pass-issue="' + outF + '"][data-pass-type="quick"]');
+  const refilled = await read();
+  check('a cancelled pass frees its slot against the cap of three immediately — the next student goes out with no reload',
+    atCapAgain.openPasses.length === 3 && /3 students/.test(atCapAgain.passNote)
+      && atCapAgain.passBanner.cards.length === 3
+      /* The moment after the cancel: two out, the reason line down, and every remaining row's
+         buttons live again. */
+      && freed.openPasses.length === 2 && freed.passNote === ''
+      && freed.passBanner.cards.length === 2
+      && freed.rows.filter((r) => r.pass && !r.pass.out).every((r) => r.pass.off === 0)
+      /* And the slot is real, not merely drawn: the next issue lands. */
+      && refilled.openPasses.length === 3
+      && refilled.openPasses.some((p) => p.studentId === outF)
+      && refilled.passBanner.cards.length === 3
+      /* All of it without one entry reaching the history. */
+      && refilled.passLogJson === beforeCancel,
+    'at the cap: ' + atCapAgain.openPasses.length + ' out with the line up; after the cancel: '
+      + freed.openPasses.length + ' out, line = ' + JSON.stringify(freed.passNote)
+      + '; after the next issue: ' + refilled.openPasses.length + ' out and '
+      + refilled.passLog.length + ' logged (unchanged = '
+      + (refilled.passLogJson === beforeCancel) + ')');
+
+  /*
+    ── acceptance lines 5 and 6: Return still works, and the note rides through it ──
+
+    Returned from the ROW rather than from the card, which is acceptance line 8's other direction:
+    the cell writes and the card has to notice. The note is typed on the card first, so what is
+    being asked is whether a note typed on one surface survives an action taken on the other.
+  */
+  await typeNote('[data-pass-note="' + outC + '"]', 'walked down to the office');
+  const notedC = await read();
+  await clickSel('[data-pass-return="' + outC + '"]');
+  const returnedC = await read();
+  const entryC = returnedC.passLog.filter((p) => p.studentId === outC)[0] || {};
+  check('a note typed on the card survives the Return and is on the entry in `passes` — written from the row, and the card notices',
+    (notedC.openPasses.filter((p) => p.studentId === outC)[0] || {}).note === 'walked down to the office'
+      /* EXACTLY ONE entry, and the count is taken against the log this section has been holding
+         byte-identical through four cancels. Cancel has not weakened Return. */
+      && returnedC.passLog.length === refilled.passLog.length + 1
+      && entryC.note === 'walked down to the office' && entryC.endedBy === 'return'
+      && entryC.keys === 'back,classId,endedBy,id,minutes,note,out,studentId,type'
+      && typeof entryC.minutes === 'number'
+      /* The card went with the pass, and the row it belonged to has its three buttons back. */
+      && returnedC.passBanner.cards.length === 2
+      && !returnedC.passBanner.cards.some((c) => c.student === outC)
+      && (returnedC.rows.filter((r) => r.student === outC)[0] || {}).pass.out === false,
+    'the log went from ' + refilled.passLog.length + ' to ' + returnedC.passLog.length
+      + ' entr(ies); the new one is ' + JSON.stringify(entryC) + ' and the banner is down to '
+      + returnedC.passBanner.cards.length + ' card(s)');
+
+  /* And the other half of the shape rule, on the same tap path: a pass nobody noted writes an entry
+     with no `note` key at all. Returned from the CARD this time, so both buttons that carry the
+     hook have been driven. */
+  await clickSel('.attendance-pass-card [data-pass-return="' + outE + '"]');
+  const returnedE = await read();
+  const entryE = returnedE.passLog.filter((p) => p.studentId === outE)[0] || {};
+  check('and a pass with no note carries no `note` key at all — the same rule a mark cell follows',
+    returnedE.passLog.length === returnedC.passLog.length + 1
+      && entryE.note === undefined
+      && entryE.keys === 'back,classId,endedBy,id,minutes,out,studentId,type'
+      && entryE.endedBy === 'return'
+      && returnedE.passBanner.cards.length === 1
+      && returnedE.passBanner.cards[0].student === outF,
+    'that entry is ' + JSON.stringify(entryE) + ', leaving '
+      + returnedE.passBanner.cards.length + ' card(s) on the banner');
+
+  /*
+    ── THE TRAPS PARAGRAPH, AS A CHECK ──
+
+    `passes` is append-only and this work order is the one exception being carved into that rule, so
+    it must not become two. cancelPass() is asked — through the seam, because a finished pass has no
+    card and therefore no button — to remove an entry that has already been RETURNED. It has to
+    refuse, and the array has to come back byte-identical.
+
+    Asked twice, and the second is the one that would catch a cancel written to take an id: once by
+    the student whose pass this section just returned, and once with the finished entry's own id
+    passed as the student, which is the shape a "cancel by id" implementation would accept.
+  */
+  const gated = await evalJs(`(async function(){
+    var s = window.planbook.store, p = window.planbook.passes;
+    var before = JSON.stringify(s.getDoc().passes);
+    var out = { before: before, byStudent: null, byId: null };
+    s.update(function(d){ out.byStudent = p.cancelPass(d, ${JSON.stringify(passClass)},
+      ${JSON.stringify(outC)}); });
+    s.update(function(d){ out.byId = p.cancelPass(d, ${JSON.stringify(passClass)},
+      ${JSON.stringify(entryC.id)}); });
+    await s.flush();
+    out.after = JSON.stringify(s.getDoc().passes);
+    out.open = s.getDoc().openPasses.length;
+    return out; })()`);
+  check('cancelPass() refuses a pass that has already been returned: the one exception to append-only does not become two',
+    gated.byStudent === null && gated.byId === null
+      && gated.after === gated.before
+      && gated.after.indexOf('walked down to the office') >= 0
+      && gated.open === 1,
+    'it returned ' + JSON.stringify(gated.byStudent) + ' for the student and '
+      + JSON.stringify(gated.byId) + ' for the finished entry\'s own id; the log is '
+      + (gated.after === gated.before ? 'byte-identical' : 'DIFFERENT') + ' and still holds '
+      + 'the returned trip with its note');
+
+  /* And the banner goes away entirely when this class has nobody out — the last clause of
+     acceptance line 8, asserted by emptying the room rather than by starting from an empty one. */
+  await clickSel('[data-pass-cancel="' + outF + '"]');
+  const emptyRoom = await read();
+  check('the banner disappears entirely when the class on screen has nobody out',
+    emptyRoom.openPasses.length === 0 && emptyRoom.passBanner.shown === false
+      && emptyRoom.passBanner.cards.length === 0 && emptyRoom.passBanner.label === ''
+      && emptyRoom.passLogJson === returnedE.passLogJson
+      && emptyRoom.rows.every((r) => r.pass && !r.pass.out && r.pass.off === 0),
+    emptyRoom.openPasses.length + ' open pass(es), banner shown = '
+      + emptyRoom.passBanner.shown + ' with ' + emptyRoom.passBanner.cards.length
+      + ' card(s), and the log unchanged by the last cancel = '
+      + (emptyRoom.passLogJson === returnedE.passLogJson));
+
+  /* Two back out, which is the state the section is required to hand on — see below. */
+  await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
+  await clickSel('[data-pass-issue="' + outC + '"][data-pass-type="nurse"]');
+
   /* Handed back the way the section before this one left it: the overflow sweep at the bottom
      measures the term nav of whatever class is open, and this section has been walking across
      five of them.
@@ -6622,7 +6999,12 @@ if (!attBooted || !attSeam) {
      TWO PASSES ARE LEFT OPEN ON PURPOSE. The coarse sweep below opens the class with the biggest
      roster — this one — and measures every control on it, so leaving one row showing a Return
      button and the rest showing three issue buttons is what puts both shapes of this column under
-     the 44px measurement. A run that tidied them away would measure the empty case only. */
+     the 44px measurement. A run that tidied them away would measure the empty case only.
+
+     SINCE WO-2.11 IT PUTS THE BANNER UNDER IT TOO, which is where that work order's 44px obligation
+     is actually measured: two open passes mean two cards on screen, and the sweep below reads every
+     button and input inside `#classView` — the card's Return, its Cancel and its note field among
+     them. That is the reason this hand-off is worth two lines of comment rather than one. */
   await send('Emulation.clearDeviceMetricsOverride');
   await closeAll();
   await clickSel('[data-class-tab]', 1);
@@ -7490,6 +7872,142 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
         stu.first = ${JSON.stringify(ready.was && ready.was.first)};
         stu.last = ${JSON.stringify(ready.was && ready.was.last)}; });
       await window.planbook.store.flush(); })()`);
+  }
+}
+
+/* ───────── the pass card is ONE ROW on a thumb, at the cap (WO-2.11) ─────────
+ *
+ * The owner's report of 2026-08-07, turned into a measurement. Three open passes drew two rows of
+ * buttons in landscape and three in portrait on a real iPad, while the desktop layout — same
+ * markup, different media block — was correct. That asymmetry is the whole reason this section
+ * exists at 768/1024 with touch on rather than in the desk pass: the defect lived entirely inside
+ * `@media (pointer: coarse)`, so every fine-pointer check in this file was green while the device
+ * the screen is FOR was wrong.
+ *
+ * THREE CARDS, NOT TWO. The cap is three per class and three is where the row is tightest; the
+ * two-card case elsewhere in this file passed throughout the defect.
+ */
+console.log('\n--- the pass card is one row at the cap of three (emulated iPad, both orientations) ---');
+{
+  await send('Emulation.clearDeviceMetricsOverride');
+  await new Promise(r => setTimeout(r, 200));
+
+  const biggest = await evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    if (!doc) return null;
+    var best = null, n = -1;
+    doc.classes.filter(function(c){ return !c.archived; }).forEach(function(c){
+      var len = c.roster ? c.roster.length : 0;
+      if (len > n) { n = len; best = c.id; } });
+    return n >= 3 ? { id: best, students: n } : null; })()`);
+
+  if (!biggest) {
+    skip('the pass card stays one row with three open, on an iPad in both orientations',
+      'no unarchived class with three students is on the device at this point in the run — a state, '
+        + 'not a pass');
+  } else {
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
+    await clickSel('#homeGrid .class-card-open[data-class-tab="' + biggest.id + '"]');
+    await new Promise(r => setTimeout(r, 300));
+
+    /* Whatever earlier sections left open, taken back through the card's own Cancel rather than
+       through the seam — it writes nothing, so this costs the document nothing to arrive at a known
+       three. A loop with a bound rather than `while`, because a Cancel that stopped working would
+       otherwise hang the run instead of failing it. */
+    for (let i = 0; i < 6; i++) {
+      if (!(await has('.attendance-pass-card [data-pass-cancel]'))) break;
+      await clickSel('.attendance-pass-card [data-pass-cancel]');
+      await new Promise(r => setTimeout(r, 120));
+    }
+    /* Issued through the buttons a teacher taps, one type each, so the chip on each card is a
+       different width and the widest one is really on screen. */
+    for (const type of ['bathroom', 'nurse', 'quick']) {
+      const sel = '#attendanceBody [data-pass-issue][data-pass-type="' + type + '"]';
+      if (await has(sel)) await clickSel(sel);
+      await new Promise(r => setTimeout(r, 120));
+    }
+
+    const MEASURE = `(function(){
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.attendance-pass-card'));
+      return cards.map(function(c){
+        var main = c.querySelector('.attendance-pass-card-main');
+        if (!main) return null;
+        var kids = Array.prototype.slice.call(main.children).filter(function(e){
+          var r = e.getBoundingClientRect(); return r.width || r.height; });
+        if (!kids.length) return null;
+        var heights = kids.map(function(e){ return e.getBoundingClientRect().height; });
+        var btn = function(s){ var e = c.querySelector(s); if (!e) return null;
+          var r = e.getBoundingClientRect();
+          return { w: Math.round(r.width), h: Math.round(r.height), l: Math.round(r.left) }; };
+        var back = btn('[data-pass-return]'), cancel = btn('[data-pass-cancel]');
+        return {
+          /* THE SINGLE-ROW TEST. A flex row that has not wrapped is exactly as tall as its tallest
+             child; one that has wrapped is about twice that. 2px of slack for subpixel rounding at
+             deviceScaleFactor 2 — not enough to swallow a wrapped row, which costs 44 or more. */
+          mainH: Math.round(main.getBoundingClientRect().height),
+          tallest: Math.round(Math.max.apply(null, heights)),
+          back: back, cancel: cancel,
+          /* The gap between the two buttons, measured rather than assumed: it is the one dimension
+             that was explicitly not allowed to give in buying this row back. */
+          gap: (back && cancel) ? Math.round(cancel.l - (back.l + back.w)) : null,
+          chip: ((c.querySelector('.attendance-pass-card-type') || {}).textContent || '').trim(),
+          name: ((c.querySelector('.attendance-pass-card-name') || {}).textContent || '').trim()
+        };
+      }).filter(Boolean); })()`;
+
+    for (const [w, h, label] of [[768, 1024, 'portrait'], [1024, 768, 'landscape']]) {
+      await send('Emulation.setDeviceMetricsOverride',
+        { width: w, height: h, deviceScaleFactor: 2, mobile: true });
+      await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+      await new Promise(r => setTimeout(r, 300));
+      /* Repainted after the resize for the reason the note-panel section gives above: this grid
+         reads `window.innerWidth` when it is drawn, not when it is measured. */
+      await evalJs('window.planbook.attendance.renderAttendance()');
+      await new Promise(r => setTimeout(r, 250));
+
+      const isCoarse = await evalJs("matchMedia('(pointer: coarse)').matches");
+      const cards = await evalJs(MEASURE);
+      const wrapped = (cards || []).filter(c => c.mainH > c.tallest + 2);
+      const small = (cards || []).filter(c =>
+        !c.back || !c.cancel || c.back.h < 44 || c.cancel.h < 44 || c.back.w < 44 || c.cancel.w < 44);
+      const tight = (cards || []).filter(c => c.gap === null || c.gap < 8);
+
+      if (isCoarse !== true) {
+        check('the emulated iPad-' + label + ' pointer really is coarse (else this measures the '
+          + 'desk pass, where the defect never was)', false, 'matchMedia = ' + isCoarse);
+      } else if (!cards || cards.length < 3) {
+        check('three passes are open, so the row is measured where it is tightest, iPad ' + label,
+          false, 'cards on screen = ' + (cards ? cards.length : 'no banner at all')
+            + ' — the cap is three and three is the case that broke');
+      } else {
+        check('the pass card is ONE ROW with three open, on an iPad in ' + label,
+          wrapped.length === 0,
+          cards.length + ' card(s); ' + cards.map(c => c.name.split(',')[0] + ' ' + c.mainH + 'px'
+            + ' vs tallest child ' + c.tallest + 'px').join(' · ')
+            + (wrapped.length ? ' — WRAPPED: ' + JSON.stringify(wrapped.map(c => c.name)) : ''));
+        check('Return and Cancel still clear 44px and stay 8px+ apart on that one row, iPad ' + label,
+          small.length === 0 && tight.length === 0,
+          cards.map(c => (c.back ? c.back.w + '×' + c.back.h : 'no Return') + ' / '
+            + (c.cancel ? c.cancel.w + '×' + c.cancel.h : 'no Cancel') + ' gap ' + c.gap).join(' · '));
+        if (label === 'portrait') {
+          /* The chip carries the word and NOT the glyph, asserted where it was spent: the emoji came
+             off to buy this row, and portrait is the orientation that could not afford it. */
+          check('the type chip on each card is a word with no emoji, which is what paid for the row',
+            cards.every(c => /^[A-Za-z]+$/.test(c.chip)),
+            JSON.stringify(cards.map(c => c.chip)));
+        }
+      }
+    }
+    await send('Emulation.clearDeviceMetricsOverride');
+    /* The three passes taken back the way they were issued. Nothing runs after this today, but a
+       section that leaves three students marked out of the room is a trap for whatever gets
+       appended below it — and Cancel is the one exit that leaves the document as it found it. */
+    for (let i = 0; i < 6; i++) {
+      if (!(await has('.attendance-pass-card [data-pass-cancel]'))) break;
+      await clickSel('.attendance-pass-card [data-pass-cancel]');
+      await new Promise(r => setTimeout(r, 120));
+    }
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   }
 }
 

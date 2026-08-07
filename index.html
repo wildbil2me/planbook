@@ -555,10 +555,19 @@
       <div class="attendance-actions" id="attendanceActions"></div>
       <p class="attendance-note hidden" id="attendanceNote"></p>
       <!-- Why the pass buttons in the grid below have gone grey (WO-2.8). Up only at the cap: this
-           is the "reason on screen rather than a dead control" the work order asks for, and it is
-           not a standing list of who is out — that banner, with names and elapsed time and a
-           presentation-mode rule of its own, is WO-2.9's. src/attendance.js fills it. -->
+           is the "reason on screen rather than a dead control" the work order asks for, and it names
+           nobody — who is out is the banner below, which is a different sentence. -->
       <p class="attendance-pass-note hidden" id="attendancePassNote"></p>
+      <!-- WHO IS OUT OF THIS ROOM RIGHT NOW (WO-2.11): one card per open pass, carrying the name,
+           the type, the time out, ✓ Return, ✕ Cancel and a note field. src/attendance.js fills it.
+
+           IT IS HERE — ABOVE THE GRID — RATHER THAN BESIDE IT, and that placement is an acceptance
+           line rather than a layout preference: the registry's width is already budgeted to the
+           pixel (src/attendance.js's dayColumnCount), so a panel beside the rows would be paid for
+           with a day column. It sits with the state line and the cap note because those three are
+           what is true right now; the toolbar, the pager and the grid below them are the working
+           surface. -->
+      <div class="attendance-pass-banner hidden" id="attendancePassBanner" role="group"></div>
 
       <div class="attendance-toolbar">
         <div class="search-box">

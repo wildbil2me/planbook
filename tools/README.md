@@ -187,7 +187,20 @@ one; "every cell is an object" is asked of the whole document with the object co
 the zero, since an empty document answers it just as happily; and the pre-WO-2.10 restore goes in
 through `restoreFromText()` and the real confirm, because that path is the only thing standing
 between a teacher and the backup already on her disk. Four mutations, all reverted and tabulated in
-`TESTING.md` § WO-2.10.**
+`TESTING.md` § WO-2.10. 330 at WO-2.8, and sixteen of those are hall passes — the reload check
+among them reads the open pass straight out of IndexedDB rather than asking the app, because that
+is the only question a desk can answer about "survives a force-quit". 344 at WO-2.11, and the
+fourteen are the pass banner and cancel. Four of them are worth knowing about: the byte-identical
+claim is asserted against `JSON.stringify` of the whole log rather than against a count, because
+cancel-as-a-zero-minute-return keeps a count honest and is exactly the defect; the cancelled note is
+searched for across the **whole serialised document** rather than in the two arrays a check might
+think to look in; and the gate — cancelPass() refusing a pass that has already been returned — is
+the one thing in this section driven through the seam rather than through a control, because a
+finished pass has no card and therefore no button. And the fourth is the desk half of a 👤 line
+rather than the line itself: Return and Cancel are measured as different SHAPES (filled against
+outline) because "they cannot be confused at speed" is the owner's call, but "they are drawn
+identically" is a thing a refactor can do by accident and a computed style can catch. Seven
+mutations, all reverted and tabulated in `TESTING.md` § WO-2.11.**
 Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.

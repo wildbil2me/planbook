@@ -67,6 +67,17 @@ skeleton. The at-risk threshold model. The FERPA stance in `docs/FERPA.md`, whic
 strengthens rather than weakens. Its `CLAUDE.md` is also a model of the kind of documentation this
 project wants: every gotcha carries the scar that produced it.
 
+**Lift the design with the function — copy, don't re-derive.** When a screen here has a counterpart
+over there, take its markup structure, its measurements and its colours, not just its behaviour.
+Both apps are the same author's, so re-deriving a palette or a layout is not independent design, it
+is retreading a decision that was already made and then tuned by a year of classroom use. The scar:
+WO-2.11's pass banner kept Roll Call!'s card *shape* and invented everything else — a light amber
+card where the original is a dark band, no avatar, the name sharing a line with three other things,
+and no place held for the elapsed clock. The owner caught it against the running app on 2026-08-07
+and it was re-cut the same day. If a Roll Call! rule genuinely must not come across, say so in a
+comment at the point of departure and name the local rule that beats it — the way the pass note
+field does where Roll Call! suppresses a focus ring and this project forbids that.
+
 **Do not take from it:** `src/bridge.gs`, JSONP reads, the GET-only outbox, the per-teacher deploy,
 or any Google Sheets storage. All of that exists to work around `file://` CORS and Apps Script
 constraints. Planbook is served over HTTPS and talks to no bridge, so none of it applies.

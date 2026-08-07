@@ -53,7 +53,7 @@
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
 .attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on,
-.attendance-detail-btn, .attendance-pass-btn {
+.attendance-detail-btn, .attendance-pass-btn, .attendance-pass-card-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -295,6 +295,115 @@
   font-size: 10px; font-weight: 700; color: #8a9bb0;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
+
+/* ── THE PASS BANNER (WO-2.11) ── */
+/* Roll Call!'s `#activePassBanner` and its `.pass-card` (dashboard.html:319–376), lifted with its
+   MEASUREMENTS AND ITS COLOURS, not just its shape.
+
+   This block was first written as a re-colour — an amber card on a white band — on the argument
+   that "the whole suite is light and there is no dark surface anywhere for it to belong to." That
+   argument was wrong on its own terms: shell.css:109 is a dark header in this app, in the same
+   navy family as Roll Call!'s. The dark band belongs, and re-deriving a palette for a card that
+   had already been tuned in the predecessor cost the tuning for nothing. Where a Roll Call! number
+   works, it is used here verbatim so a fix over there still ports.
+
+   THE CARDS ARE A FLEX ROW ABOVE THE GRID, never a column beside it — this is the one place
+   Planbook's layout genuinely differs, and the reason is local. src/attendance.js's
+   dayColumnCount() spends this screen's width to the pixel and WO-2.12 is about to spend it again,
+   so a panel on the right would cost a day column; a band across the top costs vertical space,
+   which is the one dimension this screen is not short of. Roll Call! puts the band across the top
+   too — the difference is only that it is sticky under the header there and sits inside the panel
+   here, because here it belongs to one class's registry rather than to the page. */
+.attendance-pass-banner {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  margin: 0 0 10px; padding: 12px; border-radius: 10px;
+  background: #0d1f2f; border-bottom: 2px solid #e67e22;
+}
+.attendance-pass-card {
+  min-width: 260px;
+  display: flex; flex-direction: column;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+}
+.attendance-pass-card-main { display: flex; align-items: center; gap: 12px; }
+/* The avatar was left off the first build on the grounds that "the card is one line of names and
+   not a roster." It is on the card in Roll Call! for the reason the roster and the home screen also
+   carry it: the colour is how a teacher recognises a person at a glance, and this card is read at a
+   glance by definition. shell.css's `.avatar` worn as-is, off the same avatarClass() every other
+   surface asks, so the circle beside the name here is the circle beside the name there. */
+.attendance-pass-card-info { flex: 1; min-width: 0; }
+.attendance-pass-card-name {
+  color: #fff; font-size: 13px; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* NAME ON TOP, TYPE AND TIME OUT UNDER IT — Roll Call!'s two-line info block, not four things on
+   one line. The name is the fact you are looking for and it gets the line to itself; the type and
+   the hour you last saw them are the qualifiers, and they read as one quiet line beneath. */
+.attendance-pass-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+/* The word on its own — no glyph, unlike the row's buttons. See the note in passCard(). */
+.attendance-pass-card-type {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap;
+}
+/* The three type fills at Roll Call!'s dark-card values — the same hues the row's own pass buttons
+   wear, at the alpha that reads on #0d1f2f rather than on white. */
+.attendance-pass-card-type.bathroom { background: rgba(91,111,204,0.3); color: #a0b0ff; }
+.attendance-pass-card-type.nurse    { background: rgba(231,76,60,0.3);  color: #ff9999; }
+.attendance-pass-card-type.quick    { background: rgba(39,174,96,0.3);  color: #7defa7; }
+.attendance-pass-card-out { font-size: 10px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+/* THE ELAPSED CLOCK'S SLOT, HELD OPEN AND DELIBERATELY EMPTY. WO-2.9 owns the counter itself —
+   it is the half that has to survive iOS suspending a backgrounded PWA, and it was cut to Ship 2.
+   What is kept here is its GEOMETRY, at Roll Call!'s numbers: the big orange tabular-nums figure
+   sits between the info block and the buttons, and reserving that place now means the counter
+   lands into a card that already fits it instead of re-flowing one a teacher has learned. */
+.attendance-pass-card-elapsed {
+  font-size: 20px; font-weight: 800; color: #e67e22;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  min-width: 52px; text-align: right;
+}
+/* THE TWO BUTTONS ARE DIFFERENT SHAPES ON PURPOSE, and this is the half of "Return and Cancel
+   cannot be confused at speed" that a stylesheet owns: Return is FILLED and green, Cancel is an
+   OUTLINE that only turns red under a finger. The glyph and the word do the other two thirds. Both
+   at Roll Call!'s values — it is the difference in fill rather than the difference in hue that
+   survives being seen out of the corner of an eye. */
+.attendance-pass-card-btn {
+  flex-shrink: 0;
+  padding: 6px 13px; border-radius: 8px;
+  font-size: 11px; font-weight: 800; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+}
+.attendance-pass-card-btn.back {
+  border: none; background: #27ae60; color: #fff;
+  transition: background 0.15s, transform 0.1s;
+}
+.attendance-pass-card-btn.back:hover  { background: #219a52; }
+.attendance-pass-card-btn.back:active { transform: scale(0.95); }
+.attendance-pass-card-btn.cancel {
+  background: transparent; color: rgba(255,255,255,0.7);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.attendance-pass-card-btn.cancel:hover {
+  background: rgba(220,38,38,0.25); color: #fff; border-color: rgba(220,38,38,0.6);
+}
+.attendance-pass-card-btn.cancel:active { transform: scale(0.95); }
+/* Full width under the row rather than beside it: a note is a sentence, and the card is already
+   carrying four things on one line at 390px. */
+.attendance-pass-card-note {
+  margin-top: 6px; width: 100%; box-sizing: border-box;
+  padding: 4px 8px; border-radius: 5px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85);
+  font-size: 11px; font-family: inherit;
+}
+/* THE ONE THING NOT TAKEN FROM ROLL CALL!'S CARD: its `.pass-card-note-input` suppresses the focus
+   ring and leans on the border change alone. This app has a standing check that no sheet anywhere
+   does that, and both halves of the tooling failed on this line the moment it was copied over. A
+   border that changes colour is not a focus ring to someone navigating by keyboard. The lift takes
+   the design; it does not take a rule this project has already decided against — and the check
+   catching it is the reason a lift can be done confidently rather than carefully. */
+.attendance-pass-card-note::placeholder { color: rgba(255,255,255,0.35); }
+.attendance-pass-card-note:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
 
 /* ── THE ⋯ AT THE END OF A NAME, AND THE PANEL IT OPENS (WO-2.10) ── */
 /* The way into one student's mark on the day being edited: the time it settled, a note, and the
@@ -559,6 +668,50 @@
   .attendance-pass-btn.out { padding: 4px 10px; }
   .attendance-pass-icon { font-size: 16px; }
   .attendance-pass-since { font-size: 11px; }
+  /* THE BANNER CARD (WO-2.11). Three of these are touch targets and take the floor; the four that
+     are text are named anyway, for the reason `.attendance-student-cell` gives above — a rule
+     missing from this block is a rule the next reader has to go and prove was considered.
+
+     THE CARD IS ONE ROW ON A THUMB, THE SAME ROW IT IS UNDER A MOUSE. This block first tried the
+     opposite — `flex-wrap: wrap` on the main row, the info block forced to `flex: 1 1 100%`, and
+     Return set to grow — reasoning that 44px targets could not share a line with a name and a chip.
+     On the owner's iPad on 2026-08-07 that produced two rows of buttons in landscape and three in
+     portrait, against a desktop layout that was already correct. The wrap rules were the whole
+     cause: a full-width info block leaves the buttons nowhere to go but downward, and a Return that
+     grows then takes the rest of the line and puts Cancel on a third row.
+
+     What was wrong was the premise, not the arithmetic. The line fits once it stops carrying things
+     it did not need: the chip's emoji is gone (the row's three buttons need their glyphs because
+     they lost their words to a 160px column — this chip kept its word, so the glyph was saying it
+     twice), and the two buttons are tightened to the same padding. What does NOT give to buy that
+     room is the 10px between Return and Cancel: they are 44px apart-able or this card has a defect
+     the whole work order exists to prevent. */
+  .attendance-pass-banner { gap: 10px; margin-bottom: 12px; }
+  /* `min-width: 0` against the 260px floor the card carries on a mouse: two cards side by side in
+     834pt portrait is the case acceptance line 9 protects, and a floor that cannot be crossed is
+     how the second card pushes the banner wider than the grid it sits above. */
+  .attendance-pass-card { min-width: 0; padding: 12px 14px; }
+  /* `nowrap` stated rather than inherited: the base rule does not wrap, and this line is what stops
+     a future tablet tweak from reintroducing the three-row card by accident. */
+  .attendance-pass-card-main { gap: 10px; flex-wrap: nowrap; }
+  /* Neither of these is a touch target — `-info` is the name-and-meta column, `-meta` the line under
+     the name. They carry rules here anyway so the sweep's "added a selector with no coarse rule"
+     line is answered in the sheet. `min-width: 0` is the load-bearing half: it is what lets the
+     name ellipsize instead of shoving the buttons off the end of the row. */
+  .attendance-pass-card-info { flex: 1; min-width: 0; }
+  .attendance-pass-card-meta { gap: 8px; margin-top: 4px; }
+  .attendance-pass-card-name { font-size: 14px; }
+  .attendance-pass-card-type { font-size: 12px; padding: 4px 10px; }
+  .attendance-pass-card-out { font-size: 12px; }
+  .attendance-pass-card-elapsed { font-size: 22px; }
+  /* 12px of side padding, not 16: the two buttons are the same size as each other here, and the
+     8px that came off the pair is most of what buys the single row. `min-width: 44px` stays — it is
+     the floor, and neither button is anywhere near it with a word on it. */
+  .attendance-pass-card-btn { min-height: 44px; min-width: 44px; font-size: 13px; padding: 10px 12px; }
+  /* No `transform` on tap for either: a 0.95 scale under a thumb reads as the button moving away
+     from the finger that hit it. Roll Call! kills the same two here for the same reason. */
+  .attendance-pass-card-btn.back:active, .attendance-pass-card-btn.cancel:active { transform: none; }
+  .attendance-pass-card-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
   .attendance-passes { font-size: 11px; padding: 6px 6px; }
   .attendance-pass-td { padding: 9px 6px; }
   .attendance-day { width: 54px; padding: 6px 3px; }

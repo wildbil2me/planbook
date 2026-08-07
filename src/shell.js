@@ -87,7 +87,13 @@
                                       of the room and records the time. Three at once per class,
                                       after which these are disabled and the reason is above the grid
       data-pass-return="<studentId>"  one tap back: computes the minutes and appends one entry to
-                                      the pass log. Neither of these touches attendance
+                                      the pass log. On the row AND on the banner card — one hook,
+                                      one writer, two surfaces
+      data-pass-cancel="<studentId>"  the pass was a mis-tap: the student stops being out and
+                                      NOTHING is written. On the card only, never on the row
+      data-pass-note="<studentId>"    on an <input>: a note on that student's open pass, written as
+                                      it is typed and carried into the log entry on return.
+                                      None of these four touches attendance
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
       data-roster-paste               opens the paste box over the roster panel
@@ -489,12 +495,17 @@ document.addEventListener('click', (e) => {
   const attSort = e.target.closest('[data-attendance-sort]');
   if (attSort) { attendance.setSort(attSort.getAttribute('data-attendance-sort')); return; }
 
-  /* ── hall passes (WO-2.8) ──
-     Two taps, and NEITHER OF THEM CHAINS afterAttendanceChange(). That omission is the acceptance
+  /* ── hall passes (WO-2.8, WO-2.11) ──
+     Three taps, and NONE OF THEM CHAINS afterAttendanceChange(). That omission is the acceptance
      line: a pass creates no attendance record and moves no mark, so there is nothing behind this
      screen for it to redraw. A student at the bathroom was present. The one path where a pass and a
      mark move together is a `D`, and that goes through the cell hook above, which already redraws
-     the card. */
+     the card.
+
+     Return is reached from two places — the row's own button and the banner card's — and they are
+     one hook rather than two because they are one act. Cancel is reached from the card only: the
+     160px Passes column has three targets in it already, and a fourth beside Return is how a thumb
+     aiming at Return destroys a real trip's minutes (WO-2.11). */
   const passIssue = e.target.closest('[data-pass-issue]');
   if (passIssue) {
     attendance.issuePass(passIssue.getAttribute('data-pass-issue'),
@@ -503,6 +514,8 @@ document.addEventListener('click', (e) => {
   }
   const passReturn = e.target.closest('[data-pass-return]');
   if (passReturn) { attendance.returnPass(passReturn.getAttribute('data-pass-return')); return; }
+  const passCancel = e.target.closest('[data-pass-cancel]');
+  if (passCancel) { attendance.cancelPass(passCancel.getAttribute('data-pass-cancel')); return; }
 
   /* ── roster, contacts, and the teacher's own details ── */
 
@@ -643,6 +656,17 @@ document.addEventListener('input', (e) => {
   if (attNote) {
     attendance.setNote(attNote.getAttribute('data-attendance-note'), attNote.value,
       attNote.getAttribute('data-attendance-note-date'));
+    return;
+  }
+
+  /* A note on an open hall pass, from the banner card (WO-2.11). It carries no date, and that is
+     the difference from the hook above rather than an omission: a mark belongs to one of six days
+     on the grid, and a pass is happening now — there is exactly one open pass per student per class
+     for it to land on. Nothing redraws for it either, and for the same reason: rebuilding the cards
+     would take the caret out of the field being typed into. */
+  const passNote = e.target.closest('[data-pass-note]');
+  if (passNote) {
+    attendance.setPassNote(passNote.getAttribute('data-pass-note'), passNote.value);
     return;
   }
 

@@ -227,11 +227,24 @@ meet is a second source of truth that's wrong by first period.)*
 - [ ] Overdue alerts, the elapsed clock, and pass history. *(Cut to Ship 2 — WO-2.9. The banner
       itself moved to WO-2.11 on 2026-08-07; what stays here is the half that has to survive iOS
       suspending a backgrounded PWA.)*
-- [ ] 🚩 **The pass banner, and cancelling a pass issued by mistake** — writing nothing to the log.
+- [x] 🚩 **The pass banner, and cancelling a pass issued by mistake** — writing nothing to the log.
       The append-only rule protects trips that happened; a tap that never sent anyone anywhere is
       not one of them. *(Added 2026-08-07 — WO-2.11. Found the same way hall passes themselves
       were: the owner using the finished thing. Cancel lives on the banner card rather than in the
       pass column, which is both where Roll Call! puts it and the only place with room.)*
+      *(Done 2026-08-07. The banner is scoped to the class on screen, a pass carries an optional
+      `note` typed on the card and carried into the log entry on return, and `cancelPass()` cannot
+      reach a finished pass at all — it is addressed by class and student and never names the
+      history array. The 👤 line — whether Cancel and Return can be told apart at speed on glass —
+      passed on the owner's iPad the same day, and that sitting returned one thing no acceptance
+      line asked for: the card had been styled from scratch rather than lifted from Roll Call!,
+      which had already tuned it. Re-cut against the predecessor's own values, and the rule
+      generalised into the note under Reference implementation in [`../CLAUDE.md`](../CLAUDE.md).
+      That re-cut re-opened the 👤 line it followed, and a second sitting the same day closed it:
+      everything worked, and what came back was a layout report — three open passes wrapped their
+      buttons onto two rows in landscape and three in portrait, from rules in the coarse block
+      alone, while the desktop layout was already right. Fixed, and the harness now measures the
+      one-row property at the cap of three in both orientations rather than trusting it.)*
 - [ ] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
       school-wide `no-school`, or drop named classes on a future date when an assembly is known.
       Stored as calendar events and *read* by attendance — never copied. Phase 6 adds the month

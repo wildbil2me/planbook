@@ -592,7 +592,7 @@ second-source-of-truth pattern this project has refused four times. The cell is 
 
 ## WO-2.11 — The pass banner, and cancelling a pass issued by mistake
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.8
+**Ship** 1 · **Status** ✅ DONE — 2026-08-07 · **Size** M · 🚩 · **Depends on** WO-2.8
 **Closes roadmap** Phase 2 → "Cancel a pass issued by mistake, writing nothing to the log"
 **Takes from WO-2.9** the banner card only — the elapsed timer, the overdue alerts and the history
 view stay there. See *Why the banner comes with it*.
@@ -681,20 +681,27 @@ been returned: that entry is history, the append-only rule protects it, and corr
 for the history view. An undo for the `D` coupling's dismissal-close, which has its own retraction.
 
 **Acceptance**
-- [ ] Issuing a pass and cancelling it leaves `passes` **byte-identical** to before the tap, and
+- [x] Issuing a pass and cancelling it leaves `passes` **byte-identical** to before the tap, and
       `openPasses` back to its prior length. Verified in the document, not the UI.
-- [ ] A cancelled pass frees its slot against the per-class cap of three immediately.
-- [ ] Cancel and Return cannot be confused at speed on glass. 👤
-- [ ] Cancelling creates no attendance record and changes no attendance mark — the same silence
+- [x] A cancelled pass frees its slot against the per-class cap of three immediately.
+- [x] Cancel and Return cannot be confused at speed on glass. 👤 *(Two sittings on the owner's iPad,
+      2026-08-07. The first passed and sent the card back to be lifted from Roll Call! properly,
+      which re-opened this line; the second passed on the re-cut card and returned a layout report —
+      three open passes wrapped their buttons onto two rows in landscape and three in portrait,
+      caused entirely by rules in the coarse block. Fixed, and the one-row property is now measured
+      at the cap of three in both orientations. Cancel is no longer red at rest on a touch device;
+      two of the three differences are carried by fill and glyph rather than hue. `TESTING.md` has
+      the detail and the fix if that ever stops reading.)*
+- [x] Cancelling creates no attendance record and changes no attendance mark — the same silence
       WO-2.8's acceptance line 6 measures.
-- [ ] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
-- [ ] A note typed on the card survives the Return and is on the entry in `passes`. A pass with no
+- [x] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
+- [x] A note typed on the card survives the Return and is on the entry in `passes`. A pass with no
       note carries no `note` key at all.
-- [ ] A note on a **cancelled** pass goes wherever the pass goes — nowhere.
-- [ ] The banner shows one card per open pass **in the class on screen**, and disappears entirely
+- [x] A note on a **cancelled** pass goes wherever the pass goes — nowhere.
+- [x] The banner shows one card per open pass **in the class on screen**, and disappears entirely
       when that class has none — including when another class still does. Returning or cancelling
       from the **card** updates the row's cell, and from the **cell** updates the card.
-- [ ] The banner costs the registry no day columns — it is above the grid, not beside it. The
+- [x] The banner costs the registry no day columns — it is above the grid, not beside it. The
       portrait width budget is already tight and WO-2.12 is spending it.
 
 **Traps** — **`passes` is append-only, and this work order is the one exception being added to

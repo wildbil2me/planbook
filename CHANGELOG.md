@@ -15,6 +15,68 @@ records what someone remembered.
 
 ### Added
 
+- **WO-2.11 — the pass banner, and cancelling a pass issued by mistake.** A band above the registry
+  grid carries one card per student who is out of **this** room: their name, the type, the time they
+  left, `✓ Return`, `✕ Cancel`, and a note field. Before this, the only way out of a mis-tapped pass
+  was Return — which appended a trip that never happened to a log that is append-only by rule and
+  read by Phase 4 as a signal. WO-2.8 shipped naming that as a go-live blocker; this closes it.
+
+  **Cancel writes nothing.** Not a zero-minute trip, not a corrected entry — nothing. The student
+  never left, so there is no trip to record: `passes` is byte-identical after the tap and the slot
+  against the per-class cap of three frees immediately. This is the one exception being carved into
+  the append-only rule and it must not become two, so `cancelPass()` is addressed by class and
+  student and **never names the history array at all** — it cannot reach a pass that has already
+  been returned even if asked by that entry's own id. Correcting a finished trip stays a job for the
+  history view.
+
+  **Cancel lives on the card and nowhere else.** The Passes column is 160px and already holds three
+  targets; a fourth beside Return is how a thumb aiming at Return destroys a real trip's minutes.
+  Roll Call! puts cancel on the card for that reason and Planbook does the same. Both Returns — the
+  card's and the row's — call one writer, and the two surfaces repaint together.
+
+  **A pass can carry a note**, typed on the card: *went on to the counsellor*, *third time today*.
+  It rides onto the log entry when they return, and goes wherever the pass goes — nowhere — if the
+  pass is cancelled. No note means no `note` key at all, the same shape rule a mark cell's note
+  follows.
+
+  The banner is scoped to **the class on screen**. A pass left open in period 2 is not hidden by
+  that — its own row in period 2 still shows a Return and the time out — but it is not noise on the
+  screen you are standing in front of, naming students from a room you are not in. The band sits
+  above the grid rather than beside it, so it costs the registry no day columns; the portrait width
+  budget is already tight and WO-2.12 is about to spend it.
+
+  *The card was then re-cut against Roll Call!'s own.* The first build kept the predecessor's card
+  **shape** and re-derived everything else — a light amber card where the original is a dark band
+  with an orange edge, no avatar, the name sharing one line with the type chip and the clock, and no
+  place held for the elapsed count. The owner caught it against the running app on 2026-08-07. Both
+  apps are hers; re-deriving a layout that a year of classroom use had already tuned is retreading a
+  settled decision, not designing. The card now takes `dashboard.html`'s structure, measurements and
+  colours: avatar, name over a quiet meta line, the elapsed clock's slot, then filled-green Return
+  and outline Cancel, note field beneath. One rule deliberately not copied — Roll Call!'s note input
+  suppresses its focus ring, and this project forbids that anywhere; the departure is commented where
+  it happens. The general rule is now in `CLAUDE.md` under Reference implementation.
+
+  *And then the card was made to fit its one row on a thumb.* A second iPad sitting found three open
+  passes drawing **two rows of buttons in landscape and three in portrait**, while the desktop
+  layout — same markup — was already correct. The cause was entirely in `@media (pointer: coarse)`:
+  the info block pinned to full width leaves the buttons nowhere to go but downward, and a Return set
+  to grow then takes the rest of the line and puts Cancel on a third row. Both rules removed. Two
+  things bought back the width that made them seem necessary: **the type chip lost its emoji** — the
+  row's three pass buttons carry glyphs because they lost their words to a 160px column, but this
+  chip kept its word, so the glyph was saying the same thing twice — and the two buttons went to
+  equal, tighter padding. The 10px between Return and Cancel did not give; that gap is the one this
+  work order exists to protect, and it is now asserted rather than assumed.
+
+  **What is still missing on purpose:** the elapsed counter itself. Its place on the card is held
+  open, but a clock that ticks is the thing iOS stops ticking when it suspends a backgrounded PWA,
+  and that trap belongs to WO-2.9 along with overdue alerts and pass history — cut to Ship 2.
+
+  `tools/verify-shell.mjs` 330 → 349 checks, zero skipped; `sw.js` cache v22 → v25. Seven mutation
+  proofs, including the two the work order named as traps — cancel written as Return with
+  `minutes: 0`, and a `cancelPass()` general enough to delete a returned entry — go red as designed.
+  An eighth was added with the one-row fix: putting the two wrap rules back turns the new check red
+  at 139px against a 47px tallest child, which is the three-row card exactly as it was reported.
+
 - **WO-2.8 — hall passes: one tap out, one tap back, and the app does not forget who is out.** The
   registry has a **Passes** column between the name and the day columns. 🚽 Bath · 🏥 Nurse · ⚡ Quick
   sends a student out and records the time they left; **Return** brings them back and writes down how

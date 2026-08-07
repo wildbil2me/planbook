@@ -252,13 +252,38 @@
   TODAY's column closes the student's open pass, and taking that `D` back puts it out again. See the
   block at that branch.
 
+  ── THE PASS BANNER (WO-2.11) ──
+
+  ABOVE the grid, one card per student who is out of THIS room: their name, the type, the time they
+  left, `✓ Return`, `✕ Cancel`, and a note field. Roll Call!'s `renderActivePassBanner()`
+  (dashboard.html:3403), lifted card and all — avatar, two-line info block, colours and
+  measurements. The first build of this kept the shape and re-derived the palette; the owner caught
+  it against the running app on 2026-08-07, and the rule that came out of it is worth more than the
+  card: WHEN LIFTING FROM ROLL CALL!, TAKE THE DESIGN WITH THE FUNCTION. It has been in a classroom
+  for a year and this app has not.
+
+  The one piece still left behind is the ELAPSED CLOCK, and only that: a counter that ticks is the
+  thing iOS stops ticking when it suspends a PWA, and that trap is WO-2.9's, cut to Ship 2. Its
+  place on the card is held open in the stylesheet so it lands without re-flowing anything.
+
+  CANCEL LIVES HERE AND NOWHERE ELSE, and that is the point of the banner rather than a consequence
+  of it. The Passes column is 160px and already holds three targets; a fourth one beside Return is
+  how a thumb aiming at Return destroys a real trip's minutes, so Roll Call! puts cancel on the card
+  and never on the row you issued from. Planbook does the same. The cell keeps its bare Return, both
+  Returns call the same writer, and the two surfaces repaint together in paintPasses().
+
+  IT IS SCOPED TO THE CLASS ON SCREEN — openPassesFor(), never openPassesIn(). A pass left open in
+  period 2 is not hidden by that: its own row in period 2's grid still carries a Return button and
+  the time out, which is the surface the owner confirmed reads as a reminder. What it is not is
+  noise on the screen you are standing in front of, naming students from a room you are not in.
+
   Out of scope and deliberately absent: percentages and counts over history (WO-2.4), the keyboard
   path (WO-2.5), per-student history and print/CSV (WO-2.6), and calendar events (WO-2.3), which
-  this screen READS once they exist and never authors — plus, since WO-2.8, the pass banner, the
-  overdue alerts and the pass history, which are WO-2.9's and are deliberately missing here. What is
-  on the screen is the time a student LEFT, which acceptance line 1 asks for; the elapsed count that
-  ticks beside it is the next work order's, and it is the one that has to survive iOS suspending a
-  timer.
+  this screen READS once they exist and never authors — plus the elapsed clock on the card, the two
+  overdue alerts and the pass history view, which are WO-2.9's and are deliberately missing here.
+  What is on the screen is the time a student LEFT, which acceptance line 1 asks for; the elapsed
+  count that ticks beside it is the next work order's, and it is the one that has to survive iOS
+  suspending a timer.
 */
 
 import { getDoc, update } from './store.js';
@@ -297,6 +322,7 @@ const HEAD_ID = 'attendanceHead';
 const BODY_ID = 'attendanceBody';
 const EMPTY_ID = 'attendanceEmpty';
 const PASS_NOTE_ID = 'attendancePassNote';
+const PASS_BANNER_ID = 'attendancePassBanner';
 
 /* ────────────────────────────── the vocabulary ──────────────────────────────
    Roll Call!'s five letters and its five words. `phrase` is the same fact said in a sentence —
@@ -1193,12 +1219,12 @@ export function undropClass(date) {
 
 /* ────────────────────────────── hall passes ──────────────────────────────
 
-   Two writers, both one tap, both about NOW rather than about the column being edited — a student
-   stands up and leaves at the moment the button is pressed, whichever week the grid happens to be
-   showing. src/passes.js holds the rules and the shapes; these two hold the clock, the refusals
+   Four writers, three of them one tap, all about NOW rather than about the column being edited — a
+   student stands up and leaves at the moment the button is pressed, whichever week the grid happens
+   to be showing. src/passes.js holds the rules and the shapes; these hold the clock, the refusals
    that belong to this screen, and the sentence a screen reader hears.
 
-   NEITHER OF THEM TOUCHES ATTENDANCE. No record is created, no mark moves, and neither calls
+   NONE OF THEM TOUCHES ATTENDANCE. No record is created, no mark moves, and none of them calls
    paintColumn() or paintActions() — there is nothing on those surfaces for a pass to change. A
    student at the bathroom was present, and the only place the two features meet is the `D` branch
    in setMark() above. */
@@ -1255,6 +1281,57 @@ export function returnPass(studentId) {
   if (!done) return;
   announce(fullName(student) + ' is back after ' + done.minutes
     + (done.minutes === 1 ? ' minute.' : ' minutes.'));
+}
+
+/*
+  OR THE PASS WAS A MISTAKE (WO-2.11). One tap on the card's `✕ Cancel`, and the student who never
+  left the room stops being out — with nothing written down about a trip that did not happen.
+
+  IT IS NOT A RETURN WITH NO MINUTES, and this function existing separately is the visible half of
+  that. src/passes.js's cancelPass() says why at the definition; what matters here is that this
+  reads no clock. There is no moment to stamp, because nothing happened at one.
+
+  IT IS OFFERED ONLY ON THE CARD, never on the row: the Passes column has 160px and three targets
+  in it already, and a fourth beside Return is how a thumb reaching for Return destroys a real
+  trip's minutes. The announcement says what did NOT happen, in as many words, because the one thing
+  a teacher needs to know after tapping this is that the pass log is untouched.
+*/
+export function cancelPass(studentId) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return;
+  const student = findStudent(studentId);
+  if (!student) return;
+  if (!passes.openPassFor(getDoc(), cls.id, studentId)) return;
+
+  let gone = null;
+  update((d) => { gone = passes.cancelPass(d, cls.id, studentId); });
+  paintPasses();
+  if (!gone) return;
+  const kind = passes.passType(gone.type);
+  announce(fullName(student) + '’s ' + (kind ? kind.said : 'hall') + ' pass is cancelled. '
+    + 'Nothing was written to the pass log.');
+}
+
+/*
+  A NOTE ON A PASS, typed on the card while the student is out and written as it is typed — the same
+  posture setNote() takes over a mark, and the same two rules with it.
+
+  IT DOES NOT REPAINT, which is the load-bearing line rather than an optimisation: paintPassBanner()
+  rebuilds the cards, so repainting here would replace the <input> being typed into and take the
+  caret and the software keyboard with it. The cards ARE rebuilt by the three writers above, and a
+  note half-typed when another student is sent out survives that — every keystroke is already in the
+  document, so the field comes back filled. What is lost in that case is the caret position, which
+  is the cost of one shared surface rather than a card per row.
+
+  A note needs a pass to sit on, and the refusal is here as well as in the model for the reason
+  every other refusal on this screen is doubled: this one is about the screen, that one is about the
+  document.
+*/
+export function setPassNote(studentId, text) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return;
+  if (!passes.openPassFor(getDoc(), cls.id, studentId)) return;
+  update((d) => { passes.notePass(d, cls.id, studentId, text); });
 }
 
 /* ────────────────────────────── moving around the grid ──────────────────────────────
@@ -1596,14 +1673,148 @@ function passControls(student, classId, doc, full) {
   return wrap;
 }
 
+/* ── THE PASS BANNER (WO-2.11) ──
+   Roll Call!'s `renderActivePassBanner()` (dashboard.html:3403): one card per open pass, above the
+   grid. What it carries and what it deliberately does not is argued in the header. */
+
 /*
-  THE PASSES COLUMN, REPAINTED IN PLACE, after anything that changes who is out — a pass issued or
-  returned, and a `D` that closed or reopened one. The rows are not rebuilt, for the reason
-  paintColumn() gives: a table twenty-six names long must not jump back to the top under the thumb
-  of someone half way down it.
+  ONE CARD. The student, the type, the time they left, and the three things a teacher can do about
+  it — send them back, take the pass back, or write down where they actually went.
+
+  THE TWO BUTTONS MUST NOT BE CONFUSABLE AT SPEED, which is a claim about the card rather than about
+  either one of them: they differ in glyph (`✓` against `✕`), in word, and in shape — Return is a
+  filled button and Cancel is an outline, the same pair Roll Call! draws. The stylesheet owns the
+  last of those three, and none of the three is worth anything alone.
+
+  RETURN CARRIES THE SAME HOOK THE ROW'S OWN RETURN CARRIES, so both surfaces reach one writer.
+  Cancel has no counterpart on the row and is not going to get one — see the header.
+*/
+function passCard(student, pass) {
+  const card = el('div', 'attendance-pass-card');
+  const kind = passes.passType(pass.type);
+  const said = kind ? kind.said : 'hall';
+  const label = said.charAt(0).toUpperCase() + said.slice(1);
+  const at = clockTime(pass.out);
+
+  const main = el('div', 'attendance-pass-card-main');
+
+  /* The avatar Roll Call!'s card carries, off the same avatarClass() the roster and the home screen
+     ask, so one student is one colour across every surface. Decoration to a screen reader — the
+     name is right beside it and the buttons below say it in full. */
+  const face = el('div', 'avatar ' + avatarClass(student.id), initials(rosterName(student)));
+  face.setAttribute('aria-hidden', 'true');
+  main.append(face);
+
+  /* NAME ON ITS OWN LINE, TYPE AND TIME OUT ON A SECOND — Roll Call!'s `.pass-card-info` block.
+     A name that has to share a line with a chip and a clock is a name that gets truncated first. */
+  const info = el('div', 'attendance-pass-card-info');
+  info.append(el('div', 'attendance-pass-card-name', rosterName(student)));
+
+  const meta = el('div', 'attendance-pass-card-meta');
+  /* THE WORD ALONE, NO GLYPH. The row's three pass buttons carry their icons because they lost
+     their words to a 160px column; this chip kept its word, so the emoji beside it was saying the
+     same thing twice and charging the card's one row about 18px for it. Dropped on the owner's
+     report of 2026-08-07 — three cards wrapped their buttons onto two rows in landscape and three
+     in portrait, and this is half of what bought the line back. */
+  const chip = el('span', 'attendance-pass-card-type ' + (kind ? kind.type : 'quick'));
+  chip.append(el('span', 'attendance-pass-card-word', label));
+  meta.append(chip);
+  /* The clock face in full here, not the grid's abbreviated one: the column is 160px and the card
+     is a line across the panel, so the reason `.attendance-pass-since` says "9:12a" does not apply
+     to a surface with room for "out 9:12 AM".
+
+     THIS IS THE TIME THEY LEFT, NOT HOW LONG THEY HAVE BEEN GONE. The elapsed counter belongs in
+     the slot after this block — `.attendance-pass-card-elapsed`, whose geometry the stylesheet
+     already holds open — and it is WO-2.9's, because it is the one that has to survive iOS
+     suspending a backgrounded PWA. Nothing here ticks. */
+  meta.append(el('span', 'attendance-pass-card-out', at ? 'out ' + at : 'out'));
+  info.append(meta);
+  main.append(info);
+
+  const back = el('button', 'attendance-pass-card-btn back', '✓ Return');
+  back.type = 'button';
+  back.setAttribute('data-pass-return', student.id);
+  /* The same sentence the row's Return says, because it is the same act — a screen reader landing
+     on either one hears the student, the type and the time out rather than the word "Return". */
+  back.setAttribute('aria-label', fullName(student) + ' is back from their ' + said
+    + ' pass, out since ' + at);
+  back.title = 'Back in the room — this writes the trip and its minutes';
+
+  const drop = el('button', 'attendance-pass-card-btn cancel', '✕ Cancel');
+  drop.type = 'button';
+  drop.setAttribute('data-pass-cancel', student.id);
+  /* What it does AND what it does not, on the accessible name and again on the tooltip: this is the
+     control whose whole value is the absence it leaves, and an absence is the one thing a label
+     cannot show by being tapped. */
+  drop.setAttribute('aria-label', 'Cancel ' + fullName(student) + '’s ' + said
+    + ' pass. Nothing is recorded.');
+  drop.title = 'They never left — take the pass back and record nothing';
+  main.append(back, drop);
+  card.append(main);
+
+  const note = document.createElement('input');
+  note.type = 'text';
+  note.className = 'attendance-pass-card-note';
+  note.setAttribute('data-pass-note', student.id);
+  note.value = pass.note || '';
+  note.placeholder = 'Add a note — went on to the counsellor, third time today…';
+  note.setAttribute('aria-label', 'Note on ' + fullName(student) + '’s ' + said + ' pass');
+  card.append(note);
+  return card;
+}
+
+/*
+  THE BANNER, REBUILT FROM THE OPEN DOCUMENT. Hidden entirely when this class has nobody out —
+  including when the class next door does, which is what openPassesFor() means and is the choice the
+  work order makes between the two accessors.
+
+  IT IS ABOVE THE GRID AND NOT BESIDE IT. The registry's width is spent to the last pixel already
+  (see dayColumnCount), and a panel beside the rows would buy this card at the price of a day
+  column; a band across the top costs the grid nothing but vertical space, which this screen has.
+
+  THE CARDS ARE REBUILT RATHER THAN PATCHED, which is what makes the note field's "does not repaint"
+  rule matter one function up. A student whose record has gone — a roster edited under an open pass —
+  contributes no card rather than a blank one, so the banner is hidden when nothing could be drawn
+  rather than when nothing is open.
+*/
+function paintPassBanner() {
+  const box = document.getElementById(PASS_BANNER_ID);
+  if (!box) return;
+  const cls = openClass();
+  const doc = getDoc();
+  const open = cls && doc ? passes.openPassesFor(doc, cls.id) : [];
+
+  box.textContent = '';
+  open.forEach((pass) => {
+    const student = findStudent(pass.studentId);
+    if (student) box.append(passCard(student, pass));
+  });
+  const drawn = box.children.length;
+  box.classList.toggle('hidden', !drawn);
+  /* Named for a screen reader as a group, in this class's own words: a run of cards each naming a
+     student is a list of names without a sentence saying what the list is. */
+  if (drawn) {
+    box.setAttribute('aria-label', drawn === 1
+      ? 'One student is out of ' + cls.name + ' on a hall pass'
+      : drawn + ' students are out of ' + cls.name + ' on hall passes');
+  } else {
+    box.removeAttribute('aria-label');
+  }
+}
+
+/*
+  THE PASSES COLUMN, REPAINTED IN PLACE, after anything that changes who is out — a pass issued,
+  returned or cancelled, and a `D` that closed or reopened one. The rows are not rebuilt, for the
+  reason paintColumn() gives: a table twenty-six names long must not jump back to the top under the
+  thumb of someone half way down it.
+
+  THE BANNER GOES WITH IT, in this function rather than at each of the call sites, which is what
+  makes acceptance line 8 structural: cancelling from the card updates the row, and returning from
+  the row updates the card, because neither surface has its own repaint to forget.
 */
 function paintPasses() {
   paintPassNote();
+  paintPassBanner();
   const body = document.getElementById(BODY_ID);
   const cls = openClass();
   const doc = getDoc();
@@ -1622,9 +1833,10 @@ function paintPasses() {
   screen, not by a dead button", and this is the half that is not on the button: twenty-five rows of
   greyed-out controls with no sentence anywhere is exactly the dead control it names.
 
-  It is only up at the cap. A standing "2 students are out" line would be the pass banner, and the
-  pass banner is WO-2.9's — with names, types and elapsed time, and with a presentation-mode rule of
-  its own, because a projected list of who left the room is a disclosure. Nothing here names anybody.
+  It is only up at the cap, and it stayed that way when the banner landed above it (WO-2.11). The
+  two lines say different things: this one is the reason twenty-five rows of buttons have gone grey,
+  and the banner is who is out. Nothing here names anybody, which is why this sentence and not the
+  banner is what a class at its limit says when nobody is looking at the cards.
 */
 function paintPassNote() {
   const el0 = document.getElementById(PASS_NOTE_ID);
@@ -2141,6 +2353,7 @@ export function renderAttendance() {
   paintBanner(columns);
   paintActions();
   paintPassNote();
+  paintPassBanner();
   paintToolbar();
   paintPager(columns);
 

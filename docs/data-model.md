@@ -121,16 +121,19 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
             "audience": "guardian|counselor|admin|student",
             "subject": "", "body": "" }],
 
-  /* Hall passes, in two collections — state and history. See the shape decision below. */
+  /* Hall passes, in two collections — state and history. See the shape decision below.
+     `note` is optional on both and absent where unused, the same rule as a mark cell's. */
   "openPasses": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
                    "type": "bathroom|nurse|quick",
-                   "out": "2026-09-09T09:12:00-04:00" }],
+                   "out": "2026-09-09T09:12:00-04:00",
+                   "note": "went on to the counsellor" }],
   "passes": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
                "type": "bathroom|nurse|quick",
                "out": "2026-09-09T09:12:00-04:00",
                "back": "2026-09-09T09:20:00-04:00",
                "minutes": 8,
-               "endedBy": "return|dismissed" }],
+               "endedBy": "return|dismissed",
+               "note": "went on to the counsellor" }],
 
   "events": [{ "id": "e_…", "date": "2026-11-26", "endDate": "2026-11-28",
                "kind": "no-school|dropped|early-release|grades-due|conference|meeting|trip|reminder",
@@ -226,6 +229,20 @@ Seven shape decisions that matter:
   one entry by its id and puts the pass out again. That retraction is the only removal from
   `passes` there is, and it exists so that a mis-tap does not leave a trip in the history that never
   happened. The id it retracts by is on the `D` mark cell — see the cell rule above.
+  **A pass may carry a `note`**, optional and absent where unused, exactly like a mark cell's
+  *(added 2026-08-07, WO-2.11)*. It is typed on the banner card while the student is out, so it
+  lives on the `openPasses` entry, and `closePass()` copies it onto the `passes` entry on the way
+  past — a note that died on the return would be a note nothing could ever render. An empty or
+  whitespace-only field deletes the key rather than storing `""`.
+- **Cancelling a pass removes it from `openPasses` and writes nothing at all.** *(Added 2026-08-07,
+  WO-2.11.)* A pass issued by mis-tap is not a trip: the student never left the room, so there is no
+  history to append and `passes` is not read, written, or reached by `cancelPass()` — which is
+  addressed by class and student and can only ever find an OPEN pass. **This is not a second
+  exception to the rule above.** The retraction of a dismissal remains the only removal from
+  `passes` there is. The alternative — cancelling as a return with `minutes: 0` — was rejected
+  explicitly: it is the smaller change and it writes the phantom trip that cancelling exists to
+  prevent, permanently, into the record Phase 4 reads as a signal. A note typed on a cancelled pass
+  goes where the pass goes, which is nowhere.
 
 ## Grade math — weighted categories
 
