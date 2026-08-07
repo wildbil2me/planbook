@@ -224,11 +224,14 @@ meet is a second source of truth that's wrong by first period.)*
       and neither is in the line above: a misclicked pass has no way out but Return, which writes a
       phantom trip into the append-only log — WO-2.11, 🚩. And the 160px column costs the portrait
       grid a day column — WO-2.12.)*
-- [ ] Pass banner, overdue alerts, and pass history. *(Cut to Ship 2 — WO-2.9.)*
-- [ ] 🚩 **Cancel a pass issued by mistake**, writing nothing to the log. The append-only rule
-      protects trips that happened; a tap that never sent anyone anywhere is not one of them.
-      *(Added 2026-08-07 — WO-2.11. Found the same way hall passes themselves were: the owner using
-      the finished thing. Roll Call! has it in the pass dropdown.)*
+- [ ] Overdue alerts, the elapsed clock, and pass history. *(Cut to Ship 2 — WO-2.9. The banner
+      itself moved to WO-2.11 on 2026-08-07; what stays here is the half that has to survive iOS
+      suspending a backgrounded PWA.)*
+- [ ] 🚩 **The pass banner, and cancelling a pass issued by mistake** — writing nothing to the log.
+      The append-only rule protects trips that happened; a tap that never sent anyone anywhere is
+      not one of them. *(Added 2026-08-07 — WO-2.11. Found the same way hall passes themselves
+      were: the owner using the finished thing. Cancel lives on the banner card rather than in the
+      pass column, which is both where Roll Call! puts it and the only place with room.)*
 - [ ] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
       school-wide `no-school`, or drop named classes on a future date when an assembly is known.
       Stored as calendar events and *read* by attendance — never copied. Phase 6 adds the month

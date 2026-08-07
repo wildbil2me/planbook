@@ -92,7 +92,10 @@ designed while being wrong for the room it ships into.)*
 *(Two more on 2026-08-07, both from the owner's first iPad sitting with the finished hall passes,
 and the pattern above repeating a third time. **WO-2.11 added**, 🚩, because a misclicked pass has
 no way out but Return — which writes a phantom trip into a log that is append-only by rule and read
-by Phase 4 as a signal. **WO-2.12 added**, because WO-2.8's escalation asked the wrong question:
+by Phase 4 as a signal. It pulls **the banner card forward out of WO-2.9**, because cancel needs a
+surface and the 160px pass column has no room for one — which is how Roll Call! does it, and the
+"dropdown" this was first written around turned out not to exist. **WO-2.12 added**, because
+WO-2.8's escalation asked the wrong question:
 offered four, five or six day columns in portrait, the owner said portrait should show today and
 landscape should show the week. Neither is a defect in WO-2.8, which verified clean on all seven
 acceptance lines; both are what using it on glass revealed.)*
@@ -113,7 +116,7 @@ acceptance lines; both are what using it on glass revealed.)*
 | 12 | [WO-1.13](phase-1-shell-store-roster.md#wo-113--main-area-views-make-the-header-actually-navigate) Main-area views | M | 🚩 | Aug 19–20 |
 | 13 | [WO-2.10](phase-2-attendance.md#wo-210--mark-cells-unconfirmed-timed-and-noted) Mark cells: unconfirmed, timed, noted | L | 🚩 | Aug 19–20 |
 | 14 | [WO-2.8](phase-2-attendance.md#wo-28--hall-passes-issue-hold-return) Hall passes: issue, hold, return | M | 🚩 | Aug 20 |
-| 15 | [WO-2.11](phase-2-attendance.md#wo-211--cancel-a-pass-issued-by-mistake) Cancel a pass issued by mistake | S | 🚩 | Aug 20 |
+| 15 | [WO-2.11](phase-2-attendance.md#wo-211--the-pass-banner-and-cancelling-a-pass-issued-by-mistake) Pass banner & cancel | M | 🚩 | Aug 20 |
 | 16 | [WO-2.12](phase-2-attendance.md#wo-212--portrait-shows-today-landscape-shows-the-week) Portrait shows today | S | | Aug 20 |
 | 17 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20–21 |
 | 18 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |

@@ -390,25 +390,36 @@ pass are independent, and the `D` rule above is the only coupling between them.
 
 ## WO-2.9 — Pass banner, overdue alerts, and history
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.8
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.11
 
 **Why it exists.** Cut from Ship 1 deliberately: WO-2.8 makes the daily flow work, and everything
 here is what makes it comfortable. The data is recorded either way, so these views can follow
 without losing any of it.
 
+**The banner itself moved to WO-2.11** on 2026-08-07, because cancel needed a surface to live on and
+the 160px pass column had no room for one. What came forward was the card — name, type, time out,
+Return and Cancel — and nothing else. **What stayed here is the hard half**, which is why this work
+order is still M and still carries the Traps section below.
+
 **Deliverables**
-- **The active-pass banner**, per Roll Call!'s `renderActivePassBanner()` — a card per student out,
-  with name, type, time out, and elapsed time.
+- **The elapsed clock on WO-2.11's card**, computed from the stored timestamp on every render. This
+  is the piece the banner shipped without, and the Traps section is the reason.
 - **Two escalating overdue alerts**, per Roll Call!'s configurable `alertOneMin` / `alertTwoMin`.
-- **A pass history view**, per student and per class, reading the append-only log.
-- Presentation-mode safe: a projected banner names students who left the room, so it obeys
-  [`../../src/supports.js`](../../src/supports.js)'s answer like every other surface.
+- **A pass history view**, per student and per class, reading the append-only log. This is the
+  Planbook half of Roll Call!'s report modal — its `Student Report` carries a **Hall Pass History**
+  table (`src/dashboard.html` ~4718: date, type, out, back, minutes, note) and its `Hall Pass
+  Summary` tab is the per-class view (~4803). Both are worth reading before designing this.
+- Presentation-mode safe: the history view names students, so it obeys
+  [`../../src/supports.js`](../../src/supports.js)'s answer like every other surface. *(The banner's
+  own answer is WO-2.11's, and it ships with the banner rather than after it.)*
 
 **Acceptance**
 - [ ] Elapsed time is correct after the app has been backgrounded for ten minutes. 👤 *(See Traps.)*
 - [ ] Both alerts fire once each, not repeatedly, and not again after the student returns.
 - [ ] The history view's totals match the log; a hand count of one student's passes agrees.
-- [ ] Presentation mode suppresses the banner's names.
+- [ ] A cancelled pass appears in no history view and in no total — WO-2.11 writes nothing, and this
+      is the work order that would notice if that stopped being true.
+- [ ] Presentation mode suppresses names in the history view.
 
 **Traps** — **iOS suspends timers when Safari backgrounds a PWA.** An elapsed counter that ticks
 will read "2 minutes" after twenty, and it will do it silently. Compute elapsed from the stored
@@ -576,10 +587,12 @@ second-source-of-truth pattern this project has refused four times. The cell is 
 
 ---
 
-## WO-2.11 — Cancel a pass issued by mistake
+## WO-2.11 — The pass banner, and cancelling a pass issued by mistake
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-2.8
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.8
 **Closes roadmap** Phase 2 → "Cancel a pass issued by mistake, writing nothing to the log"
+**Takes from WO-2.9** the banner card only — the elapsed timer, the overdue alerts and the history
+view stay there. See *Why the banner comes with it*.
 
 **Why it exists.** WO-2.8 shipped three issue buttons side by side in a 160px column and no way
 back out of any of them. Found by the owner on 2026-08-07, in the first iPad sitting with the
@@ -593,23 +606,48 @@ append-only, and `reopenPass()` refuses anything whose `endedBy` is not `dismiss
 cannot remove it afterwards. Phase 4 is specified to read pass data as a signal, so these
 accumulate as real history in the record that feeds it.
 
-**The reference is Roll Call!'s pass dropdown**, which is where cancel lives over there rather than
-as a fourth button. Read it before designing — the column has no room for another control, which is
-the constraint that shapes this.
+### Why the banner comes with it
+
+**There is no dropdown in Roll Call!, and an earlier draft of this work order said there was.**
+Corrected 2026-08-07 against the source. What is actually there:
+
+- The **grid cell** carries a bare `Return` and nothing else — `passOutHTML()`, `src/dashboard.html`
+  ~5270, a single line.
+- **Cancel lives on the active-pass banner card**: `✕ Cancel` beside `✓ Return`, ~3439, on a card
+  that also holds the avatar, the name, the type chip, the time out, the elapsed clock and a note
+  field. `cancelPass(si)` itself, ~3345, is four lines — `delete activePasses[si]`, repaint.
+- Compact mode has its own `✕ Pass` beside Return, ~5027.
+
+So in Roll Call! **you never cancel from the row you issued from.** That is the design, and it is
+the answer to the constraint this work order was written around: the 160px column has no room for a
+third target, and putting one there is how a thumb reaching for Return destroys a real trip's
+minutes. The banner has room outright.
+
+The owner chose this shape on 2026-08-07 over adding a control to the cell. What comes forward is
+**the card and nothing else.** The elapsed timer stays in WO-2.9 deliberately — it carries the
+iOS-suspend trap that WO-2.9's Traps section exists for, and cancel does not need it.
 
 **Deliverables**
-- **A cancel path on an open pass**, reachable from the pass cell. It removes the entry from
-  `openPasses` and **writes nothing to `passes`**.
+- **The active-pass banner**, per Roll Call!'s `renderActivePassBanner()`: one card per open pass,
+  carrying the student's name, the pass type, and the time out. **No elapsed clock** — see above.
+- **`✕ Cancel` on the card**, beside Return. It removes the entry from `openPasses` and **writes
+  nothing to `passes`**.
+- **`Return` on the card too**, as Roll Call! has it, so the banner is a complete surface rather
+  than a place where half the actions live. The cell keeps its own Return; both call the same writer.
 - **A `cancelPass()` in the model**, beside `closePass()` and deliberately not a variant of it —
   cancel is not a close with a flag. `closePass()` writes history; this one is the only writer that
   removes an open pass without leaving a record, and it says so at the definition.
-- **Distinguishable from Return under a thumb.** A cancel that can be hit while reaching for Return
-  loses a real trip's minutes, which is the mirror of the bug being fixed.
-- **Presentation-mode safe**, per the standing obligation, and 44px under `(pointer: coarse)`.
+- **Presentation-mode safe**, and this is not the standing-obligation boilerplate: **a projected
+  banner names the students who left the room**, which is a disclosure to everyone facing the wall.
+  It asks [`../../src/supports.js`](../../src/supports.js) like every other surface that names
+  anyone. WO-2.8 got to skip this because nothing it drew put a name anywhere a name was not
+  already; the banner does not get to skip it.
+- **44px under `(pointer: coarse)`**, per the standing obligation.
 
-**Out of scope** — cancelling a pass that has already been returned. That entry is history and the
-append-only rule protects it; getting it wrong is a job for a pass history view, which is WO-2.9.
-Also out: an undo for the `D` coupling's dismissal-close, which already has its own retraction.
+**Out of scope** — the elapsed clock, the two overdue alerts, and the pass history view, all of
+which stay in WO-2.9 and are why that work order still exists. Cancelling a pass that has already
+been returned: that entry is history, the append-only rule protects it, and correcting it is a job
+for the history view. An undo for the `D` coupling's dismissal-close, which has its own retraction.
 
 **Acceptance**
 - [ ] Issuing a pass and cancelling it leaves `passes` **byte-identical** to before the tap, and
@@ -619,6 +657,11 @@ Also out: an undo for the `D` coupling's dismissal-close, which already has its 
 - [ ] Cancelling creates no attendance record and changes no attendance mark — the same silence
       WO-2.8's acceptance line 6 measures.
 - [ ] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
+- [ ] The banner shows one card per open pass and disappears entirely when none are open. Returning
+      or cancelling from the **card** updates the row's cell, and from the **cell** updates the card.
+- [ ] The banner names nobody in presentation mode.
+- [ ] The banner costs the registry no day columns — it is above the grid, not beside it. The
+      portrait width budget is already tight and WO-2.12 is spending it.
 
 **Traps** — **`passes` is append-only, and this work order is the one exception being added to
 that rule, so it must not become two.** The rule protects trips that happened; a tap that sent
