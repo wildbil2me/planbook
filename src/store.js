@@ -47,8 +47,9 @@ const DB_NAME = 'planbook';
 const DB_VERSION = 1;
 const STORE = 'years';
 
-/* The document's own version, stamped into every document and read back on load. */
-export const SCHEMA_VERSION = 1;
+/* The document's own version, stamped into every document and read back on load. It went to 2 at
+   WO-2.10, when every `marks` cell became an object — see MIGRATIONS below. */
+export const SCHEMA_VERSION = 2;
 
 /* Long enough to swallow a burst of typing, short enough that "✓ Saved" appears while the
    teacher is still looking at the chip. */
@@ -176,14 +177,59 @@ export function normalizeYear(input) {
 /* ────────────────────────────── migration ────────────────────────────── */
 
 /* Keyed by the schemaVersion a step upgrades FROM, so `MIGRATIONS[1]` turns a version-1
-   document into a version-2 one. Empty today and that is the point: the ladder, the walk, and
-   the refusal to load a document it cannot place are all here already, so adding the first
-   real migration is one entry in this object rather than a refactor of the load path.
+   document into a version-2 one. The ladder, the walk, and the refusal to load a document it
+   cannot place were all written before there was anything to climb, so that the first real
+   migration would be one entry in this object rather than a refactor of the load path. WO-2.10
+   is that first entry, and it is exactly one entry: nothing below it changed.
 
    A step receives the document, mutates or replaces it, and returns it. It must not touch
    schemaVersion — the walk below owns that. */
 export const MIGRATIONS = {
-  /* 1: (doc) => { doc.somethingNew = []; return doc; },   // 1 → 2 */
+  /*
+    1 → 2 (WO-2.10). A `marks` cell was a bare code string — `"A"` — and is now always an object,
+    `{ code: "A" }`, optionally carrying `at` (the moment a `T` or a `D` settled) and `note`.
+    docs/data-model.md § "A mark cell is always an object" says why: it is the score-cell rule one
+    datatype over, and a cell that is `"A"` sometimes and `{code:"T",…}` other times is the
+    polymorphic-cell mistake that work order set out to avoid.
+
+    THREE FAILURE MODES THIS STEP IS SHAPED AGAINST, because each of them turns a term of
+    attendance into rubbish rather than into an error anyone would see:
+
+      - RUNS TWICE. A cell that is already an object is left exactly as it is, so a second pass
+        cannot produce `{ code: { code: "A" } }`. The walk above only runs a step when the
+        document sits below SCHEMA_VERSION and openYear() writes the result back once, so this
+        cannot happen through the front door — but a hand-edited document, a restore of a file
+        that was itself restored, or a future step inserted below this one all can, and being
+        idempotent costs one comparison.
+      - RUNS HALFWAY. Every record and every cell is walked; nothing is skipped on a shape this
+        step does not recognise, because "left alone" is what half-converted means. A cell that is
+        neither a string nor an object is a cell no build of Planbook ever wrote, and it is
+        DELETED rather than kept — a mark nobody can read is not a mark, and leaving it would put
+        a shape in the document that every reader after this would have to know about.
+      - NO `at` IS INVENTED. A `T` written before this work order recorded no time and it does not
+        get one now: `{ code: "T" }` with no `at` is the honest record of a tardy whose moment was
+        never captured, and a timestamp made up from the migration's own clock would read as the
+        student having arrived the day the teacher updated the app.
+
+    An empty string is the one string that is not a code. It could only come from a hand-edited
+    file, and it means "no mark", which is what deleting the key means.
+  */
+  1: (doc) => {
+    const list = Array.isArray(doc.attendance) ? doc.attendance : [];
+    list.forEach((record) => {
+      if (!record || !record.marks || typeof record.marks !== 'object') return;
+      Object.keys(record.marks).forEach((studentId) => {
+        const cell = record.marks[studentId];
+        if (typeof cell === 'string') {
+          if (cell) record.marks[studentId] = { code: cell };
+          else delete record.marks[studentId];
+        } else if (!cell || typeof cell !== 'object' || Array.isArray(cell) || !cell.code) {
+          delete record.marks[studentId];
+        }
+      });
+    });
+    return doc;
+  },
 };
 
 /* Walks a document up to SCHEMA_VERSION. Three things it refuses to do, each because the

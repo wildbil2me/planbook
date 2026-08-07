@@ -176,7 +176,18 @@ in the classes section now take their reading of the strip from the class view, 
 card the way a teacher does, and the year-switch check moved one clause onto the cards while keeping
 the term nav as its proof that `refreshClassBar()` ran. Two mutations, both reverted: drawing the
 tabs on the home view again turns two red, and blanking the caption that replaced them turns one
-red.**
+red. 299 at WO-2.10, and seventeen is a net figure over a section that was mostly RE-POINTED: a cell
+became an object and a tap on a `?` came to mean "present", so nearly every existing attendance
+check was reading a shape or a sequence that no longer exists. The reader changed with them —
+glyphs come off `.attendance-cell` rather than off the `<td>`, because a `<td>` can now hold the
+time caption too and `"T8:14a"` breaks every comparison against a string of letters. Three of the
+new ones are worth knowing about: "one tap changes no other cell" reads all twenty-six cells before
+and after, because the build this work order replaces would have passed a check that read the tapped
+one; "every cell is an object" is asked of the whole document with the object count printed beside
+the zero, since an empty document answers it just as happily; and the pre-WO-2.10 restore goes in
+through `restoreFromText()` and the real confirm, because that path is the only thing standing
+between a teacher and the backup already on her disk. Four mutations, all reverted and tabulated in
+`TESTING.md` § WO-2.10.**
 Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.

@@ -171,6 +171,14 @@ Seven shape decisions that matter:
   could have caught it. Twenty minutes late and two minutes late are different conversations with a
   guardian, and Phase 5's templates want the difference.)* **The time lives in the cell and nowhere
   else** — a mirrored `log` entry would make one event into two records.
+  Three details that follow, all settled in `src/attendance.js`:
+  **`at` is a local ISO timestamp with its offset** (`2026-09-09T08:14:00-04:00`, never a `Z`), so
+  the hour read back is the hour the teacher's clock showed.
+  **`at` is written only on today's column**: the device clock is not evidence about a class two
+  weeks ago, and a wrong arrival time beside a student's name is worse than none — a mark entered on
+  a past day is `{ "code": "T" }` and no more.
+  **A `U` carries nothing but its code.** No time, no note; it means nobody has looked at that
+  student yet, and its whole entry is deleted the moment somebody does.
 - **There is no schedule model.** A class met if it has an attendance record without an
   `exception`. Three distinct states — *met* · *dropped* · *not taken yet* — and the third is not
   the second. See [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).

@@ -60,10 +60,17 @@
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
-                                      that day — present → A → E → T → D → present. `P` is not a
-                                      step in the cycle because present is never stored
-      data-attendance-take="<iso>"    records the open class as met on that day, everyone present
+                                      that day — P → A → E → T → D → P, entered at P from a
+                                      question mark. `P` is a step and is still never STORED:
+                                      landing on it deletes the entry, which is what present is
+      data-attendance-take="<iso>"    records the open class as met on that day, everyone present —
+                                      the one control allowed to change every row at once
       data-attendance-untake="<iso>"  takes that back — offered only while nothing is marked
+      data-attendance-unconfirm-all="<iso>"  the class reset: every student back to a question mark
+      data-attendance-unconfirm="<id>"       one student back to a question mark, from their row
+      data-attendance-detail="<id>"   opens that row's own panel — the time, the note, the un-confirm
+      data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
+                                      that student's mark as it is typed
       data-attendance-drop="<iso>"    one tap: the class did not meet that day
       data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
       data-attendance-edit="<iso>"    the deliberate unlock on a past column, one column at a time
@@ -72,7 +79,8 @@
                                       at the window that ends today, because there is no tomorrow
                                       column and there is not going to be one
       data-attendance-filter="all|P|T|A|E|D"      shows only students with that mark on the day
-                                      being edited
+                                      being edited. There is no pill for `U` — it is not a code a
+                                      teacher marks, and the count is on the column head instead
       data-attendance-sort="first|last"           sorts the rows by that name
       data-attendance-search          on an <input>: narrows the rows as it is typed
       data-roster-manage              fills the roster panel for the open class, then opens it
@@ -433,6 +441,20 @@ document.addEventListener('click', (e) => {
     attendance.untakeClass(untake.getAttribute('data-attendance-untake'));
     afterAttendanceChange(); return;
   }
+  /* The two un-confirms (WO-2.10), and they are two rather than one because they act on different
+     things: the class reset puts every student back to a question mark, and the row's own puts one
+     back. Both change what the card behind says — a class whose students are all unconfirmed is a
+     class with an absence for every one of them — so both chain the redraw. */
+  const unconfirmAll = e.target.closest('[data-attendance-unconfirm-all]');
+  if (unconfirmAll) {
+    attendance.unconfirmAll(unconfirmAll.getAttribute('data-attendance-unconfirm-all'));
+    afterAttendanceChange(); return;
+  }
+  const unconfirm = e.target.closest('[data-attendance-unconfirm]');
+  if (unconfirm) {
+    attendance.unconfirmStudent(unconfirm.getAttribute('data-attendance-unconfirm'));
+    afterAttendanceChange(); return;
+  }
   const drop = e.target.closest('[data-attendance-drop]');
   if (drop) {
     attendance.dropClass(drop.getAttribute('data-attendance-drop'));
@@ -444,8 +466,11 @@ document.addEventListener('click', (e) => {
     afterAttendanceChange(); return;
   }
 
-  /* And five taps that move the view without writing anything, so none of them touches the home
-     screen: unlocking a past column, closing it again, paging the window, filtering, sorting. */
+  /* And six taps that move the view without writing anything, so none of them touches the home
+     screen: opening a row's detail panel, unlocking a past column, closing it again, paging the
+     window, filtering, sorting. */
+  const detail = e.target.closest('[data-attendance-detail]');
+  if (detail) { attendance.toggleDetail(detail.getAttribute('data-attendance-detail')); return; }
   const editPast = e.target.closest('[data-attendance-edit]');
   if (editPast) { attendance.editPastDay(editPast.getAttribute('data-attendance-edit')); return; }
   if (e.target.closest('[data-attendance-lock]')) { attendance.lockPastDay(); return; }
@@ -585,6 +610,18 @@ document.addEventListener('input', (e) => {
      the device this screen is for. */
   const attSearch = e.target.closest('[data-attendance-search]');
   if (attSearch) { attendance.setSearch(attSearch.value); return; }
+
+  /* A note on one student's mark, from the row's detail panel (WO-2.10). It carries the date it
+     belongs to on the element for the reason a cell does: the grid has six days on it, and "which
+     day did that land on" must not be a question two files can answer differently. Nothing on this
+     screen redraws for it — see src/attendance.js's setNote(), where re-rendering the row would
+     take the caret out of the field being typed into. */
+  const attNote = e.target.closest('[data-attendance-note]');
+  if (attNote) {
+    attendance.setNote(attNote.getAttribute('data-attendance-note'), attNote.value,
+      attNote.getAttribute('data-attendance-note-date'));
+    return;
+  }
 
   /* The roster's fields, saved as they are typed for the same reason and by the same debounce.
      Three hooks rather than one: a student's fields carry a path and a guardian index, the

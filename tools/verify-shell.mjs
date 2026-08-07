@@ -27,6 +27,12 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+/* The schema this build writes. Written out here rather than read off the app, so that the checks
+   below which say "the document came out at the current version" are claims about a NUMBER and not
+   a comparison of the app with itself. It went 1 → 2 at WO-2.10, when every `marks` cell became an
+   object; the next migration changes this line and the four assertions that use it. */
+const SCHEMA_NOW = 2;
+
 /* The two controls that replaced the ~950-line soft cap on 2026-08-05, retired after binding once
    in four work orders — it could not tell coverage from bloat on a file that grows with the app's
    surface. `plans/verification-tooling.md` § "Retiring the line cap" holds the reasoning, and says
@@ -611,7 +617,7 @@ if (!storeSeam) {
              label:(document.getElementById('yearButtonLabel')||{}).textContent }; })()`);
 
   check('boot() put a year document in memory and the loading screen came down behind it',
-    !!doc0 && doc0.schemaVersion === 1 && !!doc0.docId && doc0.hasDeviceId
+    !!doc0 && doc0.schemaVersion === SCHEMA_NOW && !!doc0.docId && doc0.hasDeviceId
       && /^\d{4}-\d{4}$/.test(doc0.year || ''),
     doc0 ? 'year=' + doc0.year + ' rev=' + doc0.rev + ' schemaVersion=' + doc0.schemaVersion : 'no document');
   check('the fresh document carries every collection docs/data-model.md names, and scores is a map',
@@ -827,11 +833,17 @@ if (!storeSeam) {
       && back.label === FIRST_YEAR,
     JSON.stringify(back));
 
-  /* The migration hook. MIGRATIONS is empty today and that is the point — what is being
-     checked is that the ladder exists, runs, and loses nothing, so that adding the first real
-     step is one entry in an object rather than a rewrite of the load path. A step is installed
-     here for the length of one open and removed again; the document it climbs is written
-     straight into IndexedDB, the way a document from an older build would be sitting there. */
+  /* The migration ladder, walked TWO steps. It used to be one — MIGRATIONS was empty, and what was
+     being checked was that the ladder existed, ran and lost nothing, so that adding the first real
+     step would be one entry in an object rather than a rewrite of the load path. WO-2.10 added that
+     entry, so this fixture now climbs a hook installed here (0 → 1) and then the app's own real
+     step (1 → 2), which is a better test of the walk than either alone: a ladder that ran only the
+     step it was handed, or only its own, would be caught here.
+
+     The fixture's one mark is a BARE STRING, which is what every document written before WO-2.10
+     holds, and it has to arrive as `{ code: 'A' }` with no `at` invented for it. A step is installed
+     for the length of one open and removed again; the document it climbs is written straight into
+     IndexedDB, the way a document from an older build would be sitting there. */
   const OLD_YEAR = '2019-2020';
   const mig = await evalJs(`(async function(){ var s = window.planbook.store;
     var older = { schemaVersion:0, docId:'d_from_an_older_build', year:${JSON.stringify(OLD_YEAR)},
@@ -877,18 +889,32 @@ if (!storeSeam) {
              student:opened.students[0] && opened.students[0].last,
              score:opened.scores.a_1 && opened.scores.a_1.s_1 && opened.scores.a_1.s_1.v,
              mark:opened.attendance[0] && opened.attendance[0].marks.s_1,
+             storedMark: stored && stored.attendance[0] && stored.attendance[0].marks.s_1,
              storedVersion: stored && stored.schemaVersion, storedMarker: stored && stored.cameThroughTheHook };
   })()`);
   check('a document written under an older schema loads THROUGH the migration hook',
-    !mig.failure && mig.ran === 1 && mig.schemaVersion === 1 && mig.marker === true,
+    !mig.failure && mig.ran === 1 && mig.schemaVersion === SCHEMA_NOW && mig.marker === true,
     mig.failure ? 'openYear threw: ' + mig.failure
       : 'steps run = ' + mig.ran + ', schemaVersion now ' + mig.schemaVersion);
   check('and it loses nothing on the way up — students, scores, marks, docId, teacher',
-    !mig.failure && mig.student === 'Me' && mig.score === 87 && mig.mark === 'A'
+    !mig.failure && mig.student === 'Me' && mig.score === 87
+      && !!mig.mark && mig.mark.code === 'A'
       && mig.docId === 'd_from_an_older_build' && mig.teacher === 'Older Build',
     JSON.stringify(mig));
+  /* WO-2.10's own step, asked of the thing it converts. The cell arrived as `"A"` and has to be
+     `{ code: "A" }` — an object, its code intact, and NO `at`, because the moment that tardy or
+     absence was marked was never recorded and a timestamp from the migration's own clock would say
+     the student arrived the day the teacher updated the app. Asserted on the record ON DISK as well
+     as in memory: a conversion that happened only in memory would run again on every open, which is
+     one of the three failure modes that step is written against. */
+  check('and every bare-string mark cell came up as an object, with no `at` invented for it',
+    !mig.failure && !!mig.storedMark && typeof mig.storedMark === 'object'
+      && mig.storedMark.code === 'A' && mig.storedMark.at === undefined
+      && Object.keys(mig.storedMark).join(',') === 'code',
+    'the cell was "A" in the version-1 document and is ' + JSON.stringify(mig.storedMark)
+      + ' on disk (in memory: ' + JSON.stringify(mig.mark) + ')');
   check('the migrated document is written back once, as a save (rev 7 -> 8), not on every open',
-    !mig.failure && mig.rev === 8 && mig.storedVersion === 1 && mig.storedMarker === true,
+    !mig.failure && mig.rev === 8 && mig.storedVersion === SCHEMA_NOW && mig.storedMarker === true,
     'rev = ' + mig.rev + ', stored schemaVersion = ' + mig.storedVersion);
 
   /* A forced save failure, and it has to be a REAL one: a function in the document is a value
@@ -1389,7 +1415,7 @@ if (!backupBooted || !backupSeam) {
     const yearsInFiles = parsed.map(f => f.doc.year).sort();
     const wellFormed = parsed.filter(f => Array.isArray(f.doc.classes)
       && Array.isArray(f.doc.students) && f.doc.scores && typeof f.doc.scores === 'object'
-      && f.doc.schemaVersion === 1
+      && f.doc.schemaVersion === SCHEMA_NOW
       && f.name === 'Planbook ' + f.doc.year + ' backup ' + localStamp + '.json');
     check('one tap writes one zip file, holding a readable backup of every year on the device',
       added.length === 1
@@ -1607,7 +1633,7 @@ if (!backupBooted || !backupSeam) {
       var d = await window.planbook.store.readStoredDocument(${JSON.stringify(victim)});
       return { schemaVersion: d && d.schemaVersion, rev: d && d.rev }; })()`);
     check('the poisoned year is put back as it was, so the sections below inherit nothing',
-      repaired.schemaVersion === 1 && repaired.rev === original.rev,
+      repaired.schemaVersion === SCHEMA_NOW && repaired.rev === original.rev,
       victim + ' is schema ' + repaired.schemaVersion + ' at rev ' + repaired.rev
         + ' (was schema ' + original.schemaVersion + ' at rev ' + original.rev + ')');
     await evalJs("window.planbook.closeModal('backupModal');1");
@@ -1825,6 +1851,77 @@ if (!backupBooted || !backupSeam) {
     back.identical && back.open === YEAR && back.label === YEAR && back.rev === back.fileRev + 1,
     'restored ' + back.open + ' at rev ' + back.rev + ' from a file at rev ' + back.fileRev);
 
+  /*
+    ── A BACKUP WRITTEN BEFORE WO-2.10, RESTORED (WO-2.10 acceptance 14) ──
+
+    The file on a teacher's disk today holds `"marks": { "s_1": "A" }` — bare strings, schema 1 —
+    and there is no way to re-download it in the new shape, because the app that wrote it is gone.
+    So the restore path is the only thing standing between her and a term of attendance that comes
+    back half-converted, and it has to come out RIGHT rather than merely come out.
+
+    It is driven end to end through the real path: the same restoreFromText() a drop and a file
+    picker land in, the same confirm dialog, the same button. Nothing here calls the migration.
+    The file is built from the one the run already produced, so it is a genuine Planbook backup in
+    every respect except the two this check is about — its schemaVersion and the shape of its cells.
+
+    FIVE THINGS ARE ASSERTED ON THE RECORD ON DISK, which is the only place the answer counts:
+    every cell is an object, every code survived, no `at` was invented for a mark that never had
+    one, the `at` that WAS in the file (a hand-written one, because a pre-WO-2.10 file cannot have
+    any) is not disturbed, and the document is stamped at the current schema so the conversion
+    cannot run a second time. The confirm is asked to have SAID so as well: "brought up to date
+    from an older version" is what tells the teacher her file was older than her app.
+
+    Nothing is put back afterwards, deliberately: the block below poisons this year's record and
+    then restores the good file over it, so the next check's fixture is what cleans up.
+  */
+  const OLD_FILE = await evalJs(`(function(){
+    var doc = JSON.parse(${TEXT});
+    doc.schemaVersion = 1;
+    doc.attendance = [
+      { classId:'c_b1', date:'2026-09-08', marks:{ s_b1:'A', s_b2:'T' } },
+      { classId:'c_b1', date:'2026-09-09', marks:{ s_b1:'', s_b2:'E' } },
+      { classId:'c_b1', date:'2026-09-10', exception:'dropped' }
+    ];
+    return JSON.stringify(doc); })()`);
+  await evalJs(`(async function(){
+    await window.planbook.backup.restoreFromText(${JSON.stringify(OLD_FILE)},
+      'Planbook ${YEAR} backup 2026-05-01.json'); return 1; })()`);
+  const oldConfirm = await evalJs(`(function(){
+    return { open: !document.getElementById('restoreConfirmModal').classList.contains('hidden'),
+             compare: document.getElementById('restoreCompare').textContent.replace(/\\s+/g,' ') }; })()`);
+  await clickSel('[data-backup-confirm]');
+  await new Promise(r => setTimeout(r, 600));
+  const converted = await evalJs(`(async function(){
+    var stored = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(${JSON.stringify(YEAR)});
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    var cells = [];
+    (stored.attendance || []).forEach(function(r){
+      Object.keys(r.marks || {}).forEach(function(k){
+        cells.push({ student:k, date:r.date, value:r.marks[k],
+                     isObject: !!r.marks[k] && typeof r.marks[k] === 'object',
+                     code: r.marks[k] && r.marks[k].code, at: r.marks[k] && r.marks[k].at }); });
+    });
+    return { schemaVersion: stored.schemaVersion, records: (stored.attendance || []).length,
+             cells: cells, dropped: (stored.attendance || []).filter(function(r){ return r.exception; }).length }; })()`);
+  check('restoring a backup written before WO-2.10 produces object cells, codes intact and no invented time',
+    oldConfirm.open && /older version \(1→2\)/.test(oldConfirm.compare)
+      && converted.schemaVersion === SCHEMA_NOW && converted.records === 3 && converted.dropped === 1
+      && converted.cells.length === 3
+      && converted.cells.every(c => c.isObject && c.at === undefined)
+      && converted.cells.map(c => c.date + ':' + c.student + '=' + c.code).sort().join(' ')
+        === '2026-09-08:s_b1=A 2026-09-08:s_b2=T 2026-09-09:s_b2=E',
+    'the file held bare strings at schema 1; on disk the cells are '
+      + JSON.stringify(converted.cells.map(c => c.date + ' ' + c.student + ' ' + JSON.stringify(c.value)))
+      + ' in ' + converted.records + ' record(s) at schema ' + converted.schemaVersion
+      + '; the confirm said ' + (/older version/.test(oldConfirm.compare)
+        ? JSON.stringify((oldConfirm.compare.match(/Brought up to date[^·]*/) || [''])[0].trim())
+        : 'NOTHING about the file being older'));
+
   /* The boot-failure exit. WO-1.4 holds the loading screen up on a document written by a newer
      build, deliberately — and until WO-1.5 that screen had no way out at all. The document is
      poisoned in storage the way a newer build would have left it, and the whole recovery is
@@ -1893,7 +1990,7 @@ if (!backupBooted || !backupSeam) {
                open: s.getDoc().year,
                label: (document.getElementById('yearButtonLabel')||{}).textContent }; })()`);
     check('and restoring from there replaces the unreadable document and starts the app',
-      recovered.loadingHidden && recovered.storedVersion === 1 && recovered.students === 2
+      recovered.loadingHidden && recovered.storedVersion === SCHEMA_NOW && recovered.students === 2
         && recovered.open === YEAR && recovered.label === YEAR,
       JSON.stringify(recovered));
 
@@ -2031,7 +2128,7 @@ if (!backupBooted || !backupSeam) {
                stamps: window.planbook.getPref('lastBackupAt') }; })()`);
     check('and that fixture puts every year back, so the sections below inherit nothing',
       soloBack && restoredAll.years.length === solo.records.length && restoredAll.open === YEAR
-        && restoredAll.schemaVersion === 1
+        && restoredAll.schemaVersion === SCHEMA_NOW
         && JSON.stringify(restoredAll.stamps) === JSON.stringify(solo.stamps || {}),
       'booted = ' + soloBack + ', years = ' + JSON.stringify(restoredAll.years) + ' (took '
         + solo.records.length + ' away), open = ' + restoredAll.open + ' at schema '
@@ -2570,13 +2667,18 @@ if (!classesBooted || !classSeam) {
   await evalJs(`(async function(){ var s = window.planbook.store;
     s.update(function(d){
       d.students = [{ id:'s_v1', first:'Ada', last:'Probe' }, { id:'s_v2', first:'Bo', last:'Probe' }];
-      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-09', marks:{ s_v1:'A' } });
+      /* Object cells, per WO-2.10 and docs/data-model.md: a fixture written as a bare string here
+         would be the one place in this run that a stored string could come from, and the check
+         further down that no cell in the document is a bare string would go red about this line
+         rather than about the app. (Bare strings ARE tested — deliberately, in the migration and
+         restore fixtures, where the point is that they get converted.) */
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-09', marks:{ s_v1:{ code:'A' } } });
       d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-10', marks:{} });
       /* A day the class did not meet. It is destroyed too, and it is NOT a meeting — everything in
          this app counts recorded meetings (plans/rotating-schedule.md), so the confirm names the
          two kinds separately and this record is what makes that falsifiable. */
       d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-11', exception:'dropped' });
-      d.attendance.push({ classId:${JSON.stringify(neighbourId)}, date:'2026-09-09', marks:{ s_v1:'T' } });
+      d.attendance.push({ classId:${JSON.stringify(neighbourId)}, date:'2026-09-09', marks:{ s_v1:{ code:'T' } } });
       d.assignments.push({ id:'a_v1', classId:${JSON.stringify(victimId)}, name:'Quiz', points:100 });
       d.assignments.push({ id:'a_n1', classId:${JSON.stringify(neighbourId)}, name:'Lab', points:50 });
       d.scores['a_v1'] = { s_v1:{ v:87 }, s_v2:{ v:null, flag:'missing' } };
@@ -4338,13 +4440,30 @@ if (!supportSeam) {
  * is save/submit/finalize/apply, on a dialog whose other controls are enumerated in the same read.
  * "No future column" is asserted against a window whose six dates this file computes for itself.
  *
- * WHAT IS NOT HERE, AND IS OWED TO A HUMAN: acceptance lines 2, 6 and 8. Six columns readable on
- * the iPad the owner actually holds, twenty-five students in under fifteen seconds, and a
- * "not today" strip legible across a lit classroom all need a thumb, a device and eyes. This
+ * WHAT IS NOT HERE, AND IS OWED TO A HUMAN: WO-2.1's acceptance lines 2, 6 and 8. Six columns
+ * readable on the iPad the owner actually holds, twenty-five students in under fifteen seconds, and
+ * a "not today" strip legible across a lit classroom all need a thumb, a device and eyes. This
  * section measures what a desk can measure about them — six columns rendered and no sideways
  * scroll at 800px and at an emulated coarse 1024px, a path that is one tap per absence with
  * nothing to submit, and a banner that is on screen and carries the date in words — and none of
  * those three is the line. They stay 👤 items in TESTING.md.
+ *
+ * ── WO-2.10, AND WHY MOST OF THIS SECTION MOVED RATHER THAN GREW ──
+ *
+ * A cell is an OBJECT now — `{ code, at?, note? }` — and a class that has been started holds a `U`
+ * for every student nobody has reached yet. Both of those change what every read below sees, so the
+ * reader was re-pointed rather than extended: `values` counts `.code`, and it counts what it finds
+ * however deep, so a cell that is still a bare string shows up as its own entry rather than as
+ * `[object Object]` in a tally nobody reads.
+ *
+ * THE THREE NEW CLAIMS THAT ARE ABOUT AN ABSENCE, each paired with the presence that makes it mean
+ * something. "One tap changes no other cell" is asserted by reading all twenty-six cells before and
+ * after, not by reading the one that was tapped — the work order says so in as many words, and a
+ * check that read only the tapped cell would have passed the build this work order exists to
+ * replace. "No bare string anywhere" is asked of every cell in the whole document, across every
+ * year-level fixture this run has written, with the object count printed beside it so a zero cannot
+ * pass for a clean sweep. And "no stray tardy time" is asserted on a cell that DOES carry a time —
+ * the dismissal's — so that "no `at`" cannot be true because nothing was ever stamped.
  */
 
 console.log('\n--- attendance ---');
@@ -4465,17 +4584,41 @@ const INSTALL_ATT_READER = `(function(){
           return { classId: r.classId, date: r.date, exception: r.exception,
                    keys: Object.keys(r).sort().join(','),
                    marks: r.marks ? JSON.parse(JSON.stringify(r.marks)) : null }; }),
-      /* Every mark VALUE stored anywhere in the document, counted. The no-P claim is asked of the
+      /* Every mark CODE stored anywhere in the document, counted. The no-P claim is asked of the
          whole document rather than of the class on screen — one P anywhere is the trap sprung,
-         whatever date it is on. */
+         whatever date it is on. A cell that is somehow still a bare string is counted under its own
+         string, so it lands in this tally as itself rather than being folded in with the objects.
+         (No backticks in this comment: it is inside a template literal.) */
       values: (function(){ var out = {};
         doc.attendance.forEach(function(r){
-          Object.keys(r.marks || {}).forEach(function(k){ out[r.marks[k]] = (out[r.marks[k]] || 0) + 1; });
+          Object.keys(r.marks || {}).forEach(function(k){
+            var c = r.marks[k], code = (c && typeof c === 'object') ? c.code : String(c);
+            out[code] = (out[code] || 0) + 1; });
         });
         return out; })(),
       todayValues: (function(){ var out = {};
         doc.attendance.filter(function(r){ return r.date === a.todayISO(); }).forEach(function(r){
-          Object.keys(r.marks || {}).forEach(function(k){ out[r.marks[k]] = (out[r.marks[k]] || 0) + 1; });
+          Object.keys(r.marks || {}).forEach(function(k){
+            var c = r.marks[k], code = (c && typeof c === 'object') ? c.code : String(c);
+            out[code] = (out[code] || 0) + 1; });
+        });
+        return out; })(),
+      /* THE SHAPE OF EVERY CELL IN THE DOCUMENT, which is WO-2.10's acceptance line 13 and is a
+         question about storage rather than about the screen. The object count is the guard against
+         a vacuous pass: zero bare strings and zero cells at all are the same number otherwise, and
+         this run legitimately empties the document between sections. The key tally is every field
+         name used by any cell anywhere, so a cell carrying something nobody meant to write is
+         visible here rather than only in a record dump.
+         (No backticks in this comment: it is inside a template literal.) */
+      cells: (function(){ var out = { objects:0, strings:0, other:0, bare:[], keys:{} };
+        doc.attendance.forEach(function(r){
+          Object.keys(r.marks || {}).forEach(function(k){
+            var c = r.marks[k];
+            if (typeof c === 'string') { out.strings++; out.bare.push(r.date + ' ' + k + ' = ' + JSON.stringify(c)); }
+            else if (c && typeof c === 'object' && !Array.isArray(c)) { out.objects++;
+              Object.keys(c).forEach(function(f){ out.keys[f] = (out.keys[f] || 0) + 1; }); }
+            else { out.other++; out.bare.push(r.date + ' ' + k + ' = ' + JSON.stringify(c)); }
+          });
         });
         return out; })(),
       states: active.map(function(c){ return c.id + '=' + a.stateOf(c.id, a.todayISO()); }).join(' '),
@@ -4553,7 +4696,13 @@ const INSTALL_ATT_READER = `(function(){
       rowCount: rows.length,
       /* Per row: whose it is, the name as drawn, and the glyph in every column of that row read
          left to right — "P?PP-P" is a whole row's story in six characters, and it is what makes a
-         hole in the grid a thing this file can see rather than infer. */
+         hole in the grid a thing this file can see rather than infer.
+
+         THE GLYPH IS READ OFF THE CELL, NOT OFF THE td. Since WO-2.10 a td can also hold the time
+         caption under the circle, so reading the td's own textContent yields "T8:14a" and every
+         check that compares a row to a string of letters breaks on four characters that are not a
+         mark. Same trap, and the same answer, as the avatar initials in the name cell below.
+         (No backticks in this comment: it is inside a template literal.) */
       rows: rows.map(function(r){
         var tds = Array.prototype.slice.call(r.querySelectorAll('td[data-attendance-col]'));
         /* Read .attendance-student-name, not .attendance-name. The name cell holds an avatar beside
@@ -4566,13 +4715,40 @@ const INSTALL_ATT_READER = `(function(){
         return { name: ((r.querySelector('.attendance-student-name')
                          || r.querySelector('.attendance-name') || {}).textContent || '').trim(),
                  student: r.getAttribute('data-attendance-row'),
-                 codes: tds.map(function(td){ return (td.textContent || '').trim(); }).join(''),
+                 codes: tds.map(function(td){
+                   var c = td.querySelector('.attendance-cell');
+                   return ((c || td).textContent || '').trim(); }).join(''),
+                 /* The time under each glyph, in the same left-to-right order, empty where there is
+                    none — so "a tardy shows its time on the screen" is a thing this file reads
+                    rather than infers from the document. */
+                 times: tds.map(function(td){
+                   var t = td.querySelector('.attendance-cell-time');
+                   return t ? (t.textContent || '').trim() : ''; }),
+                 /* And what a screen reader would be told about each cell, which is where the time
+                    and the note are said in full. */
+                 labels: tds.map(function(td){
+                   var c = td.firstElementChild;
+                   return c ? (c.getAttribute('aria-label') || '') : ''; }),
                  dates: tds.map(function(td){ return td.getAttribute('data-attendance-col'); }).join(' '),
                  tappable: tds.filter(function(td){
                    return !!td.querySelector('button[data-attendance-cell]'); }).length,
+                 detail: r.querySelector('[data-attendance-detail]') ? 1 : 0,
                  named: tds.filter(function(td){
                    var c = td.firstElementChild;
                    return !!(c && c.getAttribute('aria-label')); }).length }; }),
+      /* The one open row-detail panel, or nulls. It is a <tr> of its own under the row it belongs
+         to, so "is it open" and "whose is it" are two different questions and both are asked. */
+      detail: (function(){
+        var tr = document.querySelector('#attendanceBody tr[data-attendance-detail-row]');
+        var note = tr ? tr.querySelector('[data-attendance-note]') : null;
+        return { open: !!tr, student: tr ? tr.getAttribute('data-attendance-detail-row') : '',
+                 text: tr ? (tr.textContent || '').replace(/\\s+/g, ' ').trim() : '',
+                 mark: tr && tr.querySelector('.attendance-detail-mark')
+                   ? (tr.querySelector('.attendance-detail-mark').textContent || '').trim() : '',
+                 hasNote: !!note, note: note ? note.value : '',
+                 noteDate: note ? note.getAttribute('data-attendance-note-date') : '',
+                 unconfirms: tr ? tr.querySelectorAll('[data-attendance-unconfirm]').length : 0,
+                 rows: document.querySelectorAll('#attendanceBody tr[data-attendance-detail-row]').length }; })(),
       /* Anything that would turn one tap into two, or one screen into two. */
       submenus: document.querySelectorAll('#attendanceGridWrap select, #attendanceGridWrap [aria-expanded], #attendanceGridWrap details').length,
       /* The Traps line, as a structure rather than as a promise: no form to submit, and no control
@@ -4837,62 +5013,150 @@ if (!attBooted || !attSeam) {
     'three writes aimed at ' + tomorrow + ': records ' + futureTry.before + ' -> '
       + futureTry.after + ', records on that date = ' + futureTry.onTomorrow);
 
-  /* ── acceptance 11: all five marks out of one cell, no submenu, no leaving the row ── */
+  /*
+    ── WO-2.10 acceptance 1: ONE TAP MOVES ONE CELL AND NOTHING ELSE ──
+
+    Read across all twenty-six cells of today's column before and after, because that is the
+    acceptance line's own instruction ("verify by reading every other cell, not by looking at one")
+    and because the build this work order replaces would have passed a check that read the tapped
+    cell alone: there, one tap flipped every other `?` to `P` at once, which is the owner's second
+    complaint and the whole reason `U` exists.
+  */
+  const first = opened.rows[4].student;
+  await tapCell(first, nodeToday);
+  const oneTap = await read();
+  const oneTapRec = oneTap.today.filter((r) => r.classId === marking)[0] || {};
+  const others = oneTap.rows.filter((r) => r.student !== first);
+  check('one tap on a cell moves that cell to P and changes no other cell on the screen — all twenty-five stay ?',
+    oneTap.rows.filter((r) => r.student === first)[0].codes.charAt(0) === 'P'
+      && others.length === 25 && others.every((r) => r.codes.charAt(0) === '?')
+      && opened.rows.every((r) => r.codes.charAt(0) === '?')
+      && oneTap.today.length === 1 && oneTapRec.keys === 'classId,date,marks',
+    'today\'s column read ' + JSON.stringify(opened.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' and now reads ' + JSON.stringify(oneTap.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' (the tapped row is #5)');
+  /* And the same fact in the document, which is where the `?`s actually live: the tap wrote a `U`
+     for the twenty-five it did not confirm, and deleted the entry of the one it did. A build that
+     drew the `?`s without storing them would pass the check above and lose them on reload — which
+     is the next check but one. */
+  check('and the document says so: a U for every student not reached, and no entry at all for the one confirmed',
+    Object.keys(oneTapRec.marks || {}).length === 25
+      && oneTapRec.marks[first] === undefined
+      && Object.keys(oneTapRec.marks).every((id) => oneTapRec.marks[id].code === 'U')
+      && oneTap.todayValues.U === 25 && !oneTap.todayValues.P,
+    'the record holds ' + Object.keys(oneTapRec.marks || {}).length + ' entr(ies), values = '
+      + JSON.stringify(oneTap.todayValues) + ', and the confirmed student\'s entry is '
+      + JSON.stringify(oneTapRec.marks[first]));
+  /* The column head and the state line count what is left, which is the surface WO-2.10's Traps
+     line demands: a class holding `U`s is a meeting with an absence for every one of them, and the
+     failure is silent unless something says so. */
+  check('and the screen is loud about it — the column head counts what is left and the state line leads with it',
+    oneTap.columns[0].chip === '25 to go' && opened.columns[0].chip === 'Not taken'
+      && oneTap.stateText === '25 unconfirmed'
+      && / unconfirmed\b/.test(oneTap.stateClass)
+      && /count as absent/.test(oneTap.note),
+    'the column head says ' + JSON.stringify(oneTap.columns[0].chip) + ', the state line says '
+      + JSON.stringify(oneTap.stateText) + ' with class ' + JSON.stringify(oneTap.stateClass)
+      + ', and the note under it says ' + JSON.stringify(oneTap.note));
+
+  /* ── WO-2.10 acceptance 4: the unconfirmed state is stored, so it survives a reload ── */
+
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  const uReboot = await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_ATT_READER);
+  const afterOneTap = await openCard(marking);
+  check('one tap, then a reload, still shows one P and twenty-five ? — the unconfirmed state came back out of IndexedDB',
+    uReboot && afterOneTap.rowCount === 26
+      && afterOneTap.rows.filter((r) => r.codes.charAt(0) === 'P').length === 1
+      && afterOneTap.rows.filter((r) => r.codes.charAt(0) === '?').length === 25
+      && afterOneTap.rows.filter((r) => r.student === first)[0].codes.charAt(0) === 'P'
+      && afterOneTap.columns[0].chip === '25 to go'
+      && afterOneTap.cards.filter((c) => c.id === marking)[0].state === '25 unconfirmed',
+    uReboot ? 'today\'s column reads '
+      + JSON.stringify(afterOneTap.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' and the card says ' + JSON.stringify(afterOneTap.cards.filter((c) => c.id === marking)[0].state)
+      : 'the loading screen never came down');
+
+  /* ── WO-2.10 acceptance 7: the cycle, entered at P from a question mark ── */
 
   const cycler = opened.rows[0].student;
   const seen = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     await tapCell(cycler, nodeToday);
     const step = await read();
     seen.push(step.rows.filter((r) => r.student === cycler)[0].codes.charAt(0));
   }
   const cycled = await read();
-  check('all five marks come out of one cell, in one row, with no menu and no second screen',
-    seen.join('') === 'AETDP'
+  const cycledRec = cycled.today.filter((r) => r.classId === marking)[0] || {};
+  check('the cycle from ? reads P → A → E → T → D and returns to P, never to ?, with no menu and no second screen',
+    seen.join('') === 'PAETDP'
       && cycled.submenus === 0 && cycled.rowCount === 26
-      && (cycled.today.filter((r) => r.classId === marking)[0] || {}).marks
-      && Object.keys(cycled.today.filter((r) => r.classId === marking)[0].marks).length === 0,
-    'five taps on one cell walked ' + JSON.stringify(seen)
-      + ' (present is the wrap-around, and it is stored as nothing at all); marks left on the record = '
-      + JSON.stringify((cycled.today.filter((r) => r.classId === marking)[0] || {}).marks));
+      && cycledRec.marks && cycledRec.marks[cycler] === undefined,
+    'six taps on a cell that started on ? walked ' + JSON.stringify(seen)
+      + ' (present is stored as nothing at all, so the sixth tap left '
+      + JSON.stringify(cycledRec.marks ? cycledRec.marks[cycler] : null) + ' on the record)');
 
-  /* And the first of those taps is what took the class: an untaken column is question marks, and
-     one mark turns the whole column into a taken one. */
-  check('the first tap on an untaken column takes the class — the column flips from question marks to present',
-    opened.rows.every((r) => r.codes.charAt(0) === '?')
-      && opened.columns[0].chip === 'Not taken'
-      && cycled.rows.filter((r) => r.student !== cycler).every((r) => r.codes.charAt(0) === 'P')
-      && cycled.columns[0].chip === 'Taken',
-    'before: column head said ' + JSON.stringify(opened.columns[0].chip) + ' over '
-      + JSON.stringify(opened.rows[0].codes) + '; after: ' + JSON.stringify(cycled.columns[0].chip)
-      + ' over ' + JSON.stringify(cycled.rows[0].codes));
+  /* And it did not take the rest of the class with it: the twenty-four nobody has touched are still
+     `?`, six taps later. */
+  check('and six taps on one cell still change no other cell — twenty-four are ? and the confirmed one is P',
+    cycled.rows.filter((r) => r.codes.charAt(0) === '?').length === 24
+      && cycled.rows.filter((r) => r.codes.charAt(0) === 'P').length === 2
+      && cycled.columns[0].chip === '24 to go',
+    'today\'s column reads ' + JSON.stringify(cycled.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' under a head that says ' + JSON.stringify(cycled.columns[0].chip));
 
-  /* ── two absences on a class of 26 is two entries, and P is not one of them ── */
+  /* ── two absences on a class of 26, and what is in the document at rest ── */
 
   const absent = opened.rows[2].student;
   const tardy = opened.rows[7].student;
-  await tapCell(absent, nodeToday);                       /* one tap    -> A */
-  await tapCell(tardy, nodeToday);
-  await tapCell(tardy, nodeToday);
-  await tapCell(tardy, nodeToday);                        /* three taps -> T, since the owner
-                                                             reordered the cycle to A E T D */
+  await tapCell(absent, nodeToday);
+  await tapCell(absent, nodeToday);                        /* two taps  -> P, A */
+  for (let i = 0; i < 4; i++) await tapCell(tardy, nodeToday);   /* four taps -> P, A, E, T */
   const twoTaps = await read();
   const rec = twoTaps.today.filter((r) => r.classId === marking)[0] || {};
-  check('one absence and one tardy on a class of 26 put TWO entries in the document, not 26',
+  check('an absence and a tardy are two entries in the document, and the other twenty-four are U or nothing',
     twoTaps.today.length === 1 && rec.classId === marking && rec.date === nodeToday
       && rec.keys === 'classId,date,marks'
-      && Object.keys(rec.marks || {}).length === 2
-      && rec.marks[absent] === 'A' && rec.marks[tardy] === 'T'
-      && !twoTaps.values.P && twoTaps.rowCount === 26,
-    'record keys = ' + JSON.stringify(rec.keys) + ', marks = ' + JSON.stringify(rec.marks)
+      && rec.marks[absent].code === 'A' && rec.marks[tardy].code === 'T'
+      && !twoTaps.values.P && twoTaps.rowCount === 26
+      && twoTaps.todayValues.A === 1 && twoTaps.todayValues.T === 1,
+    'record keys = ' + JSON.stringify(rec.keys) + '; the two marked cells are '
+      + JSON.stringify({ absent: rec.marks[absent], tardy: rec.marks[tardy] })
       + ' for ' + twoTaps.rowCount + ' students; mark values today = '
       + JSON.stringify(twoTaps.todayValues) + ', in the whole document = '
       + JSON.stringify(twoTaps.values));
-  check('and those two cells say so while the other twenty-four read as present',
+  check('and those two cells say so while the ones nobody has reached still read ?',
     twoTaps.rows.filter((r) => r.codes.charAt(0) === 'A').length === 1
       && twoTaps.rows.filter((r) => r.codes.charAt(0) === 'T').length === 1
-      && twoTaps.rows.filter((r) => r.codes.charAt(0) === 'P').length === 24,
+      && twoTaps.rows.filter((r) => r.codes.charAt(0) === 'P').length === 2
+      && twoTaps.rows.filter((r) => r.codes.charAt(0) === '?').length === 22,
     'today\'s column reads ' + JSON.stringify(twoTaps.rows.map((r) => r.codes.charAt(0)).join('')));
+
+  /*
+    ── WO-2.10 acceptance 9: the tardy carries its time, and the screen shows it ──
+
+    Both halves, because they fail separately: the timestamp is in the document with its offset on
+    it, and the grid draws the clock time under the letter without anything being opened. The offset
+    is asserted rather than assumed — `toISOString()` would produce a `Z` and a different hour, and
+    "arrived 12:14" on a class that starts at 08:10 is a wrong fact beside a student's name.
+  */
+  const tardyCell = rec.marks[tardy];
+  const tardyRow = twoTaps.rows.filter((r) => r.student === tardy)[0];
+  check('marking a student tardy stores an ISO timestamp with its offset, and the cell shows the time without a report',
+    !!tardyCell.at && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/.test(tardyCell.at)
+      && tardyCell.at.slice(0, 10) === nodeToday
+      && /^\d{1,2}:\d{2}[ap]$/.test(tardyRow.times[0])
+      && tardyRow.times[0].slice(0, tardyRow.times[0].indexOf(':'))
+        === String(Number(tardyCell.at.slice(11, 13)) % 12 || 12)
+      && /tardy at \d{1,2}:\d{2} [AP]M/.test(tardyRow.labels[0])
+      && twoTaps.rows.filter((r) => r.times[0]).length === 1,
+    'the cell holds ' + JSON.stringify(tardyCell) + ', the grid draws '
+      + JSON.stringify(tardyRow.times[0]) + ' under it, a screen reader is told '
+      + JSON.stringify(tardyRow.labels[0]) + ', and ' + twoTaps.rows.filter((r) => r.times[0]).length
+      + ' of 26 cells in that column carry a time');
 
   /* ── acceptance 1: a mark lands and survives a reload ── */
 
@@ -4906,13 +5170,16 @@ if (!attBooted || !attSeam) {
   const reloadedRec = afterReload.today[0] || {};
   check('a mark lands and survives a reload — it comes back out of IndexedDB, not out of memory',
     attReboot && afterReload.today.length === 1
-      && reloadedRec.marks[absent] === 'A' && reloadedRec.marks[tardy] === 'T'
-      && Object.keys(reloadedRec.marks).length === 2 && !afterReload.values.P,
-    attReboot ? 'marks back out of storage = ' + JSON.stringify(reloadedRec.marks)
+      && reloadedRec.marks[absent].code === 'A' && reloadedRec.marks[tardy].code === 'T'
+      && reloadedRec.marks[tardy].at === tardyCell.at
+      && !afterReload.values.P,
+    attReboot ? 'the two marks back out of storage = '
+      + JSON.stringify({ absent: reloadedRec.marks[absent], tardy: reloadedRec.marks[tardy] })
       : 'the loading screen never came down');
   check('and the card behind it says what the document says, without anything being reopened',
-    afterReload.cards.filter((c) => c.id === marking)[0].state === 'Taken · 1 absent, 1 tardy'
-      && / taken\b/.test(afterReload.cards.filter((c) => c.id === marking)[0].cls),
+    afterReload.cards.filter((c) => c.id === marking)[0].state === '22 unconfirmed · 1 absent, 1 tardy'
+      && / taken\b/.test(afterReload.cards.filter((c) => c.id === marking)[0].cls)
+      && / unconfirmed\b/.test(afterReload.cards.filter((c) => c.id === marking)[0].cls),
     JSON.stringify(afterReload.cards.map((c) => c.state)));
 
   const reopened = await openCard(marking);
@@ -4920,31 +5187,90 @@ if (!attBooted || !attSeam) {
     reopened.rowCount === 26
       && reopened.rows.filter((r) => r.student === absent)[0].codes.charAt(0) === 'A'
       && reopened.rows.filter((r) => r.student === tardy)[0].codes.charAt(0) === 'T'
-      && reopened.stateText === 'Taken · 1 absent, 1 tardy'
+      && reopened.stateText === '22 unconfirmed · 1 absent, 1 tardy'
       && reopened.columns[0].date === nodeToday,
     'state line = ' + JSON.stringify(reopened.stateText) + ', today\'s column reads '
       + JSON.stringify(reopened.rows.map((r) => r.codes.charAt(0)).join('')));
 
-  /* ── cycling back to present deletes rather than storing, and costs one rev, not two ── */
+  /*
+    ── WO-2.10 acceptances 2 and 3: "Everyone's here" finishes the class, and what is left at rest ──
 
+    One tap on the control that is allowed to change every row, on a class that is 22/26 of the way
+    through being taken. Every `U` goes and the two real marks stay, which leaves the finished
+    document holding exactly what WO-2.1's document held for the same class: two entries out of
+    twenty-six students, no `U` and no `P`. Storage at rest is unchanged by this whole work order,
+    and this is where that is measured.
+  */
+  await clickSel('#attendanceActions [data-attendance-take]');
+  const finished = await read();
+  const finishedRec = finished.today.filter((r) => r.classId === marking)[0] || {};
+  check('"Everyone\'s here" resolves every remaining student in one tap, and the document holds no U afterwards',
+    Object.keys(finishedRec.marks || {}).length === 2
+      && finishedRec.marks[absent].code === 'A' && finishedRec.marks[tardy].code === 'T'
+      && !finished.values.U && !finished.values.P
+      && finished.rows.filter((r) => r.codes.charAt(0) === 'P').length === 24
+      && finished.rows.filter((r) => r.codes.charAt(0) === '?').length === 0
+      && finished.columns[0].chip === 'Taken'
+      && finished.stateText === 'Taken · 1 absent, 1 tardy',
+    'a class of 26 with two exceptions is ' + Object.keys(finishedRec.marks || {}).length
+      + ' entr(ies) in the finished document: ' + JSON.stringify(finishedRec.marks)
+      + '; U anywhere in the document = ' + (finished.values.U || 0)
+      + '; the column reads ' + JSON.stringify(finished.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' under ' + JSON.stringify(finished.columns[0].chip));
+
+  /*
+    ── WO-2.10 acceptances 10 and 11: one time, the dismissal's, and nothing left behind ──
+
+    Cycled a cell all the way round on a class that is now finished, so it starts at present and
+    every step is a code the teacher chose. Read at three points, because the three claims fail
+    separately: `T` stamps a time, `D` past it leaves ONE time and it is the dismissal's, and `P`
+    takes the whole entry with it — no code, no `at`, no note.
+
+    A note is typed onto the mark first, so that the last of those three is not vacuously true: a
+    build that dropped the code and kept the note would pass an assertion that only counted keys.
+  */
   const undone = reopened.rows[4].student;
   await tapCell(undone, nodeToday);
   await tapCell(undone, nodeToday);                       /* A, E */
   const three = await read();
-  await tapCell(undone, nodeToday);
-  await tapCell(undone, nodeToday);
-  await tapCell(undone, nodeToday);                       /* T, D, then back to present */
+  await tapCell(undone, nodeToday);                       /* T — the first time stamped */
+  const atTardy = await read();
+  await tapCell(undone, nodeToday);                       /* D — the second, and the only one left */
+  const atDismissed = await read();
+  const tardyStamp = ((atTardy.today[0] || {}).marks || {})[undone] || {};
+  const dismissStamp = ((atDismissed.today[0] || {}).marks || {})[undone] || {};
+  check('cycling past T onto D leaves ONE time — the dismissal\'s — and no orphaned tardy time on the cell',
+    ((three.today[0] || {}).marks || {})[undone].code === 'E'
+      && ((three.today[0] || {}).marks || {})[undone].at === undefined
+      && tardyStamp.code === 'T' && !!tardyStamp.at
+      && dismissStamp.code === 'D' && !!dismissStamp.at
+      && Object.keys(dismissStamp).sort().join(',') === 'at,code'
+      && dismissStamp.at >= tardyStamp.at,
+    'the cell went ' + JSON.stringify(((three.today[0] || {}).marks || {})[undone]) + ' -> '
+      + JSON.stringify(tardyStamp) + ' -> ' + JSON.stringify(dismissStamp)
+      + ' (an E carries no time, and the D carries exactly one field beside its code)');
+
+  /* A note on it, then the last tap. The note is written through the row's own panel, which is the
+     only way a teacher can write one. */
+  await clickSel('#attendanceBody [data-attendance-detail="' + undone + '"]');
+  await evalJs('(function(){ var e = document.querySelector("[data-attendance-note]");'
+    + ' e.value = "left at the end of the period"; e.dispatchEvent(new Event("input", { bubbles: true }));'
+    + ' return 1; })()');
+  const noted = await read();
+  await tapCell(undone, nodeToday);                       /* back to present */
   const backToTwo = await read();
-  check('cycling back to present un-marks a student rather than storing a P — the entry goes and the record stays',
-    Object.keys((three.today[0] || {}).marks || {}).length === 3
-      && (three.today[0] || {}).marks[undone] === 'E'
+  check('cycling all the way back to present clears the entry entirely — no code, no time, no note left behind',
+    (((noted.today[0] || {}).marks || {})[undone] || {}).note === 'left at the end of the period'
       && Object.keys((backToTwo.today[0] || {}).marks || {}).length === 2
       && !((backToTwo.today[0] || {}).marks || {})[undone]
       && backToTwo.today.length === 1 && !backToTwo.values.P
       && backToTwo.rows.filter((r) => r.student === undone)[0].codes.charAt(0) === 'P'
+      && backToTwo.rows.filter((r) => r.student === undone)[0].times[0] === ''
       && backToTwo.rev > three.rev,
-    'marks ' + JSON.stringify(three.today[0].marks) + ' -> '
-      + JSON.stringify(backToTwo.today[0].marks) + ', rev ' + three.rev + ' -> ' + backToTwo.rev);
+    'the cell carried ' + JSON.stringify(((noted.today[0] || {}).marks || {})[undone])
+      + ' and is now ' + JSON.stringify(((backToTwo.today[0] || {}).marks || {})[undone])
+      + '; the record holds ' + JSON.stringify((backToTwo.today[0] || {}).marks)
+      + ', rev ' + three.rev + ' -> ' + backToTwo.rev);
 
   /* All four stored codes on one class, which is what makes the no-P claim below say something:
      every letter this app can store is in the document, and P is not one of them. */
@@ -4961,6 +5287,97 @@ if (!attBooted || !attSeam) {
     'mark values written today = ' + JSON.stringify(fourCodes.todayValues)
       + ', in the whole document = ' + JSON.stringify(fourCodes.values)
       + ', card says ' + JSON.stringify(fourCodes.cards.filter((c) => c.id === marking)[0].state));
+
+  /*
+    ── WO-2.10 acceptance 12: a note survives a reload, on the same student, date and class ──
+
+    Written through the row's ⋯ panel, read back after a full reload out of IndexedDB, and checked
+    on BOTH sides: the field comes back filled for that student on that date, and the note is in the
+    cell rather than anywhere else in the document. The date the panel is bound to is asserted too —
+    a note that landed on today while the panel said yesterday would be invisible here otherwise.
+  */
+  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
+  const panel = await read();
+  await evalJs('(function(){ var e = document.querySelector("[data-attendance-note]");'
+    + ' e.value = "left for the nurse at the bell"; e.dispatchEvent(new Event("input", { bubbles: true }));'
+    + ' return 1; })()');
+  const typedIn = await read();
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  const noteReboot = await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  await evalJs(INSTALL_ATT_READER);
+  const backOnCard = await openCard(marking);
+  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
+  const reopenedNote = await read();
+  const noteCell = ((reopenedNote.today.filter((r) => r.classId === marking)[0] || {}).marks
+    || {})[dismissed] || {};
+  check('a note typed on a mark survives a reload, on the same student, date and class',
+    noteReboot && panel.detail.open && panel.detail.student === dismissed
+      && panel.detail.hasNote && panel.detail.noteDate === nodeToday
+      && typedIn.detail.note === 'left for the nurse at the bell'
+      && noteCell.note === 'left for the nurse at the bell'
+      && noteCell.code === 'D' && !!noteCell.at
+      && reopenedNote.detail.open && reopenedNote.detail.student === dismissed
+      && reopenedNote.detail.note === 'left for the nurse at the bell'
+      && backOnCard.rows.filter((r) => r.student === dismissed)[0].labels[0]
+        .indexOf('left for the nurse at the bell') > 0
+      && reopenedNote.records.filter((r) => JSON.stringify(r.marks || {}).indexOf('nurse') >= 0)
+        .length === 1,
+    noteReboot ? 'the panel opened on ' + JSON.stringify(panel.detail.mark) + ' for '
+      + JSON.stringify(panel.detail.noteDate) + '; after a reload the cell holds '
+      + JSON.stringify(noteCell) + ' and the field reads '
+      + JSON.stringify(reopenedNote.detail.note)
+      : 'the loading screen never came down');
+
+  /*
+    ── the row's panel is where un-confirm lives, and it puts ONE student back ──
+
+    The deliverable is that a student cycled by mistake can be returned to `?` without leaving the
+    screen. Driven through the panel's own button, and asserted the same way acceptance 1 is: every
+    other cell in the column is read, because a control that un-confirmed the class would be a
+    control that quietly turned twenty-five present students into absences.
+
+    THE CELL HAS TO COME BACK AS `{ code: "U" }` AND NOTHING ELSE, and that clause is here because
+    this check found the opposite on its first run: the note carried across the code change and left
+    `{ code: "U", note: "left for the nurse at the bell" }` — a note about a mark that no longer
+    existed, in an entry that is deleted the moment somebody confirms that student. src/attendance.js
+    now stops the note at `U` and says why.
+  */
+  const beforeUnconfirm = await read();
+  await clickSel('#attendanceBody tr[data-attendance-detail-row] [data-attendance-unconfirm]');
+  const unconfirmed = await read();
+  const unconfirmedRec = unconfirmed.today.filter((r) => r.classId === marking)[0] || {};
+  check('the row\'s panel puts one student back to ? — and moves no other cell on the screen',
+    beforeUnconfirm.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0) === 'D'
+      && unconfirmed.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0) === '?'
+      && unconfirmedRec.marks[dismissed].code === 'U'
+      && Object.keys(unconfirmedRec.marks[dismissed]).join(',') === 'code'
+      && unconfirmed.rows.filter((r) => r.codes.charAt(0) === '?').length === 1
+      && unconfirmed.columns[0].chip === '1 to go'
+      && unconfirmed.rows.map((r) => r.codes.charAt(0)).join('')
+        === beforeUnconfirm.rows.map((r) => r.codes.charAt(0)).join('').replace('D', '?'),
+    'the cell went from ' + JSON.stringify(beforeUnconfirm.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0))
+      + ' to ' + JSON.stringify(unconfirmed.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0))
+      + ' and the entry is now ' + JSON.stringify(unconfirmedRec.marks[dismissed])
+      + ' — the note and the time went with the mark. The column reads '
+      + JSON.stringify(unconfirmed.rows.map((r) => r.codes.charAt(0)).join('')));
+
+  /* And back to where the rest of this section expects it: the dismissal restored, the panel shut.
+     Four taps from `?` — P, A, E, T, D — because a cell that has been un-confirmed enters the cycle
+     at present like any other question mark. */
+  for (let i = 0; i < 5; i++) await tapCell(dismissed, nodeToday);
+  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
+  const restored4 = await read();
+  check('and a re-confirmed cell walks the same cycle from ? — five taps back to dismissed, with a fresh time',
+    (((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed] || {}).code === 'D'
+      && !!(((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed] || {}).at
+      && restored4.detail.open === false
+      && JSON.stringify(restored4.todayValues) === JSON.stringify({ A: 1, T: 1, E: 1, D: 1 }),
+    'the cell is ' + JSON.stringify((((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed]))
+      + ' and today\'s values are ' + JSON.stringify(restored4.todayValues));
 
   /* ── acceptance 4: taken with zero exceptions is still a record ── */
 
@@ -5170,19 +5587,35 @@ if (!attBooted || !attSeam) {
     'the strip says ' + JSON.stringify(unlocked.banner.text) + '; the column carries '
       + JSON.stringify((unlocked.columns.filter((c) => c.date === twoWeeks)[0] || {}).cls));
 
+  /*
+    Four taps on a cell in an unlocked column two weeks back: P, A, E, T. It lands on THAT date and
+    nowhere else, it takes that day (a `U` for the twenty-five students it did not confirm, exactly
+    as today's column does), and — the clause that is WO-2.10's — the tardy carries NO `at`.
+
+    That last one is a decision this work order left open and src/attendance.js settles: `at` comes
+    off the device clock, and the device clock on a Thursday says nothing true about what time a
+    student walked in a fortnight ago. A wrong time printed beside a student's name in a
+    conversation with a guardian is worse than no time, so a past column records the mark and not
+    the moment.
+  */
   const backThen = unlocked.rows[1].student;
-  await tapCell(backThen, twoWeeks);
+  for (let i = 0; i < 4; i++) await tapCell(backThen, twoWeeks);
   pastWrites += 1;
   const marked = await read();
   const backRec = marked.records.filter((r) => r.classId === marking && r.date === twoWeeks)[0] || {};
+  const backCell = (backRec.marks || {})[backThen] || {};
   check('and a tap there lands on THAT date — not on today, and not on the column beside it',
     backRec.date === twoWeeks && backRec.keys === 'classId,date,marks'
-      && backRec.marks[backThen] === 'A'
-      && Object.keys(backRec.marks).length === 1
+      && backCell.code === 'T' && backCell.at === undefined
+      && Object.keys(backCell).join(',') === 'code'
+      && Object.keys(backRec.marks).length === 26
+      && Object.keys(backRec.marks).filter((id) => backRec.marks[id].code === 'U').length === 25
       && marked.records.filter((r) => r.classId === marking && r.date === nodeToday)[0].marks[backThen] === undefined
       && marked.records.filter((r) => r.classId === marking && r.date === lastWeek[4]).length === 0,
-    'the record on ' + twoWeeks + ' is ' + JSON.stringify(backRec)
-      + '; today\'s is still ' + JSON.stringify(
+    'the cell on ' + twoWeeks + ' is ' + JSON.stringify(backCell) + ' — no time, because the device '
+      + 'clock is not evidence about a fortnight ago — beside '
+      + Object.keys(backRec.marks || {}).filter((id) => backRec.marks[id].code === 'U').length
+      + ' unconfirmed students; today\'s record is still ' + JSON.stringify(
         marked.records.filter((r) => r.classId === marking && r.date === nodeToday)[0].marks));
 
   /* Back where a teacher would leave it. "Back to today" is the control on the strip itself, which
@@ -5254,7 +5687,41 @@ if (!attBooted || !attSeam) {
       + '; the first class still holds '
       + Object.keys(secondOpen.today.filter((r) => r.classId === ids[0])[0].marks).length + ' marks');
 
+  /* One tap, which takes that class and leaves the other two students unconfirmed — the half-taken
+     class the day below needs, and the fixture the next check is built on. */
   await tapCell(secondOpen.rows[2].student, nodeToday);
+
+  /*
+    ── WO-2.10 acceptance 8: a student added AFTER a class was taken gets no mark for it ──
+
+    The `U`s are written once, when the record is created, and never again. So a student who joins
+    the roster afterwards has no entry on that day at all — which reads as present, because present
+    is the absence of a mark, and which is the only honest answer: nobody failed to account for a
+    student who was not on the list. A build that re-seeded on every write would give them an
+    absence for a class they were not in, retroactively, and it would do it silently.
+  */
+  const beforeLate = await read();
+  await closeAll();
+  await clickSel('header [data-roster-manage]');
+  await evalJs('(function(){ var e = document.getElementById("rosterNewInput");'
+    + ' e.value = "Late, Ida"; return 1; })()');
+  await clickSel('[data-roster-create] button[type="submit"]');
+  const late = await openCard(second);
+  const lateRec = late.today.filter((r) => r.classId === second)[0] || {};
+  const lateStudent = late.rows.filter((r) => r.name === 'Late, Ida')[0] || {};
+  check('a student added to the roster after a class was taken does not acquire a mark for it retroactively',
+    late.rowCount === 4 && !!lateStudent.student
+      && lateRec.marks[lateStudent.student] === undefined
+      && Object.keys(lateRec.marks || {}).length
+        === Object.keys((beforeLate.today.filter((r) => r.classId === second)[0] || {}).marks || {}).length
+      && Object.keys(lateRec.marks || {}).length === 2
+      && lateStudent.codes.charAt(0) === 'P'
+      && late.columns[0].chip === '2 to go',
+    'the class went from 3 students to ' + late.rowCount + ' and the record still holds '
+      + Object.keys(lateRec.marks || {}).length + ' entr(ies) ' + JSON.stringify(lateRec.marks)
+      + '; the new row reads ' + JSON.stringify(lateStudent.codes)
+      + ' under a head that says ' + JSON.stringify(late.columns[0].chip));
+
   /* One more class taken with nobody absent, so the day is five classes. */
   await openCard(ids[4]);
   await clickSel('#attendanceActions [data-attendance-take]');
@@ -5290,17 +5757,48 @@ if (!attBooted || !attSeam) {
      is asked of the WHOLE document, where a stray P written on any date by anything would show —
      and it is asked twice, once as an absent key and once as the complete key set. */
   check('and there is no P in it — not one, across five classes, six days and every student in them',
-    !day.values.P && Object.keys(day.values).sort().join('') === 'ADET'
-      && JSON.stringify(day.todayValues) === JSON.stringify({ A: 2, T: 1, E: 1, D: 1 })
-      && day.today.filter((r) => r.marks).reduce((n, r) => n + Object.keys(r.marks).length, 0) === 5,
+    !day.values.P && Object.keys(day.values).sort().join('') === 'ADETU'
+      && JSON.stringify(day.todayValues) === JSON.stringify({ A: 1, T: 1, E: 1, D: 1, U: 2 })
+      && day.today.filter((r) => r.marks).reduce((n, r) => n + Object.keys(r.marks).length, 0) === 6,
     'mark values written today = ' + JSON.stringify(day.todayValues)
       + ', every value stored anywhere in the document = ' + JSON.stringify(day.values)
       + ' across ' + day.today.filter((r) => r.marks).length + ' met classes');
+
+  /*
+    ── WO-2.10 acceptance 13: every cell in the document is an object ──
+
+    Asked of storage rather than of the screen, and of the WHOLE document rather than of the class
+    on screen — every year-level fixture this run has written passes through here, including the
+    ones the classes section pushed straight into the store. `objects` is printed beside the zero
+    because a document with no cells in it would answer "no bare strings" just as happily; `keys`
+    is every field name any cell carries, so a cell holding something nobody meant to write shows
+    up here rather than in a record dump nobody reads.
+  */
+  check('every cell in the document is an object — not one bare string anywhere, U and untimed codes included',
+    day.cells.strings === 0 && day.cells.other === 0 && day.cells.objects >= 30
+      && Object.keys(day.cells.keys).sort().join(',') === 'at,code'
+      && day.cells.keys.code === day.cells.objects,
+    day.cells.objects + ' object cell(s), ' + day.cells.strings + ' bare string(s), '
+      + day.cells.other + ' of some other shape'
+      + (day.cells.bare.length ? ' — ' + JSON.stringify(day.cells.bare.slice(0, 5)) : '')
+      + '; every field name in use across them = ' + JSON.stringify(day.cells.keys));
+
   check('and each card on the home screen states its own class\'s answer',
     JSON.stringify(day.cards.map((c) => c.state)) === JSON.stringify([
-      'Taken · 4 marked', 'Taken · all present', 'Didn’t meet', 'Taken · 1 absent',
+      'Taken · 4 marked', 'Taken · all present', 'Didn’t meet', '2 unconfirmed',
       'Taken · all present', 'Not taken yet']),
     JSON.stringify(day.cards.map((c) => c.state)));
+  /* WO-2.10 acceptance 6, on the surface it names: the half-taken class is the one that has to be
+     loud, and it is loud in the same place the other five are quiet. Its own palette too — a green
+     "taken" line over two students nobody looked at is the silence this is for. */
+  check('and the half-taken class names its unconfirmed count on the card, in the caution palette',
+    /^2 unconfirmed$/.test(day.cards.filter((c) => c.id === ids[3])[0].state)
+      && / unconfirmed\b/.test(day.cards.filter((c) => c.id === ids[3])[0].cls)
+      && !/ unconfirmed\b/.test(day.cards.filter((c) => c.id === ids[1])[0].cls),
+    'the half-taken card says ' + JSON.stringify(day.cards.filter((c) => c.id === ids[3])[0].state)
+      + ' with class ' + JSON.stringify(day.cards.filter((c) => c.id === ids[3])[0].cls)
+      + '; the finished one says '
+      + JSON.stringify(day.cards.filter((c) => c.id === ids[1])[0].state));
 
   /*
     And the three states are told apart ON THE CARD without reading the words — the same claim the
@@ -5513,6 +6011,57 @@ if (!attBooted || !attSeam) {
       && backHdr.openClass === ids[1],
     'class grid up = ' + backHdr.homeShown + ', class view up = ' + backHdr.viewShown
       + ', open class = ' + JSON.stringify(backHdr.openClass));
+
+  /*
+    ── THE CLASS RESET, AND THE ROUND TRIP BACK OUT OF IT (WO-2.10) ──
+
+    "Un-confirm is reachable: a student cycled by mistake can be returned to `?`, OR THE CLASS
+    RESET, without leaving the screen." The row's own button is driven further up; this is the other
+    half, and it goes last because it is the one control on this screen that deliberately destroys
+    marks — the same trade dropClass() makes, and made loud the same way: its title counts what will
+    go before it goes.
+
+    Then straight back out again with "Everyone's here", which is what makes this a round trip
+    rather than a one-way door: the class ends the run taken, with an empty `marks` object, which is
+    the shape WO-2.1 shipped for a class where nobody was absent.
+  */
+  const beforeReset = await openCard(ids[0]);
+  const resetBtn = beforeReset.actions.filter((a) => a.hook.indexOf('data-attendance-unconfirm-all=') === 0)[0];
+  await clickSel('#attendanceActions [data-attendance-unconfirm-all]');
+  const reset = await read();
+  const resetRec = reset.today.filter((r) => r.classId === ids[0])[0] || {};
+  check('"Un-confirm everyone" puts the whole class back to ?, and says how many marks that costs before it costs them',
+    !!resetBtn && resetBtn.text === 'Un-confirm everyone'
+      && beforeReset.actions.every((a) => a.hook.indexOf('data-attendance-untake=') !== 0)
+      && Object.keys(resetRec.marks || {}).length === 26
+      && Object.keys(resetRec.marks).every((id) => resetRec.marks[id].code === 'U')
+      && Object.keys(resetRec.marks).every((id) => Object.keys(resetRec.marks[id]).join(',') === 'code')
+      && reset.rows.every((r) => r.codes.charAt(0) === '?')
+      && reset.columns[0].chip === '26 to go' && reset.stateText === '26 unconfirmed'
+      && reset.states.indexOf(ids[0] + '=taken') >= 0,
+    'the control offered on a class carrying four marks was '
+      + JSON.stringify(beforeReset.actions.map((a) => a.text))
+      + '; after one tap the record holds ' + Object.keys(resetRec.marks || {}).length
+      + ' entr(ies), all of them U with nothing else on them, the column reads '
+      + JSON.stringify(reset.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' and the class is still a meeting (' + reset.states.split(' ')[0] + ')');
+
+  await clickSel('#attendanceActions [data-attendance-take]');
+  const retaken = await read();
+  const retakenRec = retaken.today.filter((r) => r.classId === ids[0])[0] || {};
+  check('and one tap of "Everyone\'s here" comes straight back out of it, to a record with an empty marks object',
+    JSON.stringify(retakenRec.marks) === '{}'
+      && retakenRec.keys === 'classId,date,marks'
+      && retaken.rows.every((r) => r.codes.charAt(0) === 'P')
+      && retaken.columns[0].chip === 'Taken' && retaken.stateText === 'Taken · all present'
+      /* Its own class only. The half-taken class beside it keeps its two `U`s — "everyone's here"
+         is a statement about the room in front of her, and a build that resolved every class at
+         once would be the WO-2.1 defect this whole work order exists to undo, one level up. */
+      && retaken.todayValues.U === 2 && !retaken.values.P,
+    'the record is now ' + JSON.stringify(retakenRec) + ', the column reads '
+      + JSON.stringify(retaken.rows.map((r) => r.codes.charAt(0)).join(''))
+      + ' and the unconfirmed students left on the day are ' + (retaken.todayValues.U || 0)
+      + ' (the other class\'s, untouched)');
 
   /* Handed back the way the section before this one left it: the overflow sweep at the bottom
      measures the term nav of whatever class is open, and this section has been walking across
@@ -6173,6 +6722,197 @@ for (const [w, h, dsf] of [[1024, 768, 2], [768, 1024, 2], [390, 844, 3]]) {
       check('the open class is scrolled into view on the tab strip at ' + w + 'x' + h,
         tabScroll.inView === true, JSON.stringify(tabScroll));
     }
+  }
+}
+
+/* ──────────── the WO-2.10 note panel fits the screen it is read on ──────────── */
+
+/*
+  THE 2026-08-06 DEVICE SITTING. The note field was cut off on the right on the iPad, in BOTH
+  orientations, on every mark code — worst on present/absent/at-an-event, where the mark chip is
+  short enough that the field stays on the same flex line as the name and gets pushed under the
+  edge. Tardy and dismissed carry a time, the longer chip wraps the field onto its own line, and it
+  escaped; that difference is why the report described a severity order rather than a plain break.
+
+  The cause was a fixed `width: 720px` on `.attendance-panel` inside src/attendance.css's
+  `(pointer: coarse)` block. The cap had already been overruled by the owner and removed from the
+  BASE rule — and left standing in the touch block, so the fix reached the laptop and never reached
+  the only device it was for. At 720px the grid's own columns want 711px inside 680px of body, the
+  wrap's `overflow-x` safety valve engages, and everything past 680px is invisible. A fixed panel
+  width also makes the geometry identical in both orientations, which is exactly what was reported:
+  rotating to landscape left 288px of screen unused and changed nothing.
+
+  This measures the thing the eye actually catches — the right edge of the field against the right
+  edge of the scroll container — rather than the page-level overflow the block above already covers.
+  The page never overflowed; the clipping was always INSIDE the wrap, which is why three green
+  "no horizontal overflow" checks sat above a screen that was visibly broken.
+
+  Driven at both iPad orientations and on every code, because the defect was orientation-independent
+  and code-dependent, and a check that ran one code would have passed on `T` while `A` was broken.
+*/
+console.log('\n--- the WO-2.10 note panel fits its screen ---');
+{
+  /*
+    THE CONDITION HAS TO BE MANUFACTURED, AND THE FIRST VERSION OF THIS CHECK DID NOT DO IT. Written
+    against whatever roster the run happened to have built, it passed with the fix fully reverted:
+    the names this harness types in are short, the name column stays narrow, and the grid fits its
+    wrap at 720px with room to spare. It was measuring a screen the defect had never been on.
+
+    The trigger is NAME LENGTH. The column is `nowrap`, so its min-content is the longest name laid
+    flat, and a table cell's min-content is a floor the browser widens the whole TABLE to honour.
+    Short names, no defect; "Delacroix-Nguyen, Xiomara" is 279px and pushes the table to 711px inside
+    680px of body. Real rosters are full of hyphenated and double-barrelled names, which is why this
+    reached the owner's iPad and never reached a test.
+
+    So the long name is written in deliberately, and put back afterwards. The precondition is then
+    ASSERTED rather than assumed — a rename that silently failed would take the check back to
+    measuring nothing, which is the exact failure being corrected here.
+  */
+  const LONG_NAME = { first: 'Xiomara', last: 'Delacroix-Nguyen' };
+  const ready = await evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    var cls = (doc.classes || []).filter(function(c){ return !c.archived && (c.roster||[]).length; })[0];
+    if (!cls) return { none: true };
+    var sid = cls.roster[0];
+    var stu = doc.students.filter(function(s){ return s.id === sid; })[0];
+    if (!stu) return { none: true };
+    var was = { first: stu.first, last: stu.last };
+    window.planbook.store.update(function(){
+      stu.first = ${JSON.stringify(LONG_NAME.first)}; stu.last = ${JSON.stringify(LONG_NAME.last)}; });
+    window.planbook.classes.selectClass(cls.id);
+    window.planbook.attendance.renderAttendance();
+    return { classId: cls.id, student: sid, was: was,
+             rows: document.querySelectorAll('[data-attendance-row]').length }; })()`);
+
+  if (ready.none || !ready.rows) {
+    skip('the WO-2.10 note panel sits inside the grid it is drawn in',
+      'no unarchived class with a roster is on the device at this point in the run, so there is no '
+        + 'registry to draw a panel in — a state, not a pass');
+  } else {
+    const day = await evalJs('window.planbook.attendance.todayISO()');
+
+    for (const [w, h, label] of [[768, 1024, 'portrait'], [1024, 768, 'landscape']]) {
+      await send('Emulation.setDeviceMetricsOverride',
+        { width: w, height: h, deviceScaleFactor: 2, mobile: true });
+      await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+      await new Promise(r => setTimeout(r, 350));
+      /* RENDER AFTER THE RESIZE, EVERY TIME. dayColumnCount() reads `window.innerWidth` when the
+         grid is painted, not when it is looked at, so a grid painted at the 390px this run's
+         previous section left behind keeps THREE columns at 768px — and three columns leave so much
+         spare width that the defect cannot occur. The first version of this section rendered once,
+         before the first resize, and measured that phantom. */
+      await evalJs('window.planbook.attendance.renderAttendance()');
+      await new Promise(r => setTimeout(r, 250));
+
+      /*
+        The precondition, per orientation. Without a name column that WANTS more than the day columns
+        leave spare, every check below is green for a reason that has nothing to do with the fix.
+
+        Measured on the RENAMED student's own row, found by id. Reading `tbody .attendance-name` took
+        whichever row sorted first — "Álvarez, José" — while the long name sat further down the list,
+        so the probe reported a 185px column and failed itself. The row this asks about has to be the
+        row the name was written onto.
+      */
+      const cond = await evalJs(`(function(){
+        var row = document.querySelector('[data-attendance-row="' + ${JSON.stringify(ready.student)} + '"]');
+        var cell = row && row.querySelector('.attendance-name');
+        if (!cell) return { noCell: true };
+        var probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:min-content;';
+        var clone = cell.cloneNode(true);
+        clone.style.maxWidth = 'none';          /* what the column would demand UNCAPPED */
+        probe.appendChild(clone); document.body.appendChild(probe);
+        var want = Math.round(probe.getBoundingClientRect().width);
+        document.body.removeChild(probe);
+        var days = document.querySelectorAll('thead .attendance-day').length;
+        var dayW = days ? Math.round(document.querySelector('thead .attendance-day')
+                            .getBoundingClientRect().width) : 0;
+        var wrap = document.querySelector('.attendance-grid-wrap');
+        return { want: want, days: days, dayW: dayW, wrapW: wrap.clientWidth,
+                 spare: wrap.clientWidth - days * dayW,
+                 name: (cell.getAttribute('title') || '') }; })()`);
+      /* Two claims, and they are separated because only one of them can be made in both
+         orientations. This first one guards the RENDER: six columns, and the long name actually on
+         the row being measured. If either slips, everything below is measuring a screen the defect
+         was never on, which is the trap this whole block exists to close. */
+      check('the grid under this measurement is six columns wide and carries the long name, iPad '
+        + label,
+        !cond.noCell && cond.days === 6 && /Delacroix-Nguyen/.test(cond.name) && cond.want >= 240,
+        cond.days + ' day columns at ' + cond.dayW + 'px; the name column wants ' + cond.want
+          + 'px uncapped — "' + cond.name + '"');
+
+      /* And this one is the defect condition itself, which is PORTRAIT-ONLY BY CONSTRUCTION. A name
+         can only push the table past its wrap when the day columns leave less room than the name
+         wants; once `.attendance-panel` takes the whole screen, landscape has 512px spare against a
+         279px name and no name could overflow it. Asserting it there would be asserting that the fix
+         had failed. Portrait is where the margin is real — 256px spare against that same 279px — so
+         portrait is where the claim is made. */
+      if (label === 'portrait') {
+        check('a long name in portrait genuinely wants more than the six columns leave — '
+          + 'the cap is load-bearing here, not decoration',
+          cond.want > cond.spare,
+          'wants ' + cond.want + 'px, ' + cond.days + ' columns leave ' + cond.spare + 'px of a '
+            + cond.wrapW + 'px wrap');
+      }
+
+      /* `P` is in the list and it is not redundant: present is stored as NO MARK, so the panel draws
+         the hint paragraph instead of the note field, and that paragraph is the widest thing this
+         panel ever holds. It spilled by the same 16px, and it is the case the owner named first. */
+      for (const code of ['P', 'A', 'E', 'T', 'D']) {
+        const m = await evalJs(`(async function(){
+          window.planbook.attendance.takeClass(${JSON.stringify(day)});
+          window.planbook.attendance.setMark(${JSON.stringify(ready.student)},
+            ${JSON.stringify(code)}, ${JSON.stringify(day)});
+          await window.planbook.store.flush();
+          window.planbook.attendance.renderAttendance();
+          window.planbook.attendance.toggleDetail(${JSON.stringify(ready.student)});
+          var wrap = document.querySelector('.attendance-grid-wrap');
+          var field = document.querySelector('.attendance-detail-note')
+                   || document.querySelector('.attendance-detail-hint');
+          if (!wrap || !field) return { noPanel: true };
+          var wr = wrap.getBoundingClientRect(), fr = field.getBoundingClientRect();
+          var out = { spill: Math.round(fr.right - wr.right),
+                      wrapOverflow: wrap.scrollWidth - wrap.clientWidth,
+                      wrapClientW: wrap.clientWidth, fieldW: Math.round(fr.width),
+                      panelW: Math.round(document.querySelector('.attendance-panel')
+                                .getBoundingClientRect().width) };
+          window.planbook.attendance.toggleDetail(${JSON.stringify(ready.student)});
+          return out; })()`);
+
+        if (m.noPanel) {
+          check('the WO-2.10 note panel opens at all on ' + code + ', ' + label, false,
+            'the ⋯ toggle drew no field — the measurement below cannot be made');
+          continue;
+        }
+        /* Guarded against a vacuous pass twice over: a field of zero width, or a wrap of zero
+           width, would both put the right edge "inside" the container without anything being
+           readable. The defect this replaces measured spill = +16 here. */
+        check('the note field sits inside the grid on ' + code + ', iPad ' + label,
+          m.spill <= 0 && m.fieldW >= 80 && m.wrapClientW >= 320,
+          'field right is ' + m.spill + 'px past the wrap right (<=0 is inside); field '
+            + m.fieldW + 'px, wrap ' + m.wrapClientW + 'px, panel ' + m.panelW + 'px');
+      }
+
+      /* The condition underneath all four: the grid fits the box it is drawn in, so the safety
+         valve never engages and nothing on this screen is reachable only by sideways swipe. */
+      const valve = await evalJs(`(function(){ var w = document.querySelector('.attendance-grid-wrap');
+        return { over: w.scrollWidth - w.clientWidth, clientW: w.clientWidth,
+                 scrollW: w.scrollWidth }; })()`);
+      check('the registry grid fits its wrap on an iPad in ' + label
+        + ', so the overflow valve stays shut',
+        valve.over <= 0 && valve.clientW >= 320,
+        'wrap client ' + valve.clientW + ', scroll ' + valve.scrollW + ' (over by ' + valve.over + ')');
+    }
+    await send('Emulation.clearDeviceMetricsOverride');
+    /* Put the roster back. Nothing runs after this today, but a section that leaves a student
+       renamed is a trap for whichever check gets appended below it next. */
+    await evalJs(`(async function(){
+      var doc = window.planbook.store.getDoc();
+      var stu = doc.students.filter(function(s){ return s.id === ${JSON.stringify(ready.student)}; })[0];
+      if (stu) window.planbook.store.update(function(){
+        stu.first = ${JSON.stringify(ready.was && ready.was.first)};
+        stu.last = ${JSON.stringify(ready.was && ready.was.last)}; });
+      await window.planbook.store.flush(); })()`);
   }
 }
 

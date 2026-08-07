@@ -516,9 +516,12 @@
   painted from the module. Everything that changes with the document is built there.
 
   The hint at the bottom is the copy a teacher reads, which is why it lives here rather than in a
-  JavaScript file — the same call the install banner and the backup nag make. It answers the two
-  questions this screen reliably provokes: "why is nobody marked present?" and "why doesn't the
-  cycle start with P like Roll Call!'s does?"
+  JavaScript file — the same call the install banner and the backup nag make. It answers the
+  questions this screen reliably provokes: "what does a question mark mean?", "why is nobody marked
+  present?", and — since WO-2.10 put a `U` behind every unconfirmed student — "why does the header
+  say twelve of them are still to go?" The one it used to answer and no longer needs to ("why
+  doesn't the cycle start with P like Roll Call!'s does?") is gone, because it does now: the first
+  tap on a question mark means present.
 -->
 <div id="classView" class="hidden">
   <div class="panel attendance-panel">
@@ -563,7 +566,8 @@
           <button type="button" class="pill active" data-attendance-filter="all"
                   aria-pressed="true" title="Show the whole class">All</button>
           <button type="button" class="pill" data-attendance-filter="P"
-                  aria-pressed="false" title="Show only students with no mark">Present</button>
+                  aria-pressed="false"
+                  title="Show only students confirmed present — the ones with no mark">Present</button>
           <button type="button" class="pill" data-attendance-filter="T"
                   aria-pressed="false" title="Show only tardy students">Tardy</button>
           <button type="button" class="pill" data-attendance-filter="A"
@@ -596,12 +600,19 @@
       <p class="attendance-empty hidden" id="attendanceEmpty"></p>
 
       <p class="attendance-hint">
-        Tap a cell to cycle it: <strong>absent → event → tardy → dismissed → back to present</strong>.
-        Roll Call! starts that cycle with P; this one doesn’t, because present is never stored — an
-        empty cell on a day you have taken <em>is</em> present, and it is drawn as a P so it can’t be
-        confused with a day nobody took. A column of amber question marks is a day you haven’t taken
-        yet. Past days need their ✏ before they accept a tap; today’s column is always live, and its
-        🚫 says the class didn’t meet. Every tap saves as you make it; there is nothing to submit.
+        A cell starts on <strong>?</strong> — nobody has confirmed that student yet, and until
+        somebody does they count as <em>absent</em>. One tap says “I see you, you’re here”. After
+        that the cell cycles
+        <strong>present → absent → event → tardy → dismissed → back to present</strong>.
+        Tapping one student changes nobody else; “Everyone’s here” is the one control that does, and
+        that is what it says. Present is never stored — an empty cell on a day you have taken
+        <em>is</em> present, and it is drawn as a P so it can’t be confused with a day nobody took.
+        A whole column of amber question marks is a day you haven’t taken yet; a few of them inside
+        a taken column are the students you haven’t reached, and the header counts them. A tardy or
+        a dismissal keeps the time it was marked, under the letter. Tap the <strong>⋯</strong> by a
+        name for that time, a note, or to put one student back to <strong>?</strong>. Past days need
+        their ✏ before they accept a tap; today’s column is always live, and its 🚫 says the class
+        didn’t meet. Every tap saves as you make it; there is nothing to submit.
       </p>
     </div>
   </div>

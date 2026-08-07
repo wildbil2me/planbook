@@ -771,8 +771,9 @@ against a class with a real 25-name roster:
 - [ ] The row does not spill sideways in portrait, and the list scrolls as one surface (no
       scroller-inside-a-scroller stealing the flick). 👤
 - [ ] VoiceOver reads a mark button as the word and the student's name, not as a bare letter. 👤
-- [ ] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
-      precache and the screen still marks. 👤
+- [x] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
+      precache and the screen still marks. 👤 *(Owner, 2026-08-06. Same physical test as the
+      duplicate of this line in the other work order's list.)*
 
 ### WO-2.1 — Attendance registry: students × recent days
 
@@ -853,14 +854,118 @@ desk pass could not reach.
       `<main>`; it is the page now, which is a different thing to feel on the device.)* 👤
 - [ ] Type into the search box with the software keyboard up and confirm the field keeps focus as the
       rows narrow underneath it. 👤
-- [ ] VoiceOver reads a cell as the student's name, the day and the mark — not as a bare letter — and
-      says what the next tap will do. 👤
-- [ ] Rotate from portrait to landscape with the screen open. The grid is still readable; it keeps
+- [x] VoiceOver reads a cell as the student's name, the day and the mark — not as a bare letter — and
+      says what the next tap will do. 👤 *(Owner, 2026-08-06.)*
+- [x] Rotate from portrait to landscape with the screen open. The grid is still readable; it keeps
       the columns it had until the next open. *(Known and deliberate — see the result file.)* 👤
-- [ ] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
-      precache and the screen still marks. 👤
+      *(Owner, 2026-08-06.)*
+- [x] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
+      precache and the screen still marks. 👤 *(Owner, 2026-08-06. Same physical test as the
+      duplicate of this line in the other work order's list.)*
 - [ ] **The owner opens it and says whether it beats Roll Call!.** This is the line the first build
       failed, and no harness can ask it. 👤
+
+### WO-2.10 — Mark cells: unconfirmed, timed, and noted
+
+**What changed under the acceptance list above.** A cell starts on `?` and the first tap means
+present; tapping one student no longer moves anybody else; a `marks` cell is an object carrying an
+optional time and note; and every document on the device — and every backup file already on the
+teacher's disk — climbs a migration to get there. WO-2.1's twelve lines above still hold and are
+still ticked: the storage at rest, the three states, and the no-`P` rule are unchanged.
+
+- [x] Tapping one student's cell moves that cell to `P` and changes no other cell on the screen.
+- [x] "Everyone's here" resolves every student to `P` in one tap, and the document holds no `U`
+      afterwards.
+- [x] A class of 26 with two exceptions is **two entries** in the finished document — no `U`, no `P`.
+- [x] Tapping one cell, then reloading, still shows one `P` and twenty-five `?`.
+- [x] A class nobody has touched has no record at all and reads "not taken yet".
+- [x] The home card names the number of unconfirmed students on a half-taken class.
+- [x] The cycle from `?` reads `P → A → E → T → D` and returns to `P`, never to `?`.
+- [x] A student added to the roster after a class was taken does not acquire a mark for it.
+- [x] Marking a student tardy stores an `at` timestamp; the grid shows the time under the letter.
+- [x] Cycling past `T` onto `D` leaves one time — the dismissal's — and no orphaned tardy time.
+- [x] Cycling all the way back to `P` clears the entry entirely: no code, no `at`, no note.
+- [x] A note typed on a mark survives a reload, on the same student, date and class.
+- [x] Every cell in the document is an object. Not one bare string anywhere.
+- [x] Restoring a backup written before this work order produces object cells, codes intact and no
+      `at` invented.
+
+*Desk pass 2026-08-06: `verify-shell.mjs` **299 of 299, 0 skipped**, up from 282 at WO-1.13’s
+correction — fifteen net new checks, and much of the attendance section re-pointed rather than
+extended, because a tap that used to give `A` now gives `P` and a cell that used to be `"A"` is now
+`{"code":"A"}`. Everything is driven through the controls a teacher touches: cells are tapped,
+"Everyone's here" is clicked, the note is typed into the row's own panel through a real `input`
+event, and the pre-WO-2.10 backup goes in through `restoreFromText()` and the real confirm dialog.
+`wo-sweep.mjs` is 11 checks, 10 passed, 0 failed, 1 to review — the standing sensitive-field-name
+line, unchanged in kind: the new mentions are still `src/attendance.js`'s header comment explaining
+what is deliberately absent from this screen.*
+
+*Four mutation proofs, run before this was written, because a check about an absence goes green
+whatever the build does unless it has been seen to go red:*
+
+| Mutation | Result |
+|---|---|
+| `setMark()` stops seeding `U`, so one tap resolves the class the old way | **12 red**, including "changes no other cell" and the whole `?`-survives-a-reload pair |
+| a cell is stored as its bare code string again | **11 red**, including "every cell is an object" and both timestamp checks |
+| the `1 → 2` migration converts nothing | **4 red**, including the restored pre-WO-2.10 backup |
+| a stale `at` is carried across a code change | **1 red** — the un-confirm, which is the only path in this cycle order by which a time can reach a cell that should not have one (`T` can only be left for `D`, which re-stamps, or for `P`, which deletes the entry) |
+
+*All four were reverted and the run is green on the shipped tree.*
+
+**The 👤 iPad sitting this work order owes.** Everything below needs a thumb, a real device or
+eyes, and none of it was checked by the harness.
+
+**Closed by the owner on 2026-08-06, on the device, as a block** — "you can check everything off",
+after the note-panel fix below was confirmed in both orientations. Recorded that way rather than as
+eight separate sittings because that is what happened: one person, one afternoon, one verdict. If any
+of these is later found wrong, this line is where to start.
+
+- [x] Take a class of 25 the new way — one tap per student, `?` to `P` down the list — and time it.
+      The cycle got one tap longer for an absence (`?` → `P` → `A`) and one shorter for a present
+      student, so WO-2.1's fifteen-second line has to be re-run rather than assumed. 👤
+- [x] Start a class, walk away, come back an hour later. The card says how many are unconfirmed and
+      it is readable from across the room. 👤
+- [x] The `?` cells inside a *taken* column and the `?` cells of a *whole untaken* column are
+      distinguishable at arm's length — the column wash and the head are what separate them. 👤
+- [x] The time under a tardy is legible on the device, and adding it has not moved the 44px circle
+      or made the rows taller. *(It is positioned out of flow precisely so it cannot; that is a
+      claim about a layout nobody has looked at on glass.)* 👤
+- [x] The ⋯ at the end of a name takes a thumb without catching the cell beside it, and the note
+      field keeps focus with the software keyboard up as it is typed. 👤
+- [x] VoiceOver reads a `?` cell as "not confirmed yet" and a tardy as its word, its time and its
+      note — not as a bare letter. 👤
+- [x] **Restore a backup taken from the teacher's own device before this build** and confirm the
+      attendance is all there. The harness proves it with a file it wrote itself; the owner's real
+      file is the one that matters. 👤
+- [x] **The owner takes a full day of five classes on it and says whether the first tap meaning
+      "present" is right.** This is the complaint the work order came from and no harness can ask
+      it. 👤
+
+#### The note panel's width — found on glass 2026-08-06, fixed the same day
+
+The first sitting found the note field cut off on the right, in **both** orientations, worst on
+present / absent / at-an-event and still wrong on tardy and dismissed. Two rules in
+`src/attendance.css`'s coarse block were at fault and both are now in: `.attendance-panel` was still
+capped at the old dialog width of 720px there (the cap had been lifted from the base rule and left
+standing in the touch block, so the fix reached the laptop and never the iPad), and
+`.attendance-name` had no `max-width`, so a long name's `nowrap` min-content pushed the whole table
+past its wrap.
+
+`verify-shell.mjs` now measures the field's right edge against the grid wrap's at both orientations
+on all five codes, with the long name written in deliberately — reverting either rule turns it red
+(+16px on `P`/`A`/`E`, the wrap overflowing by 31px). What it cannot do is look at it:
+
+- [x] The note field is fully visible in **portrait**, on a class whose longest name is a real one —
+      hyphenated or double-barrelled, the case that caused this. 👤
+      *(Owner, on the device, 2026-08-06: "it looks good in both.")*
+- [x] The same in **landscape**, where the panel now takes the full width of the main area rather
+      than 720px of it. 👤 *(Same sitting.)*
+- [x] The name column truncating with an ellipsis is acceptable in portrait, and the full name still
+      arrives on the row's tooltip / to VoiceOver. *(256px is the arithmetic — 688px of body less six
+      72px columns. Nothing capped it before this, so nobody has seen it truncate.)* 👤
+- [x] The wider panel has not made the row too long to aim down: the reason the 720px cap was argued
+      for in the first place was eye-track and thumb-track on the one screen timed in seconds. If it
+      now reads as too wide, say so — the answer is a wider name column, not the dialog width back. 👤
 
 ---
 

@@ -197,11 +197,23 @@ function classCard(cls, isOpen) {
 
   It does NOT decide what the state is. src/attendance.js does, once, for this card and for the
   screen it opens — see the import at the top of this file.
+
+  A HALF-TAKEN CLASS SAYS SO HERE, AND THAT IS A DELIVERABLE RATHER THAN A DETAIL (WO-2.10). A class
+  the teacher started and was pulled out of holds a `U` for every student she never reached, each
+  one of which counts as an absence — so one stray tap on a card makes a meeting with two dozen
+  absences in it. The failure is completely silent, it looks exactly like data, and it is otherwise
+  found in November when a percentage is wrong. This line is the surface that makes it loud: the
+  text leads with the count (src/attendance.js's stateSummary decides the words, here as everywhere),
+  and the caution palette comes with it, because a green "Taken" over twelve students nobody has
+  looked at is the sentence the whole design is arranged to prevent.
 */
 function stateLine(cls) {
   const summary = stateSummary(cls.id, todayISO());
   const line = document.createElement('span');
-  line.className = 'class-card-state ' + summary.state;
+  /* A modifier on top of the state's own class, not a fourth state: the class IS taken — a meeting
+     exists — and src/attendance.js's stateOf() still has exactly three answers. */
+  line.className = 'class-card-state ' + summary.state
+    + (summary.unconfirmed ? ' unconfirmed' : '');
   line.textContent = summary.text;
   return line;
 }

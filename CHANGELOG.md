@@ -15,6 +15,79 @@ records what someone remembered.
 
 ### Changed
 
+- **WO-2.10 — an unmarked student now reads as absent, and the first tap means "present".** The
+  registry's mark model was backwards for how the owner stands in a room, and two complaints on
+  2026-08-06 said so: a cell started on `?` and the first tap jumped to `A`, so confirming a student
+  *present* cost four taps round the cycle; and tapping one student took the whole class, flipping
+  every other `?` to `P` at once, so there was no way to tell who had actually been looked at.
+
+  A new code **`U` — unconfirmed** is written for every student when a class is first touched and
+  deleted as each student is confirmed, so the count of people still to account for is real and on
+  the home card. One tap now moves **one** cell and no other. The cycle reads `P → A → E → T → D` and
+  returns to `P`, never back to `?` — un-confirming is a deliberate act with its own control, not a
+  place the cycle lands. Underneath all of it: a teacher pulled out mid-period leaves an honest
+  record that says "I had not accounted for these students", instead of a silent room full of `P`.
+
+  **A class nobody has touched still has no record at all.** Initialization is an act, not a side
+  effect of arriving on the screen — otherwise every class the teacher merely *looked* at would
+  become a meeting that happened, and "did the class not meet, or did I forget?" is the question this
+  screen exists to answer.
+
+  **Every `marks` cell is an object now** — `{ code, at, note }` — where it used to be a bare code
+  string. That is what buys the other half of the work order: tardies and dismissals carry an `at`
+  timestamp stamped by the app, drawn under the glyph as `8:14a` and spoken in full, with no report
+  anywhere that resolves it. Notes attach per mark, per student, per date. Times are stored with a
+  real UTC offset and never as `Z`, because a mark read back in a different offset must still say the
+  minute the student walked in.
+
+  **The two changes are folded into one work order on purpose.** Both rewrite every reader and writer
+  of `marks`, and shipping them in sequence would have migrated live student data twice — the second
+  time over a real term, weeks after go-live. `MIGRATIONS[1]` takes documents from schema 1 to 2:
+  bare strings become objects with their codes intact, no `at` is invented for a mark that never had
+  one, empty-string cells are dropped, and applying it once, twice or three times is byte-identical,
+  so a re-run cannot produce `{ code: { code: 'A' } }`. It runs on restore as well as on open, which
+  matters because every backup already on the teacher's disk is a schema-1 document.
+
+  `tools/verify-shell.mjs` 282 → 299 checks, zero skipped; `sw.js` cache v19 → v20.
+
+- **The 720px cap was lifted from the wrong half of the stylesheet, and the iPad kept it for three
+  hours.** `.attendance-panel`'s dialog-era width had already been overruled and removed from the
+  base rule — with a comment saying not to put it back — but an identical `width: 720px` was still
+  sitting in `src/attendance.css`'s `@media (pointer: coarse)` block. A fine pointer never reads that
+  block, so the change landed on the laptop and **never reached the only device it was for**.
+
+  What it cost was the new note panel. The grid's own columns want 711px — a 279px name column plus
+  six day columns at 72px — against 680px of panel body, so the wrap's `overflow-x` safety valve
+  engaged and the note field sat **16px past the right edge**. Identically in both orientations,
+  because a fixed panel width makes the geometry the same whichever way the iPad is held: rotating to
+  landscape left 288px of screen unused and changed nothing. Present, absent and at-an-event were the
+  worst of it; tardy and dismissed escaped only because their longer mark chip ("Tardy at 8:14a")
+  wrapped the field onto a line of its own.
+
+  Two rules fix it and they are not interchangeable. `.attendance-panel { width: 100% }` in the
+  coarse block gives landscape the room outright. `.attendance-name { max-width: 256px }` is what
+  clears portrait, where even the whole screen is 8px short: the cell is `nowrap`, so its min-content
+  is the entire name laid flat, and a table cell's min-content is a floor the browser widens the
+  whole *table* to honour. 256px is the arithmetic — 688px of body less six 72px columns. The cap
+  truncates nothing on its own; it releases the floor, and the column still takes 512px in landscape
+  where there is room.
+
+  **The trigger was name length, which is why no fixture had ever caught it.** The harness types
+  short names; "Delacroix-Nguyen, Xiomara" is 279px and real rosters are full of them. The first
+  regression check written for this passed with the fix fully reverted — it was measuring a screen the
+  defect had never been on. It now writes the long name in deliberately, asserts that precondition,
+  and renders *after* each resize, because `dayColumnCount()` reads `window.innerWidth` when the grid
+  is painted rather than when it is read, and a grid painted at the previous section's 390px keeps
+  three columns at 768px. Reverting either rule now turns it red.
+
+  Two things a reader of that file should know. The name column truncates in portrait for the first
+  time — the ellipsis and the full name on the row's `title` were built for this moment and nothing
+  had ever made them engage. And the coarse block's `.attendance-day { width: 54px }` is a dead rule:
+  the base `min-width: 72px` beats it, so the column is 72px, and doing the arithmetic with 54 is
+  what made the cap look safe in a comment that confidently claimed six columns were 324px.
+
+  `tools/verify-shell.mjs` 299 → 314 checks, zero skipped; `sw.js` cache v20 → v21.
+
 - **Four Codex failures were one missing directory, and Codex is back in the rotation.** WO-1.4,
   WO-1.6 and WO-1.7 all died at exec time on `codex-windows-sandbox-setup.exe: program not found`,
   and the WO-1.12 probe made it four. Every one of them named the same file, and nobody had gone

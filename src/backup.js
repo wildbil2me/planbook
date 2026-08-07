@@ -321,15 +321,20 @@ export async function downloadBackup() {
  * parseBackup() — the code on the other side of the round trip — on the very text that would be
  * written. Whatever a restore would refuse, this refuses to write, which is what makes "restore
  * accepts every file this produces" true by construction rather than by inspection. A year this
- * build cannot place (a document from a NEWER Planbook is the only such case that exists today,
- * since MIGRATIONS is empty and SCHEMA_VERSION is 1) is named on screen and left unstamped: a file
- * the teacher's own app will not read is not a way back, and it would have answered the nag anyway.
+ * build cannot place (a document from a NEWER Planbook, which is still the only such case: the
+ * ladder climbs every older one) is named on screen and left unstamped: a file the teacher's own
+ * app will not read is not a way back, and it would have answered the nag anyway.
  * The stored bytes are what goes in the file — a document from an OLDER schema is written as it
  * sits, not migrated on the way out, because parseBackup() walks the ladder on the way IN and says
  * so in the confirm, and a copy that has been rewritten by a migration the teacher never saw run
- * is a copy whose original no longer exists anywhere. Today the two are the same bytes; the
- * difference only starts to matter when the first migration lands, which is when nobody will be
- * reading this decision fresh.
+ * is a copy whose original no longer exists anywhere.
+ *
+ * THAT LAST PARAGRAPH STOPPED BEING HYPOTHETICAL ON 2026-08-06. It used to end "today the two are
+ * the same bytes; the difference only starts to matter when the first migration lands" — WO-2.10 is
+ * that migration (SCHEMA_VERSION is 2, and `marks` cells that were bare strings are objects), so a
+ * device holding a year written before it now writes that year out AS IT SITS, at schema 1, and the
+ * restore converts on the way back in. That is the behaviour the paragraph chose, deliberately, and
+ * it is worth knowing that it is now being exercised rather than merely described.
  *
  * Note what stays reachable either way: the button above does NOT validate, so the open year can
  * still be downloaded on its own even in the state where this one would leave it out of the

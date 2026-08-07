@@ -391,7 +391,7 @@ timestamp on every render; never accumulate. Same class of bug as the eviction h
 
 ## WO-2.10 — Mark cells: unconfirmed, timed, and noted
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** L · 🚩 · **Depends on** WO-2.1
+**Ship** 1 · **Status** ✅ DONE — 2026-08-06 · **Size** L · 🚩 · **Depends on** WO-2.1
 **Closes roadmap** Phase 2 → amends "Marking screen, exceptions-only", closes "`U` for unconfirmed"
 and "Timestamps on tardies and dismissals" *(see below)*
 
@@ -493,30 +493,30 @@ once tapped a cell never returns to it. From `?` the first tap gives `P`.
 cycle once WO-2.8 lands: that is WO-2.8's call, and this work order keeps `D` where the owner put it.
 
 **Acceptance**
-- [ ] Tapping one student's cell moves that cell to `P` and **changes no other cell on the screen**.
+- [x] Tapping one student's cell moves that cell to `P` and **changes no other cell on the screen**.
       Verify by reading every other cell, not by looking at one.
-- [ ] "Everyone's here" resolves every student to `P` in one tap, and the document holds no `U`
+- [x] "Everyone's here" resolves every student to `P` in one tap, and the document holds no `U`
       afterwards.
-- [ ] A class with 25 students, two of them absent, is **two entries** in the finished document —
+- [x] A class with 25 students, two of them absent, is **two entries** in the finished document —
       no `U`, no `P`. Storage at rest is unchanged from WO-2.1.
-- [ ] Tapping one cell, then reloading, still shows one `P` and twenty-four `?` — the unconfirmed
+- [x] Tapping one cell, then reloading, still shows one `P` and twenty-four `?` — the unconfirmed
       state survives, which is the whole reason it is stored.
-- [ ] A class nobody has touched has **no record at all** and reads "not taken yet". It is not a
+- [x] A class nobody has touched has **no record at all** and reads "not taken yet". It is not a
       class of 25 absences. *(The single most damaging way to get this wrong.)*
-- [ ] The home card names the number of unconfirmed students on a half-taken class.
-- [ ] The cycle from `?` reads `P → A → E → T → D` and returns to `P`, never to `?`.
-- [ ] A student added to the roster after a class was taken does not acquire a mark for it
+- [x] The home card names the number of unconfirmed students on a half-taken class.
+- [x] The cycle from `?` reads `P → A → E → T → D` and returns to `P`, never to `?`.
+- [x] A student added to the roster after a class was taken does not acquire a mark for it
       retroactively.
-- [ ] Marking a student tardy stores an `at` timestamp; the marking screen shows the time without
+- [x] Marking a student tardy stores an `at` timestamp; the marking screen shows the time without
       running a report.
-- [ ] Cycling `P → A → E → T → D` past `T` and landing on `D` leaves **one** time — the dismissal's
+- [x] Cycling `P → A → E → T → D` past `T` and landing on `D` leaves **one** time — the dismissal's
       — and no orphaned tardy time. Verify in the document.
-- [ ] Cycling all the way back to `P` clears the entry entirely: no code, no `at`, no note left
+- [x] Cycling all the way back to `P` clears the entry entirely: no code, no `at`, no note left
       behind.
-- [ ] A note typed on a mark survives a reload and appears on the same student, date and class.
-- [ ] **Every cell in the document is an object.** Not one bare string anywhere, including `U`s and
+- [x] A note typed on a mark survives a reload and appears on the same student, date and class.
+- [x] **Every cell in the document is an object.** Not one bare string anywhere, including `U`s and
       including untimed codes. Inspect the document, not the UI.
-- [ ] **Restoring a backup written before this work order produces object cells**, with the codes
+- [x] **Restoring a backup written before this work order produces object cells**, with the codes
       intact and no `at` invented for marks that never had one. *(WO-1.5's restore path is the one
       thing standing between a teacher and a lost term — this is the acceptance line that says the
       migration did not eat it.)*

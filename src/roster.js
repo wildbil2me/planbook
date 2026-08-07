@@ -1271,8 +1271,24 @@ export function toggleStudentClass(classId) {
   is one she reads.
 */
 function deletionCounts(doc, student) {
+  /*
+    A `U` is not a mark and does not get counted here (WO-2.10). It means "nobody has reached this
+    student yet" on a class that is part way through being taken, it is deleted the moment somebody
+    does, and src/attendance.js's rule is that it never appears on a button, in a total, or in a
+    report — this line is one of those totals. Counting them would tell a teacher she is about to
+    destroy four attendance marks for a student who has one.
+
+    THE LETTER IS WRITTEN OUT HERE RATHER THAN IMPORTED, which is the one thing worth explaining:
+    src/attendance.js imports this file (rosterName, fullName), so importing it back would close the
+    loop this repo has refused three times. One character, in one comparison, with the rule it comes
+    from named — against a circular import that every later reader would have to reason about.
+  */
   const marks = (Array.isArray(doc.attendance) ? doc.attendance : [])
-    .filter((r) => r.marks && Object.prototype.hasOwnProperty.call(r.marks, student.id)).length;
+    .filter((r) => {
+      const cell = r.marks && r.marks[student.id];
+      if (!cell) return false;
+      return (typeof cell === 'object' ? cell.code : cell) !== 'U';
+    }).length;
   const scores = Object.keys(doc.scores || {}).reduce((n, assignmentId) => {
     const column = doc.scores[assignmentId];
     return n + (column && Object.prototype.hasOwnProperty.call(column, student.id) ? 1 : 0);

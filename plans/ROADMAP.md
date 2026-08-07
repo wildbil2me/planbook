@@ -50,14 +50,14 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
-| 2 | Attendance | ⬜ NOT STARTED | 0/15 `[░░░░░░░░░░] 0%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 7/15 `[█████░░░░░] 47%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **15/81 `[█░░░░░░░░░] 19%`** |
+| | | **Overall** | **22/81 `[███░░░░░░░] 27%`** |
 
 ---
 
@@ -189,16 +189,20 @@ proposes a cycle, a rotation, or a meeting pattern. *(A cycle model was designed
 same day, 2026-08-03: the owner's rotation changes randomly, so a model that predicts which classes
 meet is a second source of truth that's wrong by first period.)*
 
-- [x] 🚩 Marking screen, **exceptions-only** (present is the default; you tap absences and
-      tardies). This runs while students walk in — it is the critical-path flow.
-- [ ] 🚩 **`U` for unconfirmed.** A student stays `?` until their own button is tapped, and until
+- [x] 🚩 Marking screen, **exceptions-only** — the *finished* document holds nothing but exceptions
+      to present, and clearing a mark still means present. This runs while students walk in — it is
+      the critical-path flow. *(Amended 2026-08-06 by WO-2.10: present is no longer the default a
+      student STARTS on. A class being taken also holds a `U` for everyone the teacher has not
+      reached yet, and those are deleted as she reaches them — so the rule is re-pointed rather than
+      repealed, and a finished class is the same two entries it always was.)*
+- [x] 🚩 **`U` for unconfirmed.** A student stays `?` until their own button is tapped, and until
       then they count **absent** — the first tap means "I see you, you're here" and gives `P`, then
       the cycle runs `P → A → E → T → D`. Tapping one student never changes another student's
       display; only "Everyone's here" does that. The document at rest is unchanged: every `U` is
       deleted as its student is confirmed. *(Added 2026-08-06 — WO-2.10. The owner found the
       original model backwards for how she stands in a room: confirming a student present cost four
       taps round the cycle, and one tap silently resolved everyone.)*
-- [ ] 🚩 **Timestamps on tardies and dismissals**, and a note on any mark. A mark cell is an object;
+- [x] 🚩 **Timestamps on tardies and dismissals**, and a note on any mark. A mark cell is an object;
       `T` and `D` record the moment they settled. *(Added 2026-08-06, folded into WO-2.10. Planbook
       recorded that a student was tardy and never when — Roll Call! has captured it all along.
       Twenty minutes late and two minutes late are different conversations with a guardian.)*

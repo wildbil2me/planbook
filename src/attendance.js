@@ -54,25 +54,55 @@
   never empty:
 
     the class was taken       → `P` on the positive wash — present, which is what no mark means
+    a student not reached yet → `?` on the caution wash, on a column that is otherwise taken
     the class was not taken   → `?` on the caution wash, and the WHOLE COLUMN carries that wash
     the class did not meet    → `–` on a dashed grey, quiet, because there is nothing to do
 
   The column header says the same thing in words above it. The work order asks for the distinction
-  "in the column header AND in the cells under it", and this is both halves.
+  "in the column header AND in the cells under it", and this is both halves. The two `?` readings
+  are told apart the same way: an untaken column is amber END TO END and its head says "Not taken";
+  a column being taken keeps the taken wash and its head counts what is left ("12 to go").
 
   ── EXCEPTIONS ONLY. PRESENT IS THE ABSENCE OF A MARK ──
 
-  `marks` holds T / A / E / D and nothing else. A class of 25 with two absences is two entries in
-  the year document, not 25 — docs/data-model.md says so, and it is also why marking is fast.
-  Storing `P` would pass every acceptance test this work order has, quietly triple the size of the
-  document, and only show up as a problem in Phase 7 when it is being pushed through Drive. The
-  guard is in setMark(): `P` DELETES, it never writes. There is ONE writer for every path on this
-  screen — the cells, the column headers and the class-level buttons all land in the same five
-  functions — because two writers means two exceptions-only guards and the second one is where a
-  `P` eventually gets stored.
+  `marks` holds T / A / E / D, plus `U` for a student the teacher has not reached yet, and nothing
+  else. A FINISHED class of 25 with two absences is two entries in the year document, not 25 —
+  docs/data-model.md says so, and it is also why marking is fast. Storing `P` would pass every
+  acceptance test this work order has, quietly triple the size of the document, and only show up as
+  a problem in Phase 7 when it is being pushed through Drive. The guard is in setMark(): `P`
+  DELETES, it never writes. There is ONE writer for every path on this screen — the cells, the
+  column headers and the class-level buttons all land in the same few functions — because two
+  writers means two exceptions-only guards and the second one is where a `P` eventually gets stored.
 
   Note that a cell still DISPLAYS `P`. Displaying it is the truthful reading of an empty entry on a
   taken day, and it is what Roll Call! shows in the same place; storing it is the trap.
+
+  ── `U`, AND WHY THE RULE ABOVE IS RE-POINTED RATHER THAN REPEALED (WO-2.10) ──
+
+  The owner used the registry and found the model backwards for how she stands in a room: a cell
+  started on `?`, the first tap jumped to `A`, so confirming a student PRESENT cost four taps round
+  the cycle — and tapping one student flipped every other cell from `?` to `P` at once, so there was
+  no way to see who she had actually looked at. Underneath both: an unmarked student should read as
+  ABSENT, not present. If she is pulled out mid-period the honest record is "I had not accounted for
+  these students", not a silent room full of `P`.
+
+  So the first tap on a class writes `U` — unconfirmed — for every student in it, and each `U` is
+  DELETED as its student is confirmed. `U` counts as an absence wherever attendance is counted
+  (WO-2.4's denominator, not its numerator), and it is scaffolding rather than a sixth code: it
+  never appears on a button, in a total, or in a report.
+
+  Three consequences, and the middle one is the one that keeps the rule above true:
+
+    - THE DOCUMENT AT REST IS UNCHANGED. A finished class holds only its real exceptions, because
+      every `U` was deleted on the way. The `U`s exist only between starting a class and finishing
+      it, and they shrink as the teacher works.
+    - `P` IS STILL NEVER STORED. Clearing a mark still means present. What the document now holds is
+      exceptions to present, plus the students nobody has reached.
+    - A CLASS LEFT HALF-TAKEN KEEPS ITS `U`s, which is the point — an accurate record of an
+      unfinished class rather than a fabricated complete one. That is also DANGEROUS: one stray tap
+      makes a meeting with two dozen absences in it, and the failure is silent unless something
+      says so. Hence the count on the column head, in the state line, and on the home card. Do not
+      make `U` quieter than it is.
 
   The five letters and their words are Roll Call!'s — P present, T tardy, A absent, E event,
   D dismissed — because the owner reads both apps this year and her fingers already know them.
@@ -80,18 +110,48 @@
   percentage in WO-2.4; the word on the button is Roll Call!'s "Event", because that is the word
   she is used to tapping.
 
-  ── ONE CYCLE, AND THE ONE PLACE IT DIVERGES FROM HER HABIT ──
+  ── ONE CYCLE, AND WHERE A CELL ENTERS IT ──
 
   Roll Call! cycles a cell `'' → P → A → T → E`, and it has a SECOND cycle for past days in a
   different order (cyclePastAttendance, dashboard.html:3802). Planbook has one cycle and one
   writer, and the order is
 
-      present → A → E → T → D → present
+      P → A → E → T → D → P
 
-  `P` is not a step because present is never stored — clearing a mark IS present. `D` is a step
-  because Planbook has no hall-pass flow to log a dismissal from, so the grid is the only place it
-  can be said. That is a deliberate divergence from a habit in the owner's fingers, so it is named
-  on the screen (the hint under the grid) and not only in this comment.
+  A cell ENTERS that cycle at `P`: from `?` — whether that is an untaken day or an unconfirmed
+  student — the first tap means "I see you, you're here". That is the whole of WO-2.10's first
+  complaint, and it is why `?` is not a step: once tapped, a cell never returns to it by cycling.
+  (It can be put back deliberately — see un-confirm below.)
+
+  `P` is a step in the cycle and is still never stored: landing on it deletes the entry, which is
+  what present IS. `D` is a step because Planbook has no hall-pass flow to log a dismissal from, so
+  the grid is the only place it can be said. The order is the owner's — she reordered E ahead of T
+  on 2026-08-06 — and it is named on the screen (the hint under the grid) rather than only here,
+  because it diverges from a habit in her fingers.
+
+  ── A MARK CELL IS AN OBJECT, AND `T` AND `D` CARRY THE TIME (WO-2.10) ──
+
+  `{ code: "T", at: "2026-09-09T08:14:00-04:00", note: "missed the bus" }`. Every cell is an
+  object, including `U` and the untimed codes, because docs/data-model.md's score-cell rule —
+  "always an object, never a bare number; polymorphic cells are where grade bugs live" — is the
+  same rule one datatype over. `at` and `note` are simply absent where they do not apply.
+
+  The time is captured from the device clock at the moment a cell settles on `T` or `D`, and
+  cycling PAST one of them leaves no stray time behind (Roll Call!'s _trackTardyMark() solves the
+  same case by discarding its pending capture; here the cell is rewritten whole, so there is
+  nothing to discard). It matters because twenty minutes late and two minutes late are different
+  conversations with a guardian, and Phase 5's templates want the difference.
+
+  THE TIME LIVES IN THE CELL AND NOWHERE ELSE. A `log` entry mirroring each tardy would reuse
+  machinery that already exists and would immediately make one event into two records — the
+  second-source-of-truth pattern this project has refused four times.
+
+  AND IT IS ONLY STAMPED ON TODAY'S COLUMN. Marking Tuesday's tardy on Thursday would otherwise
+  record Thursday afternoon as the moment the student arrived, which is worse than no time at all:
+  it is a wrong fact printed beside a student's name in a conversation with a parent. On a past
+  column the mark is recorded without an `at`, and `{ code: "T" }` with no time is the honest
+  record of a tardy whose moment was never captured. (The same reasoning as the migration's refusal
+  to invent an `at` for marks written before this work order — src/store.js MIGRATIONS.)
 
   ── THERE IS NO SUBMIT, AND THERE IS NO DRAFT ──
 
@@ -107,9 +167,16 @@
   Two consequences worth naming, because both look like bugs from the outside:
 
     - OPENING THIS SCREEN WRITES NOTHING. Looking at a class is not taking its attendance, and if
-      it were, "not taken yet" would be unreachable the moment a teacher browsed.
-    - MARKING ONE STUDENT ABSENT TAKES THE WHOLE CLASS, on that column's date. The record is
-      created by the first tap, which is what makes the two-absence case two taps and no more.
+      it were, "not taken yet" would be unreachable the moment a teacher browsed. INITIALIZATION IS
+      AN ACT, NOT A VISIT — there are exactly two acts that start a class, and they are the two
+      below.
+    - TAPPING ONE CELL TAKES THE WHOLE CLASS, on that column's date, and CHANGES NO OTHER CELL ON
+      THE SCREEN. The record is created by that tap with a `U` for every student in the class, and
+      the one student tapped goes to `P`; everybody else still reads `?`, because nobody has looked
+      at them yet. (Until WO-2.10 the same tap flipped all twenty-five of them to `P`, which is the
+      owner's second complaint and the reason `U` exists.)
+    - "EVERYONE'S HERE" TAKES THE CLASS AND RESOLVES EVERY STUDENT AT ONCE. It is the one control
+      allowed to change every row, because that is exactly what it says it does.
 
   ── PAST DAYS TAKE AN UNLOCK; FUTURE DAYS DO NOT EXIST ──
 
@@ -215,9 +282,92 @@ export const MARKS = [
    site so that the rule and the letter cannot drift apart. */
 export const PRESENT = 'P';
 
-/* The codes that reach `marks`. Derived from MARKS rather than written out a second time: a list
-   that has to be kept in step with another list is a list that will not be. */
+/* Unconfirmed — the temporary code WO-2.10 added, deliberately NOT in MARKS above. It is not a
+   sixth attendance code to a teacher: it is never on a button, never in a total, never in a
+   report, and a finished class does not contain one. It is in the document only between the tap
+   that starts a class and the tap that confirms the last student. See the header. */
+export const UNCONFIRMED = 'U';
+
+/* The codes that reach `marks` FROM A BUTTON. Derived from MARKS rather than written out a second
+   time: a list that has to be kept in step with another list is a list that will not be. `U`
+   reaches `marks` too and is deliberately not in here — every count that treats it as an absence
+   asks for it by name, so that nothing can start reporting "1 unconfirmed" as a mark the teacher
+   made. */
 export const STORED_MARKS = MARKS.filter((m) => m.code !== PRESENT).map((m) => m.code);
+
+/* The word for a code, for an announcement or a label. `U` has one even though no button carries
+   it, because a screen reader lands on those cells like any other. */
+function wordFor(code) {
+  if (code === UNCONFIRMED) return 'Not confirmed';
+  const known = MARKS.filter((m) => m.code === code)[0];
+  return known ? known.word : 'Marked ' + code;
+}
+
+function phraseFor(code) {
+  if (code === UNCONFIRMED) return 'not confirmed yet';
+  const known = MARKS.filter((m) => m.code === code)[0];
+  return known ? known.phrase : 'marked ' + code;
+}
+
+/* ────────────────────────────── one cell ──────────────────────────────
+
+   A `marks` entry is `{ code, at?, note? }` and has been since WO-2.10 (src/store.js MIGRATIONS
+   walks every older document up to it). These three are the only readers of that shape in the app,
+   so a later field is added here rather than everywhere.
+
+   They tolerate a BARE STRING, and that is not a hedge against the migration: the migration is the
+   guarantee, and it runs on load and on restore. It is the same posture cellFor() takes toward a
+   code this app does not know — a hand-edited or foreign document should render as itself rather
+   than crash a screen that runs while a class walks in. Nothing here ever WRITES a string back. */
+export function codeOf(cell) {
+  if (typeof cell === 'string') return cell;
+  return cell && typeof cell === 'object' && typeof cell.code === 'string' ? cell.code : '';
+}
+
+export function timeOf(cell) {
+  return cell && typeof cell === 'object' && typeof cell.at === 'string' ? cell.at : '';
+}
+
+export function noteOf(cell) {
+  return cell && typeof cell === 'object' && typeof cell.note === 'string' ? cell.note : '';
+}
+
+/*
+  THE MOMENT A MARK SETTLED, as a full ISO timestamp WITH ITS OFFSET — `2026-09-09T08:14:00-04:00`
+  and not `2026-09-09T12:14:00.000Z`.
+
+  Built from the local calendar fields for the reason todayISO() is, one step further: an attendance
+  time read back in another zone, or after the offset changed in November, has to still say the hour
+  the teacher's clock said when she tapped. toISOString() would store the same instant and print it
+  as a different hour, and "arrived 12:14" against a class that starts at 08:10 is a wrong fact
+  beside a student's name.
+*/
+function stampNow(now = new Date()) {
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  const offset = -now.getTimezoneOffset();      /* minutes east of UTC */
+  const abs = Math.abs(offset);
+  return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
+    + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
+    + (offset < 0 ? '-' : '+') + pad(Math.floor(abs / 60)) + ':' + pad(abs % 60);
+}
+
+/* `2026-09-09T08:14:00-04:00` → `8:14 AM`, read straight out of the string rather than through
+   `new Date()`. The string already holds the wall clock the teacher saw; parsing it into an instant
+   and formatting it back would re-express it in whatever zone the reading device is in, which is
+   the one thing the offset above exists to prevent. An unparseable value renders as nothing at all
+   rather than as "Invalid Date". */
+function clockTime(iso) {
+  const m = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/.exec(String(iso || ''));
+  if (!m) return '';
+  const h = Number(m[1]);
+  return (h % 12 || 12) + ':' + m[2] + ' ' + (h < 12 ? 'AM' : 'PM');
+}
+
+/* The same time in the width a 54px column has for it: `8:14a`. */
+function compactTime(iso) {
+  const said = clockTime(iso);
+  return said ? said.slice(0, -3) + said.charAt(said.length - 2).toLowerCase() : '';
+}
 
 /*
   THE CYCLE, and it is one cycle for every column — today's and any past one the teacher has
@@ -225,18 +375,27 @@ export const STORED_MARKS = MARKS.filter((m) => m.code !== PRESENT).map((m) => m
   over there because today's marks live in a local buffer and past ones are written straight
   through, which is a bridge problem Planbook does not have.
 
-  Absent is FIRST because it is the common case: the two-absence class is two taps. Present is the
-  wrap-around rather than a step, because present is not a value here — it is the absence of one.
+  Present is FIRST because a cell now ENTERS the cycle there (WO-2.10): from `?` the first tap means
+  "I see you, you're here". Landing on it still deletes rather than writes, so present is a step in
+  the cycle and never a value in the document.
 
   EVENT COMES BEFORE TARDY, which reversed WO-2.1's order on 2026-08-06 at the owner's request —
   she is the one whose fingers run this five times a day, and the second-commonest mark in her rooms
   is a student pulled out for an event rather than one arriving late. The order is hers to set; the
-  two rules around it are not, and neither moved: P is still the never-stored wrap-around, and a
-  resting cell is still DRAWN as "P" so that an empty-looking cell on a taken day cannot be confused
-  with a day nobody took. The screen says the new order in words (the hint under the grid), because
-  the divergence from her Roll Call! habit is named on the screen and not only in this comment.
+  two rules around it are not, and neither moved: P is still never stored, and a resting cell is
+  still DRAWN as "P" so that an empty-looking cell on a taken day cannot be confused with a day
+  nobody took. The screen says the order in words (the hint under the grid), because the divergence
+  from her Roll Call! habit is named on the screen and not only in this comment.
 */
 export const CYCLE = [PRESENT].concat(['A', 'E', 'T', 'D']);
+
+/* What one tap gives, from whatever the cell reads now. `U` is not IN the cycle — it is where a
+   cell starts — so it enters at present, and so does a code from a foreign document that this app
+   cannot place in the ring. */
+export function nextCode(code) {
+  const index = CYCLE.indexOf(code);
+  return index < 0 ? PRESENT : CYCLE[(index + 1) % CYCLE.length];
+}
 
 /* The only exception this work order writes. plans/rotating-schedule.md names three more —
    `no school`, `snow day`, `holiday` — and WO-2.3 authors those as calendar EVENTS that this
@@ -390,16 +549,45 @@ export function stateOf(classId, date) {
   return record.exception ? DID_NOT_MEET : TAKEN;
 }
 
-/* How many of each stored code are on the record. One date's marks only — counts over a term, and
-   the percentage that comes from them, are WO-2.4's and are deliberately not here. */
+/*
+  How many of each stored code are on the record, `U` among them and counted separately. One date's
+  marks only — counts over a term, and the percentage that comes from them, are WO-2.4's and are
+  deliberately not here.
+
+  `U` IS COUNTED APART FROM `A` HERE AND FOLDED INTO IT THERE. WO-2.4 owes
+  `(P+T+E+D)/(P+T+A+E+D)` with every `U` in the denominator alongside the absences — that is the
+  arithmetic. What this function feeds is the SCREEN, and a card that said "26 absent" about a class
+  the teacher is half way through taking would be describing a fabricated fact rather than an
+  unfinished one. Two numbers here, one sum there.
+*/
 export function countsFor(classId, date) {
   const marks = marksOf(recordFor(classId, date));
   const counts = {};
   STORED_MARKS.forEach((code) => { counts[code] = 0; });
+  counts[UNCONFIRMED] = 0;
   Object.keys(marks).forEach((id) => {
-    if (Object.prototype.hasOwnProperty.call(counts, marks[id])) counts[marks[id]] += 1;
+    const code = codeOf(marks[id]);
+    if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
   });
   return counts;
+}
+
+/*
+  WHAT ONE CELL READS AS, which is not the same question as what is stored in it.
+
+    an entry            → its own code, `U` included
+    no entry, taken     → present, because present is the absence of a mark
+    no entry, no record → unconfirmed, because nobody has looked at this class at all
+
+  The third line is what makes a student added to the roster AFTER a class was taken read as present
+  on that day rather than acquiring a mark retroactively: there is a record, so there is no entry to
+  invent. Every reader on this screen — the cells, the filter pills, the cycle — goes through here,
+  so there is one answer to "what does this cell say".
+*/
+function readingOf(record, studentId) {
+  const entry = marksOf(record)[studentId];
+  if (entry) return codeOf(entry) || PRESENT;
+  return record ? PRESENT : UNCONFIRMED;
 }
 
 /*
@@ -409,32 +597,50 @@ export function countsFor(classId, date) {
   "Taken · 2 absent, 1 tardy" while the list is short enough to read at a glance on a card, and
   "Taken · 4 marked" past that: a card is about 200px wide and a line that ellipsises mid-word says
   less than a shorter true one.
+
+  AND A HALF-TAKEN CLASS LEADS WITH THE NUMBER IT HAS NOT REACHED — "12 unconfirmed · 1 absent"
+  rather than "Taken · 1 absent". This is the surface WO-2.10's Traps line demands and it is not
+  decoration: a class holding `U`s is a meeting, every `U` in it is an absence, and one stray tap
+  therefore creates a meeting with two dozen absences in it. That failure is silent, looks exactly
+  like data, and is otherwise found in November when a percentage is wrong. The word "Taken" is
+  dropped in that state on purpose — the class is BEING taken, and a green "Taken" over twelve
+  students nobody has looked at is the sentence this whole design exists to stop.
 */
 export function stateSummary(classId, date) {
   const state = stateOf(classId, date);
-  if (state === NOT_TAKEN) return { state: state, text: 'Not taken yet', marked: 0 };
-  if (state === DID_NOT_MEET) return { state: state, text: 'Didn’t meet', marked: 0 };
+  const empty = { state: state, marked: 0, unconfirmed: 0 };
+  if (state === NOT_TAKEN) return Object.assign(empty, { text: 'Not taken yet' });
+  if (state === DID_NOT_MEET) return Object.assign(empty, { text: 'Didn’t meet' });
 
   const counts = countsFor(classId, date);
-  const marked = Object.keys(counts).reduce((n, code) => n + counts[code], 0);
+  const unconfirmed = counts[UNCONFIRMED];
+  const marked = STORED_MARKS.reduce((n, code) => n + counts[code], 0);
   const parts = [];
   /* Absences first, then tardies, then the two rarer ones — the order a teacher cares about them
      in, not the order the letters happen to sit in. */
   ['A', 'T', 'E', 'D'].forEach((code) => {
     if (!counts[code]) return;
-    parts.push(counts[code] + ' ' + MARKS.filter((m) => m.code === code)[0].phrase);
+    parts.push(counts[code] + ' ' + phraseFor(code));
   });
-  if (!parts.length) return { state: state, text: 'Taken · all present', marked: 0 };
-  if (parts.length > 2) return { state: state, text: 'Taken · ' + marked + ' marked', marked: marked };
-  return { state: state, text: 'Taken · ' + parts.join(', '), marked: marked };
+  const lead = unconfirmed ? unconfirmed + ' unconfirmed' : 'Taken';
+  const out = { state: state, marked: marked, unconfirmed: unconfirmed };
+  if (!parts.length) {
+    return Object.assign(out, { text: unconfirmed ? lead : 'Taken · all present' });
+  }
+  if (parts.length > 2) return Object.assign(out, { text: lead + ' · ' + marked + ' marked' });
+  return Object.assign(out, { text: lead + ' · ' + parts.join(', ') });
 }
 
-/* The state as a word small enough to sit in a column head. Same three answers as stateSummary,
-   said in the two or three words a 52px column can hold — and it is a WORD rather than only a
-   colour, because "distinguishable without reading fine print" is not a claim colour alone can
-   carry for a teacher who does not see red and green apart. */
-function stateChip(state) {
-  if (state === TAKEN) return 'Taken';
+/* The state as a word small enough to sit in a column head. The same answers as stateSummary, said
+   in the two or three words a 72px column can hold — and it is a WORD rather than only a colour,
+   because "distinguishable without reading fine print" is not a claim colour alone can carry for a
+   teacher who does not see red and green apart.
+
+   A column being taken says how many are left rather than "Taken", for the reason stateSummary
+   gives at length: this is the second of the three places a half-taken class has to be loud, and
+   it is the one directly above the `?`s it is counting. */
+function stateChip(state, unconfirmed) {
+  if (state === TAKEN) return unconfirmed ? unconfirmed + ' to go' : 'Taken';
   if (state === DID_NOT_MEET) return 'Didn’t meet';
   return 'Not taken';
 }
@@ -461,6 +667,7 @@ let pageOffset = 0;        /* whole windows back from today; 0 is the window end
 let searchText = '';
 let filterCode = 'all';    /* 'all' or one of P T A E D */
 let sortBy = 'last';       /* 'last' or 'first' */
+let detailFor = '';        /* the student whose row detail is open, or '' — one at a time */
 
 /*
   THE DATE THAT ACCEPTS EDITS. Today unless a past column has been deliberately unlocked.
@@ -489,11 +696,11 @@ function writableDate(date) {
 
 /* ────────────────────────────── writing ──────────────────────────────
 
-   Five writers, and all five have the same shape: refuse what cannot be true, write through
-   src/store.js's update(), repaint what changed, say what happened. None of them buffers, and
-   there is nothing anywhere in this file that a later tap has to confirm.
+   The writers all have the same shape: refuse what cannot be true, write through src/store.js's
+   update(), repaint what changed, say what happened. None of them buffers, and there is nothing
+   anywhere in this file that a later tap has to confirm.
 
-   ALL FIVE TAKE AN EXPLICIT DATE, defaulting to the column that accepts edits. That parameter is
+   EVERY ONE TAKES AN EXPLICIT DATE, defaulting to the column that accepts edits. That parameter is
    the whole of "mark a past date": the exceptions-only guard, the `P`-deletes-rather-than-writes
    rule, the refusal to write onto a dropped record and the no-op-on-an-unchanged-code rule all
    run on one code path for every column. A second writer for grid cells would be a second copy of
@@ -507,18 +714,39 @@ function listIn(d) {
   return d.attendance;
 }
 
-/* The record for this class and date, created if it is not there. Creating one is what "the class
-   met" means, so this is the function that takes a class — and the empty `marks` object it seeds
-   is the record for a class where everybody was present. */
-function ensureRecord(d, classId, date) {
+/*
+  The record for this class and date, created if it is not there. Creating one is what "the class
+  met" means, so this is the function that takes a class.
+
+  `seed` is WO-2.10's whole initialization rule and it is a PARAMETER because the two acts that
+  start a class differ deliberately:
+
+    a tap on one cell   → seed = the roster. Every student gets a `U`, and the caller then moves
+                          the one student it was about to `P`. Nothing else on the screen changes.
+    "Everyone's here"   → seed = nothing. The class is taken with everybody present, which is an
+                          empty `marks` object, which is what that button says it does.
+
+  It only ever seeds on CREATION. A record that already exists is not re-seeded, or confirming a
+  student would put every `U` back on the next tap; and a student added to the roster later never
+  acquires a mark for a class that was taken before they arrived.
+*/
+function ensureRecord(d, classId, date, seed) {
   const list = listIn(d);
   let record = list.filter((r) => r && r.classId === classId && r.date === date)[0];
   if (!record) {
     record = { classId: classId, date: date, marks: {} };
+    (seed || []).forEach((id) => { record.marks[id] = { code: UNCONFIRMED }; });
     list.push(record);
   }
   if (!record.marks || typeof record.marks !== 'object') record.marks = {};
   return record;
+}
+
+/* The ids this class's `U`s are written for: the roster, in the document's own order, and only the
+   ids that name a real student — the same filter rosterOf() applies before drawing a row, because a
+   `U` for a student who is not on the screen is an absence nobody can clear. */
+function seedIds(cls) {
+  return rosterOf(cls).map((s) => s.id);
 }
 
 function removeRecord(d, classId, date) {
@@ -526,12 +754,17 @@ function removeRecord(d, classId, date) {
 }
 
 /*
-  One student, one code, one date. This is the whole of "exceptions-only", and the two lines that
-  matter are the delete and the assignment.
+  One student, one code, one date. This is the whole of "exceptions-only", and the three lines that
+  matter are the seed, the delete and the assignment.
 
   `P` deletes the entry rather than writing one. That is the trap this work order names by name: a
   build that stored `P` would pass every acceptance line here and put twenty-five entries in the
   document for a class where nobody was absent.
+
+  THE FIRST WRITE OF A CLASS SEEDS EVERY STUDENT WITH `U` (WO-2.10), and this is the only place it
+  happens — so "tap a cell" and "any later path that writes a mark first" cannot disagree about what
+  starting a class means. The tapped student's own entry is then set or deleted on top of the seed,
+  which is why one tap gives one `P` and twenty-five `?` rather than a screen full of `P`.
 
   Setting the code a student already has does nothing at all — no write, no save, no `rev`. The
   cycle below can never ask for that, but a keyboard path or a stale tap can, and a screen operated
@@ -541,7 +774,7 @@ export function setMark(studentId, code, date) {
   const cls = openClass();
   const on = date || editDate();
   if (!cls || !studentId || !getDoc()) return;
-  if (!MARKS.some((m) => m.code === code)) return;
+  if (!MARKS.some((m) => m.code === code) && code !== UNCONFIRMED) return;
   if (!writableDate(on)) return;
 
   const record = recordFor(cls.id, on);
@@ -550,78 +783,205 @@ export function setMark(studentId, code, date) {
      marks onto a dropped record, which is a shape the data model does not have. */
   if (record && record.exception) return;
 
-  const current = marksOf(record)[studentId] || PRESENT;
+  const current = readingOf(record, studentId);
   /* Nothing to write — but only once the record exists. Setting P on a class that has not been
-     taken yet is a real act: it takes the class, with everyone present. */
+     taken yet is a real act: it takes the class, with everyone present in front of her and this
+     one student confirmed. */
   if (record && current === code) return;
 
   update((d) => {
-    const r = ensureRecord(d, cls.id, on);
-    if (code === PRESENT) delete r.marks[studentId];
-    else r.marks[studentId] = code;
+    const r = ensureRecord(d, cls.id, on, seedIds(cls));
+    if (code === PRESENT) { delete r.marks[studentId]; return; }
+    /* THE CELL IS REWRITTEN WHOLE, which is what keeps a stray time from surviving a cycle: going
+       T → E builds `{ code: 'E' }` and the tardy's `at` is simply not carried across. Roll Call!
+       does the same job by deleting a pending capture (_trackTardyMark, dashboard.html:3568); here
+       there is no pending anything, so there is nothing to forget to delete.
+
+       `at` is stamped for T and D and only on today's column — see the header for why a device
+       clock says nothing true about a tardy being entered two days later. The note is the one
+       thing that DOES carry across a code change: it is a fact about the student on that day
+       ("left for the nurse"), not about which letter is on the cell. Cycling to present drops it
+       with the entry, which is the branch above and is the acceptance line's own wording.
+
+       AND IT DOES NOT CARRY ONTO A `U`, which is the one exception and was found by the harness
+       rather than reasoned out here. Un-confirming means "as if nobody had looked at this student
+       yet", and a note left behind on that cell would be a fact about a mark that no longer exists
+       — sitting in an entry which is itself deleted the moment somebody confirms them present. A
+       `U` is `{ code: "U" }` and nothing else, everywhere. */
+    const cell = { code: code };
+    if ((code === 'T' || code === 'D') && on === todayISO()) cell.at = stampNow();
+    const note = code === UNCONFIRMED ? '' : noteOf(r.marks[studentId]);
+    if (note) cell.note = note;
+    r.marks[studentId] = cell;
   });
 
-  /* The whole column, not just the cell: a first mark turns the column from NOT TAKEN to TAKEN,
-     and every other cell in it goes from `?` to `P`. Repainting one cell would leave twenty-five
-     question marks under a header that says the class was taken. The tbody is NOT rebuilt, so the
-     scroll position of a twenty-six-name table survives a mark made half way down it. */
+  /* The whole column, not just the cell: a first mark turns the column from NOT TAKEN to TAKEN, and
+     every other cell in it goes from a column-wide `?` to its own `U`. The glyph does not change —
+     that is the point of `U` — but the wash, the head and the count above them all do. The tbody is
+     NOT rebuilt, so the scroll position of a twenty-six-name table survives a mark made half way
+     down it. */
   paintColumn(on);
   paintActions();
+  paintDetail();
 
-  const word = MARKS.filter((m) => m.code === code)[0].word;
   const student = findStudent(studentId);
-  announce(fullName(student) + ' — ' + word
+  announce(fullName(student) + ' — ' + wordFor(code)
     + (on === todayISO() ? '' : ' on ' + spokenDate(on)) + '.');
 }
 
 /*
-  A TAP ON A CELL. Reads what is there, writes the next code, and does it through setMark() so that
-  every rule above applies to a cell exactly as it applies to anything else.
+  A TAP ON A CELL. Reads what the cell says, writes the next code, and does it through setMark() so
+  that every rule above applies to a cell exactly as it applies to anything else.
+
+  From `?` — an untaken day or an unconfirmed student — the next code is present, because `U` is not
+  a step in the ring. Once tapped a cell never cycles back to `?`; putting one back is a deliberate
+  act with its own control.
 */
 export function cycleMark(studentId, date) {
   const cls = openClass();
   const on = date || editDate();
   if (!cls || !studentId) return;
-  const current = marksOf(recordFor(cls.id, on))[studentId] || PRESENT;
-  const index = CYCLE.indexOf(current);
-  setMark(studentId, CYCLE[(index + 1) % CYCLE.length], on);
+  setMark(studentId, nextCode(readingOf(recordFor(cls.id, on), studentId)), on);
 }
 
-/* "Everyone's here": the tap that records a meeting with no exceptions on it. Without this, a class
-   where nobody was absent is indistinguishable from a class the teacher forgot, which is the
-   question the whole three-state design exists to answer. */
+/*
+  "Everyone's here": the tap that records a meeting with no exceptions on it, and the one control on
+  this screen allowed to change every row at once. Without it, a class where nobody was absent is
+  indistinguishable from a class the teacher forgot, which is the question the whole three-state
+  design exists to answer.
+
+  It also finishes a class she is part way through: every `U` goes, because "everyone's here" said
+  of the students nobody has reached yet is exactly what this button means. Real marks are left
+  alone — a class with two absences already on it stays a class with two absences.
+*/
 export function takeClass(date) {
   const cls = openClass();
   const on = date || editDate();
   if (!cls || !getDoc() || !writableDate(on)) return;
-  if (stateOf(cls.id, on) === TAKEN) return;
+  const existing = recordFor(cls.id, on);
+  const waiting = countsFor(cls.id, on)[UNCONFIRMED];
+  if (existing && !existing.exception && !waiting) return;
 
   update((d) => {
     const record = ensureRecord(d, cls.id, on);
     /* Defensive: this control is not offered on a class that is already marked as not meeting.
        If it is ever reached from one, taking the class means it met. */
     delete record.exception;
+    Object.keys(record.marks).forEach((id) => {
+      if (codeOf(record.marks[id]) === UNCONFIRMED) delete record.marks[id];
+    });
   });
 
   paintColumn(on);
   paintActions();
-  announce(cls.name + ' is taken for ' + spokenDate(on) + ', with everyone present.');
+  paintDetail();
+  announce(cls.name + ' is taken for ' + spokenDate(on)
+    + (waiting ? ', with the ' + waiting + ' still unconfirmed marked present.' : ', with everyone present.'));
 }
 
-/* And back off again. Offered only while the record holds no marks — see the header comment: a
-   control that can destroy a mark by being tapped twice does not belong on a screen operated at
-   speed, and the refusal below is the same rule stated where it cannot be skipped. */
+/*
+  THE CLASS RESET. Every student back to `?`, which is the state a class is in the moment it is
+  started and nothing has been looked at.
+
+  It destroys the marks already on the record, and that cost is made LOUD rather than prevented —
+  the same call dropClass() makes below, for the same reason and with the same two surfaces saying
+  so: the control's own title counts what will go, and the announcement counts what did. The
+  realistic mistake here is a teacher who has started the wrong class, not one who has just finished
+  marking a period and taps "un-confirm everyone" for fun.
+
+  It is deliberately NOT offered on a class whose record holds nothing real — there the honest
+  control is the un-take, which removes the record and leaves the day not taken yet. See
+  paintActions().
+*/
+export function unconfirmAll(date) {
+  const cls = openClass();
+  const on = date || editDate();
+  if (!cls || !getDoc() || !writableDate(on)) return;
+  const record = recordFor(cls.id, on);
+  if (!record || record.exception) return;
+  const ids = seedIds(cls);
+  if (!ids.length) return;
+
+  const summary = stateSummary(cls.id, on);
+  update((d) => {
+    const r = ensureRecord(d, cls.id, on);
+    r.marks = {};
+    ids.forEach((id) => { r.marks[id] = { code: UNCONFIRMED }; });
+  });
+
+  paintColumn(on);
+  paintActions();
+  paintDetail();
+  announce('Every student in ' + cls.name + ' is unconfirmed again for ' + spokenDate(on) + '.'
+    + (summary.marked ? ' The ' + summary.marked + (summary.marked === 1 ? ' mark' : ' marks')
+      + ' already on it were cleared.' : ''));
+}
+
+/* One student back to `?`, from the row's own detail panel. The un-confirm the work order asks for
+   at the student level: a cell cycled by mistake goes back to where it started rather than round
+   the ring again. It writes a `U` on a record that exists and does nothing at all on one that does
+   not — an unconfirmed student on an untaken day is already `?`, and creating a record to say so
+   would be this screen taking a class the teacher never touched. */
+export function unconfirmStudent(studentId, date) {
+  const cls = openClass();
+  const on = date || editDate();
+  if (!cls || !studentId) return;
+  if (!recordFor(cls.id, on)) return;
+  setMark(studentId, UNCONFIRMED, on);
+}
+
+/*
+  A NOTE ON A MARK, typed in the row's detail panel and written as it is typed — the same posture as
+  every other field editor in this app (src/roster.js), and for the same reason: there is no submit
+  step on this screen and there must never be one.
+
+  IT DOES NOT REPAINT, and that is the load-bearing line rather than an optimisation. Re-rendering
+  the row would replace the <input> the teacher is typing into, which takes the caret and the
+  software keyboard with it — the same trap that keeps the search box in index.html rather than in a
+  renderer.
+
+  A note needs a mark to sit on. A present student has no entry by construction, so there is nothing
+  to attach one to and the panel does not offer the field; this refusal is the same rule stated
+  where it cannot be skipped.
+*/
+export function setNote(studentId, text, date) {
+  const cls = openClass();
+  const on = date || editDate();
+  if (!cls || !studentId || !getDoc() || !writableDate(on)) return;
+  const record = recordFor(cls.id, on);
+  if (!record || record.exception || !marksOf(record)[studentId]) return;
+
+  const note = String(text == null ? '' : text);
+  update((d) => {
+    const r = ensureRecord(d, cls.id, on);
+    const cell = r.marks[studentId];
+    if (!cell) return;
+    /* Normalised on the way past, for the one shape that can still be a bare string here: a
+       document hand-edited after the migration ran. Writing the note onto a string primitive
+       would throw in a module, and this file never writes a string back. */
+    const next = typeof cell === 'object' ? cell : { code: codeOf(cell) };
+    if (note.trim()) next.note = note;
+    else delete next.note;
+    r.marks[studentId] = next;
+  });
+}
+
+/* And back off again. Offered only while the record holds no MARK — `U`s do not count, because a
+   class nobody has confirmed anything on has nothing to lose, and an accidental first tap has to be
+   undoable. A control that can destroy a mark by being tapped twice does not belong on a screen
+   operated at speed, and the refusal below is that rule stated where it cannot be skipped. */
 export function untakeClass(date) {
   const cls = openClass();
   const on = date || editDate();
   if (!cls || !getDoc() || !writableDate(on)) return;
   const record = recordFor(cls.id, on);
   if (!record || record.exception) return;
-  if (Object.keys(marksOf(record)).length) return;
+  if (stateSummary(cls.id, on).marked) return;
 
   update((d) => removeRecord(d, cls.id, on));
   paintColumn(on);
   paintActions();
+  paintDetail();
   announce(cls.name + ' is not taken for ' + spokenDate(on) + '.');
 }
 
@@ -641,7 +1001,10 @@ export function dropClass(date) {
   if (!cls || !getDoc() || !writableDate(on)) return;
   if (stateOf(cls.id, on) === DID_NOT_MEET) return;
 
-  const cleared = Object.keys(marksOf(recordFor(cls.id, on))).length;
+  /* Real marks only. A half-taken class is mostly `U`s, and "the 26 marks already on it were
+     cleared" about a class where the teacher had marked one absence is a sentence that would make
+     her think she had lost a period's work. */
+  const cleared = stateSummary(cls.id, on).marked;
   update((d) => {
     const list = listIn(d);
     const written = { classId: cls.id, date: on, exception: DROPPED };
@@ -684,6 +1047,11 @@ export function undropClass(date) {
 export function editPastDay(date) {
   if (!writableDate(date) || date === todayISO()) return;
   editingPast = date;
+  /* The open detail panel describes ONE student on ONE date, and that date is the one accepting
+     edits. Moving the edit date with a panel open would leave a time and a note on screen that
+     belong to a day the teacher just left, so it closes — here and everywhere else the edit date
+     moves. */
+  detailFor = '';
   renderAttendance();
   announce('Editing ' + spokenDate(date) + '. This is not today.');
 }
@@ -692,6 +1060,7 @@ export function lockPastDay() {
   if (!editingPast) return;
   const was = editingPast;
   editingPast = null;
+  detailFor = '';
   renderAttendance();
   announce('Finished editing ' + spokenDate(was) + '. Back on today.');
 }
@@ -713,6 +1082,7 @@ export function pageDays(direction) {
   else return;
   if (pageOffset === before && direction !== 'today') return;
   editingPast = null;
+  detailFor = '';
   renderAttendance();
   const shown = dayColumns(dayColumnCount(), pageOffset, todayISO());
   announce(pageOffset === 0 ? 'Back to this week, ending today.'
@@ -738,6 +1108,24 @@ export function setSort(which) {
   sortBy = which === 'first' ? 'first' : 'last';
   paintToolbar();
   renderRows();
+}
+
+/*
+  THE ROW'S OWN DETAIL, opened and closed by the ⋯ at the end of the name (WO-2.10). One at a time,
+  the way one past column is unlocked at a time and for the same reason: a screen with twenty-six
+  panels open on it is a screen you scroll instead of read.
+
+  What it holds is what the cell has no room for — the mark in words, the time a `T` or a `D`
+  settled, the note field, and the un-confirm — and it opens IN THE ROW rather than over it, which
+  is the work order's own wording. A dialog here would take the teacher off the grid mid-period,
+  and it would be the second screen this whole design is built to avoid.
+*/
+export function toggleDetail(studentId) {
+  detailFor = studentId && detailFor !== studentId ? studentId : '';
+  paintDetail();
+  if (!detailFor) return;
+  const student = findStudent(detailFor);
+  if (student) announce(fullName(student) + ' — details for ' + spokenDate(editDate()) + '.');
 }
 
 /* ────────────────────────────── the roster, in the order this screen reads it ──────────────────
@@ -784,18 +1172,24 @@ function markingOrder(cls) {
 
   THE FILTER READS THE COLUMN THAT ACCEPTS EDITS, not the whole window. "Show me who was absent" is
   a question about the day being marked, and a pill that answered it across six days would answer a
-  question nobody asked. `Present` means "no stored mark on that date", which is what present is —
-  so on a day that has not been taken yet every student matches it, and the copy under the empty
-  list says so rather than pretending otherwise.
+  question nobody asked. `Present` means "confirmed present on that date", which since WO-2.10 is a
+  narrower thing than it was: a student nobody has reached yet reads `U`, so an untaken day now
+  matches NOBODY on that pill rather than everybody. That is the same inversion the rest of this
+  work order is — an unmarked student is not a present one — and the copy under the empty list says
+  which pill emptied the screen.
+
+  THERE IS NO PILL FOR `U`, deliberately: it is not a sixth code to a teacher, and the count that
+  matters about it is on the column head and the state line above, where she can see it without
+  filtering anything.
 */
 function visibleStudents(cls) {
   const on = editDate();
-  const marks = marksOf(recordFor(cls.id, on));
+  const record = recordFor(cls.id, on);
   return markingOrder(cls).filter((s) => {
     if (searchText && rosterName(s).toLowerCase().indexOf(searchText) < 0
       && fullName(s).toLowerCase().indexOf(searchText) < 0) return false;
     if (filterCode === 'all') return true;
-    return (marks[s.id] || PRESENT) === filterCode;
+    return readingOf(record, s.id) === filterCode;
   });
 }
 
@@ -839,20 +1233,31 @@ function columnClasses(date, state, today, editing) {
   on a day nobody took would be the same picture, and the teacher would read a forgotten Tuesday as
   a Tuesday when everyone showed up.
 */
-function cellFor(student, date, state, code, editable) {
+function cellFor(student, date, state, cell, editable) {
+  const code = codeOf(cell) || PRESENT;
+  const at = timeOf(cell);
+  const note = noteOf(cell);
   let glyph = code;
   let tone = code;
   let said;
   if (state === DID_NOT_MEET) { glyph = '–'; tone = 'none'; said = 'the class did not meet'; }
   else if (state === NOT_TAKEN) { glyph = '?'; tone = 'untaken'; said = 'not taken yet'; }
-  else {
+  else if (code === UNCONFIRMED) {
+    /* The same glyph and the same amber as a day nobody has taken, because it means the same thing
+       about this student: nobody has looked at them yet. What tells the two apart is the column
+       around it — see the header. */
+    glyph = '?'; tone = 'untaken'; said = 'not confirmed yet';
+  } else {
     /* A code this app does not know can only arrive from a hand-edited or foreign document. It is
        shown as itself rather than dropped — the same harmless-failure posture src/roster.js takes
        over a roster id that names nobody — because silently rendering it as present would hide a
        mark the teacher can see in her backup file. */
-    const known = MARKS.filter((m) => m.code === code)[0];
-    said = known ? known.phrase : 'marked ' + code;
+    said = phraseFor(code);
   }
+  /* The time and the note go on the accessible name and the tooltip of every cell that carries
+     them, taken or locked: a past column is read-only, and "when was that tardy" is a question
+     about a past column more often than about today's. */
+  const carried = (at ? ' at ' + clockTime(at) : '') + (note ? ' — ' + note : '');
 
   const node = document.createElement(editable ? 'button' : 'span');
   node.className = 'attendance-cell attendance-cell-' + tone + (editable ? '' : ' locked');
@@ -860,18 +1265,38 @@ function cellFor(student, date, state, code, editable) {
   /* A one-glyph control with no accessible name is a control a screen reader reads as nothing at
      all — style guide §7. The name carries whose row and which day, because a hundred and fifty
      cells otherwise read as a hundred and fifty buttons called "P". */
-  const label = fullName(student) + ' — ' + spokenDate(date) + ': ' + said;
+  const label = fullName(student) + ' — ' + spokenDate(date) + ': ' + said + carried;
   if (editable) {
     node.type = 'button';
     node.setAttribute('data-attendance-cell', student.id);
     node.setAttribute('data-attendance-date', date);
-    const next = MARKS.filter((m) => m.code === CYCLE[(CYCLE.indexOf(code) + 1) % CYCLE.length])[0];
-    node.setAttribute('aria-label', label + '. Tap for ' + next.word.toLowerCase() + '.');
-    node.title = said.charAt(0).toUpperCase() + said.slice(1) + ' · tap for ' + next.word;
+    const next = wordFor(nextCode(state === NOT_TAKEN ? UNCONFIRMED : code));
+    node.setAttribute('aria-label', label + '. Tap for ' + next.toLowerCase() + '.');
+    node.title = said.charAt(0).toUpperCase() + said.slice(1) + carried + ' · tap for ' + next;
   } else {
     node.setAttribute('aria-label', label);
-    node.title = said;
+    node.title = said.charAt(0).toUpperCase() + said.slice(1) + carried;
   }
+  return node;
+}
+
+/*
+  THE TIME, WHERE THE MARK IS. A tardy cell says `8:14a` under its glyph, so that "how late was he"
+  is answered by looking at the grid rather than by running a report — which is the deliverable, in
+  its own words.
+
+  IT IS POSITIONED OUT OF FLOW (src/attendance.css) and that is the load-bearing decision rather
+  than a styling detail. A table row is as tall as its tallest cell, so a caption in normal flow
+  would add ~12px to EVERY row of a twenty-six-name grid the moment one student is marked tardy —
+  on the one screen in this app measured in seconds and thumb-travel. Out of flow it sits in the
+  padding the cell already has, and a class with three tardies in it is exactly as tall as a class
+  with none.
+*/
+function cellTime(at) {
+  const node = el('span', 'attendance-cell-time', compactTime(at));
+  /* The cell's own aria-label already carries the time in full, so this is decoration to a screen
+     reader and would otherwise be read out twice, as "8:14a" — which is not a time anybody says. */
+  node.setAttribute('aria-hidden', 'true');
   return node;
 }
 
@@ -885,14 +1310,18 @@ function cellFor(student, date, state, code, editable) {
     a past column    ✏ unlock it, or Done to close it again
   There is no third case, because there is no column after today.
 */
-function dayHead(date, state, today, editing) {
+function dayHead(date, state, today, editing, unconfirmed) {
   const th = el('th', 'attendance-day ' + columnClasses(date, state, today, editing));
   th.setAttribute('scope', 'col');
   th.setAttribute('data-attendance-col', date);
 
   th.append(el('span', 'attendance-day-dow', dayAbbr(date)));
   th.append(el('span', 'attendance-day-date', shortDate(date)));
-  th.append(el('span', 'attendance-day-state', stateChip(state)));
+  const chip = el('span', 'attendance-day-state', stateChip(state, unconfirmed));
+  /* The count is the alarm, so it is coloured like one rather than like the taken column it sits
+     on — the first of the three places a half-taken class has to be loud. */
+  if (state === TAKEN && unconfirmed) chip.classList.add('waiting');
+  th.append(chip);
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -952,16 +1381,19 @@ function paintColumn(date) {
   const state = stateOf(cls.id, date);
   const marks = marksOf(recordFor(cls.id, date));
   const editable = date === editDate() && state !== DID_NOT_MEET && writableDate(date);
+  const unconfirmed = countsFor(cls.id, date)[UNCONFIRMED];
 
   const th = head.querySelector('th[data-attendance-col="' + date + '"]');
-  if (th) th.replaceWith(dayHead(date, state, today, editing));
+  if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed));
 
   body.querySelectorAll('td[data-attendance-col="' + date + '"]').forEach((td) => {
     const student = findStudent(td.getAttribute('data-attendance-student'));
     if (!student) return;
     td.className = 'attendance-cell-td ' + columnClasses(date, state, today, editing);
     td.textContent = '';
-    td.append(cellFor(student, date, state, marks[student.id] || PRESENT, editable));
+    td.append(cellFor(student, date, state, marks[student.id], editable));
+    const at = state === TAKEN ? timeOf(marks[student.id]) : '';
+    if (at) td.append(cellTime(at));
   });
 }
 
@@ -1012,9 +1444,14 @@ function paintActions() {
   if (!stateEl || !actions || !note) return;
 
   const summary = cls ? stateSummary(cls.id, on)
-    : { state: NOT_TAKEN, text: 'No class is open', marked: 0 };
+    : { state: NOT_TAKEN, text: 'No class is open', marked: 0, unconfirmed: 0 };
   stateEl.textContent = summary.text;
-  stateEl.className = 'attendance-state ' + summary.state;
+  /* The caution palette while anybody is unconfirmed, on top of the state's own — a green "Taken"
+     over twelve students nobody has looked at is the silent failure WO-2.10's Traps line is about.
+     A modifier rather than a fourth state: stateOf() still has three answers, and this class is
+     genuinely taken. */
+  stateEl.className = 'attendance-state ' + summary.state
+    + (summary.unconfirmed ? ' unconfirmed' : '');
 
   actions.textContent = '';
   note.textContent = '';
@@ -1029,12 +1466,36 @@ function paintActions() {
     return;
   }
 
-  const record = recordFor(cls.id, on);
-  const marked = Object.keys(marksOf(record)).length;
-  if (summary.state === TAKEN && marked === 0) {
+  /* The rule in words, on the screen, whenever it is doing something. "They count as absent" is the
+     part a teacher cannot infer from a question mark, and it is the whole reason the count above is
+     not decoration. */
+  if (summary.unconfirmed) {
+    const one = summary.unconfirmed === 1;
+    note.textContent = summary.unconfirmed + (one ? ' student has' : ' students have')
+      + ' no mark yet, and ' + (one ? 'counts' : 'count')
+      + ' as absent until you confirm them. Tap a question mark once for present.';
+    note.classList.remove('hidden');
+  }
+
+  /*
+    THE ACTION ROW, AND THE FIVE STATES IT ANSWERS. Three controls at most, because this row is read
+    standing up with a class walking in, and the fourth button is the one that gets mis-tapped.
+
+      not taken            [Everyone’s here] · [Didn’t meet]
+      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]
+      taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]
+      taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]
+      taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]
+
+    The way back differs by row on purpose. With nothing real on the record the honest undo is to
+    REMOVE it — that leaves the day not taken yet, which is what it was — and with marks on it the
+    record must survive, so the reset puts every student back to `?` instead and says how many marks
+    that costs. Neither one can destroy a mark by being tapped twice: the first is not offered once
+    there is a mark to lose, and the second states the cost in its own title.
+  */
+  if (summary.state === TAKEN && summary.unconfirmed === 0 && summary.marked === 0) {
     /* The same control that took the class, now pressed, now meaning "actually, I have not taken
-       this". Offered only here — with a mark on the record it is not offered at all, because
-       nothing on this screen may destroy a mark by being tapped a second time. */
+       this". */
     const undo = actionButton('✓ Everyone’s here', 'data-attendance-untake', on);
     /* Its own class rather than a variant of `.class-action-btn`: shell.css owns that name and its
        variants, and src/shell.css's header sets the rule that two stylesheets never style one
@@ -1044,17 +1505,34 @@ function paintActions() {
     undo.setAttribute('aria-pressed', 'true');
     undo.title = 'Taken, with everyone present. Tap to take that back.';
     actions.append(undo);
-  } else if (summary.state === NOT_TAKEN) {
+  } else if (summary.state === NOT_TAKEN || summary.unconfirmed) {
     const take = actionButton('Everyone’s here', 'data-attendance-take', on, 'primary');
     take.setAttribute('aria-pressed', 'false');
-    take.title = 'Record this class as met, with nobody absent.';
+    take.title = summary.unconfirmed
+      ? 'Mark the ' + summary.unconfirmed + ' student'
+        + (summary.unconfirmed === 1 ? '' : 's') + ' you have not reached as present.'
+      : 'Record this class as met, with nobody absent.';
     actions.append(take);
   }
 
+  if (summary.state === TAKEN && summary.marked === 0 && summary.unconfirmed) {
+    const notYet = actionButton('Not taken yet', 'data-attendance-untake', on);
+    notYet.title = 'Take this class back to not taken yet. Nothing is marked on it, so nothing is '
+      + 'lost.';
+    actions.append(notYet);
+  } else if (summary.state === TAKEN && seedIds(cls).length) {
+    const reset = actionButton('Un-confirm everyone', 'data-attendance-unconfirm-all', on);
+    reset.title = summary.marked
+      ? 'Put every student back to a question mark. The ' + summary.marked
+        + (summary.marked === 1 ? ' mark' : ' marks') + ' on this day will be cleared.'
+      : 'Put every student back to a question mark, ready to take again.';
+    actions.append(reset);
+  }
+
   const drop = actionButton('Didn’t meet', 'data-attendance-drop', on, 'archive');
-  drop.title = marked
-    ? 'Record that this class did not meet. The ' + marked
-      + (marked === 1 ? ' mark' : ' marks') + ' on it will be cleared.'
+  drop.title = summary.marked
+    ? 'Record that this class did not meet. The ' + summary.marked
+      + (summary.marked === 1 ? ' mark' : ' marks') + ' on it will be cleared.'
     : 'Record that this class did not meet.';
   actions.append(drop);
 }
@@ -1156,6 +1634,10 @@ function renderRows() {
       editing: date === on && date !== today,
       editable: date === on && state !== DID_NOT_MEET && writableDate(date) };
   });
+  /* Whether the day being edited is on screen at all. Paged two weeks back it is not — every column
+     is read-only there — and a ⋯ that opened a panel about a date behind the teacher would be the
+     only control on this screen that acted on a day she could not see. */
+  const editableToday = perColumn.some((col) => col.editable);
 
   students.forEach((student) => {
     const row = el('tr');
@@ -1171,6 +1653,11 @@ function renderRows() {
     const avatar = el('div', 'avatar ' + avatarClass(student.id), initials(rosterName(student)));
     avatar.setAttribute('aria-hidden', 'true');
     cell.append(avatar, el('span', 'attendance-student-name', rosterName(student)));
+    /* The way into the row's own detail — the time, the note and the un-confirm. Drawn on every row
+       whenever the edit column accepts edits, rather than only on rows that have something in it:
+       a control that appears and disappears as marks are made is a control that moves the target
+       under a thumb aiming at the row below it. */
+    if (editableToday) cell.append(detailButton(student));
     name.append(cell);
     /* The whole name stays reachable on `title`, the same arrangement a class card makes. */
     name.title = rosterName(student);
@@ -1181,12 +1668,112 @@ function renderRows() {
         + columnClasses(col.date, col.state, today, col.editing));
       td.setAttribute('data-attendance-col', col.date);
       td.setAttribute('data-attendance-student', student.id);
-      td.append(cellFor(student, col.date, col.state,
-        col.marks[student.id] || PRESENT, col.editable));
+      td.append(cellFor(student, col.date, col.state, col.marks[student.id], col.editable));
+      const at = col.state === TAKEN ? timeOf(col.marks[student.id]) : '';
+      if (at) td.append(cellTime(at));
       row.append(td);
     });
     body.append(row);
   });
+
+  /* The open panel goes back where it was. Rows are rebuilt by search, filter and sort, and a
+     detail that survived only in a variable would be a panel the teacher watched vanish. If the
+     student it belongs to has been filtered off the screen it closes, because a panel with no row
+     above it belongs to nobody. */
+  paintDetail();
+}
+
+/* The ⋯ at the end of a name. Its pressed state is the panel below it, which is why it is a toggle
+   with `aria-pressed` rather than a link into something. */
+function detailButton(student) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'attendance-detail-btn' + (detailFor === student.id ? ' active' : '');
+  btn.setAttribute('data-attendance-detail', student.id);
+  btn.setAttribute('aria-pressed', detailFor === student.id ? 'true' : 'false');
+  btn.setAttribute('aria-label', (detailFor === student.id ? 'Hide' : 'Show') + ' the mark details '
+    + 'for ' + fullName(student) + ' on ' + spokenDate(editDate()));
+  btn.title = 'Time, note and un-confirm';
+  btn.textContent = '⋯';
+  return btn;
+}
+
+/*
+  THE ROW'S DETAIL PANEL, as a <tr> under the row it belongs to. One at a time.
+
+  It is a row rather than an overlay because "reachable without leaving the row" is the deliverable,
+  and because a dialog on this screen would be the second screen the whole registry design refuses.
+  It spans the whole table, so the note field gets the width a sentence needs even at 390px, where
+  the cell it describes is 44px wide.
+
+  WHAT IT OFFERS DEPENDS ON WHAT THE CELL HOLDS, and the note field is the case worth naming: a note
+  needs a mark to live on, and a present student HAS no entry — writing one would be the stored-`P`
+  trap arriving through a text field. So a confirmed-present student gets the un-confirm and nothing
+  else, and the panel says why rather than showing a field that would silently discard what was
+  typed into it.
+*/
+function paintDetail() {
+  const body = document.getElementById(BODY_ID);
+  if (!body) return;
+  const existing = body.querySelector('tr[data-attendance-detail-row]');
+  if (existing) existing.remove();
+
+  const cls = openClass();
+  if (!detailFor || !cls) return;
+  const row = body.querySelector('tr[data-attendance-row="' + detailFor + '"]');
+  const student = findStudent(detailFor);
+  if (!row || !student) { detailFor = ''; return; }
+
+  const on = editDate();
+  const record = recordFor(cls.id, on);
+  const state = stateOf(cls.id, on);
+  if (state === DID_NOT_MEET || !writableDate(on)) { detailFor = ''; return; }
+  const entry = marksOf(record)[detailFor];
+  const code = readingOf(record, detailFor);
+  const at = timeOf(entry);
+
+  const tr = el('tr', 'attendance-detail-row');
+  tr.setAttribute('data-attendance-detail-row', detailFor);
+  const td = el('td');
+  /* The name column plus one per day. Read off the row above rather than counted here, so a
+     narrower viewport that drew three columns cannot leave this cell short. */
+  td.colSpan = row.children.length;
+  const box = el('div', 'attendance-detail');
+
+  box.append(el('span', 'attendance-detail-who',
+    fullName(student) + ' — ' + spokenDate(on)));
+  const says = el('span', 'attendance-detail-mark',
+    wordFor(code) + (at ? ' at ' + clockTime(at) : ''));
+  says.classList.add('attendance-cell-' + (code === UNCONFIRMED ? 'untaken' : code));
+  box.append(says);
+
+  if (entry && code !== UNCONFIRMED) {
+    const field = document.createElement('input');
+    field.type = 'text';
+    field.className = 'attendance-detail-note';
+    field.setAttribute('data-attendance-note', detailFor);
+    field.setAttribute('data-attendance-note-date', on);
+    field.value = noteOf(entry);
+    field.placeholder = 'Add a note — missed the bus, left for the nurse…';
+    field.setAttribute('aria-label', 'Note on ' + fullName(student) + '’s mark for '
+      + spokenDate(on));
+    box.append(field);
+  } else {
+    box.append(el('span', 'attendance-detail-hint', code === UNCONFIRMED
+      ? 'Nobody has confirmed this student yet. Tap their question mark once for present.'
+      : 'Present is stored as no mark at all, so there is nothing here to note. Mark them absent, '
+        + 'tardy, at an event or dismissed and the note field appears.'));
+  }
+
+  if (record && code !== UNCONFIRMED) {
+    const back = actionButton('Un-confirm', 'data-attendance-unconfirm', detailFor);
+    back.title = 'Put this student back to a question mark, as if nobody had looked at them yet.';
+    box.append(back);
+  }
+
+  td.append(box);
+  tr.append(td);
+  row.after(tr);
 }
 
 /* The whole screen, from the open document. Called at open and after anything that changes what
@@ -1222,7 +1809,7 @@ export function renderAttendance() {
       row.append(corner);
       const on = editDate();
       columns.forEach((date) => row.append(dayHead(date, stateOf(cls.id, date), today,
-        date === on && date !== today)));
+        date === on && date !== today, countsFor(cls.id, date)[UNCONFIRMED])));
       head.append(row);
     }
   }
@@ -1251,6 +1838,7 @@ export function resetRegistry() {
   searchText = '';
   filterCode = 'all';
   sortBy = 'last';
+  detailFor = '';
   const search = document.getElementById(SEARCH_ID);
   if (search) search.value = '';
 }

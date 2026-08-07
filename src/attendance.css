@@ -52,7 +52,8 @@
 /* One grouped selector for this sheet's tappable classes, the way shell.css has one for the app
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
-.attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on {
+.attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on,
+.attendance-detail-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -120,6 +121,10 @@
 }
 .attendance-body .attendance-state.taken { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
 .attendance-body .attendance-state.not-taken { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
+/* Started and not finished (WO-2.10) — the caution wash over the taken one, on source order, for
+   the reason src/home.css gives at the same rule on the card: a class holding `U`s is a meeting
+   with an absence for every student nobody reached, and it must not read as done. */
+.attendance-body .attendance-state.unconfirmed { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
 /* Dashed, for the reason given in the header: this is the "set aside" grammar the class manager
    already uses, and it is the half of the distinction that survives being read at arm's length. */
 .attendance-body .attendance-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
@@ -233,6 +238,49 @@
    keeps its full text on the cell's `title`. */
 .attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
 
+/* ── THE ⋯ AT THE END OF A NAME, AND THE PANEL IT OPENS (WO-2.10) ── */
+/* The way into one student's mark on the day being edited: the time it settled, a note, and the
+   un-confirm. `margin-left: auto` pushes it to the far edge of the name cell, so it is nowhere near
+   the first day column and a thumb aiming at today's cell cannot catch it. Quiet until it is
+   hovered or open, because on a full grid there are twenty-six of them and none of them is the
+   thing the teacher came to this screen to tap. */
+.attendance-detail-btn {
+  flex: 0 0 auto; margin-left: auto;
+  padding: 2px 6px; border-radius: 6px; line-height: 1;
+  border: 1.5px solid transparent; background: transparent; color: #a0aab8;
+  font-size: 13px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all 0.15s;
+}
+.attendance-detail-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.attendance-detail-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+
+/* The panel, as a row of the table spanning every column: at 390px the cell it describes is 44px
+   wide and a note is a sentence, so the width has to come from the table rather than from the
+   column. Indigo, like the "not on today" band and for the same reason — this is a state the
+   teacher CHOSE, not one that needs acting on. */
+.attendance-detail-row > td { padding: 0 0 10px; }
+.attendance-detail {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; background: #eef2ff;
+}
+.attendance-detail-who { font-size: 12px; font-weight: 700; color: #3a4a8a; }
+/* The mark itself, in words, wearing the cell's own palette — the same fill and edge the circle in
+   the grid has, so the panel and the cell read as one thing. The classes come from the same
+   `.attendance-cell-*` family and are worn as-is. */
+.attendance-detail-mark {
+  padding: 3px 9px; border-radius: 999px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 11px; font-weight: 800; white-space: nowrap;
+}
+.attendance-detail-note {
+  flex: 1 1 220px; min-width: 0;
+  padding: 7px 10px; border-radius: 6px;
+  border: 1.5px solid #b0bcf0; background: #fff;
+  font-size: 12px; font-family: inherit; color: #1a1a2e;
+}
+.attendance-detail-note:focus { border-color: #5b6fcc; }
+.attendance-detail-hint { flex: 1 1 220px; font-size: 11px; line-height: 1.5; color: #5a6a9a; }
+
 /* ── ONE COLUMN HEAD ── */
 /* Roll Call!'s `thead th.day-th`: `text-align: center; min-width: 72px`. A MINIMUM, not a width —
    the column grows into whatever the table has spare, which is the half we had wrong. Ours was a
@@ -274,7 +322,22 @@
    #f3f4f6 line per row instead of one per cell, which is why its rows read as rows. */
 .attendance-grid tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
 .attendance-grid tbody tr:hover { background: #fafbfc; }
-.attendance-cell-td { padding: 9px 10px; text-align: center; vertical-align: middle; }
+/* The detail row belongs to the row above it, so it takes neither the rule nor the hover — two
+   lines under one student would read as two students. */
+.attendance-grid tbody tr.attendance-detail-row { border-bottom: 0; }
+.attendance-grid tbody tr.attendance-detail-row:hover { background: transparent; }
+/* `position: relative` is here for the time caption below, which is positioned OUT OF FLOW on
+   purpose: a table row is as tall as its tallest cell, so a caption in normal flow would add ~12px
+   to every one of twenty-six rows the moment a single student is marked tardy. */
+.attendance-cell-td { padding: 9px 10px; text-align: center; vertical-align: middle; position: relative; }
+/* The moment a `T` or a `D` settled, under the glyph it belongs to (WO-2.10). It sits in the
+   padding the cell already has, so a class with three tardies in it is exactly as tall as a class
+   with none. Tabular numerals because six of these down a column should line up. */
+.attendance-cell-time {
+  position: absolute; left: 0; right: 0; bottom: 1px;
+  font-size: 9px; font-weight: 700; line-height: 1; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
 .attendance-cell {
   display: inline-flex; align-items: center; justify-content: center;
   width: 34px; height: 34px; padding: 0; border-radius: 50%;
@@ -314,6 +377,10 @@
 .attendance-col-taken .attendance-day-state { color: #27ae60; }
 .attendance-col-not-taken .attendance-day-state { color: #8a6d1a; }
 .attendance-col-dropped .attendance-day-state { color: #a0aab8; font-style: italic; }
+/* "12 to go" over a column being taken: the count wears the caution colour rather than the taken
+   green it sits on, because it is the alarm rather than the state. Declared after the three above
+   so it wins on source order inside the taken column (WO-2.10). */
+.attendance-day-state.waiting { color: #8a6d1a; }
 /* Today: a pale rail down each side and an indigo date. Where you are, not something you chose. */
 .attendance-col-today { box-shadow: inset 1px 0 0 #e0e4ea, inset -1px 0 0 #e0e4ea; }
 .attendance-col-today .attendance-day-date { color: #5b6fcc; }
@@ -329,7 +396,22 @@
    one. The cells are the reason this block exists: they are one glyph wide, so they need min-width
    as much as min-height, and the column has to widen with them or the row spills. */
 @media (pointer: coarse) {
-  .attendance-panel { width: 720px; }
+  /* THE 720px CAP LIVED HERE TOO, AND THAT IS WHY LIFTING IT DID NOT REACH THE IPAD. The block at
+     the top of this file records the owner overruling the cap on 2026-08-06; the base rule was
+     changed and this one was not, so the fix landed on the laptop — a fine pointer, which never
+     reads this block — and every touch device kept the dialog width. The screen it was overruled
+     FOR is the only screen that never got it.
+
+     The visible cost was the WO-2.10 detail panel: at 720px the grid's own columns want 711px
+     inside 680px of body, the wrap's `overflow-x` safety valve engages, and the note field sits
+     16px past the right edge in both orientations — identically, because a fixed panel width makes
+     the geometry the same whichever way the iPad is held. Rotating to landscape left 288px of
+     screen unused and changed nothing, which is what the report described.
+
+     Two rules matter here and they are not interchangeable: this one gives landscape the room
+     outright, and `.attendance-name`'s cap below is what clears portrait, where even the full
+     screen is 8px short. Removing either one puts the note back under the edge. */
+  .attendance-panel { width: 100%; }
   .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
   .attendance-banner-text { flex-basis: 200px; }
   /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
@@ -338,6 +420,23 @@
   .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
   .attendance-toggle-on { min-height: 44px; min-width: 44px; }
+  /* The row's ⋯ and everything inside the panel it opens (WO-2.10). Three of the five are touch
+     targets and take the floor; the two that are text — the name line and the mark chip — are named
+     here anyway so that a reader of this block can see that they were considered rather than
+     missed, which is the call `.attendance-student-cell` makes twenty lines above for the same
+     reason. The "Un-confirm" button inside the panel is a `.class-action-btn` and takes its 44px
+     from shell.css's own coarse rule for that component. */
+  .attendance-detail-btn { min-height: 44px; min-width: 44px; font-size: 15px; padding: 2px 8px; }
+  /* The panel's row is a table row and not a target — what takes a thumb is the field and the
+     button inside it, both named below. It is in this block for its spacing: the gap that separates
+     the panel from the next student grows with everything else here, and a rule missing from the
+     coarse block is a rule the next reader has to go and prove was considered. */
+  .attendance-detail-row > td { padding-bottom: 12px; }
+  .attendance-detail { gap: 10px; padding: 12px 14px; }
+  .attendance-detail-who { font-size: 13px; }
+  .attendance-detail-mark { font-size: 12px; padding: 4px 10px; }
+  .attendance-detail-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  .attendance-detail-hint { font-size: 12px; }
   .attendance-body .attendance-note { font-size: 13px; }
   .attendance-body .attendance-hint { font-size: 12px; }
   .attendance-body .attendance-empty { font-size: 14px; }
@@ -352,9 +451,33 @@
   .attendance-grid { font-variant-numeric: tabular-nums; }
   .attendance-corner { font-size: 11px; }
   .attendance-name { font-size: 14px; padding: 4px 8px 4px 2px; }
+  /* THE NAME COLUMN MAY NOT DEMAND MORE THAN THE SIX COLUMNS LEAVE. This cell is `nowrap`, so its
+     min-content is the whole name laid out flat — 279px for "Delacroix-Nguyen, Xiomara" — and a
+     table cell's min-content is a floor the browser will widen the TABLE to honour. Six day columns
+     at 72px are 432px, an iPad portrait leaves 688px of body, and 688 - 432 = 256: past that the
+     grid stops fitting its wrap and the wrap starts clipping, which is how the note field ended up
+     under the right edge.
+
+     The cap does not truncate anything on its own — it releases the floor. The column still takes
+     whatever the table has spare (512px in landscape, where there is room), and it only gives way
+     where something else needs the pixels. The ellipsis and the full name on the row's `title` were
+     already built for this moment in `.attendance-student-name` above; nothing before this rule
+     ever made them engage.
+
+     Any value from 200 to 256 measures identically, because what matters is that a cap EXISTS.
+     256 is the arithmetic above and truncates the least, so it is the one written down. */
+  .attendance-name { max-width: 256px; }
   /* 54px of column for a 44px cell and 5px either side: the mis-tap this spacing is bought against
      is marking the wrong student absent on the wrong day, which is a phone call home about a child
-     who was in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css. */
+     who was in the room. Same reasoning as `.roster-row-actions`' 8px in shell.css.
+
+     THE COLUMN IS NOT 54px WIDE, AND THIS RULE IS NOT WHY. The base `.attendance-day` carries
+     `min-width: 72px` — lifted from Roll Call!'s `thead th.day-th` and deliberate — and a minimum
+     beats a width, so the rendered column is 72px. The body cell independently needs 60px (a 44px
+     circle inside `.attendance-cell-td`'s 8px sides), so nothing here is starved; what is wrong is
+     only the reading. Left as it stands because 72px is the value that was chosen on purpose and
+     narrowing the column is not what the 2026-08-06 report asked for — but do the arithmetic with
+     72, not 54. Doing it with 54 is what produced the tablet block's confident wrong sum below. */
   .attendance-day { width: 54px; padding: 6px 3px; }
   .attendance-day-dow { font-size: 10px; }
   .attendance-day-date { font-size: 13px; }
@@ -362,6 +485,9 @@
   .attendance-day-btn { min-height: 44px; min-width: 44px; font-size: 15px; padding: 2px; }
   .attendance-cell-td { padding: 9px 8px; }
   .attendance-cell { width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 15px; }
+  /* One point larger, and still out of flow: the caption has to be readable at arm's length on the
+     device that gets stood in front of a class, and the 44px circle above it must not move. */
+  .attendance-cell-time { font-size: 10px; bottom: 0; }
   /* Every tone one step louder, because a touch device is the one that gets held at arm's length
      and stood in front of a class. A 1.5px edge that reads fine on a laptop 50cm away is the edge
      that stops carrying the difference between an absence and an event across a room. */
@@ -377,11 +503,16 @@
   .attendance-col-editing { box-shadow: inset 3px 0 0 #5b6fcc, inset -3px 0 0 #5b6fcc; }
 }
 
-/* The tablet. The panel is deliberately NOT widened to 95vw here, which is what every other dialog
-   in the suite does at this breakpoint: 95vw of an iPad in landscape is 970px against 324px of
-   columns, and the 640px left over is empty floor between a name and the cell on its row. The
-   720px above already fits six columns and a long name on both orientations, so the rule this
-   block needs is the one about the toolbar, not the one about width. */
+/* The tablet. There is no width rule here and there does not need to be one: the coarse block above
+   already gives this screen the full width of `.main`, which is the same answer 95vw was reaching
+   for at this breakpoint and arrives without a second number to keep in step.
+
+   This comment used to argue the opposite — that 720px "already fits six columns and a long name on
+   both orientations". It did not. Six columns are 432px rather than the 324px claimed (the day
+   column's floor is the base `min-width: 72px`, not the 54px the coarse block asks for), and a long
+   name is 279px, so the grid wanted 711px of a 680px body and clipped the WO-2.10 note panel on
+   every iPad in both orientations. The arithmetic was wrong in the direction that made the cap look
+   safe, which is the kind of wrong that survives review. */
 @media (max-width: 1024px) {
   .attendance-sort { margin-left: 0; }
 }

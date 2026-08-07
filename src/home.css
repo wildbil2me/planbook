@@ -125,6 +125,13 @@
 /* Dashed and quiet: the "set aside" grammar `.class-row.archived` uses in shell.css, and the
    half of taken-vs-dropped-vs-untaken that survives being read from across a desk. */
 .class-card-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
+/* A class that has been STARTED and not finished (WO-2.10): taken, so a meeting exists, but holding
+   a `U` for every student the teacher never reached — and every one of those counts as an absence.
+   It takes the caution wash rather than the taken one, deliberately overriding the rule above it on
+   source order, because "act on this" is what an unfinished class is and a green line over twelve
+   unconfirmed students is the silent failure that work order's Traps line is about. Same three
+   colours as `.not-taken` and as src/attendance.css's amber: this is the same alarm, not a fourth. */
+.class-card-state.unconfirmed { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
 
 /*
   THE SLOT THAT IS STILL RESERVED, and `min-height` is the entire point of the rule.
