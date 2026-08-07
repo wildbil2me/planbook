@@ -409,9 +409,12 @@ order is still M and still carries the Traps section below.
   Planbook half of Roll Call!'s report modal — its `Student Report` carries a **Hall Pass History**
   table (`src/dashboard.html` ~4718: date, type, out, back, minutes, note) and its `Hall Pass
   Summary` tab is the per-class view (~4803). Both are worth reading before designing this.
-- Presentation-mode safe: the history view names students, so it obeys
-  [`../../src/supports.js`](../../src/supports.js)'s answer like every other surface. *(The banner's
-  own answer is WO-2.11's, and it ships with the banner rather than after it.)*
+- Presentation-mode safe, **and this view is the one that most needs it**: presentation mode is a
+  parent-teacher-night tool, and a pass history is exactly what gets read beside a guardian. It
+  obeys [`../../src/supports.js`](../../src/supports.js) like every other surface that names anyone.
+  *(WO-2.11's banner deliberately does not — see the decision recorded there. That decision rests on
+  passes and presentation mode never overlapping, which is true of a live class and **not** true of
+  this view.)*
 
 **Acceptance**
 - [ ] Elapsed time is correct after the app has been backgrounded for ten minutes. 👤 *(See Traps.)*
@@ -634,17 +637,45 @@ iOS-suspend trap that WO-2.9's Traps section exists for, and cancel does not nee
   nothing to `passes`**.
 - **`Return` on the card too**, as Roll Call! has it, so the banner is a complete surface rather
   than a place where half the actions live. The cell keeps its own Return; both call the same writer.
+- **An `Add note…` field on the card**, as Roll Call! has it, and **`note` added to the pass
+  record** — optional, absent where unused, the same shape rule the mark cell's `note` follows. It
+  is typed while the student is out and **carried through `closePass()` into the `passes` entry**,
+  which is what makes it worth anything: WO-2.9's history view renders it (Roll Call!'s
+  `.sr-pass-note`), and a note that died on return would render nowhere.
+  **Add the field now rather than in WO-2.9.** It is one optional string, and the alternative is
+  retrofitting it onto pass records already written during a live term. No migration is needed —
+  absent is a legal value — but [`../../docs/data-model.md`](../../docs/data-model.md) records it
+  with the two collections.
 - **A `cancelPass()` in the model**, beside `closePass()` and deliberately not a variant of it —
   cancel is not a close with a flag. `closePass()` writes history; this one is the only writer that
   removes an open pass without leaving a record, and it says so at the definition.
-- **Presentation-mode safe**, and this is not the standing-obligation boilerplate: **a projected
-  banner names the students who left the room**, which is a disclosure to everyone facing the wall.
-  It asks [`../../src/supports.js`](../../src/supports.js) like every other surface that names
-  anyone. WO-2.8 got to skip this because nothing it drew put a name anywhere a name was not
-  already; the banner does not get to skip it.
+- **The banner is scoped to the class on screen** — `openPassesFor(doc, classId)`, not
+  `openPassesIn(doc)`. Both exist in the model and this is the deliberate choice between them,
+  made by the owner on 2026-08-07: passes are issued for one room at a time, and a banner carrying
+  another period's students is noise on the screen you are standing in front of. A pass left open
+  in an earlier class is **not** invisible — its own row keeps its Return button and its time out in
+  that class's grid, which is the surface the owner confirmed on the iPad reads as a reminder. The
+  cross-class case, if it ever wants one, belongs to WO-2.9's overdue alerts.
 - **44px under `(pointer: coarse)`**, per the standing obligation.
 
-**Out of scope** — the elapsed clock, the two overdue alerts, and the pass history view, all of
+**Presentation mode is deliberately NOT handled here**, and the reasoning is recorded because the
+card is exactly the shape of thing a later session will flag. The card names a student beside a
+coloured type chip reading `Bathroom` / `Nurse` / `Quick` (confirmed from a screenshot of Roll Call!
+running, 2026-08-07), and `Nurse` beside a named child on a projected wall is health-adjacent
+information of the kind [`../../CLAUDE.md`](../../CLAUDE.md) puts in the never-disclose set.
+
+**The owner's call, 2026-08-07, and the argument for it:** presentation mode is a parent-teacher
+night tool — reviewing a student's record with a guardian, not running a live class. Passes are
+issued during class. The two do not overlap, so there is no card on the wall to hide.
+
+**The residual case, named rather than hidden:** nothing expires a stale pass (WO-2.8, deliberately
+— inventing a return time is the same sin as inventing a tardy's `at`). A pass forgotten in period 7
+is still open at a 6pm conference. If the banner is ever drawn on a projector, that is how. The fix
+if it happens is three lines, because the card only has to ask
+[`../../src/supports.js`](../../src/supports.js) like every other surface — the work is knowing to,
+which is what this paragraph is for.
+**Out of scope** — presentation-mode handling for the card, per the decision recorded above. The
+elapsed clock, the two overdue alerts, and the pass history view, all of
 which stay in WO-2.9 and are why that work order still exists. Cancelling a pass that has already
 been returned: that entry is history, the append-only rule protects it, and correcting it is a job
 for the history view. An undo for the `D` coupling's dismissal-close, which has its own retraction.
@@ -657,9 +688,12 @@ for the history view. An undo for the `D` coupling's dismissal-close, which has 
 - [ ] Cancelling creates no attendance record and changes no attendance mark — the same silence
       WO-2.8's acceptance line 6 measures.
 - [ ] A pass returned normally still writes exactly one entry. Cancel does not weaken Return.
-- [ ] The banner shows one card per open pass and disappears entirely when none are open. Returning
-      or cancelling from the **card** updates the row's cell, and from the **cell** updates the card.
-- [ ] The banner names nobody in presentation mode.
+- [ ] A note typed on the card survives the Return and is on the entry in `passes`. A pass with no
+      note carries no `note` key at all.
+- [ ] A note on a **cancelled** pass goes wherever the pass goes — nowhere.
+- [ ] The banner shows one card per open pass **in the class on screen**, and disappears entirely
+      when that class has none — including when another class still does. Returning or cancelling
+      from the **card** updates the row's cell, and from the **cell** updates the card.
 - [ ] The banner costs the registry no day columns — it is above the grid, not beside it. The
       portrait width budget is already tight and WO-2.12 is spending it.
 
