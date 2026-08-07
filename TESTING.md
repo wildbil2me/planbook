@@ -112,19 +112,30 @@ tied to a phase; run them over the screens that exist when you run the pass.
       phase appears in the `@media (pointer: coarse)` block. 👤
 - [x] Every `planbook_` key holds a UI preference and nothing else. No student data in
       `localStorage`. *(WO-1.2 declares no keys at all; `src/prefs.js` refuses undeclared ones.)*
-- [ ] No merge field, log line, print surface, or export emits accommodation, medical, or plan
+- [x] No merge field, log line, print surface, or export emits accommodation, medical, or plan
       data. The JSON backup is the only exception, and its own UI says so.
 - [x] Presentation mode, once it exists, suppresses every `supports` field on every screen built
       since the last pass — including any screen added by this phase.
-- [ ] `late` and `missing` are teacher-marked, never inferred from a date. Blank is ungraded and
+- [x] `late` and `missing` are teacher-marked, never inferred from a date. Blank is ungraded and
       changes no grade.
-- [ ] Roll Call! is still deployed and still working. It is the fallback until Planbook has
+- [x] Roll Call! is still deployed and still working. It is the fallback until Planbook has
       survived a full term.
 
 *2026-08-04: the first four ran green against WO-1.1 + WO-1.2. The next three have no surface yet —
 no merge fields, no presentation mode, no grades exist — so they are left unticked rather than
 ticked vacuously; a tick should mean something was exercised. The Roll Call! line is the owner's to
 confirm.*
+
+*2026-08-06, after WO-2.10: the last three are ticked, and the basis differs by line — the note
+above asked for that to be said out loud rather than left to a checkbox.* **Sensitive data out of
+merge fields, logs, prints and exports** rests on `wo-sweep.mjs`'s standing sensitive-field-name
+sweep (172 mentions read, none of them an emitter) plus the resolver refusing those paths by
+construction; the backup remains the one exception and its own UI says so. **`late`/`missing` never
+inferred from a date** rests on `wo-sweep.mjs`'s grep, which passes — and it is worth being plain
+that **there is still no grading surface to exercise it against**, so this one is a claim that no
+code violates the rule, not that a teacher marked a grade and watched it hold. Phase 3 is where it
+becomes a real check. **Roll Call! still deployed** is the owner's confirmation, given 2026-08-06.
+These are standing checks: ticking them closes this pass, not the obligation.
 
 *2026-08-04, re-run for WO-1.4: the touch-target line carries a 👤 and is re-run per phase because
 it is the check WO-1.2 passed while shipping `.search-box { min-height: 44px }` around a 19px
@@ -575,6 +586,8 @@ proved nothing here, and it will go vacuous for every per-screen stylesheet from
 - [x] 👤 On an installed iPad: every file lands in Files, and the run is not silently truncated to
       the first year by Safari's download handling. **Failed on the first (sequential-download)
       build, real hardware, 2026-08-05; passed on the zip rebuild the same day — see retest below.**
+      *(The one line still open here — every file landing in Files across all years — was closed by
+      the owner in the 2026-08-06 block confirmation.)*
 
 *Desk pass 2026-08-05: `verify-shell.mjs` **224 of 224, 0 skipped**, up from 209 at WO-1.10 — 15 new
 checks. Files read back off disk, not asked of the page: three years produce three files with
@@ -622,7 +635,7 @@ before, run against the new mechanism:*
 - [x] Drop one of those into Planbook's restore. It reaches the "Replace `<year>`" confirm
       (cancel is fine — this checks restore accepts it, not that you want to replace anything).
 - [x] Confirm the backup nag is down for every year, not just the one on screen.
-- [ ] Largest-real-dataset run — **not exercised this sitting**; the device did not yet hold more
+- [x] Largest-real-dataset run — **not exercised this sitting**; the device did not yet hold more
       than a small amount of data. The in-memory build size risk (`src/backup.js`, `src/zip.js`
       decision records) stays a thing to watch as real classroom data accumulates over the term,
       not a gate WO-1.11 needed to clear before shipping.
@@ -686,21 +699,27 @@ screen. The first two belong to the sitting below; the third is a taste call for
 
 **The 👤 iPad sitting WO-1.13 owes**, on the installed home-screen app:
 
-- [ ] Open the app, tap a class card, and confirm the class's screen replaces the grid with no
+- [x] Open the app, tap a class card, and confirm the class's screen replaces the grid with no
       dialog and no overlay — then find your way back **without being told how**. 👤
-- [ ] Do the same from the header's class row, with six classes on it, in portrait: the row scrolls,
+- [x] Do the same from the header's class row, with six classes on it, in portrait: the row scrolls,
       so check that "All classes" is still reachable and that the second door in the panel header is
       where you look for it. 👤
 - [x] On the grid, look at the header's bottom row with a teacher's eye rather than a reader's: it
       carries no class tabs there, only the words "Your classes" beside the term nav. Does it read as
       a caption, or does it read as a strip that failed to load? That is the one call in this work
       order a harness measured (63×16px, inside its strip) and cannot answer. 👤
-- [ ] Force-quit and relaunch while a class is open. It comes back on that class's screen. 👤
-- [ ] The page scrolls as one surface now that the grid is not in an overlay — a flick down a
+- [x] Force-quit and relaunch while a class is open. It comes back on that class's screen. 👤
+- [x] The page scrolls as one surface now that the grid is not in an overlay — a flick down a
       26-name list does not get handed between two scrollers, and the header scrolls away as
       expected. 👤
-- [ ] VoiceOver: leaving the class view announces the class grid, and nothing announces a dialog
+- [x] VoiceOver: leaving the class view announces the class grid, and nothing announces a dialog
       that never closes. 👤
+
+*The remaining 👤 lines in this section were closed by the owner on 2026-08-06, in the same block
+confirmation that closed WO-2.1's and WO-2.10's — "everything can get ticked", given after the
+note-panel fix was confirmed on the device. Recorded as one attestation rather than as separate
+sittings because that is what it was; if one of these is later found wrong, this is the thread to
+pull.*
 
 ---
 
@@ -832,27 +851,27 @@ desk pass could not reach.
 
 - [x] **Six columns and twenty-six names, in the orientation you actually hold the iPad.** No
       sideways swipe, and the leftmost column is today. This is acceptance line 2. 👤
-- [ ] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
+- [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the class's card. Acceptance line 6, and the only one that decides whether the flow
       survives contact with a period starting. *(The card's state line was the tap until WO-1.13
       made the whole card one control; the clock starts on the same gesture either way.)* 👤
-- [ ] Unlock a past column and look at the screen **from where you stand at the front of the room**.
+- [x] Unlock a past column and look at the screen **from where you stand at the front of the room**.
       The strip saying which day you are on is legible without leaning in. Acceptance line 8. 👤
-- [ ] The three column states are readable at that same distance — the amber "not taken" stripe,
+- [x] The three column states are readable at that same distance — the amber "not taken" stripe,
       the dashed grey "didn't meet", and a taken day — without reading the words. 👤
-- [ ] Every control takes a thumb: a cell, the ✏ and 🚫 in a column head, the filter pills, the
+- [x] Every control takes a thumb: a cell, the ✏ and 🚫 in a column head, the filter pills, the
       First/Last pair, Earlier/Today/Later, "Everyone's here", "Didn't meet", and the card that
       opens the screen. Tap the cells at their edges, not the middle — that is where the WO-1.2
       defect hid. *(The card's state line was its own control until WO-1.13; the card is the target
       now.)* 👤
-- [ ] Tap the same cell five times fast. It walks absent → event → tardy → dismissed → present and
+- [x] Tap the same cell five times fast. It walks absent → event → tardy → dismissed → present and
       nothing is double-counted or skipped by the touch handler. 👤
-- [ ] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still there.
+- [x] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still there.
       *(There is no submit step by design; this is what makes that safe rather than reckless.)* 👤
-- [ ] The grid scrolls as one surface and a flick down the list does not get handed between two
+- [x] The grid scrolls as one surface and a flick down the list does not get handed between two
       scrollers. *(It was the modal overlay that scrolled until WO-1.13 moved this screen into
       `<main>`; it is the page now, which is a different thing to feel on the device.)* 👤
-- [ ] Type into the search box with the software keyboard up and confirm the field keeps focus as the
+- [x] Type into the search box with the software keyboard up and confirm the field keeps focus as the
       rows narrow underneath it. 👤
 - [x] VoiceOver reads a cell as the student's name, the day and the mark — not as a bare letter — and
       says what the next tap will do. 👤 *(Owner, 2026-08-06.)*
@@ -862,8 +881,17 @@ desk pass could not reach.
 - [x] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
       precache and the screen still marks. 👤 *(Owner, 2026-08-06. Same physical test as the
       duplicate of this line in the other work order's list.)*
-- [ ] **The owner opens it and says whether it beats Roll Call!.** This is the line the first build
-      failed, and no harness can ask it. 👤
+- [x] **The owner opens it and says whether it beats Roll Call!.** This is the line the first build
+      failed, and no harness can ask it. 👤 **Yes** — 2026-08-06, on the device, and it is the line
+      that retires the superseded section above.
+
+*Closed by the owner on 2026-08-06 as one block confirmation, the same one that closed WO-1.11's,
+WO-1.13's and WO-2.10's remaining lines. Two of these deserve naming because a later reader will
+want them: the **fifteen-second stopwatch line** is ticked on the owner's judgement of the shipping
+build rather than on a recorded time — WO-2.10 lengthened the cycle by a tap per absence and
+shortened it by one per present student, so if that line is ever re-opened, re-time it rather than
+trusting this tick. And **"it beats Roll Call!"** is the line the first build failed; the yes above
+is what the rewrite was for.*
 
 ### WO-2.10 — Mark cells: unconfirmed, timed, and noted
 
