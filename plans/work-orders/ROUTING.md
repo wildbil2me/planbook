@@ -278,7 +278,8 @@ table it says so and explains why.
 | 14 | WO-2.8 Hall passes: issue, hold, return | **Claude** | Another Roll Call! lift, and the persistence rule inverts the reference's own design |
 | 15 | WO-2.3 Days off & pre-drops | **Codex** | Three-state logic, fully specified in `plans/rotating-schedule.md` |
 | 16 | WO-2.4 Counts & attendance % | **Codex** | Pure arithmetic over recorded meetings |
-| 17 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
+| 17 | WO-2.13 Totals once per render, not per student | **Codex** | A pure refactor whose acceptance line is byte-identical output — the most mechanically checkable row in this table |
+| 18 | WO-G1 Ship 1 go-live rehearsal | **Claude** | A judgment call about whether to ship |
 
 *(WO-2.2 was merged into WO-2.1 on 2026-08-06 and its row retired. It had routed **Codex** on
 "small, bounded, follows WO-2.1's pattern" — reasoning that was sound for the work order as written

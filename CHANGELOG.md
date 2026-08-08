@@ -15,6 +15,58 @@ records what someone remembered.
 
 ### Added
 
+- **WO-2.4 — the counts, and a percentage that agrees with the app it replaces.** Under every name
+  on the registry, and on a line above the grid: how many meetings the class has actually recorded,
+  each student's P / T / A / E / D, and a rate. Per term where the term has dates, and per year
+  always.
+
+  **The formula was not ours to choose.** `(P + T + E + D) / (P + T + A + E + D)` — excused absences
+  and dismissals sit in the *numerator*, so being out sick with a note does not damage a student's
+  rate. The owner reads both apps' numbers this year and they have to agree, which makes this a
+  compatibility requirement rather than a design decision. It was checked against Roll Call!'s
+  per-quarter sheet formula at `src/bridge.gs:625-626` — against the source, not against this
+  project's description of the source, which is a distinction that earned itself below.
+
+  **The denominator is recorded meetings of that class, never calendar days.** A class met if it has
+  an attendance record with no exception, asked through the one predicate every count already runs
+  through. Dropped days, school-wide days off, and days nobody has taken yet are absent from both
+  halves of the fraction. A denominator built from dates looks right in September and diverges by
+  November.
+
+  **Unconfirmed folds into absent — here and nowhere else.** `U` is not a sixth mark, never appears
+  in a displayed count, and a finished class contains none of it. But in this percentage every `U`
+  sits in the denominator beside the absences, because the alternative is a rate that flatters a
+  class nobody finished taking. The consequence is worth knowing before anyone hand-counts:
+  mid-marking, every student not yet reached reads as an absence.
+
+  **A student with no recorded meetings says so.** `percent` is `null`, not zero, and the line reads
+  "No recorded meetings" — because week one is exactly when a confident `0%` would be read as a
+  fact about a child rather than about an empty ledger. Terms ship with blank start and end dates,
+  which is a valid state for a teacher setting up in August, and the line is honest about that too
+  rather than labelling a whole year "Quarter 1".
+
+  **Roll Call! turned out to disagree with itself, and the divergence is its.** Its per-quarter sheet
+  formula is the one above; its year roll-up at `src/dashboard.html:4058-4073` computes
+  `(P+T)/(P+T+A+E)` — `E` dropped from the numerator, `D` gone entirely. So Planbook's year figure
+  matches Roll Call!'s *quarters summed*, not its year badge, and the comparison to run is quarter
+  against quarter. Found by reading the reference implementation while verifying, not by anything
+  failing. It is recorded in `TESTING.md` as a permanent fact about the old app rather than a
+  one-time setup note, because the next person to compare the two will otherwise find a bug that
+  isn't there.
+
+  *And then there is what the harness did.* This work order failed verification twice, both times in
+  its own fixtures rather than its arithmetic, and in opposite directions: first an assertion that
+  demanded a percentage be simultaneously 100 and 90.9, which could never pass; then a guard added
+  to fix it that skipped all ten checks on a fixture that had no terms, which could never run and
+  reported exit 0 for it. **A check that cannot fail and a check that cannot run are the same defect,
+  and only one of them shows up in a summary line.** The fixes went in with the close: the front door
+  is a real check rather than a silent return, and the meeting window asks for ten days rather than
+  three — at three it never reached the dropped day, so a function that ignored dropped days would
+  have passed a check named for counting meetings rather than days.
+
+  The owner ran the hand count against a real class and a completed Roll Call! quarter on
+  2026-08-08. The two agreed.
+
 - **WO-2.3 — days off and planned drops, typed in once, ahead of time.** A **Days off** panel —
   reachable from the class grid's header, from the 📅 in any covered column, and from the action row
   of the class screen itself — where a holiday, a break or a planned drop goes in as one entry. Two

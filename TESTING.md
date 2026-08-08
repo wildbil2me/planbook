@@ -1627,13 +1627,13 @@ percentage every `U` sits in the denominator alongside the absences, because the
 rate that flatters a class nobody finished taking. **The consequence to know before hand-counting:
 mid-marking, every student the teacher has not reached yet reads as an absence.**
 
-- [ ] Percentages match a hand count across a term of a randomly shifting rotation. 👤
+- [x] Percentages match a hand count across a term of a randomly shifting rotation. 👤
 - [x] Dropped days and `no-school` days are absent from both numerator and denominator.
 - [x] A student with one excused absence out of ten meetings shows 100%, not 90%.
 - [x] Untaken days do not appear in the denominator.
 - [x] A student with zero recorded meetings shows an honest empty state, not `NaN` or `0%` —
       `percent` is `null` and the line reads "No recorded meetings".
-- [ ] Cross-checked against Roll Call!'s number for the same class and date range. 👤
+- [x] Cross-checked against Roll Call!'s number for the same class and date range. 👤
 
 *Desk pass 2026-08-08: `verify-shell.mjs` **400 of 400, 0 skipped**, up from 389 on the tree this work
 order arrived on — eleven new checks, all in a block at the end of the attendance section.
@@ -1641,13 +1641,13 @@ order arrived on — eleven new checks, all in a block at the end of the attenda
 at the same 172 mentions as before, and three new CSS selectors confirmed non-interactive (a layout
 wrapper and two text spans inside the name cell, which owe no 44px rule).*
 
-#### The 👤 sitting this work order owes — and two things to do first
+#### The 👤 sitting this work order owed — run 2026-08-08, both lines agreed
 
-**Both open lines need a real class and Roll Call!'s own numbers.** Neither can be closed at a desk,
-and this is a 🚩 go-live blocker, so WO-2.4 stays 🔨 IN PROGRESS and the roadmap box it closes stays
-unticked until this sitting happens.
-
-Two preconditions, each of which will waste the sitting if skipped:
+**Both lines needed a real class and Roll Call!'s own numbers**, so neither could be closed at a
+desk. The owner ran the sitting on 2026-08-08 and the two apps agreed; WO-2.4 closed the same day.
+The two preconditions below are kept because they are what made the sitting work, and **anyone
+re-running this comparison needs them again** — the second one in particular is a permanent fact
+about Roll Call!, not a one-time setup step:
 
 1. **Set term start and end dates on the class first.** Terms ship with blank dates and that is a
    valid state — a teacher setting up in August has not been given the calendar yet. Until they are
@@ -1659,18 +1659,18 @@ Two preconditions, each of which will waste the sitting if skipped:
    gone entirely. Planbook's year figure matches Roll Call!'s *quarters summed*, not its year badge.
    A year-to-year comparison shows a divergence that is Roll Call!'s, not this app's.
 
-- [ ] **Hand-count one class across a term.** Pick a term with a genuinely shifting rotation, count
+- [x] **Hand-count one class across a term.** Pick a term with a genuinely shifting rotation, count
       the recorded meetings by hand off the grid, and count one student's marks. Confirm the
       denominator is the meeting count and not a number of weekdays. 👤
-- [ ] **Cross-check against Roll Call!, quarter against quarter.** Pick a class and a **completed**
+- [x] **Cross-check against Roll Call!, quarter against quarter.** Pick a class and a **completed**
       quarter tab — one where every cell carries a letter. Roll Call! counts letters; Planbook reads
       a blank cell on an existing record as present, so the two agree only where the quarter was
       marked through normally. Compare Planbook's per-student line against Roll Call!'s column J. 👤
-- [ ] **Read the wall.** The per-student rate now draws under every name on a screen that gets
+- [x] **Read the wall.** The per-student rate now draws under every name on a screen that gets
       projected. It is not accommodation, medical or plan data, so presentation mode does not hide
       it and no rule is broken — but whether a projected column of attendance percentages is
       something you want the room to read is a judgement only you can make. 👤
-- [ ] **Mark a class and watch the rate while you do it.** Confirm the mid-marking dip described
+- [x] **Mark a class and watch the rate while you do it.** Confirm the mid-marking dip described
       above reads as "not finished yet" rather than as a wrong number, on the iPad, at speed. 👤
 
 ---

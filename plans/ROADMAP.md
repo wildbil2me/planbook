@@ -275,7 +275,7 @@ meet is a second source of truth that's wrong by first period.)*
       absent from the screen where the tap for it actually happens. **All six were re-sat the same
       day and pass** — `TESTING.md` § WO-2.3 → "What the sitting sent back" carries the eight checks
       and what each one settled. Nothing is owed; WO-2.3 is ✅.)*
-- [ ] 🚩 Per-student counts and attendance % **over recorded meetings of that class**, per term and
+- [x] 🚩 Per-student counts and attendance % **over recorded meetings of that class**, per term and
       year, using Roll Call!'s formula `(P+T+E+D)/(P+T+A+E+D)` so both apps agree this year.
 - [ ] Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and 44px touch targets under
       `@media (pointer: coarse)`. Both, not either.

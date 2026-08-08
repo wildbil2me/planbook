@@ -254,7 +254,7 @@ teacher isn't looking at is the wrong one.
 
 ## WO-2.4 — Counts & attendance percentage
 
-**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 · **Depends on** WO-2.1, WO-2.3
+**Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** M · 🚩 · **Depends on** WO-2.1, WO-2.3
 **Closes roadmap** Phase 2 → "Per-student counts and attendance % over recorded meetings."
 
 **Why it exists.** The owner reads both apps' numbers this year and **they have to agree**. That
@@ -273,19 +273,21 @@ makes the formula a compatibility requirement, not a design choice.
 **Out of scope** — signals and thresholds (Phase 4), the history view (WO-2.6).
 
 **Acceptance**
-- [ ] Percentages match a hand count across a term of a randomly shifting rotation. *(One of the
-      three things that must be right before students walk in — verify against a real class.)*
+- [x] Percentages match a hand count across a term of a randomly shifting rotation. 👤 *(One of the
+      three things that must be right before students walk in — verify against a real class. Run by
+      the owner at the desk, 2026-08-08.)*
 - [x] Dropped days and `no-school` days are absent from both numerator and denominator.
 - [x] A student with one excused absence out of ten meetings shows 100%, not 90%.
 - [x] Untaken days do not appear in the denominator.
 - [x] A student with zero recorded meetings shows an honest empty state, not `NaN` or `0%`.
-- [ ] Cross-checked against Roll Call!'s number for the same class and date range.
+- [x] Cross-checked against Roll Call!'s number for the same class and date range. 👤 *(Quarter
+      against quarter, per the precondition below. Run by the owner at the desk, 2026-08-08.)*
 
 *Built 2026-08-08 — `verify-shell.mjs` **400 of 400**, `wo-sweep.mjs` 9 passed / 0 failed / 2
-standing reviews, behind ten fixtures written for this work order. **The status stays 🔨 IN PROGRESS
-on purpose:** the two open lines are the owner's, they need a real class and Roll Call!'s own
-numbers, and this is a 🚩 go-live blocker — so the roadmap box this work order closes stays unticked
-until she has run them. `TESTING.md` § WO-2.4 lists the sitting they are owed.*
+standing reviews, behind ten fixtures written for this work order. **Held at 🔨 IN PROGRESS for the
+day it took to run the two 👤 lines**, which needed a real class and Roll Call!'s own numbers on a
+🚩 go-live blocker — the roadmap box stayed unticked until the owner had run them. She ran the
+sitting `TESTING.md` § WO-2.4 lists on 2026-08-08 and both agreed; closed the same day.*
 
 *Two preconditions found while verifying, both of which will waste that sitting if she doesn't know
 them first. **Term dates must be set on the class before either line is checkable** — terms ship with
