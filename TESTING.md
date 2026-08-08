@@ -802,9 +802,10 @@ is a grid — students down, the last six weekdays across, tap a cell to cycle �
 acceptance lines are the ones in the rewritten work order.
 
 - [x] A mark lands and survives a reload.
-- [ ] **Six days of columns in LANDSCAPE, today's column alone in PORTRAIT, for a class of 26, with
-      nothing scrolling sideways in either.** 👤 **Rewritten by WO-2.12 on 2026-08-07 — the owner
-      closes the new line, and § WO-2.12 below is where the sitting is listed.**
+- [x] **Six days of columns in LANDSCAPE, today's column alone in PORTRAIT, for a class of 26, with
+      nothing scrolling sideways in either.** 👤 **Rewritten by WO-2.12 on 2026-08-07 and closed by
+      the owner the same day, on her own iPad, against the twice-re-cut build. § WO-2.12 below is
+      where the sitting is listed.**
       *The line it replaces — "six days of columns … in the orientation the owner actually holds
       it" — was ticked on her own device on 2026-08-06 and is kept in the work order rather than
       erased. WO-2.8's `Passes` column took portrait to four columns and to five on her 834pt 11″;
@@ -856,12 +857,13 @@ whatever the build does unless it has been seen to go red:*
 class with a real 25-name roster. The first three are the acceptance lines; the rest are what the
 desk pass could not reach.
 
-- [ ] **Six columns and twenty-six names in landscape; today's column alone in portrait.** No
+- [x] **Six columns and twenty-six names in landscape; today's column alone in portrait.** No
       sideways swipe either way, and the leftmost column is today in both. This is acceptance line
       2, **rewritten by WO-2.12 on 2026-08-07** — the same rewrite as the acceptance line above, and
       the same reason: six-in-portrait stopped being the goal when the owner answered the question
-      § WO-2.8 put to her. The tick from 2026-08-06 is not carried over, because what she closed
-      then is not what the screen does now. § WO-2.12's own 👤 list is where this is run. 👤
+      § WO-2.8 put to her. The tick from 2026-08-06 was not carried over, because what she closed
+      then is not what the screen does now; **she closed the rewritten line on 2026-08-07**, which is
+      what this tick records. § WO-2.12's own 👤 list is where it was run. 👤
 - [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the class's card. Acceptance line 6, and the only one that decides whether the flow
       survives contact with a period starting. *(The card's state line was the tap until WO-1.13
@@ -1422,19 +1424,29 @@ and the first two are acceptance lines rather than extras.
       idle. Every turn draws the count its orientation asks for, or this is not fixed. 👤 *(Closed by
       the owner 2026-08-07 — "everything's working good on the iPad", against the build that added
       `resize` and `orientationchange` to the trigger.)*
-- [ ] **The longest name on your real roster is readable in portrait, whole, with no ellipsis** —
-      at the door, at arm's length, while the room fills. 👤
-- [ ] **One column is enough at the door.** Take a full period in portrait without turning the iPad
-      and confirm nothing you reach for was on one of the five columns that are gone. 👤
-- [ ] **Backfilling still works, and the rotation is not a surprise.** Correct last Tuesday from
-      portrait: turn to landscape, unlock the column, mark, turn back. 👤
-- [ ] **Page back three windows in landscape, then turn to portrait: you are on today.** The exact
+- [x] **The longest name on your real roster is readable in portrait, whole, with no ellipsis** —
+      at the door, at arm's length, while the room fills. 👤 *(Closed by the owner 2026-08-07.)*
+- [x] **One column is enough at the door.** Take a full period in portrait without turning the iPad
+      and confirm nothing you reach for was on one of the five columns that are gone. 👤 *(Closed by
+      the owner 2026-08-07, ahead of the school year rather than across a live period — she was told
+      that was what this line asked for and closed it anyway. **If one column turns out not to be
+      enough once classes start, this is the line to reopen**, and the fix is a decision about
+      portrait rather than a defect.)*
+- [x] **Backfilling still works, and the rotation is not a surprise.** Correct last Tuesday from
+      portrait: turn to landscape, unlock the column, mark, turn back. 👤 *(Closed by the owner
+      2026-08-07, on the build where the unlock clears on a turn and the pager tooltip names the
+      route.)*
+- [x] **Page back three windows in landscape, then turn to portrait: you are on today.** The exact
       thing you reported. Turn back to landscape and you are on the week ending today, not where you
       left off — that is deliberate, and the sitting is where to say if it should be otherwise. 👤
-- [ ] **In portrait, Earlier and Later are greyed out**, and holding one long enough to see the
+      *(Closed by the owner 2026-08-07, on the anchored build. She did not ask for the return-to-today
+      behaviour to change, so it stands as built.)*
+- [x] **In portrait, Earlier and Later are greyed out**, and holding one long enough to see the
       tooltip says to turn the iPad. Confirm that reads as a rule rather than as a broken button. 👤
-- [ ] **Six columns and twenty-six names in landscape**, no sideways swipe, leftmost column today —
+      *(Closed by the owner 2026-08-07 — it reads as a rule.)*
+- [x] **Six columns and twenty-six names in landscape**, no sideways swipe, leftmost column today —
       which is WO-2.1's acceptance line 2 as rewritten, and the line she closes to close that one. 👤
+      *(Closed by the owner 2026-08-07. **This closes WO-2.1's last open line as well as this one.**)*
 
 ---
 

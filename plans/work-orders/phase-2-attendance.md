@@ -89,9 +89,10 @@ print/CSV output (WO-2.6). Calendar events still belong to WO-2.3; this screen w
 **Acceptance**
 - [x] A mark lands and survives a reload. *(One of the three things that must be right before
       students walk in.)*
-- [ ] **Six days of columns in LANDSCAPE, today's column alone in PORTRAIT, for a class of 26 and
-      with nothing scrolling sideways in either.** 👤 **Rewritten by WO-2.12 on 2026-08-07, and the
-      owner closes the new line.**
+- [x] **Six days of columns in LANDSCAPE, today's column alone in PORTRAIT, for a class of 26 and
+      with nothing scrolling sideways in either.** 👤 **Rewritten by WO-2.12 on 2026-08-07 and closed
+      by the owner the same day**, on her own iPad, against the build carrying both of that work
+      order's re-cuts. This was WO-2.1's last open line.
 
       > **The line this replaces**, kept because it was ticked on the owner's own device on
       > 2026-08-06 and a tick is not deleted quietly: *"Six days of columns are visible at once for a
@@ -734,7 +735,7 @@ written deliberately.
 
 ## WO-2.12 — Portrait shows today, landscape shows the week
 
-**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.8
+**Ship** 1 · **Status** ✅ DONE — 2026-08-07 · **Size** S · **Depends on** WO-2.8
 **Amends roadmap** Phase 2 → WO-2.1's "students × recent days" grid, in portrait only
 
 *Built 2026-08-07 — `verify-shell.mjs` **366 of 366** after two same-day re-cuts below (359 as first
@@ -831,9 +832,10 @@ maintain. Also out: any change to what landscape draws.
       after the turn. **The owner closed the rest on her own iPad, 2026-08-07, against the re-cut
       build**; the build this line was first written for failed on her device, which is what the
       re-cut above is.)*
-- [ ] Full student names are readable in portrait without truncation, at the owner's roster's
-      longest name. 👤 *(The desk half is closed — "Delacroix-Nguyen, Xiomara" is drawn in full in
-      portrait with the ellipsis not engaging. Her own longest name, at arm's length, is hers.)*
+- [x] Full student names are readable in portrait without truncation, at the owner's roster's
+      longest name. 👤 *(The desk half was closed first — "Delacroix-Nguyen, Xiomara" is drawn in full
+      in portrait with the ellipsis not engaging. **The owner closed her own longest name on her iPad,
+      2026-08-07.**)*
 - [x] The grid's wrap does not overflow in either orientation — the `overflow-x` valve stays shut,
       which is the WO-2.10 defect this must not reopen. *(Measured in both, at 834pt and at 768pt.)*
 - [x] A narrow **laptop** window does not fall to one column. Orientation is the signal, not width
