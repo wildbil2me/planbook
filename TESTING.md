@@ -1274,6 +1274,9 @@ across the same files as before this work order.*
 *Re-cut the same day, and the desk pass is now **361 of 361, 0 skipped** — two more checks, both in
 the same section, and two existing ones that stopped being hand-rendered. See below.*
 
+*Re-cut a second time, on the owner's second report the same day: **366 of 366, 0 skipped**. Five more
+checks, for paging across a turn. See "Paging across a turn" below.*
+
 #### The turn that only worked once
 
 **Reported by the owner on 2026-08-07, on her own iPad, hours after this shipped.** In her words: the
@@ -1319,6 +1322,56 @@ is the reason the two narrow-window checks no longer render by hand.
 **What this still cannot close.** Neither cause is reproducible in Chrome over CDP, so both checks are
 checks on the **symptom**. The 👤 list below is the only thing that closes the real one, and it now
 wants **several** turns rather than one.
+
+#### Paging across a turn — "I clicked Earlier three times and got the 4th"
+
+**Reported by the owner 2026-08-07**, on the fixed build, and it is a second defect that the rotation
+fix uncovered rather than caused: page back three windows in landscape, turn to portrait, and the
+screen showed **8/4** instead of today. Two things were wrong behind one symptom.
+
+**The position was counted in windows.** `dayColumns()` sliced at `offset * count`, so the number
+standing for *where the teacher is* got multiplied by a number that changes under her: three taps is
+eighteen weekdays back at six columns and three weekdays back at one. It is counted in **weekdays**
+now, and the *step* is the window — `pageDays()` adds `count` rather than 1 — so "two taps is two
+weeks back" is unchanged while the position is in a unit that a turn cannot rescale. This also fixes
+a quieter version with no rotation in it: a laptop window dragged from six columns to five used to
+slide the teacher from twelve weekdays back to ten.
+
+**And portrait should not have a position at all** — the owner's rule, stated plainly: *in portrait we
+only want to see TODAY*. `pageDaysBack` is pinned to 0 in `visibleColumns()`, which every paint goes
+through. Enforced at the paint and not on the turn, because a turn is only one of the ways into an
+upright screen that is paged away — a laptop window dragged tall, an iPad Split View pane, a class
+opened while already upright, a view restored at boot. Fixing it on the turn would have closed the
+route she reported and left the other four.
+
+**The page controls stay on screen in portrait, disabled, and say why.** That is this strip's own
+established answer — `Later ▶` has sat there greyed at today since WO-2.1 rather than disappearing —
+and a control that vanishes when you rotate is a control you go hunting for. The tooltip reads *"Portrait
+shows today. Turn the iPad to read the week or to correct a past day."*, which is the first time the
+backfill route appears anywhere a teacher can see it. `Today` is **not** forced off: it is also the way
+out of an unlocked past column, and that state has to stay answerable.
+
+**Landscape comes back on the week ending today** rather than where you were before you turned. That
+falls out of the pin rather than being a separate rule, and it is the honest one — the alternative is
+remembering a paged position across an orientation that is not allowed to have one.
+
+- [x] Three taps of Earlier in landscape walk a whole window at a time — six columns, today not among
+      them (18 weekdays back, measured at 2026-07-14).
+- [x] **Turning to portrait while paged three windows back shows today.** The reported symptom, and
+      the old build read 8/4 here.
+- [x] The page controls are disabled in portrait rather than gone, and the tooltip names the route out.
+- [x] Turning back to landscape lands on the week ending today.
+- [x] **Dragging a laptop window from six columns to five keeps the leftmost date** — fewer days
+      shown, teacher not moved. No rotation involved; this is the anchor on its own.
+
+*Two mutation proofs:*
+
+| Mutation | Result |
+|---|---|
+| the portrait pin removed from `visibleColumns()` | **3 red** — portrait draws 8/4 while paged, the controls come back live, and landscape returns to the stale page |
+| the window model restored (`offset * count`, stepping by 1) | **1 red** — and only one, because the portrait pin masks the rotation half. The laptop-drag check is what catches this on its own, which is exactly why it is written without a rotation in it |
+
+*Both were reverted and the run is green at 366.*
 
 *The one thing this work order fixed that nothing asked for.* `editingPast` is module state and
 survives a repaint, so unlocking Tuesday in landscape and turning the iPad upright left `editDate()`
@@ -1375,6 +1428,11 @@ and the first two are acceptance lines rather than extras.
       and confirm nothing you reach for was on one of the five columns that are gone. 👤
 - [ ] **Backfilling still works, and the rotation is not a surprise.** Correct last Tuesday from
       portrait: turn to landscape, unlock the column, mark, turn back. 👤
+- [ ] **Page back three windows in landscape, then turn to portrait: you are on today.** The exact
+      thing you reported. Turn back to landscape and you are on the week ending today, not where you
+      left off — that is deliberate, and the sitting is where to say if it should be otherwise. 👤
+- [ ] **In portrait, Earlier and Later are greyed out**, and holding one long enough to see the
+      tooltip says to turn the iPad. Confirm that reads as a rule rather than as a broken button. 👤
 - [ ] **Six columns and twenty-six names in landscape**, no sideways swipe, leftmost column today —
       which is WO-2.1's acceptance line 2 as rewritten, and the line she closes to close that one. 👤
 

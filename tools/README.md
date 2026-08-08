@@ -226,7 +226,11 @@ the section now turns the device **four more times** and asserts a count on each
 a subtraction — the narrow-laptop-window checks no longer call `renderAttendance()` by hand, because
 the repaint hangs off `resize` now as well and a hand render would hide the loss of it a second time.
 Everything above about the rotation not being simulated still holds and now covers three signals
-rather than one.** Update
+rather than one. **366 after the paging anchor**, five checks later the same day: the owner paged back
+three windows, turned to portrait and landed on the 4th rather than on today. Four of the five turn
+the device; the fifth deliberately does not — a laptop window dragged from six columns to five is the
+same defect with the rotation taken out, and it is the only one of the five that catches the window
+arithmetic on its own once portrait is pinned to today.** Update
 this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

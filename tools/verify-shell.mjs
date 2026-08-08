@@ -8302,6 +8302,116 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
           + ', coarse = ' + desk.coarse + '), budget = (' + w
           + ' - 80 chrome - 280 name - 160 Passes) / 72; over its box by ' + desk.over + 'px');
     }
+
+    /*
+     * ── PAGING ACROSS A TURN — the second thing the owner found, 2026-08-07 ──
+     *
+     * "If I click Earlier three times and turn to portrait, I see 8/4 instead of today." Two separate
+     * defects behind one symptom, and both are checked here.
+     *
+     * THE POSITION WAS COUNTED IN WINDOWS. `dayColumns()` sliced at `offset * count`, so the number
+     * standing for where the teacher is got multiplied by a number that changes when the iPad turns:
+     * three taps is eighteen weekdays back at six columns and three weekdays back at one. Now it is
+     * counted in weekdays and the STEP is the window, so the anchor survives any change of width —
+     * including a laptop drag, which is the same bug with a smaller jump and no rotation in it.
+     *
+     * AND PORTRAIT SHOULD NOT HAVE A POSITION AT ALL. Her rule: in portrait this screen shows today.
+     * Pinned at the paint rather than on the turn, because a turn is only one of the ways into an
+     * upright screen — a window dragged tall, a Split View pane, a boot in portrait.
+     */
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1112, height: 834, deviceScaleFactor: 2, mobile: true });
+    await new Promise(r => setTimeout(r, 700));
+
+    /* The pager's own state, which is a claim about what a thumb can reach rather than about dates. */
+    const PAGER = `(function(){
+      /* Scoped to the pager: the "not on today" banner carries its own data-attendance-page="today"
+         button, and an unscoped query would sometimes read that one instead. */
+      var pick = function(dir){
+        var b = document.querySelector('#attendancePager [data-attendance-page="' + dir + '"]');
+        return b ? { there: true, off: !!b.disabled, title: b.title || '' }
+                 : { there: false, off: false, title: '' }; };
+      return { earlier: pick('earlier'), later: pick('later'), today: pick('today') }; })()`;
+
+    const EARLIER = '#attendancePager [data-attendance-page="earlier"]';
+    const TODAY_BTN = '#attendancePager [data-attendance-page="today"]';
+    const page = async (sel, times) => {
+      for (let i = 0; i < times; i++) {
+        await clickSel(sel);
+        await new Promise(r => setTimeout(r, 200));
+      }
+    };
+
+    await page(EARLIER, 3);
+    const back3 = await evalJs(READ);
+    check('three taps of Earlier in landscape walk a whole window at a time — six columns, and today '
+      + 'is not one of them',
+      back3.cols.length === 6 && back3.cols.indexOf(day) < 0,
+      'leftmost ' + JSON.stringify(back3.cols[0]) + ' across ' + back3.cols.length
+        + ' column(s) at ' + back3.inner + '; today = ' + JSON.stringify(day));
+
+    /* THE REPORTED SYMPTOM, exactly as she described it. Under the old build this read 8/4. */
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
+    await new Promise(r => setTimeout(r, 700));
+    const upright = await evalJs(READ);
+    const uprightPager = await evalJs(PAGER);
+    check('turning to portrait while paged three windows back shows TODAY, not the day the old '
+      + 'arithmetic landed on',
+      upright.cols.length === 1 && upright.cols[0] === day,
+      upright.cols.length + ' column(s) ' + JSON.stringify(upright.cols) + ' at ' + upright.inner
+        + '; today = ' + JSON.stringify(day));
+    /* Disabled and still on screen, which is this strip's own answer for `Later` at today — a control
+       that vanishes on rotation is a control the teacher goes hunting for. The tooltip is checked
+       because it is the only place the backfill route is written down for her. */
+    check('and the page controls are disabled in portrait rather than gone, and say to turn the iPad',
+      uprightPager.earlier.there && uprightPager.earlier.off
+        && uprightPager.later.there && uprightPager.later.off
+        && /turn the ipad/i.test(uprightPager.earlier.title),
+      'Earlier: there = ' + uprightPager.earlier.there + ', disabled = ' + uprightPager.earlier.off
+        + ', title = ' + JSON.stringify(uprightPager.earlier.title) + '; Later disabled = '
+        + uprightPager.later.off);
+
+    /* Acceptance for part C: landscape comes back on the week ending today, because portrait zeroed
+       the position rather than hiding it. */
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1112, height: 834, deviceScaleFactor: 2, mobile: true });
+    await new Promise(r => setTimeout(r, 700));
+    const backAcross = await evalJs(READ);
+    check('and turning back to landscape lands on the week ending today, not on the page portrait '
+      + 'was not allowed to keep',
+      backAcross.cols.length === 6 && backAcross.cols[0] === day,
+      backAcross.cols.length + ' column(s), leftmost ' + JSON.stringify(backAcross.cols[0])
+        + ' against today = ' + JSON.stringify(day));
+
+    /*
+      THE ANCHOR, with no rotation in it at all — a laptop window dragged from six columns to five.
+      The old window arithmetic slid the teacher from twelve weekdays back to ten without her touching
+      anything; an anchor counted in days cannot. Read as "the leftmost column is the SAME DATE",
+      which is the claim, rather than as a date this harness would have to compute for itself.
+    */
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await new Promise(r => setTimeout(r, 700));
+    await page(EARLIER, 2);
+    const wide = await evalJs(READ);
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 900, height: 700, deviceScaleFactor: 1, mobile: false });
+    await new Promise(r => setTimeout(r, 700));
+    const narrow = await evalJs(READ);
+    check('dragging a laptop window from six columns to five keeps the day you were looking at — it '
+      + 'shows fewer days, it does not move you',
+      wide.cols.length === 6 && narrow.cols.length === 5 && narrow.cols[0] === wide.cols[0]
+        && wide.cols[0] !== day,
+      'leftmost was ' + JSON.stringify(wide.cols[0]) + ' across ' + wide.cols.length
+        + ' column(s) at 1280, and is ' + JSON.stringify(narrow.cols[0]) + ' across '
+        + narrow.cols.length + ' at 900');
+
+    /* Back to today, so the next section finds this screen where it expects it. */
+    await clickSel(TODAY_BTN);
+    await new Promise(r => setTimeout(r, 250));
     await send('Emulation.clearDeviceMetricsOverride');
   }
 }

@@ -31,8 +31,9 @@ records what someone remembered.
   everybody has to maintain.
 
   The cost, stated rather than discovered: **backfilling a past day needs a day column, so correcting
-  last Tuesday means turning the iPad.** Paging still works in portrait — *Earlier* walks back one
-  weekday per tap instead of six — but the rotation is the route.
+  last Tuesday means turning the iPad.** *Earlier* and *Later* are greyed out in portrait and their
+  tooltip says so — the rotation is the route, and now the screen tells you that rather than leaving
+  it in a work order.
 
   *One defect this opened and closed in the same pass.* Which day you are editing is module state and
   survives a repaint, so unlocking Tuesday in landscape and turning the iPad upright left the screen
@@ -56,8 +57,20 @@ records what someone remembered.
   widths where the answer changes and does nothing on the rest. It falls out of that fix that a laptop
   window dragged narrower now redraws the grid where before it needed a reload.
 
-  `tools/verify-shell.mjs` 349 → **361** checks, zero skipped, with seven mutation proofs behind the
-  new ones; `sw.js` cache v25 → v27.
+  *And paging was re-anchored, on a second report the same day.* Page back three windows in landscape,
+  turn the iPad, and the screen showed **the 4th** rather than today. Where you are in the past was
+  counted in *windows* — so the number standing for your position got multiplied by however many
+  columns were on screen, and a window is six weekdays wide in landscape and one in portrait. Three
+  taps back meant eighteen weekdays in one orientation and three in the other, and turning the iPad
+  silently moved you four weeks. It is counted in **weekdays** now, while *Earlier* still steps a whole
+  window at a time — so "two taps is two weeks back" is unchanged and nothing moves under you when the
+  width changes. The quiet version of the same bug is gone with it: a browser window dragged from six
+  columns to five used to slide you two weekdays sideways, and now it just shows fewer days of the
+  same stretch. **Portrait no longer pages at all** — it shows today, which is the whole point of it,
+  and turning the iPad is how you reach anything else.
+
+  `tools/verify-shell.mjs` 349 → **366** checks, zero skipped, with nine mutation proofs behind the
+  new ones; `sw.js` cache v25 → v28.
 
 - **WO-2.11 — the pass banner, and cancelling a pass issued by mistake.** A band above the registry
   grid carries one card per student who is out of **this** room: their name, the type, the time they

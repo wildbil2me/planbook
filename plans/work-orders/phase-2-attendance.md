@@ -737,9 +737,9 @@ written deliberately.
 **Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.8
 **Amends roadmap** Phase 2 → WO-2.1's "students × recent days" grid, in portrait only
 
-*Built 2026-08-07 — `verify-shell.mjs` **361 of 361** after the same-day re-cut below (359 as first
-built), `wo-sweep.mjs` 10 passed / 0 failed / 1 standing review, with seven mutation proofs behind the
-new checks. Four of the six acceptance lines are closed
+*Built 2026-08-07 — `verify-shell.mjs` **366 of 366** after two same-day re-cuts below (359 as first
+built, 361 after the rotation trigger), `wo-sweep.mjs` 10 passed / 0 failed / 1 standing review, with
+nine mutation proofs behind the new checks. Four of the six acceptance lines are closed
 at the desk. **The status stays 🔨 IN PROGRESS on purpose:** the two 👤 lines need the owner's own
 iPad in her own hands, and `TESTING.md` § WO-2.12 lists the sitting they are owed — along with
 WO-2.1's rewritten line 2, which is the same sitting and the line that closes that work order's.*
@@ -765,6 +765,20 @@ argument against `resize`. Two new checks, two that stopped being hand-rendered,
 `verify-shell.mjs` **361 of 361**. Full account in `TESTING.md` § "The turn that only worked once".
 **Neither cause is reproducible at a desk, so the 👤 sitting now asks for five or six turns, not
 one.***
+
+*🔁 **Re-cut again the same day, on the owner's second report:** page back three windows in landscape,
+turn to portrait, and the screen showed 8/4 rather than today. Two defects behind one symptom. The
+page position was counted in **windows** and the slice was `offset * count`, so a number standing for
+where the teacher is got multiplied by a number that changes when the iPad turns — three taps is
+eighteen weekdays back at six columns and three at one. It is counted in **weekdays** now and the
+step is the window (`pageDays()` adds `count`), so "two taps is two weeks" survives and a laptop drag
+from six columns to five stops sliding the teacher two weekdays sideways. And **portrait no longer
+pages at all** — her rule, stated plainly: in portrait we only want to see today. Pinned in
+`visibleColumns()`, which every paint goes through, because a turn is one of five routes into an
+upright screen that is paged away. The page controls stay on screen disabled, the way `Later ▶`
+already does at today, and their tooltip is the first place the backfill route is written where a
+teacher can see it. `verify-shell.mjs` **366 of 366**, two more mutation proofs. Full account in
+`TESTING.md` § "Paging across a turn".*
 
 *And one defect the listener opens, fixed in the same pass: **an unlocked past column survives a turn
 that takes it off the screen.** `editingPast` is module state, so unlocking Tuesday in landscape and

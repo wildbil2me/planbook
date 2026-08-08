@@ -572,11 +572,22 @@ function dayAbbr(iso) {
   two readings are identical; on a weekend this one keeps a column to drop or take, and the
   alternative would have left the screen with no today at all.
 
-  `offset` is in whole windows: 0 is the window ending at today, 1 is the six weekdays before it.
-  Paging by a window rather than by a day is what puts "two weeks back" two taps away.
+  `daysBack` IS IN WEEKDAYS, NOT IN WINDOWS, and that is the 2026-08-07 re-cut. It used to be a
+  window index and the slice was `offset * count` — which multiplied the teacher's position by a
+  number that CHANGES UNDER HER. Three taps of Earlier in landscape is eighteen weekdays back; turn
+  the iPad and a window is one column wide, so the same 3 became three weekdays back and the grid
+  jumped four weeks forward. The owner reported it as "I paged back three and turned it and got the
+  4th" the day portrait shipped. A laptop window dragged from six columns to five does the same
+  thing more quietly: offset 2 slides from twelve weekdays back to ten.
+
+  An anchor date cannot do that. `daysBack` is the position of the LEFTMOST column in the weekday
+  list, so a change in how many columns are drawn changes how many days are shown and not WHICH day
+  the teacher is standing on. Paging still moves a whole window at a time — see pageDays(), which is
+  where `count` is added rather than one — so "two weeks back is two taps" survives intact; it is the
+  same distance, expressed in the unit that does not move.
 */
-function dayColumns(count, offset, today) {
-  const needed = count * (offset + 1);
+function dayColumns(count, daysBack, today) {
+  const needed = daysBack + count;
   const out = [];
   const d = parseISO(today);
   if (!d) return out;
@@ -588,7 +599,7 @@ function dayColumns(count, offset, today) {
     if (!out.length || (dow !== 0 && dow !== 6)) out.push(todayISO(d));
     d.setDate(d.getDate() - 1);
   }
-  return out.slice(offset * count, offset * count + count);
+  return out.slice(daysBack, daysBack + count);
 }
 
 /* The floor under a day column, and under the two columns that are not days. Every one of these is
@@ -667,14 +678,20 @@ const PORTRAIT_DAY_COLS = 1;
   put to this function directly rather than only through a viewport a harness has to emulate.
   Neither is passed by anything in the app.
 */
-function dayColumnCount(width, height) {
+/* `h >= w` is what CSS's own `(orientation: portrait)` means, down to the square case, so this
+   answer and a stylesheet's can never disagree — which matters because the name cap that pays for
+   the portrait column lives over there. Written as arithmetic rather than as a matchMedia call so
+   that dayColumnCount()'s two optional arguments reach it. Its own name because two things ask now:
+   how many columns to draw, and whether paging is allowed at all. */
+function isPortrait(width, height) {
   const w = typeof width === 'number' ? width : window.innerWidth;
   const h = typeof height === 'number' ? height : window.innerHeight;
-  /* `h >= w` is what CSS's own `(orientation: portrait)` means, down to the square case, so this
-     answer and a stylesheet's can never disagree — which matters because the name cap that pays for
-     this column lives over there. Written as arithmetic rather than as a second matchMedia call so
-     that the two optional arguments above reach it. */
-  if (h >= w) return PORTRAIT_DAY_COLS;
+  return h >= w;
+}
+
+function dayColumnCount(width, height) {
+  const w = typeof width === 'number' ? width : window.innerWidth;
+  if (isPortrait(width, height)) return PORTRAIT_DAY_COLS;
   /* The cap on the name column only exists under a coarse pointer, and the cells are 44px there
      rather than 34px, so the two pointers genuinely have different arithmetic. Asked at call time
      rather than at load: an emulated pointer changes under a harness, and a laptop with a
@@ -684,6 +701,32 @@ function dayColumnCount(width, height) {
   const spare = w - CHROME_PX - (coarse ? NAME_COL_COARSE_PX : NAME_COL_FINE_PX) - PASS_COL_PX;
   const fits = Math.floor(spare / DAY_COL_PX);
   return Math.max(MIN_DAY_COLS, Math.min(DEFAULT_DAY_COLS, fits));
+}
+
+/*
+  THE COLUMNS THIS PAINT DRAWS, and the one place PORTRAIT PINS TO TODAY.
+
+  Every render goes through here rather than calling dayColumns() with `pageDaysBack` directly, and
+  that is the whole of the fix the owner asked for on 2026-08-07: *in portrait we only want to see
+  today*. Enforced AT THE PAINT rather than on the rotation, because a turn is only one of the ways
+  into a portrait screen that is paged away — a laptop window dragged tall, an iPad Split View pane,
+  a class opened while already upright, a view restored at boot. Zeroing it on the turn would fix the
+  route that was reported and leave the other four; zeroing it where the columns are decided means
+  there is no state in which portrait is showing a day that is not today.
+
+  IT WRITES TO MODULE STATE FROM A RENDER PATH, which is normally the thing to avoid, and it is
+  deliberate: the alternative is a portrait screen that keeps a hidden page position, and a hidden
+  position is what turned into "I paged back three, turned the iPad, and got the 4th". The write is
+  idempotent — after the first paint in portrait it is already 0 — so a repaint cannot loop.
+
+  Landscape then comes back on the week ending today rather than where the teacher was before she
+  turned. That is a consequence of this rather than a separate rule, and it is the honest one: the
+  alternative is remembering a paged position across an orientation that is not allowed to have one.
+*/
+function visibleColumns() {
+  const count = dayColumnCount();
+  if (isPortrait()) pageDaysBack = 0;
+  return dayColumns(count, pageDaysBack, todayISO());
 }
 
 /*
@@ -759,10 +802,11 @@ function syncDayColumns() {
   if (currentView() !== 'class') return;
   const count = dayColumnCount();
   if (count === paintedDayCols) return;
-  /* Asked with the NEW count: is the day being edited one of the columns about to be drawn?
-     lockPastDay() repaints and announces, so it is the whole of this branch rather than a step
-     before renderAttendance(). */
-  const shown = dayColumns(count, pageOffset, todayISO());
+  /* Asked with the NEW count, and through visibleColumns() so that a turn INTO portrait pins to
+     today before this decides anything: is the day being edited one of the columns about to be
+     drawn? lockPastDay() repaints and announces, so it is the whole of this branch rather than a
+     step before renderAttendance(). */
+  const shown = visibleColumns();
   if (editingPast && shown.indexOf(editingPast) < 0) lockPastDay();
   else renderAttendance();
 }
@@ -945,7 +989,11 @@ function openClass() { return getSelectedClass(); }
    arrival (see resetRegistry): a teacher who left a past column unlocked yesterday should not find
    it still unlocked when she opens the screen with a class walking in. */
 let editingPast = null;    /* an ISO date, or null for "today" */
-let pageOffset = 0;        /* whole windows back from today; 0 is the window ending at today */
+let pageDaysBack = 0;      /* WEEKDAYS back from today to the leftmost column; 0 is today's window.
+                              In weekdays and not in windows since 2026-08-07 — a window changes
+                              width when the iPad turns, and multiplying a teacher's position by a
+                              number that moves under her is how three taps back became four weeks.
+                              Always 0 in portrait; see visibleColumns(). */
 let searchText = '';
 let filterCode = 'all';    /* 'all' or one of P T A E D */
 let sortBy = 'last';       /* 'last' or 'first' */
@@ -1536,35 +1584,45 @@ export function lockPastDay() {
 }
 
 /*
-  Paging, in whole windows. "Earlier" goes back six weekdays at a time, which puts a date two weeks
-  behind two taps away — the acceptance line this control exists for. "Later" is clamped at the
-  window that ends today, and that clamp is the visible half of "future dates are blocked": the
-  button is there, disabled, saying why, rather than absent and unexplained.
+  Paging a whole window at a time, over a position counted in weekdays. "Earlier" goes back six
+  weekdays on a full landscape grid, which puts a date two weeks behind two taps away — the
+  acceptance line this control exists for. "Later" is clamped at the window that ends today, and
+  that clamp is the visible half of "future dates are blocked": the button is there, disabled,
+  saying why, rather than absent and unexplained.
 
-  A WINDOW IS ONE DAY WIDE IN PORTRAIT (WO-2.12), so "Earlier" walks back a weekday at a time there.
-  The arithmetic is the same arithmetic — it pages by whatever the window IS — and nothing here
-  needed changing for it; what did change is the wording each control carries, which is built from
-  the count rather than from the six it used to be able to assume.
+  THE STEP IS THE WINDOW; THE POSITION IS IN DAYS. Adding `count` here rather than 1 is what keeps
+  "two taps is two weeks" true while leaving `pageDaysBack` in a unit that does not change when the
+  iPad turns — the whole of the 2026-08-07 anchor re-cut, argued at dayColumns(). A narrow laptop
+  window pages five at a time and lands five weekdays further back, which is the same sentence about
+  a smaller screen rather than a different rule.
+
+  PORTRAIT DOES NOT PAGE AT ALL (the owner's call, 2026-08-07): in portrait this screen shows today
+  and turning the iPad is how you read the week or reach a past day. Refused here as well as disabled
+  in the pager, because a disabled button is a claim about the UI and this is a claim about the
+  state — and `Today` stays live either way, since it is the escape from an unlocked past column
+  rather than a page control.
 
   Paging away from today locks any unlocked past column, because the strip that says WHICH day you
   are editing is only honest while that day is on screen.
 */
 export function pageDays(direction) {
-  const before = pageOffset;
-  if (direction === 'today') pageOffset = 0;
-  else if (direction === 'earlier') pageOffset += 1;
-  else if (direction === 'later') pageOffset = Math.max(0, pageOffset - 1);
+  const count = dayColumnCount();
+  if (direction !== 'today' && isPortrait()) return;
+  const before = pageDaysBack;
+  if (direction === 'today') pageDaysBack = 0;
+  else if (direction === 'earlier') pageDaysBack += count;
+  else if (direction === 'later') pageDaysBack = Math.max(0, pageDaysBack - count);
   else return;
-  if (pageOffset === before && direction !== 'today') return;
+  if (pageDaysBack === before && direction !== 'today') return;
   editingPast = null;
   detailFor = '';
   renderAttendance();
-  const shown = dayColumns(dayColumnCount(), pageOffset, todayISO());
+  const shown = visibleColumns();
   /* A one-column window said "Back to this week, ending today" and "Showing Tuesday to Tuesday",
      which is the kind of sentence that makes a screen reader user go looking for the broken part.
      One column is one date, and it is said as one. */
   const one = shown.length === 1;
-  if (pageOffset === 0) announce(one ? 'Back to today.' : 'Back to this week, ending today.');
+  if (pageDaysBack === 0) announce(one ? 'Back to today.' : 'Back to this week, ending today.');
   else if (one) announce('Showing ' + spokenDate(shown[0]) + '.');
   else {
     announce('Showing ' + spokenDate(shown[shown.length - 1]) + ' to ' + spokenDate(shown[0]) + '.');
@@ -2294,7 +2352,8 @@ function paintToolbar() {
 }
 
 /* Earlier · Today · Later. "Later" is disabled at the window that ends today and says why — the
-   visible half of the rule that there is no future column. */
+   visible half of the rule that there is no future column. Since 2026-08-07 "Earlier" is disabled the
+   same way in portrait, for the same kind of reason. */
 function paintPager(columns) {
   const pager = document.getElementById(PAGER_ID);
   if (!pager) return;
@@ -2306,8 +2365,21 @@ function paintPager(columns) {
      looking at — and it was already wrong on a narrow laptop window, where the budget draws five.
      One number, read from the columns this paint was handed. */
   const many = columns.length > 1;
+  /*
+    PORTRAIT DOES NOT PAGE, AND THE CONTROL STAYS ON SCREEN TO SAY SO.
+
+    Disabled rather than removed, which is this strip's own established answer — `Later ▶` has sat
+    here greyed at today since WO-2.1 rather than disappearing, because a control that vanishes is a
+    control the teacher goes hunting for and a control that explains itself teaches the rule once.
+    The tooltip carries the route out, which until now existed only in the work order: turning the
+    iPad IS how you read the week and how you reach a past day to correct it.
+  */
+  const pinned = isPortrait();
   const earlier = actionButton('◀ Earlier', 'data-attendance-page', 'earlier');
-  earlier.title = many ? 'The ' + columns.length + ' weekdays before these' : 'The weekday before this';
+  earlier.disabled = pinned;
+  earlier.title = pinned
+    ? 'Portrait shows today. Turn the iPad to read the week or to correct a past day.'
+    : many ? 'The ' + columns.length + ' weekdays before these' : 'The weekday before this';
   pager.append(earlier);
 
   /* And a one-day window is one date rather than "Aug 7 – Aug 7". */
@@ -2317,16 +2389,22 @@ function paintPager(columns) {
         : shortDate(columns[0]))
       : ''));
 
+  /* NOT forced off in portrait, unlike the two page controls either side of it. `Today` is also the
+     way out of an unlocked past column, and that is a state this button has to be able to answer
+     even on a screen that cannot page — so the existing rule is left to decide it, and in portrait
+     `pageDaysBack` is pinned at 0 anyway. */
   const today = actionButton('Today', 'data-attendance-page', 'today');
-  today.disabled = pageOffset === 0 && !editingPast;
+  today.disabled = pageDaysBack === 0 && !editingPast;
   today.title = today.disabled ? 'You are on today'
     : many ? 'Back to the week ending today' : 'Back to today';
   pager.append(today);
 
   const later = actionButton('Later ▶', 'data-attendance-page', 'later');
-  later.disabled = pageOffset === 0;
+  later.disabled = pageDaysBack === 0;
   later.title = later.disabled
-    ? 'Today is the last column there is — tomorrow’s attendance is not something to record yet'
+    ? (pinned
+      ? 'Portrait shows today. Turn the iPad to read the week or to correct a past day.'
+      : 'Today is the last column there is — tomorrow’s attendance is not something to record yet')
     : many ? 'The ' + columns.length + ' weekdays after these' : 'The weekday after this';
   pager.append(later);
 }
@@ -2373,7 +2451,7 @@ function renderRows() {
 
   const today = todayISO();
   const on = editDate();
-  const columns = dayColumns(dayColumnCount(), pageOffset, today);
+  const columns = visibleColumns();
   /* Read once per column rather than once per cell: twenty-six rows times six columns is a hundred
      and fifty-six lookups through the whole attendance array otherwise. */
   const perColumn = columns.map((date) => {
@@ -2546,7 +2624,7 @@ export function renderAttendance() {
      leaves that guard describing what is actually on screen. */
   const count = dayColumnCount();
   paintedDayCols = count;
-  const columns = dayColumns(count, pageOffset, today);
+  const columns = visibleColumns();
   const nameEl = document.getElementById(CLASS_NAME_ID);
   const head = document.getElementById(HEAD_ID);
   const caption = document.getElementById(CAPTION_ID);
@@ -2564,10 +2642,10 @@ export function renderAttendance() {
        weekdays are the columns after it" is what the sentence below used to read as in portrait, to
        the one user who cannot see the grid and check. */
     const days = columns.length === 1
-      ? (pageOffset === 0 ? 'and today is the one day column after it.'
+      ? (pageDaysBack === 0 ? 'and today is the one day column after it.'
         : 'and one day column follows it.')
       : 'and the last ' + columns.length + ' weekdays are the columns after it, most recent first'
-        + (pageOffset === 0 ? ', starting with today.' : '.');
+        + (pageDaysBack === 0 ? ', starting with today.' : '.');
     caption.textContent = 'Attendance for ' + (cls ? cls.name : 'no class')
       + '. Students are rows. The first column after the name holds hall passes, ' + days;
   }
@@ -2607,7 +2685,7 @@ export function renderAttendance() {
 */
 export function resetRegistry() {
   editingPast = null;
-  pageOffset = 0;
+  pageDaysBack = 0;
   searchText = '';
   filterCode = 'all';
   sortBy = 'last';
