@@ -132,6 +132,14 @@
    unconfirmed students is the silent failure that work order's Traps line is about. Same three
    colours as `.not-taken` and as src/attendance.css's amber: this is the same alarm, not a fourth. */
 .class-card-state.unconfirmed { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
+/* The calendar closed the day (WO-2.3) — the fourth answer src/attendance.js's stateOf() gives, and
+   the one whose line carries a REASON rather than a count: "No school · Thanksgiving break". Solid
+   where `.dropped` above is dashed, and one shade deeper, which is exactly the distinction
+   src/attendance.css draws between the same two states in a column head. The two mean the same
+   thing about the class and different things about where the undo lives, and this line is nine
+   times out of ten the first place a teacher meets one. It is declared after `.unconfirmed` and
+   cannot collide with it: a covered day has no record, so there is no `U` on it to be counted. */
+.class-card-state.covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
 
 /*
   THE SLOT THAT IS STILL RESERVED, and `min-height` is the entire point of the rule.

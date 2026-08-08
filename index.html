@@ -443,6 +443,22 @@
             attention, as those parts of Planbook arrive — the space on it is already theirs.
           </p>
         </div>
+        <!-- Days off & planned drops (WO-2.3). HERE rather than in the header, and that is a
+             measurement rather than a preference: the top row already carries the year, backup,
+             presentation mode and About beside a title, and the bottom row's three are all about
+             the class that is OPEN — which this is not. A fifth control in either strip puts the
+             page into horizontal overflow at 390px, and tools/verify-shell.mjs measures that width
+             on every run.
+
+             It is also where it belongs by meaning. A day off is a fact about the whole school, so
+             it sits on the screen that shows the whole school's classes rather than inside one of
+             them. The second door onto the same route is the 📅 in a covered column's head on the
+             registry, which is where a teacher meets the consequence and asks where it came
+             from — two doors, one route, exactly as `data-class-manage` has three. -->
+        <button class="class-action-btn" type="button" data-dayoff-panel
+                aria-haspopup="dialog" title="Holidays, breaks and planned drops">
+          <span aria-hidden="true">📅</span> Days off
+        </button>
       </div>
     </div>
 
@@ -1350,6 +1366,120 @@
       <div class="modal-actions">
         <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>
         <button class="class-action-btn" data-backup-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  DAYS OFF & PLANNED DROPS (WO-2.3). The one screen in this app that AUTHORS a calendar exception,
+  and the only writer of `doc.events`. src/days-off.js owns the behavior and argues it; the copy a
+  teacher reads is here, for the same reason the class manager's and the roster's are.
+
+  ONE SENTENCE IN HERE IS LOAD-BEARING RATHER THAN REASSURING: nothing typed on this screen is
+  written into attendance. That is not an implementation note — it is the difference between
+  removing a holiday and every class following automatically, and removing a holiday that has left
+  fifteen stale "did not meet" records behind it. plans/rotating-schedule.md is the decision record
+  and docs/data-model.md § "Events: only what can't be derived" says it from the other side.
+
+  #daysOffClassPicker and #daysOffList are EMPTY IN THE MARKUP, like #classTabBar and #homeGrid, and
+  for the same reason: both are drawn from the open document, and a hand-written specimen row here
+  would be a second truth to keep in step with the real one.
+
+  The two date fields are real `<input type="date">`, so iPadOS gives its own picker rather than a
+  text field an ISO string has to be typed into — the same call src/classes.js's term dates make.
+-->
+<div class="modal-overlay hidden" id="daysOffModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="daysOffModalTitle">
+    <div class="modal-header">
+      <h2 id="daysOffModalTitle">Days off &amp; drops</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        The days you already know about: breaks and holidays where the whole school is out, and the
+        classes an assembly or a field trip will stop from meeting. Put them in once and every class
+        follows — <strong>nothing here is written into your attendance</strong>, so removing one
+        puts those days straight back to “not taken yet”.
+      </p>
+
+      <div class="modal-section-label">What is it</div>
+      <div class="dayoff-kinds" id="daysOffKinds" role="group" aria-label="Kind of day off">
+        <button type="button" class="pill active" data-dayoff-kind="no-school" aria-pressed="true">
+          No school — everyone is off
+        </button>
+        <button type="button" class="pill" data-dayoff-kind="dropped" aria-pressed="false">
+          A planned drop — named classes
+        </button>
+      </div>
+
+      <form class="dayoff-form" data-dayoff-create>
+        <input class="class-input" id="daysOffTitle" type="text"
+               placeholder="Thanksgiving break" aria-label="What to call this day off"
+               autocomplete="off">
+        <div class="dayoff-dates">
+          <label class="term-date-field">
+            <span class="term-date-label">From</span>
+            <input class="term-date" id="daysOffFrom" type="date"
+                   data-dayoff-date="from"
+                   aria-label="First day this covers">
+          </label>
+          <label class="term-date-field">
+            <span class="term-date-label">To</span>
+            <input class="term-date" id="daysOffTo" type="date"
+                   data-dayoff-date="to"
+                   aria-label="Last day this covers — leave empty for a single day">
+          </label>
+        </div>
+        <button class="class-action-btn primary" type="submit">Add to the calendar</button>
+      </form>
+
+      <!-- Shown only for a planned drop. A no-school day is the whole school by definition, so a
+           class picker on it would be a control with one correct answer. -->
+      <div class="hidden" id="daysOffClasses">
+        <div class="modal-section-label">Which classes are not meeting</div>
+        <div class="dayoff-classes" id="daysOffClassPicker" role="group"
+             aria-label="Classes this drop covers"></div>
+      </div>
+
+      <p class="class-hint">
+        One entry covers a whole break — set the second date and Thanksgiving is one line, not
+        three. A day you have already taken attendance on keeps it: Planbook says so before it adds
+        anything, and the marks stay exactly where they are.
+      </p>
+      <p class="class-error hidden" id="daysOffError"></p>
+
+      <div class="modal-section-label">On the calendar</div>
+      <div class="roster-list" id="daysOffList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- The warning the work order asks for by name, and the reason it is a dialog rather than a line
+     of text: a retroactive snow day laid over a week that was really taught is the one moment in
+     this feature where a teacher could believe she has closed a day that is still counting. The
+     records are never in danger — src/attendance.js answers a record before it consults the
+     calendar — so this says what STAYS rather than what goes, which is the opposite of the class
+     delete confirm it borrows its shape from. The two elements are filled by src/days-off.js. -->
+<div class="modal-overlay hidden" id="daysOffConfirmModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="daysOffConfirmTitle">
+    <div class="modal-header">
+      <h2 id="daysOffConfirmTitle">Some of those days were taught</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="daysOffConfirmLead"></p>
+      <div class="modal-section-label">What keeps its attendance</div>
+      <!-- The class delete confirm's shape in the POSITIVE wash rather than the danger one, which
+           is the whole difference between the two dialogs: that one counts what will be destroyed,
+           this one counts what will survive. A red panel here would say the opposite of what the
+           sentence above it says. -->
+      <div class="dayoff-keeps" id="daysOffConfirmFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" id="daysOffConfirmBtn" data-dayoff-confirm>
+          Add it anyway
+        </button>
+        <button class="class-action-btn" data-dayoff-cancel>Cancel</button>
       </div>
     </div>
   </div>

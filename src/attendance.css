@@ -128,11 +128,38 @@
 /* Dashed, for the reason given in the header: this is the "set aside" grammar the class manager
    already uses, and it is the half of the distinction that survives being read at arm's length. */
 .attendance-body .attendance-state.dropped { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
+/* THE FOURTH STATE (WO-2.3) — the calendar says nobody meets. The dropped grey made SOLID and one
+   shade deeper, which is the whole of the distinction and it is deliberate rather than timid.
+
+   No new hue: a holiday is not an alarm, and the amber beside it already means "you have not done
+   this yet". What is different about a covered day is not the mood, it is WHERE THE UNDO LIVES —
+   dropped is taken back with the ↩ on this screen, covered is taken back on the days-off panel — so
+   the thing that has to carry the difference is the WORD, and the fill is what makes the two look
+   like two states rather than one rendering glitch. Roll Call!'s own no-school column is a filled,
+   greyed, italic head (dashboard.html:573) against nothing dashed at all; this is that distinction
+   with Planbook's dropped column, which Roll Call! does not have, kept on the other side of it. */
+.attendance-body .attendance-state.covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
 
 /* ── THE CLASS-LEVEL CONTROLS ── */
 /* "Everyone's here" and "Didn't meet", side by side and wrapping rather than squeezing — the same
    call `.roster-actions` makes over the same kind of row. */
 .attendance-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+
+/* THE DOOR TO THE CALENDAR, HELD AWAY FROM THE CONTROLS THAT WRITE. src/attendance.js's
+   daysOffDoor() carries the reasoning: the three buttons to its left act on the day on screen and
+   are aimed at with a class walking in, this one opens a dialog and changes nothing. `margin-left:
+   auto` puts the row's spare width between them, so the separation is real on a laptop and on an
+   iPad in landscape rather than a convention a reader has to know about.
+
+   THE ROW WRAPS, AND THAT IS WHY THE MARGIN IS ALL THIS RULE DOES. On a narrow window the door
+   wraps to a line of its own — still last, still apart, and with a whole line's gap instead of a
+   flexible one. A fixed offset would have had to be undone at that width; the auto margin is
+   already correct there.
+
+   `:not(:only-child)` because a covered day draws this button and NOTHING ELSE. There is nothing to
+   be held away from there, and an auto margin would have parked a lone control against the right
+   edge of the panel with the sentence explaining it starting at the left. */
+.attendance-actions-door:not(:only-child) { margin-left: auto; }
 
 /* The pressed state of "Everyone's here", which shell.css has no variant for: `.primary` is a
    call to action and this is a fact about where you already are. Interactive wash + tinted border,
@@ -537,18 +564,61 @@
 .attendance-cell-untaken { background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a; }
 /* The class did not meet: dashed and quiet, because there is nothing to do about it. */
 .attendance-cell-none { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #c0cad5; }
+/* And the calendar's version of the same nothing (WO-2.3): the same dash on a SOLID quiet ring
+   rather than a dashed one. At 34px a border-style is about as much difference as a cell can carry,
+   and it is enough to tell a column of pre-dropped days from a column of dropped ones at a glance —
+   which is the only question a cell has to answer here, because the reason is in the head above it
+   and in the cell's own accessible name. */
+.attendance-cell-covered { background: #f5f7fa; border-color: #d0d8e4; color: #a0aab8; }
+/* A day that has not happened (2026-08-08, with the columns that made one reachable). The quietest
+   cell in the sheet, and deliberately quieter than "did not meet": that one is a fact recorded
+   about a day, this is the absence of any fact at all yet. White ground, hairline ring, a middot
+   the same near-invisible grey — the cell is there, it is legible, and it asks for nothing.
+
+   IT IS NOT THE UNTAKEN AMBER, AND THAT IS THE WHOLE REASON THIS CLASS EXISTS. `?` in amber means
+   "you have a hole to fill", said in the one colour on this screen that is an alarm. Next Tuesday
+   is not a hole, and a week read ahead of time would otherwise be five columns of them. */
+.attendance-cell-future { background: #fff; border-color: #eef0f4; color: #c0cad5; }
 
 /* ── THE COLUMN, AS A COLUMN ── */
 /* Worn by the <th> and by every <td> under it, from one function in src/attendance.js, which is
    what keeps "said in the header" and "said in the cells" one fact rather than two that drift. */
 .attendance-col-not-taken { background: #fffdf5; }
 .attendance-col-dropped { background: #fbfcfd; }
+/* The covered column (WO-2.3). Deeper than the dropped column's near-white and solid where that
+   one is dashed — a whole column of it should read as "greyed out" from across a desk, which is
+   what Roll Call! achieves with `opacity: 0.5` on the same kind of column and what this achieves
+   without dimming the date a teacher still has to read. */
+.attendance-col-covered { background: #f5f7fa; }
+/* THE FUTURE, WHICH IS A MODIFIER AND NOT A FIFTH COLUMN STATE. It is worn ALONGSIDE the state
+   class, never instead of it, so a day off next November is still `covered` and still reads as the
+   grey band a covered day reads as — the calendar's answer about a day is worth more than the fact
+   that the day is ahead.
+
+   All it does is quiet the one state whose colour is an alarm. `not-taken` is a cream wash and an
+   amber underline meaning "go and fill this in"; ahead of today there is nothing to fill in, so the
+   column goes to plain white with the neutral hairline every other quiet thing on this screen uses.
+   Declared after the four states so it wins on source order, and qualified with `.attendance-col-
+   not-taken` so it can only ever reach that one. src/attendance.js's columnClasses() and
+   stateChip() are the other two halves — the wash, the word and the glyph move together or the
+   column says two different things about itself. */
+.attendance-col-not-taken.attendance-col-future { background: #fff; }
 .attendance-day.attendance-col-taken { border-bottom-color: #a3e4bc; }
 .attendance-day.attendance-col-not-taken { border-bottom-color: #f0dfa8; }
+.attendance-day.attendance-col-not-taken.attendance-col-future { border-bottom-color: #e0e4ea; }
 .attendance-day.attendance-col-dropped { border-bottom-style: dashed; border-bottom-color: #d0d8e4; }
+.attendance-day.attendance-col-covered { border-bottom-color: #a0aab8; }
 .attendance-col-taken .attendance-day-state { color: #27ae60; }
 .attendance-col-not-taken .attendance-day-state { color: #8a6d1a; }
+/* "Ahead" in the neutral, for the reason the wash above it goes white. */
+.attendance-col-not-taken.attendance-col-future .attendance-day-state { color: #a0aab8; }
 .attendance-col-dropped .attendance-day-state { color: #a0aab8; font-style: italic; }
+/* The fourth word, and it is NOT italic where the dropped one is. Roll Call! italicises its
+   no-school head (dashboard.html:574) and this is the point of departure: over there italic-grey is
+   the only exception treatment there is, and here it already belongs to the same-day drop. Two
+   exception states in one row of column heads have to be told apart, and the stronger colour goes
+   to the one whose reason the teacher has to go somewhere else to change. */
+.attendance-col-covered .attendance-day-state { color: #6b7a8d; }
 /* "12 to go" over a column being taken: the count wears the caution colour rather than the taken
    green it sits on, because it is the alarm rather than the state. Declared after the three above
    so it wins on source order inside the taken column (WO-2.10). */
@@ -597,6 +667,12 @@
   .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
   .attendance-toggle-on { min-height: 44px; min-width: 44px; }
+  /* Same arrangement as `.attendance-banner-btn` above: the 44px comes from `.class-action-btn`,
+     which this button also wears, and the name appears here so a reader of this block can see the
+     control was considered rather than having to go and prove it is covered elsewhere. It also does
+     not shrink, which is the shell.css defect the owner found on 2026-08-08 — this button is two
+     words and a glyph in a flex row, which is exactly the shape that spills over its own border. */
+  .attendance-actions-door { min-height: 44px; min-width: 44px; flex-shrink: 0; }
   /* The row's ⋯ and everything inside the panel it opens (WO-2.10). Three of the five are touch
      targets and take the floor; the two that are text — the name line and the mark chip — are named
      here anyway so that a reader of this block can see that they were considered rather than
@@ -754,12 +830,22 @@
      that stops carrying the difference between an absence and an event across a room. */
   .attendance-cell-P, .attendance-cell-T, .attendance-cell-A,
   .attendance-cell-E, .attendance-cell-D,
-  .attendance-cell-untaken, .attendance-cell-none { border-width: 2px; }
-  /* And the same for the column, which is the half of the three-state distinction that is read
-     without looking at any single cell. */
+  .attendance-cell-untaken, .attendance-cell-none,
+  .attendance-cell-covered, .attendance-cell-future { border-width: 2px; }
+  /* And the same for the column, which is the half of the four-state distinction that is read
+     without looking at any single cell. The covered column takes the biggest step of the four,
+     because it and the dropped column are the pair a teacher has to tell apart across a room and
+     the fine pointer's two shades of near-white are what the extra distance costs. */
   .attendance-col-taken { background: #fff; }
   .attendance-col-not-taken { background: #fff8e6; }
   .attendance-col-dropped { background: #f8f9fb; }
+  .attendance-col-covered { background: #e8edf4; }
+  /* The future stays white while the untaken column goes LOUDER here, which widens the gap between
+     them rather than holding it — correct, and the reason this line exists rather than being left
+     to the base rule: the amber is stepping up precisely so a hole is unmissable across a room, and
+     a day that has not happened must not step up with it. Declared after the four so it wins on
+     source order inside this block too. */
+  .attendance-col-not-taken.attendance-col-future { background: #fff; }
   .attendance-col-today { box-shadow: inset 2px 0 0 #d0d8e4, inset -2px 0 0 #d0d8e4; }
   .attendance-col-editing { box-shadow: inset 3px 0 0 #5b6fcc, inset -3px 0 0 #5b6fcc; }
 }

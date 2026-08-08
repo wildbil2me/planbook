@@ -162,8 +162,54 @@ renumbered to match. `CHANGELOG.md` carries the entry. Historical mentions of WO
 
 ## WO-2.3 — Days off & pre-drops
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1
+**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 · **Depends on** WO-2.1
 **Closes roadmap** Phase 2 → "Days off and pre-drops, set ahead."
+
+*Built 2026-08-07 — `verify-shell.mjs` **379 of 379** (thirteen new: twelve at the end of the
+attendance section, one in the coarse sweep), `wo-sweep.mjs` 10 passed / 0 failed / 1 standing
+review, with six mutation proofs behind the new checks. **All five acceptance lines close at the
+desk** and are ticked below; what stays owed is a sitting on the owner's own iPad, listed in
+`TESTING.md` § WO-2.3, which is why the status is 🔨 rather than ✅. Nothing in this work order
+carries a 👤 acceptance line — the two things that want eyes are the fourth column palette read
+across a room and the 44px of a date picker under a thumb, and both are judgements a headless
+Chrome cannot make however green it measures.*
+
+*Sat on the iPad 2026-08-08. **All three 👤 lines pass, and the sitting sent back five defects that
+every green check above had missed.*** Two were layout under a real coarse pointer, one was the
+software keyboard, one was a design rule that only looks wrong once a thumb is doing the work, and
+one was a hole nobody had noticed because the feature that opened it had shipped the day before:
+**days off could be set ahead and not looked at ahead**, because the registry's window ended at
+today. All five are fixed on this branch (`verify-shell.mjs` **389 of 389**, ten new); the table,
+those checks and the acceptance list they close are in `TESTING.md` § WO-2.3 → "What the sitting
+sent back". The one that is a real
+change rather than a fix is the registry paging **forward** as far as the calendar reaches —
+`src/attendance.js`'s `dayColumns()` and `futureLimit()` carry the reasoning, and the rule it did
+**not** touch is that `writableDate()` still refuses every date after today. Opening the columns was
+only safe because the block was never in the rendering.
+
+*Status stays 🔨: the five fixes are measured at the desk and want one more sitting, which is the
+last 👤 line in that section.*
+
+*Two modules, split the way `src/passes.js` and `src/attendance.js` already are.* `src/calendar.js`
+*is the model — no DOM, no clock, never calls the store — and* `src/days-off.js` *is the only writer
+of* `doc.events` *in the app. The registry reads the first through* `stateOf()` *and never touches
+the second, which is what keeps "did this class meet" a question with one answer.*
+
+*The fourth state is* `covered`*, and the word on screen is the event's own — "No school" or "Planned
+drop", with the teacher's title beside it as the reason. It takes the dropped column's quiet grey
+made **solid** rather than dashed: the two mean the same thing about the class and different things
+about where the undo lives, and the undo is what a teacher is looking for when she reads that chip.
+The header slot* `src/attendance.js` *reserved for it at WO-2.1 was filled without re-flowing
+anything, and the 🚫 in a covered head became a 📅 — a door to the screen the reason was authored on
+rather than an undo, because removing a holiday affects every class on every date of its range and
+that is not a decision to take from inside one class's column head.*
+
+*One consequence worth stating rather than discovering: **a covered day is read-only, so a class
+that met on a school-wide day off cannot be recorded from the registry.** The escape hatch is the
+calendar — narrow the range, or name classes instead — and that is a real cost, chosen over the
+alternative of leaving the cells live, which would let a mis-tap invent a meeting on Thanksgiving.
+Noted as a proposed follow-up rather than fixed here, because "record a class on a covered day" is
+not in the Deliverables and a work order that grows is one that cannot be verified.*
 
 **Why it exists.** Two things are known in advance and shouldn't wait for the day to load: holidays
 (the whole school is out) and pre-drops (an assembly is shifting Thursday's rotation). Both are
@@ -187,13 +233,13 @@ time, and its precedence rules. Follow them exactly.
 **Out of scope** — the month view over this data (WO-6.3), other event kinds (WO-6.1).
 
 **Acceptance**
-- [ ] A `no-school` range across a week shows every class as not-meeting on every date in it.
-- [ ] Deleting that event restores all those days to "not taken yet" with no attendance records
+- [x] A `no-school` range across a week shows every class as not-meeting on every date in it.
+- [x] Deleting that event restores all those days to "not taken yet" with no attendance records
       having been touched.
-- [ ] A future `dropped` event naming two classes affects only those two.
-- [ ] Adding a retroactive snow day over a date that already has recorded attendance **warns and
+- [x] A future `dropped` event naming two classes affects only those two.
+- [x] Adding a retroactive snow day over a date that already has recorded attendance **warns and
       does not void the record**. Verify the marks are still there afterward.
-- [ ] No attendance record is ever created by authoring an event. Inspect the document to confirm.
+- [x] No attendance record is ever created by authoring an event. Inspect the document to confirm.
 
 **Traps** — Copying the event into attendance records is the obvious implementation and it is the
 one thing this design exists to prevent. It creates a second source of truth, and the one the

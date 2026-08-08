@@ -15,6 +15,100 @@ records what someone remembered.
 
 ### Added
 
+- **WO-2.3 — days off and planned drops, typed in once, ahead of time.** A **Days off** panel —
+  reachable from the class grid's header, from the 📅 in any covered column, and from the action row
+  of the class screen itself — where a holiday, a break or a planned drop goes in as one entry. Two
+  kinds: **No school**, which covers every class, and **a planned drop**, which names the classes an
+  assembly is stopping from meeting. A date, an optional second date, and a title. Thanksgiving is
+  one line, not fifteen.
+
+  **Nothing typed on that panel is written into attendance, and that is the whole design.** The
+  registry *reads* the calendar when it paints; it never copies an exception onto a record. Copying
+  is the obvious implementation — five classes across a three-day break is fifteen rows and the
+  marking screen would have needed no changes at all — and it is the one thing this shape exists to
+  prevent, because the copy is a second source of truth. Shorten the break by a day and the stale
+  rows survive it, each one asserting that a class did not meet on a day it did. Because there is no
+  copy, **deleting a holiday puts every day it covered straight back to "not taken yet"** — there is
+  nothing to go and unpick.
+
+  **A day with attendance actually recorded on it stays a meeting.** A snow day is added the morning
+  after, retroactively, over dates that may already hold a real period. The predicate answers the
+  record *before* it consults the calendar, so nothing the panel can write is able to void a mark —
+  the protection is structural rather than a check somebody has to remember. What the teacher gets is
+  the other half: a dialog naming every period that keeps its marks, raised only when there is
+  something to protect, because a dialog that appears every time is a dialog that gets tapped
+  through. It warns rather than refuses, deliberately — Monday and Wednesday of that snow week are
+  still legitimately closed, and an app that will not record a two-day closure because one period was
+  marked in the middle of it is an app she works around.
+
+  **A covered day says a fourth word.** Not "Didn't meet" — the teacher's own title, shortened to
+  what a 72px column holds — and it is drawn in the dropped column's quiet grey made **solid**
+  instead of dashed. The two mean the same thing about the class and different things about where
+  the undo lives, and the undo is what she is reading that chip to find: a dropped day is taken back
+  with the ↩ on the registry, a covered day is taken back on the panel that authored it. So a covered
+  column's control is a **door rather than an undo** — removing the event affects every class on
+  every date of its range, which is far too much to hang on a glyph in one class's column head.
+
+  *And then it met a classroom.* Every acceptance line passed on the desk and again on the owner's
+  iPad, and the sitting still sent back **five defects that nothing green had caught** — then a sixth,
+  against the fix for the largest of them. Worth naming because of what kinds of thing they were: two
+  were layout under a real coarse pointer, one was the software keyboard, one was a design rule that
+  only looks wrong once a thumb is doing the work, and one was a hole nobody had noticed because the
+  feature that opened it had shipped the day before.
+
+  **Future days off could be set and not looked at.** The registry's window ended at today — there
+  was no index that could even name tomorrow — so a break entered in September could not be checked
+  by going and looking at it. The grid now pages **forward** as far as the last thing on the
+  calendar, and stops there rather than running on into empty weeks: past the last holiday there is
+  nothing to see, and a screen that pages forever is one where the teacher cannot tell the end from a
+  hang. With nothing scheduled it stops at today, exactly as it always did. A day ahead of today
+  draws locked cells, no unlock, and says **"Ahead"** in neutral grey rather than "Not taken" in the
+  alarm amber — reading next week is not five jobs you forgot. **What did not move is the write.**
+  Every writer still refuses a date after today outright, which is precisely why the columns could be
+  opened up at all: the block was never in the rendering.
+
+  *That change then broke a rule it had no obvious connection to, and it is worth the sentence.*
+  `Later ▶` was disabled by one test — *are you at the forward end* — and for as long as the forward
+  end was today, that test also answered *are you in portrait*, because portrait pins the screen to
+  today. Once the end could be next week the two questions came apart, and the button lit up on the
+  one screen that refuses to page: live, tappable, and discarded by the pager. **A control with two
+  independent reasons to be off needs both of them written down**, which is the general form of it,
+  and the one above it — `Earlier` — had only ever needed the one. Caught on the iPad within the
+  hour and fixed the same day.
+
+  **"Days off" spilled out through its own border on the iPad**, and nowhere on the laptop. The touch
+  pass gives every action button `min-width: 44px`, which *replaces* the `min-width: auto` a flex
+  item gets for free — and that auto was the only thing stopping a `nowrap` button from being made
+  narrower than its own label. A shrunk nowrap button does not reflow; it overflows. Every 44px check
+  in the harness stayed green through it, because the button really was 44px and really was wrong,
+  which is why the new check measures content against box rather than measuring the box.
+
+  **The form now empties itself after an add**, and the iPadOS trap that was the original reason for
+  leaving the dates in place is answered rather than avoided: the field is discarded and rebuilt, the
+  same fix the term dates already use, so the day just used can be picked again on the first tap.
+  **Picking a start date carries the end date with it** — the second date is almost always the first
+  one. And **focus goes to the button rather than back into the title field**: focusing a text input
+  summons the software keyboard, which comes up over the bottom half of the screen, which is where
+  the list the add just changed lives.
+
+  **The way to the calendar is now on the class screen too**, past the controls that write. It was
+  reachable only from a covered day — the one day you have no reason to go there, because the thing
+  is already done — while the tap that actually wants it is *"we are off next Thursday"*, made
+  standing in the room with a class open. It sits at the far end of the action row, held away from
+  the three controls a teacher aims at with students walking in; it writes nothing and acts on no
+  day, so it is not one of them.
+
+  **One consequence stated rather than discovered:** a covered day is read-only, so a class that
+  genuinely met on a school-wide day off cannot be recorded from the registry. The escape is the
+  calendar — narrow the range, or change the kind to a drop that names classes. That was chosen over
+  leaving the cells live, which would let one mis-tap invent a meeting on Thanksgiving.
+
+  `tools/verify-shell.mjs` 366 → **389** checks, zero skipped — thirteen with the work order and ten
+  more with the punch list — and `sw.js` cache v28 → v30. Nine mutation proofs. The one that earns
+  its keep is copying the event onto attendance records inside the writer: **ten of the twelve new
+  checks go red and nothing visible changes at all.** The columns still go grey, the cards still say
+  "No school"; the only thing that gives it away is `doc.attendance` no longer matching itself.
+
 - **WO-2.12 — portrait shows today; landscape shows the week.** The registry now draws **one day
   column in portrait — today's** — and six in landscape. Held at the classroom door the screen is for
   marking the period walking in; the six-day window is something you read at a desk, and you turn the

@@ -367,7 +367,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .panel { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
 .panel-header { padding: 16px 20px 0; }
-.panel-title-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.panel-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+/* THE BUTTON IN THIS ROW DOES NOT SHRINK, and that is a bug fix rather than a preference. Every
+   `.class-action-btn` is `white-space: nowrap`, so a shrunk one does not get shorter — its label
+   runs straight out through its own border. On a fine pointer it never shrinks, because a flex item
+   without an explicit `min-width` gets `min-width: auto` and refuses to go under its content. The
+   coarse block below gives it `min-width: 44px` for the touch floor, and that REPLACES the auto —
+   which hands the button permission to shrink to 44px with a two-word label still inside it.
+
+   The owner found it on the iPad on 2026-08-08: "Days off" spilling over its border on the home
+   screen, and nowhere on the laptop. The floor is right and stays; what was missing is the refusal
+   to shrink that `min-width: auto` had been providing for free. Any nowrap control that takes a
+   `min-width` in the coarse block needs this alongside it. */
+.panel-title-row > .class-action-btn { flex: 0 0 auto; }
 .panel-title h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .panel-title p  { font-size: 11px; color: #8a9bb0; margin-top: 2px; }
 .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; }
@@ -675,6 +687,44 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .class-delete-line { font-size: 12px; line-height: 1.5; color: #c0392b; }
 
+/* ── DAYS OFF & PLANNED DROPS (WO-2.3) ── */
+/* The contents of #daysOffModal and #daysOffConfirmModal. Almost everything in that panel is a
+   component this sheet already owns — `.pill`, `.class-input`, `.term-date`, `.toggle-btn`,
+   `.roster-list`, `.class-action-btn`, `.modal-section-label` — which is the point: a fifth dialog
+   that invented a fifth grammar would be a fifth thing to keep in step. What is written out here is
+   the four things that have no counterpart.
+
+   The kind row is `.pill`s in a `data-pill-group`-shaped row rather than a <select>, for the reason
+   src/classes.js gives about term presets: a <select> on an iPad is a spinning wheel over the whole
+   screen, and this is a two-way choice with a consequence the teacher can see below it. */
+.dayoff-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The form wraps rather than squeezes — a title, two date fields and a button do not fit one line
+   at 390px, and the alternative is a date input the width of its own picker glyph. */
+.dayoff-form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.dayoff-form .class-input { flex: 1 1 180px; }
+.dayoff-dates { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dayoff-classes { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The kind, said again on the row, so the list reads in the same words the registry's column head
+   does. Two washes for two kinds: the neutral one for a whole-school closure, and the interactive
+   indigo for a planned drop, which is the kind that names classes and is therefore the kind a
+   teacher scans this list looking for. */
+.dayoff-kind {
+  flex: 0 0 auto; padding: 3px 9px; border-radius: 20px;
+  border: 1.5px solid #d0d8e4; background: #f5f7fa; color: #6b7a8d;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; white-space: nowrap;
+}
+.dayoff-kind.drop { border-color: #b0bcf0; background: #eef2ff; color: #5b6fcc; }
+/* What SURVIVES the exception being added — `.class-delete-facts` shape in the positive wash. The
+   two dialogs are the same gesture from opposite ends: that one counts what a tap destroys, this
+   one counts what it cannot. A red panel under a sentence promising the marks are safe would be
+   the app contradicting itself in the one place a teacher is deciding whether to trust it. */
+.dayoff-keeps {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-top: 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #a3e4bc; background: #eafaf1;
+}
+.dayoff-keeps-line { font-size: 12px; line-height: 1.5; color: #27ae60; }
+
 /* Both of these are <p> inside `.modal-body`, whose own rule is more specific than a bare class —
    so they are qualified rather than left to lose the cascade, exactly as `.year-hint` and
    `.year-error` are above. */
@@ -974,6 +1024,15 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .batch-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; }
   .class-action-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
   .class-action-btn.move { padding: 8px 10px; font-size: 15px; }
+  /* The home screen's header row, which is not a touch target itself — it is the flex row that
+     holds the title and the Days off button. Named here for two reasons the sweep is right to ask
+     about. The gap goes up for the reason every other row's does: the button beside it is 44px on
+     this pointer and a paragraph running into it is a mis-tap. And the button is pinned again, in
+     this block as well as in the base rule, because THIS is the block that hands it the
+     `min-width: 44px` which took its `min-width: auto` away — the two belong within sight of each
+     other or the next person to add a control here re-opens the 2026-08-08 defect. */
+  .panel-title-row { gap: 14px; }
+  .panel-title-row > .class-action-btn { flex: 0 0 auto; }
   .hdr-term-nav { gap: 6px; }
   .install-banner { font-size: 13.5px; }
   .install-banner-dismiss { padding: 8px 16px; font-size: 13px; min-height: 44px; }
@@ -998,6 +1057,23 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .term-date { min-height: 44px; min-width: 44px; font-size: 14px; padding: 0 8px; }
   .term-date-label { font-size: 11px; }
   .class-delete-line { font-size: 13px; }
+  /* Days off & planned drops (WO-2.3), in the same pass that adds them — there is no later one.
+     The four controls in that panel that are not already covered by a rule in this block: the two
+     kind pills wear `.pill`'s own coarse floor, the title field wears `.class-input`'s, the two
+     dates wear `.term-date`'s and the class buttons wear `.toggle-btn`'s, so what is named here is
+     the containers' spacing and the two text sizes. The gaps go to 8px for the reason the roster's
+     do: two 44px targets 6px apart is a mis-tap, and every one of these rows puts them shoulder to
+     shoulder. */
+  .dayoff-kinds { gap: 8px; }
+  .dayoff-form { gap: 10px; }
+  .dayoff-dates { gap: 10px; }
+  .dayoff-classes { gap: 8px; }
+  /* These three are text rather than targets — a badge, a panel and a line in it — and they are
+     named here for the size bump only, exactly as `.class-row-note` and `.class-delete-line` above
+     them are. A 44px floor on a label is 44px of a dialog spent on something nobody taps. */
+  .dayoff-kind { font-size: 11px; }
+  .dayoff-keeps { padding: 12px; }
+  .dayoff-keeps-line { font-size: 13px; }
   .modal-body .class-hint { font-size: 12px; }
   .modal-body .class-error { font-size: 13px; }
   /* Roster & contacts. Every field here carries the 44px itself with its vertical padding zeroed,

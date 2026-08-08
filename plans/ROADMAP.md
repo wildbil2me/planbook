@@ -50,7 +50,7 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
-| 2 | Attendance | 🔨 IN PROGRESS | 7/15 `[█████░░░░░] 47%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 10/16 `[██████░░░░] 63%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
@@ -252,10 +252,28 @@ meet is a second source of truth that's wrong by first period.)*
       buttons onto two rows in landscape and three in portrait, from rules in the coarse block
       alone, while the desktop layout was already right. Fixed, and the harness now measures the
       one-row property at the cap of three in both orientations rather than trusting it.)*
-- [ ] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
+- [x] 🚩 **Days off and pre-drops, set ahead.** A minimal date-picker: mark a date (or range)
       school-wide `no-school`, or drop named classes on a future date when an assembly is known.
       Stored as calendar events and *read* by attendance — never copied. Phase 6 adds the month
       view over the same data.
+      *(WO-2.3, 2026-08-07. All five acceptance lines close at the desk — `verify-shell.mjs` 379 of
+      379, with six mutation proofs; the largest of them is the Traps line itself, which turns ten
+      checks red. Two modules: `src/calendar.js` is the model and `src/days-off.js` is the only
+      writer of `doc.events` in the app. Attendance grew a **fourth** state — `covered` — in the one
+      function that decides whether a class met, which is where WO-2.1 reserved a slot for it. One
+      consequence recorded rather than hidden: a covered day is read-only, so a class that did meet
+      on a school-wide day off has to be corrected on the calendar rather than in the register.
+      The three 👤 lines it owed were sat on 2026-08-08 and **all three pass**.)*
+      *(And the sitting that closed them opened five more things, none of them an acceptance line
+      and none of them visible to a headless run — `verify-shell.mjs` 379 → 389, with three further
+      mutation proofs. The one that is a real change rather than a fix: **the registry now pages
+      forward** as far as the calendar reaches, because a day off could be set ahead and not looked
+      at ahead, which made the feature un-checkable by the person relying on it. Writing a future
+      date is refused exactly as before — only the columns opened up. The other four were a nowrap
+      button narrower than its own label under the touch pass, a form that kept its dates, focus
+      landing in a text field so the keyboard covered the list, and the way to the calendar being
+      absent from the screen where the tap for it actually happens. One 👤 line is still owed and it
+      is a re-sitting of those five: `TESTING.md` § WO-2.3 → "What the sitting sent back".)*
 - [ ] 🚩 Per-student counts and attendance % **over recorded meetings of that class**, per term and
       year, using Roll Call!'s formula `(P+T+E+D)/(P+T+A+E+D)` so both apps agree this year.
 - [ ] Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and 44px touch targets under

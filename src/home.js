@@ -210,8 +210,12 @@ function classCard(cls, isOpen) {
 function stateLine(cls) {
   const summary = stateSummary(cls.id, todayISO());
   const line = document.createElement('span');
-  /* A modifier on top of the state's own class, not a fourth state: the class IS taken — a meeting
-     exists — and src/attendance.js's stateOf() still has exactly three answers. */
+  /* A modifier on top of the state's own class, not a state of its own: the class IS taken — a
+     meeting exists — and stateOf() would answer "taken" with or without it. That is the test, and
+     it is worth stating in those terms because src/attendance.js's stateOf() now has FOUR answers
+     rather than three: WO-2.3 added `covered`, for a day a calendar event closes, and that one IS a
+     state because the class did not meet. This sentence used to read "still has exactly three
+     answers" and was left true by every work order until the one that made it false. */
   line.className = 'class-card-state ' + summary.state
     + (summary.unconfirmed ? ' unconfirmed' : '');
   line.textContent = summary.text;

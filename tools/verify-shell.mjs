@@ -4555,6 +4555,21 @@ const nodeColumns = (count, offset) => {
 };
 const thisWeek = nodeColumns(6, 0);
 const lastWeek = nodeColumns(6, 1);
+/* And the same walk the other way, derived here for the same reason nodeColumns is: since
+   2026-08-08 the registry pages FORWARD as far as the calendar goes, and a check that asked the app
+   which future dates it had chosen would agree with any answer it gave. `n` is in weekdays after
+   today, 1-based — nodeWeekdayAhead(1) is the next weekday, whatever today is. */
+const nodeWeekdayAhead = (n) => {
+  const p = (x) => (x < 10 ? '0' : '') + x;
+  const d = new Date();
+  let left = n;
+  while (left > 0) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) left -= 1;
+  }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+};
 const daysApart = (a, b) => Math.round(
   (new Date(a.slice(0, 4), Number(a.slice(5, 7)) - 1, a.slice(8, 10))
     - new Date(b.slice(0, 4), Number(b.slice(5, 7)) - 1, b.slice(8, 10))) / 86400000);
@@ -4677,6 +4692,19 @@ const INSTALL_ATT_READER = `(function(){
          (No backticks in this comment: it is inside a template literal.) */
       passLogJson: JSON.stringify(doc.passes || []),
       openPassJson: JSON.stringify(doc.openPasses || []),
+      /* ── WO-2.3, and the second field is the whole work order ──
+         Every calendar event, verbatim and WITH ITS KEY SET, so an entry carrying a field nobody
+         meant to write shows up here rather than nowhere. And doc.attendance serialised BYTE FOR
+         BYTE, which is the only honest way to ask "authoring an event created no attendance
+         record": a count would pass a build that rewrote a record in place, and a field-by-field
+         read would pass one that added a field this file forgot to look for. The Traps line is
+         about a copy appearing in that array, so the array is compared as a string.
+         (No backticks in this comment: it is inside a template literal.) */
+      events: (doc.events || []).map(function(e){
+        return { id: e.id, kind: e.kind, date: e.date, endDate: e.endDate, title: e.title,
+                 classIds: (e.classIds || []).join(','),
+                 keys: Object.keys(e).sort().join(',') }; }),
+      attJson: JSON.stringify(doc.attendance || []),
       /* THE WHOLE DOCUMENT, serialised. Used once, to ask where a cancelled pass's note went: the
          answer is meant to be nowhere, and "nowhere" is a question about the document rather than
          about the two arrays a check might think to look in. */
@@ -4940,6 +4968,7 @@ if (!attBooted || !attSeam) {
      which is what goHome() below does through the control a teacher taps. */
   const closeAll = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
     + "'rosterPasteModal','rosterModal','teacherModal','termsModal','classDeleteModal','classesModal',"
+    + "'daysOffConfirmModal','daysOffModal',"
     + "'backupModal','restoreConfirmModal','yearModal','aboutModal']"
     + ".forEach(function(m){ window.planbook.closeModal(m); }); return 1; })()");
   /* Back to the class grid, through the tab a teacher taps rather than through the seam — the
@@ -7005,6 +7034,570 @@ if (!attBooted || !attSeam) {
      is actually measured: two open passes mean two cards on screen, and the sweep below reads every
      button and input inside `#classView` — the card's Return, its Cancel and its note field among
      them. That is the reason this hand-off is worth two lines of comment rather than one. */
+  /*
+    ────────────── WO-2.3: days off & pre-drops, read by the registry and never copied into it ──────
+
+    Five acceptance lines, and four of them are about what is NOT in the document — so every check
+    below carries `attJson`, `doc.attendance` serialised byte for byte, beside whatever it is
+    asserting. A build that copied the event onto records would pass every visible claim here: the
+    columns would go grey, the cards would say "No school", and the only thing that would give it
+    away is the array this section keeps comparing to itself.
+
+    THE EVENTS ARE AUTHORED THROUGH THE REAL FORM, on the real panel, opened from both of its doors —
+    the home screen's own button and the 📅 that appears in a covered column's head. The seam is
+    used to READ, as everywhere else in this section: what stateOf() says about a class on a date,
+    and what src/calendar.js says covers it. A second copy of the covering rule in this file could
+    agree with itself perfectly and disagree with the app, which is the failure the one-function
+    design exists to prevent.
+
+    THE FIXTURE IS A WINDOW OF PAST WEEKDAYS THIS RUN HAS NOT TOUCHED, and the first check asserts
+    that it has not — an empty range is the precondition for "every class shows as not-meeting", and
+    an assertion made over dates that already held records would be measuring the history rule
+    instead and passing for the wrong reason.
+
+    THE RANGE IS FIVE OF THAT WINDOW'S SIX WEEKDAYS, AND THE SIXTH IS DROPPED BY HAND FIRST. Two
+    reasons, both of them about a check that could otherwise pass for the wrong reason. A range that
+    covered the whole window would go green against a build whose covering test ignored the dates
+    entirely, so the day just outside it is what proves a range is a range. And the sixth column is
+    DROPPED rather than left empty because a covered day and a dropped day are the two quiet greys
+    in this palette — the pair a refactor collapses into one by accident — and the only way to
+    measure that they are still two is to have one of each on screen at the same time.
+  */
+  const offWeek = nodeColumns(6, 1);            /* the six weekdays before this week's six */
+  const offEdge = offWeek[offWeek.length - 1];  /* nodeColumns is most-recent-first: the oldest */
+  const offRange = offWeek.slice(0, offWeek.length - 1);
+  const offFrom = offRange[offRange.length - 1];
+  const offTo = offRange[0];
+  /* A future date for the pre-drop, because "a FUTURE dropped event" is the acceptance line's own
+     word. It is asked of the PREDICATE here rather than of the screen — which was once because the
+     registry had no column after today, and since 2026-08-08 is because stateOf() is the thing this
+     acceptance line is about. The screen's own answer about a future day is measured in the punch
+     list at the end of this section. */
+  const preDropDay = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 9);
+    const p = (x) => (x < 10 ? '0' : '') + x;
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  })();
+
+  /* stateOf() for every active class over a list of dates, in one round trip. Asked of the app's
+     own predicate — the point of the whole work order is that there is exactly one of them. */
+  const statesOver = (dates) => evalJs('(async function(){ await window.planbook.store.flush();'
+    + ' var a = window.planbook.attendance, doc = window.planbook.store.getDoc();'
+    + ' var ids = doc.classes.filter(function(c){ return !c.archived; }).map(function(c){ return c.id; });'
+    + ' var out = {};'
+    + ' ' + JSON.stringify(dates) + '.forEach(function(d){'
+    + '   out[d] = ids.map(function(id){ return a.stateOf(id, d); }); });'
+    + ' return { ids: ids, states: out }; })()');
+
+  /* The form, filled and submitted the way a teacher fills and submits it. The two date fields are
+     set by value rather than typed: `Input.dispatchKeyEvent` into a native date picker types into
+     whichever segment happens to be focused, and what this section is testing is not the picker. */
+  const fillDayOff = async (kind, title, from, to, classIds) => {
+    if (kind === 'dropped') await clickSel('#daysOffModal [data-dayoff-kind="dropped"]');
+    else await clickSel('#daysOffModal [data-dayoff-kind="no-school"]');
+    /* Everything already chosen is tapped OFF first. The panel keeps its selection between opens —
+       a teacher entering three drops for the same two classes should not re-pick them each time —
+       so a fill that only tapped what it wanted would toggle a leftover choice back off and quietly
+       author a different event than the one this check is about. */
+    const active = await evalJs('Array.prototype.slice.call('
+      + 'document.querySelectorAll("#daysOffClassPicker .toggle-btn.active"))'
+      + '.map(function(b){ return b.getAttribute("data-dayoff-class"); })');
+    for (const id of active) await clickSel('#daysOffClassPicker [data-dayoff-class="' + id + '"]');
+    for (const id of (classIds || [])) {
+      await clickSel('#daysOffClassPicker [data-dayoff-class="' + id + '"]');
+    }
+    await evalJs('(function(){ document.getElementById("daysOffTitle").value = '
+      + JSON.stringify(title) + ';'
+      + ' document.getElementById("daysOffFrom").value = ' + JSON.stringify(from) + ';'
+      + ' document.getElementById("daysOffTo").value = ' + JSON.stringify(to || '') + ';'
+      + ' return 1; })()');
+    await clickSel('#daysOffModal [data-dayoff-create] button[type="submit"]');
+  };
+  /* What the panel is showing: which overlays are up, and every row on the calendar list. */
+  const dayOffPanel = () => evalJs(`(function(){
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#daysOffList .roster-row'));
+    return {
+      open: !document.getElementById('daysOffModal').classList.contains('hidden'),
+      confirm: !document.getElementById('daysOffConfirmModal').classList.contains('hidden'),
+      confirmLead: (document.getElementById('daysOffConfirmLead') || {}).textContent || '',
+      confirmFacts: Array.prototype.slice.call(
+        document.querySelectorAll('#daysOffConfirmFacts .dayoff-keeps-line'))
+        .map(function(e){ return (e.textContent || '').trim(); }),
+      error: (function(){ var e = document.getElementById('daysOffError');
+        return e && !e.classList.contains('hidden') ? (e.textContent || '').trim() : ''; })(),
+      pickerShown: !document.getElementById('daysOffClasses').classList.contains('hidden'),
+      rows: rows.map(function(r){
+        var rm = r.querySelector('[data-dayoff-remove]');
+        return { badge: ((r.querySelector('.dayoff-kind') || {}).textContent || '').trim(),
+                 name: ((r.querySelector('.roster-row-name') || {}).textContent || '').trim(),
+                 scope: ((r.querySelector('.roster-row-note') || {}).textContent || '').trim(),
+                 id: rm ? rm.getAttribute('data-dayoff-remove') : '' }; })
+    }; })()`);
+
+  /* The neighbour column, dropped through the controls a teacher uses: unlock the past day, tap
+     "Didn't meet" in the action row it retargets, lock it again. This is the ONLY write this
+     sub-section makes to `attendance`, it is made before the baseline is taken, and everything
+     after it is measured against a document that already holds it. */
+  await closeAll();
+  await openCard(marking);
+  await clickSel('[data-attendance-page="earlier"]');
+  await clickSel('[data-attendance-edit="' + offEdge + '"]');
+  await clickSel('#attendanceActions [data-attendance-drop]');
+  await clickSel('[data-attendance-lock]');
+  await goHome();
+
+  const beforeEvents = await read();
+  const emptyRange = beforeEvents.records.filter((r) => r.date >= offFrom && r.date <= offTo);
+  const edgeRecord = beforeEvents.records.filter((r) => r.date === offEdge
+    && r.classId === marking)[0] || null;
+  check('WO-2.3 fixture: the week this section is about to close holds no attendance, and the day just outside the range is dropped so the two greys can be told apart',
+    emptyRange.length === 0 && beforeEvents.events.length === 0
+      && !!edgeRecord && edgeRecord.exception === 'dropped',
+    offFrom + ' .. ' + offTo + ' holds ' + emptyRange.length + ' record(s); '
+      + offEdge + ' holds ' + JSON.stringify(edgeRecord)
+      + '; the document holds ' + beforeEvents.events.length + ' event(s) and '
+      + beforeEvents.records.length + ' attendance record(s) in total');
+
+  /* ── acceptance line 1: a no-school range across a week closes every class on every date in it ── */
+
+  await clickSel('#homeView [data-dayoff-panel]');
+  const panelOpen = await dayOffPanel();
+  await fillDayOff('no-school', 'Winter break', offFrom, offTo, []);
+  const afterRange = await read();
+  const rangeStates = await statesOver(offWeek);
+  const madeEvent = afterRange.events[0] || {};
+  check('a no-school range authored across a week shows every class as not-meeting on every date in it — one event, not thirty',
+    panelOpen.open === true && panelOpen.pickerShown === false
+      && afterRange.events.length === 1
+      && madeEvent.kind === 'no-school' && madeEvent.title === 'Winter break'
+      && madeEvent.date === offFrom && madeEvent.endDate === offTo && madeEvent.classIds === ''
+      && madeEvent.keys === 'classIds,date,endDate,id,kind,notes,studentId,title'
+      && offRange.every((d) => rangeStates.states[d].length === 6
+        && rangeStates.states[d].every((s) => s === 'covered'))
+      /* And the weekday one day outside the range is untouched by it: five classes still not taken
+         there, and the sixth still holding the drop this section made. A covering test that ignored
+         its own dates would go green on the clause above and red on this one. */
+      && rangeStates.states[offEdge].filter((s) => s === 'not-taken').length === 5
+      && rangeStates.states[offEdge].filter((s) => s === 'dropped').length === 1,
+    'one event ' + JSON.stringify(madeEvent) + ' covering '
+      + offRange.length + ' weekday(s) × ' + rangeStates.ids.length + ' class(es); states = '
+      + JSON.stringify(rangeStates.states));
+
+  /* ── acceptance line 5, first of four askings: authoring wrote nothing into `attendance` ── */
+
+  check('authoring that range created no attendance record — the array is byte-identical to what it was',
+    afterRange.attJson === beforeEvents.attJson
+      && afterRange.records.length === beforeEvents.records.length,
+    'the attendance array is ' + (afterRange.attJson === beforeEvents.attJson ? 'byte-identical'
+      : 'DIFFERENT') + ' across the write; ' + beforeEvents.records.length + ' record(s) before, '
+      + afterRange.records.length + ' after, and ' + afterRange.events.length + ' event(s) now');
+
+  /* ── and the registry says so, in the column head and in the cells under it ── */
+
+  await closeAll();
+  await openCard(marking);
+  await clickSel('[data-attendance-page="earlier"]');
+  const coveredCols = await read();
+  await park();
+  const coveredLook = await evalJs('window.__colLook(' + JSON.stringify(offTo) + ')');
+  const dropLook = await evalJs('window.__colLook(' + JSON.stringify(offEdge) + ')');
+  const inRange = coveredCols.columns.filter((c) => c.date !== offEdge);
+  const outside = coveredCols.columns.filter((c) => c.date === offEdge)[0] || {};
+  check('the covered week draws as not-meeting on the grid: the fourth word in every column head, and a dash in every cell under it',
+    coveredCols.columns.length === 6 && inRange.length === 5
+      && inRange.every((c) => c.chip === 'No school')
+      && inRange.every((c) => / attendance-col-covered\b/.test(c.cls))
+      /* The one control on a covered head is the door to the screen the reason was authored on —
+         not an undo, because removing a holiday is not one class's decision to take. */
+      && inRange.every((c) => c.btnText === '📅' && c.btn === '')
+      /* And the day outside the range still says the OTHER quiet word, with its own control. */
+      && outside.chip === 'Didn’t meet' && outside.btnText === '✏️'
+      && coveredCols.rows.length > 0
+      /* Every glyph in every row is the dash, on all six columns: five covered and one dropped, no
+         letter and no question mark anywhere. Tested by exclusion rather than against a literal —
+         the en dash is one paste away from being an em dash in this file and not in the app. */
+      && coveredCols.rows.every((r) => r.codes.length === 6
+        && r.codes.split('').every((g) => g !== '?' && !/[A-Za-z]/.test(g))),
+    'chips ' + JSON.stringify(coveredCols.columns.map((c) => c.chip))
+      + ', head buttons ' + JSON.stringify(coveredCols.columns.map((c) => c.btnText))
+      + ', first row reads ' + JSON.stringify((coveredCols.rows[0] || {}).codes));
+
+  /* And it is a DIFFERENT picture from a dropped column, which is the whole reason the state is a
+     fourth rather than a re-use of the third. Measured rather than declared, on two columns side by
+     side on one screen: the two are quiet greys and what separates them is a word, a fill and a
+     border-style — exactly the kind of distinction a refactor collapses by accident and a
+     stylesheet review calls identical. */
+  check('a covered column and a dropped column, side by side, are drawn as two different things rather than one grey',
+    !!coveredLook && !!dropLook
+      && coveredLook.chip === 'No school' && dropLook.chip === 'Didn’t meet'
+      && coveredLook.cellStyle === 'solid' && dropLook.cellStyle === 'dashed'
+      && coveredLook.glyph === dropLook.glyph
+      && coveredLook.cellBg !== dropLook.cellBg
+      && coveredLook.headBg !== dropLook.headBg,
+    'covered = ' + JSON.stringify(coveredLook) + '; dropped = ' + JSON.stringify(dropLook));
+
+  /* ── acceptance line 2: delete the event and every one of those days is back to "not taken yet" ── */
+
+  await clickSel('#attendanceHead [data-dayoff-panel]');
+  const listed = await dayOffPanel();
+  await clickSel('#daysOffList [data-dayoff-remove="' + madeEvent.id + '"]');
+  const afterDelete = await read();
+  const restored = await statesOver(offWeek);
+  check('deleting that event puts all five days back to "not taken yet" — and not one attendance record was touched on the way in or out',
+    listed.open === true && listed.rows.length === 1
+      && listed.rows[0].badge === 'No school' && listed.rows[0].scope === 'Every class'
+      && afterDelete.events.length === 0
+      && offRange.every((d) => restored.states[d].every((s) => s === 'not-taken'))
+      /* The dropped day is untouched by the deletion too: it was never the event's to restore, and
+         a build that had copied the holiday onto records would most likely have overwritten it. */
+      && restored.states[offEdge].filter((s) => s === 'dropped').length === 1
+      && afterDelete.attJson === beforeEvents.attJson,
+    'the panel listed ' + JSON.stringify(listed.rows) + '; after the Remove the document holds '
+      + afterDelete.events.length + ' event(s), the states are ' + JSON.stringify(restored.states)
+      + ', and the attendance array is '
+      + (afterDelete.attJson === beforeEvents.attJson ? 'byte-identical' : 'DIFFERENT'));
+
+  /* ── acceptance line 3: a future pre-drop naming two classes touches only those two ── */
+
+  const twoClasses = [ids[1], ids[3]];
+  await fillDayOff('dropped', 'Fall assembly', preDropDay, '', twoClasses);
+  const afterDrop = await read();
+  const dropStates = await statesOver([preDropDay]);
+  const dropEvent = afterDrop.events[0] || {};
+  const covered = dropStates.states[preDropDay]
+    .map((s, i) => (s === 'covered' ? dropStates.ids[i] : null)).filter(Boolean);
+  check('a future dropped event naming two classes affects only those two — and the other four are untouched',
+    afterDrop.events.length === 1 && dropEvent.kind === 'dropped'
+      && dropEvent.date === preDropDay && dropEvent.endDate === preDropDay
+      && dropEvent.classIds === twoClasses.join(',')
+      && covered.join(',') === twoClasses.join(',')
+      && dropStates.states[preDropDay].filter((s) => s === 'not-taken').length === 4
+      /* Authoring on a FUTURE date is the point of this work order, and it must not have gone
+         anywhere near the gate that refuses attendance writes after today. */
+      && afterDrop.attJson === beforeEvents.attJson,
+    'the event is ' + JSON.stringify(dropEvent) + ' on ' + preDropDay + ' (today is ' + nodeToday
+      + '); states across ' + dropStates.ids.length + ' class(es) = '
+      + JSON.stringify(dropStates.states[preDropDay]) + ', covered = ' + JSON.stringify(covered)
+      + '; attendance byte-identical = ' + (afterDrop.attJson === beforeEvents.attJson));
+
+  /* And the form refuses a drop that names nobody, rather than writing a school-wide one under the
+     wrong kind — a `dropped` with empty classIds is school-wide by the data model, which is the
+     silent wrong thing this refusal exists to stop. */
+  await fillDayOff('dropped', 'Nobody named', preDropDay, '', []);
+  const refused = await dayOffPanel();
+  const afterRefusal = await read();
+  check('a planned drop that names no class is refused rather than written as a school-wide one',
+    refused.error !== '' && /which classes/i.test(refused.error)
+      && afterRefusal.events.length === 1
+      && afterRefusal.attJson === beforeEvents.attJson,
+    'the panel said ' + JSON.stringify(refused.error) + ' and the document still holds '
+      + afterRefusal.events.length + ' event(s)');
+
+  /* ── acceptance line 4: a retroactive snow day over a day that was really taught ── */
+
+  const taughtToday = beforeEvents.today.filter((r) => !r.exception).map((r) => r.classId);
+  /* A class that dropped today from its OWN record, which is precedence line two rather than line
+     three: it did not meet, and the reason is the ledger's rather than the calendar's, so laying a
+     snow day over it must leave it reading "dropped" and not "covered". Counted here so the check
+     below is arithmetic over three groups rather than two. */
+  const droppedToday = beforeEvents.today.filter((r) => r.exception).map((r) => r.classId);
+  await fillDayOff('no-school', 'Snow day', nodeToday, '', []);
+  const warned = await dayOffPanel();
+  const duringWarning = await read();
+  check('a retroactive snow day over a day that already has recorded attendance WARNS, and has written nothing yet',
+    warned.confirm === true
+      && warned.confirmFacts.length === taughtToday.length && taughtToday.length > 0
+      && /stay/i.test(warned.confirmLead)
+      && duringWarning.events.length === 1
+      && duringWarning.attJson === beforeEvents.attJson,
+    'the confirm named ' + warned.confirmFacts.length + ' period(s) '
+      + JSON.stringify(warned.confirmFacts) + ' against ' + taughtToday.length
+      + ' recorded today; lead = ' + JSON.stringify(warned.confirmLead.slice(0, 120))
+      + '; events in the document while the warning is up = ' + duringWarning.events.length);
+
+  /* Cancel first, because "warns" is only half of it: a warning the teacher backs out of has to
+     leave the document exactly as it was, event and all. */
+  await clickSel('#daysOffConfirmModal [data-dayoff-cancel]');
+  const backedOut = await read();
+  check('backing out of that warning writes nothing at all — no event, no record',
+    backedOut.events.length === 1 && backedOut.events[0].title === 'Fall assembly'
+      && backedOut.attJson === beforeEvents.attJson,
+    'the document holds ' + backedOut.events.length + ' event(s) '
+      + JSON.stringify(backedOut.events.map((e) => e.title)) + ' and the attendance array is '
+      + (backedOut.attJson === beforeEvents.attJson ? 'byte-identical' : 'DIFFERENT'));
+
+  /* And now through it, which is the acceptance line proper: the marks are still there afterward. */
+  await fillDayOff('no-school', 'Snow day', nodeToday, '', []);
+  await clickSel('#daysOffConfirmModal [data-dayoff-confirm]');
+  const snowed = await read();
+  const snowStates = await statesOver([nodeToday]);
+  const stillTaken = snowStates.states[nodeToday]
+    .map((s, i) => (s === 'taken' ? snowStates.ids[i] : null)).filter(Boolean);
+  check('adding the snow day anyway does NOT void the record: every period that was taught is still taken, and every mark is still on it',
+    snowed.events.length === 2
+      && snowed.attJson === beforeEvents.attJson
+      && stillTaken.slice().sort().join(',') === taughtToday.slice().sort().join(',')
+      /* The three groups, and the arithmetic over them is the precedence rule in full. A class with
+         a record and no exception stays TAKEN; a class that dropped today from its own record stays
+         DROPPED, because the ledger answers before the calendar does; and only the classes with
+         nothing recorded at all are the ones the snow day closes. That last count is what makes the
+         clause above non-vacuous — without it, a build that ignored the event entirely would pass. */
+      && snowStates.states[nodeToday].filter((s) => s === 'dropped').length === droppedToday.length
+      && snowStates.states[nodeToday].filter((s) => s === 'covered').length
+        === snowStates.ids.length - taughtToday.length - droppedToday.length
+      && snowStates.ids.length - taughtToday.length - droppedToday.length > 0,
+    'today reads ' + JSON.stringify(snowStates.states[nodeToday]) + ' across '
+      + snowStates.ids.length + ' class(es): ' + stillTaken.length + ' still taken ('
+      + JSON.stringify(taughtToday) + '), ' + droppedToday.length
+      + ' dropped from their own record, and the attendance array is '
+      + (snowed.attJson === beforeEvents.attJson ? 'byte-identical' : 'DIFFERENT'));
+
+  /* ── acceptance line 5, asked of the whole run rather than of one write ── */
+
+  await clickSel('#daysOffList [data-dayoff-remove="' + snowed.events[1].id + '"]');
+  await clickSel('#daysOffList [data-dayoff-remove="' + dropEvent.id + '"]');
+  const cleared = await read();
+  const clearedStates = await statesOver([nodeToday, preDropDay].concat(offWeek));
+  check('across every event this section authored, confirmed, cancelled and removed, not one attendance record was created, changed or destroyed',
+    cleared.events.length === 0
+      && cleared.attJson === beforeEvents.attJson
+      && cleared.records.length === beforeEvents.records.length
+      /* And the whole document is back where it started — the days the events covered answer with
+         their own records again, or with "not taken yet" where there never was one. */
+      && offRange.every((d) => clearedStates.states[d].every((s) => s === 'not-taken'))
+      && clearedStates.states[preDropDay].every((s) => s === 'not-taken')
+      && clearedStates.states[nodeToday]
+        .map((s, i) => (s === 'taken' ? clearedStates.ids[i] : null)).filter(Boolean)
+        .slice().sort().join(',') === taughtToday.slice().sort().join(','),
+    beforeEvents.records.length + ' record(s) before and ' + cleared.records.length
+      + ' after, byte-identical = ' + (cleared.attJson === beforeEvents.attJson)
+      + '; ' + cleared.events.length + ' event(s) left; today reads '
+      + JSON.stringify(clearedStates.states[nodeToday]));
+
+  /*
+    ────────── THE 2026-08-08 PUNCH LIST: what the first iPad sitting sent back ──────────
+
+    WO-2.3 passed its five acceptance lines above and then met a classroom, which found five things
+    none of them covered. Three are measured here; the other two are a stylesheet rule and a focus
+    call, measured where they live (the coarse block below, and the form check in this one).
+
+    The largest is the one this sub-section is mostly about. Days off could be SET ahead and not
+    LOOKED at ahead — the window ended at today — so a teacher who entered Thanksgiving in September
+    had no way to go and see that she had entered it right. The registry now pages forward as far as
+    the calendar reaches, and the three claims worth holding are that it goes far enough, that it
+    stops somewhere honest, and that going there still writes nothing. The third is the one that
+    would be easy to lose: opening up the columns is a rendering change, and the whole reason it was
+    safe to make is that the refusal to write tomorrow lives in the writer.
+  */
+
+  const aheadDay = nodeWeekdayAhead(4);
+
+  /* One page-side read of the grid AND the pager AND the action row, for the reason every other
+     reader in this file is one round trip: three reads taken a paint apart can disagree with each
+     other and the check cannot tell which one was wrong. */
+  const gridAhead = () => evalJs(`(function(){
+    function colOf(th){
+      var date = th.getAttribute('data-attendance-col');
+      var btn = th.querySelector('button');
+      var td = document.querySelector('#attendanceBody td[data-attendance-col="' + date + '"]');
+      var cell = td ? td.firstElementChild : null;
+      return { date: date,
+               chip: ((th.querySelector('.attendance-day-state') || {}).textContent || '').trim(),
+               future: th.className.indexOf('attendance-col-future') >= 0,
+               covered: th.className.indexOf('attendance-col-covered') >= 0,
+               btn: btn ? (btn.hasAttribute('data-dayoff-panel') ? 'dayoff'
+                 : btn.hasAttribute('data-attendance-edit') ? 'edit' : 'other') : 'none',
+               cellTag: cell ? cell.tagName : '',
+               cellFuture: cell ? cell.className.indexOf('attendance-cell-future') >= 0 : false,
+               cellGlyph: cell ? (cell.textContent || '').trim() : '' };
+    }
+    var later = Array.prototype.slice.call(document.querySelectorAll('#attendancePager button'))
+      .filter(function(b){ return b.getAttribute('data-attendance-page') === 'later'; })[0];
+    return {
+      columns: Array.prototype.slice.call(
+        document.querySelectorAll('#attendanceHead th[data-attendance-col]')).map(colOf),
+      later: later ? { disabled: !!later.disabled, title: later.title || '' } : null,
+      doors: document.querySelectorAll('#attendanceActions [data-dayoff-panel]').length,
+      actions: Array.prototype.slice.call(
+        document.querySelectorAll('#attendanceActions button'))
+        .map(function(b){ return (b.textContent || '').trim(); })
+    }; })()`);
+
+  await closeAll();
+  await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
+  await clickSel('[data-attendance-page="today"]');
+
+  /* ── the door, on a day with nothing special about it ── */
+
+  const doorOnPlainDay = await gridAhead();
+  check('the way to the calendar is on the class screen itself, on an ordinary day, past the controls that write',
+    doorOnPlainDay.doors === 1
+      && doorOnPlainDay.actions[doorOnPlainDay.actions.length - 1].indexOf('Days off') >= 0
+      /* Last in the row, which is the half that keeps the three-control rule true: it is not one of
+         the controls a teacher aims at with a class walking in, so it must not sit among them. */
+      && doorOnPlainDay.actions.filter((t) => t.indexOf('Days off') >= 0).length === 1,
+    'the action row reads ' + JSON.stringify(doorOnPlainDay.actions));
+
+  /* ── the form empties itself, and does not summon the keyboard over the list it just changed ── */
+
+  const beforeAhead = await read();
+  await goHome();
+  await clickSel('#homeView [data-dayoff-panel]');
+  await fillDayOff('no-school', 'Teacher institute day', aheadDay, '', []);
+  const formAfterAdd = await evalJs(`(function(){
+    var a = document.activeElement;
+    return { from: document.getElementById('daysOffFrom').value,
+             to: document.getElementById('daysOffTo').value,
+             title: document.getElementById('daysOffTitle').value,
+             focusId: a ? (a.id || '') : '',
+             focusTag: a ? a.tagName : '',
+             focusType: a ? (a.getAttribute('type') || '') : '',
+             rows: document.querySelectorAll('#daysOffList .roster-row').length }; })()`);
+  check('after an add the whole form is empty and focus is on a button, not back in a text field where the keyboard would cover the list',
+    formAfterAdd.from === '' && formAfterAdd.to === '' && formAfterAdd.title === ''
+      && formAfterAdd.focusId !== 'daysOffTitle'
+      && formAfterAdd.focusTag === 'BUTTON'
+      && formAfterAdd.rows >= 1,
+    'the form reads ' + JSON.stringify([formAfterAdd.title, formAfterAdd.from, formAfterAdd.to])
+      + ', focus is on ' + formAfterAdd.focusTag + '#' + formAfterAdd.focusId
+      + ', and the list below it shows ' + formAfterAdd.rows + ' row(s)');
+
+  /* And the other half of the same complaint: a range is two fields, and the second one is almost
+     always the first one. Dispatched as a real `change`, because that is the event a native date
+     picker fires and the hook is deliberately not on `input` (src/days-off.js says why). */
+  const carried = await evalJs(`(function(){
+    var from = document.getElementById('daysOffFrom');
+    var to = document.getElementById('daysOffTo');
+    from.value = ${JSON.stringify(aheadDay)};
+    from.dispatchEvent(new Event('change', { bubbles: true }));
+    var filled = to.value;
+    to.value = ${JSON.stringify(nodeWeekdayAhead(6))};
+    from.value = ${JSON.stringify(aheadDay)};
+    from.dispatchEvent(new Event('change', { bubbles: true }));
+    return { filled: filled, kept: to.value }; })()`);
+  check('picking a start date carries the end date with it, and never overwrites an end date the teacher set herself',
+    carried.filled === aheadDay && carried.kept === nodeWeekdayAhead(6),
+    'an empty To became ' + JSON.stringify(carried.filled) + ' (start was ' + aheadDay
+      + '); a To already set to ' + nodeWeekdayAhead(6) + ' stayed ' + JSON.stringify(carried.kept));
+
+  await closeAll();
+  await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
+  await clickSel('[data-attendance-page="today"]');
+
+  /* ── forward, to the day that is on the calendar ── */
+
+  const atToday = await gridAhead();
+  let hops = 0;
+  let ahead = atToday;
+  while (hops < 8 && !ahead.columns.some((c) => c.date === aheadDay)) {
+    if (ahead.later && ahead.later.disabled) break;
+    await clickSel('[data-attendance-page="later"]');
+    ahead = await gridAhead();
+    hops += 1;
+  }
+  const aheadCol = ahead.columns.filter((c) => c.date === aheadDay)[0] || null;
+  /* A future weekday with nothing on it, taken off the same window, so the two future treatments
+     are measured against each other rather than one at a time. */
+  const plainAhead = ahead.columns.filter((c) => c.future && c.date !== aheadDay)[0] || null;
+
+  check('a day off set for next week can be paged forward to and read on the registry — the reason the columns were opened up at all',
+    atToday.later && atToday.later.disabled === false
+      && !!aheadCol && aheadCol.covered === true && aheadCol.future === true
+      && aheadCol.chip.length > 0 && aheadCol.btn === 'dayoff',
+    'Later at today: ' + JSON.stringify(atToday.later) + '; ' + hops + ' tap(s) later the window is '
+      + JSON.stringify(ahead.columns.map((c) => c.date)) + ' and ' + aheadDay + ' reads '
+      + JSON.stringify(aheadCol));
+
+  check('an ordinary day ahead of today says "Ahead" rather than "Not taken", carries no unlock, and its cells are inert',
+    !!plainAhead && plainAhead.chip === 'Ahead' && plainAhead.btn === 'none'
+      && plainAhead.cellTag === 'SPAN' && plainAhead.cellFuture === true
+      /* Not the `?` an untaken past day wears. That glyph and that amber together are this screen's
+         one alarm, and a day that has not happened is not something anybody forgot. */
+      && plainAhead.cellGlyph !== '?',
+    plainAhead ? JSON.stringify(plainAhead) : 'no plain future column in the window '
+      + JSON.stringify(ahead.columns.map((c) => c.date + ' ' + c.chip)));
+
+  /* ── and it stops where the calendar does ── */
+
+  let guard = 0;
+  let edge = ahead;
+  while (guard < 12 && edge.later && !edge.later.disabled) {
+    await clickSel('[data-attendance-page="later"]');
+    edge = await gridAhead();
+    guard += 1;
+  }
+  check('paging forward stops at the last thing on the calendar and says so, rather than running on into empty weeks forever',
+    !!edge.later && edge.later.disabled === true
+      && /as far ahead as the calendar goes/i.test(edge.later.title)
+      && edge.columns.some((c) => c.date >= aheadDay),
+    'after ' + (hops + guard) + ' forward tap(s) the window is '
+      + JSON.stringify(edge.columns.map((c) => c.date)) + ' and Later reads '
+      + JSON.stringify(edge.later));
+
+  /*
+    ── AND PORTRAIT STILL DOES NOT PAGE, WITH SOMETHING AHEAD ON THE CALENDAR ──
+
+    A regression this section shipped and caught within the hour, worth a check of its own because
+    of the shape of it. `Later` was disabled by ONE test — "are you at the forward end" — and that
+    test used to mean "are you on today", which portrait always is. Once the forward end could be a
+    day off next week, portrait's pinned position stopped being the end, and the button lit up on
+    the one screen that refuses to page: live, tappable, and thrown away by pageDays().
+
+    So the fixture matters. The WO-2.12 section already asks this question and CANNOT catch it —
+    it runs after every event has been removed, where the old test and the new one agree. This one
+    asks it with a day off four weekdays out, which is the only state the two answers differ in.
+  */
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
+  /* Longer than the app's own settle delay, for the reason the WO-2.12 turns give: its last look
+     after a turn is at 400ms, and reading at 300 would be timing the wait rather than the app. */
+  await new Promise(r => setTimeout(r, 700));
+  const upright = await gridAhead();
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await new Promise(r => setTimeout(r, 700));
+
+  check('turning upright with a day off still ahead on the calendar leaves Later disabled — portrait does not page, and the forward end is no longer the same question as "are you on today"',
+    upright.columns.length === 1
+      && !!upright.later && upright.later.disabled === true
+      && /portrait/i.test(upright.later.title),
+    'portrait drew ' + JSON.stringify(upright.columns.map((c) => c.date))
+      + ' and Later reads ' + JSON.stringify(upright.later));
+
+  /* ── acceptance line 5 again, asked of the surface that did not exist when it was written ── */
+
+  const afterAhead = await read();
+  check('reading a week that has not happened yet wrote nothing — the columns opened up, the writer did not',
+    afterAhead.attJson === beforeAhead.attJson
+      && afterAhead.records.length === beforeAhead.records.length,
+    beforeAhead.records.length + ' record(s) before the forward paging and '
+      + afterAhead.records.length + ' after, byte-identical = '
+      + (afterAhead.attJson === beforeAhead.attJson));
+
+  /* And with the event gone, the forward stop goes back to today — the behaviour of every year that
+     has nothing scheduled in it, which is what this screen did before the change. */
+  /* Reached from the HOME screen rather than from the 📅 in the covered column head, and that is a
+     consequence of the portrait detour above rather than a preference: turning upright pins the
+     position to today, and landscape comes back on the week ending today rather than where the
+     screen was before the turn (WO-2.12's documented cost). So the covered column is off screen by
+     the time this runs, and the 📅 with it. The home door is the orientation-independent one. */
+  await goHome();
+  await clickSel('#homeView [data-dayoff-panel]');
+  const madeAhead = (await read()).events.filter((e) => e.title === 'Teacher institute day')[0];
+  await clickSel('#daysOffList [data-dayoff-remove="' + madeAhead.id + '"]');
+  await closeAll();
+  await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
+  await clickSel('[data-attendance-page="today"]');
+  const backAtToday = await gridAhead();
+  check('with nothing on the calendar the window ends at today again, and Later goes back to saying tomorrow is not something to record',
+    !!backAtToday.later && backAtToday.later.disabled === true
+      && /tomorrow/i.test(backAtToday.later.title)
+      && backAtToday.columns.every((c) => c.future === false),
+    'the window is ' + JSON.stringify(backAtToday.columns.map((c) => c.date))
+      + ' and Later reads ' + JSON.stringify(backAtToday.later));
+
   await send('Emulation.clearDeviceMetricsOverride');
   await closeAll();
   await clickSel('[data-class-tab]', 1);
@@ -7250,6 +7843,88 @@ if (coarse !== true) {
       await clickSel('[data-class-delete-cancel]');
     }
     if (seam) await evalJs("window.planbook.closeModal('classesModal');1");
+  }
+
+  /*
+    Days off & planned drops (WO-2.3), for the same reason as every panel above: its class picker
+    and its calendar list are built at open time inside a hidden overlay, where they measure 0x0 and
+    the sweep at the top of this section skips them.
+
+    Two shapes in here are the ones this work order could plausibly get wrong, and they are the two
+    the run below puts on screen deliberately. The class picker is `.toggle-btn` rather than
+    checkboxes — a checkbox is 16px of target that no padding makes bigger — so the kind is switched
+    to a planned drop first, which is the only state in which that row exists. And the two date
+    fields are `<input type="date">`, a control whose height nobody sets by accident and which the
+    term editor above already had to be told about once.
+  */
+  if (seam && await has('#homeView [data-dayoff-panel]')) {
+    await evalJs("(function(){ ['classDeleteModal','termsModal','classesModal','backupModal',"
+      + "'yearModal','aboutModal'].forEach(function(m){ window.planbook.closeModal(m); });"
+      + " return 1; })()");
+    /* From the home view's own door, which means being on the home view: the coarse sweep reloads
+       the page and Chrome restores whichever view the preference last held. */
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
+    await clickSel('#homeView [data-dayoff-panel]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#daysOffModal [data-dayoff-kind="dropped"]');
+    await new Promise(r => setTimeout(r, 200));
+    const dom = await evalJs(`(function(){ var m = document.getElementById('daysOffModal');
+      if (!m || m.classList.contains('hidden')) return null;
+      return Array.prototype.slice.call(m.querySelectorAll('button, input'))
+        .filter(function(e){ var r = e.getBoundingClientRect(); return r.width || r.height; })
+        .map(function(e){ var r = e.getBoundingClientRect();
+          return { t:(e.className || e.tagName), w:Math.round(r.width*100)/100,
+                   h:Math.round(r.height*100)/100 }; }); })()`);
+    const picker = await evalJs("document.querySelectorAll('#daysOffClassPicker .toggle-btn').length");
+    if (!dom || dom.length < 8 || !picker) {
+      check('the days-off panel opened with its class picker, so there is something to measure',
+        false, 'controls found = ' + (dom ? dom.length : 'panel never opened')
+          + ', class buttons = ' + picker);
+    } else {
+      check('every control in the days-off panel measures >=44px on a coarse pointer, date fields and class picker included',
+        dom.every(m => m.h >= 44 && m.w >= 44),
+        'measured ' + dom.length + ' (including ' + picker + ' class button(s)); under = '
+          + JSON.stringify(dom.filter(m => m.h < 44 || m.w < 44)));
+    }
+    await evalJs("window.planbook.closeModal('daysOffModal');1");
+
+    /*
+      AND THE BUTTON THAT OPENS IT, WHICH IS A DIFFERENT QUESTION FROM 44px AND THE ONE THAT FAILED.
+      The owner found "Days off" spilling out through its own border on the iPad on 2026-08-08, with
+      every touch-target check above it green — because a button can clear 44px in both directions
+      and still be narrower than the words inside it. Every `.class-action-btn` is `white-space:
+      nowrap`, so a shrunk one does not reflow, it overflows; and the coarse block's `min-width:
+      44px` is what gave it permission to shrink, by replacing the `min-width: auto` that a flex
+      item otherwise gets for free.
+
+      Measured as scrollWidth against clientWidth, which is the defect itself rather than a proxy
+      for it: a control whose content is wider than its box IS the bug, whatever caused it. Asked of
+      every button in the header row, so the next one added to that row inherits the check.
+    */
+    const titleRow = await evalJs(`(function(){
+      var row = document.querySelector('#homeView .panel-title-row');
+      if (!row) return null;
+      return Array.prototype.slice.call(row.querySelectorAll('button')).map(function(b){
+        var r = b.getBoundingClientRect();
+        return { text: (b.textContent || '').trim(),
+                 over: b.scrollWidth - b.clientWidth,
+                 w: Math.round(r.width), h: Math.round(r.height),
+                 wrap: getComputedStyle(b).whiteSpace }; }); })()`);
+    if (!titleRow || !titleRow.length) {
+      check('the home screen header row has a control to measure', false,
+        'found ' + JSON.stringify(titleRow));
+    } else {
+      check('no button in the home header row is narrower than its own label — a nowrap control that shrinks does not reflow, it spills through its border',
+        titleRow.every(b => b.over <= 0 && b.w >= 44 && b.h >= 44),
+        titleRow.map(b => '"' + b.text + '" ' + b.w + 'x' + b.h + ' (' + b.wrap + '), content over its box by '
+          + b.over + 'px').join(' · '));
+    }
+    /* AND BACK INTO A CLASS, which is not tidying up — it is a precondition for the roster block
+       below. The class tab strip is drawn on the class view ONLY (WO-1.13), and that block finds
+       the class with the biggest roster by reading those tabs; left on the home screen it reads an
+       empty list, switches to nothing, and fails four checks about controls it never opened. Found
+       exactly that way. A card is the way in, the same route a teacher takes. */
+    if (await has('#homeGrid .class-card-open')) await clickSel('#homeGrid .class-card-open');
   }
 
   /*

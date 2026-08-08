@@ -230,8 +230,47 @@ rather than one. **366 after the paging anchor**, five checks later the same day
 three windows, turned to portrait and landed on the 4th rather than on today. Four of the five turn
 the device; the fifth deliberately does not — a laptop window dragged from six columns to five is the
 same defect with the rotation taken out, and it is the only one of the five that catches the window
-arithmetic on its own once portrait is pinned to today.** Update
-this line when you add checks — a stale count here reads as "the harness has not been touched since
+arithmetic on its own once portrait is pinned to today.** **379 at WO-2.3**, and the thirteen are
+days off and pre-drops: twelve at the end of the attendance section, one in the coarse sweep. Four
+are worth knowing about. **Every one of the twelve carries `doc.attendance` serialised byte for
+byte**, beside whatever else it is asserting — that work order's Traps line is a copy appearing in
+that array, and a build that made the copy would pass every *visible* claim in the section: the
+columns go grey, the cards say "No school", and the only thing that gives it away is the array being
+compared to itself. Proved by mutation, and it is the largest single mutation result in this file so
+far — copying the event onto records turns **ten** of the twelve red. **The range is five weekdays of
+a six-weekday window and the sixth is dropped by hand first**, which is two precautions in one
+fixture: the day outside the range is what stops a covering test that ignored its dates from passing
+(mutating `coversDate()` to `return true` turns one red), and it puts a covered column and a dropped
+column side by side on one screen, because those are the two quiet greys in this palette and "they
+are still two colours" is a claim a refactor breaks by accident (painting covered in the dropped
+palette turns one red). **The future pre-drop is asked of the predicate rather than of the screen**,
+and that is not a shortcut: the honest question about "a *future* dropped event naming two classes"
+is what `stateOf()` answers on that date for all six classes. *(When this was written the registry
+also had no column after today, so there was no rendering to read either. Since 2026-08-08 there is —
+the punch-list block below reads it.)* And **the snow-day check is arithmetic over
+three groups, not two** — taught, dropped-from-its-own-record, and nothing recorded — which is the
+precedence rule in full; it was written over two groups first and went red against a correct build,
+because a class that dropped today from its own ledger stays `dropped` and does not become
+`covered`. Six mutations, all reverted and tabulated in `TESTING.md` § WO-2.3. **One trap re-paid on
+the way**: the coarse-sweep check navigates to the home view to reach the days-off door, and the
+class tab strip is drawn on the class view only — so leaving the run there made the roster block
+below read an empty tab list and fail four checks about panels it never opened. It goes back into a
+class through a card before it hands on.
+
+**The punch-list block at the end of that section (2026-08-08) is a different kind of thing, and
+worth naming as such: it is what the first iPad sitting sent back after every acceptance line above
+had already passed.** Nine checks, plus one in the coarse sweep. Six of them are about the
+registry paging FORWARD, which is the hole the sitting found — a day off could be set ahead and not
+looked at ahead. The one to keep is *"reading a week that has not happened yet wrote nothing"*: the
+change that opened those columns is a rendering change, and the only reason it was safe is that the
+refusal to write tomorrow lives in the writer, so the check asserts `doc.attendance` byte-identical
+across the whole forward walk exactly as the block above it does. The coarse-sweep one is the other
+lesson: **"Days off" spilled through its own border on the iPad with every 44px check green**, because
+a `nowrap` button can clear 44px in both directions and still be narrower than its own label — so
+that check measures `scrollWidth` against `clientWidth`, which is the defect itself rather than a
+proxy for it, and asks it of every button in that header row.
+
+Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
 *(This line said 79 for WO-1.5 and the real number was 82: the three checks added with the per-year

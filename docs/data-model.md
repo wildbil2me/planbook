@@ -399,6 +399,18 @@ events and **read** by the attendance layer, never copied into attendance record
 holiday and every class follows. Precedence and the one rule protecting recorded history are in
 [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
 
+Two details settled when those two kinds shipped *(WO-2.3, 2026-08-07 — `src/calendar.js` owns the
+model and `src/days-off.js` is the only writer)*:
+
+- **`endDate` is always written, and equals `date` on a one-day event.** A break is one entry with a
+  range, never one entry per day — but the covering test is then `date <= on && on <= endDate` for
+  every event, rather than a comparison that has to decide what an absent field meant. A reader
+  still tolerates a missing `endDate` and treats it as a single day, which is the only thing it
+  could honestly mean in a hand-edited or restored document.
+- **`title` may be empty, and the screens say the kind's own word where it is.** It is the *reason*
+  a covered column shows a teacher — "No school · Thanksgiving break" — so a required field with a
+  default would print "No school · No school" for everybody who skipped it.
+
 **Never copy a derived event into `events`.** Move an assignment's due date and the calendar has
 to follow by itself; a stored copy creates two truths, and the one the teacher isn't looking at is
 the one that's wrong.

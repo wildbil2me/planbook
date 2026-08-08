@@ -29,22 +29,41 @@
   also not a schedule: nothing here predicts which classes meet, and plans/rotating-schedule.md is
   the decision record that says why there is nothing to predict with.
 
-  ── THE THREE STATES, AND WHY THERE IS NO SCHEDULE TO ASK ──
+  ── THE FOUR STATES, AND WHY THERE IS NO SCHEDULE TO ASK ──
 
   plans/rotating-schedule.md is settled: there is no schedule object, no cycle, no rotation, no
   meeting pattern. A class met if it has an attendance record with no `exception`. So a class on a
-  date is in exactly one of three states, and stateOf() below is the only place in the app that
+  date is in exactly one of four states, and stateOf() below is the only place in the app that
   decides which:
 
     no record at all              → NOT TAKEN YET   "did I forget?"
     a record with no `exception`  → TAKEN           the class met; this is a meeting and it counts
     a record with an `exception`  → DID NOT MEET    dropped; it counts toward nothing
+    no record, an event covers it → COVERED         the calendar says so; it counts toward nothing
 
-  The third is not the second. Every later phase reads through stateOf() rather than testing
-  `exception` itself: WO-2.3 adds calendar events to the answer (a `no-school` range covering the
-  date), and it adds them HERE, in one function, or the app grows a second opinion about whether a
-  class met. THE COLUMN HEADER IS BUILT FOR A FOURTH REASON ARRIVING — the state chip is a word and
-  a palette, not a boolean, so an event-covered day is a fourth word in the same slot.
+  Nothing else in the app tests `exception` for itself, which is what made the fourth arrive as an
+  edit to ONE function. It was three until WO-2.3, and the paragraph that stood here promised
+  exactly this: *"WO-2.3 adds calendar events to the answer (a `no-school` range covering the date),
+  and it adds them HERE, in one function, or the app grows a second opinion about whether a class
+  met."* It does, and it did.
+
+  THE ORDER IN THAT LIST IS THE PRECEDENCE RULE, and it is plans/rotating-schedule.md § Precedence
+  word for word: a class MET if it has an attendance record with no exception — full stop, before
+  the calendar is consulted at all. Otherwise it did not meet, whether that is from its own record
+  or from an event covering the date. Which is also THE ONE RULE PROTECTING HISTORY: a retroactive
+  snow day dropped over a week that was actually taken cannot void a single mark, because stateOf()
+  never reaches the event on a date that has a record. The warning that goes with it is the
+  authoring screen's (src/days-off.js) — this file simply cannot be talked into the damage.
+
+  THE COLUMN HEADER WAS BUILT FOR THIS ARRIVING — the state chip is a word and a palette, not a
+  boolean, so an event-covered day is a fourth word in the same slot, and the word is the event's
+  own: "No school" or "Planned drop", with the teacher's title beside it as the reason. The palette
+  is the dropped column's quiet grey made SOLID rather than dashed, because the two mean the same
+  thing about the class and different things about where the undo lives.
+
+  AND THE EVENT IS NEVER COPIED ONTO A RECORD. Nothing in this file writes an `exception` that came
+  from the calendar; src/calendar.js's header argues why at length. Delete the holiday and every
+  column here follows on the next paint, because there was never a copy to go and find.
 
   ── THE AMBIGUITY A GRID CREATES, WHICH A ONE-DAY SCREEN DID NOT HAVE ──
 
@@ -178,7 +197,7 @@
     - "EVERYONE'S HERE" TAKES THE CLASS AND RESOLVES EVERY STUDENT AT ONCE. It is the one control
       allowed to change every row, because that is exactly what it says it does.
 
-  ── PAST DAYS TAKE AN UNLOCK; FUTURE DAYS DO NOT EXIST ──
+  ── PAST DAYS TAKE AN UNLOCK; FUTURE DAYS CAN BE READ AND NEVER WRITTEN ──
 
   Today's column is live: its cells are buttons and its header drops the class in one tap. A past
   column is READ-ONLY until its ✏ is tapped, which is the "deliberate unlock" — one column at a
@@ -187,9 +206,16 @@
   indication, and it is a strip rather than a subtle tint because it has to survive being read
   across a classroom.
 
-  There is no future column and no way to reach one. The window ENDS at today, "Later" is disabled
-  when it already does, and every writer refuses a date after today outright — so the block is a
-  fact about the storage layer rather than a fact about which buttons got rendered.
+  The window used to END at today and there was no index that could name tomorrow. Since 2026-08-08
+  it runs forward as far as the last day off on the calendar, because WO-2.3 made the future worth
+  looking at and the owner found the gap in the first sitting: a break you can set and cannot then
+  go and look at is a break you cannot check. See dayColumns() and futureLimit().
+
+  WHAT DID NOT MOVE IS THE WRITE. Every writer still refuses a date after today outright, so the
+  block is a fact about the storage layer rather than a fact about which buttons got rendered —
+  which is exactly why the columns could be opened up without touching it. A future column draws
+  locked cells, no unlock, "Ahead" where a past day would say "Not taken", and a neutral wash where
+  it would say it in alarm amber: a day that has not happened is not a hole you forgot.
 
   ── WHAT "TAKEN WITH EVERYONE PRESENT" NEEDS, AND WHY IT IS A BUTTON ──
 
@@ -296,8 +322,10 @@
   repaint without a reload.
 
   Out of scope and deliberately absent: percentages and counts over history (WO-2.4), the keyboard
-  path (WO-2.5), per-student history and print/CSV (WO-2.6), and calendar events (WO-2.3), which
-  this screen READS once they exist and never authors — plus the elapsed clock on the card, the two
+  path (WO-2.5), per-student history and print/CSV (WO-2.6), and the AUTHORING of calendar events
+  (WO-2.3, src/days-off.js) — this screen reads them and never writes one, which is why the only
+  control it offers on a covered day is a door to the screen that owns
+  them — plus the elapsed clock on the card, the two
   overdue alerts and the pass history view, which are WO-2.9's and are deliberately missing here.
   What is on the screen is the time a student LEFT, which acceptance line 1 asks for; the elapsed
   count that ticks beside it is the next work order's, and it is the one that has to survive iOS
@@ -323,6 +351,13 @@ import { rosterName, fullName } from './roster.js';
    DOM, reads no clock and never calls the store, so this file can hand it the live document inside
    an update() without the two modules being able to disagree about who is out of the room. */
 import * as passes from './passes.js';
+/* The calendar model (WO-2.3), imported the same one way src/passes.js is and for the same reason:
+   it holds no DOM, reads no clock and never calls the store, so this file can ask it what covers a
+   date without the two modules being able to disagree about whether a class met. It is imported
+   READ-ONLY here — nothing in this file calls addEvent() or removeEvent(), because a screen that
+   both reads an event and writes one is the second source of truth that whole model exists to
+   prevent. src/days-off.js is the writer. */
+import * as calendar from './calendar.js';
 /* Which view is on glass, for the rotation repaint below and for nothing else. Imported rather than
    read off `#classView` here, so that "is the registry showing" has one answer in this app instead
    of two — and it costs no loop, because src/views.js imports src/prefs.js and nothing else. */
@@ -492,16 +527,27 @@ export function nextCode(code) {
   return index < 0 ? PRESENT : CYCLE[(index + 1) % CYCLE.length];
 }
 
-/* The only exception this work order writes. plans/rotating-schedule.md names three more —
-   `no school`, `snow day`, `holiday` — and WO-2.3 authors those as calendar EVENTS that this
-   screen reads, never as values copied onto a record. */
+/* The only exception this file writes, and it is still the only one. plans/rotating-schedule.md
+   names three more — `no school`, `snow day`, `holiday` — and WO-2.3 authors those as calendar
+   EVENTS that this screen reads, never as values copied onto a record. That is now a fact about
+   the shipped build rather than a plan: grep this file for `events` and every hit is a read. */
 const DROPPED = 'dropped';
 
-/* The three states, as strings rather than booleans, because there are three of them and the whole
-   point of this work order is that the third is not the second. */
+/* The four states, as strings rather than booleans, because there are four of them and the whole
+   point of this design is that they are not interchangeable: the third is not the second, and the
+   fourth is not the third. */
 export const TAKEN = 'taken';
 export const DID_NOT_MEET = 'dropped';
 export const NOT_TAKEN = 'not-taken';
+/*
+  THE FOURTH (WO-2.3): the class did not meet, and the reason is on the calendar rather than on a
+  record. The value is the internal name and never a word on screen — what a teacher reads is the
+  event's own "No school" or "Planned drop" plus the title she typed (src/calendar.js KINDS) — but
+  it IS a CSS class, worn by the column, the cells and the card's state line, exactly as the other
+  three are. `covered` rather than `off` or `no-school`: `off` reads as a toggle, and `no-school`
+  would name one of the two kinds that produce this state as if it were the only one.
+*/
+export const COVERED = 'covered';
 
 /* Roll Call!'s own number (dashboard.html:3902), matched rather than re-argued: six columns is a
    school week you can see at a glance without the row becoming a scroll. */
@@ -585,21 +631,95 @@ function dayAbbr(iso) {
   the teacher is standing on. Paging still moves a whole window at a time — see pageDays(), which is
   where `count` is added rather than one — so "two weeks back is two taps" survives intact; it is the
   same distance, expressed in the unit that does not move.
+
+  `daysBack` GOES NEGATIVE SINCE 2026-08-08, and that is the second re-cut of this function. It used
+  to build one list walking backwards and slice it, which made "there is no future column" a fact
+  about the generator: there was no index that could name tomorrow. That was right while nothing
+  could be known about tomorrow. WO-2.3 made it wrong — a teacher can now set Thanksgiving in
+  September, and the owner reported the consequence the day after the first sitting: "I can set
+  future dates, but I can't scroll to them." A closure you cannot look at is a closure you cannot
+  check, and the screen that shows what a class is doing was the one screen that refused to show it.
+
+  So the index space is signed. Zero is today, positive counts weekdays back, negative counts them
+  forward, and the window is `count` consecutive indices starting at `daysBack`. Nothing about the
+  reading changes — a change in column count still moves how many days are shown rather than which
+  day the teacher stands on, in both directions now.
+
+  WHAT DID NOT CHANGE IS THE WRITE. writableDate() still refuses every date after today and is the
+  only reason that holds; this function decides what is DRAWN, and the two have been separate since
+  WO-2.1 precisely so that a change here could not become a change there. A future column renders
+  locked cells and no unlock, the same as a past column nobody has opened — see dayHead().
 */
-function dayColumns(count, daysBack, today) {
-  const needed = daysBack + count;
-  const out = [];
+
+/*
+  ONE INDEX → ONE DATE. Positive walks back, negative walks forward, zero is today whatever day of
+  the week today is — Roll Call!'s rule (dashboard.html:3899), kept because on a weekend it is what
+  leaves the screen with a column to take rather than with no today at all. Every other index is
+  Mon–Fri.
+*/
+function weekdayAt(index, today) {
   const d = parseISO(today);
-  if (!d) return out;
+  if (!d) return '';
+  if (!index) return todayISO(d);
+  const step = index > 0 ? -1 : 1;
+  let left = Math.abs(index);
   let guard = 0;
-  while (out.length < needed && guard++ < 4000) {
+  while (left > 0 && guard++ < 4000) {
+    d.setDate(d.getDate() + step);
     const dow = d.getDay();
-    /* The first candidate IS today, and it goes in whatever day of the week it is. Everything
-       after it is Mon–Fri. */
-    if (!out.length || (dow !== 0 && dow !== 6)) out.push(todayISO(d));
-    d.setDate(d.getDate() - 1);
+    if (dow !== 0 && dow !== 6) left--;
   }
-  return out.slice(daysBack, daysBack + count);
+  return todayISO(d);
+}
+
+function dayColumns(count, daysBack, today) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const iso = weekdayAt(daysBack + i, today);
+    if (iso) out.push(iso);
+  }
+  return out;
+}
+
+/*
+  HOW FAR FORWARD PAGING GOES, AND WHY IT IS NOT INFINITE.
+
+  The future has nothing in it but the calendar. There is no attendance to read, nothing to mark,
+  and no control to tap — so a screen that pages forever is a screen where every tap past the last
+  holiday shows the same six empty columns and the teacher cannot tell whether she has reached the
+  end or the app has stopped responding. The limit is therefore the last thing there is to SEE: the
+  furthest date any day off or planned drop reaches. With an empty calendar it is today, and this
+  screen behaves exactly as it did before WO-2.3 — Later disabled at the window that ends today.
+
+  Returned as a `daysBack` index (0 or negative) rather than as a date, because that is what
+  pageDays() clamps and what the pager compares against. The horizon sits in the NEWEST column of
+  the furthest window, which is the one place it can be while the days around it are still visible.
+*/
+function futureLimit() {
+  const doc = getDoc();
+  const today = todayISO();
+  const events = doc ? calendar.exceptionsIn(doc) : [];
+  let last = today;
+  events.forEach((e) => {
+    const end = e && typeof e.endDate === 'string' && e.endDate > e.date ? e.endDate : (e && e.date);
+    if (typeof end === 'string' && end > last) last = end;
+  });
+  if (last <= today) return 0;
+  /* Walked ONCE rather than by asking weekdayAt() for each index in turn, which would restart the
+     walk from today every time and make a June holiday quadratic in a function every paint calls.
+     The two are the same arithmetic; this is the one that stays cheap in May. */
+  const d = parseISO(today);
+  if (!d) return 0;
+  let i = 0;
+  let guard = 0;
+  while (guard++ < 4000) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;
+    if (todayISO(d) > last) break;
+    i -= 1;
+  }
+  return i;
 }
 
 /* The floor under a day column, and under the two columns that are not days. Every one of these is
@@ -726,6 +846,15 @@ function dayColumnCount(width, height) {
 function visibleColumns() {
   const count = dayColumnCount();
   if (isPortrait()) pageDaysBack = 0;
+  /* AND THE FORWARD END IS PULLED BACK THE SAME WAY, AT THE PAINT, for the same reason and against
+     the same kind of route. The horizon moves when the CALENDAR changes, not when the teacher taps
+     anything: page forward to Thanksgiving, remove Thanksgiving, and the position that was legal a
+     moment ago is now past the end of a calendar that no longer has anything in it. Clamping in
+     pageDays() would only catch the taps; clamping here catches the deletion, the restore of a
+     backup with fewer events in it, and a year switched underneath the screen. Idempotent, so a
+     repaint cannot loop — exactly as the portrait line above it is. */
+  const ahead = futureLimit();
+  if (pageDaysBack < ahead) pageDaysBack = ahead;
   return dayColumns(count, pageDaysBack, todayISO());
 }
 
@@ -866,13 +995,90 @@ export function marksOf(record) {
   THE PREDICATE. What happened to this class on this date, in one word.
 
   Everything on the home screen, every column header on this screen, and every later phase's
-  meeting count reads this rather than testing `exception` for itself. WO-2.3's calendar events go
-  in here.
+  meeting count reads this rather than testing `exception` for itself. WO-2.3's calendar events went
+  in here, as the comment that stood in this place said they would, and the four lines below ARE
+  plans/rotating-schedule.md § Precedence:
+
+    a record with no `exception`  → the class MET. Asked first, and nothing after it can undo that.
+    a record with an `exception`  → it did not meet, from its own record.
+    no record, an event covers it → it did not meet, from the calendar.
+    nothing at all                → nobody has taken it yet.
+
+  THE ORDER IS THE RULE THAT PROTECTS HISTORY. A retroactive snow day laid over a week that was
+  really taken changes nothing here, because the record is answered before the calendar is even
+  consulted — the protection is structural rather than a check somebody has to remember to write.
+  The teacher is WARNED about it where the event is authored (src/days-off.js), which is the half a
+  person needs; this half is why the warning can afford to be a warning rather than a refusal.
+
+  AND THE EVENT IS READ, NOT COPIED. This is the read. There is no other one, and there is no write
+  anywhere that turns a covering event into an `exception` on a record — see src/calendar.js.
 */
 export function stateOf(classId, date) {
   const record = recordFor(classId, date);
-  if (!record) return NOT_TAKEN;
-  return record.exception ? DID_NOT_MEET : TAKEN;
+  if (record) return record.exception ? DID_NOT_MEET : TAKEN;
+  return coverOf(classId, date) ? COVERED : NOT_TAKEN;
+}
+
+/*
+  WHICH EVENT COVERS IT, for the screens that owe the teacher a REASON rather than only a state.
+  The work order's words are "shows as not-meeting, with the reason", and the reason is the title
+  she typed — "Thanksgiving break" is what makes an empty column read as an answer instead of as a
+  hole.
+
+  It answers on a date that has a record too, and that is deliberate rather than sloppy: the state
+  is TAKEN there and the column is drawn as taken, but the row's own accessible name can still say
+  the calendar disagreed, which is the only place a teacher would ever find out that the snow day
+  she added is sitting over a period she really did teach.
+*/
+export function coverOf(classId, date) {
+  return calendar.coveringEvent(getDoc(), classId, date);
+}
+
+/*
+  THE WORD AND THE REASON, from an event, in one place — so the column head, the state line, the
+  card and every announcement say the same thing about the same day. `word` alone where there is no
+  title, because "No school · No school" is what a required-title-with-a-default would produce.
+*/
+function coverWord(event) {
+  const info = event ? calendar.kindInfo(event.kind) : null;
+  return info ? info.word : 'No school';
+}
+/*
+  EVERY MEETING THAT WAS ACTUALLY RECORDED IN A DATE RANGE — the reading behind the warning
+  src/days-off.js owes before it lays a retroactive exception over real work.
+
+  It is HERE rather than there because "what is a meeting" is this file's answer and has been since
+  WO-2.1: a record with no `exception`. A copy of that test inside the authoring screen could agree
+  with itself and disagree with this one, and the day it did, the warning would go quiet about the
+  exact records it exists to protect.
+
+  What comes back is `{ classId, date }` and nothing else. The marks are not carried out of here:
+  the warning counts periods, not students, and a list of who was absent on the days somebody is
+  about to declare a snow day over is a screen nobody asked for. Sorted by date so the sentence
+  reads in the order the days happened.
+*/
+export function meetingsBetween(from, to) {
+  return attendanceIn(getDoc())
+    .filter((r) => r && !r.exception && typeof r.date === 'string'
+      && r.date >= from && r.date <= to)
+    .map((r) => ({ classId: r.classId, date: r.date }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+function coverTitle(event) {
+  return event && typeof event.title === 'string' ? event.title.trim() : '';
+}
+function coverText(event) {
+  const title = coverTitle(event);
+  return coverWord(event) + (title ? ' · ' + title : '');
+}
+/* The same fact in a sentence, for a cell's accessible name and for an announcement. The TITLE
+   keeps its own capitals — it is a proper noun as often as not ("Thanksgiving break") — so this is
+   built from the kind's spoken form rather than by lower-casing the chip. */
+function coverSaid(event) {
+  const info = event ? calendar.kindInfo(event.kind) : null;
+  const title = coverTitle(event);
+  return (info ? info.said : 'no school') + (title ? ' — ' + title : '');
 }
 
 /*
@@ -937,6 +1143,14 @@ export function stateSummary(classId, date) {
   const empty = { state: state, marked: 0, unconfirmed: 0 };
   if (state === NOT_TAKEN) return Object.assign(empty, { text: 'Not taken yet' });
   if (state === DID_NOT_MEET) return Object.assign(empty, { text: 'Didn’t meet' });
+  /* The card and the state line both have a whole line to spend, so this is the one surface where
+     the reason fits beside the word — "No school · Thanksgiving break". The event comes back on the
+     summary as well, because paintActions() below needs the kind to write the sentence under it and
+     asking for the cover a second time would be two answers to one question. */
+  if (state === COVERED) {
+    const event = coverOf(classId, date);
+    return Object.assign(empty, { text: coverText(event), cover: event });
+  }
 
   const counts = countsFor(classId, date);
   const unconfirmed = counts[UNCONFIRMED];
@@ -965,9 +1179,28 @@ export function stateSummary(classId, date) {
    A column being taken says how many are left rather than "Taken", for the reason stateSummary
    gives at length: this is the second of the three places a half-taken class has to be loud, and
    it is the one directly above the `?`s it is counting. */
-function stateChip(state, unconfirmed) {
+function stateChip(state, unconfirmed, cover, future) {
   if (state === TAKEN) return unconfirmed ? unconfirmed + ' to go' : 'Taken';
   if (state === DID_NOT_MEET) return 'Didn’t meet';
+  /*
+    "AHEAD" RATHER THAN "NOT TAKEN", ON A DAY THAT HAS NOT HAPPENED (2026-08-08, with the columns
+    that made it reachable). The state genuinely IS not-taken — stateOf() is untouched and this
+    changes no answer it gives — but the two words are an accusation on this screen. "Not taken"
+    means you have a hole to go and fill, and it is drawn in the same amber as the `?`s underneath
+    it for exactly that reason. Next Tuesday is not a hole. Reading a column of amber alarms across
+    a week the teacher is looking at BECAUSE she wanted to check a holiday would be the screen
+    inventing five jobs that do not exist.
+
+    It is a word, not a state: the covered branch below still wins on a future day off, because what
+    the calendar says about a day is more useful than the fact that the day is ahead.
+  */
+  if (future && state === NOT_TAKEN) return 'Ahead';
+  /* The fourth word, in the slot this header has held open for it since WO-2.1. Two or three
+     syllables, because 72px is what a column has: the TITLE — the reason — goes on the head's own
+     tooltip and accessible name and on the state line above the grid, where there is room for it.
+     A 9px "Thanksgiving break" wrapped over three lines in a column head is fine print, and fine
+     print is what the words on this row exist instead of. */
+  if (state === COVERED) return coverWord(cover);
   return 'Not taken';
 }
 
@@ -1022,6 +1255,28 @@ function editDate() {
 */
 function writableDate(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(date)) && String(date) <= todayISO();
+}
+
+/*
+  THE SECOND GATE (WO-2.3), AND IT IS ABOUT THE CALENDAR RATHER THAN ABOUT THE CLOCK.
+
+  The one above answers "is this date in the past or today"; this one answers "has the school
+  already said nobody meets". They are two questions and they get two functions — folding the
+  calendar into writableDate() would make a date-shape check into a document read on every call,
+  and would put "which class" into a signature that deliberately does not have it.
+
+  IT IS DELIBERATELY NOT THE MIRROR OF stateOf()'s COVERED BRANCH, and the difference is the rule
+  protecting history: this returns false the moment a record exists, because a day with attendance
+  ON it is a day the record won, and the teacher must go on being able to edit the marks she made.
+  What it refuses is CREATING a meeting under a holiday, which is the only way the calendar and the
+  ledger could come to disagree from this side.
+
+  Like the gate above it, this is a fact about the writers rather than about which buttons got
+  rendered: a covered column draws no tappable cell and offers no class-level control, so the only
+  ways here are a stale hook, WO-2.5's keyboard path, or a rotation that repainted around a tap.
+*/
+function coveredDay(classId, date) {
+  return !recordFor(classId, date) && !!coverOf(classId, date);
 }
 
 /* ────────────────────────────── writing ──────────────────────────────
@@ -1106,6 +1361,9 @@ export function setMark(studentId, code, date) {
   if (!cls || !studentId || !getDoc()) return;
   if (!MARKS.some((m) => m.code === code) && code !== UNCONFIRMED) return;
   if (!writableDate(on)) return;
+  /* The calendar says nobody meets and nothing here has been recorded yet, so a mark would be this
+     screen inventing a meeting under a holiday. See coveredDay(). */
+  if (coveredDay(cls.id, on)) return;
 
   const record = recordFor(cls.id, on);
   /* A class that did not meet has no attendance to hold. Its cells are not rendered as buttons, so
@@ -1252,6 +1510,7 @@ export function takeClass(date) {
   const cls = openClass();
   const on = date || editDate();
   if (!cls || !getDoc() || !writableDate(on)) return;
+  if (coveredDay(cls.id, on)) return;
   const existing = recordFor(cls.id, on);
   const waiting = countsFor(cls.id, on)[UNCONFIRMED];
   if (existing && !existing.exception && !waiting) return;
@@ -1394,6 +1653,10 @@ export function dropClass(date) {
   const on = date || editDate();
   if (!cls || !getDoc() || !writableDate(on)) return;
   if (stateOf(cls.id, on) === DID_NOT_MEET) return;
+  /* A day the calendar has already closed does not need a record saying so, and writing one would
+     be the copy this whole design refuses — the class would then read as dropped from its own
+     ledger, and deleting the holiday would leave that behind. */
+  if (coveredDay(cls.id, on)) return;
 
   /* Real marks only. A half-taken class is mostly `U`s, and "the 26 marks already on it were
      cleared" about a class where the teacher had marked one absence is a sentence that would make
@@ -1586,9 +1849,10 @@ export function lockPastDay() {
 /*
   Paging a whole window at a time, over a position counted in weekdays. "Earlier" goes back six
   weekdays on a full landscape grid, which puts a date two weeks behind two taps away — the
-  acceptance line this control exists for. "Later" is clamped at the window that ends today, and
-  that clamp is the visible half of "future dates are blocked": the button is there, disabled,
-  saying why, rather than absent and unexplained.
+  acceptance line this control exists for. "Later" runs forward to the last day off on the calendar
+  and is disabled there, saying why; on a year with nothing scheduled that is the window ending
+  today, which is where it always stopped. What it no longer says is that the future is blocked,
+  because since 2026-08-08 only WRITING to it is — see dayColumns().
 
   THE STEP IS THE WINDOW; THE POSITION IS IN DAYS. Adding `count` here rather than 1 is what keeps
   "two taps is two weeks" true while leaving `pageDaysBack` in a unit that does not change when the
@@ -1611,7 +1875,9 @@ export function pageDays(direction) {
   const before = pageDaysBack;
   if (direction === 'today') pageDaysBack = 0;
   else if (direction === 'earlier') pageDaysBack += count;
-  else if (direction === 'later') pageDaysBack = Math.max(0, pageDaysBack - count);
+  /* Clamped at the furthest thing on the calendar rather than at today — futureLimit() carries the
+     reasoning, and returns 0 on a year with no days off in it, which is the old clamp exactly. */
+  else if (direction === 'later') pageDaysBack = Math.max(futureLimit(), pageDaysBack - count);
   else return;
   if (pageDaysBack === before && direction !== 'today') return;
   editingPast = null;
@@ -1761,6 +2027,10 @@ function actionButton(label, hook, value, extraClass) {
 function columnClasses(date, state, today, editing) {
   return 'attendance-col-' + state
     + (date === today ? ' attendance-col-today' : '')
+    /* A day that has not happened. Carried alongside the state rather than instead of it, because a
+       future day off is still `covered` and must still look covered — this only has to quiet the
+       one state whose colour is an alarm. See the stylesheet, and stateChip()'s "Ahead". */
+    + (date > today ? ' attendance-col-future' : '')
     + (editing ? ' attendance-col-editing' : '');
 }
 
@@ -1773,7 +2043,7 @@ function columnClasses(date, state, today, editing) {
   on a day nobody took would be the same picture, and the teacher would read a forgotten Tuesday as
   a Tuesday when everyone showed up.
 */
-function cellFor(student, date, state, cell, editable) {
+function cellFor(student, date, state, cell, editable, cover, future) {
   const code = codeOf(cell) || PRESENT;
   const at = timeOf(cell);
   const note = noteOf(cell);
@@ -1781,6 +2051,17 @@ function cellFor(student, date, state, cell, editable) {
   let tone = code;
   let said;
   if (state === DID_NOT_MEET) { glyph = '–'; tone = 'none'; said = 'the class did not meet'; }
+  /* The same dash as a dropped day, because the same thing happened to the student, on its own
+     quiet-but-SOLID ring rather than the dropped cell's dashed one — and with the reason in the
+     accessible name, which is where a teacher who cannot see the column head finds out that this
+     is Thanksgiving and not a day somebody dropped. */
+  else if (state === COVERED) { glyph = '–'; tone = 'covered'; said = coverSaid(cover); }
+  /* A day that has not happened says so, and says it quietly. Same reasoning as stateChip()'s
+     "Ahead" and at the same word count: `?` in the untaken amber means "you have a hole here", and
+     next Tuesday is not a hole. The glyph goes to the dash every non-meeting cell uses and the tone
+     goes to the future's own neutral, so a week read ahead of time is a week with nothing shouting
+     on it. The accessible name follows, because a screen-reader user gets NONE of the colour. */
+  else if (state === NOT_TAKEN && future) { glyph = '·'; tone = 'future'; said = 'not yet — this day is ahead'; }
   else if (state === NOT_TAKEN) { glyph = '?'; tone = 'untaken'; said = 'not taken yet'; }
   else if (code === UNCONFIRMED) {
     /* The same glyph and the same amber as a day nobody has taken, because it means the same thing
@@ -2101,25 +2382,61 @@ function paintPassNote() {
   The control is one button and its identity is the column's state and position:
     today            🚫 drop the class, or ↩ take that back — one tap, no confirm
     a past column    ✏ unlock it, or Done to close it again
-  There is no third case, because there is no column after today.
+    a covered column 📅 the screen the reason was authored on — every column, past or today
+  There is no case after today, because there is no column after today.
+
+  THE COVERED COLUMN'S BUTTON IS A DOOR RATHER THAN AN UNDO (WO-2.3), and that is the deliberate
+  half. The undo for a holiday is deleting the holiday, which affects every class on every date in
+  its range — that is far too much to hang on a 12px glyph in one class's column head, and a
+  "remove this event" here would be a teacher clearing Thanksgiving for the whole school while
+  looking at Period 3. So the glyph OPENS the screen that owns it, where the range and the classes
+  it covers are on screen beside the Remove. One tap to get there, one deliberate tap there.
 */
-function dayHead(date, state, today, editing, unconfirmed) {
+function dayHead(date, state, today, editing, unconfirmed, cover) {
   const th = el('th', 'attendance-day ' + columnClasses(date, state, today, editing));
   th.setAttribute('scope', 'col');
   th.setAttribute('data-attendance-col', date);
 
   th.append(el('span', 'attendance-day-dow', dayAbbr(date)));
   th.append(el('span', 'attendance-day-date', shortDate(date)));
-  const chip = el('span', 'attendance-day-state', stateChip(state, unconfirmed));
+  const chip = el('span', 'attendance-day-state', stateChip(state, unconfirmed, cover, date > today));
   /* The count is the alarm, so it is coloured like one rather than like the taken column it sits
      on — the first of the three places a half-taken class has to be loud. */
   if (state === TAKEN && unconfirmed) chip.classList.add('waiting');
+  /* The REASON, on the head that carries the word. It has no room to be drawn, so it is on the
+     tooltip and — through the chip's own title — on the one surface that is neither of those: a
+     teacher hovering a laptop, and a screen reader landing on the column. The state line above the
+     grid says it in full for the day being edited, which is the surface an iPad actually gets. */
+  if (state === COVERED) chip.title = coverText(cover);
   th.append(chip);
+
+  /*
+    A COLUMN AHEAD OF TODAY GETS NO BUTTON AT ALL (2026-08-08), and the check is here — before one
+    is built — rather than as a branch below, so that the future case cannot leave an orphan element
+    behind. There is nothing to offer: the ✏ unlock further down opens a day for editing and
+    writableDate() would refuse every write it led to, so drawing it would be a control that looks
+    live, takes a tap, and does nothing — the exact thing this file refuses to do with a cell.
+
+    Nothing takes its place, and that is deliberate rather than unfinished. The column already says
+    what it is twice over, in the chip and in the wash the whole column wears; a third element
+    saying "not yet" would be fine print under two things that are not fine print.
+
+    A COVERED DAY IS EXEMPT, WHICHEVER SIDE OF TODAY IT FALLS. That is the one future column with
+    somewhere to go from — the 📅 below — and it is the whole reason the columns were opened up.
+  */
+  if (state !== COVERED && date > today) return th;
 
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'attendance-day-btn';
-  if (date === today) {
+  if (state === COVERED) {
+    btn.setAttribute('data-dayoff-panel', '');
+    btn.setAttribute('aria-haspopup', 'dialog');
+    btn.textContent = '📅';
+    btn.title = coverText(cover) + ' — open Days off & drops';
+    btn.setAttribute('aria-label', coverSaid(cover) + ' on ' + spokenDate(date)
+      + '. Open days off and planned drops.');
+  } else if (date === today) {
     if (state === DID_NOT_MEET) {
       btn.setAttribute('data-attendance-undrop', date);
       btn.textContent = '↩';
@@ -2172,19 +2489,21 @@ function paintColumn(date) {
   const today = todayISO();
   const editing = date === editDate() && date !== today;
   const state = stateOf(cls.id, date);
+  const cover = state === COVERED ? coverOf(cls.id, date) : null;
   const marks = marksOf(recordFor(cls.id, date));
-  const editable = date === editDate() && state !== DID_NOT_MEET && writableDate(date);
+  const editable = date === editDate() && state !== DID_NOT_MEET && state !== COVERED
+    && writableDate(date);
   const unconfirmed = countsFor(cls.id, date)[UNCONFIRMED];
 
   const th = head.querySelector('th[data-attendance-col="' + date + '"]');
-  if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed));
+  if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed, cover));
 
   body.querySelectorAll('td[data-attendance-col="' + date + '"]').forEach((td) => {
     const student = findStudent(td.getAttribute('data-attendance-student'));
     if (!student) return;
     td.className = 'attendance-cell-td ' + columnClasses(date, state, today, editing);
     td.textContent = '';
-    td.append(cellFor(student, date, state, marks[student.id], editable));
+    td.append(cellFor(student, date, state, marks[student.id], editable, cover, date > today));
     const at = state === TAKEN ? timeOf(marks[student.id]) : '';
     if (at) td.append(cellTime(at));
   });
@@ -2244,8 +2563,10 @@ function paintActions() {
   stateEl.textContent = summary.text;
   /* The caution palette while anybody is unconfirmed, on top of the state's own — a green "Taken"
      over twelve students nobody has looked at is the silent failure WO-2.10's Traps line is about.
-     A modifier rather than a fourth state: stateOf() still has three answers, and this class is
-     genuinely taken. */
+     A MODIFIER RATHER THAN A STATE, and it stayed one when WO-2.3 added a real fourth: `unconfirmed`
+     rides on top of `taken` because the class genuinely IS taken, where `covered` replaces it
+     because the class genuinely did not meet. That is the test for anything that wants to be a
+     fifth — if stateOf() would still answer the same word, it is a modifier. */
   stateEl.className = 'attendance-state ' + summary.state
     + (summary.unconfirmed ? ' unconfirmed' : '');
 
@@ -2256,8 +2577,35 @@ function paintActions() {
 
   if (summary.state === DID_NOT_MEET) {
     actions.append(actionButton('The class met after all', 'data-attendance-undrop', on, 'restore'));
+    actions.append(daysOffDoor());
     note.textContent = 'Nothing is recorded for this day, and nothing counts toward anything. '
       + 'Undoing this leaves it not taken yet, ready to mark.';
+    note.classList.remove('hidden');
+    return;
+  }
+
+  /*
+    A DAY THE CALENDAR HAS ALREADY CLOSED (WO-2.3). One control, and it is a door rather than an
+    undo — for the reason dayHead() gives at the 📅: removing the event affects every class on
+    every date of its range, and that is not a thing to do from inside one class's screen without
+    seeing what it covers.
+
+    The sentence says three things the teacher cannot infer from an empty grid: WHY (her own title),
+    that nothing is recorded here and nothing counts, and WHERE the undo lives. The last is the one
+    that matters — an app that greys a screen out without saying what would un-grey it is an app
+    she has to guess at with a class walking in.
+  */
+  if (summary.state === COVERED) {
+    /* The same door every other state now draws, rather than a second one worded differently — see
+       daysOffDoor(). Here it is the ONLY control, because there is nothing on this day to act on;
+       everywhere else it sits at the far end past the controls that write. */
+    actions.append(daysOffDoor());
+    const named = Array.isArray(summary.cover && summary.cover.classIds)
+      && summary.cover.classIds.length > 0;
+    note.textContent = coverText(summary.cover) + ' — this is on the calendar'
+      + (named ? ', for this class and any others it names' : ', for every class') + '. '
+      + 'Nothing is recorded here and nothing counts toward anything. Remove it from Days off & '
+      + 'drops and every day it covers goes back to not taken yet.';
     note.classList.remove('hidden');
     return;
   }
@@ -2275,13 +2623,15 @@ function paintActions() {
 
   /*
     THE ACTION ROW, AND THE FIVE STATES IT ANSWERS. Three controls at most, because this row is read
-    standing up with a class walking in, and the fourth button is the one that gets mis-tapped.
+    standing up with a class walking in, and the fourth button is the one that gets mis-tapped. The
+    📅 past the middot is outside that count and daysOffDoor() says why: it writes nothing, acts on
+    no day, and is held at the far end of the row away from the three that do.
 
-      not taken            [Everyone’s here] · [Didn’t meet]
-      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]
-      taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]
-      taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]
-      taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]
+      not taken            [Everyone’s here] · [Didn’t meet]                          · [📅]
+      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]              · [📅]
+      taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]        · [📅]
+      taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]  · [📅]
+      taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]                      · [📅]
 
     The way back differs by row on purpose. With nothing real on the record the honest undo is to
     REMOVE it — that leaves the day not taken yet, which is what it was — and with marks on it the
@@ -2331,6 +2681,35 @@ function paintActions() {
       + (summary.marked === 1 ? ' mark' : ' marks') + ' on it will be cleared.'
     : 'Record that this class did not meet.';
   actions.append(drop);
+  actions.append(daysOffDoor());
+}
+
+/*
+  THE DOOR TO THE CALENDAR, ON EVERY STATE THIS ROW DRAWS (2026-08-08, the owner's call after the
+  first iPad sitting). It was reachable from here already, but only on a covered day — which is the
+  day you have no reason to go there, because the thing is already done. The tap that wants this
+  control is "we are off next Thursday", made standing in the classroom with the class screen open,
+  and until now that meant going back to All classes to find the button.
+
+  IT IS NOT A FOURTH ACTION, AND THE ROW'S THREE-CONTROL RULE SURVIVES INTACT. The rule above is
+  about the controls that WRITE ON THIS DAY: they are read at speed, they are aimed at with a class
+  walking in, and the fourth one of those is the one that gets mis-tapped. This writes nothing, acts
+  on no day, and opens a dialog — so it is separated from them, pushed to the far end of the row by
+  `.attendance-actions-door` (src/attendance.css) with the taken/dropped controls left where the
+  thumb has learned to find them. A mis-tap costs a dialog and an ✕, which is the cheapest wrong
+  outcome anything on this screen has.
+
+  Same hook, same words, same route as the home screen's button and the 📅 in a covered column's
+  head — three doors, one screen. The two that already existed each say why they are where they are;
+  this one is the one a teacher reaches for most, and it took a classroom to find that out.
+*/
+function daysOffDoor() {
+  const door = actionButton('📅 Days off', 'data-dayoff-panel', '');
+  door.classList.add('attendance-actions-door');
+  door.setAttribute('aria-haspopup', 'dialog');
+  door.title = 'Holidays, breaks and planned drops — nothing on this day changes.';
+  door.setAttribute('aria-label', 'Open days off and planned drops');
+  return door;
 }
 
 /* The pills and the sort pair, which are markup in index.html and only have their pressed state
@@ -2351,9 +2730,8 @@ function paintToolbar() {
   });
 }
 
-/* Earlier · Today · Later. "Later" is disabled at the window that ends today and says why — the
-   visible half of the rule that there is no future column. Since 2026-08-07 "Earlier" is disabled the
-   same way in portrait, for the same kind of reason. */
+/* Earlier · Today · Later. "Later" is disabled at the far end of the calendar and says why. Since
+   2026-08-07 "Earlier" is disabled the same way in portrait, for the same kind of reason. */
 function paintPager(columns) {
   const pager = document.getElementById(PAGER_ID);
   if (!pager) return;
@@ -2399,12 +2777,29 @@ function paintPager(columns) {
     : many ? 'Back to the week ending today' : 'Back to today';
   pager.append(today);
 
+  /* The forward stop is the last day off on the calendar, not today — futureLimit() says why, and
+     says why an empty calendar puts it back on today. The two disabled sentences are different
+     because the two states are: one is "there is nothing further ahead to look at", the other is
+     the old "tomorrow is not something to record yet", which is still true and still the reason a
+     year with nothing scheduled stops here. */
+  const ahead = futureLimit();
   const later = actionButton('Later ▶', 'data-attendance-page', 'later');
-  later.disabled = pageDaysBack === 0;
+  /* `pinned` FIRST, and it is a fix rather than a tidy-up (2026-08-08, reported the same hour the
+     forward columns shipped). Portrait pins `pageDaysBack` to 0, and 0 is no longer the forward end
+     — with a day off on the calendar the limit is negative, so the old test alone read "there is
+     somewhere further to go" and lit this button up on the one screen that refuses to page. It
+     looked live, took a tap, and pageDays() threw the tap away.
+
+     Which is the general shape of the trap: THIS SCREEN NOW HAS TWO REASONS A PAGE CONTROL IS OFF,
+     and they are independent. `Earlier` above only ever had the portrait one; `Later` has both, and
+     an || between them is the whole of it. Anything added here later needs the same audit. */
+  later.disabled = pinned || pageDaysBack <= ahead;
   later.title = later.disabled
     ? (pinned
       ? 'Portrait shows today. Turn the iPad to read the week or to correct a past day.'
-      : 'Today is the last column there is — tomorrow’s attendance is not something to record yet')
+      : ahead < 0
+        ? 'That is as far ahead as the calendar goes — nothing is scheduled past this window'
+        : 'Today is the last column there is — tomorrow’s attendance is not something to record yet')
     : many ? 'The ' + columns.length + ' weekdays after these' : 'The weekday after this';
   pager.append(later);
 }
@@ -2457,8 +2852,15 @@ function renderRows() {
   const perColumn = columns.map((date) => {
     const state = stateOf(cls.id, date);
     return { date: date, state: state, marks: marksOf(recordFor(cls.id, date)),
+      /* The covering event, read once per column for the same reason the marks are: a covered day
+         gives every one of twenty-six cells the same reason, and asking the calendar once per cell
+         would walk `events` twenty-six times to arrive at one answer. */
+      cover: state === COVERED ? coverOf(cls.id, date) : null,
       editing: date === on && date !== today,
-      editable: date === on && state !== DID_NOT_MEET && writableDate(date) };
+      editable: date === on && state !== DID_NOT_MEET && state !== COVERED && writableDate(date),
+      /* Hoisted with the rest rather than compared per cell, for the same reason: one string
+         comparison a hundred and fifty-six times is one string comparison six times. */
+      future: date > today };
   });
   /* Whether the day being edited is on screen at all. Paged two weeks back it is not — every column
      is read-only there — and a ⋯ that opened a panel about a date behind the teacher would be the
@@ -2505,7 +2907,8 @@ function renderRows() {
         + columnClasses(col.date, col.state, today, col.editing));
       td.setAttribute('data-attendance-col', col.date);
       td.setAttribute('data-attendance-student', student.id);
-      td.append(cellFor(student, col.date, col.state, col.marks[student.id], col.editable));
+      td.append(cellFor(student, col.date, col.state, col.marks[student.id], col.editable,
+        col.cover, col.future));
       const at = col.state === TAKEN ? timeOf(col.marks[student.id]) : '';
       if (at) td.append(cellTime(at));
       row.append(td);
@@ -2564,7 +2967,11 @@ function paintDetail() {
   const on = editDate();
   const record = recordFor(cls.id, on);
   const state = stateOf(cls.id, on);
-  if (state === DID_NOT_MEET || !writableDate(on)) { detailFor = ''; return; }
+  /* COVERED sits beside DID_NOT_MEET here rather than being a case of its own: the panel edits a
+     mark, and a day with no meeting on it has no mark to edit. Which way the day came to be
+     meeting-less is a question for the state line above, not for a panel that would have nothing
+     in it. */
+  if (state === DID_NOT_MEET || state === COVERED || !writableDate(on)) { detailFor = ''; return; }
   const entry = marksOf(record)[detailFor];
   const code = readingOf(record, detailFor);
   const at = timeOf(entry);
@@ -2659,8 +3066,12 @@ export function renderAttendance() {
       row.append(corner);
       row.append(passHead());
       const on = editDate();
-      columns.forEach((date) => row.append(dayHead(date, stateOf(cls.id, date), today,
-        date === on && date !== today, countsFor(cls.id, date)[UNCONFIRMED])));
+      columns.forEach((date) => {
+        const state = stateOf(cls.id, date);
+        row.append(dayHead(date, state, today, date === on && date !== today,
+          countsFor(cls.id, date)[UNCONFIRMED],
+          state === COVERED ? coverOf(cls.id, date) : null));
+      });
       head.append(row);
     }
   }

@@ -71,6 +71,22 @@
       data-attendance-detail="<id>"   opens that row's own panel — the time, the note, the un-confirm
       data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
                                       that student's mark as it is typed
+      data-dayoff-panel               fills the days-off panel, then opens it — carried by the home
+                                      screen's own header button and by the 📅 in a covered column's
+                                      head on the registry, which are two doors onto one route
+      data-dayoff-kind="no-school|dropped"   which kind the form is about; the class picker below
+                                      appears for the second and not for the first
+      data-dayoff-class="<classId>"   adds or removes that class from the drop being authored
+      data-dayoff-create              on a <form>: adds the day off or drop typed into it, or opens
+                                      the warning first when the range already holds real attendance
+      data-dayoff-confirm             adds it anyway, having read what keeps its marks
+      data-dayoff-cancel              abandons it, having written nothing
+      data-dayoff-remove="<eventId>"  takes it off the calendar; every day it covered goes straight
+                                      back to not taken yet, because nothing was ever copied onto a
+                                      record to have to unpick
+      data-dayoff-date="from|to"      a date field in that form; on `change` it carries the end date
+                                      along with the start, and rebuilds a field cleared by hand —
+                                      the iPadOS picker quirk `data-term-field` answers above
       data-attendance-drop="<iso>"    one tap: the class did not meet that day
       data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
       data-attendance-edit="<iso>"    the deliberate unlock on a past column, one column at a time
@@ -151,6 +167,12 @@ import * as attendance from './attendance.js';
 /* Imported here for the seam at the foot of this file and for nothing else — every control a hall
    pass has is on the registry, and src/attendance.js is what drives them. */
 import * as passes from './passes.js';
+/* WO-2.3's two halves, and they are two modules for the reason src/passes.js and
+   src/attendance.js are: src/calendar.js is the MODEL — no DOM, no clock, no store — and
+   src/days-off.js is the only screen that writes one. The registry reads the first and never the
+   second, which is what keeps "is this class meeting" a question with one answer. */
+import * as calendar from './calendar.js';
+import * as daysOff from './days-off.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
@@ -238,6 +260,25 @@ function showHome() {
 */
 function afterAttendanceChange() {
   home.refreshHome();
+}
+
+/*
+  A calendar exception was added or removed, and everything that READS one redrawn.
+
+  IT IS A THIRD CHAIN RATHER THAN A REUSE OF THE TWO ABOVE, and the difference is what each one
+  knows. afterAttendanceChange() redraws the cards only, because the registry has already repainted
+  its own column by the time it runs; afterClassChange() would also decide where the teacher should
+  be standing, which is not a thing adding a holiday should do. An event changes what a whole WEEK
+  of columns says about a class the teacher is looking at, and the paint that has to follow is the
+  registry's, in full — a covered column has a different head, a different palette and inert cells,
+  and none of that is one column's repaint.
+
+  Both surfaces, every time, because an event is app-wide: the cards behind the dialog say what
+  today is, and today is exactly the day a snow day added this morning is about.
+*/
+function afterCalendarChange() {
+  home.refreshHome();
+  if (views.currentView() === 'class') attendance.renderAttendance();
 }
 
 /* A restore replaces the whole document, so everything drawn from one is redrawn — the class bar
@@ -416,6 +457,31 @@ document.addEventListener('click', (e) => {
   if (termRemove) { classes.removeTerm(termRemove.getAttribute('data-term-remove')); return; }
   const termPreset = e.target.closest('[data-term-preset]');
   if (termPreset) { classes.applyPreset(termPreset.getAttribute('data-term-preset')); return; }
+
+  /* ── days off & planned drops (WO-2.3) ──
+     Above the attendance block because the panel is opened from a control ON the registry as well
+     as from the home screen, and the two hooks must not be able to shadow each other. Nothing here
+     writes an attendance record — that is the work order's fifth acceptance line, and the way it is
+     kept true is that none of these six calls reaches a function in src/attendance.js that writes.
+
+     The panel and the confirm are the only two paths that repaint, and both chain
+     afterCalendarChange(): an event changes what a whole week of columns says, so it is the
+     registry in full and the cards behind it, not one column. */
+  const dayOffPanel = e.target.closest('[data-dayoff-panel]');
+  if (dayOffPanel) { daysOff.openDaysOff(dayOffPanel); return; }
+  const dayOffKind = e.target.closest('[data-dayoff-kind]');
+  if (dayOffKind) { daysOff.setKind(dayOffKind.getAttribute('data-dayoff-kind')); return; }
+  const dayOffClass = e.target.closest('[data-dayoff-class]');
+  if (dayOffClass) { daysOff.toggleClass(dayOffClass.getAttribute('data-dayoff-class')); return; }
+  if (e.target.closest('[data-dayoff-confirm]')) {
+    daysOff.confirmCreate(); afterCalendarChange(); return;
+  }
+  if (e.target.closest('[data-dayoff-cancel]')) { daysOff.cancelCreate(); return; }
+  const dayOffRemove = e.target.closest('[data-dayoff-remove]');
+  if (dayOffRemove) {
+    daysOff.removeDayOff(dayOffRemove.getAttribute('data-dayoff-remove'));
+    afterCalendarChange(); return;
+  }
 
   /* ── attendance ──
      High in this listener, above the roster and the teacher's details: these are the taps a
@@ -624,6 +690,13 @@ document.addEventListener('submit', (e) => {
     classes.createClassFromForm(); afterClassChange(); return;
   }
   if (form.hasAttribute('data-roster-create')) { roster.createStudentFromForm(); return; }
+  /* A day off or a planned drop. It chains the repaint unconditionally even though this tap does
+     not always write — it may raise the warning instead — because a repaint of two screens that did
+     not change costs a paint, and forgetting one on the path that DID write costs a teacher a grid
+     that still shows a week she has just cancelled. */
+  if (form.hasAttribute('data-dayoff-create')) {
+    daysOff.createFromForm(); afterCalendarChange(); return;
+  }
   if (form.hasAttribute('data-class-rename-save')) {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
     afterClassChange();
@@ -701,6 +774,12 @@ document.addEventListener('change', (e) => {
      points at the long version rather than repeating it. */
   const supportDate = e.target.closest('[data-support-date]');
   if (supportDate) roster.supportDateCommitted(supportDate);
+  /* The days-off range. Third instance of the same quirk, and the only one that also does something
+     on a NON-empty commit: picking a start date carries the end date along with it. Both halves are
+     in days-off.js's dateCommitted() and neither writes to the document — this hook changes what is
+     in a form, not what is in the year. */
+  const dayOffDate = e.target.closest('[data-dayoff-date]');
+  if (dayOffDate) daysOff.dateCommitted(dayOffDate);
   /* The accommodation kind picker, which is read HERE and not in the `input` listener above: a
      <select> commits on `change`, and hooking both would write the same value twice and move `rev`
      twice for one tap. It carries `data-support-kind` rather than `data-student-field` so that the
@@ -908,6 +987,16 @@ window.planbook = {
      from the one that copied Roll Call!'s `activePasses`. Nothing in the app reads window.planbook
      — see the block above for why the seam outlived the shelf. */
   passes,
+  /* `calendar` joined at WO-2.3, and for the reading reason `attendance` gives. Every control the
+     feature has is on a screen and a teacher can touch all of them; what no click can show is the
+     claim the work order actually makes, which is about what is NOT in the document. "Authoring an
+     event creates no attendance record" is answered by reading `events` and `attendance` off a
+     document that was reloaded, and "delete the holiday and every class follows" is answered by
+     asking coveringEvent() what covers a date after the row is gone — neither of which a harness
+     can ask without a second copy of the covering rule, where it could agree with itself and
+     disagree with the app. Nothing in the app reads window.planbook — see the block above for why
+     the seam outlived the shelf. */
+  calendar,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

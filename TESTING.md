@@ -1450,6 +1450,153 @@ and the first two are acceptance lines rather than extras.
 
 ---
 
+### WO-2.3 — Days off & pre-drops
+
+**What this adds.** A panel — **Days off** on the class-grid header, and the 📅 in any covered
+column head — where a holiday, a break or a planned drop is typed in once, ahead of time. Two kinds:
+**No school**, which covers every class, and **a planned drop**, which names the classes an assembly
+is stopping from meeting. A date, an optional second date, and a title. That is the whole form.
+
+**The one thing to hold on to while testing it.** *Nothing typed on that panel is written into
+attendance.* The registry **reads** the calendar when it paints; it never copies an exception onto a
+record. That is why removing a holiday puts every day it covered straight back to "not taken yet" —
+there was never a copy to go and find. If a future session is tempted to "apply" an event to
+records, `plans/rotating-schedule.md` and `src/calendar.js`'s header are the two places that argue
+why not, and the section of `verify-shell.mjs` below is what would catch it.
+
+**The precedence rule, which is what every check here is really about.** A class **met** if it has an
+attendance record with no exception — asked first, before the calendar is consulted at all.
+Otherwise it did not meet, whether from its own record or from a covering event. So a retroactive
+snow day laid over a week that was really taught **cannot** void a mark; the app warns, and leaves
+the record exactly where it is.
+
+**The fourth word.** A covered column says **"No school"** or **"Planned drop"** rather than
+"Didn't meet", and it is drawn in the dropped column's quiet grey made **solid** instead of dashed.
+The two mean the same thing about the class and different things about where the undo lives, and the
+undo is what a teacher is reading that chip to find.
+
+- [x] A `no-school` range across a week shows **every class** as not-meeting on **every date in it**,
+      as one event rather than one per day — and the weekday just outside the range is untouched.
+- [x] Deleting that event restores all those days to **"not taken yet"**, with `doc.attendance`
+      byte-identical to what it was before the event was ever added.
+- [x] A **future** `dropped` event naming two classes affects only those two; the other four are
+      still "not taken yet" on that date. *(Asked of `stateOf()`, which is what this line is about.
+      When it was written the registry also had no column after today; since 2026-08-08 it has, and
+      the screen's own answer about a future day is measured in the punch list below.)*
+- [x] Adding a **retroactive snow day** over a date that already has recorded attendance **warns**
+      — a dialog naming every period that keeps its marks — and **does not void the record**. After
+      confirming, every period that was taught still reads "taken" and every mark is still on it.
+- [x] **No attendance record is ever created by authoring an event.** Asserted after every write,
+      cancel and removal in the section, against `doc.attendance` serialised byte for byte.
+- [x] Backing out of that warning writes **nothing at all** — no event, no record.
+- [x] A planned drop that names **no class** is refused with a sentence, rather than quietly written
+      as a school-wide one. *(Empty `classIds` **is** school-wide in the data model, which is exactly
+      why the form will not write one under the other kind.)*
+- [x] The covered week draws as not-meeting on the grid: the fourth word in every column head, a
+      dash in every cell under it, and the 📅 door where the 🚫 would be.
+- [x] A covered column and a dropped column, **side by side on one screen**, are drawn as two
+      different things — different word, different fill, solid against dashed.
+- [x] Every control in the days-off panel measures **≥44px** on an emulated coarse pointer, the two
+      date fields and the class picker included.
+
+*Desk pass 2026-08-07: `verify-shell.mjs` **379 of 379, 0 skipped**, up from 366 on the tree this
+work order arrived on — thirteen new checks, twelve in a block at the end of the attendance section
+and one in the coarse sweep. `wo-sweep.mjs` is 11 checks, 10 passed, 0 failed, 1 to review — the
+standing sensitive-field-name line, at the same 172 mentions across the same files as before this
+work order.*
+
+*Six mutation proofs, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| **`commit()` also copies the event onto attendance records** — the Traps line's own failure | **10 red**, which is every check in the block but two. Nothing *visible* changes: the columns still go grey and the cards still say "No school". What gives it away is `doc.attendance` no longer matching itself |
+| `stateOf()` stops consulting the calendar | **3 red** — the range, the grid, and the two-greys comparison |
+| `stateOf()` consults the calendar **before** the record — the history rule inverted | **1 red**, and it is the snow-day line: four taught periods read "covered" |
+| `coversDate()` returns `true` for any date — the range ignored | **1 red**, caught by the weekday just outside the range and by nothing else |
+| the covered column painted in the dropped palette | **1 red** — the side-by-side comparison, which is the only check that can see it |
+| the class picker stops wearing `.toggle-btn`, losing its 44px floor | **1 red** in the coarse sweep (plus four in the block, because the fixture helper finds chosen classes by that class) |
+
+**One design consequence, stated rather than discovered.** A covered day is **read-only**: its cells
+are inert and it offers no "Everyone's here". So **a class that genuinely met on a school-wide day
+off cannot be recorded from the registry** — the escape hatch is the calendar, where the range can be
+narrowed or the kind changed to a drop that names classes. That was chosen over leaving the cells
+live, which would let one mis-tap invent a meeting on Thanksgiving. If it bites in a real term, the
+fix is a decision about the registry rather than a defect here.
+
+**The 👤 iPad sitting this work order owes.** Neither of these is an acceptance line — both were
+closed at the desk — but both are judgements a headless browser cannot make, and both are cheap.
+**Sat 2026-08-08, on the owner's iPad. All three pass.**
+
+- [x] **The fourth column reads as its own state from across the room.** Put a covered week and a
+      dropped day on screen together and confirm, at classroom distance, that "No school" and
+      "Didn't meet" read as two different answers rather than as one grey smudge. The washes are two
+      steps apart on a laptop and further apart under a coarse pointer; only eyes settle whether
+      that is enough. 👤
+- [x] **The two date fields are usable with a thumb, and clearing one does not trap the picker.**
+      iPadOS keeps the date popover's own selection separate from the input's value — the trap
+      `src/classes.js` paid for at WO-1.6. Add three days off in a row, some of them adjacent dates,
+      and confirm nothing has to be tapped twice. 👤 *(This line used to end "…which is why this form
+      clears the title after an add and deliberately leaves the dates alone." The sitting passed it
+      and then asked for the opposite — see punch-list item 3 below. The trap is still real and is
+      still answered; what changed is that it is answered by rebuilding the field rather than by
+      leaving a stale date in it.)*
+- [x] **Add a real break from the real school calendar**, then open a class and confirm the week
+      reads the way you expect it to when you come back to it in November. 👤
+
+#### What the sitting sent back — the 2026-08-08 punch list
+
+Every acceptance line above passed on the iPad and five things were still wrong. That is the point
+of the sitting, and it is worth writing down which kinds of thing a headless run cannot reach: two
+were layout under a real coarse pointer, one was a software keyboard, one was a design rule that
+only looks wrong once a thumb is doing the work, and one was a hole nobody had noticed because the
+feature that opened it had shipped the day before.
+
+| # | What the classroom found | What it turned out to be |
+|---|---|---|
+| 1 | "Days off" spilled through its own border | `.class-action-btn`'s coarse `min-width: 44px` **replaces** the `min-width: auto` a flex item gets for free, so a `nowrap` button was free to shrink under its own label. 44px checks cannot see it — the button was 44px and wrong |
+| 2 | Future days off could be set and not looked at | The registry's window ended at today. Now it pages forward as far as the calendar reaches |
+| 3 | Keeping the dates after an add was awkward | They clear, and the iPadOS picker trap is answered by rebuilding the field rather than by avoiding the clear. `To` now follows `From` as well |
+| 4 | Focus returned to the title field, so the keyboard covered the list | Focus goes to the submit button — where the thumb is, and no keyboard |
+| 5 | The way to the calendar was on the wrong screen | The 📅 door is now in the class screen's action row in every state, held at the far end away from the three controls that write |
+
+- [x] The **Days off** button is not narrower than its own label under a coarse pointer, and neither
+      is anything else in that header row.
+- [x] A day off set for next week can be **paged forward to and read** on the registry, and the
+      column shows the event's word with the 📅 door on it.
+- [x] An ordinary day ahead of today says **"Ahead"** rather than "Not taken", carries no unlock, and
+      its cells are inert — *not* the `?` in alarm amber that means "you left a hole here".
+- [x] Paging forward **stops at the last thing on the calendar** and says so; with nothing scheduled
+      it stops at today, exactly as it did before.
+- [x] Reading a week that has not happened yet **writes nothing** — `doc.attendance` byte-identical
+      across the whole forward walk. The columns opened up; the writer did not.
+- [x] After an add the **whole form is empty** and focus is on a button, not in a text field.
+- [x] Picking a start date **carries the end date with it**, and never overwrites an end date already
+      set later than the new start.
+- [x] The 📅 door is on the class screen's action row on an ordinary day, **last** in the row.
+- [x] **Portrait still does not page**, with a day off ahead on the calendar. *(Regression, reported
+      and fixed 2026-08-08: `Later` had one reason to be disabled — "you are at the forward end" —
+      and that used to mean "you are on today", which portrait always is. Once the forward end could
+      be next week, portrait's pinned position stopped being it and the button went live on the one
+      screen that refuses to page. It now has both reasons, and anything added to that strip needs
+      the same audit.)*
+- [ ] **The five fixes, back on the iPad.** Everything above is measured; what is not is whether the
+      forward columns read as "ahead" rather than as broken, and whether three days off in a row now
+      go in without a fight. Same sitting shape as the one above. 👤
+
+*Desk pass 2026-08-08 (punch list): `verify-shell.mjs` **389 of 389, 0 skipped**, up from 379 — ten
+new checks, nine in a punch-list block at the end of the attendance section and one in the coarse
+sweep.*
+
+*Three mutation proofs, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| `.panel-title-row > .class-action-btn` goes back to `flex: 0 1 auto` — the shrink the coarse `min-width` had quietly allowed | **1 red**, and it reproduces the classroom report exactly: `"📅 Days off" 71x44, content over its box by 12px`. Every 44px check stays green through it, which is the whole reason this one measures `scrollWidth` instead |
+| `futureLimit()` always returns 0 — the horizon pinned back to today | **3 red**: the day off cannot be paged to, there is no plain future column to read "Ahead" off, and the forward stop reports the old "tomorrow is not something to record" sentence. The *"wrote nothing"* check stays green under it, correctly — it is asserting an absence, and a build that never pages forward also never writes anything |
+| the portrait guard dropped from `Later` — the regression as shipped | **1 red**, reading `{"disabled":false,"title":"The weekday after this"}` on a one-column portrait screen. Exactly one, and that is the point: the WO-2.12 portrait check stays green through it, because it runs after every event has been removed and the old test and the new one agree there |
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*
