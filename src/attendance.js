@@ -338,7 +338,7 @@ import { announce } from './live-region.js';
    gives where they were exported: the colour is part of how a teacher recognises a person, so there
    is one answer per student and not one per screen. The roster and the home cards already read
    them; the registry is the third. */
-import { getSelectedClass, initials, avatarClass } from './classes.js';
+import { getSelectedClass, getSelectedTerm, initials, avatarClass } from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
    student is one record referenced from many places; how that record READS — "Van Dyke, Mary" in a
    list, "Mary Van Dyke" in a sentence — is the same question here as it is there, off the same
@@ -380,6 +380,7 @@ const BODY_ID = 'attendanceBody';
 const EMPTY_ID = 'attendanceEmpty';
 const PASS_NOTE_ID = 'attendancePassNote';
 const PASS_BANNER_ID = 'attendancePassBanner';
+const TOTALS_ID = 'attendanceTotals';
 
 /* ────────────────────────────── the vocabulary ──────────────────────────────
    Roll Call!'s five letters and its five words. `phrase` is the same fact said in a sentence —
@@ -1120,6 +1121,59 @@ function readingOf(record, studentId) {
   const entry = marksOf(record)[studentId];
   if (entry) return codeOf(entry) || PRESENT;
   return record ? PRESENT : UNCONFIRMED;
+}
+
+/* The ledger supplies candidate dates; stateOf() remains the one meeting predicate. Kept here so
+   window totals, signal windows and the rendered class count cannot grow three subtly different
+   copies of the same filter chain. */
+function meetingDates(classId, from = '', to = '') {
+  return attendanceIn(getDoc())
+    .filter((r) => r && r.classId === classId && typeof r.date === 'string'
+      && (!from || r.date >= from) && (!to || r.date <= to))
+    .map((r) => r.date)
+    .filter((date, index, all) => all.indexOf(date) === index)
+    .filter((date) => stateOf(classId, date) === TAKEN);
+}
+
+/* Last N recorded meetings of one class, newest first. Candidate dates come from the ledger, but
+   stateOf() remains the predicate; callers never grow a second exception or calendar test. */
+export function lastMeetings(classId, count, through = todayISO()) {
+  const limit = Math.max(0, Math.floor(Number(count) || 0));
+  if (!classId || !limit) return [];
+  return meetingDates(classId, '', through)
+    .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
+    .slice(0, limit);
+}
+
+function emptyAttendanceCounts() { return { P: 0, T: 0, A: 0, E: 0, D: 0 }; }
+
+/* One student's Roll Call!-compatible totals over an inclusive range. stateOf() decides meetings;
+   readingOf() includes roster members with no stored mark. U folds into A here and nowhere else.
+   `percent: null` is the honest zero-meeting state. */
+export function attendanceTotals(classId, studentId, from = '', to = '') {
+  const counts = emptyAttendanceCounts();
+  meetingDates(classId, from, to)
+    .map((date) => recordFor(classId, date))
+    .forEach((record) => {
+      const reading = readingOf(record, studentId);
+      const code = reading === UNCONFIRMED ? 'A' : reading;
+      if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
+    });
+  const meetings = MARKS.reduce((sum, mark) => sum + counts[mark.code], 0);
+  const attended = counts.P + counts.T + counts.E + counts.D;
+  return Object.assign(counts, { meetings: meetings, attended: attended,
+    percent: meetings ? (attended / meetings) * 100 : null });
+}
+
+export function termTotals(classId, studentId, term) {
+  return attendanceTotals(classId, studentId, term && term.start, term && term.end);
+}
+function termHasDates(term) { return Boolean(term && term.start && term.end); }
+function percentText(totals) {
+  return totals.percent === null ? 'No recorded meetings' : Math.round(totals.percent) + '%';
+}
+function countText(totals) {
+  return MARKS.map((mark) => mark.code + ' ' + totals[mark.code]).join(' · ');
 }
 
 /*
@@ -2869,6 +2923,7 @@ function renderRows() {
   /* Read once for the whole table rather than once per row: the cap is a fact about the class, and
      asking it twenty-six times would walk `openPasses` twenty-six times. */
   const passesFull = passes.atCap(doc, cls.id);
+  const term = getSelectedTerm();
 
   students.forEach((student) => {
     const row = el('tr');
@@ -2883,7 +2938,14 @@ function renderRows() {
     const cell = el('div', 'attendance-student-cell');
     const avatar = el('div', 'avatar ' + avatarClass(student.id), initials(rosterName(student)));
     avatar.setAttribute('aria-hidden', 'true');
-    cell.append(avatar, el('span', 'attendance-student-name', rosterName(student)));
+    const identity = el('span', 'attendance-student-identity');
+    identity.append(el('span', 'attendance-student-name', rosterName(student)));
+    const totals = termHasDates(term) ? termTotals(cls.id, student.id, term)
+      : attendanceTotals(cls.id, student.id);
+    identity.append(el('span', 'attendance-student-totals',
+      (termHasDates(term) ? term.label + ' · ' : 'Term dates not set · Year · ')
+        + countText(totals) + ' · ' + percentText(totals)));
+    cell.append(avatar, identity);
     /* The way into the row's own detail — the time, the note and the un-confirm. Drawn on every row
        whenever the edit column accepts edits, rather than only on rows that have something in it:
        a control that appears and disappears as marks are made is a control that moves the target
@@ -2986,6 +3048,14 @@ function paintDetail() {
 
   box.append(el('span', 'attendance-detail-who',
     fullName(student) + ' — ' + spokenDate(on)));
+  const term = getSelectedTerm();
+  const year = attendanceTotals(cls.id, student.id);
+  const selected = termHasDates(term) ? termTotals(cls.id, student.id, term) : null;
+  box.append(el('span', 'attendance-detail-totals',
+    (selected
+      ? term.label + ': ' + countText(selected) + ' · ' + percentText(selected) + ' | '
+      : 'Term dates not set · ')
+      + 'Year: ' + countText(year) + ' · ' + percentText(year)));
   const says = el('span', 'attendance-detail-mark',
     wordFor(code) + (at ? ' at ' + clockTime(at) : ''));
   says.classList.add('attendance-cell-' + (code === UNCONFIRMED ? 'untaken' : code));
@@ -3035,7 +3105,21 @@ export function renderAttendance() {
   const nameEl = document.getElementById(CLASS_NAME_ID);
   const head = document.getElementById(HEAD_ID);
   const caption = document.getElementById(CAPTION_ID);
+  const totalsEl = document.getElementById(TOTALS_ID);
   if (nameEl) nameEl.textContent = cls ? cls.name : 'no class';
+  if (totalsEl) {
+    if (!cls) totalsEl.textContent = '';
+    else {
+      const term = getSelectedTerm();
+      const inYear = meetingDates(cls.id).length;
+      const dated = termHasDates(term);
+      const inTerm = dated ? meetingDates(cls.id, term.start, term.end).length : 0;
+      totalsEl.textContent = (dated ? term.label + ': ' + inTerm
+        + ' recorded meeting' + (inTerm === 1 ? '' : 's') + ' · ' : 'Term dates not set · ')
+        + 'Year: ' + inYear
+        + ' recorded meeting' + (inYear === 1 ? '' : 's');
+    }
+  }
 
   paintBanner(columns);
   paintActions();

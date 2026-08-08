@@ -39,7 +39,7 @@ starts to sprawl.
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.12 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.14 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.10 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -54,7 +54,7 @@ starts to sprawl.
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 11 | 6 | 🔨 IN PROGRESS |
+| 2 — Attendance | 13 | 6 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -62,7 +62,7 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 0 | ⬜ NOT STARTED |
-| | **60** | **19** | `[███░░░░░░░] 32%` |
+| | **62** | **19** | `[███░░░░░░░] 31%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -98,7 +98,12 @@ surface and the 160px pass column has no room for one — which is how Roll Call
 WO-2.8's escalation asked the wrong question:
 offered four, five or six day columns in portrait, the owner said portrait should show today and
 landscape should show the week. Neither is a defect in WO-2.8, which verified clean on all seven
-acceptance lines; both are what using it on glass revealed.)*
+acceptance lines; both are what using it on glass revealed. **WO-2.13 added**, because WO-2.4's
+verifier broke its own fixture to ask what it could not express and found the per-student totals
+being recomputed once per row — 76 ms per render at a year of data, on the screen that has to keep
+up with students walking in. Not a defect in WO-2.4, which is arithmetically correct and verified;
+it is the cost of that arithmetic being asked twenty-six times for one answer, and the same file
+already hoists three other reads for exactly this reason.)*
 
 | # | Work order | Size | 🚩 | Suggested |
 |---|---|---|---|---|
@@ -120,7 +125,8 @@ acceptance lines; both are what using it on glass revealed.)*
 | 16 | [WO-2.12](phase-2-attendance.md#wo-212--portrait-shows-today-landscape-shows-the-week) Portrait shows today | S | | Aug 20 |
 | 17 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20–21 |
 | 18 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
-| 19 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
+| 19 | [WO-2.13](phase-2-attendance.md#wo-213--the-totals-are-recomputed-once-per-student-compute-them-once-per-render) Totals once per render, not per student | S | | Aug 21–22 |
+| 20 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
 
 **The hard ordering constraint:** WO-1.5 ships before WO-1.6. Nothing that writes student data
 lands before the path that gets it back out. Everything else in the table can shuffle.

@@ -139,6 +139,9 @@
    greyed, italic head (dashboard.html:573) against nothing dashed at all; this is that distinction
    with Planbook's dropped column, which Roll Call! does not have, kept on the other side of it. */
 .attendance-body .attendance-state.covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+.attendance-body .attendance-totals {
+  margin: -4px 0 10px; color: #6b7a8d; font-size: 12px; font-weight: 700; line-height: 1.4;
+}
 
 /* ── THE CLASS-LEVEL CONTROLS ── */
 /* "Everyone's here" and "Didn't meet", side by side and wrapping rather than squeezing — the same
@@ -203,6 +206,11 @@
   font-size: 10px; font-weight: 700; color: #8a9bb0;
   letter-spacing: 0.8px; text-transform: uppercase;
 }
+.attendance-student-identity { display: flex; flex-direction: column; min-width: 0; }
+.attendance-student-totals {
+  color: #8a9bb0; font-size: 10px; font-weight: 600; line-height: 1.35; white-space: normal;
+}
+.attendance-detail-totals { color: #6b7a8d; font-size: 12px; font-weight: 700; line-height: 1.45; }
 /* Roll Call!'s `.sort-btn`, under a name of this app's own because shell.css never lifted that
    one — the first screen with something to sort is what instances it, and this is it. */
 .attendance-sort-btn {

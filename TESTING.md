@@ -1602,6 +1602,79 @@ sweep.*
 
 ---
 
+### WO-2.4 — Counts & attendance percentage
+
+**What this adds.** Under every name on the registry, and on a line above the grid: how many meetings
+this class has actually recorded, each student's P / T / A / E / D, and a percentage. Per term where
+the term has dates, and per year always.
+
+**The formula, and why it is not ours to choose.** `(P + T + E + D) / (P + T + A + E + D)`. Excused
+absences and dismissals sit in the **numerator**, so an excused absence does not damage a student's
+rate. This matches Roll Call!'s per-quarter sheet formula at `src/bridge.gs:625-626` — verified
+against that source, not against a description of it. The owner reads both apps' numbers this year
+and they have to agree, which makes this a compatibility requirement rather than a design decision.
+**Do not "fix" it to something more defensible.**
+
+**The denominator is recorded meetings of that class — never calendar days.** A class met if it has
+an attendance record with no exception, asked through the one predicate (`stateOf()`), and every
+count runs through it. A dropped day, a school-wide day off, and a day nobody has taken yet are all
+absent from both halves of the fraction. A denominator built from dates looks right in September and
+diverges by November.
+
+**Unconfirmed folds into absent — here and nowhere else.** `U` is WO-2.10's temporary code. It is not
+a sixth mark, it never appears in a displayed count, and a finished class contains none. But in this
+percentage every `U` sits in the denominator alongside the absences, because the alternative is a
+rate that flatters a class nobody finished taking. **The consequence to know before hand-counting:
+mid-marking, every student the teacher has not reached yet reads as an absence.**
+
+- [ ] Percentages match a hand count across a term of a randomly shifting rotation. 👤
+- [x] Dropped days and `no-school` days are absent from both numerator and denominator.
+- [x] A student with one excused absence out of ten meetings shows 100%, not 90%.
+- [x] Untaken days do not appear in the denominator.
+- [x] A student with zero recorded meetings shows an honest empty state, not `NaN` or `0%` —
+      `percent` is `null` and the line reads "No recorded meetings".
+- [ ] Cross-checked against Roll Call!'s number for the same class and date range. 👤
+
+*Desk pass 2026-08-08: `verify-shell.mjs` **400 of 400, 0 skipped**, up from 389 on the tree this work
+order arrived on — eleven new checks, all in a block at the end of the attendance section.
+`wo-sweep.mjs` is 11 checks, 9 passed, 0 failed, 2 to review: the standing sensitive-field-name line
+at the same 172 mentions as before, and three new CSS selectors confirmed non-interactive (a layout
+wrapper and two text spans inside the name cell, which owe no 44px rule).*
+
+#### The 👤 sitting this work order owes — and two things to do first
+
+**Both open lines need a real class and Roll Call!'s own numbers.** Neither can be closed at a desk,
+and this is a 🚩 go-live blocker, so WO-2.4 stays 🔨 IN PROGRESS and the roadmap box it closes stays
+unticked until this sitting happens.
+
+Two preconditions, each of which will waste the sitting if skipped:
+
+1. **Set term start and end dates on the class first.** Terms ship with blank dates and that is a
+   valid state — a teacher setting up in August has not been given the calendar yet. Until they are
+   set there is no term figure at all: the line reads *"Term dates not set · Year: N recorded
+   meetings"*, which is honest and is not something to compare against a quarter.
+2. **Compare quarter against quarter. Never year against year.** Roll Call! disagrees with itself:
+   its per-quarter sheet formula is the one above, but its year roll-up
+   (`src/dashboard.html:4058-4073`) computes `(P+T)/(P+T+A+E)` — `E` dropped from the numerator, `D`
+   gone entirely. Planbook's year figure matches Roll Call!'s *quarters summed*, not its year badge.
+   A year-to-year comparison shows a divergence that is Roll Call!'s, not this app's.
+
+- [ ] **Hand-count one class across a term.** Pick a term with a genuinely shifting rotation, count
+      the recorded meetings by hand off the grid, and count one student's marks. Confirm the
+      denominator is the meeting count and not a number of weekdays. 👤
+- [ ] **Cross-check against Roll Call!, quarter against quarter.** Pick a class and a **completed**
+      quarter tab — one where every cell carries a letter. Roll Call! counts letters; Planbook reads
+      a blank cell on an existing record as present, so the two agree only where the quarter was
+      marked through normally. Compare Planbook's per-student line against Roll Call!'s column J. 👤
+- [ ] **Read the wall.** The per-student rate now draws under every name on a screen that gets
+      projected. It is not accommodation, medical or plan data, so presentation mode does not hide
+      it and no rule is broken — but whether a projected column of attendance percentages is
+      something you want the room to read is a judgement only you can make. 👤
+- [ ] **Mark a class and watch the rate while you do it.** Confirm the mid-marking dip described
+      above reads as "not finished yet" rather than as a wrong number, on the iPad, at speed. 👤
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

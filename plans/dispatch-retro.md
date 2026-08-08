@@ -53,7 +53,7 @@ status --short` first on resume, before reading your own status file.
 `PREF_DEFAULTS` — because the enforcement in `prefs.js` is silent by design and a silent refusal is
 invisible to everything except an audit.
 
-## Codex — four probes, a fix, and what each one was wrong about
+## Codex — four probes, a fix, and the first run that landed
 
 **Do not probe by looking for a file in `bin/`.** The first version checked for
 `codex-windows-sandbox-setup.exe` beside `codex.exe`, on the strength of an error message naming it.
@@ -139,6 +139,57 @@ distinctly, so a harness bug cannot arrive dressed as a runner failure. That las
 section's own standing rule applied to its own replacement: a gate nobody has watched fail is not
 evidence that it can. `ROUTING.md`'s suspension lifted on the passing probe exactly as its text said
 it would, and WO-2.2, WO-2.3 and WO-2.4 are back on Codex routes.
+
+### WO-2.4, 2026-08-08 — the first Codex run that landed, and where it actually went wrong
+
+**Codex wrote code for the first time.** The probe passed a third time (**3 for 3** since the PATH
+fix), the dispatch exited 0 with a result file, and `src/attendance.js` gained a correct
+implementation of `(P+T+E+D)/(P+T+A+E+D)`. A later verifier checked the formula against Roll Call!'s
+own `bridge.gs:625-626` rather than against the work order's claim about it, and they match at the
+source. **The rubric was right about this work order for four dispatches while the runner was down,
+and it was right again when the runner came up.**
+
+It still took two FAILs to land, and **both were in the harness, never in the app** — the same
+fixture, failing in opposite directions:
+
+- **Round 1: a check that could never pass.** `percent === 100` and `percent === 10/11*100` asserted
+  over one result object.
+- **Round 2: ten checks that could never run.** The fix added `if (!term) return null` at the top of
+  the block. The fixture class carries no terms, so every WO-2.4 check skipped — **and the suite
+  exited 0**, because a skip is not a failure. The evidence went backwards while the summary went
+  green.
+
+That pair is the whole lesson, and it is this file's § "Fixture assumptions" arriving from a new
+direction: **a check that cannot fail and a check that cannot run are the same defect wearing
+different signs, and only one of them is visible in a summary line.** Round 1 was caught because it
+printed red. Round 2 printed nothing at all and had to be caught by a verifier reading the block and
+asking why 395 had become 390.
+
+Three consequences, applied 2026-08-08:
+
+- **A missing fixture is now a `check()`, not a `skip()`** (`tools/verify-shell.mjs`, WO-2.4 block).
+  A skip is the right answer for a capability the environment lacks; it is the wrong answer for a
+  fixture that was supposed to be there, because it converts a broken harness into a green run.
+- **The term guard was narrowed** to the two checks that actually need a term, rather than gating all
+  ten at the front door. A guard should cost what it protects.
+- **`lastMeetings` went from N=3 to N=10.** At 3 the window did not reach the dropped day, so a
+  function that never excluded dropped days would have passed a check named *"counts meetings rather
+  than days."* The check now spans both the dropped day and the no-school day. Same failure mode as
+  the two above: the assertion was fine and the *fixture* could not express the bug.
+
+**On who fixed it.** After the second FAIL the owner declined a third Codex round and had the
+orchestrator repair the fixture directly. That inverts the pipeline's normal separation, so the
+re-verify brief said so explicitly and told the verifier to be pointed about it — and the verifier
+earned that instruction, catching a comment that misdescribed its own edit. **If the orchestrator
+ever writes code again, the conflict gets named in the verifier's brief.** It is not a rule against
+doing it; it is a rule against doing it quietly.
+
+**One more thing the first attempt at that fix taught.** The obvious repair — seed a `terms` array
+onto the fixture class — broke two unrelated checks, because that class is *deliberately* the legacy
+"stored with no terms at all" shape and term ids are asserted against `/^tm_[0-9a-z]{10}$/`. **A
+shared fixture carries invariants that are somebody else's acceptance criteria.** The block now lends
+itself a term and removes it in its own restore, and the seeding site carries a comment saying why
+not to try it again.
 
 ## Ticking — why the orchestrator holds the pen
 

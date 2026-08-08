@@ -254,7 +254,7 @@ teacher isn't looking at is the wrong one.
 
 ## WO-2.4 — Counts & attendance percentage
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-2.1, WO-2.3
+**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 · **Depends on** WO-2.1, WO-2.3
 **Closes roadmap** Phase 2 → "Per-student counts and attendance % over recorded meetings."
 
 **Why it exists.** The owner reads both apps' numbers this year and **they have to agree**. That
@@ -275,11 +275,26 @@ makes the formula a compatibility requirement, not a design choice.
 **Acceptance**
 - [ ] Percentages match a hand count across a term of a randomly shifting rotation. *(One of the
       three things that must be right before students walk in — verify against a real class.)*
-- [ ] Dropped days and `no-school` days are absent from both numerator and denominator.
-- [ ] A student with one excused absence out of ten meetings shows 100%, not 90%.
-- [ ] Untaken days do not appear in the denominator.
-- [ ] A student with zero recorded meetings shows an honest empty state, not `NaN` or `0%`.
+- [x] Dropped days and `no-school` days are absent from both numerator and denominator.
+- [x] A student with one excused absence out of ten meetings shows 100%, not 90%.
+- [x] Untaken days do not appear in the denominator.
+- [x] A student with zero recorded meetings shows an honest empty state, not `NaN` or `0%`.
 - [ ] Cross-checked against Roll Call!'s number for the same class and date range.
+
+*Built 2026-08-08 — `verify-shell.mjs` **400 of 400**, `wo-sweep.mjs` 9 passed / 0 failed / 2
+standing reviews, behind ten fixtures written for this work order. **The status stays 🔨 IN PROGRESS
+on purpose:** the two open lines are the owner's, they need a real class and Roll Call!'s own
+numbers, and this is a 🚩 go-live blocker — so the roadmap box this work order closes stays unticked
+until she has run them. `TESTING.md` § WO-2.4 lists the sitting they are owed.*
+
+*Two preconditions found while verifying, both of which will waste that sitting if she doesn't know
+them first. **Term dates must be set on the class before either line is checkable** — terms ship with
+blank `start`/`end`, which is valid, and an undated term now renders "Term dates not set · Year: N
+recorded meetings" rather than a term figure. And **the comparison must be quarter against quarter,
+never year against year**: Roll Call! disagrees with itself, its per-quarter sheet formula being
+`(P+T+E+D)/(P+T+A+E+D)` (`bridge.gs:625-626`, which Planbook matches at the source) while its year
+roll-up drops `E` from the numerator and `D` entirely (`dashboard.html:4058-4073`). A year-to-year
+check shows a divergence that is Roll Call!'s, not this app's.*
 
 **Traps** — Denominators built from calendar dates will look right in September and diverge by
 November. The denominator is *recorded meetings of that class*, per class, always.
@@ -901,3 +916,189 @@ being asked a frame early, the same way the width question does.
 **Backfilling a past day needs a day column**, so in portrait the teacher rotates to correct
 Tuesday. That is the accepted cost of this trade and it should be written down where WO-2.1's
 unlock is described, not left for someone to hit at the door.
+
+---
+
+## WO-2.13 — The totals are recomputed once per student; compute them once per render
+
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.4
+**Amends roadmap** Phase 2 → WO-2.4's "per-student counts and attendance %", on the render path only
+
+**Why it exists.** WO-2.4 is arithmetically correct and verified — this work order does not touch a
+single number it produces. What it fixes is *how many times* that arithmetic runs.
+
+`attendanceTotals()` (`src/attendance.js:1153`) calls `meetingDates()` (`:1129`), which walks the
+whole of `doc.attendance`, dedupes the dates it finds, and then runs `stateOf()` on every candidate —
+and `stateOf()` calls `recordFor()`, which is another full scan of the ledger. `attendanceTotals()`
+then maps `recordFor()` across those dates a second time. That is the cost of one student.
+
+It is called **once per student**, inside `students.forEach` at `:2943-2944`.
+
+**The meeting dates are identical for every student in the class.** A 26-student roster therefore
+computes the same list of dates twenty-six times, and re-derives every record on it twenty-six
+times, to produce twenty-six different tallies over one shared set of days. The only per-student part
+is `readingOf(record, studentId)` — one property lookup per meeting.
+
+Measured: **76 ms** for one `renderAttendance()` at 875 records / 175 meetings / 27 rows, desktop
+headless. A full year across five classes is that size. On an iPad, that lands somewhere in the
+region of 250–400 ms — **after every mark tap**, on the screen `CLAUDE.md` names as the critical
+path, being used while students walk into the room.
+
+**The fix has an obvious shape and this file already argues for it three times within twenty lines of
+the offending code.** `renderRows()` hoists `perColumn` (*"Read once per column rather than once per
+cell: twenty-six rows times six columns is a hundred and fifty-six lookups through the whole
+attendance array otherwise"*), `cover` (*"asking the calendar once per cell would walk `events`
+twenty-six times to arrive at one answer"*), and `passesFull` (*"Read once for the whole table rather
+than once per row… asking it twenty-six times would walk `openPasses` twenty-six times"*). The
+per-student totals were added **one line below that last comment** and do the thing it forbids.
+
+**Deliverables**
+- The meeting dates for the render's window, and the record on each, computed **once per render** and
+  shared across every row — the same hoist `perColumn` and `passesFull` already are, in the same
+  place and in the same style.
+- Every student's counts folded out of that one shared pass. `readingOf()` stays the per-student
+  reader; `stateOf()` stays the meeting predicate.
+- The same treatment for the class-level counts at `:3114-3116`, which call `meetingDates()` twice
+  more per render, and for the detail panel at `:3052-3053`, which computes a year and a term total
+  for one student while the row above it has already computed the same thing.
+- A measured before/after recorded in the work order and in `TESTING.md`.
+
+**Out of scope** — any change to the arithmetic, the formula, the predicate, or the rendered strings.
+Caching *across* renders, or anywhere outside one `renderAttendance()` call. Indexing `doc.attendance`
+in the store, which is a bigger decision than this work order and would touch every reader in the app.
+
+**Acceptance**
+- [ ] **Every total is byte-identical to today's output.** This is a pure refactor. Assert the full
+      `attendanceTotals()` return object — counts, `meetings`, `attended`, `percent` — for a roster
+      including a student with no marks at all, a student with an `E`, and a student with a `U`,
+      against the values recorded in `tools/verify-shell.mjs`'s WO-2.4 block today.
+- [ ] All eleven existing WO-2.4 checks still pass, unmodified. If a check has to be edited to
+      accommodate this change, that is a behavior change and the work order has gone wrong.
+- [ ] A before/after measurement of `renderAttendance()` at 875 records / 175 meetings / 27 rows,
+      taken the same way both times, reported as two numbers. The before figure is 76 ms.
+- [ ] `meetingDates()` is called **O(1) times per render**, not once per student. Assert it by
+      counting calls, not by reading the code.
+- [ ] `stateOf()` is still the only meeting predicate, and `readingOf()` is still the only cell
+      reader. No second copy of either appears anywhere in the diff.
+- [ ] The detail panel and the class-level count line show the same numbers they show today.
+- [ ] Marking a student re-renders with the new totals immediately — the shared pass is rebuilt per
+      render, not carried between them. 👤 *(A stale total after a tap is the failure mode this
+      work order introduces if it gets caching wrong, and it is the one a desk check will miss.)*
+
+**Traps** — **The tempting fast version is the wrong one.** A hand-rolled loop that tests
+`record.exception` directly, or that skips `stateOf()` because "we already know which dates are
+meetings", rebuilds the precedence rule in a second place and undoes WO-2.4's central design — see
+`plans/rotating-schedule.md` § Precedence and the header on `stateOf()`. Call the predicate once and
+keep the answer; do not write a faster predicate.
+
+**Do not cache across renders.** The whole point of the hoist is that it lives and dies inside one
+`renderAttendance()`. A module-level cache keyed on class id will be correct until the day a mark,
+an event or a restore changes the ledger without going through the invalidation nobody remembered to
+write — and the symptom is a wrong percentage, which is the one thing WO-2.4 exists to prevent.
+
+**`percent: null` is not zero and must survive the refactor.** A student with no recorded meetings
+reads "No recorded meetings"; a folded-counts implementation that initialises to `0` and divides
+will produce `NaN` or a confident `0%` for exactly the students a teacher is most likely to be
+looking at in the first week.
+
+---
+
+## WO-2.14 — Close two wo-gate blind spots found at WO-2.4
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+
+**Not a go-live blocker.** Added 2026-08-08, out of WO-2.4's close. *(The blank line above is
+deliberate: `parseFile()` ends the header block at the first one, and `depsOf()` regex-scans
+everything inside it for `WO-` tokens. WO-1.12 carries this note inside the block and is read as
+depending on the work order that merely found it. This one depends on nothing on purpose — the gaps
+were found at WO-2.4 but the fix touches only `tools/wo-gate.mjs`, and hanging it off a work order
+that stays 🔨 IN PROGRESS until the owner's desk sitting would block it for a reason that isn't
+real.)*
+
+**Why it exists.** `tools/wo-gate.mjs` is the only script in `tools/` that writes into `plans/`, and
+it is the only one nothing checks — `verify-shell.mjs` tests the app and `wo-sweep.mjs` reads a
+diff, so the tool that edits the tracker runs unverified. WO-2.4 walked into two of its gaps in one
+dispatch. Neither is an app defect; both let the tracker say something untrue, which is the failure
+`plans/verification-tooling.md` keeps naming as worse than no check at all.
+
+**The two gaps**
+
+- **Nothing ever claims a work order, so the collision guard can never fire.** There is no
+  `--start`. WO-2.4 sat at `⬜ NOT STARTED` through two Codex rounds, a correction brief and two
+  verifier passes, because the only thing that writes a status is `--tick`, and `--tick` is the last
+  step. Meanwhile `gate()` carries the guard built for exactly this — `wo-gate.mjs:169`, *"already
+  🔨 IN PROGRESS — ask before proceeding"* — which no dispatch can arm. A second `/wo` with no
+  argument would have had `next` hand it WO-2.4 and started building it in the same working tree,
+  with nothing anywhere saying a run was already in flight.
+- **`--tick` can only ever write `✅ DONE`.** `wo-gate.mjs:324-327` hardcodes the status; the fence
+  at `:309` accepts `⬜ NOT STARTED` or `🔨 IN PROGRESS` and then flattens both to done. So the
+  project's own convention — land at `🔨 IN PROGRESS` while 👤 or 🙋 lines are still owed, as at
+  WO-2.1, WO-2.11 and WO-2.12 — is unreachable through the tool, and has been hand-edited every
+  time. At WO-2.4 the offered maintenance was `--tick WO-2.4`, which would have stamped `✅ DONE` on
+  a 🚩 go-live blocker with two acceptance lines still owed to the owner. It was caught by reading
+  the source, not by the tool refusing.
+
+The second gap is the one with teeth. `parseFile()` (`:43-78`) reads only the header block, so the
+script has never looked at an Acceptance list — it will write "done" over a work order whose own
+checkboxes say otherwise and report `PASS`.
+
+**Deliverables**
+- **`--start <ID>`**, refusing anything that is not `⬜ NOT STARTED`, writing `🔨 IN PROGRESS`, and
+  honouring `--dry-run` the way `--tick` does. The orchestrator calls it after the routing decision
+  and before the brief is written, which is what arms `:169`.
+- **A way back.** An abandoned dispatch must not leave a permanent claim — see Traps.
+- **`--tick` reads the work order's own Acceptance list.** If any line is still `[ ]`, write
+  `🔨 IN PROGRESS` instead of `✅ DONE`, name the lines that held it open, and **leave the roadmap
+  boxes unticked** — an unfinished work order closes nothing. `parseFile()` learns to find the
+  Acceptance block; nothing else needs new knowledge, because the orchestrator already ticks by hand
+  what it verified before it runs the tool.
+- **`next` says what it skipped.** Claimed rows drop out of "next" the moment `--start` exists, and
+  a running order that silently steps over a work order is how one gets forgotten.
+- The claim step written into `ROUTING.md` and the orchestrator's own definition, so it is protocol
+  rather than a flag nobody calls.
+
+**Out of scope** — no new script and no `tools/lib/`; this closes blind spots in a file that already
+exists and stays one file, per [`../verification-tooling.md`](../verification-tooling.md). No change
+to what `--tick` touches: still one named work order, still never a 👤 line in `TESTING.md`, still
+never `CHANGELOG.md`. Not a status for *why* a run stopped — `🚧 BLOCKED` already exists and is set
+by a human.
+
+**Acceptance**
+- [ ] `--start` on a `⬜ NOT STARTED` work order writes `🔨 IN PROGRESS`, and a **second** `--start`
+      on the same ID exits non-zero. Prove it by running it twice, not by reading the fence.
+- [ ] `--start` refuses `✅ DONE`, `🚧 BLOCKED` and `🔒 GATED` without editing the file.
+- [ ] A claimed work order does **not** move either dashboard. They count finished work, and
+      `recomputeDashboard()` (`:241`) must keep counting only `✅ DONE`.
+- [ ] The way back returns a claimed work order to `⬜ NOT STARTED`, and says so in one line.
+- [ ] **`--tick` on a work order with one unticked Acceptance line writes `🔨 IN PROGRESS`, not
+      `✅ DONE`, and names that line.** Plant the violation: untick one line of a work order that
+      would otherwise pass, run it, watch it refuse. This is the WO-2.4 case, reproduced.
+- [ ] That same refusal leaves every roadmap box it *Closes* unticked.
+- [ ] `--tick` on a fully ticked work order still writes `✅ DONE — <date>`, ticks its roadmap boxes
+      and recomputes the dashboard. No regression on the path that works today.
+- [ ] `--dry-run` on `--start` and on the new `--tick` path prints the exact edit and writes
+      **nothing** — compare the file before and after, don't trust the banner.
+- [ ] `next` names any `🔨 IN PROGRESS` row it stepped over, and why.
+- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — 400/400/0-skips and exit 0 —
+      neither of which covers this file, which is the point of the planting above.
+
+**Traps** — **Per `verification-tooling.md`'s precondition rule, a check that could not have caught
+the gap it is named for is not evidence.** WO-1.12 proved each fix by planting the violation first
+and watching the script fail; do the same here. A `--tick` that refuses a work order nobody unticked
+has demonstrated nothing.
+
+**The claim outlives the run, and that is the new failure this work order introduces.** A dispatch
+that dies mid-flight leaves `🔨 IN PROGRESS` behind, `next` steps over it forever, and the work order
+is lost from the running order while looking healthy — the tracker lying in the other direction. The
+way back and the loud skip are why this is two deliverables and not one. `gate()` already has the
+shape of the answer at `:179-181`, where a brief with no result over a dirty tree is reported as an
+interrupted draft; a stale claim should be as loud.
+
+**Do not let the two gaps become one flag.** `--start` writes a status because a run began;
+`--tick`'s refusal writes the same status because the work is not finished. They arrive at
+`🔨 IN PROGRESS` for unrelated reasons, and collapsing them into shared code is how a future
+`--start` starts ticking checkboxes.
+
+**Nothing here may make the status line harder to hand-edit.** Every `🔨 IN PROGRESS` in `plans/`
+today was written by hand, including WO-2.4's, and will be again the first time this script is wrong
+about something. The file stays the record; the tool stays a convenience over it.
