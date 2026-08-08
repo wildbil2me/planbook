@@ -162,7 +162,7 @@ renumbered to match. `CHANGELOG.md` carries the entry. Historical mentions of WO
 
 ## WO-2.3 — Days off & pre-drops
 
-**Ship** 1 · **Status** 🔨 IN PROGRESS · **Size** M · 🚩 · **Depends on** WO-2.1
+**Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** M · 🚩 · **Depends on** WO-2.1
 **Closes roadmap** Phase 2 → "Days off and pre-drops, set ahead."
 
 *Built 2026-08-07 — `verify-shell.mjs` **379 of 379** (thirteen new: twelve at the end of the
@@ -187,8 +187,13 @@ change rather than a fix is the registry paging **forward** as far as the calend
 **not** touch is that `writableDate()` still refuses every date after today. Opening the columns was
 only safe because the block was never in the rendering.
 
-*Status stays 🔨: the five fixes are measured at the desk and want one more sitting, which is the
-last 👤 line in that section.*
+*Closed 2026-08-08 on a second sitting the same day: all eight checks over the six fixes pass, which
+was the last line this work order owed. Two sittings on one day is what this work order actually
+cost, and it is worth saying why rather than filing it as thoroughness — the first sitting found
+five things behind a fully green harness, and the fix for the largest of them introduced the sixth.
+**A change that opens a new axis on a screen re-opens every rule that was phrased against the old
+one.** Here it was `Later ▶`, disabled by a test that had silently been answering two questions at
+once for as long as the forward end and today were the same date.*
 
 *Two modules, split the way `src/passes.js` and `src/attendance.js` already are.* `src/calendar.js`
 *is the model — no DOM, no clock, never calls the store — and* `src/days-off.js` *is the only writer

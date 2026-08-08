@@ -103,6 +103,11 @@ records what someone remembered.
   calendar — narrow the range, or change the kind to a drop that names classes. That was chosen over
   leaving the cells live, which would let one mis-tap invent a meeting on Thanksgiving.
 
+  **Two sittings on one day**, and that is the shape of this work order rather than an accident of
+  it. The first found five things behind a harness that was entirely green, and the fix for the
+  largest of them introduced the sixth — a change that opens a new axis on a screen re-opens every
+  rule that was phrased against the old one. The second closed all eight checks over all six.
+
   `tools/verify-shell.mjs` 366 → **389** checks, zero skipped — thirteen with the work order and ten
   more with the punch list — and `sw.js` cache v28 → v30. Nine mutation proofs. The one that earns
   its keep is copying the event onto attendance records inside the writer: **ten of the twelve new

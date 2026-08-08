@@ -1579,9 +1579,14 @@ feature that opened it had shipped the day before.
       be next week, portrait's pinned position stopped being it and the button went live on the one
       screen that refuses to page. It now has both reasons, and anything added to that strip needs
       the same audit.)*
-- [ ] **The five fixes, back on the iPad.** Everything above is measured; what is not is whether the
+- [x] **The six fixes, back on the iPad.** Everything above is measured; what is not is whether the
       forward columns read as "ahead" rather than as broken, and whether three days off in a row now
-      go in without a fight. Same sitting shape as the one above. 👤
+      go in without a fight. Same sitting shape as the one above. 👤 *(Sat 2026-08-08, second
+      sitting the same day. All eight checks pass — the button fits, a date can be re-picked
+      immediately after the one before it, the keyboard stays down, the 📅 is far enough from
+      "Didn't meet" to aim at, a forward column reads as ahead rather than as broken, the forward
+      stop lands on the last thing on the calendar, and portrait greys both page controls. **This
+      was the last line WO-2.3 owed.**)*
 
 *Desk pass 2026-08-08 (punch list): `verify-shell.mjs` **389 of 389, 0 skipped**, up from 379 — ten
 new checks, nine in a punch-list block at the end of the attendance section and one in the coarse
