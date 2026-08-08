@@ -108,10 +108,37 @@ function parseFile(file) {
 //
 // The line shapes are wo-brief.mjs's acceptanceLines(), on purpose: two scripts reading one list two
 // different ways is how the brief and the tracker start disagreeing about what was asked for.
+// A work order with no **Acceptance** field but with checkboxes in its body is holding its list
+// somewhere this parser was not looking. That is every gate work order: WO-G1 … WO-G4 keep theirs
+// under `### The rehearsal`, `### Ship gate` and friends, and the original comment here recorded the
+// gap as a fact about gates.md rather than as a defect — "no list at all — gates.md is like this."
+//
+// The consequence was the worst-placed one available. `--tick WO-G1` would have stamped ✅ DONE with
+// every box open, on the one work order whose entire stated purpose is guarding against *declaring
+// done*, and whose failure mode is going live on an app nobody rehearsed. It printed an honest NOTE
+// saying the status rested on the caller's word alone — which is WO-2.14's honesty working, and is
+// also a warning on a 🚩 go-live blocker, which is a thing people read past.
+//
+// So: no field, but boxes present → the boxes ARE the list. Deliberately NOT a second **Acceptance**
+// heading bolted into gates.md, because two lists read two ways is how the brief and the tracker
+// start disagreeing about what was asked for — the rule this file states twenty lines up.
+//
+// Over-collecting is the safe direction here and under-collecting is not: an extra box can only hold
+// a work order open until a human ticks it, while a missed one closes a gate that was never run.
+function checkboxesOf(lines, from, to) {
+  const out = [];
+  for (let j = from; j < to; j++) {
+    const m = /^\s*-\s*\[([ x])\]\s*(.+)$/.exec(lines[j]);
+    if (m) out.push({ line: j, ticked: m[1] === 'x', text: m[2].trim() });
+    else if (out.length && /^\s{2,}\S/.test(lines[j])) out[out.length - 1].text += ' ' + lines[j].trim();
+  }
+  return out.length ? out : null;                              // genuinely no list — say so, as before
+}
+
 function acceptanceOf(lines, from, to) {
   let i = -1;
   for (let k = from; k < to; k++) if (/^\*\*Acceptance\*\*/.test(lines[k])) { i = k; break; }
-  if (i < 0) return null;                                      // no list at all — gates.md is like this
+  if (i < 0) return checkboxesOf(lines, from, to);             // gates.md: the boxes are the list
   const out = [];
   for (let j = i + 1; j < to; j++) {
     const l = lines[j];
