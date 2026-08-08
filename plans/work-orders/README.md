@@ -74,7 +74,7 @@ dashboard tidy. The work lands on `phase/2-attendance`, because that is where th
 
 ## Ship 1 — the three weeks that matter
 
-Nineteen work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
+Twenty work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
 is genuinely tight, so it is written out day by day rather than left to be discovered.
 
 *(Four changes on 2026-08-06, all from one root cause — building attendance without holding it
@@ -126,7 +126,8 @@ already hoists three other reads for exactly this reason.)*
 | 17 | [WO-2.3](phase-2-attendance.md#wo-23--days-off--pre-drops) Days off & pre-drops | M | 🚩 | Aug 20–21 |
 | 18 | [WO-2.4](phase-2-attendance.md#wo-24--counts--attendance-percentage) Counts & attendance % | M | 🚩 | Aug 21 |
 | 19 | [WO-2.13](phase-2-attendance.md#wo-213--the-totals-are-recomputed-once-per-student-compute-them-once-per-render) Totals once per render, not per student | S | | Aug 21–22 |
-| 20 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
+| 20 | [WO-2.5](phase-2-attendance.md#wo-25--keyboard--touch-pass) **Keyboard & touch pass** | S | 🚩 | Aug 22 |
+| 21 | [WO-G1](gates.md#wo-g1--ship-1-go-live-rehearsal) **Ship 1 go-live rehearsal** | M | 🚩 | Aug 22–24 |
 
 **The hard ordering constraint:** WO-1.5 ships before WO-1.6. Nothing that writes student data
 lands before the path that gets it back out. Everything else in the table can shuffle.
@@ -136,8 +137,14 @@ lands before the path that gets it back out. Everything else in the table can sh
 readable name column is a worse fit than one column, not a broken screen · WO-1.9 presentation mode degrades to
 "accommodations are collapsed by default and there's a hide-everything toggle in the header" ·
 WO-2.4 percentages can be read from Roll Call! for a week · WO-1.10 home screen degrades to a class
-list. **Never cut WO-1.5, WO-1.3, or WO-G1** — those three are what make going live in three weeks
-a considered risk rather than a reckless one.
+list. **Never cut WO-1.5, WO-1.3, WO-2.5, or WO-G1** — those four are what make going live in three
+weeks a considered risk rather than a reckless one.
+
+*(WO-2.5 joined that list and moved into Ship 1 on 2026-08-08, when the laptop became the device of
+record for the term — see WO-G1's decision record. It is the keyboard path, and without it a class
+of 25 is marked by mouse while students walk in. A work order that was a Ship 2 polish item under
+the old model is a go-live blocker under the new one; the deliverable did not change, the standard
+it is built to did.)*
 
 ---
 

@@ -305,12 +305,30 @@ November. The denominator is *recorded meetings of that class*, per class, alway
 
 ## WO-2.5 — Keyboard & touch pass
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.1
+**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-2.1
 **Closes roadmap** Phase 2 → "Keyboard path on desktop and 44px touch targets. Both, not either."
 
-**Why it exists.** Attendance is marked on the iPad while students arrive and reviewed on the laptop
-afterward. The roadmap says both, not either, because building for one device is how the other one
-becomes unusable.
+**Why it exists.** The roadmap says both, not either, because building for one device is how the
+other one becomes unusable.
+
+**Moved into Ship 1 and marked 🚩 on 2026-08-08, and the reason changes what this work order is.**
+This was written when the model was *"attendance is marked on the iPad while students arrive and
+reviewed on the laptop afterward,"* which made the keyboard path an affordance for the quiet half of
+the job. That model is inverted for the first term: **the laptop is the device of record and the
+keyboard path is how a live class gets marked while students walk in** — see WO-G1's decision
+record, which turns on two devices being two databases and sync being Phase 7.
+
+So the deliverable is unchanged and the **standard it is built to is not**. This is now on the
+critical path CLAUDE.md names: *fast enough to do while students arrive*, for a class of 25–30, by
+someone who is greeting a room rather than looking at a screen. A keyboard path that is merely
+present and correct passes the acceptance list below and still fails the term. Mouse-clicking 25
+rows one at a time is the failure this work order exists to prevent, and until it lands the
+laptop-only decision is not safe to act on.
+
+**Do not let this quietly become an iPad work order.** The touch and screen-reader deliverables stay
+— the iPad remains a verification device and Phase 7 brings it back as a peer — but the keyboard
+half is the one with a term riding on it, and it is the half with no hardware sitting of its own
+behind it. Every 👤 line in Phase 2 was closed on the iPad.
 
 **Deliverables**
 - Desktop: row selection, `P`/`T`/`A`/`E`/`D` keys to mark, arrow keys to move, Escape to

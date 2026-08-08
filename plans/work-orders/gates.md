@@ -18,38 +18,29 @@ go live was made 2026-08-03 with the risk stated and accepted; **this work order
 makes it considered rather than reckless.** Two facts are load-bearing and both get verified here,
 not assumed.
 
-### Before the sitting — four things, in this order
+### Before the sitting
 
-**The order is not a preference.** Two of these change the very thing the rehearsal is meant to
-validate, so doing them afterwards means the rehearsal proved something about a configuration that
-no longer exists.
-
-- [ ] **1. Pin the DHCP reservation at the router, to the address the laptop already has**
-      (`192.168.50.142`). Before the iPad touches the server again. Pinning *after* the iPad has
-      installed risks the router handing out a different address — which is a different origin, with
-      an empty database, and the installed app's year still sitting at the old one. See the decision
-      record below for why the origin is load-bearing.
-- [ ] **2. Start `tools/serve-https.mjs` and read its startup line.** It compares the certificate's
-      addresses against the machine's and says so when they have diverged. That is the check that
-      step 1 moved nothing. If it has moved, `node tools/make-cert.mjs` again — and the iPad must
-      re-trust the new root (Settings → General → About → Certificate Trust Settings), which is a
-      toggle that fails closed and silently.
-- [ ] **3. Load the app on the iPad, which is what pulls `planbook-shell-v31`.** Confirm Cache
-      Storage holds `v31` **and only `v31`** — the "only" is the half that catches a failed
-      `activate`, and a cache that layered instead of replacing is invisible from the app itself.
-      Until this is done the device is on `v30`, which predates WO-2.4's counts and percentage and
-      WO-2.13's fix.
-- [ ] **4. Take a backup and put it off the device** — before the rehearsal, not as part of it. The
-      backup drill below wipes storage on purpose, and step 1 can strand a database. This is the copy
-      that exists if either goes wrong.
+- [ ] **1. Start `node tools/serve-https.mjs` and open `https://localhost:8443` on the laptop.**
+      Loopback, so it resolves on any network including the school's — no certificate address to
+      match, no DHCP to depend on.
+- [ ] **2. Confirm the laptop is on `planbook-shell-v31`.** Cache Storage holds `v31` **and only
+      `v31`** — the "only" is the half that catches a failed `activate`, and a cache that layered
+      instead of replacing is invisible from inside the app.
+- [ ] **3. Take a backup and put it off the laptop** — before the rehearsal, not as part of it. The
+      backup drill below wipes storage on purpose. This is the copy that exists if it goes wrong.
+- [ ] **4. WO-2.5 has landed.** Without the keyboard path a class of 25 is marked by mouse, one
+      click per student, while students walk in. That is the version of laptop-only that fails, so
+      the rehearsal is not worth running until it is in.
 
 ### The three things that must be right
 
 From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the attendance ledger itself
 — not a schedule, since there isn't one. What must be right is narrow and testable.
 
-- [ ] **A mark lands and survives a reload.** On the iPad, installed, with the app force-quit
-      between mark and check.
+- [ ] **A mark lands and survives a reload.** On the laptop — the device of record — with the app
+      closed and reopened between mark and check. *(Originally written as an iPad check, when the
+      iPad was to be the device of record. Re-run on the iPad too as a compatibility pass, but the
+      laptop is the one that gates the term.)*
 - [ ] **A dropped class is distinguishable from an untaken one** — on screen, and in the stored
       document.
 - [ ] **The percentage matches a hand count.** Against a real class, over real recorded meetings.
@@ -96,35 +87,51 @@ able to contaminate the ledger it is rehearsing.
 
 ### Where Ship 1 actually runs — decided 2026-08-08
 
-**The term runs on the LAN address: `https://192.168.50.142:8443`, served by
-`tools/serve-https.mjs` from a `main` checkout.** No public host, no static host, no domain. That
-is a decision, not a gap waiting to be filled — Phase 8 owns the distribution channel and a real
-URL, and neither is needed to mark attendance in August.
+**The laptop is the device of record for the term, at `https://localhost:8443`, served by
+`tools/serve-https.mjs` from a `main` checkout.** No public host, no domain. Phase 8 owns the
+distribution channel and a real URL, and neither is needed to mark attendance in August.
 
-**It works because the app is offline-first, and that is proven rather than assumed.** WO-1.3's
-checks include the installed app opening with the network disabled, and the desk half was run with
-the server process *stopped outright* rather than with a DevTools toggle. Once the iPad has
-installed and the service worker has precached `SHELL`, the laptop can be closed and off-network
-for the rest of the term.
+**How this decision was reached, because the first answer was wrong.** The plan was the iPad on the
+LAN address, `https://192.168.50.142:8443`, with the laptop alongside it. Working through what that
+meant on an ordinary Tuesday turned up the thing nobody had said out loud: **two devices are two
+databases.** Browser storage is local to the device, so an iPad and a laptop hold separate
+IndexedDB stores *even at the identical URL* — that is not a misconfiguration, it is what
+local-first means, and it is the same property that keeps a vendor server away from student data.
+`docs/sync.md` is the answer to it and always was, but sync is Phase 7 and 🔒 GATED on OAuth
+verification. So for this term there is no automatic sync, and one device has to be the record.
 
-**What follows from it, and what the rehearsal must cover:**
+**Why the laptop and not the iPad.** One device removes divergence entirely rather than managing it,
+and `localhost` is loopback — it resolves on any network including the school's, needs no DHCP
+reservation, and has no certificate address to match. Every fragility the LAN plan carried
+disappears with it. The sequencing is also better: when Phase 7 lands, the iPad joins a record that
+already exists instead of arriving with a competing one.
 
-- **The origin is an IP address, and IndexedDB is scoped to the origin.** `https://192.168.50.142:8443`
-  is not where the app is served from; it *is* where the term's attendance lives. A DHCP lease that
-  moves does not degrade this — it strands it. A fresh install at a new address is a different
-  origin with an empty database, and the only way back is a backup file taken beforehand.
-  **Pin the laptop's address with a DHCP reservation at the router before day one.**
-  `tools/README.md` already records the adjacent failure: a moved lease leaves a valid certificate
-  for the wrong host, signed, unexpired, and refused.
-- **Updates require the iPad back on that network with the server running.** There is no deploy that
-  reaches the device on its own. Landing a fix and the teacher receiving it are two separate acts all
-  term.
-- **The iPad is on `planbook-shell-v30` as of this decision.** The bump to `v31` — which carries
-  WO-2.4's counts and percentage and WO-2.13's fix — reaches it only on its next load from the
-  server. Do that *before* rehearsing, or the rehearsal measures an app two work orders old.
-- **There is no sync in Ship 1.** Phase 7 is 🔒 GATED on OAuth verification, and `docs/sync.md` says
-  the local-first app ships without it. Moving a year between laptop and iPad is a backup file out
-  and a restore in, by hand — `plans/ROADMAP.md` calls it "crude, manual, and real."
+**What it costs, and the condition attached.** This inverts WO-2.5's stated model — *"attendance is
+marked on the iPad while students arrive and reviewed on the laptop afterward"* — so the keyboard
+path stops being a review affordance and becomes **the** way a live class is marked. WO-2.5 is
+therefore pulled into Ship 1 and 🚩, and **this decision is not safe to act on until it lands**: a
+class of 25 marked by mouse while students walk in is the version of laptop-only that fails.
+
+**The iPad stays in the rotation as a verification device.** It keeps its LAN install and is checked
+against every change, so it is trusted hardware on the day sync arrives rather than a device that
+went dark for a term. Three rules keep that from becoming a second record:
+
+- **Restore only ever flows laptop → iPad. Never the reverse.** This is the one that can destroy a
+  term. Restore is a wholesale replace, not a merge (`restoreDocument()`, `docs/sync.md`), so an
+  iPad backup pulled onto the laptop overwrites the real ledger with test data — silently, and
+  reporting success.
+- **The iPad's data lives in a year that cannot be mistaken for the term.** Labels are strictly
+  `YYYY-YYYY` (`src/store.js:176`), so it cannot be named "TEST" — use something like **2030-2031**,
+  which is unmistakable in the year picker.
+- **Confirm the iPad's cache version before trusting any result from it.** An iPad on a stale build
+  passes or fails for reasons about the build rather than about the change. This is not
+  hypothetical: on 2026-08-08 the iPad sat on `v30` while `main` was two work orders ahead, and
+  nothing in either tool could see it.
+
+**Two consequences of the iPad being a test device.** The DHCP reservation demotes from load-bearing
+to convenient — a moved lease now costs a test install, not a term. And iPad checks are an at-home
+activity, since updating it needs the laptop's server running on that network; at school it runs
+whatever build it last received.
 
 ### Ship gate
 
