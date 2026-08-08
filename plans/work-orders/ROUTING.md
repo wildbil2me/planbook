@@ -27,9 +27,24 @@ than what someone meant.
 The orchestrator does not grade its own dispatch. It chose the route and wrote the brief, which
 makes it the wrong party to mark the homework.
 
+**Claiming comes first.** After the routing decision and before the brief, the orchestrator runs
+`node tools/wo-gate.mjs --start <WO-ID>`. It writes `🔨 IN PROGRESS` and nothing else — no dashboard,
+no checkbox, because a claim is not progress. It is also the only thing that arms the collision guard
+the gate report has carried since the beginning: WO-2.4 sat at `⬜ NOT STARTED` through two Codex
+rounds, a correction brief and two verifier passes, because `--tick` was the only thing that wrote a
+status and `--tick` is the last step. A second `/wo` with no argument would have been handed the same
+work order and built it in the same working tree. **A dispatch that dies gets `--release <WO-ID>`** —
+a claim outlives the run that made it, and one nobody released hides a work order from `next` forever
+while the tracker looks healthy. `next` names every claimed row it stepped over for exactly that
+reason.
+
 **Ticking follows the verdict.** On a verifier PASS, and once you say go, the orchestrator applies
 the ticks whose evidence is a command the verifier ran: the work order `Status`, the roadmap box,
-the dashboard counts, and the 👤-free `TESTING.md` lines.
+the dashboard counts, and the 👤-free `TESTING.md` lines. `--tick` reads the work order's own
+Acceptance list before it writes anything: one line still `[ ]` and it writes `🔨 IN PROGRESS`
+instead of `✅ DONE`, names the lines that held it open, and leaves the roadmap boxes alone. Landing
+at `🔨 IN PROGRESS` with 👤 lines owed is the project's own convention — WO-2.1, WO-2.11 and WO-2.12
+all did — and it was hand-edited every time until WO-2.14, because the tool could only write done.
 
 **The implementer may also tick as it goes, as of 2026-08-06** — see § "Implementers may tick" below
 for what changed and why. **The verifier still never ticks**, and that is not the same rule wearing

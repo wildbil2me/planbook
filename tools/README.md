@@ -7,7 +7,7 @@
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
 | `wo-sweep.mjs` | The verifier's standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down. `node tools/wo-sweep.mjs` |
-| `wo-gate.mjs` | Work order gates, "what's next", and the maintenance ticks with a recomputed dashboard. `node tools/wo-gate.mjs next` |
+| `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, and the maintenance ticks with a recomputed dashboard. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
 | `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path>` |
@@ -17,8 +17,11 @@ read `plans/` and the agent transcripts, and none of them touches `src/`. They e
 pipeline was re-deriving the same work every run: gate parsing, brief assembly, sweep allowlists, and
 a cost analysis that was rebuilt from scratch four times in one afternoon and thrown away each time.
 Same failure mode as the two throwaway browser harnesses that became `verify-shell.mjs`.
-`wo-gate.mjs --tick` is the only one that writes to the repo, and it only writes to `plans/`, refusing
-to touch a 👤 line or `CHANGELOG.md`. `codex-invoke.mjs` writes outside the repo (a temp dir for
+`wo-gate.mjs` is the only one that writes to the repo, and only ever to `plans/`: `--start` and
+`--release` write one status line, `--tick` writes the status, the roadmap boxes and the dashboard —
+and all three refuse to touch a 👤 line or `CHANGELOG.md`. Since WO-2.14 `--tick` reads the work
+order's own Acceptance list first and writes `🔨 IN PROGRESS` rather than `✅ DONE` when a line is
+still open, because the one script that edits the tracker is the one nothing else checks. `codex-invoke.mjs` writes outside the repo (a temp dir for
 `--probe`, the dispatch result file for `--brief`/`--out`) and exists because the `codex-resources\`
 `PATH` fix was re-derived and re-typed at two call sites inside `work-order-orchestrator.md` — one
 file means the fix can only be right or wrong in one place. Full saga in

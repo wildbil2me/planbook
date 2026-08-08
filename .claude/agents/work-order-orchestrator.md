@@ -104,6 +104,22 @@ route this and future rubric-eligible work orders to Codex again. Keep probing e
 one clean pair of runs after a four-run losing streak is data, not a guarantee. If it fails again,
 re-suspend and say so exactly as bluntly as this paragraph does.
 
+### 2c. Claim it, before you write the brief
+
+```
+node tools/wo-gate.mjs --start <WO-ID>
+```
+
+Writes `🔨 IN PROGRESS` and nothing else — no dashboard, no checkbox. It is what arms the collision
+guard step 1 reports, and until WO-2.14 nothing could: WO-2.4 sat at `⬜ NOT STARTED` through two
+Codex rounds and two verifier passes because `--tick` was the only thing that wrote a status. **A
+non-zero exit means someone already claimed it — stop and ask.**
+
+**If the dispatch dies, release it**: `node tools/wo-gate.mjs --release <WO-ID>` puts it back to
+`⬜ NOT STARTED`. A claim outlives the run that made it, and an abandoned one hides a work order from
+`next` while the tracker looks healthy. `next` names every claimed row it steps over; that line is
+your cue that one is stale, not a decoration.
+
 ### 3. Write the brief
 
 ```
@@ -213,6 +229,12 @@ node tools/wo-gate.mjs --tick <WO-ID>
 It sets the work order `Status`, ticks the roadmap boxes named in **Closes roadmap**, and recomputes
 the README dashboard counts and bar from the phase files. Then say what it applied, and apply the
 👤-free `TESTING.md` lines by hand.
+
+**It reads the Acceptance list first.** Any line still `[ ]` and it writes `🔨 IN PROGRESS` instead
+of `✅ DONE`, names the lines, leaves the roadmap alone, and exits non-zero. That is not a failure —
+it is the tool refusing to close a work order whose own boxes say it is open, which is the whole
+reason a 👤 line owed to the iPad cannot be ticked past. Report the named lines as what is still
+owed.
 
 Three things stay out of your hands:
 

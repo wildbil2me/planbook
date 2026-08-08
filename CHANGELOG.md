@@ -13,7 +13,57 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The accommodations-in-storage check went red about the clock, roughly one run in ten.**
+  `tools/verify-shell.mjs` asserts that nothing sensitive reaches `localStorage`, and part of that is
+  searching a JSON dump of every stored value for the three plan words — `IEP`, `504`, `ELL`. `504`
+  is three digits, and every epoch-millisecond stamp we write is thirteen of them; on 2026-08-08
+  `planbook_lastBackupAt` held `{"2026-2027":1786195504308,…}` and the check failed on a timestamp.
+
+  **The reason this was worth stopping to fix is what the failure teaches.** It is not a flake in a
+  cosmetic check — it is a red on the single check whose subject is accommodation data leaking into
+  storage, and the remedy that works is to run it again. A control that goes red for a reason the
+  reader learns to dismiss is worse than no control, because the dismissal is what survives; the next
+  time it means something, the response is already trained.
+
+  The three plan words are now matched with a word boundary, **in the storage check only.** A real
+  leak arrives there as JSON, where a plan value is always delimited — `"504"`, `"plan":"504"`,
+  `has a 504 plan` — so the boundary cannot hide one; a thirteen-digit number has word characters on
+  both sides and no longer matches. The screen checks keep plain substring matching on purpose:
+  `innerText` runs adjacent nodes together, so a real leak can land as `504Smith` with no boundary at
+  all, and tightening there would have been a way to miss one. Substring on screen, boundary in the
+  store, and the difference is written down at the matcher.
+
+  Checked against nine cases rather than a green run — the two collisions that used to fire, and six
+  shapes a real leak takes, all still caught. A passing harness run proves nothing here, since the
+  bug only appears when the clock cooperates.
+
 ### Added
+
+- **WO-2.14 — a work order can now be claimed, and a tick can be refused.** `tools/wo-gate.mjs`
+  grew `--start` and `--release`, and `--tick` grew a conscience.
+
+  **A dispatch claims its work order before the brief is written.** That is what finally arms the
+  "already 🔨 IN PROGRESS" guard the gate report has printed since the beginning and has never once
+  been able to fire — WO-2.4 ran two Codex rounds, a correction and two verifier passes while the
+  tracker said nobody had started it. A claim writes one status line and moves no dashboard, because
+  a claim is not progress; the dashboards count `✅ DONE` and nothing else. `--release` puts it back
+  when a dispatch dies, and `next` names every claimed row it steps over — with the command to
+  release it — so an abandoned claim cannot quietly delete a work order from the running order.
+
+  **`--tick` now reads the work order's own Acceptance list before it writes anything.** One box
+  still open and it writes `🔨 IN PROGRESS` instead of `✅ DONE`, names the lines that held it open
+  by file and line number, and leaves the roadmap boxes and both dashboards alone — an unfinished
+  work order closes nothing. It exits non-zero under a third verb, `HELD`: nothing failed, the tool
+  wrote what was true, but the caller asked to close a work order and it is not closed.
+
+  **Landing at 🔨 with 👤 lines owed is what this project actually does** — WO-2.1, WO-2.11, WO-2.12
+  — and until now that status was hand-edited every time, because the tool could only write done. At
+  WO-2.4 the offered maintenance would have stamped `✅ DONE` on a go-live blocker with two lines
+  still owed to the owner. That was caught by reading the source, which is not a control. The old
+  script was run against the same planted state to confirm it: it stamps done over an open box,
+  closes the roadmap line, moves both dashboards, and exits 0.
 
 - **WO-2.4 — the counts, and a percentage that agrees with the app it replaces.** Under every name
   on the registry, and on a line above the grid: how many meetings the class has actually recorded,

@@ -3881,9 +3881,30 @@ if (!supportSeam) {
   */
   const VALUE_NEEDLES = [CASE_NAME, CASE_EMAIL, REVIEW_DATE, DETAIL_ONE, DETAIL_TWO, MEDICAL,
     BEHAVIOR, MEDICAL_TWO, 'Extended time', 'extended-time', 'Something else'];
-  const NEEDLES = [...VALUE_NEEDLES, 'IEP', '504', 'ELL'];
+  const PLAN_NEEDLES = ['IEP', '504', 'ELL'];
+  const NEEDLES = [...VALUE_NEEDLES, ...PLAN_NEEDLES];
   const foundIn = (text) => NEEDLES.filter(n => text.indexOf(n) >= 0);
   const foundValueIn = (text) => VALUE_NEEDLES.filter(n => text.indexOf(n) >= 0);
+  /*
+    A third matcher, for a JSON dump of localStorage only — where the plan words need a word
+    boundary and everywhere else they must not have one.
+
+    '504' is three digits and every epoch-millisecond stamp we write is thirteen of them.
+    `planbook_lastBackupAt` held {"2026-2027":1786195504308,…} on 2026-08-08 and turned the storage
+    check red about the clock, on the one check whose subject is accommodation data reaching
+    storage. A control that goes red for a reason the reader learns to dismiss is worse than no
+    control, because the dismissal is what survives.
+
+    The boundary cannot hide a real leak here: anything written to localStorage arrives in this
+    string as JSON, where a plan value is delimited — "504", "plan":"504", "has a 504 plan". It is
+    NOT applied to `foundIn`, which reads DOM text: innerText runs adjacent nodes together, so a
+    real leak can land as "504Smith" with no boundary at all, and a boundary there would be a way
+    to miss one. Substring on screen, boundary in the store.
+  */
+  const foundInStore = (text) => [
+    ...foundValueIn(text),
+    ...PLAN_NEEDLES.filter(n => new RegExp(`\\b${n}\\b`).test(text)),
+  ];
 
   const before = await openFullestRoster();
   const ids = await evalJs("(function(){ var doc = window.planbook.store.getDoc();"
@@ -4166,7 +4187,7 @@ if (!supportSeam) {
     check('no support detail, and no memory of the panel being open, reached localStorage, and every key present is ours',
       oursIn(supportLocal).length > 0
         && foreignIn(supportLocal).length === 0
-        && foundIn(supportBlob).length === 0
+        && foundInStore(supportBlob).length === 0
         && !/supports|accommodat|reveal/i.test(supportBlob),
       storeDetail(supportLocal));
 

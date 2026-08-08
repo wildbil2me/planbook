@@ -1007,7 +1007,7 @@ looking at in the first week.
 
 ## WO-2.14 — Close two wo-gate blind spots found at WO-2.4
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-08 · **Size** S · **Depends on** nothing
 
 **Not a go-live blocker.** Added 2026-08-08, out of WO-2.4's close. *(The blank line above is
 deliberate: `parseFile()` ends the header block at the first one, and `depsOf()` regex-scans
@@ -1066,22 +1066,22 @@ never `CHANGELOG.md`. Not a status for *why* a run stopped — `🚧 BLOCKED` al
 by a human.
 
 **Acceptance**
-- [ ] `--start` on a `⬜ NOT STARTED` work order writes `🔨 IN PROGRESS`, and a **second** `--start`
+- [x] `--start` on a `⬜ NOT STARTED` work order writes `🔨 IN PROGRESS`, and a **second** `--start`
       on the same ID exits non-zero. Prove it by running it twice, not by reading the fence.
-- [ ] `--start` refuses `✅ DONE`, `🚧 BLOCKED` and `🔒 GATED` without editing the file.
-- [ ] A claimed work order does **not** move either dashboard. They count finished work, and
+- [x] `--start` refuses `✅ DONE`, `🚧 BLOCKED` and `🔒 GATED` without editing the file.
+- [x] A claimed work order does **not** move either dashboard. They count finished work, and
       `recomputeDashboard()` (`:241`) must keep counting only `✅ DONE`.
-- [ ] The way back returns a claimed work order to `⬜ NOT STARTED`, and says so in one line.
-- [ ] **`--tick` on a work order with one unticked Acceptance line writes `🔨 IN PROGRESS`, not
+- [x] The way back returns a claimed work order to `⬜ NOT STARTED`, and says so in one line.
+- [x] **`--tick` on a work order with one unticked Acceptance line writes `🔨 IN PROGRESS`, not
       `✅ DONE`, and names that line.** Plant the violation: untick one line of a work order that
       would otherwise pass, run it, watch it refuse. This is the WO-2.4 case, reproduced.
-- [ ] That same refusal leaves every roadmap box it *Closes* unticked.
-- [ ] `--tick` on a fully ticked work order still writes `✅ DONE — <date>`, ticks its roadmap boxes
+- [x] That same refusal leaves every roadmap box it *Closes* unticked.
+- [x] `--tick` on a fully ticked work order still writes `✅ DONE — <date>`, ticks its roadmap boxes
       and recomputes the dashboard. No regression on the path that works today.
-- [ ] `--dry-run` on `--start` and on the new `--tick` path prints the exact edit and writes
+- [x] `--dry-run` on `--start` and on the new `--tick` path prints the exact edit and writes
       **nothing** — compare the file before and after, don't trust the banner.
-- [ ] `next` names any `🔨 IN PROGRESS` row it stepped over, and why.
-- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — 400/400/0-skips and exit 0 —
+- [x] `next` names any `🔨 IN PROGRESS` row it stepped over, and why.
+- [x] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — 400/400/0-skips and exit 0 —
       neither of which covers this file, which is the point of the planting above.
 
 **Traps** — **Per `verification-tooling.md`'s precondition rule, a check that could not have caught
@@ -1104,3 +1104,99 @@ interrupted draft; a stale claim should be as loud.
 **Nothing here may make the status line harder to hand-edit.** Every `🔨 IN PROGRESS` in `plans/`
 today was written by hand, including WO-2.4's, and will be again the first time this script is wrong
 about something. The file stays the record; the tool stays a convenience over it.
+
+---
+
+## WO-2.15 — wo-gate tells the truth about its own writes
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.14
+
+**Not a go-live blocker, and deliberately after it.** Added 2026-08-08, out of WO-2.14's close. This
+is the harness, not the app: a bug here makes the tracker lie, which is expensive and slow to
+notice, but it never reaches a classroom. The sprint's governing rule is about code that writes
+student data, and nothing in this work order does. **Do not pull it forward into Ship 1.**
+
+**Why it exists.** WO-2.14 closed two gaps in `tools/wo-gate.mjs` and proved all ten of its
+acceptance lines by planting violations and running them. Every one of those plants was unwound the
+same hour, and the evidence for them now lives in a dispatch transcript. **In November there is
+nothing.** `verify-shell.mjs` drives a browser and `wo-sweep.mjs` greps `src/`; neither can express
+*"the tracker was told the truth"*, so the only script in `tools/` that writes into `plans/` is still
+the only one nothing checks — which is exactly the sentence WO-2.14 was written to stop being true,
+and it closed the gaps without closing that.
+
+**And then a third gap turned up while ticking WO-2.14.** WO-2.5's **Closes roadmap** fragment quotes
+*"Keyboard path on desktop and 44px touch targets. Both, not either."*; the roadmap box at
+`ROADMAP.md:280` actually reads *"Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and
+44px touch targets under…"*. The parenthetical is in the box and not in the quotation, so
+`roadmapEdits()` (`:453-471`) matches zero boxes. That is *reported* — `misses` prints
+`NOTE | roadmap: "…" matched 0 roadmap boxes — not ticking it` at `:548` — and then the run says
+`PASS` and exits 0. **Same family as the two WO-2.14 closed: the tool does something other than what
+it was asked, says so quietly, and nothing stops.** Nobody has ticked WO-2.5 yet, so the roadmap box
+it is supposed to close would simply have stayed open with a green run behind it.
+
+**Deliverables**
+- **A standing check on `wo-gate.mjs`, inside `wo-gate.mjs`.** `--self-check` copies `plans/` to a
+  temp directory, plants the violations WO-2.14 proved by hand — an unticked acceptance line, a
+  double `--start`, a `--start` on `✅ DONE`, a `--release` of nothing, a `--dry-run` that must write
+  nothing — runs the script against the copy, and fails if any of them stops being caught. One flag,
+  one exit code, no new file.
+- **Decide what a zero-match `Closes roadmap` fragment is**, and make the tool act on the decision.
+  The recommendation is that it becomes a `HELD`, not a `NOTE`: a work order that names a roadmap box
+  and closes none of them is either quoting a box that moved or quoting one that never existed, and
+  both want a human before the status line says done. Whatever is chosen, the reasoning goes in a
+  comment at the point of decision.
+- **Fix WO-2.5's fragment** so it matches `ROADMAP.md:280`, and **sweep every other work order's
+  `Closes roadmap` line for the same rot** — a fragment written against a roadmap box that has since
+  been reworded fails silently and only at tick time, which is the worst moment to discover it. The
+  sweep should also find the fields the tool does not know exist: WO-2.13 carries an **Amends
+  roadmap** clause on its `Depends on` line, which `depsOf()` scrapes into the dependency field and
+  reports as prose, and which nothing else in the script has ever heard of. Decide whether that field
+  is real; if it is, it needs handling, and if it is not, it should not be in a header block.
+- Whatever the sweep finds, recorded where the next person will see it rather than fixed and
+  forgotten.
+
+**Out of scope** — no new script and no `tools/lib/`, per
+[`../verification-tooling.md`](../verification-tooling.md); `--self-check` lives in the file it
+checks or it does not exist. **No second harness**: this does not grow into a test framework, and if
+it starts wanting one, stop and say so. No change to what `--tick` writes or to which files it may
+touch. Not a fix for the `'504'` needle in `verify-shell.mjs` — that was repaired on 2026-08-08 and
+is a different file's problem.
+
+**Acceptance**
+- [ ] `--self-check` passes on the current tree, and the run says how many plants it made — "0 plants
+      passed" is what a broken self-check prints, and it must be visible rather than inferred.
+- [ ] **Each plant is proved to be able to fail.** Restore the pre-WO-2.14 script from git into a
+      temp path, run `--self-check` against it, and watch the acceptance-list plant and the
+      double-`--start` plant report failures. A self-check that passes against the code it was
+      written to catch is not evidence.
+- [ ] `--self-check` writes nothing inside the repository. Hash `plans/` before and after; compare
+      the hashes, not the banner.
+- [ ] `--self-check` leaves no temp directory behind on either exit path, including the failing one.
+- [ ] A work order whose `Closes roadmap` fragment matches zero boxes is handled per the decision
+      above, and the behaviour is demonstrated on a planted fragment rather than on WO-2.5 — WO-2.5
+      is being fixed in this same work order and cannot be the fixture that proves it.
+- [ ] WO-2.5's fragment matches exactly one roadmap box. Prove it with `--tick WO-2.5 --dry-run`,
+      which must plan the roadmap edit; do not tick WO-2.5 itself, which is not built.
+- [ ] Every `Closes roadmap` fragment in `plans/work-orders/` is reported as matching exactly one
+      box, or listed as not doing so with the reason. Run it over all of them, not a sample.
+- [ ] `--tick`, `--start` and `--release` behave exactly as they did before on the paths that already
+      work — WO-2.14's acceptance list, re-run.
+- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — 400/400/0-skips and exit 0.
+
+**Traps** — **The precondition rule applies to the self-check itself, one level up.** WO-1.12 and
+WO-2.14 both proved a fix by planting the violation and watching the script fail. A `--self-check`
+is a check on checks, and the same rule bites harder: the way it fails is by planting something the
+current script happens to catch for an unrelated reason, then passing forever. The second acceptance
+line — run it against the old script and watch it go red — is the whole guarantee here, and it is
+the one to do first, not last.
+
+**The temp copy is the only safe fixture, and getting it wrong is the worst bug in this file.** A
+self-check that plants an unticked acceptance line in the real `plans/` and then dies before
+unwinding leaves corrupted tracker state that looks hand-written. Copy first, operate on the copy,
+and never let a plant path take a real repository path — not even under `--dry-run`, because the
+next edit to that code will remove the flag.
+
+**A green self-check is not coverage, and the run should not imply it is.** This checks the handful
+of behaviours WO-2.14 built and nothing else — not the Acceptance parser against all 61 work orders,
+not `recomputeDashboard()`'s arithmetic, not `next`'s ordering. Say what it covers in the output, or
+the next reader will trust it for the parts it never touched.

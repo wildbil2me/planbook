@@ -4,15 +4,21 @@
 //   node tools/wo-gate.mjs WO-1.7          gate report for one work order; non-zero if blocked
 //   node tools/wo-gate.mjs next            first NOT STARTED row in the Ship 1 table
 //   node tools/wo-gate.mjs --list          every work order and its status
+//   node tools/wo-gate.mjs --start WO-1.7 [--dry-run]     claim it: ⬜ NOT STARTED → 🔨 IN PROGRESS
+//   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🔨 IN PROGRESS → ⬜ NOT STARTED
 //   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
 //
 // The orchestrator ran steps 1, 2 and 2b of its own definition as 8-13 Read and Bash calls plus the
 // reasoning to interpret them, every dispatch. All of it is deterministic parsing of a header line
 // that is already machine-readable, so it lives here instead.
 //
-// --tick writes into plans/, which every other agent is forbidden to touch. Its fences are at
-// applyTick(): one named work order, never a 👤 line, never CHANGELOG.md, and --dry-run prints the
-// exact edit first. See plans/work-orders/ROUTING.md for who is allowed to run it and when.
+// --start, --release and --tick write into plans/, which every other agent is forbidden to touch.
+// The fences are at each of them: one named work order, never a 👤 line, never CHANGELOG.md, and
+// --dry-run prints the exact edit first. See plans/work-orders/ROUTING.md for who runs them and when.
+//
+// The status a work order carries is the record; these three are a convenience over it. Every
+// 🔨 IN PROGRESS in plans/ before WO-2.14 was typed by hand and will be again the first time this
+// script is wrong about something, so nothing here may make that line harder to hand-edit.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,6 +64,13 @@ function parseFile(file) {
     const statusRaw = field(/\*\*Status\*\*\s*([^·]*)/);
     const status = STATUSES.find(s => statusRaw.startsWith(s)) || statusRaw || '(none)';
 
+    // The rest of the work order — heading to the next `---` rule or the next `## WO-`, which is
+    // wo-brief.mjs's boundary rule, deliberately. Only the Acceptance list is read out of it.
+    let end = lines.length;
+    for (let k = j; k < lines.length; k++) {
+      if (/^---\s*$/.test(lines[k]) || /^##\s+WO-/.test(lines[k])) { end = k; break; }
+    }
+
     out.push({
       id: m[1],
       title: m[2],
@@ -65,6 +78,7 @@ function parseFile(file) {
       headingLine: i + 1,
       blockStart,                                              // 0-indexed line of the header block
       blockLines: block.length,
+      acceptance: acceptanceOf(lines, j, end),                 // null when there is no list at all
       ship: field(/\*\*Ship\*\*\s*([^·]*)/),
       status,
       statusRaw,
@@ -73,6 +87,38 @@ function parseFile(file) {
       dependsRaw: field(/\*\*Depends on\*\*\s*(.*?)(?=\s*·\s*\*\*|\s*\*\*Closes roadmap\*\*|$)/),
       closesRoadmap: field(/\*\*Closes roadmap\*\*\s*(.*)$/),
     });
+  }
+  return out;
+}
+
+// The Acceptance list is the work order's own account of whether it is finished, and this parser
+// did not read it until WO-2.14 — which is how --tick came to write "done" over a list of open
+// boxes and print PASS. It runs from the **Acceptance** field to the next bold field, usually
+// **Traps**, and each item is a `- [ ]` or `- [x]` that may wrap onto indented continuation lines.
+//
+// Three things it must not get wrong, all of them read off the phase files rather than off one
+// specimen:
+//   - The list does NOT end at the first blank line. WO-2.1's second item carries an indented
+//     blockquote with blank lines around it, and ten more items follow it.
+//   - The heading is not always bare: WO-3.4's reads "**Acceptance** — each verified against a hand
+//     computation, recorded in `docs/grade-math-cases.md`:".
+//   - Leading whitespace on the `-` is allowed. If a future work order indents an item, it still
+//     counts — an item this misses is an item that cannot hold a work order open, and that error
+//     runs in the dangerous direction.
+//
+// The line shapes are wo-brief.mjs's acceptanceLines(), on purpose: two scripts reading one list two
+// different ways is how the brief and the tracker start disagreeing about what was asked for.
+function acceptanceOf(lines, from, to) {
+  let i = -1;
+  for (let k = from; k < to; k++) if (/^\*\*Acceptance\*\*/.test(lines[k])) { i = k; break; }
+  if (i < 0) return null;                                      // no list at all — gates.md is like this
+  const out = [];
+  for (let j = i + 1; j < to; j++) {
+    const l = lines[j];
+    if (/^\*\*[A-Z]/.test(l)) break;                           // the next bold field ends the list
+    const m = /^\s*-\s*\[([ x])\]\s*(.+)$/.exec(l);
+    if (m) out.push({ line: j, ticked: m[1] === 'x', text: m[2].trim() });
+    else if (out.length && /^\s{2,}\S/.test(l)) out[out.length - 1].text += ' ' + l.trim();  // wrapped
   }
   return out;
 }
@@ -166,7 +212,7 @@ function gate(id, wos) {
   // 3. Gated, and 4. already started
   if (wo.status.startsWith('🔒 GATED')) problems.push(`${wo.id} is 🔒 GATED — do not start it`);
   if (wo.status.startsWith('✅ DONE')) notes.push(`${wo.id} is already ✅ DONE — ask before proceeding`);
-  if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is already 🔨 IN PROGRESS — ask before proceeding`);
+  if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is already 🔨 IN PROGRESS — a dispatch has claimed it. Ask before proceeding; if that dispatch is gone, --release ${wo.id} puts it back to ⬜ NOT STARTED`);
   if (wo.status.startsWith('🚧 BLOCKED')) problems.push(`${wo.id} is 🚧 BLOCKED`);
 
   // 5. Interrupted-run evidence
@@ -189,10 +235,29 @@ function gate(id, wos) {
 
 // ---------------------------------------------------------------------------- next
 
+// A claimed row drops out of "next" the moment --start exists, and a running order that steps over
+// a work order in silence is how one gets forgotten. So every skip is named, with the way back
+// attached: a dispatch that died mid-flight leaves the claim behind, and from here that looks
+// exactly like a dispatch still working.
+//
+// In --quiet mode the skips go to stderr, because stdout there is one ID that something else reads.
+function reportSkips(claimed, quiet) {
+  const say = quiet ? console.error : console.log;
+  for (const wo of claimed) {
+    say(`skipped ${wo.id} — ${wo.title}`);
+    say(`  🔨 IN PROGRESS: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`);
+  }
+  if (claimed.length && !quiet) console.log('');
+}
+
 function next(wos, quiet) {
+  const claimed = [];
   for (const id of shipOneOrder()) {
     const wo = wos.get(id);
-    if (wo && wo.status.startsWith('⬜ NOT STARTED')) {
+    if (!wo) continue;
+    if (wo.status.startsWith('🔨 IN PROGRESS')) { claimed.push(wo); continue; }
+    if (wo.status.startsWith('⬜ NOT STARTED')) {
+      reportSkips(claimed, quiet);
       if (quiet) { console.log(wo.id); return 0; }
       console.log(`next: ${wo.id} — ${wo.title}`);
       console.log(`  size ${wo.size || '—'}${wo.flag ? '   🚩 go-live blocker' : ''}`);
@@ -201,6 +266,7 @@ function next(wos, quiet) {
       return gate(wo.id, wos);
     }
   }
+  reportSkips(claimed, quiet);
   console.log('next: nothing ⬜ NOT STARTED left in the Ship 1 table');
   return 0;
 }
@@ -262,6 +328,110 @@ function recomputeDashboard(text) {
   return { text: lines.join('\n'), edits, grandTotal, grandDone };
 }
 
+// ---------------------------------------------------------------------------- claim, and release
+
+// Rewrite the **Status** field of one line and nothing else, leaving every other field and every `·`
+// exactly where the hand that typed them put them. This is the ONLY thing --start, --release and
+// --tick share, and it is deliberately a text edit with no opinion in it: each of the three decides
+// its own status, for its own reason, behind its own fence.
+//
+// That separation is the work order's instruction, not tidiness. --start writes 🔨 IN PROGRESS
+// because a run began; --tick writes the same words because the work is not finished. They arrive at
+// one status for unrelated reasons, and a common path that cannot tell them apart is how a future
+// --start starts ticking checkboxes.
+function statusEdit(phaseLines, wo, statusText) {
+  let line = -1;
+  for (let i = wo.blockStart; i < wo.blockStart + wo.blockLines; i++) {
+    if (phaseLines[i] && phaseLines[i].includes('**Status**')) { line = i; break; }
+  }
+  if (line < 0) return null;
+  const before = phaseLines[line];
+  const after = before.replace(/(\*\*Status\*\*\s*)([^·]*?)(\s*(?:·|$))/, `$1${statusText}$3`);
+  return { line, before, after };
+}
+
+function printEdit(file, e) {
+  console.log(`${path.relative(REPO, file)}:${e.line + 1}`);
+  console.log(`  - ${e.before.trim()}`);
+  console.log(`  + ${e.after.trim()}`);
+}
+
+// --start: claim a work order, so a second dispatch can see one is already in flight.
+//
+// The guard for that collision has been in gate() since the beginning — "already 🔨 IN PROGRESS —
+// ask before proceeding" — and until WO-2.14 nothing could arm it, because the only thing that wrote
+// a status was --tick and --tick is the last step. WO-2.4 sat at ⬜ NOT STARTED through two Codex
+// rounds, a correction brief and two verifier passes.
+function applyStart(id, wos, dryRun) {
+  const wo = wos.get(id);
+  if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
+
+  // Fence: only an unclaimed work order can be claimed. Everything else — already running, done,
+  // blocked, gated — is either a collision or a caller with the wrong ID, and both want a human
+  // before anything is written.
+  if (!wo.status.startsWith('⬜ NOT STARTED')) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED may be claimed`);
+    if (wo.status.startsWith('🔨 IN PROGRESS')) {
+      console.error(`     | a dispatch has already claimed it. If that dispatch is gone: --release ${id}`);
+    }
+    return 1;
+  }
+
+  const phaseText = read(wo.file);
+  const phaseLines = phaseText.split('\n');
+  const e = statusEdit(phaseLines, wo, '🔨 IN PROGRESS');
+  if (!e) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
+
+  console.log(`start ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
+  console.log('');
+  printEdit(wo.file, e);
+
+  if (!dryRun) {
+    phaseLines[e.line] = e.after;
+    fs.writeFileSync(wo.file, phaseLines.join('\n'));
+  }
+
+  console.log('');
+  console.log('NOT touched: the roadmap, the dashboard, and every checkbox. A claim is not progress — the dashboards count ✅ DONE and nothing else.');
+  console.log(dryRun ? 'DRY RUN | re-run without --dry-run to apply.'
+                     : `PASS | ${id} claimed — 🔨 IN PROGRESS. If this dispatch dies, --release ${id} puts it back.`);
+  return 0;
+}
+
+// --release: the way back. A claim outlives the run that made it, and a dispatch that dies mid-flight
+// leaves the work order looking healthy while `next` steps over it forever — the tracker lying in the
+// other direction. This is the one line that undoes it.
+//
+// It is not a status for *why* a run stopped. 🚧 BLOCKED already exists for that and a human sets it.
+function applyRelease(id, wos, dryRun) {
+  const wo = wos.get(id);
+  if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
+
+  if (!wo.status.startsWith('🔨 IN PROGRESS')) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only a claimed (🔨 IN PROGRESS) work order can be released`);
+    return 1;
+  }
+
+  const phaseText = read(wo.file);
+  const phaseLines = phaseText.split('\n');
+  const e = statusEdit(phaseLines, wo, '⬜ NOT STARTED');
+  if (!e) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
+
+  console.log(`release ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
+  console.log('');
+  printEdit(wo.file, e);
+
+  if (!dryRun) {
+    phaseLines[e.line] = e.after;
+    fs.writeFileSync(wo.file, phaseLines.join('\n'));
+  }
+
+  console.log('');
+  console.log(dryRun ? 'DRY RUN | re-run without --dry-run to apply.'
+                     : `PASS | ${id} released — the claim is gone, it is ⬜ NOT STARTED again and back in \`next\`. Nothing else was touched.`);
+  return 0;
+}
+
 // ---------------------------------------------------------------------------- tick
 
 function today() {
@@ -300,6 +470,12 @@ function roadmapEdits(wo, roadmapText) {
   return { edits, misses, fragments };
 }
 
+// One Acceptance line, short enough to read in a list of them. The file:line beside it is how you
+// get to the whole thing, and WO-2.1's second item is 900 characters of blockquote.
+function clip(s, n = 100) {
+  return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+}
+
 function applyTick(id, wos, dryRun) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
@@ -311,26 +487,32 @@ function applyTick(id, wos, dryRun) {
     return 1;
   }
 
+  // The work order's own Acceptance list decides which status this writes. Before WO-2.14 this
+  // hardcoded ✅ DONE and had never read a checkbox, so at WO-2.4 the offered maintenance would have
+  // stamped "done" on a 🚩 go-live blocker with two lines still owed to the owner — caught by reading
+  // the source, not by the tool refusing.
+  //
+  // An open line holds the work order at 🔨 IN PROGRESS, which is the project's own convention
+  // (WO-2.1, WO-2.11 and WO-2.12 all landed there with 👤 lines owed) and was unreachable through
+  // this tool until now. It writes a status because the work is unfinished — nothing to do with
+  // --start, which writes the same words because a run began.
+  const open = wo.acceptance ? wo.acceptance.filter(a => !a.ticked) : [];
+  const held = open.length > 0;
+
   const planned = [];
 
   // 1. The work order's own Status line.
   const phaseText = read(wo.file);
   const phaseLines = phaseText.split('\n');
-  let statusLine = -1;
-  for (let i = wo.blockStart; i < wo.blockStart + wo.blockLines; i++) {
-    if (phaseLines[i] && phaseLines[i].includes('**Status**')) { statusLine = i; break; }
-  }
-  if (statusLine < 0) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
-  const newStatus = phaseLines[statusLine].replace(
-    /(\*\*Status\*\*\s*)([^·]*?)(\s*(?:·|$))/,
-    `$1✅ DONE — ${today()}$3`
-  );
-  planned.push({ file: wo.file, line: statusLine, before: phaseLines[statusLine], after: newStatus });
-  phaseLines[statusLine] = newStatus;
+  const se = statusEdit(phaseLines, wo, held ? '🔨 IN PROGRESS' : `✅ DONE — ${today()}`);
+  if (!se) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
+  const statusUnchanged = se.before === se.after;                // already 🔨 IN PROGRESS, held again
+  if (!statusUnchanged) { planned.push({ file: wo.file, ...se }); phaseLines[se.line] = se.after; }
 
-  // 2. The roadmap boxes this work order closes.
+  // 2. The roadmap boxes this work order closes — and not one of them while a line is open. An
+  //    unfinished work order closes nothing, however much of it is finished.
   const roadmapText = read(ROADMAP);
-  const rm = roadmapEdits(wo, roadmapText);
+  const rm = held ? { edits: [], misses: [], fragments: [] } : roadmapEdits(wo, roadmapText);
   const roadmapLines = roadmapText.split('\n');
   for (const e of rm.edits) { planned.push({ file: ROADMAP, ...e }); roadmapLines[e.line] = e.after; }
 
@@ -340,11 +522,29 @@ function applyTick(id, wos, dryRun) {
   // Report
   console.log(`tick ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
   console.log('');
-  for (const e of planned) {
-    console.log(`${path.relative(REPO, e.file)}:${e.line + 1}`);
-    console.log(`  - ${e.before.trim()}`);
-    console.log(`  + ${e.after.trim()}`);
+  for (const e of planned) printEdit(e.file, e);
+  if (statusUnchanged) console.log(`NOTE | the status line already reads "${wo.status}" — left exactly as it is`);
+  if (wo.acceptance === null) console.log(`NOTE | ${id} has no **Acceptance** list — nothing here could hold it open, so this status is written on the caller's word alone`);
+
+  // The refusal. Everything above has been reported; nothing below this line ticks anything.
+  if (held) {
+    console.log('');
+    console.log(`HELD | ${open.length} of ${wo.acceptance.length} Acceptance lines are still [ ] — ${id} is not done:`);
+    for (const a of open) {
+      console.log(`  ${path.relative(REPO, wo.file)}:${a.line + 1}  ${clip(a.text)}`);
+    }
+    console.log('');
+    console.log('NOTE | roadmap boxes left unticked and the dashboard left alone — an unfinished work order closes nothing.');
+    if (!dryRun) fs.writeFileSync(wo.file, phaseLines.join('\n'));
+    console.log(dryRun
+      ? 'DRY RUN | re-run without --dry-run to write 🔨 IN PROGRESS. It will still refuse to write ✅ DONE.'
+      : `HELD | ${id} left at 🔨 IN PROGRESS. Tick the lines above once they are true, then run this again.`);
+    return 1;
   }
+
+  // Say how many lines were read, not just that none of them was open: "all 0 lines are ticked" is
+  // what a parser that found nothing would print, and it should be visible rather than inferred.
+  if (wo.acceptance) console.log(`NOTE | all ${wo.acceptance.length} Acceptance lines are ticked — nothing holds ${id} open`);
   for (const m of rm.misses) console.log(`NOTE | roadmap: ${m}`);
   if (!rm.fragments.length) console.log('NOTE | this work order has no **Closes roadmap** line — no roadmap box to tick');
 
@@ -407,15 +607,20 @@ const argv = process.argv.slice(2);
 const wos = allWorkOrders();
 
 if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
-  console.log(`wo-gate.mjs — gates, next, and ticks for Planbook work orders
+  console.log(`wo-gate.mjs — gates, next, claims and ticks for Planbook work orders
 
   node tools/wo-gate.mjs WO-1.7               gate report; exits non-zero if blocked
   node tools/wo-gate.mjs next [--quiet]       first NOT STARTED in the Ship 1 table
   node tools/wo-gate.mjs --list               every work order and its status
+  node tools/wo-gate.mjs --start WO-1.7 [--dry-run]     claim it — ⬜ NOT STARTED → 🔨 IN PROGRESS
+  node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back, for a dispatch that died
   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
 
---tick writes into plans/. Run it with --dry-run first and read the diff.
-It never touches a 👤 line in TESTING.md and never touches CHANGELOG.md.`);
+--start, --release and --tick write into plans/. Run each with --dry-run first and read the diff.
+--start claims a work order so a second dispatch can see one is in flight; it moves no dashboard.
+--tick reads the work order's own Acceptance list: any line still [ ] and it writes 🔨 IN PROGRESS
+instead of ✅ DONE, names the lines, and leaves the roadmap alone.
+None of them touches a 👤 line in TESTING.md, and none touches CHANGELOG.md.`);
   process.exit(0);
 }
 
@@ -427,6 +632,20 @@ if (argv[0] === '--list') {
 }
 
 if (argv[0] === 'next') process.exit(next(wos, argv.includes('--quiet')));
+
+// Three separate blocks for three separate writes. Each names its own flag in its own error, so a
+// mistyped ID is reported by the thing the caller actually ran.
+if (argv[0] === '--start') {
+  const id = argv[1];
+  if (!id || !/^WO-/.test(id)) { console.error('FAIL | --start needs an explicit work order ID, e.g. --start WO-1.7'); process.exit(1); }
+  process.exit(applyStart(id, wos, argv.includes('--dry-run')));
+}
+
+if (argv[0] === '--release') {
+  const id = argv[1];
+  if (!id || !/^WO-/.test(id)) { console.error('FAIL | --release needs an explicit work order ID, e.g. --release WO-1.7'); process.exit(1); }
+  process.exit(applyRelease(id, wos, argv.includes('--dry-run')));
+}
 
 if (argv[0] === '--tick') {
   const id = argv[1];
