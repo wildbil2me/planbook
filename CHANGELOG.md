@@ -15,6 +15,51 @@ records what someone remembered.
 
 ### Fixed
 
+- **WO-2.13 — the totals are computed once per render, and a stale row nobody had reported is
+  gone.** The registry recomputed every student's counts inside the per-row loop: `attendanceTotals()`
+  walked the whole `doc.attendance` array once per name, and `meetingDates()` rebuilt the class's
+  meeting list twenty-seven times to answer one question. It now runs as a single shared pass per
+  `renderAttendance()`, folded over the roster, and `meetingDates()` is called **twice** — counted at
+  runtime, not read off the source.
+
+  **Measured on the owner's machine, same harness and same fixture both sides** — 875 records, 175
+  meetings, 27 rows, median of nine consecutive renders. Before **40.10 ms** and **32.80 ms** across
+  two runs; after **9.20 ms** both runs; **3.6–4.4×**. The before column came from a detached `HEAD`
+  worktree with this branch's `verify-shell.mjs` copied into it, so the only thing differing between
+  the two numbers is `src/attendance.js`. Two before-runs are recorded because that column carries
+  real spread and the after column does not. The 76 ms this work order was written against does not
+  reproduce here — a shifted baseline, not a discrepancy, and the pair above replaces it.
+
+  **The speed is not what this work order proved.** Run against the pre-refactor tree the new
+  regression goes red, and what it catches is a filtered-out row reading `Quarter 1 · P 87 · T 1 ·
+  A 2 · E 0 · D 0 · 98%` both before *and after* a mark — stale — while the detail panel beside it
+  repaints correctly. That defect was already shipping. It is invisible at `filterCode === 'all'`,
+  which is the only configuration the first implementation round was ever checked in, and it takes an
+  ordinary teacher action to reach: filter to one mark, open a student's detail, change that
+  student's mark. Acceptance asked the detail panel and the class line to stay byte-identical, and
+  they do; the row was never inside that sentence. **A pure refactor that fixes something was not
+  reviewing itself honestly** — the fix is real and welcome, and it is also evidence that the
+  original code path had no coverage under an active filter.
+
+  **`stateOf()` is still the only meeting predicate and `readingOf()` still the only cell reader.**
+  The fold calls them; it does not reimplement them. A hand-rolled loop testing `record.exception`
+  directly would have been quicker to write and would have put the precedence rule in a second
+  place — which is the arrangement WO-2.4 exists to hold together.
+
+  `tools/verify-shell.mjs` 400 → **405** checks, zero skipped, and the five new ones were proved by
+  running them against the pre-refactor tree rather than by reading them. One soft spot is recorded
+  at the assertion itself: the call-count check is `calls === null || calls === 2`, so it would go
+  quietly green if the counting exports were ever dropped. It measured `2` here, so it is not vacuous
+  today.
+
+  **`sw.js` cache stayed at `v30`, and that is a defect this entry records rather than hides.**
+  `src/attendance.js` is in `SHELL`, and the rule written at the top of `sw.js` is to bump `CACHE` in
+  the same commit that changes any file in it — `activate` deletes every cache that is not the
+  current one, which is the whole mechanism by which a deploy replaces the shell instead of layering
+  on top of it. WO-2.4 broke the same rule first and nothing caught either. An installed iPad holding
+  `planbook-shell-v30` keeps serving the pre-WO-2.4 module, so neither the counts, the percentage,
+  nor this fix reaches the only device that matters until the string moves.
+
 - **The accommodations-in-storage check went red about the clock, roughly one run in ten.**
   `tools/verify-shell.mjs` asserts that nothing sensitive reaches `localStorage`, and part of that is
   searching a JSON dump of every stored value for the three plan words — `IEP`, `504`, `ELL`. `504`
@@ -370,6 +415,49 @@ records what someone remembered.
   today, landscape shows the week.
 
   `tools/verify-shell.mjs` 314 → 330 checks, zero skipped; `sw.js` cache v21 → v22.
+
+### Added
+
+- **WO-1.13 — `<main>` holds views now, and the header row that always looked like navigation
+  finally is.** `selectClass()` wrote the `openClassId` preference and repainted the tab strip, and
+  that was all it did, because there was nowhere in `<main>` to go: one panel, "Your classes", that
+  nothing ever swapped. WO-1.6's own note in `index.html` had called the header class row "the app's
+  navigation rather than a styled strip" — it was never navigation, and no work order between them
+  noticed.
+
+  `<main>` now holds sibling views toggled by `.hidden` (`src/views.js`, 88 lines — not a router and
+  not a framework), which is the shape Roll Call! has used all along. The home grid became
+  `#homeView`, one view among several rather than the only thing there is, and **WO-2.1's attendance
+  grid moved out of `attendanceModal` into a main-area view, rendering unchanged** — a re-parenting,
+  not a redesign.
+
+  **The cost landed a phase later, which is what makes this a defect and not a taste.** Attendance
+  needed somewhere to live, the only established pattern was `openModal()`, so the marking screen
+  opened as a dialog *on top of* the class cards it had just made irrelevant — and the app carried
+  **two** class selectors, the header tabs and the home cards, both feeding one invisible variable
+  and neither one going anywhere. The owner found it immediately and asked why the panel was not the
+  screen. We had lifted Roll Call!'s modal components and its visual language and left its view
+  architecture behind; `CLAUDE.md` says to lift from Roll Call! rather than hand-design, and this was
+  the second defect in a single day traceable to not having done that.
+
+  **The owner's call, recorded because it is a product decision and not a build one: cards enter,
+  tabs switch.** The class tab strip is not drawn on the home view at all — there, the cards are how
+  you enter a class and a tab row duplicating them *is* the defect. On the class view the strip is
+  the fast switcher between classes, the job it can do that the cards cannot, because the cards are
+  not on screen then. The two are never visible at once meaning the same thing.
+
+  *The first pass answered a third way*, recasting cards-and-tabs as "two renderings of one control"
+  by analogy with `data-class-manage`'s three doors, and then ticked its own box on it. The analogy
+  is where it went wrong: three doors onto a modal are three ways to reach one **task**, while cards
+  and tabs were two ways to reach one **place**, both on screen simultaneously. The verifier failed
+  the line and referred it up rather than accepting it, which is the behaviour that was supposed to
+  happen and did.
+
+  `sw.js` cache v15 → v16, with `src/views.js` added to `SHELL` in the same commit that created it.
+
+  *Entered 2026-08-08, two days after the work landed.* The standing obligation is that a changelog
+  entry goes in as the work lands; this one did not, and the omission was invisible until WO-G1's
+  "`CHANGELOG.md` current" gate was actually checked against the file rather than assumed.
 
 ### Changed
 
