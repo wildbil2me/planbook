@@ -347,6 +347,90 @@ function report(hits) {
     hits.length ? report(hits) : 'no `outline: none` / `outline: 0` in any stylesheet or markup file');
 }
 
+/* ══════════════════════════ 9. a SHELL file changed without a CACHE bump ══════════════════════
+   sw.js states the rule in its own header: "Add the file to SHELL and bump CACHE in the same commit
+   that creates it," because `activate` deletes every cache that is not the current one — the name IS
+   the version, and an unchanged name means the installed app keeps the shell it already has.
+
+   Nothing enforced it, and it had already been broken twice when this check was written. WO-2.4 and
+   WO-2.13 both changed src/attendance.js and left CACHE at v30, which was set at WO-2.3. Every other
+   attendance commit had bumped it, so the habit was real and the two misses were invisible: an
+   installed iPad on v30 keeps serving the pre-WO-2.4 module, and what the teacher does not get is
+   the counts, the percentage, and the fix — on the one device that matters. Neither run of
+   verify-shell.mjs could see it, because the harness fetches over a live network where the newest
+   file is always served.
+
+   "Changed" is a diff concept, so this asks git — and it asks it across COMMITS, not just the
+   working tree. A working-tree-only check would have gone green on the exact defect that produced
+   it, both offences having already been committed. The question is therefore: since the commit that
+   introduced the CACHE string now in sw.js, has any file in SHELL changed?
+
+   A CACHE value that appears in no commit at all is a bump sitting uncommitted in the working tree.
+   That is the rule being followed, not broken, so it passes — the whole point is to bump before you
+   deploy, and the deploy is the commit. */
+
+{
+  const swPath = path.join(REPO, 'sw.js');
+  if (!fs.existsSync(swPath)) {
+    check('every SHELL file change is paired with a CACHE bump', true, 'sw.js does not exist yet');
+  } else {
+    const swText = fs.readFileSync(swPath, 'utf8');
+    const cacheM = /const CACHE\s*=\s*'([^']+)'/.exec(swText);
+    // SHELL is read the same way sw.js documents: single-quoted strings out of the array text. The
+    // apostrophe warning in sw.js's header is about exactly this parse, so it is honoured, not
+    // re-derived — one apostrophe in a comment inside the array pairs with the next and swallows
+    // every real entry between them.
+    const shellM = /const SHELL\s*=\s*\[([\s\S]*?)\n\];/.exec(swText);
+    const shellFiles = new Set();
+    if (shellM) {
+      for (const m of shellM[1].matchAll(/'([^']+)'/g)) {
+        const p = m[1].replace(/^\.\//, '');
+        if (p && !p.endsWith('/')) shellFiles.add(p);   // './' is the index, not a file on disk
+      }
+    }
+
+    if (!cacheM || !shellM || !shellFiles.size) {
+      review('every SHELL file change is paired with a CACHE bump',
+        `sw.js parsed to ${shellFiles.size} SHELL entr(ies) and ${cacheM ? 'a' : 'no'} CACHE string — read it by hand rather than trusting this check`);
+    } else {
+      const cache = cacheM[1];
+      let gitAnswered = true;
+      let introducedAt = '';
+      let changed = new Set();
+      try {
+        const git = (args) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8' });
+        // The commit that introduced the CACHE string sw.js carries right now. -S counts
+        // occurrences, so this is the commit where this exact version string appeared.
+        introducedAt = git(['log', '-1', '--format=%H', '-S', cache, '--', 'sw.js']).trim();
+        if (introducedAt) {
+          for (const f of git(['diff', '--name-only', `${introducedAt}..HEAD`]).split('\n')) {
+            if (f.trim()) changed.add(f.trim());
+          }
+        }
+        // Uncommitted work counts too: a SHELL file edited but not yet committed is still a
+        // shell change that owes a bump, and catching it before the commit is the point.
+        for (const f of git(['diff', '--name-only', 'HEAD']).split('\n')) if (f.trim()) changed.add(f.trim());
+      } catch { gitAnswered = false; }
+
+      const offenders = [...changed].filter(f => shellFiles.has(f)).sort();
+      if (!gitAnswered) {
+        review('every SHELL file change is paired with a CACHE bump',
+          'git could not be asked what has changed, so this check saw nothing — which is not the same as nothing having changed. Confirm the CACHE bump by hand before deploying.');
+      } else if (!introducedAt) {
+        // Not in history: the bump is in the working tree, ahead of the commit that will carry it.
+        check('every SHELL file change is paired with a CACHE bump', true,
+          `${cache} is not in any commit yet — the bump is uncommitted, which is the rule being followed`);
+      } else if (!offenders.length) {
+        check('every SHELL file change is paired with a CACHE bump', true,
+          `${cache} was set at ${introducedAt.slice(0, 7)}; no SHELL file has changed since`);
+      } else {
+        check('every SHELL file change is paired with a CACHE bump', false,
+          `${offenders.join(', ')} changed since ${cache} was set at ${introducedAt.slice(0, 7)} — bump CACHE in sw.js, or an installed app keeps the shell it already has`);
+      }
+    }
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

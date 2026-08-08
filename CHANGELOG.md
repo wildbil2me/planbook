@@ -52,13 +52,40 @@ records what someone remembered.
   quietly green if the counting exports were ever dropped. It measured `2` here, so it is not vacuous
   today.
 
-  **`sw.js` cache stayed at `v30`, and that is a defect this entry records rather than hides.**
+  **`sw.js` cache stayed at `v30`, which this work order did not notice and the next entry fixes.**
   `src/attendance.js` is in `SHELL`, and the rule written at the top of `sw.js` is to bump `CACHE` in
-  the same commit that changes any file in it — `activate` deletes every cache that is not the
-  current one, which is the whole mechanism by which a deploy replaces the shell instead of layering
-  on top of it. WO-2.4 broke the same rule first and nothing caught either. An installed iPad holding
-  `planbook-shell-v30` keeps serving the pre-WO-2.4 module, so neither the counts, the percentage,
-  nor this fix reaches the only device that matters until the string moves.
+  the same commit that changes any file in it. WO-2.4 broke it first; this work order broke it again.
+
+- **Three shell files had drifted past the service worker's cache name, and the installed app would
+  have kept the old ones.** `sw.js` says it in its own header — *"bump `CACHE` in the same commit"* —
+  because `activate` deletes every cache that is **not** the current one. The name is the version, so
+  an unchanged name is not a stale deploy that eventually catches up; it is a deploy that never
+  happens. `CACHE` had sat at `planbook-shell-v30` since WO-2.3 while `index.html`,
+  `src/attendance.css` and `src/attendance.js` all changed underneath it, across WO-2.4 and WO-2.13.
+  Now `v31`.
+
+  **What an installed iPad on `v30` was actually holding was the pre-WO-2.4 app** — no counts, no
+  attendance percentage, and none of WO-2.13's fix. That is the device Ship 1 goes live on, and it
+  would have gone into WO-G1's rehearsal serving code from two work orders ago. A rehearsal against
+  the wrong build passes or fails for reasons that have nothing to do with the app.
+
+  **Neither existing tool could see it, for the same reason.** `verify-shell.mjs` drives a real
+  browser over a live local server, where the newest file on disk is always the file served — the
+  service worker's cache is the one layer a live-network harness is structurally unable to observe.
+  `wo-sweep.mjs` never asked. So the miss survived two work orders, two verifier passes and a green
+  405-check run, and was found by writing a changelog entry and going to look up the version number.
+
+  `tools/wo-sweep.mjs` gains the check: **since the commit that introduced the `CACHE` string sw.js
+  carries right now, has any file in `SHELL` changed?** It asks git across commits rather than only
+  the working tree — a working-tree check would have gone green on the very defect that prompted it,
+  both offences having already been committed, which is the failure this repo keeps re-learning. It
+  reads `SHELL` by the single-quoted-string parse `sw.js` documents, honouring the apostrophe warning
+  in that header rather than re-deriving it. A `CACHE` value in no commit at all is a bump sitting
+  uncommitted ahead of the commit that will carry it, and passes. Proved by running it against the
+  committed `v30` tree, where it names all three files and exits non-zero, rather than by reading it.
+
+  `tools/wo-sweep.mjs` 11 → **12 checks**. It stays a grep-shaped check in the grep-shaped tool, per
+  `plans/verification-tooling.md`: the browser cannot answer this one, and git can.
 
 - **The accommodations-in-storage check went red about the clock, roughly one run in ten.**
   `tools/verify-shell.mjs` asserts that nothing sensitive reaches `localStorage`, and part of that is
