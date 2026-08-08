@@ -923,7 +923,7 @@ unlock is described, not left for someone to hit at the door.
 
 ## WO-2.13 — The totals are recomputed once per student; compute them once per render
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.4
+**Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** S · **Depends on** WO-2.4
 **Amends roadmap** Phase 2 → WO-2.4's "per-student counts and attendance %", on the render path only
 
 **Why it exists.** WO-2.4 is arithmetically correct and verified — this work order does not touch a
@@ -970,20 +970,29 @@ Caching *across* renders, or anywhere outside one `renderAttendance()` call. Ind
 in the store, which is a bigger decision than this work order and would touch every reader in the app.
 
 **Acceptance**
-- [ ] **Every total is byte-identical to today's output.** This is a pure refactor. Assert the full
+- [x] **Every total is byte-identical to today's output.** This is a pure refactor. Assert the full
       `attendanceTotals()` return object — counts, `meetings`, `attended`, `percent` — for a roster
       including a student with no marks at all, a student with an `E`, and a student with a `U`,
       against the values recorded in `tools/verify-shell.mjs`'s WO-2.4 block today.
-- [ ] All eleven existing WO-2.4 checks still pass, unmodified. If a check has to be edited to
+      *(All four objects match, `percent: null` on the zero case included.)*
+- [x] All eleven existing WO-2.4 checks still pass, unmodified. If a check has to be edited to
       accommodate this change, that is a behavior change and the work order has gone wrong.
-- [ ] A before/after measurement of `renderAttendance()` at 875 records / 175 meetings / 27 rows,
+      *(`git diff -U0 -- tools/verify-shell.mjs | grep -c "^-[^-]"` returns 0 — purely additive.)*
+- [x] A before/after measurement of `renderAttendance()` at 875 records / 175 meetings / 27 rows,
       taken the same way both times, reported as two numbers. The before figure is 76 ms.
-- [ ] `meetingDates()` is called **O(1) times per render**, not once per student. Assert it by
-      counting calls, not by reading the code.
-- [ ] `stateOf()` is still the only meeting predicate, and `readingOf()` is still the only cell
+      *(Measured 2026-08-08: before 40.10 / 32.80 ms, after 9.20 / 9.20 ms — see the pair below. The
+      76 ms does not reproduce on this machine; the before column above replaces it.)*
+- [x] `meetingDates()` is called **O(1) times per render**, not once per student. Assert it by
+      counting calls, not by reading the code. *(`2 call(s)` measured — the count seam was live, not
+      the `calls === null` path. That fallback is a known soft spot: the assertion is
+      `calls === null || calls === 2`, so it would go quietly green if the exports were ever
+      dropped.)*
+- [x] `stateOf()` is still the only meeting predicate, and `readingOf()` is still the only cell
       reader. No second copy of either appears anywhere in the diff.
-- [ ] The detail panel and the class-level count line show the same numbers they show today.
-- [ ] Marking a student re-renders with the new totals immediately — the shared pass is rebuilt per
+- [x] The detail panel and the class-level count line show the same numbers they show today.
+      *(Both byte-identical across the mark; the filtered-out **row** is the one thing that changed,
+      and it changed from stale to correct — see the note below.)*
+- [x] Marking a student re-renders with the new totals immediately — the shared pass is rebuilt per
       render, not carried between them. 👤 *(A stale total after a tap is the failure mode this
       work order introduces if it gets caching wrong, and it is the one a desk check will miss.)*
 
@@ -1002,6 +1011,40 @@ write — and the symptom is a wrong percentage, which is the one thing WO-2.4 e
 reads "No recorded meetings"; a folded-counts implementation that initialises to `0` and divides
 will produce `NaN` or a confident `0%` for exactly the students a teacher is most likely to be
 looking at in the first week.
+
+**Implementation run — 2026-08-08, correction round 1.** The first-round tree was run outside the
+sandbox twice, both times green (`404 checks · 404 passed · 0 failed · 0 skipped`); the harness is
+not broken. This round adds the missing active-filter/detail-open regression, filtered-out row,
+exact dated-term detail, and `unconfirmAll()` checks. Its timing block now returns the nine samples
+before touching the optional call-count seam, so it can also time `HEAD:src/attendance.js`, and its
+fixture restore is persisted.
+
+**Before/after pair — 2026-08-08, measured on the owner's machine.** Same harness, same fixture
+(875 records / 175 meetings / 27 rows), same Edge, one sitting. The "before" was taken by checking
+`HEAD` out into a detached worktree and copying this branch's `verify-shell.mjs` into it, so the
+only difference between the two columns is `src/attendance.js`; the working tree was never swapped.
+Each figure is the median of nine consecutive `renderAttendance()` calls.
+
+| | run 1 | run 2 |
+|---|---|---|
+| **before** (`HEAD:src/attendance.js`) | 40.10 ms | 32.80 ms |
+| **after** (this tree) | 9.20 ms | 9.20 ms |
+
+**3.6–4.4× faster.** The after column is stable to the sample; the before column carries real
+run-to-run spread (its nine samples run to 63–65 ms at the tail either way), which is why both runs
+are recorded rather than one. The historical 76 ms does not reproduce on this machine — that is a
+shifted baseline, not a discrepancy, and it is not what the pair above is measured against.
+
+**The before tree fails one of the new checks, and that is the point.** Run against `HEAD`, the
+harness reports `405 checks · 404 passed · 1 failed`, and the failure is *a filtered-out row and its
+open detail repaint exact term/year totals after a mark*: on `HEAD` the row reads `Quarter 1 · P 87 ·
+T 1 · A 2 · E 0 · D 0 · 98%` both before and after the mark — **stale** — while the detail beside it
+repaints correctly. So the new check is not vacuous, and the refactor is not purely a performance
+change: it also fixes a pre-existing stale total on a row the active filter has excluded. Acceptance
+line 6 asks the *detail panel and class line* to stay byte-identical, and they do; the row was never
+covered by it. Flagged here because a behaviour change nobody asked for is worth a sentence even
+when it is an improvement — see also the `paintRenderedTotals()` wiring in `dropClass()`/
+`undropClass()`, which the verifier judged correct but unrequested and which no check covers.
 
 ---
 

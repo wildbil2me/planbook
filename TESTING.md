@@ -1673,6 +1673,28 @@ about Roll Call!, not a one-time setup step:
 - [x] **Mark a class and watch the rate while you do it.** Confirm the mid-marking dip described
       above reads as "not finished yet" rather than as a wrong number, on the iPad, at speed. 👤
 
+### WO-2.13 — Totals computed once per render
+
+- [x] `node --check src/attendance.js`, `node --check tools/verify-shell.mjs`,
+      `node tools/wo-sweep.mjs`, and `git diff --check` pass.
+- [x] The source diff adds no second `stateOf()` predicate or `readingOf()` cell reader. The one
+      `readingOf()` call moved unchanged from `attendanceTotals()` into the shared-record fold.
+- [x] `node tools/verify-shell.mjs` passes the additive WO-2.13 checks and all eleven unmodified
+      WO-2.4 checks. Run on the owner's machine 2026-08-08 against this correction-round tree:
+      `405 checks · 405 passed · 0 failed · 0 skipped`, twice. The same harness run against `HEAD`
+      reports `404 passed · 1 failed`, so the new checks discriminate rather than passing vacuously.
+- [x] Record the before/after medians for 875 records / 175 meetings / 27 rows. Measured 2026-08-08,
+      same harness and same fixture both sides; the "before" came from a detached `HEAD` worktree
+      with this branch's `verify-shell.mjs` copied in, so only `src/attendance.js` differs. Median of
+      nine renders: **before 40.10 ms and 32.80 ms** across two runs, **after 9.20 ms** both runs —
+      **3.6–4.4×**. Two before-runs are recorded because that column has real spread; the after
+      column does not. The historical 76 ms does not reproduce on this machine and is not the
+      baseline here.
+- [x] Confirm the immediate post-mark totals on a real iPad. 👤 Confirmed by the owner 2026-08-08.
+      The desk half is automated and passes here too: the harness drives an active filter with
+      detail open, asserts exact term/year values, checks the filtered-out row, and covers
+      `unconfirmAll()`.
+
 ---
 
 ## Phase 3 — Gradebook

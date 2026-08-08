@@ -1126,7 +1126,9 @@ function readingOf(record, studentId) {
 /* The ledger supplies candidate dates; stateOf() remains the one meeting predicate. Kept here so
    window totals, signal windows and the rendered class count cannot grow three subtly different
    copies of the same filter chain. */
+let meetingDatesCalls = 0;
 function meetingDates(classId, from = '', to = '') {
+  meetingDatesCalls += 1;
   return attendanceIn(getDoc())
     .filter((r) => r && r.classId === classId && typeof r.date === 'string'
       && (!from || r.date >= from) && (!to || r.date <= to))
@@ -1134,6 +1136,11 @@ function meetingDates(classId, from = '', to = '') {
     .filter((date, index, all) => all.indexOf(date) === index)
     .filter((date) => stateOf(classId, date) === TAKEN);
 }
+
+/* Read-only verification seam for WO-2.13: the browser harness resets this immediately before a
+   render and reads it immediately after. It counts calls; it never holds attendance data. */
+export function resetMeetingDatesCallCount() { meetingDatesCalls = 0; }
+export function meetingDatesCallCount() { return meetingDatesCalls; }
 
 /* Last N recorded meetings of one class, newest first. Candidate dates come from the ledger, but
    stateOf() remains the predicate; callers never grow a second exception or calendar test. */
@@ -1147,22 +1154,28 @@ export function lastMeetings(classId, count, through = todayISO()) {
 
 function emptyAttendanceCounts() { return { P: 0, T: 0, A: 0, E: 0, D: 0 }; }
 
-/* One student's Roll Call!-compatible totals over an inclusive range. stateOf() decides meetings;
-   readingOf() includes roster members with no stored mark. U folds into A here and nowhere else.
-   `percent: null` is the honest zero-meeting state. */
-export function attendanceTotals(classId, studentId, from = '', to = '') {
+function meetingRecords(classId, from = '', to = '') {
+  return meetingDates(classId, from, to).map((date) => recordFor(classId, date));
+}
+
+function totalsFrom(records, studentId) {
   const counts = emptyAttendanceCounts();
-  meetingDates(classId, from, to)
-    .map((date) => recordFor(classId, date))
-    .forEach((record) => {
-      const reading = readingOf(record, studentId);
-      const code = reading === UNCONFIRMED ? 'A' : reading;
-      if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
-    });
+  records.forEach((record) => {
+    const reading = readingOf(record, studentId);
+    const code = reading === UNCONFIRMED ? 'A' : reading;
+    if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
+  });
   const meetings = MARKS.reduce((sum, mark) => sum + counts[mark.code], 0);
   const attended = counts.P + counts.T + counts.E + counts.D;
   return Object.assign(counts, { meetings: meetings, attended: attended,
     percent: meetings ? (attended / meetings) * 100 : null });
+}
+
+/* One student's Roll Call!-compatible totals over an inclusive range. stateOf() decides meetings;
+   readingOf() includes roster members with no stored mark. U folds into A here and nowhere else.
+   `percent: null` is the honest zero-meeting state. */
+export function attendanceTotals(classId, studentId, from = '', to = '') {
+  return totalsFrom(meetingRecords(classId, from, to), studentId);
 }
 
 export function termTotals(classId, studentId, term) {
@@ -1523,7 +1536,7 @@ export function setMark(studentId, code, date) {
      down it. */
   paintColumn(on);
   paintActions();
-  paintDetail();
+  paintRenderedTotals();
   /* The Passes column is repainted from here because a `D` can have closed or reopened a pass, and
      because the cap it is drawn against has moved with it. It costs one pass over the rows on a tap
      that usually changed nothing there; the alternative is a Return button still sitting beside a
@@ -1581,7 +1594,7 @@ export function takeClass(date) {
 
   paintColumn(on);
   paintActions();
-  paintDetail();
+  paintRenderedTotals();
   announce(cls.name + ' is taken for ' + spokenDate(on)
     + (waiting ? ', with the ' + waiting + ' still unconfirmed marked present.' : ', with everyone present.'));
 }
@@ -1618,7 +1631,7 @@ export function unconfirmAll(date) {
 
   paintColumn(on);
   paintActions();
-  paintDetail();
+  paintRenderedTotals();
   announce('Every student in ' + cls.name + ' is unconfirmed again for ' + spokenDate(on) + '.'
     + (summary.marked ? ' The ' + summary.marked + (summary.marked === 1 ? ' mark' : ' marks')
       + ' already on it were cleared.' : ''));
@@ -1688,7 +1701,7 @@ export function untakeClass(date) {
   update((d) => removeRecord(d, cls.id, on));
   paintColumn(on);
   paintActions();
-  paintDetail();
+  paintRenderedTotals();
   announce(cls.name + ' is not taken for ' + spokenDate(on) + '.');
 }
 
@@ -1726,6 +1739,7 @@ export function dropClass(date) {
 
   paintColumn(on);
   paintActions();
+  paintRenderedTotals();
   announce(cls.name + ' did not meet on ' + spokenDate(on) + '.'
     + (cleared ? ' The ' + cleared + (cleared === 1 ? ' mark' : ' marks')
       + ' already on it were cleared.' : ''));
@@ -1743,6 +1757,7 @@ export function undropClass(date) {
   update((d) => removeRecord(d, cls.id, on));
   paintColumn(on);
   paintActions();
+  paintRenderedTotals();
   announce(cls.name + ' met after all on ' + spokenDate(on)
     + '. Its attendance is not taken yet.');
 }
@@ -2858,8 +2873,39 @@ function paintPager(columns) {
   pager.append(later);
 }
 
+function totalsForRender(cls, term, students) {
+  const yearRecords = meetingRecords(cls.id);
+  const dated = termHasDates(term);
+  const selectedRecords = dated ? meetingRecords(cls.id, term.start, term.end) : yearRecords;
+  const year = new Map();
+  const selected = dated ? new Map() : year;
+  students.forEach((student) => {
+    year.set(student.id, totalsFrom(yearRecords, student.id));
+    if (dated) selected.set(student.id, totalsFrom(selectedRecords, student.id));
+  });
+  return { term: term, dated: dated, yearRecords: yearRecords, selectedRecords: selectedRecords,
+    year: year, selected: selected };
+}
+
+function paintClassTotals(totals) {
+  const totalsEl = document.getElementById(TOTALS_ID);
+  if (!totalsEl) return;
+  if (!totals) { totalsEl.textContent = ''; return; }
+  const inYear = totals.yearRecords.length;
+  const inTerm = totals.dated ? totals.selectedRecords.length : 0;
+  totalsEl.textContent = (totals.dated ? totals.term.label + ': ' + inTerm
+    + ' recorded meeting' + (inTerm === 1 ? '' : 's') + ' · ' : 'Term dates not set · ')
+    + 'Year: ' + inYear + ' recorded meeting' + (inYear === 1 ? '' : 's');
+}
+
+function studentTotalsText(totals, studentId) {
+  const value = totals.selected.get(studentId);
+  return (totals.dated ? totals.term.label + ' · ' : 'Term dates not set · Year · ')
+    + countText(value) + ' · ' + percentText(value);
+}
+
 /* The rows, and only the rows. Search, filter and sort come through here; a write does not. */
-function renderRows() {
+function renderRows(sharedTotals) {
   const cls = openClass();
   const body = document.getElementById(BODY_ID);
   const empty = document.getElementById(EMPTY_ID);
@@ -2898,6 +2944,10 @@ function renderRows() {
   empty.classList.add('hidden');
   wrap.classList.remove('hidden');
 
+  /* The year and selected-term meeting records are facts about this render, not about one row.
+     Read each window once, then fold every student's reading out of those shared records. */
+  const totals = sharedTotals || totalsForRender(cls, getSelectedTerm(), students);
+
   const today = todayISO();
   const on = editDate();
   const columns = visibleColumns();
@@ -2923,7 +2973,6 @@ function renderRows() {
   /* Read once for the whole table rather than once per row: the cap is a fact about the class, and
      asking it twenty-six times would walk `openPasses` twenty-six times. */
   const passesFull = passes.atCap(doc, cls.id);
-  const term = getSelectedTerm();
 
   students.forEach((student) => {
     const row = el('tr');
@@ -2940,11 +2989,8 @@ function renderRows() {
     avatar.setAttribute('aria-hidden', 'true');
     const identity = el('span', 'attendance-student-identity');
     identity.append(el('span', 'attendance-student-name', rosterName(student)));
-    const totals = termHasDates(term) ? termTotals(cls.id, student.id, term)
-      : attendanceTotals(cls.id, student.id);
     identity.append(el('span', 'attendance-student-totals',
-      (termHasDates(term) ? term.label + ' · ' : 'Term dates not set · Year · ')
-        + countText(totals) + ' · ' + percentText(totals)));
+      studentTotalsText(totals, student.id)));
     cell.append(avatar, identity);
     /* The way into the row's own detail — the time, the note and the un-confirm. Drawn on every row
        whenever the edit column accepts edits, rather than only on rows that have something in it:
@@ -2982,7 +3028,7 @@ function renderRows() {
      detail that survived only in a variable would be a panel the teacher watched vanish. If the
      student it belongs to has been filtered off the screen it closes, because a panel with no row
      above it belongs to nobody. */
-  paintDetail();
+  paintDetail(totals);
 }
 
 /* The ⋯ at the end of a name. Its pressed state is the panel below it, which is why it is a toggle
@@ -3000,6 +3046,25 @@ function detailButton(student) {
   return btn;
 }
 
+/* Attendance writes repaint a column in place so the teacher keeps her scroll position. Totals
+   follow the same rule: rebuild the shared per-render pass, then replace only the text it feeds. */
+function paintRenderedTotals() {
+  const cls = openClass();
+  if (!cls) { paintClassTotals(null); return; }
+  /* A write can change active-filter membership without rebuilding tbody. Fold the whole roster so
+     every row that was present before the write, and its still-open detail panel, has a value in
+     this render's maps even when that student is no longer visibleStudents(). */
+  const students = rosterOf(cls);
+  const totals = totalsForRender(cls, getSelectedTerm(), students);
+  paintClassTotals(totals);
+  students.forEach((student) => {
+    const row = document.querySelector('[data-attendance-row="' + student.id + '"]');
+    const line = row && row.querySelector('.attendance-student-totals');
+    if (line) line.textContent = studentTotalsText(totals, student.id);
+  });
+  paintDetail(totals);
+}
+
 /*
   THE ROW'S DETAIL PANEL, as a <tr> under the row it belongs to. One at a time.
 
@@ -3014,7 +3079,7 @@ function detailButton(student) {
   else, and the panel says why rather than showing a field that would silently discard what was
   typed into it.
 */
-function paintDetail() {
+function paintDetail(sharedTotals) {
   const body = document.getElementById(BODY_ID);
   if (!body) return;
   const existing = body.querySelector('tr[data-attendance-detail-row]');
@@ -3049,8 +3114,9 @@ function paintDetail() {
   box.append(el('span', 'attendance-detail-who',
     fullName(student) + ' — ' + spokenDate(on)));
   const term = getSelectedTerm();
-  const year = attendanceTotals(cls.id, student.id);
-  const selected = termHasDates(term) ? termTotals(cls.id, student.id, term) : null;
+  const totals = sharedTotals || totalsForRender(cls, term, [student]);
+  const year = totals.year.get(student.id);
+  const selected = totals.dated ? totals.selected.get(student.id) : null;
   box.append(el('span', 'attendance-detail-totals',
     (selected
       ? term.label + ': ' + countText(selected) + ' · ' + percentText(selected) + ' | '
@@ -3105,21 +3171,9 @@ export function renderAttendance() {
   const nameEl = document.getElementById(CLASS_NAME_ID);
   const head = document.getElementById(HEAD_ID);
   const caption = document.getElementById(CAPTION_ID);
-  const totalsEl = document.getElementById(TOTALS_ID);
+  const totals = cls ? totalsForRender(cls, getSelectedTerm(), visibleStudents(cls)) : null;
   if (nameEl) nameEl.textContent = cls ? cls.name : 'no class';
-  if (totalsEl) {
-    if (!cls) totalsEl.textContent = '';
-    else {
-      const term = getSelectedTerm();
-      const inYear = meetingDates(cls.id).length;
-      const dated = termHasDates(term);
-      const inTerm = dated ? meetingDates(cls.id, term.start, term.end).length : 0;
-      totalsEl.textContent = (dated ? term.label + ': ' + inTerm
-        + ' recorded meeting' + (inTerm === 1 ? '' : 's') + ' · ' : 'Term dates not set · ')
-        + 'Year: ' + inYear
-        + ' recorded meeting' + (inYear === 1 ? '' : 's');
-    }
-  }
+  paintClassTotals(totals);
 
   paintBanner(columns);
   paintActions();
@@ -3159,7 +3213,7 @@ export function renderAttendance() {
       head.append(row);
     }
   }
-  renderRows();
+  renderRows(totals);
 }
 
 /*

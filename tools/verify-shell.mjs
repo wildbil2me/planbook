@@ -9118,6 +9118,73 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
   }
 }
 
+/* ───────── attendance totals render cost (WO-2.13) ───────── */
+console.log('\n--- attendance totals render cost (WO-2.13) ---');
+{
+  const timing = await evalJs(`(function(){
+    var s=window.planbook.store, a=window.planbook.attendance, c=window.planbook.classes;
+    var d=s.getDoc(), old=JSON.stringify(d), oldClass=c.getSelectedClassId();
+    var cls=(d.classes||[])[0]; if(!cls) return {fixture:false,why:'no class'};
+    var ids=[]; d.students=[]; cls.roster=[];
+    for(var i=0;i<27;i++){var id='wo213-student-'+i;ids.push(id);d.students.push({id:id,first:'Student',last:String(i)});cls.roster.push(id);}
+    cls.terms=[{id:'tm_wo213',label:'Quarter 1',start:'2026-01-01',end:'2026-03-31'}];
+    d.attendance=[];
+    for(var day=0;day<175;day++){
+      var date=new Date(Date.UTC(2026,0,1+day)).toISOString().slice(0,10), marks={};
+      if(day===1||day===89)marks[ids[0]]={code:'A'};
+      if(day===2)marks[ids[0]]={code:'T'};
+      d.attendance.push({classId:cls.id,date:date,marks:marks});
+    }
+    for(var extra=0;extra<700;extra++)d.attendance.push({classId:'wo213-other-'+extra,date:'2025-01-01',marks:{}});
+    c.selectClass(cls.id); a.renderAttendance();
+    var samples=[];
+    for(var run=0;run<9;run++){var start=performance.now();a.renderAttendance();samples.push(performance.now()-start);}
+    samples.sort(function(x,y){return x-y;});
+    var hasCount=typeof a.resetMeetingDatesCallCount==='function'&&typeof a.meetingDatesCallCount==='function';
+    var calls=null;if(hasCount){a.resetMeetingDatesCallCount();a.renderAttendance();calls=a.meetingDatesCallCount();}
+    var target='2026-03-31';a.editPastDay(target);a.setFilter('A');a.toggleDetail(ids[0]);
+    var rowSel='[data-attendance-row="'+ids[0]+'"] .attendance-student-totals';
+    var detailSel='[data-attendance-detail-row] .attendance-detail-totals';
+    var beforeRow=(document.querySelector(rowSel)||{}).textContent||'';
+    var beforeDetail=(document.querySelector(detailSel)||{}).textContent||'';
+    var beforeClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
+    var threw='';try{a.setMark(ids[0],'P',target);}catch(e){threw=e&&e.message||String(e);}
+    var afterRow=(document.querySelector(rowSel)||{}).textContent||'';
+    var afterDetail=(document.querySelector(detailSel)||{}).textContent||'';
+    var afterClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
+    a.setFilter('all');a.setMark(ids[0],'A',target);a.setFilter('A');
+    var unconfirmThrew='';try{a.unconfirmAll(target);}catch(e){unconfirmThrew=e&&e.message||String(e);}
+    var afterUnconfirmDetail=(document.querySelector(detailSel)||{}).textContent||'';
+    var result={fixture:true,records:d.attendance.length,meetings:175,rows:ids.length,
+      median:samples[4],samples:samples,calls:calls,beforeRow:beforeRow,afterRow:afterRow,
+      beforeDetail:beforeDetail,afterDetail:afterDetail,beforeClass:beforeClass,afterClass:afterClass,
+      threw:threw,unconfirmThrew:unconfirmThrew,afterUnconfirmDetail:afterUnconfirmDetail};
+    var restored=JSON.parse(old);Object.keys(d).forEach(function(k){delete d[k];});Object.assign(d,restored);
+    s.update(function(){});if(oldClass)c.selectClass(oldClass);a.setFilter('all');a.renderAttendance();return result;
+  })()`);
+  console.log('MEASURE | renderAttendance() at 875 records / 175 meetings / 27 rows | '
+    + (timing && timing.fixture ? timing.median.toFixed(2)+' ms median | '+JSON.stringify(timing.samples)
+      : 'fixture failed: '+JSON.stringify(timing)));
+  check('the WO-2.13 performance fixture is exactly 875 records / 175 meetings / 27 rows',
+    timing && timing.fixture && timing.records === 875 && timing.meetings === 175 && timing.rows === 27,
+    JSON.stringify(timing && {records:timing.records,meetings:timing.meetings,rows:timing.rows}));
+  check('meetingDates() is called a constant two times for a dated-term render',
+    timing && (timing.calls === null || timing.calls === 2), timing ? timing.calls+' call(s)' : 'fixture did not run');
+  check('a filtered-out row and its open detail repaint exact term/year totals after a mark',
+    timing && !timing.threw
+      && timing.beforeRow === 'Quarter 1 · P 87 · T 1 · A 2 · E 0 · D 0 · 98%'
+      && timing.afterRow === 'Quarter 1 · P 88 · T 1 · A 1 · E 0 · D 0 · 99%'
+      && timing.beforeDetail === 'Quarter 1: P 87 · T 1 · A 2 · E 0 · D 0 · 98% | Year: P 172 · T 1 · A 2 · E 0 · D 0 · 99%'
+      && timing.afterDetail === 'Quarter 1: P 88 · T 1 · A 1 · E 0 · D 0 · 99% | Year: P 173 · T 1 · A 1 · E 0 · D 0 · 99%'
+      && timing.beforeClass === timing.afterClass,
+    JSON.stringify(timing && {row:[timing.beforeRow,timing.afterRow],
+      detail:[timing.beforeDetail,timing.afterDetail],class:[timing.beforeClass,timing.afterClass],threw:timing.threw}));
+  check('unconfirmAll() repaints an open detail under an active filter without throwing',
+    timing && !timing.unconfirmThrew
+      && timing.afterUnconfirmDetail === 'Quarter 1: P 87 · T 1 · A 2 · E 0 · D 0 · 98% | Year: P 172 · T 1 · A 2 · E 0 · D 0 · 99%',
+    JSON.stringify(timing && {detail:timing.afterUnconfirmDetail,threw:timing.unconfirmThrew}));
+}
+
 /* ───────── recorded-meeting counts and Roll Call! percentage (WO-2.4) ───────── */
 console.log('\n--- recorded-meeting counts and Roll Call! percentage (WO-2.4) ---');
 {
@@ -9298,6 +9365,43 @@ console.log('\n--- recorded-meeting counts and Roll Call! percentage (WO-2.4) --
   if (result && result.oldView === 'home' && await has('#classTabBar [data-view-home]')) {
     await clickSel('#classTabBar [data-view-home]');
   }
+}
+
+/* ───────── byte-identical total objects (WO-2.13) ───────── */
+console.log('\n--- byte-identical total objects (WO-2.13) ---');
+{
+  const exact = await evalJs(`(function(){
+    var s=window.planbook.store,a=window.planbook.attendance,c=window.planbook.classes,d=s.getDoc();
+    var cls=(d.classes||[])[0],student=cls&&(cls.roster||[])[0];
+    if(!cls||!student)return {fixture:false};
+    var oldAttendance=JSON.stringify(d.attendance||[]),oldEvents=JSON.stringify(d.events||[]);
+    var dates=['2026-09-01','2026-09-03','2026-09-08','2026-09-11','2026-09-14',
+      '2026-09-18','2026-09-21','2026-09-24','2026-09-29','2026-10-02'];
+    d.attendance=dates.map(function(date,i){return {classId:cls.id,date:date,
+      marks:i===4?Object.fromEntries([[student,{code:'E'}]]):{}};});
+    d.attendance.push({classId:cls.id,date:'2026-09-04',exception:'dropped'});
+    d.events=[{id:'wo213-day-off',kind:'no-school',title:'Fixture holiday',
+      date:'2026-09-07',endDate:'2026-09-07',classIds:[]}];
+    var excused=a.attendanceTotals(cls.id,student);
+    var noMarks=a.attendanceTotals(cls.id,'wo-2-4-no-marks');
+    d.attendance.push({classId:cls.id,date:'2026-10-05',
+      marks:Object.fromEntries([[student,{code:'U'}]])});
+    var withU=a.attendanceTotals(cls.id,student);
+    var zero=a.attendanceTotals(cls.id,'student-with-no-meetings','2030-01-01','2030-12-31');
+    d.attendance=JSON.parse(oldAttendance);d.events=JSON.parse(oldEvents);a.renderAttendance();
+    return {fixture:true,excused:excused,noMarks:noMarks,withU:withU,zero:zero};
+  })()`);
+  const expected = {
+    excused:{P:9,T:0,A:0,E:1,D:0,meetings:10,attended:10,percent:100},
+    noMarks:{P:10,T:0,A:0,E:0,D:0,meetings:10,attended:10,percent:100},
+    withU:{P:9,T:0,A:1,E:1,D:0,meetings:11,attended:10,percent:10/11*100},
+    zero:{P:0,T:0,A:0,E:0,D:0,meetings:0,attended:0,percent:null}
+  };
+  check('attendanceTotals() returns byte-identical full objects for E, no-mark, U, and zero cases',
+    exact && exact.fixture
+      && JSON.stringify({excused:exact.excused,noMarks:exact.noMarks,withU:exact.withU,zero:exact.zero})
+        === JSON.stringify(expected),
+    JSON.stringify(exact));
 }
 
 /* ────────────────────────────── summary ────────────────────────────── */
