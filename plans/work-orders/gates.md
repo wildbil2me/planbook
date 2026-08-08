@@ -18,6 +18,31 @@ go live was made 2026-08-03 with the risk stated and accepted; **this work order
 makes it considered rather than reckless.** Two facts are load-bearing and both get verified here,
 not assumed.
 
+### Before the sitting — four things, in this order
+
+**The order is not a preference.** Two of these change the very thing the rehearsal is meant to
+validate, so doing them afterwards means the rehearsal proved something about a configuration that
+no longer exists.
+
+- [ ] **1. Pin the DHCP reservation at the router, to the address the laptop already has**
+      (`192.168.50.142`). Before the iPad touches the server again. Pinning *after* the iPad has
+      installed risks the router handing out a different address — which is a different origin, with
+      an empty database, and the installed app's year still sitting at the old one. See the decision
+      record below for why the origin is load-bearing.
+- [ ] **2. Start `tools/serve-https.mjs` and read its startup line.** It compares the certificate's
+      addresses against the machine's and says so when they have diverged. That is the check that
+      step 1 moved nothing. If it has moved, `node tools/make-cert.mjs` again — and the iPad must
+      re-trust the new root (Settings → General → About → Certificate Trust Settings), which is a
+      toggle that fails closed and silently.
+- [ ] **3. Load the app on the iPad, which is what pulls `planbook-shell-v31`.** Confirm Cache
+      Storage holds `v31` **and only `v31`** — the "only" is the half that catches a failed
+      `activate`, and a cache that layered instead of replacing is invisible from the app itself.
+      Until this is done the device is on `v30`, which predates WO-2.4's counts and percentage and
+      WO-2.13's fix.
+- [ ] **4. Take a backup and put it off the device** — before the rehearsal, not as part of it. The
+      backup drill below wipes storage on purpose, and step 1 can strand a database. This is the copy
+      that exists if either goes wrong.
+
 ### The three things that must be right
 
 From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the attendance ledger itself
@@ -31,11 +56,33 @@ From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the atte
 
 **Verify all three against a real class before trusting it with a term.**
 
+**Two of them write, and one must not.** The first two put marks in the ledger, so run them in the
+throwaway year described below, on a copy of a real roster. The third is read-only and has to be the
+**live** year — a hand count means nothing against fabricated meetings, and the whole point is that
+the number the teacher will actually see agrees with the number she can count herself. Compare
+quarter against quarter, not against Roll Call!'s year badge, which disagrees with its own quarters
+(`TESTING.md`, WO-2.4).
+
 ### The rehearsal
 
-- [ ] Run a **full simulated school day**: five classes, one dropped, one marked late in the day,
-      one deliberately left untaken, and one marked for yesterday. Then reload and confirm every
-      state reads correctly.
+**Run all of it in a throwaway school year, then switch back and delete it.** `createYear()` and
+`switchYear()` exist (`src/year-picker.js`); use them before the first mark below.
+
+**This is not tidiness, and getting it wrong is not recoverable by editing.** In this data model a
+simulated day *is* a real day — a class met if it has an attendance record without an exception, and
+there is deliberately no schedule to disagree with it (`plans/rotating-schedule.md`). A rehearsal run
+in the live year leaves five fabricated meetings in the ledger, in the denominator of every student's
+percentage, and in the recorded-meetings count the home screen exists to answer. The term would then
+open with a confident wrong number in exactly the week a confident number gets believed — and the
+teacher has no way to tell it from a real one, because it *is* a real one. The rehearsal must not be
+able to contaminate the ledger it is rehearsing.
+
+- [ ] Run a **full simulated school day** — **in the throwaway year** — five classes, one dropped,
+      one marked late in the day, one deliberately left untaken, and one marked for yesterday. Then
+      reload and confirm every state reads correctly.
+- [ ] **Afterwards: switch back to the live year and delete the rehearsal year.** Then confirm the
+      live year's recorded-meeting counts and percentages are exactly what they were before the
+      sitting — the rehearsal is only finished when it has left no trace.
 - [ ] **Backup drill, end to end.** Download the backup, wipe browser storage, restore, and confirm
       every mark, student, and class returns. Do this on the iPad, not only the laptop.
 - [ ] **Installed on the actual teaching iPad**, from Safari, launching without browser chrome.
