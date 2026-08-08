@@ -47,11 +47,51 @@ From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the atte
       for falling back. Decide the trigger now, not at 7:45am on a Tuesday.
 - [ ] A backup is downloaded and stored off the device before day one.
 
+### Where Ship 1 actually runs — decided 2026-08-08
+
+**The term runs on the LAN address: `https://192.168.50.142:8443`, served by
+`tools/serve-https.mjs` from a `main` checkout.** No public host, no static host, no domain. That
+is a decision, not a gap waiting to be filled — Phase 8 owns the distribution channel and a real
+URL, and neither is needed to mark attendance in August.
+
+**It works because the app is offline-first, and that is proven rather than assumed.** WO-1.3's
+checks include the installed app opening with the network disabled, and the desk half was run with
+the server process *stopped outright* rather than with a DevTools toggle. Once the iPad has
+installed and the service worker has precached `SHELL`, the laptop can be closed and off-network
+for the rest of the term.
+
+**What follows from it, and what the rehearsal must cover:**
+
+- **The origin is an IP address, and IndexedDB is scoped to the origin.** `https://192.168.50.142:8443`
+  is not where the app is served from; it *is* where the term's attendance lives. A DHCP lease that
+  moves does not degrade this — it strands it. A fresh install at a new address is a different
+  origin with an empty database, and the only way back is a backup file taken beforehand.
+  **Pin the laptop's address with a DHCP reservation at the router before day one.**
+  `tools/README.md` already records the adjacent failure: a moved lease leaves a valid certificate
+  for the wrong host, signed, unexpired, and refused.
+- **Updates require the iPad back on that network with the server running.** There is no deploy that
+  reaches the device on its own. Landing a fix and the teacher receiving it are two separate acts all
+  term.
+- **The iPad is on `planbook-shell-v30` as of this decision.** The bump to `v31` — which carries
+  WO-2.4's counts and percentage and WO-2.13's fix — reaches it only on its next load from the
+  server. Do that *before* rehearsing, or the rehearsal measures an app two work orders old.
+- **There is no sync in Ship 1.** Phase 7 is 🔒 GATED on OAuth verification, and `docs/sync.md` says
+  the local-first app ships without it. Moving a year between laptop and iPad is a backup file out
+  and a restore in, by hand — `plans/ROADMAP.md` calls it "crude, manual, and real."
+
 ### Ship gate
 
-- [ ] `TESTING.md` Phase 1 and Phase 2 sections fully passing.
-- [ ] `CHANGELOG.md` current.
-- [ ] `phase/1-*` and `phase/2-*` merged to `main`; `main` is what's deployed.
+- [ ] `TESTING.md` Phase 1 and Phase 2 sections fully passing. *(Checked 2026-08-08: 246 boxes
+      ticked, 6 open. All six are under the struck-through `WO-2.1 — Attendance marking screen`
+      heading, superseded 2026-08-06 and kept as a record; they were never run against the screen
+      that shipped and ticking them would be false. Read as satisfied — but it is a judgement, so it
+      is written here rather than left for the next reader to re-derive.)*
+- [x] `CHANGELOG.md` current. *(2026-08-08. WO-1.13 and WO-2.13 were both absent — WO-1.13 since
+      2026-08-06 — and the gap was invisible until this line was checked against the file instead of
+      assumed.)*
+- [x] `phase/1-*` and `phase/2-*` merged to `main`; `main` is what's deployed. *(2026-08-08.
+      Fast-forward to `9d09f4c`, 32 commits, 0 behind; `phase/1-shell-store-roster` was already
+      contained in `main`. Pushed. "Deployed" means the LAN server above, per the decision record.)*
 
 **If any of the three things above fails, Ship 1 does not go live and Roll Call! carries the term.**
 That is not a failure of the project; it is the reason the fallback exists.
