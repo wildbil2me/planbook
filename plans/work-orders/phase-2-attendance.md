@@ -1242,13 +1242,24 @@ is a different file's problem.
 - [ ] A work order whose `Closes roadmap` fragment matches zero boxes is handled per the decision
       above, and the behaviour is demonstrated on a planted fragment rather than on WO-2.5 — WO-2.5
       is being fixed in this same work order and cannot be the fixture that proves it.
-- [ ] WO-2.5's fragment matches exactly one roadmap box. Prove it with `--tick WO-2.5 --dry-run`,
-      which must plan the roadmap edit; do not tick WO-2.5 itself, which is not built.
+- [ ] WO-2.5's fragment matches exactly one roadmap box — proved by the fragment sweep below, **not
+      by `--tick WO-2.5 --dry-run`**, which no longer works and cannot be made to. WO-2.5 shipped on
+      2026-08-08, so that command now exits `FAIL | WO-2.5 is "✅ DONE" — only ⬜ NOT STARTED or
+      🔨 IN PROGRESS may be ticked`, and `ROADMAP.md:280` was hand-ticked the same day, so even a
+      corrected fragment has no edit left to plan. If a live `--tick` demonstration is still wanted,
+      do it inside `--self-check`'s temp copy of `plans/`, where the status line and the roadmap box
+      can both be rolled back to their pre-2026-08-08 values and the run costs the repository
+      nothing. **This line was rewritten on 2026-08-08, the day its fixture was spent** — the same
+      family of rot this work order exists to catch, arriving in its own acceptance list.
 - [ ] Every `Closes roadmap` fragment in `plans/work-orders/` is reported as matching exactly one
       box, or listed as not doing so with the reason. Run it over all of them, not a sample.
 - [ ] `--tick`, `--start` and `--release` behave exactly as they did before on the paths that already
       work — WO-2.14's acceptance list, re-run.
-- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — 400/400/0-skips and exit 0.
+- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — **all checks passing, zero
+      skips, exit 0, and the count matching whatever `tools/README.md` says at the time**. No number
+      is written here on purpose: this line read `400/400` until 2026-08-08, by which point the tree
+      was at 428 and the line had been quietly wrong for three work orders. A hardcoded total in an
+      acceptance box goes stale every time the harness grows, which is every work order.
 
 **Traps** — **The precondition rule applies to the self-check itself, one level up.** WO-1.12 and
 WO-2.14 both proved a fix by planting the violation and watching the script fail. A `--self-check`
