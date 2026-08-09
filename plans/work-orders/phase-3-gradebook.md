@@ -166,9 +166,15 @@ which reads due dates rather than storing copies of them.
   `.hidden` — **with modal editors** for creating and editing a single assignment. The list is a
   surface a teacher scans and works down; editing one assignment is a task she finishes and
   dismisses. Same shape as the roster. See [`../gradebook-surfaces.md`](../gradebook-surfaces.md).
-- **This work order owns the control that switches between the open class's screens**, because it is
-  the first one that needs it — attendance and assignments cannot both be "the class view". It is
-  not designed here; design it against `design/mockups/`, which draws one candidate to argue with.
+- **This work order builds the control that switches between the open class's screens**, because it
+  is the first one that needs it — attendance and assignments cannot both be "the class view".
+  **Decided by the owner 2026-08-09**, so this is no longer yours to design: a segmented control
+  under the panel title carrying **three** tabs — Attendance · Assignments · Scores — and **a class
+  always opens on Attendance**, never on the screen it was left on. Per-student detail is **not** a
+  fourth tab: it is reached by tapping a student, and the strip shows that student's name as a
+  breadcrumb segment only while you are in it. The reasoning, including why the header strip cannot
+  hold it, is [`../gradebook-surfaces.md`](../gradebook-surfaces.md) § "How the class view navigates
+  between its screens". `design/mockups/proposed.css` § SHARED has the drawn styles; lift them.
 - Create, edit, duplicate, reorder, and delete assignments per the data model:
   `id, classId, termId, categoryId, name, points, assigned, due`.
 - **Due date is a plain date.** There is no "next meeting" to default to, and inventing one would
@@ -186,6 +192,13 @@ which reads due dates rather than storing copies of them.
 - [ ] No date field auto-populates from anything schedule-shaped.
 - [ ] The list is a view in `<main>`, not a dialog, and the class's screens are switchable without
       passing through the class manager.
+- [ ] **Opening a class lands on Attendance every time** — including a class whose assignment list
+      was the screen open when it was last left, and including after a reload. Prove it by leaving
+      one class on Assignments, opening a second class and coming back, not by reading the code:
+      the failure mode is a per-class memory nobody asked for, and it is invisible until the second
+      class.
+- [ ] The switcher carries three tabs and no student tab. A student's name appears in the strip only
+      while that student's detail is open, and switching away from it takes the name with it.
 
 **Traps** — **Do not build the list inside the modal system.** Every class-scoped editor before this
 one is a modal and the precedent is misleading; the rule is in `../gradebook-surfaces.md`. **And
@@ -366,6 +379,11 @@ between a report and a conversation.
 - **Surface: a main-area view.** This work order's own first sentence calls it "the screen open
   during a guardian conference" — a screen a teacher sits in front of with a parent, scrolling and
   pointing, is not a dialog. See [`../gradebook-surfaces.md`](../gradebook-surfaces.md).
+- **You arrive here from a name, never from the nav strip** *(owner, 2026-08-09)*. WO-3.3 builds the
+  three-tab switcher and this screen is deliberately not a fourth tab: it is reached by tapping a
+  student from attendance, the assignment list or the score grid, and the strip then shows that
+  student's name as a breadcrumb segment while you are in it. So **this work order owns no navigation
+  target of its own** — it owns the entry points on the screens that name students, and the way back.
 - Category breakdown with each category's percentage, weight, and contribution.
 - The list of missing work, with points at stake.
 - "What it would take to move" — the score needed on remaining work to reach the next letter band.

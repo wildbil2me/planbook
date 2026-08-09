@@ -85,12 +85,13 @@
         <button class="class-action-btn" type="button">Print &amp; export</button>
       </div>
 
-      <!-- ONE CANDIDATE for the class-screen switcher. WO-3.3 owns the real decision. -->
+      <!-- The class-screen switcher, DECIDED 2026-08-09: three tabs, and a class always opens on
+           Attendance. Drawn here as one candidate; the fourth tab it carried ("A student") came off
+           in the deciding. WO-3.3 builds it. See plans/gradebook-surfaces.md. -->
       <div class="screen-nav" role="tablist" aria-label="Screens for this class">
         <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
         <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
         <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Scores</button>
-        <button class="screen-nav-btn detail" type="button" role="tab" aria-selected="false">A student</button>
       </div>
     </div>
 
@@ -333,6 +334,14 @@
     </div>
   </div>
 
+  <div class="mk-caption decided">
+    <strong>The screen switcher: three tabs, and a class always opens on Attendance.</strong>
+    <em>(Owner, 2026-08-09.)</em> The fourth tab drawn here — <em>A student</em> — is gone. It is not a
+    peer of the other three: you cannot enter that screen without first choosing a student, so as a tab
+    it is either dead on a freshly-opened class or it picks someone for you. Detail is reached by
+    tapping a name in the frozen column, and the strip carries that name as a breadcrumb only while you
+    are in it. Full reasoning in <code>plans/gradebook-surfaces.md</code>; WO-3.3 builds it.
+  </div>
   <div class="mk-caption">
     <strong>The two frozen columns are the whole idea.</strong> Narrow the window until the grid
     scrolls sideways: the student and their grade stay put while the assignments run under them.

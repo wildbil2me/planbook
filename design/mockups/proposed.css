@@ -51,10 +51,23 @@
    § SHARED — the screen switcher and the category chip
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* THE SWITCHER BETWEEN ONE CLASS'S SCREENS. Attendance, Assignments, Scores and a
-   student's detail are all views of the same open class, and something has to move
-   between them. This is ONE CANDIDATE, drawn so there is something concrete to
-   argue with — WO-3.3 owns the real decision (see plans/gradebook-surfaces.md).
+/* THE SWITCHER BETWEEN ONE CLASS'S SCREENS. Attendance, Assignments and Scores are
+   views of the same open class, and something has to move between them.
+
+   DECIDED 2026-08-09 by the owner — this was drawn as one candidate to argue with
+   and is now the shape WO-3.3 builds (plans/gradebook-surfaces.md § "How the class
+   view navigates between its screens"). Two things changed in the arguing:
+
+     THREE TABS, NOT FOUR. Per-student detail was drawn here as a fifth peer
+     labelled "A student", set apart by a gap. It is not a peer: you cannot enter it
+     without first choosing a student, so as a tab it is either dead on a
+     freshly-opened class or it invents a selection the teacher did not make. It is
+     reached by tapping a student instead, and the name then appears in this strip
+     as a breadcrumb WHILE YOU ARE IN IT — which is what .detail below now styles.
+
+     A CLASS ALWAYS OPENS ON ATTENDANCE, never on the screen it was left on. The
+     critical path is marking at the door while the class walks in; grade entry pays
+     a second tap per class for it, and that is the right way round.
 
    Why it is here, under the panel title, and not in the header strip: that strip
    already carries the class tabs, the term nav and three icon buttons, and
@@ -84,9 +97,13 @@
   background: #fff; color: #1a1a2e;
   box-shadow: 0 1px 3px rgba(0,0,0,0.10);
 }
-/* The one screen that is about a single student rather than the whole class sits
-   apart, after a gap — the same separation `.cls-tab-home` makes for the same
-   reason: it is a different KIND of destination, not a fifth peer. */
+/* THE BREADCRUMB, not a tab. Worn only by the segment carrying an open student's
+   name, which exists only while that student's detail is open and goes away when
+   you switch off it. It sits apart, after a gap — the same separation
+   `.cls-tab-home` makes for the same reason: a different KIND of destination. The
+   gap was here when this was drawn as a fourth tab, and it was the right instinct
+   about the wrong control; what changed is that nothing now renders it unless the
+   teacher has actually gone somewhere. */
 .screen-nav-btn.detail { margin-left: 10px; }
 
 /* THE CATEGORY CHIP, shared by the grid's column heads and the assignment list.

@@ -18,8 +18,9 @@ WO-3.7 each carry a **Surface** deliverable and a trap pointing at it.
 The second reason is the annotations — places where a drawing had to guess and the guess was not the
 drawing's to make. Amber ones are still **open**; green ones marked **DECIDED** have since been
 answered and are kept in place rather than deleted, because a drawing that quietly absorbs a decision
-loses the record of there having been a choice. **Two are decided and ten are open** — the two
-decisions each spawned a smaller question of their own — and they are listed at the bottom of this
+loses the record of there having been a choice. **Three are decided and ten are open** — the first
+two decisions each spawned a smaller question of their own, and the third is the screen switcher,
+which was the question these drawings existed to make arguable. All are listed at the bottom of this
 file so they are not lost when someone reads only the pictures.
 
 ## What is here
@@ -117,10 +118,23 @@ Ten, in the order a reader meets them. Each is drawn in place with an amber note
     real — and "score 75% on everything left" is ambiguous when one of those is worth 0 points.
     Bonus work needs its own line in that arithmetic. WO-3.7's; not yet drawn.
 
-## What the drawings deliberately do not decide
+## The one the drawings deliberately did not decide, and its answer
 
-**How the class view switches between its screens.** Attendance, assignments, scores and a student's
-detail are all views of one open class and something has to move between them. A segmented control
-under the panel title is drawn in all three so there is something concrete to argue with — but
-WO-3.3 owns that decision, because it is the first work order that needs it. Drawing it is not
-choosing it.
+**How the class view switches between its screens — decided 2026-08-09 by the owner.** A segmented
+control under the panel title was drawn in all three pages so there was something concrete to argue
+with, and arguing with it changed two things:
+
+- **Three tabs, not four.** Attendance · Assignments · Scores. The drawings carried a fourth,
+  *A student*, set apart by a gap that admitted it was a different kind of destination. The gap was
+  the right instinct and the wrong fix: a tab you cannot enter without first choosing a student is
+  either dead on a freshly-opened class or it invents a selection nobody made. Detail is reached by
+  tapping a name, and the strip shows that name as a **breadcrumb** only while you are in it — which
+  is what `student.html` was already drawing, and the reason that page needed no redraw.
+- **A class always opens on Attendance**, never on the screen it was left on. Marking at the door
+  while the class walks in is the critical path; grade entry pays a second tap per class for it.
+
+`assignments.html` and `scores.html` have lost their *A student* tab and all three pages carry green
+**DECIDED** notes. The record is
+[`../../plans/gradebook-surfaces.md`](../../plans/gradebook-surfaces.md) § "How the class view
+navigates between its screens", and WO-3.3 now carries it as a deliverable with two acceptance lines
+rather than as a question.

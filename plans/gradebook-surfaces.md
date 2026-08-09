@@ -118,11 +118,40 @@ first.
 - Mockups of all four screens, built against the real stylesheets, live in
   [`../design/mockups/`](../design/mockups/README.md). They are drawings, not code, and they say so.
 
+## How the class view navigates between its screens
+
+**Decided 2026-08-09 by the owner**, against the candidate drawn in `../design/mockups/`. This
+section asked the question until that date and is kept as an answer rather than replaced, because
+WO-3.3 is briefed off it.
+
+**A segmented control under the panel title, carrying three tabs: Attendance · Assignments ·
+Scores.** Light-surface grammar, on the white panel, not in the header strip — that strip already
+carries the class tabs, the term nav and three icon buttons, and `src/classes.js` records that a
+fourth control up there puts the page into horizontal overflow at 390px. The class tabs answer
+*which class*; this answers *which screen of it*.
+
+**Per-student detail is not a fourth tab.** It is reached by tapping a student from any of the
+three, and the strip then shows that student's name as a fourth segment *while you are in it* — a
+breadcrumb back, which appears because you went somewhere. The drawings had it as a peer tab labelled
+"A student", set apart by a gap that admitted it was a different kind of destination; the gap was the
+right instinct and the wrong fix. A tab you cannot enter without first choosing a student is either
+dead on a freshly-opened class or it invents a selection the teacher did not make, and neither belongs
+on the app's primary navigation. WO-3.7's own first sentence — "the screen open during a guardian
+conference" — describes arriving from a name, never from a nav bar.
+
+**A class always opens on Attendance**, never on the screen it was left on. Attendance is the
+critical path: marked at the door while thirty students walk in, and the one flow whose speed the
+working agreements name. Grade entry across five classes pays a second tap per class for it, and that
+is the right way round — the fast path should be the one with the class arriving, not the one at a
+desk. Last-screen memory also means opening 2nd period and not immediately knowing what you are
+looking at.
+
+**The two strips on screen at once were put to the owner and accepted.** It is the same objection
+that killed the tabs-in-a-modal option below — class tabs in the navy header, screen tabs on the
+white panel — and it is answered by the registers being different rather than by there being fewer
+strips. Recorded because it was raised and answered, not because it went unnoticed.
+
 ## What this record does not decide
 
-**How the class view navigates between its screens.** Attendance, assignments, scores and
-per-student detail will all be views of one open class, and something has to switch them. That
-control does not exist yet, WO-3.3 is the first work order that needs it, and it is that work
-order's to design — this record only says the destinations are views. The mockups draw one candidate
-(a segmented control under the panel title) so there is something concrete to argue with; drawing it
-is not choosing it.
+**Whether the class manager's row gets re-cut** — see above; that is a decision to make against the
+finished row rather than predicted here.
