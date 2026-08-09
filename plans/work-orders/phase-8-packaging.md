@@ -8,7 +8,7 @@ Branch: `phase/8-packaging`. The 1.0.0 call itself is [WO-G4](gates.md#wo-g4--th
 
 ## WO-8.1 — `TESTING.md` complete and passing
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** every phase
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** every phase
 **Closes roadmap** Phase 8 → "`TESTING.md` complete and fully passing."
 
 **Why it exists.** This is the regression gate. **There is no automated suite and that is a
@@ -30,7 +30,7 @@ decision, not an omission** — which puts all the weight on this checklist bein
 
 ## WO-8.2 — Demo build
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
 **Closes roadmap** Phase 8 → "Demo build with a fake in-memory dataset, no account."
 
 **Why it exists.** A stranger evaluating a gradebook will not type in a roster to find out whether
@@ -58,7 +58,7 @@ they like it. The demo is the top of the adoption funnel, and it doubles as a he
 
 ## WO-8.3 — Accessibility pass
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.2
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.2
 **Closes roadmap** Phase 8 → "Accessibility pass: screen reader (NVDA/VoiceOver), keyboard-only,
 contrast." *(the parenthetical was missing from the fragment until 2026-08-08, WO-2.15, so it
 matched zero boxes — the same rot, and the same shape, as WO-2.5's)*
@@ -86,7 +86,7 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.4 — Print stylesheets
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
 **Closes roadmap** Phase 8 → "Print stylesheets for every printable surface."
 
 **Deliverables**
@@ -108,7 +108,7 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.5 — README, FERPA, and known limitations
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
 **Closes roadmap** Phase 8 → "`README.md` with a Known limitations section" and "`docs/FERPA.md`."
 
 **Why it exists.** The 1.0 criteria require limitations to be "written down before launch, not
@@ -138,7 +138,7 @@ stating well.
 
 ## WO-8.6 — Onboarding, name, and distribution
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5
 **Closes roadmap** Phase 8 → "Onboarding: install → marking attendance with no documentation" and
 "Name and distribution channel decided."
 

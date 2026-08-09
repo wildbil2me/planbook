@@ -15,7 +15,7 @@ Thresholds and defaults are specified in [`../../docs/data-model.md`](../../docs
 
 ## WO-4.1 — Signal engine & thresholds
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.4, WO-3.4
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.4, WO-3.4
 **Closes roadmap** Phase 4 → "Threshold engine reading every rule from the document, editable in
 Settings", "One evaluator produces both lists", "Why is this student here?"
 
@@ -48,7 +48,7 @@ falls is exactly who a teacher wants to see twice.
 
 ## WO-4.2 — Concern signals
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
 **Closes roadmap** Phase 4 → "Concern signals."
 
 **Deliverables** — each rule, each with its documented default, each editable:
@@ -83,7 +83,7 @@ class*. Three absences across three weeks of a twice-weekly section is still thr
 
 ## WO-4.3 — Praise signals
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
 **Closes roadmap** Phase 4 → "Praise signals."
 
 **Why it exists.** "Top of the class" surfaces the same four students every week and is worth
@@ -119,7 +119,7 @@ stale.
 
 ## WO-4.4 — Behavior & note logging
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.7
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.7
 **Closes roadmap** Phase 4 → "Behavior/note logging fast enough to do mid-class."
 
 **Why it exists.** The behavior signals have no input without it, and a logging flow that takes
@@ -143,7 +143,7 @@ thirty seconds will never be used during a class period.
 
 ## WO-4.5 — Cooldown & the quiet middle
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.2, WO-4.3
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.2, WO-4.3
 **Closes roadmap** Phase 4 → "Contact cooldown" and "The quiet middle."
 
 **Why it exists.** Without the cooldown the list is identical every week, the teacher stops reading

@@ -1320,7 +1320,7 @@ the next reader will trust it for the parts it never touched.
 
 ## WO-2.16 — the self-check states its precondition, and `**Blocks**` stops being a dependency
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.15
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.15
 
 **Not a go-live blocker, and the same kind of work as WO-2.15.** Added 2026-08-09, out of WO-2.15's
 verification. Harness, not app: nothing here writes student data or reaches a classroom. **Do not

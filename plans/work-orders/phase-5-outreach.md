@@ -16,7 +16,7 @@ templates. Two rules dominate this phase, and both are about what must never lea
 
 ## WO-5.1 — Merge-field resolver
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4, WO-4.1
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4, WO-4.1
 **Closes roadmap** Phase 5 → "An unresolved merge field never renders blank" and "No merge field
 ever resolves accommodation, medical, or plan data."
 
@@ -65,7 +65,7 @@ open the moment someone adds a field to the data model.
 
 ## WO-5.2 — Templates
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.1
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.1
 **Closes roadmap** Phase 5 → "Templates with merge fields" and "Separate concern and praise
 templates."
 
@@ -94,7 +94,7 @@ a warning.
 
 ## WO-5.3 — Send flow
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.2
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.2
 **Closes roadmap** Phase 5 → "Audience picker", "Copy to self", "`mailto:` handoff", "Editable
 before sending."
 
@@ -130,7 +130,7 @@ apostrophe, an em dash, and a multi-paragraph body.
 
 ## WO-5.4 — Contact log & history
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3, WO-4.5
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3, WO-4.5
 **Closes roadmap** Phase 5 → "Log the contact (append-only) and show contact history per student."
 
 **Why it exists.** The log is what WO-4.5's cooldown reads. Without it the signal lists are

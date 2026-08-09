@@ -16,7 +16,7 @@ govern this whole phase, and both are about the teacher never being surprised:
 
 ## WO-3.1 — Categories & weights
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.6
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.6
 **Closes roadmap** Phase 3 → "Weighted categories per class, editable, with a visible warning when
 weights ≠ 100%."
 
@@ -41,7 +41,7 @@ wrong at the start of a term.
 
 ## WO-3.2 — Letter-scale editor
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.4
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.4
 **Closes roadmap** Phase 3 → "Letter-scale editor."
 
 **Why it exists.** The teacher defines the bands; the app never hardcodes 90/80/70. **This subsumes
@@ -67,7 +67,7 @@ disagreeing rule this design removes.
 
 ## WO-3.3 — Assignments
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1
 **Closes roadmap** Phase 3 → "Assignments: name, points, category, assigned date, due date."
 
 **Why it exists.** The assignment list is the spine of the gradebook and of Phase 6's calendar,
@@ -91,7 +91,7 @@ which reads due dates rather than storing copies of them.
 
 ## WO-3.4 — Grade engine
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1, WO-3.2
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1, WO-3.2
 **Closes roadmap** Phase 3 → "Weighted grade with empty categories redistributing their weight."
 
 **Why it exists.** This is the arithmetic the whole product's credibility rests on, and the 1.0
@@ -137,7 +137,7 @@ wrong.
 
 ## WO-3.5 — Score entry grid
 
-**Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-3.3, WO-3.4
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-3.3, WO-3.4
 **Closes roadmap** Phase 3 → "Score entry grid" and "`late` and `missing` are marked, never
 inferred."
 
@@ -169,7 +169,7 @@ arithmetic.
 
 ## WO-3.6 — Past-due prompt
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5
 **Closes roadmap** Phase 3 → "Past-due blanks generate a prompt."
 
 **Why it exists.** An earlier draft computed missing from the due date — blank plus past-due equalled
@@ -192,7 +192,7 @@ class. The due date is still useful, but **only as a prompt**.
 
 ## WO-3.7 — Per-student grade detail
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
 **Closes roadmap** Phase 3 → "Per-student detail: category breakdown, what's missing, what it would
 take to move."
 
@@ -217,7 +217,7 @@ between a report and a conversation.
 
 ## WO-3.8 — Accommodation prompts at point of use
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.8, WO-3.3
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.8, WO-3.3
 **Closes roadmap** Phase 3 → "Accommodation prompts at point of use."
 
 **Why it exists.** "A list nobody opens protects nobody." A teacher is legally obligated to
@@ -243,7 +243,7 @@ compliance.
 
 ## WO-3.9 — Grades print & CSV
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
 **Closes roadmap** Phase 3 → "Print/CSV for grades."
 
 **Why it exists.** The SIS has no import, so re-keying is manual and the printout is what the owner
@@ -267,7 +267,7 @@ order's value.
 
 ## WO-3.10 — OAuth verification paperwork 🔒
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing technical
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing technical
 **Closes roadmap** Phase 3 → *(no box. The roadmap's **Parallel, non-code** line at the end of Phase
 3 is a paragraph, not a checkbox, so there has never been anything here to tick — the quotation
 marks came off on 2026-08-08, WO-2.15, because the sweep was reading it as a fragment that matched

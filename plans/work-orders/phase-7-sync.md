@@ -16,7 +16,7 @@ acceptable, and it is why sync is last.
 
 ## WO-7.1 — Auth
 
-**Status** 🔒 GATED · **Size** M · **Depends on** WO-3.10 submitted
+**Ship** — · **Status** 🔒 GATED · **Size** M · **Depends on** WO-3.10 submitted
 **Closes roadmap** Phase 7 → "Google Identity Services token flow", "Sign-in is opt-in and
 reversible."
 
@@ -48,7 +48,7 @@ here. Sync is a foreground act, while the app is open and the teacher is signed 
 
 ## WO-7.2 — Document transfer & conflicts
 
-**Status** 🔒 GATED · **Size** L · **Depends on** WO-7.1
+**Ship** — · **Status** 🔒 GATED · **Size** L · **Depends on** WO-7.1
 **Closes roadmap** Phase 7 → "Upload/download the year document", "`rev`/`baseRev` comparison",
 "Conflict: keep both", "Handle token expiry gracefully."
 
@@ -92,7 +92,7 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.3 — Verification complete
 
-**Status** 🔒 GATED · **Size** S · **Depends on** WO-3.10, WO-7.2
+**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.10, WO-7.2
 **Closes roadmap** Phase 7 → "Verification complete."
 
 **Deliverables**

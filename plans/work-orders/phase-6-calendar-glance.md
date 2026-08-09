@@ -21,7 +21,7 @@ Two rules govern the phase:
 
 ## WO-6.1 — Event model & authoring
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.3
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.3
 **Closes roadmap** Phase 6 → "Event model: date or range, title, kind, optional class and student.",
 "Grades-due deadlines", "IEP/504 review dates", "Recurring events by materializing instances."
 *(the first fragment stopped at the two words `Event model` until 2026-08-08, WO-2.15 — under twelve
@@ -58,7 +58,7 @@ date kinds that carry real consequences if missed.
 
 ## WO-6.2 — Derived events
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.1, WO-3.3
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.1, WO-3.3
 **Closes roadmap** Phase 6 → "Derived events computed at render from assignments, terms, and the
 schedule — not stored." *(the fragment elided the middle of the box until 2026-08-08, WO-2.15. An
 ellipsis inside a fragment matches nothing: `norm()` strips it rather than wildcarding it, so a
@@ -87,7 +87,7 @@ fragment may stop early but may never skip a middle.)*
 
 ## WO-6.3 — Month & week views
 
-**Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.2
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.2
 **Closes roadmap** Phase 6 → "Month and week views, filterable by class."
 
 **Deliverables**
@@ -107,7 +107,7 @@ fragment may stop early but may never skip a middle.)*
 
 ## WO-6.4 — The glance page
 
-**Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-6.3, WO-4.5
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-6.3, WO-4.5
 **Closes roadmap** Phase 6 → "The glance page" and "Honest empty states."
 
 **Why it exists.** This is what WO-1.10's home screen has been accreting toward since Phase 1. It

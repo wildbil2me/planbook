@@ -203,6 +203,13 @@ the owner's real classes, before the numbers matter.
 - [ ] Backup drill re-run now that grades exist.
 - [ ] `TESTING.md` Phase 3 section fully passing.
 - [ ] WO-3.10 OAuth paperwork **submitted**, with the date recorded.
+- [ ] **The `**Ship** —` work orders get a ship, or keep `—` on purpose.** Phases 5–8 and WO-G4 carry
+      `—` because the delivery table in [`../ROADMAP.md`](../ROADMAP.md) stops at Ship 3 — outreach,
+      calendar, sync and packaging are all *"Then | Nov →"*. By the time this gate runs, Ship 3 is
+      the next thing in front of you and what follows it is no longer hypothetical, so this is the
+      first honest moment to name it. *(Added 2026-08-09, when the field was written into thirty-three
+      work orders that had never carried one. A `—` that nobody revisits becomes the same invisible
+      blank it replaced, which is why this is a gate line and not a note.)*
 
 ---
 
@@ -229,7 +236,7 @@ stops reading the list has lost the feature permanently — quietly, without any
 
 ## WO-G4 — The 1.0.0 call
 
-**Status** ⬜ NOT STARTED · **Size** S · **Depends on** every work order
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** every work order
 **Closes roadmap** → the *What 1.0.0 means* section, which is a heading and a set of criteria rather
 than a box — there is nothing here for `--tick` to tick, and the quotation marks are off it on
 purpose so the sweep does not read it as a fragment *(2026-08-08, WO-2.15)*

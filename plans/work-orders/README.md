@@ -42,6 +42,7 @@ missing — it gets swallowed by whichever field is written before it**, so a ne
 | Field | Read by the tool as |
 |---|---|
 | **Ship** · **Status** · **Size** · 🚩 | The status line. `--start`, `--release` and `--tick` rewrite **Status** and nothing else |
+| **Ship**, specifically | `1`, `2`, `3` — the ship whose table carries it, and whose gate work order depends on it. `—` means **in no ship**, which is a statement and not a blank: either the work order sits outside the delivery plan (the tooling ones — WO-2.14, WO-2.15), or it has been deferred out of a ship (WO-2.7), or no ship covering it exists yet (Phases 5–8, WO-G4 — the delivery table stops at Ship 3). **Every work order carries this field.** It was missing from thirty-three of them until 2026-08-09, which is exactly the rot the row below describes: absent read as *"no ship,"* when it meant *"nobody has said"* |
 | **Depends on** | Every `WO-` token is a gate; anything else on the line is reported as prose for a human to read |
 | **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks |
 | **Amends roadmap** | Reported, never acted on. This work order changes the promise of a box some earlier one already closed — WO-2.12 and WO-2.13 carry it. The *(italic paren note)* it owes `ROADMAP.md` is still a hand edit |
@@ -215,11 +216,14 @@ more than its rows:
   "Phase 3" is not a work order ID and the ellipsis was read as two tokens rather than a range. Ten
   work orders it waits on were invisible to the gate, and WO-2.6 sat in the middle of the range
   gating nothing. Rewritten as an explicit list on 2026-08-09.
-- **The `**Ship**` header fields disagree with both.** WO-2.6, WO-2.7 and WO-2.9 say `**Ship** 2`;
-  every Phase 3 work order leaves the field blank, so by header alone the entire gradebook is in no
-  ship at all. **Not changed here** — the table is the running order, and stamping `**Ship** 2` on
-  ten work orders would assert something the roadmap's five-item line does not say. It is a real
-  decision and it is written down rather than made quietly.
+- **The `**Ship**` header fields disagreed with both** — WO-2.6, WO-2.7 and WO-2.9 said `**Ship** 2`
+  while every Phase 3 work order left the field blank, so by header alone the entire gradebook was in
+  no ship at all. **Filled in on 2026-08-09**, and the gap turned out to be four times bigger than
+  Phase 3: the field was missing from **thirty-three** work orders, every one from Phase 3 through
+  Phase 8 plus WO-G4. Only Phases 1 and 2 and the first three gates ever carried it. Phase 3 → Ship 2
+  (WO-G2 depends on all ten), Phase 4 → Ship 3 (WO-G3 depends on Phase 4), Phases 5–8 and WO-G4 → `—`,
+  which is not a shrug: the delivery table defines no ship past 3, so they are genuinely in none yet.
+  **WO-G2 carries the line that revisits them** when there is a ship to put them in.
 
 **The unit of urgency is different from Ship 1's, and the table is built around that.** Ship 1 raced
 a fixed date with students behind it. Ship 2 races a date the owner sets — but from **~Aug 24 the
