@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Ship 1 rehearsed — 2026-08-08
+
+**The go-live rehearsal ran clean, two weeks early.** A full simulated school day in a throwaway
+year — five classes, one dropped, one marked late, one left untaken, one marked for yesterday —
+then the year deleted and the live ledger confirmed untouched. A mark survives a reload and a
+force-quit. A full class marks in airplane mode and loses nothing on reconnect. Browser storage was
+wiped to the floor and every mark, student and class came back from the backup file — which also
+re-proved the install path, since clearing site data takes the service worker with it. Installed on
+the teaching iPad (iPadOS 26.5.2), launching without browser chrome. Roll Call! is still deployed
+and stays deployed.
+
+**What is verified and what is not.** The attendance arithmetic agrees with a hand count — but
+against backfilled test data, because no real class exists before the term. That check re-runs in
+week one against a live roster, and until it does, the tick is about the formula rather than about
+the term.
+
+**One thing the rehearsal could not close, recorded here so it is not lost.** The backfilled test
+data is still in the live year. The rehearsal was designed so it could not contaminate the ledger,
+and it did not — but the ledger was already carrying fabricated meetings before the sitting began,
+and in this data model a fabricated meeting *is* a meeting: it sits in the denominator of every
+percentage and in the recorded-meetings count, indistinguishable from a real one. The term should
+open in a fresh year, with the test data left in one labelled unmistakably.
+
 ### Added
 
 - **WO-2.5 — a class is marked from the keyboard, one keystroke per student.** `↓` lands on the

@@ -10,7 +10,7 @@ Each is a checklist you run, not a thing you build.
 
 ## WO-G1 — Ship 1 go-live rehearsal
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** M · 🚩 · **Depends on** WO-1.1 … WO-2.4
+**Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** M · 🚩 · **Depends on** WO-1.1 … WO-2.4
 **Target** ~2026-08-22, before students walk in ~2026-08-24
 
 **Why it exists.** A three-week-old app will be holding a live term of attendance. The decision to
@@ -20,10 +20,10 @@ not assumed.
 
 ### Before the sitting
 
-- [ ] **1. Start `node tools/serve-https.mjs` and open `https://localhost:8443` on the laptop.**
+- [x] **1. Start `node tools/serve-https.mjs` and open `https://localhost:8443` on the laptop.**
       Loopback, so it resolves on any network including the school's — no certificate address to
-      match, no DHCP to depend on.
-- [ ] **2. Confirm the laptop is on `planbook-shell-v32`.** Cache Storage holds `v32` **and only
+      match, no DHCP to depend on. *(Owner, 2026-08-08.)*
+- [x] **2. Confirm the laptop is on `planbook-shell-v32`.** Cache Storage holds `v32` **and only
       `v32`** — the "only" is the half that catches a failed `activate`, and a cache that layered
       instead of replacing is invisible from inside the app. *(Was `v31`; WO-2.5 bumped it. This
       number goes stale on every shell change and is read as an instruction — check it against
@@ -40,12 +40,12 @@ not assumed.
 From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the attendance ledger itself
 — not a schedule, since there isn't one. What must be right is narrow and testable.
 
-- [ ] **A mark lands and survives a reload.** On the laptop — the device of record — with the app
+- [x] **A mark lands and survives a reload.** On the laptop — the device of record — with the app
       closed and reopened between mark and check. *(Originally written as an iPad check, when the
       iPad was to be the device of record. Re-run on the iPad too as a compatibility pass, but the
-      laptop is the one that gates the term.)*
-- [ ] **A dropped class is distinguishable from an untaken one** — on screen, and in the stored
-      document.
+      laptop is the one that gates the term.)* *(Owner, 2026-08-08.)*
+- [x] **A dropped class is distinguishable from an untaken one** — on screen, and in the stored
+      document. *(Owner, 2026-08-08. Both halves — on screen and in the document.)*
 - [x] **The percentage matches a hand count.** Against a real class, over real recorded meetings.
       *(Owner, 2026-08-08, **against backfilled test data plus current entries, not a real class** —
       there is none yet; the term starts ~2026-08-24. That confirms **the arithmetic**: the app's
@@ -77,22 +77,29 @@ open with a confident wrong number in exactly the week a confident number gets b
 teacher has no way to tell it from a real one, because it *is* a real one. The rehearsal must not be
 able to contaminate the ledger it is rehearsing.
 
-- [ ] Run a **full simulated school day** — **in the throwaway year** — five classes, one dropped,
+- [x] Run a **full simulated school day** — **in the throwaway year** — five classes, one dropped,
       one marked late in the day, one deliberately left untaken, and one marked for yesterday. Then
-      reload and confirm every state reads correctly.
-- [ ] **Afterwards: switch back to the live year and delete the rehearsal year.** Then confirm the
+      reload and confirm every state reads correctly. *(Owner, 2026-08-08.)*
+- [x] **Afterwards: switch back to the live year and delete the rehearsal year.** Then confirm the
       live year's recorded-meeting counts and percentages are exactly what they were before the
-      sitting — the rehearsal is only finished when it has left no trace.
-- [ ] **Backup drill, end to end.** Download the backup, wipe browser storage, restore, and confirm
-      every mark, student, and class returns. Do this on the iPad, not only the laptop.
-- [ ] **Installed on the actual teaching iPad**, from Safari, launching without browser chrome.
-      Record the iPadOS version in `TESTING.md`.
-- [ ] **Airplane mode test.** Full class marked with no network, then reconnect. Nothing lost.
+      sitting — the rehearsal is only finished when it has left no trace. *(Owner, 2026-08-08.)*
+- [x] **Backup drill, end to end.** Download the backup, wipe browser storage, restore, and confirm
+      every mark, student, and class returns. Do this on the iPad, not only the laptop. *(Owner,
+      2026-08-08. Storage cleared via DevTools → Application → Clear site data, which takes the
+      service worker and precache with it — so the restore was also an unintended re-install test.)*
+- [x] **Installed on the actual teaching iPad**, from Safari, launching without browser chrome.
+      Record the iPadOS version in `TESTING.md`. *(Owner, 2026-08-08. **iPadOS 26.5.2**, recorded in
+      `TESTING.md` § WO-2.5.)*
+- [x] **Airplane mode test.** Full class marked with no network, then reconnect. Nothing lost.
+      *(Owner, 2026-08-08.)*
 - [x] **Roll Call! confirmed still deployed and working.** It is the fallback, and *a fallback
       you've decommissioned isn't one.* Do not decommission it. *(Owner, 2026-08-08.)*
-- [ ] The week-one plan is written down: which app is the record of truth, and what the trigger is
-      for falling back. Decide the trigger now, not at 7:45am on a Tuesday.
-- [ ] A backup is downloaded and stored off the device before day one.
+- [x] The week-one plan is written down: which app is the record of truth, and what the trigger is
+      for falling back. Decide the trigger now, not at 7:45am on a Tuesday. *(Owner, 2026-08-08.
+      **Written down outside this repo** — worth copying in here before day one, because the one
+      reader who will need it at 7:45 on a Tuesday is the one who cannot find it.)*
+- [x] A backup is downloaded and stored off the device before day one. *(Owner, 2026-08-08. Taken
+      before the drill below wiped storage, and it is the copy the restore was proved against.)*
 
 ### Where Ship 1 actually runs — decided 2026-08-08
 
