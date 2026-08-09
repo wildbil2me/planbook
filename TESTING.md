@@ -1845,11 +1845,83 @@ it sets the pointer type itself, so it can only ever confirm its own assumption.
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*
 
-Nothing here yet — WO-3.1 through WO-3.10 append their acceptance lines as they land.
+WO-3.1 is the first entry here; WO-3.2 through WO-3.10 append theirs as they land. Append; don't
+restructure.
 
 Grade math gets hand-computed cases, not spot checks: an all-excused category, a zero-point
 assignment, a term with one assignment, and a document where one category has no assignments at
 all (its weight redistributes).
+
+### WO-3.1 — Categories & weights
+
+- [x] A new class arrives with four starter categories that already total 100%, so the warning is
+      off on a class nobody has touched.
+- [x] Weights of 40/35/25 show no warning; changing 25 to 20 warns and names the total as 95%.
+- [x] The warning names the number rather than calling the weights invalid, and it blocks nothing —
+      no error line, no disabled field.
+- [x] The warning is on two surfaces: the banner in the editor, and a badge on the class-manager row
+      behind it.
+- [x] Two classes carry different category sets, weights and names without interference; the four
+      untouched classes stay at 100%.
+- [x] Add, rename, reorder and remove all work, and a category added arrives at 0% without
+      reweighting the ones already there.
+- [x] Removing a category with nothing filed under it takes one tap; removing one that holds work
+      warns first and counts the assignments and scores it takes.
+- [x] Cancelling that warning writes nothing — `rev` does not move.
+- [x] Weights survive a reload and come back out of IndexedDB, warning and all.
+- [x] Weights that are right only in decimal (40.1 + 34.7 + 25.2) are called right.
+- [x] The categories editor is thumbable on the tablet — the 58px weight field in particular, and
+      Remove beside a one-glyph arrow. 👤
+- [x] iPadOS offers a numeric keypad for the weight field, and the spinner is reachable. 👤
+- [x] The amber banner and the row badge are legible on a projector from the back of a room. 👤
+- [x] The categories panel reads correctly on the tablet in both orientations. 👤
+- [x] Offline launch with the network off, `categories.js` served from the precache. 👤
+- [ ] The removal confirm's counted form is read against real assignments, once WO-3.3 can create
+      them. 👤 *(Split off the orientation line above on 2026-08-09 rather than ticked with it: the
+      two were one line, one of them impossible until WO-3.3, and a single box cannot be honestly
+      ticked for both. See the carried-forward limit at the foot of this section.)*
+
+*Not ticked, and owed to WO-3.4/WO-3.5 rather than to a device: the work order's acceptance lines 2
+and 4 both name a **displayed grade**, and nothing in this app renders a percentage yet. See the
+note under those lines in `plans/work-orders/phase-3-gradebook.md`.*
+
+*The desk half is `verify-shell.mjs`, **449 of 449** with zero skips, 21 checks added here and one
+re-pointed. That re-point is the interesting one: `each one arrives with … its other collections
+present and empty` asserted `categories.every(n => n === 0)` because `src/classes.js` seeded none on
+purpose, in a comment naming this work order as the condition it was waiting for. It now asserts the
+starter set and, more to the point, that the starter weights total 100 — a class arriving with the
+warning already on would make the warning the ignorable state.*
+
+*Five mutations, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| `isBalanced()` compares `weightTotal(cls) === 100` instead of within `BALANCE_EPSILON` | **1 red** — the decimal case only, which is the point of the tolerance |
+| `newClass()` seeds `categories: []` again | **2 red**, then the section aborts with no rows to click |
+| `removeCategory()` cascades unconditionally, never opening the confirm | **2 red** — the warning and the cancel |
+| `afterCategoryChange()` dropped from `shell.js`'s typing chain | **3 red** — the manager row keeps a stale total behind the panel |
+| the warning prints "these weights are invalid" instead of the total | **3 red** — every check that asserts the number |
+
+*The first of those is worth its own note, because the first draft of that check proved nothing.
+It used 12.5 + 87.5, which sums to **exactly** 100 in binary — it went green against the
+strict-equality mutation. The set now used (40.1 + 34.7 + 25.2) was found by search rather than
+guessed. This defect appears for some decimal weightings and not others, and never for the round
+numbers anyone reaches for first.*
+
+*The touch-target standing check was re-run for this feature. WO-3.1's new controls are the
+Categories button on each manager row, and inside the editor the name field, the weight field, the
+two reorder arrows, Remove, "Add a category", and the removal confirm's two buttons. The weight
+field is the one this could plausibly have got wrong — an `<input type="number">` is drawn by the
+browser with a spinner inside it and inherits no height from the row it sits in — so it carries its
+own 44px with the vertical padding zeroed, keeping its 58px width. The persistent total is measured
+too, but for legibility and for `scrollWidth > clientWidth` rather than for 44px: it is a sentence,
+not a target, and the "Days off" spill from the first iPad sitting is the failure it is being asked
+about.*
+
+*One limit carried forward, the same one WO-1.6 recorded about its delete confirm. The counted form
+of the removal warning — "9 assignments and 214 scores" — cannot be read on a real document yet,
+because nothing creates an assignment until WO-3.3. It is exercised at the desk against fixtures
+written through the store, and is owed a human read once there is real work to count.*
 
 ---
 

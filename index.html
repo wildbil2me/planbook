@@ -80,8 +80,15 @@
   become the same tap. The way back to the class grid is the "All classes" tab at the head of the
   class row, with a second door in the class view's own panel header.
 
-  Deliberately still absent, so that nothing here has to be un-built later:
-    - Categories and weights — WO-3.1. A class has an empty `categories` for that reason.
+  WO-3.1 filled the one line that used to sit here as "deliberately still absent": a class now
+  arrives with four grading categories that total 100%, and #categoriesModal is where a teacher
+  reweights, renames, reorders and removes them. Two things about that panel are load-bearing
+  rather than decorative. #categoryTotal is drawn in BOTH states and always names the number —
+  "Weights total 95%", never "invalid" — because the total is the thing a teacher mid-setup can act
+  on, and because a line that appears only when something is wrong makes its own absence the
+  message. And #categoryRemoveModal counts the assignments and scores a removal destroys before it
+  destroys them, which is the class-delete grammar rather than the term editor's refusal;
+  src/categories.js argues that departure at the point it makes it.
 
   WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
   service worker registration in src/shell.js, and the eviction banner below the header.
@@ -814,7 +821,9 @@
         Call it whatever you call it out loud — “Period 3 — Biology”, “AP Bio”, “3rd hour”. Four
         quarters unless you choose otherwise, and every term can be renamed, dated, added to, or
         removed afterwards: a new class arrives usable rather than correct. Terms belong to the
-        class, so one class on semesters and another on quarters is an ordinary thing here.
+        class, so one class on semesters and another on quarters is an ordinary thing here. It also
+        arrives with four grading categories adding up to 100% — tests, quizzes, homework,
+        classwork — which are a starting point and not a guess you have to live with.
       </p>
       <p class="class-error hidden" id="classError"></p>
 
@@ -901,6 +910,86 @@
       <div class="modal-actions">
         <button class="class-action-btn danger" id="classDeleteBtn" data-class-delete-confirm>Delete</button>
         <button class="class-action-btn" data-class-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Grading categories and weights for one class (WO-3.1), opened over the class manager exactly
+     as the term editor is — src/modal.js keeps a stack, so Escape closes this and leaves that open.
+     #categoryList and #categoryTotal are rendered by src/categories.js; a specimen row here would
+     be a second truth to keep in step with the real one.
+
+     Three things in the copy below are load-bearing rather than decorative.
+
+     The hint under the list says that an empty category redistributes its weight. That is not a
+     footnote — it is the rule in docs/data-model.md § Grade math that makes a category the teacher
+     has not used yet harmless, and without it the sensible thing to do in September looks like
+     deleting every category you have not put work in.
+
+     The hint says weights that do not add up are not blocked. The teacher is mid-setup; the app's
+     job is to tell her, not to stop her, and saying so where the warning is stops the amber line
+     from reading like an error she has to clear before she can carry on.
+
+     And it offers 0% as the alternative to removal, because "this category does not count this
+     term" and "destroy the work filed under it" are two different intentions and only one of them
+     is reversible. -->
+<div class="modal-overlay hidden" id="categoriesModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoriesModalTitle">
+    <div class="modal-header">
+      <h2 id="categoriesModalTitle">Categories &amp; weights</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        What <strong id="categoriesClassName"></strong> is graded on, and how much each part counts.
+        Every class has its own set, so one class weighted 40/35/25 and another weighted evenly is
+        an ordinary thing here — Planbook never makes them match.
+      </p>
+
+      <div class="modal-section-label">Categories in this class</div>
+      <div class="category-list" id="categoryList"></div>
+      <!-- The persistent total. It is a plain line rather than an aria-live region: this app has
+           exactly one of those (src/live-region.js), and a second one updating per keystroke would
+           read a half-typed number aloud. src/categories.js announces the crossing instead. -->
+      <p class="category-total" id="categoryTotal"></p>
+      <div class="category-actions">
+        <button class="class-action-btn" type="button" data-category-add>Add a category</button>
+      </div>
+      <p class="class-hint">
+        Weights are percentages of the final grade and want to add up to 100. They do not have to
+        right now — nothing is blocked while they are wrong, and Planbook will say what they come
+        to until they add up. A category with no work in it yet doesn’t drag the grade down: its
+        weight spreads across the categories that do have work, so an empty one costs nothing.
+      </p>
+      <p class="class-hint">
+        To stop a category counting without losing anything, set its weight to 0 — the assignments
+        stay and the grade stops using them. Removing is the one that takes the work with it, which
+        is why it counts what goes first.
+      </p>
+      <p class="class-error hidden" id="categoryError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- The removal confirm. Same tier and the same job as the class delete confirm above, and it is
+     deliberately that dialog's grammar rather than the term editor's refusal: a term removal that
+     cascaded would leave assignments pointing at nothing, and this one leaves no orphan at all —
+     the work goes with the category and the count is on screen before it does. The reasoning in
+     full is at removeCategory() in src/categories.js. The two empty elements are filled there. -->
+<div class="modal-overlay hidden" id="categoryRemoveModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoryRemoveTitle">
+    <div class="modal-header">
+      <h2 id="categoryRemoveTitle">Remove this category?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="categoryRemoveLead"></p>
+      <div class="modal-section-label">What goes with it</div>
+      <div class="class-delete-facts" id="categoryRemoveFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" id="categoryRemoveBtn" data-category-remove-confirm>Remove</button>
+        <button class="class-action-btn" data-category-remove-cancel>Cancel</button>
       </div>
     </div>
   </div>

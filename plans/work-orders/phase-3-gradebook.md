@@ -16,7 +16,7 @@ govern this whole phase, and both are about the teacher never being surprised:
 
 ## WO-3.1 — Categories & weights
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.6
+**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-1.6
 **Closes roadmap** Phase 3 → "Weighted categories per class, editable, with a visible warning when
 weights ≠ 100%."
 
@@ -32,10 +32,29 @@ wrong at the start of a term.
 - Sensible starter categories on class creation, trivially editable.
 
 **Acceptance**
-- [ ] Weights of 40/35/25 produce no warning; 40/35/20 warns and shows "95%".
+- [x] Weights of 40/35/25 produce no warning; 40/35/20 warns and shows "95%".
 - [ ] The app still computes a grade while weights are wrong, and says the grade is provisional.
-- [ ] Two classes carry different category sets without interference.
+- [x] Two classes carry different category sets without interference.
 - [ ] Reweighting recomputes every displayed grade in that class immediately.
+
+**Two lines are owed, and they are owed to WO-3.4/WO-3.5 rather than to this work order.** *(Left
+open 2026-08-09, at the end of WO-3.1's build.)* Lines 2 and 4 both name **a displayed grade**, and
+there is no grade anywhere in this app yet: WO-3.4 owns the arithmetic — category percentage,
+weighted class grade, letter from percentage — together with the hand-computed
+`docs/grade-math-cases.md` that is deliberately its only test suite, and WO-3.5 owns the grid that
+renders it. Building either here would have landed that arithmetic without the document that checks
+it, which is the one thing WO-3.4 exists to prevent.
+
+What WO-3.1 built instead is the seam those two lines close through, and it is done rather than
+sketched: `isProvisional(cls)` and `weightTotal(cls)` in `src/categories.js` are pure functions over
+a class, exported for exactly those consumers, and the editor already says in words that a grade
+computed from weights that do not add up is provisional. The half of line 4 that has a consumer
+today — the total and the provisional verdict recomputing as a weight is typed, on the banner and on
+the class-manager row behind it — is driven and measured in `tools/verify-shell.mjs`.
+
+**The follow-up:** when WO-3.5 renders a grade, it reads `isProvisional()` for the class and labels
+the figure; ticking lines 2 and 4 belongs to that work order's own pass, against a real percentage
+on screen. Nothing further is needed here.
 
 ---
 

@@ -59,6 +59,17 @@
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
                                       and on `change` rebuilds a date field that was cleared
+      data-category-manage="<classId>" opens the grading categories for that class
+      data-category-add               adds a category to the class the editor is open for, at 0%
+      data-category-move-up="<id>"    moves that category one place earlier in the list
+      data-category-move-down="<id>"  one place later
+      data-category-remove="<id>"     removes it — on the tap when nothing is filed under it, and
+                                      through a confirm that counts the assignments and scores when
+                                      something is
+      data-category-remove-confirm    carries out that removal
+      data-category-remove-cancel     abandons it, having written nothing
+      data-category-field="name|weight" + data-category-id: an input; edits that field as it is
+                                      typed, and redraws the running weights total beside it
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
                                       question mark. `P` is a step and is still never STORED:
@@ -170,6 +181,11 @@ import * as store from './store.js';
 import { refreshYearButton, openYearPicker, switchYear, createYearFromForm } from './year-picker.js';
 import * as backup from './backup.js';
 import * as classes from './classes.js';
+/* WO-3.1. Its own module rather than a third section of src/classes.js, and that file's header
+   argues why; the import runs one way — classes.js imports the seed and the weight arithmetic from
+   here, and this module imports nothing back, so "which class is open" is resolved below and
+   handed down as an id. */
+import * as categories from './categories.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* Imported here for the seam at the foot of this file and for nothing else — every control a hall
@@ -230,6 +246,24 @@ function afterClassChange() {
   home.refreshHome();
   if (!classes.getSelectedClassId()) showHome();
   else if (views.currentView() === 'class') attendance.renderAttendance();
+}
+
+/*
+  A grading category changed, and the screen underneath the panel redrawn.
+
+  ONE CALL, AND IT IS THE SAME FAILURE afterClassChange() DESCRIBES ONE VIEW FURTHER IN. The class
+  manager's rows now carry the weights total (src/classes.js's classRow), and the categories editor
+  opens on top of that manager — so a teacher who fixes 95% to 100% and closes the panel would be
+  looking at a row still saying "weights 95%", which reads as the app not having taken her change.
+  src/categories.js cannot make that call itself: it would have to import src/classes.js, and the
+  import between those two already runs the other way.
+
+  NOT afterClassChange(). Nothing here changes which classes exist, their order, or which one is
+  open, so the cards and the class view have nothing to redraw — and afterClassChange() also
+  decides where the teacher should be standing, which is not a thing typing a weight should do.
+*/
+function afterCategoryChange() {
+  classes.refreshClassList();
 }
 
 /*
@@ -465,6 +499,50 @@ document.addEventListener('click', (e) => {
   if (termRemove) { classes.removeTerm(termRemove.getAttribute('data-term-remove')); return; }
   const termPreset = e.target.closest('[data-term-preset]');
   if (termPreset) { classes.applyPreset(termPreset.getAttribute('data-term-preset')); return; }
+
+  /* ── grading categories & weights (WO-3.1) ──
+     Directly under terms, because these are the same act: setting a class up. Every one of the six
+     below chains afterCategoryChange(), including the two that may write nothing — a repaint of a
+     five-row list that did not change costs a paint, and forgetting one on the path that DID write
+     costs a teacher a row still reporting the total she has just fixed.
+
+     The editor is opened with an id resolved HERE rather than inside src/categories.js: that module
+     is deliberately a leaf (see the import at the top of this file), and "which class" is a
+     question this file answers for every other module too. */
+  const categoryManage = e.target.closest('[data-category-manage]');
+  if (categoryManage) {
+    categories.openCategoryEditor(categoryManage.getAttribute('data-category-manage')
+      || classes.getSelectedClassId(), categoryManage);
+    return;
+  }
+  if (e.target.closest('[data-category-add]')) {
+    categories.addCategory(); afterCategoryChange(); return;
+  }
+  const categoryUp = e.target.closest('[data-category-move-up]');
+  if (categoryUp) {
+    categories.moveCategoryUp(categoryUp.getAttribute('data-category-move-up'));
+    afterCategoryChange(); return;
+  }
+  const categoryDown = e.target.closest('[data-category-move-down]');
+  if (categoryDown) {
+    categories.moveCategoryDown(categoryDown.getAttribute('data-category-move-down'));
+    afterCategoryChange(); return;
+  }
+  /* One hook for both halves of the removal, and the branch is in src/categories.js rather than
+     here: whether a category holds assignments is a question about the document, and this file
+     routes taps. The opener is passed for the case where it opens the confirm — src/modal.js needs
+     somewhere to hand focus back to, and Safari does not focus a button when you tap it. */
+  const categoryRemove = e.target.closest('[data-category-remove]');
+  if (categoryRemove) {
+    categories.removeCategory(categoryRemove.getAttribute('data-category-remove'), categoryRemove);
+    afterCategoryChange(); return;
+  }
+  if (e.target.closest('[data-category-remove-confirm]')) {
+    categories.confirmRemoveCategory(); afterCategoryChange(); return;
+  }
+  if (e.target.closest('[data-category-remove-cancel]')) {
+    categories.cancelRemoveCategory(); return;
+  }
 
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
@@ -794,6 +872,14 @@ document.addEventListener('input', (e) => {
   const field = e.target.closest('[data-term-field]');
   if (field) { classes.editTermField(field); return; }
 
+  /* A category's name or its weight, saved as it is typed and by the same debounce. The chain runs
+     per keystroke on purpose: the total is what the teacher is watching while she types the number,
+     and a running total that lags the field it is adding up is worse than no total. The row itself
+     is not re-rendered — see src/categories.js, where replacing the input under the caret is the
+     failure that rule exists for. */
+  const categoryField = e.target.closest('[data-category-field]');
+  if (categoryField) { categories.editCategoryField(categoryField); afterCategoryChange(); return; }
+
   /* The registry's search box, which is the one hook on this listener that writes NOTHING — it
      narrows the rows on screen. It is here rather than on `keyup` for the reason the fields below
      are: `input` is the event that fires for a paste, for dictation, and for the software
@@ -1044,6 +1130,16 @@ window.planbook = {
      result is inspected without a second copy of the resolution logic in the harness. Nothing in
      the app reads window.planbook — see the block above for why the seam outlived the shelf. */
   classes,
+  /* `categories` joined at WO-3.1, and for the reading reason `classes` gives rather than a driving
+     one: every control this feature has is a button or a field in #categoriesModal and a teacher
+     can touch all of them. What no click can show is the pair of claims WO-3.4 and WO-3.5 will be
+     built on — what weightTotal() makes of a set of weights, and whether isProvisional() agrees
+     with the banner on screen. Asking the module is the only way to tell a build where the banner
+     is computed from the exported arithmetic from one where the banner does its own sum and the
+     export is decorative, and a harness carrying its own copy of that sum could agree with itself
+     and disagree with the app. Nothing in the app reads window.planbook — see the block above for
+     why the seam outlived the shelf. */
+  categories,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

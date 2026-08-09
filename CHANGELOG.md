@@ -38,6 +38,48 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.1 — every class carries its own grading categories, and what each one is worth.** Tests,
+  quizzes, homework, whatever you actually put in the book. A new class arrives with four that
+  already total 100%, and all of it is yours to rename, reweight, reorder or throw away. A category
+  you add starts at 0%, because any other guess would silently reweight the ones already there.
+
+  **The weights are watched rather than policed.** If they come to 95% instead of 100%, Planbook
+  says so — in the editor, and on the class-manager row behind it, so a class left half-finished is
+  visible without opening five panels to find it. Then it gets out of the way: nothing is blocked,
+  no field is disabled, no number is repaired. You are told the total, and told that any grade
+  worked out from it is provisional until it adds up. Half-finished is the normal state of a class
+  in August.
+
+  **Removing a category is the one thing here that destroys anything, so it counts first.** The
+  confirm names the assignments filed under it and the scores they hold, and offers the other answer
+  while it has your attention — set the weight to 0 and the category stops counting without losing
+  the work. A category holding nothing goes on a single tap. This deliberately departs from the term
+  editor next door, which refuses the same move: a removed term would leave assignments pointing at
+  an id that no longer exists, still looking like work and counted by nothing, where a category
+  removal that takes its assignments with it leaves no orphan at all. The argument is written at the
+  point of departure in `src/categories.js`, not only here.
+
+  **Weights are stored exactly as typed** — nothing clamps, rounds or repairs, per the data model's
+  own rule that a number which silently isn't what you typed is the worst thing a gradebook can do.
+  The one tolerance is 0.005, which exists solely so binary floating point cannot call
+  40.1 + 34.7 + 25.2 wrong; it is half the smallest gap a two-decimal field can express, so it
+  cannot hide a real one. 33.33 × 3 = 99.99 still warns, correctly.
+
+  **Read on the teaching iPad on 2026-08-09** — the editor is thumbable including the 58px weight
+  field, iPadOS offers the numeric keypad, the amber banner and the row badge carry to the back of a
+  room on a projector, both orientations read correctly, and the app launches with the network off
+  with `categories.js` served from the precache.
+
+  **Two of the work order's four acceptance lines are still open, on purpose, and WO-3.1 stays
+  🔨 IN PROGRESS because of it.** Both name a *displayed grade*, and nothing in this app renders a
+  percentage yet — the grade engine is WO-3.4 and the score grid WO-3.5. Building the arithmetic
+  here would have landed it without the hand-computed cases WO-3.4 names as its only test suite, so
+  it was left alone and the boxes were left open rather than ticked against a half-measure.
+  `weightTotal()` and `isProvisional()` ship as pure functions for those work orders to read, and
+  the editor already says the word *provisional* in the meantime. One further check is owed to
+  WO-3.3 rather than to a device: the removal confirm's counted form has only ever been read against
+  fixtures, because nothing creates an assignment yet.
+
 - **WO-2.15 — `wo-gate.mjs` now checks itself, and reads the fragments it has been trusting.**
   Two new read-only verbs, `--self-check` and `--audit`, plus the nine rotted header fragments the
   first `--audit` run found.

@@ -47,6 +47,12 @@ import { getDoc, update, newId } from './store.js';
 import { openModal, closeModal } from './modal.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
+/* WO-3.1. Two things, both of them one-directional: the categories a new class is seeded with, and
+   the arithmetic the row note below reports. src/categories.js imports nothing from this file — the
+   resolution of "which class is open" stays here and shell.js hands that module an id — so this is
+   a leaf import rather than the fifth loop this repo has refused. */
+import { starterCategories, categoriesOf, weightTotal, isProvisional, formatWeight }
+  from './categories.js';
 /* WO-1.13. Selecting a class has to put that class's working surface in <main>, which is the half
    this module has been missing since WO-1.6 — see selectClass() at the bottom of this section.
    src/views.js imports nothing but src/prefs.js, precisely so that the modules which navigate can
@@ -189,9 +195,15 @@ export function getSelectedTerm() {
 
 /*
   A new class, carrying the whole shape docs/data-model.md settles, with every collection present
-  and empty rather than absent — the reason is at src/store.js:102-104. `categories` stays empty
-  on purpose: weights are WO-3.1 and out of scope here, and a category seeded now would be a
-  weight nobody chose sitting in the grade math the moment WO-3.1 lands.
+  and empty rather than absent — the reason is at src/store.js:102-104.
+
+  `categories` WAS EMPTY UNTIL WO-3.1, and the note that used to sit here said why: weights were
+  out of scope, and "a category seeded now would be a weight nobody chose sitting in the grade math
+  the moment WO-3.1 lands." WO-3.1 has landed, and the condition that comment was waiting for is
+  the thing that has changed — the weights are now visible, editable and reported on, so a starter
+  set is a starting point a teacher can see rather than a hidden assumption. The seed lives in
+  src/categories.js beside the rest of the category rules; it totals 100 deliberately, so a fresh
+  class arrives with the warning OFF and the first thing a teacher meets is not a complaint.
 
   `archived: false` is the one field not in that document's sketch. The work order asks for
   archiving, archiving has to survive a save, and a boolean on the class is the whole of it.
@@ -202,7 +214,7 @@ function newClass(name, presetKey) {
     name: name,
     archived: false,
     terms: presetTerms(presetKey),
-    categories: [],
+    categories: starterCategories(),
     letterScale: null,
     roster: [],
   };
@@ -575,6 +587,28 @@ function classRow(cls, index, siblings) {
     note.textContent = terms.length ? plural(terms.length, 'term', 'terms') : 'No terms yet';
     row.append(note);
 
+    /*
+      WHERE WO-3.1's WARNING IS PERSISTENT RATHER THAN MERELY UNDISMISSABLE. The banner inside the
+      categories editor says the total while the teacher is in there; this is the same fact on the
+      screen she sets five classes up from, so "which one did I not finish?" is a thing she can see
+      without opening five panels. The number is named here too, for the same reason it is named
+      there — "weights 95%" is actionable and "weights wrong" is not.
+
+      ACTIVE ROWS ONLY. An archived class is one the teacher has put away, and an amber note about
+      the weights of a class that is not on the bar is a complaint about a decision she has already
+      made.
+    */
+    if (!isArchived(cls) && isProvisional(cls)) {
+      const warn = document.createElement('span');
+      warn.className = 'class-row-warn';
+      warn.textContent = categoriesOf(cls).length
+        ? 'weights ' + formatWeight(weightTotal(cls)) + '%'
+        : 'no categories';
+      warn.title = 'The grading weights in this class do not add up to 100%, so any grade in it '
+        + 'is provisional. Open Categories to set them.';
+      row.append(warn);
+    }
+
     if (isArchived(cls)) {
       actions.append(actionButton('Restore', 'data-class-restore', cls.id, 'restore'));
       const del = actionButton('Delete', 'data-class-delete', cls.id, 'delete');
@@ -596,6 +630,13 @@ function classRow(cls, index, siblings) {
       const termsBtn = actionButton('Terms', 'data-term-manage', cls.id);
       termsBtn.setAttribute('aria-haspopup', 'dialog');
       actions.append(termsBtn);
+      /* WO-3.1's one door, beside the one it copies. The class manager is where a class is set up,
+         which is where the work order says weights get set — "the first thing to set up in a new
+         class". Deliberately NOT a fourth icon in the header: index.html measures that row at 390px
+         and records that a fourth control there puts the page into horizontal overflow. */
+      const catsBtn = actionButton('Categories', 'data-category-manage', cls.id);
+      catsBtn.setAttribute('aria-haspopup', 'dialog');
+      actions.append(catsBtn);
       actions.append(actionButton('Rename', 'data-class-rename', cls.id));
       actions.append(actionButton('Archive', 'data-class-archive', cls.id, 'archive'));
     }
@@ -604,6 +645,17 @@ function classRow(cls, index, siblings) {
   row.append(actions);
   return row;
 }
+
+/*
+  Exported at WO-3.1, and it is the only mutator-adjacent function in this file with a caller
+  outside it. The row note now carries the weights total (see classRow above), and weights are
+  edited in a panel this module knows nothing about — so when src/categories.js writes one, the
+  manager sitting underneath it is describing a class as it was. src/shell.js chains this, exactly
+  as it chains afterClassChange() for the home screen's cards: the second view of a fact redrawn
+  from the file where this app states the order things happen in, rather than by an import that
+  would close a loop.
+*/
+export function refreshClassList() { renderClassList(); }
 
 function renderClassList() {
   const doc = getDoc();

@@ -343,6 +343,24 @@ asks — every button has an accessible name, and every button whose visible tex
 both an `aria-label` and a `title`. 150 buttons, 55 of them one glyph. Eight mutations, all reverted
 and tabulated in `TESTING.md` § WO-2.5.
 
+**449 at WO-3.1**, and twenty-one of the twenty-two is a new section; the twenty-second is a
+RE-POINT rather than an addition, which is why the arithmetic reads 428 + 21. The re-pointed one had
+asserted that a new class arrives with `categories` EMPTY — true, deliberate, and documented in
+`src/classes.js` in a comment naming WO-3.1 as the condition it was waiting for — and now asserts
+the starter set and that its weights total 100. Three of the twenty-one are worth knowing about.
+**The float-tolerance check was vacuous when first written and was caught by its own mutation
+run**: it used 12.5 + 87.5, which sums to exactly 100 in binary, so it went green against a build
+where `isBalanced()` compared with `===`; the set it uses now (40.1 + 34.7 + 25.2 = 100.00000000000001)
+was found by search, and it is the only check in the section that can tell the tolerance from a
+strict equality. **The total is asserted as a SUBSTRING of the sentence a teacher reads** — "95%" —
+rather than as a boolean about the banner being amber, because "these weights are invalid" satisfies
+every other clause in that check and is precisely what the work order forbids; mutating the copy to
+say exactly that turns three red. And **every claim about the total is made twice, once on the
+banner in the editor and once on the badge on the class-manager row behind it**, because those are
+two renderings of one number drawn by two modules — dropping the repaint chain in `src/shell.js`
+leaves the banner right and the row a keystroke behind, which is a defect only a check that reads
+both can see. Five mutations, all reverted and tabulated in `TESTING.md` § WO-3.1.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

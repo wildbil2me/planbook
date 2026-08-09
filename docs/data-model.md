@@ -271,6 +271,20 @@ happens to them.
 must be visible in the cell — a score that silently isn't what you typed is the worst thing a
 gradebook can do.
 
+**Category weights do not have to total 100, and a reader must not assume they do.** *(Added
+2026-08-09, WO-3.1.)* A class halfway through being set up totals 85; a class the teacher has not
+opened yet has no categories at all. Neither is an error state and neither is refused — the editor
+says what the weights come to and lets her carry on, because the alternative is an app that blocks
+setup until it is perfect. `src/categories.js` owns the arithmetic: `weightTotal(cls)` and
+`isProvisional(cls)`, both pure functions of a class, and the second is what a screen showing a
+grade reads to say the figure is provisional. Two consequences for the grade engine, and neither is
+a new rule — both fall out of the redistribution rule above, which already normalises by the sum of
+the categories that have work rather than by 100. It divides by the **actual** total, so a class at
+85 still produces a sensible weighted average and only the label changes. And a class with no
+categories has no grade at all, which is "no grade yet" and not `0%`.
+Weights are stored exactly as typed — decimals included, and `0` is a real weight, which is how a
+teacher stops a category counting without destroying the work filed under it.
+
 ## Accommodations — the most sensitive data in the app
 
 `supports` holds IEP and 504 accommodations, medical needs, and behavior plans. A teacher is
