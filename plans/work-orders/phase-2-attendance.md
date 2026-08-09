@@ -1221,6 +1221,18 @@ it is supposed to close would simply have stayed open with a green run behind it
   is real; if it is, it needs handling, and if it is not, it should not be in a header block.
 - Whatever the sweep finds, recorded where the next person will see it rather than fixed and
   forgotten.
+- **A drift check on `ROADMAP.md`'s progress dashboard.** Count the ticked and total boxes under
+  each `## Phase N` heading and compare against that phase's dashboard row, including the overall
+  total — which must also equal the sum of its own rows. **Report only, never write**: the
+  out-of-scope rule below still binds, and `--tick` touches the same files after this work order
+  that it touches before it. This is *not* a `--self-check` item — that flag plants violations and
+  tests the tool, whereas this checks the documents, so it rides the normal run and takes the same
+  `HELD`-versus-`NOTE` decision as the zero-match fragment above. **Why it is here:** `ROADMAP.md:36`
+  makes updating the dashboard row a manual fourth step, `wo-gate.mjs` only ever writes the dashboard
+  in `work-orders/README.md`, and nothing reads the roadmap's back. Found 2026-08-08 with Phase 1
+  reading `🔨 IN PROGRESS · 11/12` against **twelve ticked boxes and zero unticked** — Phase 1 having
+  closed on 2026-08-06 — Phase 2 reading 10/16 against twelve, and an overall of 22/81 where the rows
+  sum to 25/82. Three wrong numerators, and a denominator wrong independently of all of them.
 
 **Out of scope** — no new script and no `tools/lib/`, per
 [`../verification-tooling.md`](../verification-tooling.md); `--self-check` lives in the file it
@@ -1253,6 +1265,13 @@ is a different file's problem.
       family of rot this work order exists to catch, arriving in its own acceptance list.
 - [ ] Every `Closes roadmap` fragment in `plans/work-orders/` is reported as matching exactly one
       box, or listed as not doing so with the reason. Run it over all of them, not a sample.
+- [ ] Every `## Phase N` row in `ROADMAP.md`'s dashboard matches the box counts under its own
+      heading, or is reported as not doing so **with both numbers shown**; the overall row is
+      checked against the sum of the rows as well as against the file. **Prove it on a planted
+      wrong count in a temp copy** — the tree's own three wrong rows are being corrected by hand
+      before this work order lands and cannot be the fixture. *(That sentence is the lesson from
+      acceptance line 6 above, which named a fixture that was spent the day WO-2.5 shipped. A work
+      order about drift should not keep writing acceptance lines that drift.)*
 - [ ] `--tick`, `--start` and `--release` behave exactly as they did before on the paths that already
       work — WO-2.14's acceptance list, re-run.
 - [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — **all checks passing, zero

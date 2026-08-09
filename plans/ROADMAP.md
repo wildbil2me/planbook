@@ -49,15 +49,23 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | Phase | What | Status | Progress |
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
-| 1 | Shell, store, roster | 🔨 IN PROGRESS | 11/12 `[█████████░] 92%` |
-| 2 | Attendance | 🔨 IN PROGRESS | 10/16 `[██████░░░░] 63%` |
+| 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 12/16 `[████████░░] 75%` |
 | 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **22/81 `[███░░░░░░░] 27%`** |
+| | | **Overall** | **28/82 `[███░░░░░░░] 34%`** |
+
+*Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
+closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
+WO-2.5's tick made it two. The overall row said 22/81 while its own rows summed to 25/82: three
+wrong numerators and a denominator wrong independently of them. **This table is maintained by hand**
+— step 3 of the protocol above — and `wo-gate.mjs` only ever writes the dashboard in
+`work-orders/README.md`, so nothing catches it drifting. A report-only drift check is booked as a
+deliverable of WO-2.15; until it lands, these numbers are worth recounting rather than trusting.*
 
 ---
 

@@ -28,11 +28,12 @@ not assumed.
       instead of replacing is invisible from inside the app. *(Was `v31`; WO-2.5 bumped it. This
       number goes stale on every shell change and is read as an instruction — check it against
       `sw.js` when you get here, rather than trusting the line.)*
-- [ ] **3. Take a backup and put it off the laptop** — before the rehearsal, not as part of it. The
+- [x] **3. Take a backup and put it off the laptop** — before the rehearsal, not as part of it. The
       backup drill below wipes storage on purpose. This is the copy that exists if it goes wrong.
-- [ ] **4. WO-2.5 has landed.** Without the keyboard path a class of 25 is marked by mouse, one
+      *(Owner, 2026-08-08.)*
+- [x] **4. WO-2.5 has landed.** Without the keyboard path a class of 25 is marked by mouse, one
       click per student, while students walk in. That is the version of laptop-only that fails, so
-      the rehearsal is not worth running until it is in.
+      the rehearsal is not worth running until it is in. *(✅ DONE 2026-08-08, commit `3b36b3a`.)*
 
 ### The three things that must be right
 
@@ -45,7 +46,13 @@ From [`../ROADMAP.md`](../ROADMAP.md): the riskiest thing on day one is the atte
       laptop is the one that gates the term.)*
 - [ ] **A dropped class is distinguishable from an untaken one** — on screen, and in the stored
       document.
-- [ ] **The percentage matches a hand count.** Against a real class, over real recorded meetings.
+- [x] **The percentage matches a hand count.** Against a real class, over real recorded meetings.
+      *(Owner, 2026-08-08, **against backfilled test data plus current entries, not a real class** —
+      there is none yet; the term starts ~2026-08-24. That confirms **the arithmetic**: the app's
+      number and a hand count agree over the meetings that exist. It does not confirm the thing the
+      paragraph below asks for, which is that the number the teacher sees in the **live** year
+      agrees with the number she can count herself. **Re-run this in week one against a real class**
+      and note it here; until then this tick is about the formula, not about the term.)*
 
 **Verify all three against a real class before trusting it with a term.**
 
@@ -81,8 +88,8 @@ able to contaminate the ledger it is rehearsing.
 - [ ] **Installed on the actual teaching iPad**, from Safari, launching without browser chrome.
       Record the iPadOS version in `TESTING.md`.
 - [ ] **Airplane mode test.** Full class marked with no network, then reconnect. Nothing lost.
-- [ ] **Roll Call! confirmed still deployed and working.** It is the fallback, and *a fallback
-      you've decommissioned isn't one.* Do not decommission it.
+- [x] **Roll Call! confirmed still deployed and working.** It is the fallback, and *a fallback
+      you've decommissioned isn't one.* Do not decommission it. *(Owner, 2026-08-08.)*
 - [ ] The week-one plan is written down: which app is the record of truth, and what the trigger is
       for falling back. Decide the trigger now, not at 7:45am on a Tuesday.
 - [ ] A backup is downloaded and stored off the device before day one.
@@ -137,7 +144,16 @@ whatever build it last received.
 
 ### Ship gate
 
-- [ ] `TESTING.md` Phase 1 and Phase 2 sections fully passing. *(Checked 2026-08-08: 246 boxes
+- [x] `TESTING.md` Phase 1 and Phase 2 sections fully passing. *(2026-08-08, second pass: **255 of
+      255, zero open.** The six that held this line open were all in the struck-through
+      `~~WO-2.1 — Attendance marking screen~~` section — checks written against commit `11f0780`,
+      a one-class one-day screen that no longer exists. They were never run and must never be
+      ticked, so they are now marked ⊘ superseded, each naming the live check that replaced it:
+      five in § WO-2.1 — Attendance registry, and the portrait one in § WO-2.12, which removed the
+      condition rather than passing the test — portrait draws a single day column, so no row can
+      spill. See the ⊘ entry in the Legend for the rule. If any pointer is judged not to cover its
+      original, that box comes back open and this line reopens with it.)* *(Earlier: checked
+      2026-08-08 at 246 boxes and left open with the judgement recorded.)*
       ticked, 6 open. All six are under the struck-through `WO-2.1 — Attendance marking screen`
       heading, superseded 2026-08-06 and kept as a record; they were never run against the screen
       that shipped and ticking them would be false. Read as satisfied — but it is a judgement, so it

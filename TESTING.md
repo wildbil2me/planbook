@@ -29,6 +29,13 @@ means not yet run, or nothing built yet for it to run against.
 printer, a screen reader, ears. No headless run and no desktop device emulator closes one of
 these, and marking one passed from a desktop is how a claim becomes a lie.
 
+**⊘ marks a check that was superseded before it was ever run**, and it is deliberately not a
+checkbox. It appears only inside a struck-through section kept as a record. A superseded check must
+never be ticked — it did not pass — but leaving it as `- [ ]` is equally wrong, because it reads as
+work outstanding against a screen that no longer exists and it holds a ship gate open forever. Every
+⊘ names the live check that replaced it, so the coverage is followed rather than assumed. If no live
+check can be named, the box is **not** superseded and stays open.
+
 ## Before running the desktop half, run the script
 
 ```
@@ -752,7 +759,10 @@ grid lands. Nothing below is a claim about the current tree.
 - [x] Marking a class taken with zero exceptions still creates a record — otherwise "taken with
       everyone present" is indistinguishable from "forgot."
 - [x] One tap drops a class; one tap undoes it.
-- [ ] Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+- ⊘ Taking attendance for a class of 25 with two absences takes under 15 seconds on an iPad. 👤
+      *(Superseded. Duplicated by the stopwatch line below, which is ticked, and re-run against the
+      shipping grid at § WO-2.1 — Attendance registry → "Twenty-five students, two absences, under
+      15 seconds".)*
 - [x] All five marks are reachable without a submenu.
 - [x] The document after a full day of five classes contains no `P` entries.
 
@@ -779,17 +789,27 @@ against a class with a real 25-name roster:
 - [x] Twenty-five students, two absences, **under 15 seconds**, timed with a stopwatch from tapping
       the card's state line. This is the acceptance line, and it is the only one that decides
       whether the flow survives contact with a period starting. 👤
-- [ ] The three states are readable **from where you stand** — dropped vs not-taken-yet, at arm's
+- ⊘ The three states are readable **from where you stand** — dropped vs not-taken-yet, at arm's
       length, in a lit classroom, without leaning in to read the words. 👤
-- [ ] Mark two students, then force-quit the app mid-period and relaunch. Both marks are still
+      *(Superseded → § WO-2.1 — Attendance registry, "Unlock a past column and look at the screen
+      from where you stand at the front of the room", which asks it of the shipping grid.)*
+- ⊘ Mark two students, then force-quit the app mid-period and relaunch. Both marks are still
       there. *(There is no submit step by design; this is what makes that safe rather than
-      reckless.)* 👤
-- [ ] Every control on the marking screen takes a thumb: the five letters on a row, "Everyone's
+      reckless.)* 👤 *(Superseded → § WO-2.1 — Attendance registry, same words, run on the grid; the
+      hall-pass half is § WO-2.8's force-quit-from-the-app-switcher line.)*
+- ⊘ Every control on the marking screen takes a thumb: the five letters on a row, "Everyone's
       here", "Didn't meet", and the card's own state line. Tap the letters at the edges, not the
-      middle — that is where the WO-1.2 defect hid. 👤
-- [ ] The row does not spill sideways in portrait, and the list scrolls as one surface (no
-      scroller-inside-a-scroller stealing the flick). 👤
-- [ ] VoiceOver reads a mark button as the word and the student's name, not as a bare letter. 👤
+      middle — that is where the WO-1.2 defect hid. 👤 *(Superseded → § WO-2.1 — Attendance
+      registry, "Every control takes a thumb". The controls this line names are gone: the grid has
+      no row of five letters and no "Everyone's here".)*
+- ⊘ The row does not spill sideways in portrait, and the list scrolls as one surface (no
+      scroller-inside-a-scroller stealing the flick). 👤 *(Superseded by WO-2.12, which removed the
+      condition rather than passing the test: **portrait now draws one day column**, so there is no
+      multi-column row to spill. The rotation and scroll half is § WO-2.12's "Turn the iPad from
+      portrait to landscape mid-class", which asserts the scroll position survives the turn.)*
+- ⊘ VoiceOver reads a mark button as the word and the student's name, not as a bare letter. 👤
+      *(Superseded → § WO-2.1 — Attendance registry, "VoiceOver reads a cell as the student's name,
+      the day and the mark".)*
 - [x] Offline launch with the network off: `attendance.js` and `attendance.css` are served from the
       precache and the screen still marks. 👤 *(Owner, 2026-08-06. Same physical test as the
       duplicate of this line in the other work order's list.)*
@@ -1814,10 +1834,10 @@ dates put the first of those at ~2026-08-24 (`work-orders/gates.md`). Whatever w
 satisfied the owner; it was not that. **If the doorway is re-sat once a live class exists, note it
 here** — the go-live rehearsal leans on these three.*
 
-*Still unrecorded, and worth one line when the iPad is next to hand: **what `matchMedia('(pointer:
-coarse)').matches` returns with the keyboard attached**. If a trackpad model reports `fine`, the
-entire coarse block stops applying while a thumb is still the input — a defect `verify-shell.mjs`
-cannot see, because it sets the pointer type itself.*
+*`matchMedia('(pointer: coarse)')` **still matches with the keyboard attached** — owner, 2026-08-08,
+iPadOS 26.5.2. So the coarse block keeps applying and every 44px rule stays live on the device where
+a thumb is still the input. This was worth asking because `verify-shell.mjs` structurally cannot:
+it sets the pointer type itself, so it can only ever confirm its own assumption.*
 
 ---
 
