@@ -23,6 +23,16 @@ and all three refuse to touch a 👤 line or `CHANGELOG.md`. Since WO-2.14 `--ti
 order's own Acceptance list first and writes `🔨 IN PROGRESS` rather than `✅ DONE` when a line is
 still open, because the one script that edits the tracker is the one nothing else checks.
 
+**Since WO-3.11 the statuses it writes are three different facts rather than two.** `--start` writes
+`🤖 CLAIMED — <dispatch>` (the date, unless `--dispatch <label>` says otherwise) and `--release` is the
+way back out of it — and out of nothing else, so a caller who is wrong gets a refusal instead of a
+finished work order set back to `⬜ NOT STARTED`. `🔨 IN PROGRESS` now means only what `--tick` writes:
+part-built, nobody in flight. A work order that **landed** carrying Acceptance lines another work order
+will close is `✅ DONE` with a `**Owes**` field, and those lines stay `- [ ]` with a `→ WO-x.y` marker.
+`--tick` honours a marker **only while it can find the matching open box under the named target** —
+resolve or hold, because a marker taken on trust is a `- [x]` spelled with an arrow, and the hand-ticked
+version with a paragraph under it explaining that ☑ did not mean "verified" is what WO-3.11 replaced.
+
 **Since WO-2.15 it also refuses, writing nothing at all, when the trackers are wrong about
 themselves** — a `**Closes roadmap**` fragment that closes no box, or a `ROADMAP.md` dashboard row
 that disagrees with the boxes under its own heading. An open Acceptance line means the *work* is
@@ -35,14 +45,15 @@ Two flags that write nothing anywhere:
 
 ```
 node tools/wo-gate.mjs --audit         every **Closes roadmap** fragment against ROADMAP.md's boxes,
-                                       and ROADMAP.md's dashboard against its own box counts
+                                       every **Owes** pointer against the box it names, and
+                                       ROADMAP.md's dashboard against its own box counts
 node tools/wo-gate.mjs --self-check    plant every violation this script is supposed to catch, in a
                                        temp copy of plans/, and fail if one stops being caught
 ```
 
-`--self-check` copies `plans/` to a temp directory, writes a **synthetic** work order into the copy,
-plants nine violations against it, runs the script over the copy, and deletes the directory on both
-exit paths. Two things about it are load-bearing. **Every plant path goes through a guard that
+`--self-check` copies `plans/` to a temp directory, writes two **synthetic** work orders into the copy,
+plants thirteen violations against them, runs the script over the copy, and deletes the directory on
+both exit paths. Two things about it are load-bearing. **Every plant path goes through a guard that
 refuses anything inside the repository** — WO-2.15 was itself `🔨 IN PROGRESS` while it was being
 written, so a plant that escaped would have corrupted a live work order and looked hand-written
 afterwards. And **the fixture is synthetic on purpose**: WO-2.15's own acceptance list had to be
@@ -50,6 +61,23 @@ re-cut twice because it named real work orders as fixtures and both were spent w
 `--against <path>` runs the plants over a *different* copy of the script, which is how each plant is
 proved able to fail — `git show 7973a42:tools/wo-gate.mjs` into a temp file and seven of the nine go
 red. **A green run is not coverage**, and the run says so in its own output.
+
+**WO-3.11's four plants were proved the same way and then again more narrowly**, because the broad
+run proves less than it looks like it does: against `git show 128d6f4:tools/wo-gate.mjs`, eleven of the
+thirteen go red — but most of them go red because that script has never heard of `🤖 CLAIMED` and
+refuses the tick, which says nothing about whether a pointer plant can see a pointer defect. So each
+was also run against a copy of the *current* script with one behaviour mutated, and the interesting
+part is what did **not** go red beside it:
+
+| Mutation | Result |
+|---|---|
+| `resolveRehome()` returns `null` always — the marker is taken on trust | **2 red**: the deleted/reworded plant and the unresolvable-`**Owes**` plant. The resolving plant stays green, which is the point — a resolver that says yes to everything passes it |
+| a re-homed line still counts as holding the work order open | **2 red**: the resolving plant, and `next` still hiding the dependent |
+| `--release` refuses only `⬜ NOT STARTED` | **1 red**: the release plant, on `✅ DONE` and `🔨 IN PROGRESS` |
+| a target box that is already `[x]` resolves anyway | **1 red**: the unresolvable-`**Owes**` plant, on that case alone |
+| `**Owes**` and the `→` markers need not agree | **1 red**: same plant, on the orphaned-field case |
+
+Five mutations, all reverted, none of them touching a plant it was not aimed at.
 
 **It has a precondition, and since WO-2.16 it states it and checks it first: the trackers must already
 be clean.** The copy inherits whatever drift `plans/` is carrying, drift is what `--tick` refuses over,

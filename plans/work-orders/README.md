@@ -24,8 +24,15 @@ up, finished, and verified without needing to hold the rest of the project in yo
 
 **Do not tick a work order that is written but unverified.** Same rule as the roadmap, same reason.
 
-**Status vocabulary:** `⬜ NOT STARTED` · `🔨 IN PROGRESS` · `✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED`
-· 🚩 marks a **go-live blocker**.
+**Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
+`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · 🚩 marks a **go-live blocker**.
+
+**🤖 and 🔨 are two different facts, and 2026-08-09 (WO-3.11) is when they stopped being one.**
+`🤖 CLAIMED — <dispatch>` is written by `--start` and undone by `--release`: a run has this in flight.
+`🔨 IN PROGRESS` is what `--tick` writes over an open Acceptance list: part-built, nobody in flight,
+and `--release` refuses it. A work order that **landed** with lines it cannot close is neither — it is
+`✅ DONE` with a `**Owes**` field. One glyph for the first two meant `next` stepped over finished work,
+WO-3.3's gate failed on it, and `--release` could not be run without knowing which was meant.
 
 **Size:** `S` ≈ a sitting · `M` ≈ a day · `L` ≈ several days, and a candidate for splitting if it
 starts to sprawl.
@@ -46,6 +53,7 @@ want it read; it is no longer a change to what the field above it means if you f
 | **Ship** · **Status** · **Size** · 🚩 | The status line. `--start`, `--release` and `--tick` rewrite **Status** and nothing else |
 | **Ship**, specifically | `1`, `2`, `3` — the ship whose table carries it, and whose gate work order depends on it. `—` means **in no ship**, which is a statement and not a blank: either the work order sits outside the delivery plan (the tooling ones — WO-2.14, WO-2.15), or it has been deferred out of a ship (WO-2.7), or no ship covering it exists yet (Phases 5–8, WO-G4 — the delivery table stops at Ship 3). **Every work order carries this field.** It was missing from thirty-three of them until 2026-08-09, which is exactly the rot the row below describes: absent read as *"no ship,"* when it meant *"nobody has said"* |
 | **Depends on** | Every `WO-` token is a gate; anything else on the line is reported as prose for a human to read. A `…` between two `WO-` tokens is **two dependencies and not a range** — the gate warns about it and will never expand it, because WO-G2's `WO-2.5 … WO-2.7` left WO-2.6 gating nothing for a week and a parser guessing at ranges invents dependencies nobody typed |
+| **Owes** | The work orders carrying this one's re-homed Acceptance lines, and **the one field here that is acted on rather than only reported**. Present exactly when a line has been moved, absent everywhere else. Each named ID must be pointed at by a `- [ ] … → WO-x.y` line below, and each of those pointers must land on **exactly one box that is still `[ ]`** under the target — `--tick` refuses the work order when one does not, and `--audit` resolves every pointer in the directory each run. Quote the target's box after the marker, the way **Closes roadmap** quotes a roadmap box, whenever the wording changed on the way; write the marker **bare**, because a `→ WO-x.y` inside backticks is read as prose about markers |
 | **Blocks** | Reported, never acted on, and **never a dependency** — it is the opposite of one. Prose written by a hand rather than a list of IDs: WO-1.1's says `everything` and WO-1.5's ends `— **unblocked as of 2026-08-04**`. Until WO-2.16 the `WO-` tokens on it reached the dependency walk, so WO-1.5 — the backup work order the whole sprint waits on — was reported as *depending on* WO-1.6. Both were ✅ DONE so nothing was gated wrongly, which was luck: the same line between two open work orders is a cycle the gate would have called satisfied |
 | **Target** | Reported, never acted on. A date, on three of the four gate work orders — WO-G4 has none, because the 1.0.0 call is the one gate no calendar can set — because a gate is otherwise calendar-bound rather than work-bound. It sat inside `Depends on` until WO-2.16 for the same reason **Blocks** did, and got away with it because a date carries no `WO-` token |
 | **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks |
@@ -81,8 +89,25 @@ whether one roadmap line *contains* the fragment.
    work order closes no box — WO-1.13, WO-3.10 and WO-G4 each pointed at a heading or a paragraph
    rather than a checkbox, and each was reported as rot until the quotation marks came off.
 
+**A re-homed Acceptance line stays `- [ ]`.** *(2026-08-09, WO-3.11.)* When a line names work another
+work order will actually do, leave the box open, add `**Owes** WO-x.y` to the header beside
+**Depends on**, and end the line with a bare `→ WO-x.y` and a quotation of the box that carries it now:
+
+```
+- [ ] Reweighting recomputes every displayed grade … the crossing in both directions.
+      → WO-3.5 "Reweighting recomputes every displayed grade in that class immediately"
+```
+
+**Never `- [x]`.** WO-3.1's two were ticked by hand for a day, each with a paragraph underneath saying
+that ☑ meant *resolved on this work order, not verified* — and a mark that needs a paragraph to stop it
+meaning "verified" is the wrong mark, with the paragraph in a place no check reads. The marker says the
+same thing on its face and is checkable from both ends. **The debt ends when the target ticks its box:**
+`--audit` then fails on the pointer — a box that is already `[x]` — which is the signal to tick the line
+at the source on that evidence and take the **Owes** field off.
+
 **Run `node tools/wo-gate.mjs --audit`.** It checks every fragment in this directory against
-`ROADMAP.md`, and `ROADMAP.md`'s progress dashboard against the boxes under its own `## Phase N`
+`ROADMAP.md`, every `**Owes**` pointer against the box it names, and `ROADMAP.md`'s progress dashboard
+against the boxes under its own `## Phase N`
 headings. It writes nothing, and it is the cheapest way to find out that a box was reworded under a
 work order that will not be ticked for another six weeks.
 
@@ -118,14 +143,14 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
 | 2 — Attendance | 15 | 12 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 11 | 2 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 11 | 3 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **65** | **28** | `[████░░░░░░] 43%` |
+| | **65** | **29** | `[████░░░░░░] 45%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

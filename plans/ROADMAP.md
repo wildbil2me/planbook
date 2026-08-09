@@ -38,7 +38,13 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 
 **Do not tick a box for work that is written but unverified.** Written-but-unproven is still `- [ ]`.
 
-**Status vocabulary:** `⬜ NOT STARTED` · `🔨 IN PROGRESS` · `✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED`
+**Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
+`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED`
+
+*(🤖 added 2026-08-09, WO-3.11. `🔨 IN PROGRESS` was carrying two unrelated meanings — a dispatch is
+building this right now, and this landed with Acceptance lines open on purpose — and no tool could tell
+them apart. A claim is 🤖 CLAIMED now; 🔨 means part-built and nobody in flight; landed-with-lines-owed
+is `✅ DONE` plus a `**Owes**` field on the work order.)*
 
 🚩 marks a **go-live blocker** — it must work before students walk in.
 

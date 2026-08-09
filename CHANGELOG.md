@@ -38,6 +38,53 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.11 — the tracker can now say "landed, with lines owed."** Nothing here is visible to a
+  teacher, and this is the one Ship 2 item that buys nothing that is. It is about the tools that
+  decide what to build next telling the truth about what is finished.
+
+  **`🔨 IN PROGRESS` was carrying two unrelated facts, and no tool could tell them apart** — *a
+  dispatch is building this right now* and *this landed, and some acceptance lines are open on
+  purpose because they name something no work order has built yet.* WO-3.1 was the second and read as
+  the first for a day. `next` stepped over finished work, WO-3.3's dependency gate failed on a
+  deliverable that had actually shipped, and `--release` — the way back for a dispatch that died —
+  could not be run at all, because releasing the second kind writes `⬜ NOT STARTED` over completed
+  work and hands it to the next run as unstarted. A claim is `🤖 CLAIMED — <dispatch>` now. `🔨`
+  keeps only the honest meaning: part-built, nobody in flight.
+
+  **Landed-with-lines-owed is `✅ DONE` plus a new `**Owes**` field, and it is the one header field
+  that is acted on rather than only reported.** A line that names work another work order will
+  actually do stays `- [ ]`, gains a `→ WO-x.y` marker and a quotation of the box that carries it
+  now, and stops holding its own work order open — **but only while the pointer still lands on an
+  open box.** Reword the target and the tick is held; delete it and the tick is held. `--audit`
+  resolves every pointer in the directory on every run.
+
+  **The migration was the proof, and it is why the field is shaped this way.** WO-3.1's two owed
+  lines were `- [x]` for a day, each with a paragraph underneath explaining that ☑ meant *resolved on
+  this work order, not verified* — a mark that needs a paragraph to stop it meaning "verified" is the
+  wrong mark, and the paragraph sat in a place no check reads. They are open boxes pointing at WO-3.5
+  now, checkable from both ends. **The debt ends when WO-3.5 ticks them:** `--audit` then fails on the
+  pointer, which is the signal to tick at the source on that evidence and drop the field. Exactly two
+  lines converted; the two beside them were genuinely done and were left alone.
+
+  **`--self-check` goes 9 plants to 13**, and the four new ones were mutation-tested rather than
+  believed: breaking the pointer resolver reddens the two plants that name it and leaves the
+  positive-path plant green, which is the only thing that catches a resolver that says no to
+  everything. Against the pre-change script, 11 of 13 go red.
+
+  **One correction found by the verifier, in this work order's own subject matter.** Five files were
+  updated to the new vocabulary and a sixth was missed — the orchestrator's own operating
+  instructions, which still promised that claiming a work order writes `🔨 IN PROGRESS`. A human
+  reading a stale document is misinformed; an agent reading one acts on it. That is precisely the
+  gap between what the tools do and what the record says they do that this work order exists to
+  close, reappearing inside it.
+
+  **The dispatch that built this was killed mid-flight by an API session limit**, and left seven
+  ticked acceptance boxes behind with no report to justify them. They were treated as claims from a
+  run that did not survive to make them, and every one was re-checked from scratch — four of them
+  against the real work-order text rather than the synthetic fixture, because the fixture cannot
+  express strikethrough, wrapped boxes, or a marker written inside backticks that must not be read as
+  a marker. All seven held.
+
 - **WO-3.2 — letter scales are the teacher's, not the app's.** The bands that turn a percentage into
   a letter are now edited in Class manager → Letter scale, document-wide or per class, and each band
   shows the range it actually covers. Setting an A boundary of 89.5 makes 89.5 an A — which is the

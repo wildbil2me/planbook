@@ -28,7 +28,7 @@ The orchestrator does not grade its own dispatch. It chose the route and wrote t
 makes it the wrong party to mark the homework.
 
 **Claiming comes first.** After the routing decision and before the brief, the orchestrator runs
-`node tools/wo-gate.mjs --start <WO-ID>`. It writes `🔨 IN PROGRESS` and nothing else — no dashboard,
+`node tools/wo-gate.mjs --start <WO-ID>`. It writes `🤖 CLAIMED — <dispatch>` and nothing else — no dashboard,
 no checkbox, because a claim is not progress. It is also the only thing that arms the collision guard
 the gate report has carried since the beginning: WO-2.4 sat at `⬜ NOT STARTED` through two Codex
 rounds, a correction brief and two verifier passes, because `--tick` was the only thing that wrote a
@@ -38,6 +38,13 @@ a claim outlives the run that made it, and one nobody released hides a work orde
 while the tracker looks healthy. `next` names every claimed row it stepped over for exactly that
 reason.
 
+*(`--start` wrote `🔨 IN PROGRESS` until 2026-08-09, when WO-3.11 split the glyph: `--release` could
+not be run safely while a dead dispatch and a work order that landed with lines owed were spelled the
+same, because releasing the second sets finished work back to `⬜ NOT STARTED` and hands it to the next
+`/wo` as unstarted. `--release` now touches `🤖 CLAIMED` and refuses everything else. The suffix is the
+date the claim was made unless `--dispatch <label>` says otherwise — it answers the only question a
+stale claim raises.)*
+
 **Ticking follows the verdict.** On a verifier PASS, and once you say go, the orchestrator applies
 the ticks whose evidence is a command the verifier ran: the work order `Status`, the roadmap box,
 the dashboard counts, and the 👤-free `TESTING.md` lines. `--tick` reads the work order's own
@@ -45,6 +52,10 @@ Acceptance list before it writes anything: one line still `[ ]` and it writes `�
 instead of `✅ DONE`, names the lines that held it open, and leaves the roadmap boxes alone. Landing
 at `🔨 IN PROGRESS` with 👤 lines owed is the project's own convention — WO-2.1, WO-2.11 and WO-2.12
 all did — and it was hand-edited every time until WO-2.14, because the tool could only write done.
+**A line that will never close here** — because it names something another work order builds — is not
+that: leave it `- [ ]`, point it at the work order that owes it, and add `**Owes**` to the header
+(WO-3.11, and `README.md` § "A re-homed Acceptance line stays `- [ ]`"). `--tick` then writes
+`✅ DONE`, for as long as the pointer still lands on an open box.
 
 **The implementer may also tick as it goes, as of 2026-08-06** — see § "Implementers may tick" below
 for what changed and why. **The verifier still never ticks**, and that is not the same rule wearing

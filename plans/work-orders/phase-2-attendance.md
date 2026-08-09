@@ -1190,6 +1190,14 @@ interrupted draft; a stale claim should be as loud.
 today was written by hand, including WO-2.4's, and will be again the first time this script is wrong
 about something. The file stays the record; the tool stays a convenience over it.
 
+*(**The glyph in the four ticked lines above is `🤖 CLAIMED` now** — 2026-08-09, WO-3.11. The Traps
+paragraph two up was right and did not go far enough: keeping `--start` and `--tick`'s refusal in
+separate code did not stop them meaning the same thing on the page, and `--release` could not tell a
+dead dispatch from a work order that landed with lines owed. Everything those lines assert still
+holds, with `🤖 CLAIMED` where they say `🔨 IN PROGRESS` for a claim; `🔨` keeps only the second
+meaning, which is what `--tick` writes over an open Acceptance list. Nothing here was re-verified or
+re-ticked — this note is so a reader running these lines by hand is not told the tool is broken.)*
+
 ---
 
 ## WO-2.15 — wo-gate tells the truth about its own writes

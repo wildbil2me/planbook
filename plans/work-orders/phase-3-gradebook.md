@@ -16,7 +16,7 @@ govern this whole phase, and both are about the teacher never being surprised:
 
 ## WO-3.1 — Categories & weights
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** WO-1.6
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** WO-1.6 · **Owes** WO-3.5
 **Closes roadmap** Phase 3 → "Weighted categories per class, editable, with a visible warning when
 weights ≠ 100%."
 
@@ -33,25 +33,25 @@ wrong at the start of a term.
 
 **Acceptance**
 - [x] Weights of 40/35/25 produce no warning; 40/35/20 warns and shows "95%".
-- [x] ~~The app still computes a grade while weights are wrong, and says the grade is provisional.~~
+- [ ] ~~The app still computes a grade while weights are wrong, and says the grade is provisional.~~
       **Superseded 2026-08-09 by the owner:** *there is no grade at all until the weights total 100.*
-      The replacement line — **the app shows no grade while the weights are wrong, and says why** —
-      is now the first inherited box on **WO-3.5**, the first screen with somewhere to not-show a
-      grade. ☑ here means *resolved on this work order*, *not verified*: this line's own claim no
-      longer exists, and its replacement is gated by a box elsewhere rather than by this one.
+      The replacement line is the first inherited box on **WO-3.5**, the first screen with somewhere
+      to not-show a grade. This line's own claim no longer exists and its replacement is gated by a
+      box elsewhere, so it stays open here and points there:
+      → WO-3.5 "No grade is shown while the weights are wrong, and the screen says why"
 - [x] Two classes carry different category sets without interference.
-- [x] Reweighting recomputes every displayed grade in that class immediately — **including the
+- [ ] Reweighting recomputes every displayed grade in that class immediately — **including the
       crossing in both directions:** grades appear when the weights reach 100 and disappear when
-      they leave it. **Re-homed 2026-08-09 to WO-3.5** as its second inherited box, unchanged in
-      wording. ☑ here means *resolved on this work order*, *not verified*: nothing in the app
-      displayed a grade while WO-3.1 was open, so there was never a build this could be run against.
-      The half that had a consumer — the total and the verdict recomputing as a weight is typed, on
-      the banner and the class-manager row — is driven and measured in `tools/verify-shell.mjs`.
+      they leave it. Nothing in the app displayed a grade while WO-3.1 was open, so there was never
+      a build this could be run against. The half that had a consumer — the total and the verdict
+      recomputing as a weight is typed, on the banner and the class-manager row — is driven and
+      measured in `tools/verify-shell.mjs`; the displayed-grade half is owed by
+      → WO-3.5 "Reweighting recomputes every displayed grade in that class immediately"
 
-**Two lines were owed, and they are now boxes on WO-3.5 rather than prose here.** *(Left open
-2026-08-09 at the end of WO-3.1's build; re-homed and this work order ticked the same day, once it was
-clear the debt was recorded only in the work order nobody re-reads after it goes ✅ — and that it was
-holding WO-3.3 on a dependency that could not resolve until WO-3.5.)* Lines 2 and 4 both name **a
+**Two lines are owed, and they are boxes on WO-3.5 rather than prose here.** *(Left open 2026-08-09 at
+the end of WO-3.1's build; re-homed and this work order ticked the same day, once it was clear the debt
+was recorded only in the work order nobody re-reads after it goes ✅ — and that it was holding WO-3.3
+on a dependency that could not resolve until WO-3.5.)* Lines 2 and 4 both name **a
 displayed grade**, and
 there is no grade anywhere in this app yet: WO-3.4 owns the arithmetic — category percentage,
 weighted class grade, letter from percentage — together with the hand-computed
@@ -68,6 +68,17 @@ the class-manager row behind it — is driven and measured in `tools/verify-shel
 
 **The follow-up:** when WO-3.5 renders a grade, it reads `isProvisional()` for the class and decides
 whether there is a grade to draw at all; ticking lines 2 and 4 belongs to that work order's own pass.
+
+**How those two lines are written, and why they are not ☑** *(2026-08-09, WO-3.11)* — they were `- [x]`
+for a day, each with a paragraph under it explaining that ☑ meant *resolved on this work order, not
+verified*. A mark that needs a paragraph to stop it meaning "verified" is the wrong mark, and the
+paragraph was not in the file `--audit` reads. They are `- [ ]` now, each ending in a bare
+→ WO-3.5 and a quotation of the box that carries it, and this work order's header carries **Owes**
+WO-3.5 to say so where a reader looks first. `node tools/wo-gate.mjs --audit` resolves both pointers
+every run and fails if either box is reworded, deleted, or ticked. **When WO-3.5 ticks them, --audit
+will fail on this work order** — a pointer into a box that is already `[x]` is the signal that the debt
+was paid: tick lines 2 and 4 here on WO-3.5's evidence, and take the **Owes** field off. That is the
+one hand edit this design asks for, and it is asked at the moment there is finally something to verify.
 
 **A correction is owed to this work order's own copy, and it is not cosmetic.** *(2026-08-09, after
 the owner's call above.)* Three sentences are now false, because there is no grade to be provisional
@@ -290,21 +301,27 @@ attendance. Grades go in once or twice a week for five classes; if this is slow,
 - [ ] The grid is usable on an iPad in landscape.
 - [ ] `Esc` mid-column does not close the screen or lose the teacher's place, because there is no
       dialog to close. Prove it by pressing it, not by arguing the screen is a view.
-
-**Inherited from WO-3.1, and they are acceptance lines here rather than a note.** *(Re-homed
-2026-08-09, when WO-3.1 was ticked.)* Both name a **displayed grade**, which WO-3.1 could not show
-because nothing rendered one; this is the first screen with somewhere to not-show one. They arrived
-recorded in WO-3.1's own prose as "owed to WO-3.5" — which is a debt written into a work order that
-nobody re-reads once it is ✅, so they are boxes now. WO-3.4:236 already holds the engine half of the
-first one; these two are the screen half.
-
 - [ ] **No grade is shown while the weights are wrong, and the screen says why** — the number's
       absence and the total that caused it, not a figure with a "provisional" label on it. This is the
       owner's 2026-08-09 rule, which superseded WO-3.1's original line mid-build: *there is no grade at
-      all until the weights total 100.*
+      all until the weights total 100.* *(Inherited from WO-3.1.)*
 - [ ] **Reweighting recomputes every displayed grade in that class immediately, and the crossing works
       in both directions** — grades appear when the weights reach 100 and disappear when they leave it.
-      The disappearing half is the one a build can pass while getting wrong.
+      The disappearing half is the one a build can pass while getting wrong. *(Inherited from WO-3.1.)*
+
+**The last two are inherited from WO-3.1, and they are acceptance lines here rather than a note.**
+*(Re-homed 2026-08-09, when WO-3.1 was ticked.)* Both name a **displayed grade**, which WO-3.1 could
+not show because nothing rendered one; this is the first screen with somewhere to not-show one. They
+arrived recorded in WO-3.1's own prose as "owed to WO-3.5" — which is a debt written into a work order
+that nobody re-reads once it is ✅, so they are boxes now. WO-3.4:236 already holds the engine half of
+the first one; these two are the screen half.
+
+*(They sat below this paragraph until 2026-08-09 and were invisible to `wo-gate.mjs`, which ends an
+Acceptance list at the next bold line — so the two boxes this phase's debt hangs on could not have held
+WO-3.5 open, and `--tick WO-3.5` would have written ✅ DONE over them. Moved into the list at WO-3.11,
+which is the work order that made them checkable from the other end: **WO-3.1's lines 2 and 4 point
+here** with a `→ WO-3.5` marker each, and `--audit` now fails if either box is reworded out from under
+its pointer. Ticking these two is what discharges that debt — see WO-3.1's follow-up note.)*
 
 **Traps** — Do not infer anything from the due date here. That's WO-3.6, and it is a prompt, not
 arithmetic. **And do not reach for the modal system**, however much the surrounding code does — see
@@ -456,7 +473,7 @@ security assessment — days, not months, if nothing is added later.
 
 ## WO-3.11 — `**Owes**`, and splitting what 🔨 IN PROGRESS means
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. This is tracker tooling, like WO-2.15 and WO-2.16 — it closes no product
 box, and inventing one to make the dashboard tidier is the drift those two work orders exist to
 catch.)*
@@ -504,18 +521,18 @@ and the ✅ that means *we stopped checking* become the same mark.
   follow-up was cleaning up.
 
 **Acceptance**
-- [ ] A work order with one `- [ ] … → WO-x.y` line and a resolving target ticks to `✅ DONE`, and its
+- [x] A work order with one `- [ ] … → WO-x.y` line and a resolving target ticks to `✅ DONE`, and its
       dependents' gates pass.
-- [ ] The same line with the target box **deleted or reworded** holds the tick, names the line, and
+- [x] The same line with the target box **deleted or reworded** holds the tick, names the line, and
       writes nothing.
-- [ ] `--audit` fails on an `**Owes**` naming a work order that does not exist, and on one whose
+- [x] `--audit` fails on an `**Owes**` naming a work order that does not exist, and on one whose
       target box is already ticked.
-- [ ] `--release` against a `✅ DONE` or `🔨 IN PROGRESS` work order refuses and writes nothing;
+- [x] `--release` against a `✅ DONE` or `🔨 IN PROGRESS` work order refuses and writes nothing;
       against `🤖 CLAIMED` it works as it does today.
-- [ ] `next` returns a work order that WO-3.1's old state would have hidden, and still skips both 🤖
+- [x] `next` returns a work order that WO-3.1's old state would have hidden, and still skips both 🤖
       and 🔨.
-- [ ] `--self-check` plants all three new violations and fails when any one stops being caught.
-- [ ] WO-3.1's two re-homed lines are converted from `- [x]` to `- [ ] → WO-3.5`, and WO-3.1 still
+- [x] `--self-check` plants all three new violations and fails when any one stops being caught.
+- [x] WO-3.1's two re-homed lines are converted from `- [x]` to `- [ ] → WO-3.5`, and WO-3.1 still
       reads `✅ DONE` afterwards. **This is the migration, and it is the proof:** the same work order
       that forced this design has to come out honest at the end of it.
 

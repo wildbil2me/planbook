@@ -110,7 +110,9 @@ re-suspend and say so exactly as bluntly as this paragraph does.
 node tools/wo-gate.mjs --start <WO-ID>
 ```
 
-Writes `🔨 IN PROGRESS` and nothing else — no dashboard, no checkbox. It is what arms the collision
+Writes `🤖 CLAIMED — <dispatch>` and nothing else — no dashboard, no checkbox. *(It wrote `🔨 IN
+PROGRESS` until 2026-08-09, when WO-3.11 split the glyph: `🔨` now means part-built with nobody in
+flight, and `--release` refuses it.)* It is what arms the collision
 guard step 1 reports, and until WO-2.14 nothing could: WO-2.4 sat at `⬜ NOT STARTED` through two
 Codex rounds and two verifier passes because `--tick` was the only thing that wrote a status. **A
 non-zero exit means someone already claimed it — stop and ask.**

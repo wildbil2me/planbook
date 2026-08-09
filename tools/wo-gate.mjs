@@ -4,8 +4,9 @@
 //   node tools/wo-gate.mjs WO-1.7          gate report for one work order; non-zero if blocked
 //   node tools/wo-gate.mjs next            first NOT STARTED row in the Ship 1 table
 //   node tools/wo-gate.mjs --list          every work order and its status
-//   node tools/wo-gate.mjs --start WO-1.7 [--dry-run]     claim it: ⬜ NOT STARTED → 🔨 IN PROGRESS
-//   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🔨 IN PROGRESS → ⬜ NOT STARTED
+//   node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run]
+//                                                         claim it: ⬜ NOT STARTED → 🤖 CLAIMED
+//   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🤖 CLAIMED → ⬜ NOT STARTED
 //   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
 //   node tools/wo-gate.mjs --audit                        the trackers' standing rot check
 //   node tools/wo-gate.mjs --self-check [--against <path>] this file's standing check on itself
@@ -21,6 +22,20 @@
 // The status a work order carries is the record; these three are a convenience over it. Every
 // 🔨 IN PROGRESS in plans/ before WO-2.14 was typed by hand and will be again the first time this
 // script is wrong about something, so nothing here may make that line harder to hand-edit.
+//
+// WO-3.11 split what 🔨 IN PROGRESS used to mean, because it meant two unrelated things and nothing
+// here could tell them apart: *a dispatch is building this right now*, and *this landed and was
+// verified with some Acceptance lines open on purpose*. WO-3.1 was the second and read as the first
+// for a day — `next` stepped over it, WO-3.3's gate failed on it, and `--release` could not be run
+// safely because a dead dispatch and an intentionally-open work order were the same three glyphs.
+//
+// So a claim is now **🤖 CLAIMED — <dispatch>**, written by --start and undone by --release, and
+// 🔨 IN PROGRESS keeps only its honest meaning: work genuinely part-built, which is what --tick
+// writes when a line is still open. Landed-with-lines-owed is ✅ DONE plus a **Owes** field, and the
+// lines it owes stay `- [ ]` carrying a `→ WO-x.y` marker that --tick honours ONLY when it can find
+// the matching open box under the named target. The pointer has to resolve or the tick is held —
+// that conditional is the whole design, because a marker the tool trusts is just a `- [x]` spelled
+// with an arrow, and the `- [x]` is what WO-3.11 exists to undo.
 //
 // --audit and --self-check (WO-2.15) write nothing anywhere. --audit reads the two trackers and
 // reports where they have drifted apart; --self-check copies plans/ to a temp directory, plants the
@@ -41,8 +56,10 @@ const ROADMAP = path.join(REPO, 'plans', 'ROADMAP.md');
 const DISPATCH = path.join(REPO, '.claude', 'dispatch');
 
 // The status vocabulary, from plans/work-orders/README.md. Order matters: longest first, so
-// "✅ DONE — 2026-08-04" doesn't match a bare prefix of something else.
-const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🚧 BLOCKED', '🔒 GATED'];
+// "✅ DONE — 2026-08-04" doesn't match a bare prefix of something else. `🤖 CLAIMED — <dispatch>`
+// (WO-3.11) has that same compound shape and is read the same way — every status read in this file
+// is a startsWith, so the suffix is carried by the file and ignored by the parse.
+const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🤖 CLAIMED', '🚧 BLOCKED', '🔒 GATED'];
 
 // The hard ordering constraint, stated in CLAUDE.md, the phase file, and the orchestrator's gates.
 // No feature that writes student data ships before the path that gets it back out.
@@ -95,7 +112,13 @@ function read(f) { return fs.readFileSync(f, 'utf8'); }
 // says `everything` and WO-1.5's ends `— **unblocked as of 2026-08-04**`. So no `WO-` token on a
 // `**Blocks**` line may reach depsOf(), which is why this is a field of its own rather than a second
 // thing read out of `Depends on`.
-const KNOWN_FIELDS = ['Ship', 'Status', 'Size', 'Depends on', 'Blocks', 'Target', 'Closes roadmap', 'Amends roadmap', 'Takes from'];
+//
+// **Owes** is REAL, decided 2026-08-09 (WO-3.11), and it is the one field here that is ACTED ON
+// rather than only reported. It names the work orders carrying this one's re-homed Acceptance lines,
+// and it is present exactly when a line has been moved — absent on all but a handful. It is read
+// twice: --tick refuses a work order whose **Owes** disagrees with its own `→` markers, and --audit
+// resolves every pointer to a real, open box. That is the difference between a debt and a claim.
+const KNOWN_FIELDS = ['Ship', 'Status', 'Size', 'Depends on', 'Owes', 'Blocks', 'Target', 'Closes roadmap', 'Amends roadmap', 'Takes from'];
 
 // **The closed list stopped being the boundary — WO-2.16.** The old rule here said an unknown field
 // "is visible as prose on the field before it rather than silently changing what that field means",
@@ -183,6 +206,7 @@ function parseFile(file) {
       size: field(/\*\*Size\*\*\s*([^·]*)/),
       flag: /🚩/.test(joined),
       dependsRaw: field(fieldRe('Depends on', present)),
+      owesRaw: field(fieldRe('Owes', present)),
       blocks: field(fieldRe('Blocks', present)),
       target: field(fieldRe('Target', present)),
       closesRoadmap: field(fieldRe('Closes roadmap', present)),
@@ -235,7 +259,82 @@ function checkboxesOf(lines, from, to) {
     if (m) out.push({ line: j, ticked: m[1] === 'x', text: m[2].trim() });
     else if (out.length && /^\s{2,}\S/.test(lines[j])) out[out.length - 1].text += ' ' + lines[j].trim();
   }
-  return out.length ? out : null;                              // genuinely no list — say so, as before
+  return out.length ? marked(out) : null;                      // genuinely no list — say so, as before
+}
+
+// ------------------------------------------------------------------ re-homed lines (WO-3.11)
+//
+// `- [ ] …the line… → WO-3.5 "quoted from the box that carries it now"`. The marker says the work
+// this line names is owed by another work order, and the whole point of it is that a reader and a
+// script can both check that claim without the paragraph of explanation the `- [x]` version needed.
+//
+// **The quoted fragment is optional and it is what makes rewording detectable.** Without it the
+// line's own text is the fragment, which is right when a line was moved verbatim; WO-3.1's two were
+// not — one was superseded by the owner and rewritten, the other picked up a clause on the way — so
+// both quote the target's wording, exactly as **Closes roadmap** quotes a roadmap box. Same reason,
+// same rules, same failure caught: a box reworded under a pointer that will not be read for weeks.
+// **A marker inside backticks is prose about markers, not a marker**, and that rule was paid for on
+// the first run of this code: WO-3.11's own seventh Acceptance line says the two lines are converted
+// *"from `- [x]` to `- [ ] → WO-3.5`"*, and --audit read the work order that invented the syntax as
+// carrying a pointer of its own. It is the same rule README.md § "Header fields" already states for
+// **Closes roadmap** fragments — write notes about a thing in backticks and the parser leaves them
+// alone — so a real marker is written bare, and the tick that depends on it says so when it holds.
+const REHOME_MARKER = /→\s*(WO-[\dG][\w.]*)\s*(?:"([^"]*)")?/g;
+const CODE_SPAN = /`[^`]*`/g;
+
+function marked(items) {
+  for (const it of items) {
+    it.rehomes = [...it.text.replace(CODE_SPAN, '').matchAll(REHOME_MARKER)]
+      .map(m => ({ target: m[1], fragment: m[2] || '' }));
+  }
+  return items;
+}
+
+// Does one `→ WO-x.y` pointer resolve? It resolves when the named work order exists, carries an
+// Acceptance list, and exactly one **open** box in it matches the fragment.
+//
+// Every one of those four conditions is a way the debt could quietly stop existing, and "already
+// ticked" is deliberately a failure rather than a pass: a ticked target box means the debt was paid
+// and this pointer is stale, so the line here should be ticked on that evidence and the **Owes**
+// field taken off. That is a human's edit — the tool's job is to stop the pair drifting apart in
+// silence, which is the whole complaint WO-3.11 was written about.
+function resolveRehome(mark, wos) {
+  const target = wos.get(mark.target);
+  if (!target) return `→ ${mark.target} names a work order that does not exist`;
+  if (!target.acceptance || !target.acceptance.length) return `→ ${mark.target} has no Acceptance list for the line to land in`;
+  const f = norm(mark.fragment || mark.text);
+  if (f.length < 12) return `→ ${mark.target} carries a fragment too short to match a box safely — quote more of it`;
+  const hits = target.acceptance.filter(b => norm(b.text).includes(f));
+  if (hits.length !== 1) {
+    return `→ ${mark.target} matched ${hits.length} of its ${target.acceptance.length} Acceptance boxes — it must match exactly one${hits.length ? '' : '. The box was deleted or reworded; quote it as it reads now'}`;
+  }
+  if (hits[0].ticked) return `→ ${mark.target}'s box at ${path.relative(REPO, target.file)}:${hits[0].line + 1} is already [x] — the debt was paid, so tick this line on that evidence and drop the **Owes** field`;
+  return null;                                                 // resolved: the box exists and is open
+}
+
+// Every pointer on one work order, resolved. `holds` are the lines that may stop counting as open;
+// `problems` are the pointers that may not, in the words the refusal prints.
+function rehomesOf(wo, wos) {
+  const holds = [], problems = [];
+  for (const a of wo.acceptance || []) {
+    if (!a.rehomes || !a.rehomes.length) continue;
+    const why = a.rehomes.map(m => resolveRehome({ ...m, text: a.text.replace(REHOME_MARKER, '') }, wos)).filter(Boolean);
+    if (why.length) problems.push({ item: a, why });
+    else if (!a.ticked) holds.push(a);
+  }
+
+  // The **Owes** field and the markers are two statements of one fact, and either one alone rots.
+  // A field naming a work order no line points at is a debt nobody can find; a line pointing
+  // somewhere the field does not name is a debt the header does not admit to.
+  const named = [...new Set((wo.owesRaw.match(/WO-[\dG][\w.]*/g) || []))];
+  const pointed = [...new Set((wo.acceptance || []).flatMap(a => (a.rehomes || []).map(m => m.target)))];
+  for (const id of named) {
+    if (!pointed.includes(id)) problems.push({ item: null, why: [`**Owes** names ${id} and no Acceptance line carries a "→ ${id}" marker`] });
+  }
+  for (const id of pointed) {
+    if (!named.includes(id)) problems.push({ item: null, why: [`an Acceptance line points at ${id} and **Owes** does not name it — add it beside **Depends on**`] });
+  }
+  return { holds, problems, named, pointed };
 }
 
 function acceptanceOf(lines, from, to) {
@@ -250,7 +349,7 @@ function acceptanceOf(lines, from, to) {
     if (m) out.push({ line: j, ticked: m[1] === 'x', text: m[2].trim() });
     else if (out.length && /^\s{2,}\S/.test(l)) out[out.length - 1].text += ' ' + l.trim();  // wrapped
   }
-  return out;
+  return marked(out);
 }
 
 function allWorkOrders() {
@@ -270,8 +369,12 @@ function depsOf(wo) {
   return { ids: [...new Set(ids)], hasProse: prose.length > 0 && !/^nothing$/i.test(wo.dependsRaw.trim()) };
 }
 
-// The Ship 1 table in README.md is the running order. Rows look like:
+// The running order in README.md. Rows look like:
 //   | 6 | [WO-1.6](phase-1-...#wo-16--classes--terms) Classes & terms | M | 🚩 | Aug 10–11 |
+//
+// Named for the Ship 1 table it was written against, and it has read EVERY numbered work-order row
+// in that file since the Ship 2 table was written on 2026-08-09 — document order, so Ship 1 first
+// and then Ship 2. Worth knowing before writing a check against it, because the name says otherwise.
 function shipOneOrder() {
   const rows = [];
   for (const line of read(README).split('\n')) {
@@ -321,8 +424,12 @@ function gate(id, wos) {
     for (const dep of ids) {
       const d = wos.get(dep);
       const st = d ? d.status : '(not found)';
+      // ✅ DONE passes, and 🤖 CLAIMED and 🔨 IN PROGRESS both block — WO-3.11's rule, and the
+      // reason the split was worth having: a dependency that landed with lines owed elsewhere is
+      // ✅ DONE plus **Owes**, so it stops gating its dependents while still saying what it owes.
       const ok = st.startsWith('✅ DONE');
-      console.log(`  depends ${dep.padEnd(8)} ${st}${ok ? '' : '   <-- not done'}`);
+      const owed = d && d.owesRaw ? `   owes ${d.owesRaw}` : '';
+      console.log(`  depends ${dep.padEnd(8)} ${st}${ok ? owed : '   <-- not done'}`);
       if (!ok) problems.push(`dependency ${dep} is ${st}, not ✅ DONE`);
     }
     if (hasProse) {
@@ -352,6 +459,17 @@ function gate(id, wos) {
   if (wo.blocks) console.log(`  blocks  ${wo.blocks}`);
   if (wo.target) console.log(`  target  ${wo.target}`);
 
+  // **Owes** is printed here and resolved by --audit and --tick. A pointer that has stopped
+  // resolving is named on the gate report too, because the gate is what somebody reads before
+  // picking the work order up, and a debt that no longer lands anywhere is a thing to know first.
+  if (wo.owesRaw || (wo.acceptance || []).some(a => a.rehomes && a.rehomes.length)) {
+    const { holds, problems: rehomeProblems } = rehomesOf(wo, wos);
+    console.log(`  owes    ${wo.owesRaw || '(no **Owes** field)'}   ${holds.length} re-homed line(s) resolving`);
+    for (const p of rehomeProblems) {
+      for (const w of p.why) notes.push(`a re-homed Acceptance line does not resolve${p.item ? ` (${path.relative(REPO, wo.file)}:${p.item.line + 1})` : ''}: ${w}`);
+    }
+  }
+
   // The lesson of the three fields WO-2.16 found, armed for the fourth. An unknown field used to be
   // absorbed into whichever field was written before it, silently and plausibly; now it terminates
   // that field and is named here once, by the ID that carries it. There is no live instance of this
@@ -376,7 +494,10 @@ function gate(id, wos) {
   // 3. Gated, and 4. already started
   if (wo.status.startsWith('🔒 GATED')) problems.push(`${wo.id} is 🔒 GATED — do not start it`);
   if (wo.status.startsWith('✅ DONE')) notes.push(`${wo.id} is already ✅ DONE — ask before proceeding`);
-  if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is already 🔨 IN PROGRESS — a dispatch has claimed it. Ask before proceeding; if that dispatch is gone, --release ${wo.id} puts it back to ⬜ NOT STARTED`);
+  // The two halves of what 🔨 used to mean, said in two different sentences (WO-3.11). A claim has a
+  // way back and a part-built work order does not, so the advice under them is not the same advice.
+  if (wo.status.startsWith('🤖 CLAIMED')) notes.push(`${wo.id} is 🤖 CLAIMED — a dispatch has it in flight. Ask before proceeding; if that dispatch is gone, --release ${wo.id} puts it back to ⬜ NOT STARTED`);
+  if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is 🔨 IN PROGRESS — part-built, and nobody is claiming to be working on it. This is what --tick writes over an open Acceptance list, so pick it up where it stopped; --release refuses this status by design`);
   if (wo.status.startsWith('🚧 BLOCKED')) problems.push(`${wo.id} is 🚧 BLOCKED`);
 
   // 5. Interrupted-run evidence
@@ -405,11 +526,17 @@ function gate(id, wos) {
 // exactly like a dispatch still working.
 //
 // In --quiet mode the skips go to stderr, because stdout there is one ID that something else reads.
+// Since WO-3.11 there are two reasons to step over a row and they get two different sentences,
+// because they want two different things done about them. A 🤖 claim has a way back — `--release`.
+// A 🔨 does not and must not: it is part-built work, `--release` refuses it by design, and the way
+// back is to finish it. One line for both was exactly the confusion the split removed.
 function reportSkips(claimed, quiet) {
   const say = quiet ? console.error : console.log;
   for (const wo of claimed) {
     say(`skipped ${wo.id} — ${wo.title}`);
-    say(`  🔨 IN PROGRESS: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`);
+    say(wo.status.startsWith('🤖 CLAIMED')
+      ? `  ${wo.status}: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`
+      : `  🔨 IN PROGRESS: part-built work, not a claim — nothing is in flight and --release refuses this status. Pick it up where it stopped, or finish and --tick it`);
   }
   if (claimed.length && !quiet) console.log('');
 }
@@ -419,7 +546,7 @@ function next(wos, quiet) {
   for (const id of shipOneOrder()) {
     const wo = wos.get(id);
     if (!wo) continue;
-    if (wo.status.startsWith('🔨 IN PROGRESS')) { claimed.push(wo); continue; }
+    if (wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED')) { claimed.push(wo); continue; }
     if (wo.status.startsWith('⬜ NOT STARTED')) {
       reportSkips(claimed, quiet);
       if (quiet) { console.log(wo.id); return 0; }
@@ -431,7 +558,7 @@ function next(wos, quiet) {
     }
   }
   reportSkips(claimed, quiet);
-  console.log('next: nothing ⬜ NOT STARTED left in the Ship 1 table');
+  console.log('next: nothing ⬜ NOT STARTED left in the running order in work-orders/README.md');
   return 0;
 }
 
@@ -499,10 +626,12 @@ function recomputeDashboard(text) {
 // --tick share, and it is deliberately a text edit with no opinion in it: each of the three decides
 // its own status, for its own reason, behind its own fence.
 //
-// That separation is the work order's instruction, not tidiness. --start writes 🔨 IN PROGRESS
-// because a run began; --tick writes the same words because the work is not finished. They arrive at
-// one status for unrelated reasons, and a common path that cannot tell them apart is how a future
-// --start starts ticking checkboxes.
+// That separation is the work order's instruction, not tidiness. It used to be load-bearing in a way
+// WO-3.11 has now fixed at the source: --start wrote 🔨 IN PROGRESS because a run began and --tick
+// wrote the same words because the work was not finished, so one status carried two meanings and
+// nothing downstream could tell them apart. --start writes 🤖 CLAIMED now. Keep the three paths
+// separate anyway — a common path that decides the status for its caller is how a future --start
+// starts ticking checkboxes.
 function statusEdit(phaseLines, wo, statusText) {
   let line = -1;
   for (let i = wo.blockStart; i < wo.blockStart + wo.blockLines; i++) {
@@ -522,28 +651,44 @@ function printEdit(file, e) {
 
 // --start: claim a work order, so a second dispatch can see one is already in flight.
 //
-// The guard for that collision has been in gate() since the beginning — "already 🔨 IN PROGRESS —
-// ask before proceeding" — and until WO-2.14 nothing could arm it, because the only thing that wrote
+// The guard for that collision has been in gate() since the beginning — "already claimed — ask
+// before proceeding" — and until WO-2.14 nothing could arm it, because the only thing that wrote
 // a status was --tick and --tick is the last step. WO-2.4 sat at ⬜ NOT STARTED through two Codex
 // rounds, a correction brief and two verifier passes.
-function applyStart(id, wos, dryRun) {
+//
+// **What goes in `🤖 CLAIMED — <dispatch>` when the caller names nothing: today's date.** The suffix
+// answers the question a stale claim actually raises — *how long has this been sitting?* — and the
+// only other identifier available here is the work order ID, which is already on the line above it.
+// `--dispatch <label>` overrides it for a caller that has something better to say, and a label
+// carrying a `·` is refused rather than written, because `·` is what separates one header field from
+// the next and a status that swallows the field after it is worse than no label at all.
+function applyStart(id, wos, dryRun, label) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
 
-  // Fence: only an unclaimed work order can be claimed. Everything else — already running, done,
-  // blocked, gated — is either a collision or a caller with the wrong ID, and both want a human
-  // before anything is written.
+  // Fence: only an unclaimed work order can be claimed. Everything else — already claimed, part-
+  // built, done, blocked, gated — is either a collision or a caller with the wrong ID, and both want
+  // a human before anything is written.
   if (!wo.status.startsWith('⬜ NOT STARTED')) {
     console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED may be claimed`);
-    if (wo.status.startsWith('🔨 IN PROGRESS')) {
+    if (wo.status.startsWith('🤖 CLAIMED')) {
       console.error(`     | a dispatch has already claimed it. If that dispatch is gone: --release ${id}`);
     }
+    if (wo.status.startsWith('🔨 IN PROGRESS')) {
+      console.error(`     | this one is part-built rather than claimed — nothing is in flight, and --release refuses it (WO-3.11).`);
+      console.error(`     | Picking it up is a hand edit of the status line, deliberately: it is a judgement about half-finished work.`);
+    }
+    return 1;
+  }
+
+  if (label && /[·*\n|]/.test(label)) {
+    console.error(`FAIL | --dispatch label "${label}" carries one of · * | or a newline — those break the header field parse. Nothing was written`);
     return 1;
   }
 
   const phaseText = read(wo.file);
   const phaseLines = phaseText.split('\n');
-  const e = statusEdit(phaseLines, wo, '🔨 IN PROGRESS');
+  const e = statusEdit(phaseLines, wo, `🤖 CLAIMED — ${label || today()}`);
   if (!e) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
 
   console.log(`start ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
@@ -558,7 +703,7 @@ function applyStart(id, wos, dryRun) {
   console.log('');
   console.log('NOT touched: the roadmap, the dashboard, and every checkbox. A claim is not progress — the dashboards count ✅ DONE and nothing else.');
   console.log(dryRun ? 'DRY RUN | re-run without --dry-run to apply.'
-                     : `PASS | ${id} claimed — 🔨 IN PROGRESS. If this dispatch dies, --release ${id} puts it back.`);
+                     : `PASS | ${id} claimed — ${e.after.replace(/.*\*\*Status\*\*\s*/, '').replace(/\s*·.*$/, '')}. If this dispatch dies, --release ${id} puts it back.`);
   return 0;
 }
 
@@ -567,12 +712,24 @@ function applyStart(id, wos, dryRun) {
 // other direction. This is the one line that undoes it.
 //
 // It is not a status for *why* a run stopped. 🚧 BLOCKED already exists for that and a human sets it.
+//
+// **It touches 🤖 CLAIMED and nothing else (WO-3.11), and the refusal is the feature.** While a claim
+// and a part-built work order were the same three glyphs, this could not be run safely at all — the
+// caller had to know which of the two meanings the file meant, and being wrong meant setting finished
+// work back to ⬜ NOT STARTED where `next` would hand it to somebody as unstarted. Now the file says
+// which, so the fence can, and a caller who is wrong gets a refusal instead of a silent demotion.
 function applyRelease(id, wos, dryRun) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
 
-  if (!wo.status.startsWith('🔨 IN PROGRESS')) {
-    console.error(`FAIL | ${id} is "${wo.status}" — only a claimed (🔨 IN PROGRESS) work order can be released`);
+  if (!wo.status.startsWith('🤖 CLAIMED')) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only a claimed (🤖 CLAIMED) work order can be released`);
+    if (wo.status.startsWith('🔨 IN PROGRESS')) {
+      console.error(`     | 🔨 IN PROGRESS is part-built work, not a claim: there is no dispatch to release and nothing here would be undoing one.`);
+    }
+    if (wo.status.startsWith('✅ DONE')) {
+      console.error(`     | ${id} landed. If it landed with Acceptance lines owed elsewhere, that is what its **Owes** field and its "→ WO-x.y" lines are for — not a status change.`);
+    }
     return 1;
   }
 
@@ -767,11 +924,25 @@ function applyTick(id, wos, dryRun) {
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
 
   // Fence: only a work order that is open may be ticked. Re-ticking a done one, or ticking one
-  // that is BLOCKED or GATED, is a sign the caller has the wrong ID.
-  if (!(wo.status.startsWith('⬜ NOT STARTED') || wo.status.startsWith('🔨 IN PROGRESS'))) {
-    console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED or 🔨 IN PROGRESS may be ticked`);
+  // that is BLOCKED or GATED, is a sign the caller has the wrong ID. 🤖 CLAIMED joined the list at
+  // WO-3.11 and had to: it is what every dispatch now runs under, and --tick is its last step.
+  if (!(wo.status.startsWith('⬜ NOT STARTED') || wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED'))) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED, 🤖 CLAIMED or 🔨 IN PROGRESS may be ticked`);
     return 1;
   }
+
+  // Re-homed lines, before anything else is decided (WO-3.11). A `- [ ] … → WO-x.y` line names work
+  // this work order is not going to do, and it stops holding this work order open — **but only when
+  // the pointer resolves to an open box under the named target.** A marker the tool takes on trust
+  // is a `- [x]` spelled with an arrow, and the hand-ticked `- [x]` with a paragraph under it
+  // explaining that it did not mean "verified" is the exact thing WO-3.11 exists to replace.
+  //
+  // A pointer that does NOT resolve refuses in the second style rather than the first: nothing is
+  // written at all, not even 🔨 IN PROGRESS. The distinction is WO-2.15's and it holds here — an open
+  // Acceptance line means the WORK is unfinished and there is a true status for that; a pointer into
+  // a box that was reworded or deleted means the TRACKER is wrong about itself, and no status makes
+  // that true. Same for a **Owes** field that disagrees with the markers under it.
+  const rehome = rehomesOf(wo, wos);
 
   // The work order's own Acceptance list decides which status this writes. Before WO-2.14 this
   // hardcoded ✅ DONE and had never read a checkbox, so at WO-2.4 the offered maintenance would have
@@ -780,9 +951,9 @@ function applyTick(id, wos, dryRun) {
   //
   // An open line holds the work order at 🔨 IN PROGRESS, which is the project's own convention
   // (WO-2.1, WO-2.11 and WO-2.12 all landed there with 👤 lines owed) and was unreachable through
-  // this tool until now. It writes a status because the work is unfinished — nothing to do with
-  // --start, which writes the same words because a run began.
-  const open = wo.acceptance ? wo.acceptance.filter(a => !a.ticked) : [];
+  // this tool until now. It writes a status because the work is unfinished — and since WO-3.11 that
+  // is all 🔨 means, --start having taken 🤖 CLAIMED for the other half.
+  const open = wo.acceptance ? wo.acceptance.filter(a => !a.ticked && !rehome.holds.includes(a)) : [];
   const held = open.length > 0;
 
   const planned = [];
@@ -812,7 +983,23 @@ function applyTick(id, wos, dryRun) {
   if (statusUnchanged) console.log(`NOTE | the status line already reads "${wo.status}" — left exactly as it is`);
   if (wo.acceptance === null) console.log(`NOTE | ${id} has no **Acceptance** list — nothing here could hold it open, so this status is written on the caller's word alone`);
 
-  // The refusal. Everything above has been reported; nothing below this line ticks anything.
+  // The first refusal, and since WO-3.11 it comes before the one about open lines, because it is
+  // about the tracker rather than about the work: every `→ WO-x.y` marker must land somewhere, and
+  // the **Owes** field must name what the markers point at. It names the line, and it writes nothing.
+  if (rehome.problems.length) {
+    console.log('');
+    console.log(`HELD | ${id} has a re-homed Acceptance line whose pointer does not resolve:`);
+    for (const p of rehome.problems) {
+      if (p.item) console.log(`  ${path.relative(REPO, wo.file)}:${p.item.line + 1}  ${clip(p.item.text, 80)}`);
+      for (const w of p.why) console.log(`      ${w}`);
+    }
+    console.log('');
+    console.log('NOTE | nothing was written — not the status line above, not a roadmap box, not either dashboard.');
+    console.log('NOTE | a "→ WO-x.y" marker only stops holding a work order open while it names a box that exists and is still [ ]. Quote the box as it reads now, or take the marker off and tick the line here on its own evidence. `--audit` lists every pointer in one pass.');
+    return 1;
+  }
+
+  // The second refusal. Everything above has been reported; nothing below this line ticks anything.
   if (held) {
     console.log('');
     console.log(`HELD | ${open.length} of ${wo.acceptance.length} Acceptance lines are still [ ] — ${id} is not done:`);
@@ -828,7 +1015,7 @@ function applyTick(id, wos, dryRun) {
     return 1;
   }
 
-  // The second refusal, and the one WO-2.15 added. Everything above has been reported; nothing below
+  // The third refusal, and the one WO-2.15 added. Everything above has been reported; nothing below
   // this line ticks anything either. It comes before every write, including the status line: an
   // Acceptance list holds a work order open because the WORK is unfinished and 🔨 IN PROGRESS is the
   // true thing to write, whereas a fragment that closes no box or a dashboard that does not add up
@@ -859,7 +1046,16 @@ function applyTick(id, wos, dryRun) {
 
   // Say how many lines were read, not just that none of them was open: "all 0 lines are ticked" is
   // what a parser that found nothing would print, and it should be visible rather than inferred.
-  if (wo.acceptance) console.log(`NOTE | all ${wo.acceptance.length} Acceptance lines are ticked — nothing holds ${id} open`);
+  if (wo.acceptance) {
+    console.log(`NOTE | all ${wo.acceptance.length} Acceptance lines are ticked — nothing holds ${id} open`
+      .replace('are ticked', rehome.holds.length ? `are ticked or re-homed (${rehome.holds.length} re-homed, each resolving to an open box)` : 'are ticked'));
+  }
+  // Said on the way out as well as in the header, because this is the run that writes ✅ DONE over a
+  // work order with `- [ ]` lines still on it, and the reader of the output is the person who has to
+  // believe that is honest. The lines are named, with where the debt went.
+  for (const a of rehome.holds) {
+    console.log(`NOTE | ${path.relative(REPO, wo.file)}:${a.line + 1} stays [ ] and is owed by ${a.rehomes.map(m => m.target).join(', ')} — ${clip(a.text, 70)}`);
+  }
   for (const m of rm.notes) console.log(`NOTE | roadmap: ${m}`);
   if (!rm.fragments.length) {
     console.log(wo.closesRoadmap
@@ -973,6 +1169,35 @@ function audit(wos) {
   console.log('');
   console.log(`  ${wos.size} work orders, ${withField} with a **Closes roadmap** field, ${fragments} quoted fragments, ${bad} problem(s)`);
 
+  // The third section, added at WO-3.11 for the same reason as the first: a pointer quoted from a box
+  // that has since been reworded fails silently and only at tick time, and the tick that finds out is
+  // weeks later on a work order whose author has moved on. The difference is that a **Closes roadmap**
+  // fragment names a box in ROADMAP.md and a `→ WO-x.y` marker names a box in another work order, so
+  // this walk is over the same directory it is standing in.
+  console.log('');
+  console.log('`**Owes**` and its `→ WO-x.y` markers, against the boxes they name');
+  console.log('');
+  let pointers = 0, owesBad = 0, withOwes = 0;
+  for (const wo of wos.values()) {
+    const marks = (wo.acceptance || []).filter(a => a.rehomes && a.rehomes.length);
+    if (!wo.owesRaw && !marks.length) continue;
+    withOwes++;
+    const { problems: rehomeProblems } = rehomesOf(wo, wos);
+    for (const p of rehomeProblems) {
+      owesBad++;
+      const where = p.item ? `${path.basename(wo.file)}:${p.item.line + 1}` : `${path.basename(wo.file)}:${wo.headingLine}`;
+      for (const w of p.why) console.log(`  BAD  ${wo.id.padEnd(8)} ${w}   (${where})`);
+    }
+    for (const a of marks) {
+      if (rehomeProblems.some(p => p.item === a)) continue;
+      pointers += a.rehomes.length;
+      console.log(`  ok   ${wo.id.padEnd(8)} ${a.ticked ? '[x]' : '[ ]'} → ${a.rehomes.map(m => m.target).join(', ')}   ${clip(a.text.replace(REHOME_MARKER, '').trim(), 56)}`);
+    }
+  }
+  if (!withOwes) console.log('  —    no work order carries a **Owes** field or a re-homed line');
+  console.log('');
+  console.log(`  ${withOwes} work order(s) with a **Owes** field or a "→" marker, ${pointers} pointer(s) resolving, ${owesBad} problem(s)`);
+
   console.log('');
   console.log('ROADMAP.md progress dashboard, against the boxes under each `## Phase N`');
   console.log('');
@@ -990,11 +1215,11 @@ function audit(wos) {
   console.log('');
   for (const d of drift) console.log(`FAIL | ${d}`);
 
-  const problems = bad + drift.length;
+  const problems = bad + drift.length + owesBad;
   console.log('');
   console.log(problems
     ? `FAIL | ${problems} problem(s) across the two trackers. Nothing was written; all of it is a hand edit.`
-    : 'PASS | every fragment matches exactly one roadmap box, and every dashboard row matches its own boxes.');
+    : 'PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, and every dashboard row matches its own boxes.');
   return problems ? 1 : 0;
 }
 
@@ -1046,23 +1271,54 @@ const FIXTURE_FILE = 'phase-3-gradebook.md';
 const FIXTURE_PHASE = '3';
 const FIXTURE_BOX = 'self-check fixture box, planted in a temp copy and never in the repository';
 
-function fixtureBlock({ status, fragment, open }) {
+// The second fixture, added at WO-3.11: the work order the first one's re-homed line points AT, and
+// the dependent whose gate the first one used to hold shut. Both roles at once on purpose — that is
+// the real shape (WO-3.1 owed WO-3.5 and gated WO-3.3 through it), and a pointer plant needs a target
+// that is itself synthetic. Naming a real work order as the target is the mistake WO-2.15's own
+// acceptance list had to be re-cut twice for: every real fixture is spent within the week.
+const TARGET_ID = 'WO-9.8';
+const TARGET_BOX = 'the re-homed line, carried by the target fixture';
+
+// `target` says what WO-9.8 does with the box WO-9.9's pointer names: carries it open, carries it
+// ticked, reworded it, or deleted it. Those four are the whole life of a pointer, and three of them
+// have to hold the tick.
+function targetBoxLine(target) {
+  if (target === 'ticked') return `- [x] ${TARGET_BOX}`;
+  if (target === 'reworded') return '- [ ] a box whose wording moved out from under the pointer';
+  if (target === 'deleted') return '- [ ] an unrelated box, and nothing else — the named one is gone';
+  return `- [ ] ${TARGET_BOX}`;
+}
+
+function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open' }) {
   return `
 ---
 
 ## ${FIXTURE_ID} — self-check fixture
 
-**Ship** — · **Status** ${status} · **Size** S · **Depends on** nothing
+**Ship** — · **Status** ${status} · **Size** S · **Depends on** nothing${owes ? ` · **Owes** ${owes}` : ''}
 **Closes roadmap** Phase ${FIXTURE_PHASE} → "${fragment}"
 
 **Why it exists.** \`wo-gate.mjs --self-check\` writes this into a temp copy of \`plans/\` and deletes
 it with the copy. **If you are reading this inside the repository, a self-check died before its
-cleanup ran** — delete this block and the matching fixture box in \`ROADMAP.md\`. Nothing depends on
-either, and nothing else in the repository mentions ${FIXTURE_ID}.
+cleanup ran** — delete this block, the ${TARGET_ID} block under it, and the matching fixture box in
+\`ROADMAP.md\`. Nothing depends on any of them, and nothing else in the repository mentions
+${FIXTURE_ID} or ${TARGET_ID}.
 
 **Acceptance**
 - [x] the first line, ticked
-- [${open ? ' ' : 'x'}] the second line, which one plant unticks
+- [${open ? ' ' : 'x'}] the second line, which one plant unticks${rehome ? `\n- [ ] ${rehome}` : ''}
+
+---
+
+## ${TARGET_ID} — self-check target fixture
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** ${FIXTURE_ID}
+
+**Why it exists.** The work order ${FIXTURE_ID}'s re-homed line points at, and the dependent its
+status gates. Written into the same temp copy and deleted with it.
+
+**Acceptance**
+${targetBoxLine(target)}
 `;
 }
 
@@ -1219,7 +1475,9 @@ function runPlants(subject, sandbox) {
     const lines = readSb(p).split('\n');
     const first = lines.findIndex(l => /^\|\s*\d+\s*\|\s*\[(WO-[\dG][\w.]*)\]/.test(l));
     if (first < 0) throw new Error('--self-check found no running-order table in work-orders/README.md');
-    lines.splice(first, 0, `| 0 | [${FIXTURE_ID}](${FIXTURE_FILE}#wo-99--self-check-fixture) self-check fixture | S | | — |`);
+    lines.splice(first, 0,
+      `| 0 | [${FIXTURE_ID}](${FIXTURE_FILE}#wo-99--self-check-fixture) self-check fixture | S | | — |`,
+      `| 0 | [${TARGET_ID}](${FIXTURE_FILE}#wo-98--self-check-target-fixture) self-check target fixture | S | | — |`);
     plantWrite(p, lines.join('\n'));
   }
 
@@ -1264,12 +1522,22 @@ function runPlants(subject, sandbox) {
   const fixtureBoxLine = () => readSb('ROADMAP.md').split('\n').find(l => l.includes(FIXTURE_BOX) && /^-\s*\[/.test(l)) || '';
   const readmeRow = () => (readSb(path.join('work-orders', 'README.md')).split('\n').find(l => /^\|\s*3 —/.test(l)) || '').split('|');
 
-  const OK = '⬜ NOT STARTED', RUN = '🔨 IN PROGRESS';
+  // The target fixture's box, read the same way and for the same reason: a plant about a pointer has
+  // to be able to say what the box at the other end of it looks like.
+  const targetBoxState = () => {
+    const block = readSb(path.join('work-orders', FIXTURE_FILE)).split(`## ${TARGET_ID} —`)[1] || '';
+    const line = block.split('\n').find(l => /^-\s*\[[ x]\]/.test(l)) || '';
+    return line.trim();
+  };
+
+  const OK = '⬜ NOT STARTED', RUN = '🔨 IN PROGRESS', CLAIM = '🤖 CLAIMED';
   const plants = [
     {
       name: 'an unticked Acceptance line holds --tick at 🔨 IN PROGRESS instead of ✅ DONE',
       run: () => {
-        reset({ status: RUN, fragment: FIXTURE_BOX, open: true });
+        // From 🤖 CLAIMED, which is where a dispatch's last step now runs from (WO-3.11): this plant
+        // is the one that proves --tick both accepts a claim and answers it with the OTHER glyph.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: true });
         const before = snapshot();
         const r = run(['--tick', FIXTURE_ID]);
         const bad = [];
@@ -1277,6 +1545,7 @@ function runPlants(subject, sandbox) {
         if (!/HELD/.test(r.out)) bad.push('the run never said HELD');
         if (!/the second line/.test(r.out)) bad.push('the run did not name the line that held it open');
         if (/✅ DONE/.test(fixtureStatus())) bad.push(`it wrote "${fixtureStatus()}" over an open Acceptance list`);
+        if (!fixtureStatus().startsWith(RUN)) bad.push(`a held tick left the status at "${fixtureStatus()}", not 🔨 IN PROGRESS`);
         if (/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('it ticked the roadmap box of an unfinished work order');
         if (changedSince(before).some(f => f.endsWith('README.md'))) bad.push('it moved a dashboard');
         return bad;
@@ -1290,7 +1559,7 @@ function runPlants(subject, sandbox) {
         const unclaimed = snapshot();
         const first = run(['--start', FIXTURE_ID]);
         if (first.code !== 0) bad.push(`the first --start exited ${first.code}:`, ...verdict(first.out));
-        if (!fixtureStatus().startsWith(RUN)) bad.push(`the first --start left the status at "${fixtureStatus()}"`);
+        if (!fixtureStatus().startsWith(CLAIM)) bad.push(`the first --start left the status at "${fixtureStatus()}"`);
         // A claim is not progress: both dashboards count ✅ DONE and nothing else.
         const moved = changedSince(unclaimed).filter(f => !f.endsWith(FIXTURE_FILE));
         if (moved.length) bad.push(`a claim moved ${moved.join(', ')} — it may only touch the work order's own status line`);
@@ -1302,10 +1571,13 @@ function runPlants(subject, sandbox) {
       },
     },
     {
-      name: '--start on ✅ DONE, 🚧 BLOCKED and 🔒 GATED is refused, and writes nothing',
+      name: '--start on ✅ DONE, 🔨 IN PROGRESS, 🚧 BLOCKED and 🔒 GATED is refused, and writes nothing',
       run: () => {
         const bad = [];
-        for (const status of ['✅ DONE — 2026-01-01', '🚧 BLOCKED', '🔒 GATED — waiting on a fixture']) {
+        // 🔨 joined the list at WO-3.11 and is the interesting one: part-built work is not free to
+        // claim, because a claim on it would say a dispatch is in flight when the truth is that one
+        // stopped. Picking it up is a hand edit, deliberately.
+        for (const status of ['✅ DONE — 2026-01-01', RUN, '🚧 BLOCKED', '🔒 GATED — waiting on a fixture']) {
           reset({ status, fragment: FIXTURE_BOX, open: false });
           const before = snapshot();
           const r = run(['--start', FIXTURE_ID]);
@@ -1317,18 +1589,24 @@ function runPlants(subject, sandbox) {
       },
     },
     {
-      name: '--release refuses what nobody claimed, and returns a claimed one to ⬜ NOT STARTED',
+      name: '--release refuses ⬜, ✅ DONE and 🔨 IN PROGRESS, and returns a 🤖 claimed one to ⬜ NOT STARTED',
       run: () => {
         const bad = [];
-        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
-        const before = snapshot();
-        const r = run(['--release', FIXTURE_ID]);
-        if (r.code === 0) bad.push('--release on a ⬜ NOT STARTED work order exited 0');
-        if (changedSince(before).length) bad.push(`it wrote ${changedSince(before).join(', ')}`);
+        // ✅ DONE and 🔨 joined this list at WO-3.11 and are the reason the split was worth having.
+        // While a claim and a landed-with-lines-owed work order were the same three glyphs, running
+        // this on the wrong one set finished work back to ⬜ NOT STARTED, where `next` hands it to the
+        // next dispatch as unstarted. The fence can only refuse what the file can distinguish.
+        for (const status of [OK, '✅ DONE — 2026-01-01', RUN]) {
+          reset({ status, fragment: FIXTURE_BOX, open: false });
+          const before = snapshot();
+          const r = run(['--release', FIXTURE_ID]);
+          if (r.code === 0) bad.push(`--release on a "${status}" work order exited 0`);
+          if (changedSince(before).length) bad.push(`--release on "${status}" wrote ${changedSince(before).join(', ')}`);
+        }
 
         // The way back, which is the whole reason --release exists: a dispatch that died mid-flight
         // leaves a claim behind, and `next` steps over it forever.
-        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
         const claimed = snapshot();
         const back = run(['--release', FIXTURE_ID]);
         if (back.code !== 0) bad.push(`--release on a claimed work order exited ${back.code}:`, ...verdict(back.out));
@@ -1344,9 +1622,9 @@ function runPlants(subject, sandbox) {
         const bad = [];
         // The status each dry run must PRINT as its `+` line and must not WRITE. Reading the banner
         // is not enough — WO-2.14's own acceptance line says compare the file, don't trust the word.
-        for (const [status, edit, args] of [[OK, RUN, ['--start', FIXTURE_ID, '--dry-run']],
-                                            [RUN, OK, ['--release', FIXTURE_ID, '--dry-run']],
-                                            [RUN, '✅ DONE', ['--tick', FIXTURE_ID, '--dry-run']]]) {
+        for (const [status, edit, args] of [[OK, CLAIM, ['--start', FIXTURE_ID, '--dry-run']],
+                                            [`${CLAIM} — 2026-01-01`, OK, ['--release', FIXTURE_ID, '--dry-run']],
+                                            [`${CLAIM} — 2026-01-01`, '✅ DONE', ['--tick', FIXTURE_ID, '--dry-run']]]) {
           reset({ status, fragment: FIXTURE_BOX, open: false });
           const before = snapshot();
           const r = run(args);
@@ -1364,7 +1642,7 @@ function runPlants(subject, sandbox) {
     {
       name: 'a fully ticked work order still gets ✅ DONE, its roadmap box, and the dashboard',
       run: () => {
-        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
         const rowBefore = readmeRow();
         const r = run(['--tick', FIXTURE_ID]);
         const bad = [];
@@ -1399,13 +1677,25 @@ function runPlants(subject, sandbox) {
       // Every assertion here is about the FIXTURE's row, which step 2b puts above every real one. It
       // used to assert against "the one ⬜ NOT STARTED row in the table", which was an assertion about
       // the live running order wearing a plant's clothes — see 2b.
-      name: '`next` names the claimed row it stepped over, and the way back',
+      name: '`next` names both kinds of skipped row — 🤖 with the way back, 🔨 without one',
       run: () => {
         const bad = [];
-        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
         const claimed = run(['next']);
-        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(claimed.out)) bad.push('`next` stepped over a 🔨 IN PROGRESS row without naming it');
+        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(claimed.out)) bad.push('`next` stepped over a 🤖 CLAIMED row without naming it');
         if (!new RegExp(`--release ${FIXTURE_ID}`).test(claimed.out)) bad.push('`next` named the skip without the way back');
+
+        // The other half of the split (WO-3.11): 🔨 is still skipped — part-built work is not the
+        // next thing to start — but --release refuses it, so offering it as the way back would send
+        // the reader to a command that says no. The two sentences are the whole point of the glyph.
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        const partBuilt = run(['next']);
+        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(partBuilt.out)) bad.push('`next` stepped over a 🔨 IN PROGRESS row without naming it');
+        if (!/part-built/.test(partBuilt.out)) bad.push('`next` did not say what 🔨 IN PROGRESS means when it skipped one');
+        if (new RegExp(`node tools/wo-gate.mjs --release ${FIXTURE_ID}`).test(partBuilt.out)) {
+          bad.push('`next` offered --release as the way back out of 🔨 IN PROGRESS, which refuses it');
+        }
+
         reset({ status: OK, fragment: FIXTURE_BOX, open: false });
         const open = run(['next']);
         if (!new RegExp(`next: ${FIXTURE_ID}`).test(open.out)) bad.push('`next` did not offer the fixture row, which sits above every real row in the copy');
@@ -1416,10 +1706,127 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // ------------------------------------------------------------------ WO-3.11's four
+    //
+    // Three of these plant a violation the split invented; the fourth plants the thing that is
+    // supposed to WORK, and it is not optional. A resolver that answered "no" to every pointer would
+    // pass all three violation plants in a row and would have broken the one behaviour the field
+    // exists for. The same trap caught WO-3.1's float tolerance and WO-3.2's sorted scale: a check
+    // that only ever sees the failure it is named after goes green against a build that fails
+    // everything. So the positive path is planted beside them, in both marker forms.
+    {
+      name: 'a re-homed line whose pointer resolves stops holding the work order open, in both marker forms',
+      run: () => {
+        const bad = [];
+        // Bare marker: the line's own text is the fragment, which is right when a line moved
+        // verbatim. Quoted marker: the fragment is quoted from the target, which is what WO-3.1's two
+        // lines need, because one was superseded by the owner and the other picked up a clause.
+        for (const [form, rehome] of [['bare', `${TARGET_BOX} → ${TARGET_ID}`],
+                                      ['quoted', `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`]]) {
+          reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID, rehome, target: 'open' });
+          const r = run(['--tick', FIXTURE_ID]);
+          if (r.code !== 0) bad.push(`--tick exited ${r.code} on a ${form} pointer that resolves:`, ...verdict(r.out));
+          if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`the ${form} form left the status at "${fixtureStatus()}"`);
+          if (!/^-\s*\[ \]/.test(targetBoxState())) bad.push(`the ${form} form ticked the target's box: "${targetBoxState()}"`);
+          if (!/stays \[ \] and is owed by/.test(r.out)) bad.push(`the ${form} form wrote ✅ DONE over an open line without saying which line or who owes it`);
+
+          // And the dependent's gate, which is the reason any of this exists: WO-3.1 at 🔨 failed
+          // WO-3.3's gate for a fortnight of nothing.
+          const g = run([TARGET_ID]);
+          if (g.code !== 0) bad.push(`${TARGET_ID}'s gate still fails after its dependency ticked (${form} form):`, ...verdict(g.out));
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'a target box deleted or reworded holds the tick, names the line, and writes nothing',
+      run: () => {
+        const bad = [];
+        for (const target of ['reworded', 'deleted']) {
+          reset({
+            status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID,
+            rehome: `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`, target,
+          });
+          const before = snapshot();
+          const r = run(['--tick', FIXTURE_ID]);
+          if (r.code === 0) bad.push(`--tick exited 0 with the target box ${target}`);
+          if (!/HELD/.test(r.out)) bad.push(`the ${target} run never said HELD`);
+          if (!/a line this fixture will not close/.test(r.out)) bad.push(`the ${target} run did not name the line whose pointer failed`);
+          if (!/matched 0/.test(r.out)) bad.push(`the ${target} run did not say the pointer matched 0 boxes`);
+          const changed = changedSince(before);
+          if (changed.length) bad.push(`the ${target} run wrote ${changed.join(', ')}`);
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'an unresolvable **Owes** fails --audit and holds the tick — missing work order, and a box already ticked',
+      run: () => {
+        const bad = [];
+        // Two ways a pointer stops meaning anything. The second is the quiet one and the reason
+        // --audit gained this check: the target ticked the box, the debt was paid, and the pair of
+        // documents now say something that was true last month.
+        const cases = [
+          ['a work order that does not exist', { owes: 'WO-9.1', rehome: `a line this fixture will not close → WO-9.1 "${TARGET_BOX}"`, target: 'open' }, /does not exist/],
+          ['a target box already ticked', { owes: TARGET_ID, rehome: `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`, target: 'ticked' }, /already \[x\]/],
+        ];
+        for (const [what, opts, says] of cases) {
+          reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, ...opts });
+          const before = snapshot();
+          const a = run(['--audit']);
+          if (a.code === 0) bad.push(`--audit exited 0 with ${what}`);
+          if (!says.test(a.out)) bad.push(`--audit did not say why the pointer failed (${what})`);
+          if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
+          const t = run(['--tick', FIXTURE_ID]);
+          if (t.code === 0) bad.push(`--tick exited 0 with ${what}`);
+          if (changedSince(before).length) bad.push(`the refused --tick wrote ${changedSince(before).join(', ')}`);
+        }
+
+        // And the field on its own: **Owes** naming a work order no line points at is a debt nobody
+        // can find, which is the state the header lands in when a line is edited and the field is not.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID, target: 'open' });
+        const orphan = run(['--audit']);
+        if (orphan.code === 0) bad.push('--audit exited 0 on a **Owes** field with no line pointing at it');
+        return bad;
+      },
+    },
+    {
+      // Acceptance line 5, and the shape WO-3.1 was actually in: verified work sitting at 🔨 because
+      // two of its lines named a screen nothing had built. `next` stepped over it — right for a live
+      // dispatch, wrong for this — and the work order that DEPENDS on it was offered with a gate that
+      // could not pass. The fixture reproduces that state rather than the repository being reverted
+      // into it, because WO-3.1 is ✅ DONE on disk and a fixture cannot be spent.
+      name: '`next` stops hiding a dependent once the work order above it lands with its lines re-homed',
+      run: () => {
+        const bad = [];
+        const opts = {
+          fragment: FIXTURE_BOX, open: false, owes: TARGET_ID,
+          rehome: `${TARGET_BOX} → ${TARGET_ID}`, target: 'open',
+        };
+        // WO-3.1's old state: the same work order, at 🔨, with the same line open.
+        reset({ ...opts, status: RUN });
+        const before = run(['next']);
+        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(before.out)) bad.push('`next` did not step over the 🔨 row');
+        if (!new RegExp(`next: ${TARGET_ID}`).test(before.out)) bad.push(`\`next\` did not reach ${TARGET_ID} behind the 🔨 row`);
+        if (before.code === 0) bad.push(`\`next\` offered ${TARGET_ID} with a passing gate while its dependency was 🔨 IN PROGRESS`);
+        if (!new RegExp(`dependency ${FIXTURE_ID} is 🔨`).test(before.out)) bad.push('the failing gate did not name the dependency that failed it');
+
+        // The same tree, ticked under the new rules.
+        reset({ ...opts, status: `${CLAIM} — 2026-01-01` });
+        const t = run(['--tick', FIXTURE_ID]);
+        if (t.code !== 0) bad.push(`--tick exited ${t.code} on the re-homed fixture:`, ...verdict(t.out));
+        const after = run(['next']);
+        if (after.code !== 0) bad.push(`\`next\` still exits ${after.code} after the dependency landed:`, ...verdict(after.out));
+        if (!new RegExp(`next: ${TARGET_ID}`).test(after.out)) bad.push(`\`next\` did not offer ${TARGET_ID} once ${FIXTURE_ID} was ✅ DONE`);
+        if (!new RegExp(`PASS \\| gates clear for ${TARGET_ID}`).test(after.out)) bad.push(`${TARGET_ID}'s gate did not pass with its dependency ✅ DONE`);
+        if (/skipped/.test(after.out)) bad.push('`next` still stepped over the landed work order');
+        return bad;
+      },
+    },
     {
       name: "a wrong count in ROADMAP.md's dashboard holds the tick, with both numbers shown",
       run: () => {
-        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
         const lines = readSb('ROADMAP.md').split('\n');
         const { rows } = roadmapDashboardRows(lines);
         const row = rows.get(FIXTURE_PHASE);
@@ -1460,11 +1867,12 @@ function runPlants(subject, sandbox) {
 
   console.log('');
   console.log(`  ${plants.length} plants, ${plants.length - failed} caught, ${failed} missed.`);
-  console.log('  Covers only what WO-2.14 and WO-2.15 built: the two refusals, the three fences, the');
-  console.log('  dry runs, one tick that works, and one skip. NOT covered: the Acceptance parser against');
-  console.log('  the real work orders, gate()\'s dependency and hard-ordering walk, `next` over the real');
-  console.log('  Ship 1 table, the rest of recomputeDashboard()\'s arithmetic, and --audit against the');
-  console.log('  real trackers. A green run here is not coverage — it is nine claims about nine plants.');
+  console.log('  Covers what WO-2.14, WO-2.15 and WO-3.11 built: the four refusals, the fences on each');
+  console.log('  of --start, --release and --tick, the dry runs, one tick that works, both kinds of');
+  console.log('  skip, and the four about **Owes** and its pointers. NOT covered: the Acceptance parser');
+  console.log('  against the real work orders, gate()\'s hard-ordering walk, `next` over the real running');
+  console.log('  order, the rest of recomputeDashboard()\'s arithmetic, and --audit against the real');
+  console.log(`  trackers. A green run here is not coverage — it is ${plants.length} claims about ${plants.length} plants.`);
   console.log('');
   console.log(failed ? `FAIL | ${failed} of ${plants.length} plants were not caught.`
                      : `PASS | ${plants.length} of ${plants.length} plants were caught.`);
@@ -1480,14 +1888,18 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
   console.log(`wo-gate.mjs — gates, next, claims and ticks for Planbook work orders
 
   node tools/wo-gate.mjs WO-1.7               gate report; exits non-zero if blocked
-  node tools/wo-gate.mjs next [--quiet]       first NOT STARTED in the Ship 1 table
+  node tools/wo-gate.mjs next [--quiet]       first NOT STARTED in the running order
   node tools/wo-gate.mjs --list               every work order and its status
-  node tools/wo-gate.mjs --start WO-1.7 [--dry-run]     claim it — ⬜ NOT STARTED → 🔨 IN PROGRESS
-  node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back, for a dispatch that died
+  node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run]
+                                                        claim it — ⬜ NOT STARTED → 🤖 CLAIMED —
+                                                        <label, or today's date>
+  node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back, for a dispatch that died.
+                                                        🤖 CLAIMED only; it refuses every other status
   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
   node tools/wo-gate.mjs --audit                        every **Closes roadmap** fragment against
-                                                        ROADMAP.md, and its dashboard against its
-                                                        own boxes. Reports; never writes
+                                                        ROADMAP.md, every **Owes** pointer against
+                                                        the box it names, and the dashboard against
+                                                        its own boxes. Reports; never writes
   node tools/wo-gate.mjs --self-check [--against <path>] plant every violation this script is
                                                         supposed to catch, in a temp copy of plans/,
                                                         and fail if one stops being caught. Requires
@@ -1500,6 +1912,12 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
 instead of ✅ DONE, names the lines, and leaves the roadmap alone. It also refuses, writing nothing,
 when a **Closes roadmap** fragment closes no box or ROADMAP.md's dashboard does not match its own
 boxes — both are the tracker being wrong about itself, and no status makes that true.
+
+The four statuses this writes are four different facts (WO-3.11). 🤖 CLAIMED — <dispatch>: a run has
+it in flight, and --release is the way back. 🔨 IN PROGRESS: part-built, nobody in flight, --release
+refuses it. ✅ DONE plus a **Owes** field: landed, with Acceptance lines owed to the work orders that
+will actually close them — those lines stay - [ ] and carry a "→ WO-x.y" marker, and --tick honours
+one only while it can find the matching OPEN box under that target.
 None of them touches a 👤 line in TESTING.md, and none touches CHANGELOG.md, and none of them
 writes ROADMAP.md's progress dashboard — that stays a hand edit (ROADMAP.md, maintenance step 3).`);
   process.exit(0);
@@ -1530,7 +1948,8 @@ if (argv[0] === 'next') process.exit(next(wos, argv.includes('--quiet')));
 if (argv[0] === '--start') {
   const id = argv[1];
   if (!id || !/^WO-/.test(id)) { console.error('FAIL | --start needs an explicit work order ID, e.g. --start WO-1.7'); process.exit(1); }
-  process.exit(applyStart(id, wos, argv.includes('--dry-run')));
+  const d = argv.indexOf('--dispatch');
+  process.exit(applyStart(id, wos, argv.includes('--dry-run'), d >= 0 ? argv[d + 1] : ''));
 }
 
 if (argv[0] === '--release') {
