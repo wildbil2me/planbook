@@ -1923,6 +1923,155 @@ of the removal warning — "9 assignments and 214 scores" — cannot be read on 
 because nothing creates an assignment until WO-3.3. It is exercised at the desk against fixtures
 written through the store, and is owed a human read once there is real work to count.*
 
+### WO-3.2 — Letter-scale editor
+
+- [x] The door is in the class manager, document-level, and opens the panel over it — Escape closes
+      the bands and leaves the manager up.
+- [x] The panel lists the bands the document holds, twelve of them, and no boundary is written down
+      anywhere but `src/store.js`'s seed.
+- [x] Every band shows the range it works out to: the top one reads "and up", and every other stops
+      where the band above it starts.
+- [x] A seeded scale draws the positive note rather than a warning — a teacher who has decided
+      nothing is not greeted by a complaint.
+- [x] Typing 89.5 into the A boundary while A− still sits at 90 is caught **in the editor**: the note
+      names A−, and A−'s own row reads "never reached" in amber.
+- [x] The mapping agrees with that warning rather than working around it — 89.4 is the band *below*
+      the stranded one, because nothing sorts the list to be helpful.
+- [x] With A− moved below it, 89.5 is an A and 89.49 is an A−. So is 89.4999.
+- [x] The boundary is stored as `89.5` — a number, not 90 and not `"89.5"` — and the field and the
+      range beside it both say 89.5.
+- [x] A faulty scale blocks nothing: no error line, every field live, and the only two disabled
+      controls are the reorder arrows at the ends of the list.
+- [x] A band added arrives at 0% with **no boundary invented for it**, and the note says at once that
+      the scale is out of order.
+- [x] A letter containing markup stays text.
+- [x] Removing a band takes one tap and opens no dialog — nothing is filed under a band.
+- [x] Reordering changes no boundary at all: moving the bottom band up strands the one it passed, and
+      moving it back repairs the scale.
+- [x] Raising the lowest boundary is caught as a gap at the bottom, and a percentage below it gets
+      **no letter** rather than an invented one.
+- [x] The subject row offers "Every class" and every class on the bar — an archived class is not
+      offered, and keeps whatever override it had.
+- [x] A class with no override is shown the bands it uses, read-only, with the door to give it its own
+      and no "Add a band".
+- [x] Turning the override on copies the bands that already applied; turning it off writes `null`
+      rather than an empty array.
+- [x] A per-class override applies to that class only: 94% is one letter in that class and another in
+      every other class and document-wide, and exactly one class holds an array.
+- [x] With the document scale up, the panel names the classes that have their own bands.
+- [x] The bands survive a reload — the document scale and the class override both come back out of
+      IndexedDB.
+- [x] The editor is thumbable on the tablet: the 64px letter field beside the 66px boundary field,
+      Remove beside a one-glyph arrow, and the subject pills. 👤
+- [x] iPadOS offers a numeric keypad for the boundary field, and **89.5 can be typed into it** —
+      `step="any"` rather than a whole-number step, which is the whole point of the feature. 👤
+- [x] The amber "never reached" chip and the standing note are legible on a projector from the back
+      of a room. 👤
+- [x] The panel reads correctly on the tablet in both orientations with twelve bands in it, and the
+      row does not spill sideways at 44px a control. 👤
+- [x] Offline launch with the network off, `letter-scale.js` served from the precache
+      (`planbook-shell-v35`). 👤
+
+*The desk half is `verify-shell.mjs`, **473 of 473** with zero skips: twenty-two checks in a new
+letter-grades section and two in the coarse-pointer sweep. Three of them are worth knowing about.*
+
+***The mapping is read through the seam, and that is not a shortcut.*** *Nothing in this app displays
+a grade — no engine (WO-3.4), no assignments (WO-3.3), no grid (WO-3.5) — and WO-3.2 forbids building
+a preview over student data to demonstrate one. So "89.5 is an A" is asked of the exported
+`letterFor()` after the boundary has been typed into the real field. That is also the only way to tell
+a build where the ranges on screen come out of the exported mapping from one where the panel does its
+own arithmetic and the export WO-3.4 will import says something else.*
+
+***No boundary is written down in the harness except the ones it types on purpose.*** *The seeded
+scale is compared against what came out of the document, because 90/80/70 belongs in seed data and
+nowhere else — a check asserting `93` would be a second copy of a school's grading policy living in a
+tool.*
+
+***One fixture proved nothing until a mutation said so, which is WO-3.1's float-tolerance footnote
+happening again in a new place.*** *The check that the scale is never sorted behind the teacher probed
+89.4 and 89.6 — and a `letterFor()` mutated to sort descending answers both of them identically,
+because reordering an A at 89.5 above an A− at 90 changes nothing below 90. That mutation turned
+**nothing** red across all 473 checks. The probe that catches it is 92, where the list says A and a
+sorted list says A−; it is now the third clause of that check.*
+
+***`letterScale` is read as what the field HOLDS, not as a boolean.*** *`null` is the sentinel, an
+array is an override, and `undefined` is a class stored by a build older than this work order — the
+restored class in row 1 of the manager is exactly that. The first draft asserted `=== null` for every
+class that has no override and went red on that one for a reason that had nothing to do with the
+claim. Distinguishing the three is also what makes "turning the override off writes `null` rather than
+an empty array" a check rather than a hope.*
+
+*The touch-target standing check was re-run for this feature. WO-3.2's new controls are the Letter
+scale door in the class manager, and inside the editor the subject pills, the override switch, the
+letter field, the boundary field, two reorder arrows and Remove per band, and "Add a band" — 69
+controls measured on a coarse pointer, none under 44px in either direction. Two of them are the ones
+this could plausibly have got wrong: the boundary field is an `<input type="number">`, the control the
+categories and term editors have each had to be told about once already, and `.pill` carries a coarse
+height with no width, so a subject pill reading "AP" would have been half a target until the subject
+row pinned it. The standing note and the derived range chip are measured too, but for legibility and
+for `scrollWidth > clientWidth` rather than for 44px — they are prose, and the "Days off" spill from
+the first iPad sitting is the failure they are being asked about.*
+
+*Four mutations, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| `letterFor()` sorts the scale descending before matching — the tidying "fix" | **0 red** as first written, **1 red** once the 92 probe went in. See the note above; this is the one that matters |
+| `editBandField()` rounds the boundary to a whole percent on the way in | **4 red** — 89.5 becomes 90, the stored boundary, the mapping, and the reload |
+| `enableOverride()` stores the document array by reference instead of copying it | **3 red** — the isolation check, the reload, and turning the override off |
+| the note says "this scale is invalid" instead of naming the band nothing reaches | **1 red** — the check that asserts the letter is in the sentence |
+
+*One limit carried forward, and it is the one this work order cannot close by itself: **the letters
+have never been read beside a percentage on a screen**, because nothing draws one yet. The mapping is
+verified at the desk through the exported function and by the ranges the editor prints; a human read
+of a letter next to a grade — and the re-key against the SIS that "no separate rounding rule" exists
+for — is owed to WO-3.5.*
+
+***The five 👤 lines were run in one sitting on 2026-08-09** on the installed iPad, in the order the
+verifier set them: offline launch first, then the decimal keypad, then a thumb on every control of one
+band row, then the stranded band read from the back of a room with the projector on, then twelve bands
+in both orientations. All five pass. The keypad line is the one that could have gone either way —
+`step="any"` is what makes 89.5 typeable, and a whole-number step would have failed here rather than
+at the desk.*
+
+***And the rounding prohibition is now actually guarded, which it was not when this section was first
+written.*** *The desk note above says the fourth acceptance line is a grep; `verify-shell.mjs` said
+that grep was "made in `tools/wo-sweep.mjs`", and the sweep had no rounding check at all. The line had
+been read by hand once, in the dispatch, and the comment turned that reading into a standing guard
+nobody was standing. `wo-sweep.mjs` § 10 now makes it real, in three clauses, and the split between
+them is the design: **a round-to-whole-percent option is a hard FAIL** anywhere in the app, in either
+word order (`roundGrades`, `gradeRounding`) — there is no version of that identifier that wants a
+human's opinion. **`src/letter-scale.js` rounding anything at all is a hard FAIL**, which is only its
+own header's promise made checkable. **Rounding anywhere else on the mapping path is a REVIEW, not a
+FAIL**, because WO-3.4's engine will legitimately want `Math.round` to draw "87%" and a check that
+went red on display formatting would be switched off inside a work order. Comment lines are excluded
+from all three, or the prose stating the prohibition — which names `toFixed` and `Math.round` in order
+to forbid them — would be read as the violation. `wo-sweep.mjs` is **15 checks, 14 passed, 0 failed, 1
+to review** — the standing sensitive-field-name line, which now also names `letter-scale.js`, for a
+comment citing `roster.js`; that module reads and emits no student data.*
+
+*Four mutations against the new clauses, all reverted — the same discipline as the fixture above,
+since a guard written to answer an audit is exactly the kind that goes green at nothing:*
+
+| Mutation | Result |
+|---|---|
+| `const roundPercentToWhole = Math.round(94.6)` in `src/letter-scale.js` | **2 FAIL** — the option clause and the module clause, exit 1. **Proves neither on its own:** the line carries both signals at once, an option-shaped name *and* a rounding primitive |
+| a `gradeRounding` setting read in `src/letter-scale.js`, no rounding primitive anywhere near it | **1 FAIL** — the option clause alone |
+| `const shownAt = Math.round(94.6)` in `src/letter-scale.js` — a neutral name | **1 FAIL** — the module clause alone |
+| `Math.round(87.4)` added to `src/shell.js`, which imports the mapping | **1 REVIEW, 0 FAIL** — surfaced by file:line with the question framed, and the run still exits 0 |
+
+*Rows 2 and 3 are the ones that carry the proof, and row 3 exists because the owner asked which two
+checks row 1 had turned red. **It was the wrong question to be unable to answer.** Row 1 mutates one
+line that trips both clauses, so it cannot show either working alone — and row 2 had already shown the
+module clause **passing** while the option clause failed, which left the module clause never once
+fired on its own. A neutrally-named `Math.round` is the case it exists for, and until row 3 was run
+nothing had asked it. This is the 89.4/89.6 fixture above happening to the guard written to answer for
+it: a check whose evidence cannot distinguish its own clauses is evidence of less than it looks.*
+
+*Row 2 is still the one that matters for the rule itself. A guard that only fires when a rounding call
+is present would miss what the Traps line actually forbids — the **option**, which can be added a whole
+work order before anything rounds.*
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

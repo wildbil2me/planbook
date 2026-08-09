@@ -852,6 +852,23 @@
         off the class bar. Deleting is offered on an archived class, once it is out of your way.
       </p>
 
+      <!-- WO-3.2's one door, and it is document-level rather than a seventh control on a class row.
+           plans/gradebook-surfaces.md § "And the class manager gets less cramped by doing nothing"
+           forbids re-cutting that row, and this file's own measurements rule out another icon in
+           either header strip at 390px — so the letter scale is reached from the panel that already
+           holds the year's setup, beside the classes it is about. The per-class override is reached
+           INSIDE that panel, from a row of the same classes listed above; the reasoning is above
+           #letterScaleModal, where a teacher-facing decision belongs. -->
+      <div class="modal-section-label">Letter grades</div>
+      <div class="scale-actions">
+        <button class="class-action-btn" type="button" data-letter-scale aria-haspopup="dialog">Letter scale</button>
+      </div>
+      <p class="class-hint">
+        The bands that turn a percentage into a letter — one set for the year, and any class can have
+        its own. You define the boundaries: if 89.5 should be an A, that is what you type, and
+        Planbook never rounds a percentage on its way to a letter.
+      </p>
+
       <div class="hidden" id="classArchivedSection">
         <div class="modal-section-label">Archived</div>
         <div class="class-list" id="classArchivedList"></div>
@@ -1006,6 +1023,85 @@
         <button class="class-action-btn danger" id="categoryRemoveBtn" data-category-remove-confirm>Remove</button>
         <button class="class-action-btn" data-category-remove-cancel>Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Letter grades (WO-3.2), opened over the class manager exactly as the term editor and the
+     categories panel are — src/modal.js keeps a stack, so Escape closes this and leaves that open.
+     #scaleSubjects, #scaleOverride, #bandList and #scaleNote are all rendered by src/letter-scale.js;
+     a specimen band here would be a second truth to keep in step with the real one, and it would
+     also be this file quoting a boundary, which is the one thing that must never appear outside seed
+     data.
+
+     WHERE THE PER-CLASS OVERRIDE IS REACHED FROM, AND WHAT WAS REJECTED. The subject row at the top
+     of this panel picks the scale being looked at: "Every class" or one class. That is here rather
+     than on a class-manager row because the row already carries six controls and
+     plans/gradebook-surfaces.md refuses to re-cut it, and rather than in the header because this
+     file measures that strip at 390px and records that a fourth control there overflows. A second
+     door inside "Categories & weights" was considered and dropped: two doors onto one panel is two
+     places for a teacher to learn, and the class list this panel's subject row is made of is
+     already on screen behind it.
+
+     Four things in the copy below are load-bearing rather than decorative.
+
+     "A percentage takes the first band it reaches" is the rule the whole feature is, and it is said
+     to the teacher rather than only implemented: it is what makes the boundary she types the
+     rounding rule, so there is no second rule to disagree with the SIS about. There is deliberately
+     no "round to nearest whole percent" option anywhere in this app, and there must not be one.
+
+     The sentence about each band running up to the next one's boundary is what makes the range
+     beside every row readable — the upper bound is derived, not stored, which is also why a gap
+     between two bands cannot be typed.
+
+     The line about a class's own bands says what `null` means in the document: no override unless
+     you ask for one, and turning it off puts the class back on the year's bands rather than freezing
+     a copy of them.
+
+     And it says nothing is blocked while a scale is wrong, for the reason the categories panel says
+     it: a scale mid-edit is wrong for a second at a time, and an app that refused to save it would
+     be arguing with a teacher who is typing. -->
+<div class="modal-overlay hidden" id="letterScaleModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="letterScaleTitle">
+    <div class="modal-header">
+      <h2 id="letterScaleTitle">Letter grades</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        A percentage takes the <strong>first band it reaches</strong>, reading down this list. So the
+        boundary you type is the whole of the rule: if 89.5 should be an A, type 89.5 — nothing here
+        rounds a percentage before it looks for a letter, and there is no second rule to disagree
+        with your school’s system about.
+      </p>
+
+      <div class="modal-section-label">These bands are for</div>
+      <div class="scale-subjects" id="scaleSubjects" role="group"
+           aria-label="Which scale you are looking at"></div>
+      <div class="scale-override" id="scaleOverride"></div>
+
+      <div class="modal-section-label">Bands, highest first</div>
+      <div class="band-list" id="bandList"></div>
+      <!-- The standing note. A plain line rather than an aria-live region: this app has exactly one
+           of those (src/live-region.js), and a second one updating per keystroke would read a
+           half-typed boundary aloud. src/letter-scale.js announces the crossing instead. -->
+      <p class="scale-note" id="scaleNote"></p>
+      <div class="band-actions" id="bandAddRow">
+        <button class="class-action-btn" type="button" data-band-add>Add a band</button>
+      </div>
+      <p class="class-hint">
+        Each band runs from its own boundary up to the next one above it, which is what the range
+        beside it says — 93 belongs to the band that starts at 93, not to the one below. That is why
+        there is only one number to type per band, and why two bands can never leave a hole between
+        them. Nothing is blocked while a scale is wrong: keep going, and the line above says what it
+        makes of the bands as they are.
+      </p>
+      <p class="class-hint">
+        A class only has its own bands if you give it them; otherwise it uses the ones above, and
+        changing those changes every class at once. Putting a class back on the year’s bands discards
+        the ones you typed for it — nothing else in that class is touched, because a letter scale
+        holds no grades.
+      </p>
     </div>
   </div>
 </div>

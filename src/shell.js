@@ -70,6 +70,19 @@
       data-category-remove-cancel     abandons it, having written nothing
       data-category-field="name|weight" + data-category-id: an input; edits that field as it is
                                       typed, and redraws the running weights total beside it
+      data-letter-scale               opens the letter-grade bands. One door, and it is document-
+                                      level: the per-class override is reached from the subject row
+                                      inside that panel, because the class-manager row is full
+      data-scale-subject="<classId>"  which scale the panel is showing; empty means the year's own
+      data-scale-override-on="<id>"   gives that class its own bands, copied from the year's
+      data-scale-override-off="<id>"  puts it back on the year's bands, discarding its own
+      data-band-add                   adds a band to the scale the panel is showing, at 0%
+      data-band-move-up="<index>"     moves that band higher in the list; the list order IS the
+                                      order a percentage is read against
+      data-band-move-down="<index>"   one lower
+      data-band-remove="<index>"      removes it, on the tap — nothing is filed under a band
+      data-band-field="letter|min" + data-band-index: an input; edits that band as it is typed, and
+                                      redraws the derived range beside every row below it
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
                                       question mark. `P` is a step and is still never STORED:
@@ -186,6 +199,10 @@ import * as classes from './classes.js';
    here, and this module imports nothing back, so "which class is open" is resolved below and
    handed down as an id. */
 import * as categories from './categories.js';
+/* WO-3.2. Its own module for the reason src/teacher.js declines to host it — a setting about the
+   gradebook rather than about the teacher — and a leaf like categories.js: it imports the store, the
+   modal system and the live region, and nothing imports it back. */
+import * as letterScale from './letter-scale.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* Imported here for the seam at the foot of this file and for nothing else — every control a hall
@@ -544,6 +561,41 @@ document.addEventListener('click', (e) => {
     categories.cancelRemoveCategory(); return;
   }
 
+  /* ── letter grades (WO-3.2) ──
+     Directly under the categories, because these are the same act: setting the year up. Eight hooks
+     and NOT ONE OF THEM CHAINS A REPAINT, which is a deliberate absence rather than a forgotten
+     line. afterCategoryChange() exists because the class-manager row prints the weights total, so a
+     panel over it leaves that row stale; nothing on any screen behind this panel says anything about
+     the letter scale — no row badge, no card, no header — so there is nothing to redraw. The day a
+     screen shows a letter (WO-3.5), it adds its line to a chain here, exactly as the categories did.
+
+     The editor is opened with no class: the door is a document-level control, and a panel that
+     remembered the class it was last on would open showing one class's bands to a teacher who asked
+     about all of them. Which class the two override hooks act on comes off the button, because the
+     subject row is rendered from the document and the id is already on it. */
+  const scaleDoor = e.target.closest('[data-letter-scale]');
+  if (scaleDoor) { letterScale.openLetterScaleEditor(scaleDoor); return; }
+  const scaleSubject = e.target.closest('[data-scale-subject]');
+  if (scaleSubject) {
+    letterScale.selectScaleSubject(scaleSubject.getAttribute('data-scale-subject'));
+    return;
+  }
+  const overrideOn = e.target.closest('[data-scale-override-on]');
+  if (overrideOn) {
+    letterScale.enableOverride(overrideOn.getAttribute('data-scale-override-on')); return;
+  }
+  const overrideOff = e.target.closest('[data-scale-override-off]');
+  if (overrideOff) {
+    letterScale.disableOverride(overrideOff.getAttribute('data-scale-override-off')); return;
+  }
+  if (e.target.closest('[data-band-add]')) { letterScale.addBand(); return; }
+  const bandUp = e.target.closest('[data-band-move-up]');
+  if (bandUp) { letterScale.moveBandUp(bandUp.getAttribute('data-band-move-up')); return; }
+  const bandDown = e.target.closest('[data-band-move-down]');
+  if (bandDown) { letterScale.moveBandDown(bandDown.getAttribute('data-band-move-down')); return; }
+  const bandRemove = e.target.closest('[data-band-remove]');
+  if (bandRemove) { letterScale.removeBand(bandRemove.getAttribute('data-band-remove')); return; }
+
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
      as from the home screen, and the two hooks must not be able to shadow each other. Nothing here
@@ -880,6 +932,13 @@ document.addEventListener('input', (e) => {
   const categoryField = e.target.closest('[data-category-field]');
   if (categoryField) { categories.editCategoryField(categoryField); afterCategoryChange(); return; }
 
+  /* A band's letter or its boundary, saved as it is typed and by the same debounce. No chain, for
+     the reason the eight click hooks above have none: nothing behind that panel draws a letter yet.
+     The rows are not re-rendered — src/letter-scale.js patches the derived range chips in place,
+     because replacing the input under the caret is the failure that rule exists for. */
+  const bandField = e.target.closest('[data-band-field]');
+  if (bandField) { letterScale.editBandField(bandField); return; }
+
   /* The registry's search box, which is the one hook on this listener that writes NOTHING — it
      narrows the rows on screen. It is here rather than on `keyup` for the reason the fields below
      are: `input` is the event that fires for a paste, for dictation, and for the software
@@ -1140,6 +1199,17 @@ window.planbook = {
      and disagree with the app. Nothing in the app reads window.planbook — see the block above for
      why the seam outlived the shelf. */
   categories,
+  /* `letterScale` joined at WO-3.2, and for the reading reason `categories` gives rather than a
+     driving one: every control this feature has is a pill, a field or a button in #letterScaleModal
+     and a teacher can touch all of them. What no click can show is the work order's first acceptance
+     line — that a boundary of 89.5 makes 89.5 an A and 89.49 the band below — because nothing in
+     this app displays a grade yet, and building a preview over student data to demonstrate it is
+     what WO-3.2 forbids. So tools/verify-shell.mjs types the boundary through the real field and
+     then asks letterFor() and scaleFaults(), which is the only way to tell a build where the ranges
+     on screen come from the exported mapping from one where the panel does its own arithmetic and
+     the export WO-3.4 will import says something else. Nothing in the app reads window.planbook —
+     see the block above for why the seam outlived the shelf. */
+  letterScale,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

@@ -752,6 +752,92 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .modal-body .category-total.warn { border-color: #e67e22; background: #fef5ea; color: #7a4f10; }
 
+/* ── LETTER GRADES (WO-3.2) ── */
+/* The contents of #letterScaleModal, plus the one door to it in the class manager. Almost
+   everything in that panel is a component this sheet already owns — `.class-action-btn` for every
+   button, `.pill` for the subject row, `.class-empty` for an empty scale, `.class-hint` and
+   `.modal-section-label` — which is the point: a seventh dialog inventing a seventh grammar would
+   be a seventh thing to keep in step. What is written out here is the eight things with no
+   counterpart.
+
+   The row is `.category-row`'s shape with a letter where the name is and a derived range chip after
+   the number, and it wraps for the same reason that one does: two action buttons and a Remove at
+   44px apiece is most of the 440px inside a modal panel, and the range chip beside them is as long
+   as its two boundaries make it. */
+.scale-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* Which scale is being looked at, and the door to a per-class override. `.pill`s in the
+   `.dayoff-kinds` shape rather than a <select>, for the reason that row gives: a <select> on an iPad
+   is a spinning wheel over the whole screen, and this is a short list whose consequence is drawn
+   immediately below it. */
+.scale-subjects { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Whose bands these are, said in a sentence with the switch beside it. A flex row rather than a
+   washed panel: `.dayoff-keeps` and `.class-delete-facts` are for what a tap keeps or destroys, and
+   this is a statement of fact with a control in it. */
+.scale-override { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.scale-override-note { flex: 1 1 200px; min-width: 0; font-size: 11px; color: #8a9bb0; line-height: 1.5; }
+
+.band-list { display: flex; flex-direction: column; gap: 6px; }
+.band-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+/* A band that applies to the selected class but is edited under "Every class". Dashed and on white,
+   which is `.class-row.archived`'s grammar for the same meaning — this row is real and is not
+   yours to change here. */
+.band-row.inherited { background: #fff; border-style: dashed; }
+/* A letter, not a word: two or three characters, centred, and bold because it is the thing the row
+   is about. 64px rather than the 58px `.category-weight` uses — "A−" plus a caret is narrower than
+   three digits and a spinner, but the field is the row's first target and the extra 6px is what
+   keeps it from reading as an afterthought beside the number. */
+.band-letter-input {
+  width: 64px; flex: 0 0 auto; text-align: center; padding: 6px 8px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px;
+  font-size: 13px; font-weight: 700; color: #1a1a2e; background: #fff;
+}
+/* The same letter as text, on an inherited row. */
+.band-letter { width: 64px; flex: 0 0 auto; text-align: center; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+/* `.category-weight-field`'s pair, which lifted Roll Call!'s `.config-num` + `.config-num-wrap`
+   (dashboard.html ~711-716): the number and its unit as one flex item, so "%" can never wrap away
+   from the field it belongs to. Written out rather than shared for the reason the install banner and
+   the backup nag are written out separately — two components that happen to look alike, until the
+   day one of them changes. */
+.band-min-field { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.band-min {
+  width: 66px; text-align: center; padding: 4px 6px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+.band-min-unit { font-size: 13px; font-weight: 700; color: #6b7a8d; }
+/* THE DERIVED RANGE, and the fourth deliverable: what this band actually covers, on the row, so a
+   scale's shape is legible without doing eleven subtractions. Quiet by default — it is a
+   consequence, not a control — in `.class-row-note`'s secondary grey. The warn state is the
+   `.class-row-warn` badge in full (the `#fff3cd` wash on `#f5c98a` with `#c0700a` text, from
+   design/style-guide.md §1), because "never reached" is the same class of fact as "weights 95%": a
+   thing to fix, not a thing that destroys anything, so it is amber and never red. */
+.band-range { flex: 1 1 120px; min-width: 0; font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.band-range.warn {
+  flex: 0 0 auto; padding: 2px 8px; border-radius: 20px;
+  border: 1.5px solid #f5c98a; background: #fff3cd; color: #c0700a;
+  font-size: 10px; letter-spacing: 0.4px; white-space: nowrap;
+}
+.band-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.band-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* THE STANDING NOTE, drawn in both states, and the same two washes `.category-total` carries: the
+   positive one from `.dayoff-keeps` and the warning from Roll Call!'s inline notice banner
+   (`#noSchoolBanner`, dashboard.html:1294). Written out rather than sharing that class, for the
+   reason `.band-min-field` is: they are two sentences about two different things, and the day one of
+   them changes is the day sharing costs more than it saved.
+   Qualified with `.modal-body` because it is a <p> in there, and `.modal-body p` is more specific
+   than a bare class — the same reason `.year-hint` and `.category-total` are qualified. */
+.modal-body .scale-note {
+  margin-top: 10px; padding: 10px 14px; border-radius: 8px;
+  border: 1.5px solid #a3e4bc; background: #eafaf1; color: #1a6b3a;
+  font-size: 12px; font-weight: 700; line-height: 1.5;
+}
+.modal-body .scale-note.warn { border-color: #e67e22; background: #fef5ea; color: #7a4f10; }
+
 /* ── DAYS OFF & PLANNED DROPS (WO-2.3) ── */
 /* The contents of #daysOffModal and #daysOffConfirmModal. Almost everything in that panel is a
    component this sheet already owns — `.pill`, `.class-input`, `.term-date`, `.toggle-btn`,
@@ -1146,6 +1232,42 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
      and a 44px floor on a label is 44px of a dialog spent on something nobody taps. */
   .class-row-warn { font-size: 11px; }
   .modal-body .category-total { font-size: 13px; padding: 12px 14px; }
+  /* Letter grades (WO-3.2), in the same pass that adds them — there is no later one. The buttons in
+     that panel are `.class-action-btn` and the subject row is `.pill`, both of which have their own
+     floor above; what is named here is the two fields, the five containers and the three pieces of
+     text.
+     Both fields carry the 44px themselves with their vertical padding zeroed, which is the WO-1.2
+     `.search-box` lesson: a 44px row around a 19px input looks tappable above and below the text,
+     does nothing there, and the teacher taps twice. Each keeps its own width — wider than the 44px
+     floor, because "A−" wants a caret beside it and a boundary can be 89.5 with a spinner after
+     it — and both are named with a `min-width` anyway so the next reader does not have to go and
+     prove they are covered.
+     `.pill` carries a height and no width of its own, which is right for a chip with a class name in
+     it and wrong for the one that might read "A": the subject row pins it, in this block, because
+     this is the block that makes every other target in the panel 44px wide.
+     `.band-row-actions` gets 8px for the reason `.category-row-actions` does: Remove sits shoulder
+     to shoulder with an arrow, and 6px between two 44px targets is a mis-tap. */
+  .scale-actions { gap: 10px; }
+  .scale-subjects { gap: 8px; }
+  .scale-subjects .pill { min-width: 44px; }
+  .scale-override { gap: 10px; }
+  .band-list { gap: 8px; }
+  .band-row { gap: 10px; }
+  .band-min-field { gap: 6px; }
+  .band-letter-input { min-height: 44px; min-width: 64px; font-size: 15px; padding: 0 8px; }
+  .band-min { min-height: 44px; min-width: 66px; font-size: 14px; padding: 0 6px; }
+  .band-min-unit { font-size: 14px; }
+  .band-row-actions { gap: 8px; }
+  .band-actions { gap: 10px; }
+  /* Text, not targets — a letter on a read-only row, a derived range, a sentence and a standing
+     line. Named here for the size bump only, exactly as `.class-row-note` and `.dayoff-kind` are:
+     10-12px is unreadable at arm's length on a tablet, and a 44px floor on a label is 44px of a
+     dialog spent on something nobody taps. */
+  .band-letter { font-size: 15px; }
+  .band-range { font-size: 12px; }
+  .band-range.warn { font-size: 11px; }
+  .scale-override-note { font-size: 12px; }
+  .modal-body .scale-note { font-size: 13px; padding: 12px 14px; }
   /* Days off & planned drops (WO-2.3), in the same pass that adds them — there is no later one.
      The four controls in that panel that are not already covered by a rule in this block: the two
      kind pills wear `.pill`'s own coarse floor, the title field wears `.class-input`'s, the two

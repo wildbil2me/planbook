@@ -40,7 +40,7 @@ and writes the answers down where the work orders can see them.
 | Assignment list | WO-3.3 | **View**, with modal editors | The list is a surface you scan and work down; creating one assignment is a task you finish. Same shape as the roster. |
 | Per-student detail | WO-3.7 | **View** | Its own text already calls it "the screen open during a guardian conference". |
 | Categories & weights | WO-3.1 | **Modal** — shipped | Set up in August, revisited a few times a year. |
-| Letter-scale editor | WO-3.2 | **Modal** | Same. |
+| Letter-scale editor | WO-3.2 | **Modal** — shipped | Same. Reached from a document-level door in the class manager rather than from a class row, because the row is not re-cut (below); the per-class override is a subject row inside the panel. |
 
 ### The score grid is the one that cannot be a modal
 
@@ -76,6 +76,15 @@ manager keeps the four setup tasks that genuinely belong to it.
 If the row is still cramped once Phase 3 lands, that is a real complaint with a cheap answer —
 Terms and Categories are both setup, and could fold behind one **Set up** door — but it is a
 different decision, and it should be made against the finished row rather than predicted here.
+
+**WO-3.2 took this literally and the row is untouched.** *(2026-08-09, in that work order's build.)*
+The letter scale needed a door and had three places it could not go: a seventh control on the row
+(this section), a fourth icon in either header strip (`index.html`'s own 390px measurements), and the
+teacher's own details panel (`src/teacher.js` declines it by name). So it is a **document-level
+control in the class-manager panel** — under the class list and its hints, not on a row — and the
+per-class override is reached from a subject row *inside* that panel: "Every class", then one `.pill`
+per class on the bar. The row was going to be the obvious answer and the record above is the reason it
+is not; the same shape is available to any later document-wide setting that needs a home.
 
 ## What was considered and rejected
 

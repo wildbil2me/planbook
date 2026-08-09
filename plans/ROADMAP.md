@@ -51,13 +51,13 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 12/16 `[████████░░] 75%` |
-| 3 | Gradebook | ⬜ NOT STARTED | 0/10 `[░░░░░░░░░░] 0%` |
+| 3 | Gradebook | 🔨 IN PROGRESS | 2/10 `[██░░░░░░░░] 20%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **28/82 `[███░░░░░░░] 34%`** |
+| | | **Overall** | **30/82 `[████░░░░░░] 37%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -308,8 +308,8 @@ meet is a second source of truth that's wrong by first period.)*
 
 **Goal:** grades entered once or twice a week, in minutes, for five classes.
 
-- [ ] Weighted categories per class, editable, with a visible warning when weights ≠ 100%.
-- [ ] **Letter-scale editor** — the teacher defines the bands. The app never hardcodes 90/80/70.
+- [x] Weighted categories per class, editable, with a visible warning when weights ≠ 100%.
+- [x] **Letter-scale editor** — the teacher defines the bands. The app never hardcodes 90/80/70.
       This subsumes rounding: if 89.5 should be an A, the boundary is 89.5, and there is no
       separate rounding rule to disagree with the SIS about.
 - [ ] Assignments: name, points, category, assigned date, due date. *A plain date — there is no

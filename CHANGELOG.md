@@ -38,6 +38,35 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.2 — letter scales are the teacher's, not the app's.** The bands that turn a percentage into
+  a letter are now edited in Class manager → Letter scale, document-wide or per class, and each band
+  shows the range it actually covers. Setting an A boundary of 89.5 makes 89.5 an A — which is the
+  whole of the rounding rule, because there isn't a second one to disagree with the SIS about. A band
+  the scale can never reach says so, in place, without blocking anything.
+
+  **Read on the teaching iPad on 2026-08-09** — offline launch with `letter-scale.js` from the
+  precache, iPadOS's numeric keypad accepting `89.5` into the boundary field, a thumb on every control
+  of a band row, the amber "never reached" chip legible from the back of a room on a projector, and
+  twelve bands in both orientations without a row spilling sideways.
+
+  **The prohibition that has no UI: there is no "round to nearest whole percent" option, and there
+  must never be one.** It is the second, disagreeing rule this design exists to delete. That was
+  stated in three places and enforced in none — and worse, `tools/verify-shell.mjs` recorded that the
+  check "is a grep, made in `tools/wo-sweep.mjs`" when the sweep had no rounding check at all. The
+  acceptance line had been read by hand once, during the dispatch, and the comment promoted that
+  reading into a standing guard nobody was standing. `wo-sweep.mjs` gains it for real, **12 → 15
+  checks**: the option identifier is a hard failure in either word order, `src/letter-scale.js`
+  rounding anything at all is a hard failure, and rounding elsewhere on the mapping path is handed to
+  a human undecided — because WO-3.4's grade engine will legitimately round to draw "87%", and a check
+  that failed on that would be switched off within a work order. Verified by mutation, including one
+  that adds the option with no rounding call anywhere near it: the feature can be added a whole work
+  order before anything actually rounds.
+
+  **A cross-reference between the two harnesses is a claim, not a check** — neither can see the
+  other's absence, so "this is checked over there" is exactly as unverified as any other comment.
+  Written up in `tools/README.md` beside the WO-1.10 `CACHE` miss it rhymes with: that was a rule
+  nobody enforced, this was a rule the record said was enforced.
+
 - **WO-3.1 — every class carries its own grading categories, and what each one is worth.** Tests,
   quizzes, homework, whatever you actually put in the book. A new class arrives with four that
   already total 100%, and all of it is yours to rename, reweight, reorder or throw away. A category

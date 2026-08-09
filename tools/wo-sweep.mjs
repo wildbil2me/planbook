@@ -431,6 +431,138 @@ function report(hits) {
   }
 }
 
+/* ══════════════════════════ 10. no rounding between a percentage and a letter ══════════════════
+   WO-3.2's design, in one sentence: the boundary the teacher types IS the rounding rule, so if 89.5
+   should be an A she types 89.5 and there is no second rule to disagree with the SIS about. The
+   Traps line forbids the second rule outright — no "round to nearest whole percent" option, ever,
+   and no tolerance or epsilon wearing its clothes.
+
+   Nothing enforced it. The acceptance line was settled by hand in the dispatch that built the
+   feature, and then `tools/verify-shell.mjs` wrote down that the grep "is made in tools/wo-sweep.mjs"
+   — which was not true, and is the reason this section exists. A prohibition whose only guard is a
+   comment saying it is guarded is worse than an unguarded one: the next reader stops looking.
+
+   Three clauses, and the split between FAIL and REVIEW is the point.
+
+   (a) THE OPTION SHAPE IS A HARD FAIL, anywhere in the app's code. `roundGrades`, `gradeRounding`,
+   `roundToWholePercent` — the identifier is the feature, and there is no version of it that wants a
+   human to weigh in. Zero today, and it must stay zero.
+
+   (b) src/letter-scale.js ROUNDS NOTHING, EVEN FOR DISPLAY, which its own header promises: a
+   boundary is printed with String() because 89.5 has to read as 89.5. That module owns the mapping,
+   so a rounding primitive appearing in it needs no judgment either.
+
+   (c) EVERYWHERE ELSE ON THE PATH IS A REVIEW, not a FAIL. WO-3.4's grade engine imports letterFor()
+   and will legitimately want Math.round to draw "87%" — display formatting over a percentage is not
+   the banned thing, and a check that failed on it would be turned off within a work order. So any
+   rounding primitive in a file that touches the mapping is handed to the verifier by file:line with
+   the question already framed: does this round on the way to a letter?
+
+   Comment lines are excluded from all three. The prohibition is *stated* in prose in
+   src/letter-scale.js's header — naming toFixed and Math.round to forbid them — and a check that
+   reads the rule as the violation is the false FAIL this file's own header warns about twice.
+
+   The four Math.round calls that predate WO-3.2 are allowlisted by name below rather than by
+   pattern, because "display formatting over a number that is not a grade" is a judgment somebody
+   made once and the names are what record it. A fifth one shows up as a REVIEW. */
+
+{
+  // Which lines in a file are comment rather than code. Block state has to be carried line to line,
+  // so this cannot be a grepLines predicate — that only ever sees one line. Both comment syntaxes
+  // that appear in this repo's code are handled: JS block and line comments, and markup comments.
+  // Written with `//` rather than a block, because a block comment that has to *name* the delimiters
+  // it is looking for closes itself at the first one it mentions.
+  function commentLines(file) {
+    const set = new Set();
+    let inBlock = false;
+    let inMarkup = false;
+    fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      const wasIn = inBlock || inMarkup;
+      if (!inBlock && /\/\*/.test(line) && !/\/\*[\s\S]*?\*\//.test(line)) inBlock = true;
+      if (!inMarkup && /<!--/.test(line) && !/<!--[\s\S]*?-->/.test(line)) inMarkup = true;
+      const opened = !wasIn && (inBlock || inMarkup);
+      // A line that opens or closes a block, sits inside one, is a full one-line comment, or is a
+      // `//` line — all prose as far as this check is concerned.
+      if (wasIn || opened || /^\s*(\/\/|\*|<!--)/.test(line) || /\/\*[\s\S]*?\*\//.test(line)
+          || /<!--[\s\S]*?-->/.test(line)) set.add(i + 1);
+      if (inBlock && /\*\//.test(line)) inBlock = false;
+      if (inMarkup && /-->/.test(line)) inMarkup = false;
+    });
+    return set;
+  }
+
+  const codeOnly = (files, re) => {
+    const hits = [];
+    for (const f of files) {
+      const comments = commentLines(f);
+      let text;
+      try { text = fs.readFileSync(f, 'utf8'); } catch { continue; }
+      text.split('\n').forEach((line, i) => {
+        re.lastIndex = 0;
+        if (re.test(line) && !comments.has(i + 1)) hits.push({ file: rel(f), line: i + 1, text: line.trim() });
+      });
+    }
+    return hits;
+  };
+
+  const ROUNDS = /\b(toFixed|toPrecision|Number\.EPSILON|Math\.(?:round|ceil|floor))\b/;
+
+  /* (a) The option that must never exist. Both word orders, because the identifier could be written
+     either way round, plus the bare "round to whole/nearest" phrasing. */
+  {
+    const OPTION = /\b(?:round\w*(?:percent|grade|score|letter|whole|nearest)\w*|(?:percent|grade|score|letter)\w*round(?:ing|ed)?\w*)\b/i;
+    const hits = codeOnly(CODE, OPTION);
+    check('no round-to-whole-percent option exists', !hits.length,
+      hits.length
+        ? report(hits) + ' — WO-3.2 Traps: the boundary the teacher types is the rounding rule, and a second one is the thing this design deletes'
+        : 'no identifier in the app pairs rounding with a percentage, grade, score or letter');
+  }
+
+  /* (b) The module that owns the mapping. Named explicitly rather than found by pattern: if this
+     file is ever renamed, the check going quiet is the failure, so it says so out loud. */
+  {
+    const scale = CODE.filter(p => rel(p) === 'src/letter-scale.js');
+    if (!scale.length) {
+      review('src/letter-scale.js rounds nothing, even for display',
+        'src/letter-scale.js is not where this check expects it — the module that owns the percentage-to-letter mapping moved or was renamed, and this clause is now watching nothing. Point it at the new path.');
+    } else {
+      const hits = codeOnly(scale, ROUNDS);
+      check('src/letter-scale.js rounds nothing, even for display', !hits.length,
+        hits.length
+          ? report(hits) + ' — letterFor() compares against `min` unmodified and a boundary prints with String(); a formatter here is where a second rule moves in'
+          : 'no toFixed, toPrecision, Number.EPSILON or Math.round/ceil/floor outside its prose');
+    }
+  }
+
+  /* (c) The rest of the path, handed over undecided. */
+  {
+    // Allowlisted by name, with what each one formats — all four predate WO-3.2, none is a grade.
+    const PREDATES = new Set([
+      'src/attendance.js',   // the attendance percentage, and a column count, and a UTC offset
+      'src/categories.js',   // formatWeight(), and BALANCE_EPSILON over a SUM of decimals
+      'src/backup.js',       // a file size in MB, and a backup's age in days
+      'src/passes.js',       // elapsed minutes on a hall pass
+    ]);
+    const TOUCHES_MAPPING = /\b(letterFor|letterScaleOf|scaleForClass|hasOwnScale|bandRanges|scaleFaults)\b/;
+    const onPath = CODE.filter((p) => {
+      if (rel(p) === 'src/letter-scale.js' || PREDATES.has(rel(p))) return false;
+      let text;
+      try { text = fs.readFileSync(p, 'utf8'); } catch { return false; }
+      return TOUCHES_MAPPING.test(text);
+    });
+    const hits = codeOnly(onPath, ROUNDS);
+    if (!hits.length) {
+      check('nothing rounds on the way to a letter', true,
+        onPath.length
+          ? `${onPath.length} file(s) touch the mapping (${onPath.map(rel).join(', ')}) and none of them round`
+          : 'no file outside src/letter-scale.js touches the mapping yet — WO-3.4\'s grade engine will be the first');
+    } else {
+      review('rounding in a file that touches the percentage-to-letter mapping',
+        `${report(hits)} — display formatting over a percentage is allowed; rounding a percentage BEFORE it is banded is not. Read which one this is, and add the file to PREDATES with a note if it is the former.`);
+    }
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

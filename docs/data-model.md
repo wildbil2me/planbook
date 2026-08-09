@@ -360,6 +360,23 @@ band whose `min` it meets.
 This subsumes rounding: if 89.5 should be an A, the boundary is 89.5. There is no separate
 rounding rule to disagree with the SIS about.
 
+**A band has no id, and its upper bound is derived.** *(Written down at WO-3.2, which built the
+editor and had to decide what "a gap" could mean for this shape.)* A band runs from its own `min` up
+to — but not including — the lowest `min` above it in the list, so the bands are contiguous by
+construction and **an interior gap is not expressible**: there is no second number to disagree with
+the next band's. Two failures are, and `src/letter-scale.js` checks exactly those two, in the editor:
+
+- **A band nothing can reach.** "First band whose `min` it meets" makes a band reachable only if its
+  `min` is strictly below every `min` above it. An A at 89.5 sitting above an A− at 90 silently skips
+  the A−. This is the "overlap" case, and it is why nothing sorts the list — sorting would repair a
+  scale the teacher can see is wrong and hand her a letter she did not define.
+- **A gap at the bottom.** The lowest reachable `min` above 0 leaves every percentage below it with no
+  letter at all, which is why the seed puts F at 0. `letterFor()` answers "no letter" there rather
+  than falling back to one.
+
+The band is `{ letter, min }` with no id because nothing references a band — a category needs one
+because assignments are filed under it; a band is only ever read positionally by the mapping.
+
 ## Signal thresholds
 
 All configurable, stored in the document (not `localStorage` — they are the teacher's settings and

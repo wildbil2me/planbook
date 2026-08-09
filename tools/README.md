@@ -361,6 +361,23 @@ two renderings of one number drawn by two modules — dropping the repaint chain
 leaves the banner right and the row a keystroke behind, which is a defect only a check that reads
 both can see. Five mutations, all reverted and tabulated in `TESTING.md` § WO-3.1.
 
+**473 at WO-3.2**, and twenty-four is a count of additions: twenty-two in a new letter-grades section
+and two in the coarse sweep. Three of them are worth knowing about. **The mapping is read through the
+seam and driven through the fields**, because nothing in this app displays a grade — no engine, no
+grid — and that work order forbids building a preview over student data to demonstrate one; so a
+boundary is typed into the real `<input>` and `letterFor()` is then asked what it makes of a
+percentage, which is the only way to tell a build whose ranges come out of the exported mapping from
+one whose panel does its own arithmetic. **No boundary is written down in this file except the ones it
+types on purpose** — the seeded scale is compared against what came out of the document, because
+90/80/70 belongs in seed data and a harness asserting `93` would be a second copy of a school's
+grading policy living in a tool. And the third is a fixture that proved nothing until a mutation said
+so, which is the WO-3.1 float-tolerance footnote happening again in a new place: **the check that a
+scale is never sorted behind the teacher probed 89.4 and 89.6, and a `letterFor()` mutated to sort
+descending answers both of them identically** — reordering an A at 89.5 above an A− at 90 changes
+nothing below 90. It went green against the defect it exists for. The probe that catches it is 92,
+where the list says A and a sorted list says A−. Four mutations, all reverted and tabulated in
+`TESTING.md` § WO-3.2.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
@@ -368,6 +385,22 @@ WO-1.3", which is the opposite of true and makes a green run look smaller than i
 backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash` and a run on the
 WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
 thirty seconds.)*
+
+**A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
+**15 checks** since WO-3.2's follow-up, and the three added there exist because this file's sibling
+had already written down that they did. The letter-grades section of `verify-shell.mjs` said its
+fourth acceptance line — *there is no rounding code anywhere* — "is a grep, made in
+`tools/wo-sweep.mjs`", at a point when the sweep had no rounding check of any kind. The line had been
+settled by hand once, in the dispatch, and the comment quietly promoted that reading into a standing
+guard. Nothing was measuring it, and the next person to propose a "round to nearest whole percent"
+option would have been told by two files that something was watching.
+
+The lesson generalises past this one comment: **the two harnesses can only point at each other for
+checks that exist, and neither one can see the other's absence.** `verify-shell.mjs` cannot tell that
+a grep it defers to was never written, and the sweep does not read the harness's prose. So a sentence
+of the form "this is checked over there" is exactly as load-bearing as a check and exactly as
+unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
+miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
 
 ### Driving a browser over CDP — nine traps, all of which first look like app defects
 
