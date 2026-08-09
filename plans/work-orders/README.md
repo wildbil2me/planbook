@@ -32,6 +32,56 @@ starts to sprawl.
 
 ---
 
+## Header fields, and the two ways they rot
+
+The paragraph under a `## WO-x.y — Title` heading is read by `tools/wo-gate.mjs`, `wo-brief.mjs` and
+by people. These are the fields it may carry. **A field the script has never heard of does not go
+missing — it gets swallowed by whichever field is written before it**, so a new one is a change to
+`KNOWN_FIELDS` in `wo-gate.mjs` and not just a line of prose.
+
+| Field | Read by the tool as |
+|---|---|
+| **Ship** · **Status** · **Size** · 🚩 | The status line. `--start`, `--release` and `--tick` rewrite **Status** and nothing else |
+| **Depends on** | Every `WO-` token is a gate; anything else on the line is reported as prose for a human to read |
+| **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks |
+| **Amends roadmap** | Reported, never acted on. This work order changes the promise of a box some earlier one already closed — WO-2.12 and WO-2.13 carry it. The *(italic paren note)* it owes `ROADMAP.md` is still a hand edit |
+| **Takes from WO-x.y** | Prose. Nothing reads it |
+
+**Everything must sit in one paragraph with no blank line in it.** The header block ends at the
+first blank line, and a field below that line is invisible to every script here — WO-2.8's
+**Closes roadmap** sat one blank line out of reach under an italic note, so `--tick` would have
+reported "no **Closes roadmap** line" and closed nothing, and its box was only ever ticked by hand.
+
+**Quoting a `Closes roadmap` fragment — four rules, each one learned from a fragment that matched
+nothing.** The matcher normalises backticks, `**`, ellipses, trailing punctuation and case, then asks
+whether one roadmap line *contains* the fragment.
+
+1. **Quote the box, do not paraphrase it.** WO-2.11 wrote *"Cancel a pass issued by mistake, writing
+   nothing to the log"* for a box that reads *"The pass banner, and cancelling a pass issued by
+   mistake — writing nothing to the log."*
+2. **Include the parentheticals.** WO-2.5 and WO-8.3 both dropped one and both matched zero boxes.
+3. **A fragment is matched against ONE line.** Roadmap boxes wrap; stop where the box wraps and end
+   with `…`, which is stripped. You may stop early, you may never skip a middle — an ellipsis in the
+   *middle* of a fragment matches nothing, which is how WO-6.2's fragment failed.
+4. **Anything in double quotes on that line is read as a fragment**, including inside an *(italic
+   paren note)*. Write notes about fragments in backticks, and use no quotation marks at all when the
+   work order closes no box — WO-1.13, WO-3.10 and WO-G4 each pointed at a heading or a paragraph
+   rather than a checkbox, and each was reported as rot until the quotation marks came off.
+
+**Run `node tools/wo-gate.mjs --audit`.** It checks every fragment in this directory against
+`ROADMAP.md`, and `ROADMAP.md`'s progress dashboard against the boxes under its own `## Phase N`
+headings. It writes nothing, and it is the cheapest way to find out that a box was reworded under a
+work order that will not be ticked for another six weeks.
+
+*(That sweep was run for the first time on 2026-08-08, at WO-2.15, and found **nine** problems across
+sixty-three work orders: six fragments quoting a box that had been reworded or elided, one too short
+to match safely, one field below the header paragraph, and one quoting a heading rather than a box.
+All nine are fixed above, each with a dated note at the fragment. The point is not the nine — it is
+that every one of them would have surfaced as a silent no-op at tick time, months later, on a work
+order whose author had moved on. Which is exactly what happened to WO-2.5 on 2026-08-08.)*
+
+---
+
 ## The files
 
 | File | Work orders | Roadmap phase |
@@ -54,7 +104,7 @@ starts to sprawl.
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 14 | 10 | 🔨 IN PROGRESS |
+| 2 — Attendance | 14 | 11 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -62,7 +112,7 @@ starts to sprawl.
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **63** | **24** | `[███░░░░░░░] 38%` |
+| | **63** | **25** | `[████░░░░░░] 40%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

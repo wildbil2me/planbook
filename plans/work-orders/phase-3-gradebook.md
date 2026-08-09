@@ -268,7 +268,11 @@ order's value.
 ## WO-3.10 — OAuth verification paperwork 🔒
 
 **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing technical
-**Closes roadmap** Phase 3 → "Parallel, non-code: start OAuth verification paperwork now."
+**Closes roadmap** Phase 3 → *(no box. The roadmap's **Parallel, non-code** line at the end of Phase
+3 is a paragraph, not a checkbox, so there has never been anything here to tick — the quotation
+marks came off on 2026-08-08, WO-2.15, because the sweep was reading it as a fragment that matched
+nothing. The box this work order's outcome eventually closes is Phase 7's **Verification
+complete.**, and WO-7.3 owns it — a box is closed by one work order, never two.)*
 
 **Why it exists.** Phase 7 is gated on Google OAuth verification, which is **calendar-bound rather
 than work-bound**. Starting it during Phase 3 is the difference between sync landing in November and

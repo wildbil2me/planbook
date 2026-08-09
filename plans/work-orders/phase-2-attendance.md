@@ -306,7 +306,10 @@ November. The denominator is *recorded meetings of that class*, per class, alway
 ## WO-2.5 — Keyboard & touch pass
 
 **Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** S · 🚩 · **Depends on** WO-2.1
-**Closes roadmap** Phase 2 → "Keyboard path on desktop and 44px touch targets. Both, not either."
+**Closes roadmap** Phase 2 → "Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and
+44px touch targets under…" *(re-quoted from the box on 2026-08-08, WO-2.15. The old fragment left
+the parenthetical out and matched zero boxes, so the box was hand-ticked; a fragment is matched
+against one line, so it stops where the box wraps and the ellipsis carries the rest.)*
 
 **Why it exists.** The roadmap says both, not either, because building for one device is how the
 other one becomes unusable.
@@ -412,6 +415,7 @@ architecture exists to avoid. The teacher exports the file; the app never fetche
 ## WO-2.8 — Hall passes: issue, hold, return
 
 **Ship** 1 · **Status** ✅ DONE — 2026-08-07 · **Size** M · 🚩 · **Depends on** WO-2.1, WO-1.13
+**Closes roadmap** Phase 2 → "Hall passes: bathroom, nurse, quick"
 
 *Built 2026-08-06; correction round 1 on 2026-08-07 date-gated the `D` coupling's reopen half and
 qualified WO-2.1's six-column line, which this order made false in portrait. All seven acceptance
@@ -424,7 +428,6 @@ neither four nor six but "portrait should show today", which is a different line
 that was ticked. **WO-2.12 rewrote it on 2026-08-07**, and the qualification is gone with it: the
 line now reads six in landscape and today alone in portrait, unticked, waiting on the owner's own
 device.*
-**Closes roadmap** Phase 2 → "Hall passes: bathroom, nurse, quick"
 
 **Why it exists.** The owner issues hall passes every period in Roll Call! and found them missing
 the first time she used Planbook's registry. This phase's goal is *"the owner stops opening Roll
@@ -700,7 +703,8 @@ second-source-of-truth pattern this project has refused four times. The cell is 
 ## WO-2.11 — The pass banner, and cancelling a pass issued by mistake
 
 **Ship** 1 · **Status** ✅ DONE — 2026-08-07 · **Size** M · 🚩 · **Depends on** WO-2.8
-**Closes roadmap** Phase 2 → "Cancel a pass issued by mistake, writing nothing to the log"
+**Closes roadmap** Phase 2 → "The pass banner, and cancelling a pass issued by mistake" *(re-quoted
+from the box on 2026-08-08, WO-2.15 — the old fragment paraphrased it and matched zero boxes)*
 **Takes from WO-2.9** the banner card only — the elapsed timer, the overdue alerts and the history
 view stay there. See *Why the banner comes with it*.
 
@@ -1176,7 +1180,7 @@ about something. The file stays the record; the tool stays a convenience over it
 
 ## WO-2.15 — wo-gate tells the truth about its own writes
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.14
+**Ship** — · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-2.14
 
 **Not a go-live blocker, and deliberately after it.** Added 2026-08-08, out of WO-2.14's close. This
 is the harness, not the app: a bug here makes the tracker lie, which is expensive and slow to
@@ -1242,19 +1246,19 @@ touch. Not a fix for the `'504'` needle in `verify-shell.mjs` — that was repai
 is a different file's problem.
 
 **Acceptance**
-- [ ] `--self-check` passes on the current tree, and the run says how many plants it made — "0 plants
+- [x] `--self-check` passes on the current tree, and the run says how many plants it made — "0 plants
       passed" is what a broken self-check prints, and it must be visible rather than inferred.
-- [ ] **Each plant is proved to be able to fail.** Restore the pre-WO-2.14 script from git into a
+- [x] **Each plant is proved to be able to fail.** Restore the pre-WO-2.14 script from git into a
       temp path, run `--self-check` against it, and watch the acceptance-list plant and the
       double-`--start` plant report failures. A self-check that passes against the code it was
       written to catch is not evidence.
-- [ ] `--self-check` writes nothing inside the repository. Hash `plans/` before and after; compare
+- [x] `--self-check` writes nothing inside the repository. Hash `plans/` before and after; compare
       the hashes, not the banner.
-- [ ] `--self-check` leaves no temp directory behind on either exit path, including the failing one.
-- [ ] A work order whose `Closes roadmap` fragment matches zero boxes is handled per the decision
+- [x] `--self-check` leaves no temp directory behind on either exit path, including the failing one.
+- [x] A work order whose `Closes roadmap` fragment matches zero boxes is handled per the decision
       above, and the behaviour is demonstrated on a planted fragment rather than on WO-2.5 — WO-2.5
       is being fixed in this same work order and cannot be the fixture that proves it.
-- [ ] WO-2.5's fragment matches exactly one roadmap box — proved by the fragment sweep below, **not
+- [x] WO-2.5's fragment matches exactly one roadmap box — proved by the fragment sweep below, **not
       by `--tick WO-2.5 --dry-run`**, which no longer works and cannot be made to. WO-2.5 shipped on
       2026-08-08, so that command now exits `FAIL | WO-2.5 is "✅ DONE" — only ⬜ NOT STARTED or
       🔨 IN PROGRESS may be ticked`, and `ROADMAP.md:280` was hand-ticked the same day, so even a
@@ -1263,18 +1267,18 @@ is a different file's problem.
       can both be rolled back to their pre-2026-08-08 values and the run costs the repository
       nothing. **This line was rewritten on 2026-08-08, the day its fixture was spent** — the same
       family of rot this work order exists to catch, arriving in its own acceptance list.
-- [ ] Every `Closes roadmap` fragment in `plans/work-orders/` is reported as matching exactly one
+- [x] Every `Closes roadmap` fragment in `plans/work-orders/` is reported as matching exactly one
       box, or listed as not doing so with the reason. Run it over all of them, not a sample.
-- [ ] Every `## Phase N` row in `ROADMAP.md`'s dashboard matches the box counts under its own
+- [x] Every `## Phase N` row in `ROADMAP.md`'s dashboard matches the box counts under its own
       heading, or is reported as not doing so **with both numbers shown**; the overall row is
       checked against the sum of the rows as well as against the file. **Prove it on a planted
       wrong count in a temp copy** — the tree's own three wrong rows are being corrected by hand
       before this work order lands and cannot be the fixture. *(That sentence is the lesson from
       acceptance line 6 above, which named a fixture that was spent the day WO-2.5 shipped. A work
       order about drift should not keep writing acceptance lines that drift.)*
-- [ ] `--tick`, `--start` and `--release` behave exactly as they did before on the paths that already
+- [x] `--tick`, `--start` and `--release` behave exactly as they did before on the paths that already
       work — WO-2.14's acceptance list, re-run.
-- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — **all checks passing, zero
+- [x] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — **all checks passing, zero
       skips, exit 0, and the count matching whatever `tools/README.md` says at the time**. No number
       is written here on purpose: this line read `400/400` until 2026-08-08, by which point the tree
       was at 428 and the line had been quietly wrong for three work orders. A hardcoded total in an

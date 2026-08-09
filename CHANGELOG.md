@@ -38,6 +38,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.15 — `wo-gate.mjs` now checks itself, and reads the fragments it has been trusting.**
+  Two new read-only verbs, `--self-check` and `--audit`, plus the nine rotted header fragments the
+  first `--audit` run found.
+
+  **`--self-check` plants nine known violations in a throwaway copy of `plans/` and fails if any one
+  of them stops being caught.** The gate is the control that keeps the trackers honest, and until now
+  nothing kept the gate honest: every guard it prints was believed because it printed. The plants
+  cover the guards that matter — a tick over an open Acceptance list, `--start` against a status that
+  forbids it, a fully ticked order closing its roadmap box and both dashboards. It writes nothing
+  inside the repository and leaves no temp directory behind on either exit path, including the
+  failing one.
+
+  **A plant that cannot fail proves nothing, so each one was proved able to fail.** Two of the nine
+  do not go red against the pre-WO-2.14 script — they were proved by mutation instead, each mutation
+  reddening only the plants that name that behaviour and no others. That gap was disclosed rather
+  than papered over, which is the whole risk this work order was written against: a self-check passes
+  green forever the moment a plant is caught for a reason unrelated to the guard it is meant to test.
+
+  **`--audit` reads every work order's `Closes roadmap` fragment and every roadmap dashboard row and
+  reports drift without writing.** A fragment that matches no roadmap box now holds the tick at
+  `HELD` instead of noting it and passing — a fragment that closes nothing is a broken link, not a
+  style choice, and passing on it is how a work order gets ticked while the roadmap it was supposed
+  to close stays open.
+
+  **Nine fragments had already rotted.** The worst was WO-2.8's, whose entire `Closes roadmap` line
+  sat one blank line below the header paragraph — outside the header every script parses, so it was
+  invisible to all of them. `--tick` would have closed nothing there and said so quietly.
+
+  **One thing to know before running it:** `--self-check` copies the live `plans/`, so it needs the
+  trackers already clean and goes red when they are not — the failure it prints blames the plants
+  rather than the drift. Fails loud, which is the safe direction, but the message points the wrong
+  way.
+
 - **WO-2.5 — a class is marked from the keyboard, one keystroke per student.** `↓` lands on the
   first name, then one letter each — `P` present, `T` tardy, `A` absent, `E` event, `D` dismissed —
   and the selection moves down the list on its own. A class of thirty is thirty keystrokes and the

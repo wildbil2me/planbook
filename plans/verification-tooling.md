@@ -232,6 +232,35 @@ shelf-coupled check is re-pointed or retired on its own merits, by someone who h
 anyway. **Trimming before then would be a refactor for its own sake** — precisely what the one-file
 rule exists to prevent, and what the WO-1.4 conversation declined to do for the same reason.
 
+## The check on `wo-gate.mjs` is a flag inside `wo-gate.mjs`, 2026-08-08
+
+WO-2.15 gave `tools/wo-gate.mjs` a `--self-check` that copies `plans/` to a temp directory, plants
+the violations the script is supposed to catch, runs the script over the copy, and fails if one of
+them stops being caught. **It is a flag in the file it checks. It is not `tools/wo-selfcheck.mjs`,
+and there is no `tools/lib/`.** The boundary table's first rule is why, and this is the case it was
+written for: a check on a script is exactly the kind of addition that arrives looking like it wants
+its own file, and the first shared helper directory is the first structural step to a framework.
+
+This is the same argument as *"The grep half moves out"* above, arriving from the other direction.
+That section moved grep-shaped work **out** of `verify-shell.mjs` because it belonged in a different
+kind of tool; this one keeps a check **in** the tool it tests because splitting it would create the
+seam the one-file rule exists to prevent. Neither is about file count. Both are about whether two
+things share structure: `--self-check` imports nothing, is imported by nothing, and would be deleted
+by deleting one function.
+
+**It is not the second harness either, and the test is the same as `wo-sweep.mjs`'s.** It gates
+nothing, it is run by hand, it has no config and no dependencies, it is never required to run or ship
+the app, and it closes no 👤 item. What it adds that neither sibling could express is *"the tracker
+was told the truth"* — `verify-shell.mjs` drives a browser and `wo-sweep.mjs` greps `src/`, so the
+one script in `tools/` that writes into `plans/` was the only one nothing checked.
+
+**If it starts wanting a runner, stop.** The signals to watch are this document's existing ones: a
+config file, a shared helper, a plugin seam, or plants that need to be registered somewhere other
+than the array they live in. The honest risk is different from `verify-shell.mjs`'s — that file grows
+with the app's surface, whereas this one should grow only when `wo-gate.mjs` grows a new refusal. Nine
+plants for nine behaviours. **If the plant count outruns the behaviour count, something is being
+tested twice.**
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

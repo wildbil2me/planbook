@@ -687,7 +687,8 @@ without demonstrating it actually catches something.
 **Ship** 1 · **Status** ✅ DONE — 2026-08-06 · **Size** M · 🚩 ·
 **Depends on** WO-1.10
 **Closes roadmap** Phase 1 → *(no roadmap line; this closes a gap the roadmap assumed closed —
-see "Why it exists")*
+see **Why it exists** below. The quotation marks came off that reference on 2026-08-08: the sweep
+reads anything in double quotes on this line as a roadmap fragment, and this one matched no box.)*
 
 **Why it exists.** The shell has no navigation. `selectClass()` in
 [`../../src/classes.js`](../../src/classes.js) writes the `openClassId` preference and repaints the

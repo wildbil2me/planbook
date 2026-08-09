@@ -223,7 +223,9 @@ stops reading the list has lost the feature permanently — quietly, without any
 ## WO-G4 — The 1.0.0 call
 
 **Status** ⬜ NOT STARTED · **Size** S · **Depends on** every work order
-**Closes roadmap** → "What 1.0.0 means"
+**Closes roadmap** → the *What 1.0.0 means* section, which is a heading and a set of criteria rather
+than a box — there is nothing here for `--tick` to tick, and the quotation marks are off it on
+purpose so the sweep does not read it as a fragment *(2026-08-08, WO-2.15)*
 
 **Why it exists.** *This is an argument, not a scoreboard, and ticking every box is the trigger for
 the call, not the call itself.* Write the argument down; each criterion gets a sentence of evidence,

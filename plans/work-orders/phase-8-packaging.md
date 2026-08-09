@@ -59,7 +59,9 @@ they like it. The demo is the top of the adoption funnel, and it doubles as a he
 ## WO-8.3 — Accessibility pass
 
 **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.2
-**Closes roadmap** Phase 8 → "Accessibility pass: screen reader, keyboard-only, contrast."
+**Closes roadmap** Phase 8 → "Accessibility pass: screen reader (NVDA/VoiceOver), keyboard-only,
+contrast." *(the parenthetical was missing from the fragment until 2026-08-08, WO-2.15, so it
+matched zero boxes — the same rot, and the same shape, as WO-2.5's)*
 
 **Why it exists.** *Roll Call!'s headless run found 66 unlabelled buttons in an area already ticked
 done.* **Run the pass, don't assert it.**
