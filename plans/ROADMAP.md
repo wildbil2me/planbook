@@ -14,7 +14,7 @@ with the risk stated and accepted — reorders everything below. See
 
 ## Work orders
 
-Every phase below is cut into work orders in [`work-orders/`](work-orders/) — 58 of them, each with
+Every phase below is cut into work orders in [`work-orders/`](work-orders/) — 65 of them, each with
 its own dependencies, deliverables, and testable acceptance criteria. **Start there when you sit
 down to build something**; this roadmap says what and why, the work orders say how the work is cut
 and in what order.
