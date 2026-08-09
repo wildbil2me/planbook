@@ -321,8 +321,18 @@
   dayColumnCount() holds the rule and the argument; the listener under it is what makes a turn
   repaint without a reload.
 
-  Out of scope and deliberately absent: percentages and counts over history (WO-2.4), the keyboard
-  path (WO-2.5), per-student history and print/CSV (WO-2.6), and the AUTHORING of calendar events
+  ── AND THE KEYBOARD MARKS IT (WO-2.5) ──
+
+  `↓` picks up the first name, then one letter per student — P, T, A, E, D — with the selection
+  moving down on its own. Since 2026-08-08 the laptop is the device of record and this is the path a
+  live class is marked on, so it is built to the same clock everything above is: the hand does not
+  leave the letters and the eyes do not have to leave the room. The block at markSelected() holds
+  the model and what was taken from Roll Call! to build it; the keys themselves are named in
+  src/shell.js's listener, and on screen in the ⌨ Keys dialog, which is what stops them being
+  folklore.
+
+  Out of scope and deliberately absent: percentages and counts over history (WO-2.4),
+  per-student history and print/CSV (WO-2.6), and the AUTHORING of calendar events
   (WO-2.3, src/days-off.js) — this screen reads them and never writes one, which is why the only
   control it offers on a covered day is a door to the screen that owns
   them — plus the elapsed clock on the card, the two
@@ -1285,9 +1295,11 @@ function stateChip(state, unconfirmed, cover, future) {
 function openClass() { return getSelectedClass(); }
 
 /* ── THE VIEW STATE ──
-   Five values, none of them student data and none of them persisted. They are reset on every
+   Seven values, none of them student data and none of them persisted. They are reset on every
    arrival (see resetRegistry): a teacher who left a past column unlocked yesterday should not find
-   it still unlocked when she opens the screen with a class walking in. */
+   it still unlocked when she opens the screen with a class walking in.
+   (The count said five until WO-2.5 and had said five since WO-2.10 added `detailFor` — it is a
+   number in a comment, which is the kind that goes stale silently. Counted, not guessed.) */
 let editingPast = null;    /* an ISO date, or null for "today" */
 let pageDaysBack = 0;      /* WEEKDAYS back from today to the leftmost column; 0 is today's window.
                               In weekdays and not in windows since 2026-08-07 — a window changes
@@ -1298,6 +1310,8 @@ let searchText = '';
 let filterCode = 'all';    /* 'all' or one of P T A E D */
 let sortBy = 'last';       /* 'last' or 'first' */
 let detailFor = '';        /* the student whose row detail is open, or '' — one at a time */
+let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, and see that block
+                              below for why it is a row rather than a cell */
 
 /*
   THE DATE THAT ACCEPTS EDITS. Today unless a past column has been deliberately unlocked.
@@ -1561,6 +1575,13 @@ export function cycleMark(studentId, date) {
   const on = date || editDate();
   if (!cls || !studentId) return;
   setMark(studentId, nextCode(readingOf(recordFor(cls.id, on), studentId)), on);
+  /* A TAP HANDS THE ROW TO THE KEYBOARD (WO-2.5). Click one cell with the mouse and the rest of the
+     class can be finished from the letters, which is the flow a teacher falls into when she starts
+     pointing and then puts her hand back on the keys. It takes the selection and deliberately NOT
+     the focus: on a touch device, focusing what a thumb just hit is the keyboard path reaching into
+     the tap's, and paintColumn() has already restored the ring for anyone who arrived here by
+     pressing Enter on the cell. */
+  selectStudent(studentId, { focus: false });
 }
 
 /*
@@ -2002,6 +2023,197 @@ export function toggleDetail(studentId) {
   const student = findStudent(detailFor);
   if (student) announce(fullName(student) + ' — details for ' + spokenDate(editDate()) + '.');
 }
+
+/* ───────────────────────────── THE KEYBOARD PATH (WO-2.5) ─────────────────────────────
+
+  THE STANDARD IS NOT "REACHABLE FROM THE KEYBOARD". Since 2026-08-08 the laptop is the device of
+  record (WO-G1), so this is how a live class gets marked while it walks in — twenty-five to thirty
+  students, by someone greeting a room rather than watching a screen. So the shape below is ONE
+  KEYSTROKE PER STUDENT with the hand never leaving the letters and the selection advancing on its
+  own: `↓` once to pick up the first name, then `P P A P T P …` down the list. A path that were
+  merely present and correct — tab to a cell, hit Enter four times to reach `E`, tab again — passes
+  the acceptance line and still costs the seconds this whole screen exists to save.
+
+  IT IS ROLL CALL!'s MODEL, LIFTED WITH ITS COMPONENT (dashboard.html:3580-3677, and
+  design/portable-components.md:152 for the highlight). Over there a ROW is selected rather than a
+  cell, arrows move it, a letter writes and advances, Escape deselects, and the selected row wears
+  `.row-selected` — indigo wash and a 3px left rail, which src/attendance.css copies by value.
+  Three things differ here and each is named where it happens:
+
+    - A LETTER SETS, IT DOES NOT CYCLE. `A` means absent from wherever the cell was reading, the way
+      Roll Call!'s setAttendanceCode() does. cycleMark() is the TAP's writer and stays that way; a
+      keyboard that cycled would make one absence cost up to five keystrokes and would make the
+      count depend on what the cell already said, which is the opposite of not looking at it.
+    - THE SELECTION IS A REAL FOCUS. Roll Call! paints a highlight and leaves document.activeElement
+      wherever it was. Here the selected row's cell is FOCUSED, which buys two things for free: the
+      style guide's `:focus-visible` ring lands on the exact cell the next letter will write into
+      (acceptance line 3), and a screen reader reads that cell's own accessible name — the student,
+      the date and the mark — so moving the selection needs no announcement of its own.
+    - `D` IS A FIFTH LETTER. Roll Call! has four; this app's cycle carries dismissed, and the grid
+      is the only place a dismissal can be said (see the header).
+
+  WHERE THE KEYS DO NOTHING IS EXACTLY WHERE A THUMB DOES NOTHING. Every letter writes through
+  setMark(), so a locked past column, a dropped day, a covered day, a date after today and a window
+  paged off the day being edited all refuse a keystroke precisely as they refuse a tap. There is no
+  second set of rules and no second writer — which is the same discipline the header states about
+  `P` never being stored.
+
+  WHAT IS NOT HERE: no key takes the whole class, drops it, unlocks a past column, pages the window
+  or opens a row's detail. Those are the controls a mis-typed letter would be most expensive on, and
+  the deliverable names five letters, four arrows and Escape. The `?` that opens the shortcut list
+  is src/shell.js's, because it is about the dialog rather than about the grid.
+*/
+
+const SELECTED_ROW_CLASS = 'attendance-row-selected';
+
+function gridBody() { return document.getElementById(BODY_ID); }
+
+/*
+  THE ROWS A KEYSTROKE CAN LAND ON, in the order they are drawn.
+
+  Read off the DOM rather than recomputed from visibleStudents(), and that is the load-bearing half:
+  search, filter and sort have already decided which students are on screen and in what order, and a
+  second opinion here would let `↓` walk onto a row the teacher cannot see. The detail panel's own
+  <tr> carries no `data-attendance-row`, so it is never a stop.
+*/
+function selectableRows() {
+  const body = gridBody();
+  if (!body) return [];
+  return Array.from(body.querySelectorAll('tr[data-attendance-row]'))
+    .map((tr) => tr.getAttribute('data-attendance-row'));
+}
+
+/*
+  THE CELL A KEYSTROKE WRITES INTO: this student's cell on the day that accepts edits.
+
+  cellFor() draws a <button> only where the column is editable and an inert <span> everywhere else,
+  so `button[...]` returning null IS the answer to "may the keyboard write here" — the same fact the
+  screen is already showing, rather than a second copy of the rule. It also answers "is the day
+  being edited even on screen", which a window paged two weeks back makes a real question.
+*/
+function markCellFor(studentId) {
+  const body = gridBody();
+  if (!body || !studentId) return null;
+  return body.querySelector('button[data-attendance-cell="' + studentId + '"]'
+    + '[data-attendance-date="' + editDate() + '"]');
+}
+
+/* Which row the browser's focus is sitting in, or ''. Used to pick the selection back up after an
+   Escape, so that an arrow resumes where the teacher was rather than at the top of the class. */
+function focusedRowId() {
+  const active = document.activeElement;
+  const row = active && active.closest ? active.closest('tr[data-attendance-row]') : null;
+  return row ? row.getAttribute('data-attendance-row') : '';
+}
+
+/*
+  THE ROW WASH, AND NOTHING ELSE — no focus, no scroll. Called from renderRows(), so a selection
+  survives a search keystroke, a filter pill and a sort.
+
+  A selection whose student is no longer on screen is DROPPED, which is the rule detailFor already
+  follows for the same reason: a highlight with no row under it belongs to nobody, and the next
+  letter would otherwise write into a student the teacher filtered away.
+*/
+function paintSelection() {
+  const body = gridBody();
+  if (!body) return;
+  if (selectedId && selectableRows().indexOf(selectedId) === -1) selectedId = '';
+  body.querySelectorAll('tr[data-attendance-row]').forEach((tr) => {
+    tr.classList.toggle(SELECTED_ROW_CLASS,
+      tr.getAttribute('data-attendance-row') === selectedId);
+  });
+}
+
+/*
+  PUT THE KEYBOARD ON A STUDENT.
+
+  `focus: false` is the tap's way in — see cycleMark(). Everywhere else the cell takes focus, and
+  the two calls that do it are two on purpose:
+
+    .focus({ preventScroll: true }) then row.scrollIntoView({ block, inline: 'nearest' })
+
+  because the grid lives in `.attendance-grid-wrap`, which scrolls SIDEWAYS. A plain .focus() brings
+  its element into view on both axes, so walking down a class on a narrow laptop window would drag
+  the columns left and right under a teacher who is not looking at them. `block: 'nearest'` moves
+  the page by exactly what the row needs and `inline: 'nearest'` leaves the horizontal position
+  where she put it.
+*/
+export function selectStudent(studentId, opts) {
+  const body = gridBody();
+  if (!body || selectableRows().indexOf(studentId) === -1) return false;
+  selectedId = studentId;
+  paintSelection();
+  if (opts && opts.focus === false) return true;
+  const cell = markCellFor(studentId);
+  if (cell) cell.focus({ preventScroll: true });
+  const row = body.querySelector('tr[data-attendance-row="' + studentId + '"]');
+  if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  return true;
+}
+
+/* One row down or up, clamped at both ends. With nothing selected it picks up from wherever focus
+   already is, and failing that from the end of the list the arrow came from. */
+export function moveSelection(step) {
+  const rows = selectableRows();
+  if (!rows.length) return false;
+  let index = rows.indexOf(selectedId);
+  if (index === -1) index = rows.indexOf(focusedRowId());
+  if (index === -1) return selectStudent(step > 0 ? rows[0] : rows[rows.length - 1]);
+  return selectStudent(rows[Math.min(rows.length - 1, Math.max(0, index + step))]);
+}
+
+/*
+  ONE LETTER: write it on the selected student, then move on.
+
+  THE ADVANCE IS THE WHOLE FEATURE. One keystroke per student and nothing to move the cursor with is
+  what makes a class of thirty a run of thirty keys; a teacher who had to press `↓` between each one
+  is doing sixty and watching the screen to know where she is.
+
+  IT STOPS AT THE LAST ROW RATHER THAN WRAPPING. A wrap would put her silently back at the top of a
+  class she has just finished, and the next letter would overwrite the first student. Roll Call!
+  clamps here too (dashboard.html:3666).
+
+  Returns whether anything was written, so that src/shell.js knows whether to swallow the key: a
+  letter that could not be used belongs to the browser, not to this screen.
+*/
+export function markSelected(code) {
+  if (!selectedId) return false;
+  const rows = selectableRows();
+  const index = rows.indexOf(selectedId);
+  if (index === -1) { selectedId = ''; paintSelection(); return false; }
+  /* Nothing to write into — a locked past column, a dropped or covered day, a day after today, or a
+     window paged off the day being edited. The refusal a thumb gets, said the same way: nothing. */
+  if (!markCellFor(selectedId)) return false;
+  setMark(selectedId, code, editDate());
+  /* setMark() has repainted the column and put focus back on the cell it replaced (paintColumn), so
+     the last row keeps its ring rather than losing it to <body> at the bottom of a class. */
+  selectStudent(index < rows.length - 1 ? rows[index + 1] : selectedId);
+  return true;
+}
+
+/*
+  ESCAPE: STOP, WITHOUT MOVING ANYTHING.
+
+  The selection goes and DOM focus deliberately stays where it is. Escape's job here is "my next
+  keystroke must not land on a student" — the whole of it — and the cheapest way to get that wrong
+  is to blur, which puts focus on <body> and leaves a teacher who wanted to pause hunting for her
+  place with Tab. So the letters go dead because there is no target, the ring stays on the cell she
+  was on, and `↓` picks up from exactly there (see moveSelection).
+
+  Said out loud, because the row wash going quiet is the only other signal and a screen-reader user
+  gets none of it.
+*/
+export function clearSelection() {
+  if (!selectedId) return false;
+  selectedId = '';
+  paintSelection();
+  announce('Nothing selected. Press the down arrow to start again.');
+  return true;
+}
+
+/* Read by tools/verify-shell.mjs through the seam, and by nothing in the app: every caller in here
+   already has the id it just passed in. */
+export function selectedStudent() { return selectedId; }
 
 /* ────────────────────────────── the roster, in the order this screen reads it ──────────────────
 
@@ -2567,14 +2779,27 @@ function paintColumn(date) {
   const th = head.querySelector('th[data-attendance-col="' + date + '"]');
   if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed, cover));
 
+  /* WHO HAD THE RING BEFORE THIS COLUMN WAS REBUILT (WO-2.5). Every cell below is REPLACED, so a
+     keyboard user who pressed Enter on one — or typed a letter at it, which is the whole of the
+     keyboard path — is left with document.activeElement on <body> and no way back but Tab. That is
+     acceptance line 3 in one sentence: focus is never lost after a mark. Captured before the loop
+     because the node it names is detached inside it. */
+  const hadFocus = document.activeElement;
+
   body.querySelectorAll('td[data-attendance-col="' + date + '"]').forEach((td) => {
     const student = findStudent(td.getAttribute('data-attendance-student'));
     if (!student) return;
+    const wasFocused = td.contains(hadFocus);
     td.className = 'attendance-cell-td ' + columnClasses(date, state, today, editing);
     td.textContent = '';
-    td.append(cellFor(student, date, state, marks[student.id], editable, cover, date > today));
+    const node = cellFor(student, date, state, marks[student.id], editable, cover, date > today);
+    td.append(node);
     const at = state === TAKEN ? timeOf(marks[student.id]) : '';
     if (at) td.append(cellTime(at));
+    /* The REPLACEMENT, not the row — the ring goes back on the exact cell the next keystroke writes
+       into. A column that has just gone read-only draws a <span> instead, which cannot hold focus
+       and must not be asked to: there is nothing to type at any more. */
+    if (wasFocused && node.tagName === 'BUTTON') node.focus({ preventScroll: true });
   });
 }
 
@@ -3024,6 +3249,12 @@ function renderRows(sharedTotals) {
     body.append(row);
   });
 
+  /* The keyboard's row goes back where it was, and for the same reason and under the same rule as
+     the panel below it: rows are rebuilt by search, filter and sort, and a selection that survived
+     only in a variable would be a highlight the teacher watched vanish — or worse, an invisible one
+     the next letter still wrote into. Filtered off the screen, it is dropped (paintSelection). */
+  paintSelection();
+
   /* The open panel goes back where it was. Rows are rebuilt by search, filter and sort, and a
      detail that survived only in a variable would be a panel the teacher watched vanish. If the
      student it belongs to has been filtered off the screen it closes, because a panel with no row
@@ -3239,6 +3470,11 @@ export function resetRegistry() {
   filterCode = 'all';
   sortBy = 'last';
   detailFor = '';
+  /* The keyboard starts on nobody in a new class, for the reason the paragraph above gives about
+     every other value here: the screen is opened with a class walking through the door, and a
+     selection carried in from the class before it would put the first letter typed onto a student
+     in period 2's list who happens to sit in the same place. */
+  selectedId = '';
   const search = document.getElementById(SEARCH_ID);
   if (search) search.value = '';
 }

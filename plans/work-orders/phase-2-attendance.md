@@ -305,7 +305,7 @@ November. The denominator is *recorded meetings of that class*, per class, alway
 
 ## WO-2.5 — Keyboard & touch pass
 
-**Ship** 1 · **Status** ⬜ NOT STARTED · **Size** S · 🚩 · **Depends on** WO-2.1
+**Ship** 1 · **Status** ✅ DONE — 2026-08-08 · **Size** S · 🚩 · **Depends on** WO-2.1
 **Closes roadmap** Phase 2 → "Keyboard path on desktop and 44px touch targets. Both, not either."
 
 **Why it exists.** The roadmap says both, not either, because building for one device is how the
@@ -337,10 +337,16 @@ behind it. Every 👤 line in Phase 2 was closed on the iPad.
 - Screen-reader labels on the mark buttons — an icon-only `A` button needs `aria-label` and `title`.
 
 **Acceptance**
-- [ ] A full class can be marked from the keyboard without touching the mouse.
-- [ ] No attendance control is under 44px on a coarse pointer.
-- [ ] Keyboard focus is visible on every step and never lost after a mark.
-- [ ] The shortcuts are documented somewhere in the UI, not only in this file.
+- [x] A full class can be marked from the keyboard without touching the mouse.
+- [x] No attendance control is under 44px on a coarse pointer.
+- [x] Keyboard focus is visible on every step and never lost after a mark.
+- [x] The shortcuts are documented somewhere in the UI, not only in this file.
+
+*All four measured at a desk on 2026-08-08 — `verify-shell.mjs` 428 of 428, twenty-two of them new,
+eight mutations reverted. `TESTING.md` § WO-2.5 carries the evidence line by line and the mutation
+table. **The classroom sitting is still owed**: five 👤 lines are open there, and the two that
+matter are marking a real class from the doorway and the 44px pass on the owner's own iPad — the
+figure above is an emulated coarse pointer at 1024×768, which is a measurement and not a thumb.*
 
 ---
 

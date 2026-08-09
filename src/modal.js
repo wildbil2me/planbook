@@ -66,6 +66,20 @@ function top() {
   return stack.length ? stack[stack.length - 1] : null;
 }
 
+/*
+  IS ANYTHING ON TOP OF THE PAGE RIGHT NOW.
+
+  Exported for one caller: the registry's keyboard path (WO-2.5), which must not let `A` mark a
+  student absent while a dialog owns the screen. Roll Call!'s shortcut handler opens with the same
+  guard (`if (_topOpenModal()) return;`, dashboard.html:3623) and it is the guard that is invisible
+  until it is missing — a teacher typing into a confirm dialog would be writing marks behind it.
+
+  It answers "is one open", never "which". Nothing outside this module may reach into the stack to
+  decide whether to OPEN one: openModal() already refuses a duplicate, and a caller that made that
+  decision for itself would be a second opinion about what is on screen.
+*/
+export function anyModalOpen() { return stack.length > 0; }
+
 /* `opener` is the control that opened the modal, and closing gives focus back to it.
    Pass it whenever there is one — see the Safari note in the header comment. */
 export function openModal(overlay, opener) {

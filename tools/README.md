@@ -273,6 +273,35 @@ a `nowrap` button can clear 44px in both directions and still be narrower than i
 that check measures `scrollWidth` against `clientWidth`, which is the defect itself rather than a
 proxy for it, and asks it of every button in that header row.
 
+**405 on the tree WO-2.5 arrived on, and 428 when it left** — and the first of those two numbers is
+measured rather than carried forward, because the line above stops at 379 + the ten-check punch-list
+block and the tree really had 405. That is the footnote below happening a third time; the run was
+made before a line of this work order was written, so the twenty-three are a count of additions and
+not an arithmetic difference. Twenty-two of them are the keyboard section, which runs on a FINE
+pointer and before the coarse sweep on purpose — the keyboard path is the laptop's, and since
+2026-08-08 the laptop is the device of record. The twenty-third is in the coarse sweep: the new ⌨
+door measured for `scrollWidth` against `clientWidth`, which is the "Days off" spill from the first
+iPad sitting asked of the next button of the same shape rather than left to be rediscovered.
+
+Five of the twenty-two are worth knowing about. **The walk dispatches exactly one ArrowDown and
+then one letter per student and nothing else** — no arrow between the letters — because a check that
+pressed ↓ to move on would go green against a build where a letter marked but did not advance, and
+that build passes the acceptance line and still fails the term. **Two of the three "this keystroke
+writes nothing" checks were VACUOUS when first written**, and were caught by the mutation runs
+rather than by review: setMark() refuses a no-op, so a letter that happens to match the mark already
+on the cell leaves `doc.attendance` byte-identical whether the guard is there or not — they now read
+the cell first and press a letter that would change it. **The focus check asks the element
+`:focus-visible` rather than reading the rule off the stylesheet**, because the global rule being
+present and the ring being drawn are two different facts and it is the second one acceptance line 3
+is about. And **Enter-on-a-cell is a check of its own**, because the keyboard walk re-focuses through
+selectStudent() and would paper over the loss: removing paintColumn()'s hand-off to the replacement
+cell leaves every other check green and only that one red. And the fifth is the only one in the
+section that is not about the keyboard at all: **the screen-reader deliverable was already met by
+WO-2.1 and had nothing watching it**, so the check asks the whole class view what that deliverable
+asks — every button has an accessible name, and every button whose visible text is one glyph carries
+both an `aria-label` and a `title`. 150 buttons, 55 of them one glyph. Eight mutations, all reverted
+and tabulated in `TESTING.md` § WO-2.5.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

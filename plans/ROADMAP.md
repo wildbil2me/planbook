@@ -277,8 +277,17 @@ meet is a second source of truth that's wrong by first period.)*
       and what each one settled. Nothing is owed; WO-2.3 is ✅.)*
 - [x] 🚩 Per-student counts and attendance % **over recorded meetings of that class**, per term and
       year, using Roll Call!'s formula `(P+T+E+D)/(P+T+A+E+D)` so both apps agree this year.
-- [ ] Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and 44px touch targets under
+- [x] Keyboard path on desktop (row select, `P`/`T`/`A`/`E`, arrows) and 44px touch targets under
       `@media (pointer: coarse)`. Both, not either.
+      *(WO-2.5, 2026-08-08. **Hand-ticked, and that is not a shortcut** — `wo-gate.mjs --tick`
+      reports this box as `matched 0 roadmap boxes` and would have marked WO-2.5 done while leaving
+      it open. That is WO-2.15's third gap, recorded at `work-orders/phase-2-attendance.md:1195`;
+      WO-2.15 owns the matcher and wants a fixture other than WO-2.5, so the text above is left as
+      it stands rather than edited into agreement. **The box understates what shipped**: it names
+      four letters and five landed — `P` `T` `A` `E` `D`, one keystroke each, selection advancing on
+      its own. Both halves are real — all four Acceptance lines were confirmed by hand on the laptop
+      **and** the iPad on 2026-08-08. What is still owed is the doorway itself: marking a live class
+      while it walks in, which no desk can answer and which `TESTING.md` § WO-2.5 keeps open.)*
 - [ ] Per-student attendance history view.
 - [ ] **Roll Call! importer**: file input taking an exported class spreadsheet (`.csv`/`.xlsx`),
       zero permissions. Idempotent, and previews before it commits — re-running must not double a

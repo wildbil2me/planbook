@@ -13,6 +13,45 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Added
+
+- **WO-2.5 — a class is marked from the keyboard, one keystroke per student.** `↓` lands on the
+  first name, then one letter each — `P` present, `T` tardy, `A` absent, `E` event, `D` dismissed —
+  and the selection moves down the list on its own. A class of thirty is thirty keystrokes and the
+  mouse is never touched. `Esc` stops. The keys are behind a **⌨ Keys** button beside search and
+  sort, and behind `?` for a hand already on the keyboard.
+
+  **A letter sets the mark; it does not cycle.** That is the whole design, and it is a deliberate
+  departure from Roll Call!, where the same keys step through the codes. Cycling makes one absence
+  cost up to five keystrokes and makes the count depend on what the cell already said — which means
+  looking at the screen. The standard this was built to is marking a class at the door while it
+  walks in, so `A` means absent from wherever the cell was reading. The tap keeps its own cycling
+  writer, untouched.
+
+  **The selected row is a real focus, not a painted highlight.** It wears Roll Call!'s indigo wash
+  and 3px rail, copied by value, but the focus ring stays on the cell your next letter writes into —
+  including at the bottom of the list, where it used to be dropped, and after `Esc`, which removes
+  the target and leaves the focus where your eyes last were. The rail is reserved transparent on
+  every row, so selecting a name does not step it 3px sideways thirty times down a class.
+
+  **The keys go quiet exactly where a thumb is refused.** Every letter writes through the same
+  `setMark()` a tap does, so a locked past column, a dropped day, a covered day, a date after today,
+  and a window paged off the day being edited all refuse a keystroke — one writer, one set of rules.
+  A held modifier, an open dialog, focus in a text field, or any view but the class one is ignored.
+  `Enter` is deliberately unbound: the selected cell is focused, so binding it would fire the cell
+  *and* move the row.
+
+  **The 44px touch pass was re-run across the whole attendance screen**, measured on a coarse
+  pointer rather than read off the stylesheet — every control on the registry, the days-off panel,
+  and the new ⌨ button, which is also checked for the label spill that the first iPad sitting found
+  on "Days off". Reading the sheet alongside the measurement turned up six `.attendance-*` selectors
+  with no rule in any coarse block, three of which were cited elsewhere in the file as the precedent
+  for being there; none is a control, and all six are now declared with their base values restated
+  rather than changed.
+
+  **Confirmed by hand on both the laptop and the iPad on 2026-08-08.** What is still owed is the
+  doorway itself — a live class walking in — which `TESTING.md` § WO-2.5 keeps open.
+
 ### Fixed
 
 - **WO-2.13 — the totals are computed once per render, and a stale row nobody had reported is

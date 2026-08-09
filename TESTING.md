@@ -1695,6 +1695,130 @@ about Roll Call!, not a one-time setup step:
       detail open, asserts exact term/year values, checks the filtered-out row, and covers
       `unconfirmAll()`.
 
+### WO-2.5 — Keyboard & touch pass
+
+**What this adds.** A class is marked from the keyboard: **↓** lands on the first name, then one
+letter per student — **P** present, **T** tardy, **A** absent, **E** event, **D** dismissed — and the
+selection moves down the list on its own. **Esc** stops. The keys are written down on screen, on a
+**⌨ Keys** button in the registry's toolbar and behind **?**, plus a paragraph under the grid.
+
+**The standard, which is not "the keys work".** Since 2026-08-08 the laptop is the device of record
+and this is how a live class gets marked while it walks in — twenty-five to thirty students, by
+someone greeting a room rather than watching a screen. **A class of thirty is thirty keystrokes.** A
+path that needed an arrow key between the letters, or a look up at the screen to find where the
+selection went, would pass every line below and still cost the seconds this screen exists to save.
+
+**A letter SETS, it does not cycle.** `A` means absent from wherever the cell was reading. Tapping a
+cell still cycles it — that is the tap's writer and it is unchanged — but a keyboard that cycled
+would make one absence cost up to five keystrokes and would make the count depend on what the cell
+already said, which is the opposite of not looking at it.
+
+**The keys go quiet exactly where a thumb is refused.** Every letter writes through the same
+`setMark()` a tap does, so a locked past column, a dropped day, a day the calendar has closed, a
+date after today and a window paged off the day being edited all refuse a keystroke. There is no
+second writer and no second set of rules. They also go quiet while a dialog is open and while the
+caret is in a field — the search box is two inches above the grid and "Patel" is five marks.
+
+**The row highlight is Roll Call!'s `.row-selected`** (`design/portable-components.md:152`), copied by
+value: `rgba(91,111,204,0.07)` across the row and a 3px `#5b6fcc` rail down its left edge. One
+departure, and it is measured: the rail is **reserved on every row** and only coloured on the
+selected one, because adding a border on selection steps twenty-six names 3px sideways once per
+student down a class of thirty.
+
+- [x] A full class can be marked from the keyboard without touching the mouse. *(Measured: 26
+      students in Period 3, one ArrowDown and 26 letters and nothing else, with the whole `marks`
+      object compared against what those keystrokes should have produced — including the five `P`
+      students, who must have **no entry at all**. The grid is reached the same way: 10 Tabs to the
+      class card and Enter.)*
+- [x] No attendance control is under 44px on a coarse pointer. *(Measured under an emulated coarse
+      pointer, gated on `matchMedia('(pointer: coarse)')` actually matching: every visible
+      interactive element in the document, every control inside `#classView` for a 26-name roster
+      with two hall passes open, the days-off panel, and the new ⌨ door — the last of those also
+      measured for `scrollWidth` against `clientWidth`, which is the "Days off" spill the first iPad
+      sitting found. **Not the same as a sitting on the owner's own iPad**, which is the line below.)*
+- [x] Keyboard focus is visible on every step and never lost after a mark. *(Measured by asking each
+      focused element `:focus-visible` — not by reading the rule off the stylesheet — after every one
+      of the 26 marks, at the last row where there is nothing to advance to, after Enter on a cell,
+      and after Escape.)*
+- [x] The shortcuts are documented somewhere in the UI, not only in this file. *(The ⌨ button is a
+      real `<button>` in the tab order with an `aria-label`, so somebody who knows none of the keys
+      can find them; `?` opens the same dialog for a hand already on the keys; the dialog names all
+      five letters, both arrows and Escape; the hint paragraph under the grid says it in prose.)*
+
+**The screen-reader deliverable was already met and had nothing watching it.** WO-2.1 wrote both an
+`aria-label` and a `title` on every cell and every column head, so this work order added no labels;
+what it added is the check, because a deliverable with no fixture behind it is one the next refactor
+can quietly undo. 150 visible buttons on the class view, 55 of them a single glyph, all named.
+
+*Desk pass 2026-08-08: `verify-shell.mjs` **428 of 428, 0 skipped**, up from 405 on the tree this work
+order arrived on — 22 in a new keyboard section that runs on a FINE pointer before the coarse sweep,
+and one in the coarse sweep. `wo-sweep.mjs` is 12 checks, 11 passed, 0 failed, 1 to review: the
+standing sensitive-field-name line, unchanged at the same 172 mentions.*
+
+*Eight mutation proofs, run before this was written:*
+
+| Mutation | Result |
+|---|---|
+| the letter marks but does not advance (`selectStudent(selectedId)` always) | **3 red** — the full-class comparison, the advance check, and the last-row ring |
+| `paintColumn()` does not hand focus to the replacement cell | **1 red** — Enter on a focused cell drops to `<body>`; every other check stays green, which is why that one exists |
+| the keyboard cycles instead of setting (`cycleMark` for `setMark`) | **1 red** — the marks are one code off along the whole class |
+| the `anyModalOpen()` guard removed from the keydown listener | **1 red** — a letter typed with the key list open marks a student behind it |
+| the `INPUT` guard removed from the keydown listener | **1 red** — typing a name into the search box marks the selected student |
+| the left rail added on selection instead of reserved on every row | **2 red** — the treatment check and the no-reflow measurement |
+| Escape blurs instead of leaving focus where it was | **3 red** — the ring is gone, the arrow resumes from the wrong row, and the dialog has nowhere to return focus to |
+| `cellFor()`'s editable branch writes no `title` | **1 red** — 26 icon-only cells with an `aria-label` and no tooltip, which is half of the third deliverable |
+
+*All eight were reverted and the run is green on the shipped tree. The last of them cost this work
+order a scare worth writing down: it was reverted with `git checkout -- src/attendance.js`, which
+took **every** WO-2.5 edit in that file with it and turned the next run into eight reds that looked
+like a regression. The other seven were driven by a script that held the original bytes in memory
+and wrote them back. Revert a plant the way you made it.*
+
+*Two of those mutations found a defect in the checks rather than in the app, and it is worth naming
+because the shape recurs: **two of the three "this keystroke writes nothing" checks were vacuous when
+first written**. `setMark()` refuses a no-op, so a letter that happens to match the mark already on
+the cell leaves `doc.attendance` byte-identical whether the guard fired or not — both went green
+against a build with the guard deleted. They now read the cell first and press a letter that would
+change it, and the two that cannot select anything at all press two different letters instead.*
+
+**The 👤 iPad and classroom sitting this work order owes.** The harness drives a headless browser at
+a desk; none of the following can be answered there, and the first two are the ones with a term
+riding on them.
+
+- [x] **Mark a real class from the keyboard, at the door, while it walks in.** Thirty students,
+      hand on the letters, eyes on the room. The question is not whether it works — it is whether you
+      ever have to look down to find out where the selection is. 👤
+- [x] **Then mark the next period the same way without reading anything first.** If the keys have to
+      be looked up a second time, the ⌨ door is in the wrong place or the letters are wrong. 👤
+- [x] **Every attendance control on your own iPad, in the orientation you hold it.** The 44px pass
+      above is an emulator at 1024×768; a thumb on an 11″ is the line. Include the ⌨ Keys button,
+      which is new, and the row of pass buttons at the cap. 👤
+- [x] **Read the selected row across the classroom.** The indigo wash is 7% on a laptop and 10% on a
+      coarse pointer; confirm it is findable at arm's length without being loud enough to compete
+      with the amber of an untaken column. 👤
+- [x] **A Smart Keyboard on the iPad, if you use one.** Everything above applies there and nothing
+      about it has been tested — the coarse-pointer rules and the key handler are live at the same
+      time on that device and on no other. 👤
+
+*2026-08-08, the teacher's own sitting — **hardware: iPadOS 26.5.2**, plus the laptop. **All four
+Acceptance criteria confirmed by hand on both devices** — the keyboard walk, the 44px targets, the
+focus ring, and the ⌨ door. The iPad line follows from criterion 2, which *is* the 44px pass, run on
+the real device rather than the emulator; the Smart Keyboard line follows from criterion 1, a
+keyboard walk, which cannot have been run on an iPad without a keyboard attached. Those two
+inferences are written down rather than left for the next reader to make.*
+
+*The remaining three — both doorway lines and the read-across-the-room line — **were reported set by
+the teacher on 2026-08-08**, and that is the basis recorded, deliberately, in place of the specific
+claim each line makes. The doorway lines describe thirty students walking in, and this project's own
+dates put the first of those at ~2026-08-24 (`work-orders/gates.md`). Whatever was run on the 8th
+satisfied the owner; it was not that. **If the doorway is re-sat once a live class exists, note it
+here** — the go-live rehearsal leans on these three.*
+
+*Still unrecorded, and worth one line when the iPad is next to hand: **what `matchMedia('(pointer:
+coarse)').matches` returns with the keyboard attached**. If a trackpad model reports `fine`, the
+entire coarse block stops applying while a thumb is still the input — a defect `verify-shell.mjs`
+cannot see, because it sets the pointer type itself.*
+
 ---
 
 ## Phase 3 — Gradebook

@@ -149,12 +149,20 @@
     the first case of it: src/year-picker.js builds them fresh every time the modal opens and
     binds nothing.
 
+    NOT EVERYTHING ON THIS SCREEN IS A CLICK. Three other document-level listeners live further
+    down, and each one is there because the thing it carries has no control to hang a hook on:
+    `submit` (forms), `input` (fields saved as they are typed), and since WO-2.5 `keydown` — the
+    registry's marking keys, which are the path a live class is marked on now that the laptop is
+    the device of record. That last one is the only listener in this file that reads
+    document.activeElement to decide whether the event is for it, and its five guards are argued
+    where it sits.
+
     `data-year-picker` is not `data-modal-open="yearModal"` because the list inside it has to
     be read out of IndexedDB before the panel is on screen — a modal that opens and then fills
     in is a modal that flickers.
 */
 
-import { openModal, closeModal } from './modal.js';
+import { openModal, closeModal, anyModalOpen } from './modal.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
 import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './install-banner.js';
@@ -701,6 +709,80 @@ document.addEventListener('submit', (e) => {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
     afterClassChange();
   }
+});
+
+/*
+  ── THE REGISTRY'S KEYBOARD PATH (WO-2.5) ──
+
+  The third document-level listener in this file, and the one with a term riding on it: since
+  2026-08-08 the laptop is the device of record, so this is how a class of twenty-five to thirty
+  gets marked while it walks in. `↓` picks up the first name, then one letter per student, and the
+  selection moves down on its own — the hand never leaves the keys and the eyes never have to leave
+  the room. src/attendance.js's markSelected() holds the model and what was lifted from Roll Call!
+  to build it; this listener is only the routing, exactly as the click listener above is.
+
+  NOTHING HERE DECIDES ANYTHING ABOUT ATTENDANCE. Every key lands in an exported writer in
+  src/attendance.js, which is where the rules about what may be written live — a locked past column,
+  a dropped day, a covered day and any date after today refuse a keystroke there, in the same
+  guards that refuse a tap. That is the one-writer rule this app keeps, said in a second event type.
+
+  FIVE GUARDS, AND EVERY ONE OF THEM IS A PLACE A STRAY LETTER WOULD LAND SOMEWHERE EXPENSIVE:
+
+    - A MODIFIER HELD. Ctrl+A is select-all and Cmd+P is print; neither is "absent" or "present",
+      and swallowing them would break the browser on the screen a teacher works on all day. Shift is
+      not in the list: it is how `?` is typed, and Shift+A is still an A.
+    - A DIALOG OPEN. Roll Call!'s own shortcut handler opens with this guard for the same reason
+      (dashboard.html:3623) — the letters belong to whatever is on top, and a teacher typing into a
+      confirm would otherwise be writing marks behind it.
+    - FOCUS IN A FIELD. The search box sits two inches above the grid, and "Patel" is five marks.
+      Covered by tag rather than by hook, because a field added later must not have to remember.
+    - ANY VIEW BUT THE CLASS ONE. There is no grid to mark on the home screen.
+    - THE KEY DID NOTHING. Every branch swallows the event only when its writer says it acted, so a
+      letter that could not be used goes back to the browser rather than being eaten by a screen
+      that ignored it — which is what type-ahead and every browser shortcut depend on.
+
+  `Enter` IS DELIBERATELY NOT BOUND, and it is the one key Roll Call! has that this does not. Over
+  there it means "skip to the next student" and is safe because focus is never on a control; here
+  the selected cell IS focused, so binding Enter would fire the cell's own click AND move the row —
+  one keystroke doing two things, one of which writes. `↓` already means skip, and it means it
+  everywhere.
+*/
+const MARK_KEYS = ['P', 'T', 'A', 'E', 'D'];
+const KEYS_MODAL = 'attendanceKeysModal';
+
+document.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  if (anyModalOpen()) return;
+  if (views.currentView() !== 'class') return;
+  const active = document.activeElement;
+  const tag = active ? active.tagName : '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (active && active.isContentEditable) return;
+
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (attendance.moveSelection(e.key === 'ArrowDown' ? 1 : -1)) e.preventDefault();
+    return;
+  }
+  if (e.key === 'Escape') {
+    if (attendance.clearSelection()) e.preventDefault();
+    return;
+  }
+  /* The shortcut for the shortcut list, and the reason the ⌨ button beside the sort pair is not the
+     only door: a teacher whose hand is already on the keys should not have to find a control with a
+     mouse to be told which keys those are. The opener is passed so that closing gives focus back to
+     the cell she was on — see src/modal.js, and the Safari note in its header. */
+  if (e.key === '?') {
+    openModal(KEYS_MODAL, active && active !== document.body ? active : null);
+    e.preventDefault();
+    return;
+  }
+  const code = String(e.key).toUpperCase();
+  if (MARK_KEYS.indexOf(code) === -1) return;
+  if (!attendance.markSelected(code)) return;
+  e.preventDefault();
+  /* The same chain a tap on a cell makes: the card behind this view carries today's state, and a
+     letter changes it exactly as a finger does. */
+  afterAttendanceChange();
 });
 
 /* Term labels and dates, saved as they are typed. `input` rather than `change`: `change` on a text

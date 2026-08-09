@@ -23,9 +23,11 @@ not assumed.
 - [ ] **1. Start `node tools/serve-https.mjs` and open `https://localhost:8443` on the laptop.**
       Loopback, so it resolves on any network including the school's — no certificate address to
       match, no DHCP to depend on.
-- [ ] **2. Confirm the laptop is on `planbook-shell-v31`.** Cache Storage holds `v31` **and only
-      `v31`** — the "only" is the half that catches a failed `activate`, and a cache that layered
-      instead of replacing is invisible from inside the app.
+- [ ] **2. Confirm the laptop is on `planbook-shell-v32`.** Cache Storage holds `v32` **and only
+      `v32`** — the "only" is the half that catches a failed `activate`, and a cache that layered
+      instead of replacing is invisible from inside the app. *(Was `v31`; WO-2.5 bumped it. This
+      number goes stale on every shell change and is read as an instruction — check it against
+      `sw.js` when you get here, rather than trusting the line.)*
 - [ ] **3. Take a backup and put it off the laptop** — before the rehearsal, not as part of it. The
       backup drill below wipes storage on purpose. This is the copy that exists if it goes wrong.
 - [ ] **4. WO-2.5 has landed.** Without the keyboard path a class of 25 is marked by mouse, one

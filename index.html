@@ -617,6 +617,28 @@
           <button type="button" class="attendance-sort-btn active" data-attendance-sort="last"
                   aria-pressed="true" title="Sort by last name">Last</button>
         </div>
+        <!-- WHERE THE SHORTCUTS STOP BEING FOLKLORE (WO-2.5). The work order's phrase is
+             "discoverable, not folklore", and a key list that lives only in a work order is the
+             folklore: a teacher who does not already know that ↓ then P T A E D marks a class will
+             never find out, and mouse-clicking twenty-five rows one at a time is the failure the
+             keyboard path exists to prevent.
+
+             IT IS A BUTTON RATHER THAN A LINE OF FINE PRINT because it has to be reachable BY
+             SOMEONE WHO DOES NOT KNOW THE KEYS — Tab lands on it like any other control, where the
+             `?` that opens the same dialog is only useful once you have been told about it. Both
+             doors exist and each covers the other's gap; the hint paragraph under the grid names
+             them in prose for the reader who is scanning rather than hunting.
+
+             In the toolbar rather than the action row above it, and that is the three-control rule
+             from src/attendance.js's paintActions() being obeyed rather than ignored: this writes
+             nothing and acts on no day, so it belongs with search, filter and sort, which are the
+             other things on this screen that only change what you are looking at. -->
+        <button type="button" class="class-action-btn attendance-keys-btn"
+                data-modal-open="attendanceKeysModal" aria-haspopup="dialog"
+                aria-label="Keyboard shortcuts for marking attendance"
+                title="Mark this class from the keyboard — press ? for the list">
+          <span aria-hidden="true">⌨</span> Keys
+        </button>
       </div>
 
       <!-- Earlier · Today · Later, above the columns they move. -->
@@ -645,6 +667,19 @@
         name for that time, a note, or to put one student back to <strong>?</strong>. Past days need
         their ✏ before they accept a tap; today’s column is always live, and its 🚫 says the class
         didn’t meet. Every tap saves as you make it; there is nothing to submit.
+      </p>
+
+      <!-- The keyboard, in the same paragraph voice as the two either side of it (WO-2.5). It is
+           three sentences rather than a legend because the legend is a tap away and this is the bit
+           that has to be read while scanning: that there IS a keyboard path, what starting it costs
+           (one arrow key), and where the rest of it is written down. -->
+      <p class="attendance-hint">
+        <strong>From the keyboard.</strong> On a laptop you never have to touch the mouse: press
+        <strong>↓</strong> to land on the first name, then one letter per student —
+        <strong>P</strong> present, <strong>T</strong> tardy, <strong>A</strong> absent,
+        <strong>E</strong> event, <strong>D</strong> dismissed — and the selection moves down the
+        list on its own, so a class of thirty is thirty keystrokes. <strong>Esc</strong> stops it.
+        The whole list is on the <strong>⌨ Keys</strong> button above, or press <strong>?</strong>.
       </p>
 
       <!-- The passes half of the same paragraph, kept separate because it answers different
@@ -1482,6 +1517,85 @@
         </button>
         <button class="class-action-btn" data-dayoff-cancel>Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  THE KEYS (WO-2.5) — the fourth acceptance line of that work order, which asks that the shortcuts
+  be documented "somewhere in the UI, not only in this file".
+
+  It is prose and a list rather than a legend dumped in a corner, because the thing a teacher needs
+  is not the letters — those are the same five that are already on the cells — but the SHAPE: that
+  one key marks one student and then moves you on, so a class is a run of keystrokes rather than a
+  sequence of aim-and-click. That sentence is the first thing in the body, above the table.
+
+  Reachable two ways, and both matter. The ⌨ button in the registry's toolbar is an ordinary
+  control, so Tab finds it for somebody who does not know a single shortcut yet; `?` is for the hand
+  that is already on the keys. src/shell.js owns the second and says why it is not the only one.
+
+  The copy lives here rather than in a JavaScript file for the reason the hint paragraphs under the
+  grid do: it is what a teacher reads, and prose that a renderer builds is prose nobody edits.
+-->
+<div class="modal-overlay hidden" id="attendanceKeysModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceKeysTitle">
+    <div class="modal-header">
+      <h2 id="attendanceKeysTitle">Marking from the keyboard</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="attendance-keys-lead">
+        One key per student, and your hand never leaves the keyboard. Press <strong>↓</strong> to
+        land on the first name, then type a letter for each student as you look up at the room —
+        the selection moves down the list on its own, so a class of thirty is thirty keystrokes.
+      </p>
+      <dl class="attendance-keys">
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">↓</kbd><kbd class="attendance-key">↑</kbd></dt>
+          <dd>Next student, or back to the one above. The first <kbd class="attendance-key">↓</kbd>
+              picks up the top name.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">P</kbd></dt>
+          <dd>Present.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">T</kbd></dt>
+          <dd>Tardy. The time is recorded with it.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">A</kbd></dt>
+          <dd>Absent.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">E</kbd></dt>
+          <dd>Event — an excused absence.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">D</kbd></dt>
+          <dd>Dismissed. The time is recorded, and an open hall pass is closed with it.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">Esc</kbd></dt>
+          <dd>Stop. Nothing is selected, and the letters do nothing until you press an arrow
+              again.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">?</kbd></dt>
+          <dd>This list.</dd>
+        </div>
+      </dl>
+      <p>
+        A letter <em>sets</em> the mark rather than stepping through the cycle, so an absence is one
+        key whatever the cell was reading before it. Everything saves as you type it, the same as a
+        tap — there is nothing to submit.
+      </p>
+      <p>
+        The keys go quiet wherever a tap would be refused: while you are typing in the search box,
+        while a panel is open, on a past day that has not had its ✏ pressed, and on a day the class
+        didn’t meet. And they only ever write on the day the screen says it is editing, which is
+        today unless you have unlocked something else.
+      </p>
     </div>
   </div>
 </div>
