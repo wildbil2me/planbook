@@ -377,8 +377,22 @@ follow. It becomes urgent the first time a guardian conference asks "which days?
 
 ## WO-2.7 — Roll Call! importer
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.7
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.7
 **Closes roadmap** Phase 2 → "Roll Call! importer."
+
+**Deferred out of Ship 2 on 2026-08-09, by the owner: no live data is coming across from Roll Call!**
+The 2026-27 rosters are pasted fresh and the attendance ledger starts empty, so there is nothing
+historical to import that anyone wants imported. It keeps its work order, its roadmap box and its
+dependency — the deferral is about *when*, not about whether — and it comes back the first time
+someone wants a prior year read in. **It was also removed from WO-G2's dependency line the same day**;
+a gate that waits on work nobody intends to do is a gate that gets waived, and a waived gate teaches
+the next one that gates are advisory.
+
+*One thing goes with it, so it is not discovered later:* acceptance line 2 — *"imported attendance
+produces the same percentage Roll Call! reports for that class"* — was the only mechanized check that
+WO-2.4's formula agrees with the app it replaces. That agreement is a compatibility requirement, not
+a preference (WO-2.4, *Why it exists*), so with the importer deferred it stays where it already was
+in practice: the owner reading both apps' numbers by hand this term.
 
 **Why it exists.** Cut from Ship 1 deliberately: August is a fresh year with fresh rosters, and they
 get pasted. The importer is for *historical* data and can land any time before it's wanted. It is
@@ -1301,3 +1315,168 @@ next edit to that code will remove the flag.
 of behaviours WO-2.14 built and nothing else — not the Acceptance parser against all 61 work orders,
 not `recomputeDashboard()`'s arithmetic, not `next`'s ordering. Say what it covers in the output, or
 the next reader will trust it for the parts it never touched.
+
+---
+
+## WO-2.16 — the self-check states its precondition, and `**Blocks**` stops being a dependency
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.15
+
+**Not a go-live blocker, and the same kind of work as WO-2.15.** Added 2026-08-09, out of WO-2.15's
+verification. Harness, not app: nothing here writes student data or reaches a classroom. **Do not
+pull it into Ship 1**, which closed on 2026-08-08.
+
+Two findings from WO-2.15's own verification, neither of which failed one of its acceptance lines,
+and both of which are in the code it shipped. They are one work order because they are both the same
+shape — the tool doing something defensible and describing it wrongly.
+
+**Why it exists — one.** `--self-check` copies the live `plans/` (`wo-gate.mjs:1003`), so it inherits
+whatever drift the trackers are carrying, and drift makes plants fail. Proved 2026-08-09 in a scratch
+copy of `plans/` and `tools/` outside the repository: set one `## Phase N` dashboard row to `11/12` —
+the exact drift this tree carried on the morning of 2026-08-08, before WO-2.15 corrected it — and the
+run prints `9 plants, 7 caught, 2 missed` and exits 1. The two it names are *"`--dry-run` on
+`--start`, `--release` and `--tick` writes nothing at all"* and *"a fully ticked work order still gets
+✅ DONE, its roadmap box, and the dashboard"*. **Neither of those is what went wrong.** Both plants
+behaved perfectly; the copied `ROADMAP.md` earned a `HELD`, which is `--tick` doing exactly what
+WO-2.15 built it to do, and the 160-character clip at `wo-gate.mjs:1182` cuts the message off before
+the reason arrives. So the self-check has a precondition it has never stated — the trackers must
+already be clean — and announces the violation as two unrelated plant failures.
+
+**And on 2026-08-09 it stopped being theoretical — `--self-check` is red on the tree as of the Ship 2
+table.** The `next` plant claims the fixture row and expects `next` to step over it and offer *"the
+one ⬜ NOT STARTED row in the table"*. That expectation is written into the plant, and the comment at
+`wo-gate.mjs:1025-1026` says why: *"Every real row in that table is ✅ DONE, so a run against the copy
+without this would exercise nothing."* True on 2026-08-08, when Ship 1 had just closed and the
+running order was empty. False on 2026-08-09, when a Ship 2 table put twelve ⬜ NOT STARTED rows
+ahead of the fixture — so `next` now answers WO-2.16 and never reaches it, and the plant reports
+three failures, none of which is a defect in `next`.
+
+**Nothing is wrong with the tool's writes.** `--audit` passes, `--tick`, `--start` and `--release`
+are untouched, and the repository is not in a bad state. What is broken is the self-check's fixture,
+by a *documentation* edit — which is the sharpest possible statement of the problem: a check on the
+tool is failing because of something that is not the tool. Until this work order lands, a red
+`--self-check` cannot be read at face value, and *"a control that goes red for a reason the reader
+learns to dismiss is worse than no control"* is this project's own rule, written down at WO-1.12.
+
+The fix is the same one the precondition deliverable asks for, one level along: **the fixture must
+not depend on what the live running order happens to contain.** Give the fixture its own table, or
+its own copy with the real rows neutralised, or assert against its own row rather than against *the
+one* NOT STARTED row. Whichever is chosen, the comment at `:1025` gets rewritten, because the
+sentence that made the old assumption reasonable is the sentence that made it invisible.
+
+It fails loud, which is the safe direction to be wrong in, and that is why this is `S` and not `M`.
+The cost is a reader's morning: the first thing a red self-check makes you do is go and read the two
+plants it named, which are fine. Note the boundary, because it is not obvious — drift in
+`work-orders/README.md`'s dashboard does **not** trip it (also checked), since `--tick` recomputes
+that table itself. Only what can earn a `HELD` does: `ROADMAP.md` dashboard drift, and a
+`Closes roadmap` fragment that matches no box.
+
+**Why it exists — two.** `**Blocks**` is a header field nothing has ever heard of, and it is being
+read as a dependency:
+
+- `phase-1-shell-store-roster.md:15` — WO-1.1 carries `**Depends on** nothing · **Blocks** everything`
+  on its status line, and `node tools/wo-gate.mjs WO-1.1` reports
+  `depends (prose) nothing · **Blocks** everything`. Harmless, and visibly odd.
+- `phase-1-shell-store-roster.md:195` — WO-1.5 carries `**Blocks** WO-1.6 and every work order after
+  it` on its own line under the header, and `node tools/wo-gate.mjs WO-1.5` reports
+  `depends WO-1.6 ✅ DONE`. **That is the relationship backwards.** WO-1.5 is the backup-and-restore
+  work order that WO-1.6 waits on — the one hard ordering constraint in the whole sprint — and the
+  gate reads it as WO-1.5 waiting on WO-1.6. Both are done, so nothing is gated wrongly today, and
+  that is luck rather than design: the same line between two open work orders is a cycle, and the
+  gate would report the ordering satisfied while pointing the wrong way down it.
+
+WO-2.15's deliverable three asked for exactly this — *"the fields the tool does not know exist"* —
+and found **Amends roadmap** while walking past this one. The new field table at
+[`README.md:44-48`](README.md) documents five fields and not this one.
+
+**And a second unknown field, found 2026-08-09 while rewriting WO-G2's dependency line:**
+`**Target**`, which all four gate work orders carry on the line under their header
+(`gates.md:14`, `:183`, `:205`). It lands in the same place — `node tools/wo-gate.mjs WO-G2` ends its
+dependency report with `(prose) … **Target** ~2026-09-15, before the first grades are entered for
+real`. Harmless today, because a date carries no `WO-` token to be misread as a dependency. It is
+here because it is the third instance of one defect: **any line in the header block that is not
+`Depends on` is absorbed into `Depends on`.** Fix the class, not the three fields — and if the fix
+is per-field, say in a comment why the general one was rejected.
+
+*(That same rewrite found the other half of this: `WO-2.5 … WO-2.7` was read as two tokens rather
+than a range, so WO-2.6 sat in the middle of WO-G2's dependency line gating nothing. That one is
+fixed in place rather than in code — an ellipsis range is a thing a human writes and a parser should
+not be taught to guess at. If this work order adds anything there, it is a **warning** when a
+dependency line contains `…` between two `WO-` tokens, never an expansion.)*
+
+**Deliverables**
+- **`--self-check` says what it requires and checks it first.** Run the drift readers `--audit`
+  already has over the copy before any plant is made, and if the copy is not clean, stop with that as
+  the reason — the trackers' drift, named, and the command that shows it — rather than running nine
+  plants and reporting two of them red. A plant failure should mean a plant failed.
+- **Un-couple the `next` plant from the live running order — this one is red right now**, and it is
+  the first thing to fix, because until it is green nothing else in this work order can be verified
+  by a passing run. The plant asserts against *"the one ⬜ NOT STARTED row in the table"*; give it its
+  own row to assert against, or its own table, or neutralise the real rows in the copy. Rewrite the
+  comment at `wo-gate.mjs:1025-1026` with it — the sentence that made the assumption reasonable in
+  August is the sentence that will hide the next one.
+- **The clip stops hiding the reason.** Whatever the plant failure prints, `HELD` and its cause must
+  survive into the output. Decide whether that is a longer clip, the last line rather than the first,
+  or the whole captured run behind a flag; the reasoning goes in a comment at the point of decision.
+- **Decide whether `**Blocks**` is a real field**, and make the tool act on the decision. The
+  recommendation is that it is real and is treated as **Amends roadmap** is — parsed, reported,
+  never acted on — because it is genuine information a human wants at the top of a work order and it
+  reads naturally beside `Depends on`. Whatever is chosen, **no `WO-` token on a `**Blocks**` line
+  may reach `depsOf()`**, and the field table in `work-orders/README.md` gains a row either way.
+- **A third thing, which is the actual lesson:** an unknown header field currently fails by being
+  silently absorbed into the nearest known one. Say in the field table what happens to a field that
+  is not in it, so the next person who invents `**Supersedes**` finds out from the document rather
+  than from a gate report that reads plausibly and is wrong.
+
+**Out of scope** — no new script and no `tools/lib/`, per
+[`../verification-tooling.md`](../verification-tooling.md). No new plants beyond what the precondition
+check needs; `--self-check` is not growing into a test framework, and if it starts wanting to, stop
+and say so. **No change to what `--tick`, `--start` or `--release` write**, or to which files they may
+touch — this work order changes what the tool *says*, and its reading of one field, and nothing about
+its writes. Do not correct the two `**Blocks**` lines' prose; they are the fixtures.
+
+**Acceptance**
+- [ ] With `ROADMAP.md`'s dashboard drifted in a temp copy, `--self-check` stops before planting and
+      names the drift as the reason. **Prove it on a planted row in a copy outside the repository** —
+      the tree's own rows are clean as of 2026-08-08 and cannot be the fixture, and planting drift in
+      the live `plans/` to test a drift check is how a bad morning starts.
+- [ ] The same, for the other thing that earns a `HELD`: a `Closes roadmap` fragment matching zero
+      boxes in the copy.
+- [ ] On a clean tree, `--self-check` still passes with all nine plants caught and still says how
+      many it made — the precondition check must not cost a plant.
+- [ ] **The `next` plant passes with a populated running order**, which is the state the tree has
+      been in since 2026-08-09 and the state it will be in for every phase from here. Prove it both
+      ways: with ⬜ NOT STARTED rows ahead of the fixture, and with none — the second is the
+      condition that has been silently holding the plant up since it was written.
+- [ ] A plant that genuinely fails still reports as a plant failure, with the `HELD` reason visible
+      rather than clipped away. Prove it by mutating the subject script, not by drifting the
+      trackers — those are the two cases this work order exists to tell apart, so the evidence has to
+      tell them apart too.
+- [ ] `node tools/wo-gate.mjs WO-1.5` no longer reports `WO-1.6` as a dependency, and WO-1.5's
+      `**Blocks**` line is unchanged on disk.
+- [ ] `node tools/wo-gate.mjs WO-1.1` no longer scrapes `**Blocks** everything` into its dependency
+      field.
+- [ ] `--list` and `next` are unchanged on every other work order — diff the full output of both
+      against the same commands run before the change, and show that the only differences are the two
+      lines above.
+- [ ] `**Blocks**` has a row in `work-orders/README.md`'s field table, and the table says what becomes
+      of a field that has no row.
+- [ ] `--self-check` writes nothing inside the repository and leaves no temp directory on either exit
+      path, including the new early one. **The early exit is a new exit path** — WO-2.15's acceptance
+      line 4 was written before it existed.
+- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — all checks passing, zero
+      skips, exit 0, and the count matching whatever `tools/README.md` says at the time.
+
+**Traps** — **The precondition check must not become a tenth plant.** It runs over the copy before
+any plant exists, it tests the trackers rather than the script, and folding it into the plant loop is
+how a future reader concludes the trackers are what `--self-check` checks. They are its fixture.
+
+**Do not fix the drift you find.** If the precondition check goes red on the real trees while this is
+being built, that is `--audit`'s job and a separate edit with a human behind it. A self-check that
+repairs `plans/` to make itself pass is the worst possible version of this tool.
+
+**`**Blocks**` is prose written by a hand, not a schema.** WO-1.5's line ends with
+`— **unblocked as of 2026-08-04**`, and WO-1.1's says `everything`. Neither is a list of work order
+IDs, and code that assumes it is will be wrong the third time someone writes one. Parse it as
+reportable text that happens to contain `WO-` tokens, exactly as `Depends on` already does for its
+prose tail — and make sure the tokens go nowhere near the gate.

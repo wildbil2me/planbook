@@ -179,8 +179,15 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** Phase 3, WO-2.5 … WO-2.7
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9, WO-3.10
 **Target** ~2026-09-15, before the first grades are entered for real
+
+*(That line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09. It was rewritten for two reasons, both
+found while writing the Ship 2 table. **The ellipsis was not a range to the tool** — `depsOf()` reads
+`WO-` tokens, so it saw WO-2.5 and WO-2.7 and never WO-2.6, which sat in the middle of the range and
+was therefore gating nothing. **And "Phase 3" is not a token at all**, so ten work orders this gate
+genuinely waits on were invisible to it; they are written out. WO-2.7 came off the line the same day,
+deferred — see its work order.)*
 
 **Why it exists.** Grade math wrong in September is discovered in November, by a guardian. The 1.0
 criteria demand grade math "verified against hand-computed cases" — this is where that happens, on

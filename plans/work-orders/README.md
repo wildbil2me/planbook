@@ -89,7 +89,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.14 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.16 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.10 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -104,7 +104,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 14 | 11 | 🔨 IN PROGRESS |
+| 2 — Attendance | 15 | 11 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -112,7 +112,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **63** | **25** | `[████░░░░░░] 40%` |
+| | **64** | **25** | `[███░░░░░░░] 39%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -124,8 +124,10 @@ dashboard tidy. The work lands on `phase/2-attendance`, because that is where th
 
 ## Ship 1 — the three weeks that matter
 
-Twenty work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the ordering
-is genuinely tight, so it is written out day by day rather than left to be discovered.
+Twenty-one work orders between 2026-08-03 and ~2026-08-24. This is the only stretch where the
+ordering is genuinely tight, so it is written out day by day rather than left to be discovered.
+**Closed 2026-08-08** — every row ✅ DONE, WO-G1's rehearsal included. *(The count read "twenty"
+until 2026-08-09; WO-2.5 was pulled into the table on 2026-08-08 and the sentence above it was not.)*
 
 *(Four changes on 2026-08-06, all from one root cause — building attendance without holding it
 against Roll Call! first, screen by screen. **WO-2.2 merged into WO-2.1**, because splitting today
@@ -195,6 +197,80 @@ record for the term — see WO-G1's decision record. It is the keyboard path, an
 of 25 is marked by mouse while students walk in. A work order that was a Ship 2 polish item under
 the old model is a go-live blocker under the new one; the deliverable did not change, the standard
 it is built to did.)*
+
+---
+
+## Ship 2 — first grades
+
+Thirteen work orders between 2026-08-09 and ~2026-09-15, ending at
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). Written 2026-08-09, the day after Ship 1 closed,
+because until it existed there was **no running order at all** past Ship 1 — `next` reads the tables
+in this file and had nothing left to read, and the ordering everyone was working from lived in three
+documents that disagreed. Naming the disagreements, since they are the reason this table is worth
+more than its rows:
+
+- [`../ROADMAP.md:80`](../ROADMAP.md) calls Ship 2 *"categories & weights · assignments · score entry
+  with late/missing · weighted grade · letter scale"* — five items, all gradebook.
+- **WO-G2's dependency line** wanted all of Phase 3 plus WO-2.5 … WO-2.7 — and got neither, because
+  "Phase 3" is not a work order ID and the ellipsis was read as two tokens rather than a range. Ten
+  work orders it waits on were invisible to the gate, and WO-2.6 sat in the middle of the range
+  gating nothing. Rewritten as an explicit list on 2026-08-09.
+- **The `**Ship**` header fields disagree with both.** WO-2.6, WO-2.7 and WO-2.9 say `**Ship** 2`;
+  every Phase 3 work order leaves the field blank, so by header alone the entire gradebook is in no
+  ship at all. **Not changed here** — the table is the running order, and stamping `**Ship** 2` on
+  ten work orders would assert something the roadmap's five-item line does not say. It is a real
+  decision and it is written down rather than made quietly.
+
+**The unit of urgency is different from Ship 1's, and the table is built around that.** Ship 1 raced
+a fixed date with students behind it. Ship 2 races a date the owner sets — but from **~Aug 24 the
+owner is teaching**, so capacity halves at the exact midpoint. The heavy items are therefore front-
+loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
+
+| # | Work order | Size | G2 | Suggested |
+|---|---|---|---|---|
+| 1 | [WO-2.16](phase-2-attendance.md#wo-216--the-self-check-states-its-precondition-and-blocks-stops-being-a-dependency) Self-check precondition & `**Blocks**` | S | | Aug 10 |
+| 2 | [WO-3.1](phase-3-gradebook.md#wo-31--categories--weights) Categories & weights | S | ✔ | Aug 10–11 |
+| 3 | [WO-3.2](phase-3-gradebook.md#wo-32--letter-scale-editor) Letter-scale editor | S | ✔ | Aug 11–12 |
+| 4 | [WO-3.3](phase-3-gradebook.md#wo-33--assignments) Assignments | M | ✔ | Aug 12–14 |
+| 5 | [WO-3.4](phase-3-gradebook.md#wo-34--grade-engine) **Grade engine** | M | ✔ | Aug 14–17 |
+| 6 | [WO-3.5](phase-3-gradebook.md#wo-35--score-entry-grid) **Score entry grid** | L | ✔ | Aug 17–21 |
+| 7 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
+| 8 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
+| 9 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 10 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 11 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 12 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 13 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+**Running in parallel, on nobody's critical path and its own clock:**
+[WO-3.10](phase-3-gradebook.md#wo-310--oauth-verification-paperwork-) — OAuth verification paperwork.
+It is a G2 dependency (*submitted*, with the date recorded), it depends on **nothing technical**, and
+it is the one item here that is **calendar-bound rather than work-bound**: submitting late does not
+cost a week of work, it costs however long Google takes. It also needs a decision the code cannot
+make — the hosting and domain call, which overlaps WO-8.6. *(The precedent is sitting on disk: Roll
+Call! is at 0.9.0-beta with every engineering blocker closed, held by exactly this class of task.)*
+
+**The hard ordering constraint:** WO-3.1 and WO-3.2 before everything else in the gradebook. Six of
+the ten Phase 3 work orders sit behind them, and WO-3.5 — the L, and the screen WO-G2 actually
+tests — is four deep. *Ship 1's constraint (backup before anything that writes student data) is
+already satisfied here: WO-1.5 backs up the whole year document, and grades land inside it.*
+
+**If the schedule slips**, cut in this order: **WO-2.9** — overdue pass alerts are a convenience over
+a log that is already being written correctly · **WO-3.6** past-due prompt, which is a nudge toward
+marks the teacher can already set by hand · **WO-3.8** accommodation prompts degrade to what Ship 1
+already delivers, the accommodation on the roster where the legal obligation is met, and the prompt
+is what makes it convenient rather than what makes it lawful.
+
+**Never cut WO-3.1, WO-3.2, WO-3.4 or WO-3.9.** The first three are the grade math, and grade math
+wrong in September is discovered in November by a guardian. WO-3.9 is there for a less obvious
+reason: WO-G2 tests *"the printout order matches the SIS entry screen, confirmed against a real
+re-key"*, and the SIS has no usable export, so re-keying by hand is the owner's actual recurring
+labor. Cutting it does not descope a feature, it descopes the gate.
+
+**Deferred out of Ship 2** — [WO-2.7](phase-2-attendance.md#wo-27--roll-call-importer), the Roll Call!
+importer, on 2026-08-09: no live data is coming across, the rosters are pasted fresh, and the ledger
+starts empty. It keeps its work order and its roadmap box; it lost its place in the running order and
+its seat on WO-G2's dependency line.
 
 ---
 
