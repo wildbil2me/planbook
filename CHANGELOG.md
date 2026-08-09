@@ -80,6 +80,17 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   WO-3.3 rather than to a device: the removal confirm's counted form has only ever been read against
   fixtures, because nothing creates an assignment yet.
 
+  **Superseded the same day, and left standing rather than rewritten.** Hours after this landed the
+  owner settled the rule it was written against: **there is no grade at all until the weights total
+  100** — not a provisional figure, not a figure with a label on it. So the two paragraphs above are
+  an accurate record of what shipped and a misleading guide to where the app is going, which is
+  exactly the kind of entry worth annotating instead of quietly editing. What actually changes:
+  `isProvisional()` keeps its signature and its truth value but now means *"this class has no
+  grade"*, and the sentences built on it — in the categories editor and on the class-manager row —
+  are owed a correction that is folded into WO-3.5. Nothing shows a grade before then, so no teacher
+  reads a false claim about a number she can see. The reasoning is in `docs/data-model.md` § Grade
+  math.
+
 - **WO-2.15 — `wo-gate.mjs` now checks itself, and reads the fragments it has been trusting.**
   Two new read-only verbs, `--self-check` and `--audit`, plus the nine rotted header fragments the
   first `--audit` run found.

@@ -62,17 +62,25 @@ the class-manager row behind it — is driven and measured in `tools/verify-shel
 whether there is a grade to draw at all; ticking lines 2 and 4 belongs to that work order's own pass.
 
 **A correction is owed to this work order's own copy, and it is not cosmetic.** *(2026-08-09, after
-the owner's call above.)* `src/categories.js` tells the teacher that "any grade in this class is
-provisional until they add up", and announces "Grades are provisional." Both are now false: there is
-no grade to be provisional about. `isProvisional(cls)` keeps its signature and its truth value —
-weights ≠ 100 — but its **name and every sentence built on it now mean "this class has no grade".**
+the owner's call above.)* Three sentences are now false, because there is no grade to be provisional
+about — and they are in **two** files, which is one more than the first pass of this note claimed:
+
+| Where | What it says now |
+|---|---|
+| `src/categories.js` `renderTotal()` | *"…Any grade in this class is provisional until they add up."* |
+| `src/categories.js` `announce()` | *"Weights total 95 percent, not 100. Grades are provisional."* |
+| `src/classes.js` `classRow()` | the `weights 95%` badge's `title`: *"…so any grade in it is provisional. Open Categories to set them."* |
+
+`isProvisional(cls)` keeps its signature and its truth value — weights ≠ 100 — but its **name and
+every sentence built on it now mean "this class has no grade".**
 
 This is a code change, not a documentation one, and it is **coupled to the harness**: at least one
 check in `tools/verify-shell.mjs` asserts the banner text carries both `95%` and the word
 *provisional*, and it goes red the moment the copy changes. So it is a small work order rather than a
-drive-by edit — the copy, the announcement, the rename if one is wanted, and the checks that hold
-them. **Fold it into WO-3.5's brief** unless it is wanted sooner; nothing displays a grade before
-then, so nothing is currently lying to a teacher about a number she can see.
+drive-by edit — the copy in both files, the announcement, the badge tooltip, the rename if one is
+wanted, and the checks that hold them. **Fold it into WO-3.5's brief** unless it is wanted sooner;
+nothing displays a grade before then, so nothing is currently lying to a teacher about a number she
+can see.
 
 ---
 
