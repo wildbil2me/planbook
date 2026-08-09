@@ -1,0 +1,98 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Mockup chrome — the parts of these pages that are NOT the app.
+
+   Everything in this file exists to make a drawing unmistakable as a drawing. It
+   is deliberately ugly against the app's palette: slate, mono, hard edges, no
+   rounded corners over 4px. If a screenshot of one of these pages ever gets
+   mistaken for the running app, this file failed and should get louder.
+
+   NOTHING HERE LIFTS. When a screen is built for real, `proposed.css` is the file
+   that gets split up and carried across; this one stays behind. That is why the
+   two are separate files rather than one.
+
+   Every class here is prefixed `mk-`. Nothing in src/ uses that prefix, so this
+   sheet cannot collide with the app's own — checked, not assumed.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+body { padding-bottom: 60px; }
+
+/* The band at the top of every mockup page. Above the app frame, not inside it,
+   so it can never be read as a component of the screen below. */
+.mk-notice {
+  background: #1a1a2e; color: #fff;
+  padding: 10px 20px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px; line-height: 1.5;
+  display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline;
+}
+.mk-notice strong { color: #ffd166; font-weight: 700; }
+.mk-notice a { color: #9fb4ff; }
+
+.mk-nav {
+  background: #2b2b40; padding: 8px 20px;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 12px;
+}
+.mk-nav a {
+  color: rgba(255,255,255,0.7); text-decoration: none;
+  padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.18);
+}
+.mk-nav a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.mk-nav a.here { background: #fff; color: #1a1a2e; border-color: #fff; font-weight: 700; }
+
+/* A label between two drawn states on one page ("with the editor open", "variant B"). */
+.mk-section {
+  max-width: 1300px; margin: 28px auto 0; padding: 0 20px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px; font-weight: 700; color: #6b7a8d;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.mk-section::before { content: '▚ '; color: #a0aab8; }
+
+/* An annotation attached to something drawn above it. Left rule, so it reads as
+   marginalia rather than as copy belonging to the screen. */
+.mk-caption {
+  max-width: 1300px; margin: 10px auto 0; padding: 8px 14px;
+  border-left: 3px solid #d0d8e4; background: #fff;
+  font-size: 12px; line-height: 1.6; color: #6b7a8d;
+}
+.mk-caption + .mk-caption { margin-top: 6px; }
+.mk-caption strong { color: #1a1a2e; }
+.mk-caption code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px; background: #f0f2f5; padding: 1px 5px; border-radius: 3px;
+}
+/* An annotation about something that is a question rather than a proposal. */
+.mk-caption.ask { border-left-color: #e67e22; background: #fef5ea; color: #8a5a1a; }
+.mk-caption.ask strong { color: #8a5a1a; }
+/* A question the owner has since answered. Kept in place rather than deleted, and kept visibly
+   distinct from a proposal — a drawing that quietly absorbs a decision loses the record of there
+   having been a choice, which is the thing the next reader most needs. */
+.mk-caption.decided { border-left-color: #27ae60; background: #eafaf1; color: #1a6b3a; }
+.mk-caption.decided strong { color: #1a6b3a; }
+.mk-caption.decided::before {
+  content: 'DECIDED'; display: inline-block; margin-right: 8px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  color: #fff; background: #27ae60; border-radius: 3px; padding: 1px 6px;
+  vertical-align: 1px;
+}
+
+/* The contents page. */
+.mk-index { max-width: 760px; margin: 0 auto; padding: 32px 20px; }
+.mk-index h1 { font-size: 22px; margin-bottom: 6px; }
+.mk-index > p { font-size: 14px; color: #6b7a8d; line-height: 1.7; margin-bottom: 8px; }
+.mk-index-list { list-style: none; margin-top: 20px; display: grid; gap: 10px; }
+.mk-index-list a {
+  display: block; background: #fff; border: 1.5px solid #e0e4ea; border-radius: 10px;
+  padding: 14px 16px; text-decoration: none; color: #1a1a2e;
+}
+.mk-index-list a:hover { border-color: #5b6fcc; }
+.mk-index-list b { font-size: 14px; display: block; }
+.mk-index-list span { font-size: 12px; color: #6b7a8d; display: block; margin-top: 3px; line-height: 1.5; }
+.mk-index-list em { font-style: normal; color: #8a9bb0; font-size: 11px; font-weight: 700; }
+
+@media (pointer: coarse) {
+  .mk-nav a { min-height: 44px; display: flex; align-items: center; }
+  .mk-index-list a { min-height: 44px; }
+}

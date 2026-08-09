@@ -271,19 +271,53 @@ happens to them.
 must be visible in the cell — a score that silently isn't what you typed is the worst thing a
 gradebook can do.
 
-**Category weights do not have to total 100, and a reader must not assume they do.** *(Added
-2026-08-09, WO-3.1.)* A class halfway through being set up totals 85; a class the teacher has not
-opened yet has no categories at all. Neither is an error state and neither is refused — the editor
-says what the weights come to and lets her carry on, because the alternative is an app that blocks
-setup until it is perfect. `src/categories.js` owns the arithmetic: `weightTotal(cls)` and
-`isProvisional(cls)`, both pure functions of a class, and the second is what a screen showing a
-grade reads to say the figure is provisional. Two consequences for the grade engine, and neither is
-a new rule — both fall out of the redistribution rule above, which already normalises by the sum of
-the categories that have work rather than by 100. It divides by the **actual** total, so a class at
-85 still produces a sensible weighted average and only the label changes. And a class with no
-categories has no grade at all, which is "no grade yet" and not `0%`.
-Weights are stored exactly as typed — decimals included, and `0` is a real weight, which is how a
-teacher stops a category counting without destroying the work filed under it.
+**Category weights do not have to total 100 while a class is being set up, and nothing is blocked
+while they don't.** A class halfway through totals 85; a class the teacher has not opened yet has no
+categories at all. Neither is an error state and neither is refused — the editor says what the
+weights come to and lets her carry on, because the alternative is an app that blocks setup until it
+is perfect. Scores can still be entered the whole time. Weights are stored exactly as typed —
+decimals included, and `0` is a real weight, which is how a teacher stops a category counting
+without destroying the work filed under it.
+
+**But there is no grade at all until they total 100.** *(Owner's decision, 2026-08-09.)* Not a
+provisional figure, not a figure with a label on it, not a best guess — **no number.** Screens that
+show a grade show its absence and the reason: *the weights come to 95%, so there is no grade yet.*
+A class with no categories is the same case for the same reason.
+
+This **replaces** the paragraph WO-3.1 added here on the morning of the same day, which said the
+engine should divide by the actual total so "a class at 85 still produces a sensible weighted average
+and only the label changes." That was written by the work order that shipped the categories editor,
+which flagged it in its own result file as the thing to cut if it had legislated into WO-3.4's
+territory. It had, and the legislation was wrong. **The scar worth keeping:** a weighted average over
+weights that do not add up is arithmetic nobody asked for, dressed as an answer — and a teacher
+mid-setup would have been shown a number, told it was provisional, and had no way to tell how far off
+it was. Refusing to print one is both simpler and truer, and it deletes the whole question of what to
+divide by.
+
+`src/categories.js` owns the determination: `weightTotal(cls)` and `isProvisional(cls)`, both pure
+functions of a class. **`isProvisional()` now means "this class has no grade", not "this grade is
+provisional".** Its name and its copy are owed a correction — see the note in WO-3.1.
+
+### Extra credit
+
+**A zero-point assignment is the extra-credit mechanism.** *(Owner's decision, 2026-08-09.)* It
+follows from `earned / possible` being summed over the category rather than averaged across
+assignments: an assignment worth 0 points scored `5` adds 5 to that category's `earned` and 0 to its
+`possible`. A student at 13/20 in Quizzes who earns 5 points of extra credit is at 18/20 — 90% — and
+nothing special happened in the arithmetic.
+
+Three consequences:
+
+- **A category can exceed 100%, and so can the overall grade.** Nothing caps either. A cap would
+  silently discard points the teacher deliberately awarded, which is the same failure as a score
+  that isn't what you typed.
+- **A category whose `possible` sums to zero has no percentage** — it is `n/0`, not `100%` and not
+  `0%`. This happens when a category holds nothing but zero-point assignments. Treat it exactly like
+  an empty category: its weight redistributes. **This is the one edge case that will crash a naive
+  engine**, and it is reachable by a teacher who makes an "Extra credit" category and puts only
+  extra credit in it.
+- **No separate extra-credit flag, field, or category type exists**, and none should be added. The
+  feature is the absence of a special case.
 
 ## Accommodations — the most sensitive data in the app
 

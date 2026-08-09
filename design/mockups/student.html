@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Per-student grade detail (WO-3.7)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. The student is invented; the arithmetic on this page is real and checks out.</span>
+  <span>Per-student detail · <a href="../../plans/work-orders/phase-3-gradebook.md">WO-3.7</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html" class="here">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📘</div>
+      <div class="header-title"><h1>Planbook</h1><p>Biology I · Quarter 1</p></div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab cls-tab-home" type="button">All classes</button>
+      <button class="cls-tab active" type="button">Biology I</button>
+      <button class="cls-tab" type="button">Biology I · P4</button>
+      <button class="cls-tab" type="button">Anatomy</button>
+      <button class="cls-tab" type="button">Env Science</button>
+      <button class="cls-tab" type="button">Research</button>
+      <button class="cls-tab cls-tab-add" type="button">+</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Owen Bennett</h2>
+          <p>Biology I · Quarter 1</p>
+        </div>
+        <button class="class-action-btn" type="button">Draft a message</button>
+      </div>
+      <div class="screen-nav" role="tablist" aria-label="Screens for this class">
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Scores</button>
+        <button class="screen-nav-btn detail active" type="button" role="tab" aria-selected="true">Owen Bennett</button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-hero">
+        <div class="avatar av1 detail-avatar">OB</div>
+        <div class="detail-hero-who">
+          <div class="detail-hero-name">Owen Bennett</div>
+          <div class="detail-hero-sub">10 assignments · 1 missing · last entered Sep 25</div>
+        </div>
+        <button class="detail-support-btn" type="button" aria-label="Support details for this student">
+          <span class="detail-support-dot" aria-hidden="true"></span> 2 · view
+        </button>
+        <div class="detail-hero-grade">
+          <div class="detail-grade-big">66.5%</div>
+          <div class="detail-grade-band">D · next band C− at 70%</div>
+        </div>
+      </div>
+
+      <div class="detail-cols">
+        <div>
+          <div class="detail-card">
+            <div class="detail-card-title">Where the grade comes from</div>
+            <table class="detail-break">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Weight</th>
+                  <th>Earned</th>
+                  <th>Category %</th>
+                  <th>Contributes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="detail-break-cat">Tests</td>
+                  <td class="detail-break-weak">40%</td>
+                  <td class="detail-break-weak">78 / 100</td>
+                  <td class="detail-break-num">78.0%</td>
+                  <td class="detail-break-num">31.20</td>
+                </tr>
+                <tr>
+                  <td class="detail-break-cat">Quizzes</td>
+                  <td class="detail-break-weak">25%</td>
+                  <td class="detail-break-weak">13 / 20</td>
+                  <td class="detail-break-num">65.0%</td>
+                  <td class="detail-break-num">16.25</td>
+                </tr>
+                <tr>
+                  <td class="detail-break-cat">Homework</td>
+                  <td class="detail-break-weak">20%</td>
+                  <td class="detail-break-weak">8 / 20</td>
+                  <td class="detail-break-num">40.0%</td>
+                  <td class="detail-break-num">8.00</td>
+                </tr>
+                <tr>
+                  <td class="detail-break-cat">Classwork</td>
+                  <td class="detail-break-weak">15%</td>
+                  <td class="detail-break-weak">11 / 15</td>
+                  <td class="detail-break-num">73.3%</td>
+                  <td class="detail-break-num">11.00</td>
+                </tr>
+                <tr class="empty">
+                  <td class="detail-break-cat">Participation</td>
+                  <td class="detail-break-weak">0%</td>
+                  <td class="detail-break-redist" colspan="2">nothing filed under it — weight redistributes</td>
+                  <td class="detail-break-num">—</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Overall</td>
+                  <td class="detail-break-weak">100%</td>
+                  <td></td>
+                  <td></td>
+                  <td>66.45</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="detail-stack" role="img" aria-label="Contributions: Tests 31.2, Quizzes 16.25, Homework 8, Classwork 11, of 100">
+              <div class="detail-stack-seg" style="width:31.2%;background:#5b6fcc"></div>
+              <div class="detail-stack-seg" style="width:16.25%;background:#0097a7"></div>
+              <div class="detail-stack-seg" style="width:8%;background:#27ae60"></div>
+              <div class="detail-stack-seg" style="width:11%;background:#8e44ad"></div>
+            </div>
+            <div class="detail-stack-legend">
+              <span class="detail-stack-key"><span class="detail-stack-swatch" style="background:#5b6fcc"></span> Tests 31.2</span>
+              <span class="detail-stack-key"><span class="detail-stack-swatch" style="background:#0097a7"></span> Quizzes 16.3</span>
+              <span class="detail-stack-key"><span class="detail-stack-swatch" style="background:#27ae60"></span> Homework 8.0</span>
+              <span class="detail-stack-key"><span class="detail-stack-swatch" style="background:#8e44ad"></span> Classwork 11.0</span>
+              <span class="detail-stack-key"><span class="detail-stack-swatch" style="background:#eef0f4"></span> not earned 33.6</span>
+            </div>
+          </div>
+
+          <div class="detail-card" style="border:none;padding:0">
+            <div class="detail-move">
+              <div class="detail-move-head">What it would take to move</div>
+              <p>
+                Three assignments are still to come — the Osmosis Quiz (20), Ch 3 Homework (10) and
+                the Lab Notebook (25). Scoring <b>75%</b> on all three lands him at <b>70.2%</b>,
+                which is a <b>C−</b>. Scoring <b>90%</b> on all three lands him at <b>74.5%</b>.
+              </p>
+              <p style="margin-top:8px">
+                Handing in the missing Ch 2 Homework on its own moves him to <b>69.3%</b> — not quite
+                a C−, but it is the single largest jump available from one piece of work.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-card">
+            <div class="detail-card-title">Missing work · 10 points at stake</div>
+            <div class="detail-missing-row">
+              <span class="detail-missing-name">Ch 2 Homework</span>
+              <span class="detail-missing-when">due Sep 18</span>
+              <span class="detail-missing-pts">10 pts</span>
+            </div>
+            <p style="font-size:11px;color:#8a9bb0;line-height:1.6;margin-top:10px">
+              Marked missing by you, not worked out from a due date. The Osmosis Quiz is blank rather
+              than missing — blank counts toward nothing until you say otherwise.
+            </p>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-card-title">Attendance</div>
+            <div class="detail-att">
+              <div class="detail-att-stat">
+                <div class="detail-att-num">22</div>
+                <div class="detail-att-label">Present</div>
+              </div>
+              <div class="detail-att-stat">
+                <div class="detail-att-num">2</div>
+                <div class="detail-att-label">Absent</div>
+              </div>
+              <div class="detail-att-stat">
+                <div class="detail-att-num">1</div>
+                <div class="detail-att-label">Tardy</div>
+              </div>
+            </div>
+            <p class="detail-att-note">
+              Out of <b>24 recorded meetings</b> — not 24 school days. Days the class did not meet are
+              not counted in either direction.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>The contributions sum to the grade, and that is the point of the table.</strong>
+    31.20 + 16.25 + 8.00 + 11.00 = 66.45. WO-3.7's first acceptance line asks for exactly this, and
+    a guardian who can follow the arithmetic on the screen is a guardian who is not arguing about
+    whether the number is real.
+  </div>
+  <div class="mk-caption">
+    <strong>The empty category is shown, not hidden.</strong> Participation holds nothing, so its
+    weight redistributes across the other four rather than counting as a zero — the row says so in
+    the caution wash. Hiding it is how a teacher concludes the app lost an assignment.
+  </div>
+  <div class="mk-caption">
+    <strong>"What it would take to move" gives two figures and a third route.</strong> One number is a
+    target; two numbers are a conversation, and the missing-homework line is the one a fifteen-year-old
+    can act on tonight. The arithmetic is reproducible by hand — WO-3.7's third acceptance line — and
+    the 75% figure was solved for, not estimated.
+  </div>
+  <div class="mk-caption decided">
+    <strong>Extra credit is real, so the "to move" figure has to count it.</strong> Owner,
+    2026-08-09: a zero-point assignment scored <b>5</b> is +5 earned points in its category. That
+    makes the bonus a genuine route to the next band — often the <em>cheapest</em> one, since it adds
+    to the numerator without adding to the denominator — and a "what it would take" figure that
+    ignored it would be wrong in the student's favour, which is the worst direction to be wrong in
+    front of a parent. <strong>The figures on this page do not yet include it</strong>; they were
+    solved before the decision. WO-3.7 must, and its acceptance line already says the figure has to
+    be reproducible by hand.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Which raises a question this screen should answer out loud.</strong> If a bonus is
+    outstanding, "scoring 75% on everything left" is ambiguous — 75% of a 0-point assignment is
+    0 points. The remaining-work list and the arithmetic behind it need to treat bonus work as a
+    separate line rather than folding it into "everything left". Not yet drawn.
+  </div>
+
+  <div class="mk-section">The accommodation indicator, and the same screen projected</div>
+
+  <div class="mk-caption">
+    <strong>This is the most sensitive control in the gradebook</strong>, so it is drawn twice.
+    Left: normal use — a neutral dot and a count, no word, no icon that names a plan, no colour that
+    reads as an alert. It says "there is something here to open", which is what a teacher needs to
+    know she has an obligation, and nothing a parent reading upside down or a room reading off a wall
+    can decode. Right: presentation mode, where it is gone entirely — not greyed, not collapsed.
+    <code>src/supports.js</code> answers that question for the whole app and this element obeys it
+    rather than having a rule of its own.
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;max-width:1300px;margin:12px auto 0">
+    <div class="panel" style="padding:16px">
+      <div class="detail-hero" style="margin-bottom:0">
+        <div class="avatar av1 detail-avatar">OB</div>
+        <div class="detail-hero-who">
+          <div class="detail-hero-name">Owen Bennett</div>
+          <div class="detail-hero-sub">10 assignments · 1 missing</div>
+        </div>
+        <button class="detail-support-btn" type="button" aria-label="Support details for this student">
+          <span class="detail-support-dot" aria-hidden="true"></span> 2 · view
+        </button>
+        <div class="detail-hero-grade">
+          <div class="detail-grade-big">66.5%</div>
+          <div class="detail-grade-band">D</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#8a9bb0;margin-top:10px;line-height:1.5">Normal use — at the desk.</p>
+    </div>
+
+    <div class="panel" style="padding:16px">
+      <div class="detail-hero" style="margin-bottom:0">
+        <div class="avatar av1 detail-avatar">OB</div>
+        <div class="detail-hero-who">
+          <div class="detail-hero-name">Owen Bennett</div>
+          <div class="detail-hero-sub">10 assignments · 1 missing</div>
+        </div>
+        <div class="detail-hero-grade">
+          <div class="detail-grade-big">66.5%</div>
+          <div class="detail-grade-band">D</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#8a9bb0;margin-top:10px;line-height:1.5">
+        Presentation mode — the indicator is absent, and the row does not reflow around a hole.
+      </p>
+    </div>
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Open question — should this screen be reachable in presentation mode at all?</strong>
+    WO-3.7's acceptance line only requires that no <code>supports</code> data appears. But a named
+    student's failing grade on a projector is a disclosure of a different kind, and the work order is
+    silent on it. Two candidate answers: hide the grade the way the indicator is hidden, or refuse the
+    screen entirely with a line saying why. This is the owner's call, not the implementer's.
+  </div>
+</main>
+
+</body>
+</html>

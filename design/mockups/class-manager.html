@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Class manager, re-cut</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Variant A is what ships today. Variant B is a proposal. Nothing is decided here.</span>
+  <span>Class manager · <a href="../../plans/gradebook-surfaces.md">gradebook-surfaces.md</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html" class="here">Class manager</a>
+</nav>
+
+<main class="main">
+
+  <div class="mk-caption">
+    <strong>The manager stays a modal</strong> — that part is settled. It is opened in August, revisited
+    a few times a year, and it is a task you finish and dismiss. What is <em>not</em> settled is how many
+    doors it carries: WO-3.1 made its rows six controls wide, and the three heavy gradebook screens
+    becoming views is what stops it going to nine.
+  </div>
+
+  <div class="mk-section">Variant A — the row exactly as it ships today (WO-3.1)</div>
+
+  <div style="max-width:560px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Classes &amp; terms</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Your classes, in the order they appear across the top of the app.</p>
+        <div class="modal-section-label" style="margin-top:16px">Active</div>
+        <div class="class-list">
+          <div class="class-row">
+            <span class="class-row-name">Biology I</span>
+            <span class="class-row-note">4 terms</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Biology I earlier" disabled>↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Biology I later">↓</button>
+              <button class="class-action-btn" type="button">Terms</button>
+              <button class="class-action-btn" type="button">Categories</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+          <div class="class-row">
+            <span class="class-row-name">Biology I · Period 4</span>
+            <span class="class-row-note">4 terms</span>
+            <span class="class-row-warn">weights 95%</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move later">↓</button>
+              <button class="class-action-btn" type="button">Terms</button>
+              <button class="class-action-btn" type="button">Categories</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+          <div class="class-row">
+            <span class="class-row-name">Anatomy &amp; Physiology (Honors)</span>
+            <span class="class-row-note">2 terms</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move later">↓</button>
+              <button class="class-action-btn" type="button">Terms</button>
+              <button class="class-action-btn" type="button">Categories</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="button">+ Add a class</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Six controls, and the third row shows the failure.</strong> A realistic class name pushes
+    the action group onto its own line, so the row is two lines tall and the buttons no longer sit
+    beside the class they belong to. <code>.class-row</code> wraps by declaration, which is the right
+    call — it is what stops the labels running out through their own borders — but wrapping is a
+    symptom being handled gracefully, not the row fitting.
+  </div>
+  <div class="mk-caption">
+    <strong>This is also the version that does not get worse.</strong> With the assignment list, the
+    score grid and the student detail all being views reached from the class view, no further door is
+    added here by Phase 3. Six is the ceiling, not a waypoint.
+  </div>
+
+  <div class="mk-section">Variant B — Terms and Categories folded behind one “Set up” door</div>
+
+  <div style="max-width:560px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Classes &amp; terms</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Your classes, in the order they appear across the top of the app.</p>
+        <div class="modal-section-label" style="margin-top:16px">Active</div>
+        <div class="class-list">
+          <div class="class-row">
+            <span class="class-row-name">Biology I</span>
+            <span class="class-row-note">4 terms · 4 categories</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Biology I earlier" disabled>↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Biology I later">↓</button>
+              <button class="class-action-btn" type="button">Set up…</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+          <div class="class-row">
+            <span class="class-row-name">Biology I · Period 4</span>
+            <span class="class-row-note">4 terms · 5 categories</span>
+            <span class="class-row-warn">weights 95%</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move later">↓</button>
+              <button class="class-action-btn" type="button">Set up…</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+          <div class="class-row">
+            <span class="class-row-name">Anatomy &amp; Physiology (Honors)</span>
+            <span class="class-row-note">2 terms · 4 categories</span>
+            <div class="class-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move later">↓</button>
+              <button class="class-action-btn" type="button">Set up…</button>
+              <button class="class-action-btn" type="button">Rename</button>
+              <button class="class-action-btn archive" type="button">Archive</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="button">+ Add a class</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Five controls, and the long name now fits on one line.</strong> The cost is a tap: Terms
+    and Categories both move one level down, behind a panel that offers the two of them plus the
+    letter scale WO-3.2 is about to add. That panel is also where a fourth setup screen would go
+    without touching this row again, which is the part that matters more than the tap.
+  </div>
+  <div class="mk-caption">
+    <strong>The badge stays on the row, and that is not negotiable in either variant.</strong>
+    WO-3.1 put <code>weights 95%</code> here precisely so an unfinished class is visible without
+    opening five panels to find it. Folding the door must not fold the warning — a warning behind a
+    door is a warning nobody reads.
+  </div>
+  <div class="mk-caption">
+    <strong>The note earns its keep in B and does not in A.</strong> "4 terms · 4 categories" was
+    rejected as furniture when the buttons said both words; with the buttons folded away it becomes
+    the only thing telling you what is behind the door.
+  </div>
+  <div class="mk-caption ask">
+    <strong>This is a real fork and it is the owner's.</strong> A costs a wrapped row on long class
+    names; B costs one tap on every trip to Terms — which, in the last week of August, is five trips.
+    <code>plans/gradebook-surfaces.md</code> deliberately declines to pick, and says the call should be
+    made against the finished row rather than predicted. Nothing in Phase 3 is blocked on it.
+  </div>
+</main>
+
+</body>
+</html>

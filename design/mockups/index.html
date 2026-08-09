@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planbook — gradebook mockups</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWINGS, NOT THE APP.</strong>
+  <span>Drawn 2026-08-09, before any of Phase 3's screens were built.</span>
+</div>
+
+<div class="mk-index">
+  <h1>Gradebook mockups</h1>
+  <p>
+    Four screens, drawn against the app's real stylesheet — <code>src/shell.css</code> is linked, not
+    copied, so these cannot drift from the design system without breaking loudly. The proposed styles
+    live in <code>proposed.css</code> and are written to be lifted into
+    <code>src/scores.css</code>, <code>src/assignments.css</code> and <code>src/detail.css</code>
+    when the work orders land.
+  </p>
+  <p>
+    They exist to make one decision arguable before it is expensive: <strong>the three heavy
+    gradebook screens are main-area views, not modals.</strong> The reasoning is in
+    <a href="../../plans/gradebook-surfaces.md">plans/gradebook-surfaces.md</a>.
+  </p>
+  <p>
+    Every drawing carries annotations. The amber ones are <strong>open questions</strong> — places
+    where the drawing had to guess and the guess is the owner's or a later work order's to make.
+    There are seven of them and they are the most useful thing here.
+  </p>
+
+  <ul class="mk-index-list">
+    <li>
+      <a href="scores.html">
+        <b>Score entry grid <em>· WO-3.5 · size L</em></b>
+        <span>Students down, assignments across, with the name and the running grade frozen while
+        the term scrolls under them. Flags in the cell, per-assignment averages in the footer, and
+        the same screen drawn again with the weights not adding up.</span>
+      </a>
+    </li>
+    <li>
+      <a href="assignments.html">
+        <b>Assignment list <em>· WO-3.3 · size M</em></b>
+        <span>Grouped by category with how much of each is entered, plus the modal editor that
+        stays a modal. Shows what an empty category says about its own weight.</span>
+      </a>
+    </li>
+    <li>
+      <a href="student.html">
+        <b>Per-student grade detail <em>· WO-3.7 · size M</em></b>
+        <span>The conference screen. Contributions that sum to the grade, what it would take to
+        move, and the accommodation indicator drawn twice — once normally, once projected.</span>
+      </a>
+    </li>
+    <li>
+      <a href="class-manager.html">
+        <b>Class manager, re-cut <em>· no work order</em></b>
+        <span>Two variants of the row that started this: as it ships at six controls, and with
+        Terms and Categories folded behind one door. Deliberately undecided.</span>
+      </a>
+    </li>
+  </ul>
+
+  <p style="margin-top:22px;font-size:12px;color:#8a9bb0;line-height:1.7">
+    Open these on the iPad. The touch pass in <code>proposed.css</code> is real — 44px cells, wider
+    inputs, a narrower frozen name column — and the score grid is the screen most likely to be wrong
+    under a thumb. Narrow the browser window on a laptop to see the frozen columns work.
+  </p>
+</div>
+
+</body>
+</html>

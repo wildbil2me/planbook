@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Score entry grid (WO-3.5)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here is wired to anything — no store, no keyboard handling, no arithmetic.</span>
+  <span>Score entry grid · <a href="../../plans/work-orders/phase-3-gradebook.md">WO-3.5</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="scores.html" class="here">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!-- The app frame, copied from index.html rather than approximated. -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📘</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p>Biology I · Quarter 1</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab cls-tab-home" type="button">All classes</button>
+      <button class="cls-tab active" type="button">Biology I</button>
+      <button class="cls-tab" type="button">Biology I · P4</button>
+      <button class="cls-tab" type="button">Anatomy</button>
+      <button class="cls-tab" type="button">Env Science</button>
+      <button class="cls-tab" type="button">Research</button>
+      <button class="cls-tab cls-tab-add" type="button">+</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Biology I</h2>
+          <p>Quarter 1 · 10 students · 9 assignments</p>
+        </div>
+        <button class="class-action-btn" type="button">Print &amp; export</button>
+      </div>
+
+      <!-- ONE CANDIDATE for the class-screen switcher. WO-3.3 owns the real decision. -->
+      <div class="screen-nav" role="tablist" aria-label="Screens for this class">
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
+        <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Scores</button>
+        <button class="screen-nav-btn detail" type="button" role="tab" aria-selected="false">A student</button>
+      </div>
+    </div>
+
+    <div class="scores-body">
+      <div class="scores-summary">
+        <span>Class average <b>84.2%</b></span>
+        <span class="sep">·</span>
+        <span>14 blanks across 2 assignments</span>
+        <span class="sep">·</span>
+        <span>Weights total <b>100%</b></span>
+      </div>
+
+      <div class="scores-actions">
+        <button class="class-action-btn" type="button">⌨ Keys</button>
+        <button class="class-action-btn" type="button">Paste a column</button>
+        <button class="class-action-btn" type="button">Sort: roster order</button>
+        <button class="class-action-btn scores-actions-door" type="button">Assignments →</button>
+      </div>
+
+      <div class="scores-keys">
+        <span class="scores-key"><kbd>↵</kbd> next student</span>
+        <span class="scores-key"><kbd>⇥</kbd> next assignment</span>
+        <span class="scores-key"><kbd>L</kbd> late</span>
+        <span class="scores-key"><kbd>M</kbd> missing</span>
+        <span class="scores-key"><kbd>X</kbd> excused</span>
+        <span class="scores-key"><kbd>⌫</kbd> clear to blank</span>
+      </div>
+
+      <div class="scores-grid-wrap">
+        <table class="scores-grid">
+          <thead>
+            <tr>
+              <th class="scores-name" style="text-align:left">Student</th>
+              <th class="scores-grade">Grade</th>
+              <th class="scores-col">
+                <span class="scores-col-name">Ch 1 Homework</span>
+                <span class="scores-col-pts">out of 10</span>
+                <span class="cat-chip">Homework <b>20%</b></span>
+                <span class="scores-col-due">due Sep 8</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Cell Structure Quiz</span>
+                <span class="scores-col-pts">out of 20</span>
+                <span class="cat-chip">Quizzes <b>25%</b></span>
+                <span class="scores-col-due">due Sep 12</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Microscope Lab</span>
+                <span class="scores-col-pts">out of 15</span>
+                <span class="cat-chip">Classwork <b>15%</b></span>
+                <span class="scores-col-due">due Sep 15</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Ch 2 Homework</span>
+                <span class="scores-col-pts">out of 10</span>
+                <span class="cat-chip">Homework <b>20%</b></span>
+                <span class="scores-col-due">due Sep 18</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Unit 1 Test</span>
+                <span class="scores-col-pts">out of 100</span>
+                <span class="cat-chip">Tests <b>40%</b></span>
+                <span class="scores-col-due">due Sep 22</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Osmosis Quiz</span>
+                <span class="scores-col-pts">out of 20</span>
+                <span class="cat-chip">Quizzes <b>25%</b></span>
+                <span class="scores-col-due overdue">due Sep 25 · 4 blank</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Ch 3 Homework</span>
+                <span class="scores-col-pts">out of 10</span>
+                <span class="cat-chip">Homework <b>20%</b></span>
+                <span class="scores-col-due">due Oct 2</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Lab Notebook</span>
+                <span class="scores-col-pts">out of 25</span>
+                <span class="cat-chip">Classwork <b>15%</b></span>
+                <span class="scores-col-due">due Oct 6</span>
+              </th>
+              <th class="scores-col">
+                <span class="scores-col-name">Bonus: Diffusion Poster</span>
+                <span class="scores-col-pts">out of 0</span>
+                <span class="cat-chip">Quizzes <b>25%</b></span>
+                <span class="scores-col-due">due Oct 9</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="scores-name">Alvarez, Mia</td>
+              <td class="scores-grade"><div class="scores-grade-num">92.4%</div><div class="scores-grade-letter">A−</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="18" inputmode="decimal" aria-label="Cell Structure Quiz for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="15" inputmode="decimal" aria-label="Microscope Lab for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="9" inputmode="decimal" aria-label="Ch 2 Homework for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="94" inputmode="decimal" aria-label="Unit 1 Test for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="19" inputmode="decimal" aria-label="Osmosis Quiz for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Mia Alvarez"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Mia Alvarez"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Bennett, Owen</td>
+              <td class="scores-grade"><div class="scores-grade-num">66.5%</div><div class="scores-grade-letter">D</div></td>
+              <td><span class="scores-cell"><input class="scores-input late" value="8" inputmode="decimal" aria-label="Ch 1 Homework for Owen Bennett, late"><span class="scores-flag late">L</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="13" inputmode="decimal" aria-label="Cell Structure Quiz for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="11" inputmode="decimal" aria-label="Microscope Lab for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input missing" value="" placeholder="0" inputmode="decimal" aria-label="Ch 2 Homework for Owen Bennett, missing"><span class="scores-flag missing">M</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="78" inputmode="decimal" aria-label="Unit 1 Test for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Osmosis Quiz for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Owen Bennett"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Owen Bennett"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Cho, Daniel</td>
+              <td class="scores-grade"><div class="scores-grade-num">88.0%</div><div class="scores-grade-letter">B+</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="17" inputmode="decimal" aria-label="Cell Structure Quiz for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input excused" value="" placeholder="Ex" inputmode="decimal" aria-label="Microscope Lab for Daniel Cho, excused"><span class="scores-flag excused">X</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 2 Homework for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="86" inputmode="decimal" aria-label="Unit 1 Test for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="17" inputmode="decimal" aria-label="Osmosis Quiz for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Daniel Cho"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Daniel Cho"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Dumont, Claire</td>
+              <td class="scores-grade"><div class="scores-grade-num">101.2%</div><div class="scores-grade-letter">A</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="20" inputmode="decimal" aria-label="Cell Structure Quiz for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="14" inputmode="decimal" aria-label="Microscope Lab for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 2 Homework for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="97" inputmode="decimal" aria-label="Unit 1 Test for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="20" inputmode="decimal" aria-label="Osmosis Quiz for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Claire Dumont"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="5" inputmode="decimal" aria-label="Bonus Diffusion Poster for Claire Dumont"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Egan, Ruth</td>
+              <td class="scores-grade"><div class="scores-grade-num">64.1%</div><div class="scores-grade-letter">D</div></td>
+              <td><span class="scores-cell"><input class="scores-input missing" value="" placeholder="0" inputmode="decimal" aria-label="Ch 1 Homework for Ruth Egan, missing"><span class="scores-flag missing">M</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="11" inputmode="decimal" aria-label="Cell Structure Quiz for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input late" value="12" inputmode="decimal" aria-label="Microscope Lab for Ruth Egan, late"><span class="scores-flag late">L</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="7" inputmode="decimal" aria-label="Ch 2 Homework for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="68" inputmode="decimal" aria-label="Unit 1 Test for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Osmosis Quiz for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Ruth Egan"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Ruth Egan"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Ferreira, Luis</td>
+              <td class="scores-grade"><div class="scores-grade-num">79.3%</div><div class="scores-grade-letter">C+</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="9" inputmode="decimal" aria-label="Ch 1 Homework for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="15" inputmode="decimal" aria-label="Cell Structure Quiz for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="13" inputmode="decimal" aria-label="Microscope Lab for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="8" inputmode="decimal" aria-label="Ch 2 Homework for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="81" inputmode="decimal" aria-label="Unit 1 Test for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="14" inputmode="decimal" aria-label="Osmosis Quiz for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Luis Ferreira"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Luis Ferreira"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Gallagher, Nora</td>
+              <td class="scores-grade"><div class="scores-grade-num">90.2%</div><div class="scores-grade-letter">A−</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="19" inputmode="decimal" aria-label="Cell Structure Quiz for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="14" inputmode="decimal" aria-label="Microscope Lab for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="9" inputmode="decimal" aria-label="Ch 2 Homework for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="90" inputmode="decimal" aria-label="Unit 1 Test for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="18" inputmode="decimal" aria-label="Osmosis Quiz for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Nora Gallagher"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Nora Gallagher"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Haddad, Sami</td>
+              <td class="scores-grade"><div class="scores-grade-num">83.7%</div><div class="scores-grade-letter">B</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="9" inputmode="decimal" aria-label="Ch 1 Homework for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="16" inputmode="decimal" aria-label="Cell Structure Quiz for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="13" inputmode="decimal" aria-label="Microscope Lab for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input late" value="10" inputmode="decimal" aria-label="Ch 2 Homework for Sami Haddad, late"><span class="scores-flag late">L</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="84" inputmode="decimal" aria-label="Unit 1 Test for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="16" inputmode="decimal" aria-label="Osmosis Quiz for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Sami Haddad"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Sami Haddad"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Iverson, Kate</td>
+              <td class="scores-grade"><div class="scores-grade-num">76.5%</div><div class="scores-grade-letter">C</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="8" inputmode="decimal" aria-label="Ch 1 Homework for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="14" inputmode="decimal" aria-label="Cell Structure Quiz for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="12" inputmode="decimal" aria-label="Microscope Lab for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="8" inputmode="decimal" aria-label="Ch 2 Homework for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="76" inputmode="decimal" aria-label="Unit 1 Test for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Osmosis Quiz for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Kate Iverson"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Kate Iverson"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Novak, Peter</td>
+              <td class="scores-grade"><div class="scores-grade-num">81.0%</div><div class="scores-grade-letter">B−</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="15" inputmode="decimal" aria-label="Cell Structure Quiz for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="13" inputmode="decimal" aria-label="Microscope Lab for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="9" inputmode="decimal" aria-label="Ch 2 Homework for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="80" inputmode="decimal" aria-label="Unit 1 Test for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="15" inputmode="decimal" aria-label="Osmosis Quiz for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Ch 3 Homework for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Lab Notebook for Peter Novak"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" placeholder="—" inputmode="decimal" aria-label="Bonus Diffusion Poster for Peter Novak"></span></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="scores-name"><span class="scores-foot-label">Class average</span></td>
+              <td class="scores-grade">84.2%</td>
+              <td>93%</td>
+              <td>79%</td>
+              <td>89%</td>
+              <td>87%</td>
+              <td>83%</td>
+              <td class="scores-foot-low">61%</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>The two frozen columns are the whole idea.</strong> Narrow the window until the grid
+    scrolls sideways: the student and their grade stay put while the assignments run under them.
+    A real Quarter 1 has twenty-odd columns, so without this a teacher four columns in is typing a
+    number into an anonymous row. The grade is frozen <em>beside the name</em> rather than parked at
+    the far right, because it is the number she is watching change while she types.
+  </div>
+  <div class="mk-caption">
+    <strong>Flags are said twice</strong> — in the fill and in a corner glyph — for the reason
+    <code>src/attendance.css</code> gives about the registry: a state carried only by a background
+    disappears on hover, in print, and from the back of a room. The palettes are the registry's own,
+    so <code>late</code> here is the same orange as <code>tardy</code> there.
+    <strong>Blank is styled as nothing at all</strong>, deliberately: blank means ungraded and
+    affects no grade, and a styled blank looks like a state somebody chose.
+  </div>
+  <div class="mk-caption">
+    <strong>The grade column is not coloured by band.</strong> No red for a failing number, no green
+    for a passing one. This app colours nothing else by judgement, it would be the loudest thing on a
+    screen that gets projected, and it would put a red row beside a student's name in front of the
+    class. The letter carries the meaning.
+  </div>
+  <div class="mk-caption">
+    <strong>The per-assignment average in the footer</strong> is the cheapest useful thing on the
+    screen: reading down and finding the class averaged 61% on the Osmosis Quiz is a fact most
+    gradebooks make you go and compute. Not in WO-3.5's deliverables — an addition to argue about.
+  </div>
+  <div class="mk-caption">
+    <strong>About the numbers.</strong> The scores are invented and most of the grades in the frozen
+    column are illustrative rather than computed — with one exception that matters:
+    <strong>Owen Bennett's 66.5% is real arithmetic</strong> on the row above it, and the
+    <a href="student.html">student detail drawing</a> breaks it down to contributions that sum back to
+    it. When a drawing shows a number and its workings on two screens, the two have to agree, or the
+    thing being reviewed is a rounding error instead of a design.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Open question — the cell is <code>type="text"</code> with
+    <code>inputmode="decimal"</code>, not <code>type="number"</code>.</strong> WO-3.1's weight field
+    is a real number input and the iPad sitting passed it, but that field is 58px in a dialog with
+    one of it on screen. Here there are 240 of them: the spinner eats width in a 96px column, and
+    iOS draws its own affordances on number inputs. This needs a device before WO-3.5 commits.
+  </div>
+  <div class="mk-caption decided">
+    <strong>Extra credit is a zero-point assignment, and needs no feature at all.</strong> Owner,
+    2026-08-09. The last column is <em>Bonus: Diffusion Poster</em>, <b>out of 0</b>, filed under
+    Quizzes like any other quiz — Claire's <b>5</b> adds 5 to the Quizzes numerator and nothing to its
+    denominator, taking her 20/40 of quizzes to 25/40 and her overall grade to <b>101.2%</b>. Nothing
+    caps it. This drawing previously showed a 0%-<em>weight</em> category, which was the wrong answer
+    to the same question: a 0%-weight category contributes nothing, so the column would have been
+    decorative.
+  </div>
+  <div class="mk-caption decided">
+    <strong>The feature is the absence of a special case</strong>, which is why it works: no extra
+    credit flag, no field, no category type. It falls out of a category being
+    <code>sum(earned) / sum(possible)</code> rather than an average of per-assignment percentages —
+    so this decision also <em>pins</em> that, and <code>docs/data-model.md</code> now says so.
+  </div>
+  <div class="mk-caption ask">
+    <strong>The one thing this breaks, and it needs a hand-computed case.</strong> A category holding
+    <em>only</em> zero-point assignments has <code>possible = 0</code> — n/0, which is not 100% and
+    not 0% and will crash a naive engine. A teacher reaches it by making an "Extra credit" category
+    and putting only extra credit in it, which is the obvious thing to do. It should behave as an
+    empty category and redistribute. Added to WO-3.4's acceptance list.
+  </div>
+
+  <div class="mk-section">The same screen when the weights don't add up</div>
+
+  <div class="panel scores-panel" style="margin-top:10px">
+    <div class="scores-body" style="padding-top:16px">
+      <div class="grade-none">
+        <span class="grade-none-text">
+          These weights add up to <b>95%</b>, not 100%, so this class has <b>no grade yet</b> —
+          Planbook will not work one out from weights that don't add up. Keep entering scores;
+          nothing here is blocked, and the grades appear the moment the weights do.
+        </span>
+        <button class="class-action-btn" type="button">Open Categories</button>
+      </div>
+      <div class="scores-summary">
+        <span>Class average <b>—</b></span>
+        <span class="sep">·</span>
+        <span>14 blanks across 2 assignments</span>
+        <span class="sep">·</span>
+        <span>Weights total <b>95%</b></span>
+      </div>
+      <div class="scores-grid-wrap">
+        <table class="scores-grid">
+          <thead>
+            <tr>
+              <th class="scores-name" style="text-align:left">Student</th>
+              <th class="scores-grade">Grade</th>
+              <th class="scores-col"><span class="scores-col-name">Ch 1 Homework</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span></th>
+              <th class="scores-col"><span class="scores-col-name">Cell Structure Quiz</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>25%</b></span></th>
+              <th class="scores-col"><span class="scores-col-name">Unit 1 Test</span><span class="scores-col-pts">out of 100</span><span class="cat-chip">Tests <b>40%</b></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="scores-name">Alvarez, Mia</td>
+              <td class="scores-grade"><div class="scores-grade-none" aria-label="No grade: weights total 95%">—</div></td>
+              <td><span class="scores-cell"><input class="scores-input" value="10" inputmode="decimal" aria-label="Ch 1 Homework"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="18" inputmode="decimal" aria-label="Cell Structure Quiz"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="94" inputmode="decimal" aria-label="Unit 1 Test"></span></td>
+            </tr>
+            <tr>
+              <td class="scores-name">Bennett, Owen</td>
+              <td class="scores-grade"><div class="scores-grade-none" aria-label="No grade: weights total 95%">—</div></td>
+              <td><span class="scores-cell"><input class="scores-input late" value="8" inputmode="decimal" aria-label="Ch 1 Homework, late"><span class="scores-flag late">L</span></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="13" inputmode="decimal" aria-label="Cell Structure Quiz"></span></td>
+              <td><span class="scores-cell"><input class="scores-input" value="78" inputmode="decimal" aria-label="Unit 1 Test"></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption decided">
+    <strong>There is no grade, rather than a provisional one.</strong> The owner settled this on
+    2026-08-09, and it replaces what this drawing showed a few hours earlier — an amber percentage
+    with a dotted underline. A weighted average over weights that don't add up is arithmetic nobody
+    asked for wearing the costume of an answer, and a teacher mid-setup would have had no way to tell
+    how far off it was. Refusing to print one is simpler and truer, and it <em>deletes</em> the
+    question of what to divide by instead of answering it. Recorded in
+    <a href="../../docs/data-model.md">docs/data-model.md</a> § Grade math.
+  </div>
+  <div class="mk-caption">
+    <strong>The em dash is quiet, and the banner is loud.</strong> One sentence at the top explains
+    the whole column; repeating that alarm down twenty-four rows would read as twenty-four problems
+    with twenty-four students, when the problem is with the class, once. But the cell is
+    <em>not</em> left empty — an empty cell in a grade column is indistinguishable from a rendering
+    fault, which is the same reason the registry never draws an empty attendance cell.
+  </div>
+  <div class="mk-caption">
+    <strong>Note what is <em>not</em> disabled.</strong> Every score field is still live and the
+    keyboard path still works. "No grade yet" is a statement about the grade, not a lock on the
+    screen — WO-3.1's rule was "don't block them, tell them", and that survives the change intact.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Still open — what does the <em>class average</em> line say here?</strong> The summary
+    above the grid reads "Class average 84.2%". With no grades there is no average either, so it
+    presumably becomes the same em dash — but a per-assignment footer average is a different figure,
+    computed from points and not from weights at all, and there is no reason for <em>those</em> to
+    disappear. Drawn with the footer intact and the class average absent; worth confirming.
+  </div>
+
+  <div class="mk-section" id="categories-dialog">Where “Open Categories” goes — the dialog WO-3.1 already ships</div>
+
+  <div class="mk-caption">
+    <strong>Not a proposal — this is what is in the app today</strong>, lifted markup and copy intact
+    from <code>index.html</code>'s <code>#categoriesModal</code> and the sentences
+    <code>src/categories.js</code> actually prints. It is here so the two halves of the provisional
+    story can be read in one place: the banner on the grid says a grade is provisional, and this is
+    the screen that fixes it. Drawn inline rather than over an overlay so both are visible at once;
+    in the app it is a dialog on top of the grid.
+  </div>
+
+  <div style="max-width:520px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Categories &amp; weights</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          What <strong>Biology I</strong> is graded on, and how much each part counts.
+          Every class has its own set, so one class weighted 40/35/25 and another weighted evenly is
+          an ordinary thing here — Planbook never makes them match.
+        </p>
+
+        <div class="modal-section-label">Categories in this class</div>
+        <div class="category-list">
+          <div class="category-row">
+            <input class="category-name-input" type="text" value="Tests" aria-label="Name of category 1 in Biology I">
+            <div class="category-weight-field">
+              <input class="category-weight" type="number" min="0" step="1" inputmode="decimal" value="40" aria-label="Weight of Tests in Biology I, as a percentage">
+              <span class="category-weight-unit" aria-hidden="true">%</span>
+            </div>
+            <div class="category-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Tests earlier" disabled>↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Tests later">↓</button>
+              <button class="class-action-btn delete" type="button" aria-label="Remove Tests from Biology I">Remove</button>
+            </div>
+          </div>
+          <div class="category-row">
+            <input class="category-name-input" type="text" value="Quizzes" aria-label="Name of category 2 in Biology I">
+            <div class="category-weight-field">
+              <input class="category-weight" type="number" min="0" step="1" inputmode="decimal" value="25" aria-label="Weight of Quizzes in Biology I, as a percentage">
+              <span class="category-weight-unit" aria-hidden="true">%</span>
+            </div>
+            <div class="category-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Quizzes earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Quizzes later">↓</button>
+              <button class="class-action-btn delete" type="button" aria-label="Remove Quizzes from Biology I">Remove</button>
+            </div>
+          </div>
+          <div class="category-row">
+            <input class="category-name-input" type="text" value="Homework" aria-label="Name of category 3 in Biology I">
+            <div class="category-weight-field">
+              <input class="category-weight" type="number" min="0" step="1" inputmode="decimal" value="20" aria-label="Weight of Homework in Biology I, as a percentage">
+              <span class="category-weight-unit" aria-hidden="true">%</span>
+            </div>
+            <div class="category-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Homework earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Homework later">↓</button>
+              <button class="class-action-btn delete" type="button" aria-label="Remove Homework from Biology I">Remove</button>
+            </div>
+          </div>
+          <div class="category-row">
+            <input class="category-name-input" type="text" value="Classwork" aria-label="Name of category 4 in Biology I">
+            <div class="category-weight-field">
+              <input class="category-weight" type="number" min="0" step="1" inputmode="decimal" value="10" aria-label="Weight of Classwork in Biology I, as a percentage">
+              <span class="category-weight-unit" aria-hidden="true">%</span>
+            </div>
+            <div class="category-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Classwork earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Classwork later">↓</button>
+              <button class="class-action-btn delete" type="button" aria-label="Remove Classwork from Biology I">Remove</button>
+            </div>
+          </div>
+          <div class="category-row">
+            <input class="category-name-input" type="text" value="Participation" aria-label="Name of category 5 in Biology I">
+            <div class="category-weight-field">
+              <input class="category-weight" type="number" min="0" step="1" inputmode="decimal" value="0" aria-label="Weight of Participation in Biology I, as a percentage">
+              <span class="category-weight-unit" aria-hidden="true">%</span>
+            </div>
+            <div class="category-row-actions">
+              <button class="class-action-btn move" type="button" aria-label="Move Participation earlier">↑</button>
+              <button class="class-action-btn move" type="button" aria-label="Move Participation later" disabled>↓</button>
+              <button class="class-action-btn delete" type="button" aria-label="Remove Participation from Biology I">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="category-total warn">⚠ Weights total 95%, not 100% — 5% short. Nothing is blocked: keep setting up. Any grade in this class is provisional until they add up.</p>
+
+        <div class="category-actions">
+          <button class="class-action-btn" type="button">Add a category</button>
+        </div>
+        <p class="class-hint">
+          Weights are percentages of the final grade and want to add up to 100. They do not have to
+          right now — nothing is blocked while they are wrong, and Planbook will say what they come
+          to until they add up. A category with no work in it yet doesn’t drag the grade down: its
+          weight spreads across the categories that do have work, so an empty one costs nothing.
+        </p>
+        <p class="class-hint">
+          To stop a category counting without losing anything, set its weight to 0 — the assignments
+          stay and the grade stops using them. Removing is the one that takes the work with it, which
+          is why it counts what goes first.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>The arithmetic lines up with the grid above.</strong> 40 + 25 + 20 + 10 + 0 = 95, which is
+    the number the banner on the provisional grid prints — and Classwork at 10 rather than 15 is the
+    single edit that put the class there. Participation at 0% is the state WO-3.1 offers <em>instead
+    of</em> deleting, which is why a 0 is never silently removed.
+  </div>
+  <div class="mk-caption">
+    <strong>This is also the crowded row, one level down.</strong> Five controls per category — a name
+    field, a weight field, two arrows and Remove — inside a 480px dialog. It is the same pressure the
+    class manager's row is under, and it is worth looking at on the tablet next to the
+    <a href="class-manager.html">class-manager drawing</a> rather than separately.
+  </div>
+
+  <div class="mk-section" id="removal-confirm">And the removal confirm, counted against the assignments on this page</div>
+
+  <div style="max-width:520px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Remove this category?</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Removing “Classwork” from Biology I takes the work filed under it as well. This cannot be
+          undone, and a backup file is the only way back. If you only want it to stop counting, set
+          its weight to 0 instead — the assignments stay and the grade stops using them.
+        </p>
+        <div class="modal-section-label">What goes with it</div>
+        <div class="class-delete-facts">
+          <div class="class-delete-line">2 assignments and 10 scores</div>
+          <div class="class-delete-line">The remaining categories keep the weights they have, so this class totals 85% until you set them.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="class-action-btn danger" type="button">Remove Classwork</button>
+          <button class="class-action-btn" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>This closes the one check WO-3.1 could not run.</strong> Its result file records the
+    counted form of this warning as exercised only against fixtures, because nothing creates an
+    assignment until WO-3.3 — so “2 assignments and 10 scores” had never been read against real work.
+    Here it is, counted off the grid at the top of this page: Classwork holds the Microscope Lab
+    (10 scores entered) and the Lab Notebook (none yet), and 95 − 10 = 85. The sentence survives
+    contact with real numbers. It is still a drawing, so the tick stays owed to WO-3.3.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Open question the drawing surfaced — “2 assignments and 10 scores” undercounts what a
+    teacher loses.</strong> The Lab Notebook is worth 25 points and has no scores yet, so it costs
+    nothing by this sentence's arithmetic — but it is a piece of work she set up and will have to set
+    up again. The count is honest about data and quiet about effort. Possibly fine; worth a look
+    before WO-3.3 makes it common.
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,600 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Proposed styles for the three gradebook views, drawn 2026-08-09.
+
+   THIS IS THE HALF OF THE MOCKUPS THAT LIFTS. `mockup.css` is chrome that stays
+   behind; everything below is written to be carried into the app almost as-is,
+   split three ways at build time:
+
+     § SCORE GRID       →  src/scores.css        (WO-3.5)
+     § ASSIGNMENT LIST  →  src/assignments.css   (WO-3.3)
+     § STUDENT DETAIL   →  src/detail.css        (WO-3.7)
+     § SHARED           →  whichever work order lands first; see the note there
+
+   It is one file here only so four drawings can share it. The app's own rule is
+   one stylesheet per screen, loaded after src/shell.css, styling only its own
+   class names, with its own @media (pointer: coarse) block at the end
+   (src/shell.css's header). Splitting it is mechanical — the section banners are
+   the cut lines.
+
+   IT FOLLOWS THE SAME RULES AS THE APP'S SHEETS, so that "lift" means lift:
+
+     - Colours are written out inline, never as custom properties. Suite
+       convention; src/shell.css's header says why, and it is not tidiness.
+     - There is no dark mode anywhere in the suite. Do not add one here.
+     - No selector below names anything src/shell.css, src/home.css or
+       src/attendance.css styles. The controls that ARE shell components
+       (`.panel`, `.class-action-btn`, `.search-box`, `.pill`, `.avatar`,
+       `.modal-*`) are worn as-is and never restyled from here. Two stylesheets
+       must never style the same class.
+     - Every tappable class is named in the grouped selector at the top AND in the
+       coarse-pointer block at the bottom, in the same pass that adds it.
+
+   WHERE THE VALUES COME FROM. The grid's head, rows and rules are Roll Call!'s
+   table as src/attendance.css already lifted it — 9px/10px cells, a 10px
+   uppercase #8a9bb0 head on a 1px #eef0f4 rule, one #f3f4f6 line per row carried
+   by the row and not the cell. The registry and the score grid are the same
+   object with different cells in it, and a teacher moving between them should not
+   be able to feel a seam. Nothing here was re-derived.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* One grouped selector for every tappable class in this sheet, the way each app
+   stylesheet has one — a control covered only by some other selector's rule is a
+   control the next reader has to go and prove is covered. */
+.screen-nav-btn, .scores-input, .scores-flag-btn, .scores-keys-btn,
+.assign-row-btn, .assign-sort-btn, .detail-missing-btn, .detail-support-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SHARED — the screen switcher and the category chip
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE SWITCHER BETWEEN ONE CLASS'S SCREENS. Attendance, Assignments, Scores and a
+   student's detail are all views of the same open class, and something has to move
+   between them. This is ONE CANDIDATE, drawn so there is something concrete to
+   argue with — WO-3.3 owns the real decision (see plans/gradebook-surfaces.md).
+
+   Why it is here, under the panel title, and not in the header strip: that strip
+   already carries the class tabs, the term nav and three icon buttons, and
+   src/classes.js records that a fourth control up there puts the page into
+   horizontal overflow at 390px. The class tabs answer "which class"; this answers
+   "which screen of it", and stacking both in one 48px navy strip makes two rows of
+   tabs where neither is obviously the one you want.
+
+   It is a segmented control rather than five `.cls-tab`s because these are not
+   peers of the classes above them — they are inside one class, and the box around
+   them says so. Light-surface grammar (`.pill`'s edge, `.cls-tab.active`'s
+   inversion) because it sits on a white panel, not on the navy. */
+.screen-nav {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: #f0f2f5; border-radius: 9px; margin-bottom: 12px;
+  max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.screen-nav-btn {
+  padding: 6px 14px; border-radius: 7px; border: none; background: transparent;
+  font-size: 12px; font-weight: 700; color: #6b7a8d; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0; transition: all 0.15s;
+}
+.screen-nav-btn:hover:not(.active) { background: rgba(255,255,255,0.7); color: #1a1a2e; }
+/* White on the grey trough rather than a fill: the same "you are here" inversion
+   `.cls-tab.active` makes on the navy, read the other way up. */
+.screen-nav-btn.active {
+  background: #fff; color: #1a1a2e;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+}
+/* The one screen that is about a single student rather than the whole class sits
+   apart, after a gap — the same separation `.cls-tab-home` makes for the same
+   reason: it is a different KIND of destination, not a fifth peer. */
+.screen-nav-btn.detail { margin-left: 10px; }
+
+/* THE CATEGORY CHIP, shared by the grid's column heads and the assignment list.
+   It carries no colour of its own and takes none per category: a teacher can
+   create any number of categories, so a palette here would either run out or
+   become a thing to memorise. Weight is the fact worth showing, so it is in the
+   chip rather than in a tooltip. */
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 10px; font-weight: 700; color: #6b7a8d;
+  white-space: nowrap; text-transform: none; letter-spacing: 0;
+}
+.cat-chip b { color: #1a1a2e; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* A category whose weight is 0 — WO-3.1 makes that a first-class state, the
+   answer offered instead of deleting, so it must not read as broken. Quiet, not
+   amber: the teacher chose it. */
+.cat-chip.zero { border-style: dashed; color: #a0aab8; }
+.cat-chip.zero b { color: #a0aab8; }
+
+/* THE NO-GRADE BANNER, on any screen that would have shown a grade if the weights
+   totalled 100. The owner settled this on 2026-08-09: **there is no grade at all
+   until they add up** — not a provisional figure, not a figure with a label on it.
+   So this banner is not a caveat attached to a number, it is the explanation
+   standing where the number would have been.
+
+   That is why it says the total: "no grade" on its own is indistinguishable from a
+   bug, and the total is both the reason and the instruction.
+
+   Caution amber, which in this app means "act on this" — not danger red. Nothing
+   is wrong; something is unfinished. */
+.grade-none {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 12px; padding: 10px 14px;
+  border: 1.5px solid #f0dfa8; border-left: 5px solid #e0b940; border-radius: 8px;
+  background: #fff8e6; color: #8a6d1a;
+  font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.grade-none-text { flex: 1 1 240px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORE GRID  →  src/scores.css  (WO-3.5)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.scores-panel { width: 100%; max-width: 100%; }
+/* Matches `.attendance-body` exactly, and for the same reason: left and right
+   line up with `.panel-header`'s 20px, top is zero because the header above
+   already ends in a gap. */
+.scores-body { padding: 0 20px 20px; }
+
+/* The summary line over the grid — class average and how much is still ungraded.
+   `.attendance-totals`' voice, in this sheet's own name. */
+.scores-summary {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
+  margin: -2px 0 10px; color: #6b7a8d; font-size: 12px; font-weight: 700;
+  line-height: 1.5;
+}
+.scores-summary b { color: #1a1a2e; font-size: 14px; font-variant-numeric: tabular-nums; }
+.scores-summary .sep { color: #d0d8e4; }
+
+.scores-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* The door that opens a dialog and changes nothing, held away from the buttons
+   that write — `.attendance-actions-door`'s call, made the same way. */
+.scores-actions-door:not(:only-child) { margin-left: auto; }
+
+/* THE KEYBOARD STRIP. Attendance put its key legend behind a "⌨ Keys" button and
+   this screen needs the same thing more: entry here is the keyboard, and the
+   legend is what a teacher reads once in September and never again. Shown open in
+   the drawing so the keys can be argued with. */
+.scores-keys {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  margin: 0 0 10px; padding: 9px 12px; border-radius: 8px;
+  background: #f8f9fb; border: 1.5px solid #eef0f4;
+  font-size: 12px; color: #6b7a8d; line-height: 1.5;
+}
+.scores-key {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-weight: 700; white-space: nowrap;
+}
+.scores-key kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border: 1.5px solid #d0d8e4; border-bottom-width: 2.5px; border-radius: 5px;
+  background: #fff; color: #1a1a2e;
+  font-family: inherit; font-size: 11px; font-weight: 800;
+}
+
+/* Horizontal scroll belongs to the grid, never to the page — a page that scrolls
+   sideways on an iPad is a teacher swiping the app instead of the list.
+   `.attendance-grid-wrap`'s rule, restated in this sheet's own name. */
+.scores-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scores-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+/* `separate` rather than `collapse`, which is the ONE place this sheet departs
+   from src/attendance.css, and it is forced: a sticky cell under
+   `border-collapse: collapse` loses its borders in WebKit as it scrolls, because
+   collapsed borders belong to the table and not to the cell. Borders are
+   therefore declared per cell below, bottom-only, which reproduces the collapsed
+   look exactly. If the sticky columns are ever dropped, put `collapse` back. */
+
+.scores-grid thead th {
+  padding: 9px 10px; text-align: center; vertical-align: bottom;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4; white-space: nowrap;
+  background: #fff;
+}
+.scores-grid tbody td {
+  padding: 9px 10px; text-align: center; vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+}
+.scores-grid tbody tr:hover td { background: #fafbfc; }
+
+/* ── THE TWO FROZEN COLUMNS ── */
+/* The student and their grade stay put while the assignments scroll under them.
+   Without this, a teacher three columns into a wide term is typing a number into
+   an anonymous row — and the grade is frozen beside the name rather than parked
+   at the far right for the same reason: it is the number she is watching change,
+   and a number you have to scroll to see is a number you stop watching.
+
+   THE WIDTHS ARE DECLARED, and they have to be. `left` on the second sticky
+   column is a pixel offset, so it can only be right if the first column's width
+   is known — this is exactly the hand-computed layout src/attendance.css warns
+   against, and it is accepted here for two columns because sticky arithmetic
+   leaves no alternative. The rest of the table is still auto. If the name column
+   is ever re-measured, this offset moves with it: WO-3.5 should assert the two in
+   one check so they cannot drift apart. */
+.scores-name {
+  position: sticky; left: 0; z-index: 2;
+  width: 190px; min-width: 190px;
+  text-align: left !important; background: #fff;
+  font-size: 13px; font-weight: 600; color: #1a1a2e; white-space: nowrap;
+  border-right: 1px solid #f3f4f6;
+}
+.scores-grade {
+  position: sticky; left: 190px; z-index: 2;
+  width: 84px; min-width: 84px;
+  background: #fff;
+  /* A real edge where the frozen pair ends and the scrolling half begins.
+     Without it the first assignment column appears to slide *under the grade*
+     rather than past the whole block, which reads as a rendering fault. */
+  border-right: 1.5px solid #e0e4ea;
+}
+.scores-grid thead th.scores-name,
+.scores-grid thead th.scores-grade { z-index: 3; }
+.scores-grid tbody tr:hover .scores-name,
+.scores-grid tbody tr:hover .scores-grade { background: #fafbfc; }
+
+/* The student's live grade. Deliberately NOT coloured by band — no red for a
+   failing number and no green for a passing one. Colouring a grade is a judgement
+   this app has not made anywhere else, it would be the loudest thing on a screen
+   a teacher projects, and it would put a red row next to a student's name in front
+   of the class. The letter carries the meaning; the colour stays out of it. */
+.scores-grade-num {
+  font-size: 14px; font-weight: 800; color: #1a1a2e;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.scores-grade-letter { font-size: 10px; font-weight: 700; color: #8a9bb0; margin-top: 1px; }
+/* THE COLUMN WITH NO GRADE IN IT, because the weights do not total 100.
+
+   A quiet em dash, and quiet on purpose. The banner above the grid is where the
+   alarm belongs and it explains the whole column in one sentence; repeating that
+   alarm 24 times down a frozen column would read as 24 problems with 24 students,
+   which is the opposite of true — the problem is with the class, once.
+
+   It is NOT an empty cell. An empty cell in a grade column is indistinguishable
+   from a rendering fault, and this screen already refuses empty cells for exactly
+   that reason everywhere else (see the flag states below, and src/attendance.css's
+   header on the registry's three states). */
+.scores-grade-none {
+  font-size: 14px; font-weight: 800; color: #c0cad5; line-height: 1.2;
+}
+
+/* ── THE COLUMN HEAD ── */
+/* Three lines: what it is, what it is out of, and which category it counts in.
+   The points are on the head rather than in every cell, which is what makes a
+   bare `18` in the cell readable — and what stops the grid printing "/20"
+   twenty-four times down a column. */
+.scores-col { min-width: 96px; }
+.scores-col-name {
+  display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0; max-width: 130px;
+  overflow: hidden; text-overflow: ellipsis; margin: 0 auto 3px;
+}
+.scores-col-pts {
+  display: block; font-size: 10px; font-weight: 700; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; margin-bottom: 4px;
+}
+.scores-col-due { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; margin-top: 4px; }
+/* Past its due date with blanks still in the column. NOT arithmetic and not a
+   mark — WO-3.6 owns the prompt that offers to fill them, and nothing in this app
+   ever infers `missing` from a date. This is a nudge on a column head and it
+   changes no grade. */
+.scores-col-due.overdue { color: #8a6d1a; }
+
+/* ── ONE CELL ── */
+.scores-cell { position: relative; display: inline-flex; }
+/* A real <input>, not a button that opens something. 25 scores down a column is
+   the acceptance line, and every layer between the keyboard and the number costs
+   25 times. `inputmode="decimal"` on the element, `type="text"` deliberately —
+   see the note in the drawing: a number input's spinner eats width in a 96px
+   column and iOS puts a magnifier on it. */
+.scores-input {
+  width: 56px; height: 32px; padding: 0 4px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; background: #fff;
+  font-size: 13px; font-weight: 700; color: #1a1a2e; text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.12s, background 0.12s;
+}
+.scores-input::placeholder { color: #d0d8e4; font-weight: 600; }
+.scores-input:hover { border-color: #b0bcf0; }
+/* The focus ring is src/shell.css's :focus-visible outline and is NOT overridden
+   here. It is also not enough on its own for this screen — a teacher looking at
+   the student list needs to find the caret without hunting — so the focused cell
+   also takes the interactive wash. Both, not either. */
+.scores-input:focus { border-color: #5b6fcc; background: #eef2ff; }
+
+/* THE FLAG STATES, said twice: in the fill, and in a glyph pinned to the cell.
+   src/attendance.css's rule about the registry applies here with more force —
+   in a grid of numbers, a flag carried only by a background is a flag that
+   disappears the moment the row is hovered, printed, or looked at from the back
+   of a room. The palettes are the registry's own, so `late` here and `tardy`
+   there are the same orange. */
+.scores-input.late    { background: #fef5ea; border-color: #e67e22; color: #b35f0f; }
+.scores-input.missing { background: #fdeaea; border-color: #e74c3c; color: #c0392b; }
+.scores-input.excused { background: #f3eaff; border-color: #7c3aed; color: #7c3aed; }
+/* Blank means ungraded and affects nothing — the data model's rule. It gets no
+   wash at all, because a blank that is styled is a blank that looks like a state
+   somebody chose. */
+
+.scores-flag {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; border: 1.5px solid #fff;
+  font-size: 9px; font-weight: 800; line-height: 1; color: #fff;
+  pointer-events: none;
+}
+.scores-flag.late    { background: #e67e22; }
+.scores-flag.missing { background: #e74c3c; }
+.scores-flag.excused { background: #7c3aed; }
+
+/* The row's own total, at the far right of the scrolling half. Not sticky: it is
+   a check figure, not something you watch. */
+.scores-row-total { font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums; }
+
+/* The per-assignment average, in a footer row. Reading down a column and finding
+   the class averaged 61% on one quiz is the single most useful thing this grid
+   can say that a gradebook usually does not. */
+.scores-grid tfoot td {
+  padding: 9px 10px; text-align: center;
+  border-top: 1.5px solid #eef0f4;
+  font-size: 11px; font-weight: 800; color: #6b7a8d; font-variant-numeric: tabular-nums;
+  background: #fff;
+}
+.scores-grid tfoot .scores-name,
+.scores-grid tfoot .scores-grade { background: #fff; }
+.scores-foot-label { font-size: 10px; font-weight: 700; color: #8a9bb0; text-transform: uppercase; letter-spacing: 0.5px; }
+.scores-foot-low { color: #8a6d1a; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ASSIGNMENT LIST  →  src/assignments.css  (WO-3.3)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.assign-body { padding: 0 20px 20px; }
+.assign-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.assign-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.assign-table { width: 100%; border-collapse: collapse; }
+.assign-table thead th {
+  padding: 9px 10px; text-align: left;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4; white-space: nowrap;
+}
+.assign-table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
+.assign-table tbody tr:hover { background: #fafbfc; }
+.assign-table tbody td { padding: 9px 10px; vertical-align: middle; }
+.assign-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.assign-pts, .assign-date { font-size: 12px; color: #6b7a8d; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.assign-date.overdue { color: #8a6d1a; font-weight: 700; }
+
+/* HOW MUCH OF IT IS ENTERED, which is the question this screen is opened to
+   answer in the week before grades are due. A bar rather than a number alone,
+   because "18 of 24" is arithmetic and a part-filled bar is a glance. */
+.assign-progress { display: flex; align-items: center; gap: 8px; min-width: 132px; }
+.assign-bar { flex: 1 1 auto; height: 6px; border-radius: 999px; background: #eef0f4; overflow: hidden; }
+.assign-bar-fill { height: 100%; background: #27ae60; border-radius: 999px; }
+/* Started and not finished takes the caution wash, the same call src/home.css and
+   src/attendance.css both make about a half-marked class: partly-entered work is
+   a thing to come back to, and it must not read as done. */
+.assign-bar-fill.partial { background: #e0b940; }
+.assign-bar-fill.none { background: #e0e4ea; }
+.assign-count { font-size: 11px; font-weight: 700; color: #6b7a8d; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.assign-row-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+/* Row buttons are `.class-action-btn` worn as-is. This class only holds the row
+   together; it never restyles the button. */
+
+/* The category group heading, when the list is grouped rather than flat. */
+.assign-group-head td {
+  padding: 14px 10px 6px; border-bottom: 1px solid #eef0f4; background: #fff;
+}
+.assign-group-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 11px; font-weight: 800; color: #1a1a2e;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.assign-group-note { font-size: 11px; font-weight: 700; color: #8a9bb0; text-transform: none; letter-spacing: 0; }
+/* A category with no assignments in it. Its weight redistributes — the data
+   model's rule, and the one a teacher is most likely to be surprised by — so the
+   row says so rather than showing an empty group and letting her wonder. */
+.assign-group-empty {
+  font-size: 12px; color: #8a6d1a; background: #fff8e6;
+  border: 1.5px solid #f0dfa8; border-radius: 8px;
+  padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § STUDENT DETAIL  →  src/detail.css  (WO-3.7)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.detail-body { padding: 0 20px 20px; }
+
+/* THE HERO. Name, grade, band — the three things a guardian looks at first, and
+   the reason this screen is not a dialog: it is read across a desk with somebody
+   sitting next to you. */
+.detail-hero {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 14px;
+  border: 1.5px solid #eef0f4; border-radius: 10px; background: #f8f9fb;
+}
+/* The hero's avatar is BIGGER than the app's 32px one, and this is a second class
+   worn alongside `.avatar` rather than a rule targeting it. `.detail-hero .avatar
+   { width: 44px }` would have been shorter and is exactly the thing src/shell.css's
+   header forbids — two stylesheets styling one class is how a per-file touch pass
+   stops being safe from the cascade. The sanctioned shape is the one
+   `.hdr-mode-btn` uses: wear the component for its grammar, add your own class for
+   what differs. Caught by diffing this file's selectors against src/*.css, not by
+   reading it. */
+.detail-avatar { width: 44px; height: 44px; font-size: 14px; }
+.detail-hero-who { flex: 1 1 200px; min-width: 0; }
+.detail-hero-name { font-size: 17px; font-weight: 800; color: #1a1a2e; }
+.detail-hero-sub { font-size: 12px; color: #6b7a8d; margin-top: 2px; }
+.detail-hero-grade { text-align: right; flex-shrink: 0; }
+.detail-grade-big {
+  font-size: 32px; font-weight: 800; color: #1a1a2e; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.detail-grade-band { font-size: 13px; font-weight: 700; color: #6b7a8d; margin-top: 3px; }
+/* The hero when the class has no grade — the weights do not total 100, so there is
+   no number to draw. An em dash in the quiet grey, with the reason under it where
+   the letter band would have been. Never blank: a hero with a hole in it reads as a
+   screen that failed to load, which is the one thing this page cannot afford in
+   front of a guardian. */
+.detail-grade-big.none { color: #c0cad5; }
+
+/* THE ACCOMMODATION INDICATOR, and the most sensitive control on any of these
+   screens. Three rules from CLAUDE.md govern it and none is negotiable:
+   discreet by default, an indicator only with details on a deliberate tap, and
+   nothing at all in presentation mode.
+
+   So: no word, no icon that names a plan, no colour that reads as an alert — a
+   neutral dot and a count. It says "there is something here to open", which is
+   what a teacher needs to know she has an obligation, and nothing that a parent
+   reading upside down or a room reading off a wall can decode. `src/supports.js`
+   answers the presentation question for the whole app; this element is hidden by
+   that answer and never by a rule of its own. */
+.detail-support-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border-radius: 999px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 11px; font-weight: 700; color: #6b7a8d; cursor: pointer;
+}
+.detail-support-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.detail-support-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #5b6fcc; flex-shrink: 0;
+}
+
+.detail-cols { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); gap: 14px; align-items: start; }
+.detail-card { border: 1.5px solid #eef0f4; border-radius: 10px; padding: 14px 16px; }
+.detail-card + .detail-card { margin-top: 14px; }
+.detail-card-title {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px;
+}
+
+/* ── THE BREAKDOWN ── */
+/* Every category, its weight, what the student earned in it, and what that
+   contributes to the number in the hero. The contributions sum to the overall
+   grade — that is WO-3.7's first acceptance line, and this table is where a
+   guardian gets to see the arithmetic rather than be told it. */
+.detail-break { width: 100%; border-collapse: collapse; }
+.detail-break th {
+  padding: 0 8px 7px; text-align: right;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4;
+}
+.detail-break th:first-child { text-align: left; }
+.detail-break td { padding: 9px 8px; text-align: right; border-bottom: 1px solid #f3f4f6; font-variant-numeric: tabular-nums; }
+.detail-break td:first-child { text-align: left; }
+.detail-break tfoot td { border-bottom: none; border-top: 1.5px solid #eef0f4; font-weight: 800; color: #1a1a2e; padding-top: 10px; }
+.detail-break-cat { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.detail-break-num { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.detail-break-weak { font-size: 12px; color: #6b7a8d; }
+/* A category with nothing in it. Its weight redistributes across the others
+   rather than counting as a zero, and the breakdown SHOWS that rather than hiding
+   the row — WO-3.7's second acceptance line. A hidden row is how a teacher
+   concludes the app lost an assignment. */
+.detail-break tr.empty td { background: #fff8e6; }
+.detail-break tr.empty .detail-break-cat { color: #8a6d1a; }
+.detail-break-redist { font-size: 11px; font-weight: 700; color: #8a6d1a; }
+
+/* The contribution bar, drawn under the whole table rather than per row: it is
+   one grade made of parts, and parts of one bar is what that looks like. */
+.detail-stack { display: flex; height: 10px; border-radius: 999px; overflow: hidden; margin-top: 12px; background: #eef0f4; }
+.detail-stack-seg { height: 100%; }
+.detail-stack-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: #6b7a8d; font-weight: 700; }
+.detail-stack-key { display: inline-flex; align-items: center; gap: 6px; }
+.detail-stack-swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── WHAT IT WOULD TAKE TO MOVE ── */
+/* The difference between a report and a conversation, per WO-3.7's own header.
+   Interactive indigo rather than caution amber: this is a route, not a warning. */
+.detail-move {
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; border-radius: 8px;
+  background: #eef2ff; padding: 12px 14px;
+}
+.detail-move-head { font-size: 13px; font-weight: 800; color: #3a4a8a; margin-bottom: 6px; }
+.detail-move p { font-size: 12px; color: #3a4a8a; line-height: 1.6; }
+.detail-move b { font-variant-numeric: tabular-nums; }
+/* When the next band is out of reach with the work that remains. Said plainly and
+   quietly rather than hidden — a teacher who does not know this walks into a
+   conference and promises something arithmetic will not give. */
+.detail-move.unreachable { border-color: #e0e4ea; border-left-color: #8a9bb0; background: #f8f9fb; }
+.detail-move.unreachable .detail-move-head { color: #1a1a2e; }
+.detail-move.unreachable p { color: #6b7a8d; }
+
+/* ── MISSING WORK ── */
+.detail-missing-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 0; border-bottom: 1px solid #f3f4f6;
+}
+.detail-missing-row:last-child { border-bottom: none; }
+.detail-missing-name { flex: 1 1 auto; font-size: 13px; font-weight: 600; color: #1a1a2e; min-width: 0; }
+.detail-missing-pts {
+  font-size: 11px; font-weight: 800; color: #c0392b;
+  background: #fdeaea; border: 1.5px solid #e74c3c; border-radius: 999px;
+  padding: 2px 9px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.detail-missing-when { font-size: 11px; font-weight: 700; color: #8a9bb0; white-space: nowrap; }
+.detail-missing-none { font-size: 12px; color: #27ae60; font-weight: 700; }
+
+/* ── ATTENDANCE SUMMARY ── */
+/* From WO-2.4, counted in recorded meetings and never in calendar days — the
+   phrasing is the app's standing rule and the label says it out loud, because a
+   percentage with no denominator on a conference screen is a percentage a parent
+   will read as days of school. */
+.detail-att { display: flex; flex-wrap: wrap; gap: 8px; }
+.detail-att-stat {
+  flex: 1 1 84px; border: 1.5px solid #eef0f4; border-radius: 8px;
+  padding: 9px 10px; text-align: center; background: #f8f9fb;
+}
+.detail-att-num { font-size: 18px; font-weight: 800; color: #1a1a2e; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.detail-att-label { font-size: 10px; font-weight: 700; color: #8a9bb0; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+.detail-att-note { font-size: 11px; color: #8a9bb0; margin-top: 8px; line-height: 1.5; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH — every control above, at the floor, in one place
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* design/style-guide.md §6: 44px minimum under a coarse pointer, and this block
+   comes last so it can override the base rules it re-states. Every class in the
+   grouped selector at the top of this file appears here. */
+@media (pointer: coarse) {
+  .screen-nav-btn { min-height: 44px; padding: 6px 16px; }
+
+  /* THE CELL AT 44px, WHICH IS THE MEASUREMENT THIS WHOLE SCREEN TURNS ON.
+     A 44px-tall cell in a 24-row grid is ~1050px of table before the head — so
+     the grid is taller than the tablet and the frozen name column is what makes
+     that survivable. Width goes up with height: a 56px box under a thumb is a
+     target you miss sideways. */
+  .scores-input { height: 44px; width: 62px; font-size: 15px; }
+  .scores-flag { min-width: 18px; height: 18px; font-size: 10px; top: -6px; right: -6px; }
+  .scores-grid tbody td { padding: 7px 8px; }
+  .scores-col { min-width: 104px; }
+  /* The frozen pair gets narrower on touch, not wider: the tablet has less width
+     to spend and the name still has to fit. Kept in step with `left` below. */
+  .scores-name { width: 168px; min-width: 168px; }
+  .scores-grade { left: 168px; }
+
+  .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
+  .assign-row-btn, .assign-sort-btn { min-height: 44px; min-width: 44px; }
+  .detail-missing-btn, .detail-support-btn { min-height: 44px; }
+  .detail-support-dot { width: 10px; height: 10px; }
+}
+
+@media (max-width: 1024px) {
+  /* One column, breakdown first: on a tablet in portrait the grade and its
+     arithmetic are what the conversation is about, and the attendance panel can
+     sit under them. */
+  .detail-cols { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .detail-hero { gap: 10px; }
+  .detail-hero-grade { text-align: left; }
+  .detail-grade-big { font-size: 26px; }
+  .scores-summary { gap: 4px 10px; }
+  .scores-summary .sep { display: none; }
+}

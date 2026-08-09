@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Assignment list (WO-3.3)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing is wired to anything.</span>
+  <span>Assignment list · <a href="../../plans/work-orders/phase-3-gradebook.md">WO-3.3</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html" class="here">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📘</div>
+      <div class="header-title"><h1>Planbook</h1><p>Biology I · Quarter 1</p></div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab cls-tab-home" type="button">All classes</button>
+      <button class="cls-tab active" type="button">Biology I</button>
+      <button class="cls-tab" type="button">Biology I · P4</button>
+      <button class="cls-tab" type="button">Anatomy</button>
+      <button class="cls-tab" type="button">Env Science</button>
+      <button class="cls-tab" type="button">Research</button>
+      <button class="cls-tab cls-tab-add" type="button">+</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Assignments</h2>
+          <p>Biology I · Quarter 1 · 9 assignments · 215 points</p>
+        </div>
+        <button class="class-action-btn primary" type="button">+ New assignment</button>
+      </div>
+
+      <div class="screen-nav" role="tablist" aria-label="Screens for this class">
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+        <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Assignments</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Scores</button>
+        <button class="screen-nav-btn detail" type="button" role="tab" aria-selected="false">A student</button>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="search" placeholder="Find an assignment" aria-label="Find an assignment">
+        </div>
+      </div>
+    </div>
+
+    <div class="assign-body">
+      <div class="assign-actions">
+        <button class="class-action-btn" type="button">Group: by category</button>
+        <button class="class-action-btn" type="button">Sort: due date</button>
+        <button class="class-action-btn" type="button">Duplicate to another class…</button>
+      </div>
+
+      <div class="assign-table-wrap">
+        <table class="assign-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Assignment</th>
+              <th>Points</th>
+              <th>Assigned</th>
+              <th>Due</th>
+              <th style="min-width:150px">Entered</th>
+              <th style="text-align:right">&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="assign-group-head">
+              <td colspan="6">
+                <span class="assign-group-title">
+                  Tests <span class="cat-chip">weight <b>40%</b></span>
+                  <span class="assign-group-note">1 assignment · 100 points</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Unit 1 Test</td>
+              <td class="assign-pts">100</td>
+              <td class="assign-date">Sep 18</td>
+              <td class="assign-date">Sep 22</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill" style="width:100%"></div></div>
+                  <span class="assign-count">10/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move Unit 1 Test earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move Unit 1 Test later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="assign-group-head">
+              <td colspan="6">
+                <span class="assign-group-title">
+                  Quizzes <span class="cat-chip">weight <b>25%</b></span>
+                  <span class="assign-group-note">2 assignments · 40 points</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Cell Structure Quiz</td>
+              <td class="assign-pts">20</td>
+              <td class="assign-date">Sep 10</td>
+              <td class="assign-date">Sep 12</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill" style="width:100%"></div></div>
+                  <span class="assign-count">10/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Osmosis Quiz</td>
+              <td class="assign-pts">20</td>
+              <td class="assign-date">Sep 23</td>
+              <td class="assign-date overdue">Sep 25</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill partial" style="width:60%"></div></div>
+                  <span class="assign-count">6/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="assign-group-head">
+              <td colspan="6">
+                <span class="assign-group-title">
+                  Homework <span class="cat-chip">weight <b>20%</b></span>
+                  <span class="assign-group-note">3 assignments · 30 points</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Ch 1 Homework</td>
+              <td class="assign-pts">10</td>
+              <td class="assign-date">Sep 4</td>
+              <td class="assign-date">Sep 8</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill" style="width:100%"></div></div>
+                  <span class="assign-count">10/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Ch 2 Homework</td>
+              <td class="assign-pts">10</td>
+              <td class="assign-date">Sep 15</td>
+              <td class="assign-date">Sep 18</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill" style="width:100%"></div></div>
+                  <span class="assign-count">10/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Ch 3 Homework</td>
+              <td class="assign-pts">10</td>
+              <td class="assign-date">Sep 29</td>
+              <td class="assign-date">Oct 2</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill none" style="width:0%"></div></div>
+                  <span class="assign-count">0/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="assign-group-head">
+              <td colspan="6">
+                <span class="assign-group-title">
+                  Classwork <span class="cat-chip">weight <b>15%</b></span>
+                  <span class="assign-group-note">2 assignments · 40 points</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Microscope Lab</td>
+              <td class="assign-pts">15</td>
+              <td class="assign-date">Sep 15</td>
+              <td class="assign-date">Sep 15</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill" style="width:100%"></div></div>
+                  <span class="assign-count">10/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="assign-name">Lab Notebook</td>
+              <td class="assign-pts">25</td>
+              <td class="assign-date">Sep 8</td>
+              <td class="assign-date">Oct 6</td>
+              <td>
+                <div class="assign-progress">
+                  <div class="assign-bar"><div class="assign-bar-fill none" style="width:0%"></div></div>
+                  <span class="assign-count">0/10</span>
+                </div>
+              </td>
+              <td>
+                <div class="assign-row-actions">
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move earlier">↑</button>
+                  <button class="class-action-btn move assign-row-btn" type="button" aria-label="Move later">↓</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Edit</button>
+                  <button class="class-action-btn assign-row-btn" type="button">Duplicate</button>
+                  <button class="class-action-btn delete assign-row-btn" type="button">Delete</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="assign-group-head">
+              <td colspan="6">
+                <span class="assign-group-title">
+                  Participation <span class="cat-chip">weight <b>0%</b></span>
+                  <span class="assign-group-note">nothing in it yet</span>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="6">
+                <p class="assign-group-empty">
+                  Nothing is filed under <b>Participation</b> yet, so its weight redistributes across
+                  the other four categories rather than counting as a zero. Every grade in this class
+                  is already correct — it is being worked out as though Participation did not exist.
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>A view with modal editors, not a modal.</strong> The list is a surface a teacher scans in
+    the week before grades are due; creating one assignment is a task she finishes and dismisses.
+    Same split as the roster. The editor is drawn below.
+  </div>
+  <div class="mk-caption">
+    <strong>The "Entered" bar is why this screen gets opened.</strong> The question is never "what did
+    I assign", it is "what have I not finished putting in" — and a part-filled amber bar answers that
+    without arithmetic. The half-entered state takes the caution wash for the same reason
+    <code>src/home.css</code> and <code>src/attendance.css</code> both do: partly-done must not read
+    as done.
+  </div>
+  <div class="mk-caption">
+    <strong>The empty category says its own consequence.</strong> An empty group with nothing under it
+    is how a teacher concludes the app lost her work; the sentence that its weight redistributes is
+    the data model's rule stated where it bites. Note it appears even at 0% weight, where the
+    redistribution is a no-op — worth deciding whether that sentence should be suppressed there.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Open question — five buttons per row is the class manager's problem all over again.</strong>
+    Nine assignments × five controls is 45 targets on one screen, and on a phone this row wraps to
+    two lines each. The alternatives: a single <em>⋯</em> per row opening a small menu (fewer targets,
+    one more tap for the common case), or dropping <em>Duplicate</em> to the menu and keeping Edit and
+    the arrows inline. Drawn wide on purpose so the crowding is visible rather than argued about.
+  </div>
+
+  <div class="mk-section">The editor, which stays a modal</div>
+
+  <!-- Drawn inline rather than in a `.modal-overlay`, so it and the list can both be seen. In the
+       app this is a real dialog on top of the list. -->
+  <div style="max-width:520px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Edit assignment</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section-label">What it is</div>
+        <div class="class-row" style="background:#fff;border-color:#e0e4ea;flex-direction:column;align-items:stretch;gap:10px">
+          <label style="font-size:11px;font-weight:700;color:#8a9bb0">Name
+            <input type="text" value="Osmosis Quiz" style="display:block;width:100%;margin-top:5px;padding:8px 10px;border:1.5px solid #e0e4ea;border-radius:6px;font-size:13px;color:#1a1a2e">
+          </label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label style="flex:1 1 120px;font-size:11px;font-weight:700;color:#8a9bb0">Points
+              <input type="text" inputmode="decimal" value="20" style="display:block;width:100%;margin-top:5px;padding:8px 10px;border:1.5px solid #e0e4ea;border-radius:6px;font-size:13px;color:#1a1a2e">
+            </label>
+            <label style="flex:2 1 180px;font-size:11px;font-weight:700;color:#8a9bb0">Category
+              <select style="display:block;width:100%;margin-top:5px;padding:8px 10px;border:1.5px solid #e0e4ea;border-radius:6px;font-size:13px;color:#1a1a2e;background:#fff">
+                <option>Tests — 40%</option>
+                <option selected>Quizzes — 25%</option>
+                <option>Homework — 20%</option>
+                <option>Classwork — 15%</option>
+                <option>Participation — 0%</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-section-label">When</div>
+        <div class="class-row" style="background:#fff;border-color:#e0e4ea;gap:10px">
+          <label style="flex:1 1 130px;font-size:11px;font-weight:700;color:#8a9bb0">Assigned
+            <input type="date" value="2026-09-23" style="display:block;width:100%;margin-top:5px;padding:8px 10px;border:1.5px solid #e0e4ea;border-radius:6px;font-size:13px;color:#1a1a2e">
+          </label>
+          <label style="flex:1 1 130px;font-size:11px;font-weight:700;color:#8a9bb0">Due
+            <input type="date" value="2026-09-25" style="display:block;width:100%;margin-top:5px;padding:8px 10px;border:1.5px solid #e0e4ea;border-radius:6px;font-size:13px;color:#1a1a2e">
+          </label>
+        </div>
+        <p style="margin-top:10px">
+          Both dates are plain dates and neither fills itself in. Planbook has no schedule model, so
+          there is no "next meeting" to default to.
+        </p>
+
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="button">Save</button>
+          <button class="class-action-btn" type="button">Cancel</button>
+          <button class="class-action-btn delete" type="button" style="margin-left:auto">Delete…</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>The date fields are inert on purpose</strong>, and the sentence under them is the app's
+    standing refusal — see <code>plans/rotating-schedule.md</code>. A future session <em>will</em> want
+    to default the due date to the next class meeting; there is no such thing here.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Open question — the form controls above are drawn with inline styles.</strong> The app has
+    no field/label component yet: WO-3.1's categories editor rolled its own, the roster rolled its own
+    <code>.student-field</code>, and now this. Three hand-rolled forms is the point at which the suite
+    normally lifts one from <code>design/portable-components.md</code> instead. Worth doing before
+    WO-3.3 rather than after.
+  </div>
+</main>
+
+</body>
+</html>

@@ -33,9 +33,15 @@ wrong at the start of a term.
 
 **Acceptance**
 - [x] Weights of 40/35/25 produce no warning; 40/35/20 warns and shows "95%".
-- [ ] The app still computes a grade while weights are wrong, and says the grade is provisional.
+- [ ] ~~The app still computes a grade while weights are wrong, and says the grade is provisional.~~
+      **Superseded 2026-08-09 by the owner:** *there is no grade at all until the weights total 100.*
+      The replacement line: **the app shows no grade while the weights are wrong, and says why** —
+      the number's absence and the total that caused it, not a figure with a label on it. Owed to
+      WO-3.5, which is the first screen with somewhere to not-show a grade.
 - [x] Two classes carry different category sets without interference.
-- [ ] Reweighting recomputes every displayed grade in that class immediately.
+- [ ] Reweighting recomputes every displayed grade in that class immediately — **including the
+      crossing in both directions:** grades appear when the weights reach 100 and disappear when
+      they leave it.
 
 **Two lines are owed, and they are owed to WO-3.4/WO-3.5 rather than to this work order.** *(Left
 open 2026-08-09, at the end of WO-3.1's build.)* Lines 2 and 4 both name **a displayed grade**, and
@@ -52,9 +58,21 @@ computed from weights that do not add up is provisional. The half of line 4 that
 today — the total and the provisional verdict recomputing as a weight is typed, on the banner and on
 the class-manager row behind it — is driven and measured in `tools/verify-shell.mjs`.
 
-**The follow-up:** when WO-3.5 renders a grade, it reads `isProvisional()` for the class and labels
-the figure; ticking lines 2 and 4 belongs to that work order's own pass, against a real percentage
-on screen. Nothing further is needed here.
+**The follow-up:** when WO-3.5 renders a grade, it reads `isProvisional()` for the class and decides
+whether there is a grade to draw at all; ticking lines 2 and 4 belongs to that work order's own pass.
+
+**A correction is owed to this work order's own copy, and it is not cosmetic.** *(2026-08-09, after
+the owner's call above.)* `src/categories.js` tells the teacher that "any grade in this class is
+provisional until they add up", and announces "Grades are provisional." Both are now false: there is
+no grade to be provisional about. `isProvisional(cls)` keeps its signature and its truth value —
+weights ≠ 100 — but its **name and every sentence built on it now mean "this class has no grade".**
+
+This is a code change, not a documentation one, and it is **coupled to the harness**: at least one
+check in `tools/verify-shell.mjs` asserts the banner text carries both `95%` and the word
+*provisional*, and it goes red the moment the copy changes. So it is a small work order rather than a
+drive-by edit — the copy, the announcement, the rename if one is wanted, and the checks that hold
+them. **Fold it into WO-3.5's brief** unless it is wanted sooner; nothing displays a grade before
+then, so nothing is currently lying to a teacher about a number she can see.
 
 ---
 
@@ -93,6 +111,13 @@ disagreeing rule this design removes.
 which reads due dates rather than storing copies of them.
 
 **Deliverables**
+- **Surface: a main-area view**, a sibling of `#homeView` and `#classView` in `<main>`, toggled by
+  `.hidden` — **with modal editors** for creating and editing a single assignment. The list is a
+  surface a teacher scans and works down; editing one assignment is a task she finishes and
+  dismisses. Same shape as the roster. See [`../gradebook-surfaces.md`](../gradebook-surfaces.md).
+- **This work order owns the control that switches between the open class's screens**, because it is
+  the first one that needs it — attendance and assignments cannot both be "the class view". It is
+  not designed here; design it against `design/mockups/`, which draws one candidate to argue with.
 - Create, edit, duplicate, reorder, and delete assignments per the data model:
   `id, classId, termId, categoryId, name, points, assigned, due`.
 - **Due date is a plain date.** There is no "next meeting" to default to, and inventing one would
@@ -101,10 +126,23 @@ which reads due dates rather than storing copies of them.
 - Deleting an assignment warns about the scores it takes with it.
 
 **Acceptance**
-- [ ] A zero-point assignment can be created and does not break any grade calculation.
+- [ ] A zero-point assignment can be created and does not break any grade calculation. **This line
+      is the extra-credit feature, not a robustness check** *(owner, 2026-08-09)*: a 0-point
+      assignment scored `5` is +5 earned points in its category. The editor must let `0` be typed in
+      the points field and must not "helpfully" reject or default it.
 - [ ] An assignment can be moved between categories and the grade updates.
 - [ ] Duplicating into another class produces a new assignment with no scores attached.
 - [ ] No date field auto-populates from anything schedule-shaped.
+- [ ] The list is a view in `<main>`, not a dialog, and the class's screens are switchable without
+      passing through the class manager.
+
+**Traps** — **Do not build the list inside the modal system.** Every class-scoped editor before this
+one is a modal and the precedent is misleading; the rule is in `../gradebook-surfaces.md`. **And
+carry a `classId` guard into every assignment query you write**: WO-3.1's `removalCounts()` and
+`applyRemoval()` filter by `categoryId` alone, which is safe only while ids are opaque and stops
+being safe the moment duplicate-to-another-class exists — a naive duplicate carrying the source's
+`categoryId` would let a category removal in one class delete work in another, counted under a
+dialog naming the first.
 
 ---
 
@@ -132,6 +170,17 @@ signals and Phase 5's merge fields.
 
 - **Empty-category redistribution**: a category with no graded work drops out and its weight is
   redistributed proportionally across the categories that have work.
+- **No grade at all until the weights total 100.** *(Owner, 2026-08-09.)* Not a provisional figure
+  and not a best guess — the function returns "no grade", and the reason, and the screens say so.
+  This deletes the question of what to divide by rather than answering it: a weighted average over
+  weights that do not add up is arithmetic nobody asked for. A class with no categories is the same
+  case. See `docs/data-model.md` § Grade math, which records what this replaced and why.
+- **Extra credit is a zero-point assignment, and needs no code of its own.** *(Owner, 2026-08-09.)*
+  It falls out of `earned / possible` being **summed over the category** rather than averaged across
+  assignments: an assignment worth 0 scored `5` adds 5 to `earned` and 0 to `possible`, so 13/20 in
+  Quizzes becomes 18/20. **A category may exceed 100% and so may the overall grade; nothing caps
+  either** — a cap silently discards points the teacher chose to award. There is no extra-credit
+  flag, field or category type, and none should be added.
 - A worked-examples document (`docs/grade-math-cases.md`) with hand-computed expected values for
   every case in the acceptance list. This *is* the test suite — there is no framework, by decision.
 
@@ -142,7 +191,18 @@ signals and Phase 5's merge fields.
 - [ ] A term with exactly one assignment.
 - [ ] A category with no assignments at all — weight redistributed, grade correct.
 - [ ] A category whose every score is `excused` — behaves as empty, weight redistributed.
-- [ ] A zero-point assignment — no division by zero, no effect on the percentage.
+- [ ] ~~A zero-point assignment — no division by zero, no effect on the percentage.~~
+      **Rewritten 2026-08-09:** a zero-point assignment scored `5` **raises** the category by 5
+      earned points against 0 possible — that is extra credit, and "no effect" was the opposite of
+      the requirement. No division by zero either way.
+- [ ] Extra credit carries a category **past 100%**, and the overall grade past 100% with it.
+      Nothing clamps.
+- [ ] A category holding **only** zero-point assignments — `possible` sums to zero, so it has no
+      percentage. Behaves as empty and redistributes; never `NaN`, never `100%`, never a crash.
+      **This is the case a naive engine dies on, and a teacher reaches it by making an "Extra
+      credit" category and putting only extra credit in it.**
+- [ ] Weights totalling 95 — **no grade is returned at all**, and the reason names the total. Then
+      the same document with the weights corrected to 100 returns a grade. Both directions.
 - [ ] A `missing` flag scores zero; the same cell set to `excused` raises the grade.
 - [ ] A `late` flag changes nothing versus the same score unflagged.
 - [ ] A blank cell changes nothing versus no cell at all.
@@ -164,6 +224,14 @@ inferred."
 attendance. Grades go in once or twice a week for five classes; if this is slow, the app is not used.
 
 **Deliverables**
+- **Surface: a main-area view**, the same shape and for the same reasons as the attendance registry —
+  which was itself a dialog until WO-1.13 moved it. **Not a modal, and this one is not a preference.**
+  A modal closes on `Esc`, which is the key a teacher's hand is nearest while typing a column of 25
+  scores; a focus trap wants `Tab`, which in a grid means the next assignment; and `.modal-panel` is
+  480px where this needs the full 1300px `.main`. Full reasoning in
+  [`../gradebook-surfaces.md`](../gradebook-surfaces.md).
+- **`src/scores.css`, loaded after `src/shell.css`**, styling only its own class names, with its own
+  `@media (pointer: coarse)` block at the end. Two stylesheets never style the same class.
 - Grid: students down, assignments across, one column per assignment.
 - `Enter` moves down the column — that is the entry pattern, one assignment at a time.
 - Flags reachable without leaving the keyboard: `late`, `missing`, `excused`, and clear-to-blank.
@@ -180,9 +248,12 @@ attendance. Grades go in once or twice a week for five classes; if this is slow,
 - [ ] Clearing a cell removes the key entirely rather than storing `{ v: null }` with no flag.
 - [ ] Grades recompute live and match WO-3.4's hand-computed values.
 - [ ] The grid is usable on an iPad in landscape.
+- [ ] `Esc` mid-column does not close the screen or lose the teacher's place, because there is no
+      dialog to close. Prove it by pressing it, not by arguing the screen is a view.
 
 **Traps** — Do not infer anything from the due date here. That's WO-3.6, and it is a prompt, not
-arithmetic.
+arithmetic. **And do not reach for the modal system**, however much the surrounding code does — see
+the Surface deliverable above and `../gradebook-surfaces.md`.
 
 ---
 
@@ -220,6 +291,9 @@ numbers Phase 5's merge fields put in an email. "What would it take to move" is 
 between a report and a conversation.
 
 **Deliverables**
+- **Surface: a main-area view.** This work order's own first sentence calls it "the screen open
+  during a guardian conference" — a screen a teacher sits in front of with a parent, scrolling and
+  pointing, is not a dialog. See [`../gradebook-surfaces.md`](../gradebook-surfaces.md).
 - Category breakdown with each category's percentage, weight, and contribution.
 - The list of missing work, with points at stake.
 - "What it would take to move" — the score needed on remaining work to reach the next letter band.
@@ -231,6 +305,11 @@ between a report and a conversation.
 - [ ] With a category empty, the breakdown shows the redistribution rather than hiding it.
 - [ ] The "to move" figure is reproducible by hand.
 - [ ] No `supports` data appears on this screen in presentation mode.
+- [ ] It is a view in `<main>`, not a dialog.
+
+**Traps** — Do not build this in the modal system; see the Surface deliverable and
+`../gradebook-surfaces.md`. And note that presentation mode is a harder problem on a view than in a
+dialog: a dialog can be closed to hide it, a view is what is on the wall.
 
 ---
 
