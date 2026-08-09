@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Suite Style Guide — colors &amp; design</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  SUITE STYLE GUIDE — a single, self-contained page.
+
+  WHAT THIS IS. The rendered twin of design/style-guide.md, plus the component shelf
+  that WO-1.2 shipped in index.html and WO-1.10 removed with the shelf. It is written
+  to be COPIED OUT of this repo and dropped into a sibling education app: it links no
+  stylesheet, loads no font, fetches nothing, and has no dependencies. Save the file,
+  open it, and it works — including from file://.
+
+  HOW TO USE IT IN A NEW PROJECT.
+    1. Copy this one file into the new repo's design/ folder.
+    2. Change the app name in the header and the favicon emoji. Nothing else is
+       app-specific.
+    3. Copy §11's base layer into the new app's stylesheet first, before any screen.
+    4. Click any swatch to copy its hex.
+
+  THREE THINGS THAT READ LIKE MISTAKES AND ARE NOT — they are suite conventions, and
+  they are the reason this page can be lifted wholesale:
+
+    1. COLORS ARE WRITTEN OUT, LITERALLY, EVERY TIME. There is not one CSS custom
+       property in this file, and there is none in any app stylesheet in the suite.
+       Hoisting the navy into --navy is not an improvement, it is a divergence: the
+       whole suite would have to migrate at once or the apps stop being copy-paste
+       compatible with each other. This page practises what it documents, so anything
+       you copy out of it is already a literal value.
+
+    2. THERE IS NO DARK MODE. No prefers-color-scheme query, no [data-theme] selector,
+       no dark variant of anything. The navy chrome IS the light theme, not a dark skin
+       of it. Do not add dark variants for new elements.
+
+    3. THE RESPONSIVE BLOCKS COME LAST AND IN ONE ORDER: (pointer: coarse), then
+       1024px, then 640px. That order is load-bearing — the touch pass has to be able
+       to override the base rules it re-states.
+
+  Values are quoted from src/shell.css and design/style-guide.md. If this page ever
+  disagrees with the guide, the guide wins.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+/* ── BASE ─────────────────────────────────────────────────────────────────────
+   Copy this block verbatim into any new app. It is §11 of this page as well. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  font-size: 14px;
+  min-height: 100vh;
+  overscroll-behavior-y: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+button, input, select, textarea { font-family: inherit; }
+/* Never remove this, and never style bare :focus. */
+:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* One grouped selector for every tappable class. Extend the list with each new one. */
+.cls-tab, .q-btn, .pill, .hdr-icon-btn, .class-action-btn, .batch-btn,
+.swatch, .modal-close, .presentation-strip-btn, .backup-nag-btn, .toggle-btn {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+
+/* ── HEADER ───────────────────────────────────────────────────────────────────
+   Two rows: identity + icon actions on top, navigation below. The gradient is the
+   suite's identity. The bottom row's black wash separates the rows without a border.
+   padding-top clears the iOS status bar in a home-screen install — the gradient
+   still runs edge to edge, only the content is inset. */
+.header {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  padding-top: env(safe-area-inset-top, 0px);
+  position: sticky; top: 0; z-index: 80;
+}
+.header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 52px; gap: 12px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.header-bottom {
+  display: flex; align-items: center; gap: 4px;
+  min-height: 48px; background: rgba(0,0,0,0.15);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.header-bottom::-webkit-scrollbar { display: none; }
+.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.header-logo {
+  width: 34px; height: 34px; background: rgba(255,255,255,0.12);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.header-title h1 { color: #fff; font-size: 16px; font-weight: 700; }
+.header-title p  { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 1px; }
+.hdr-icon-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 7px; color: rgba(255,255,255,0.6);
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.hdr-icon-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
+.cls-tab {
+  padding: 4px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55);
+  flex-shrink: 0; white-space: nowrap;
+}
+.cls-tab:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.cls-tab.active { background: #1a1a2e; color: #fff; }
+.cls-tab-home { margin-right: 10px; }
+/* Dashed rather than filled, so it reads as a slot instead of as a class named "+". */
+.cls-tab-add {
+  background: transparent; border: 1.5px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.6);
+}
+.cls-tab-add:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.5); color: #fff; }
+.hdr-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.18); margin: 0 8px; flex-shrink: 0; }
+.hdr-right-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: auto; }
+.q-btn {
+  padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  flex-shrink: 0; white-space: nowrap;
+}
+.q-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.q-btn.active { background: #fff; color: #1a3c5e; }
+
+/* ── BANNERS ──────────────────────────────────────────────────────────────────
+   Standing conditions, in normal flow under the header rather than fixed. Both use
+   a solid button rather than an outline one, because each is THE action, not a
+   dismissal — there is no dismissing a mode, only leaving it. */
+.presentation-strip {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #f3eaff; color: #7c3aed; border-bottom: 1px solid #c8a0f0;
+  padding: 8px 20px; font-size: 12.5px; line-height: 1.55;
+}
+.presentation-strip-btn {
+  border: 1.5px solid #7c3aed; background: #7c3aed; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
+}
+.presentation-strip-btn:hover { background: #6d28d9; border-color: #6d28d9; }
+.backup-nag {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
+  padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
+}
+.backup-nag-btn {
+  border: 1.5px solid #c9a83f; background: #c9a83f; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
+}
+
+/* ── MAIN + PANEL ─────────────────────────────────────────────────────────── */
+.main {
+  padding: 20px; max-width: 1300px; margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+.panel { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+.panel-header { padding: 16px 20px 0; }
+.panel-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.panel-title h2 { font-size: 15px; font-weight: 700; }
+.panel-title p  { font-size: 11px; color: #8a9bb0; margin-top: 2px; line-height: 1.5; }
+.search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; }
+.search-box {
+  flex: 0 0 360px; display: flex; align-items: center; gap: 7px;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 7px 11px;
+}
+.search-box input { border: none; font-size: 13px; width: 100%; background: transparent; color: #1a1a2e; }
+.search-box input::placeholder { color: #a0aab8; }
+.pills { display: flex; gap: 5px; position: absolute; left: 50%; transform: translateX(-50%); }
+.pill {
+  padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d; cursor: pointer; white-space: nowrap;
+}
+.pill.active { background: #27ae60; border-color: #27ae60; color: #fff; }
+.empty-state { padding: 48px 20px; text-align: center; color: #a0aab8; font-size: 13px; }
+.date-batch-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #f8f9fb; border-top: 1px solid #eef0f4; border-bottom: 1px solid #eef0f4;
+  padding: 8px 20px;
+}
+
+/* ── BUTTONS ──────────────────────────────────────────────────────────────────
+   Wash background + strong text for chips. A SOLID strong fill is reserved for the
+   active/selected state and for one primary action per surface. */
+.class-action-btn {
+  padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.class-action-btn:hover:not(:disabled) { border-color: #5b6fcc; color: #5b6fcc; }
+.class-action-btn.primary { background: #5b6fcc; border-color: #5b6fcc; color: #fff; }
+.class-action-btn.primary:hover:not(:disabled) { background: #4a5fbb; border-color: #4a5fbb; }
+.class-action-btn.danger { background: #e74c3c; border-color: #e74c3c; color: #fff; }
+.class-action-btn.danger:hover:not(:disabled) { background: #c0392b; border-color: #c0392b; }
+/* Per-action hover tints, so that in a row of five buttons the destructive one never
+   looks like the other four. HOVER ONLY — the resting row stays one visual family,
+   because colouring five buttons five ways is a row nobody can scan. */
+.class-action-btn.archive:hover:not(:disabled) { border-color: #e67e22; color: #e67e22; }
+.class-action-btn.restore:hover:not(:disabled) { border-color: #27ae60; color: #27ae60; }
+.class-action-btn.delete:hover:not(:disabled)  { border-color: #e74c3c; color: #e74c3c; background: #fdeaea; }
+.class-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.batch-btn {
+  border: none; border-radius: 6px; padding: 4px 11px;
+  font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.batch-btn:hover { opacity: 0.8; }
+.batch-btn.p { background: #eafaf1; color: #27ae60; }
+.batch-btn.a { background: #fdeaea; color: #e74c3c; }
+.batch-btn.i { background: #eef2ff; color: #5b6fcc; }
+.batch-btn.w { background: #fef5ea; color: #e67e22; }
+.toggle-btn {
+  padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 700;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d; cursor: pointer; transition: all 0.15s;
+}
+.toggle-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.toggle-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+
+/* ── SAVE INDICATOR ───────────────────────────────────────────────────────── */
+.save-indicator {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.save-indicator.saving  { background: #fef5ea; color: #e67e22; }
+.save-indicator.saved   { background: #eafaf1; color: #27ae60; }
+.save-indicator.error   { background: #fdeaea; color: #e74c3c; }
+.save-indicator.syncing { background: #eef2ff; color: #5b6fcc; }
+.save-indicator.retry   { background: #fef5ea; color: #e67e22; }
+
+/* ── AVATAR ───────────────────────────────────────────────────────────────────
+   Ten fixed classes assigned by `id % 10`, so a person keeps the same color
+   everywhere in the app without anything being stored. */
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.av0{background:#5b6fcc}.av1{background:#27ae60}.av2{background:#e67e22}
+.av3{background:#e74c3c}.av4{background:#8e44ad}.av5{background:#0097a7}
+.av6{background:#c0392b}.av7{background:#1a6b3a}.av8{background:#2471a3}.av9{background:#d4ac0d}
+
+/* ── MODAL ────────────────────────────────────────────────────────────────────
+   z-index ladder, kept identical across the suite so fixes stay portable:
+   content banners 90 · loading 999 · modals 1000 · setup screens 1001 · hero 1100.
+   The overlay scrolls and the panel is centred by `margin: auto` rather than by
+   align-items alone: centring a too-tall flex child clips its top edge with no way
+   to scroll back to it, and an iPad in landscape is 704px of usable height. */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.modal-panel {
+  background: #fff; border-radius: 14px; width: 480px; max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25); overflow: hidden;
+  margin: auto; animation: srIn 0.18s ease;
+}
+@keyframes srIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 100%);
+  padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.modal-header h2 { color: #fff; font-size: 15px; font-weight: 700; }
+.modal-close {
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.modal-close:hover { background: rgba(255,255,255,0.22); }
+.modal-body { padding: 20px; font-size: 13px; line-height: 1.6; color: #6b7a8d; }
+.modal-body p + p { margin-top: 10px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   BELOW HERE: chrome that belongs to THIS DOCUMENT ONLY.
+   Everything above is app furniture and lifts. Everything below is the guide's own
+   scaffolding — section labels, swatch grids, spec tables, the copy toast. It is
+   prefixed `sg-` so it can never collide with an app class name, and so you can
+   delete it in one grep when you strip this file down to a starter template.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.sg-section { padding: 16px 20px; border-top: 1px solid #eef0f4; }
+.sg-section:first-of-type { border-top: none; }
+.sg-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px;
+}
+.sg-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.sg-note { font-size: 12px; color: #6b7a8d; margin-top: 10px; line-height: 1.6; max-width: 78ch; }
+.sg-note + .sg-note { margin-top: 6px; }
+.sg-note code, .sg-inline-code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11.5px; background: #f8f9fb; border: 1px solid #eef0f4;
+  border-radius: 4px; padding: 1px 5px; color: #1a1a2e;
+}
+.sg-note strong { color: #1a1a2e; font-weight: 700; }
+/* Dark specimen bed. On-dark controls are invisible on white, so they are shown
+   against the surface they were designed for. */
+.sg-dark {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+/* Swatches. Each carries its own hex in a style attribute and prints that hex
+   beneath itself, so the row can be diffed by eye against the palette tables. */
+.sg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.swatch {
+  border: 1.5px solid #e0e4ea; border-radius: 8px; overflow: hidden;
+  background: #fff; cursor: pointer; text-align: left; padding: 0;
+  font-family: inherit; transition: all 0.15s; position: relative;
+}
+.swatch:hover { border-color: #5b6fcc; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.swatch:active { transform: scale(0.97); }
+.swatch .sg-chip { display: block; height: 52px; }
+.swatch .sg-meta { display: block; padding: 6px 9px 7px; background: #fff; }
+.swatch .sg-hex {
+  display: block; font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px; font-weight: 700; color: #1a1a2e; letter-spacing: 0.2px;
+}
+.swatch .sg-role { display: block; font-size: 10px; color: #8a9bb0; margin-top: 2px; line-height: 1.35; }
+/* Accent rows: strong / wash / border tint read together, because the RULE is the
+   relationship between them, not any one value. */
+.sg-accent { border: 1.5px solid #e0e4ea; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+.sg-accent-head { padding: 8px 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sg-accent-body { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px 12px; background: #fff; }
+.sg-tri { display: flex; gap: 0; border-radius: 7px; overflow: hidden; border: 1.5px solid #e0e4ea; }
+.sg-tri span {
+  width: 74px; height: 40px; display: flex; align-items: flex-end; justify-content: center;
+  font-family: ui-monospace, Consolas, monospace; font-size: 9px; font-weight: 700; padding-bottom: 3px;
+}
+/* Spec tables. */
+.sg-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sg-table th {
+  text-align: left; font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 0 12px 8px 0; border-bottom: 1px solid #eef0f4; white-space: nowrap;
+}
+.sg-table td { padding: 8px 12px 8px 0; border-bottom: 1px solid #f3f4f6; vertical-align: top; line-height: 1.5; color: #6b7a8d; }
+.sg-table td:first-child { color: #1a1a2e; font-weight: 600; white-space: nowrap; }
+.sg-table code { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: #1a1a2e; }
+.sg-tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Type specimens. */
+.sg-type { display: flex; align-items: baseline; gap: 14px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; flex-wrap: wrap; }
+.sg-type:last-child { border-bottom: none; }
+.sg-type-spec {
+  flex: 0 0 190px; font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px; color: #8a9bb0;
+}
+/* Radius + shadow specimens. */
+.sg-shapes { display: flex; flex-wrap: wrap; gap: 10px; }
+.sg-shape {
+  width: 92px; height: 66px; background: #fff; border: 1.5px solid #e0e4ea;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px;
+  font-family: ui-monospace, Consolas, monospace; font-size: 10px; color: #6b7a8d;
+}
+.sg-shadows { display: flex; flex-wrap: wrap; gap: 16px; padding: 6px 4px 10px; }
+.sg-shadow {
+  width: 128px; height: 66px; background: #fff; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 10px; color: #6b7a8d; padding: 6px; line-height: 1.4;
+}
+/* Copy-out code block. */
+.sg-pre {
+  background: #0d2137; color: #fff; border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11.5px; line-height: 1.65; white-space: pre;
+}
+.sg-pre .c { color: rgba(255,255,255,0.45); }
+/* The copy confirmation. Announced to screen readers through the live region as
+   well — a toast is not something a screen-reader user has reason to be looking at. */
+.sg-toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px);
+  background: #1a1a2e; color: #fff; font-size: 12px; font-weight: 600;
+  padding: 9px 16px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  opacity: 0; pointer-events: none; transition: all 0.18s ease; z-index: 1100;
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+.sg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.sg-contents { display: flex; flex-wrap: wrap; gap: 6px; }
+.sg-contents a {
+  font-size: 12px; font-weight: 600; color: #5b6fcc; text-decoration: none;
+  background: #eef2ff; border: 1.5px solid #b0bcf0; border-radius: 20px; padding: 4px 11px;
+  transition: all 0.15s;
+}
+.sg-contents a:hover { background: #5b6fcc; color: #fff; }
+.sg-footer { text-align: center; font-size: 11px; color: #a0aab8; padding: 4px 20px 28px; line-height: 1.7; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE. In the order the suite declares them, and that order is load-bearing:
+   the touch pass has to be able to override the base rules it re-states.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TOUCH PASS. Every interactive control reaches 44px, icon buttons 44×44, font
+   sizes bump 1–2px, hover-only affordances become always visible. Every new control
+   must appear in this block. */
+@media (pointer: coarse) {
+  .hdr-icon-btn { width: 44px; height: 44px; }
+  .cls-tab, .q-btn { min-height: 44px; font-size: 14px; padding: 0 16px; display: flex; align-items: center; }
+  .pill { padding: 10px 16px; font-size: 12px; min-height: 44px; }
+  .class-action-btn, .batch-btn, .toggle-btn { min-height: 44px; font-size: 12px; padding: 0 14px; }
+  .presentation-strip-btn, .backup-nag-btn { min-height: 44px; font-size: 13px; padding: 0 14px; }
+  .modal-close { width: 44px; height: 44px; }
+  .search-box { padding: 10px 12px; }
+  .search-box input { font-size: 16px; } /* under 16px, iOS zooms the page on focus */
+  .swatch { min-height: 44px; }
+  .sg-note, .panel-title p { font-size: 13px; }
+  .sg-table { font-size: 13.5px; }
+}
+@media (max-width: 1024px) {
+  .search-box { flex: 1 1 auto; }
+  .pills { position: static; transform: none; flex-wrap: wrap; }
+  .search-row { flex-wrap: wrap; }
+  .sg-type-spec { flex: 0 0 100%; }
+}
+@media (max-width: 640px) {
+  .main { padding: 10px; gap: 12px; }
+  .sg-section { padding: 14px 14px; }
+  .panel-header { padding: 14px 14px 0; }
+  .presentation-strip, .backup-nag { padding: 10px 14px; }
+  .modal-panel { width: 95vw; }
+  .sg-swatches { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+}
+
+/* Print: drop the chrome, keep the reference. A style guide gets printed and pinned. */
+@media print {
+  .header, .sg-contents, .sg-toast, .presentation-strip, .backup-nag { display: none !important; }
+  body { background: #fff; }
+  .panel { box-shadow: none; border: 1px solid #e0e4ea; break-inside: avoid; }
+  .main { max-width: none; padding: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── THE HEADER NAV BAR ──────────────────────────────────────────────────────
+     Live, not a picture. This is the module a sibling app lifts first: top row is
+     identity + icon actions, bottom row is navigation — primary tabs left
+     (horizontally scrollable), secondary context tabs right, separated by a divider.
+     An app with no tab concept keeps .header-top and drops .header-bottom WHOLE;
+     don't thin it out piecemeal. -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo" aria-hidden="true">🎨</div>
+      <div class="header-title">
+        <h1>Suite Style Guide</h1>
+        <p>Colors and design language, in one portable file</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-icon-btn" title="Icon button specimen" aria-label="Icon button specimen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
+        </svg>
+      </button>
+      <button class="hdr-icon-btn" title="Print this guide" aria-label="Print this guide" id="sgPrint">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <button class="cls-tab cls-tab-home">All classes</button>
+    <button class="cls-tab active" aria-pressed="true">Period 1</button>
+    <button class="cls-tab">Period 2</button>
+    <button class="cls-tab">Period 3</button>
+    <button class="cls-tab cls-tab-add" title="Add a class" aria-label="Add a class">+</button>
+    <div class="hdr-right-controls">
+      <div class="hdr-divider"></div>
+      <button class="q-btn active" aria-pressed="true">Q1</button>
+      <button class="q-btn">Q2</button>
+      <button class="q-btn">Q3</button>
+      <button class="q-btn">Q4</button>
+    </div>
+  </div>
+</header>
+
+<!-- Both standing-condition banners, shown in place so the stack order is visible:
+     mode strip first, then caution. -->
+<div class="presentation-strip">
+  <div class="presentation-strip-text"><strong>Presentation mode is on.</strong> Sensitive fields are hidden. This strip is the violet "special state" accent doing its one job — a mode you are in, not a warning.</div>
+  <button class="presentation-strip-btn">Turn it off</button>
+</div>
+<div class="backup-nag">
+  <div class="backup-nag-text"><strong>The caution banner.</strong> Amber, hairlined, with the action solid rather than outlined. Use it for a standing condition the user should act on — offline, stale data, no backup yet — never for an error that just happened.</div>
+  <button class="backup-nag-btn">Take the action</button>
+</div>
+
+<main class="main">
+
+  <!-- ── HOW TO USE ─────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>How to carry this into another project</h2>
+          <p>One file, no dependencies, no build step, no fonts to load. It works from <code class="sg-inline-code">file://</code>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">Contents</div>
+      <nav class="sg-contents" aria-label="Sections">
+        <a href="#palette">1 · Palette</a>
+        <a href="#accents">2 · Semantic accents</a>
+        <a href="#avatars">3 · Avatar palette</a>
+        <a href="#type">4 · Typography</a>
+        <a href="#shape">5 · Shape &amp; depth</a>
+        <a href="#components">6 · Components</a>
+        <a href="#motion">7 · Motion</a>
+        <a href="#states">8 · States</a>
+        <a href="#touch">9 · Responsive &amp; touch</a>
+        <a href="#a11y">10 · Accessibility</a>
+        <a href="#base">11 · The base layer</a>
+        <a href="#voice">12 · Voice</a>
+      </nav>
+      <p class="sg-note">
+        Copy this file into the new repo's <code>design/</code> folder, change the app name in
+        the header and the favicon emoji, and paste §11's base layer into the new app's
+        stylesheet before any screen styles. <strong>Click any swatch to copy its hex.</strong>
+      </p>
+      <p class="sg-note">
+        Three rules make the lift safe, and all three read like mistakes:
+        <strong>colors are written out literally, never as custom properties</strong> — hoisting the
+        navy into <code>--navy</code> means the whole suite has to migrate at once or the apps stop
+        being copy-paste compatible;
+        <strong>there is no dark mode anywhere</strong> — the navy chrome IS the light theme, not a
+        dark skin of it, so don't write dark variants for new elements;
+        and <strong>the responsive blocks come last, in the order coarse → 1024 → 640</strong>,
+        because the touch pass has to be able to override the base rules it re-states.
+      </p>
+      <p class="sg-note">
+        Class names are the other half of portability. <strong>Keep them.</strong> Shared names are
+        what let a fix travel between sibling apps — the app name, the favicon emoji, the
+        <code>localStorage</code> prefix and the header subtitle are the only things that change.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 1 · PALETTE ────────────────────────────────────────────────────── -->
+  <div class="panel" id="palette">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>1 · Palette</h2>
+          <p>Click a swatch to copy its hex. Two families: dark chrome and light page.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Chrome — the dark surfaces</div>
+      <div class="sg-swatches">
+        <button class="swatch" data-hex="#0d2137"><span class="sg-chip" style="background:#0d2137"></span><span class="sg-meta"><span class="sg-hex">#0d2137</span><span class="sg-role">Gradient start · solid full-screen</span></span></button>
+        <button class="swatch" data-hex="#1a3c5e"><span class="sg-chip" style="background:#1a3c5e"></span><span class="sg-meta"><span class="sg-hex">#1a3c5e</span><span class="sg-role">Gradient middle (60%)</span></span></button>
+        <button class="swatch" data-hex="#2a2a6e"><span class="sg-chip" style="background:#2a2a6e"></span><span class="sg-meta"><span class="sg-hex">#2a2a6e</span><span class="sg-role">Gradient end</span></span></button>
+        <button class="swatch" data-hex="#0d1f2f"><span class="sg-chip" style="background:#0d1f2f"></span><span class="sg-meta"><span class="sg-hex">#0d1f2f</span><span class="sg-role">Active-alert banner</span></span></button>
+        <button class="swatch" data-hex="linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%)"><span class="sg-chip" style="background:linear-gradient(135deg,#0d2137 0%,#1a3c5e 60%,#2a2a6e 100%)"></span><span class="sg-meta"><span class="sg-hex">Header</span><span class="sg-role">135deg · 0 / 60% / 100%</span></span></button>
+        <button class="swatch" data-hex="linear-gradient(135deg, #0d2137 0%, #1a3c5e 100%)"><span class="sg-chip" style="background:linear-gradient(135deg,#0d2137 0%,#1a3c5e 100%)"></span><span class="sg-meta"><span class="sg-hex">Modal header</span><span class="sg-role">135deg · two stops</span></span></button>
+      </div>
+      <p class="sg-note">
+        <strong>On-dark text:</strong> <code>#fff</code>; secondary <code>rgba(255,255,255,0.5–0.6)</code>;
+        hints <code>rgba(255,255,255,0.45)</code>.
+        <strong>On-dark controls:</strong> background <code>rgba(255,255,255,0.08)</code>,
+        border <code>1.5px solid rgba(255,255,255,0.15–0.25)</code>,
+        hover background <code>rgba(255,255,255,0.16–0.18)</code>. White alpha rather than a second
+        set of hexes, so one control works over any point of the gradient.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Page — the light surfaces</div>
+      <div class="sg-swatches">
+        <button class="swatch" data-hex="#f0f2f5"><span class="sg-chip" style="background:#f0f2f5"></span><span class="sg-meta"><span class="sg-hex">#f0f2f5</span><span class="sg-role">Page background</span></span></button>
+        <button class="swatch" data-hex="#fff"><span class="sg-chip" style="background:#fff;border-bottom:1px solid #eef0f4"></span><span class="sg-meta"><span class="sg-hex">#fff</span><span class="sg-role">Panel / card</span></span></button>
+        <button class="swatch" data-hex="#f8f9fc"><span class="sg-chip" style="background:#f8f9fc"></span><span class="sg-meta"><span class="sg-hex">#f8f9fc</span><span class="sg-role">Subdued card</span></span></button>
+        <button class="swatch" data-hex="#f8f9fb"><span class="sg-chip" style="background:#f8f9fb"></span><span class="sg-meta"><span class="sg-hex">#f8f9fb</span><span class="sg-role">Inset bar</span></span></button>
+        <button class="swatch" data-hex="#1a1a2e"><span class="sg-chip" style="background:#1a1a2e"></span><span class="sg-meta"><span class="sg-hex">#1a1a2e</span><span class="sg-role">Primary text</span></span></button>
+        <button class="swatch" data-hex="#6b7a8d"><span class="sg-chip" style="background:#6b7a8d"></span><span class="sg-meta"><span class="sg-hex">#6b7a8d</span><span class="sg-role">Secondary text</span></span></button>
+        <button class="swatch" data-hex="#8a9bb0"><span class="sg-chip" style="background:#8a9bb0"></span><span class="sg-meta"><span class="sg-hex">#8a9bb0</span><span class="sg-role">Muted labels</span></span></button>
+        <button class="swatch" data-hex="#a0aab8"><span class="sg-chip" style="background:#a0aab8"></span><span class="sg-meta"><span class="sg-hex">#a0aab8</span><span class="sg-role">Disabled / empty</span></span></button>
+        <button class="swatch" data-hex="#eef0f4"><span class="sg-chip" style="background:#eef0f4"></span><span class="sg-meta"><span class="sg-hex">#eef0f4</span><span class="sg-role">Panel dividers</span></span></button>
+        <button class="swatch" data-hex="#f3f4f6"><span class="sg-chip" style="background:#f3f4f6"></span><span class="sg-meta"><span class="sg-hex">#f3f4f6</span><span class="sg-role">Table rows</span></span></button>
+        <button class="swatch" data-hex="#e0e4ea"><span class="sg-chip" style="background:#e0e4ea"></span><span class="sg-meta"><span class="sg-hex">#e0e4ea</span><span class="sg-role">Input borders</span></span></button>
+        <button class="swatch" data-hex="#e0e4f0"><span class="sg-chip" style="background:#e0e4f0"></span><span class="sg-meta"><span class="sg-hex">#e0e4f0</span><span class="sg-role">Subdued card border</span></span></button>
+        <button class="swatch" data-hex="#d0d8e4"><span class="sg-chip" style="background:#d0d8e4"></span><span class="sg-meta"><span class="sg-hex">#d0d8e4</span><span class="sg-role">Stronger hairline</span></span></button>
+      </div>
+      <p class="sg-note">
+        Four greys for text and four for lines is not indecision — it is the whole hierarchy. A
+        panel with one grey in it reads flat, and a panel with six reads noisy. Pick the role, then
+        take its value.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 2 · SEMANTIC ACCENTS ───────────────────────────────────────────── -->
+  <div class="panel" id="accents">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>2 · Semantic accents</h2>
+          <p>Each meaning is a set of three, not a color: a strong tone, a pale wash used as its background, and a border tint.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#eafaf1;color:#27ae60;border-bottom:1.5px solid #a3e4bc">Positive · present · confirm <span class="batch-btn p">Wash chip</span></div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#27ae60;color:#fff">#27ae60</span>
+            <span style="background:#eafaf1;color:#27ae60">#eafaf1</span>
+            <span style="background:#a3e4bc;color:#1a6b3a">#a3e4bc</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">Hover on the solid: <code>#219a52</code>.</p>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#eef2ff;color:#5b6fcc;border-bottom:1.5px solid #b0bcf0">Interactive · selection · info <span class="batch-btn i">Wash chip</span></div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#5b6fcc;color:#fff">#5b6fcc</span>
+            <span style="background:#eef2ff;color:#5b6fcc">#eef2ff</span>
+            <span style="background:#b0bcf0;color:#1a1a2e">#b0bcf0</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">Hover <code>#4a5fbb</code>. Alternate wash <code>#eef0fb</code>. This is also the focus-ring color.</p>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#fef5ea;color:#e67e22;border-bottom:1.5px solid #f5c98a">Warning · tardy <span class="batch-btn w">Wash chip</span></div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#e67e22;color:#fff">#e67e22</span>
+            <span style="background:#fef5ea;color:#e67e22">#fef5ea</span>
+            <span style="background:#f5c98a;color:#c0700a">#f5c98a</span>
+          </div>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#fdeaea;color:#e74c3c;border-bottom:1.5px solid #f0b0b0">Danger · absent <span class="batch-btn a">Wash chip</span></div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#e74c3c;color:#fff">#e74c3c</span>
+            <span style="background:#fdeaea;color:#e74c3c">#fdeaea</span>
+            <span style="background:#f0b0b0;color:#c0392b">#f0b0b0</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">Deep <code>#c0392b</code>, alternate <code>#dc2626</code>.</p>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#f3eaff;color:#7c3aed;border-bottom:1.5px solid #c8a0f0">Special state — a mode you are in</div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#7c3aed;color:#fff">#7c3aed</span>
+            <span style="background:#f3eaff;color:#7c3aed">#f3eaff</span>
+            <span style="background:#c8a0f0;color:#6d28d9">#c8a0f0</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">Hover <code>#6d28d9</code>. Reserve violet for modes and dismissals — not for a fifth severity.</p>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#fff8e6;color:#8a6d1a;border-bottom:1.5px solid #f0dfa8">Caution banner — offline, stale, standing condition</div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#c9a83f;color:#fff">#c9a83f</span>
+            <span style="background:#fff8e6;color:#8a6d1a">#fff8e6</span>
+            <span style="background:#f0dfa8;color:#8a6d1a">#f0dfa8</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">Text <code>#8a6d1a</code>, border <code>#c9a83f</code>. Distinct from warning amber on purpose: this is a condition, not an event.</p>
+        </div>
+      </div>
+      <div class="sg-accent">
+        <div class="sg-accent-head" style="background:#fff3cd;color:#c0700a;border-bottom:1.5px solid #e0e4ea">Warn badge — a micro-badge on a row</div>
+        <div class="sg-accent-body">
+          <div class="sg-tri">
+            <span style="background:#c0700a;color:#fff">#c0700a</span>
+            <span style="background:#fff3cd;color:#c0700a">#fff3cd</span>
+          </div>
+          <p class="sg-note" style="margin:0;flex:1 1 220px">The one accent with <strong>no border tint</strong> — a 9px badge sitting inside a row has no room for one, so it takes the neutral <code>#e0e4ea</code> if it needs an edge at all.</p>
+        </div>
+      </div>
+
+      <p class="sg-note">
+        <strong>The rule that makes all of this hold together:</strong> interactive chips and
+        buttons are <strong>wash background + strong-color text</strong>, optionally with a 1.5px
+        tinted border. A <strong>solid strong-color fill is reserved</strong> for the active or
+        selected state and for one primary action per surface. Break that and the screen loses its
+        ability to say which thing is chosen — everything shouts at the same volume.
+      </p>
+      <p class="sg-note">
+        Reach for a wash before you reach for a new hue. Four semantic colors, each with three
+        values, cover more ground than eight hues do, and a fifth hue is almost always a sign that
+        two meanings should have been one.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 3 · AVATARS ────────────────────────────────────────────────────── -->
+  <div class="panel" id="avatars">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>3 · Avatar palette</h2>
+          <p>Ten fixed classes, <code>.av0</code>–<code>.av9</code>, assigned by <code>id % 10</code>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-row" style="margin-bottom:12px">
+        <div class="avatar av0">AB</div><div class="avatar av1">CD</div><div class="avatar av2">EF</div>
+        <div class="avatar av3">GH</div><div class="avatar av4">IJ</div><div class="avatar av5">KL</div>
+        <div class="avatar av6">MN</div><div class="avatar av7">OP</div><div class="avatar av8">QR</div>
+        <div class="avatar av9">ST</div>
+      </div>
+      <div class="sg-swatches">
+        <button class="swatch" data-hex="#5b6fcc"><span class="sg-chip" style="background:#5b6fcc"></span><span class="sg-meta"><span class="sg-hex">#5b6fcc</span><span class="sg-role">.av0</span></span></button>
+        <button class="swatch" data-hex="#27ae60"><span class="sg-chip" style="background:#27ae60"></span><span class="sg-meta"><span class="sg-hex">#27ae60</span><span class="sg-role">.av1</span></span></button>
+        <button class="swatch" data-hex="#e67e22"><span class="sg-chip" style="background:#e67e22"></span><span class="sg-meta"><span class="sg-hex">#e67e22</span><span class="sg-role">.av2</span></span></button>
+        <button class="swatch" data-hex="#e74c3c"><span class="sg-chip" style="background:#e74c3c"></span><span class="sg-meta"><span class="sg-hex">#e74c3c</span><span class="sg-role">.av3</span></span></button>
+        <button class="swatch" data-hex="#8e44ad"><span class="sg-chip" style="background:#8e44ad"></span><span class="sg-meta"><span class="sg-hex">#8e44ad</span><span class="sg-role">.av4</span></span></button>
+        <button class="swatch" data-hex="#0097a7"><span class="sg-chip" style="background:#0097a7"></span><span class="sg-meta"><span class="sg-hex">#0097a7</span><span class="sg-role">.av5</span></span></button>
+        <button class="swatch" data-hex="#c0392b"><span class="sg-chip" style="background:#c0392b"></span><span class="sg-meta"><span class="sg-hex">#c0392b</span><span class="sg-role">.av6</span></span></button>
+        <button class="swatch" data-hex="#1a6b3a"><span class="sg-chip" style="background:#1a6b3a"></span><span class="sg-meta"><span class="sg-hex">#1a6b3a</span><span class="sg-role">.av7</span></span></button>
+        <button class="swatch" data-hex="#2471a3"><span class="sg-chip" style="background:#2471a3"></span><span class="sg-meta"><span class="sg-hex">#2471a3</span><span class="sg-role">.av8</span></span></button>
+        <button class="swatch" data-hex="#d4ac0d"><span class="sg-chip" style="background:#d4ac0d"></span><span class="sg-meta"><span class="sg-hex">#d4ac0d</span><span class="sg-role">.av9</span></span></button>
+      </div>
+      <p class="sg-note">
+        Derived from the id, never stored — so a person keeps the same color on every screen with
+        nothing to migrate and nothing to keep in sync. All ten carry white text at 800 weight; the
+        two lightest (<code>#d4ac0d</code>, <code>#0097a7</code>) are the reason initials are bold
+        rather than 600.
+      </p>
+      <p class="sg-note">
+        <strong>These are identity, not status.</strong> Four of them are also semantic accents,
+        which is fine on a 32px circle of initials and is not fine anywhere a color carries meaning
+        — never let an avatar hue sit next to a status chip of the same hue and imply a relationship.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 4 · TYPOGRAPHY ─────────────────────────────────────────────────── -->
+  <div class="panel" id="type">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>4 · Typography</h2>
+          <p>One stack, small sizes, heavy weights. Headings are small and bold, not large.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">The stack</div>
+      <p class="sg-note" style="margin-top:0">
+        <code>'Segoe UI', system-ui, sans-serif</code> everywhere, and every
+        <code>&lt;button&gt;</code> / <code>&lt;input&gt;</code> gets
+        <code>font-family: inherit</code> — form controls do not inherit it on their own, and one
+        missed input is a visibly foreign widget. Anything meant to be pasted into an email uses
+        <code>Arial, Helvetica, sans-serif</code> instead, because that is what survives the trip.
+        <strong>No web font is loaded, ever</strong> — it is a network dependency on a first paint
+        that has to work offline.
+      </p>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">The scale</div>
+      <div class="sg-type"><span class="sg-type-spec">22px / 700 · white</span><span style="font-size:22px;font-weight:700">Full-screen title</span></div>
+      <div class="sg-type"><span class="sg-type-spec">16px / 700</span><span style="font-size:16px;font-weight:700">Header app name</span></div>
+      <div class="sg-type"><span class="sg-type-spec">15px / 700</span><span style="font-size:15px;font-weight:700">Panel and modal title</span></div>
+      <div class="sg-type"><span class="sg-type-spec">14px / 400 · body base</span><span style="font-size:14px">Body text, the <code class="sg-inline-code">body</code> default</span></div>
+      <div class="sg-type"><span class="sg-type-spec">13px / 400</span><span style="font-size:13px">Controls and dense body copy</span></div>
+      <div class="sg-type"><span class="sg-type-spec">12px / 400 · #6b7a8d</span><span style="font-size:12px;color:#6b7a8d">Secondary text and notes</span></div>
+      <div class="sg-type"><span class="sg-type-spec">11px / 600–700</span><span style="font-size:11px;font-weight:700">CHIPS, BUTTONS, SUBTITLES</span></div>
+      <div class="sg-type"><span class="sg-type-spec">10px / 700 · 0.8px · #8a9bb0</span><span style="font-size:10px;font-weight:700;color:#8a9bb0;letter-spacing:0.8px;text-transform:uppercase">Section label</span></div>
+      <div class="sg-type"><span class="sg-type-spec">9px / 700</span><span style="font-size:9px;font-weight:700">MICRO-BADGE</span></div>
+      <div class="sg-type"><span class="sg-type-spec">tabular-nums · 800</span><span style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums">11:48 · 94.5%</span></div>
+      <p class="sg-note">
+        <strong>Weights carry the hierarchy, not sizes.</strong> 600 for names and labels, 700 for
+        buttons and titles, 800 for statistics and big numbers. The whole UI lives between 9px and
+        16px; if something needs to be louder, make it heavier or give it a wash, don't make it
+        bigger.
+      </p>
+      <p class="sg-note">
+        Every timer, percentage and counter takes
+        <code>font-variant-numeric: tabular-nums</code>. Without it a ticking clock jitters its own
+        width, and a column of percentages will not line up.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 5 · SHAPE & DEPTH ──────────────────────────────────────────────── -->
+  <div class="panel" id="shape">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>5 · Shape, depth, spacing</h2>
+          <p>Radius rises with the size of the thing. Borders are 1.5px; hairlines are 1px.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">Radius ladder</div>
+      <div class="sg-shapes">
+        <div class="sg-shape" style="border-radius:6px">6 · small</div>
+        <div class="sg-shape" style="border-radius:7px">7 · buttons</div>
+        <div class="sg-shape" style="border-radius:8px">8 · inputs</div>
+        <div class="sg-shape" style="border-radius:10px">10 · cards</div>
+        <div class="sg-shape" style="border-radius:14px">14 · panels</div>
+        <div class="sg-shape" style="border-radius:16px">16 · hero</div>
+        <div class="sg-shape" style="border-radius:20px">20 · pills</div>
+        <div class="sg-shape" style="border-radius:50%;width:66px">50%</div>
+      </div>
+      <p class="sg-note">
+        <strong>1.5px, not 1px</strong>, for every border on a light surface. It is the odd value in
+        the whole system and it is deliberate: at 1px these borders disappear on a retina iPad, and
+        at 2px they read as an error state. Hairline dividers between rows stay at 1px, because
+        those are meant to recede.
+      </p>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">Elevation</div>
+      <div class="sg-shadows">
+        <div class="sg-shadow" style="box-shadow:0 1px 4px rgba(0,0,0,0.07)">panel<br>0 1px 4px / .07</div>
+        <div class="sg-shadow" style="box-shadow:0 2px 12px rgba(0,0,0,0.3)">header<br>0 2px 12px / .3</div>
+        <div class="sg-shadow" style="box-shadow:0 8px 32px rgba(0,0,0,0.25)">modal<br>0 8px 32px / .25</div>
+        <div class="sg-shadow" style="box-shadow:0 12px 48px rgba(0,0,0,0.28)">hero<br>0 12px 48px / .28</div>
+      </div>
+      <p class="sg-note">
+        Four shadows, and the jump between them is large on purpose — a panel barely lifts, a modal
+        clearly floats. Overlay scrims are <code>rgba(0,0,0,0.5)</code>, or
+        <code>0.55</code> behind a hero modal.
+      </p>
+    </div>
+    <div class="sg-section">
+      <div class="sg-label">Spacing rhythm</div>
+      <div class="sg-tbl-wrap">
+        <table class="sg-table">
+          <thead><tr><th>Measure</th><th>Value</th><th>Where</th></tr></thead>
+          <tbody>
+            <tr><td>Page gutter</td><td><code>20px</code></td><td><code>.main</code>, dropping to 10px under 640px</td></tr>
+            <tr><td>Panel padding</td><td><code>20px</code></td><td>Horizontal; 14–16px vertical</td></tr>
+            <tr><td>Within a group</td><td><code>12–16px</code></td><td>Between a label and its control</td></tr>
+            <tr><td>Sibling controls</td><td><code>4–8px</code></td><td>Button rows, tab strips, chips</td></tr>
+            <tr><td>Content width</td><td><code>1300px</code></td><td><code>max-width</code>, centred with <code>margin: 0 auto</code></td></tr>
+            <tr><td>Safe areas</td><td><code>max(20px, env(safe-area-inset-left))</code></td><td>Every full-bleed row, for landscape iPad</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6 · COMPONENTS ─────────────────────────────────────────────────── -->
+  <div class="panel" id="components">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>6 · Components</h2>
+          <p>Live specimens. Every one of these is real markup with the real classes — copy from the page source.</p>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" placeholder="Search…" aria-label="Search — specimen, nothing to search">
+        </div>
+        <div class="pills" role="group" aria-label="Filter specimens">
+          <button class="pill active" aria-pressed="true">All</button>
+          <button class="pill" aria-pressed="false">Concern</button>
+          <button class="pill" aria-pressed="false">Praise</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- The inset toolbar: a gray strip hairlined top and bottom, holding wash chips. -->
+    <div class="date-batch-bar">
+      <span class="save-indicator saved">✓ Saved</span>
+      <button class="batch-btn p">Present</button>
+      <button class="batch-btn a">Absent</button>
+      <button class="batch-btn i">Info</button>
+      <button class="batch-btn w">Tardy</button>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Buttons</div>
+      <div class="sg-row">
+        <button class="class-action-btn">Outline</button>
+        <button class="class-action-btn primary">Primary</button>
+        <button class="class-action-btn danger">Danger</button>
+        <button class="class-action-btn archive">Archive · hover</button>
+        <button class="class-action-btn restore">Restore · hover</button>
+        <button class="class-action-btn delete">Delete · hover</button>
+        <button class="class-action-btn" disabled>Disabled</button>
+      </div>
+      <p class="sg-note">
+        The last three take their accent <strong>on hover only</strong>. In a row of five buttons the
+        destructive one must never look like the other four — but colouring all five five ways is a
+        row nobody can scan, so the resting state stays one visual family and the color arrives when
+        the pointer does. Disabled is <code>opacity: 0.45</code> plus
+        <code>cursor: not-allowed</code>; it is never hidden, because a control that vanishes is a
+        control the user hunts for.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Toggles and filter pills</div>
+      <div class="sg-row">
+        <button class="toggle-btn active" aria-pressed="true">Toggle on</button>
+        <button class="toggle-btn" aria-pressed="false">Toggle off</button>
+        <span style="width:12px"></span>
+        <button class="pill active" aria-pressed="true">Selected</button>
+        <button class="pill" aria-pressed="false">Unselected</button>
+      </div>
+      <p class="sg-note">
+        Both carry <code>aria-pressed</code>, and a pill row is wrapped in
+        <code>role="group"</code> with a label. Note the two grammars: a toggle's on-state is a
+        <em>wash</em> (it is one of several independent switches), a pill's is a <em>solid fill</em>
+        (exactly one of the row is chosen).
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Save indicator — all states at once</div>
+      <div class="sg-row">
+        <span class="save-indicator saving">⏳ Saving…</span>
+        <span class="save-indicator saved">✓ Saved</span>
+        <span class="save-indicator error">✕ Save failed</span>
+        <span class="save-indicator syncing">↻ Syncing…</span>
+        <span class="save-indicator retry">↻ Retrying…</span>
+      </div>
+      <p class="sg-note">
+        Wash backgrounds with strong text, at 11px/600 in a 10px-radius pill. A sixth state,
+        <code>queued</code>, exists only in apps with a remote write queue — in a local-first app a
+        write that has not landed has <em>failed</em>, not queued, and offering the softer word
+        would be a lie the user acts on.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">On-dark controls</div>
+      <div class="sg-dark">
+        <button class="cls-tab active">Period 1</button>
+        <button class="cls-tab">Period 2</button>
+        <button class="cls-tab cls-tab-add">+</button>
+        <div class="hdr-divider"></div>
+        <button class="q-btn active">Q1</button>
+        <button class="q-btn">Q2</button>
+        <button class="hdr-icon-btn" title="Icon button" aria-label="Icon button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6"/></svg>
+        </button>
+      </div>
+      <p class="sg-note">
+        Shown against the gradient because that is the surface they were designed for — on white
+        they are invisible. The two active states <strong>invert differently and on purpose</strong>:
+        a primary tab goes to near-black <code>#1a1a2e</code>, a context tab goes to white with
+        <code>#1a3c5e</code> text. Two levels of navigation cannot both be the loudest thing in the
+        bar.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Modal</div>
+      <div class="sg-row">
+        <button class="class-action-btn" data-modal-open>Open from here</button>
+        <button class="class-action-btn primary" data-modal-open>Open from here instead</button>
+      </div>
+      <p class="sg-note">
+        Two openers, so focus-return is testable: Escape or a backdrop click has to put focus back
+        on <em>whichever</em> button opened it, not on the first one on the page. The z-index ladder
+        is fixed across the suite — content banners 90 · loading 999 · modals 1000 · setup screens
+        1001 · hero 1100 — so that a fix to one app's stacking travels to the others.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Icons — inline SVG, no icon font, no image files</div>
+      <div class="sg-row" style="color:#5b6fcc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <p class="sg-note">
+        Feather-style, always
+        <code>viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"</code> with
+        round caps and joins. 16×16 on desktop, 18×18 on touch.
+        <code>stroke="currentColor"</code> is what lets one icon sit in a white header button and a
+        red delete button without a second copy.
+      </p>
+    </div>
+
+    <div class="sg-section">
+      <div class="sg-label">Empty state</div>
+      <div class="empty-state">Nothing to show yet. This is what a panel looks like with no rows in it.</div>
+      <p class="sg-note">
+        48px of vertical padding, centred, <code>#a0aab8</code> at 13px. Every list gets one — a
+        panel that collapses to nothing when empty reads as a bug.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 7 · MOTION ─────────────────────────────────────────────────────── -->
+  <div class="panel" id="motion">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>7 · Motion</h2>
+          <p>Small and fast, and no library. Nothing animates longer than a third of a second except a loop.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-tbl-wrap">
+        <table class="sg-table">
+          <thead><tr><th>Where</th><th>Value</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Interactive elements</td><td><code>transition: all 0.15s</code></td><td>Hover, border, background</td></tr>
+            <tr><td>Micro-interactions</td><td><code>0.1s</code></td><td>Dots, small toggles</td></tr>
+            <tr><td>Press feedback</td><td><code>transform: scale(0.95)</code></td><td>On <code>:active</code> — the only touch confirmation there is</td></tr>
+            <tr><td>Round dot buttons</td><td><code>scale(1.15)</code> + shadow</td><td>Hover grow</td></tr>
+            <tr><td>Entrances</td><td><code>0.18s ease</code>, opacity + scale</td><td><code>@keyframes srIn</code> — open the modal above to see it</td></tr>
+            <tr><td>Spinners</td><td><code>0.8s spin</code></td><td>Linear, infinite</td></tr>
+            <tr><td>Skeletons</td><td><code>1.4s shimmer</code></td><td>Load-in placeholders</td></tr>
+            <tr><td>Collapsible banners</td><td><code>0.3s</code> on <code>max-height</code> + padding</td><td>The one long transition, because it moves the page</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sg-note">
+        Animate <code>transform</code> and <code>opacity</code> where you can; both are composited,
+        and everything else risks a janky frame on an older iPad — which is the device this suite is
+        actually used on.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 8 · STATES ─────────────────────────────────────────────────────── -->
+  <div class="panel" id="states">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>8 · States</h2>
+          <p>Five states, and the focus ring is the one that is not negotiable.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-tbl-wrap">
+        <table class="sg-table">
+          <thead><tr><th>State</th><th>Treatment</th></tr></thead>
+          <tbody>
+            <tr><td>Hover</td><td>Solid buttons darken one step. On-dark controls brighten their white alpha. Outline buttons take the accent on border <em>and</em> text.</td></tr>
+            <tr><td>Active / selected</td><td>Solid accent fill with white text. On the dark header this inverts instead — white background, navy text.</td></tr>
+            <tr><td>Disabled</td><td><code>opacity: 0.35–0.5</code>, <code>cursor: not-allowed</code>, washed colors. Present, not hidden.</td></tr>
+            <tr><td>Focus</td><td><code>:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }</code></td></tr>
+            <tr><td>Loading</td><td>Skeleton shimmer for content, a spinner only for a blocking wait.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sg-note">
+        <strong>Never remove the focus ring, and never style bare <code>:focus</code>.</strong> Use
+        <code>:focus-visible</code> so a mouse click doesn't leave a ring behind but a Tab key does.
+        If a starter template you are lifting from suppresses an outline — some do, on search inputs
+        — <strong>drop that rule rather than lift it</strong>: a box that draws no focus affordance
+        of its own leaves a keyboard user with no idea where they are.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 9 · RESPONSIVE ─────────────────────────────────────────────────── -->
+  <div class="panel" id="touch">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>9 · Responsive &amp; touch</h2>
+          <p>Four breakpoints, declared in this order. The order is load-bearing.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <div class="sg-tbl-wrap">
+        <table class="sg-table">
+          <thead><tr><th>Query</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>(pointer: coarse)</code></td><td><strong>The touch pass.</strong> Every interactive control gets <code>min-height: 44px</code>, icon buttons 44×44, fonts bump 1–2px, hover-only affordances become always visible. <strong>Every new control must appear in this block.</strong></td></tr>
+            <tr><td><code>(max-width: 1024px)</code></td><td>Tablet: search stretches, the centred pill row un-centres and wraps, grids drop a column.</td></tr>
+            <tr><td><code>(max-width: 640px)</code></td><td>Phone: page padding 10px, modals <code>width: 95vw</code>, two-column grids, bars wrap.</td></tr>
+            <tr><td><code>(orientation: portrait) and (max-width: 1024px)</code></td><td>Portrait-tablet grid tweak.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sg-note">
+        The touch pass comes <strong>first</strong> so the width queries can override it, and it is
+        <code>pointer: coarse</code> rather than a width, because a 1024px iPad and a 1024px laptop
+        need different targets at the same size.
+      </p>
+      <p class="sg-note">
+        <strong>iOS specifics, all of them scars:</strong> a viewport meta with
+        <code>maximum-scale=1.0</code>; <code>apple-mobile-web-app-capable</code>;
+        <code>env(safe-area-inset-*)</code> on every full-bleed row;
+        <code>overscroll-behavior-y: contain</code> to kill rubber-banding;
+        <code>-webkit-overflow-scrolling: touch</code> on scrollers; and
+        <code>touch-action: manipulation; user-select: none</code> on every tappable class, in one
+        grouped selector at the top of the sheet, which is what removes the 300ms tap delay and
+        stops a long-press from selecting a button's label.
+        <strong>Inputs go to 16px on touch</strong> — under 16px, iOS zooms the whole page on focus
+        and does not zoom back.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 10 · ACCESSIBILITY ─────────────────────────────────────────────── -->
+  <div class="panel" id="a11y">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>10 · Accessibility</h2>
+          <p>The parts that are easy to skip and expensive to retrofit.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <p class="sg-note" style="margin-top:0">
+        <strong>Every icon-only button carries both <code>aria-label</code> and
+        <code>title</code></strong> — the label for a screen reader, the tooltip for a sighted user
+        who cannot place the glyph. Toggles carry <code>aria-pressed</code>; a filter row is
+        <code>role="group"</code> with a label; visually hidden text uses a <code>.sr-only</code>
+        utility rather than <code>display: none</code>, which removes it from the accessibility tree
+        as well.
+      </p>
+      <p class="sg-note">
+        <strong>Emoji used as decoration get <code>aria-hidden="true"</code>.</strong> Otherwise a
+        screen reader announces "memo" before your app's name, every single time.
+      </p>
+      <p class="sg-note">
+        <strong>Live announcements go through one <code>announce()</code> helper into a single
+        <code>aria-live</code> region</strong>, never through the visual indicator. A save failure
+        shows as a red chip <em>and</em> is announced, because the chip is not something a
+        screen-reader user has any reason to be looking at. One region, one helper — two live
+        regions race each other and the second message wins.
+      </p>
+      <p class="sg-note">
+        <strong>Color is never the only signal.</strong> Every status chip in this guide carries a
+        glyph or a word as well as a wash: ⏳ ✓ ✕ ↻. Around 8% of men have some form of color
+        vision deficiency, and in a classroom app the person reading the screen is often doing it
+        over someone's shoulder at an angle, on a projector, in daylight.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 11 · BASE LAYER ────────────────────────────────────────────────── -->
+  <div class="panel" id="base">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>11 · The base layer</h2>
+          <p>Paste this into a new app's stylesheet first, before any screen styles.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+<pre class="sg-pre"><span class="c">/* Reset — all three properties, on everything. */</span>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  font-size: 14px;
+  min-height: 100vh;
+  overscroll-behavior-y: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+<span class="c">/* Form controls do not inherit the font. One missed input is a foreign widget. */</span>
+button, input, select, textarea { font-family: inherit; }
+
+<span class="c">/* Never remove this. Never style bare :focus. */</span>
+:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }
+
+<span class="c">/* The show/hide mechanism everywhere — !important so it beats any display rule. */</span>
+.hidden { display: none !important; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+<span class="c">/* One grouped selector for every tappable class. Extend the list with each new one. */</span>
+.cls-tab, .q-btn, .pill, .hdr-icon-btn, .class-action-btn, .batch-btn {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}</pre>
+      <p class="sg-note">And the head, which is as much of the design as the CSS is:</p>
+<pre class="sg-pre">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"&gt;
+&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;
+&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;
+
+<span class="c">&lt;!-- Emoji favicon: no file, no request, no 404 in the console. --&gt;</span>
+&lt;link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg'
+  viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;📋&lt;/text&gt;&lt;/svg&gt;"&gt;</pre>
+      <p class="sg-note">
+        Then lift the header, the panel frame, the modal system and the button classes from this
+        page's source. <strong>Keep the class names</strong> — that is what makes a fix in one app
+        portable to the next.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── 12 · VOICE ─────────────────────────────────────────────────────── -->
+  <div class="panel" id="voice">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>12 · Voice</h2>
+          <p>Friendly-utilitarian, and written for a teacher between classes.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sg-section">
+      <p class="sg-note" style="margin-top:0">
+        <strong>Sentence case everywhere</strong>, except the uppercase 10px micro section labels.
+        Not Title Case On Buttons — it reads as marketing, and this is a tool.
+      </p>
+      <p class="sg-note">
+        <strong>Emoji are functional signposts</strong> — 📋 ⚠ 🚫 ✓ ↩ — used sparingly in chrome and
+        banners, never decorating body text.
+      </p>
+      <p class="sg-note">
+        <strong>Errors say what happened and what to do next</strong>, in that order, in one
+        sentence each. "The bridge did not respond within 15 seconds. Check your connection and try
+        again." Not "An error occurred." A message that does not end in an action the reader can
+        take is a message that makes them find you instead.
+      </p>
+      <p class="sg-note">
+        <strong>Never use a softer word than the truth.</strong> A save that failed says failed. The
+        cost of an accurate scary word is a moment of alarm; the cost of a reassuring inaccurate one
+        is a term of work the user thought was safe.
+      </p>
+    </div>
+  </div>
+
+  <p class="sg-footer">
+    Rendered twin of <code class="sg-inline-code">design/style-guide.md</code>. Where the two
+    disagree, the guide wins.<br>
+    Self-contained by design — no stylesheet, no font, no script beyond this page. Copy the file and go.
+  </p>
+
+</main>
+
+<!-- The modal specimen. Openable, closable, and it returns focus to its opener. -->
+<div class="modal-overlay hidden" id="sgModal" role="dialog" aria-modal="true" aria-labelledby="sgModalTitle">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 id="sgModalTitle">Modal specimen</h2>
+      <button class="modal-close" id="sgModalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>480px wide, 14px radius, capped at <code class="sg-inline-code">95vw</code>, entering with
+      the 0.18s <code class="sg-inline-code">srIn</code> animation. The gradient header is the
+      two-stop variant, not the three-stop one the page header uses.</p>
+      <p>The overlay scrolls and the panel is centred with <code class="sg-inline-code">margin: auto</code>
+      rather than by <code class="sg-inline-code">align-items</code> alone. Centring a too-tall flex
+      child clips its top edge with no way to scroll back to it — an iPad in landscape is 704px of
+      usable height, which any modal with a form in it will pass.</p>
+      <p>Escape closes it, so does a click on the backdrop, and either one puts focus back on the
+      button that opened it.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sg-toast" id="sgToast" aria-hidden="true"></div>
+<div class="sr-only" role="status" aria-live="polite" id="sgLive"></div>
+
+<script>
+/* Everything below serves the guide itself: copy-a-swatch, the modal specimen, print.
+   No app depends on any of it. */
+(function () {
+  'use strict';
+
+  var live  = document.getElementById('sgLive');
+  var toast = document.getElementById('sgToast');
+  var toastTimer = null;
+
+  /* One announce() helper into one aria-live region — the pattern §10 describes.
+     Cleared first, because setting the same text twice announces nothing the second time. */
+  function announce(msg) {
+    live.textContent = '';
+    setTimeout(function () { live.textContent = msg; }, 40);
+  }
+
+  function flash(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1600);
+    announce(msg);
+  }
+
+  /* Click a swatch to copy its value. execCommand is the fallback rather than the
+     afterthought: navigator.clipboard is unavailable over file://, which is exactly how
+     this page gets opened once it has been copied into another project. */
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        function () { flash(text + ' copied'); },
+        function () { legacyCopy(text); }
+      );
+    } else {
+      legacyCopy(text);
+    }
+  }
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    flash(ok ? text + ' copied' : 'Could not copy — select it by hand: ' + text);
+  }
+
+  document.querySelectorAll('.swatch').forEach(function (btn) {
+    var hex = btn.getAttribute('data-hex');
+    btn.setAttribute('title', 'Copy ' + hex);
+    btn.setAttribute('aria-label', 'Copy ' + hex);
+    btn.addEventListener('click', function () { copy(hex); });
+  });
+
+  /* Modal. Focus returns to whichever button opened it — which is the whole reason there
+     are two openers in the components panel. */
+  var modal   = document.getElementById('sgModal');
+  var closeEl = document.getElementById('sgModalClose');
+  var opener  = null;
+
+  function openModal(from) {
+    opener = from;
+    modal.classList.remove('hidden');
+    closeEl.focus();
+  }
+  function closeModal() {
+    modal.classList.add('hidden');
+    if (opener) { opener.focus(); opener = null; }
+  }
+
+  document.querySelectorAll('[data-modal-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () { openModal(btn); });
+  });
+  closeEl.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+  });
+
+  /* Specimen toggles: the pills and tabs are live so their active states can be seen,
+     and because a style guide whose buttons do nothing invites a click that teaches
+     nothing. Radio behaviour within each group. */
+  function radioGroup(selector) {
+    var group = document.querySelectorAll(selector);
+    group.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        group.forEach(function (b) {
+          b.classList.remove('active');
+          if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        if (btn.hasAttribute('aria-pressed')) btn.setAttribute('aria-pressed', 'true');
+      });
+    });
+  }
+  radioGroup('.header-bottom .cls-tab:not(.cls-tab-add)');
+  radioGroup('.header-bottom .q-btn');
+  radioGroup('.panel-header .pills .pill');
+
+  document.querySelectorAll('.toggle-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var on = btn.classList.toggle('active');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  });
+
+  document.getElementById('sgPrint').addEventListener('click', function () { window.print(); });
+})();
+</script>
+</body>
+</html>

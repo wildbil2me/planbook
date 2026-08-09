@@ -4,6 +4,21 @@ The visual language shared by every app in the suite. Values are quoted from
 `src/dashboard.html` — copy them literally. Colors are defined inline (no CSS variables);
 that is a deliberate convention, keep it unless the whole suite migrates at once.
 
+**There is a rendered twin: [`style-guide.html`](style-guide.html).** This file is the
+reference you read; that one is the reference you *look at* — every color as a clickable
+swatch that copies its own hex, and the component shelf WO-1.2 shipped in `index.html`
+and WO-1.10 took back out when the shelf left. It is a single self-contained page that
+links no stylesheet, loads no font and fetches nothing, so it opens from `file://` and
+**is meant to be copied out of this repo into a sibling app** — change the app name and
+the favicon emoji, and nothing else is app-specific.
+
+Which one to reach for: **this file settles what a value is, the HTML settles what it
+looks like next to the others.** A wash that reads correctly in a table cell can still be
+wrong against the strong tone beside it, and that is not a judgement a markdown table can
+make. The two are kept in step by hand — if you change a value here, change it there, and
+the HTML practises what it documents, so anything copied out of it is already a literal
+value rather than a variable that needs a definition travelling with it.
+
 ## 1. Palette
 
 ### Chrome (dark surfaces)
