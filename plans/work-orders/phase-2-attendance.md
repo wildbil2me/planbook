@@ -1320,7 +1320,7 @@ the next reader will trust it for the parts it never touched.
 
 ## WO-2.16 — the self-check states its precondition, and `**Blocks**` stops being a dependency
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.15
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** WO-2.15
 
 **Not a go-live blocker, and the same kind of work as WO-2.15.** Added 2026-08-09, out of WO-2.15's
 verification. Harness, not app: nothing here writes student data or reaches a classroom. **Do not
@@ -1390,8 +1390,9 @@ and found **Amends roadmap** while walking past this one. The new field table at
 [`README.md:44-48`](README.md) documents five fields and not this one.
 
 **And a second unknown field, found 2026-08-09 while rewriting WO-G2's dependency line:**
-`**Target**`, which all four gate work orders carry on the line under their header
-(`gates.md:14`, `:183`, `:205`). It lands in the same place — `node tools/wo-gate.mjs WO-G2` ends its
+`**Target**`, which three of the four gate work orders carry on the line under their header
+(`gates.md:14`, `:183`, `:219` — WO-G4 has none, since the 1.0.0 call is the one gate no calendar can
+set). It lands in the same place — `node tools/wo-gate.mjs WO-G2` ends its
 dependency report with `(prose) … **Target** ~2026-09-15, before the first grades are entered for
 real`. Harmless today, because a date carries no `WO-` token to be misread as a dependency. It is
 here because it is the third instance of one defect: **any line in the header block that is not
@@ -1436,35 +1437,35 @@ touch — this work order changes what the tool *says*, and its reading of one f
 its writes. Do not correct the two `**Blocks**` lines' prose; they are the fixtures.
 
 **Acceptance**
-- [ ] With `ROADMAP.md`'s dashboard drifted in a temp copy, `--self-check` stops before planting and
+- [x] With `ROADMAP.md`'s dashboard drifted in a temp copy, `--self-check` stops before planting and
       names the drift as the reason. **Prove it on a planted row in a copy outside the repository** —
       the tree's own rows are clean as of 2026-08-08 and cannot be the fixture, and planting drift in
       the live `plans/` to test a drift check is how a bad morning starts.
-- [ ] The same, for the other thing that earns a `HELD`: a `Closes roadmap` fragment matching zero
+- [x] The same, for the other thing that earns a `HELD`: a `Closes roadmap` fragment matching zero
       boxes in the copy.
-- [ ] On a clean tree, `--self-check` still passes with all nine plants caught and still says how
+- [x] On a clean tree, `--self-check` still passes with all nine plants caught and still says how
       many it made — the precondition check must not cost a plant.
-- [ ] **The `next` plant passes with a populated running order**, which is the state the tree has
+- [x] **The `next` plant passes with a populated running order**, which is the state the tree has
       been in since 2026-08-09 and the state it will be in for every phase from here. Prove it both
       ways: with ⬜ NOT STARTED rows ahead of the fixture, and with none — the second is the
       condition that has been silently holding the plant up since it was written.
-- [ ] A plant that genuinely fails still reports as a plant failure, with the `HELD` reason visible
+- [x] A plant that genuinely fails still reports as a plant failure, with the `HELD` reason visible
       rather than clipped away. Prove it by mutating the subject script, not by drifting the
       trackers — those are the two cases this work order exists to tell apart, so the evidence has to
       tell them apart too.
-- [ ] `node tools/wo-gate.mjs WO-1.5` no longer reports `WO-1.6` as a dependency, and WO-1.5's
+- [x] `node tools/wo-gate.mjs WO-1.5` no longer reports `WO-1.6` as a dependency, and WO-1.5's
       `**Blocks**` line is unchanged on disk.
-- [ ] `node tools/wo-gate.mjs WO-1.1` no longer scrapes `**Blocks** everything` into its dependency
+- [x] `node tools/wo-gate.mjs WO-1.1` no longer scrapes `**Blocks** everything` into its dependency
       field.
-- [ ] `--list` and `next` are unchanged on every other work order — diff the full output of both
+- [x] `--list` and `next` are unchanged on every other work order — diff the full output of both
       against the same commands run before the change, and show that the only differences are the two
       lines above.
-- [ ] `**Blocks**` has a row in `work-orders/README.md`'s field table, and the table says what becomes
+- [x] `**Blocks**` has a row in `work-orders/README.md`'s field table, and the table says what becomes
       of a field that has no row.
-- [ ] `--self-check` writes nothing inside the repository and leaves no temp directory on either exit
+- [x] `--self-check` writes nothing inside the repository and leaves no temp directory on either exit
       path, including the new early one. **The early exit is a new exit path** — WO-2.15's acceptance
       line 4 was written before it existed.
-- [ ] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — all checks passing, zero
+- [x] `verify-shell.mjs` and `wo-sweep.mjs` still run clean afterward — all checks passing, zero
       skips, exit 0, and the count matching whatever `tools/README.md` says at the time.
 
 **Traps** — **The precondition check must not become a tenth plant.** It runs over the copy before

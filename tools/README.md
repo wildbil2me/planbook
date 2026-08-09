@@ -51,6 +51,17 @@ re-cut twice because it named real work orders as fixtures and both were spent w
 proved able to fail — `git show 7973a42:tools/wo-gate.mjs` into a temp file and seven of the nine go
 red. **A green run is not coverage**, and the run says so in its own output.
 
+**It has a precondition, and since WO-2.16 it states it and checks it first: the trackers must already
+be clean.** The copy inherits whatever drift `plans/` is carrying, drift is what `--tick` refuses over,
+and a refusal is indistinguishable from a plant that broke — so a dirty tree used to be announced as
+two unrelated plants going red, neither of which had done anything wrong. `--audit`'s own two readers
+now run over the copy before anything is planted, and a dirty copy stops the run with the drift named
+and `0 plants made`. Only what can earn a `HELD` counts: `ROADMAP.md` dashboard drift, and a
+`**Closes roadmap**` fragment matching no box. Drift in *this* directory's dashboard does not, because
+`--tick` recomputes that table itself. **A plant failure means a plant failed**, and when one does the
+subject's own `HELD` and its reason are printed under it rather than clipped off at 160 characters,
+which is how the same morning was spent twice.
+
 `codex-invoke.mjs` writes outside the repo (a temp dir for
 `--probe`, the dispatch result file for `--brief`/`--out`) and exists because the `codex-resources\`
 `PATH` fix was re-derived and re-typed at two call sites inside `work-order-orchestrator.md` — one

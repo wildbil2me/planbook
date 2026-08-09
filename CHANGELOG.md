@@ -110,6 +110,37 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.16 — a header field the gate had never heard of was being swallowed by the field above it,
+  and that made the sprint's one hard ordering constraint point backwards.** `**Blocks**` is the
+  opposite of a dependency, and the gate was reading the `WO-` tokens off it as dependencies. So
+  WO-1.5 — the backup work order the whole sprint is ordered around, the one the *no feature that
+  writes student data lands before backup and restore* rule is about — was reported as **depending
+  on WO-1.6**, which in fact waits on it. Both were already `✅ DONE`, so nothing was ever gated
+  wrongly. That was luck: the same line between two open work orders is a cycle, and the gate would
+  have called the ordering satisfied while pointing the wrong way down it.
+
+  **The fix is to the class of defect, not to the field.** The boundary between one header field and
+  the next is now a *position* — the start of a header line, or a `·` — rather than a closed list of
+  names. Previously any field the script had never heard of was absorbed into whatever field was
+  written above it, silently changing what that field meant. `**Blocks**` and `**Target**` are now
+  fields in their own right, reported to the reader and acted on by nothing. And a field with **no
+  row in the field table** is named by the gate as unread, instead of quietly editing its neighbour.
+  That last control is why this is a fix and not a patch: three fields — `**Amends roadmap**`,
+  `**Blocks**`, `**Target**` — were each invented by a hand, absorbed in silence, and then found one
+  at a time by a human reading the gate's output and thinking it looked odd. The fourth will announce
+  itself.
+
+- **WO-2.16 — `--self-check` states its precondition and checks it first, and a failing plant no
+  longer loses its reason at 160 characters.** The self-check copies the trackers, and tracker drift
+  is exactly what `--tick` refuses over — so a dirty tree meant two healthy plants were reported as
+  failures. It now stops before planting anything, with the drift named. When a plant does fail, the
+  subject's own `HELD` line and its cause survive into the output rather than being clipped.
+
+  **The `next` plant no longer depends on what the live running order happens to contain** — its
+  fixture row sits above every real row. It had been red since the Ship 2 table was written, for a
+  reason that was never a defect in `next`, which is the failure mode a self-check is most vulnerable
+  to: a control that goes red for a reason the reader learns to dismiss is worse than no control.
+
 - **WO-2.13 — the totals are computed once per render, and a stale row nobody had reported is
   gone.** The registry recomputed every student's counts inside the per-row loop: `attendanceTotals()`
   walked the whole `doc.attendance` array once per name, and `meetingDates()` rebuilt the class's

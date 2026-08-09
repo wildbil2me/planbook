@@ -35,18 +35,30 @@ starts to sprawl.
 ## Header fields, and the two ways they rot
 
 The paragraph under a `## WO-x.y — Title` heading is read by `tools/wo-gate.mjs`, `wo-brief.mjs` and
-by people. These are the fields it may carry. **A field the script has never heard of does not go
-missing — it gets swallowed by whichever field is written before it**, so a new one is a change to
-`KNOWN_FIELDS` in `wo-gate.mjs` and not just a line of prose.
+by people. These are the fields it may carry. A field the script has never heard of **used to get
+swallowed by whichever field was written before it**; since WO-2.16 it does not, because the boundary
+between one field and the next is now a *position* — the start of a header line, or a `·` — rather
+than the closed list below. A new field is still a change to `KNOWN_FIELDS` in `wo-gate.mjs` if you
+want it read; it is no longer a change to what the field above it means if you forget.
 
 | Field | Read by the tool as |
 |---|---|
 | **Ship** · **Status** · **Size** · 🚩 | The status line. `--start`, `--release` and `--tick` rewrite **Status** and nothing else |
 | **Ship**, specifically | `1`, `2`, `3` — the ship whose table carries it, and whose gate work order depends on it. `—` means **in no ship**, which is a statement and not a blank: either the work order sits outside the delivery plan (the tooling ones — WO-2.14, WO-2.15), or it has been deferred out of a ship (WO-2.7), or no ship covering it exists yet (Phases 5–8, WO-G4 — the delivery table stops at Ship 3). **Every work order carries this field.** It was missing from thirty-three of them until 2026-08-09, which is exactly the rot the row below describes: absent read as *"no ship,"* when it meant *"nobody has said"* |
-| **Depends on** | Every `WO-` token is a gate; anything else on the line is reported as prose for a human to read |
+| **Depends on** | Every `WO-` token is a gate; anything else on the line is reported as prose for a human to read. A `…` between two `WO-` tokens is **two dependencies and not a range** — the gate warns about it and will never expand it, because WO-G2's `WO-2.5 … WO-2.7` left WO-2.6 gating nothing for a week and a parser guessing at ranges invents dependencies nobody typed |
+| **Blocks** | Reported, never acted on, and **never a dependency** — it is the opposite of one. Prose written by a hand rather than a list of IDs: WO-1.1's says `everything` and WO-1.5's ends `— **unblocked as of 2026-08-04**`. Until WO-2.16 the `WO-` tokens on it reached the dependency walk, so WO-1.5 — the backup work order the whole sprint waits on — was reported as *depending on* WO-1.6. Both were ✅ DONE so nothing was gated wrongly, which was luck: the same line between two open work orders is a cycle the gate would have called satisfied |
+| **Target** | Reported, never acted on. A date, on three of the four gate work orders — WO-G4 has none, because the 1.0.0 call is the one gate no calendar can set — because a gate is otherwise calendar-bound rather than work-bound. It sat inside `Depends on` until WO-2.16 for the same reason **Blocks** did, and got away with it because a date carries no `WO-` token |
 | **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks |
 | **Amends roadmap** | Reported, never acted on. This work order changes the promise of a box some earlier one already closed — WO-2.12 and WO-2.13 carry it. The *(italic paren note)* it owes `ROADMAP.md` is still a hand edit |
 | **Takes from WO-x.y** | Prose. Nothing reads it |
+| *anything with no row here* | **Read by nothing, and said so once per gate report.** It is parsed far enough to keep it out of the field written above it, and `node tools/wo-gate.mjs WO-x.y` names it as a field with no row. If it is real, give it both a row here and a line in `KNOWN_FIELDS`; if it is not, take it out of the header block. This row exists because three fields — **Amends roadmap**, **Blocks**, **Target** — were each invented by a hand, absorbed in silence, and found one at a time by a human reading the gate's output and thinking it looked odd |
+
+**A field is recognised by where it sits as much as by its name.** It must start a line of the header
+block or follow a `·`, and the asterisks must hold nothing but capitalised words — plus the `WO-x.y`
+that `**Takes from WO-2.9**` names its own argument with. Bold *prose* inside a field's value is left
+alone and stays part of that value, which is why WO-1.13's *see **Why it exists** below* does not end
+its **Closes roadmap** line and WO-1.11's **Not a go-live blocker.** does not end its **Depends on**.
+Write a new field at the start of a line, the way every existing one is written, and it will be seen.
 
 **Everything must sit in one paragraph with no blank line in it.** The header block ends at the
 first blank line, and a field below that line is invisible to every script here — WO-2.8's
@@ -105,7 +117,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 15 | 11 | 🔨 IN PROGRESS |
+| 2 — Attendance | 15 | 12 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 10 | 0 | ⬜ NOT STARTED |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -113,7 +125,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **64** | **25** | `[███░░░░░░░] 39%` |
+| | **64** | **26** | `[████░░░░░░] 41%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

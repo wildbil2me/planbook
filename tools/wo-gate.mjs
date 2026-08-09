@@ -24,7 +24,9 @@
 //
 // --audit and --self-check (WO-2.15) write nothing anywhere. --audit reads the two trackers and
 // reports where they have drifted apart; --self-check copies plans/ to a temp directory, plants the
-// violations WO-2.14 and WO-2.15 proved by hand, and fails if any of them stops being caught.
+// violations WO-2.14 and WO-2.15 proved by hand, and fails if any of them stops being caught. Since
+// WO-2.16 it checks its own precondition first — the trackers must be clean, because the copy
+// inherits their drift and drift makes a healthy plant report a failure.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -59,8 +61,7 @@ function read(f) { return fs.readFileSync(f, 'utf8'); }
 // whichever field's regex runs to the end of the line. **Amends roadmap** did exactly that — it sits
 // on WO-2.12's and WO-2.13's `Depends on` line, `depsOf()` scraped it into the dependency field, and
 // the gate report announced a "non-work-order clause" on two work orders that depend on exactly one
-// thing each. So every known field stops at the next known field, and an unknown one is visible as
-// prose on the field before it rather than silently changing what that field means.
+// thing each.
 //
 // **Amends roadmap** is REAL, decided 2026-08-08 (WO-2.15). It records that a work order changes the
 // promise of a roadmap box some earlier work order already closed — WO-2.12 narrowing WO-2.1's grid
@@ -71,11 +72,63 @@ function read(f) { return fs.readFileSync(f, 'utf8'); }
 // it is reported by `gate()`, and it is NEVER written — amending a box is prose about intent and
 // only a human writes that. Documented in `plans/work-orders/README.md` § Header fields so the next
 // one is typed the same way.
-const KNOWN_FIELDS = ['Ship', 'Status', 'Size', 'Depends on', 'Closes roadmap', 'Amends roadmap', 'Takes from'];
+//
+// **Blocks** and **Target** are REAL too, decided 2026-08-09 (WO-2.16), and handled exactly as
+// **Amends roadmap** is: parsed, reported by gate(), never acted on and never written. `**Blocks**`
+// is why that work order exists. WO-1.5 carries `**Blocks** WO-1.6 and every work order after it` on
+// the line under its header, and depsOf() read the `WO-` token out of it and reported *"depends
+// WO-1.6 ✅ DONE"* — the sprint's one hard ordering constraint pointing backwards, since WO-1.5 is
+// the backup work order that WO-1.6 waits on. Both were ✅ DONE, so nothing was gated wrongly, and
+// that is luck rather than design: the same line between two OPEN work orders is a cycle, and the
+// gate would have called the ordering satisfied while pointing the wrong way down it. It is real
+// because it is genuine information a human wants at the top of a work order and it reads naturally
+// beside `Depends on`.
+//
+// **Target** is real for a narrower reason: three of the four gate work orders carry a date on the
+// line under their header (`gates.md:14`, `:183`, `:219`) — WO-G4 has none, since the 1.0.0 call is
+// the one gate no calendar can set — and a gate is otherwise calendar-bound rather than work-bound:
+// the date is the point of it. Leaving it unknown was the other option and was rejected: it would
+// print an unknown-field NOTE nobody can act on under every gate report forever, and *"a control
+// that goes red for a reason the reader learns to dismiss is worse than no control"* (WO-1.12).
+//
+// **Neither is ever a list of IDs.** `**Blocks**` is prose written by a hand, not a schema: WO-1.1's
+// says `everything` and WO-1.5's ends `— **unblocked as of 2026-08-04**`. So no `WO-` token on a
+// `**Blocks**` line may reach depsOf(), which is why this is a field of its own rather than a second
+// thing read out of `Depends on`.
+const KNOWN_FIELDS = ['Ship', 'Status', 'Size', 'Depends on', 'Blocks', 'Target', 'Closes roadmap', 'Amends roadmap', 'Takes from'];
 
-// `**Name** …everything up to the next known field or the end of the header paragraph`.
-function fieldRe(name) {
-  const others = KNOWN_FIELDS.filter(f => f !== name).join('|');
+// **The closed list stopped being the boundary — WO-2.16.** The old rule here said an unknown field
+// "is visible as prose on the field before it rather than silently changing what that field means",
+// and both halves of that were wrong. It is not visible: the gate report reads plausibly and three
+// fields sat mis-read for a week. And it does change what the field before it means, because a `WO-`
+// token inside it becomes a dependency. Three instances, one defect — **Amends roadmap**, **Blocks**,
+// **Target** — so the fix is to the class and not to the three names: **a field ends at the next bold
+// token written where a field is written**, known or not.
+//
+// "Where a field is written" is the whole guard, and it is why this is not simply "any bold token".
+// Header blocks carry bold prose as well as fields, in both of the ways that could go wrong:
+// WO-1.13's **Closes roadmap** note says *see **Why it exists** below*, which is field-SHAPED and
+// mid-sentence, and WO-1.11's block opens a line with **Not a go-live blocker.**, which is at a field
+// POSITION and not field-shaped. A field is both at once — at the start of a header line or after a
+// `·`, and nothing inside the asterisks but capitalised words, plus the `WO-x.y` that
+// `**Takes from WO-2.9**` names its own argument with.
+const FIELD_NAME = String.raw`[A-Z][A-Za-z]*(?: [a-z][A-Za-z]*)*`;
+const FIELD_TOKEN = new RegExp(String.raw`(?:^|·)\s*\*\*(${FIELD_NAME})(?: WO-[\dG][\w.]*)*\*\*`, 'g');
+
+// Every field-shaped token in one header block, in the order written. Read off the block's LINES and
+// not off the joined paragraph, because "the start of a line" is a position the join destroys.
+function fieldsIn(block) {
+  const names = [];
+  for (const line of block) {
+    for (const m of line.matchAll(FIELD_TOKEN)) if (!names.includes(m[1])) names.push(m[1]);
+  }
+  return names;
+}
+
+// `**Name** …everything up to the next field or the end of the header paragraph`. `present` is this
+// block's own fields, so an unknown one terminates the field before it exactly as a known one does.
+function fieldRe(name, present = []) {
+  const others = [...new Set([...KNOWN_FIELDS, ...present])].filter(f => f !== name).join('|');
   return new RegExp(`\\*\\*${name}\\*\\*\\s*(.*?)(?=\\s*·?\\s*\\*\\*(?:${others})\\b|$)`);
 }
 
@@ -92,6 +145,7 @@ function parseFile(file) {
     const blockStart = j;
     while (j < lines.length && lines[j].trim()) block.push(lines[j++]);
     const joined = block.join(' ');
+    const present = fieldsIn(block);
 
     const field = re => { const r = re.exec(joined); return r ? r[1].trim() : ''; };
     const statusRaw = field(/\*\*Status\*\*\s*([^·]*)/);
@@ -128,9 +182,12 @@ function parseFile(file) {
       statusRaw,
       size: field(/\*\*Size\*\*\s*([^·]*)/),
       flag: /🚩/.test(joined),
-      dependsRaw: field(fieldRe('Depends on')),
-      closesRoadmap: field(fieldRe('Closes roadmap')),
-      amendsRoadmap: field(fieldRe('Amends roadmap')),
+      dependsRaw: field(fieldRe('Depends on', present)),
+      blocks: field(fieldRe('Blocks', present)),
+      target: field(fieldRe('Target', present)),
+      closesRoadmap: field(fieldRe('Closes roadmap', present)),
+      amendsRoadmap: field(fieldRe('Amends roadmap', present)),
+      unknownFields: present.filter(f => !KNOWN_FIELDS.includes(f)),
       strayRoadmapLines: strays,                               // 0-indexed, outside the header block
     });
   }
@@ -272,12 +329,38 @@ function gate(id, wos) {
       console.log(`  depends (prose) ${wo.dependsRaw}`);
       notes.push(`"Depends on" carries a non-work-order clause — read it yourself: ${wo.dependsRaw}`);
     }
+    // An ellipsis between two `WO-` tokens is a range a human wrote and this parser must not guess
+    // at: WO-G2's line read `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09, and WO-2.6 sat in the middle
+    // of it gating nothing. A WARNING, never an expansion (WO-2.16) — teaching the parser to fill in
+    // a range means it invents dependencies nobody typed. It is here rather than left alone because
+    // the same work order took away the accident that made anyone look: WO-G1's `**Target**` clause
+    // used to bleed into this field and raise the prose NOTE above, and now it does not.
+    if (/WO-[\dG][\w.]*\s*…\s*WO-[\dG][\w.]*/.test(wo.dependsRaw)) {
+      notes.push(`"Depends on" has a "…" between two WO- tokens, and it is read as two dependencies rather than a range — every ID between them gates nothing. If a range is meant, write the IDs out: ${wo.dependsRaw}`);
+    }
   }
 
   // Reported, never acted on: an amendment is prose about a box some earlier work order closed, and
   // nothing here may edit that box. It is printed because whoever is about to start this work order
   // wants to know it changes a promise already made.
   if (wo.amendsRoadmap) console.log(`  amends  ${wo.amendsRoadmap}`);
+
+  // The same treatment, for the same reason, decided at WO-2.16. `**Blocks**` is the one that used to
+  // be read as a dependency — pointing the wrong way down the sprint's one hard ordering constraint —
+  // so it is printed here where a human reads it and nowhere near depsOf(). `**Target**` is a date,
+  // and a gate work order's date is the point of it.
+  if (wo.blocks) console.log(`  blocks  ${wo.blocks}`);
+  if (wo.target) console.log(`  target  ${wo.target}`);
+
+  // The lesson of the three fields WO-2.16 found, armed for the fourth. An unknown field used to be
+  // absorbed into whichever field was written before it, silently and plausibly; now it terminates
+  // that field and is named here once, by the ID that carries it. There is no live instance of this
+  // in the tree as of 2026-08-09 and that is the intended state — it fires the first time somebody
+  // invents **Supersedes**, and it is the reason the field table in work-orders/README.md can say
+  // what becomes of a field with no row.
+  for (const f of wo.unknownFields) {
+    notes.push(`**${f}** is a header field nothing reads — no row in plans/work-orders/README.md § "Header fields", no line in KNOWN_FIELDS. It is parsed only far enough to keep it out of the field written before it. Give it both, or take it out of the header block`);
+  }
   for (const k of wo.strayRoadmapLines) {
     notes.push(`a **Closes/Amends roadmap** line sits below the header paragraph at ${path.relative(REPO, wo.file)}:${k + 1} — nothing in this script can see it, so --tick would tick no box and say so as if there were none. Move it into the header paragraph (--audit lists these)`);
   }
@@ -942,6 +1025,21 @@ function audit(wos) {
 // and ordering walk, `next`'s ordering, recomputeDashboard()'s arithmetic beyond one row and one
 // total, --audit against the real trackers, and every word of every real work order. It checks the
 // handful of behaviours WO-2.14 and WO-2.15 built, against one work order it made up.
+//
+// IT HAS A PRECONDITION, AND SINCE WO-2.16 IT SAYS SO FIRST. The copy is made from the live plans/,
+// so it inherits whatever drift the trackers are carrying, and drift makes plants fail — `--tick`
+// refuses over a ROADMAP.md dashboard that does not add up, which is exactly what WO-2.15 built it to
+// do, so the plant that ticks the fixture goes red for a reason that is not about the script at all.
+// Proved on 2026-08-09, twice, in scratch copies of plans/ and tools/ outside the repository: set one
+// `## Phase N` dashboard row back to the `11/12` this tree carried on the morning of 2026-08-08, and
+// the pre-WO-2.16 script names *"`--dry-run` on `--start`, `--release` and `--tick` writes nothing at
+// all"* and *"a fully ticked work order still gets ✅ DONE, its roadmap box, and the dashboard"* as
+// failures. Both plants had behaved perfectly. So the drift readers run over the copy FIRST, and a
+// dirty copy stops the run with the drift as the reason.
+//
+// The precondition is NOT a tenth plant, deliberately (WO-2.16's trap). It runs before any plant
+// exists, it tests the TRACKERS rather than the script, and folding it into the plant loop is how the
+// next reader concludes that the trackers are what --self-check checks. They are its fixture.
 
 const FIXTURE_ID = 'WO-9.9';
 const FIXTURE_FILE = 'phase-3-gradebook.md';
@@ -977,6 +1075,60 @@ function assertOutsideRepo(p) {
   return r;
 }
 
+// The precondition, over the COPY, before a plant exists: the two things that can earn a `HELD` and
+// therefore turn a healthy plant red. Both readers are --audit's own — roadmapDashboardDrift() and
+// roadmapHits() — pointed at a different directory, which is the whole reason parseFile() takes a
+// path and roadmapDashboardDrift() takes text.
+//
+// Only these two, and the boundary is not obvious enough to leave unwritten: drift in
+// work-orders/README.md's dashboard does NOT belong here (--tick recomputes that table itself, so it
+// cannot hold a tick), and a **Closes roadmap** line below the header paragraph does not either — a
+// stray only blocks the tick of the work order carrying it, and the fixture carries its own header.
+// A zero-match fragment in some other work order cannot break a plant today for the same reason; it
+// is checked anyway, because it is the same tracker rot and the next plant to tick something other
+// than the fixture would find out the hard way.
+function trackerDrift(plansDir) {
+  const roadmapText = fs.readFileSync(path.join(plansDir, 'ROADMAP.md'), 'utf8');
+  const lines = roadmapText.split('\n');
+  const problems = roadmapDashboardDrift(roadmapText).map(d => `ROADMAP.md's progress dashboard — ${d}`);
+
+  const dir = path.join(plansDir, 'work-orders');
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.md') && f !== 'README.md' && f !== 'ROUTING.md');
+  for (const f of files) {
+    for (const wo of parseFile(path.join(dir, f))) {
+      for (const frag of [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1])) {
+        const { tooShort, hits } = roadmapHits(frag, lines);
+        if (tooShort) problems.push(`${wo.id} (${f}:${wo.headingLine}) quotes "${frag}", which is too short to match a roadmap box safely`);
+        else if (hits.length !== 1) problems.push(`${wo.id} (${f}:${wo.headingLine}) quotes "${clip(frag, 60)}", which matches ${hits.length} roadmap boxes and must match exactly one`);
+      }
+    }
+  }
+  return problems;
+}
+
+// What a failing plant prints as its evidence, and the reason it is not a clip of the first n
+// characters any more (WO-2.16). Every refusal in this file states its verdict on the way OUT — a
+// `HELD |` header with its reasons indented under it — so the head-clip showed the banner and cut the
+// reason off. On 2026-08-09 that cost a reader a morning: a copied ROADMAP.md carrying this tree's own
+// dashboard drift earned a HELD, two plants reported it as their own failure, and neither could say
+// why.
+//
+// The verdict lines, then. Not the last line — the last line of a HELD is the instruction, not the
+// cause. Not the whole captured run behind a flag either: a flag is a second thing to know about
+// before the output is readable, and it defaults to the broken behaviour, which is how the reason
+// stays hidden for whoever hits this next. A plant failure is rare enough to afford twelve lines.
+function verdict(out) {
+  const lines = out.split('\n');
+  const keep = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*(?:HELD|FAIL)\s*\|/.test(lines[i])) continue;
+    keep.push(lines[i].trim());
+    for (let j = i + 1; j < lines.length && /^\s+\S/.test(lines[j]); j++) keep.push(lines[j].trim());
+  }
+  const tail = lines.filter(l => l.trim()).slice(-3).map(l => l.trim());   // no verdict at all: the end of it
+  return (keep.length ? keep : tail).slice(0, 12).map(l => `  ${l}`);
+}
+
 function selfCheck(subjectPath) {
   const subject = path.resolve(subjectPath);
   if (!fs.existsSync(subject)) { console.error(`FAIL | --self-check --against: no such file "${subject}"`); return 1; }
@@ -996,11 +1148,36 @@ function runPlants(subject, sandbox) {
   const readSb = p => fs.readFileSync(rel(p), 'utf8');
   const plantWrite = (p, text) => fs.writeFileSync(assertOutsideRepo(rel(p)), text);
 
+  console.log('--self-check');
+  console.log(`  subject   ${subject}`);
+  console.log(`  sandbox   ${sandbox}   (copied from ${path.relative(REPO, path.join(REPO, 'plans'))}, deleted on the way out)`);
+
   // 1. The copy. The subject script goes in beside it, so the script under test resolves REPO to the
   //    sandbox and cannot reach the real plans/ even if every other guard here were wrong.
   fs.mkdirSync(path.join(sandbox, 'tools'));
   fs.copyFileSync(subject, assertOutsideRepo(path.join(sandbox, 'tools', 'wo-gate.mjs')));
   fs.cpSync(path.join(REPO, 'plans'), assertOutsideRepo(path.join(sandbox, 'plans')), { recursive: true });
+
+  // 1b. The precondition, stated and checked before anything is planted. See the section comment: the
+  //     copy inherits the trackers' drift, drift earns a `HELD`, and a `HELD` makes a healthy plant
+  //     report a failure that is not about the script. Stopping here costs no plant — every plant is
+  //     still made and still counted on a clean tree — and it is the one exit path where the answer
+  //     "go and read the two plants it named" is wrong, so it names the trackers instead.
+  const drift = trackerDrift(path.join(sandbox, 'plans'));
+  if (drift.length) {
+    console.log('');
+    console.log('FAIL | --self-check requires the trackers to be clean before it can plant anything,');
+    console.log('     | and the copy it just made is not. Nothing was planted; no fixture was written.');
+    console.log('');
+    for (const d of drift) console.log(`     | ${d}`);
+    console.log('');
+    console.log('  0 plants made. A plant failure has to mean a plant failed — the plants check this');
+    console.log('  script, and the trackers are the fixture they run against, so drift in the fixture');
+    console.log('  is reported here rather than as two unrelated plants going red (WO-2.16).');
+    console.log('');
+    console.log(`FAIL | ${drift.length} problem(s) in the trackers, copied from plans/. \`node tools/wo-gate.mjs --audit\` shows them against the real files; all of it is a hand edit, and nothing here will make one.`);
+    return 1;
+  }
 
   // 2. The fixture's roadmap box, and the dashboard row it moves. Added before the snapshot so the
   //    copy is self-consistent: a box added without its row would be drift, and the drift plant
@@ -1022,15 +1199,27 @@ function runPlants(subject, sandbox) {
     plantWrite('ROADMAP.md', lines.join('\n'));
   }
 
-  // 2b. A Ship 1 row for the fixture, so `next` has something to step over. Every real row in that
-  //     table is ✅ DONE, so a run against the copy without this would exercise nothing.
+  // 2b. A running-order row for the fixture, so `next` has something to step over — placed ABOVE
+  //     every real row, which is the whole of the fix WO-2.16 made here.
+  //
+  //     It used to go below the last real row, under the comment "Every real row in that table is
+  //     ✅ DONE, so a run against the copy without this would exercise nothing." That was true on
+  //     2026-08-08, when Ship 1 had just closed and there was no running order past it, and it was
+  //     false the next morning: the Ship 2 table put twelve ⬜ NOT STARTED rows ahead of the fixture,
+  //     `next` answered one of those and never reached row 99, and the plant reported four failures,
+  //     none of which was a defect in `next`. The sentence that made the assumption reasonable is the
+  //     sentence that made it invisible — so the assumption is gone rather than restated.
+  //
+  //     From the top, the fixture is the first row `next` reads whatever the live tables contain:
+  //     claimed, it is the skip that gets named; unclaimed, it is what `next` offers. Neither
+  //     assertion depends on a real row's status any more. The number in the cell is decoration —
+  //     `shipOneOrder()` reads document order, not the number — and 0 says so.
   {
     const p = path.join('work-orders', 'README.md');
     const lines = readSb(p).split('\n');
-    let last = -1;
-    for (let i = 0; i < lines.length; i++) if (/^\|\s*\d+\s*\|\s*\[(WO-[\dG][\w.]*)\]/.test(lines[i])) last = i;
-    if (last < 0) throw new Error('--self-check found no Ship 1 table in work-orders/README.md');
-    lines.splice(last + 1, 0, `| 99 | [${FIXTURE_ID}](${FIXTURE_FILE}#wo-99--self-check-fixture) self-check fixture | S | | — |`);
+    const first = lines.findIndex(l => /^\|\s*\d+\s*\|\s*\[(WO-[\dG][\w.]*)\]/.test(l));
+    if (first < 0) throw new Error('--self-check found no running-order table in work-orders/README.md');
+    lines.splice(first, 0, `| 0 | [${FIXTURE_ID}](${FIXTURE_FILE}#wo-99--self-check-fixture) self-check fixture | S | | — |`);
     plantWrite(p, lines.join('\n'));
   }
 
@@ -1100,7 +1289,7 @@ function runPlants(subject, sandbox) {
         const bad = [];
         const unclaimed = snapshot();
         const first = run(['--start', FIXTURE_ID]);
-        if (first.code !== 0) bad.push(`the first --start exited ${first.code}: ${clip(first.out.trim(), 120)}`);
+        if (first.code !== 0) bad.push(`the first --start exited ${first.code}:`, ...verdict(first.out));
         if (!fixtureStatus().startsWith(RUN)) bad.push(`the first --start left the status at "${fixtureStatus()}"`);
         // A claim is not progress: both dashboards count ✅ DONE and nothing else.
         const moved = changedSince(unclaimed).filter(f => !f.endsWith(FIXTURE_FILE));
@@ -1142,7 +1331,7 @@ function runPlants(subject, sandbox) {
         reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
         const claimed = snapshot();
         const back = run(['--release', FIXTURE_ID]);
-        if (back.code !== 0) bad.push(`--release on a claimed work order exited ${back.code}: ${clip(back.out.trim(), 120)}`);
+        if (back.code !== 0) bad.push(`--release on a claimed work order exited ${back.code}:`, ...verdict(back.out));
         if (!fixtureStatus().startsWith(OK)) bad.push(`--release left the status at "${fixtureStatus()}"`);
         const moved = changedSince(claimed).filter(f => !f.endsWith(FIXTURE_FILE));
         if (moved.length) bad.push(`--release also wrote ${moved.join(', ')}`);
@@ -1161,7 +1350,7 @@ function runPlants(subject, sandbox) {
           reset({ status, fragment: FIXTURE_BOX, open: false });
           const before = snapshot();
           const r = run(args);
-          if (r.code !== 0) bad.push(`${args[0]} --dry-run exited ${r.code}: ${clip(r.out.trim(), 120)}`);
+          if (r.code !== 0) bad.push(`${args[0]} --dry-run exited ${r.code}:`, ...verdict(r.out));
           if (!/DRY RUN/.test(r.out)) bad.push(`${args[0]} --dry-run never said DRY RUN`);
           if (!r.out.split('\n').some(l => l.trim().startsWith('+') && l.includes(edit))) {
             bad.push(`${args[0]} --dry-run never printed the edit it would make (a "+" line reading ${edit})`);
@@ -1179,7 +1368,7 @@ function runPlants(subject, sandbox) {
         const rowBefore = readmeRow();
         const r = run(['--tick', FIXTURE_ID]);
         const bad = [];
-        if (r.code !== 0) bad.push(`--tick exited ${r.code} on a fully ticked work order: ${clip(r.out.trim(), 160)}`);
+        if (r.code !== 0) bad.push(`--tick exited ${r.code} on a fully ticked work order:`, ...verdict(r.out));
         if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`the status reads "${fixtureStatus()}"`);
         if (!/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('the roadmap box it closes was left unticked');
         const rowAfter = readmeRow();
@@ -1206,6 +1395,10 @@ function runPlants(subject, sandbox) {
     {
       // The claim outlives the run that made it, so a row that drops out of `next` in silence is a
       // work order lost from the running order while looking healthy. WO-2.14's tenth deliverable.
+      //
+      // Every assertion here is about the FIXTURE's row, which step 2b puts above every real one. It
+      // used to assert against "the one ⬜ NOT STARTED row in the table", which was an assertion about
+      // the live running order wearing a plant's clothes — see 2b.
       name: '`next` names the claimed row it stepped over, and the way back',
       run: () => {
         const bad = [];
@@ -1215,8 +1408,11 @@ function runPlants(subject, sandbox) {
         if (!new RegExp(`--release ${FIXTURE_ID}`).test(claimed.out)) bad.push('`next` named the skip without the way back');
         reset({ status: OK, fragment: FIXTURE_BOX, open: false });
         const open = run(['next']);
-        if (!new RegExp(`next: ${FIXTURE_ID}`).test(open.out)) bad.push('`next` did not offer the one ⬜ NOT STARTED row in the table');
-        if (/skipped/.test(open.out)) bad.push('`next` reported a skip with nothing claimed');
+        if (!new RegExp(`next: ${FIXTURE_ID}`).test(open.out)) bad.push('`next` did not offer the fixture row, which sits above every real row in the copy');
+        // No skip at all, not just no skip of the fixture: the fixture is the first row, so `next`
+        // returns at it before it can reach a real claim. That stays true whatever the live table has
+        // claimed — which is the difference between this assertion and the one it replaced.
+        if (/skipped/.test(open.out)) bad.push('`next` reported a skip with nothing claimed ahead of the fixture');
         return bad;
       },
     },
@@ -1244,10 +1440,10 @@ function runPlants(subject, sandbox) {
     },
   ];
 
-  console.log('--self-check');
-  console.log(`  subject   ${subject}`);
-  console.log(`  sandbox   ${sandbox}   (copied from ${path.relative(REPO, path.join(REPO, 'plans'))}, deleted on the way out)`);
+  // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
+  // precondition's early exit has a header above it. This one waits until there is a fixture to name.
   console.log(`  fixture   ${FIXTURE_ID}, written into the copy of ${FIXTURE_FILE} — no real work order is a fixture here`);
+  console.log(`  trackers  clean in the copy — no ROADMAP.md dashboard drift, no fragment closing zero boxes`);
   console.log('');
 
   let failed = 0;
@@ -1294,7 +1490,9 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
                                                         own boxes. Reports; never writes
   node tools/wo-gate.mjs --self-check [--against <path>] plant every violation this script is
                                                         supposed to catch, in a temp copy of plans/,
-                                                        and fail if one stops being caught
+                                                        and fail if one stops being caught. Requires
+                                                        the trackers to be clean first, and says so
+                                                        instead of planting if they are not
 
 --start, --release and --tick write into plans/. Run each with --dry-run first and read the diff.
 --start claims a work order so a second dispatch can see one is in flight; it moves no dashboard.

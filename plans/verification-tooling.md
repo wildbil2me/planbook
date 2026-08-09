@@ -261,6 +261,15 @@ with the app's surface, whereas this one should grow only when `wo-gate.mjs` gro
 plants for nine behaviours. **If the plant count outruns the behaviour count, something is being
 tested twice.**
 
+**And its precondition is not a tenth plant, 2026-08-09 (WO-2.16).** `--self-check` copies the live
+`plans/` and then plants against the copy, so it inherits whatever drift the trackers are carrying —
+and drift is exactly what `--tick` refuses over, which made two healthy plants report failures that
+were not theirs. The fix reads the trackers before anything is planted and stops with the drift as the
+reason. It is **not** in the plant array and must not be moved into it: a plant asserts something
+about the script, this asserts something about the fixture the plants run against, and folding the two
+together is how the next reader concludes that `plans/` is what `--self-check` checks. Still nine
+plants for nine behaviours; the count is the control, and a precondition is not a behaviour.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or
