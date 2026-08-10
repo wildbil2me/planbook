@@ -38,6 +38,35 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.18 — the term-switch checks now cover all three surfaces a term change repaints, not two.**
+  WO-2.17 made a term change repaint the screen it lands on, and the checks that came with it watched
+  the class line and the row line. The open detail panel — the one a teacher opens *because* she wants
+  the detail behind a number — had nothing on it: deleting the line that repaints it left every
+  existing term-switch check green.
+
+  **The check reads the panel out of the screen, not out of the arithmetic.** Re-reading the totals
+  the paint was computed from would go green whether or not anything reached the panel, which is a
+  check that proves the test rather than the app. So the ⋯ is tapped open before the term changes and
+  the figures are read from the panel's own cells afterwards, with the *year* half holding still while
+  the *term* half moves — the pair is what makes it a claim about the term rather than about the panel
+  merely having been redrawn.
+
+  **`selectTerm()`'s refusal of a term id belonging to another class is driven now rather than read.**
+  The guard is two lines and obviously right, which is exactly the condition under which a guard gets
+  refactored away by someone who is sure. Cutting it turns the new check red and nothing else in the
+  whole run — the measurement of how much coverage that guard had, which was none.
+
+  **Both checks were proved able to fail, because a check that has never failed is not evidence that
+  it can.** Counts quoted before, during and after each mutation; `src/` byte-identical to where it
+  started. One thing the mutation corrected about this work order's own premise: deleting the repaint
+  turns **two** checks red, not one — WO-2.13 was already watching that line from the *mark* path. The
+  gap was real but narrower than stated, and it is written down that way in `tools/README.md` and
+  `TESTING.md` rather than trimmed to fit.
+
+  **No app code changed**, and nothing here is visible to a teacher. Also corrected in passing: the
+  running check count in `tools/README.md` was stale by thirteen — WO-3.4 added checks without
+  updating it, the second time that has been missed. It now reads the measured 537.
+
 - **WO-3.4 — grades add up.** Weighted category math, computed from the assignments and scores a
   teacher has actually recorded. **A category with no graded work drops out and its weight is shared
   across the categories that do have work**, so a grade is right in week one rather than wrong until

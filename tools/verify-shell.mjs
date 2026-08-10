@@ -6600,6 +6600,29 @@ if (!classesBooted || !classSeam || !assignSeam) {
  * made from a screen that is NOT the registry, so "a screen that does not read the term is not
  * repainted" is asserted as text still sitting there afterwards rather than inferred from which
  * branch src/shell.js took.
+ *
+ * TWO MORE CHECKS HANG OFF THIS FIXTURE (WO-2.18), and neither is a defect in what WO-2.17 shipped —
+ * both are the check that would notice if it stopped being right.
+ *
+ *   THE OPEN DETAIL PANEL IS THE THIRD SURFACE paintRenderedTotals() PAINTS, and the seven checks
+ *   above assert the first two. So the block opens the ⋯ panel through the real button before the
+ *   term tap: deleting `paintDetail(totals)` at the foot of that function used to leave all seven
+ *   green while a panel a teacher opened BECAUSE she wanted the detail kept the term she had just
+ *   left on screen. A check that asserts two of three painted surfaces licenses the third to be
+ *   deleted. The panel's figures are read out of the DOM — the text in `.attendance-detail-totals`,
+ *   which is the sentence the teacher reads — and never out of the totals map, for the same reason
+ *   the row sentinel is an attribute on a surviving element rather than a count: a figure recomputed
+ *   correctly and never painted is the whole bug.
+ *
+ *   AND selectTerm() IS DRIVEN WITH ANOTHER CLASS'S TERM ID, at the foot of the block. WO-2.17's
+ *   fourth acceptance line asks that it return without writing in that case; nothing here ever asked
+ *   it to, so that half was settled by reading the two-line guard, which is the condition under which
+ *   a guard gets refactored away. The failure it prevents is a preference naming a term the open
+ *   class does not have — the case src/classes.js keys the whole preference per class to avoid — so
+ *   what is asserted is the absence of all three of its writes: the preference byte for byte, the
+ *   nav's own active mark, and the live region, which is pre-filled with a sentence of this file's
+ *   own so that silence is text still sitting there rather than an empty string that was always
+ *   empty. announce() defers its write a tick (src/live-region.js), so that read waits.
  */
 console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) ---');
 {
@@ -6611,7 +6634,13 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
   const LINE_B = LABEL_B + ': 5 recorded meetings · Year: 8 recorded meetings';
   const ROW_A = LABEL_A + ' · P 3 · T 0 · A 0 · E 0 · D 0 · 100%';
   const ROW_B = LABEL_B + ' · P 5 · T 0 · A 0 · E 0 · D 0 · 100%';
+  /* The panel says the term half and the year half in one line, and only the term half is allowed
+     to move: the year is the same eight meetings under either term, which is what makes this pair
+     of strings a claim about the TERM rather than about the panel having been redrawn at all. */
+  const PANEL_A = LABEL_A + ': P 3 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 8 · T 0 · A 0 · E 0 · D 0 · 100%';
+  const PANEL_B = LABEL_B + ': P 5 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 8 · T 0 · A 0 · E 0 · D 0 · 100%';
   const SENTINEL = 'WO-2.17 sentinel — this screen was not repainted';
+  const SR_SENTINEL = 'WO-2.18 sentinel — nothing was announced';
 
   const plant = await evalJs(`(function(){
     var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
@@ -6652,6 +6681,9 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     var btns = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
     var row = document.querySelector('[data-attendance-row="wo217-student"]');
     var line = row ? row.querySelector('.attendance-student-totals') : null;
+    /* WO-2.18. Out of the panel the teacher is looking at, not out of the map that fed it. */
+    var panel = document.querySelector('tr[data-attendance-detail-row="wo217-student"]');
+    var panelLine = panel ? panel.querySelector('.attendance-detail-totals') : null;
     var up = function(id){ var el = document.getElementById(id);
       return !!(el && !el.classList.contains('hidden')); };
     return {
@@ -6659,6 +6691,8 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
         label: b.textContent, active: b.classList.contains('active') }; }),
       classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
       rowText: line ? line.textContent : '',
+      panelUp: !!panel,
+      panelText: panelLine ? panelLine.textContent : '',
       sentinel: !!(row && row.getAttribute('data-wo217-sentinel')),
       summary: (document.getElementById('assignmentsSummary') || {}).textContent || '',
       registryUp: up('classView'), listUp: up('assignmentsView'), homeUp: up('homeView') }; })()`;
@@ -6669,6 +6703,9 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
   } else {
     await evalJs(`(function(){ var row = document.querySelector('[data-attendance-row="wo217-student"]');
       if (row) row.setAttribute('data-wo217-sentinel', '1'); return !!row; })()`);
+    /* WO-2.18: the panel is opened through the ⋯ the teacher taps, before anything is read, so that
+       every read below is taken with the third painted surface on screen. */
+    await clickSel('[data-attendance-detail="wo217-student"]');
     const before = await evalJs(READ);
     check('the WO-2.17 fixture is real: the registry is up, over two dated terms whose windows hold three meetings and five',
       before.registryUp && before.terms.length === 2
@@ -6687,6 +6724,14 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     check('and each student\'s own term line goes with it, rather than the class figure moving alone',
       before.rowText === ROW_A && after.rowText === ROW_B,
       JSON.stringify(before.rowText) + ' -> ' + JSON.stringify(after.rowText));
+    /* THE THIRD SURFACE (WO-2.18). paintRenderedTotals()'s own header names three, the two checks
+       above are the first two, and an open panel is the one a teacher opened because she wanted the
+       detail. Its own figures, read out of the panel, in the same tap as the two lines above. */
+    check('and the open detail panel moves with them, which is the third surface the same paint owes',
+      before.panelUp && after.panelUp
+        && before.panelText === PANEL_A && after.panelText === PANEL_B,
+      'panel open before = ' + before.panelUp + ', after = ' + after.panelUp + ' :: '
+        + JSON.stringify(before.panelText) + ' -> ' + JSON.stringify(after.panelText));
     /* THE TRAP, MEASURED. Repainting the whole registry would make the two checks above pass and
        this one fail: the marked row would be a different element by then. The registry's columns are
        a window of dates and do not move when the term does, so a term change owes the teacher the
@@ -6696,6 +6741,10 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
       after.sentinel && after.rowText !== before.rowText,
       'the marked row survived the switch = ' + after.sentinel + ', and its totals moved = '
         + (after.rowText !== before.rowText));
+
+    /* The panel closed the way it was opened (WO-2.18). The three checks below drive other screens,
+       and a panel left open behind them would be a fixture none of them asked for. */
+    await clickSel('[data-attendance-detail="wo217-student"]');
 
     /* THE OTHER SCREEN THE NAV SITS ON, which is WO-3.3's line and must not regress — and the same
        tap must leave the registry it is not on alone. */
@@ -6733,6 +6782,62 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
       'class grid up = ' + onHome.homeUp + ', the nav moved to '
         + JSON.stringify((onHome.terms[1] || {}).label) + ', both screens untouched = '
         + (onHome.classText === SENTINEL && onHome.summary === SENTINEL));
+
+    /* A TERM ID FROM ANOTHER CLASS, AIMED AT THIS ONE (WO-2.18). There is no control that can do
+       this — the nav only ever draws the open class's terms — so it goes through the seam, which is
+       the same exception the future-date check in the attendance section names. What a restore, a
+       hand edit or a class switched under a stale handler CAN produce is exactly this call, and the
+       guard's whole job is that it writes nothing. Borrowed from whichever other class in the
+       document carries a term rather than from a planted one: an id nothing else in this run has
+       ever seen would be a weaker fixture than a real one belonging to a real class. */
+    const foreign = await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var d = s.getDoc(), clsId = c.getSelectedClassId();
+      var other = (d.classes || []).filter(function(x){
+        return x.id !== clsId && (x.terms || []).length; })[0];
+      if (!other) return { ok:false, why:'no other class in this document carries a term id to borrow' };
+      var read = function(){
+        var nav = document.getElementById('termNav');
+        var btns = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
+        return {
+          pref: JSON.stringify(window.planbook.getPref('openTermIds') || {}),
+          term: c.getSelectedTermId(),
+          active: btns.filter(function(b){ return b.classList.contains('active'); })
+            .map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
+          offered: btns.map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
+          totals: (document.getElementById('attendanceTotals') || {}).textContent || '' };
+      };
+      var live = document.getElementById('srLive');
+      if (live) live.textContent = ${JSON.stringify(SR_SENTINEL)};
+      var was = read();
+      /* CAUGHT RATHER THAN LET FLY, and it is asserted below. A build whose guard is gone reaches
+         term.label on a term this class does not have and throws — which writes no preference and
+         announces nothing, so the three claims below would all be satisfied by a screen that had
+         just broken. Caught here, it is one red check; uncaught, it is the whole run. */
+      var threw = '';
+      try { c.selectTerm(other.terms[0].id); } catch (e) { threw = String(e && e.message || e); }
+      /* announce() clears and then writes on a 30ms timer so that an identical repeat reaches
+         assistive tech as a change (src/live-region.js). Reading straight back would report
+         silence from a build that spoke. */
+      await new Promise(function(r){ setTimeout(r, 250); });
+      return { ok:true, borrowed: other.terms[0].id, from: other.name,
+        was: was, now: read(), said: live ? live.textContent : '', threw: threw };
+    })()`);
+    check('a term id belonging to ANOTHER class writes no preference, moves no highlight and announces nothing',
+      foreign.ok && !foreign.threw && foreign.now.pref === foreign.was.pref
+        && foreign.now.term === foreign.was.term
+        && foreign.now.active === foreign.was.active
+        && foreign.now.offered === foreign.was.offered
+        && foreign.said === SR_SENTINEL
+        && foreign.now.totals === SENTINEL,
+      foreign.ok
+        ? JSON.stringify(foreign.borrowed) + ' from ' + JSON.stringify(foreign.from) + ' :: '
+          + 'preference ' + foreign.was.pref + ' -> ' + foreign.now.pref + ', open term '
+          + JSON.stringify(foreign.was.term) + ' -> ' + JSON.stringify(foreign.now.term)
+          + ', nav active ' + JSON.stringify(foreign.was.active) + ' -> '
+          + JSON.stringify(foreign.now.active) + ', said ' + JSON.stringify(foreign.said)
+          + (foreign.threw ? ', and it THREW: ' + foreign.threw : '')
+        : foreign.why);
 
     /*
       The document back as it was, IN PLACE rather than as a fresh object — every module holds the

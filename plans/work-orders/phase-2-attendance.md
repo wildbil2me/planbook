@@ -1563,7 +1563,7 @@ answers correctly everywhere.
 
 ## WO-2.18 — the term-switch checks cover every surface the repaint paints
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.17 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** WO-2.17 · **Blocks** nothing, and
 that is the point — it is the row to cut first if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. It closes no
 product box, and inventing one would be the drift WO-2.15 and WO-2.16 exist to catch — the same call
@@ -1614,14 +1614,14 @@ found and it gets its own work order; do not fix the app from inside this one. A
 year** — everything here hangs off what WO-2.17 already builds.
 
 **Acceptance**
-- [ ] With a detail panel open, switching term moves the panel's figures in the same paint as the
+- [x] With a detail panel open, switching term moves the panel's figures in the same paint as the
       class line and the row line.
-- [ ] Deleting `paintDetail(totals)` at `src/attendance.js:3306` turns the new panel check red and
+- [x] Deleting `paintDetail(totals)` at `src/attendance.js:3306` turns the new panel check red and
       leaves WO-2.17's seven green — run, not reasoned, with the counts before and after quoted.
-- [ ] `selectTerm()` called with another class's term id writes no preference, moves no highlight and
+- [x] `selectTerm()` called with another class's term id writes no preference, moves no highlight and
       announces nothing — asserted from the harness rather than from reading the guard.
-- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
-- [ ] `src/` is byte-identical to HEAD across the whole work order.
+- [x] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
+- [x] `src/` is byte-identical to HEAD across the whole work order.
 
 **Traps** — **Do not widen `paintRenderedTotals()` to make it easier to observe.** The narrowness is
 the deliverable WO-2.17 shipped, and a check that needs the code changed to be checkable is measuring

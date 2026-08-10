@@ -1874,6 +1874,42 @@ screens. Worth a glance on the iPad at the **next** sitting rather than a line o
 dated terms set up, a tap on the term nav should move the figures under it and nothing else, and a
 repaint that skips the grid is the kind of thing that could read as a screen that did not respond.*
 
+### WO-2.18 — The term-switch checks cover every surface the repaint paints
+
+**What this changes.** Nothing a teacher sees: harness, not app, and `src/` is byte-identical to the
+tree WO-2.17 left. Two checks are added to WO-2.17's own block — no second fixture and no new fixture
+year — and they close the two gaps that work order's verification left. `paintRenderedTotals()` paints
+**three** surfaces that know which term is open and the seven checks asserted two of them, which
+licenses the third to be deleted; and WO-2.17's fourth acceptance line was half settled by reading a
+guard rather than by driving it.
+
+- [x] `node --check tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass — the sweep at
+      `15 checks · 14 passed · 0 failed · 1 to review`, the same line it printed before this work
+      order and the standing REVIEW unchanged (nothing added here mentions a support, accommodation,
+      medical or plan field).
+- [x] `node tools/verify-shell.mjs` is green at **537 checks · 537 passed · 0 failed · 0 skipped**,
+      two of them this work order's. The tree it arrived on measured 535, not the 522 `tools/README.md`
+      had recorded — WO-3.4's thirteen never reached that line, and it is corrected there.
+- [x] **With a detail panel open, the term switch moves the panel's own figures** in the same tap as
+      the class line and the row line. The panel is opened through the real ⋯ before anything is read,
+      and its figures are read out of `.attendance-detail-totals` in the DOM rather than out of the
+      totals map — the text the teacher reads, for the same reason WO-2.17's row sentinel is an
+      attribute on a surviving element.
+- [x] **`selectTerm()` driven with a term id belonging to another class writes nothing** — preference
+      serialised byte for byte, the nav's active mark, and the live region pre-filled with a sentence
+      of the harness's own so that silence is text still sitting there. Asserted from the harness, not
+      from reading the guard.
+- [x] Two mutations, both reverted, `git status --short src/` and `git diff --stat src/` empty
+      afterwards and the run green again at 537:
+
+      | Mutation | Result |
+      |---|---|
+      | `paintDetail(totals)` deleted from the foot of `paintRenderedTotals()` (`src/attendance.js:3306`) | **2 red**: the new panel check, and WO-2.13's "a filtered-out row and its open detail repaint exact term/year totals after a mark". **All seven of WO-2.17's stay green**, which is the claim this work order was written on. The second red is the correction to it: the harness was watching that line from the MARK path already and was blind to it only on the TERM-SWITCH path — the one WO-2.17 shipped, and the one where no other repaint would have brought the figures back |
+      | `selectTerm()`'s foreign-term guard cut to `if (!cls) return;` (`src/classes.js:479`) | **1 red**, and nothing else in 537 — which is the whole reason the check exists. It fails in four ways at once, all of them printed: the preference is written with the foreign id, the resolver then answers with a term the teacher did not tap, the nav's highlight moves to it, and `term.label` throws on the way to the announcement. The throw is why the check catches rather than lets fly — uncaught it takes the run down, and a build that dies before writing satisfies all three "nothing was written" claims |
+
+*No 👤 line, for the reason WO-2.17 gives above and one more: nothing here changes a pixel, so there
+is nothing on the iPad to look at that was not already owed by WO-2.17.*
+
 ---
 
 ## Phase 3 — Gradebook

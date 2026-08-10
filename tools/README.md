@@ -456,6 +456,34 @@ screen that is *not* the registry, which is how "a screen that does not read the
 repainted" is asserted as text still sitting there afterwards. Two mutations, both reverted and
 tabulated in `TESTING.md` § WO-2.17.
 
+**537 at WO-2.18**, and only two of the fifteen are that work order's: the tree it arrived on
+measured **535**, because WO-3.4's thirteen grade-engine checks landed without reaching this line.
+Measured on the tree, not carried forward — which is the footnote below happening for the third time,
+and the reason it is worth thirty seconds is that the arithmetic 522 + 2 would have read as a green
+run of 524 for as long as anyone believed this line. **Both of the two hang off WO-2.17's fixture
+rather than standing up a second one**, which is what the work order asks for and also what makes the
+first of them cheap: the two dated terms, the planted student and the three-meetings-against-five are
+already there, and all the check adds is the ⋯ tapped before the term is. **The first is the third
+surface `paintRenderedTotals()` paints.** Its header comment names three — the class line, one line
+per row, and the open detail panel — and WO-2.17's seven asserted the first two, so a check that
+asserts two of three painted surfaces licenses the third to be deleted. It is read out of the DOM,
+from the text in `.attendance-detail-totals`, and never from the totals map: a figure recomputed
+correctly and never painted is the whole bug, and re-reading the map is how a check goes green
+against exactly that. *One correction to that reasoning, found by running the mutation rather than
+arguing it: deleting the call turns **two** red, not one — WO-2.13's "a filtered-out row and its open
+detail repaint exact term/year totals after a mark" was already watching that same line from the MARK
+path. So the harness was not blind to the deletion; it was blind to it on the term-switch path, which
+is the one WO-2.17 shipped and the one where nothing else would have moved the figures back.* **The
+second drives `selectTerm()` with a term id borrowed from another class
+in the same document**, which no control can do — the nav only ever draws the open class's terms —
+and asserts the absence of all three of its writes: the preference serialised byte for byte, the
+nav's own active mark, and the live region, pre-filled with a sentence of the harness's own so that
+silence is text still sitting there rather than an empty string that was always empty. It catches the
+throw rather than letting it fly, and asserts on that too, because a build whose guard is gone
+reaches `term.label` on a term the class does not have and dies **before** it can write a preference
+or announce — so the three absence claims would all have been satisfied by a screen that had just
+broken. Two mutations, both reverted and tabulated in `TESTING.md` § WO-2.18.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 
