@@ -979,6 +979,46 @@ below**, inside a 480px `.modal-panel`, with the coarse block's `min-height: 44p
 making it worse rather than better. **Diagnose it on the hardware before changing a number** — a width
 tuned until it looks right at the desk is how this comes back.
 
+**Diagnosed on the hardware, 2026-08-10, and the guess above is right in outline and wrong where it
+matters.** Owner's screenshots in both orientations with the fields empty, plus a comparison pass over
+the app's two other date-field screens.
+
+- **Not an orientation bug.** `.modal-panel` is 480px in both orientations (`index.html:988`), and
+  portrait and landscape fail identically.
+- **Three symptoms, one cause.** The fields are about half the height of *Name* and *Points* despite
+  sharing their rule at `src/assignments.css:269`; they overlap instead of sitting in the row's 12px
+  coarse gap; and *Due* is clipped by the panel edge. **iOS Safari paints `<input type="date">` as a
+  native control**: the flex layout shrinks the element's *box* — so `min-width: 0` is working — while
+  the native widget paints at its own intrinsic size regardless. Layout and paint disagree, and every
+  symptom falls out of that one fact, including the ignored `min-height`.
+- **`-webkit-appearance: none` does not exist anywhere in this codebase.** Grepped `src/` for it, for
+  `appearance:`, and for any `input[type=…]` selector: zero matches for all three. Nothing has ever
+  told WebKit to stop drawing these natively.
+- **Why this screen and not the other two, confirmed rather than assumed.** The term editor and the
+  days-off form both wear `.term-date` (`src/shell.css:684`), which sets **no width**, in a
+  `flex-wrap: wrap` row of content-sized items — the widget's intrinsic width *is* its layout width,
+  so nothing is forced and nothing overlaps. `.assign-field-date` is **the only date input in the app
+  given `width: 100%`** (`src/assignments.css:222`), inside `flex: 1 1 140px; min-width: 0`. A 140px
+  basis in a 480px panel shrinks the pair to roughly 210px each and never triggers the wrap, so this
+  is the one place the box is forced narrower than the widget draws.
+
+**So the first thing to try is the reset, not a width.** `-webkit-appearance: none; appearance: none`
+on `.assign-field-date`, then re-open on the device. Predicted: the 44px lands, the gap appears, the
+clipping goes, and no number is tuned. If that is not it, the fallback is a larger flex-basis so the
+row wraps to two lines the way `.term-dates` does — but that is the second answer and it is the one
+the paragraph above warns about.
+
+**The squatness is not this work order's.** The owner reports the date fields on *Classes & terms* and
+on *Days off & drops* are equally short — both carry `min-height: 44px` in their own coarse blocks
+(`src/shell.css:1208`) and neither takes it. That is an app-wide touch-target failure on three
+shipped screens, it is one shared fix rather than one dialog's, and it is booked separately. **What
+belongs here is the overlap**, which is this dialog's alone.
+
+**A testing-order trap this work order creates for itself.** Part two makes both dates default to
+today, so once it lands a newly created assignment never shows the empty state the owner photographed.
+**Prove part one against empty fields**, independently of part two, or the fix will look done because
+the symptom moved out of the default path and into the one a teacher reaches by clearing a date.
+
 **Part two — both dates should offer today.** Today is the overwhelmingly common value for *Assigned*
 and a reasonable start for *Due*, and typing it on an iPad picker costs more than it should.
 

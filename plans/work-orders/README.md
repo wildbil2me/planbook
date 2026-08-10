@@ -127,7 +127,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.22 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.23 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.18 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -142,7 +142,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 21 | 16 | 🔨 IN PROGRESS |
+| 2 — Attendance | 22 | 16 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 18 | 6 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -150,7 +150,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 7 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **79** | **36** | `[████░░░░░░] 46%` |
+| | **80** | **36** | `[████░░░░░░] 45%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -281,23 +281,24 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 10 | [WO-2.20](phase-2-attendance.md#wo-220--the-orchestrator-must-not-report-a-spawn-as-a-run) Orchestrator reports a spawn as a run | S | | Aug 21, half a day |
 | 11 | [WO-2.19](phase-2-attendance.md#wo-219--the-harnesss-own-check-count-is-checked) Harness check count | S | | Aug 21, half a day |
 | 12 | [WO-3.17](phase-3-gradebook.md#wo-317--the-assigned-and-due-fields) The Assigned and Due fields | S | | Aug 22 |
-| 13 | [WO-3.14](phase-3-gradebook.md#wo-314--percentages-to-two-decimal-places) Percentages to two decimals | S | | Aug 22, half a day |
-| 14 | [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) OAuth client & consent screen | S | | Aug 22, an hour |
-| 15 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
-| 16 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
-| 17 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
-| 18 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
-| 19 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
-| 20 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 21 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 22 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
-| 23 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 24 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 25 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 26 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 27 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 28 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 29 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 13 | [WO-2.23](phase-2-attendance.md#wo-223--every-date-field-in-the-app-is-short-of-44px-on-the-ipad) Date fields are short of 44px | S | | Aug 22, half a day |
+| 14 | [WO-3.14](phase-3-gradebook.md#wo-314--percentages-to-two-decimal-places) Percentages to two decimals | S | | Aug 22, half a day |
+| 15 | [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) OAuth client & consent screen | S | | Aug 22, an hour |
+| 16 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
+| 17 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
+| 18 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
+| 19 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
+| 20 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
+| 21 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
+| 22 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 23 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
+| 24 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 25 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 26 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 27 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 28 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 29 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 30 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-3.12 was given a row at #17 on 2026-08-10, having had none since it was booked out of WO-3.4's
 verification eight days earlier — **the same failure WO-3.10 had**, and the reason both are worth a
@@ -314,9 +315,9 @@ its own deliverables required a verified domain, which required a naming decisio
 in Phase 8. **So the one item on the board paced by an outside party was also the one nobody could pick
 up**, and it was invisible here — it had no numbered row, so `next` never offered it.*
 
-*It is now **WO-3.10** (the client and the consent screen — an hour, needs nothing, at #14),
-**WO-8.7** (the name and the host — split out of WO-8.6, at #20) and **WO-3.18** (policy, video,
-submission — at #22, and then a queue that is not ours). **The three are ordered by what unblocks
+*It is now **WO-3.10** (the client and the consent screen — an hour, needs nothing, at #15),
+**WO-8.7** (the name and the host — split out of WO-8.6, at #21) and **WO-3.18** (policy, video,
+submission — at #23, and then a queue that is not ours). **The three are ordered by what unblocks
 what**, not by size: WO-8.7 is the critical path for sync ever reaching another teacher, and it sat
 five phases away from where it was needed.*
 
@@ -326,7 +327,7 @@ review queue.*
 
 ***And the thing the old shape hid: verification gates public launch, not development.*** *An OAuth
 client in Testing mode runs `drive.file` today, so the whole of Phase 7 can be built and used on the
-owner's own devices long before any paperwork clears. That is why #14 is an hour rather than a phase,
+owner's own devices long before any paperwork clears. That is why #15 is an hour rather than a phase,
 and why it is worth doing whether or not the distribution question is ever answered yes.*
 
 *WO-2.21 was inserted on 2026-08-10, out of WO-3.5's verification, and it is **deliberately ahead of
@@ -344,34 +345,47 @@ exist to keep the call-site count honest as checks arrive. **If the fortnight ti
 second row to cut, after WO-3.12** — nothing in it is a defect, §11 is right today, and what is
 missing is the guard on the premises it is right for. No row below was re-flowed.*
 
-*And the drift these notes keep acquiring, since it has now happened twice: **a row number in prose
-goes stale the moment a row is inserted above it.** WO-2.21's note said #15 against a table showing
-#16, and the OAuth note's #18 and #20 were already #19 and #21 before this insertion moved them again.
-All three were corrected on 2026-08-10 and the "inserted at #15" was rewritten to carry a date rather
-than a position. Nothing checks this — `wo-gate.mjs --audit` reads roadmap fragments and `**Owes**`
-pointers, not the numbers in these paragraphs — so it is worth a glance whenever a row goes in.*
+*WO-2.23 was inserted at #13 on 2026-08-10, out of the same iPad sitting that diagnosed WO-3.17 —
+which found the fault it was sent to look at and the same fault on every other screen with a date on
+it. **It sits immediately after WO-3.17 because the two close in one sitting**: WO-3.17 proves the
+mechanism on the hardware, and this one applies it to the two screens WO-3.17 is forbidden to touch.
+It is a genuine touch-target failure on three shipped screens rather than a tooling item, and the
+reason it went unnoticed for a phase and a half is written into it — **neither harness can see this,
+and neither should be asked to**, because the desk browser honours the rule the device ignores and a
+check for it would go green on the broken tree.*
+
+*And the drift these notes keep acquiring, since it has now happened three times: **a row number in
+prose goes stale the moment a row is inserted above it, and the prose does not notice.** Two rounds of
+corrections on 2026-08-10 alone. The second round found the damage was worse than one insertion's
+worth: the paragraphs about WO-3.15, WO-3.16 and WO-3.13 were pointing at #20, #21 and #22 when the
+table had them at #26, #27 and #28 — stale by six rows, from insertions nobody went back for. **The
+convention that survives this is the one the historical notes already use**: "was inserted at #N on
+`<date>`" is a fact about a moment and stays true, while "it is now at #N" is a pointer and rots.
+Prefer the first, and check the second whenever a row goes in — nothing else will, since
+`wo-gate.mjs --audit` reads roadmap fragments and `**Owes**` pointers and never looks at these
+numbers.*
 
 *WO-3.14 through WO-3.17 were booked on 2026-08-10 out of the owner's first sitting with the score grid
 on real hardware — the four things a working teacher found that no agent and no harness had. **They
 split two and two, and the split is by when the thing bites rather than by how big it is** (all four
 are S).*
 
-***WO-3.17 and WO-3.14 come before the term opens, at #12 and #13.*** *WO-3.17's first half is a real
+***WO-3.17 and WO-3.14 come before the term opens, at #12 and #14.*** *WO-3.17's first half is a real
 defect on real hardware — the Assigned and Due fields overlap and push off screen on the iPad — on the
 dialog that creates every assignment the gradebook holds, and the term opens ~Aug 24. WO-3.14 is the
 precision mismatch against the school's SIS, which lands on the teacher every time she re-keys a row,
 which is week one. Both sit right after the two tooling rows and before WO-2.6.*
 
-***WO-3.15 and WO-3.16 stay late, at #20 and #21.*** *A button that saves three navigations and a pair
+***WO-3.15 and WO-3.16 stay late, at #27 and #28.*** *A button that saves three navigations and a pair
 of arrow keys are conveniences on a screen that already works, and WO-3.16 in particular carries a real
 trap — left and right are also how a caret moves inside a number — which is worth taking slowly rather
 than early.*
 
 ***No row was re-flowed for the two that moved up, and that is deliberate.*** *They are two sittings
-inside a window that runs to ~Sep 15, the same call the WO-2.17 note below records. WO-3.13 moved to
-#22 to keep the three convenience-shaped rows together ahead of the gate. **If the fortnight turns out
-not to hold two extra sittings, #12 and #13 are not the rows to move** — they are the two that bite in
-week one. The rows to move are #20 through #22.*
+inside a window that runs to ~Sep 15, the same call the WO-2.17 note below records. WO-3.13 moved down
+to keep the three convenience-shaped rows together ahead of the gate. **If the fortnight turns out
+not to hold two extra sittings, #12 and #14 are not the rows to move** — they are the two that bite in
+week one. The rows to move are the three convenience rows at #27 through #29.*
 
 *WO-2.17 was inserted at #2 on 2026-08-09, out of WO-3.3's verification, and every row below it moved
 down one. It is dated Aug 10–11 alongside WO-3.1 rather than given a slot of its own — it is half a
