@@ -1489,3 +1489,72 @@ repairs `plans/` to make itself pass is the worst possible version of this tool.
 IDs, and code that assumes it is will be wrong the third time someone writes one. Parse it as
 reportable text that happens to contain `WO-` tokens, exactly as `Depends on` already does for its
 prose tail — and make sure the tokens go nowhere near the gate.
+
+---
+
+## WO-2.17 — the term nav repaints the screen it is sitting on
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Closes roadmap** *(no box. This is a defect found by WO-3.3's verification, in code Phase 2
+shipped — it closes no product box, and inventing one to make the dashboard tidier is the drift
+WO-2.15 and WO-2.16 exist to catch.)*
+
+**Why it exists.** `classes.selectTerm()` writes the preference, repaints the class bar, and announces
+the change (`src/classes.js:477-490`). It repaints **nothing else**. That was right while the term nav
+sat on exactly one screen and that screen did not care: the attendance registry is a window of recent
+dates, and the columns do not move when the term does.
+
+**But the totals under it are term-scoped, and they always have been.** `paintClassTotals()` is fed
+`totalsForRender(cls, getSelectedTerm(), visibleStudents(cls))` — `src/attendance.js:3405`, and again
+at `:3174` and `:3289`. So tapping *Quarter 2* on the registry moves the highlight in the header, says
+"Quarter 2 is open" out loud, and leaves **Quarter 1's percentages on the screen**, with nothing to
+tell the teacher which term the number belongs to. It corrects itself on the next repaint from any
+other cause, which is what has kept it invisible: mark one student and the numbers jump, and the jump
+reads as the mark landing rather than as the term finally arriving.
+
+**Found by WO-3.3's verifier on 2026-08-09**, in the assignment list rather than here — that screen is
+term-filtered top to bottom, so the whole body went wrong at once instead of one line of it, and the
+defect was impossible to miss. WO-3.3's correction round fixed its own screen in one line
+(`src/shell.js:614-628`) and deliberately did **not** reach into attendance: repainting the registry
+from that branch would have hidden this rather than fixed it, and the note at `shell.js:624-626` says
+so at the point of departure. This work order is the other half, booked where the code lives.
+
+**The general shape, which is the reason this is a work order and not a one-line patch.** The term nav
+is a header control that every class screen sits underneath, and the number of those screens is
+growing — attendance, assignments, and WO-3.5's score grid, which is term-filtered by construction.
+Each new screen that reads `getSelectedTerm()` and does not repaint on a term change is this same bug
+again. The fix should make the repaint a property of the term change rather than a thing each screen
+remembers to ask for.
+
+**Deliverables**
+- **A term change repaints whatever class screen is up.** The pattern to match is
+  `afterCategoryChange()` in `src/shell.js` — the chain the category controls already use, and the one
+  WO-3.3's assignment-list line was hung off.
+- **The registry's totals line is correct immediately after a term switch**, with no second action
+  needed to bring it right.
+- **The order of operations stays in `src/shell.js`.** `src/classes.js` must not learn what screens
+  exist; its header records that it is the read point for "which class, which term" and nothing more,
+  and an import from it into the screens would close a loop this repo has refused four times.
+
+**Out of scope** — the term nav's own appearance, `openTermIds`, and anything about which term is
+*selected*. This is about what repaints after it changes, not about the choice.
+
+**Acceptance**
+- [ ] Switching term on the attendance registry updates the totals line in the same paint — no mark,
+      no reload, no second tap.
+- [ ] Switching term on the assignment list still repaints it (WO-3.3's line, which must not regress).
+- [ ] A screen that does not read the term is not repainted by a term change — the fix is a chain, not
+      a blanket repaint of everything.
+- [ ] `src/classes.js` gains no import from a screen module, and `selectTerm()` still returns without
+      writing when the term id does not belong to the open class.
+- [ ] The harness proves the pre-fix failure: a check that reads the totals line after a term switch
+      and goes red against the current code. 👤 *not needed — this one is measurable at the desk.*
+
+**Traps** — **Do not fix this by repainting every class screen on every term change.** The registry
+paints a grid of students × days and the score grid will be larger still; a blanket repaint is a cost
+that arrives on the flow the whole app is measured by, and `src/attendance.js`'s own history is one
+long argument about paint cost (WO-2.13 exists because the totals were computed once per student).
+Paint what is up, the way `afterCategoryChange()` does. **And do not move the term resolution into a
+screen module** to make the repaint easier — `src/classes.js:6-12` argues that classes and terms are
+not separable, and the resolution living in one place is why a preference naming a removed term
+answers correctly everywhere.
