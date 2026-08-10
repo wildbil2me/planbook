@@ -1629,3 +1629,86 @@ the change. **And do not assert the detail panel by re-reading the totals map** 
 teacher reads, out of the panel in the DOM, for the same reason WO-2.17's row sentinel is an attribute
 on a surviving element rather than a count: a figure recomputed correctly and never painted is the
 whole bug.
+
+---
+
+## WO-2.19 — the harness's own check count is checked
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `wo-sweep.mjs` and the
+count line in `tools/README.md` both exist today · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15 and WO-2.18 made.)*
+
+**Not a go-live blocker, and in no ship.** Added 2026-08-10, out of WO-2.18's verification. It sits
+outside the delivery plan the way WO-2.14 and WO-2.15 do: it buys a teacher nothing, it is not on
+WO-G2, and no row of the Ship 2 table moves for it.
+
+**Why it exists.** `tools/README.md` records how many checks `verify-shell.mjs` runs — **537 at
+WO-2.18** — and that number is maintained by whoever lands a work order remembering to update it. The
+file says so in as many words: *"Update this line when you add checks."* **It has now been missed
+twice.** WO-1.5's line said 79 when the real number was 82. WO-2.18 arrived to find it saying 522
+against a tree that measured 535, because WO-3.4's thirteen grade-engine checks landed without
+reaching it — so the arithmetic `522 + 2` would have written 524, and read as a green run thirteen
+checks smaller than it was.
+
+**A number that is maintained by remembering is not maintained.** The file's own footnote already
+argues the standard — *"a count that is nearly right is the same problem as a stale one"* — and the
+remedy it prescribes is thirty seconds of care per work order, which is precisely the thing that has
+failed twice. This is the general statement and it is worth more than the instance: `wo-sweep.mjs`
+exists because `plans/verification-tooling.md` directs grep-shaped checks out of the browser and into
+a grep, and *how many times does this file call `check()`* is grep-shaped.
+
+**Why nobody has folded it into another work order.** WO-2.18's implementer proposed exactly this and
+judged it too small to book, to be picked up by "the next work order that touches the sweep." Nothing
+left on the board touches the sweep — Phase 2's remainder is WO-2.6, WO-2.7 and WO-2.9, Phase 3 is
+product screens, and the gates are ship checkpoints. So *the next one that touches it* is never, which
+is how the third miss happens.
+
+**The measurement that makes this harder than it sounds, taken 2026-08-10 on `6e90e53`.** The sweep
+can count call sites; the README records executed checks; **the two numbers are not the same and the
+gap is unexplained.** `grep -c 'check(' tools/verify-shell.mjs` is **542**. One is the definition at
+`tools/verify-shell.mjs:68`. One is an `else check(` at `:10563`, which a line-anchored pattern misses.
+That leaves roughly **541 call sites against 537 executed** — four sites that a run does not reach,
+presumably conditional branches, and nobody has yet said which four. Settling that is most of this
+work order; a check asserting `541 === 537` written by rounding the difference away would be worse
+than no check at all.
+
+**Deliverables**
+- **A check in `wo-sweep.mjs` that counts `check()` call sites in `verify-shell.mjs` and compares them
+  against a number recorded in `tools/README.md`**, failing on disagreement with `file:line`, in the
+  shape the sweep's other checks take. The pattern carries its own written-down allowlist, per that
+  file's convention — the definition and any non-call occurrence are named there rather than
+  re-derived by the next reader.
+- **The four-site gap, named.** Whichever four call sites a run does not reach are identified and
+  written into `tools/README.md` alongside the count, with the reason. If the gap turns out to be
+  structural rather than a fixed four — a `check()` inside a loop makes call sites permanently unequal
+  to executed checks — say so and record the number the sweep is actually asserting, so the paragraph
+  claims what it can prove and not one word more.
+- **Proved by mutation in both directions, and the proof written down.** Add a throwaway `check()` to
+  `verify-shell.mjs` and the sweep must go red without the README being touched; correct the README
+  and it must go green. Both reverted, in the tabulated form `TESTING.md` § WO-2.18 uses.
+
+**Out of scope** — anything in `src/`, and anything that changes what `verify-shell.mjs` prints or how
+it counts. This work order asserts the existing number; it does not redesign the reporting. If a
+disagreement turns up that is a defect rather than a stale line, that is a finding and it gets its own
+work order.
+
+**Acceptance**
+- [ ] `node tools/wo-sweep.mjs` fails when `verify-shell.mjs` gains or loses a check and
+      `tools/README.md` is not updated to match — run, not reasoned, with the output quoted both ways.
+- [ ] The number the sweep asserts is the number `tools/README.md` states it is, and the paragraph
+      says which quantity it is counting — call sites or executed checks — rather than leaving a
+      reader to assume they are the same.
+- [ ] The four call sites a run does not reach are named in `tools/README.md` with their reason, or
+      the paragraph records why a fixed number cannot be stated.
+- [ ] `node tools/wo-sweep.mjs` otherwise prints the line it printed before — no new REVIEW, and the
+      standing sensitive-field-name REVIEW unchanged.
+- [ ] `node tools/verify-shell.mjs` passes whole and `src/` is byte-identical to HEAD.
+
+**Traps** — **Do not make the sweep run or import the harness.** Its own header is explicit: it opens
+no browser and drives nothing, and a sweep that shells out to a 160-second browser run stops being the
+cheap command a verifier runs first. **Do not settle the gap by loosening the assertion** — a check
+that passes when the numbers are "close" restates the problem it was written to solve, and a `REVIEW`
+that prints on every clean run is noise a verifier learns to scroll past. If the honest answer is that
+the two counts cannot be made equal, the check asserts the one it can count and the README names the
+other. **And do not update the count as part of this work order's own landing** without the check
+proving it: correcting the line by hand one more time is the ritual that has failed twice.
