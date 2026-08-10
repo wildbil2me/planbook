@@ -38,6 +38,33 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.4 — grades add up.** Weighted category math, computed from the assignments and scores a
+  teacher has actually recorded. **A category with no graded work drops out and its weight is shared
+  across the categories that do have work**, so a grade is right in week one rather than wrong until
+  every category has something in it.
+
+  **Extra credit is simply an assignment worth 0 points** — there is no extra-credit flag, field or
+  category type, and there is not going to be one. A 0-point assignment scored `5` adds 5 to what a
+  student earned and nothing to what was possible, which is what carries 13/20 in Quizzes to 18/20.
+  **Nothing is capped at 100%**, not the category and not the overall grade: a cap would quietly
+  throw away points the teacher chose to award. A category holding *only* extra credit has no
+  percentage at all and steps aside like any other empty one, rather than reading as a perfect score.
+
+  **A class whose category weights do not total 100 shows no grade, and says what the total is.** Not
+  a provisional figure and not a best guess — a weighted average over weights that do not add up is
+  arithmetic nobody asked for, and a number on screen would be believed. The same holds for a class
+  with no categories yet, and for a class where nothing has been graded: the answer is an honest
+  "no grade yet", never `0%`.
+
+  `late` still changes no arithmetic — it is a record of what happened, not a penalty — and a blank
+  cell means ungraded and affects nothing, exactly as an absent cell does. `missing` is the only flag
+  that scores zero, and it is marked by the teacher, never inferred from a date rolling over.
+
+  **No screen changes yet**; this is the arithmetic underneath, and the score grid that shows it
+  comes next. It is verified against twelve hand-computed cases in `docs/grade-math-cases.md` that a
+  teacher can check with a calculator and no JavaScript — the standard the 1.0 criteria set for the
+  one part of this app that has to be right.
+
 - **WO-3.3 — a class has an assignment list.** Name, points, category, and assigned and due dates,
   created and edited in Class → Assignments: the spine the rest of the gradebook hangs off. Create,
   edit, reorder within a category, and delete — the delete warns first and counts the scores it takes

@@ -227,6 +227,7 @@ import * as classes from './classes.js';
    here, and this module imports nothing back, so "which class is open" is resolved below and
    handed down as an id. */
 import * as categories from './categories.js';
+import * as gradeEngine from './grade-engine.js';
 /* WO-3.2. Its own module for the reason src/teacher.js declines to host it — a setting about the
    gradebook rather than about the teacher — and a leaf like categories.js: it imports the store, the
    modal system and the live region, and nothing imports it back. */
@@ -1442,6 +1443,10 @@ window.planbook = {
      and disagree with the app. Nothing in the app reads window.planbook — see the block above for
      why the seam outlived the shelf. */
   categories,
+  /* `gradeEngine` is pure and has no screen in WO-3.4. The browser verifier reads its answers
+     through this seam so the worked cases exercise the shipped module rather than a second copy
+     of the arithmetic in the harness. */
+  gradeEngine,
   /* `letterScale` joined at WO-3.2, and for the reading reason `categories` gives rather than a
      driving one: every control this feature has is a pill, a field or a button in #letterScaleModal
      and a teacher can touch all of them. What no click can show is the work order's first acceptance

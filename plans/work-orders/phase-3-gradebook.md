@@ -155,7 +155,7 @@ functions over a document, a class and a scale, exported for exactly that consum
 
 ## WO-3.3 — Assignments
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.4, WO-3.5, WO-3.7
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.5, WO-3.7
 **Closes roadmap** Phase 3 → "Assignments: name, points, category, assigned date, due date."
 
 **Why it exists.** The assignment list is the spine of the gradebook and of Phase 6's calendar,
@@ -183,14 +183,16 @@ which reads due dates rather than storing copies of them.
 - Deleting an assignment warns about the scores it takes with it.
 
 **Acceptance**
-- [ ] A zero-point assignment can be created and does not break any grade calculation. **This line
+- [x] A zero-point assignment can be created and does not break any grade calculation. **This line
       is the extra-credit feature, not a robustness check** *(owner, 2026-08-09)*: a 0-point
       assignment scored `5` is +5 earned points in its category. The editor must let `0` be typed in
       the points field and must not "helpfully" reject or default it. **The editor half is built and
       verified** — `0` is typed into the real field, kept as `0` through a re-render and a reload,
-      and labelled *Extra credit* on the row so a lone zero cannot read as a slip. The arithmetic
-      half has no engine to break yet, and is owed by
-      → WO-3.4 "a zero-point assignment scored 5 raises the category by 5 earned points against 0 possible"
+      and labelled *Extra credit* on the row so a lone zero cannot read as a slip. **The arithmetic
+      half was owed by WO-3.4 and was discharged there on 2026-08-10** — worked case 5 in
+      `docs/grade-math-cases.md`, driven by the harness through `window.planbook.gradeEngine`:
+      13 + 5 earned over 20 + 0 possible is 90%, and the category is not divided per assignment, so
+      there is no division by zero either way.
 - [ ] An assignment can be moved between categories and the grade updates. **The move is built and
       verified** — one `<select>` in the editor, the row redraws under its new group head, and the
       score column follows byte for byte because `scores` is keyed by assignment. The displayed
@@ -251,7 +253,7 @@ count in A's category-removal confirm.
 
 ## WO-3.4 — Grade engine
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1, WO-3.2
+**Ship** 2 · **Status** ✅ DONE — 2026-08-10 · **Size** M · **Depends on** WO-3.1, WO-3.2
 **Closes roadmap** Phase 3 → "Weighted grade with empty categories redistributing their weight."
 
 **Why it exists.** This is the arithmetic the whole product's credibility rests on, and the 1.0
@@ -290,26 +292,26 @@ signals and Phase 5's merge fields.
 **Out of scope** — any UI. WO-3.5 renders what this computes.
 
 **Acceptance** — each verified against a hand computation, recorded in `docs/grade-math-cases.md`:
-- [ ] Straightforward weighted case across three categories.
-- [ ] A term with exactly one assignment.
-- [ ] A category with no assignments at all — weight redistributed, grade correct.
-- [ ] A category whose every score is `excused` — behaves as empty, weight redistributed.
-- [ ] ~~A zero-point assignment — no division by zero, no effect on the percentage.~~
+- [x] Straightforward weighted case across three categories.
+- [x] A term with exactly one assignment.
+- [x] A category with no assignments at all — weight redistributed, grade correct.
+- [x] A category whose every score is `excused` — behaves as empty, weight redistributed.
+- [x] ~~A zero-point assignment — no division by zero, no effect on the percentage.~~
       **Rewritten 2026-08-09:** a zero-point assignment scored `5` **raises** the category by 5
       earned points against 0 possible — that is extra credit, and "no effect" was the opposite of
       the requirement. No division by zero either way.
-- [ ] Extra credit carries a category **past 100%**, and the overall grade past 100% with it.
+- [x] Extra credit carries a category **past 100%**, and the overall grade past 100% with it.
       Nothing clamps.
-- [ ] A category holding **only** zero-point assignments — `possible` sums to zero, so it has no
+- [x] A category holding **only** zero-point assignments — `possible` sums to zero, so it has no
       percentage. Behaves as empty and redistributes; never `NaN`, never `100%`, never a crash.
       **This is the case a naive engine dies on, and a teacher reaches it by making an "Extra
       credit" category and putting only extra credit in it.**
-- [ ] Weights totalling 95 — **no grade is returned at all**, and the reason names the total. Then
+- [x] Weights totalling 95 — **no grade is returned at all**, and the reason names the total. Then
       the same document with the weights corrected to 100 returns a grade. Both directions.
-- [ ] A `missing` flag scores zero; the same cell set to `excused` raises the grade.
-- [ ] A `late` flag changes nothing versus the same score unflagged.
-- [ ] A blank cell changes nothing versus no cell at all.
-- [ ] Every category empty — an honest "no grade yet", not `0%` and not `NaN`.
+- [x] A `missing` flag scores zero; the same cell set to `excused` raises the grade.
+- [x] A `late` flag changes nothing versus the same score unflagged.
+- [x] A blank cell changes nothing versus no cell at all.
+- [x] Every category empty — an honest "no grade yet", not `0%` and not `NaN`.
 
 **Traps** — A score cell is **always an object**, never a bare number. Polymorphic cells are where
 grade bugs live. If you find yourself writing `typeof cell === 'number'`, something upstream is
@@ -626,3 +628,92 @@ resolve it.
 **Not on the Ship 2 critical path.** Nothing about grades depends on it, and it must not be allowed to
 delay WO-3.4 or WO-3.5. But it is worth running **before WO-3.3** — see Why it exists — because
 WO-3.3 is the next work order that lands in the position this fixes.
+
+---
+
+## WO-3.12 — the grade-engine cases cover the arguments the engine actually takes
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.4 · **Blocks** nothing, and
+that is deliberate — the arithmetic is right today, so this is a row to cut if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. Inventing a
+product box for harness work is the drift WO-2.15 and WO-2.16 exist to catch — the same call WO-2.17
+and WO-2.18 both made.)*
+
+**Not a go-live blocker, and nothing here is a defect.** Added 2026-08-10, out of WO-3.4's second
+verification. `src/grade-engine.js` is correct as shipped and its twelve worked cases all pass. **Do
+not go hunting for a bug; there isn't one.** What is missing is the check that would notice if the
+code stopped being correct.
+
+**Why it exists.** WO-3.4's thirteen harness checks were mutation-tested at verification, and nine of
+nine arithmetic mutants died — dropping the `possible === 0` guard, making `missing` stop adding to
+`possible`, treating `excused` as `missing`, penalising `late`, capping the class grade at 100,
+dividing by 100 instead of `activeWeight`, skipping the `isBalanced()` gate, returning `0` for no
+graded work, and letting a blank cell add to `possible`. That suite is real evidence. **Five mutants
+survived**, and they fall into two groups, both of which are about the *inputs the cases use* rather
+than about the arithmetic they check.
+
+**Group 1 — the fix that landed this week has no standing check.** WO-3.4's correction round routed
+the weight total through `formatWeight()` (`src/grade-engine.js:96`) so the engine's "no grade yet"
+message and the categories banner stop disagreeing about the same class on the same screen. The only
+unbalanced-weight fixture in the harness is `50 / 30 / 15 = 95` — **integers, which is exactly the
+case where the bug could not appear.** Measured at verification: reverting `formatWeight(total)` to
+raw concatenation leaves **all thirteen checks green.** The defect was real — with `40.1 / 34.7 / 20`
+the banner read `94.8%` and the engine read `94.80000000000001%` — and the fix is real, and today
+nothing would catch it coming back. A fixture whose values cannot express the failure is the shape
+this project has now recorded three times.
+
+**Group 2 — every case is one class, one term, one student.** `c1`, `t1`, `s1` throughout
+`docs/grade-math-cases.md`. An engine that ignored `classId`, `termId` or `studentId` **entirely**
+passes all thirteen checks — confirmed by mutation, not by inspection: three separate mutants
+dropping those filters all stayed green. The filters do hold in the source
+(`src/grade-engine.js:34-37` and `:41-42`), which is why this is missing coverage and not a live
+defect. But the engine's whole job is to answer *for one student, in one class, in one term*, and its
+three most important arguments are currently unexercised. This is the WO-3.3 `classId` scar sitting
+forty lines above WO-3.4 in this same file, in the one place that scar has not yet been checked.
+
+**Deliverables**
+- **A decimal-weight case.** Extend WO-3.4's case-8 fixture with `[40.1, 34.7, 20]` and assert the
+  message reads `The category weights total 94.8%, so there is no grade yet.` — the string, not the
+  number, because the string is what the teacher reads and what disagreed with the banner.
+- **Multi-class, multi-term, multi-student fixtures**, so that each of the three filters is
+  independently exercised: an assignment in another class, an assignment in another term, and a
+  second and third student with different cells, each asserted to leave the subject's grade untouched.
+- **Every new check is proved by a mutation, and the proof is written down.** Revert
+  `formatWeight(total)` to raw concatenation and the decimal-weight check must go red **while the
+  other thirteen stay green**. Drop each of the three filters in turn and the matching check must go
+  red while the rest stay green. If a mutation reddens everything, the fixture is coupled and the
+  check is not measuring what it claims. Record each mutation and its result in `tools/README.md`,
+  the way WO-2.17's and WO-2.18's are.
+- **`docs/grade-math-cases.md` gains the new cases** in the same hand-computed form as the existing
+  twelve, since that document is the suite's source of truth and a check whose expected value is not
+  written there has nowhere to be checked against.
+
+**Out of scope** — anything in `src/`. The arithmetic is verified correct; this work order adds no
+behaviour. If a new check goes red against current code, **that is a defect found and it gets its own
+work order** — do not fix the app from inside this one. Also out of scope: the weight-`0` message
+noted at WO-3.4's verification (a category holding the only graded work at weight `0` reports "There
+is no graded work yet", which is factually off though the numeric answer is right). That is a wording
+question for the screen that renders it, and it belongs to WO-3.5 or later.
+
+**Acceptance**
+- [ ] A case with weights `40.1 / 34.7 / 20` asserts the message string reads `94.8%`, not
+      `94.80000000000001%`.
+- [ ] Reverting `formatWeight(total)` at `src/grade-engine.js:96` to raw concatenation turns that
+      check red and leaves WO-3.4's thirteen green — run, not reasoned, with the counts before and
+      after quoted.
+- [ ] An assignment in a second class does not move the subject's grade, and dropping the `classId`
+      filter turns that check red on its own.
+- [ ] An assignment in a second term does not move the subject's grade, and dropping the `termId`
+      filter turns that check red on its own.
+- [ ] A second student's cells do not move the subject's grade, and reading the first student's cell
+      regardless of id turns that check red on its own.
+- [ ] The new cases are written into `docs/grade-math-cases.md` with hand-computed expected values.
+- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
+- [ ] `src/` is byte-identical to HEAD across the whole work order.
+
+**Traps** — **A mutation that reddens every check has proved nothing.** The point of each proof is
+that one check moves and the others do not; that is what separates a check that measures its own
+subject from a fixture so coupled that any damage anywhere shows up everywhere. And **do not rewrite
+the existing twelve cases to be multi-class.** They are the hand-computed record that WO-3.4 was
+verified against, they are readable by a teacher with a calculator, and their simplicity is a feature.
+Add cases; do not complicate the ones that exist.
