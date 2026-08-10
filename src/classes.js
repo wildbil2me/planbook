@@ -57,7 +57,7 @@ import { starterCategories, categoriesOf, weightTotal, isProvisional, formatWeig
    this module has been missing since WO-1.6 — see selectClass() at the bottom of this section.
    src/views.js imports nothing but src/prefs.js, precisely so that the modules which navigate can
    import it without closing a loop. */
-import { showView, currentView } from './views.js';
+import { showView, currentView, isClassScreen } from './views.js';
 
 const CLASS_MODAL_ID = 'classesModal';
 const TERM_MODAL_ID = 'termsModal';
@@ -275,8 +275,15 @@ export function refreshClassBar() {
 
     Repainted on every view change because src/shell.js and selectClass() below both call this
     after showView(), which is also why showView comes first at both call sites.
+
+    SINCE WO-3.3 A CLASS HAS SEVERAL SCREENS, and the question this line asks is "are we inside a
+    class", not "are we on the attendance one". The strip belongs to all of them: a teacher on the
+    assignment list needs the same fast switch between classes she has on the registry, and the
+    "All classes" door at the head of the row is the way out of any of them. Asked of src/views.js's
+    isClassScreen() rather than by comparing against a list here, so that WO-3.5 adding the score
+    grid changes one line in that file and none in this one.
   */
-  const onClassView = currentView() === 'class';
+  const onClassView = isClassScreen(currentView());
 
   bar.textContent = '';
   if (!list.length) {

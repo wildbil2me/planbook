@@ -57,13 +57,13 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 12/16 `[████████░░] 75%` |
-| 3 | Gradebook | 🔨 IN PROGRESS | 2/10 `[██░░░░░░░░] 20%` |
+| 3 | Gradebook | 🔨 IN PROGRESS | 3/10 `[███░░░░░░░] 30%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **30/82 `[████░░░░░░] 37%`** |
+| | | **Overall** | **31/82 `[████░░░░░░] 38%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -318,9 +318,16 @@ meet is a second source of truth that's wrong by first period.)*
 - [x] **Letter-scale editor** — the teacher defines the bands. The app never hardcodes 90/80/70.
       This subsumes rounding: if 89.5 should be an A, the boundary is 89.5, and there is no
       separate rounding rule to disagree with the SIS about.
-- [ ] Assignments: name, points, category, assigned date, due date. *A plain date — there is no
+- [x] Assignments: name, points, category, assigned date, due date. *A plain date — there is no
       "next meeting" to default to, and inventing one would require the schedule model Phase 2
-      rejects.*
+      rejects.* *(WO-3.3, 2026-08-09. It came with one thing this line did not predict and could
+      not have been built without: **a class now has more than one screen**, so the work order also
+      built the control that switches between them — a three-tab strip on the panel, Attendance ·
+      Assignments · Scores, with a class always opening on Attendance. The decision record is
+      [`gradebook-surfaces.md`](gradebook-surfaces.md); WO-3.5 and WO-3.7 wear the same strip. Two
+      of this work order's acceptance lines name a **grade** and one names the per-student detail,
+      none of which exists yet — they stay open against WO-3.4, WO-3.5 and WO-3.7 rather than being
+      ticked here.)*
 - [ ] Score entry grid — one column per assignment, `Enter` moves down the column. The
       second-most-frequent action in the app; it gets the same care as marking attendance.
 - [ ] **`late` and `missing` are marked, never inferred.** Raw score plus a flag. `missing` counts

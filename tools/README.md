@@ -406,6 +406,39 @@ nothing below 90. It went green against the defect it exists for. The probe that
 where the list says A and a sorted list says A−. Four mutations, all reverted and tabulated in
 `TESTING.md` § WO-3.2.
 
+**515 at WO-3.3**, and forty-two is a count of additions in one new section: the assignment list, the
+three-tab screen switcher, and the two dialogs that write one assignment. Five of them are worth
+knowing about. **The trap check is asserted from both ends and only one end has a control.** WO-3.3
+forbids a duplicate carrying its source's `categoryId` into another class, so one check reads the copy
+the real dialog wrote and asserts it wears the TARGET's category or none; the other plants an
+assignment in class B wearing class A's category id — the shape a restore or a hand edit can produce,
+which no button can — and asserts it is absent from A's list **and** absent from the count in A's
+category-removal confirm. The second is the expensive half: an unguarded count is what a teacher agrees
+to destroy. **The always-opens-on-Attendance line is driven the way the work order asks for it and not
+the way a desk would reach for.** It leaves one class on Assignments, opens a second, and comes back,
+because a per-class memory is invisible until the second class; then it does the same thing across a
+reload and asserts `planbook_openView` never held anything but `class`, which is the cross-reload form
+of the same defect. **The coverage bar needed a roster and the run does not leave one where it can be
+used** — the only class carrying students is the one restored from a pre-WO-3.1 backup, which has
+neither terms nor categories and so cannot hold an assignment at all — so this section adds two
+students through the real roster form and takes them out again at the end. Deliberately not added to
+the class that already has 26: the attendance section asserts that number, and a fixture that quietly
+changes another section's arithmetic is worse than no fixture. And **one check is honest about being
+unable to demonstrate its line**: WO-3.3's seventh acceptance line says a student's name leaves the
+strip when you switch away from their detail, and there is no detail screen in this build to leave —
+so what is asserted is the rule's safe direction, that a name set through `setDetailBreadcrumb()` with
+no detail open is drawn on neither strip. The line is re-homed to WO-3.7 rather than ticked. And
+**the duplicate's fixture had to be built in both directions, which it was not at first.** The check
+that says a copy wears the target's own category id "or none" was written against a document in which
+no two classes shared a category name, so only the *no match* path was ever taken and a
+`matchCategory()` returning `''` unconditionally would have passed the whole section — the verifier
+found it by asking what would have to be true of the fixture for the bug to be invisible, and the
+answer was the fixture. It now renames the source's category through the real name field to a name no
+other class has, drives the dialog against that, then adds a category of that same name to the target
+through the real manager and drives it again: the refusal and the match, each asserted, with the
+fixture itself asserted before both. Seven mutations, all reverted and tabulated in `TESTING.md`
+§ WO-3.3.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

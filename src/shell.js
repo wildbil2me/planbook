@@ -83,6 +83,34 @@
       data-band-remove="<index>"      removes it, on the tap — nothing is filed under a band
       data-band-field="letter|min" + data-band-index: an input; edits that band as it is typed, and
                                       redraws the derived range beside every row below it
+      data-class-screen="<view>"      moves between the open class's screens — Attendance ·
+                                      Assignments · Scores. Drawn by src/screen-nav.js on every one
+                                      of them, and it never changes WHICH class is open, only which
+                                      screen of it. A class always opens on Attendance, so nothing
+                                      here writes down which screen was left (src/views.js)
+      data-assignment-new             adds an assignment to the open class and term, and opens the
+                                      editor on it
+      data-assignment-edit="<id>"     opens the editor for that assignment
+      data-assignment-move-up="<id>"  moves it one place earlier inside its own category group
+      data-assignment-move-down="<id>"  one place later
+      data-assignment-duplicate="<id>"  opens the copy dialog — into this class or another section
+      data-assignment-copy-class="<id>"  which class the copy lands in; re-proposes its term and
+                                      matches its category BY NAME, never by carrying an id across
+      data-assignment-copy-confirm    writes the copy, with a new id and no scores on it
+      data-assignment-copy-cancel     abandons it, having written nothing
+      data-assignment-delete="<id>"   opens the confirm that counts the scores it takes with it —
+                                      empty on the editor's own Delete…, meaning "the open one"
+      data-assignment-delete-confirm  carries out that deletion
+      data-assignment-delete-cancel   abandons it, having written nothing
+      data-assignment-field="name|points|assigned|due" + data-assignment-id: an input; edits that
+                                      field as it is typed, and on `change` rebuilds a date field
+                                      that was cleared — the iPadOS picker quirk data-term-field
+                                      answers above. `points` stores what was typed, INCLUDING 0
+      data-assignment-category="<id>" a <select>; files that assignment under another category of
+                                      the same class, on `change` rather than on `input`
+      data-assignment-copy-term       a <select> in the copy dialog; which term the copy lands in
+      data-assignment-copy-category   a <select>; which of the TARGET class's categories it lands in
+      data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
                                       question mark. `P` is a step and is still never STORED:
@@ -219,6 +247,13 @@ import * as supports from './supports.js';
 import * as presentation from './presentation.js';
 import * as teacher from './teacher.js';
 import * as views from './views.js';
+/* WO-3.3, and two modules rather than one because they are two different things. src/screen-nav.js
+   is the strip that switches between one class's screens — a leaf that imports src/views.js and
+   nothing else, drawn on every class screen and belonging to none of them; src/assignments.js is
+   one of those screens. The order below is the order they are wired: the switcher moves the view,
+   this file paints whatever the switch landed on. */
+import * as screenNav from './screen-nav.js';
+import * as assignments from './assignments.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -262,7 +297,51 @@ function afterYearChange() {
 function afterClassChange() {
   home.refreshHome();
   if (!classes.getSelectedClassId()) showHome();
-  else if (views.currentView() === 'class') attendance.renderAttendance();
+  else if (views.isClassScreen(views.currentView())) paintClassScreen(views.currentView());
+  /* AND THE STRIP THAT SAYS WHICH SCREEN OF IT (WO-3.3). Cheap enough to repaint when nothing
+     changed — it is six elements — and the cost of leaving it out is a strip that survives a class
+     going away, or one that is still empty on the first paint after boot. */
+  screenNav.refreshScreenNav();
+}
+
+/*
+  WHICH OF THE OPEN CLASS'S SCREENS IS PAINTED, and the one place that mapping lives (WO-3.3).
+
+  A class has three screens now — Attendance, Assignments and, when WO-3.5 lands, Scores — and
+  every caller above that used to say `attendance.renderAttendance()` was really saying "paint
+  whatever screen of this class is up". Said once, here, because that is what this file is for: the
+  day a fourth screen exists, the modules that navigate do not each learn about it.
+*/
+function paintClassScreen(view) {
+  if (view === 'assignments') assignments.renderAssignments();
+  else attendance.renderAttendance();
+}
+
+/*
+  MOVING BETWEEN ONE CLASS'S SCREENS — the control WO-3.3 builds, and the whole of what a tap on
+  the strip does.
+
+  Four calls, in this order and for four different reasons. The view swaps. The class tab strip
+  repaints because it is drawn differently on a class screen than on the grid (src/classes.js's
+  refreshClassBar reads which view is up, and its `onClassView` is now "any screen of a class").
+  The switcher repaints because the active segment is which screen is showing. Then the screen
+  itself is painted, because a view that is shown and not drawn is the class before last.
+
+  WHICH CLASS IS OPEN IS UNTOUCHED, and so is every preference: this moves between screens of the
+  class already open, and `openView` deliberately writes down every one of them as `class` so that
+  a reload lands on Attendance (src/views.js's REMEMBERED_AS, and the owner's decision at
+  plans/gradebook-surfaces.md). Said out loud for the reason selectClass() is: this is a screen a
+  screen-reader user cannot see move.
+*/
+function showClassScreen(name) {
+  if (!classes.getSelectedClassId()) { showHome(); return; }
+  const view = views.showView(views.isClassScreen(name) ? name : 'class');
+  classes.refreshClassBar();
+  screenNav.refreshScreenNav();
+  paintClassScreen(view);
+  const cls = classes.getSelectedClass();
+  announce((screenNav.screenLabel(view) || 'That screen')
+    + (cls ? ' for ' + cls.name : '') + '.');
 }
 
 /*
@@ -281,6 +360,13 @@ function afterClassChange() {
 */
 function afterCategoryChange() {
   classes.refreshClassList();
+  /* AND THE ASSIGNMENT LIST, WHEN THAT IS THE SCREEN BEHIND THE PANEL (WO-3.3). It is grouped by
+     category, it prints each category's weight in a chip, and removing a category destroys the
+     work filed under it — so a teacher who opens Categories from the assignment list and renames,
+     reweights or removes one would otherwise close the panel onto a list describing the class as
+     it was, with rows on it that no longer exist. Painted only when it is up, for the reason
+     afterClassChange() gives: painting a hidden screen is rows nobody is looking at. */
+  if (views.currentView() === 'assignments') assignments.renderAssignments();
 }
 
 /*
@@ -299,6 +385,10 @@ function afterCategoryChange() {
 function showHome() {
   views.showView('home');
   classes.refreshClassBar();
+  /* The screen switcher goes empty here rather than being hidden: the class grid is not a screen
+     OF a class, so there is nothing for it to switch between — and an empty strip keeps the panel
+     header the same height between views, where a hidden one would make it jump. */
+  screenNav.refreshScreenNav();
   home.refreshHome();
   announce('Your classes.');
 }
@@ -469,6 +559,18 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  /*
+    "SHOW ME ANOTHER SCREEN OF THIS CLASS" (WO-3.3), directly under the control that opens one,
+    because these two are the app's navigation and everything below them is something you do once
+    you have arrived. The tab row above answers WHICH CLASS; this answers which screen of it.
+
+    One hook for all three segments, and the strip is drawn on every class screen — so the same tap
+    means the same thing whichever screen it is made from. A segment for a screen that does not
+    exist yet is disabled in the markup src/screen-nav.js builds, so it never reaches this line.
+  */
+  const classScreen = e.target.closest('[data-class-screen]');
+  if (classScreen) { showClassScreen(classScreen.getAttribute('data-class-screen')); return; }
+
   const rename = e.target.closest('[data-class-rename]');
   if (rename) { classes.startRename(rename.getAttribute('data-class-rename')); return; }
   if (e.target.closest('[data-class-rename-cancel]')) { classes.cancelRename(); return; }
@@ -510,7 +612,21 @@ document.addEventListener('click', (e) => {
     return;
   }
   const termSelect = e.target.closest('[data-term-select]');
-  if (termSelect) { classes.selectTerm(termSelect.getAttribute('data-term-select')); return; }
+  if (termSelect) {
+    classes.selectTerm(termSelect.getAttribute('data-term-select'));
+    /* AND THE SCREEN THE TERM NAV IS SITTING ON TOP OF (WO-3.3, correction round 1).
+       classes.selectTerm() repaints the class bar and nothing else, which was right while the only
+       class screen was the attendance registry — that screen is a window of dates and does not
+       change when the term does. The assignment list is entirely term-filtered, headline included,
+       so tapping Quarter 2 moved the chip in the header and left a table of Quarter 1's work
+       underneath it, still captioned "Assignments · Quarter 1". Painted only when it is the screen
+       up, for the reason afterCategoryChange() above gives.
+       NOT paintClassScreen(): the registry has a term-totals line with a gap of its own shape and
+       it is not this work order's to close — repainting attendance here would hide it rather than
+       fix it. */
+    if (views.currentView() === 'assignments') assignments.renderAssignments();
+    return;
+  }
   if (e.target.closest('[data-term-add]')) { classes.addTerm(); return; }
   const termRemove = e.target.closest('[data-term-remove]');
   if (termRemove) { classes.removeTerm(termRemove.getAttribute('data-term-remove')); return; }
@@ -595,6 +711,60 @@ document.addEventListener('click', (e) => {
   if (bandDown) { letterScale.moveBandDown(bandDown.getAttribute('data-band-move-down')); return; }
   const bandRemove = e.target.closest('[data-band-remove]');
   if (bandRemove) { letterScale.removeBand(bandRemove.getAttribute('data-band-remove')); return; }
+
+  /* ── assignments (WO-3.3) ──
+     Under the two setup panels because that is the order a class is built in: what it is graded
+     on, what the letters mean, then the work itself. None of the eleven below chains
+     afterClassChange() or afterCategoryChange() — nothing here changes which classes exist, their
+     order, which one is open, or a category — and src/assignments.js repaints its own screen after
+     every write, exactly as src/attendance.js does. The one thing behind this screen that could go
+     stale is the class-manager row, and no hook here touches a class.
+
+     The opener is passed to all four that open a dialog: src/modal.js needs somewhere to hand
+     focus back to, and Safari does not focus a button when you tap it. */
+  const assignmentNew = e.target.closest('[data-assignment-new]');
+  if (assignmentNew) { assignments.createAssignment(assignmentNew); return; }
+  const assignmentEdit = e.target.closest('[data-assignment-edit]');
+  if (assignmentEdit) {
+    assignments.openAssignmentEditor(assignmentEdit.getAttribute('data-assignment-edit'),
+      assignmentEdit);
+    return;
+  }
+  const assignmentUp = e.target.closest('[data-assignment-move-up]');
+  if (assignmentUp) {
+    assignments.moveAssignmentUp(assignmentUp.getAttribute('data-assignment-move-up')); return;
+  }
+  const assignmentDown = e.target.closest('[data-assignment-move-down]');
+  if (assignmentDown) {
+    assignments.moveAssignmentDown(assignmentDown.getAttribute('data-assignment-move-down')); return;
+  }
+  const assignmentCopy = e.target.closest('[data-assignment-duplicate]');
+  if (assignmentCopy) {
+    assignments.openCopyEditor(assignmentCopy.getAttribute('data-assignment-duplicate'),
+      assignmentCopy);
+    return;
+  }
+  const copyClass = e.target.closest('[data-assignment-copy-class]');
+  if (copyClass) {
+    assignments.setCopyClass(copyClass.getAttribute('data-assignment-copy-class')); return;
+  }
+  if (e.target.closest('[data-assignment-copy-confirm]')) { assignments.confirmCopy(); return; }
+  if (e.target.closest('[data-assignment-copy-cancel]')) { assignments.cancelCopy(); return; }
+  /* One hook and two doors — the row's own Delete and the Delete… inside the editor, which carries
+     no value and means "the one this editor is open for". Two controls, one route, the same shape
+     `data-view-home` and `data-term-manage` both take. */
+  const assignmentDelete = e.target.closest('[data-assignment-delete]');
+  if (assignmentDelete) {
+    assignments.openAssignmentDelete(assignmentDelete.getAttribute('data-assignment-delete'),
+      assignmentDelete);
+    return;
+  }
+  if (e.target.closest('[data-assignment-delete-confirm]')) {
+    assignments.confirmAssignmentDelete(); return;
+  }
+  if (e.target.closest('[data-assignment-delete-cancel]')) {
+    assignments.cancelAssignmentDelete(); return;
+  }
 
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
@@ -939,6 +1109,19 @@ document.addEventListener('input', (e) => {
   const bandField = e.target.closest('[data-band-field]');
   if (bandField) { letterScale.editBandField(bandField); return; }
 
+  /* An assignment's name, its points or one of its dates, saved as it is typed and by the same
+     debounce. The list behind the dialog is redrawn per keystroke and the FIELD is not — see
+     src/assignments.js, where replacing the input under the caret is the failure that rule exists
+     for. `points` stores exactly what was typed, including 0, which is this app's extra-credit
+     mechanism rather than a value to be caught (docs/data-model.md § Extra credit). */
+  const assignmentField = e.target.closest('[data-assignment-field]');
+  if (assignmentField) { assignments.editAssignmentField(assignmentField); return; }
+
+  /* The copy's name, which writes NOTHING to the document: a duplicate is a proposal until the
+     button that names the class it lands in. */
+  const copyName = e.target.closest('[data-assignment-copy-name]');
+  if (copyName) { assignments.setCopyName(copyName); return; }
+
   /* The registry's search box, which is the one hook on this listener that writes NOTHING — it
      narrows the rows on screen. It is here rather than on `keyup` for the reason the fields below
      are: `input` is the event that fires for a paste, for dictation, and for the software
@@ -1013,6 +1196,22 @@ document.addEventListener('change', (e) => {
      other listener cannot see it at all. */
   const kind = e.target.closest('[data-support-kind]');
   if (kind) roster.editAccommodationKind(kind);
+  /* An assignment's dates, which is the same iPadOS quirk on a fourth pair of fields —
+     src/assignments.js points at the long version rather than repeating it. Same element the
+     `input` listener above already saved; this hook exists for the cleared value. */
+  const assignmentDate = e.target.closest('[data-assignment-field]');
+  if (assignmentDate) assignments.assignmentDateCommitted(assignmentDate);
+  /* Which category an assignment counts in, read HERE and not in the `input` listener above, for
+     the reason `data-support-kind` is: a <select> commits on `change`, and hooking both would write
+     the same value twice and move `rev` twice for one tap. It carries its own hook so that the
+     other listener cannot see it at all. */
+  const assignmentCategory = e.target.closest('[data-assignment-category]');
+  if (assignmentCategory) assignments.setAssignmentCategory(assignmentCategory);
+  /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
+  const copyTerm = e.target.closest('[data-assignment-copy-term]');
+  if (copyTerm) assignments.setCopyTerm(copyTerm);
+  const copyCategory = e.target.closest('[data-assignment-copy-category]');
+  if (copyCategory) assignments.setCopyCategory(copyCategory);
 });
 
 /*
@@ -1074,8 +1273,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       src/classes.js to know it: a stored `class` on a document with no active class is a blank
       main area, so it falls back to the grid. This runs BEFORE refreshClassBar() because the
       strip's active mark is read off which view is up.
+
+      AND IT IS ALWAYS `class` — Attendance — WHICHEVER SCREEN OF A CLASS WAS STORED (WO-3.3). The
+      preference cannot hold `assignments` in the first place: src/views.js writes every class
+      screen down as `class`, so nothing can be sitting there to restore. Asking isClassScreen()
+      rather than comparing to `class` is the belt to those braces, and it is what makes the owner's
+      rule survive a document restored from a browser that stored something else — a class opens on
+      Attendance every time, including after a reload.
     */
-    views.showView(views.savedView() === 'class' && classes.getSelectedClassId() ? 'class' : 'home');
+    views.showView(views.isClassScreen(views.savedView()) && classes.getSelectedClassId()
+      ? 'class' : 'home');
     /* The class bar and the term nav, drawn from the document that just came out of IndexedDB.
        Boot is the only place they are drawn from outside src/classes.js and the two chains above:
        every other change to a class is made inside that module, which redraws its own header. */
@@ -1210,6 +1417,18 @@ window.planbook = {
      the export WO-3.4 will import says something else. Nothing in the app reads window.planbook —
      see the block above for why the seam outlived the shelf. */
   letterScale,
+  /* `assignments` and `screenNav` joined at WO-3.3, and for the reading reason `classes` gives
+     rather than a driving one: every control either feature has is a button, a field or a segment
+     on a real screen, and a teacher can touch all of them. Two things no click can show. The first
+     is what a DUPLICATE actually wrote — that the copy carries the target class's own ids and that
+     `scores` grew no column for it — which is the difference between this build and the naive one
+     that carried the source's `categoryId` across a class boundary, and it is invisible on screen
+     because both look identical on the list. The second is the breadcrumb rule: WO-3.7 owns the
+     per-student detail, so there is no screen today from which a name can be set and then left, and
+     setDetailBreadcrumb() through this seam is the only way to ask whether a name set with no
+     detail open stays off the strip. Nothing in the app reads window.planbook — see the block above
+     for why the seam outlived the shelf. */
+  assignments, screenNav,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

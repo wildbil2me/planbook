@@ -146,6 +146,20 @@ is the right way round — the fast path should be the one with the class arrivi
 desk. Last-screen memory also means opening 2nd period and not immediately knowing what you are
 looking at.
 
+**Built at WO-3.3, and here is where it lives** *(2026-08-09)*. `src/screen-nav.js` is the strip —
+a leaf module that imports `src/views.js` and nothing else, so any screen can wear it without an
+import loop. A class screen carries an empty `<nav class="screen-nav" data-screen-nav>` in its panel
+header and appears in the strip with no change to that file, the same contract `#classTabBar` has
+with its renderer; `src/shell.js` repaints it after anything that moves the view and paints the
+screen the switch landed on. **WO-3.5 and WO-3.7 add one line each to `VIEWS` and `CLASS_SCREENS` in
+`src/views.js` and one empty `<nav>` in their own markup, and nothing else** — the *Scores* segment
+is already drawn, disabled, and stops being disabled the moment its view exists. The always-opens-on-
+Attendance half is not in the strip at all: it is `REMEMBERED_AS` in `src/views.js`, which writes
+every class screen down as `class`, so the preference cannot hold anything for a reload to restore.
+The `.screen-nav*` styles landed in `src/assignments.css` as § SHARED, per the rule below that the
+shared block ships with whichever work order lands first; `src/scores.css` and `src/detail.css` wear
+them and must never restyle them.
+
 **The two strips on screen at once were put to the owner and accepted.** It is the same objection
 that killed the tabs-in-a-modal option below — class tabs in the navy header, screen tabs on the
 white panel — and it is answered by the registers being different rather than by there being fewer

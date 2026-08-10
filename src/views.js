@@ -25,22 +25,58 @@
   src/prefs.js — a module that imported classes.js or attendance.js could not be imported BY them,
   and this repo has refused to close an import loop four times now (src/shell.js's own header).
 
-  THE PREFERENCE IS A UI PREFERENCE and nothing else: which of two screens this browser was last
-  looking at. It is `planbook_openView`, declared in src/prefs.js like every other one, and it holds
-  a view NAME rather than an element id — an id in localStorage is markup leaking into storage, and
-  the markup is allowed to be renamed. Which class that view shows is `openClassId`, which was
-  always the right preference and is untouched by this file.
+  THE PREFERENCE IS A UI PREFERENCE and nothing else: whether this browser was last inside a class
+  or looking at the grid. It is `planbook_openView`, declared in src/prefs.js like every other one,
+  and it holds a view NAME rather than an element id — an id in localStorage is markup leaking into
+  storage, and the markup is allowed to be renamed. Which class that view shows is `openClassId`,
+  which was always the right preference and is untouched by this file. WHICH SCREEN OF THAT CLASS is
+  deliberately not remembered at all — see REMEMBERED_AS below.
 */
 
 import { getPref, setPref } from './prefs.js';
 
 /* view name → the element that is shown for it. A view added by a later work order adds one line
    here and one `<div>` in index.html; nothing else in this file changes. Phase 3's gradebook and
-   Phase 6's calendar are the two already known about. */
+   Phase 6's calendar are the two already known about.
+
+   `class` is the ATTENDANCE screen, and the name is kept rather than corrected. It was the class
+   view when a class had one screen, it is the value sitting in `planbook_openView` on two devices
+   already, and renaming it would rename a stored preference to make a word in this file read
+   better. WO-3.3 added `assignments` beside it; WO-3.5 adds `scores` the same way. */
 const VIEWS = {
   home: 'homeView',
   class: 'classView',
+  assignments: 'assignmentsView',
 };
+
+/*
+  THE SCREENS OF ONE OPEN CLASS, in the order the switcher draws them (src/screen-nav.js).
+
+  A class screen is a view like any other — same `.hidden` toggle, same `<main>`, no router — and
+  this list is what lets the two callers that care ask the question without keeping their own copy
+  of the answer: src/classes.js draws the class tabs on any of them, and src/shell.js paints the
+  right screen after a switch.
+*/
+const CLASS_SCREENS = ['class', 'assignments'];
+
+export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
+
+/*
+  WHAT A CLASS SCREEN IS REMEMBERED AS, and this is the whole of "a class always opens on
+  Attendance, never on the screen it was left on" (plans/gradebook-surfaces.md, decided by the owner
+  2026-08-09; WO-3.3's sixth acceptance line).
+
+  The preference cannot hold `assignments`. Not "is ignored when it does" — cannot hold it: every
+  class screen is written down as `class`, so a browser that was left on the assignment list and
+  then reloaded reads `class` at boot and lands on Attendance, and there is no per-class memory
+  anywhere to go stale. Collapsing on the READ side instead would have worked today and left a
+  stored `assignments` sitting in localStorage waiting for the next reader of savedView() to trust
+  it.
+
+  It costs nothing that anybody asked for: `openView` answers "was this browser inside a class or
+  looking at the grid", which is exactly the granularity src/shell.js's boot restores at.
+*/
+const REMEMBERED_AS = { assignments: 'class' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,
@@ -64,7 +100,7 @@ export function showView(name) {
     const el = document.getElementById(VIEWS[key]);
     if (el) el.classList.toggle('hidden', key !== want);
   });
-  setPref('openView', want);
+  setPref('openView', REMEMBERED_AS[want] || want);
   return want;
 }
 

@@ -1,0 +1,283 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — the assignment list (WO-3.3): one class, one term, the work in it.
+
+   The third per-screen stylesheet, following the rule src/shell.css's header sets
+   and src/home.css instanced first: one file per screen, loaded after the shell's,
+   styling only its own class names, with its own @media (pointer: coarse) block at
+   the end. No selector below names anything shell.css, home.css or attendance.css
+   styles — the controls here that ARE shell components (`.class-action-btn`,
+   `.panel*`, `.modal-*`, `.pill`) are worn as-is and never restyled from here.
+
+   NOTHING BELOW WAS DESIGNED HERE. Every value is lifted from
+   design/mockups/proposed.css, which was drawn against these same stylesheets on
+   2026-08-09 and written to be carried across almost as-is; that file's header
+   states the rules it follows so that "lift" means lift. The cut lines there are
+   its section banners, and this file is two of them:
+
+     § ASSIGNMENT LIST  →  here, in full
+     § SHARED           →  here, because "whichever work order lands first" is this
+                           one. `.screen-nav*` and `.cat-chip*` are NOT this
+                           screen's controls: the switcher is drawn on every class
+                           screen (src/screen-nav.js) and the chip is shared with
+                           the score grid's column heads. WO-3.5's src/scores.css
+                           and WO-3.7's src/detail.css WEAR them and must never
+                           restyle them — two stylesheets styling one class is how
+                           a per-file touch pass stops being safe from the cascade.
+                           `.grade-none` is the other half of § SHARED and is
+                           deliberately NOT here: nothing in this build shows a
+                           grade, so it lands with WO-3.5, which is the first
+                           screen with somewhere to not-show one.
+
+   The grid's head, rows and rules are Roll Call!'s table as src/attendance.css
+   already lifted it — 9px/10px cells, a 10px uppercase #8a9bb0 head on a 1px
+   #eef0f4 rule, one #f3f4f6 line per row carried by the row and not the cell. The
+   registry and this list are the same object with different cells in it, and a
+   teacher moving between them should not be able to feel a seam.
+
+   The two things that read like mistakes here are the same two that read like
+   mistakes in shell.css, home.css and attendance.css: colours are written out
+   inline rather than as custom properties, and there is no dark variant of
+   anything. Both are deliberate suite conventions — read CLAUDE.md before tidying
+   either one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
+   has one: a control covered only by some other selector's rule is a control the next reader has
+   to go and prove is covered. */
+.screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Except the ones you type into. `user-select: none` on a text field is a field a teacher cannot
+   double-tap to select a word in, which is the shape of the correction src/roster.js's note
+   records about suppressing things on inputs. */
+.assign-field-input, .assign-field-date { user-select: text; -webkit-user-select: text; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SHARED — the screen switcher and the category chip
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE SWITCHER BETWEEN ONE CLASS'S SCREENS. Attendance, Assignments and Scores are views of the
+   same open class, and something has to move between them. Decided by the owner 2026-08-09 against
+   the drawn candidate; the record is plans/gradebook-surfaces.md § "How the class view navigates
+   between its screens" and the behaviour is src/screen-nav.js, whose header carries the reasoning
+   this comment would otherwise repeat.
+
+   It is a segmented control rather than five `.cls-tab`s because these are not peers of the classes
+   above them — they are inside one class, and the box around them says so. Light-surface grammar
+   (`.pill`'s edge, `.cls-tab.active`'s inversion) because it sits on a white panel, not on navy. */
+.screen-nav {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: #f0f2f5; border-radius: 9px; margin-bottom: 12px;
+  max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.screen-nav-btn {
+  padding: 6px 14px; border-radius: 7px; border: none; background: transparent;
+  font-size: 12px; font-weight: 700; color: #6b7a8d; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0; transition: all 0.15s;
+}
+.screen-nav-btn:hover:not(.active):not(:disabled) { background: rgba(255,255,255,0.7); color: #1a1a2e; }
+/* White on the grey trough rather than a fill: the same "you are here" inversion `.cls-tab.active`
+   makes on the navy, read the other way up. */
+.screen-nav-btn.active {
+  background: #fff; color: #1a1a2e;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+}
+/* Scores until WO-3.5 lands, and the breadcrumb below, which is a caption rather than a route. The
+   same 0.45 `.class-action-btn:disabled` uses, so a dead segment here reads as the same kind of
+   thing a dead button reads as everywhere else in the app. */
+.screen-nav-btn:disabled { cursor: default; opacity: 0.45; }
+/* THE BREADCRUMB, NOT A TAB. Worn only by the segment carrying an open student's name, which exists
+   only while that student's detail is open and goes away when you switch off it (WO-3.7 fills it;
+   src/screen-nav.js holds the rule). It sits apart, after a gap — the same separation
+   `.cls-tab-home` makes for the same reason: a different KIND of destination. It keeps full opacity
+   despite being disabled, because it is where you ARE. */
+.screen-nav-btn.detail { margin-left: 10px; opacity: 1; }
+
+/* THE CATEGORY CHIP, shared by this list's group heads and the score grid's column heads. It
+   carries no colour of its own and takes none per category: a teacher can create any number of
+   categories, so a palette here would either run out or become a thing to memorise. Weight is the
+   fact worth showing, so it is in the chip rather than in a tooltip. */
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 10px; font-weight: 700; color: #6b7a8d;
+  white-space: nowrap; text-transform: none; letter-spacing: 0;
+}
+.cat-chip b { color: #1a1a2e; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* A category whose weight is 0 — WO-3.1 makes that a first-class state, the answer offered instead
+   of deleting, so it must not read as broken. Quiet, not amber: the teacher chose it. */
+.cat-chip.zero { border-style: dashed; color: #a0aab8; }
+.cat-chip.zero b { color: #a0aab8; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ASSIGNMENT LIST
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The panel takes its main area's full width, the same call src/attendance.css records the owner
+   making about the registry on 2026-08-06: a panel narrower than the area it sits in "reads as a
+   window that never closed". Six columns of assignment need it anyway. */
+.assign-panel { width: 100%; max-width: 100%; }
+/* Matches `.attendance-body` exactly, and for the same reason: left and right line up with
+   `.panel-header`'s 20px, top is zero because the header above already ends in a gap. */
+.assign-body { padding: 0 20px 20px; }
+.assign-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* Horizontal scroll belongs to the table, never to the page — a page that scrolls sideways on an
+   iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule, restated
+   in this sheet's own name. */
+.assign-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.assign-table { width: 100%; border-collapse: collapse; }
+.assign-table thead th {
+  padding: 9px 10px; text-align: left;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4; white-space: nowrap;
+}
+.assign-col-name { min-width: 200px; }
+.assign-col-entered { min-width: 150px; }
+.assign-table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
+.assign-table tbody tr:hover { background: #fafbfc; }
+.assign-table tbody td { padding: 9px 10px; vertical-align: middle; }
+.assign-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.assign-pts, .assign-date { font-size: 12px; color: #6b7a8d; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A due date that has gone past with the column still unfinished. IT IS A TINT AND NOTHING ELSE:
+   nothing here marks a student, nothing here changes a grade, and no flag is ever inferred from a
+   date in this app (docs/data-model.md § Grade math). WO-3.6 owns the prompt that OFFERS to fill
+   the blanks in; this is the colour that makes the teacher look at it. */
+.assign-date.overdue { color: #8a6d1a; font-weight: 700; }
+/* A 0-point assignment is extra credit and is said in words rather than left to be inferred from a
+   zero, which reads as a mistake. Quiet indigo: it is a thing the teacher chose, not a warning. */
+.assign-extra { font-size: 10px; font-weight: 800; color: #5b6fcc; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; }
+
+/* HOW MUCH OF IT IS ENTERED, which is the question this screen is opened to answer in the week
+   before grades are due. A bar rather than a number alone, because "18 of 24" is arithmetic and a
+   part-filled bar is a glance. */
+.assign-progress { display: flex; align-items: center; gap: 8px; min-width: 132px; }
+.assign-bar { flex: 1 1 auto; height: 6px; border-radius: 999px; background: #eef0f4; overflow: hidden; }
+.assign-bar-fill { height: 100%; background: #27ae60; border-radius: 999px; }
+/* Started and not finished takes the caution wash, the same call src/home.css and
+   src/attendance.css both make about a half-marked class: partly-entered work is a thing to come
+   back to, and it must not read as done. */
+.assign-bar-fill.partial { background: #e0b940; }
+.assign-bar-fill.none { background: #e0e4ea; }
+.assign-count { font-size: 11px; font-weight: 700; color: #6b7a8d; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.assign-row-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+/* Row buttons are `.class-action-btn` worn as-is. This class only holds the row together and gives
+   the coarse block below something to name; it never restyles the button. */
+.assign-row-btn { }
+
+/* The category group heading. The list is grouped by category rather than flat because the weight
+   is what makes a mark out of 20 mean anything, and because an empty category has to be visible —
+   see below. */
+.assign-group-head td {
+  padding: 14px 10px 6px; border-bottom: 1px solid #eef0f4; background: #fff;
+}
+.assign-group-head:hover td { background: #fff; }
+.assign-group-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 11px; font-weight: 800; color: #1a1a2e;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.assign-group-note { font-size: 11px; font-weight: 700; color: #8a9bb0; text-transform: none; letter-spacing: 0; }
+/* A category with no assignments in it. Its weight redistributes — the data model's rule, and the
+   one a teacher is most likely to be surprised by — so the row says so rather than showing an empty
+   group and letting her wonder whether the app lost her work. */
+.assign-group-empty {
+  font-size: 12px; color: #8a6d1a; background: #fff8e6;
+  border: 1.5px solid #f0dfa8; border-radius: 8px;
+  padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
+}
+/* Work filed under a category this class no longer has — reachable from a restored document, or
+   from a build older than WO-3.1. Red rather than amber: an empty category costs nothing and this
+   costs the assignment, which is counted by nothing until it is re-filed. */
+.assign-group-orphan {
+  font-size: 12px; color: #c0392b; background: #fdeaea;
+  border: 1.5px solid #e74c3c; border-radius: 8px;
+  padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
+}
+
+.assign-empty { font-size: 13px; color: #a0aab8; padding: 18px 2px; line-height: 1.6; }
+.assign-hint { font-size: 12px; color: #8a9bb0; line-height: 1.6; margin-top: 14px; }
+.assign-hint strong { color: #6b7a8d; }
+
+/* ── THE EDITOR'S FIELDS ── */
+/* Three hand-rolled form layouts and counting — the categories editor, the roster's
+   `.student-field`, and now this — is design/mockups/README.md's open question 5, and it is
+   ANSWERED HERE THE SAME WAY AGAIN rather than by lifting a field component from
+   design/portable-components.md. The reason is scope: a field component is a change to two shipped
+   screens as well as this one, it is worth doing once rather than under a work order whose subject
+   is assignments, and doing it here would leave the app with four layouts instead of two. Named in
+   WO-3.3's result file so the question stays open rather than being quietly closed. */
+.assign-fields { display: flex; flex-direction: column; gap: 10px; }
+.assign-field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.assign-field {
+  display: flex; flex-direction: column; gap: 5px; flex: 1 1 140px; min-width: 0;
+}
+.assign-field-wide { flex: 2 1 220px; }
+.assign-field-label { font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.assign-field-input, .assign-field-select, .assign-field-date {
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; background: #fff;
+  font-family: inherit; font-size: 13px; color: #1a1a2e;
+}
+.assign-field-input:focus, .assign-field-select:focus, .assign-field-date:focus {
+  border-color: #5b6fcc;
+}
+.assign-field-note { font-size: 11px; color: #8a9bb0; line-height: 1.5; }
+
+/* ── DUPLICATING ── */
+/* The class picker is `.pill`s worn as-is, in the shape src/letter-scale.js's subject row uses; this
+   class only holds them in a wrapping row. */
+.assign-copy-classes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH — every control above, at the floor, in one place
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* design/style-guide.md §6: 44px minimum under a coarse pointer, and this block comes last so it
+   can override the base rules it re-states. Every class in the grouped selector at the top of this
+   file appears here, plus the containers whose gaps have to grow with the targets in them.
+
+   The fields carry the 44px THEMSELVES with their vertical padding zeroed, which is the WO-1.2
+   `.search-box` lesson: a 44px row around a 19px input looks tappable above and below the text,
+   does nothing there, and the teacher taps twice. */
+@media (pointer: coarse) {
+  .screen-nav-btn { min-height: 44px; padding: 6px 16px; }
+  /* Five controls per row is design/mockups/README.md's open question 4 — nine assignments × five
+     targets — and they are drawn wide on purpose so the crowding can be seen rather than argued
+     about. What this block can do about it is make each one a real target and give the row enough
+     gap that Delete is not shoulder to shoulder with Edit: 8px, the same widening
+     `.category-row-actions` and `.roster-row-actions` both took, and for the same reason — a
+     mis-tap here costs an assignment and the scores under it. */
+  .assign-row-actions { gap: 8px; }
+  .assign-row-btn { min-height: 44px; min-width: 44px; }
+  .assign-table tbody td { padding: 7px 8px; }
+  .assign-progress { min-width: 120px; }
+  .assign-count { font-size: 12px; }
+  .assign-name { font-size: 14px; }
+  .assign-pts, .assign-date { font-size: 13px; }
+  .assign-group-title { font-size: 12px; }
+  .assign-group-note { font-size: 12px; }
+  .assign-group-empty, .assign-group-orphan { font-size: 13px; }
+  .assign-empty, .assign-hint { font-size: 13px; }
+  .assign-fields { gap: 12px; }
+  .assign-field-row { gap: 12px; }
+  .assign-field-label { font-size: 12px; }
+  .assign-field-note { font-size: 12px; }
+  .assign-field-input, .assign-field-date { min-height: 44px; font-size: 14px; padding: 0 10px; }
+  /* A <select> keeps its vertical padding: iPadOS draws the control itself and a zeroed padding
+     leaves the text clamped to the top of a 44px box. */
+  .assign-field-select { min-height: 44px; font-size: 14px; padding: 8px 10px; }
+  .assign-copy-classes { gap: 10px; }
+  .cat-chip { font-size: 11px; padding: 3px 9px; }
+}
+
+@media (max-width: 640px) {
+  /* The name column's 200px floor is what makes the table scroll sideways rather than squeeze on a
+     phone, and on a phone the actions wrap to a second line under the row. Both are accepted: the
+     alternative is hiding a control, and every one of the five writes something. */
+  .assign-col-name { min-width: 160px; }
+  .assign-progress { min-width: 96px; }
+}

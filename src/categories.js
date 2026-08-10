@@ -353,7 +353,7 @@ function categoryRow(cls, cat, index, siblings) {
   /* The dialog is conditional — a category holding nothing goes on the tap — so this cannot claim
      `aria-haspopup="dialog"` unconditionally. It is set below, per row, when there is something to
      confirm; a promise of a dialog that does not open is worse than no promise. */
-  const held = assignmentsIn(getDoc(), cat.id);
+  const held = assignmentsIn(getDoc(), cls.id, cat.id);
   if (held) remove.setAttribute('aria-haspopup', 'dialog');
   actions.append(remove);
 
@@ -485,21 +485,31 @@ function moveCategory(id, delta) {
 export function moveCategoryUp(id) { moveCategory(id, -1); }
 export function moveCategoryDown(id) { moveCategory(id, 1); }
 
-/* Assignments filed under one category, which is the one question this module asks about grade
-   data and the only thing that makes removing a category destructive. There is no assignment
-   screen yet — WO-3.3 owns that — so this is zero for every category today, and it is written now
-   because this editor is what will still be removing categories when it is not. */
-function assignmentsIn(doc, categoryId) {
+/*
+  Assignments filed under one category OF ONE CLASS, which is the one question this module asks
+  about grade data and the only thing that makes removing a category destructive.
+
+  THE `classId` HALF WAS ADDED AT WO-3.3 AND IT IS NOT DECORATION. This function and the two below
+  it filtered by `categoryId` alone, which was safe for exactly as long as a category id could only
+  appear in the class it was made in — and duplicate-to-another-class is the feature that ends
+  that. A copy carrying its source's `categoryId` into another class would be counted here, and
+  destroyed by applyRemoval() below, under a dialog naming a class it was never in.
+  src/assignments.js makes sure no such copy is ever written (it matches the target's category by
+  name and refuses an id from another class); this is the guard on the other side of that promise,
+  for the document that arrives from a restore, a hand edit, or a build older than this one.
+*/
+function assignmentsIn(doc, classId, categoryId) {
   return (Array.isArray(doc && doc.assignments) ? doc.assignments : [])
-    .filter((a) => a.categoryId === categoryId).length;
+    .filter((a) => a.classId === classId && a.categoryId === categoryId).length;
 }
 
 /* Everything a removal would destroy, counted off the open document rather than estimated — the
    same shape as src/classes.js's deletionCounts() and for the same reason: "Remove Tests?" is a
-   question a tired teacher answers yes to, and "9 assignments and 214 scores" is one she reads. */
-function removalCounts(doc, categoryId) {
+   question a tired teacher answers yes to, and "9 assignments and 214 scores" is one she reads.
+   Class-scoped since WO-3.3 — see assignmentsIn() above for why that stopped being optional. */
+function removalCounts(doc, classId, categoryId) {
   const assignments = (Array.isArray(doc.assignments) ? doc.assignments : [])
-    .filter((a) => a.categoryId === categoryId);
+    .filter((a) => a.classId === classId && a.categoryId === categoryId);
   /* Scores are keyed by assignment, then student (docs/data-model.md), so the count is the number
      of cells in the columns belonging to those assignments. A key that is not there means ungraded
      and is not a score. */
@@ -546,7 +556,7 @@ export function removeCategory(id, opener) {
   const cat = findCategory(cls, id);
   if (!cat) return;
 
-  const counts = removalCounts(doc, id);
+  const counts = removalCounts(doc, cls.id, id);
   if (!counts.assignments) {
     applyRemoval(cls, cat, counts);
     return;
@@ -574,16 +584,18 @@ export function removeCategory(id, opener) {
 }
 
 /* The only lines in this module that destroy anything, and they destroy exactly what the dialog
-   listed: the category, the assignments filed under it, and the score columns belonging to those
-   assignments. Students, attendance, terms and every other category are untouched. */
+   listed: the category, the assignments filed under it IN THIS CLASS, and the score columns
+   belonging to those assignments. Students, attendance, terms, every other category — and, since
+   WO-3.3 put the `classId` on both tests below, any work in another class that a restored document
+   filed under the same id — are untouched. */
 function applyRemoval(cls, cat, counts) {
   const name = cat.name || 'the category';
   update((d) => {
     const gone = (Array.isArray(d.assignments) ? d.assignments : [])
-      .filter((a) => a.categoryId === cat.id).map((a) => a.id);
+      .filter((a) => a.classId === cls.id && a.categoryId === cat.id).map((a) => a.id);
     gone.forEach((assignmentId) => { if (d.scores) delete d.scores[assignmentId]; });
     d.assignments = (Array.isArray(d.assignments) ? d.assignments : [])
-      .filter((a) => a.categoryId !== cat.id);
+      .filter((a) => !(a.classId === cls.id && a.categoryId === cat.id));
     cls.categories = categoriesOf(cls).filter((c) => c.id !== cat.id);
   });
   showCategoryError('');
@@ -603,7 +615,7 @@ export function confirmRemoveCategory() {
   pendingRemoveId = '';
   closeModal(REMOVE_MODAL_ID);
   if (!doc || !cls || !cat) return;
-  applyRemoval(cls, cat, removalCounts(doc, id));
+  applyRemoval(cls, cat, removalCounts(doc, cls.id, id));
 }
 
 /* No. Nothing has been written, so there is nothing to undo — which is the point of counting

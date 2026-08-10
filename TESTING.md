@@ -1876,10 +1876,13 @@ all (its weight redistributes).
 - [x] The amber banner and the row badge are legible on a projector from the back of a room. 👤
 - [x] The categories panel reads correctly on the tablet in both orientations. 👤
 - [x] Offline launch with the network off, `categories.js` served from the precache. 👤
-- [ ] The removal confirm's counted form is read against real assignments, once WO-3.3 can create
+- [x] The removal confirm's counted form is read against real assignments, once WO-3.3 can create
       them. 👤 *(Split off the orientation line above on 2026-08-09 rather than ticked with it: the
       two were one line, one of them impossible until WO-3.3, and a single box cannot be honestly
-      ticked for both. See the carried-forward limit at the foot of this section.)*
+      ticked for both. See the carried-forward limit at the foot of this section. **Read on the iPad
+      2026-08-09**, the same day WO-3.3 landed the assignments it needed — the counted branch is
+      reachable at last, since a category with nothing filed under it is removed with no dialog at
+      all.)*
 
 *Not ticked, and owed to WO-3.4/WO-3.5 rather than to a device: the work order's acceptance lines 2
 and 4 both name a **displayed grade**, and nothing in this app renders a percentage yet. See the
@@ -2071,6 +2074,156 @@ it: a check whose evidence cannot distinguish its own clauses is evidence of les
 *Row 2 is still the one that matters for the rule itself. A guard that only fires when a rounding call
 is present would miss what the Traps line actually forbids — the **option**, which can be added a whole
 work order before anything rounds.*
+
+### WO-3.3 — Assignments, and the switcher between a class's screens
+
+- [x] The assignment list is a **view** in `<main>` — a sibling of the class grid and the registry,
+      toggled by `.hidden` — with no `role="dialog"`, no `aria-modal`, and no overlay open behind it.
+- [x] One tap on the strip's *Assignments* segment gets there from the registry, and one tap back
+      returns; the class manager is never involved.
+- [x] The strip carries **three** segments — Attendance · Assignments · Scores — on both class
+      screens, with no fourth and no student among them. *Scores* is drawn disabled and says why.
+- [x] The strip sits on the white panel under the title, not in the navy header.
+- [x] An empty list says so in words, naming the class and the term, with no table drawn.
+- [x] A new assignment arrives with **both dates empty** — in the document and on both fields — and
+      nothing anywhere fills one in. There is no "next meeting" and no term-start default.
+- [x] It lands in the open class, the open term, and one of that class's own categories.
+- [x] `0` typed into the points field is stored as `0`: not refused, not defaulted, not blanked. It
+      survives closing the editor, redrawing the list and a full reload.
+- [x] A 0-point row says **Extra credit** in words, so a lone zero cannot read as a slip.
+- [x] An assignment name carrying markup renders as text, and so does a category name in a group head.
+- [x] Every empty category is drawn with its own consequence in words — the weight redistributes —
+      and a category at 0% says something else, because there the redistribution is a no-op.
+- [x] An assignment moves between categories through the editor's `<select>`, the row redraws under
+      its new group head, and its score column is byte-identical afterwards.
+- [x] The coverage column counts entered cells against the class roster: 1/N and 0/N, not a guess.
+- [x] Tapping another term in the header nav **repaints the list**: the other term's work goes, the
+      summary line and the caption name the term now open, and switching back brings the work back.
+      *(Added at correction round 1, 2026-08-09. Before it the chip in the header moved and the table
+      did not — every row, the caption and the summary went on describing the term just left.)*
+- [x] Duplicating into another class writes a **new** assignment with a new id, the target class's
+      own term, and **no score column**. The source is untouched.
+- [x] The copy carries the target's own category — matched by name — and **never** the source's
+      category id. Where no category of that name exists there, it lands unfiled and the dialog says so.
+      *(Un-ticked by the verifier on 2026-08-09 and **earned back the same day**, at correction round 1.
+      Its finding stands as written: only the refusal was exercised, because no class in the fixture was
+      ever named like another, so `matchCategory()` only ever took its `return ''` path and a version of
+      it that returned `''` unconditionally would have passed every check in this section. The fixture
+      now builds both cases instead of hoping for one — the source's category is renamed through the
+      real name field to a name no other class has, and the target is then given a category of that same
+      name through the real category manager, so the copy's `categoryId` can be told apart from the
+      source's id for one name. The mutation the verifier named was run: **`matchCategory()` returning
+      `''` unconditionally turns two checks red**, the proposal and the copy.)*
+- [x] The duplicate dialog never **displays** a category it will not file the copy under. With no
+      category of that name in the target, the control shows *— choose a category —* rather than the
+      target's first category, and every real category below it is a change away from what is shown.
+      Picking one moves the proposal onto it and takes the placeholder away with it.
+- [x] The copy carries the points and both dates across unchanged.
+- [x] Work belonging to another class never appears on this class's list, even when it wears this
+      class's category id and this class's term id.
+- [x] A category removal counts only the work in **its own class** — "1 assignment", not 2 — so a
+      teacher never agrees to destroy work in a class the dialog does not name.
+- [x] The ↑ ↓ arrows reorder an assignment inside its own category, and the document order is the
+      order drawn.
+- [x] Deleting warns first, counts the scores it takes, and names the assignment on the button.
+      Cancelling writes nothing — `rev` does not move. Confirming takes the assignment and its score
+      column and nothing else.
+- [x] **Opening a class lands on Attendance every time.** Leaving one class on Assignments, opening a
+      second and coming back lands on Attendance both times — there is no per-class memory.
+- [x] Entering from a home card does the same, and so does a reload: `planbook_openView` never holds
+      anything but `class`, because every class screen is written down as that.
+- [x] "All classes" works from the assignment list and empties the strip on the way out.
+- [x] The five controls in an assignment row are separable under a thumb, and Delete is not shoulder
+      to shoulder with Edit. 👤 *(This is `design/mockups/README.md`'s open question 4, drawn wide on
+      purpose. The coarse block gives each one 44px and widens the row's gap to 8px; whether that is
+      enough at nine rows is a device question.)*
+- [x] iPadOS offers a numeric keypad for the points field, and `0` is typeable on it. 👤
+- [x] The date picker's **Clear** works on both date fields — the WebKit quirk `data-term-field`
+      already answers for terms, answered here the same way and never tested on the hardware. 👤
+- [x] The switcher is readable and tappable in both orientations, and does not push the panel title
+      off the top in portrait. 👤
+- [x] The amber "nothing filed here" note and the red "not in a category" note are legible on a
+      projector from the back of a room, and neither reads as an error. 👤
+- [x] Offline launch with the network off, `assignments.js`, `screen-nav.js` and `assignments.css`
+      served from the precache. 👤
+- [x] In the duplicate dialog on the iPad, a target class with no category of that name opens its
+      category picker on *— choose a category —*, and choosing a real one from iPadOS's own wheel
+      files the copy under it. 👤 *(Added at correction round 1, 2026-08-09, and read on the hardware
+      the same day — a second, shorter sitting, because it arrived after the first one. iOS renders a `<select>` as a native picker and fires `change` on Done only
+      when the value moved, which is the platform form of the defect this fix answers: with the
+      placeholder showing, every real category is a move. The desk half is measured, the wheel is
+      not.)*
+
+***The six 👤 lines above them were run in one sitting on 2026-08-09** on the installed iPad, over
+`tools/serve-https.mjs`. All six pass. The date-picker **Clear** is the one that was riding on an
+assumption rather than on evidence — `data-term-field`'s answer to the WebKit quirk was copied to
+both assignment date fields and had never been put on the hardware, and it holds. **The seventh 👤
+line came later, with correction round 1, and is owed to a sitting of its own.***
+
+*Three lines are not ticked and are owed to other work orders rather than to a device — see the note
+under the Acceptance list in `plans/work-orders/phase-3-gradebook.md`. Lines 1 and 2 each name a
+**grade** and nothing in this app renders one yet (WO-3.4, WO-3.5). Line 7's second sentence names a
+screen that does not exist: there is no per-student detail to enter or leave, so the breadcrumb cannot
+be shown appearing and then going. What is verified instead is the rule's safe direction — a name set
+through `setDetailBreadcrumb()` with no detail open is drawn on neither strip — and WO-3.7 gained an
+Acceptance box for the half that needs its screen.*
+
+*The desk half is `verify-shell.mjs`, **515 of 515** with zero skips, 42 checks added in one new
+section. Four of them needed a fixture the run does not otherwise leave behind, and each fixture is
+asserted to be real before the claim that stands on it. The only class carrying students is the one
+restored from a pre-WO-3.1 backup, which has neither terms nor categories and so cannot hold an
+assignment, so the section adds two students through the real roster form and removes them again at the
+end — deliberately not to the 26-student class the attendance section counts. The duplicate needs one
+category name held by two classes and one held by only one, so it renames the source's category through
+the real name field and then adds a category of that name to the target through the real manager. The
+term switch needs two terms and adds one through the real term editor if the run has left only one.
+All of it comes down at the foot of the section.*
+
+*Seven mutations, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| `assignmentsOf()` filters by `termId` alone — the `classId` guard dropped | **1 red** — a foreign assignment appears on this class's list |
+| `confirmCopy()` carries the source's `categoryId` into the target class | **1 red** — the trap check, and nothing else notices |
+| `matchCategory()` returns `''` unconditionally — no name is ever matched | **2 red** — the proposal, and the copy that lands unfiled where a twin exists |
+| `removalCounts()` in `src/categories.js` filters by `categoryId` alone | **1 red** — the confirm counts 2 assignments where 1 is in that class |
+| a typed `0` falls back to the 100-point default | **3 red** — the field, the row's Extra credit badge, and the reload |
+| `REMEMBERED_AS` stops collapsing a class screen to `class` | **1 red** — the reload comes back on the assignment list |
+| `selectClass()` keeps the screen the browser was last on | **2 red** — the second class, and coming back to the first |
+
+*The third row is correction round 1's, and it is the mutation the verifier asked for by name: it is
+the one that would have passed the first cut of this section unnoticed. The three checks added at that
+round were also run against the code **as it stood before their fixes**, both reverted together —
+`copySelect()` without its placeholder option and the `[data-term-select]` branch without its repaint —
+and three went red: the term switch, the dialog's proposal, and the dialog's display. The attribution is
+unambiguous by what each check reads, but they were reverted in one run rather than two.*
+
+*The first row is the one worth keeping, because **the check it turned red went green on the first
+run of that mutation.*** The planted foreign assignment originally carried the target class's own
+`termId`, so the term filter beside the guard was already excluding it and the guard under test could
+be deleted with nothing to show for it. A naive duplicate copies everything and changes the class, so
+the honest adversary shares the term as well as the category — the fixture now plants the source's own
+open term, and only the `classId` guard can keep the row off the list. This is the WO-3.1 float-
+tolerance footnote and the WO-3.2 89.4/89.6 footnote happening a third time, in a third place: **a
+fixture that cannot express the failure is not evidence**, and only a mutation run says which kind you
+have.
+
+*The touch-target standing check was re-run for this feature. The new controls are the three segments
+of the switcher, the "+ New assignment" button, the five controls in each assignment row, the four
+fields and one `<select>` in the editor, the class pills and two `<select>`s in the duplicate dialog,
+and the two buttons in each of the two confirms. `wo-sweep.mjs` REVIEWs eleven new selectors as having
+no coarse-block rule; every one of them is a container, a column-width floor or a text badge —
+`.assign-panel`, `.assign-body`, `.assign-actions`, `.assign-table-wrap`, `.assign-col-name`,
+`.assign-col-entered`, `.assign-extra`, `.assign-bar`, `.assign-bar-fill`, `.assign-group-head`,
+`.assign-field-wide` — and not one of them is tappable. The controls inside them are covered, either
+by their own rule in `src/assignments.css` or by `.class-action-btn` and `.pill` in `src/shell.css`.*
+
+*One limit this work order closes for somebody else, and it is worth naming: **WO-3.1's carried-forward
+limit — the counted form of the category-removal warning, which had never been read against a real
+assignment — now has real assignments to count.** The desk half is measured here, and **the human read
+of "9 assignments and 214 scores" against work a teacher actually created was done the same day** —
+the box under WO-3.1 is ticked. The counted branch was unreachable before this work order for a reason
+worth keeping: a category with nothing filed under it is removed with no dialog at all.*
 
 ---
 

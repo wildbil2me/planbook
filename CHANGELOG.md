@@ -38,6 +38,55 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.3 — a class has an assignment list.** Name, points, category, and assigned and due dates,
+  created and edited in Class → Assignments: the spine the rest of the gradebook hangs off. Create,
+  edit, reorder within a category, and delete — the delete warns first and counts the scores it takes
+  with it. **Neither date fills itself in**, because Planbook has no timetable and is not getting one,
+  and a date here still marks nobody and changes no grade.
+
+  **Duplicate to another class**, for teaching the same content to more than one section. The copy
+  arrives with no scores on it, and it lands in the *target* class's own term and category — matched
+  by name rather than carried across, which is the difference between a copy and a booby trap. Where
+  the other class has no category of that name, the dialog **asks** rather than quietly showing you
+  its first one: the category box reads *— choose a category —*, and the copy is filed under nothing
+  until you pick.
+
+  **The term buttons repaint the list.** The assignment list is a term at a time, so tapping
+  *Quarter 2* changes the work on screen and the line above it, not just the highlighted button.
+
+  **Worth 0 points is how you give extra credit.** Type `0` and it stays `0`; the row says **Extra
+  credit** in words. A 0-point assignment scored 5 will add 5 to what a student earned and nothing to
+  what was possible, once there is a grade to add it to.
+
+  **A switcher between a class's screens** — Attendance · Assignments · Scores — sitting on the white
+  panel under the title rather than up in the navy header, where a fourth control puts the page into
+  horizontal overflow at 390px. **A class always opens on Attendance, every time, including after a
+  reload**: marking at the door is the flow that has to be fast, and a per-class memory of where you
+  were last is a thing nobody asked for. It is built so the preference cannot even hold the other
+  screens — every class screen is written down as `class`, so there is no stale value to restore.
+
+  **A guard was widened past this work order's own code, deliberately.** Category removal used to
+  find the work it destroys by category alone, which was safe only while no assignment could exist in
+  two classes at once — and duplicate-to-another-class ends that. Guarding only the new queries would
+  have covered documents this build wrote while leaving a restored or hand-edited one able to produce
+  the dangerous shape: a teacher agreeing to destroy work in a class the dialog does not name.
+  `src/categories.js` is class-scoped now too, and the harness plants that document.
+
+  **Read on the teaching iPad on 2026-08-09** — offline launch with `assignments.js`,
+  `screen-nav.js` and `assignments.css` from the precache, iPadOS's numeric keypad taking `0` into the
+  points field, the date picker's **Clear** working on both date fields, a thumb on all five controls
+  of an assignment row with Delete not shoulder to shoulder with Edit, the amber and red category
+  notes legible from the back of a room on a projector, and the switcher in both orientations without
+  pushing the panel title off the top. The same sitting closed a line WO-3.1 had been owed since it
+  shipped: **the removal warning's counted form** — *"9 assignments and 214 scores"* — had never been
+  read against real assignments, because until this work order there were none to count.
+
+  **Two acceptance lines could not close here and now point at the work orders that will close them.**
+  Both name a **grade**, and nothing in this app renders one yet: the arithmetic is WO-3.4's on
+  purpose, so that it lands together with the document that checks it. What was built and verified is
+  the half that is real today — `0` survives in the points field, and an assignment moves between
+  categories.
+
 - **WO-3.11 — the tracker can now say "landed, with lines owed."** Nothing here is visible to a
   teacher, and this is the one Ship 2 item that buys nothing that is. It is about the tools that
   decide what to build next telling the truth about what is finished.

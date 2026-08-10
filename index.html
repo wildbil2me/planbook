@@ -134,6 +134,12 @@
   <!-- The marking screen's own sheet (WO-2.1), second instance of the same convention. Order
        matters for the same reason: a per-screen sheet has to be able to override the shell. -->
   <link rel="stylesheet" href="src/attendance.css">
+  <!-- The assignment list's own sheet (WO-3.3), third instance. It also carries the screen
+       switcher — `.screen-nav*` — which is not this screen's control but every class screen's:
+       design/mockups/proposed.css § SHARED says the shared block lands with whichever gradebook
+       work order ships first, and this is it. src/scores.css and src/detail.css wear those classes
+       and must never restyle them; two stylesheets never style one class. -->
+  <link rel="stylesheet" href="src/assignments.css">
 </head>
 <body>
 
@@ -569,6 +575,19 @@
           <span aria-hidden="true">←</span> All classes
         </button>
       </div>
+
+      <!-- THE SWITCHER BETWEEN THIS CLASS'S SCREENS (WO-3.3). Empty in the markup and filled by
+           src/screen-nav.js, like #classTabBar and #homeGrid above it: one writer, so the strip on
+           this panel and the strip on the assignment list cannot disagree about which screen is
+           up. Every class screen carries an identical empty `<nav data-screen-nav>` and nothing
+           else — a hand-written specimen tab here would be a second truth.
+
+           Under the panel title rather than in the navy header, and that is a measurement: the
+           header strip already carries the class tabs, the term nav and three icon buttons, and a
+           fourth control up there overflows at 390px (src/classes.js, classRow()). The class tabs
+           answer "which class"; this answers "which screen of it".
+           plans/gradebook-surfaces.md § "How the class view navigates between its screens". -->
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
     </div>
 
     <div class="attendance-body">
@@ -707,6 +726,93 @@
   </div>
 </div>
 
+<!--
+  THE ASSIGNMENT LIST (WO-3.3) — the second screen of an open class, and the spine of the gradebook.
+
+  IT IS A VIEW AND NOT A MODAL, WHICH IS THE DECISION THIS WORK ORDER WAS MOST LIKELY TO GET WRONG.
+  Every class-scoped editor built before it is a dialog — the class manager, the term editor, the
+  roster, the student editor, the categories panel — so the precedent in this file points the other
+  way. The rule that beats it is WO-1.13's and it is older: a surface a teacher works in is a view,
+  a task she finishes and dismisses is a modal. Scanning the term's work in the week before grades
+  are due is the first; writing one assignment down is the second. So the list is here, in <main>,
+  as a sibling of #homeView and #classView toggled by `.hidden`, and the editor below <main> is a
+  dialog. The record is plans/gradebook-surfaces.md, and it is settled rather than open.
+
+  THE TABLE IS EMPTY IN THE MARKUP, like every other list in this app, because it is drawn from the
+  open document by src/assignments.js. The three things that are markup — the title row, the
+  switcher and the action row — are the three that do not change with the document.
+
+  WHAT THE COLUMNS ARE FOR. "Entered" is why this screen gets opened at all: the question is never
+  "what did I assign", it is "what have I not finished putting in", and a part-filled bar answers
+  that without arithmetic. It counts score cells against the class roster and computes no grade —
+  there is no grade in this build, and WO-3.4 owns the arithmetic when there is.
+-->
+<div id="assignmentsView" class="hidden">
+  <div class="panel assign-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2 id="assignmentsClassName"></h2>
+          <p id="assignmentsSummary"></p>
+        </div>
+        <button class="class-action-btn primary" type="button" data-assignment-new
+                aria-haspopup="dialog">+ New assignment</button>
+      </div>
+
+      <!-- The same empty strip the attendance panel carries, filled by the same module. -->
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
+    </div>
+
+    <div class="assign-body">
+      <!-- The way back to the class grid, in the body rather than the title row: that row already
+           carries the primary control on this screen, and index.html's own 390px note about the
+           class view applies here — six class tabs and "All classes" do not fit the header strip
+           at once, so a teacher who has finished with this screen needs a door where she is
+           already looking. Same `data-view-home` hook: one route, more doors. -->
+      <div class="assign-actions">
+        <button class="class-action-btn" type="button" data-view-home>
+          <span aria-hidden="true">←</span> All classes
+        </button>
+      </div>
+
+      <div class="assign-table-wrap">
+        <table class="assign-table">
+          <caption class="sr-only" id="assignmentsCaption"></caption>
+          <thead>
+            <tr>
+              <th class="assign-col-name">Assignment</th>
+              <th>Points</th>
+              <th>Assigned</th>
+              <th>Due</th>
+              <th class="assign-col-entered">Entered</th>
+              <th><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="assignmentsBody"></tbody>
+        </table>
+      </div>
+      <p class="assign-empty hidden" id="assignmentsEmpty"></p>
+
+      <p class="assign-hint">
+        An assignment belongs to one class and one term, so this list is what
+        <strong id="assignmentsHintTerm"></strong> is graded on and nothing else. Points, the
+        category it counts in, and both dates are all editable afterwards — nothing here is
+        settled by writing it down. <strong>Neither date fills itself in.</strong> Planbook has no
+        timetable and is not getting one, so there is no “next meeting” to guess at; a due date is
+        a plain date you type, and it changes no grade and marks nobody. <strong>Duplicate</strong>
+        copies an assignment into this class or into another one you teach — the copy arrives with
+        no scores on it, which is the point of copying it rather than the cost.
+      </p>
+      <p class="assign-hint">
+        <strong>Worth 0 points is how you give extra credit.</strong> A 0-point assignment scored 5
+        adds 5 to what a student has earned in its category and nothing to what was possible, so it
+        lifts the grade instead of diluting it. There is no separate extra-credit switch and there
+        is not going to be one.
+      </p>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
@@ -742,10 +848,12 @@
         included.
       </p>
       <p>
-        <strong>The gradebook itself is half here.</strong> You can set up what a class is graded on
-        and what each part is worth, but there are no assignments, no scores and no grades behind
-        those categories yet — so nothing on this screen works out a percentage for anybody. That is
-        what comes next. Signals, outreach and Drive sync come after it.
+        <strong>The gradebook itself is half here.</strong> You can set up what a class is graded
+        on, what each part is worth, and the assignments themselves — a class now has an
+        Assignments screen beside its attendance, with points, categories and dates on it. What is
+        still missing is the half that carries numbers: there are no scores yet and no grades, so
+        nothing in Planbook works out a percentage for anybody. That is what comes next. Signals,
+        outreach and Drive sync come after it.
       </p>
       <p>
         The backup file that gets everything back out of the browser is already here, under the ⤓
@@ -1102,6 +1210,117 @@
         the ones you typed for it — nothing else in that class is touched, because a letter scale
         holds no grades.
       </p>
+    </div>
+  </div>
+</div>
+
+<!-- ONE ASSIGNMENT (WO-3.3), and the reason this is a dialog while the list behind it is not.
+     The list is a surface a teacher scans and works down; writing one assignment down is a task she
+     finishes and dismisses. plans/gradebook-surfaces.md holds the rule and the record.
+
+     THERE IS NO SAVE BUTTON, and there must never be one. Every field writes as it is typed, which
+     is the app's standing contract everywhere a teacher types (the class manager, the term editor,
+     the categories panel, the student editor) and the reason the registry has no submit either: a
+     teacher interrupted mid-sentence must not lose what she typed because she never reached the
+     bottom. "Done" closes a dialog with nothing waiting in it.
+
+     #assignmentFields is filled by src/assignments.js — the category list is per class and the
+     dates are read off the document, so a specimen field here would be a second truth. The
+     paragraph under it is the app's standing refusal about dates, said where it bites. -->
+<div class="modal-overlay hidden" id="assignmentModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
+    <div class="modal-header">
+      <h2 id="assignmentModalTitle">Assignment</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        What it is called, what it is out of, which category it counts in, and when. Everything here
+        is editable later and nothing is settled by writing it down — moving an assignment to
+        another category is one tap on the list below it.
+      </p>
+      <div class="assign-fields" id="assignmentFields"></div>
+      <p class="class-hint">
+        <strong>Both dates are plain dates and neither fills itself in.</strong> Planbook has no
+        timetable, so there is no “next meeting” to default to — and a date here never marks
+        anybody or changes a grade on its own.
+      </p>
+      <p class="class-hint">
+        <strong>0 points is extra credit.</strong> Type it and it stays 0: a 0-point assignment
+        scored 5 adds 5 to the category’s earned points and nothing to its possible ones.
+      </p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button" data-modal-close>Done</button>
+        <button class="class-action-btn delete" type="button" data-assignment-delete
+                aria-haspopup="dialog">Delete…</button>
+      </div>
+      <p class="class-error hidden" id="assignmentError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- DUPLICATING ONE, into this class or into another section of the same course — the owner
+     teaches the same content to more than one class, and re-typing an assignment five times is the
+     thing this exists to stop.
+
+     WHY THE TARGET'S CATEGORY AND TERM ARE CHOSEN HERE RATHER THAN CARRIED ACROSS. Ids are opaque
+     and belong to the class they were made in: the source's `categoryId` means nothing in another
+     class, and a copy that kept it would be filed under a category that class does not have —
+     invisible on its list, counted by nothing, and (the trap WO-3.3 names) destroyed by a category
+     removal in the class it came from, under a dialog naming a different class. So the copy is
+     matched by NAME into the target and shown to the teacher before she agrees to it.
+
+     Filled by src/assignments.js. -->
+<div class="modal-overlay hidden" id="assignmentCopyModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentCopyTitle">
+    <div class="modal-header">
+      <h2 id="assignmentCopyTitle">Duplicate this assignment</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="assignmentCopyLead"></p>
+      <div class="modal-section-label">Which class</div>
+      <div class="assign-copy-classes" id="assignmentCopyClasses" role="group"
+           aria-label="Which class the copy goes into"></div>
+      <div class="modal-section-label">Where it lands</div>
+      <div class="assign-fields" id="assignmentCopyFields"></div>
+      <p class="class-hint" id="assignmentCopyNote"></p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button" id="assignmentCopyBtn"
+                data-assignment-copy-confirm>Make the copy</button>
+        <button class="class-action-btn" type="button" data-assignment-copy-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The delete confirm. Same tier and the same grammar as the class and category confirms: it
+     counts what goes before it goes, and nothing is written until the teacher taps the button that
+     names the assignment.
+
+     IT ASKS EVERY TIME, INCLUDING WHEN NOTHING IS FILED UNDER IT, which is where it departs from
+     the category confirm one level up — that one removes a category holding nothing on the tap.
+     A category is a container and an empty one destroys nothing; an assignment IS the work, so an
+     assignment with no scores on it is still a name, a mark out of, a category and two dates that
+     the teacher will have to type again. The count in the dialog is about the scores; the dialog
+     itself is about the assignment. (This also answers the open question in
+     design/mockups/README.md § 8 in the conservative direction — see removeAssignment() in
+     src/assignments.js.) -->
+<div class="modal-overlay hidden" id="assignmentDeleteModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentDeleteTitle">
+    <div class="modal-header">
+      <h2 id="assignmentDeleteTitle">Delete this assignment?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="assignmentDeleteLead"></p>
+      <div class="modal-section-label">What goes with it</div>
+      <div class="class-delete-facts" id="assignmentDeleteFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" type="button" id="assignmentDeleteBtn"
+                data-assignment-delete-confirm>Delete</button>
+        <button class="class-action-btn" type="button" data-assignment-delete-cancel>Cancel</button>
+      </div>
     </div>
   </div>
 </div>

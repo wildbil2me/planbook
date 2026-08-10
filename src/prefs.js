@@ -87,8 +87,12 @@ export const PREF_DEFAULTS = {
   openTermIds: {},
 
   /* Which of the main area's views this browser was last looking at: 'home' for the class grid,
-     'class' for the open class's working surface (WO-1.13). src/views.js is the only reader and
-     the only writer, and it holds the list of names this may legally be.
+     'class' for the open class (WO-1.13). src/views.js is the only reader and the only writer, and
+     it holds the list of names this may legally be.
+
+     STILL TWO VALUES SINCE WO-3.3 GAVE A CLASS SEVERAL SCREENS, and that is a decision rather than
+     an omission: a class always opens on Attendance, so the assignment list is written down here as
+     `class` and no reload can restore it. src/views.js's REMEMBERED_AS says why at length.
 
      A VIEW NAME AND NOT AN ELEMENT ID. The markup is allowed to be renamed; a preference holding
      `#classView` would make an id in index.html a storage format. Nor is it a class id — WHICH

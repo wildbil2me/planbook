@@ -155,7 +155,7 @@ functions over a document, a class and a scale, exported for exactly that consum
 
 ## WO-3.3 — Assignments
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.1
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.4, WO-3.5, WO-3.7
 **Closes roadmap** Phase 3 → "Assignments: name, points, category, assigned date, due date."
 
 **Why it exists.** The assignment list is the spine of the gradebook and of Phase 6's calendar,
@@ -186,19 +186,32 @@ which reads due dates rather than storing copies of them.
 - [ ] A zero-point assignment can be created and does not break any grade calculation. **This line
       is the extra-credit feature, not a robustness check** *(owner, 2026-08-09)*: a 0-point
       assignment scored `5` is +5 earned points in its category. The editor must let `0` be typed in
-      the points field and must not "helpfully" reject or default it.
-- [ ] An assignment can be moved between categories and the grade updates.
-- [ ] Duplicating into another class produces a new assignment with no scores attached.
-- [ ] No date field auto-populates from anything schedule-shaped.
-- [ ] The list is a view in `<main>`, not a dialog, and the class's screens are switchable without
+      the points field and must not "helpfully" reject or default it. **The editor half is built and
+      verified** — `0` is typed into the real field, kept as `0` through a re-render and a reload,
+      and labelled *Extra credit* on the row so a lone zero cannot read as a slip. The arithmetic
+      half has no engine to break yet, and is owed by
+      → WO-3.4 "a zero-point assignment scored 5 raises the category by 5 earned points against 0 possible"
+- [ ] An assignment can be moved between categories and the grade updates. **The move is built and
+      verified** — one `<select>` in the editor, the row redraws under its new group head, and the
+      score column follows byte for byte because `scores` is keyed by assignment. The displayed
+      grade does not exist until the grid draws one, so that half is owed by
+      → WO-3.5 "Moving an assignment to another category updates every displayed grade in that class"
+- [x] Duplicating into another class produces a new assignment with no scores attached.
+- [x] No date field auto-populates from anything schedule-shaped.
+- [x] The list is a view in `<main>`, not a dialog, and the class's screens are switchable without
       passing through the class manager.
-- [ ] **Opening a class lands on Attendance every time** — including a class whose assignment list
+- [x] **Opening a class lands on Attendance every time** — including a class whose assignment list
       was the screen open when it was last left, and including after a reload. Prove it by leaving
       one class on Assignments, opening a second class and coming back, not by reading the code:
       the failure mode is a per-class memory nobody asked for, and it is invisible until the second
       class.
 - [ ] The switcher carries three tabs and no student tab. A student's name appears in the strip only
-      while that student's detail is open, and switching away from it takes the name with it.
+      while that student's detail is open, and switching away from it takes the name with it. **The
+      first sentence is built and verified**, on both strips: three segments, no fourth, no student
+      among them. The second cannot be demonstrated in this build — there is no per-student detail
+      to enter or leave — so what is verified instead is the rule that makes it true, that a name set
+      with no detail screen open is drawn nowhere. Owed by
+      → WO-3.7 "The strip shows the open student's name as a breadcrumb segment while this screen is up"
 
 **Traps** — **Do not build the list inside the modal system.** Every class-scoped editor before this
 one is a modal and the precedent is misleading; the rule is in `../gradebook-surfaces.md`. **And
@@ -207,6 +220,32 @@ carry a `classId` guard into every assignment query you write**: WO-3.1's `remov
 being safe the moment duplicate-to-another-class exists — a naive duplicate carrying the source's
 `categoryId` would let a category removal in one class delete work in another, counted under a
 dialog naming the first.
+
+**Three lines are owed, and they are boxes on other work orders rather than prose here.** *(Left open
+2026-08-09 at the end of this build, in the shape WO-3.1's two took three sections above.)* Lines 1
+and 2 each name **a grade**, and there is still none in this app: WO-3.4 owns the arithmetic together
+with the hand-computed `docs/grade-math-cases.md` that is deliberately its only test suite, and WO-3.5
+owns the grid that renders it. **Line 2 was re-pointed at correction round 1** *(2026-08-09)*: it hung
+on WO-3.5's reweighting box, which is about weights crossing 100 and already carries WO-3.1's line 4 —
+so WO-3.5's verifier could have ticked it by walking weights across 100, discharging this line with
+nobody having moved an assignment between categories at all. WO-3.5 gained a box that only the claim
+can tick, the same move line 7 made on WO-3.7 one line below. The halves that could be built here were, and are measured in
+`tools/verify-shell.mjs`: a typed `0` survives typing, a re-render and a reload as `0`, and an
+assignment moves between categories with its score column following byte for byte. Line 7's second
+sentence is a different kind of debt — not arithmetic, but a screen. **The breadcrumb rule is built
+and cannot be exercised**: `src/screen-nav.js` draws an open student's name only while the detail view
+is the one on the glass, and WO-3.7 owns that view, so today the name is drawable nowhere. What is
+verified here is the rule's safe direction — a name set with no detail open appears on neither strip —
+and WO-3.7 gained an Acceptance box for the half that needs its screen.
+
+**The `classId` guard went in on both sides of the promise.** Every query in `src/assignments.js`
+filters by class, the duplicate matches the target's category **by name** and never carries an id
+across, and `src/categories.js`'s `assignmentsIn()`, `removalCounts()` and `applyRemoval()` — the two
+functions the Traps line names, plus the row's own count — now take a `classId` as well. The second
+half is what covers a document that arrives from a restore or a hand edit rather than from this
+build's own duplicate button, and `verify-shell.mjs` plants exactly that document: an assignment in
+class B wearing class A's `categoryId`, which must be absent from A's list **and** absent from the
+count in A's category-removal confirm.
 
 ---
 
@@ -314,6 +353,9 @@ attendance. Grades go in once or twice a week for five classes; if this is slow,
 - [ ] The grid is usable on an iPad in landscape.
 - [ ] `Esc` mid-column does not close the screen or lose the teacher's place, because there is no
       dialog to close. Prove it by pressing it, not by arguing the screen is a view.
+- [ ] **Moving an assignment to another category updates every displayed grade in that class
+      immediately** — the two categories it leaves and joins, and the overall grade with them.
+      *(Inherited from WO-3.3.)*
 - [ ] **No grade is shown while the weights are wrong, and the screen says why** — the number's
       absence and the total that caused it, not a figure with a "provisional" label on it. This is the
       owner's 2026-08-09 rule, which superseded WO-3.1's original line mid-build: *there is no grade at
@@ -321,6 +363,15 @@ attendance. Grades go in once or twice a week for five classes; if this is slow,
 - [ ] **Reweighting recomputes every displayed grade in that class immediately, and the crossing works
       in both directions** — grades appear when the weights reach 100 and disappear when they leave it.
       The disappearing half is the one a build can pass while getting wrong. *(Inherited from WO-3.1.)*
+
+**The category-move line above them is WO-3.3's, and it is a box of its own for a reason worth
+keeping.** *(Added 2026-08-09 at WO-3.3's correction round 1.)* WO-3.3 built the move — the `<select>`
+in the assignment editor, the row redrawing under its new group head, the score column following byte
+for byte — and could not show a grade change because nothing rendered a grade. Its debt was first
+pointed at the reweighting box below, and that was the wrong home: **that box is about weights crossing
+100, and ticking it by walking weights across 100 would have discharged WO-3.3's line with nobody
+having moved an assignment at all.** A debt that the tooling closes without the claim ever being tested
+is worse than no debt, because it reads as tested. So the claim has a box that only the claim can tick.
 
 **The last two are inherited from WO-3.1, and they are acceptance lines here rather than a note.**
 *(Re-homed 2026-08-09, when WO-3.1 was ticked.)* Both name a **displayed grade**, which WO-3.1 could
@@ -396,6 +447,13 @@ between a report and a conversation.
 - [ ] The "to move" figure is reproducible by hand.
 - [ ] No `supports` data appears on this screen in presentation mode.
 - [ ] It is a view in `<main>`, not a dialog.
+- [ ] The strip shows the open student's name as a breadcrumb segment while this screen is up, and
+      switching to any of the three tabs takes the name with it. *(Inherited from WO-3.3, which
+      built the strip and the rule and could not demonstrate this half: there was no per-student
+      detail to enter or to leave, so the name was never drawable. `setDetailBreadcrumb()` in
+      `src/screen-nav.js` is the seam it is set through, and that module already refuses to draw a
+      name unless its own view is the one on screen — the half that has to be shown here is the
+      name actually appearing, and then going.)*
 
 **Traps** — Do not build this in the modal system; see the Surface deliverable and
 `../gradebook-surfaces.md`. And note that presentation mode is a harder problem on a view than in a
