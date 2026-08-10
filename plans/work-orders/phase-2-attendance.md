@@ -1787,3 +1787,66 @@ reader see through it.
 - [ ] The next real dispatch after this lands produces a report that arrives when the work does.
       *(This is the only line that cannot be checked at the desk, and it is deliberately last: the
       failure it names took a full dispatch to surface.)*
+
+---
+
+## WO-2.21 — the 44px sweep can see a screen that is not the one on screen
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 — the by-hand fix it
+generalises is in `tools/verify-shell.mjs` § "the score entry grid (WO-3.5)" · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19 and
+WO-2.20 made.)*
+
+**Not a go-live blocker, and in no ship.** Added 2026-08-10, out of WO-3.5's verification, where it
+was raised as a residual and deliberately not folded into that work order.
+
+**Why it exists.** The standing 44px touch-target sweep collects `button, input, select, …` across the
+page and skips anything computing to `display: none`. **`.hidden` is `display: none !important`, and
+every view but the one on screen is `.hidden`.** So the sweep measures whichever screen the fixture
+happened to leave open and reports green over the rest.
+
+**This is not hypothetical and the number is the point.** WO-3.5 shipped a grid holding roughly 250
+score inputs. The sweep walked past every one of them and passed — and because the *Scores* segment
+shipped disabled in the same round, **nothing in that run could have opened the view to measure them
+even if it had wanted to.** A green run over a fixture that cannot express the failure is the backup
+nag escape exactly, and this is its third appearance.
+
+**What WO-3.5 did about it, and why that is not enough.** It opens `#scoresView` through the real
+navigation segment before measuring, and asserts *"the grid is OPEN and drawn under the coarse
+pointer"* as a check of its own, because a sweep over nothing is what it was closing. **All of that is
+hand-written inside WO-3.5's own section and covers `#scoresView` alone.** The mechanism is untouched.
+
+**The cost of leaving it, which is what makes this worth an S now rather than later.** WO-3.6, WO-3.7
+and WO-3.9 each add a screen. On today's harness each one arrives with the same hole, needs the same
+by-hand workaround written again, and **reports green in the meantime whether or not anyone remembers
+to write it.** The failure is silent and it is silent in the direction of looking fine — which is the
+same shape as WO-2.19's stale check count, and the same argument for fixing the mechanism rather than
+the instance.
+
+**Deliverables**
+- **The sweep enumerates every view and measures each one opened**, rather than measuring whatever the
+  fixture left visible. How it opens them is the design question: driving the real navigation is
+  truest and is what WO-3.5 did by hand; un-hiding them directly is cheaper and risks measuring a
+  layout no teacher can reach. **Pick one deliberately and write the reasoning down** — a sweep that
+  measures a screen in a state the app never puts it in is a new way to be green and wrong.
+- **A view with nothing in it fails rather than passes.** The count assertion is the part that makes
+  this real: WO-3.5's section asserts ≥200 cells before measuring, because zero controls measured is
+  indistinguishable from zero controls undersized. **Every view carries its own floor.**
+- **A view the sweep does not know about is named**, so the next screen is a failing check rather than
+  a silent omission. This is the WO-2.19 principle: a list maintained by remembering is not maintained.
+- **WO-3.5's by-hand block collapses into the general mechanism**, or the work order says in a sentence
+  why it must stay special. Two mechanisms measuring the same screen is how one of them rots.
+
+**Out of scope** — widening what the sweep measures beyond touch targets, and any change to the 44px
+threshold itself. This is about *which screens are looked at*, not about what is checked on them.
+
+**Acceptance**
+- [ ] Every view in `index.html` is measured under the coarse pointer, enumerated from the document
+      rather than from a list someone typed.
+- [ ] **Deleting WO-3.5's by-hand block does not reduce coverage of `#scoresView`** — the general
+      mechanism reaches it, proved by running with the block removed and quoting the counts.
+- [ ] A view that opens empty fails on its own floor, driven by planting an empty one rather than
+      argued.
+- [ ] Adding a view to `index.html` and not to the harness turns a check red, driven the same way.
+- [ ] The total check count rises and `tools/README.md` records the new number — which is WO-2.19's
+      mechanism if it has landed, and a hand edit with a note if it has not.
