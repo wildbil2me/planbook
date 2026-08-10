@@ -128,7 +128,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.19 | Phase 2 |
-| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.11 | Phase 3 |
+| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.13 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
@@ -143,14 +143,14 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
 | 2 — Attendance | 18 | 14 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 12 | 5 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 13 | 5 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **69** | **33** | `[████░░░░░░] 48%` |
+| | **70** | **33** | `[████░░░░░░] 47%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -240,7 +240,7 @@ it is built to did.)*
 
 ## Ship 2 — first grades
 
-Fourteen work orders between 2026-08-09 and ~2026-09-15, ending at
+Eighteen work orders between 2026-08-09 and ~2026-09-15, ending at
 [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). Written 2026-08-09, the day after Ship 1 closed,
 because until it existed there was **no running order at all** past Ship 1 — `next` reads the tables
 in this file and had nothing left to read, and the ordering everyone was working from lived in three
@@ -278,13 +278,15 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 7 | [WO-3.4](phase-3-gradebook.md#wo-34--grade-engine) **Grade engine** | M | ✔ | Aug 14–17 |
 | 8 | [WO-2.18](phase-2-attendance.md#wo-218--the-term-switch-checks-cover-every-surface-the-repaint-paints) Term-switch check coverage | S | | Aug 17 |
 | 9 | [WO-3.5](phase-3-gradebook.md#wo-35--score-entry-grid) **Score entry grid** | L | ✔ | Aug 17–21 |
-| 10 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
-| 11 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
-| 12 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 13 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 14 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 15 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 16 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 10 | [WO-2.19](phase-2-attendance.md#wo-219--the-harnesss-own-check-count-is-checked) Harness check count | S | | Aug 21, half a day |
+| 11 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
+| 12 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
+| 13 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 14 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 15 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 16 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 17 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 11–12 |
+| 18 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.17 was inserted at #2 on 2026-08-09, out of WO-3.3's verification, and every row below it moved
 down one. It is dated Aug 10–11 alongside WO-3.1 rather than given a slot of its own — it is half a
@@ -301,6 +303,25 @@ halves. It goes before the score grid because WO-3.5 is the **third** screen to 
 starts costing there, not here. It is dated Aug 17 alongside WO-3.5's start rather than given a slot
 of its own — it is half a day against a fixture that already exists — so **no other row's dates were
 re-flowed**. If that half day is not there, this is the row to move.*
+
+*WO-2.19 was inserted at #10 on 2026-08-10 and every row below it moved down one. **It is deliberately
+behind WO-3.5 rather than in front of it.** It makes `wo-sweep.mjs` fail when `verify-shell.mjs`'s check
+count and the number written in `tools/README.md` disagree — and WO-3.5 is the largest batch of new
+checks since WO-3.4, which is the batch most likely to go in without that line being touched. Ahead of
+WO-3.5 the check exists with nothing to catch and costs half a day off the last L item before capacity
+halves; behind it, it catches WO-3.5's own miss in the same week. It is dated Aug 21 alongside WO-2.6's
+start rather than given a slot of its own — half a day against a file that already exists — so **no
+other row's dates were re-flowed**. It carries `**Ship** —` and that is not a contradiction: the ship
+field says WO-G2 does not wait on it, this row says when it gets done. Being in no ship is what put
+WO-2.14 and WO-2.15 outside every table, and outside every table is where `next` cannot see a work
+order at all.*
+
+*WO-3.13 was inserted at #17 on 2026-08-10, split out of WO-3.5's deliverable list, and only WO-G2
+moved below it. **It is last before the gate because it is the row to cut**: it closes no roadmap box,
+WO-G2 does not depend on it, and a teacher who cannot paste can still type the column. It is also the
+one row here whose worth is not yet established — see the question at the head of the work order, which
+is whether scores routinely arrive in a pasteable column at all. If the answer is paper, this row comes
+out rather than moving.*
 
 *WO-3.11 was inserted at #5 on 2026-08-09 and was the one row here that bought nothing a teacher can
 see, until WO-2.18 joined it on 2026-08-10.

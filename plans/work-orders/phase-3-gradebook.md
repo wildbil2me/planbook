@@ -343,8 +343,16 @@ attendance. Grades go in once or twice a week for five classes; if this is slow,
 - Flags are **visible in the cell**. A score that silently isn't what you typed is the worst thing
   a gradebook can do.
 - Live class grade and per-student grade updating as you type.
-- Paste a column of scores from a clipboard, with a preview.
 - Touch path: the grid is usable on an iPad, and every control is in the coarse-pointer block.
+
+**Paste-a-column was split out to [WO-3.13](#wo-313--paste-a-column-of-scores) on 2026-08-10.** It read
+as one line here — *"paste a column of scores from a clipboard, with a preview"* — and it is a second
+surface with its own preview, its own alignment rules and its own way to silently put a score on the
+wrong student. It closes no roadmap box, it is not on WO-G2, and nothing in the grid depends on it, so
+it is the one deliverable that can leave without the rest changing shape. **This work order is still
+size L**: the split removes a self-contained surface, it does not reclassify what is left. The grid,
+the keyboard path, the flags, the live grades, the touch path and the three inherited debts below are
+what makes it L, and none of them moved.
 
 **Acceptance**
 - [ ] Entering 25 scores down a column takes 25 keystroke-groups and no mouse.
@@ -717,3 +725,77 @@ subject from a fixture so coupled that any damage anywhere shows up everywhere. 
 the existing twelve cases to be multi-class.** They are the hand-computed record that WO-3.4 was
 verified against, they are readable by a teacher with a calculator, and their simplicity is a feature.
 Add cases; do not complicate the ones that exist.
+
+---
+
+## WO-3.13 — paste a column of scores
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Closes roadmap** *(no box. The roadmap's Phase 3 list names the score grid and the `late`/`missing`
+rule; pasting is a way into the grid, not a thing the grid must do. It closes what WO-3.5 closes or
+nothing, and it closes nothing.)*
+
+**Split out of WO-3.5 on 2026-08-10**, where it was one deliverable line. It is not on WO-G2's
+dependency list and it is deliberately not being added: a teacher who cannot paste can still type,
+and gating first grades on a convenience is how a ship slips for something nobody needed in week one.
+
+**Why it exists.** Twenty-five scores typed down a column is twenty-five keystroke-groups — WO-3.5's
+first acceptance line. When the scores already exist somewhere in a column, retyping them is the
+teacher doing by hand what the clipboard was invented for, and it is the same re-keying tax the SIS
+already charges her once.
+
+**The question that decides whether this is worth building, which only the owner can answer.** The SIS
+has no export, so nothing arrives from there. This is worth an S only if scores routinely arrive in a
+pasteable column — an auto-graded quiz, a spreadsheet she already keeps — and worth nothing if the
+usual case is a stack of paper being read one at a time. **Answer that before dispatching this**, and
+if the answer is paper, the honest move is to strike this work order rather than build it and find
+out. Nothing else waits on it.
+
+**The risk this work order exists to contain.** A pasted column is **positional**: value 7 lands on
+student 7. Every way that goes wrong puts a real score on the wrong child's record, and it goes wrong
+quietly — one student dropped from the source list, a header row included, a trailing blank line. That
+is worse than a typo, because a typo is visible to the person who made it and this is not. The preview
+is not a nicety here; it is the whole work order.
+
+**Deliverables**
+- **One assignment column at a time**, into a column the teacher has already chosen in the grid. Not a
+  rectangle across assignments, and not a file — see Out of scope.
+- **A preview that pairs every incoming value with the student name it will land on**, in the grid's
+  own roster order, and **writes nothing until it is committed**. This is WO-1.7's paste box, which
+  established the pattern for the roster and is the component to lift rather than re-derive.
+- **A count mismatch refuses.** More values than students or fewer, the paste is rejected with both
+  numbers named, and nothing is written. **Never truncated to fit and never padded** — a silent
+  truncation is the failure mode described above, wearing the clothes of a successful paste.
+- **The flag vocabulary is the grid's own**, whatever WO-3.5 shipped, and it is shown in the preview
+  as the flag rather than as the raw token. **A blank line leaves the cell ungraded** and does not
+  mark it `missing` — blank means ungraded and affects nothing, and `missing` is marked by the
+  teacher, never inferred.
+- **Committed values go through the same writer a typed score does.** One writer, one set of rules, the
+  way every mark on the attendance grid goes through `setMark()`.
+
+**Out of scope** — matching by a pasted name column, importing a file, and pasting across more than
+one assignment. Name-matching is the obvious next thing and it is a different work order with a
+different risk profile; **positional plus a refusal is what makes positional safe**, and that is what
+this one is.
+
+**Acceptance**
+- [ ] Pasting a column shows a preview pairing each value with the student name it will land on, and
+      the document is unchanged until commit — proved by reading the stored document, not the screen.
+- [ ] A paste with the wrong number of values refuses, names both counts, and writes nothing. Run at
+      one too many and one too few.
+- [ ] A blank in the paste leaves that cell ungraded rather than `missing`, and the preview says which
+      it is.
+- [ ] A pasted score and a typed score are indistinguishable in the stored document, and breaking the
+      writer turns both paths red — run, not reasoned.
+- [ ] Grades recompute after a committed paste and match WO-3.4's hand-computed values.
+- [ ] The paste box is usable on an iPad with the on-screen keyboard up, and the preview scrolls to its
+      last row and its commit button. 👤
+- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
+
+**Traps** — **Do not write on paste and offer an undo instead.** An undo that has to be found is not
+the same safety as a commit that has to be given, and the roster importer already settled this for
+this codebase. **Do not silently coerce a non-numeric token to zero** — a zero is a score a teacher
+chose to give, and inventing one is the same class of harm as scoring a blank. Refuse the token, name
+it, and let her fix the source. **And do not reach for the roster importer's field-mapping UI**: that
+screen exists because a roster paste has columns whose meaning is ambiguous. A score column has one
+meaning, and the mapping step would be ceremony over the top of it.
