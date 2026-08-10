@@ -127,7 +127,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.13 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.17 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.18 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.11 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -142,7 +142,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 16 | 13 | 🔨 IN PROGRESS |
+| 2 — Attendance | 17 | 13 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 11 | 4 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -150,7 +150,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 6 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **66** | **31** | `[████░░░░░░] 47%` |
+| | **67** | **31** | `[████░░░░░░] 46%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -276,14 +276,15 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 5 | [WO-3.11](phase-3-gradebook.md#wo-311--owes-and-splitting-what--in-progress-means) `**Owes**` & the status split | S | | Aug 12, half a day |
 | 6 | [WO-3.3](phase-3-gradebook.md#wo-33--assignments) Assignments | M | ✔ | Aug 12–14 |
 | 7 | [WO-3.4](phase-3-gradebook.md#wo-34--grade-engine) **Grade engine** | M | ✔ | Aug 14–17 |
-| 8 | [WO-3.5](phase-3-gradebook.md#wo-35--score-entry-grid) **Score entry grid** | L | ✔ | Aug 17–21 |
-| 9 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
-| 10 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
-| 11 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 12 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 13 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 14 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 15 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 8 | [WO-2.18](phase-2-attendance.md#wo-218--the-term-switch-checks-cover-every-surface-the-repaint-paints) Term-switch check coverage | S | | Aug 17 |
+| 9 | [WO-3.5](phase-3-gradebook.md#wo-35--score-entry-grid) **Score entry grid** | L | ✔ | Aug 17–21 |
+| 10 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
+| 11 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
+| 12 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 13 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 14 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 15 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 16 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.17 was inserted at #2 on 2026-08-09, out of WO-3.3's verification, and every row below it moved
 down one. It is dated Aug 10–11 alongside WO-3.1 rather than given a slot of its own — it is half a
@@ -291,7 +292,18 @@ day, and the two do not touch the same files — so **no other row's dates were 
 half day is not there, it is the row to move rather than the ones with a ✔. It is early because it is
 a wrong number on the screen the teacher opens every period, and the term opens ~Aug 24.*
 
-*WO-3.11 was inserted at #5 on 2026-08-09 and is the one row here that buys nothing a teacher can see.
+*WO-2.18 was inserted at #8 on 2026-08-10, out of WO-2.17's verification, and every row below it moved
+down one. **It is deliberately after WO-3.4 and deliberately before WO-3.5.** It buys a teacher
+nothing — it is harness coverage for a repaint chain that is correct today — so it does not go ahead
+of the grade engine, which is on the G2 gate and is the last M-sized item that fits before capacity
+halves. It goes before the score grid because WO-3.5 is the **third** screen to hang off
+`afterTermChange()` and the first one term-filtered by construction: a hole in the chain's coverage
+starts costing there, not here. It is dated Aug 17 alongside WO-3.5's start rather than given a slot
+of its own — it is half a day against a fixture that already exists — so **no other row's dates were
+re-flowed**. If that half day is not there, this is the row to move.*
+
+*WO-3.11 was inserted at #5 on 2026-08-09 and was the one row here that bought nothing a teacher can
+see, until WO-2.18 joined it on 2026-08-10.
 It sits before WO-3.3 because WO-3.3 is the next work order that lands with Acceptance lines it cannot
 close — its grade-calculation lines wait on WO-3.4 and WO-3.5 — and a `🔨` there blocks WO-3.5, which
 depends on it. **It is also the row to cut first if the fortnight tightens**, ahead of everything with

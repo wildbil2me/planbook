@@ -1558,3 +1558,74 @@ Paint what is up, the way `afterCategoryChange()` does. **And do not move the te
 screen module** to make the repaint easier — `src/classes.js:6-12` argues that classes and terms are
 not separable, and the resolution living in one place is why a preference naming a removed term
 answers correctly everywhere.
+
+---
+
+## WO-2.18 — the term-switch checks cover every surface the repaint paints
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.17 · **Blocks** nothing, and
+that is the point — it is the row to cut first if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. It closes no
+product box, and inventing one would be the drift WO-2.15 and WO-2.16 exist to catch — the same call
+WO-2.17 made.)*
+
+**Not a go-live blocker.** Added 2026-08-10, out of WO-2.17's verification. Nothing here writes
+student data or reaches a classroom, and **nothing here is a defect in what WO-2.17 shipped** — the
+behaviour is correct today. What is missing is the check that would notice if it stopped being.
+
+**Why it exists.** `paintRenderedTotals()` paints **three** surfaces that know which term is open —
+the class line, one line per student row, and the open detail panel (`src/attendance.js:3300-3306`).
+Its own header comment says so, in those words. WO-2.17's seven harness checks assert the first two
+and **no fixture has a detail panel open across the term switch**. So deleting `paintDetail(totals)`
+at `src/attendance.js:3306` leaves all seven green while an open panel keeps the previous term's
+figures on screen — which is the original WO-2.17 defect, surviving inside the work order that fixed
+it, on the one surface a teacher opens *because* she wants the detail.
+
+**A check that asserts two of three painted surfaces licenses the third to be deleted.** That is the
+general statement, and it is worth more than the instance: this is the second time on this chain that
+correct numbers have been mistaken for a correct fix. WO-2.17's verifier ran a blanket-repaint
+mutation and watched both "the figures moved" checks stay green — the row sentinel was the only thing
+that separated the right fix from a wrong one that computed the right answer. Same shape here, one
+surface along.
+
+**And the second half of an Acceptance line was read rather than run.** WO-2.17's fourth line asks
+that `selectTerm()` still return without writing when the term id does not belong to the open class
+(`src/classes.js:478-479`). Nothing in the harness ever drives it with another class's term id, so
+that half was confirmed by reading the guard. The guard is two lines and obviously right, which is
+exactly the condition under which a guard gets refactored away — and the failure it prevents is a
+preference naming a term the open class does not have, which is the case `src/classes.js:480-483`
+keys the whole preference per class to avoid.
+
+**Deliverables**
+- **A check with a detail panel open across the term switch**, asserting the panel's own figures move
+  with the class line and the row line. The WO-2.17 fixture already builds what this needs — two dated
+  terms, `wo217-student`, three meetings against five — so this extends that block rather than
+  standing up a second one.
+- **The check is proved by a mutation, and the proof is written down.** Drop `paintDetail(totals)` at
+  `src/attendance.js:3306`, run the harness, and the new check must go red **while the other seven
+  stay green**. If they all go red, the fixture is coupled and the check is not measuring what it
+  claims. Record the mutation and its result in `tools/README.md`, the way WO-2.17's is.
+- **A check that drives `selectTerm()` with a term id belonging to a different class** and asserts
+  that nothing was written: the preference unchanged, the class bar unmoved, and no announcement. Two
+  classes with terms already exist in the fixtures; this needs an id from one aimed at the other.
+
+**Out of scope** — anything in `src/`. If a check goes red against current code, that is a defect
+found and it gets its own work order; do not fix the app from inside this one. And **no new fixture
+year** — everything here hangs off what WO-2.17 already builds.
+
+**Acceptance**
+- [ ] With a detail panel open, switching term moves the panel's figures in the same paint as the
+      class line and the row line.
+- [ ] Deleting `paintDetail(totals)` at `src/attendance.js:3306` turns the new panel check red and
+      leaves WO-2.17's seven green — run, not reasoned, with the counts before and after quoted.
+- [ ] `selectTerm()` called with another class's term id writes no preference, moves no highlight and
+      announces nothing — asserted from the harness rather than from reading the guard.
+- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
+- [ ] `src/` is byte-identical to HEAD across the whole work order.
+
+**Traps** — **Do not widen `paintRenderedTotals()` to make it easier to observe.** The narrowness is
+the deliverable WO-2.17 shipped, and a check that needs the code changed to be checkable is measuring
+the change. **And do not assert the detail panel by re-reading the totals map** — read the text the
+teacher reads, out of the panel in the DOM, for the same reason WO-2.17's row sentinel is an attribute
+on a surviving element rather than a count: a figure recomputed correctly and never painted is the
+whole bug.
