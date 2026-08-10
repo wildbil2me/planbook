@@ -3277,9 +3277,19 @@ function detailButton(student) {
   return btn;
 }
 
-/* Attendance writes repaint a column in place so the teacher keeps her scroll position. Totals
-   follow the same rule: rebuild the shared per-render pass, then replace only the text it feeds. */
-function paintRenderedTotals() {
+/*
+  Attendance writes repaint a column in place so the teacher keeps her scroll position. Totals
+  follow the same rule: rebuild the shared per-render pass, then replace only the text it feeds.
+
+  EXPORTED AT WO-2.17, AND IT IS EVERY FIGURE ON THIS SCREEN THAT KNOWS WHICH TERM IS OPEN — the
+  class line, one line per row, and the open detail panel. Those three read getSelectedTerm() and
+  the rest of the registry does not: the columns are a window of recent dates and they do not move
+  when the term does. So this is what a term change owes the teacher here, and renderAttendance()
+  would be the same three lines plus a grid of students × days rebuilt for nothing. Called from
+  src/shell.js's afterTermChange(), which is where the order of operations lives; this module still
+  does not know that a term nav exists.
+*/
+export function paintRenderedTotals() {
   const cls = openClass();
   if (!cls) { paintClassTotals(null); return; }
   /* A write can change active-filter membership without rebuilding tbody. Fold the whole roster so

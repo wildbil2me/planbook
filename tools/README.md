@@ -439,6 +439,23 @@ through the real manager and drives it again: the refusal and the match, each as
 fixture itself asserted before both. Seven mutations, all reverted and tabulated in `TESTING.md`
 § WO-3.3.
 
+**522 at WO-2.17**, and the seven are one new section directly under the assignments one, which is
+where that section's own comment had left the registry's term-totals gap "to whoever owns it". Three
+things about it are worth knowing. **The three checks that carry the acceptance line were written and
+run RED first**, against the unfixed tree — `519 passed · 3 failed` — because this work order asks for
+the pre-fix failure in as many words, and a check written after a fix has never demonstrated that it
+can fail. **The fixture is two dated terms over records the block plants, three meetings in one window
+and five in the other**, so the claim is a number that has to move rather than a repaint that has to
+happen: a check that read the term LABEL at the front of the totals line would go green against a
+build that redrew that line out of the same stale totals. And **the Traps line is measured with a
+sentinel attribute rather than argued from the diff** — `data-wo217-sentinel` on one row of the grid
+survives a repaint of the figures and does not survive `renderAttendance()`, which empties tbody, so
+the blanket fix this work order forbids turns exactly one check red while leaving the two "the figures
+moved" checks green. The totals element is overwritten by hand before every term tap made from a
+screen that is *not* the registry, which is how "a screen that does not read the term is not
+repainted" is asserted as text still sitting there afterwards. Two mutations, both reverted and
+tabulated in `TESTING.md` § WO-2.17.
+
 Update this line when you add checks — a stale count here reads as "the harness has not been touched since
 WO-1.3", which is the opposite of true and makes a green run look smaller than it is.
 

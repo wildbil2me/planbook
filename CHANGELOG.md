@@ -288,6 +288,20 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.17 — switching term on the attendance registry now brings the counts under the term nav
+  with it.** Tapping *Quarter 2* moved the highlight and said the term out loud, then left Quarter 1's
+  recorded meetings and percentages sitting on the screen, with nothing to say which term the numbers
+  belonged to. They corrected themselves on the next repaint from any other cause — mark one student
+  and the figures jump — which is what kept this invisible: the jump reads as the mark landing rather
+  than as the term finally arriving.
+
+  **The repaint now belongs to the term change itself**, the way the category controls already work,
+  rather than being something each screen remembers to ask for. The assignment list, which already
+  behaved, keeps behaving; the screens still to come inherit it instead of arriving with this same
+  bug again. A term change still repaints only the screen that is up — the registry paints a grid of
+  students × days and the score grid will be larger still, so repainting everything is a cost on the
+  flow the whole app is measured by.
+
 - **WO-2.16 — a header field the gate had never heard of was being swallowed by the field above it,
   and that made the sprint's one hard ordering constraint point backwards.** `**Blocks**` is the
   opposite of a dependency, and the gate was reading the `WO-` tokens off it as dependencies. So

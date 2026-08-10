@@ -1839,6 +1839,41 @@ iPadOS 26.5.2. So the coarse block keeps applying and every 44px rule stays live
 a thumb is still the input. This was worth asking because `verify-shell.mjs` structurally cannot:
 it sets the pointer type itself, so it can only ever confirm its own assumption.*
 
+### WO-2.17 — The term nav repaints the screen it is sitting on
+
+**What this fixes.** Tapping a term on the attendance registry moved the highlight in the header and
+left the previous term's meeting counts and percentages on screen. Nothing said which term the number
+belonged to, and the next repaint from any other cause corrected it — mark one student and the
+figures jump, which reads as the mark landing rather than as the term arriving. The repaint is now a
+property of the term change (`afterTermChange()` in `src/shell.js`) rather than something each class
+screen remembers to ask for.
+
+- [x] `node --check src/shell.js`, `node --check src/attendance.js`,
+      `node --check tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass — the sweep at
+      `15 checks · 14 passed · 0 failed · 1 to review`, the standing REVIEW line unchanged by this
+      work order (no added line mentions a support, accommodation, medical or plan field).
+- [x] `node tools/verify-shell.mjs` is green at **522 checks · 522 passed · 0 failed · 0 skipped**,
+      seven of them this work order's.
+- [x] **The pre-fix red is recorded rather than assumed.** The same seven checks were written and run
+      first against the unfixed tree: `522 checks · 519 passed · 3 failed`, the three being the
+      registry's class totals line, its per-student term line, and the pair of them moving without
+      the grid being rebuilt. A check that has never failed is not evidence that it can.
+- [x] Two mutations, both reverted, each turning exactly one check red and no other:
+
+      | Mutation in `afterTermChange()` | Result |
+      |---|---|
+      | the registry branch calls `renderAttendance()` instead of `paintRenderedTotals()` — the blanket repaint this work order's Traps line forbids | **1 red**: the row the harness marked before the tap is a different element afterwards. The two "the figures moved" checks stay green, which is the point — a blanket repaint gets the numbers right and is still the wrong fix |
+      | the `view === 'class'` test dropped, so any view falls through to the registry | **1 red**: a term tapped from the class grid repaints a screen nobody is looking at |
+- [x] `src/classes.js` is untouched by this work order — `git diff` names only `src/shell.js`,
+      `src/attendance.js`, `tools/verify-shell.mjs`, `sw.js` and the trackers — so its import list
+      still holds no screen module and `selectTerm()`'s refusal of a term id that does not belong to
+      the open class is the same three lines it was.
+*No 👤 line is added here, deliberately. This work order's own Acceptance says the failure is
+measurable at the desk, and it is — the seven checks above drive the real term buttons on the real
+screens. Worth a glance on the iPad at the **next** sitting rather than a line of its own: with two
+dated terms set up, a tap on the term nav should move the figures under it and nothing else, and a
+repaint that skips the grid is the kind of thing that could read as a screen that did not respond.*
+
 ---
 
 ## Phase 3 — Gradebook

@@ -370,6 +370,44 @@ function afterCategoryChange() {
 }
 
 /*
+  THE TERM CHANGED, AND THE SCREEN THE NAV IS SITTING ON TOP OF REDRAWN (WO-2.17).
+
+  src/classes.js's selectTerm() writes the preference, repaints the class bar and says the new term
+  out loud. It repaints nothing in <main>, which was right while the term nav sat over one screen
+  that did not care — and stopped being right the moment a second one arrived. The registry's totals
+  line has been term-scoped since WO-2.4, so tapping Quarter 2 moved the highlight in the header and
+  left Quarter 1's percentages an inch below it, with nothing on screen saying which term the number
+  belonged to. It corrected itself on the next repaint from any other cause, which is how it survived
+  a phase: mark one student and the numbers jump, and the jump reads as the mark landing.
+
+  WHICH IS WHY THIS IS A CHAIN AND NOT A LINE IN THE HANDLER. The term nav is a header control that
+  every class screen sits underneath, and there are three of them the day WO-3.5's score grid lands —
+  term-filtered by construction. Each new screen that reads getSelectedTerm() and does not repaint
+  here is this same defect again, so the repaint is a property of the term change and the screen adds
+  one line to this function rather than remembering to ask.
+
+  PAINT WHAT IS UP, THE WAY afterCategoryChange() DOES, and each branch asks its own module for the
+  narrowest repaint that makes its screen true. The assignment list is term-filtered top to bottom,
+  headline included, so it is redrawn whole. The registry is not: its columns are a window of recent
+  dates and do not move when the term does, so what changes is the three totals surfaces and
+  paintRenderedTotals() is exactly those — where renderAttendance() would rebuild a grid of students
+  × days to correct one line, on the flow this app is measured by (src/attendance.js's own history is
+  one long argument about paint cost; WO-2.13 exists because the totals were folded once per student).
+
+  AND NOTHING AT ALL FROM THE CLASS GRID. The nav is drawn there too, but the cards are today's
+  attendance and no card reads a term — so `class` and `assignments` are named rather than left to an
+  else, and a view that does not ask the question is not repainted for the answer.
+
+  NOT paintClassScreen(): that maps a view to its whole-screen paint, which is what entering a screen
+  needs and what a term change is one line short of. Two callers, two questions.
+*/
+function afterTermChange() {
+  const view = views.currentView();
+  if (view === 'assignments') assignments.renderAssignments();
+  else if (view === 'class') attendance.paintRenderedTotals();
+}
+
+/*
   THE WAY BACK TO THE CLASS GRID. Both doors — the "All classes" tab at the head of the class row
   and the button in the class view's own panel header — land here, because they are one route.
 
@@ -614,17 +652,15 @@ document.addEventListener('click', (e) => {
   const termSelect = e.target.closest('[data-term-select]');
   if (termSelect) {
     classes.selectTerm(termSelect.getAttribute('data-term-select'));
-    /* AND THE SCREEN THE TERM NAV IS SITTING ON TOP OF (WO-3.3, correction round 1).
-       classes.selectTerm() repaints the class bar and nothing else, which was right while the only
-       class screen was the attendance registry — that screen is a window of dates and does not
-       change when the term does. The assignment list is entirely term-filtered, headline included,
-       so tapping Quarter 2 moved the chip in the header and left a table of Quarter 1's work
-       underneath it, still captioned "Assignments · Quarter 1". Painted only when it is the screen
-       up, for the reason afterCategoryChange() above gives.
-       NOT paintClassScreen(): the registry has a term-totals line with a gap of its own shape and
-       it is not this work order's to close — repainting attendance here would hide it rather than
-       fix it. */
-    if (views.currentView() === 'assignments') assignments.renderAssignments();
+    /* AND THE SCREEN THE TERM NAV IS SITTING ON TOP OF (WO-3.3, correction round 1; made a chain at
+       WO-2.17). classes.selectTerm() repaints the class bar and nothing in <main>, which was right
+       while the term nav sat over one screen that did not care. It left the assignment list showing
+       one term's work under another term's heading — that screen is term-filtered top to bottom —
+       and it left the registry's totals line reporting the term the teacher had just left, which is
+       the same defect one figure at a time and took a phase longer to see. Both belong to the term
+       change rather than to this hook, so the order of operations is afterTermChange() above and the
+       next class screen adds a line there rather than a branch here. */
+    afterTermChange();
     return;
   }
   if (e.target.closest('[data-term-add]')) { classes.addTerm(); return; }

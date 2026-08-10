@@ -5821,7 +5821,9 @@ if (!classesBooted || !classSeam || !assignSeam) {
       [data-term-select] branch.)* Before it, tapping Quarter 2 moved the chip in the header and
       left the table, the caption and the summary line all describing Quarter 1 — the first surface
       in this app where a term switch gets the entire body wrong rather than one figure, which is
-      why it is fixed here and the registry's own term-totals gap is left to whoever owns it.
+      why it was fixed here first. The registry's own term-totals gap, left then to whoever owned
+      it, is WO-2.17 — its block sits directly below this section, and the chain both screens now
+      hang off is src/shell.js's afterTermChange().
 
       TWO TERMS ARE NEEDED TO SWITCH BETWEEN and this class may only have one, so one is added
       through the real term editor when that is the case and taken down with the rest of the fixture
@@ -6328,6 +6330,187 @@ if (!classesBooted || !classSeam || !assignSeam) {
         && backOnAttendance.strip.every((s) => s.active[0] === true && s.active[1] === false),
       'attendance up = ' + backOnAttendance.classShown);
     if (stage.tabs[1] && stage.tabs[1] !== src.id) await clickSel('#classTabBar [data-class-tab]', 1);
+  }
+}
+
+/* ───────── the term nav repaints the screen it is sitting on (WO-2.17) ─────────
+ *
+ * THE SIBLING OF THE TERM-SWITCH CHECK IN THE SECTION ABOVE, and it is here because that block's
+ * own comment left the registry's half "to whoever owns it". This is that half. `selectTerm()`
+ * wrote the preference, repainted the class bar and said the new term out loud, and the totals line
+ * an inch below the nav went on reporting the term the teacher had just left. It came right on the
+ * next repaint from any other cause, which is what kept it invisible for a phase: mark one student
+ * and the numbers jump, and the jump reads as the mark landing rather than as the term arriving.
+ *
+ * THE FIXTURE IS TWO DATED TERMS OVER RECORDS THIS BLOCK PLANTS — three meetings inside one window
+ * and five inside the other — because the claim is a NUMBER that has to move, not a repaint that
+ * has to happen. A check that only read the label at the front of the line would go green against a
+ * build that redrew that line out of the same stale totals. The whole document is snapshotted here
+ * and put back at the foot of the block, the way the WO-2.13 timing fixture does it.
+ *
+ * TWO KINDS OF SENTINEL, and they are what make this work order's Traps line measurable instead of
+ * a matter of reading the diff. A `data-wo217-sentinel` attribute on one row of the grid survives a
+ * repaint of the figures and does NOT survive `renderAttendance()`, which empties tbody and builds
+ * it again — so the check that says "the figures, not the grid" goes red against the blanket fix as
+ * well as against no fix at all. And the totals element is overwritten by hand before every term tap
+ * made from a screen that is NOT the registry, so "a screen that does not read the term is not
+ * repainted" is asserted as text still sitting there afterwards rather than inferred from which
+ * branch src/shell.js took.
+ */
+console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) ---');
+{
+  const TERM_A = 'tm_wo217a', TERM_B = 'tm_wo217b';
+  const LABEL_A = 'WO-2.17 early', LABEL_B = 'WO-2.17 late';
+  /* Written out in full rather than pattern-matched: this is the sentence a teacher reads under the
+     term nav, and both halves of it — which term, and how many meetings in it — are the claim. */
+  const LINE_A = LABEL_A + ': 3 recorded meetings · Year: 8 recorded meetings';
+  const LINE_B = LABEL_B + ': 5 recorded meetings · Year: 8 recorded meetings';
+  const ROW_A = LABEL_A + ' · P 3 · T 0 · A 0 · E 0 · D 0 · 100%';
+  const ROW_B = LABEL_B + ' · P 5 · T 0 · A 0 · E 0 · D 0 · 100%';
+  const SENTINEL = 'WO-2.17 sentinel — this screen was not repainted';
+
+  const plant = await evalJs(`(function(){
+    var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+    var d = s.getDoc();
+    if (!d) return { ok:false, why:'no year document is open' };
+    var clsId = c.getSelectedClassId();
+    var cls = (d.classes || []).filter(function(x){ return x.id === clsId; })[0];
+    if (!cls) return { ok:false, why:'no class is open, so there is no term nav to tap' };
+    /* Parked on the window rather than carried back through this call: the teardown at the foot of
+       the block has to put the SAME object graph back, and a document that made the round trip
+       through CDP would come back as a copy of a copy. NO BACKTICKS IN THIS COMMENT. */
+    window.__wo217 = { doc: JSON.stringify(d), classId: clsId, termId: c.getSelectedTermId() };
+    s.update(function(doc){
+      cls.terms = [
+        { id:'tm_wo217a', label:'WO-2.17 early', start:'2026-02-02', end:'2026-02-06' },
+        { id:'tm_wo217b', label:'WO-2.17 late', start:'2026-03-02', end:'2026-03-13' }
+      ];
+      if (!Array.isArray(doc.attendance)) doc.attendance = [];
+      if (!Array.isArray(doc.students)) doc.students = [];
+      if (!Array.isArray(cls.roster)) cls.roster = [];
+      doc.attendance = doc.attendance.filter(function(r){ return r.classId !== clsId; });
+      ['2026-02-02','2026-02-03','2026-02-04',
+        '2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06'].forEach(function(date){
+        doc.attendance.push({ classId: clsId, date: date, marks: {} }); });
+      doc.students.push({ id:'wo217-student', first:'Term', last:'Probe' });
+      cls.roster.push('wo217-student');
+    });
+    /* Whatever the sections above left on the toolbar, so the planted row is drawn and its totals
+       are the whole roster's arithmetic rather than a filtered subset's. */
+    a.setSearch(''); a.setFilter('all');
+    c.selectClass(clsId);
+    a.renderAttendance();
+    return { ok:true, classId: clsId, name: cls.name };
+  })()`);
+
+  const READ = `(function(){
+    var nav = document.getElementById('termNav');
+    var btns = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
+    var row = document.querySelector('[data-attendance-row="wo217-student"]');
+    var line = row ? row.querySelector('.attendance-student-totals') : null;
+    var up = function(id){ var el = document.getElementById(id);
+      return !!(el && !el.classList.contains('hidden')); };
+    return {
+      terms: btns.map(function(b){ return { id: b.getAttribute('data-term-select'),
+        label: b.textContent, active: b.classList.contains('active') }; }),
+      classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
+      rowText: line ? line.textContent : '',
+      sentinel: !!(row && row.getAttribute('data-wo217-sentinel')),
+      summary: (document.getElementById('assignmentsSummary') || {}).textContent || '',
+      registryUp: up('classView'), listUp: up('assignmentsView'), homeUp: up('homeView') }; })()`;
+
+  if (!plant.ok) {
+    check('the WO-2.17 fixture is real: the registry is up, over two dated terms whose windows hold three meetings and five',
+      false, plant.why);
+  } else {
+    await evalJs(`(function(){ var row = document.querySelector('[data-attendance-row="wo217-student"]');
+      if (row) row.setAttribute('data-wo217-sentinel', '1'); return !!row; })()`);
+    const before = await evalJs(READ);
+    check('the WO-2.17 fixture is real: the registry is up, over two dated terms whose windows hold three meetings and five',
+      before.registryUp && before.terms.length === 2
+        && before.terms[0].id === TERM_A && before.terms[1].id === TERM_B
+        && before.terms[0].active && !before.terms[1].active
+        && before.classText === LINE_A && before.rowText === ROW_A && before.sentinel,
+      JSON.stringify(before.terms.map((t) => t.label + (t.active ? ' (open)' : ''))) + ' :: '
+        + JSON.stringify(before.classText) + ' :: ' + JSON.stringify(before.rowText));
+
+    await clickSel('#termNav [data-term-select="' + TERM_B + '"]');
+    const after = await evalJs(READ);
+    check('switching term on the attendance registry updates the totals line in the same paint — no mark, no reload, no second tap',
+      before.classText === LINE_A && after.classText === LINE_B
+        && !!(after.terms[1] || {}).active,
+      JSON.stringify(before.classText) + ' -> ' + JSON.stringify(after.classText));
+    check('and each student\'s own term line goes with it, rather than the class figure moving alone',
+      before.rowText === ROW_A && after.rowText === ROW_B,
+      JSON.stringify(before.rowText) + ' -> ' + JSON.stringify(after.rowText));
+    /* THE TRAP, MEASURED. Repainting the whole registry would make the two checks above pass and
+       this one fail: the marked row would be a different element by then. The registry's columns are
+       a window of dates and do not move when the term does, so a term change owes the teacher the
+       figures and nothing else — src/attendance.js's own history is one long argument about paint
+       cost (WO-2.13 exists because the totals were computed once per student). */
+    check('the term change repaints the figures and not the grid under them — the rows the teacher was looking at are the same elements',
+      after.sentinel && after.rowText !== before.rowText,
+      'the marked row survived the switch = ' + after.sentinel + ', and its totals moved = '
+        + (after.rowText !== before.rowText));
+
+    /* THE OTHER SCREEN THE NAV SITS ON, which is WO-3.3's line and must not regress — and the same
+       tap must leave the registry it is not on alone. */
+    await clickSel('#classView [data-class-screen="assignments"]');
+    await evalJs(`(function(){ var t = document.getElementById('attendanceTotals');
+      if (t) t.textContent = ${JSON.stringify(SENTINEL)}; return 1; })()`);
+    await clickSel('#termNav [data-term-select="' + TERM_A + '"]');
+    const onList = await evalJs(READ);
+    check('switching term on the assignment list still repaints it, and the tap is the only action it takes',
+      onList.listUp && !onList.registryUp
+        && onList.summary.indexOf('Assignments · ' + LABEL_A + ' · ') === 0
+        && !!(onList.terms[0] || {}).active,
+      JSON.stringify(onList.summary.slice(0, 64)));
+    check('and the registry is not repainted from under the assignment list, because it is not the screen that is up',
+      onList.classText === SENTINEL,
+      JSON.stringify(onList.classText.slice(0, 64)));
+
+    /* AND FROM THE CLASS GRID, where the term nav is still drawn and no class screen is on the
+       glass. Nothing in <main> reads the term there, so nothing in <main> is repainted — asserted
+       against both class screens at once, with the nav's own active mark as the proof that the tap
+       landed at all. A blanket repaint passes every check above this one and fails this. */
+    await clickSel('#assignmentsView [data-view-home]');
+    await evalJs(`(function(){
+      var t = document.getElementById('attendanceTotals');
+      var s = document.getElementById('assignmentsSummary');
+      if (t) t.textContent = ${JSON.stringify(SENTINEL)};
+      if (s) s.textContent = ${JSON.stringify(SENTINEL)};
+      return 1; })()`);
+    await clickSel('#termNav [data-term-select="' + TERM_B + '"]');
+    const onHome = await evalJs(READ);
+    check('a term change made from the class grid repaints neither class screen — the fix is a chain, not a blanket repaint of everything',
+      onHome.homeUp && !onHome.registryUp && !onHome.listUp
+        && onHome.classText === SENTINEL && onHome.summary === SENTINEL
+        && !!(onHome.terms[1] || {}).active,
+      'class grid up = ' + onHome.homeUp + ', the nav moved to '
+        + JSON.stringify((onHome.terms[1] || {}).label) + ', both screens untouched = '
+        + (onHome.classText === SENTINEL && onHome.summary === SENTINEL));
+
+    /*
+      The document back as it was, IN PLACE rather than as a fresh object — every module holds the
+      reference getDoc() handed it — and the class and term this block found open put back with it.
+      The section below reloads onto whatever is left here and expects to arrive inside a class, so
+      the last act is selectClass(), exactly as the assignments teardown above ends on a tab.
+    */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+      var saved = window.__wo217, d = s.getDoc();
+      var restored = JSON.parse(saved.doc);
+      Object.keys(d).forEach(function(k){ delete d[k]; });
+      Object.assign(d, restored);
+      s.update(function(){});
+      c.selectClass(saved.classId);
+      /* The preference is still naming tm_wo217b, which no longer exists — resolved rather than
+         trusted (src/classes.js), so this is tidiness and not a repair. */
+      if (saved.termId) c.selectTerm(saved.termId);
+      a.setSearch(''); a.setFilter('all'); a.renderAttendance();
+      delete window.__wo217;
+      await s.flush();
+      return 1; })()`);
   }
 }
 

@@ -1494,7 +1494,7 @@ prose tail — and make sure the tokens go nowhere near the gate.
 
 ## WO-2.17 — the term nav repaints the screen it is sitting on
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. This is a defect found by WO-3.3's verification, in code Phase 2
 shipped — it closes no product box, and inventing one to make the dashboard tidier is the drift
 WO-2.15 and WO-2.16 exist to catch.)*
@@ -1540,14 +1540,14 @@ remembers to ask for.
 *selected*. This is about what repaints after it changes, not about the choice.
 
 **Acceptance**
-- [ ] Switching term on the attendance registry updates the totals line in the same paint — no mark,
+- [x] Switching term on the attendance registry updates the totals line in the same paint — no mark,
       no reload, no second tap.
-- [ ] Switching term on the assignment list still repaints it (WO-3.3's line, which must not regress).
-- [ ] A screen that does not read the term is not repainted by a term change — the fix is a chain, not
+- [x] Switching term on the assignment list still repaints it (WO-3.3's line, which must not regress).
+- [x] A screen that does not read the term is not repainted by a term change — the fix is a chain, not
       a blanket repaint of everything.
-- [ ] `src/classes.js` gains no import from a screen module, and `selectTerm()` still returns without
+- [x] `src/classes.js` gains no import from a screen module, and `selectTerm()` still returns without
       writing when the term id does not belong to the open class.
-- [ ] The harness proves the pre-fix failure: a check that reads the totals line after a term switch
+- [x] The harness proves the pre-fix failure: a check that reads the totals line after a term switch
       and goes red against the current code. 👤 *not needed — this one is measurable at the desk.*
 
 **Traps** — **Do not fix this by repainting every class screen on every term change.** The registry
