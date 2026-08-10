@@ -315,5 +315,8 @@ You never inspected the work, so recording someone else's verdict is transcripti
 - **Point both agents at the two verification commands** in the brief — `tools/verify-shell.mjs` and
   `tools/wo-sweep.mjs`. Nobody should write a third harness. If a work order needs a check neither
   can make, that is a proposed follow-up in your report, not a throwaway script.
-- **Keep this file short.** It grew 169 → 274 lines in one day and every dispatch paid to read all of
-  it. New lessons go to `plans/dispatch-retro.md`; only the imperative belongs here.
+- **Keep this file short.** It grew 169 → 274 lines in one day, and WO-2.20's wait rule took it to
+  **322** — every dispatch pays to read all of it. New lessons go to `plans/dispatch-retro.md`; only
+  the imperative belongs here. **If you edit this file, correct that number in the same edit.** It was
+  already stale when WO-2.20 read it, and a length rule that misstates the length is the first rule a
+  reader discounts.
