@@ -24,6 +24,11 @@ node tools/verify-shell.mjs      # measures what a stylesheet review gets wrong
 node tools/wo-sweep.mjs          # the standing greps
 ```
 
+**Wait for both to exit and quote what they printed.** You spawn nothing — you have no `Agent` tool —
+so you cannot report a spawn as a run in the shape WO-2.20 describes; the one version of that failure
+available to you is a backgrounded Bash call reported before it exited, and `verify-shell.mjs` runs
+about 160 seconds. A verdict is evidence you read, never a run you started.
+
 Run both first, and read what they **skipped** as carefully as what they failed. A `SKIP` is never a
 pass — a fixture that quietly stopped existing turns a green run into a meaningless one.
 `wo-sweep.mjs` also emits `REVIEW` lines: those are greppable evidence handed to you undecided, not

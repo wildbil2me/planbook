@@ -1717,7 +1717,7 @@ proving it: correcting the line by hand one more time is the ritual that has fai
 
 ## WO-2.20 — the orchestrator must not report a spawn as a run
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `.claude/agents/` and
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** nothing — `.claude/agents/` and
 the dispatch status-file convention both exist today · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18 and WO-2.19
 made.)*
@@ -1774,15 +1774,15 @@ cheap fix is to stop producing the ambiguous report**, not to build the instrume
 reader see through it.
 
 **Acceptance**
-- [ ] The orchestrator's definition, read start to finish by someone who has not seen this note,
+- [x] The orchestrator's definition, read start to finish by someone who has not seen this note,
       cannot be followed in a way that reports before the implementer returns.
-- [ ] The dispatch-time status line says the child was spawned and is awaited, and predicts a
+- [x] The dispatch-time status line says the child was spawned and is awaited, and predicts a
       duration only in words that read as a prediction.
-- [ ] The reading phase and the blindness of the file-based signals are stated in the file, with the
+- [x] The reading phase and the blindness of the file-based signals are stated in the file, with the
       21-minute measurement from WO-3.5 quoted as the evidence.
-- [ ] The definition forbids re-dispatching over a live `🤖 CLAIMED` line and names `--release` as the
+- [x] The definition forbids re-dispatching over a live `🤖 CLAIMED` line and names `--release` as the
       only way a claim is cleared.
-- [ ] `work-order-verifier` and `work-order-implementer` are each read and either fixed the same way
+- [x] `work-order-verifier` and `work-order-implementer` are each read and either fixed the same way
       or ruled unaffected in one sentence saying why.
 - [ ] The next real dispatch after this lands produces a report that arrives when the work does.
       *(This is the only line that cannot be checked at the desk, and it is deliberately last: the

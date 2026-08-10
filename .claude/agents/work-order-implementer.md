@@ -51,6 +51,13 @@ A separate `work-order-verifier` reads your work cold against the Acceptance lis
 your reasoning, only what is on disk. So report honestly rather than favorably: claiming a line you
 did not meet costs you a correction round, not a pass.
 
+**Report a command's result only from output you actually read.** You spawn nothing — you have no
+`Agent` tool — so you cannot report a spawn as a run in the shape WO-2.20 describes. The one version
+of that failure available to you is a backgrounded Bash call written up before it exited:
+`verify-shell.mjs` takes about 160 seconds, and *"the harness passes"* typed while it is still
+running is a prediction wearing a result's clothes. Wait for the exit, quote what it printed, and if
+you had to stop before it finished, say that instead of guessing the ending.
+
 Against the Acceptance list, item by item: what you verified and how, what you could not verify
 (anything needing a real iPad or human eyes — say so rather than assuming), and anything you left
 undone with the reason. List the files you changed. If you hit a decision the work order didn't

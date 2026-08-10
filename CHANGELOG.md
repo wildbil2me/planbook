@@ -387,6 +387,40 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.20 — the orchestrator now waits for its implementer before reporting.** On 2026-08-10 a
+  dispatch on WO-3.5 returned a complete, confident report sixty seconds in: the route with its
+  reasoning, the claim written, the brief written, and *"the implementer is in the background. Expect
+  20 to 40 minutes."* Every word was true except the tense. It had **spawned** the implementer and
+  returned, having observed no work at all.
+
+  **A report written at spawn time is indistinguishable from one written at completion**, and
+  everything downstream follows from a reader being unable to tell those apart. A finished-shaped
+  report read against a status file frozen at the dispatch line said the child had never launched, so
+  it was re-dispatched. It had launched. It was reading — **21 minutes between spawn and first write**
+  on that work order, and for all of it the status file does not grow, no result file appears and
+  `git status` is unchanged. Those are the three signals a watcher naturally reaches for, all blind,
+  and blind longest on the largest work orders, which are exactly the ones a duplicate hurts most. Two
+  implementers then built WO-3.5 concurrently for nineteen minutes; the tree survived because both
+  lifted the same mockup and surfaces document rather than inventing, which is luck resting on a
+  shared brief and not a property of the system. It still cost the two defects the verifier found.
+
+  **The fix is to stop producing the ambiguous report**, not to build the instrument that would let a
+  reader see through it — no heartbeat, no liveness protocol, deliberately out of scope. The
+  orchestrator waits for its child, says *spawned, awaiting return* at dispatch and gives the duration
+  only in words that read as a prediction, writes down that an implementer's first write is not its
+  start, and refuses to re-dispatch over a live `🤖 CLAIMED` line. `--release` is the one way a live
+  claim is cleared and it is a deliberate, named act; a silent second spawn is not.
+  `work-order-verifier` and `work-order-implementer` carry no `Agent` tool and so cannot have this
+  defect — each was read and fixed anyway for the one shape available to it, a backgrounded shell call
+  written up before it exited.
+
+  **Nothing mechanically guards any of this.** `wo-sweep.mjs` ignores `.claude`, so someone trimming
+  these paragraphs for length would trip no check — and a check asserting the file contains the word
+  *wait* would pass happily over a file rewritten to say the opposite. No app code changed; nothing
+  here is visible to a teacher. The last acceptance line cannot be checked at a desk and is
+  deliberately last: it closes when the next real dispatch produces a report that arrives when the
+  work does.
+
 - **WO-2.17 — switching term on the attendance registry now brings the counts under the term nav
   with it.** Tapping *Quarter 2* moved the highlight and said the term out loud, then left Quarter 1's
   recorded meetings and percentages sitting on the screen, with nothing to say which term the numbers

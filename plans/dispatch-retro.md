@@ -53,6 +53,49 @@ status --short` first on resume, before reading your own status file.
 `PREF_DEFAULTS` — because the enforcement in `prefs.js` is silent by design and a silent refusal is
 invisible to everything except an audit.
 
+## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
+
+**2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,
+confident report**: the route with its reasoning, the claim written, the brief written, and *"the
+implementer is in the background at Opus. Expect 20 to 40 minutes."* Every word of it was true
+except the tense. It had **spawned** the implementer and returned. It had observed no work at all.
+
+The coordinator read a finished-shaped report against a status file frozen at the dispatch line,
+concluded the child had never launched, and re-dispatched. **It had launched. It was reading.** An
+implementer on an `L` reads the brief, the design mockup, the surfaces document and six or eight
+source files before it writes anything: here that was **21 minutes between spawn and first write**
+(spawn 11:56Z, first write to `src/views.js` 12:17Z). The liveness watcher polled three signals
+between 11:58Z and 12:04Z — status-file lines, the result file, and `git status` on `src/` — and a
+reading agent touches none of them. **No signal was read as death.**
+
+**Two implementers then built WO-3.5 concurrently for 19 minutes.** The tree survived, and survived
+on luck resting on a shared brief rather than on any property of the system: both lifted
+`design/mockups/scores.html` and `plans/gradebook-surfaces.md` instead of inventing, so the halves
+fit, `src/shell.js` imported exactly the six functions `src/scores.js` exported, and the ids matched.
+It still cost both defects the verifier found, and they have the same shape — **a file asserting
+something about a file the other implementer owned, which neither had opened**: `index.html:867`
+claimed `src/screen-nav.js` needed no change (it did, and the Scores view was unreachable without
+it), and nothing chained `afterAssignmentChange()` in `src/shell.js`. Recovery took a correction
+round and a second verifier pass.
+
+**The root cause is one sentence: a report written at spawn time is indistinguishable from a report
+written at completion.** The false stall, the duplicate and the two defects all follow from a reader
+being unable to tell those apart.
+
+**The fix considered and rejected.** The instinct is to build the missing instrument — a heartbeat
+file, a progress protocol, a poll the watcher can trust. WO-2.20 put that out of scope on purpose,
+and the reason is worth keeping: *the cheap fix is to stop producing the ambiguous report, not to
+build the instrument that would let a reader see through it.* An orchestrator that does not speak
+until its child returns needs no liveness channel, because there is no longer a window in which
+someone must guess. Anything more is a work order of its own, and one nobody has needed yet.
+
+Two things the day is worth remembering for anyway. **The only signal that actually separated the
+two cases was token usage**, which no file exposes — mtimes and `git status` lie in the one direction
+that matters, and they lie longest on the largest work orders. And the WO-3.5 status file **struck
+its wrong line through rather than deleting it** (`~~FALSE START~~`, annotated with what was actually
+happening), which is why this section could be written from the record instead of from memory. Do
+that: a status trail that edits away its own mistakes cannot teach anything.
+
 ## Codex — four probes, a fix, and the first run that landed
 
 **Do not probe by looking for a file in `bin/`.** The first version checked for
