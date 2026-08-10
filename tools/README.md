@@ -498,10 +498,54 @@ in one new section"*) and never reached here, which is WO-3.4's thirteen happeni
 order later. Measured on `1f5217c` on 2026-08-10, not carried forward: `554 checks · 554 passed ·
 0 failed · 0 skipped`, 13,150 lines, 23.7 lines per check, 177s. **That number is still maintained by
 hand and there is no honest way to make it otherwise** — it is `results.length` at the end of a
-177-second browser run, and the sweep that guards the line below opens no browser by design. What
-follows is what a grep *can* hold.
+177-second browser run, and the sweep that guards the line below opens no browser by design.
 
-**`verify-shell.mjs` holds 560 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**563 at WO-3.17**, measured the same way: `563 checks · 563 passed · 0 failed · 0 skipped`, 13,558
+lines, 24.1 lines per check, 182s. Nine of the ten call sites added are a new section at the foot of
+the file — the Assigned and Due fields — and the arithmetic 554 + 10 = 564 does not hold because one
+existing check was RE-POINTED rather than added, while the tenth new site is a fixture guard's
+failure arm that a green run never reaches. WO-3.3's
+*"no date field auto-populates: a new assignment arrives with both dates empty"* asserted the exact
+behaviour the owner overruled on 2026-08-10, so it now asserts that both dates arrive on today and
+that nothing schedule-shaped fills them, which is the half of that line that never changed. Four
+things about the new section are worth knowing.
+
+**It runs at two widths, and the split was forced by an artifact that reads exactly like an app
+defect.** Written as one 390px pass, two of its checks failed reporting the values of a dialog that
+had never opened: at 390 the page reports `document.documentElement.clientWidth` 390 and
+`window.innerWidth` 524, and `95vw` resolves to 370.5px — the layout viewport is 390, the visual one
+is 524, and the page is at a scale of about 0.74. `getBoundingClientRect` answers in layout
+coordinates and `Input.dispatchMouseEvent` takes visual ones, so a click at the left edge lands and
+one aimed at a row control near the right edge misses by about a third of the screen. Changing the
+device scale factor from 3 to 2 did not fix it, which is how that suspicion was eliminated. So
+everything that clicks a control runs at 1024x768 and only the geometry runs at 390, reached with the
+one control at the top of the panel. It is **not** in the numbered trap list below, because that
+list's rule is two independent diagnoses and this has one; it is written up at the point in the
+harness where it bit, and a check now asserts the two viewports are equal before anything is clicked.
+
+**The fields are measured EMPTY, and after this work order that is a state a teacher reaches only by
+clearing a date.** Part two puts today in both dates on creation, so a block that opened a new
+assignment and measured what it found would be measuring boxes with values holding them open — while
+the owner's screenshots are of empty ones. The section therefore creates an assignment, clears both
+dates through the real fields, and measures what is left; the emptiness is asserted **inside** the
+same check as the geometry, so a build that stopped clearing cannot quietly turn it into a
+measurement of two filled boxes. Proved by mutation: applying the default on OPEN rather than on
+creation turns that check red along with three others.
+
+**One check is honest about measuring the mechanism only as far as a laptop can see it.** The iPad
+symptom is WebKit painting the native date widget over the box the stylesheet sized; headless
+Chromium honours the box already, so it can demonstrate neither the defect nor the fix. What is
+asserted instead is that the `appearance` reset is live on both fields as a **computed style** — it
+says the declaration reaches the right element, not that iOS obeys it, and it exists so the one line
+the whole fix rests on cannot be tidied away without something going red. The 👤 line stays owed.
+
+**And the prose check reads two surfaces rather than the one the work order names.** The bold
+promise that had become false was copied in the editor dialog as well as under the list, and a
+rewrite that fixed one would have left the dialog contradicting itself an inch from the field.
+Reverting only the editor's copy turns that check red with the list hint still correct. Four
+mutations, all reverted and tabulated in `TESTING.md` § WO-3.17.
+
+**`verify-shell.mjs` holds 570 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10570` is why the
@@ -509,7 +553,11 @@ pattern is not line-anchored, and comment lines are excluded because the harness
 its prose constantly.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** 560 − 554 = 6, which reads like six unreached branches; the work order that
+could go and name.** It is 570 − 563 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
+follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
+counts in it as the measurement of that tree rather than of this one. The gap moved by one because
+WO-3.17 added one fixture-guard failure arm — the first bullet below is the shape of it — and nothing
+about the reasoning changed. 560 − 554 = 6 reads like six unreached branches; the work order that
 booked this check reasoned its way to *"roughly 541 call sites against 537 executed — four sites that a
 run does not reach"* on the same arithmetic, and both numbers are a coincidence of two unrelated
 quantities. Measured by instrumenting a throwaway copy of the harness — `new Error().stack` inside

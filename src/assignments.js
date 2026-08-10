@@ -32,13 +32,29 @@
 
   ── FIVE THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS ──
 
-  1. NO DATE FILLS ITSELF IN. Neither `assigned` nor `due` is defaulted, guessed, or advanced —
-     not to today, not to the end of the term, and above all not to "the next time this class
-     meets", which does not exist and is not going to: plans/rotating-schedule.md records a cycle
-     model that was designed and deleted the same day, because the owner's rotation also changes at
-     random. An empty date is valid and stays empty, the same rule src/classes.js states for term
-     dates. Nothing in this file reads a clock except the overdue TINT below, which changes no
-     stored value and marks no student.
+  1. TODAY IS OFFERED, AND NOTHING ELSE EVER IS. A newly created assignment arrives with `assigned`
+     and `due` both on today — in createAssignment() below, and nowhere else — because today is the
+     day a teacher is almost always writing the thing down on, and typing it into an iPad picker
+     costs more than it saves. That is the ONLY value this file will ever put in a date field it was
+     not handed. Nothing is guessed, nothing is advanced to the end of the term, and above all
+     nothing is set to "the next time this class meets", which does not exist and is not going to:
+     plans/rotating-schedule.md records a cycle model that was designed and deleted the same day,
+     because the owner's rotation also changes at random. **Today is a fact and a next meeting is a
+     guess**, and it is the guess the rule forbids — which is why the owner could overrule the older
+     version of this decision ("neither date fills itself in") on 2026-08-10 without touching the
+     reasoning under it. WO-3.17 is the record, and index.html's hint says the same thing to the
+     teacher in her own words.
+
+     THREE THINGS THAT SURVIVE THAT CHANGE, and each is one of that work order's acceptance lines.
+     An empty date is still valid and still stays empty — the same rule src/classes.js states for
+     term dates — so clearing one must not re-fill it (assignmentDateCommitted() below rebuilds the
+     field from the assignment, which is what makes that true rather than remembered). The default
+     is a CREATION-time default, so an assignment being EDITED is never touched: open a two-year-old
+     assignment with a blank Due and it opens blank. And a COPY keeps whatever its source had, which
+     is the duplicate dialog's own rule and not this one — confirmCopy() says why beside it.
+
+     The clock is read in exactly two places in this file, and both of them are today: that default,
+     and the overdue TINT below, which changes no stored value and marks no student.
 
   2. POINTS ARE STORED EXACTLY AS TYPED, INCLUDING 0. Nothing here clamps, rounds, rejects or
      "helpfully" defaults a number a teacher entered — the rule src/categories.js states for a
@@ -84,7 +100,8 @@ import { categoriesOf, formatWeight } from './categories.js';
    re-derived for the reason src/home.js imports the same function: two answers to "what day is it"
    is how a screen and a record end up disagreeing about a date, and src/attendance.js's todayISO()
    is built from the local calendar fields precisely so that an evening in October is not tomorrow.
-   Used only for the overdue tint — see decision 1. */
+   Used in exactly two places, both of them today: the creation-time default both dates arrive on,
+   and the overdue tint — see decision 1. */
 import { todayISO } from './attendance.js';
 
 const EDITOR_MODAL_ID = 'assignmentModal';
@@ -644,7 +661,13 @@ function dateField(assignment, field) {
   /* A real date input, so iPadOS gives the teacher its own picker rather than a text field she has
      to type an ISO string into. Empty is allowed and stays empty. There is no `min`, no `max`, and
      nothing comparing this field to the other one or to a term's dates — see decision 1, and
-     src/classes.js's dateField(), which states the same refusal about term dates. */
+     src/classes.js's dateField(), which states the same refusal about term dates.
+
+     THIS FUNCTION SHOWS WHAT THE ASSIGNMENT HOLDS AND DECIDES NOTHING. Today arrives on a new
+     assignment in createAssignment(), which is a creation-time default; a field built here for an
+     EXISTING assignment with a blank date is blank, and so is the one rebuilt after a clear. Both
+     of those are acceptance lines of WO-3.17 and both are true because the value is read rather
+     than chosen. A `|| todayISO()` on the line below would break them together. */
   input.type = 'date';
   input.value = typeof assignment[field] === 'string' ? assignment[field] : '';
   input.setAttribute('data-assignment-field', field);
@@ -721,6 +744,13 @@ export function createAssignment(opener) {
   }
 
   const cats = categoriesOf(cls);
+  /* Both dates start on today, and this is the ONE place in this file that puts a value in a date
+     field the teacher did not type (decision 1). It is a starting point in the same sense
+     DEFAULT_POINTS is: it is what she almost always means, and every other value — including empty
+     — survives being typed over it. Through todayISO() rather than a local `new Date()`, because
+     that function is built from the LOCAL calendar fields and an assignment written down at eight
+     on an October evening must not be filed as tomorrow's. */
+  const today = todayISO();
   const assignment = {
     id: newId('a'),
     classId: cls.id,
@@ -730,8 +760,8 @@ export function createAssignment(opener) {
     categoryId: cats.length ? cats[0].id : '',
     name: '',
     points: DEFAULT_POINTS,
-    assigned: '',
-    due: '',
+    assigned: today,
+    due: today,
   };
   update((doc) => {
     if (!Array.isArray(doc.assignments)) doc.assignments = [];
@@ -743,7 +773,11 @@ export function createAssignment(opener) {
   renderAssignments();
   renderEditorFields();
   openModal(EDITOR_MODAL_ID, opener);
-  announce('Added an assignment to ' + cls.name + ', worth ' + DEFAULT_POINTS + ' points. Name it.');
+  /* The dates are said because they were WRITTEN. Everything this app puts in a field on the
+     teacher's behalf is announced with it — a default nobody said out loud is a value a
+     screen-reader user finds out about later, from a list she did not expect to read a date on. */
+  announce('Added an assignment to ' + cls.name + ', worth ' + DEFAULT_POINTS
+    + ' points, assigned and due today. Name it.');
 
   /* Focus the name after the fields are in the document, for the reason src/classes.js's
      renderClassList() gives: an input that is not yet in the page cannot take focus, and on iPadOS
@@ -1125,6 +1159,14 @@ export function confirmCopy() {
     categoryId: category,
     name: copyName,
     points: source.points,
+    /* THE SOURCE'S DATES EXACTLY AS THEY ARE, AND DELIBERATELY NOT TODAY. WO-3.17 gives a new
+       assignment today in both fields; this is the other creation path in this file and it was
+       weighed against that one rather than left unconsidered. Two reasons it goes the other way.
+       The dialog above tells the teacher in words that "the dates come across as they are" before
+       she taps the button, and a control that quietly re-dated its copy would be contradicting its
+       own printed promise — the same fault the hint in index.html was carrying and that work order
+       fixed. And a copy that dropped a due date the teacher had already set is a form to fill in
+       twice, which is the cost this control exists to remove. Blank in the source stays blank. */
     assigned: source.assigned,
     due: source.due,
   };

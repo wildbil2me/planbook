@@ -803,11 +803,14 @@
         An assignment belongs to one class and one term, so this list is what
         <strong id="assignmentsHintTerm"></strong> is graded on and nothing else. Points, the
         category it counts in, and both dates are all editable afterwards — nothing here is
-        settled by writing it down. <strong>Neither date fills itself in.</strong> Planbook has no
-        timetable and is not getting one, so there is no “next meeting” to guess at; a due date is
-        a plain date you type, and it changes no grade and marks nobody. <strong>Duplicate</strong>
-        copies an assignment into this class or into another one you teach — the copy arrives with
-        no scores on it, which is the point of copying it rather than the cost.
+        settled by writing it down. <strong>A new assignment starts with both dates on today</strong>,
+        because that is the day you are almost always writing it down on. Type over either one, or
+        clear it and leave it blank — a date is never required, and clearing one leaves it empty.
+        <strong>Nothing else is ever filled in for you.</strong> Planbook has no timetable and is not
+        getting one, so there is no “next meeting” to guess at; a due date is a plain date you type,
+        and it changes no grade and marks nobody. <strong>Duplicate</strong> copies an assignment
+        into this class or into another one you teach — the dates come across as they are, and the
+        copy arrives with no scores on it, which is the point of copying it rather than the cost.
       </p>
       <p class="assign-hint">
         <strong>Worth 0 points is how you give extra credit.</strong> A 0-point assignment scored 5
@@ -1396,7 +1399,11 @@
 
      #assignmentFields is filled by src/assignments.js — the category list is per class and the
      dates are read off the document, so a specimen field here would be a second truth. The
-     paragraph under it is the app's standing refusal about dates, said where it bites. -->
+     paragraph under it says what the two dates do, which since WO-3.17 is two things rather than
+     one: a new assignment starts them both on today, and nothing ever moves them afterwards. The
+     second half is the standing refusal, said where it bites; the first half is the sentence that
+     had to change with the behaviour, because a dialog that contradicts its own printed promise is
+     worse than either behaviour on its own. -->
 <div class="modal-overlay hidden" id="assignmentModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
     <div class="modal-header">
@@ -1411,9 +1418,10 @@
       </p>
       <div class="assign-fields" id="assignmentFields"></div>
       <p class="class-hint">
-        <strong>Both dates are plain dates and neither fills itself in.</strong> Planbook has no
-        timetable, so there is no “next meeting” to default to — and a date here never marks
-        anybody or changes a grade on its own.
+        <strong>Both dates are plain dates, and a new assignment starts them on today.</strong>
+        Type over either one, or clear it and leave it blank. Nothing moves them after that:
+        Planbook has no timetable, so there is no “next meeting” to advance a due date to — and a
+        date here never marks anybody or changes a grade on its own.
       </p>
       <p class="class-hint">
         <strong>0 points is extra credit.</strong> Type it and it stays 0: a 0-point assignment

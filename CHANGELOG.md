@@ -38,6 +38,31 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.17 — the Assigned and Due dates.** A new assignment now starts with **both dates on today**,
+  which is the day you are almost always writing it down on. Type over either one, or clear it and
+  leave it blank — a date is still never required, and clearing one leaves it empty rather than
+  filling itself back in. **An assignment you already have is untouched**: the default is applied when
+  the assignment is created, not when the editor opens, so a blank *Due* from last month opens blank.
+  A duplicate still carries its original's dates across, because the copy dialog tells you in words
+  that the dates come across as they are, and a copy that re-dated itself would be doing the thing
+  this work order is fixing the hint for.
+
+  **Nothing schedule-shaped fills these fields, and nothing is going to.** Planbook has no timetable
+  and is not getting one, so there is no "next meeting" to advance a due date to — today is a fact
+  rather than a guess, which is why this could change while the reasoning under it did not. The hint
+  that used to promise *"Neither date fills itself in"* now says what the app actually does, and so
+  does the note inside the editor, which had the same sentence sitting an inch from the field.
+
+  **And on the iPad the two date fields no longer overlap.** They were drawing at about half the
+  height of *Name* and *Points*, running into each other, with *Due* clipped by the edge of the panel
+  — in both orientations, and not reproducible at a desk in either. iOS Safari paints a date field as
+  a native control at its own intrinsic size no matter what the layout asks for, so the box shrank and
+  the widget did not; every symptom falls out of that one fact, including the 44px touch target it was
+  already being given and ignoring. It is told not to now, in one line of CSS, with no width tuned
+  anywhere. Confirmed on the teaching iPad on 2026-08-10 — portrait, landscape, and again with both
+  dates cleared — and the native date picker still opens and commits. **The same squatness on
+  *Classes & terms* and *Days off & drops* is a separate fix and is still open.**
+
 - **WO-3.5 — the score entry grid.** Students down, assignments across, one column per assignment,
   reached from a third segment on the class strip beside Attendance and Assignments. **Type a score,
   press `Enter`, and the caret drops to the next student in the same assignment** — a class of
@@ -140,8 +165,11 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 - **WO-3.3 — a class has an assignment list.** Name, points, category, and assigned and due dates,
   created and edited in Class → Assignments: the spine the rest of the gradebook hangs off. Create,
   edit, reorder within a category, and delete — the delete warns first and counts the scores it takes
-  with it. **Neither date fills itself in**, because Planbook has no timetable and is not getting one,
-  and a date here still marks nobody and changes no grade.
+  with it. **Nothing schedule-shaped fills these dates in**, because Planbook has no timetable and is
+  not getting one, and a date here still marks nobody and changes no grade. *(As WO-3.3 shipped it,
+  both dates also arrived empty; WO-3.17 later made a new assignment start on today, which is a fact
+  rather than a guess at a schedule. The half of this sentence that changed is noted here so the two
+  entries do not contradict each other.)*
 
   **Duplicate to another class**, for teaching the same content to more than one section. The copy
   arrives with no scores on it, and it lands in the *target* class's own term and category — matched

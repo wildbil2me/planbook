@@ -964,7 +964,7 @@ dialog partly so that Tab still reaches the rest of the screen.
 
 ## WO-3.17 — the Assigned and Due fields
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.3 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** WO-3.3 · **Blocks** nothing
 **Closes roadmap** *(no box.)*
 
 **Booked 2026-08-10 from the owner's iPad sitting.** Two separate complaints about the same pair of
@@ -1043,14 +1043,17 @@ half, which is still true and still worth saying.
 the thing the no-timetable rule actually forbids.
 
 **Acceptance**
-- [ ] A newly created assignment opens with both dates on today's date, formatted as the field expects.
-- [ ] Clearing either date and committing stores it empty, and reopening shows it empty.
-- [ ] Editing an existing assignment with a blank date shows blank, not today.
-- [ ] The hint text no longer says the dates do not fill themselves in, and still says why there is no
+- [x] A newly created assignment opens with both dates on today's date, formatted as the field expects.
+- [x] Clearing either date and committing stores it empty, and reopening shows it empty.
+- [x] Editing an existing assignment with a blank date shows blank, not today.
+- [x] The hint text no longer says the dates do not fill themselves in, and still says why there is no
       next-meeting guess.
-- [ ] Both fields measure ≥44px under the coarse pointer and neither exceeds the panel width at the
+- [x] Both fields measure ≥44px under the coarse pointer and neither exceeds the panel width at the
       narrowest supported width.
-- [ ] 👤 On the iPad, portrait and landscape: both fields fully visible, no overlap, nothing off screen.
+- [x] 👤 On the iPad, portrait and landscape: both fields fully visible, no overlap, nothing off screen.
+      **Confirmed on the hardware by the owner, 2026-08-10**, in both orientations and with both dates
+      cleared — the state the original screenshots were taken in. The native date picker still opens
+      and commits under `appearance: none`, which was the one thing the reset could have taken with it.
 
 ## WO-3.18 — verification submitted 🔒
 

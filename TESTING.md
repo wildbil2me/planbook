@@ -2492,6 +2492,90 @@ control is really about is that work order's.*
 
 ---
 
+### WO-3.17 — The Assigned and Due fields
+
+- [x] A newly created assignment opens with **both dates on today**, in the document and in the two
+      fields, in the `YYYY-MM-DD` an `<input type="date">` wants. Today is derived in Node off the
+      same machine clock and compared, rather than read back out of the field it was written from:
+      two runtimes, one clock, one answer, and a check that asked the app what day it was would agree
+      with a build that wrote UTC's tomorrow into an October evening.
+- [x] **Clearing either date stores it empty and leaves the rebuilt field empty.** Driven on the real
+      `change` the iPad picker's Clear fires — which is also the event that throws the input away and
+      builds a fresh one — so what is asserted is the *rebuilt* field, not just the document.
+- [x] And **reopening that assignment shows both dates still empty** rather than filling them in
+      again. The editor is filled from the document every time it opens, so this is the line that
+      catches a default applied on OPEN rather than on creation.
+- [x] **Editing an existing assignment with a blank date shows blank, not today.** The fixture is
+      planted through the store rather than clicked into being, and deliberately so: after this work
+      order there is no control that makes one, and the shape comes from a restore, a hand edit, or a
+      build older than this. Asked *first*, before this block has created anything.
+- [x] **The hint no longer says the dates do not fill themselves in, and still says why there is no
+      next-meeting guess.** Asserted on **two** surfaces — the standing hint under the list and the
+      note inside the editor — because the bold sentence had been copied into the dialog as well, and
+      the work order names only the first of them.
+- [x] **Both fields measure ≥44px under a coarse pointer and neither exceeds the panel width at
+      390px**, the narrowest supported width: 159.25 × 44 each, inside a panel capped at 370.5px,
+      spanning 96.75–256 and 268–427.25 with the row's 12px gap intact and neither field squeezed
+      narrower than what it draws. **Measured with both fields EMPTY**, which after part two is a
+      state a teacher reaches only by clearing a date — the block creates an assignment and clears
+      both dates to get there, and the emptiness is asserted inside the same check as the geometry.
+- [x] 👤 On the iPad, portrait and landscape: both fields fully visible, no overlap, nothing off
+      screen. **Passed on real hardware, owner, 2026-08-10** — portrait and landscape, and again with
+      both dates cleared, which after part two is the only way back to the state the original
+      screenshots were taken in. **The native date picker still opens and commits** with
+      `appearance: none` applied; that was the one way this fix could have cost more than it bought.
+      *(Nothing in the desk half touches this line. The mechanism is iOS Safari painting
+      `<input type="date">` as a native control at its own intrinsic size while the flex layout
+      shrinks the element's box; headless Chromium honours the box already, so it could demonstrate
+      neither the defect nor the fix. What the desk could witness is that the `appearance: none`
+      reset is live on both fields as a **computed style** — the declaration reaches the right
+      element — and that is a check of its own so the one line the fix rests on cannot be tidied
+      away silently.)*
+
+*The desk half is `verify-shell.mjs`, **563 of 563** with zero skips and zero failures, 9 checks
+added in one new section and one existing check **re-pointed**. Three things about it are worth
+knowing.*
+
+***One WO-3.3 check asserted the behaviour this work order overrules, and it was re-pointed rather
+than deleted.*** *It read "no date field auto-populates: a new assignment arrives with both dates
+empty". The half that changed is the emptiness; the half that did not is that nothing
+**schedule-shaped** fills these fields, which is what the no-timetable rule actually forbids. It now
+asserts both dates arrive on today and nothing else does.*
+
+***The block runs at two widths, and an emulator artifact is why.*** *Written as a single 390px pass,
+two checks failed reporting the values of a dialog that had never opened — the click on a row's Edit
+button landed on nothing. At 390 the page reports `documentElement.clientWidth` 390 and
+`window.innerWidth` 524 while `95vw` resolves to 370.5px: the layout viewport is 390 and the visual
+one is 524, so `getBoundingClientRect` (layout coordinates) and `Input.dispatchMouseEvent` (visual
+ones) disagree and a right-hand control is missed by about a third of the screen. Dropping the device
+scale factor from 3 to 2 did not fix it. So everything that clicks runs at 1024×768 and only the
+geometry runs at 390, and a check now asserts the two viewport widths are equal before anything is
+clicked. **It read exactly like an app defect** — a dialog that would not open — which is what makes
+it worth writing down.*
+
+***Nothing here is the app-wide date-field squatness.*** *The owner reports the date fields on
+Classes & terms and on Days off & drops are equally short and take their own `min-height: 44px` no
+better. That is one shared failure across three shipped screens, it is booked separately, and
+`.term-date` was deliberately left untouched — copying this fix onto it would ship an untested change
+to two other dialogs under a work order about this one.*
+
+*Four mutations, all reverted, over three runs — the last three were applied together, since each
+turns a different check red and none of them can mask another:*
+
+| Mutation | Result |
+|---|---|
+| the default applied on **open** instead of on creation — `dateField()` falls back to `todayISO()` for a blank value | **4 red**: the blank-assignment line, the cleared-field line, the reopen line, and the 390px geometry check — that last one because it asserts the values are empty in the same breath as the boxes, so a build that stopped clearing cannot turn it into a measurement of two filled fields |
+| the creation-time default removed — `assigned: '', due: ''` in `createAssignment()` | **2 red**: this section's today check and the re-pointed WO-3.3 one, each from its own end |
+| `-webkit-appearance: none; appearance: none` removed from `.assign-field-date` | **1 red**, computed style reading `auto` on both fields. Nothing else moved, which is the honest limit: on this engine the reset changes no measurement |
+| the editor's own note reverted to *"neither fills itself in"*, with the list hint left correct | **1 red** — the prose check, on the second surface alone. The work order names only the first one, so this is the clause that would otherwise have been decorative |
+
+*`wo-sweep.mjs` is **16 checks, 15 passed, 0 failed, 1 to review**, and the REVIEW is the standing
+sensitive-field-name sweep, unchanged by this work order. `sw.js`'s `CACHE` is bumped to
+`planbook-shell-v41` in the same pass, because `index.html`, `src/assignments.js` and
+`src/assignments.css` are all in `SHELL`.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

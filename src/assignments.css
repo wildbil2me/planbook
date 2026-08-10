@@ -226,6 +226,35 @@
 .assign-field-input:focus, .assign-field-select:focus, .assign-field-date:focus {
   border-color: #5b6fcc;
 }
+/* THE TWO DATE FIELDS ARE THE ONE CONTROL IN THIS DIALOG THAT WEBKIT DRAWS ITSELF, and on the iPad
+   that is not a cosmetic difference. Diagnosed on the owner's hardware 2026-08-10 (WO-3.17), in both
+   orientations, with the fields empty: the pair OVERLAPPED instead of sitting in the row's 12px
+   coarse gap, `Due` was clipped by the panel edge, and both drew at about half the height of `Name`
+   and `Points` despite sharing their rule above and the 44px floor below.
+
+   ONE CAUSE, THREE SYMPTOMS. iOS Safari paints `<input type="date">` as a NATIVE control at its own
+   intrinsic size, while the flex layout shrinks the element's BOX — `min-width: 0` on `.assign-field`
+   is working, and that is exactly the trouble: layout and paint disagree, so the widget draws across
+   the gap, past the panel edge, and at whatever height it pleases with the `min-height` below
+   ignored. Every symptom falls out of that one fact.
+
+   WHY HERE AND NOT ON THE OTHER TWO DATE SCREENS. `.term-date` (src/shell.css), worn by the term
+   editor and the days-off form, sets no width at all and sits in a `flex-wrap: wrap` row of
+   content-sized items — the widget's intrinsic width IS its layout width there, so nothing is ever
+   forced narrower than it draws. This is the only date input in the app given `width: 100%`, inside
+   `flex: 1 1 140px`, in a 480px panel that shrinks the pair to about 210px each and never wraps.
+
+   SO THE FIX IS THE RESET AND NOT A NUMBER, and that order is the point rather than a preference: a
+   width tuned until it looks right at a laptop desk is how this comes back on the next device. One
+   line tells WebKit to stop drawing the control natively, and the box the teacher sees becomes the
+   box this stylesheet sized. It is the first `appearance` reset in this codebase — there was none
+   anywhere before it, which is why nothing had ever told WebKit to stop.
+
+   NOT THE SQUATNESS FIX. The date fields on *Classes & terms* and *Days off & drops* are equally
+   short on the device and take their own `min-height: 44px` no better; that is one app-wide failure
+   across three screens, it is booked separately, and copying this line onto `.term-date` here would
+   ship an untested change to two other dialogs under a work order about this one. */
+.assign-field-date { -webkit-appearance: none; appearance: none; }
 .assign-field-note { font-size: 11px; color: #8a9bb0; line-height: 1.5; }
 
 /* ── DUPLICATING ── */
@@ -266,6 +295,10 @@
   .assign-field-row { gap: 12px; }
   .assign-field-label { font-size: 12px; }
   .assign-field-note { font-size: 12px; }
+  /* The two date fields only ever TAKE this floor because of the `appearance` reset above: a
+     natively drawn WebKit date widget paints at its own height and walks straight past a
+     `min-height`, which is what the owner photographed on 2026-08-10 (WO-3.17). The declaration was
+     here the whole time; the reset is what makes it reach the glass. */
   .assign-field-input, .assign-field-date { min-height: 44px; font-size: 14px; padding: 0 10px; }
   /* A <select> keeps its vertical padding: iPadOS draws the control itself and a zeroed padding
      leaves the text clamped to the top of a 44px box. */
