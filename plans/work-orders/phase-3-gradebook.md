@@ -546,39 +546,54 @@ order's value.
 
 ---
 
-## WO-3.10 — OAuth verification paperwork 🔒
+## WO-3.10 — the OAuth client exists and asks for one scope
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing technical
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — no domain, no name, no
+policy · **Blocks** Phase 7 can be built and run once this exists
 **Closes roadmap** Phase 3 → *(no box. The roadmap's **Parallel, non-code** line at the end of Phase
 3 is a paragraph, not a checkbox, so there has never been anything here to tick — the quotation
 marks came off on 2026-08-08, WO-2.15, because the sweep was reading it as a fragment that matched
 nothing. The box this work order's outcome eventually closes is Phase 7's **Verification
 complete.**, and WO-7.3 owns it — a box is closed by one work order, never two.)*
 
-**Why it exists.** Phase 7 is gated on Google OAuth verification, which is **calendar-bound rather
-than work-bound**. Starting it during Phase 3 is the difference between sync landing in November and
-sync landing whenever the paperwork happens to clear. This is not an engineering task and it does
-not resolve itself. *(Roll Call! sat at 0.9.0-beta with every engineering blocker closed, held up by
-exactly this class of non-engineering task.)*
+**Split on 2026-08-10, and the split is the point.** This was one M-sized work order carrying
+everything from "create a Cloud project" to "submit for verification", and **it could not be started
+at all**: its own deliverable list required a verified domain, which requires the hosting and naming
+decision, which sat in WO-8.6 in Phase 8. So the one item on the board paced by an outside party was
+also the one nobody could pick up. It is now three:
+
+| | | |
+|---|---|---|
+| **WO-3.10** *(this one)* | the client and the consent screen | startable today, needs nothing |
+| **WO-8.7** | the name and the host, decided | the real critical path |
+| **WO-3.18** | policy, video, submission | needs the domain WO-8.7 settles |
+
+**Why it exists, and the thing that was hiding inside the old shape.** Verification gates **public
+launch, not development.** `docs/sync.md` says sync stays behind a flag until it is verified and the
+local-first app ships without it — but an OAuth client in **Testing** mode, with the owner as a test
+user, runs `drive.file` today. So the whole of Phase 7 — the token flow, `rev`/`baseRev` ordering,
+the conflict copy — **can be built, run and used on the owner's own two devices months before any
+paperwork clears.** The unverified-app screen is a click-through for one person who knows what it is,
+and it is intolerable only in front of a stranger. That is what this hour in a console buys, and it
+is why it is not paperwork.
 
 **Deliverables**
 - A Google Cloud project and one OAuth client, owned by us. Teachers deploy nothing.
 - Consent screen configured requesting **`drive.file` and nothing else**.
-- A verified domain, which requires the hosting decision to be made — overlaps WO-8.6.
-- A published privacy policy at that domain, stating plainly: no vendor server ever receives student
-  data, no account is required, and Drive holds only files this app created.
-- A demo video showing the scope in use.
-- Verification submitted, with the submission date and reference recorded here.
+- Publishing status left at **Testing**, with the owner added as a test user, and the client id
+  written down where Phase 7 can read it.
 
 **Acceptance**
-- [ ] The consent screen shows exactly one scope and no "Google hasn't verified this app" warning.
-- [ ] The privacy policy is live at the verified domain.
-- [ ] The submission date is written into this work order. *(Fill in when submitted, so the wait is
-      measurable rather than remembered.)*
+- [ ] The consent screen lists exactly one scope, and the scope string is `drive.file`.
+- [ ] A sign-in completes on the owner's own account and the app receives a token — driven, not
+      assumed. The unverified-app screen is expected here and is not a failure.
+- [ ] The client id is recorded where WO-7.1 will look for it.
 
 **Traps** — Adding `spreadsheets` or a mail scope re-opens verification and puts the warning back in
 front of a teacher. `drive.file` is a sensitive scope, not a restricted one, so there is no CASA
-security assessment — days, not months, if nothing is added later.
+security assessment — days, not months, if nothing is added later. **And Testing mode is not a
+destination:** it works for the owner and for up to a hundred test users, and it is the thing WO-3.18
+replaces before a stranger ever sees the consent screen.
 
 ---
 
@@ -996,3 +1011,46 @@ the thing the no-timetable rule actually forbids.
 - [ ] Both fields measure ≥44px under the coarse pointer and neither exceeds the panel width at the
       narrowest supported width.
 - [ ] 👤 On the iPad, portrait and landscape: both fields fully visible, no overlap, nothing off screen.
+
+## WO-3.18 — verification submitted 🔒
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7 — the client to
+verify and the domain to verify it at · **Blocks** a stranger seeing a clean consent screen
+**Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
+one work order, never two.)*
+
+**Split out of WO-3.10 on 2026-08-10**, which is where the full reasoning sits. This is the half that
+**cannot start until there is a domain**, and it is booked separately so that the half which can start
+is not held behind it.
+
+**Why it exists.** `drive.file` is a *sensitive* scope, so the client needs Google's review before a
+teacher who is not the owner ever signs in. Until it clears, the consent screen wears **"Google hasn't
+verified this app"** — the exact screen this project's whole architecture exists to avoid. `CLAUDE.md`
+rejects the Apps Script design specifically because that warning "can never be cleared" there; shipping
+an unverified client to other teachers would reproduce the failure by another route.
+
+**It is calendar-bound rather than work-bound**, which is the entire reason it is scheduled early
+rather than sized large. Days to weeks in someone else's queue, and no amount of effort compresses it.
+*(Roll Call! sat at 0.9.0-beta with every engineering blocker closed, held up by exactly this class of
+task.)*
+
+**Deliverables**
+- **A published privacy policy at the verified domain**, stating plainly: no vendor server ever
+  receives student data, no account is required, and Drive holds only files this app created.
+- **A demo video** showing the scope in use.
+- **The domain verified** in the Cloud console against the host WO-8.7 settles.
+- **Submission**, with the date and reference recorded in this work order.
+- **Publishing status moved off Testing** once it clears.
+
+**The overlap worth planning for.** The privacy policy and `docs/FERPA.md` (WO-8.5) say overlapping
+things to different readers — one is a legal artifact at a URL Google will read, the other is the
+document a principal or district IT reads. **Write them together or write them twice.** WO-8.5 is
+scheduled in Phase 8 and this is not, so whoever reaches this first should expect to draft both.
+
+**Acceptance**
+- [ ] The privacy policy is live at the verified domain and says the three things above in plain words.
+- [ ] The consent screen shows exactly one scope **and no "Google hasn't verified this app" warning**,
+      checked on an account that is not a test user — which is the only account that can tell.
+- [ ] The submission date is written into this work order. *(Fill it in when submitted, so the wait is
+      measurable rather than remembered.)*
+- [ ] 👤 A teacher who is not the owner completes sign-in and sees nothing that frightens them.

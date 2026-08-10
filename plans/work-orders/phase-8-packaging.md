@@ -136,31 +136,79 @@ stating well.
 
 ---
 
-## WO-8.6 — Onboarding, name, and distribution
+## WO-8.6 — Onboarding
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5
-**Closes roadmap** Phase 8 → "Onboarding: install → marking attendance with no documentation" and
-"Name and distribution channel decided."
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5, WO-8.7
+**Closes roadmap** Phase 8 → "Onboarding: install → marking attendance with no documentation."
+
+**Narrowed on 2026-08-10.** This carried the name and the distribution channel until then, and its own
+note said why that was wrong: *"If sync is wanted before 1.0, the naming decision is on Phase 3's
+critical path, not Phase 8's."* It was right, and the file went on holding the decision in Phase 8
+anyway. **Both decisions moved to WO-8.7**, which is scheduled early. What is left here is a build,
+and it belongs where it sits.
 
 **Why it exists.** *Roll Call! sat at 0.9.0-beta with every engineering blocker closed, held up by
 exactly this. It isn't an engineering task and it doesn't resolve itself.* Naming it as a work order
 with acceptance criteria is the only defense.
-
-Note the coupling: WO-3.10 needs a verified domain, which needs the distribution decision. If sync
-is wanted before 1.0, **the naming decision is on Phase 3's critical path**, not Phase 8's.
 
 **Deliverables**
 - Onboarding path: install → create a class → paste a roster → mark attendance, with no
   documentation and no warning screen.
 - A first-run flow that gets a teacher to their first attendance mark, following Roll Call!'s
   setup-flow skeleton.
-- **The name.** Decided, not shortlisted.
-- **The distribution channel.** Decided: where it's hosted, how a teacher finds it, what the URL is.
 
 **Acceptance**
 - [ ] A teacher who has never seen the app installs it and marks attendance for a real class without
       asking a question. Test on an actual person, not a thought experiment.
 - [ ] No step in that path requires reading documentation.
-- [ ] The name is written down here and used consistently in the manifest, README, and consent
-      screen.
-- [ ] The URL exists, resolves, and matches the verified domain from WO-3.10.
+- [ ] The name WO-8.7 settled is used consistently in the manifest, the README and the consent screen
+      — one name, checked in all three rather than assumed from one.
+
+---
+
+## WO-8.7 — the name and the host, decided
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing but a decision
+**Blocks** WO-3.18 — there is no domain to verify until this is answered
+**Closes roadmap** Phase 8 → "Name and distribution channel decided."
+
+**Split out of WO-8.6 on 2026-08-10**, because it is the only part of it that blocks anything, and it
+was blocking from five phases away. WO-3.18 cannot start without a domain; a domain cannot exist
+without a host and a name. **This is the critical path for sync ever reaching another teacher**, and
+until 2026-08-10 it was an unnumbered bullet inside a Phase 8 work order that depended on a Phase 8
+work order.
+
+**Why it is an S and still hard.** Nothing here takes a day to *do* — a host is chosen in an hour and
+a domain is bought in ten minutes. It is hard because it is irreversible in the way names are: the
+name goes in the manifest, the README, the consent screen a teacher reads before trusting the app, and
+the URL she types. **Changing it later means re-verifying with Google**, because the verified domain is
+part of what was verified. Decide it once, deliberately, rather than defaulting into it.
+
+**What the host has to be, and it is a short list.** The app is static files and a service worker.
+- **HTTPS**, non-negotiable — a service worker will not register without it, and no service worker
+  means no offline and no install, which is the eviction protection the whole data-safety argument
+  rests on.
+- **A custom domain that can be verified** in the Google Cloud console.
+- **Nothing else.** No Node, no runtime, no database. Anything more is a backend by another name, and
+  `CLAUDE.md` rules on that: it "turns us into a FERPA data processor with breach liability."
+
+**The FERPA property that makes this decision cheap, and that must not be given away.** A static host
+serves the app and **never receives student data** — grades, rosters and accommodations live in
+IndexedDB in the teacher's own browser, and there is no endpoint to send them to. So the hosting
+choice carries no student-data exposure and can be made on price and reliability alone. **That is true
+only while it stays static.** The moment anything here grows a server-side component, the choice stops
+being neutral and the position that sells this app to a principal is gone.
+
+**Deliverables**
+- **The name.** Decided, not shortlisted, and written into this work order.
+- **The host.** Decided, and why — price, reliability, custom domain support.
+- **The domain**, registered and resolving.
+- **The distribution story in a sentence**: how a teacher finds it and what she types.
+
+**Acceptance**
+- [ ] The name is written here, and it is one name rather than a preference between two.
+- [ ] The URL resolves over HTTPS and serves the app, with the service worker registering — checked
+      in a browser, not assumed from the host's marketing.
+- [ ] The domain is verified in the Cloud console, which is what WO-3.18 consumes.
+- [ ] Nothing in the deployment runs server-side code. Stated as a checked fact, because this is the
+      line the architecture cannot cross without a decision nobody has made.

@@ -179,7 +179,7 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9, WO-3.10
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9
 **Target** ~2026-09-15, before the first grades are entered for real
 
 *(That line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09. It was rewritten for two reasons, both
@@ -188,6 +188,16 @@ found while writing the Ship 2 table. **The ellipsis was not a range to the tool
 was therefore gating nothing. **And "Phase 3" is not a token at all**, so ten work orders this gate
 genuinely waits on were invisible to it; they are written out. WO-2.7 came off the line the same day,
 deferred — see its work order.)*
+
+***WO-3.10 came off this line on 2026-08-10, and it is the correction that matters most of the three.***
+*It was the OAuth verification paperwork, and the tooling reads `Depends on` as **must be ✅ DONE** —
+so this gate could not pass until Google's review queue cleared. **Ship 2 is first grades and contains
+no sync.** The intent was always "start the paperwork during Phase 3", which is a scheduling statement
+and was written in the one field that turns it into a blocker. Worse, it blocked on something that
+could not be started: WO-3.10 required a verified domain, which required a naming decision sitting in
+Phase 8. Left alone, a gate named for grade arithmetic would have slipped on a queue nobody here
+controls, for a feature it does not ship. The paperwork's real deadline is Phase 7, and WO-7.3 owns the
+box it closes.*
 
 **Why it exists.** Grade math wrong in September is discovered in November, by a guardian. The 1.0
 criteria demand grade math "verified against hand-computed cases" — this is where that happens, on
