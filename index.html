@@ -140,6 +140,12 @@
        work order ships first, and this is it. src/scores.css and src/detail.css wear those classes
        and must never restyle them; two stylesheets never style one class. -->
   <link rel="stylesheet" href="src/assignments.css">
+  <!-- The score grid's own sheet (WO-3.5), fourth instance of the same convention. It WEARS
+       `.screen-nav*` and `.cat-chip*` from the sheet above and restyles neither; what it does add
+       is `.grade-none`, the other half of § SHARED, which src/assignments.css deliberately left
+       behind because nothing in that build showed a grade and so nothing had anywhere to not-show
+       one. src/detail.css will wear it from here in turn. -->
+  <link rel="stylesheet" href="src/scores.css">
 </head>
 <body>
 
@@ -808,6 +814,170 @@
         adds 5 to what a student has earned in its category and nothing to what was possible, so it
         lifts the grade instead of diluting it. There is no separate extra-credit switch and there
         is not going to be one.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!--
+  THE SCORE ENTRY GRID (WO-3.5) — the third screen of an open class, and the second-most-frequent
+  action in the app. Students down, assignments across, one column per assignment.
+
+  IT IS A VIEW AND NOT A MODAL, AND HERE THAT IS AN ACCEPTANCE LINE RATHER THAN A PREFERENCE. A modal
+  closes on Escape, which is the key a teacher's hand is nearest while typing a column of twenty-five
+  scores; a focus trap wants Tab, which in a grid means the next assignment; and `.modal-panel` is
+  480px where this needs the full 1300px of `.main`. So it is here, in <main>, as a sibling of
+  #homeView, #classView and #assignmentsView toggled by `.hidden` — and there is deliberately nothing
+  on this screen that closes, because leaving it is navigation rather than a decision. The record is
+  plans/gradebook-surfaces.md § "The score grid is the one that cannot be a modal", and it is settled.
+
+  THERE IS NO SUBMIT BUTTON IN HERE, AND THERE MUST NEVER BE ONE — the same rule the registry states
+  above, for the same reason: every keystroke writes as it is made, and a screen that loses a column
+  of scores because the teacher never reached the bottom of it is a screen she stops trusting.
+
+  THE HEAD, THE BODY AND THE SUMMARY LINE ARE EMPTY IN THE MARKUP, like every other list in this app,
+  because they are drawn from the open document by src/scores.js. What IS markup is what does not
+  change with the document: the title row, the switcher, the toolbar, the flag bar and the key legend.
+  A renderer that rebuilt the flag bar would take a button out from under a thumb mid-tap.
+
+  THE FLAG BAR IS THE TOUCH PATH, AND IT IS NOT BEHIND THE "⌨ Keys" BUTTON. A score cell asks iPadOS
+  for a decimal keypad, and a decimal keypad has no letters on it — so L, M and X cannot be typed on
+  the device this screen is measured on, and four buttons are the only way to mark a score missing
+  there. They act on the cell the teacher is in and hand focus straight back to it, so the next thing
+  she does is type the next score. The KEY LEGEND behind ⌨ Keys is a different thing: it is what a
+  laptop teacher reads once in September, and it is closed to begin with.
+-->
+<div id="scoresView" class="hidden">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2 id="scoresClassName"></h2>
+          <p id="scoresHeadline"></p>
+        </div>
+        <!-- The way back to the class grid, in the title row exactly as the attendance panel has it,
+             and NOT in the toolbar below: that toolbar goes away with the grid when there is nothing
+             to grade, and the way home must not go with it. Same `data-view-home` hook the "All
+             classes" tab in the header carries — one route, more doors. -->
+        <button class="class-action-btn" type="button" data-view-home>
+          <span aria-hidden="true">←</span> All classes
+        </button>
+      </div>
+
+      <!-- The same empty strip the attendance panel and the assignment list carry, filled by the
+           same module. src/screen-nav.js's Scores segment is enabled because #scoresView exists and
+           src/views.js knows the name — that file asks rather than storing an answer, so the next
+           screen enables its own tab the same way.
+
+           IT DID NOT, ON THE FIRST CUT OF THIS SCREEN, AND THIS COMMENT IS WHY. It said "nothing in
+           that file changed for it" against a hardcoded `pending` string that had never been
+           removed, so the view shipped with its only door greyed out. Corrected 2026-08-10 in the
+           same pass that made the claim true. Markup does not get to assert what another file
+           does; if it has to, open that file. -->
+
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
+    </div>
+
+    <div class="scores-body">
+      <!-- NO GRADE, AND WHY — up only when the weights do not total 100. The owner settled this on
+           2026-08-09: there is no grade at all until they add up, so this is not a caveat attached to
+           a number, it is the explanation standing where the number would have been. It names the
+           total, because "no grade" on its own is indistinguishable from a bug. src/scores.js writes
+           the sentence; the button is the door that fixes it.
+
+           `data-category-manage` with no value means "the open class" — src/shell.js falls back to
+           getSelectedClassId(), which is what lets this be static markup rather than an attribute
+           rewritten on every render. Same hook the class manager's row carries: one route, more
+           doors, exactly as `data-view-home` and `data-class-manage` each have several. -->
+      <div class="grade-none hidden" id="scoresNoGrade">
+        <span class="grade-none-text" id="scoresNoGradeText"></span>
+        <button class="class-action-btn" type="button" data-category-manage
+                aria-haspopup="dialog">Open Categories</button>
+      </div>
+
+      <!-- The class average, what is still blank, and what the weights come to. Drawn by
+           src/scores.js on every keystroke, which is the whole of "live". -->
+      <div class="scores-summary" id="scoresSummary"></div>
+
+      <div class="scores-actions" id="scoresActions">
+        <!-- The key legend, behind a button, exactly as the registry's is (WO-2.5) — and for the same
+             two halves of one reason: it has to be reachable by someone who does not already know the
+             keys, and it must not take a line of the screen from someone who does. It is a disclosure
+             rather than a preference, so nothing remembers it; src/scores.js says why.
+
+             There is deliberately no "Assignments →" door beside it, though the drawing has one: the
+             switcher two inches above already goes there, and a second control to the same screen on
+             the same panel is the same route twice. -->
+        <button class="class-action-btn scores-keys-btn" type="button" data-scores-keys
+                aria-expanded="false" aria-controls="scoresKeys"
+                title="The keys for entering scores without the mouse">
+          <span aria-hidden="true">⌨</span> Keys
+        </button>
+      </div>
+
+      <!-- THE FLAG BAR. Four buttons, the four letters, acting on the cell the teacher is in — and
+           the whole touch path for a flag, because the decimal keypad a score cell asks for has no
+           letters on it. They carry the letters as well as the words so that a teacher who learns
+           them here can stop tapping them. -->
+      <div class="scores-flags" id="scoresFlags" role="group"
+           aria-label="Mark the score cell you are in">
+        <span class="scores-flags-label">Flag the cell you are in</span>
+        <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="late"
+                title="Turned it in late. The score still counts in full — late is a record, not a penalty.">Late (L)</button>
+        <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="missing"
+                title="Not turned in. Counts as zero out of the full points.">Missing (M)</button>
+        <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="excused"
+                title="Excused. Drops out of the grade entirely — neither earned nor possible.">Excused (X)</button>
+        <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="clear"
+                title="Clear the cell back to blank. Blank means ungraded and changes no grade.">Clear</button>
+      </div>
+
+      <!-- Closed to begin with, opened by the button above. The two keys at the top do what the
+           browser and src/shell.js already do; the four below are the same four the bar carries. -->
+      <div class="scores-keys hidden" id="scoresKeys">
+        <span class="scores-key"><kbd>↵</kbd> next student, down the column</span>
+        <span class="scores-key"><kbd>⇥</kbd> next assignment, across the row</span>
+        <span class="scores-key"><kbd>L</kbd> late</span>
+        <span class="scores-key"><kbd>M</kbd> missing</span>
+        <span class="scores-key"><kbd>X</kbd> excused</span>
+        <span class="scores-key"><kbd>⌫</kbd> clear an empty cell to blank</span>
+      </div>
+
+      <div class="scores-grid-wrap" id="scoresGridWrap">
+        <table class="scores-grid">
+          <caption class="sr-only" id="scoresCaption"></caption>
+          <thead id="scoresHead"></thead>
+          <tbody id="scoresBody"></tbody>
+        </table>
+      </div>
+      <p class="scores-empty hidden" id="scoresEmpty"></p>
+
+      <p class="scores-hint">
+        One column at a time is the way this screen is meant to be used: type a score, press
+        <strong>Enter</strong>, and the caret drops to the next student in the same assignment — so a
+        class of twenty-five is twenty-five numbers and no mouse. It stops at the last name rather
+        than wrapping round to the first. <strong>Tab</strong> steps sideways to the next assignment,
+        and <strong>↑ ↓</strong> move within the column as well. Everything on this grid is
+        <strong id="scoresHintTerm"></strong>, and nothing else. Every keystroke saves as you make it;
+        there is nothing to submit, and <strong>Escape</strong> does nothing here because there is no
+        dialog to close.
+      </p>
+      <p class="scores-hint">
+        <strong>A blank cell is ungraded and changes no grade at all</strong> — it is not a zero.
+        Clearing a score back to blank takes it out of the book entirely. <strong>Missing</strong> is
+        the one that counts as zero, and it is only ever marked by you: nothing in Planbook decides it
+        from a due date. <strong>Excused</strong> drops the work out of the grade completely, and
+        <strong>late</strong> changes nothing about the arithmetic — it is a record you can see, not a
+        penalty. Each of the three shows in the cell, in the fill and in a corner letter, because a
+        score that silently isn't what you typed is the worst thing a gradebook can do.
+      </p>
+      <p class="scores-hint">
+        <strong>The grade beside each name is live</strong>, and it is the weighted average of this
+        class's categories with the empty ones' weight spread across the ones that have work. It can
+        go over 100%: an assignment worth 0 points is how extra credit works here, and nothing caps
+        what a student earned. <strong>Until the weights total 100% there is no grade at all</strong>
+        — not a provisional one — and the banner above says what they come to. Nothing is blocked
+        while they are wrong: keep entering scores, and the grades appear the moment the weights do.
       </p>
     </div>
   </div>

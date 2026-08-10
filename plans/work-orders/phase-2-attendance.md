@@ -1712,3 +1712,78 @@ that prints on every clean run is noise a verifier learns to scroll past. If the
 the two counts cannot be made equal, the check asserts the one it can count and the README names the
 other. **And do not update the count as part of this work order's own landing** without the check
 proving it: correcting the line by hand one more time is the ritual that has failed twice.
+
+---
+
+## WO-2.20 — the orchestrator must not report a spawn as a run
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `.claude/agents/` and
+the dispatch status-file convention both exist today · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18 and WO-2.19
+made.)*
+
+**Not a go-live blocker, and in no ship.** Added 2026-08-10, out of WO-3.5's dispatch. It is at the
+top of the running order anyway, ahead of WO-2.19, because it is the one thing on the board that
+makes the *next* dispatch safer, and the next dispatch is imminent.
+
+**Why it exists — the incident, in full, because the fix is small and the reasoning is the valuable
+part.** On 2026-08-10 the `work-order-orchestrator` was dispatched on WO-3.5. Sixty seconds in it
+returned a complete, confident report: the route with its reasoning, the claim written, the brief
+written, and *"the implementer is in the background at Opus. Expect 20 to 40 minutes."* Every word was
+true except the tense. It had **spawned** the implementer and returned; it had observed no work at all.
+
+The coordinator, reading a finished-shaped report against a status file frozen at the dispatch line,
+concluded the child had never launched — and re-dispatched. **It had launched. It was reading.** A
+`work-order-implementer` on an L-sized work order reads the brief, the design mockup, the surfaces
+document and six or eight source files before it writes anything: on WO-3.5 that was **21 minutes
+between spawn and first write.** For those 21 minutes the status file does not grow, no result file
+appears, and `git status` is unchanged — the three signals a watcher naturally reaches for, all of
+them blind, all of them blind *longest on the largest work orders*, which are exactly the ones a
+duplicate hurts most.
+
+**Two implementers then built WO-3.5 concurrently for 19 minutes.** The tree survived — both lifted
+`design/mockups/scores.html` and `plans/gradebook-surfaces.md` rather than inventing, so the halves
+fit, `src/shell.js` imported exactly the six functions `src/scores.js` exported, and the ids matched.
+That is luck resting on a shared brief, not a property of the system. It still cost both defects the
+verifier found: each was a file asserting something about a file the *other* implementer owned, which
+neither had opened.
+
+**The root cause is one sentence: a report written at spawn time is indistinguishable from a report
+written at completion.** Everything downstream — the false stall, the duplicate, the two defects —
+follows from a reader being unable to tell those apart. Fix the ambiguity and the rest cannot happen.
+
+**Deliverables**
+- **`.claude/agents/work-order-orchestrator.md` does not emit its report until the implementer has
+  returned.** If it spawns in the background, it waits — and a long flat stretch in the status file is
+  explicitly *not* evidence of failure while it waits.
+- **The status line it writes at dispatch says what is actually true**: `spawned, awaiting` rather
+  than a duration prediction phrased as an observation. A predicted 20 to 40 minutes is fine as a
+  prediction and misleading as a report.
+- **The reading phase is written down where the next reader of that file will hit it** — that an
+  implementer's first write is not its start, that 20+ minutes of silence is normal on an L, and that
+  the mtime-shaped signals are blind for all of it.
+- **A rule against re-dispatching a work order that already carries a `🤖 CLAIMED` line**, in the
+  orchestrator's own instructions, whatever a status file appears to show. `--release` exists for a
+  claim that is genuinely dead and it is a deliberate, named act; a silent second spawn is not.
+- **The same reading applied to `work-order-verifier` and `work-order-implementer`** if either can
+  report before its own children return. Do not assume it cannot — check.
+
+**Out of scope** — a liveness or heartbeat mechanism, a progress protocol, anything that makes the
+agents observable. That is a real and larger piece of work and this one must not become it. **The
+cheap fix is to stop producing the ambiguous report**, not to build the instrument that would let a
+reader see through it.
+
+**Acceptance**
+- [ ] The orchestrator's definition, read start to finish by someone who has not seen this note,
+      cannot be followed in a way that reports before the implementer returns.
+- [ ] The dispatch-time status line says the child was spawned and is awaited, and predicts a
+      duration only in words that read as a prediction.
+- [ ] The reading phase and the blindness of the file-based signals are stated in the file, with the
+      21-minute measurement from WO-3.5 quoted as the evidence.
+- [ ] The definition forbids re-dispatching over a live `🤖 CLAIMED` line and names `--release` as the
+      only way a claim is cleared.
+- [ ] `work-order-verifier` and `work-order-implementer` are each read and either fixed the same way
+      or ruled unaffected in one sentence saying why.
+- [ ] The next real dispatch after this lands produces a report that arrives when the work does.
+      *(This is the only line that cannot be checked at the desk, and it is deliberately last: the
+      failure it names took a full dispatch to surface.)*

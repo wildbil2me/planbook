@@ -38,6 +38,49 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.5 — the score entry grid.** Students down, assignments across, one column per assignment,
+  reached from a third segment on the class strip beside Attendance and Assignments. **Type a score,
+  press `Enter`, and the caret drops to the next student in the same assignment** — a class of
+  twenty-five is twenty-five numbers and no mouse. At the bottom of a column it stops rather than
+  wrapping, holds the caret where it is, and says *"that is the last student. 25 of 25 entered"*,
+  because a key that does nothing and says nothing reads as a key that was not received.
+
+  **`L`, `M` and `X` mark late, missing and excused from the keyboard**, and each shows in the cell
+  two ways — the fill and a corner letter — because a score that silently is not what you typed is
+  the worst thing a gradebook can do. Blank still means ungraded and affects nothing; `missing` is
+  still the only flag that scores zero, and it is still marked by the teacher rather than inferred
+  from a date. **Clearing a cell deletes the score** rather than storing an empty one, so nothing is
+  left behind for a later reader to interpret.
+
+  **Every grade beside every name is live**, recomputed on the keystroke from WO-3.4's arithmetic —
+  including when an assignment moves to another category, which now moves every displayed grade in
+  the class rather than only the number underneath. **And there is no grade at all until the category
+  weights total 100%**, in either direction: the grades go the moment the weights leave 100 and come
+  back the moment they reach it, with a banner standing where the number would have been naming what
+  the weights actually come to. Nothing is blocked meanwhile — every score field stays live behind
+  the banner.
+
+  **`Escape` does nothing here, deliberately.** The grid is a screen rather than a dialog, which is
+  the whole reason it is one: `Escape` is the key nearest a hand typing a column of numbers, and on a
+  dialog it would throw the screen away mid-column. There is no `Escape` binding in the file at all,
+  which is what makes that true rather than merely intended.
+
+  **Verified on the teaching iPad on 2026-08-10**, in landscape, on real grades: the frozen name and
+  grade columns hold under momentum scroll without shearing, the flag fills read from the back of a
+  room under a projector, and the grid launches offline from the precache. Two things came back from
+  that sitting. iPadOS offers the full keyboard on its number pane rather than the compact decimal
+  keypad the drawing asked for — accepted, since the digits are under the thumb either way. And **the
+  school's SIS carries percentages to two decimal places where this screen shows one**, which turns
+  every re-keyed row into a rounding step done in the teacher's head; that is booked as WO-3.14 rather
+  than left as a surprise.
+
+  **A note for whoever adds the next screen.** The standing 44px touch-target sweep had been walking
+  past this one and reporting green: it skips anything computing to `display: none`, and every view
+  but the one on screen is `.hidden`. Roughly 250 score cells were never measured. The checks that
+  cover this grid open it through the real navigation segment first and assert the cells are there
+  before measuring — but **that fix is this screen's, by hand.** The next new view arrives with the
+  same hole until the sweep itself is generalised.
+
 - **WO-2.18 — the term-switch checks now cover all three surfaces a term change repaints, not two.**
   WO-2.17 made a term change repaint the screen it lands on, and the checks that came with it watched
   the class line and the row line. The open detail panel — the one a teacher opens *because* she wants

@@ -5867,14 +5867,21 @@ if (!classesBooted || !classSeam || !assignSeam) {
       stripOnClass.every((s) => s.inMain && !s.inHeader),
       'inMain ' + JSON.stringify(stripOnClass.map((s) => s.inMain))
         + ', inHeader ' + JSON.stringify(stripOnClass.map((s) => s.inHeader)));
-    /* Scores has no view yet (WO-3.5) and is drawn disabled rather than left out, so the strip does
-       not change shape under the teacher when it arrives. Attendance is the one she is standing on. */
-    check('Attendance is the active segment on a freshly opened class, and Scores is drawn but not yet reachable',
+    /* All three carry their hook and none is disabled since WO-3.5 landed #scoresView. This check
+       asserted the OPPOSITE of the third one until 2026-08-10 — "Scores is drawn but not yet
+       reachable" — and stayed green through a build that shipped the view with its only door greyed
+       out, because src/screen-nav.js still held a hardcoded `pending` string. That is the shape of a
+       check that outlives the state it describes: it went on measuring the build it was written
+       against. It is worded as a question about the SET now, so the day a fourth screen is drawn
+       ahead of its view the disabled one is named rather than assumed. */
+    check('Attendance is the active segment on a freshly opened class, and all three segments carry their hook',
       stripOnClass.every((s) => s.active[0] === true && s.current[0] === 'true')
-        && stripOnClass.every((s) => s.disabled[2] === true && s.hooks[2] === null)
-        && stripOnClass.every((s) => s.hooks[0] === 'class' && s.hooks[1] === 'assignments'),
+        && stripOnClass.every((s) => s.disabled.every((d) => d === false))
+        && stripOnClass.every((s) => s.hooks[0] === 'class' && s.hooks[1] === 'assignments'
+          && s.hooks[2] === 'scores'),
       'active ' + JSON.stringify(stripOnClass[0].active)
-        + ', disabled ' + JSON.stringify(stripOnClass[0].disabled));
+        + ', disabled ' + JSON.stringify(stripOnClass[0].disabled)
+        + ', hooks ' + JSON.stringify(stripOnClass[0].hooks));
 
     /*
       ACCEPTANCE LINE 5. One tap on the strip, and what arrives is a VIEW: a sibling of #homeView
@@ -12369,6 +12376,745 @@ console.log('\n--- byte-identical total objects (WO-2.13) ---');
       && JSON.stringify({excused:exact.excused,noMarks:exact.noMarks,withU:exact.withU,zero:exact.zero})
         === JSON.stringify(expected),
     JSON.stringify(exact));
+}
+
+/* ───────── the score entry grid (WO-3.5) ─────────
+ *
+ * Ten acceptance lines, nine of which a desk can answer and one of which cannot. The one that
+ * cannot is line 6 — "the grid is usable on an iPad in landscape" — and it stays a 👤 item in
+ * TESTING.md however green this block runs; what is measured here is the half a laptop can see, on
+ * an emulated coarse pointer, and none of it is the line.
+ *
+ * WHY THIS BLOCK OPENS THE VIEW BEFORE IT MEASURES ANYTHING, which is the whole reason it exists
+ * rather than a handful of lines bolted onto the sweeps above. The standing 44px sweep collects
+ * `button, input, ...` across the page and skips anything whose computed `display` is `none`;
+ * `.hidden` is `display: none !important` (src/shell.css), and every view but the one on screen is
+ * `.hidden`. So that sweep walked past ~250 score inputs and reported green — the same shape as the
+ * backup-nag escape, a green run over a fixture that cannot express the failure. Worse, until the
+ * correction round of 2026-08-10 nothing in this run COULD open the view: src/screen-nav.js still
+ * shipped the Scores segment disabled, so the grid had no door at all. A check that cannot fail is
+ * not a check, so the coarse pass below opens the grid through the real segment first and asserts it
+ * is drawn before it measures one box.
+ *
+ * THE FIXTURE IS docs/grade-math-cases.md CASE 1, DRIVEN THROUGH THE KEYBOARD. A class of 25 with
+ * Tests 50 / Quizzes 30 / Homework 20, its own four-band letter scale so that 87% is a B rather than
+ * the document default's B+, and case 1's three assignments — plus seven empty ones, which change no
+ * grade (an assignment with no cell for a student contributes 0/0) and are there so the grid is wider
+ * than the viewport and the two frozen columns have something to be frozen against. Every score below
+ * is typed as keystrokes AT THE PAGE, never assigned to `.value`: the claim is a keyboard path, and a
+ * harness that sets values and dispatches `input` would be asserting that src/shell.js's listener
+ * works, which is not what the acceptance line says.
+ *
+ * THE SCORES DIFFER PER ROW ON PURPOSE. A column of 25 identical numbers stores the same map whether
+ * the build wrote it against the drawn row order or against the roster order, and this class's roster
+ * is deliberately stored BACKWARDS from the order the grid sorts into. So the map is the claim: row i
+ * gets 60 + i, and the check reads the students off the drawn rows.
+ *
+ * THE FIXTURE COMES BACK OUT at the foot of the block — the class, its students, its work and its
+ * score columns — the way the assignments section takes its own down. Not a document snapshot, for a
+ * reason particular to this block: it reloads the page twice, and a snapshot parked on `window` does
+ * not survive a reload.
+ */
+console.log('\n--- the score entry grid (WO-3.5) ---');
+{
+  const scoreSeam = await evalJs("!!(window.planbook && window.planbook.scores"
+    + " && typeof window.planbook.scores.renderScores === 'function'"
+    + " && window.planbook.classes && window.planbook.gradeEngine && window.planbook.assignments)");
+
+  if (!scoreSeam) {
+    skip('the score grid: 25 down a column, Enter at the bottom, Esc mid-column, three flags, a '
+      + 'cleared key, case 1 to the digit, the category move, and the weights crossing 100 both ways',
+      'no window.planbook.scores seam on the page — it is kept deliberately so this file can read '
+      + 'what a keystroke wrote, so its absence is a defect and not a stage of the build');
+  } else {
+    /* Back to a laptop before anything is measured: the sections above leave the browser on an
+       emulated tablet, and eight of the checks below are about a keyboard. The coarse half of this
+       block turns touch on again for itself. */
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 700));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    await evalJs(INSTALL_WALKER);
+
+    /* One key, dispatched AT THE PAGE rather than at an element, which is most of the claim — the
+       same helper and the same reasoning as the WO-2.5 keyboard section above. A printable key needs
+       `keyDown` with `text` or `e.key` arrives as the raw code; Enter, Escape, the arrows and
+       Backspace take the `rawKeyDown` shape, which still reaches the editing pipeline. */
+    const sk = async (k, code, vk, text) => {
+      const ev = { key: k, code: code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk,
+        modifiers: 0 };
+      if (text) ev.text = text;
+      await send('Input.dispatchKeyEvent',
+        Object.assign({ type: text ? 'keyDown' : 'rawKeyDown' }, ev));
+      await send('Input.dispatchKeyEvent', Object.assign({ type: 'keyUp' }, ev));
+      await new Promise(r => setTimeout(r, 45));
+    };
+    const skEnter = () => sk('Enter', 'Enter', 13);
+    const skEsc = () => sk('Escape', 'Escape', 27);
+    const skBack = () => sk('Backspace', 'Backspace', 8);
+    const skUp = () => sk('ArrowUp', 'ArrowUp', 38);
+    const skLetter = (L) => sk(L, 'Key' + L, L.charCodeAt(0), L);
+    const skDigits = async (n) => {
+      for (const d of String(n).split('')) await sk(d, 'Digit' + d, d.charCodeAt(0), d);
+    };
+    /* One keystroke-group: the digits of a score, and the Enter that commits it and moves down. */
+    const skScore = async (n) => { await skDigits(n); await skEnter(); };
+
+    const A1 = 'wo35-a1', A2 = 'wo35-a2', A3 = 'wo35-a3', P1 = 'wo35-p1';
+    const cellSel = (a, s) => '#scoresBody [data-score-cell="' + a + '"][data-score-student="'
+      + s + '"]';
+    const focusCell = (a, s) => clickSel(cellSel(a, s));
+
+    /*
+      THE FIXTURE. Planted through the store rather than through the controls, and that is the one
+      place this block departs from the assignments section's rule of driving everything: 25 students,
+      three categories, ten assignments and a per-class letter scale is twenty minutes of clicking
+      that proves nothing this file has not proved elsewhere. Every SCORE — which is what this work
+      order is about — is typed.
+    */
+    const plant = await evalJs(`(function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var d = s.getDoc();
+      if (!d) return { ok:false, why:'no year document is open' };
+      var students = [], roster = [];
+      for (var i = 1; i <= 25; i++) {
+        var n = (i < 10 ? '0' : '') + i;
+        students.push({ id:'wo35-s' + n, first:'Score', last:'Row' + n });
+        roster.push('wo35-s' + n);
+      }
+      /* BACKWARDS. The grid sorts surname then first name (src/scores.js's gridOrder), so the drawn
+         order is Row01..Row25 and the stored roster is the exact reverse of it. A column typed down
+         the screen and written against the roster order would land twenty-five scores on the wrong
+         twenty-five students and look perfectly fine doing it. */
+      roster.reverse();
+      var work = [
+        { id:'wo35-a1', classId:'c_wo35', termId:'tm_wo35', categoryId:'wo35-tests',
+          name:'Unit test', points:100, assigned:'', due:'2026-09-18' },
+        { id:'wo35-a2', classId:'c_wo35', termId:'tm_wo35', categoryId:'wo35-quiz',
+          name:'Quiz one', points:20, assigned:'', due:'' },
+        { id:'wo35-a3', classId:'c_wo35', termId:'tm_wo35', categoryId:'wo35-home',
+          name:'HW one', points:10, assigned:'', due:'' }
+      ];
+      /* Seven with nothing in them. An assignment with no cell for a student contributes 0/0, so
+         these change no grade below — what they change is the WIDTH of the grid, which is what the
+         two frozen columns exist for and what a three-column fixture could not have tested. */
+      for (var j = 1; j <= 7; j++) {
+        work.push({ id:'wo35-p' + j, classId:'c_wo35', termId:'tm_wo35', categoryId:'wo35-tests',
+          name:'Filler ' + j, points:10, assigned:'', due:'' });
+      }
+      var was = c.getSelectedClassId();
+      s.update(function(doc){
+        doc.classes.push({ id:'c_wo35', name:'WO-3.5 Grid', archived:false,
+          terms:[{ id:'tm_wo35', label:'WO-3.5 Term', start:'', end:'' }],
+          categories:[{ id:'wo35-tests', name:'Tests', weight:50 },
+                      { id:'wo35-quiz', name:'Quizzes', weight:30 },
+                      { id:'wo35-home', name:'Homework', weight:20 }],
+          /* Its own bands, so 87 is a B rather than the document default's B+ — which is the letter
+             docs/grade-math-cases.md case 1 names, and the reason that file says "unless a case says
+             otherwise". */
+          letterScale:[{ letter:'A', min:90 }, { letter:'B', min:80 },
+                       { letter:'C', min:70 }, { letter:'F', min:0 }],
+          roster: roster });
+        students.forEach(function(st){ doc.students.push(st); });
+        work.forEach(function(a){ doc.assignments.push(a); });
+      });
+      /* Navigates and repaints the class bar, and deliberately paints no screen and no strip — which
+         is why the tab is then clicked for real: that is the route that runs src/shell.js's chain. */
+      c.selectClass('c_wo35');
+      return { ok:true, rows: roster.length, columns: work.length, was: was,
+        drawnFirst: 'wo35-s01', rosterFirst: roster[0] };
+    })()`);
+
+    if (!plant.ok) {
+      check('the WO-3.5 fixture is real: a class of 25 with case 1\'s three weighted categories',
+        false, plant.why);
+    } else {
+      await clickSel('#classTabBar [data-class-tab="c_wo35"]');
+      await new Promise(r => setTimeout(r, 250));
+
+      const READ = `(function(){
+        var view = document.getElementById('scoresView');
+        var body = document.getElementById('scoresBody');
+        var head = document.getElementById('scoresHead');
+        var rows = Array.prototype.slice.call(body.querySelectorAll('tr[data-score-row]'));
+        var banner = document.getElementById('scoresNoGrade');
+        var summary = document.getElementById('scoresSummary');
+        var strip = document.querySelector('#scoresView [data-screen-nav]');
+        var segs = strip ? Array.prototype.slice.call(strip.querySelectorAll('.screen-nav-btn')) : [];
+        return {
+          shown: !view.classList.contains('hidden'),
+          classShown: !document.getElementById('classView').classList.contains('hidden'),
+          /* A view lives in <main>. A dialog would not, and would carry the semantics beside it. */
+          inMain: !!view.closest('main'),
+          dialogBits: view.querySelectorAll('[role="dialog"], [aria-modal], .modal-overlay').length,
+          openModals: document.querySelectorAll('.modal-overlay:not(.hidden)').length,
+          headline: (document.getElementById('scoresHeadline')||{}).textContent,
+          students: rows.map(function(r){ return r.getAttribute('data-score-row'); }),
+          grades: rows.map(function(r){
+            var n = r.querySelector('.scores-grade-num');
+            return n ? n.textContent : (r.querySelector('.scores-grade-none') ? '—' : ''); }),
+          letters: rows.map(function(r){
+            var l = r.querySelector('.scores-grade-letter'); return l ? l.textContent : ''; }),
+          heads: Array.prototype.slice.call(head.querySelectorAll('th.scores-col')).map(function(th){
+            return { name: (th.querySelector('.scores-col-name')||{}).textContent,
+                     chip: ((th.querySelector('.cat-chip')||{}).textContent||'')
+                       .replace(/\\s+/g,' ').trim() }; }),
+          summary: (summary ? summary.textContent : '').replace(/\\s+/g,' ').trim(),
+          bannerUp: banner ? !banner.classList.contains('hidden') : null,
+          bannerText: ((document.getElementById('scoresNoGradeText')||{}).textContent||'')
+            .replace(/\\s+/g,' ').trim(),
+          /* The word the owner's 2026-08-09 rule forbids ON A FIGURE, asked of the three surfaces
+             that carry one and NOT of the whole view: the standing hint under the grid uses the word
+             in order to tell the teacher it is never used, and a search of the view would go red
+             about the sentence that states the rule. */
+          provisional: /provisional/i.test(body.textContent)
+            || /provisional/i.test(summary ? summary.textContent : '')
+            || /provisional/i.test(banner ? banner.textContent : ''),
+          segHooks: segs.map(function(b){ return b.getAttribute('data-class-screen'); }),
+          segDisabled: segs.map(function(b){ return b.disabled; })
+        }; })()`;
+
+      /* Flushed before every read, for tools/README.md trap 6: every save is debounced, so a read
+         taken a moment after a keystroke can be looking at the document from before it. */
+      const readDoc = () => evalJs(`(async function(){ await window.planbook.store.flush();
+        var d = window.planbook.store.getDoc();
+        var sc = d.scores || {};
+        /* Every cell in the WHOLE document that is a null with no flag — the shape acceptance line 4
+           says must never be written — and every cell that is a bare number rather than an object.
+           Asked of everything rather than of this fixture, so a second writer added later cannot pass
+           by being somewhere else. */
+        var nulls = [], bare = [];
+        Object.keys(sc).forEach(function(a){
+          Object.keys(sc[a]).forEach(function(s){
+            var cell = sc[a][s];
+            if (typeof cell !== 'object' || cell === null) { bare.push(a + '/' + s); return; }
+            if ((cell.v === null || cell.v === undefined) && !cell.flag) nulls.push(a + '/' + s); }); });
+        return { keys: Object.keys(sc), nulls: nulls, bare: bare,
+                 a1: sc['wo35-a1'] ? JSON.stringify(sc['wo35-a1']) : null,
+                 a1has: sc['wo35-a1'] ? Object.keys(sc['wo35-a1']) : [],
+                 all: JSON.stringify(sc),
+                 weights: JSON.stringify((d.classes.filter(function(c){
+                   return c.id === 'c_wo35'; })[0] || {}).categories || []) }; })()`);
+
+      const onClass = await evalJs(READ);
+      check('the WO-3.5 fixture is real: a class of 25 opens on Attendance, and its roster is stored in the reverse of the order the grid draws',
+        onClass.classShown && !onClass.shown && plant.rows === 25 && plant.columns === 10
+          && plant.rosterFirst === 'wo35-s25',
+        plant.rows + ' student(s), ' + plant.columns + ' assignment(s); the roster starts at '
+          + plant.rosterFirst + ' where the grid draws ' + plant.drawnFirst + ' first');
+
+      /*
+        THE DOOR, which is defect 1 of the 2026-08-10 correction round. The grid shipped with the
+        Scores segment disabled and carrying no `data-class-screen`, so nothing — not a teacher, not
+        this file — could reach the view at all; index.html asserted that src/screen-nav.js needed no
+        change for it, and that file had never been opened. One tap on the real segment is the claim.
+
+        AND THE PREFERENCE IS STILL `class`, which is src/views.js's REMEMBERED_AS and the owner's
+        rule that a class always reopens on Attendance. Asserted here rather than after a reload
+        because the write happens on the way IN — showView() collapses every class screen to `class`
+        as it stores it — which is the half a check made after a reload cannot tell from a read-side
+        fix that left `scores` sitting in localStorage.
+      */
+      /*
+        THE DOOR CHECK IS ALSO A GATE, and it is a gate because of what happened when this section
+        was first negative-tested: with the Scores segment disabled again, clickSel found nothing,
+        threw, and took the whole run down before it printed a summary. A missing fixture is a failed
+        check in this file and never a crash — the roster block says so in as many words — so the
+        hook is asked for before it is clicked, and everything below it is announced as SKIPPED
+        rather than quietly not run. A skip is not a pass.
+      */
+      const doorOk = await evalJs("!!document.querySelector("
+        + "'#classView [data-class-screen=\"scores\"]')");
+      if (!doorOk) {
+        check('the Scores segment is a live door: one tap lands on the grid, a view in <main> with no dialog anywhere in it, and the reload preference still says class',
+          false,
+          'the segment carries no data-class-screen hook — hooks '
+            + JSON.stringify(onClass.segHooks) + ', disabled '
+            + JSON.stringify(onClass.segDisabled)
+            + '. Drawn and greyed is the state WO-3.5 shipped in and the 2026-08-10 correction round removed.');
+        skip('the rest of WO-3.5 — 25 down a column, Enter at the bottom, Esc mid-column, the three flags, the cleared key, case 1 to the digit, the category move, the weights crossing 100 both ways, and the coarse-pointer sweep',
+          'the grid has no door, so nothing below it could be driven the way a teacher would reach it');
+      } else {
+        await clickSel('#classView [data-class-screen="scores"]');
+        await new Promise(r => setTimeout(r, 250));
+        const opened = await evalJs(READ);
+        const openView = await evalJs(
+          "JSON.parse(localStorage.getItem('planbook_openView') || 'null')");
+        check('the Scores segment is a live door: one tap lands on the grid, a view in <main> with no dialog anywhere in it, and the reload preference still says class',
+          opened.shown && !opened.classShown && opened.inMain
+            && opened.dialogBits === 0 && opened.openModals === 0
+            && opened.segHooks.join(',') === 'class,assignments,scores'
+            && opened.segDisabled.every((d) => d === false)
+            && openView === 'class',
+          'grid up = ' + opened.shown + ', in <main> = ' + opened.inMain + ', dialog bits = '
+            + opened.dialogBits + ', segment hooks = ' + JSON.stringify(opened.segHooks)
+            + ', disabled = ' + JSON.stringify(opened.segDisabled)
+            + ', openView preference = ' + JSON.stringify(openView));
+
+        /*
+          ACCEPTANCE LINE 1. Twenty-five scores down one column in twenty-five keystroke-groups, with no
+          mouse — and "no mouse" is COUNTED rather than asserted by the harness not having called
+          clickSel. A page-side listener installed after the arrival tap catches a build that needs a
+          click between rows, which is exactly the failure the line is about.
+        */
+        await focusCell(A1, 'wo35-s01');
+        await evalJs(`(function(){
+          window.__wo35mouse = 0;
+          window.__wo35count = function(){ window.__wo35mouse++; };
+          ['mousedown','mouseup','click'].forEach(function(t){
+            document.addEventListener(t, window.__wo35count, true); });
+          return 1; })()`);
+        for (let i = 1; i <= 25; i++) await skScore(60 + i);
+        await new Promise(r => setTimeout(r, 150));
+        const typed = await readDoc();
+        const afterColumn = await evalJs(READ);
+        const mouse = await evalJs('window.__wo35mouse');
+        const wantColumn = {};
+        afterColumn.students.forEach((id, i) => { wantColumn[id] = { v: 61 + i }; });
+        check('twenty-five scores go down one column in twenty-five keystroke-groups with no mouse, and land on the students in DRAWN row order rather than in roster order',
+          mouse === 0 && afterColumn.students.length === 25
+            && typed.a1 === JSON.stringify(wantColumn)
+            && afterColumn.students[0] === 'wo35-s01' && afterColumn.students[24] === 'wo35-s25',
+          'mouse events during the column = ' + mouse + '; drawn order ran '
+            + afterColumn.students[0] + ' → ' + afterColumn.students[24] + '; stored column = '
+            + String(typed.a1).slice(0, 96) + ' …');
+
+        /*
+          ACCEPTANCE LINE 2. The twenty-fifth Enter above was pressed at the bottom of the column, so
+          this reads what it did: the caret is still in the last cell, its value is selected so the next
+          thing typed overtypes rather than appends, and the live region says which student and how many
+          are in. A wrap would have put the teacher back at the top of a class she had just finished,
+          where the next number overwrites the first student's mark.
+        */
+        const bottom = await evalJs(`(function(){ var a = document.activeElement;
+          return { cell: a ? a.getAttribute('data-score-cell') : '',
+                   student: a ? a.getAttribute('data-score-student') : '',
+                   value: a ? a.value : '',
+                   selected: a ? (a.selectionEnd - a.selectionStart) : -1,
+                   said: (document.getElementById('srLive')||{}).textContent || '' }; })()`);
+        check('Enter at the bottom of a column keeps the caret where it is with the value selected for overtyping, and says which student and how many are in',
+          bottom.cell === A1 && bottom.student === 'wo35-s25' && bottom.value === '85'
+            && bottom.selected === 2 && /last student/.test(bottom.said)
+            && /25 of 25/.test(bottom.said),
+          JSON.stringify(bottom));
+
+        /*
+          ACCEPTANCE LINE 7, proved by pressing the key rather than by arguing the screen is a view.
+          Twice, two thirds of the way down, with a freshly typed digit in the field: nothing closes,
+          nothing navigates, the caret does not move, what was typed survives and no dialog appears.
+          There is no Escape binding in src/scores.js at all, which is what makes this true — so the
+          check is written to fail against a build that added one "helpfully".
+        */
+        await focusCell(A1, 'wo35-s16');
+        await skEnter();
+        await skDigits(9);
+        const escBefore = await evalJs(`(function(){ var a = document.activeElement;
+          return { student: a.getAttribute('data-score-student'), value: a.value,
+                   caret: a.selectionStart }; })()`);
+        await skEsc();
+        await skEsc();
+        const escAfter = await evalJs(`(function(){ var a = document.activeElement;
+          var view = document.getElementById('scoresView');
+          return { student: a ? a.getAttribute('data-score-student') : '(focus left the grid)',
+                   value: a ? a.value : '', caret: a ? a.selectionStart : -1,
+                   shown: !view.classList.contains('hidden'),
+                   openModals: document.querySelectorAll('.modal-overlay:not(.hidden)').length }; })()`);
+        check('Esc pressed twice mid-column closes nothing and loses nothing — the screen is still up, the caret is in the same cell, and what was typed into it is still there',
+          escAfter.shown && escAfter.openModals === 0
+            && escBefore.student === 'wo35-s17' && escAfter.student === 'wo35-s17'
+            && escBefore.value === '9' && escAfter.value === '9'
+            && escAfter.caret === escBefore.caret,
+          JSON.stringify(escBefore) + ' -> ' + JSON.stringify(escAfter));
+        /* The 9 typed to give Esc something to lose comes back off and the row's own mark goes back on,
+           through the keyboard like everything else, so the arithmetic below is case 1's and not this
+           check's leftovers. */
+        await skBack();
+        await skDigits(77);
+
+        /*
+          ACCEPTANCE LINE 5. docs/grade-math-cases.md case 1, to the digit, on the row whose Tests mark
+          the column above happened to make 80: Tests 80/100, Quizzes 18/20, Homework 10/10 against
+          weights 50/30/20 is 87%, and this class's own bands make that a B. Both extra cells are typed
+          through the keyboard like everything else, and the figure is read off the SCREEN — the engine
+          is asked separately, so a screen doing its own arithmetic could not pass by agreeing with
+          itself.
+        */
+        await focusCell(A3, 'wo35-s01');
+        for (let i = 1; i <= 25; i++) await skScore(10);
+        await focusCell(A2, 'wo35-s20');
+        await skDigits(18);
+        await new Promise(r => setTimeout(r, 150));
+        const case1 = await evalJs(READ);
+        const engine = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+          var cls = d.classes.filter(function(c){ return c.id === 'c_wo35'; })[0];
+          var g = window.planbook.gradeEngine.weightedClassGrade(d, cls, 'tm_wo35', 'wo35-s20');
+          return { percentage: g.percentage, letter: g.letter, reason: g.reason }; })()`);
+        const row20 = case1.students.indexOf('wo35-s20');
+        check('the displayed grade is docs/grade-math-cases.md case 1 to the digit — 87.0% and a B — and the screen and the engine agree about it',
+          row20 >= 0 && case1.grades[row20] === '87.0%' && case1.letters[row20] === 'B'
+            && engine.percentage === 87 && engine.letter === 'B' && engine.reason === null
+            && case1.bannerUp === false && case1.provisional === false,
+          'screen ' + case1.grades[row20] + ' ' + case1.letters[row20] + ' :: engine '
+            + engine.percentage + ' ' + engine.letter);
+
+        /*
+          ACCEPTANCE LINE 8, INHERITED FROM WO-3.3, and the box that only this claim can tick. The
+          assignment moves from Tests (50%) to Homework (20%) through the real <select> in the real
+          editor, and EVERY displayed grade in the class has to move on that keystroke — no weight
+          changes, no score changes, and walking the weights across 100 could never have discharged it.
+
+          Case 1's row goes 87.0% -> 86.7%: Quizzes keep 90% at 30, Homework becomes (80 + 10) / 110 =
+          81.81…% at 20, Tests is empty so its 50 redistributes, and 90 x 30/50 + 81.81… x 20/50 =
+          86.72…%. Hand-computed here rather than asked of the engine, for the reason the case above is:
+          an engine and a screen that agree with each other and disagree with the arithmetic is exactly
+          what this file exists to catch.
+
+          THE EDITOR IS OPENED THROUGH THE SEAM, and that is the one exception in this block. No control
+          on the score grid opens an assignment editor — there is deliberately no second door to the
+          assignment list from here, and index.html says why — so no tap can get the dialog on screen
+          over this view. What is DRIVEN is the part the acceptance line is about: the real <select>,
+          the real `change` event, and src/shell.js's real hook.
+        */
+        const beforeMove = await evalJs(READ);
+        const beforeDoc = await readDoc();
+        await evalJs("window.planbook.assignments.openAssignmentEditor('wo35-a1'); 1");
+        await new Promise(r => setTimeout(r, 250));
+        const pickCategory = async (id) => {
+          await evalJs(`(function(){
+            var s = document.querySelector('#assignmentFields [data-assignment-category]');
+            if (!s) return 0;
+            s.value = ${JSON.stringify(id)};
+            s.dispatchEvent(new Event('change', { bubbles: true }));
+            return 1; })()`);
+          await new Promise(r => setTimeout(r, 250));
+        };
+        await pickCategory('wo35-home');
+        const afterMove = await evalJs(READ);
+        const afterMoveDoc = await readDoc();
+        const movedRows = afterMove.students.filter((id, i) =>
+          afterMove.grades[i] !== beforeMove.grades[i]).length;
+        const a1Head = afterMove.heads.filter((h) => h.name === 'Unit test')[0] || {};
+        check('moving an assignment to another category moves EVERY displayed grade in the class on the keystroke — case 1\'s row 87.0% -> 86.7%, with no weight and no score touched',
+          beforeMove.grades[row20] === '87.0%' && afterMove.grades[row20] === '86.7%'
+            && movedRows === 25
+            && /Homework/.test(a1Head.chip) && /20%/.test(a1Head.chip)
+            && afterMoveDoc.all === beforeDoc.all
+            && afterMoveDoc.weights === beforeDoc.weights,
+          movedRows + ' of 25 displayed grades moved; case 1\'s row ' + beforeMove.grades[row20]
+            + ' -> ' + afterMove.grades[row20] + '; that column head now reads '
+            + JSON.stringify(a1Head.chip) + '; scores byte-identical = '
+            + (afterMoveDoc.all === beforeDoc.all) + ', weights byte-identical = '
+            + (afterMoveDoc.weights === beforeDoc.weights));
+
+        /* And back, through the same control — the half of a move a build can get right on the way out
+           and wrong on the way home, and it puts case 1 back for the two checks below. */
+        await pickCategory('wo35-tests');
+        await evalJs("window.planbook.closeModal('assignmentModal'); 1");
+        await new Promise(r => setTimeout(r, 200));
+        const backAgain = await evalJs(READ);
+        check('and moving it back restores every displayed grade, so the chain runs in both directions rather than only on the way out',
+          backAgain.grades[row20] === '87.0%'
+            && JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades),
+          'case 1\'s row is ' + backAgain.grades[row20] + ' again, and all 25 match = '
+            + (JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades)));
+
+        /*
+          ACCEPTANCE LINES 9 AND 10, INHERITED FROM WO-3.1 — the weights taken off 100 and put back,
+          through the real weight field in the real categories editor, reached from the class manager
+          the way a teacher reaches it. The banner has to stand where the number was and NAME the total;
+          no grade may be shown at all; and the word "provisional" may appear on no figure.
+
+          The disappearing half first, which is the one the work order warns a build can pass while
+          getting wrong.
+        */
+        await clickSel('header [data-class-manage]');
+        await new Promise(r => setTimeout(r, 350));
+        await clickSel('#classList [data-category-manage="c_wo35"]');
+        await new Promise(r => setTimeout(r, 350));
+        const typeWeight = async (v) => {
+          await evalJs(`(function(){
+            var f = document.querySelector('#categoryList [data-category-id="wo35-tests"]'
+              + '[data-category-field="weight"]');
+            if (!f) return 0;
+            f.value = ${JSON.stringify(String(v))};
+            f.dispatchEvent(new Event('input', { bubbles: true }));
+            return 1; })()`);
+          await new Promise(r => setTimeout(r, 250));
+        };
+        await typeWeight(40);
+        const unbalanced = await evalJs(READ);
+        check('no grade is shown at all while the weights do not total 100, the banner stands where the number was and names the total, and no figure wears a "provisional" label',
+          unbalanced.bannerUp === true && /90%/.test(unbalanced.bannerText)
+            && /not 100%/.test(unbalanced.bannerText)
+            && unbalanced.grades.length === 25 && unbalanced.grades.every((g) => g === '—')
+            && unbalanced.letters.every((l) => l === '')
+            && /Class average —/.test(unbalanced.summary)
+            && unbalanced.provisional === false,
+          'banner up = ' + unbalanced.bannerUp + ' :: '
+            + JSON.stringify(unbalanced.bannerText.slice(0, 96)) + ' :: distinct grade cells = '
+            + JSON.stringify([...new Set(unbalanced.grades)]) + ' :: '
+            + JSON.stringify(unbalanced.summary.slice(0, 64)));
+
+        await typeWeight(50);
+        const balanced = await evalJs(READ);
+        check('and the grades come back the moment the weights reach 100 again — the crossing works in both directions, with the categories panel still open over the grid',
+          balanced.bannerUp === false && balanced.grades[row20] === '87.0%'
+            && balanced.letters[row20] === 'B'
+            && JSON.stringify(balanced.grades) === JSON.stringify(beforeMove.grades)
+            && /Weights total 100%/.test(balanced.summary),
+          'banner up = ' + balanced.bannerUp + ', case 1\'s row is ' + balanced.grades[row20] + ' '
+            + balanced.letters[row20] + ', and all 25 match = '
+            + (JSON.stringify(balanced.grades) === JSON.stringify(beforeMove.grades)));
+        await evalJs("window.planbook.closeModal('categoriesModal');"
+          + "window.planbook.closeModal('classesModal'); 1");
+        await new Promise(r => setTimeout(r, 250));
+
+        /*
+          ACCEPTANCE LINE 3. The three flags, set from the keyboard, read back as COMPUTED STYLE rather
+          than as class names: the claim is that a teacher can tell them apart, and a class name on an
+          element whose rule was deleted is a class name that says nothing. Four ways apart — the fill,
+          the border, the corner glyph and the accessible name — and blank has none of them, because a
+          blank that is styled is a blank that looks like a state somebody chose.
+
+          The caret is parked on a fourth cell before the read: `.scores-input:focus` carries a wash of
+          its own, and measuring a flag on the cell that still has focus would be measuring the two
+          rules together.
+        */
+        await focusCell(A1, 'wo35-s01');
+        await skLetter('L');
+        await focusCell(A1, 'wo35-s02');
+        await skLetter('M');
+        await focusCell(A1, 'wo35-s03');
+        await skLetter('X');
+        await focusCell(A1, 'wo35-s10');
+        const flags = await evalJs(`(function(){
+          var pick = function(a, s){
+            var e = document.querySelector('#scoresBody [data-score-cell="' + a
+              + '"][data-score-student="' + s + '"]');
+            if (!e) return null;
+            var st = getComputedStyle(e);
+            var glyph = e.parentElement ? e.parentElement.querySelector('.scores-flag') : null;
+            return { bg: st.backgroundColor, border: st.borderTopColor, ink: st.color,
+                     glyph: glyph ? glyph.textContent : '', label: e.getAttribute('aria-label') || '',
+                     placeholder: e.placeholder, value: e.value }; };
+          return { late: pick('wo35-a1','wo35-s01'), missing: pick('wo35-a1','wo35-s02'),
+                   excused: pick('wo35-a1','wo35-s03'), blank: pick('wo35-p2','wo35-s01') }; })()`);
+        const four = [flags.late, flags.missing, flags.excused, flags.blank];
+        check('late, missing and excused are three distinct fills, three distinct borders, three distinct glyphs and three distinct accessible names — and blank wears none of them',
+          four.every((f) => !!f)
+            && new Set(four.map((f) => f.bg)).size === 4
+            && new Set(four.map((f) => f.border)).size === 4
+            && flags.late.glyph === 'L' && flags.missing.glyph === 'M' && flags.excused.glyph === 'X'
+            && flags.blank.glyph === ''
+            && / — late$/.test(flags.late.label) && / — missing$/.test(flags.missing.label)
+            && / — excused$/.test(flags.excused.label) && !/ — /.test(flags.blank.label)
+            && flags.missing.value === '' && flags.excused.value === ''
+            && flags.missing.placeholder === '0' && flags.excused.placeholder === 'Ex'
+            && flags.blank.placeholder === '—',
+          'fills ' + JSON.stringify(four.map((f) => f && f.bg)) + ' :: borders '
+            + JSON.stringify(four.map((f) => f && f.border)) + ' :: glyphs '
+            + JSON.stringify(four.map((f) => f && f.glyph)));
+
+        /*
+          ACCEPTANCE LINE 4, and it is the one no screenshot can answer: a cleared cell and a cell
+          holding `{ v: null }` with no flag look identical on the grid and grade identically too. Two
+          halves, because writeCell() makes two promises. The cell's key goes; and when the last cell in
+          a column goes, the COLUMN's key goes with it, rather than leaving an empty object under an
+          assignment id that every later reader would have to know about.
+
+          Both cells are arrived at with a key rather than a click, so the value is SELECTED on arrival
+          and one Backspace is the whole clear — which is also how a teacher fixing a column does it.
+        */
+        await focusCell(A1, 'wo35-s03');
+        await skEnter();
+        await skBack();
+        await new Promise(r => setTimeout(r, 150));
+        /* And a column with exactly one cell in it, so that its last cell leaving is the column
+           leaving. wo35-p1 has never been typed into. */
+        await focusCell(P1, 'wo35-s01');
+        await skScore(7);
+        const withColumn = await readDoc();
+        await skUp();
+        await skBack();
+        await new Promise(r => setTimeout(r, 150));
+        const cleared = await readDoc();
+        check('clearing a cell deletes its key rather than storing a null with no flag, the last cell out takes the empty column key with it, and no such null exists anywhere in the document',
+          cleared.a1has.indexOf('wo35-s04') === -1
+            && cleared.a1has.length === 24
+            && withColumn.keys.indexOf('wo35-p1') >= 0
+            && cleared.keys.indexOf('wo35-p1') === -1
+            && cleared.nulls.length === 0 && cleared.bare.length === 0,
+          'the cleared student is still in the column = ' + (cleared.a1has.indexOf('wo35-s04') !== -1)
+            + ' with ' + cleared.a1has.length + ' cell(s) left; the one-cell column went from present ('
+            + (withColumn.keys.indexOf('wo35-p1') >= 0) + ') to present ('
+            + (cleared.keys.indexOf('wo35-p1') >= 0) + '); nulls with no flag anywhere = '
+            + JSON.stringify(cleared.nulls) + '; bare numbers anywhere = '
+            + JSON.stringify(cleared.bare));
+
+        /*
+          THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE. The grade column's
+          `left` is a pixel offset, so it can only be right if the name column's width is known — the
+          hand-computed layout src/attendance.css warns against, accepted for two columns because sticky
+          arithmetic leaves no alternative. That comment claimed a check that did not exist until this
+          one; the width and the offset could have drifted apart in any later edit and nothing would have
+          said so. Both blocks, because the coarse block narrows the name column and has to move the
+          offset with it — which is also why the two numbers are asserted to DIFFER between the blocks:
+          a coarse block that had quietly stopped overriding either would otherwise pass.
+        */
+        const frozen = await evalJs(`(function(){
+          var out = { base: {}, coarse: {}, sheet: false };
+          window.__eachRule(function(r, label){
+            var href = '';
+            try { href = (r.parentStyleSheet && r.parentStyleSheet.href) || ''; } catch (e) {}
+            if (href.indexOf('scores.css') < 0) return;
+            out.sheet = true;
+            var coarse = false, p = r.parentRule;
+            while (p) {
+              if (p.conditionText && p.conditionText.indexOf('coarse') >= 0) coarse = true;
+              p = p.parentRule;
+            }
+            var bag = coarse ? out.coarse : out.base;
+            /* Split and matched exactly, never by substring: '.scores-grade-num' contains
+               '.scores-grade', and the grouped thead selector contains both of them. */
+            var parts = String(label).split(',').map(function(x){ return x.trim(); });
+            if (parts.indexOf('.scores-name') >= 0 && r.style.width) {
+              bag.nameWidth = r.style.width; bag.nameMin = r.style.minWidth;
+            }
+            if (parts.indexOf('.scores-grade') >= 0 && r.style.left) bag.gradeLeft = r.style.left;
+          });
+          return out; })()`);
+        check('the frozen name column\'s width and the frozen grade column\'s offset are the same number in the base rules and the same number again in the coarse block',
+          frozen.sheet && !!frozen.base.nameWidth && !!frozen.coarse.nameWidth
+            && frozen.base.nameWidth === frozen.base.gradeLeft
+            && frozen.base.nameWidth === frozen.base.nameMin
+            && frozen.coarse.nameWidth === frozen.coarse.gradeLeft
+            && frozen.coarse.nameWidth === frozen.coarse.nameMin
+            && frozen.coarse.nameWidth !== frozen.base.nameWidth,
+          'base ' + JSON.stringify(frozen.base) + ' :: coarse ' + JSON.stringify(frozen.coarse));
+
+        /*
+          AND THE SAME PAIR AS A MEASUREMENT, with the grid scrolled sideways — which is the defect
+          itself rather than a proxy for it. Two sticky columns whose numbers have drifted apart do not
+          stop being sticky; they OVERLAP, and the student's name disappears under her own grade three
+          columns into a wide term. The seven empty assignments in the fixture are here for this: a
+          three-column grid at 1200px does not scroll at all, and a check over a grid that cannot move
+          is a check that cannot fail.
+        */
+        const PIN = `(function(){
+          var wrap = document.getElementById('scoresGridWrap');
+          var row = document.querySelector('#scoresBody tr[data-score-row="wo35-s01"]');
+          if (!wrap || !row) return null;
+          wrap.scrollLeft = 260;
+          var name = row.querySelector('.scores-name').getBoundingClientRect();
+          var grade = row.querySelector('.scores-grade').getBoundingClientRect();
+          var box = wrap.getBoundingClientRect();
+          return { scrolled: wrap.scrollLeft, scrollable: wrap.scrollWidth - wrap.clientWidth,
+                   overlap: Math.round((name.right - grade.left) * 100) / 100,
+                   nameOff: Math.round((name.left - box.left) * 100) / 100,
+                   nameW: Math.round(name.width * 100) / 100 }; })()`;
+        const pinned = await evalJs(PIN);
+        check('and with the grid scrolled sideways the two frozen columns stay pinned to its left edge without overlapping each other',
+          !!pinned && pinned.scrollable > 0 && pinned.scrolled > 0
+            && pinned.overlap <= 0.5 && Math.abs(pinned.nameOff) <= 0.5,
+          JSON.stringify(pinned));
+
+        /*
+          ── THE COARSE PASS ──
+
+          Everything above is a keyboard, and none of it is acceptance line 6. This is what a desk can
+          say about the touch half: that every control on the grid clears 44px with the view OPEN, which
+          is the state the standing sweep at the top of this run cannot reach. A `.hidden` view computes
+          to `display: none`, that sweep skips anything that does, and so it walked past every one of
+          these inputs and reported green. The grid is opened here through the real segment before a
+          single box is measured, and that it is DRAWN is its own check — because a sweep over nothing
+          is the failure this block exists to close.
+
+          Line 6 itself — "usable on an iPad in landscape" — stays a 👤 item in TESTING.md. An emulator
+          is not a thumb.
+        */
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
+        await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+        await send('Page.reload');
+        await new Promise(r => setTimeout(r, 700));
+        await waitForBoot();
+        await evalJs(KILL_ANIM);
+        await evalJs(INSTALL_WALKER);
+        const coarseNow = await evalJs("matchMedia('(pointer: coarse)').matches");
+        await clickSel('#classTabBar [data-class-tab="c_wo35"]');
+        await new Promise(r => setTimeout(r, 250));
+        await clickSel('#classView [data-class-screen="scores"]');
+        await new Promise(r => setTimeout(r, 350));
+        const drawn = await evalJs(`(function(){
+          var view = document.getElementById('scoresView');
+          var cell = document.querySelector('#scoresBody [data-score-cell]');
+          if (!view) return null;
+          var vs = getComputedStyle(view);
+          var r = cell ? cell.getBoundingClientRect() : { width: 0, height: 0 };
+          return { hidden: view.classList.contains('hidden'), viewDisplay: vs.display,
+                   cellDisplay: cell ? getComputedStyle(cell).display : '(no cell)',
+                   drawn: r.width > 0 && r.height > 0,
+                   cells: document.querySelectorAll('#scoresBody [data-score-cell]').length }; })()`);
+        check('the score grid is OPEN and drawn under the coarse pointer, so the sweep below measures score cells rather than a display:none screen',
+          coarseNow === true && !!drawn && !drawn.hidden && drawn.viewDisplay !== 'none'
+            && drawn.cellDisplay !== 'none' && drawn.drawn && drawn.cells >= 200,
+          'coarse pointer = ' + coarseNow + ' :: ' + JSON.stringify(drawn));
+
+        const grid44 = await evalJs(`(function(){
+          var out = [];
+          document.querySelectorAll('#scoresView button, #scoresView input').forEach(function(e){
+            var r = e.getBoundingClientRect();
+            if (r.width === 0 && r.height === 0) return;
+            if (getComputedStyle(e).display === 'none') return;
+            out.push({ t: (e.className || e.tagName), w: Math.round(r.width * 100) / 100,
+                       h: Math.round(r.height * 100) / 100 }); });
+          return out; })()`);
+        const under44 = grid44.filter((m) => m.h < 44 || m.w < 44);
+        check('every control on the open score grid measures >=44px on a coarse pointer, the score cells and the four flag buttons included',
+          grid44.length >= 200 && under44.length === 0,
+          'measured ' + grid44.length + ' visible control(s) with the grid open; under = '
+            + JSON.stringify(under44.slice(0, 6))
+            + (under44.length > 6 ? ' … and ' + (under44.length - 6) + ' more' : ''));
+
+        const pinnedCoarse = await evalJs(PIN);
+        check('and the frozen pair holds on the coarse pointer too, where the name column is narrower and the offset had to move with it',
+          !!pinnedCoarse && pinnedCoarse.scrollable > 0 && pinnedCoarse.scrolled > 0
+            && pinnedCoarse.overlap <= 0.5 && Math.abs(pinnedCoarse.nameOff) <= 0.5
+            && !!pinned && pinnedCoarse.nameW < pinned.nameW,
+          JSON.stringify(pinnedCoarse) + ' against a fine-pointer name column of '
+            + (pinned ? pinned.nameW : '?') + 'px');
+      }
+    }
+
+    /*
+      THE FIXTURE COMES BACK OUT — the class, its twenty-five students, its ten assignments and every
+      score column typed into them — and the class this block found open is put back under it. Written
+      as one update rather than through the real Delete controls, for the reason the assignments
+      teardown gives: a fixture coming down is not a claim being made. This is the last section in the
+      file, so nothing depends on the state; it is cleaned up anyway, because a run that left a
+      fixture class in the teacher's own browser is a run that wrote student data nobody asked for.
+    */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var d = s.getDoc();
+      if (!d) return 0;
+      s.update(function(doc){
+        doc.classes = doc.classes.filter(function(x){ return x.id !== 'c_wo35'; });
+        doc.students = doc.students.filter(function(x){
+          return String(x.id).indexOf('wo35-') !== 0; });
+        doc.assignments = doc.assignments.filter(function(a){ return a.classId !== 'c_wo35'; });
+        Object.keys(doc.scores || {}).forEach(function(k){
+          if (String(k).indexOf('wo35-') === 0) delete doc.scores[k]; });
+      });
+      var was = ${JSON.stringify(plant.was || '')};
+      if (was) c.selectClass(was);
+      c.refreshClassBar();
+      await s.flush();
+      return 1; })()`);
+  }
 }
 
 /* ────────────────────────────── summary ────────────────────────────── */

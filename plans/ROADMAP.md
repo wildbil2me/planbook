@@ -57,13 +57,13 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 12/16 `[████████░░] 75%` |
-| 3 | Gradebook | 🔨 IN PROGRESS | 4/10 `[████░░░░░░] 40%` |
+| 3 | Gradebook | 🔨 IN PROGRESS | 6/10 `[██████░░░░] 60%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **32/82 `[████░░░░░░] 39%`** |
+| | | **Overall** | **34/82 `[████░░░░░░] 41%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -328,9 +328,9 @@ meet is a second source of truth that's wrong by first period.)*
       of this work order's acceptance lines name a **grade** and one names the per-student detail,
       none of which exists yet — they stay open against WO-3.4, WO-3.5 and WO-3.7 rather than being
       ticked here.)*
-- [ ] Score entry grid — one column per assignment, `Enter` moves down the column. The
+- [x] Score entry grid — one column per assignment, `Enter` moves down the column. The
       second-most-frequent action in the app; it gets the same care as marking attendance.
-- [ ] **`late` and `missing` are marked, never inferred.** Raw score plus a flag. `missing` counts
+- [x] **`late` and `missing` are marked, never inferred.** Raw score plus a flag. `missing` counts
       as zero; `late` is a record, not a penalty; `EX` leaves the denominator; blank is simply
       ungraded and affects nothing.
 - [ ] Past-due blanks generate a **prompt** — "6 blanks are past due, mark them missing?" — that

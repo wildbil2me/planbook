@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v39';
+const CACHE = 'planbook-shell-v40';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -47,6 +47,7 @@ const SHELL = [
   './src/home.css',
   './src/attendance.css',
   './src/assignments.css',
+  './src/scores.css',
   './src/shell.js',
   './src/home.js',
   './src/attendance.js',
@@ -73,6 +74,7 @@ const SHELL = [
   './src/views.js',
   './src/screen-nav.js',
   './src/assignments.js',
+  './src/scores.js',
   './icons/icon-152.png',
   './icons/icon-167.png',
   './icons/icon-180.png',

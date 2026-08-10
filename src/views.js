@@ -42,11 +42,13 @@ import { getPref, setPref } from './prefs.js';
    `class` is the ATTENDANCE screen, and the name is kept rather than corrected. It was the class
    view when a class had one screen, it is the value sitting in `planbook_openView` on two devices
    already, and renaming it would rename a stored preference to make a word in this file read
-   better. WO-3.3 added `assignments` beside it; WO-3.5 adds `scores` the same way. */
+   better. WO-3.3 added `assignments` beside it; WO-3.5 added `scores` the same way, in one line and
+   with no other change to this file than the two lists below. */
 const VIEWS = {
   home: 'homeView',
   class: 'classView',
   assignments: 'assignmentsView',
+  scores: 'scoresView',
 };
 
 /*
@@ -57,7 +59,7 @@ const VIEWS = {
   of the answer: src/classes.js draws the class tabs on any of them, and src/shell.js paints the
   right screen after a switch.
 */
-const CLASS_SCREENS = ['class', 'assignments'];
+const CLASS_SCREENS = ['class', 'assignments', 'scores'];
 
 export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
 
@@ -66,17 +68,20 @@ export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1;
   Attendance, never on the screen it was left on" (plans/gradebook-surfaces.md, decided by the owner
   2026-08-09; WO-3.3's sixth acceptance line).
 
-  The preference cannot hold `assignments`. Not "is ignored when it does" — cannot hold it: every
-  class screen is written down as `class`, so a browser that was left on the assignment list and
-  then reloaded reads `class` at boot and lands on Attendance, and there is no per-class memory
-  anywhere to go stale. Collapsing on the READ side instead would have worked today and left a
-  stored `assignments` sitting in localStorage waiting for the next reader of savedView() to trust
-  it.
+  The preference cannot hold `assignments` or `scores`. Not "is ignored when it does" — cannot hold
+  them: every class screen is written down as `class`, so a browser that was left on the score grid
+  and then reloaded reads `class` at boot and lands on Attendance, and there is no per-class memory
+  anywhere to go stale. Collapsing on the READ side instead would have worked today and left a stored
+  `assignments` sitting in localStorage waiting for the next reader of savedView() to trust it.
+
+  A SCREEN ADDED HERE ADDS ITS LINE, and forgetting is silent: the omission does nothing at all until
+  a teacher reloads while standing on the new screen, and then it is a preference holding a value the
+  owner's rule says cannot exist. WO-3.5's `scores` is the second entry for that reason.
 
   It costs nothing that anybody asked for: `openView` answers "was this browser inside a class or
   looking at the grid", which is exactly the granularity src/shell.js's boot restores at.
 */
-const REMEMBERED_AS = { assignments: 'class' };
+const REMEMBERED_AS = { assignments: 'class', scores: 'class' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,

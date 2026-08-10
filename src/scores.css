@@ -1,0 +1,393 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — the score entry grid (WO-3.5): students down, assignments across.
+
+   The fourth per-screen stylesheet, following the rule src/shell.css's header sets
+   and src/home.css instanced first: one file per screen, loaded after the shell's,
+   styling only its own class names, with its own @media (pointer: coarse) block at
+   the end. No selector below names anything shell.css, home.css, attendance.css or
+   assignments.css styles — the controls here that ARE shell components
+   (`.class-action-btn`, `.panel*`, `.hidden`) are worn as-is and never restyled
+   from here, and `.screen-nav*` and `.cat-chip*` belong to src/assignments.css
+   § SHARED. THIS FILE WEARS THOSE TWO AND MUST NEVER RESTYLE THEM: two stylesheets
+   styling one class is how a per-file touch pass stops being safe from the cascade.
+
+   NOTHING BELOW WAS DESIGNED HERE. Every value is lifted from
+   design/mockups/proposed.css § SCORE GRID, which was drawn against these same
+   stylesheets on 2026-08-09 — before anything was built — and written to be carried
+   across almost as-is; that file's header states the rules it follows so that "lift"
+   means lift. The cut lines there are its section banners, and this file is one and
+   a half of them:
+
+     § SCORE GRID  →  here, in full
+     § SHARED      →  the `.grade-none` half only. src/assignments.css took
+                      `.screen-nav*` and `.cat-chip*` at WO-3.3 because the shared
+                      block lands with whichever gradebook work order ships first,
+                      and left this one behind on purpose, with a note saying why:
+                      nothing in that build showed a grade, so the banner that
+                      stands where a grade is NOT shown had nowhere to live. This is
+                      the first screen with somewhere to not-show one. WO-3.7's
+                      src/detail.css wears it and must never restyle it.
+
+   The grid's head, rows and rules are Roll Call!'s table as src/attendance.css
+   already lifted it — 9px/10px cells, a 10px uppercase #8a9bb0 head on a 1px
+   #eef0f4 rule, one #f3f4f6 line per row carried by the row and not the cell. The
+   registry and this grid are the same object with different cells in it, and a
+   teacher moving between them should not be able to feel a seam.
+
+   THREE THINGS THE DRAWING HAS THAT ARE DELIBERATELY NOT HERE, each said at the
+   point it would have gone, because a lift that quietly drops a rule reads as an
+   oversight: the paste column's button (WO-3.13), the per-assignment footer
+   averages (the drawing's own caption says they are not in this work order's
+   deliverables), and the overdue tint on a column head (WO-3.6 owns everything
+   about a due date, and nothing in this file reads a clock).
+
+   The two things that read like mistakes here are the same two that read like
+   mistakes in shell.css, home.css, attendance.css and assignments.css: colours are
+   written out inline rather than as custom properties, and there is no dark variant
+   of anything. Both are deliberate suite conventions — read CLAUDE.md before
+   tidying either one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
+   has one: a control covered only by some other selector's rule is a control the next reader has
+   to go and prove is covered. */
+.scores-input, .scores-keys-btn, .scores-flag-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Except the one you type into. `user-select: none` on a score field is a field a teacher cannot
+   double-tap to select the number in, which is the shape of the correction src/roster.js's note
+   records about suppressing things on inputs — and on this screen it is worse than elsewhere,
+   because overtyping a wrong mark is the correction she makes most. */
+.scores-input { user-select: text; -webkit-user-select: text; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SHARED — the no-grade banner
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE NO-GRADE BANNER, on any screen that would have shown a grade if the weights totalled 100.
+   The owner settled this on 2026-08-09: **there is no grade at all until they add up** — not a
+   provisional figure, not a figure with a label on it (docs/data-model.md § Grade math). So this
+   banner is not a caveat attached to a number, it is the explanation standing where the number
+   would have been.
+
+   That is why it says the total: "no grade" on its own is indistinguishable from a bug, and the
+   total is both the reason and the instruction.
+
+   Caution amber, which in this app means "act on this" — not danger red. Nothing is wrong;
+   something is unfinished, and src/categories.js's own banner uses the same palette one level
+   down, which is where the teacher is going to fix it. */
+.grade-none {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 12px; padding: 10px 14px;
+  border: 1.5px solid #f0dfa8; border-left: 5px solid #e0b940; border-radius: 8px;
+  background: #fff8e6; color: #8a6d1a;
+  font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.grade-none-text { flex: 1 1 240px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORE GRID
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The panel takes its main area's full width, the same call src/attendance.css records the owner
+   making about the registry on 2026-08-06: a panel narrower than the area it sits in "reads as a
+   window that never closed". Students down and assignments across needs it anyway — this is the
+   screen `.modal-panel`'s 480px could not have held, which is the third of the three reasons
+   plans/gradebook-surfaces.md gives for this being a view. */
+.scores-panel { width: 100%; max-width: 100%; }
+/* Matches `.attendance-body` exactly, and for the same reason: left and right line up with
+   `.panel-header`'s 20px, top is zero because the header above already ends in a gap. */
+.scores-body { padding: 0 20px 20px; }
+
+/* The summary line over the grid — the class average, how much is still ungraded, and what the
+   weights come to. `.attendance-totals`' voice, in this sheet's own name. */
+.scores-summary {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
+  margin: -2px 0 10px; color: #6b7a8d; font-size: 12px; font-weight: 700;
+  line-height: 1.5;
+}
+.scores-summary b { color: #1a1a2e; font-size: 14px; font-variant-numeric: tabular-nums; }
+.scores-summary .sep { color: #d0d8e4; }
+
+.scores-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* `.scores-actions-door` is in the drawing and is NOT here: the only door this screen would have
+   given it is the assignment list, and the switcher two inches above already goes there. A rule
+   for a control nothing wears is a rule the next reader has to go and prove is dead. */
+
+/* THE FLAG BAR, and the one control on this screen the drawing named without drawing.
+   design/mockups/proposed.css reserves `.scores-flag-btn` in both its tappable group and its
+   coarse block and never uses it; this is what it was reserving.
+
+   WHY IT EXISTS AT ALL, when the flags are a keyboard path: a score cell asks iPadOS for a decimal
+   keypad (`inputmode="decimal"`), and a decimal keypad has no letters on it. So `L`, `M` and `X`
+   are unreachable on the device this screen is measured on, and "usable on an iPad" is one of this
+   work order's acceptance lines. Four buttons acting on the cell you are in, carrying the same four
+   letters, so the touch path teaches the keyboard one rather than replacing it. */
+.scores-flags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.scores-flags-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+/* The buttons are `.class-action-btn` worn as-is. This class only gives the coarse block below
+   something to name; it never restyles the button. */
+.scores-flag-btn { }
+
+/* THE KEYBOARD STRIP. Attendance put its key legend behind a "⌨ Keys" button and this screen needs
+   the same thing more: entry here IS the keyboard, and the legend is what a teacher reads once in
+   September and never again. Shown open in the drawing so the keys could be argued with; here it
+   starts closed behind the button, and the state is not remembered anywhere — see src/scores.js,
+   which says why a disclosure like this is not a stored preference. */
+.scores-keys {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  margin: 0 0 10px; padding: 9px 12px; border-radius: 8px;
+  background: #f8f9fb; border: 1.5px solid #eef0f4;
+  font-size: 12px; color: #6b7a8d; line-height: 1.5;
+}
+.scores-key {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-weight: 700; white-space: nowrap;
+}
+.scores-key kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border: 1.5px solid #d0d8e4; border-bottom-width: 2.5px; border-radius: 5px;
+  background: #fff; color: #1a1a2e;
+  font-family: inherit; font-size: 11px; font-weight: 800;
+}
+
+/* Horizontal scroll belongs to the grid, never to the page — a page that scrolls sideways on an
+   iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule, restated
+   in this sheet's own name. */
+.scores-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scores-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+/* `separate` rather than `collapse`, which is the ONE place this sheet departs from
+   src/attendance.css, and it is forced: a sticky cell under `border-collapse: collapse` loses its
+   borders in WebKit as it scrolls, because collapsed borders belong to the table and not to the
+   cell. Borders are therefore declared per cell below, bottom-only, which reproduces the collapsed
+   look exactly. If the sticky columns are ever dropped, put `collapse` back. */
+
+.scores-grid thead th {
+  padding: 9px 10px; text-align: center; vertical-align: bottom;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4; white-space: nowrap;
+  background: #fff;
+}
+/* `td` AND `th`, though every cell src/scores.js builds in a body row is a `<td>` — the name cell
+   included, which is the drawing's own markup and the choice that keeps this padding and this row
+   line applying to the frozen first column (src/scores.js says why nothing is lost to a screen
+   reader by it: every input in the row names its student in full). The `th` half of the selector is
+   here for the row header this grid does not have yet and might: WO-3.7's per-student detail is the
+   next thing to draw one, and a rule that said `td` alone would leave that cell with no padding and
+   no row line — a visibly broken first column, and exactly the kind of thing a stylesheet review
+   reads straight past.
+
+   THE TWO FILES DISAGREED IN PROSE UNTIL 2026-08-10: this comment said the name cell WAS a
+   `<th scope="row">` and src/scores.js:643 said, correctly, that it deliberately is not. Nothing
+   rendered wrong, because the selector names both — which is how a stale claim survives. */
+.scores-grid tbody td,
+.scores-grid tbody th {
+  padding: 9px 10px; text-align: center; vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+}
+.scores-grid tbody tr:hover td { background: #fafbfc; }
+
+/* ── THE TWO FROZEN COLUMNS ── */
+/* The student and their grade stay put while the assignments scroll under them. Without this, a
+   teacher three columns into a wide term is typing a number into an anonymous row — and the grade
+   is frozen beside the name rather than parked at the far right for the same reason: it is the
+   number she is watching change, and a number you have to scroll to see is a number you stop
+   watching.
+
+   THE WIDTHS ARE DECLARED, and they have to be. `left` on the second sticky column is a pixel
+   offset, so it can only be right if the first column's width is known — this is exactly the
+   hand-computed layout src/attendance.css warns against, and it is accepted here for two columns
+   because sticky arithmetic leaves no alternative. The rest of the table is still auto.
+
+   THE PAIR IS ASSERTED THREE WAYS in tools/verify-shell.mjs § "the score entry grid (WO-3.5)", so
+   the width and the offset cannot drift apart in a later edit. One check reads the two DECLARATIONS
+   out of this sheet — base against base, coarse against coarse, and the two blocks required to
+   differ, so a coarse block that quietly stopped overriding either would not pass. Two more MEASURE
+   it, once per pointer, with the grid scrolled sideways: columns whose numbers have drifted do not
+   stop being sticky, they overlap, and the student's name goes under her own grade.
+
+   Written down here because the claim was made before the check was: this comment said "asserted in
+   one check" from the day the file shipped and there was no such check until 2026-08-10. */
+.scores-name {
+  position: sticky; left: 0; z-index: 2;
+  width: 190px; min-width: 190px;
+  text-align: left !important; background: #fff;
+  font-size: 13px; font-weight: 600; color: #1a1a2e; white-space: nowrap;
+  border-right: 1px solid #f3f4f6;
+}
+.scores-grade {
+  position: sticky; left: 190px; z-index: 2;
+  width: 84px; min-width: 84px;
+  background: #fff;
+  /* A real edge where the frozen pair ends and the scrolling half begins. Without it the first
+     assignment column appears to slide *under the grade* rather than past the whole block, which
+     reads as a rendering fault. */
+  border-right: 1.5px solid #e0e4ea;
+}
+.scores-grid thead th.scores-name,
+.scores-grid thead th.scores-grade { z-index: 3; }
+.scores-grid tbody tr:hover .scores-name,
+.scores-grid tbody tr:hover .scores-grade { background: #fafbfc; }
+
+/* The student's live grade. Deliberately NOT coloured by band — no red for a failing number and no
+   green for a passing one. Colouring a grade is a judgement this app has not made anywhere else, it
+   would be the loudest thing on a screen a teacher projects, and it would put a red row next to a
+   student's name in front of the class. The letter carries the meaning; the colour stays out of it. */
+.scores-grade-num {
+  font-size: 14px; font-weight: 800; color: #1a1a2e;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.scores-grade-letter { font-size: 10px; font-weight: 700; color: #8a9bb0; margin-top: 1px; }
+/* THE COLUMN WITH NO GRADE IN IT — because the weights do not total 100, or because nothing in the
+   class is graded yet.
+
+   A quiet em dash, and quiet on purpose. The banner above the grid is where the alarm belongs and
+   it explains the whole column in one sentence; repeating that alarm 25 times down a frozen column
+   would read as 25 problems with 25 students, which is the opposite of true — the problem is with
+   the class, once.
+
+   It is NOT an empty cell. An empty cell in a grade column is indistinguishable from a rendering
+   fault, which is the same reason src/attendance.css's registry never draws an empty attendance
+   cell. The reason is on the cell as an accessible name, so the em dash is not the whole answer to
+   someone who cannot see the banner. */
+.scores-grade-none {
+  font-size: 14px; font-weight: 800; color: #c0cad5; line-height: 1.2;
+}
+
+/* ── THE COLUMN HEAD ── */
+/* Three lines: what it is, what it is out of, and which category it counts in. The points are on
+   the head rather than in every cell, which is what makes a bare `18` in the cell readable — and
+   what stops the grid printing "/20" twenty-five times down a column. The category chip is
+   `.cat-chip` from src/assignments.css § SHARED, worn as-is. */
+.scores-col { min-width: 96px; }
+.scores-col-name {
+  display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0; max-width: 130px;
+  overflow: hidden; text-overflow: ellipsis; margin: 0 auto 3px;
+}
+.scores-col-pts {
+  display: block; font-size: 10px; font-weight: 700; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; margin-bottom: 4px;
+}
+.scores-col-due { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; margin-top: 4px; }
+/* `.scores-col-due.overdue` is in the drawing and is NOT here. A tint is not arithmetic and
+   src/assignments.css carries one on its own due column — but everything about a past due date on
+   THIS screen belongs to WO-3.6, which owns the prompt that offers to fill the blanks in, and this
+   work order's Traps line says so by name. So nothing in src/scores.js reads a clock, there is
+   nothing for the class to be put on, and the rule goes with it. */
+
+/* ── ONE CELL ── */
+.scores-cell { position: relative; display: inline-flex; }
+/* A real <input>, not a button that opens something. 25 scores down a column is the acceptance
+   line, and every layer between the keyboard and the number costs 25 times.
+
+   `type="text"` with `inputmode="decimal"` rather than `type="number"`, which is
+   design/mockups/README.md's open question 1 answered the way the drawing drew it: a number
+   input's spinner eats width in a 96px column and iOS draws its own affordances on one. WO-3.1's
+   weight field is a real number input and passed the iPad sitting, but that is one 58px field in a
+   dialog where this is ~250 of them. The keypad and the column under a thumb are two separate 👤
+   lines in TESTING.md § WO-3.5, both unticked: this file is committed to the shape the drawing
+   chose, not to having proved it. What the desk DOES say is measured — every one of those ~250
+   cells clears 44px on an emulated coarse pointer, with the view forced open first, because the
+   standing sweep skips a hidden screen and had been walking past all of them. */
+.scores-input {
+  width: 56px; height: 32px; padding: 0 4px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px; background: #fff;
+  font-size: 13px; font-weight: 700; color: #1a1a2e; text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.12s, background 0.12s;
+}
+.scores-input::placeholder { color: #d0d8e4; font-weight: 600; }
+.scores-input:hover { border-color: #b0bcf0; }
+/* The focus ring is src/shell.css's :focus-visible outline and is NOT overridden here. It is also
+   not enough on its own for this screen — a teacher looking at the student list needs to find the
+   caret without hunting — so the focused cell also takes the interactive wash. Both, not either. */
+.scores-input:focus { border-color: #5b6fcc; background: #eef2ff; }
+
+/* THE FLAG STATES, said twice: in the fill, and in a glyph pinned to the cell. src/attendance.css's
+   rule about the registry applies here with more force — in a grid of numbers, a flag carried only
+   by a background is a flag that disappears the moment the row is hovered, printed, or looked at
+   from the back of a room. The palettes are the registry's own, so `late` here and `tardy` there
+   are the same orange. */
+.scores-input.late    { background: #fef5ea; border-color: #e67e22; color: #b35f0f; }
+.scores-input.missing { background: #fdeaea; border-color: #e74c3c; color: #c0392b; }
+.scores-input.excused { background: #f3eaff; border-color: #7c3aed; color: #7c3aed; }
+/* Blank means ungraded and affects nothing — the data model's rule. It gets no wash at all, because
+   a blank that is styled is a blank that looks like a state somebody chose. */
+
+.scores-flag {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; border: 1.5px solid #fff;
+  font-size: 9px; font-weight: 800; line-height: 1; color: #fff;
+  pointer-events: none;
+}
+.scores-flag.late    { background: #e67e22; }
+.scores-flag.missing { background: #e74c3c; }
+.scores-flag.excused { background: #7c3aed; }
+
+/* The empty state and the hint, which the drawing does not carry and which every other screen in
+   this app does: `.assign-empty` / `.assign-hint` and `.attendance-empty` / `.attendance-hint` are
+   the pair being followed, at the same sizes. A screen that answers "there is nothing here" with an
+   empty table is a screen a teacher reads as broken. */
+.scores-empty { font-size: 13px; color: #a0aab8; padding: 18px 2px; line-height: 1.6; }
+.scores-hint { font-size: 12px; color: #8a9bb0; line-height: 1.6; margin-top: 14px; }
+.scores-hint strong { color: #6b7a8d; }
+
+/* The per-assignment averages the drawing puts in a `<tfoot>` are NOT here, and its own caption is
+   why: "Not in WO-3.5's deliverables — an addition to argue about." So the styles for them stay in
+   the drawing with the argument, and this file has no `tfoot` rule to explain. */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH — every control above, at the floor, in one place
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* design/style-guide.md §6: 44px minimum under a coarse pointer, and this block comes last so it
+   can override the base rules it re-states. Every class in the grouped selector at the top of this
+   file appears here, plus the containers whose gaps have to grow with the targets in them. */
+@media (pointer: coarse) {
+  /* THE CELL AT 44px, WHICH IS THE MEASUREMENT THIS WHOLE SCREEN TURNS ON. A 44px-tall cell in a
+     25-row grid is ~1100px of table before the head — so the grid is taller than the tablet and the
+     frozen name column is what makes that survivable. Width goes up with height: a 56px box under a
+     thumb is a target you miss sideways. */
+  .scores-input { height: 44px; width: 62px; font-size: 15px; }
+  .scores-flag { min-width: 18px; height: 18px; font-size: 10px; top: -6px; right: -6px; }
+  .scores-grid tbody td, .scores-grid tbody th { padding: 7px 8px; }
+  .scores-col { min-width: 104px; }
+  /* The frozen pair gets narrower on touch, not wider: the tablet has less width to spend and the
+     name still has to fit. Kept in step with `left` — the same pair the check named above asserts. */
+  .scores-name { width: 168px; min-width: 168px; }
+  .scores-grade { left: 168px; }
+
+  .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
+  /* The four flag buttons are the ones a thumb reaches for on this screen, and a mis-tap here is a
+     score marked missing. 10px between them, the widening `.category-row-actions` and
+     `.roster-row-actions` both took, and for the same reason. */
+  .scores-flags { gap: 10px; }
+  .scores-flags-label { font-size: 11px; }
+  .scores-summary { font-size: 13px; }
+  .scores-keys { font-size: 13px; }
+  .scores-key kbd { min-width: 26px; height: 26px; font-size: 12px; }
+  .scores-col-name { font-size: 12px; }
+  .scores-col-pts { font-size: 11px; }
+  .scores-col-due { font-size: 10px; }
+  .scores-name { font-size: 14px; }
+  .scores-grade-num { font-size: 15px; }
+  .scores-grade-letter { font-size: 11px; }
+  .scores-grade-none { font-size: 15px; }
+  .scores-empty, .scores-hint { font-size: 13px; }
+  .grade-none { font-size: 14px; }
+}
+
+@media (max-width: 640px) {
+  .scores-summary { gap: 4px 10px; }
+  .scores-summary .sep { display: none; }
+}

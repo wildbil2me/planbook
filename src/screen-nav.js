@@ -37,7 +37,7 @@
   are on. Same reason `.cls-tab.active` carries `aria-current="true"` two rows up the page.
 */
 
-import { currentView, isClassScreen } from './views.js';
+import { currentView, isClassScreen, isView } from './views.js';
 
 /* Every container that wants a strip, and there is one per class screen. A view added later puts
    an empty `<nav data-screen-nav>` in its panel header and appears here with no change to this
@@ -48,16 +48,24 @@ const CONTAINER = '[data-screen-nav]';
   The three, in order. `view` is the name in src/views.js — which is why Attendance's is `class`,
   and that history is written down at VIEWS there.
 
-  Scores has no view yet: WO-3.5 owns the grid. It is drawn anyway, disabled, and that is the
-  honest shape of the owner's decision — the strip carries three tabs from the day it exists, so a
-  teacher learns where scores live before they arrive and the strip does not change shape under her
-  when they do. WO-3.5 adds `scores: 'scoresView'` to VIEWS and this button stops being disabled
-  with no edit here: `enabled` is asked of src/views.js rather than stored.
+  A SEGMENT IS ENABLED IFF src/views.js HAS ITS VIEW, and nothing here records which. That is what
+  lets a tab be DRAWN before its screen exists — the strip carries every screen the class is going
+  to have from the day it exists, so a teacher learns where they live before they arrive and the
+  strip does not change shape under her when they do — while the disabling stays a question rather
+  than a stored answer that a later work order has to remember to come back and edit.
+
+  IT WAS A STORED ANSWER UNTIL 2026-08-10 AND IT COST WO-3.5 A CORRECTION ROUND. `pending` was a
+  hardcoded sentence on the Scores row; this comment already promised the mechanism below ("`enabled`
+  is asked of src/views.js"), index.html's own markup asserted that this file therefore needed no
+  edit when #scoresView landed, and neither implementer opened the third file. The view shipped with
+  its only door disabled. So the promise is now the code: WO-3.7's `detail` and Phase 6's calendar
+  add a line here the day they are drawn and a line to VIEWS the day they work, and the two halves
+  cannot disagree because only one of them is written down.
 */
 const SCREENS = [
-  { view: 'class', label: 'Attendance', pending: '' },
-  { view: 'assignments', label: 'Assignments', pending: '' },
-  { view: 'scores', label: 'Scores', pending: 'Entering scores is not built yet.' },
+  { view: 'class', label: 'Attendance' },
+  { view: 'assignments', label: 'Assignments' },
+  { view: 'scores', label: 'Scores' },
 ];
 
 /*
@@ -99,13 +107,17 @@ function segment(screen, active) {
   btn.type = 'button';
   btn.className = 'screen-nav-btn' + (active ? ' active' : '');
   btn.textContent = screen.label;
-  if (screen.pending) {
+  if (!isView(screen.view)) {
     /* Disabled rather than absent, and it says why on hover and to a screen reader. A control that
        is simply missing is a feature a teacher goes looking for; one that is greyed with a sentence
-       on it is a feature that has not arrived. */
+       on it is a feature that has not arrived. The sentence is DERIVED from the label rather than
+       written beside it, for the reason SCREENS gives: a bespoke string per row is a second place
+       the arrival of a screen has to be recorded, and the first one to go stale is the one nobody
+       renders. */
+    const why = screen.label + ' is not built yet.';
     btn.disabled = true;
-    btn.title = screen.pending;
-    btn.setAttribute('aria-label', screen.label + ' — ' + screen.pending);
+    btn.title = why;
+    btn.setAttribute('aria-label', screen.label + ' — ' + why);
     return btn;
   }
   btn.setAttribute('data-class-screen', screen.view);

@@ -111,6 +111,19 @@
       data-assignment-copy-term       a <select> in the copy dialog; which term the copy lands in
       data-assignment-copy-category   a <select>; which of the TARGET class's categories it lands in
       data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed
+      data-score-cell="<assignmentId>" + data-score-student="<id>": ONE SCORE. It is four hooks in one
+                                      element, which nothing else in this file is: an input that saves
+                                      as it is typed, a keydown target (Enter down the column, L M X
+                                      for the flags, ⌫ on an empty cell to clear it), and a focusin
+                                      target so the flag bar knows which cell it is pointed at. An
+                                      empty field with no flag DELETES the key rather than storing a
+                                      null — blank means ungraded (docs/data-model.md)
+      data-score-flag="late|missing|excused|clear"  the flag bar; marks the cell the teacher is in and
+                                      hands focus back to it. It exists because a decimal keypad has
+                                      no letters on it, so the keyboard path above is unreachable on
+                                      an iPad
+      data-scores-keys                shows or hides the key legend on the score grid. Remembered
+                                      nowhere — it is a disclosure, not a preference
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
                                       question mark. `P` is a step and is still never STORED:
@@ -255,6 +268,10 @@ import * as views from './views.js';
    this file paints whatever the switch landed on. */
 import * as screenNav from './screen-nav.js';
 import * as assignments from './assignments.js';
+/* WO-3.5's score grid — the third screen of an open class, and the first thing in this app that
+   draws a grade. It imports src/grade-engine.js and nothing in it computes one; the chains below are
+   what make "live" true from more than one direction. */
+import * as scores from './scores.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -308,13 +325,14 @@ function afterClassChange() {
 /*
   WHICH OF THE OPEN CLASS'S SCREENS IS PAINTED, and the one place that mapping lives (WO-3.3).
 
-  A class has three screens now — Attendance, Assignments and, when WO-3.5 lands, Scores — and
-  every caller above that used to say `attendance.renderAttendance()` was really saying "paint
-  whatever screen of this class is up". Said once, here, because that is what this file is for: the
-  day a fourth screen exists, the modules that navigate do not each learn about it.
+  A class has three screens — Attendance, Assignments and, since WO-3.5, Scores — and every caller
+  above that used to say `attendance.renderAttendance()` was really saying "paint whatever screen of
+  this class is up". Said once, here, because that is what this file is for: the day a fourth screen
+  exists, the modules that navigate do not each learn about it.
 */
 function paintClassScreen(view) {
   if (view === 'assignments') assignments.renderAssignments();
+  else if (view === 'scores') scores.renderScores();
   else attendance.renderAttendance();
 }
 
@@ -368,6 +386,75 @@ function afterCategoryChange() {
      it was, with rows on it that no longer exist. Painted only when it is up, for the reason
      afterClassChange() gives: painting a hidden screen is rows nobody is looking at. */
   if (views.currentView() === 'assignments') assignments.renderAssignments();
+  /*
+    AND THE SCORE GRID, WHICH IS WHERE THIS CHAIN STOPS BEING COSMETIC (WO-3.5). The assignment list
+    goes stale in WORDS — a chip that still says 25%. The grid goes stale in NUMBERS: every grade in
+    its frozen column is a weighted average over these weights, and the banner above it says whether
+    there is a grade at all. So a teacher who opens Categories from this screen, walks the total from
+    95 to 100 and back, is looking at both halves of WO-3.5's last acceptance line — the grades appear
+    when the weights reach 100 and disappear when they leave it — and both halves happen behind the
+    panel as she types, because this chain runs on the keystroke that changes the weight.
+
+    renderScores() rather than paintDerived(): a category REMOVAL destroys the assignments filed under
+    it, which is whole columns rather than figures, and the narrower paint would leave a column of live
+    inputs for work that no longer exists.
+  */
+  if (views.currentView() === 'scores') scores.renderScores();
+}
+
+/*
+  AN ASSIGNMENT CHANGED, AND THE SCREEN WHOSE COLUMNS ARE ASSIGNMENTS REDRAWN (WO-3.5).
+
+  THE SHAPE IS afterCategoryChange()'s, ONE FEATURE OVER, and so is the failure. The assignment list
+  repaints itself after every write — src/assignments.js ends every mutation with renderAssignments(),
+  which is why the eleven hooks below it chain nothing — and that was the whole story while it was the
+  only screen an assignment was drawn on. The score grid is the second one, and on it an assignment is
+  not a row, it is a COLUMN and a divisor: its points are the denominator of every cell under it, its
+  category decides which weight the column counts at, and deleting it takes the column away. So an
+  editor open over the grid changes numbers a teacher is looking at, and without this the grid goes on
+  showing the arithmetic of the assignment as it was.
+
+  THE CATEGORY MOVE IS WO-3.5's ACCEPTANCE LINE 8, and it is a box of its own because it is the one
+  that can be got wrong while every other grade check passes: the weights do not move, the scores do
+  not move, and the displayed grade has to change anyway because the column now counts at a different
+  weight. WO-3.3 built the move and could not show it; this is where it shows. `points` is the loudest
+  of the rest — one keystroke in that field changes every grade in the class — and rename, due date,
+  reorder, duplicate and delete are all the same staleness in a quieter register.
+
+  NOT afterClassChange() AND NOT afterCategoryChange(). Nothing here changes which classes exist,
+  their order, which one is open, or a category — so the cards, the class bar and the class-manager
+  row have nothing to redraw, and afterClassChange() would also decide where the teacher should be
+  standing, which is not a thing renaming an assignment should do.
+
+  renderScores() rather than a narrower paint, for the reason afterCategoryChange() gives one function
+  up: a delete takes a whole column away and a create adds one, which is structure rather than figures,
+  and the narrower paint would leave a column of live inputs for work that no longer exists. Nothing is
+  being typed on the grid while these run — every one of them is a control inside a modal over it.
+*/
+function afterAssignmentChange() {
+  if (views.currentView() === 'scores') scores.renderScores();
+}
+
+/*
+  THE LETTER SCALE CHANGED, AND THE SCREEN THAT PRINTS A LETTER REDRAWN (WO-3.5).
+
+  This is the chain the letter-grade block below promised: "the day a screen shows a letter (WO-3.5),
+  it adds its line to a chain here, exactly as the categories did." That day is this one. The score
+  grid prints a band under every percentage, the editor is a modal over whatever screen was up, and a
+  teacher who moves the A boundary from 90 to 89.5 while the grid is behind the panel would otherwise
+  close it onto a column of letters computed against the old bands.
+
+  ONE BRANCH AND NOT THREE, because nothing else in the app draws a letter yet: no card, no row badge,
+  no header. WO-3.7's per-student detail adds the second one.
+
+  renderScores() rather than a narrower paint, and that is src/scores.js's own decision rather than a
+  choice made here: it exposes one paint for outside callers on purpose, because the two inside it
+  differ by whether they may touch an <input> and a caller that had to choose would eventually choose
+  wrong. Nothing is being typed while this panel is open — the editor is a modal over the grid — so the
+  wide paint costs nothing that can be felt.
+*/
+function afterLetterScaleChange() {
+  if (views.currentView() === 'scores') scores.renderScores();
 }
 
 /*
@@ -396,15 +483,22 @@ function afterCategoryChange() {
   one long argument about paint cost; WO-2.13 exists because the totals were folded once per student).
 
   AND NOTHING AT ALL FROM THE CLASS GRID. The nav is drawn there too, but the cards are today's
-  attendance and no card reads a term — so `class` and `assignments` are named rather than left to an
+  attendance and no card reads a term — so the three class screens are named rather than left to an
   else, and a view that does not ask the question is not repainted for the answer.
 
   NOT paintClassScreen(): that maps a view to its whole-screen paint, which is what entering a screen
   needs and what a term change is one line short of. Two callers, two questions.
+
+  THE SCORE GRID IS THE WIDE PAINT (WO-3.5), like the assignment list and unlike the registry: a term
+  change replaces every column on it, because a column IS an assignment and assignments belong to one
+  term. It is the third screen this chain's own comment predicted, and it is the one where forgetting
+  the line would put Quarter 1's scores under a header saying Quarter 2, one keystroke from being
+  overwritten.
 */
 function afterTermChange() {
   const view = views.currentView();
   if (view === 'assignments') assignments.renderAssignments();
+  else if (view === 'scores') scores.renderScores();
   else if (view === 'class') attendance.paintRenderedTotals();
 }
 
@@ -715,12 +809,17 @@ document.addEventListener('click', (e) => {
   }
 
   /* ── letter grades (WO-3.2) ──
-     Directly under the categories, because these are the same act: setting the year up. Eight hooks
-     and NOT ONE OF THEM CHAINS A REPAINT, which is a deliberate absence rather than a forgotten
-     line. afterCategoryChange() exists because the class-manager row prints the weights total, so a
-     panel over it leaves that row stale; nothing on any screen behind this panel says anything about
-     the letter scale — no row badge, no card, no header — so there is nothing to redraw. The day a
-     screen shows a letter (WO-3.5), it adds its line to a chain here, exactly as the categories did.
+     Directly under the categories, because these are the same act: setting the year up. Every hook
+     that can change a BAND now chains afterLetterScaleChange(), and that is WO-3.5 paying the debt
+     this block's own comment recorded: "the day a screen shows a letter (WO-3.5), it adds its line to
+     a chain here, exactly as the categories did." Until then there was nothing behind this panel that
+     said anything about the scale — no row badge, no card, no header — and the absence of a chain was
+     correct. The score grid prints a band under every percentage, so a teacher who moves the A
+     boundary from 90 to 89.5 with the grid behind the panel would otherwise close it onto a column of
+     letters computed against the bands she has just replaced.
+
+     The door and the subject row are NOT chained, and that is the same distinction the categories
+     block makes: opening the panel and choosing whose scale you are looking at change no band.
 
      The editor is opened with no class: the door is a document-level control, and a panel that
      remembered the class it was last on would open showing one class's bands to a teacher who asked
@@ -733,23 +832,36 @@ document.addEventListener('click', (e) => {
     letterScale.selectScaleSubject(scaleSubject.getAttribute('data-scale-subject'));
     return;
   }
+  /* An override arriving or leaving swaps which scale a class is banded by, which is every letter in
+     that class changing at once — the loudest of the six. */
   const overrideOn = e.target.closest('[data-scale-override-on]');
   if (overrideOn) {
-    letterScale.enableOverride(overrideOn.getAttribute('data-scale-override-on')); return;
+    letterScale.enableOverride(overrideOn.getAttribute('data-scale-override-on'));
+    afterLetterScaleChange(); return;
   }
   const overrideOff = e.target.closest('[data-scale-override-off]');
   if (overrideOff) {
-    letterScale.disableOverride(overrideOff.getAttribute('data-scale-override-off')); return;
+    letterScale.disableOverride(overrideOff.getAttribute('data-scale-override-off'));
+    afterLetterScaleChange(); return;
   }
-  if (e.target.closest('[data-band-add]')) { letterScale.addBand(); return; }
+  if (e.target.closest('[data-band-add]')) { letterScale.addBand(); afterLetterScaleChange(); return; }
   const bandUp = e.target.closest('[data-band-move-up]');
-  if (bandUp) { letterScale.moveBandUp(bandUp.getAttribute('data-band-move-up')); return; }
+  if (bandUp) {
+    letterScale.moveBandUp(bandUp.getAttribute('data-band-move-up'));
+    afterLetterScaleChange(); return;
+  }
   const bandDown = e.target.closest('[data-band-move-down]');
-  if (bandDown) { letterScale.moveBandDown(bandDown.getAttribute('data-band-move-down')); return; }
+  if (bandDown) {
+    letterScale.moveBandDown(bandDown.getAttribute('data-band-move-down'));
+    afterLetterScaleChange(); return;
+  }
   const bandRemove = e.target.closest('[data-band-remove]');
-  if (bandRemove) { letterScale.removeBand(bandRemove.getAttribute('data-band-remove')); return; }
+  if (bandRemove) {
+    letterScale.removeBand(bandRemove.getAttribute('data-band-remove'));
+    afterLetterScaleChange(); return;
+  }
 
-  /* ── assignments (WO-3.3) ──
+  /* ── assignments (WO-3.3, and the chain since WO-3.5) ──
      Under the two setup panels because that is the order a class is built in: what it is graded
      on, what the letters mean, then the work itself. None of the eleven below chains
      afterClassChange() or afterCategoryChange() — nothing here changes which classes exist, their
@@ -757,10 +869,15 @@ document.addEventListener('click', (e) => {
      every write, exactly as src/attendance.js does. The one thing behind this screen that could go
      stale is the class-manager row, and no hook here touches a class.
 
+     THE ONES THAT WRITE NOW CHAIN afterAssignmentChange(), which is the SECOND screen an assignment
+     is drawn on: the score grid, where it is a column and a divisor rather than a row. The openers
+     and the two cancels deliberately do not — they change what is in a dialog, not what is in the
+     year — and neither do the copy dialog's pickers, which move a proposal.
+
      The opener is passed to all four that open a dialog: src/modal.js needs somewhere to hand
      focus back to, and Safari does not focus a button when you tap it. */
   const assignmentNew = e.target.closest('[data-assignment-new]');
-  if (assignmentNew) { assignments.createAssignment(assignmentNew); return; }
+  if (assignmentNew) { assignments.createAssignment(assignmentNew); afterAssignmentChange(); return; }
   const assignmentEdit = e.target.closest('[data-assignment-edit]');
   if (assignmentEdit) {
     assignments.openAssignmentEditor(assignmentEdit.getAttribute('data-assignment-edit'),
@@ -769,11 +886,13 @@ document.addEventListener('click', (e) => {
   }
   const assignmentUp = e.target.closest('[data-assignment-move-up]');
   if (assignmentUp) {
-    assignments.moveAssignmentUp(assignmentUp.getAttribute('data-assignment-move-up')); return;
+    assignments.moveAssignmentUp(assignmentUp.getAttribute('data-assignment-move-up'));
+    afterAssignmentChange(); return;
   }
   const assignmentDown = e.target.closest('[data-assignment-move-down]');
   if (assignmentDown) {
-    assignments.moveAssignmentDown(assignmentDown.getAttribute('data-assignment-move-down')); return;
+    assignments.moveAssignmentDown(assignmentDown.getAttribute('data-assignment-move-down'));
+    afterAssignmentChange(); return;
   }
   const assignmentCopy = e.target.closest('[data-assignment-duplicate]');
   if (assignmentCopy) {
@@ -785,7 +904,13 @@ document.addEventListener('click', (e) => {
   if (copyClass) {
     assignments.setCopyClass(copyClass.getAttribute('data-assignment-copy-class')); return;
   }
-  if (e.target.closest('[data-assignment-copy-confirm]')) { assignments.confirmCopy(); return; }
+  /* The copy lands in whichever class the dialog names, which may be the one on screen — so the
+     grid behind it gains a column for it, and this is the one hook in the block whose write may
+     also land somewhere the teacher is not looking. The chain asks which view is up rather than
+     which class was chosen, which answers both cases with one line. */
+  if (e.target.closest('[data-assignment-copy-confirm]')) {
+    assignments.confirmCopy(); afterAssignmentChange(); return;
+  }
   if (e.target.closest('[data-assignment-copy-cancel]')) { assignments.cancelCopy(); return; }
   /* One hook and two doors — the row's own Delete and the Delete… inside the editor, which carries
      no value and means "the one this editor is open for". Two controls, one route, the same shape
@@ -797,11 +922,24 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-assignment-delete-confirm]')) {
-    assignments.confirmAssignmentDelete(); return;
+    assignments.confirmAssignmentDelete(); afterAssignmentChange(); return;
   }
   if (e.target.closest('[data-assignment-delete-cancel]')) {
     assignments.cancelAssignmentDelete(); return;
   }
+
+  /* ── the score grid (WO-3.5) ──
+     Two hooks, and neither of them chains anything: src/scores.js repaints its own screen after every
+     write, exactly as src/attendance.js and src/assignments.js do, and nothing behind this screen goes
+     stale for a score — the class-manager row prints a weights total, the cards print today's
+     attendance, and no card or row prints a grade.
+
+     The flag bar is a TOUCH path for keys that cannot be typed: a score cell asks iPadOS for a decimal
+     keypad and a decimal keypad has no letters on it, so L, M and X are unreachable on the device this
+     screen is measured on. The value on the button is the flag; src/scores.js refuses anything else. */
+  const scoreFlag = e.target.closest('[data-score-flag]');
+  if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
+  if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
 
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
@@ -1090,6 +1228,29 @@ const KEYS_MODAL = 'attendanceKeysModal';
 document.addEventListener('keydown', (e) => {
   if (e.altKey || e.ctrlKey || e.metaKey) return;
   if (anyModalOpen()) return;
+
+  /*
+    THE SCORE GRID'S KEYS (WO-3.5), AND THEY HAVE TO BE READ BEFORE THE GUARDS BELOW, NOT AFTER.
+
+    Three of those five guards would each swallow this screen whole: it is not the `class` view, its
+    focus is always inside an INPUT, and that is not an accident of layout — the cells ARE inputs,
+    which is what makes 25 scores 25 keystroke-groups. So the branch is scoped by the element instead
+    of by the view: a `keydown` whose target carries `data-score-cell` is a key pressed in a score
+    cell, and nothing else in the app can be.
+
+    src/scores.js decides what each key means and answers whether it used the key, so a key it could
+    not use goes back to the browser — the same contract markSelected() has below, and the reason
+    type-ahead, find-in-page and every browser shortcut still work on this screen. `Esc` is the one
+    that matters: it is NOT in that module's list, so it falls through here, reaches src/modal.js's own
+    handler, finds no modal open and does nothing at all. That is WO-3.5's seventh acceptance line,
+    kept by there being no code rather than by code.
+  */
+  const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
+  if (scoreCell) {
+    if (scores.handleScoreKey(e.key, scoreCell)) e.preventDefault();
+    return;
+  }
+
   if (views.currentView() !== 'class') return;
   const active = document.activeElement;
   const tag = active ? active.tagName : '';
@@ -1150,9 +1311,27 @@ document.addEventListener('input', (e) => {
      debounce. The list behind the dialog is redrawn per keystroke and the FIELD is not — see
      src/assignments.js, where replacing the input under the caret is the failure that rule exists
      for. `points` stores exactly what was typed, including 0, which is this app's extra-credit
-     mechanism rather than a value to be caught (docs/data-model.md § Extra credit). */
+     mechanism rather than a value to be caught (docs/data-model.md § Extra credit).
+
+     The chain runs per keystroke on purpose, for the reason the category field two hooks up gives:
+     `points` is the denominator of every cell in that column, so a teacher who corrects 20 to 25
+     with the score grid behind the dialog is watching every grade in the class move — and a figure
+     that lags the field it is computed from is worse than no figure. */
   const assignmentField = e.target.closest('[data-assignment-field]');
-  if (assignmentField) { assignments.editAssignmentField(assignmentField); return; }
+  if (assignmentField) {
+    assignments.editAssignmentField(assignmentField); afterAssignmentChange(); return;
+  }
+
+  /* A SCORE, SAVED AS IT IS TYPED (WO-3.5), and this is the busiest hook in the app: a teacher enters
+     a column of twenty-five, so it fires a few hundred times in a sitting and the store's debounce is
+     what turns that into a handful of writes (src/store.js). `input` rather than `change`, for the
+     reason every field above uses it — `change` waits for a blur, and the grade beside the name is
+     what the teacher is watching while she types the number.
+
+     No chain: src/scores.js repaints its own grade column and summary, and it deliberately does not
+     touch the field, because replacing the input under the caret is the failure that rule exists for. */
+  const scoreCell = e.target.closest('[data-score-cell]');
+  if (scoreCell) { scores.editScore(scoreCell); return; }
 
   /* The copy's name, which writes NOTHING to the document: a duplicate is a proposal until the
      button that names the class it lands in. */
@@ -1235,20 +1414,51 @@ document.addEventListener('change', (e) => {
   if (kind) roster.editAccommodationKind(kind);
   /* An assignment's dates, which is the same iPadOS quirk on a fourth pair of fields —
      src/assignments.js points at the long version rather than repeating it. Same element the
-     `input` listener above already saved; this hook exists for the cleared value. */
+     `input` listener above already saved; this hook exists for the cleared value. The chain runs
+     for the same reason it does there: a due date is printed on the column head of the score grid,
+     and a cleared one has to leave it. */
   const assignmentDate = e.target.closest('[data-assignment-field]');
-  if (assignmentDate) assignments.assignmentDateCommitted(assignmentDate);
+  if (assignmentDate) { assignments.assignmentDateCommitted(assignmentDate); afterAssignmentChange(); }
   /* Which category an assignment counts in, read HERE and not in the `input` listener above, for
      the reason `data-support-kind` is: a <select> commits on `change`, and hooking both would write
      the same value twice and move `rev` twice for one tap. It carries its own hook so that the
-     other listener cannot see it at all. */
+     other listener cannot see it at all.
+
+     THIS IS WO-3.5's ACCEPTANCE LINE 8 — the one the chain exists for, and the one the box was
+     written separately to hold. WO-3.3 built the move and had no screen that could show it; the
+     grid is that screen, and one tap on this <select> has to change the weight the column counts at
+     and every grade beside every name, on the keystroke. The weights have not moved and no score
+     has moved, which is exactly why walking the weights across 100 could never have discharged it. */
   const assignmentCategory = e.target.closest('[data-assignment-category]');
-  if (assignmentCategory) assignments.setAssignmentCategory(assignmentCategory);
+  if (assignmentCategory) {
+    assignments.setAssignmentCategory(assignmentCategory); afterAssignmentChange();
+  }
   /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);
   const copyCategory = e.target.closest('[data-assignment-copy-category]');
   if (copyCategory) assignments.setCopyCategory(copyCategory);
+});
+
+/*
+  WHICH SCORE CELL THE FLAG BAR ACTS ON (WO-3.5) — the sixth event type this file listens for, and the
+  only one whose reason is a browser difference rather than a feature.
+
+  The four flag buttons say "the cell you are in", and by the time one of their clicks arrives the cell
+  is no longer the active element: Safari does not focus a button when you tap it (src/modal.js's
+  header records the same divergence for the opposite reason), so `document.activeElement` is <body> on
+  the iPad and the button on a laptop. Neither is the answer. So the CELL says when it is entered and
+  src/scores.js remembers two ids.
+
+  `focusin` rather than `focus`, because `focus` does not bubble and there are two hundred cells to
+  attach to otherwise — which would also mean re-attaching on every render.
+
+  It is scoped to the hook and nothing else: no other element in the app carries `data-score-cell`, so
+  this listener is inert on every screen but one.
+*/
+document.addEventListener('focusin', (e) => {
+  const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
+  if (scoreCell) scores.noteFocusedCell(scoreCell);
 });
 
 /*
@@ -1470,6 +1680,14 @@ window.planbook = {
      detail open stays off the strip. Nothing in the app reads window.planbook — see the block above
      for why the seam outlived the shelf. */
   assignments, screenNav,
+  /* `scores` joined at WO-3.5, and for the reading reason `classes` gives rather than a driving one:
+     every control this screen has is an input, a button or a segment a teacher can touch. What no
+     click can show is the SHAPE of what a keystroke wrote — acceptance line 4 is that clearing a cell
+     removes the key entirely rather than storing `{ v: null }` with no flag, and a cleared cell and a
+     cell holding a null look identical on screen and grade identically too. So the harness types
+     through the real field and then reads `scores` off the document to tell the two apart. Nothing in
+     the app reads window.planbook — see the block above for why the seam outlived the shelf. */
+  scores,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

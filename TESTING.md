@@ -2153,7 +2153,10 @@ work order before anything rounds.*
 - [x] One tap on the strip's *Assignments* segment gets there from the registry, and one tap back
       returns; the class manager is never involved.
 - [x] The strip carries **three** segments — Attendance · Assignments · Scores — on both class
-      screens, with no fourth and no student among them. *Scores* is drawn disabled and says why.
+      screens, with no fourth and no student among them. *(As shipped at WO-3.3, *Scores* was drawn
+      disabled and said why, because its view did not exist. WO-3.5 built the view and the segment
+      became live — reworded 2026-08-10 at that work order's correction round 1, where the segment was
+      found still disabled and the check that would have said so was asserting the disabling.)*
 - [x] The strip sits on the white panel under the title, not in the navy header.
 - [x] An empty list says so in words, naming the class and the term, with no table drawn.
 - [x] A new assignment arrives with **both dates empty** — in the document and on both fields — and
@@ -2295,6 +2298,153 @@ assignment — now has real assignments to count.** The desk half is measured he
 of "9 assignments and 214 scores" against work a teacher actually created was done the same day** —
 the box under WO-3.1 is ticked. The counted branch was unreachable before this work order for a reason
 worth keeping: a category with nothing filed under it is removed with no dialog at all.*
+
+### WO-3.5 — The score entry grid
+
+- [x] The grid is a **view** in `<main>` — a sibling of the class grid, the registry and the
+      assignment list, toggled by `.hidden` — with no `role="dialog"`, no `aria-modal`, and no
+      overlay open behind it. `.modal-panel` is 480px; this takes the full `.main`.
+- [x] The strip's *Scores* segment is live, carries `data-class-screen="scores"`, and one tap on it
+      from the registry lands on the grid. *(This is the defect correction round 1 was called for: the
+      view shipped with that segment still disabled, so nothing — not a teacher, not the harness —
+      could reach it. `index.html` asserted that `src/screen-nav.js` needed no change for it and that
+      file had never been opened. `enabled` is now the question `isView()` that file's header always
+      said it was.)*
+- [x] Entering 25 scores down one column takes **25 keystroke-groups and no mouse** — the mouse
+      events fired between the first cell and the last are counted, not assumed, and the count is 0.
+- [x] The 25 scores land on the students in the order the grid **draws**, not the order the roster
+      stores. The fixture's roster is deliberately the exact reverse of the drawn order, and every
+      score in the column is a different number, so a build that wrote against the roster would put
+      twenty-five marks on the wrong twenty-five students and look fine doing it.
+- [x] `Enter` at the bottom of a column clamps rather than wrapping: the caret stays in the last
+      cell, the value stays selected for overtyping, and the live region says *"that is the last
+      student. 25 of 25 entered."* — because a key that does nothing and says nothing reads as a key
+      that was not received.
+- [x] `Esc` pressed **twice** two thirds of the way down a column, with a freshly typed digit in the
+      field, closes nothing, navigates nowhere, opens no dialog, and leaves the caret and the digit
+      where they were. There is no `Esc` binding in `src/scores.js` at all; that is what makes it true.
+- [x] `late`, `missing` and `excused` are distinct **four** ways — the fill and the border read as
+      computed style rather than as class names, the corner glyph, and the accessible name — and a
+      blank cell wears none of the four. `missing` shows no number and placeholders `0`; `excused`
+      placeholders `Ex`.
+- [x] Clearing a cell **deletes the key**. Not `{ v: null }` with no flag — and when the last cell in
+      a column goes, the column's own key goes with it rather than leaving an empty object under an
+      assignment id. Asserted over the whole document, so a second writer added later cannot pass by
+      being somewhere else.
+- [x] The live grade is `docs/grade-math-cases.md` **case 1 to the digit** — 87.0% and a B, read off
+      the screen — and the engine, asked separately, answers 87 and B. A screen doing its own
+      arithmetic cannot pass by agreeing with itself.
+- [x] The grid is usable on an iPad in landscape. 👤 *(Owner, on the hardware, 2026-08-10. Acceptance line 6, and it is the one no
+      emulator can answer. What is measured at the desk is below.)*
+- [x] **Moving an assignment to another category moves every displayed grade in the class on the
+      keystroke** — all 25 of them, case 1's row 87.0% → 86.7%, the column head's chip from
+      *Tests 50%* to *Homework 20%*, with the score map and the weight list byte-identical either
+      side. *(Inherited from WO-3.3. This was the second defect of correction round 1: there was no
+      `afterAssignmentChange()` chain at all, so the engine moved and the screen did not.)*
+- [x] And moving it back restores every displayed grade, so the chain runs in both directions rather
+      than only on the way out.
+- [x] **No grade is shown at all while the weights do not total 100.** Every grade cell is a quiet em
+      dash, the class average is an em dash, the banner stands where the number would have been and
+      **names the total** — *"These weights add up to 90%, not 100%…"* — and the word *provisional*
+      appears on no figure. *(Inherited from WO-3.1. The word is searched for in the grade column, the
+      summary and the banner, deliberately not in the whole view: the standing hint under the grid
+      uses the word in order to tell the teacher it is never used.)*
+- [x] **The crossing works in both directions.** Typing the weight back to 50 brings all 25 grades
+      back on the keystroke, with the categories panel still open over the grid. *(Inherited from
+      WO-3.1, and the disappearing half was driven first, because that is the half a build can pass
+      while getting wrong.)*
+- [x] Nothing is blocked while the weights are wrong: every score field stays live behind the banner.
+- [x] Opening the grid never writes `scores` into `planbook_openView` — it holds `class`, on the way
+      **in**, which is `REMEMBERED_AS` rather than a read-side fix that would leave the wrong value
+      sitting in storage.
+- [x] The two frozen columns: the name column's declared width and the grade column's `left` offset
+      are one number in the base rules and one number again in the coarse block, and the two blocks
+      differ. With the grid scrolled sideways they stay pinned to its left edge and do not overlap —
+      on both pointers, 190px and 168px.
+- [x] Every control on the **open** grid measures ≥44px on an emulated coarse pointer: 259 of them,
+      250 of which are score cells, none under 44px in either direction.
+- [x] iPadOS offers a **decimal keypad** for a score cell — `type="text"` with `inputmode="decimal"`,
+      which is `design/mockups/README.md`'s open question 1 answered the way the drawing drew it, and
+      never put on the hardware. 👤 *(Owner, on the hardware, 2026-08-10, and the answer is not quite
+      the one this line asked for: what opens is the **full keyboard on its number pane**, not the
+      compact decimal keypad. The owner accepts it — the digits are under the thumb either way — so
+      this is ticked as adequate rather than as exact. Recorded because `design/mockups/README.md`'s
+      open question 1 now has a real answer, and it is "close enough on this hardware", not "yes".)*
+- [x] A 44px cell in a 96px column (104px on touch) is hittable under a thumb down a 25-row grid,
+      and the grid is not so tall that the frozen name column stops being enough. 👤 *(Owner, 2026-08-10.)*
+- [x] The frozen name and grade columns hold under **momentum scroll** on WebKit, sideways and
+      vertically, without shearing or flicker. 👤 *(Owner, 2026-08-10.)*
+- [x] The three flag fills and their corner glyphs are legible on a projector from the back of a
+      room, and none of them reads as an error. 👤 *(Owner, 2026-08-10.)*
+- [x] Offline launch with the network off, `scores.js` and `scores.css` served from the precache
+      (`planbook-shell-v40`). 👤 *(Owner, 2026-08-10.)*
+- [x] A term's worth of real grades re-keyed into the school's SIS against this screen, which is what
+      WO-3.2 left owed: **the letters have never been read beside a percentage by a human.** 👤
+      *(Owner, on real grades, 2026-08-10. The letters read right beside the percentages. One
+      mismatch found in the doing, and it is a precision difference rather than a wrong figure: the
+      school's SIS carries percentages to **two** decimal places and this screen shows **one**, so
+      re-keying is a rounding step done in the teacher's head at every row. Booked as WO-3.14 — not
+      a defect of this work order, which never specified a precision, but the field discovering what
+      the precision has to be.)*
+
+*The desk half is `verify-shell.mjs`, **554 of 554** with zero skips, 17 checks added in one new
+section and one existing check reworded. Four things about it are worth knowing.*
+
+***The whole standing 44px sweep had walked past this screen and reported green.*** *That sweep
+collects `button, input, …` across the page and skips anything computing to `display: none`;
+`.hidden` is `display: none !important`, and every view but the one on screen is `.hidden`. So ~250
+score inputs were never measured — and because of the disabled segment above, **nothing in that run
+could have opened the view to measure them.** That is the backup-nag escape again: a green run over a
+fixture that cannot express the failure. The new section opens the grid through the real segment
+first, and *"the grid is OPEN and drawn under the coarse pointer"* is a check of its own, because a
+sweep over nothing is exactly what this is closing.*
+
+***Every score is typed as keystrokes at the page.*** *Not `.value` plus a dispatched `input` — that
+would assert that `src/shell.js`'s listener works, which is not what the acceptance line says. The
+fixture itself (a class of 25, three categories, ten assignments, a per-class four-band scale) is
+planted through the store, because twenty minutes of clicking would prove nothing this file has not
+proved elsewhere; the **scores**, which are what this work order is about, are all keyboard.*
+
+***Seven of the ten assignments in the fixture are empty, and they change no grade.*** *An assignment
+with no cell for a student contributes 0/0. What they change is the **width** of the grid, which is
+the only way the two frozen columns can be tested at all: a three-column grid at 1200px does not
+scroll sideways, and a sticky check over a grid that cannot move is a check that cannot fail.*
+
+***The category-move check reads the screen, never the engine.*** *86.7% is hand-computed here —
+Quizzes keep 90% at 30, Homework becomes (80 + 10) / 110 = 81.81…% at 20, Tests empties and its 50
+redistributes — because an engine and a screen that agree with each other and disagree with the
+arithmetic is the failure this file exists to catch.*
+
+*Two mutations, both reverted — the two defects of correction round 1, re-introduced deliberately to
+prove the new checks are not decorative:*
+
+| Mutation | Result |
+|---|---|
+| `src/screen-nav.js` marks the *Scores* segment disabled again — the state WO-3.5 shipped in | **the run CRASHED**: `clickSel` found nothing to click and threw before a summary was printed. Fixed in the harness, not in the app — the door is now asked for before it is clicked, and a missing one is a red check plus an announced skip. This file's rule is that a missing fixture is a failed check and never a crash, and this section had broken it |
+| `afterAssignmentChange()` dropped from the category `<select>` hook in `src/shell.js` | **1 red** — *"0 of 25 displayed grades moved; case 1's row 87.0% → 87.0%; that column head now reads Tests 50%"*. Every other check in the section stayed green, which is the point: this is the one box only this claim can tick |
+
+*The first row is the more useful of the two, and it is not about the app at all. A negative control
+that takes the run down does not tell you the check works — it tells you nothing, because there is no
+summary to read. **The mutation found a defect in the check rather than in the code**, which is the
+only reason it is worth a row.*
+
+*`wo-sweep.mjs` is **15 checks, 13 passed, 0 failed, 2 to review**, and both REVIEWs were read and
+answered rather than silenced. The sensitive-field-name line now names `src/scores.js`; the hit is
+that file's own prose saying **no support data appears on this screen at all** — there is no indicator
+dot, no plan, nothing, which is the safest form of the discreet-by-default rule on a grid of names a
+teacher projects. The six selectors with no coarse-block rule — `.grade-none-text`, `.scores-panel`,
+`.scores-body`, `.scores-actions`, `.scores-grid-wrap`, `.scores-cell` — are a text span, four
+containers and an inline wrapper; not one is tappable, and the 21 real controls inside them are
+measured above.*
+
+*Three limits carried forward. **The six 👤 lines are owed to a sitting on the owner's own iPad**, and
+the decimal keypad is the one that could go either way — it is the drawing's answer to its own open
+question, and this build is committed to that shape rather than to having proved it. **The per-student
+detail is not here** (WO-3.7): tapping a name does nothing yet, which is why `setDetailBreadcrumb()`
+is still exercised only through the seam. **And paste-a-column is deliberately absent** — split to
+WO-3.13 on 2026-08-10 — so there is no clipboard handler, no preview and no alignment rule on this
+screen, and the sort control the drawing carries was not built with it, because the question that
+control is really about is that work order's.*
 
 ---
 

@@ -16,7 +16,7 @@ govern this whole phase, and both are about the teacher never being surprised:
 
 ## WO-3.1 — Categories & weights
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** WO-1.6 · **Owes** WO-3.5
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** S · **Depends on** WO-1.6
 **Closes roadmap** Phase 3 → "Weighted categories per class, editable, with a visible warning when
 weights ≠ 100%."
 
@@ -33,20 +33,30 @@ wrong at the start of a term.
 
 **Acceptance**
 - [x] Weights of 40/35/25 produce no warning; 40/35/20 warns and shows "95%".
-- [ ] ~~The app still computes a grade while weights are wrong, and says the grade is provisional.~~
+- [x] ~~The app still computes a grade while weights are wrong, and says the grade is provisional.~~
       **Superseded 2026-08-09 by the owner:** *there is no grade at all until the weights total 100.*
       The replacement line is the first inherited box on **WO-3.5**, the first screen with somewhere
       to not-show a grade. This line's own claim no longer exists and its replacement is gated by a
-      box elsewhere, so it stays open here and points there:
-      → WO-3.5 "No grade is shown while the weights are wrong, and the screen says why"
+      box elsewhere, so it stayed open here and pointed there:
+      `→ WO-3.5 "No grade is shown while the weights are wrong, and the screen says why"`
+      **Discharged 2026-08-10**, at WO-3.5's correction round 1: every grade cell on the score grid
+      is a quiet em dash while the weights come to 90, the banner stands where the number was and
+      names that total, and *provisional* appears on no figure — driven in
+      `tools/verify-shell.mjs` § "the score entry grid (WO-3.5)". The pointer above is kept in
+      backticks, which this tracker reads as prose about a marker rather than a live one, so the
+      record of where the debt was paid survives the ticking of it.
 - [x] Two classes carry different category sets without interference.
-- [ ] Reweighting recomputes every displayed grade in that class immediately — **including the
+- [x] Reweighting recomputes every displayed grade in that class immediately — **including the
       crossing in both directions:** grades appear when the weights reach 100 and disappear when
       they leave it. Nothing in the app displayed a grade while WO-3.1 was open, so there was never
       a build this could be run against. The half that had a consumer — the total and the verdict
       recomputing as a weight is typed, on the banner and the class-manager row — is driven and
-      measured in `tools/verify-shell.mjs`; the displayed-grade half is owed by
-      → WO-3.5 "Reweighting recomputes every displayed grade in that class immediately"
+      measured in `tools/verify-shell.mjs`; the displayed-grade half was owed by
+      `→ WO-3.5 "Reweighting recomputes every displayed grade in that class immediately"`
+      **Discharged 2026-08-10**, at WO-3.5's correction round 1, and in the direction the line warns
+      about first: the weight is typed off 100 with the score grid behind the panel and all 25 grades
+      go, then typed back and all 25 return on the keystroke. Backticked above for the reason the
+      second box gives.
 
 **Two lines are owed, and they are boxes on WO-3.5 rather than prose here.** *(Left open 2026-08-09 at
 the end of WO-3.1's build; re-homed and this work order ticked the same day, once it was clear the debt
@@ -68,6 +78,15 @@ the class-manager row behind it — is driven and measured in `tools/verify-shel
 
 **The follow-up:** when WO-3.5 renders a grade, it reads `isProvisional()` for the class and decides
 whether there is a grade to draw at all; ticking lines 2 and 4 belongs to that work order's own pass.
+
+**The tick on lines 2 and 4, and who made it.** *(2026-08-10.)* `tools/wo-gate.mjs:299` says that
+discharging a `→ WO-x.y` pointer and taking the **Owes** field off "is a human's edit" — the tool
+refuses it deliberately, because the tick asserts *someone has seen the evidence that this debt was
+paid*. **An agent made that edit here**, at the end of WO-3.5, and the verifier ruled the substance
+correct on evidence it produced itself rather than on the implementer's word. **The owner ratified it
+on 2026-08-10**, with the alternative on the table: revert all three boxes, restore both **Owes**
+fields and rule by hand. Recorded because the rule is about *who asserted it*, and reading the ticks
+alone would not tell you.
 
 **How those two lines are written, and why they are not ☑** *(2026-08-09, WO-3.11)* — they were `- [x]`
 for a day, each with a paragraph under it explaining that ☑ meant *resolved on this work order, not
@@ -155,7 +174,7 @@ functions over a document, a class and a scale, exported for exactly that consum
 
 ## WO-3.3 — Assignments
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.5, WO-3.7
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.7
 **Closes roadmap** Phase 3 → "Assignments: name, points, category, assigned date, due date."
 
 **Why it exists.** The assignment list is the spine of the gradebook and of Phase 6's calendar,
@@ -193,11 +212,15 @@ which reads due dates rather than storing copies of them.
       `docs/grade-math-cases.md`, driven by the harness through `window.planbook.gradeEngine`:
       13 + 5 earned over 20 + 0 possible is 90%, and the category is not divided per assignment, so
       there is no division by zero either way.
-- [ ] An assignment can be moved between categories and the grade updates. **The move is built and
+- [x] An assignment can be moved between categories and the grade updates. **The move is built and
       verified** — one `<select>` in the editor, the row redraws under its new group head, and the
       score column follows byte for byte because `scores` is keyed by assignment. The displayed
-      grade does not exist until the grid draws one, so that half is owed by
-      → WO-3.5 "Moving an assignment to another category updates every displayed grade in that class"
+      grade does not exist until the grid draws one, so that half was owed by
+      `→ WO-3.5 "Moving an assignment to another category updates every displayed grade in that class"`
+      **Discharged 2026-08-10**, at WO-3.5's correction round 1 — where it was found NOT to work:
+      there was no `afterAssignmentChange()` chain at all, so the engine moved and the screen did
+      not. With the chain in, one tap on that `<select>` moves all 25 displayed grades and the column
+      head's chip with them. Backticked above so the pointer survives the tick that answers it.
 - [x] Duplicating into another class produces a new assignment with no scores attached.
 - [x] No date field auto-populates from anything schedule-shaped.
 - [x] The list is a view in `<main>`, not a dialog, and the class's screens are switchable without
@@ -321,7 +344,7 @@ wrong.
 
 ## WO-3.5 — Score entry grid
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-3.3, WO-3.4
+**Ship** 2 · **Status** ✅ DONE — 2026-08-10 · **Size** L · **Depends on** WO-3.3, WO-3.4
 **Closes roadmap** Phase 3 → "Score entry grid" and "`late` and `missing` are marked, never
 inferred."
 
@@ -355,22 +378,24 @@ the keyboard path, the flags, the live grades, the touch path and the three inhe
 what makes it L, and none of them moved.
 
 **Acceptance**
-- [ ] Entering 25 scores down a column takes 25 keystroke-groups and no mouse.
-- [ ] `Enter` at the bottom of a column does something sensible and predictable.
-- [ ] A cell flagged `missing` is visually distinct from `excused` and from blank.
-- [ ] Clearing a cell removes the key entirely rather than storing `{ v: null }` with no flag.
-- [ ] Grades recompute live and match WO-3.4's hand-computed values.
-- [ ] The grid is usable on an iPad in landscape.
-- [ ] `Esc` mid-column does not close the screen or lose the teacher's place, because there is no
+- [x] Entering 25 scores down a column takes 25 keystroke-groups and no mouse.
+- [x] `Enter` at the bottom of a column does something sensible and predictable.
+- [x] A cell flagged `missing` is visually distinct from `excused` and from blank.
+- [x] Clearing a cell removes the key entirely rather than storing `{ v: null }` with no flag.
+- [x] Grades recompute live and match WO-3.4's hand-computed values.
+- [x] The grid is usable on an iPad in landscape. *(Owner, on the hardware, 2026-08-10. Four things
+      came out of the same sitting and are booked rather than folded in here: WO-3.14, WO-3.15,
+      WO-3.16, WO-3.17.)*
+- [x] `Esc` mid-column does not close the screen or lose the teacher's place, because there is no
       dialog to close. Prove it by pressing it, not by arguing the screen is a view.
-- [ ] **Moving an assignment to another category updates every displayed grade in that class
+- [x] **Moving an assignment to another category updates every displayed grade in that class
       immediately** — the two categories it leaves and joins, and the overall grade with them.
       *(Inherited from WO-3.3.)*
-- [ ] **No grade is shown while the weights are wrong, and the screen says why** — the number's
+- [x] **No grade is shown while the weights are wrong, and the screen says why** — the number's
       absence and the total that caused it, not a figure with a "provisional" label on it. This is the
       owner's 2026-08-09 rule, which superseded WO-3.1's original line mid-build: *there is no grade at
       all until the weights total 100.* *(Inherited from WO-3.1.)*
-- [ ] **Reweighting recomputes every displayed grade in that class immediately, and the crossing works
+- [x] **Reweighting recomputes every displayed grade in that class immediately, and the crossing works
       in both directions** — grades appear when the weights reach 100 and disappear when they leave it.
       The disappearing half is the one a build can pass while getting wrong. *(Inherited from WO-3.1.)*
 
@@ -799,3 +824,175 @@ chose to give, and inventing one is the same class of harm as scoring a blank. R
 it, and let her fix the source. **And do not reach for the roster importer's field-mapping UI**: that
 screen exists because a roster paste has columns whose meaning is ambiguous. A score column has one
 meaning, and the mapping step would be ceremony over the top of it.
+
+## WO-3.14 — percentages to two decimal places
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Closes roadmap** *(no box.)*
+
+**Booked 2026-08-10 from WO-3.5's SIS re-keying box**, the first time a human read this app's
+percentages beside the school's. They do not match in precision: **the SIS carries two decimal places
+and this screen shows one.** Nothing is wrong on either side — WO-3.5 never specified a precision, and
+`src/scores.js:256` picked `toFixed(1)` reasonably — but the mismatch lands on the teacher as a
+rounding step done in her head at every row of a class of twenty-five, while re-keying, which is
+exactly where a transcription error costs a student a grade.
+
+**Why it exists.** The re-keying tax is the one this app cannot remove (the SIS has no import), so the
+one thing it can do is make the number on this screen the number that goes in the box. A percentage
+the teacher has to convert is worse than no percentage at all, because converting is silent and looks
+like reading.
+
+**Deliverables**
+- **`formatPercent()` at `src/scores.js:256` carries two decimals.** One function, so the grade
+  column, the class average and the summary all move together or none of them do.
+- **Every other surface that shows a percentage is found and ruled on explicitly** — the per-student
+  detail, the class average, anything WO-3.7 has since added. Either it moves to two decimals or the
+  work order says in a sentence why that surface differs. **A grid at two decimals beside a summary at
+  one is worse than the mismatch this is fixing.**
+- **The attendance percentage is out of scope and stays as it is.** It is not re-keyed into anything.
+
+**Out of scope** — a configurable precision. It is one teacher, one SIS, and a preference here is a
+setting to maintain forever in exchange for a decision that can be made once.
+
+**Acceptance**
+- [ ] `docs/grade-math-cases.md` case 1 reads `87.00%` on the grid, not `87.0%`, and the letter beside
+      it is unchanged.
+- [ ] A grade that is not exact — case 1's 86.666… after the category move — reads to two decimals and
+      is **rounded, not truncated**.
+- [ ] The class average, the grade column and the per-student detail agree to the same precision,
+      asserted together in one check rather than three.
+- [ ] 👤 One row re-keyed into the real SIS with no mental arithmetic between screen and box.
+
+## WO-3.15 — a way to add an assignment from the score grid
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Closes roadmap** *(no box.)*
+
+**Booked 2026-08-10 from the owner's first sitting with the grid.** The grid is where a teacher stands
+when she discovers she needs a column that does not exist yet — the quiz she just gave. Today that is
+*Scores → Assignments → New → back to Scores*, four navigations to reach a button that could be here.
+
+**Why it exists.** It is the same argument the *Scores* segment itself won: the screen a teacher is
+standing on should be able to do the thing she is standing there to do. Nothing about it is new
+behaviour — `data-assignment-new` at `index.html:764` already creates an assignment in the open class
+and term and opens the editor on it, and `src/shell.js:879` already routes it. **This is a button, not
+a feature**, and the work order is small because the machinery it needs is built.
+
+**Deliverables**
+- **The existing `data-assignment-new` hook, worn on the score grid**, in `#scoresActions` beside the
+  keys toggle. The same hook and the same handler — a second creator here would be a second set of
+  rules for what a new assignment is.
+- **The grid repaints with the new column in it** when the editor commits, through the chain WO-3.5's
+  correction round built (`afterAssignmentChange()`), and the caret lands somewhere sensible rather
+  than nowhere.
+- **The button reads as the same button** it is on the assignment list — lift the markup and the
+  class, do not re-derive a variant.
+
+**Out of scope** — creating an assignment inline in the grid header without the editor. The editor is
+where points, category and dates are set, and a column created without them is a column that has to be
+visited anyway.
+
+**Acceptance**
+- [ ] Tapping it on the grid opens the same editor the assignment list opens, on a new assignment in
+      the open class and term.
+- [ ] Committing it adds the column to the grid **without a manual repaint or a screen change**, and
+      the grade column is still correct beside it.
+- [ ] Cancelling it leaves no assignment behind and no empty column on the grid.
+- [ ] It measures ≥44px under the coarse pointer, inside the section that opens the view first —
+      `tools/verify-shell.mjs`'s WO-3.5 block, which exists because the standing sweep cannot see this
+      screen.
+- [ ] 👤 Reachable under a thumb on the iPad without covering the first score cell.
+
+## WO-3.16 — left and right arrows move across the grid
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Closes roadmap** *(no box.)*
+
+**Booked 2026-08-10 from the owner's first sitting with the grid.** `ArrowDown` and `ArrowUp` move
+between students in a column (`src/scores.js:926-927`). `ArrowLeft` and `ArrowRight` do nothing, so
+moving one assignment sideways is a reach for the pointer in the middle of a keyboard task.
+
+**Why it exists.** WO-3.5's first acceptance line is twenty-five scores in twenty-five keystroke-groups
+with no mouse, and it is satisfied **down** a column. A teacher entering one assignment for a class
+does exactly that; a teacher fixing a handful of cells across a row is back on the trackpad. The grid
+is two-dimensional and half its axes answer the keyboard.
+
+**Deliverables**
+- **`ArrowLeft` and `ArrowRight` move one assignment column, same student**, through the same
+  clamp-rather-than-wrap rule the vertical pair uses, with the same live-region sentence at the edge —
+  *"that is the last assignment"* — because a key that does nothing and says nothing reads as a key
+  that was not received. That symmetry is the deliverable; a different edge behaviour on the horizontal
+  axis is a bug that will read as a preference.
+- **The caret and selection behave as they do vertically**: the value in the arrived-at cell is
+  selected for overtyping.
+- **A cell mid-edit is not stranded.** Whatever `ArrowDown` does with a partly typed value, these do the
+  same thing, decided once in `handleScoreKey()` rather than twice.
+
+**The trap.** `ArrowLeft` and `ArrowRight` are **also how a caret moves inside a number the teacher is
+correcting.** Stealing them unconditionally makes it impossible to fix the middle digit of `100` without
+the pointer — a worse tax than the one this is removing. Decide the rule deliberately and write it
+down: the strong candidate is that the key moves cells only when the caret is already at the end of the
+value it is leaving (or the field is empty or fully selected), and edits the text otherwise. **The
+horizontal axis is not symmetric with the vertical one here, because up and down mean nothing to a
+caret in a one-line field and left and right mean everything.**
+
+**Out of scope** — Tab as a horizontal move. Tab is the browser's, and WO-3.5 chose `<main>` over a
+dialog partly so that Tab still reaches the rest of the screen.
+
+**Acceptance**
+- [ ] `ArrowRight` from a full cell moves one assignment right, same student, value selected.
+- [ ] `ArrowLeft` at the first assignment clamps, says so once, and moves nothing.
+- [ ] **With the caret mid-value, `ArrowLeft` moves the caret and not the cell** — driven with a real
+      keystroke at a partly corrected number, not reasoned about.
+- [ ] The vertical pair still behaves exactly as WO-3.5 shipped it; its checks stay green unchanged.
+- [ ] Twenty-five scores down a column is still twenty-five keystroke-groups and no mouse.
+
+## WO-3.17 — the Assigned and Due fields
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.3 · **Blocks** nothing
+**Closes roadmap** *(no box.)*
+
+**Booked 2026-08-10 from the owner's iPad sitting.** Two separate complaints about the same pair of
+controls in the assignment editor, kept in one work order because they are one dialog, one file and one
+testing sitting on the hardware.
+
+**Part one — they overlap and push off screen on the iPad.** Owner-observed on the device; not
+reproduced at the desk, which is the point. `.assign-field` already carries `min-width: 0` and
+`flex: 1 1 140px` (`src/assignments.css:216-218`), so the usual flex culprit is pre-empted and the
+likelier mechanism is **iOS Safari giving `<input type="date">` an intrinsic width it refuses to shrink
+below**, inside a 480px `.modal-panel`, with the coarse block's `min-height: 44px` and larger font
+making it worse rather than better. **Diagnose it on the hardware before changing a number** — a width
+tuned until it looks right at the desk is how this comes back.
+
+**Part two — both dates should offer today.** Today is the overwhelmingly common value for *Assigned*
+and a reasonable start for *Due*, and typing it on an iPad picker costs more than it should.
+
+**The rule this part contradicts, which the owner has overruled.** `index.html:806` tells the teacher in
+bold that **"Neither date fills itself in,"** and gives a reason: Planbook has no timetable and is not
+getting one, so there is no "next meeting" to guess at. That reason survives — **this is not a guess at
+a schedule, it is today's date, which is a fact.** But the sentence is now false and it is load-bearing
+prose in the hint the teacher reads. **Update it in the same commit**; a UI that contradicts its own
+printed promise is worse than either behaviour alone. Say what the app does now and keep the timetable
+half, which is still true and still worth saying.
+
+**Deliverables**
+- The two fields sized so that **both are fully visible and neither overlaps the other or the panel
+  edge** on the iPad in both orientations, with the fix made against the real mechanism.
+- Both dates **default to today on a newly created assignment**, editable to anything, and **empty stays
+  a legal value** — a date is not required and clearing one must not re-fill it.
+- **An assignment being edited is never touched.** The default is a creation-time default; opening an
+  existing assignment with a blank *Due* leaves it blank.
+- The hint at `index.html:806` rewritten to match, keeping its no-timetable reasoning.
+
+**Out of scope** — a due-date suggestion of any kind beyond today. That is WO-3.6's territory and it is
+the thing the no-timetable rule actually forbids.
+
+**Acceptance**
+- [ ] A newly created assignment opens with both dates on today's date, formatted as the field expects.
+- [ ] Clearing either date and committing stores it empty, and reopening shows it empty.
+- [ ] Editing an existing assignment with a blank date shows blank, not today.
+- [ ] The hint text no longer says the dates do not fill themselves in, and still says why there is no
+      next-meeting guess.
+- [ ] Both fields measure ≥44px under the coarse pointer and neither exceeds the panel width at the
+      narrowest supported width.
+- [ ] 👤 On the iPad, portrait and landscape: both fields fully visible, no overlap, nothing off screen.
