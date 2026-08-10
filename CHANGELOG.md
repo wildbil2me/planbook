@@ -417,9 +417,11 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   **Nothing mechanically guards any of this.** `wo-sweep.mjs` ignores `.claude`, so someone trimming
   these paragraphs for length would trip no check — and a check asserting the file contains the word
   *wait* would pass happily over a file rewritten to say the opposite. No app code changed; nothing
-  here is visible to a teacher. The last acceptance line cannot be checked at a desk and is
-  deliberately last: it closes when the next real dispatch produces a report that arrives when the
-  work does.
+  here is visible to a teacher. The last acceptance line could not be checked at a desk and was
+  deliberately last: it closed on the next real dispatch producing a report that arrived when the
+  work did. **That was WO-2.19, on 2026-08-10** — one line at dispatch, then the full graded report
+  31 minutes later, the report itself made of the verifier's own measurements, which is the content
+  the sixty-second WO-3.5 report had none of.
 
 - **WO-2.19 — the standing sweep now checks the harness's own size.** `tools/README.md` has recorded
   how many checks `verify-shell.mjs` runs since WO-1.3, maintained by whoever landed a work order
