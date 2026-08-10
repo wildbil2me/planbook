@@ -1910,6 +1910,50 @@ guard rather than by driving it.
 *No 👤 line, for the reason WO-2.17 gives above and one more: nothing here changes a pixel, so there
 is nothing on the iPad to look at that was not already owed by WO-2.17.*
 
+### WO-2.19 — The harness's own check count is checked
+
+**What this changes.** Nothing a teacher sees, and nothing `verify-shell.mjs` prints: `src/` and the
+harness itself are both byte-identical to HEAD. `tools/wo-sweep.mjs` gains a sixteenth check that
+counts `check()` call sites in `verify-shell.mjs` and compares them against a number recorded in
+`tools/README.md`, so the line that had gone stale three times (WO-1.5, WO-2.18, and again at WO-3.5)
+is now maintained by a grep rather than by remembering.
+
+- [x] `node --check tools/wo-sweep.mjs` passes, and `node tools/wo-sweep.mjs` is
+      `16 checks · 15 passed · 0 failed · 1 to review` — one more PASS line than the
+      `15 checks · 14 passed · 0 failed · 1 to review` it printed before, **no new REVIEW**, and the
+      standing sensitive-field-name REVIEW byte-identical at *"174 mention(s) in index.html,
+      src/attendance.js, src/home.js, src/letter-scale.js, src/prefs.js, src/presentation.js,
+      src/roster.js, src/scores.js, src/shell.css, src/shell.js, src/supports.js, sw.js"*.
+- [x] `node tools/verify-shell.mjs` is green at **554 checks · 554 passed · 0 failed · 0 skipped**,
+      none of them this work order's, and `git diff --stat src/ tools/verify-shell.mjs` is empty
+      afterwards. The line in `tools/README.md` had said 537 — WO-3.5's seventeen are counted in the
+      § WO-3.5 block above and never reached it, which is the third miss and this work order's subject.
+- [x] **The gap between the two numbers is structural, and the arithmetic that made it look like a
+      short list of branches is a coincidence.** Measured, not reasoned: a throwaway copy of the
+      harness with `new Error().stack` in `check()` reports that a green run fires **532 distinct call
+      sites**, that **10 of them fire more than once** (22 extra results — `:11557` runs ten times
+      across the note-panel matrix), and that **28 never fire at all** (all of them the failure arm of
+      a fixture guard, `if (!plant.ok) check(…, false, plant.why)`). 532 + 22 = 554 against 560 call
+      sites, and 28 − 22 = 6 is two unrelated corrections cancelling. The work order's *"four sites
+      that a run does not reach"* was the same arithmetic on an older tree. Recorded in
+      `tools/README.md` beside the count, with the reason.
+- [x] The sweep asserts **call sites**, `tools/README.md` says so in the sentence the check greps, and
+      the executed count sits beside it as prose — no check compares the two, and none passes on
+      "close". Making the grep agree with the run would mean running the run, which this file's own
+      header forbids.
+- [x] Two mutations, both reverted, `git diff --stat tools/verify-shell.mjs` empty afterwards and the
+      sweep green again at 560:
+
+      | Mutation | Result |
+      |---|---|
+      | a throwaway `check('WO-2.19 throwaway mutation, reverted', true, …)` added at `tools/verify-shell.mjs:13120`, `tools/README.md` untouched | **1 red**, and the sweep exits 1: *"tools/verify-shell.mjs has 561 `check()` call site(s), up 1 on the 560 recorded at tools/README.md:504"*. Correcting that one line to 561 with the throwaway still in turns it green again at 561 — the both-directions proof the Deliverable asks for |
+      | the throwaway removed with `tools/README.md` left at 561 — the *loses a check* direction | **1 red**, and the sweep exits 1: *"tools/verify-shell.mjs has 560 `check()` call site(s), down 1 on the 561 recorded at tools/README.md:504"*. A check that only noticed growth would have gone green here |
+
+*No 👤 line. Nothing here renders, and a grep over two files in `tools/` has no iPad half. The one
+thing a human still owes this line is the executed count itself: it comes off the summary line of a
+177-second run and no grep can hold it, which `tools/README.md` now says in as many words rather than
+leaving the next reader to infer that the two numbers are the same number.*
+
 ---
 
 ## Phase 3 — Gradebook

@@ -1634,7 +1634,7 @@ whole bug.
 
 ## WO-2.19 — the harness's own check count is checked
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `wo-sweep.mjs` and the
+**Ship** — · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** nothing — `wo-sweep.mjs` and the
 count line in `tools/README.md` both exist today · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15 and WO-2.18 made.)*
 
@@ -1693,16 +1693,27 @@ disagreement turns up that is a defect rather than a stale line, that is a findi
 work order.
 
 **Acceptance**
-- [ ] `node tools/wo-sweep.mjs` fails when `verify-shell.mjs` gains or loses a check and
+- [x] `node tools/wo-sweep.mjs` fails when `verify-shell.mjs` gains or loses a check and
       `tools/README.md` is not updated to match — run, not reasoned, with the output quoted both ways.
-- [ ] The number the sweep asserts is the number `tools/README.md` states it is, and the paragraph
+      *Both directions run and quoted in `TESTING.md` § WO-2.19: a throwaway call site added gives
+      `up 1 on the 560 recorded`, exit 1; the README corrected to 561 goes green; the throwaway then
+      removed with the README left at 561 gives `down 1 on the 561 recorded`, exit 1.*
+- [x] The number the sweep asserts is the number `tools/README.md` states it is, and the paragraph
       says which quantity it is counting — call sites or executed checks — rather than leaving a
-      reader to assume they are the same.
-- [ ] The four call sites a run does not reach are named in `tools/README.md` with their reason, or
-      the paragraph records why a fixed number cannot be stated.
-- [ ] `node tools/wo-sweep.mjs` otherwise prints the line it printed before — no new REVIEW, and the
-      standing sensitive-field-name REVIEW unchanged.
-- [ ] `node tools/verify-shell.mjs` passes whole and `src/` is byte-identical to HEAD.
+      reader to assume they are the same. *`tools/README.md:504` is the sentence the sweep greps, and
+      it says **call sites**; the executed count sits in the paragraph above it, labelled as such.*
+- [x] The four call sites a run does not reach are named in `tools/README.md` with their reason, or
+      the paragraph records why a fixed number cannot be stated. *It is not four and no fixed number
+      can be stated: measured, a green run leaves **28** call sites unfired and fires **10** others
+      more than once, and 28 − 22 = 6 is the arithmetic that looked like a short list. Both groups are
+      named with their shape and examples by `file:line`.*
+- [x] `node tools/wo-sweep.mjs` otherwise prints the line it printed before — no new REVIEW, and the
+      standing sensitive-field-name REVIEW unchanged. *`diff` of the whole run before and after is two
+      hunks: one added PASS line and `15 checks` → `16 checks`. The REVIEW block does not appear in the
+      diff at all.*
+- [x] `node tools/verify-shell.mjs` passes whole and `src/` is byte-identical to HEAD.
+      *`554 checks · 554 passed · 0 failed · 0 skipped`, exit 0, run after every edit;
+      `git diff --stat src/ tools/verify-shell.mjs` empty.*
 
 **Traps** — **Do not make the sweep run or import the harness.** Its own header is explicit: it opens
 no browser and drives nothing, and a sweep that shells out to a 160-second browser run stops being the
@@ -1717,7 +1728,7 @@ proving it: correcting the line by hand one more time is the ritual that has fai
 
 ## WO-2.20 — the orchestrator must not report a spawn as a run
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** nothing — `.claude/agents/` and
+**Ship** — · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** nothing — `.claude/agents/` and
 the dispatch status-file convention both exist today · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18 and WO-2.19
 made.)*
@@ -1784,9 +1795,18 @@ reader see through it.
       only way a claim is cleared.
 - [x] `work-order-verifier` and `work-order-implementer` are each read and either fixed the same way
       or ruled unaffected in one sentence saying why.
-- [ ] The next real dispatch after this lands produces a report that arrives when the work does.
+- [x] The next real dispatch after this lands produces a report that arrives when the work does.
       *(This is the only line that cannot be checked at the desk, and it is deliberately last: the
-      failure it names took a full dispatch to surface.)*
+      failure it names took a full dispatch to surface.)* **Closed 2026-08-10 by WO-2.19's dispatch**,
+      the next one after this landed at `e58858a`. One line at dispatch, then the full graded report
+      31 minutes later — confirmed by the owner as the only thing that reached him, and the failure
+      this line names is a reader unable to tell a spawn from a run, so the owner is the instrument.
+      `.claude/dispatch/WO-2.19-status.md` corroborates it in order: `spawned … awaiting return.
+      Expect 20–40 min` phrased as a prediction, `implementer returned (~17 min)` marked *"Not graded
+      by me"*, verifier spawned and awaited, `verifier returned: PASS`. The report was also *made of*
+      the verifier's own re-instrumentation — 560/554/532/22/28 re-derived, four mutations the
+      implementer never claimed — which is content that cannot exist before the child returns, and
+      exactly what WO-3.5's sixty-second report had none of.
 
 ---
 
@@ -1850,3 +1870,91 @@ threshold itself. This is about *which screens are looked at*, not about what is
 - [ ] Adding a view to `index.html` and not to the harness turns a check red, driven the same way.
 - [ ] The total check count rises and `tools/README.md` records the new number — which is WO-2.19's
       mechanism if it has landed, and a hand edit with a note if it has not.
+
+---
+
+## WO-2.22 — a missing harness is a failure, and one call per line stops being an assumption
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.19 — this is §11 of
+`tools/wo-sweep.mjs`, which that work order wrote · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19,
+WO-2.20 and WO-2.21 made.)*
+
+**Not a go-live blocker, and in no ship.** Added 2026-08-10 out of WO-2.19's verification, where both
+halves were raised as residuals and deliberately not folded into a work order that had already passed
+— the same call WO-2.21 got out of WO-3.5. Neither is a defect in what WO-2.19 shipped; both are
+places where §11 is right today for a reason it does not check.
+
+**Why it exists — two things, and the first is a severity, not a bug.** §11 has three ways to be
+unhappy and they are not ranked the way the failures are. A `tools/README.md` whose sentence has been
+*reworded* is a `FAIL` at `tools/wo-sweep.mjs:644`. A `tools/verify-shell.mjs` that has been
+*deleted* is a `REVIEW` at `:613` — it prints, it does not fail, and the run exits 0. **The larger
+disaster is the quieter signal.** This file's own header defines `REVIEW` as *"greppable evidence that
+needs a human decision"*, and a vanished harness is not a decision anybody is being asked to make; it
+is the one condition under which every claim this sweep makes about the harness is void. It also
+inverts the section's own logic: `:634` fails loudly when the *pattern* stops matching, on the
+explicit reasoning that a green run over an empty grep "reads green from a distance and is not". A
+missing file is that same shape, one step further along.
+
+**The second is a premise the check relies on and does not state.** §11 pushes one entry per *line*
+that holds a `check(` call (`:620–623`), so its count is a count of lines. That equals the count of
+calls only while no line holds two, which is true of all 561 occurrences in the harness today and is
+nowhere written down. A second call appended to a line already holding one would be invisible: the
+count would not move, §11 would pass, and the number in `tools/README.md` would be quietly wrong —
+which is precisely the failure WO-2.19 exists to prevent, arriving through the one door that work
+order left open.
+
+**Deliverables**
+- **A missing `tools/verify-shell.mjs` or `tools/README.md` is a `FAIL`, not a `REVIEW`.** Both, not
+  just the harness: neither absence leaves a question for a human.
+- **§11 asserts that no line in the harness holds more than one `check(` occurrence**, so
+  lines-equals-calls becomes a check rather than a premise. The message names the offending line.
+- **The allowlist paragraph at `:592` records that the count is a count of lines** and points at the
+  new clause as what makes that safe, in the form the rest of that paragraph already uses.
+- **`tools/README.md`'s `wo-sweep.mjs` is **16 checks** sentence carries a note saying why that number
+  is deliberately unguarded** — the sweep prints its own true count on every run, in a second, where
+  a reader will see it, which is the asymmetry that made WO-2.19 worth doing for the harness and not
+  worth doing here. Nobody should have to re-derive that.
+
+**Out of scope, and this is the load-bearing half of the work order: `verify-shell.mjs` does not
+assert its own summary against `tools/README.md`.** WO-2.19's implementer proposed it as the obvious
+follow-up — eight lines, and the executed count is the one number in this system that nothing
+watches. It is refused on two grounds, recorded here so the next reader who notices an unguarded
+number does not re-propose it. **First, a red `verify-shell.mjs` run means the app is broken**, and in
+week one of a live term that signal has to stay clean enough to drop everything for; making it also
+mean "a sentence in a README is stale" spends the one alarm that must not be second-guessed.
+**Second, the hole is already mostly closed, sideways.** §11's `FAIL` text at `:647` says in as many
+words: *update that line, **and the executed-check count in the paragraph beside it**, from a run
+rather than by arithmetic.* Every event that makes the executed count stale — a check added, a check
+removed — now trips §11 and hands the reader both numbers. What remains is somebody editing the
+executed count wrongly while touching no check at all, which is not the failure that happened three
+times. Also out of scope: any change to what `verify-shell.mjs` prints or how it counts, and anything
+in `src/`.
+
+**Acceptance**
+- [ ] `node tools/wo-sweep.mjs` FAILs and exits 1 with `tools/verify-shell.mjs` moved aside, and again
+      with `tools/README.md` moved aside — both run, both outputs quoted, both reverted.
+- [ ] §11 FAILs when a second `check()` call is appended to a line that already holds one, naming the
+      line. **Proved non-vacuous by the count clause passing in that same run**: 560 lines still hold
+      calls, so the old clause is satisfied and the new one is the only thing red. Reverted.
+- [ ] `tools/README.md` states why `wo-sweep.mjs`'s own count is left unguarded, and states that §11
+      counts lines and what now guarantees that is a count of calls.
+- [ ] `tools/README.md` records why `verify-shell.mjs` does not assert its own summary, in enough
+      detail that the argument does not have to be rebuilt.
+- [ ] `node tools/wo-sweep.mjs` otherwise prints what it printed before: §11 still PASSes at the true
+      call-site count, no new REVIEW, and the standing sensitive-field-name REVIEW unchanged — proved
+      by diffing a whole run before and against after.
+- [ ] `tools/verify-shell.mjs` and `src/` are byte-identical to HEAD by hash. **A full harness run is
+      not required and should not be spent**: nothing in this work order touches `src/`, `index.html`,
+      `sw.js` or the harness itself except inside a mutation that is reverted, and 177 seconds buys no
+      claim that the hash does not already make.
+
+**Traps** — **Do not switch §11 to counting occurrences per line.** It looks like the fix and it is
+the wrong one: `check(` appears in trailing comments and in the harness's own quoted prose, and
+`commentLines()` excludes whole comment lines rather than trailing ones, so occurrence counting trades
+a hypothetical undercount for a plausible overcount and a false `FAIL`. The premise is the thing to
+check; the counting is already correct. **Do not update `16 checks` → `17 checks` by arithmetic** —
+this work order adds exactly one check and the temptation to increment is the ritual that has failed
+three times in the sibling file. Measure it from a run and quote the summary line. **And do not build
+the self-assertion**, however small it looks by then; the argument against it is above, and a work
+order that quietly does its own Out of scope line is worse than one that argues with it.

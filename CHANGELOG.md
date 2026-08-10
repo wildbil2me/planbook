@@ -421,6 +421,45 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   deliberately last: it closes when the next real dispatch produces a report that arrives when the
   work does.
 
+- **WO-2.19 — the standing sweep now checks the harness's own size.** `tools/README.md` has recorded
+  how many checks `verify-shell.mjs` runs since WO-1.3, maintained by whoever landed a work order
+  remembering to update it, and it had gone stale three times: 79 where the tree held 82 at WO-1.5,
+  522 where it held 535 at WO-2.18, and 537 where it holds 554 now, WO-3.5's seventeen never having
+  reached the file. `node tools/wo-sweep.mjs` counts the `check()` call sites and goes red when that
+  line disagrees, in **either** direction — the growth case and the loss case were both proved by
+  mutation, because a check that only noticed a check being added would have passed happily over one
+  being deleted. **15 → 16 checks.** The third miss had already happened; this work order caught it
+  rather than prevented it.
+
+  **What the count is, exactly, is now written down instead of assumed, and the work order's own
+  arithmetic was wrong.** It asked for the four call sites a run does not reach to be named, off
+  *"roughly 541 call sites against 537 executed"*. There is no fixed gap and there never will be: on
+  this tree 560 call sites yield 554 results, and the 6 between them is two unrelated corrections
+  cancelling. **Twenty-eight call sites never fire at all** — every one of them the failure arm of a
+  fixture guard, so a run in which one fires is a run in which something is wrong — and **ten more sit
+  inside loops** and fire once per viewport, per orientation, per note code, one of them ten times.
+  532 distinct sites plus 22 extra results is 554. That was measured rather than reasoned, by
+  instrumenting a throwaway copy of the harness with `new Error().stack` inside `check()` and diffing
+  the executed line numbers against the same grep the sweep uses; the method is recorded so the next
+  reader can re-derive it in one run instead of reasoning to another wrong four.
+
+  **So the sweep asserts the number a grep can hold, and the run's own number sits beside it in
+  prose** — still measured by hand, labelled as such, with `tools/README.md` saying which quantity is
+  which rather than letting the next reader assume they are the same. No check compares the two, and
+  none passes on "close": the alternative was a tolerance, and a tolerance is how 522 + 2 = 524 nearly
+  read as a green run. The sentence the sweep greps is ordinary prose rather than a marker comment, so
+  rewording it turns the sweep **red with the wording it expected**, not off.
+
+  **Nothing a teacher can see changed, and two gaps are left open on purpose.** The executed count is
+  still the one number in this system that nothing watches — closing it means either opening a browser
+  from a tool that is deliberately all greps, or changing what `verify-shell.mjs` prints, and it would
+  make a full run red for a documentation edit, which is a different bargain from the one the sweep
+  makes. That wants a decision, so it is proposed rather than smuggled in here. And the sweep's own
+  count — *16 checks*, in the same file — is now the unguarded number one level up: the same defect
+  class, one turn of the screw smaller. The new check also counts *lines* holding a call, so a second
+  `check()` appended to a line already holding one would be invisible; harmless today, since all 561
+  occurrences sit on distinct lines, and worth knowing before someone packs two onto one.
+
 - **WO-2.17 — switching term on the attendance registry now brings the counts under the term nav
   with it.** Tapping *Quarter 2* moved the highlight and said the term out loud, then left Quarter 1's
   recorded meetings and percentages sitting on the screen, with nothing to say which term the numbers

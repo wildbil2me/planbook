@@ -492,8 +492,49 @@ backup fix on 2026-08-04 never reached it. Measured, not guessed — `git stash`
 WO-1.5 tree. A count that is nearly right is the same problem as a stale one, so it is worth the
 thirty seconds.)*
 
+**554 at WO-3.5, and the line above stops at 537 — the third miss, and the reason WO-2.19 exists.**
+WO-3.5's seventeen are counted in `TESTING.md` § WO-3.5 (*"554 of 554 with zero skips, 17 checks added
+in one new section"*) and never reached here, which is WO-3.4's thirteen happening again one work
+order later. Measured on `1f5217c` on 2026-08-10, not carried forward: `554 checks · 554 passed ·
+0 failed · 0 skipped`, 13,150 lines, 23.7 lines per check, 177s. **That number is still maintained by
+hand and there is no honest way to make it otherwise** — it is `results.length` at the end of a
+177-second browser run, and the sweep that guards the line below opens no browser by design. What
+follows is what a grep *can* hold.
+
+**`verify-shell.mjs` holds 560 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
+sweep red rather than turning the check off. Its allowlist is written down at the check: the
+definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10570` is why the
+pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
+its prose constantly.
+
+**Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
+could go and name.** 560 − 554 = 6, which reads like six unreached branches; the work order that
+booked this check reasoned its way to *"roughly 541 call sites against 537 executed — four sites that a
+run does not reach"* on the same arithmetic, and both numbers are a coincidence of two unrelated
+quantities. Measured by instrumenting a throwaway copy of the harness — `new Error().stack` inside
+`check()`, executed line numbers diffed against the grep — a green run on this tree fires **532
+distinct call sites**, of which **10 fire more than once** (22 extra results, one site 10×), and
+**28 never fire at all**. 532 + 22 = 554. The two corrections cancel to 6 by accident.
+
+- **The 28 that never fire are all one shape: the failure arm of a fixture guard.** `if (!plant.ok)
+  check('the WO-3.5 fixture is real…', false, plant.why)` — `tools/verify-shell.mjs:12532`, and
+  `:4814`, `:6708`, `:10143`, `:12632` and the twenty-three like them. They exist so that a fixture
+  that did not arrive is announced as a red check rather than as a section that quietly did not run,
+  which is this file's oldest rule. **A run in which one of them fires is a run in which something is
+  wrong**, so "call sites a green run does not reach" is a description of the harness working.
+- **The 10 that fire more than once are `check()` inside a loop** — once per viewport, per
+  orientation, per note code: `:11557` runs ten times across the note-panel matrix, and `:11269`,
+  `:11296`, `:11332` and `:11338` three times each across three window sizes. One call site there is
+  ten lines of output, and no grep can see that.
+
+So the sweep asserts the call sites and this paragraph states the executed count beside it, rather
+than a check that passes when two different numbers are close. **If you add a check, both numbers
+move and neither moves by the same amount**: the sweep will tell you the first one by name, and the
+second one comes off the summary line of a run.
+
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**15 checks** since WO-3.2's follow-up, and the three added there exist because this file's sibling
+**16 checks** since WO-2.19, and the three added at WO-3.2's follow-up exist because this file's sibling
 had already written down that they did. The letter-grades section of `verify-shell.mjs` said its
 fourth acceptance line — *there is no rounding code anywhere* — "is a grep, made in
 `tools/wo-sweep.mjs`", at a point when the sweep had no rounding check of any kind. The line had been

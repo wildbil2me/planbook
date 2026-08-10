@@ -113,6 +113,34 @@ function report(hits) {
   return hits.length > shown.length ? `${s}, +${hits.length - shown.length} more (--verbose)` : s;
 }
 
+// Which lines in a file are comment rather than code. Block state has to be carried line to line,
+// so this cannot be a grepLines predicate — that only ever sees one line. Both comment syntaxes
+// that appear in this repo's code are handled: JS block and line comments, and markup comments.
+// Written with `//` rather than a block, because a block comment that has to *name* the delimiters
+// it is looking for closes itself at the first one it mentions.
+//
+// It sits up here rather than inside a section because two checks need it — §10's rounding greps,
+// which is where it was written, and §11's count of the harness's own `check()` calls. Moved at
+// WO-2.19, unchanged; a second copy of block-comment tracking is worse than a shared six lines.
+function commentLines(file) {
+  const set = new Set();
+  let inBlock = false;
+  let inMarkup = false;
+  fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    const wasIn = inBlock || inMarkup;
+    if (!inBlock && /\/\*/.test(line) && !/\/\*[\s\S]*?\*\//.test(line)) inBlock = true;
+    if (!inMarkup && /<!--/.test(line) && !/<!--[\s\S]*?-->/.test(line)) inMarkup = true;
+    const opened = !wasIn && (inBlock || inMarkup);
+    // A line that opens or closes a block, sits inside one, is a full one-line comment, or is a
+    // `//` line — all prose as far as this check is concerned.
+    if (wasIn || opened || /^\s*(\/\/|\*|<!--)/.test(line) || /\/\*[\s\S]*?\*\//.test(line)
+        || /<!--[\s\S]*?-->/.test(line)) set.add(i + 1);
+    if (inBlock && /\*\//.test(line)) inBlock = false;
+    if (inMarkup && /-->/.test(line)) inMarkup = false;
+  });
+  return set;
+}
+
 /* ══════════════════════════ 1. no dependency manifest ══════════════════════════ */
 
 {
@@ -467,30 +495,8 @@ function report(hits) {
    made once and the names are what record it. A fifth one shows up as a REVIEW. */
 
 {
-  // Which lines in a file are comment rather than code. Block state has to be carried line to line,
-  // so this cannot be a grepLines predicate — that only ever sees one line. Both comment syntaxes
-  // that appear in this repo's code are handled: JS block and line comments, and markup comments.
-  // Written with `//` rather than a block, because a block comment that has to *name* the delimiters
-  // it is looking for closes itself at the first one it mentions.
-  function commentLines(file) {
-    const set = new Set();
-    let inBlock = false;
-    let inMarkup = false;
-    fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-      const wasIn = inBlock || inMarkup;
-      if (!inBlock && /\/\*/.test(line) && !/\/\*[\s\S]*?\*\//.test(line)) inBlock = true;
-      if (!inMarkup && /<!--/.test(line) && !/<!--[\s\S]*?-->/.test(line)) inMarkup = true;
-      const opened = !wasIn && (inBlock || inMarkup);
-      // A line that opens or closes a block, sits inside one, is a full one-line comment, or is a
-      // `//` line — all prose as far as this check is concerned.
-      if (wasIn || opened || /^\s*(\/\/|\*|<!--)/.test(line) || /\/\*[\s\S]*?\*\//.test(line)
-          || /<!--[\s\S]*?-->/.test(line)) set.add(i + 1);
-      if (inBlock && /\*\//.test(line)) inBlock = false;
-      if (inMarkup && /-->/.test(line)) inMarkup = false;
-    });
-    return set;
-  }
-
+  // `commentLines()` moved to the helpers at the head of this file at WO-2.19, unchanged — §11
+  // needs the same block-comment tracking and a second copy of it would be the worse answer.
   const codeOnly = (files, re) => {
     const hits = [];
     for (const f of files) {
@@ -559,6 +565,89 @@ function report(hits) {
     } else {
       review('rounding in a file that touches the percentage-to-letter mapping',
         `${report(hits)} — display formatting over a percentage is allowed; rounding a percentage BEFORE it is banded is not. Read which one this is, and add the file to PREDATES with a note if it is the former.`);
+    }
+  }
+}
+
+/* ══════════════════════════ 11. the harness's own size is written down ══════════════════════════
+   `tools/README.md` records how big `verify-shell.mjs` is, and until WO-2.19 that number was
+   maintained by whoever landed a work order remembering to update it. It was missed at WO-1.5 (the
+   line said 79 against a tree of 82), at WO-2.18 (522 against 535, WO-3.4's thirteen never having
+   reached it) and again at WO-3.5, whose seventeen are recorded in `TESTING.md` and not there. A
+   number maintained by remembering is not maintained, so this asks a grep instead.
+
+   WHAT IS ASSERTED HERE IS CALL SITES, NOT EXECUTED CHECKS, and the two are permanently unequal.
+   `verify-shell.mjs` prints `results.length` — how many times `check()` and `skip()` actually ran —
+   and a grep cannot know that. Measured at WO-2.19 by instrumenting a throwaway copy of the harness:
+   of 560 call sites a green run fires 532, ten of those fire more than once (one of them ten times,
+   inside a loop over viewports), and twenty-eight never fire at all because they are the failure arm
+   of a fixture guard. 532 + 22 = 554, and 560 − 554 = 6 is two unrelated corrections cancelling
+   rather than six branches somebody could go and name. The full account is in `tools/README.md`
+   beside the count. Making the grep agree with the run would mean running the run, and this file
+   opens no browser by design (see the header). So the sweep asserts the number it can count,
+   `tools/README.md` states which number that is, and the executed count lives beside it as prose. A
+   check that compared the two and passed when they were close would restate the problem it was
+   written to solve.
+
+   ALLOWLIST, so the next reader does not re-derive it:
+   - `tools/verify-shell.mjs:68` is `function check(name, ok, detail)` — the definition, excluded by
+     name. It is the only occurrence of `check(` in that file that is not a call.
+   - `:10570` is an `else check(`, the one call site not first on its line. The pattern is therefore
+     NOT line-anchored; it matches `check(` anywhere a call could be written.
+   - `.check(` and `recheck(` are excluded by construction — the character before `check` may not be
+     a word character or a dot. Neither shape exists in the harness today; the guard is so that one
+     arriving does not silently inflate the count.
+   - Comment lines are excluded. The harness quotes call names in its prose constantly (`letterFor()`,
+     `paintDetail(totals)`), and a comment that came to mention `check()` would otherwise arrive here
+     as a call site that does not exist — the false FAIL this file's header warns about twice. Zero
+     comment lines match today.
+
+   The number is read out of `tools/README.md` by its sentence rather than a marker comment, because
+   a marker is a thing to keep in sync with the prose beside it. If that sentence is reworded the
+   check goes RED and says so, which is the loud failure; it never goes quiet. */
+
+{
+  const harnessPath = path.join(REPO, 'tools', 'verify-shell.mjs');
+  const readmePath = path.join(REPO, 'tools', 'README.md');
+  if (!fs.existsSync(harnessPath) || !fs.existsSync(readmePath)) {
+    review('the recorded `check()` call-site count matches the harness',
+      `${!fs.existsSync(harnessPath) ? 'tools/verify-shell.mjs' : 'tools/README.md'} is not where this check expects it — the count is now watching nothing. Point it at the new path.`);
+  } else {
+    const comments = commentLines(harnessPath);
+    const CALL = /(^|[^A-Za-z0-9_$.])check\s*\(/;
+    const DEFINITION = /function\s+check\s*\(/;
+    const sites = [];
+    fs.readFileSync(harnessPath, 'utf8').split('\n').forEach((line, i) => {
+      if (comments.has(i + 1) || DEFINITION.test(line) || !CALL.test(line)) return;
+      sites.push({ file: 'tools/verify-shell.mjs', line: i + 1, text: line.trim() });
+    });
+
+    // The sentence in tools/README.md that carries the number, and where it sits.
+    const RECORDED = /holds (\d+) `check\(\)` call sites/g;
+    const readmeLines = fs.readFileSync(readmePath, 'utf8').split('\n');
+    const stated = [];
+    readmeLines.forEach((line, i) => {
+      RECORDED.lastIndex = 0;
+      for (const m of line.matchAll(RECORDED)) stated.push({ n: Number(m[1]), at: `tools/README.md:${i + 1}` });
+    });
+
+    if (!sites.length) {
+      // A pattern that matches nothing reads exactly like a harness with no checks in it. Failing
+      // loudly here is the guard against a green run over an empty grep, which is the shape of
+      // wrongness this whole section exists to catch in the other file.
+      check('the recorded `check()` call-site count matches the harness', false,
+        'no `check()` call site found in tools/verify-shell.mjs at all — the pattern in tools/wo-sweep.mjs has stopped matching, which reads green from a distance and is not');
+    } else if (stated.length !== 1) {
+      check('the recorded `check()` call-site count matches the harness', false,
+        stated.length
+          ? `tools/README.md states the count ${stated.length} times (${stated.map(s => s.at).join(', ')}) — one sentence holds it, or the sweep cannot say which one it is asserting`
+          : 'tools/README.md no longer contains the sentence this check reads (`… holds N `check()` call sites …`) — restore the wording or re-point this check; a reworded sentence must not read as a passing count');
+    } else if (stated[0].n !== sites.length) {
+      check('the recorded `check()` call-site count matches the harness', false,
+        `tools/verify-shell.mjs has ${sites.length} \`check()\` call site(s), ${sites.length > stated[0].n ? 'up' : 'down'} ${Math.abs(sites.length - stated[0].n)} on the ${stated[0].n} recorded at ${stated[0].at} — update that line, and the executed-check count in the paragraph beside it, from a run rather than by arithmetic. Sites run ${sites[0].file}:${sites[0].line}..${sites[sites.length - 1].line}`);
+    } else {
+      check('the recorded `check()` call-site count matches the harness', true,
+        `${sites.length} \`check()\` call site(s) in tools/verify-shell.mjs, matching ${stated[0].at} — call sites, not executed checks; the gap is named there`);
     }
   }
 }
