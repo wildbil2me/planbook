@@ -453,9 +453,16 @@ class. The due date is still useful, but **only as a prompt**.
 
 ## WO-3.7 — Per-student grade detail
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-3.4, WO-2.6
 **Closes roadmap** Phase 3 → "Per-student detail: category breakdown, what's missing, what it would
 take to move."
+
+*Re-sized M → L and given a second dependency on 2026-08-11, when per-student print and CSV were
+amended in at the owner's call. The roadmap boxes are unchanged: "Print/CSV for grades" is WO-3.9's
+class-level output and stays there, and this closes no box of its own for the added half — it is a
+deliverable this work order absorbs rather than a line the roadmap was tracking. The WO-2.6
+dependency is real rather than decorative: the print gate and the download hand-off are to be
+borrowed from it, not re-derived.*
 
 **Why it exists.** This is the screen open during a guardian conference, and the source of the
 numbers Phase 5's merge fields put in an email. "What would it take to move" is the difference
@@ -475,6 +482,28 @@ between a report and a conversation.
 - "What it would take to move" — the score needed on remaining work to reach the next letter band.
 - Attendance summary for the same student, from WO-2.4.
 - Presentation-mode safe.
+- **Print and CSV for the one student on the screen** *(owner, 2026-08-11)*. This is the sheet a
+  guardian leaves the conference holding: the category breakdown, the missing work, the attendance
+  summary, one student, one page. **It rides here rather than in a work order of its own** for a
+  reason that is about the artifact and not about scheduling — a per-student printout that showed
+  attendance but not grades would be the wrong thing to hand a parent, and per-student output cannot
+  be built correctly until the screen that assembles all of it exists. That screen is this one.
+  - **The mechanism already exists and is to be borrowed, not re-derived.** WO-2.6 built the app's
+    first `@media print` block, gated on a `<body>` attribute the Print button sets and removes
+    (`body[data-attendance-print]`, Roll Call!'s `data-modal-print` idiom), and exported
+    `handToBrowser()` from `src/backup.js` as the one-download-per-tap hand-off. Use both. A second
+    print idiom in this app is a second thing to keep gated, and an ungated rule prints a blank sheet
+    from every other screen.
+  - **A print surface on a *view* is a harder problem than on a dialog**, and this is where the two
+    traps below meet: WO-2.6 printed from a modal, which is a bounded thing with a known parent. A
+    view is the whole screen, including the nav strip and the breadcrumb.
+  - **Roll Call!'s `printStudentReport` is the precedent** — lift its structure and measurements with
+    the function, per `CLAUDE.md`. Its at-risk banner, absence letter and email composer are **not**
+    in scope here: those are Phase 4 and 5, and a threshold invented here would be a second opinion
+    about "at risk" before the work order that owns the first one is written.
+  - **The CSV's fixture roster must contain a non-ASCII name.** WO-2.6 shipped a BOM asserted present
+    and never asserted useful, because every name in the harness is ASCII; the gap was closed by the
+    owner's own roster rather than by a check. Do not inherit that hole.
 
 **Acceptance**
 - [ ] The breakdown's contributions sum to the displayed overall grade.
@@ -482,6 +511,12 @@ between a report and a conversation.
 - [ ] The "to move" figure is reproducible by hand.
 - [ ] No `supports` data appears on this screen in presentation mode.
 - [ ] It is a view in `<main>`, not a dialog.
+- [ ] One student's detail prints to one page carrying their name, the class, the term and the date
+      it was printed — and the nav strip, breadcrumb and any app chrome are not on it.
+- [ ] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII
+      character in it**.
+- [ ] Neither the printout nor the CSV emits accommodation, medical, or plan data — verified in both
+      presentation modes, with the data asserted present in the document first.
 - [ ] The strip shows the open student's name as a breadcrumb segment while this screen is up, and
       switching to any of the three tabs takes the name with it. *(Inherited from WO-3.3, which
       built the strip and the rule and could not demonstrate this half: there was no per-student
@@ -493,6 +528,13 @@ between a report and a conversation.
 **Traps** — Do not build this in the modal system; see the Surface deliverable and
 `../gradebook-surfaces.md`. And note that presentation mode is a harder problem on a view than in a
 dialog: a dialog can be closed to hide it, a view is what is on the wall.
+
+**Printing a view is the other half of that same trap.** WO-2.6's print surface is a modal — a
+bounded element with a known parent, which is why its verifier checked by hand that the modal is a
+direct child of `<body>` and why every one of its 24 print rules is gated on the body attribute. A
+view has no such boundary: the nav strip, the three-tab switcher and the breadcrumb are all on the
+screen it prints from, and none of them belongs on the sheet. Whatever hides them must be gated the
+same way, or a Ctrl+P from any other screen starts producing blank paper again.
 
 ---
 
