@@ -10527,6 +10527,40 @@ if (!seam) {
  * every measurement after it.
  */
 
+/* WHAT COUNTS AS A CONTROL, in one place (WO-2.21). Every touch measurement in this file used to
+   carry its own copy of this list, and the copies had already drifted — the whole-page sweep
+   collects six kinds of element, WO-3.5's score-grid block collected two. A second list is a second
+   answer, and the one that rots is the one nobody re-reads. */
+const CONTROL_SEL = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
+
+/*
+  The measurement itself, scoped to one element by CSS selector, or to the whole document when
+  handed nothing.
+
+  A STRING BUILT IN NODE rather than a helper installed on the page the way INSTALL_WALKER is:
+  every Page.reload throws page-side helpers away, this is now called on both sides of three of
+  them, and an expression cannot go missing the way an install that somebody forgets to repeat can.
+
+  THE TWO SKIPS ARE THE POINT OF WRITING IT DOWN ONCE. A box that is not rendered is not a box a
+  thumb can miss, and a control inside a shown container can still be hidden by its own class — but
+  `display: none` is also what `.hidden` computes to, and `.hidden` is what every view but the one on
+  screen wears. That is the whole of WO-2.21: this expression is honest about what it can see, and the
+  caller is responsible for putting the screen it wants measured ON SCREEN first.
+*/
+function measureIn(rootSel) {
+  const sel = rootSel
+    ? CONTROL_SEL.split(',').map((s) => rootSel + ' ' + s.trim()).join(', ')
+    : CONTROL_SEL;
+  return `(function(){ var out=[];
+    document.querySelectorAll(${JSON.stringify(sel)}).forEach(function(e){
+      var r=e.getBoundingClientRect();
+      if (r.width===0 && r.height===0) return;
+      if (getComputedStyle(e).display==='none') return;
+      out.push({t:e.tagName+'.'+(e.className||''), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100});
+    });
+    return out; })()`;
+}
+
 console.log('\n--- 44px touch targets (emulated coarse pointer) ---');
 await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
 await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -10543,22 +10577,175 @@ check('the emulated pointer really is coarse (else everything below measures the
 if (coarse !== true) {
   skip('no visible interactive element measures under 44px', 'the coarse pointer never engaged');
 } else {
-  const MEAS = `(function(){
-    var sel='button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])', out=[];
-    document.querySelectorAll(sel).forEach(function(e){
-      var r=e.getBoundingClientRect();
-      if (r.width===0 && r.height===0) return;
-      if (getComputedStyle(e).display==='none') return;
-      out.push({t:e.tagName+'.'+(e.className||''), w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100});
-    });
-    return out; })()`;
-  const meas = await evalJs(MEAS);
+  /* Whatever is on screen right now, which is one view out of four — see the block below, which
+     is the half of this sweep that opens the other three. */
+  const meas = await evalJs(measureIn());
   const under = meas.filter(m => m.h < 44 || m.w < 44);
   console.log('measured ' + meas.length + ' visible interactive elements');
   check('at least a handful of controls were found (guards a vacuous pass)', meas.length >= 5,
     'measured = ' + meas.length);
   check('no visible interactive element measures under 44px on a coarse pointer',
     under.length === 0, JSON.stringify(under));
+
+  /* ─────────── EVERY VIEW, OPENED THE WAY A TEACHER OPENS IT (WO-2.21) ───────────
+
+     THE SWEEP ABOVE MEASURES ONE SCREEN AND SOUNDS LIKE IT MEASURED THE APP. `.hidden` is
+     `display: none !important`, every view but the one on screen wears it, and the measurement
+     skips anything computing to `display: none` — so what it just walked is whichever view the
+     section above it happened to leave open, and the other three were passed over in silence.
+     WO-3.5 shipped a grid holding ~250 score inputs through that gap and this run went green over
+     every one of them.
+
+     WHICH VIEWS: ASKED OF THE DOCUMENT, NEVER LISTED HERE. index.html's <main> holds the views as
+     siblings toggled by `.hidden` and nothing else (src/views.js's header, lifted from Roll Call!'s
+     #registryView / #compactGridView), so the CHILDREN OF <main> ARE THE LIST. VIEW_PLAN below adds
+     only what the document cannot say — which door opens each screen, and how few controls is too
+     few — and a child of <main> that is not in it turns the first check red and names itself. That
+     is WO-2.19's rule in a new place: a list maintained by remembering is not maintained, so
+     WO-3.6, WO-3.7 and WO-3.9 each arrive here as a failing check rather than as a screen nobody
+     measured.
+
+     THEY ARE OPENED THROUGH THE REAL NAVIGATION, AND THAT IS THE DECISION THIS BLOCK RECORDS.
+     The cheap alternative is to drop `.hidden` from each view in turn, and it was rejected for a
+     reason this repo has already paid for once. #scoresView shipped with its only door DISABLED —
+     src/screen-nav.js carried a hardcoded `pending` on the Scores segment — so the view existed,
+     was fully drawn, and no teacher could reach it. Un-hiding measures a beautiful grid there and
+     reports green; clicking the door cannot, because there is no door to click. Un-hiding also
+     measures layouts the app never produces (two views visible at once, a class screen open with no
+     class selected), and a sweep that measures a screen in a state the app never puts it in is a
+     new way to be green and wrong. So: the segment, the card and the "All classes" door, in that
+     order, exactly as WO-3.5 did it by hand.
+
+     A VIEW WITH NO DOOR THEREFORE FAILS RATHER THAN BEING SKIPPED. openView() throws when the
+     control it needs is not on the page — disabled segments carry no `data-class-screen` at all —
+     and the throw is reported against that view by name. Skipping it silently is the bug this whole
+     block exists to close, one level up.
+
+     AND IT PUTS THE PAGE BACK. Sections in this file inherit each other's DOM state; the days-off
+     check left a run on the home view once and cost four checks in the section below it, which is
+     written up in tools/README.md. The class that was open is the class this block enters through
+     (its own card), and the view it found is the view it leaves. */
+  const VIEW_PLAN = {
+    /*
+      `screen` is the `data-class-screen` value that opens it, or null for the class grid, which is
+      reached by the "All classes" door instead. `floor` is how few controls means "this did not
+      draw" — the count assertion is what makes the measurement real, because ZERO CONTROLS MEASURED
+      AND ZERO CONTROLS UNDERSIZED ARE THE SAME GREEN.
+
+      THE FLOORS ARE OF THIS RUN'S DOCUMENT, not of the app in a teacher's hands, and they are
+      small for a reason worth reading before anyone raises them. By the time this section runs the
+      assignments section has deleted every assignment in the document (its teardown says so in as
+      many words), and the class the section above leaves open has no roster — so #assignmentsView is
+      in its empty state and #scoresView hides its toolbar, its flag bar and its grid along with it
+      (src/scores.js). Measured on the tree this was written on: 7 · 27 · 5 · 4, which is
+
+        homeView         the Days off button and one card per class (six of them)
+        classView        the panel's door home, three switcher segments, the class's own three
+                         action buttons, the search field, six filter pills, the sort pair, ⌨ Keys,
+                         🖨 Record, three pager buttons and six day-column heads
+        assignmentsView  + New assignment, three segments, All classes — every one of them markup
+        scoresView       All classes and three segments — every one of them markup
+
+      so the floors are set just under those: enough room for a column window that moves with the
+      calendar, and far enough above zero that a view which opens and draws NOTHING cannot pass. A
+      floor above what the document can produce would be a check that fails on a correct build, which
+      is the other way to make a number nobody trusts.
+
+      That asymmetry is also why WO-3.5's by-hand block stays where it is — see the note there.
+    */
+    homeView: { screen: null, floor: 3 },
+    classView: { screen: 'class', floor: 20 },
+    assignmentsView: { screen: 'assignments', floor: 5 },
+    scoresView: { screen: 'scores', floor: 4 },
+  };
+
+  /* Which view is up, read off the DOM rather than off a variable this block keeps — the same
+     answer src/views.js's currentView() gives, and for the same reason it gives it that way. */
+  const shownView = async () => await evalJs(
+    "(function(){var v=document.querySelector('main > :not(.hidden)');return v?v.id:''})()");
+
+  /* The open class, read through the seam, which is what `classes` is on it for (src/shell.js).
+     Reading which class is open is a question; every act below is a click. */
+  const openClassId = seam ? await evalJs('window.planbook.classes.getSelectedClassId()') : '';
+
+  async function openView(id) {
+    const plan = VIEW_PLAN[id];
+    if ((await shownView()) === id) return;      /* already on it; a tap on the screen you are
+                                                   standing on is not how anyone gets there */
+    if (plan.screen === null) {
+      /* The way back to the grid. Two doors on one hook, and document order picks the header's
+         tab — which is drawn on class screens only, so it is exactly where we are coming from. */
+      await clickSel('[data-view-home]');
+      return;
+    }
+    /* The switcher is drawn inside each class screen's OWN panel, so the screen you are standing on
+       is the only strip that can be tapped — a hidden one measures 0x0 and the click lands at the
+       top-left corner of the viewport on whatever is there, which is clickSel's oldest trap. A
+       screen that has no strip in it therefore has no door to the next screen, and the way through
+       is the one a teacher has: out to the grid, and back in through the class's own card. That is
+       also the only door from the grid, because the header's tab strip is not drawn on the home
+       view at all (src/classes.js) — and it is the card of the class that was already open, so this
+       block hands the run back the class it was given. */
+    let on = await shownView();
+    if (!on || !(await has('#' + on + ' [data-class-screen="' + plan.screen + '"]'))) {
+      if (on !== 'homeView') await clickSel('[data-view-home]');
+      await clickSel('#homeGrid [data-class-tab="' + openClassId + '"]');
+      on = await shownView();
+    }
+    if (on === id) return;                       /* a card always lands on Attendance */
+    if (!on) throw new Error('no view is visible at all, so there is no strip to tap');
+    await clickSel('#' + on + ' [data-class-screen="' + plan.screen + '"]');
+  }
+
+  const inMain = await evalJs(`(function(){
+    return Array.prototype.map.call(document.querySelectorAll('main > *'), function(e){
+      return e.id || '(no id: <' + e.tagName.toLowerCase() + '>)'; }); })()`);
+  const planned = Object.keys(VIEW_PLAN);
+  const unplanned = inMain.filter((id) => planned.indexOf(id) === -1);
+  const goneFromMain = planned.filter((id) => inMain.indexOf(id) === -1);
+  /* `>= 4` guards the vacuous pass this section is otherwise wide open to: a selector that stopped
+     matching reports "no unplanned views" in exactly the same words as a document with none. */
+  check('every screen in <main> is one this sweep knows how to open, enumerated from the document '
+    + 'rather than from a list — a view added to index.html and not here is named, not skipped',
+    inMain.length >= 4 && unplanned.length === 0 && goneFromMain.length === 0,
+    inMain.length + ' in <main>: ' + inMain.join(', ')
+      + (unplanned.length ? ' :: NOT IN VIEW_PLAN, so nothing measured them: ' + unplanned.join(', ') : '')
+      + (goneFromMain.length ? ' :: in VIEW_PLAN and no longer in <main>: ' + goneFromMain.join(', ') : ''));
+
+  const cameInOn = await shownView();
+  for (const id of inMain.filter((v) => planned.indexOf(v) !== -1)) {
+    const plan = VIEW_PLAN[id];
+    let noDoor = '';
+    try {
+      await openView(id);
+      await new Promise(r => setTimeout(r, 250));
+    } catch (e) { noDoor = e.message; }
+    const state = await evalJs(`(function(){ var v=document.getElementById(${JSON.stringify(id)});
+      if (!v) return null; var s=getComputedStyle(v); var r=v.getBoundingClientRect();
+      return { hidden: v.classList.contains('hidden'), display: s.display,
+               w: Math.round(r.width*100)/100, h: Math.round(r.height*100)/100 }; })()`);
+    const open = !noDoor && !!state && !state.hidden && state.display !== 'none' && state.h > 0;
+    const vm = open ? await evalJs(measureIn('#' + id)) : [];
+    const vunder = vm.filter((m) => m.h < 44 || m.w < 44);
+    console.log('measured ' + vm.length + ' control(s) on #' + id);
+    check('#' + id + ' opens through the app\'s own navigation and draws at least ' + plan.floor
+      + ' control(s) — a screen nothing can reach, and a screen that opens empty, both fail here',
+      open && vm.length >= plan.floor,
+      noDoor ? 'no door: ' + noDoor
+        : JSON.stringify(state) + ' :: ' + vm.length + ' control(s) measured');
+    check('every control on the open #' + id + ' measures >=44px on a coarse pointer',
+      vm.length >= plan.floor && vunder.length === 0,
+      'measured ' + vm.length + '; under = ' + JSON.stringify(vunder.slice(0, 6))
+        + (vunder.length > 6 ? ' … and ' + (vunder.length - 6) + ' more' : ''));
+  }
+
+  /* Back on the view this block found, in the class it found open, through the same doors. */
+  if (VIEW_PLAN[cameInOn]) {
+    try { await openView(cameInOn); } catch (e) {
+      console.log('could not put #' + cameInOn + ' back: ' + e.message);
+    }
+  }
+  console.log('left the page on #' + (await shownView()) + ', class ' + (openClassId || '(none)'));
 
   /* Measured after opening, not read off min-height: the search-box defect was a compliant
      declaration on the wrong element.
@@ -13085,6 +13272,19 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           single box is measured, and that it is DRAWN is its own check — because a sweep over nothing
           is the failure this block exists to close.
 
+          WHY THIS BLOCK STILL EXISTS NOW THAT WO-2.21 OPENS EVERY VIEW UP THERE, which is the one
+          sentence that work order asks for: THE GENERAL SWEEP CAN REACH THIS SCREEN AND CANNOT REACH
+          A FULL ONE. It runs 2,700 lines above this fixture, on a document where the assignments
+          section has deleted every assignment and no class carrying a roster has a term to file one
+          in — so #scoresView opens there in its "nothing to grade" state, where src/scores.js hides
+          the grid, the toolbar and the flag bar, and four panel controls are all there is to measure.
+          The 25-student, 10-assignment fixture is planted here and torn down at the foot of this
+          section, so THIS is the only place in the run where 250 score cells exist at once, and 250
+          is the number WO-3.5's acceptance line is about. The general mechanism proves the screen is
+          reachable and its chrome is thumb-sized on every run; this proves the cells are, in the only
+          state where there are any. What is NOT duplicated any more is the measurement itself — both
+          call measureIn(), so there is one definition of what a control is and one of what is skipped.
+
           Line 6 itself — "usable on an iPad in landscape" — stays a 👤 item in TESTING.md. An emulator
           is not a thumb.
         */
@@ -13116,15 +13316,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             && drawn.cellDisplay !== 'none' && drawn.drawn && drawn.cells >= 200,
           'coarse pointer = ' + coarseNow + ' :: ' + JSON.stringify(drawn));
 
-        const grid44 = await evalJs(`(function(){
-          var out = [];
-          document.querySelectorAll('#scoresView button, #scoresView input').forEach(function(e){
-            var r = e.getBoundingClientRect();
-            if (r.width === 0 && r.height === 0) return;
-            if (getComputedStyle(e).display === 'none') return;
-            out.push({ t: (e.className || e.tagName), w: Math.round(r.width * 100) / 100,
-                       h: Math.round(r.height * 100) / 100 }); });
-          return out; })()`);
+        const grid44 = await evalJs(measureIn('#scoresView'));
         const under44 = grid44.filter((m) => m.h < 44 || m.w < 44);
         check('every control on the open score grid measures >=44px on a coarse pointer, the score cells and the four flag buttons included',
           grid44.length >= 200 && under44.length === 0,

@@ -592,17 +592,63 @@ reverted and tabulated in `TESTING.md` § WO-2.6 — and one of the six is tabul
 mutation run** rather than as a result, because its edit never applied and the green run it produced
 meant nothing until it was re-run.
 
-**`verify-shell.mjs` holds 589 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**591 at WO-2.21**, measured the same way: `591 checks · 591 passed · 0 failed · 0 skipped`, 14,230
+lines, 24.1 lines per check, 193s. Nine results out of **three** call sites, and that ratio is the
+work order: the sweep now opens every view in `<main>` and measures each one, so two of the three
+sites fire once per view. **The nine exist because the old sweep measured one screen and sounded like
+it had measured the app** — `.hidden` is `display: none !important`, the sweep skips anything that
+computes to `display: none`, and every view but the one on screen is `.hidden`. WO-3.5's ~250 score
+inputs went through that gap and this harness reported green over all of them. Three things about it
+are worth knowing.
+
+**The views are enumerated from the document and opened through the real navigation, and the second
+half of that is the decision.** `<main>`'s element children *are* the view list (src/views.js's
+header), so a screen added to `index.html` and not to the harness's `VIEW_PLAN` turns a check red and
+names itself rather than being silently unmeasured. Un-hiding each view in turn would have been
+cheaper and would have gone **green over the defect that produced this work order**: `#scoresView`
+shipped with its only segment disabled, so the view existed and was drawn and no teacher could reach
+it — un-hiding measures a beautiful grid there, and clicking the door cannot. A view whose door is
+missing or disabled therefore fails by name here instead of being skipped.
+
+**Every view carries its own floor, and the floors are small on purpose.** Zero controls measured and
+zero controls undersized are the same green, so each view asserts a count before it asserts a
+measurement — 7 · 27 · 5 · 4 on this tree, floors 3 · 20 · 5 · 4. They are that low because of what
+the run's document holds by then: the assignments section has deleted every assignment and the class
+left open has no roster, so `#assignmentsView` and `#scoresView` are in their empty states and what
+is left on them is panel chrome. **That is also why WO-3.5's by-hand block stays**, which is the one
+sentence its work order asks for: the general mechanism can reach that screen and cannot reach a
+*full* one, and 250 cells is what WO-3.5's acceptance line is about. Proved rather than argued —
+deleting that block outright leaves `588 checks · 588 passed`, with `#scoresView` still opened and
+measured by the general mechanism at **4 controls** instead of the **259** the block itself prints on
+a real run (`measured 259 visible control(s) with the grid open`, 250 of them score cells). What is
+no longer duplicated is the measurement itself: one `measureIn()` builds it, and the two skips and
+the definition of "a control" are written down once.
+
+**Two mutations, both reverted.** Planting an empty view that is a real class screen (`index.html`,
+`src/views.js` and `src/screen-nav.js`, plus its `VIEW_PLAN` entry) turns its two checks red on the
+floor — *"0 control(s) measured"* — rather than passing for having nothing to complain about; planting
+a second view that the harness has never heard of turns the enumeration check red naming
+`wo221UnknownView`. The same run also caught something a desk review would not: the restore that puts
+the page back for the sections below depended on the last view opened having a switcher in it, which
+an empty one does not. It now goes out to the grid and back in through the class's own card, which is
+the route a teacher has when a screen has no door onward.
+
+**`verify-shell.mjs` holds 592 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
-definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10570` is why the
+definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
 pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
 its prose constantly.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 589 − 582 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
+could go and name.** It is 592 − 591 = 1 on this tree, it was 589 − 582 = 7 before WO-2.21, and it was
+560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
-counts in it as the measurement of that tree rather than of this one. The gap moved by one at WO-3.17,
+counts in it as the measurement of that tree rather than of this one. **WO-2.21 moved it by six in
+one go**, which is the second bullet below arriving in bulk rather than anything new: two of its three
+call sites sit inside a loop over the views enumerated from `<main>`, and four views turn two sites
+into eight results. A gap of 1 is not a harness that has become tidier; it is two unrelated
+quantities that happen to be passing each other. The gap moved by one at WO-3.17,
 because that section added one fixture-guard failure arm — the first bullet below is the shape of it.
 **It did not move at WO-2.6, and that is a coincidence of both mechanisms below firing at once**: that
 section added one fixture-guard arm a green run never reaches AND one call site inside a two-pass loop

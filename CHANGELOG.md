@@ -462,6 +462,29 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.21 — the touch-target sweep now measures every screen, not whichever one happened to be
+  open.** It enumerates every view in `<main>` off the document, opens each one the way a teacher
+  does — the card, the "All classes" door, the switcher segments — and measures it there, with a
+  floor per view so that a screen which opens empty fails instead of passing quietly. A screen added
+  to `index.html` and not to the harness now turns a check red rather than going unmeasured. That is
+  how roughly 250 score inputs came to be walked past by a green run.
+
+  **Opened through the app's own navigation, not by un-hiding.** The cheap version of this — strip
+  `.hidden` and measure what appears — would have gone green over the exact defect that produced the
+  work order: `#scoresView` shipped with its only segment disabled, so un-hiding measures a grid no
+  teacher could reach. A view that exists but cannot be opened now **fails by name** instead of being
+  quietly skipped, which is the whole difference between a harness that checks the app and one that
+  checks the document.
+
+  *A limit recorded rather than papered over.* The general sweep runs before the score-grid fixture
+  exists, on a document where every assignment has been deleted, so the assignments and scores views
+  are in their empty states and their floors equal their static chrome. What the mechanism guarantees
+  is therefore *this screen is reachable and its chrome is thumb-sized* — **not** *its content was
+  measured*. That is precisely why WO-3.5's by-hand block survives rather than being folded in: with
+  the grid genuinely open it measures 259 controls where the general mechanism sees 4. A screen
+  registered later with a chrome-level floor inherits the same limit, and it must not be mistaken for
+  coverage.
+
 - **WO-2.23 — every date field in the app now takes the 44px touch target it was already declared.**
   The assignment editor's *Assigned* and *Due*, the term editor's *Starts* and *Ends*, the days-off
   *From* and *To*, and the plan *Review date* on the student editor — seven fields across four

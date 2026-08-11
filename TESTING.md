@@ -2188,6 +2188,61 @@ is why the row is here rather than quietly re-run.*
 
 ---
 
+### WO-2.21 — The 44px sweep can see a screen that is not the one on screen
+
+**What this changes.** Nothing a teacher sees: `src/` and `index.html` are byte-identical to HEAD.
+`tools/verify-shell.mjs`'s coarse-pointer section stops measuring whichever view the section above it
+left open and instead **enumerates the children of `<main>` and opens each one through the real
+navigation**, each with its own floor. `.hidden` is `display: none !important`, the sweep skips
+anything computing to `display: none`, and every view but the one on screen is `.hidden` — which is
+how WO-3.5's ~250 score inputs were walked past by a green run.
+
+- [x] Every view in `index.html` is measured under the coarse pointer, **enumerated from the document**
+      — `document.querySelectorAll('main > *')`, never a list typed into the harness. The run prints
+      `4 in <main>: homeView, classView, assignmentsView, scoresView` and measures 7 · 27 · 5 · 4
+      controls on them, every one ≥44px.
+- [x] **They are opened by driving the app's own navigation** — the "All classes" door, the class's own
+      card, the `data-class-screen` segments — rather than by un-hiding them, and the reasoning is
+      written at the block. Un-hiding is cheaper and would have gone **green over the defect that
+      produced this work order**: `#scoresView` shipped with its only segment disabled, so the view was
+      there and drawn and unreachable. A view whose door is missing or disabled fails by name here.
+- [x] **Deleting WO-3.5's by-hand coarse block does not lose the view**: the run is
+      `588 checks · 588 passed · 0 failed · 0 skipped` with `#scoresView` still opened through the real
+      navigation and measured, at **4 controls** instead of the **259** WO-3.5's block prints on a real
+      run (`measured 259 visible control(s) with the grid open`). What is lost is the *density*, not the
+      coverage — and that is why the block stays, in one sentence at the block and in `tools/README.md`:
+      the general sweep runs 2,700 lines before WO-3.5's 25×10 fixture is planted, on a document where
+      every assignment has been deleted, so it can reach that screen and never a full one.
+- [x] `node tools/verify-shell.mjs` is green at **591 checks · 591 passed · 0 failed · 0 skipped**,
+      14,230 lines, 24.1 lines per check, 193s — nine results from three call sites, because two of
+      them fire once per view.
+- [x] `node tools/wo-sweep.mjs` is green at `16 checks · 15 passed · 0 failed · 1 to review`, the one
+      REVIEW being the standing sensitive-field-name grep. §11 named the move itself —
+      *"592 `check()` call site(s), up 3 on the 589 recorded"* — and `tools/README.md` now records
+      **592 call sites** and **591 executed**, both off real runs rather than arithmetic.
+- [x] The page is put back the way the section found it: the same view, the same open class, reached
+      through the same doors. The run prints `left the page on #classView`.
+
+*Two mutations, both reverted, `git status` clean of them afterwards:*
+
+| Mutation | Result |
+|---|---|
+| an **empty** view planted as a real class screen — `<div id="wo221EmptyView" class="hidden"></div>` in `<main>`, wired into `src/views.js` (`VIEWS`, `CLASS_SCREENS`, `REMEMBERED_AS`) and `src/screen-nav.js`'s `SCREENS`, plus its own `VIEW_PLAN` entry with `floor: 1` | **2 red on its floor**, which is the acceptance line: *"#wo221EmptyView opens through the app's own navigation and draws at least 1 control(s) … `{"hidden":false,"display":"block","w":984,"h":0}` :: 0 control(s) measured"*, and the 44px check red beside it at *"measured 0"* rather than green for having nothing to complain about. Three of WO-3.3's own checks went red too — the strip really did grow a fourth segment |
+| a view the harness has never heard of — `<div id="wo221UnknownView" class="hidden"></div>` in `<main>` and nowhere else | **1 red**: *"6 in `<main>`: homeView, classView, assignmentsView, scoresView, wo221EmptyView, wo221UnknownView :: NOT IN VIEW_PLAN, so nothing measured them: wo221UnknownView"*. This is the line WO-3.6, WO-3.7 and WO-3.9 will each hit on their way in |
+
+*The empty-view run also found a defect in the first cut of the restore, which is why the mutation was
+worth running rather than reasoning about: putting the page back clicked the switcher inside whatever
+view was open last, and an empty view has no switcher in it — `could not put #classView back`. The
+route is now out to the grid and back in through the class's card, which is the way a teacher leaves a
+screen that has no door onward.*
+
+*No 👤 line. Nothing here renders, and the thing this work order measures — that a screen is opened
+before it is measured — has no iPad half that was not already owed by the screens themselves. The 44px
+threshold and what is measured on each screen are untouched, deliberately: this work order is about
+**which** screens are looked at.*
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

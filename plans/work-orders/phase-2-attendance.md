@@ -1834,7 +1834,7 @@ reader see through it.
 
 ## WO-2.21 — the 44px sweep can see a screen that is not the one on screen
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 — the by-hand fix it
+**Ship** — · **Status** ✅ DONE — 2026-08-11 · **Size** S · **Depends on** WO-3.5 — the by-hand fix it
 generalises is in `tools/verify-shell.mjs` § "the score entry grid (WO-3.5)" · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19 and
 WO-2.20 made.)*
@@ -1883,15 +1883,34 @@ the instance.
 threshold itself. This is about *which screens are looked at*, not about what is checked on them.
 
 **Acceptance**
-- [ ] Every view in `index.html` is measured under the coarse pointer, enumerated from the document
-      rather than from a list someone typed.
-- [ ] **Deleting WO-3.5's by-hand block does not reduce coverage of `#scoresView`** — the general
+- [x] Every view in `index.html` is measured under the coarse pointer, enumerated from the document
+      rather than from a list someone typed. *`document.querySelectorAll('main > *')` is the list;
+      the run prints `4 in <main>: homeView, classView, assignmentsView, scoresView` and measures
+      7 · 27 · 5 · 4 controls on them with each view OPEN, every one ≥44px. Each is opened by driving
+      the real navigation — the design decision is argued at the block, and the short form is that
+      un-hiding would have reported green over WO-3.5's disabled Scores segment.*
+- [x] **Deleting WO-3.5's by-hand block does not reduce coverage of `#scoresView`** — the general
       mechanism reaches it, proved by running with the block removed and quoting the counts.
-- [ ] A view that opens empty fails on its own floor, driven by planting an empty one rather than
-      argued.
-- [ ] Adding a view to `index.html` and not to the harness turns a check red, driven the same way.
-- [ ] The total check count rises and `tools/README.md` records the new number — which is WO-2.19's
-      mechanism if it has landed, and a hand edit with a note if it has not.
+      *Run with the block deleted: `588 checks · 588 passed · 0 failed · 0 skipped`, and `#scoresView`
+      still opened through the real segment and measured — at **4 controls**, against the **259** that
+      block prints on a real run (`measured 259 visible control(s) with the grid open`). The view's
+      coverage survives; the grid's density does not, because the 25×10 fixture is planted 2,700 lines
+      later and torn down before that section ends. So the block **stays**, which the Deliverable
+      allows, and the one sentence why is written at the block and in `tools/README.md`.*
+- [x] A view that opens empty fails on its own floor, driven by planting an empty one rather than
+      argued. *An empty `#wo221EmptyView` planted as a real class screen (index.html + `src/views.js`
+      + `src/screen-nav.js` + its `VIEW_PLAN` entry) goes red on the floor:
+      `{"hidden":false,"display":"block","w":984,"h":0} :: 0 control(s) measured`, with the 44px check
+      red beside it rather than green over nothing. Reverted; tabulated in `TESTING.md` § WO-2.21.*
+- [x] Adding a view to `index.html` and not to the harness turns a check red, driven the same way.
+      *`<div id="wo221UnknownView" class="hidden">` in `<main>` and nowhere else:
+      `6 in <main>: … :: NOT IN VIEW_PLAN, so nothing measured them: wo221UnknownView`. Reverted.*
+- [x] The total check count rises and `tools/README.md` records the new number — which is WO-2.19's
+      mechanism if it has landed, and a hand edit with a note if it has not. *It has landed and it
+      named the move: §11 went red at "592 `check()` call site(s), up 3 on the 589 recorded". Both
+      numbers now come off real runs — **592 call sites** from the sweep's own grep, **591 executed**
+      from `591 checks · 591 passed · 0 failed · 0 skipped`. Nine results from three call sites,
+      because two of them fire once per view; the gap paragraph records why it moved from 7 to 1.*
 
 ---
 

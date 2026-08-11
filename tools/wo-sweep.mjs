@@ -592,7 +592,7 @@ function commentLines(file) {
    ALLOWLIST, so the next reader does not re-derive it:
    - `tools/verify-shell.mjs:68` is `function check(name, ok, detail)` — the definition, excluded by
      name. It is the only occurrence of `check(` in that file that is not a call.
-   - `:10570` is an `else check(`, the one call site not first on its line. The pattern is therefore
+   - `:10773` is an `else check(`, the one call site not first on its line. The pattern is therefore
      NOT line-anchored; it matches `check(` anywhere a call could be written.
    - `.check(` and `recheck(` are excluded by construction — the character before `check` may not be
      a word character or a dot. Neither shape exists in the harness today; the guard is so that one
