@@ -206,7 +206,31 @@
   font-size: 10px; font-weight: 700; color: #8a9bb0;
   letter-spacing: 0.8px; text-transform: uppercase;
 }
-.attendance-student-identity { display: flex; flex-direction: column; min-width: 0; }
+/* THE NAME AND THE TERM LINE UNDER IT, AND SINCE WO-2.6 THEY ARE A BUTTON — the door into that
+   student's history, which is Roll Call!'s `.s-name-link` arrangement (dashboard.html: an onclick on
+   the name that opens the student report) with the target grown to the whole identity block.
+
+   Growing it is what keeps the row the height it was. A 44px minimum on the name ALONE would push
+   the term line down and take the row from 62px to 75 on a coarse pointer — twenty-six students'
+   worth of extra scrolling on the one screen measured in seconds. The block is 31px of text
+   already, so 44 on the block is 13px of padding and the row is still decided by the 44px cells to
+   its right. The arithmetic is restated at the coarse rule.
+
+   The reset is the usual button reset and one line of it is load-bearing: `font: inherit`. A button
+   does not inherit type, and without it the name inside would drop to the UA's 13.33px Arial while
+   `.attendance-name` above says 13px/600 — which reads as a rendering fault rather than as a
+   control. */
+.attendance-student-identity {
+  display: flex; flex-direction: column; min-width: 0;
+  width: 100%; margin: 0; padding: 0;
+  border: 0; background: none; font: inherit; color: inherit;
+  text-align: left; cursor: pointer;
+}
+/* Roll Call!'s `.s-name-link:hover { color: #5b6fcc }`, on the name rather than on the whole block:
+   the term line under it is grey on purpose and a hover that lit both up would read as a selection.
+   The coarse block adds the underline that stands in for a hover nobody has on a touch screen,
+   which is that stylesheet's own answer at the same selector. */
+.attendance-student-identity:hover .attendance-student-name { color: #5b6fcc; }
 .attendance-student-totals {
   color: #8a9bb0; font-size: 10px; font-weight: 600; line-height: 1.35; white-space: normal;
 }
@@ -272,16 +296,22 @@
    is shell.css's `.avatar` — 32px, round, `flex-shrink: 0` — worn as-is, because two stylesheets
    never style one class (src/shell.css's header). This sheet owns the row around it and nothing in
    it. */
-/* Neither of the two selectors here takes a coarse-block rule, and that is a decision rather than
-   an omission — `wo-sweep.mjs` flagged both for review, which is what that check is for. A flex
-   wrapper and a text span are not touch targets: nothing in this cell is tappable. The tappable
-   things on this row are the cells to its right, and they carry their 44px in the block at the
-   foot of this file. */
+/* `.attendance-student-cell` IS STILL NOT A TOUCH TARGET — it is the flex wrapper, and what it
+   holds is an avatar, the identity button and the ⋯. Both of those carry their own 44px in the
+   block at the foot of this file. (Until WO-2.6 nothing in this cell was tappable at all, and the
+   note that stood here said so; the identity block is what changed, not this wrapper.) */
 .attendance-student-cell { display: flex; align-items: center; gap: 9px; }
 /* The name is what gives way when the column is tight, never the avatar: a 32px circle that
    shrinks to 20px reads as a rendering fault, while a truncated name reads as a truncated name and
-   keeps its full text on the cell's `title`. */
-.attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
+   keeps its full text on the cell's `title`.
+
+   `white-space: nowrap` is restated here rather than inherited from `.attendance-name` since
+   WO-2.6: the ellipsis needs it, and the element is inside a <button> now — a form control is
+   where an inherited white-space value is least safe to assume across engines. */
+.attendance-student-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: color 0.1s;
+}
 
 /* ── THE PASSES COLUMN (WO-2.8) ── */
 /* Roll Call!'s `col-passes`, at its own `min-width: 160px` (dashboard.html:3988) and in its own
@@ -697,6 +727,115 @@
   font-family: inherit; font-size: 12px; font-weight: 700; line-height: 1.3; text-align: center;
 }
 
+/* ══════════════════ THE TWO READ-BACK SURFACES (WO-2.6) ══════════════════
+
+   One student's history, and the class's record for a term. Both are dialogs over this screen and
+   both are drawn by src/attendance-report.js, so their rules are here rather than in a sheet of
+   their own — the same call the ⌨ key list above makes, which is also a dialog belonging to this
+   screen rather than a screen of its own.
+
+   The grammar is lifted from Roll Call!'s student report (`.sr-*` in dashboard.html) and from the
+   registry above: an identity row with the avatar and a rate badge, section labels in the app's
+   uppercase micro-label voice, and the five mark palettes worn EXACTLY as the cells wear them —
+   `.attendance-cell-A` and its four siblings, which this sheet owns and which the row's detail
+   panel already reuses the same way. A second amber for a tardy in a printed table is a second
+   answer to "what colour is a tardy". */
+
+/* The door in the toolbar. Wears shell.css's `.class-action-btn`; the name exists so the control is
+   listed by name in the coarse block below and to carry the one rule that is its own — it does not
+   shrink, for the reason `.attendance-keys-btn` beside it states. */
+.attendance-record-btn { flex-shrink: 0; }
+
+/* Wider than a form dialog because a table of dates is what is in it. `.modal-panel` supplies the
+   frame and the 95vw; this raises the cap only, so a narrow screen is unchanged. */
+.attendance-report-panel { max-width: 900px; }
+
+/* Print and Download CSV, at the TOP of the body — index.html says why: the table under them is a
+   term long, and a control below it is a control reached by scrolling past the whole record. */
+.attendance-report-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px;
+}
+
+/* Roll Call!'s `.sr-header-left` — avatar, then name over a quiet subtitle — with its rate badge
+   pushed to the far end. On the record dialog the same row carries the class name and the printed
+   header instead, with no avatar, because a class has no face. */
+.attendance-report-head {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding: 0 0 12px; margin: 0 0 4px;
+  border-bottom: 1.5px solid #eef0f4;
+}
+.attendance-report-who { flex: 1 1 200px; min-width: 0; }
+.attendance-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+.attendance-report-sub {
+  font-size: 12px; font-weight: 600; color: #8a9bb0; line-height: 1.5; margin-top: 2px;
+}
+/* Roll Call!'s `.sr-rate-badge`, in this app's positive green rather than that app's three
+   threshold colours: a threshold is Phase 4's to decide, and a badge that turned amber here would
+   be this file inventing what "at risk" means before the work order that owns it is written. */
+.attendance-report-rate {
+  flex: 0 0 auto;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1.5px solid #a3e4bc; background: #eafaf1; color: #27ae60;
+  font-size: 18px; font-weight: 700; line-height: 1.2;
+}
+
+/* design/style-guide.md §9's uppercase micro label, which shell.css calls `.modal-section-label` on
+   a dialog; named here because these two dialogs put one over each table and the spacing above a
+   table is not the spacing above a form row. */
+.attendance-report-label {
+  margin: 18px 0 8px;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+
+.attendance-report-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.attendance-report-table th, .attendance-report-table td {
+  padding: 6px 8px; text-align: left; vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+}
+.attendance-report-table thead th {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  border-bottom: 1.5px solid #eef0f4; white-space: nowrap;
+}
+.attendance-report-num { text-align: right; white-space: nowrap; }
+.attendance-report-table thead th.attendance-report-num { text-align: right; }
+.attendance-report-row-head { font-weight: 600; color: #1a1a2e; }
+/* The term the registry behind this dialog is on, in the interactive wash the rest of this app uses
+   for "you are here" — Roll Call!'s `.sr-q-current` in Planbook's palette. */
+.attendance-report-open > * { background: #eef2ff; }
+.attendance-report-dow {
+  display: inline-block; min-width: 30px;
+  font-size: 10px; font-weight: 700; color: #a0aab8; letter-spacing: 0.5px;
+}
+.attendance-report-date { font-weight: 600; color: #4a5a6a; }
+/* A mark, wearing the cell palette from the top of this sheet. `.attendance-detail-mark`'s shape,
+   at the size a table row can hold. */
+.attendance-report-mark {
+  display: inline-block; min-width: 22px; padding: 2px 8px;
+  border: 1.5px solid transparent; border-radius: 6px;
+  font-size: 11px; font-weight: 700; text-align: center;
+}
+.attendance-report-empty { font-size: 13px; color: #a0aab8; line-height: 1.5; margin: 8px 0; }
+.attendance-report-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 16px; }
+
+/* ── the day-by-day grid, and its slices ──
+   One slice per printed page's worth of date columns. On screen the slice scrolls sideways inside
+   its own wrapper exactly as the registry's grid does; on paper it is a page. */
+.attendance-report-slice { margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.attendance-report-slice-label {
+  font-size: 11px; font-weight: 700; color: #8a9bb0; margin-bottom: 4px;
+}
+.attendance-report-grid th, .attendance-report-grid td { padding: 4px 5px; }
+.attendance-report-day { text-align: center; }
+.attendance-report-day .attendance-report-dow,
+.attendance-report-day .attendance-report-date { display: block; min-width: 0; }
+.attendance-report-cell { text-align: center; }
+.attendance-report-grid .attendance-report-mark { min-width: 20px; padding: 1px 4px; }
+
 /* ── RESPONSIVE ── */
 /* Same order design/style-guide.md §6 names and both other sheets follow: (pointer: coarse)
    first, then the width blocks. */
@@ -963,6 +1102,61 @@
      whole reason it is reserved; the two values are one decision written twice. */
   .attendance-grid tr > :first-child { border-left-width: 4px; }
   .attendance-grid tbody tr.attendance-row-selected > * { background: rgba(91,111,204,0.1); }
+
+  /* ── WO-2.6's controls and the two dialogs they open ──
+
+     THE IDENTITY BLOCK IS A TOUCH TARGET NOW, and the 44px goes on the BLOCK rather than on the
+     name inside it. The arithmetic, because it decides the height of every row on the screen this
+     app is measured by: the block is a 13px name over a 10px totals line, about 31px; the row is
+     decided by the 44px cell plus `.attendance-cell-td`'s 9px of padding either side, so 62px.
+     44 on the block leaves the cell still deciding (44 + 18 of `.attendance-name` padding = 62) and
+     the row does not move. 44 on the NAME alone would make the block 44 + 13 = 57, the cell 75, and
+     twenty-six students two thirds of a screen taller. `justify-content: center` is what keeps the
+     text where it was inside the taller box. */
+  .attendance-student-identity { min-width: 0; min-height: 44px; justify-content: center; }
+  /* Roll Call!'s own coarse rule at the same selector (`.s-name-link { text-decoration: underline }`
+     in dashboard.html's `@media (pointer: coarse)`, under the heading "always-visible hover-only
+     affordances"): there is no hover on a touch screen, so the affordance that a hover carries on a
+     laptop has to be drawn all the time. Lifted, not re-derived. */
+  .attendance-student-name { text-decoration: underline; }
+  /* The 44px comes from `.class-action-btn`'s own coarse rule, which this button also wears; the
+     name is here so a reader of this block can see the control was considered rather than having to
+     go and prove it is covered elsewhere, and `flex-shrink` is restated for the reason
+     `.attendance-keys-btn` beside it restates it — a two-word label with a glyph in a flex row is
+     the shape that clears 44px in both directions and still spills through its own border. */
+  .attendance-record-btn { min-height: 44px; min-width: 44px; flex-shrink: 0; }
+  /* The two output buttons wear `.class-action-btn` and take their 44px from it; this row is here
+     for its spacing. Nothing else in either dialog is tappable — the ✕ is shell.css's
+     `.modal-close` — so the rest of the names below are text and tables, listed for the reason
+     `.attendance-student-cell` and `.attendance-pass-card-info` are listed: a rule missing from
+     this block is a rule the next reader has to go and prove was considered. What they get is one
+     step up in size, because a coarse pointer is the device held at arm's length. */
+  .attendance-report-actions { gap: 10px; margin-bottom: 18px; }
+  .attendance-report-panel { max-width: 900px; }
+  .attendance-report-head { gap: 14px; padding-bottom: 14px; }
+  .attendance-report-who { min-width: 0; }
+  .attendance-report-name { font-size: 17px; }
+  .attendance-report-sub { font-size: 13px; }
+  .attendance-report-rate { font-size: 19px; padding: 7px 16px; }
+  .attendance-report-label { font-size: 11px; margin-top: 20px; }
+  .attendance-report-table { font-size: 13px; }
+  .attendance-report-table th, .attendance-report-table td { padding: 8px 9px; }
+  .attendance-report-num { white-space: nowrap; }
+  .attendance-report-row-head { font-weight: 600; }
+  .attendance-report-open > * { background: #eef2ff; }
+  .attendance-report-dow { font-size: 11px; }
+  .attendance-report-date { font-size: 13px; }
+  .attendance-report-mark { font-size: 12px; padding: 3px 9px; }
+  .attendance-report-empty { font-size: 14px; }
+  .attendance-report-note { font-size: 12px; }
+  .attendance-report-slice { margin-bottom: 18px; }
+  .attendance-report-slice-label { font-size: 12px; }
+  /* The day-by-day grid does NOT grow with the rest: it is students by dates, it already scrolls
+     sideways inside its own slice, and a step up in padding here costs columns on the screen with
+     the least room for them. Named, considered, tightened rather than grown. */
+  .attendance-report-grid th, .attendance-report-grid td { padding: 5px 5px; }
+  .attendance-report-day { text-align: center; }
+  .attendance-report-cell { text-align: center; }
 }
 
 /* The tablet. There is no width rule here and there does not need to be one: the coarse block above
@@ -999,3 +1193,108 @@
   .attendance-passes, .attendance-pass-td { padding-left: 4px; padding-right: 4px; }
   .attendance-pager-range { display: none; }
 }
+
+/* ══════════════════════════ THE PRINTED PAGE (WO-2.6) ══════════════════════════
+
+   The one @media print block in this app, and the only surface it prints is the attendance record
+   dialog. It is HERE, in the registry's own sheet, because that dialog belongs to this screen the
+   way the ⌨ key list does — and because there is nothing else to print: Planbook has no default
+   print surface at all.
+
+   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/attendance-report.js's printRecord()
+   puts `data-attendance-print` on <body>, calls window.print(), and takes it off again — Roll Call!'s
+   `body[data-modal-print]` idiom (dashboard.html), lifted whole. Without the gate, a Ctrl+P made
+   anywhere else in the app would hide the entire page and print a blank sheet, which is the kind of
+   thing nobody finds until the day it matters. With it, a keyboard print is the browser's business
+   and this block is silent.
+
+   ONE DEPARTURE FROM ROLL CALL!, and it is forced. Over there the DEFAULT print target is the
+   registry table, because that table IS the term. Ours is a six-day window (src/attendance.js's
+   header says why at length), so printing it would hand a teacher six days and call it a term. The
+   record dialog exists to be the thing that prints.
+
+   WHAT MAKES A CLASS FIT. Down the page: one row per student, 8pt, and a roster of ordinary size
+   lands on one sheet. Across it: the day-by-day table is already drawn in slices of twenty-four
+   date columns by the module (DATES_PER_SLICE, and the millimetres are written down there), and
+   each slice starts a new page. `display: table-header-group` on every thead is what repeats the
+   column heads when a table does break, which is the one thing a long roster needs and the one
+   thing browsers only do if you ask.
+
+   Colours are kept rather than stripped. These are the five mark palettes the teacher reads on
+   screen, `print-color-adjust` asks the browser not to drop them, and a monochrome printer renders
+   them as five distinguishable greys behind five distinct letters — which is the same belt-and-
+   braces the grid itself is built on. */
+@media print {
+  /* Everything on the page goes, and the record comes back. `body > *` rather than a list of
+     chrome class names: this sheet styles its own class names and nothing else (see the header at
+     the top of this file), and a list would also be a list to keep in step with every panel a
+     later work order adds. */
+  body[data-attendance-print] > * { display: none !important; }
+  body[data-attendance-print] { background: #fff; }
+  body[data-attendance-print] > #attendanceRecordModal {
+    display: block !important; position: static !important;
+    overflow: visible !important; background: none !important; padding: 0 !important;
+  }
+  body[data-attendance-print] #attendanceRecordModal .modal-panel {
+    display: block !important; width: 100% !important; max-width: none !important;
+    max-height: none !important; overflow: visible !important;
+    border-radius: 0 !important; box-shadow: none !important; animation: none !important;
+  }
+  body[data-attendance-print] #attendanceRecordModal .modal-body {
+    overflow: visible !important; max-height: none !important; padding: 0 !important;
+  }
+  /* The dialog's own furniture is not part of the record: the title bar says "Attendance record"
+     where the printed header already says which class and which term, the ✕ is a control, and so
+     are Print and Download CSV. */
+  body[data-attendance-print] #attendanceRecordModal .modal-header,
+  body[data-attendance-print] .attendance-report-actions { display: none !important; }
+
+  body[data-attendance-print] .attendance-report-head {
+    border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 4mm;
+  }
+  body[data-attendance-print] .attendance-report-name { font-size: 14pt; color: #000; }
+  body[data-attendance-print] .attendance-report-sub { font-size: 9pt; color: #333; }
+  body[data-attendance-print] .attendance-report-label {
+    font-size: 8pt; color: #000; margin: 6mm 0 2mm;
+  }
+  body[data-attendance-print] .attendance-report-table { font-size: 8pt; }
+  body[data-attendance-print] .attendance-report-table th,
+  body[data-attendance-print] .attendance-report-table td {
+    padding: 1mm 1.5mm; border-bottom: 0.2mm solid #999; color: #000;
+  }
+  body[data-attendance-print] .attendance-report-table thead th {
+    font-size: 7pt; color: #000; border-bottom: 0.4mm solid #000;
+  }
+  /* Repeat the column heads on the second page of a long roster, and never break a student's row
+     in half. */
+  body[data-attendance-print] .attendance-report-table thead { display: table-header-group; }
+  body[data-attendance-print] .attendance-report-table tr { break-inside: avoid; }
+  /* The slice IS the page. `overflow: visible` because the on-screen sideways scroll has nothing to
+     scroll on paper, and a slice that kept `overflow-x: auto` would print clipped at the sheet edge
+     with no way to reach the rest. */
+  body[data-attendance-print] .attendance-report-slice {
+    overflow: visible !important; break-before: page; margin-bottom: 0;
+  }
+  body[data-attendance-print] .attendance-report-slice-label { font-size: 8pt; color: #000; }
+  body[data-attendance-print] .attendance-report-grid th,
+  body[data-attendance-print] .attendance-report-grid td { padding: 0.8mm 0.5mm; }
+  body[data-attendance-print] .attendance-report-row-head { max-width: 45mm; overflow: hidden; }
+  body[data-attendance-print] .attendance-report-day { width: 6mm; }
+  body[data-attendance-print] .attendance-report-dow { font-size: 6pt; min-width: 0; }
+  body[data-attendance-print] .attendance-report-date { font-size: 7pt; }
+  body[data-attendance-print] .attendance-report-mark {
+    min-width: 0; padding: 0.3mm 1mm; font-size: 7.5pt;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  body[data-attendance-print] .attendance-report-rate {
+    font-size: 12pt; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  body[data-attendance-print] .attendance-report-note { font-size: 7pt; color: #333; }
+  body[data-attendance-print] .attendance-report-empty { font-size: 9pt; color: #333; }
+}
+
+/* The sheet, and the margin the twenty-four-column arithmetic is against: A4 is 210mm wide, 10mm
+   either side leaves 190, a 45mm student column leaves 145, and 24 date columns at 6mm are 144.
+   Letter is 6mm wider and therefore has room to spare. Outside the block above on purpose — an
+   @page rule inside @media print is honoured unevenly, and this one is inert on screen anyway. */
+@page { margin: 10mm; }

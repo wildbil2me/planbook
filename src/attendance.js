@@ -331,8 +331,18 @@
   src/shell.js's listener, and on screen in the ⌨ Keys dialog, which is what stops them being
   folklore.
 
-  Out of scope and deliberately absent: percentages and counts over history (WO-2.4),
-  per-student history and print/CSV (WO-2.6), and the AUTHORING of calendar events
+  ── AND IT IS THE LEDGER EVERY OTHER READING COMES OFF (WO-2.6) ──
+
+  A student's history and the class's printed record are not on this screen and are not drawn by
+  this file: src/attendance-report.js owns both surfaces. What is here is the READING they are made
+  of — walkMeetings(), attendanceHistory(), classRecord() — because "which meetings count" has been
+  this file's answer since WO-2.1 and a second copy of that filter chain living in an export is a
+  printout that disagrees with the percentage above it the first time a day off is added. The two
+  doors onto those surfaces are on this screen: a student's own name in the grid, and 🖨 Record in
+  the toolbar.
+
+  Out of scope and deliberately absent: percentages and counts over history (WO-2.4)
+  and the AUTHORING of calendar events
   (WO-2.3, src/days-off.js) — this screen reads them and never writes one, which is why the only
   control it offers on a covered day is a door to the screen that owns
   them — plus the elapsed clock on the card, the two
@@ -603,15 +613,31 @@ export function spokenDate(iso) {
     + ', ' + d.getFullYear();
 }
 
+/* `2026-09-08` → `September 8, 2026`: spokenDate without the weekday. What a printed record's
+   header and a file's name are read as months later, where the weekday says nothing and the year
+   says everything. Added at WO-2.6 for src/attendance-report.js, and it lives HERE rather than
+   there for the reason parseISO() above gives at length — `new Date('2026-09-08')` is UTC midnight
+   and lands a day early west of Greenwich, and this file is not going to have a second opinion
+   about what day a date is. */
+export function plainDate(iso) {
+  const d = parseISO(iso);
+  if (!d) return String(iso || '');
+  return MONTH_NAMES[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+}
+
 /* `2026-09-08` → `9/8`, which is what fits in a column head. The year is deliberately absent: six
    weekdays never span a year boundary in a way a teacher could misread, and the spoken form is on
-   every cell's accessible name. */
-function shortDate(iso) {
+   every cell's accessible name.
+
+   EXPORTED AT WO-2.6, with dayAbbr() below it, for the same one-clock reason plainDate() gives: the
+   printed record's date columns and the history's own rows are the same dates the grid draws, said
+   the same way, out of the same parser. */
+export function shortDate(iso) {
   const d = parseISO(iso);
   return d ? (d.getMonth() + 1) + '/' + d.getDate() : String(iso || '');
 }
 
-function dayAbbr(iso) {
+export function dayAbbr(iso) {
   const d = parseISO(iso);
   return d ? DAY_ABBR[d.getDay()] : '';
 }
@@ -1168,17 +1194,55 @@ function meetingRecords(classId, from = '', to = '') {
   return meetingDates(classId, from, to).map((date) => recordFor(classId, date));
 }
 
-function totalsFrom(records, studentId) {
-  const counts = emptyAttendanceCounts();
-  records.forEach((record) => {
-    const reading = readingOf(record, studentId);
-    const code = reading === UNCONFIRMED ? 'A' : reading;
-    if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
-  });
+/* The counts so far, as the totals every surface in this app phrases. A copy rather than the live
+   tally, because walkMeetings() below hands one of these out per row and a shared object would leave
+   every row of a history reporting the last row's numbers. */
+function summarise(counts) {
   const meetings = MARKS.reduce((sum, mark) => sum + counts[mark.code], 0);
   const attended = counts.P + counts.T + counts.E + counts.D;
-  return Object.assign(counts, { meetings: meetings, attended: attended,
+  return Object.assign({}, counts, { meetings: meetings, attended: attended,
     percent: meetings ? (attended / meetings) * 100 : null });
+}
+
+/*
+  ONE WALK OVER ONE SET OF RECORDS: the rows a history lists, and the totals its percentage is.
+
+  WO-2.6's first acceptance line — "a student's history lists exactly the meetings counted in their
+  percentage, the two agree" — is a claim about a SHARED SOURCE and not about two implementations
+  landing on the same number. A second walk with its own filter would agree on any fixture anybody
+  wrote and disagree in November, on the first retroactive snow day, the first class dropped from
+  its own record, the first student added to a roster mid-term. So the list and the arithmetic come
+  out of the same pass, and totalsFrom() below is the totals half of THIS rather than a second count
+  standing beside it. Nothing in this file may grow a second row list.
+
+  CHRONOLOGICAL, oldest first — which the totals do not care about and a history does: a running
+  percentage is only running if the rows are in the order the days happened, and the ledger's own
+  order is insertion order, where a backfilled Tuesday sits after the Friday that followed it.
+
+  `U` FOLDS INTO `A` HERE, exactly as it did when this was one function, and the fold is what the
+  header at the top of this file promises: `U` is scaffolding, it counts as an absence wherever
+  attendance is counted, and it never appears in a total or in a report. So an unconfirmed student's
+  history row reads `A` and their CSV cell reads `A` — never `U`, and never a blank that would read
+  as a day nobody took.
+*/
+function walkMeetings(records, studentId) {
+  const counts = emptyAttendanceCounts();
+  const rows = records.slice()
+    .filter(Boolean)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((record) => {
+      const reading = readingOf(record, studentId);
+      const code = reading === UNCONFIRMED ? 'A' : reading;
+      if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code] += 1;
+      const so = summarise(counts);
+      return { date: record.date, code: code, meetings: so.meetings, attended: so.attended,
+        percent: so.percent };
+    });
+  return { rows: rows, totals: summarise(counts) };
+}
+
+function totalsFrom(records, studentId) {
+  return walkMeetings(records, studentId).totals;
 }
 
 /* One student's Roll Call!-compatible totals over an inclusive range. stateOf() decides meetings;
@@ -1192,11 +1256,92 @@ export function termTotals(classId, studentId, term) {
   return attendanceTotals(classId, studentId, term && term.start, term && term.end);
 }
 function termHasDates(term) { return Boolean(term && term.start && term.end); }
-function percentText(totals) {
+
+/*
+  ONE STUDENT'S RECORDED MEETINGS, oldest first, each with the mark it was given and the percentage
+  as it stood after it (WO-2.6). Same range arguments as attendanceTotals() above and the same walk
+  underneath, so the list a teacher reads at a conference and the figure on her registry cannot come
+  apart — see walkMeetings().
+
+  What a row holds is a date, a code and the running arithmetic. It does NOT hold the note or the
+  time on the mark: those are the row's own detail on the registry, they belong to the day rather
+  than to the term, and a history that carried them would be a second surface for editing them.
+*/
+export function attendanceHistory(classId, studentId, from = '', to = '') {
+  return walkMeetings(meetingRecords(classId, from, to), studentId).rows;
+}
+
+export function termHistory(classId, studentId, term) {
+  return attendanceHistory(classId, studentId, term && term.start, term && term.end);
+}
+
+/*
+  Exported at WO-2.6 so that a printed page, a CSV and a dialog say a percentage in exactly the
+  words the registry says it in. Two renderings of one number drawn by two modules is how a printout
+  that has left the building comes to disagree with the screen it was taken from.
+
+  countText() below is deliberately NOT exported with it: the report surfaces lay the five counts
+  out as five columns, where "P 3 · T 0 · A 0" is a line for a place with one line to spend.
+*/
+export function percentText(totals) {
   return totals.percent === null ? 'No recorded meetings' : Math.round(totals.percent) + '%';
 }
 function countText(totals) {
   return MARKS.map((mark) => mark.code + ' ' + totals[mark.code]).join(' · ');
+}
+
+/*
+  THE WHOLE CLASS'S ATTENDANCE FOR THE OPEN TERM, as data — the reading src/attendance-report.js
+  turns into a printed page and a CSV, and the only reading either of them gets.
+
+  IT IS HERE RATHER THAN THERE because "which meetings count" is this file's answer and has been
+  since WO-2.1, the same argument meetingsBetween() makes at the top of this file. A copy of that
+  filter chain inside an export would agree with itself perfectly and disagree with the percentage
+  on the registry the moment a day off is added, which is precisely the failure WO-2.6's first
+  acceptance line is written against.
+
+  NO ARGUMENTS, and that is deliberate: it answers "the class and term on screen", which is what
+  both surfaces are about, and it reads the roster in markingOrder() — the same order, and the same
+  sort toggle, as the rows the teacher is looking at. Nothing here is narrowed by the search box or
+  the filter pills: a record with three students missing out of it because a pill was left on is a
+  record that is wrong in a way nobody would notice until a conference.
+
+  `dates` IS THE DENOMINATOR AND THE TERM'S RANGE IS A LABEL. Everything in this app counts recorded
+  meetings and never calendar days (docs/data-model.md), so `start` and `end` are what the header
+  prints and `dates.length` is what the percentages are over. An undated term falls back to the
+  first and last meeting there actually was, because a header with an empty range on it says less
+  than one that says which days this page covers.
+
+  WHAT IS NOT ON IT: nothing from a student's record but the name they are marked under and the id
+  their row is keyed by. No guardian, no counselor, no support block — no accommodation, medical or
+  plan field reaches this shape at all, in either presentation mode, which is what makes WO-2.6's
+  fourth acceptance line true by construction rather than by a conditional somebody has to
+  remember. The rule is docs/data-model.md's and src/supports.js's header states it: the JSON backup
+  is the one file that carries any of that, and it says so in its own words on screen.
+*/
+export function classRecord() {
+  const cls = openClass();
+  if (!cls) return null;
+  const term = getSelectedTerm();
+  const dated = termHasDates(term);
+  const records = dated ? meetingRecords(cls.id, term.start, term.end) : meetingRecords(cls.id);
+  const dates = records.filter(Boolean).map((r) => r.date)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const students = markingOrder(cls).map((student) => {
+    const walk = walkMeetings(records, student.id);
+    const marks = {};
+    walk.rows.forEach((row) => { marks[row.date] = row.code; });
+    return { id: student.id, first: String(student.first || ''), last: String(student.last || ''),
+      name: rosterName(student), marks: marks, totals: walk.totals };
+  });
+  return {
+    classId: cls.id, className: cls.name,
+    termLabel: term && term.label ? term.label : '',
+    dated: dated,
+    start: dated ? term.start : (dates[0] || ''),
+    end: dated ? term.end : (dates[dates.length - 1] || ''),
+    dates: dates, students: students,
+  };
 }
 
 /*
@@ -3212,7 +3357,7 @@ function renderRows(sharedTotals) {
     const cell = el('div', 'attendance-student-cell');
     const avatar = el('div', 'avatar ' + avatarClass(student.id), initials(rosterName(student)));
     avatar.setAttribute('aria-hidden', 'true');
-    const identity = el('span', 'attendance-student-identity');
+    const identity = historyDoor(student);
     identity.append(el('span', 'attendance-student-name', rosterName(student)));
     identity.append(el('span', 'attendance-student-totals',
       studentTotalsText(totals, student.id)));
@@ -3260,6 +3405,39 @@ function renderRows(sharedTotals) {
      student it belongs to has been filtered off the screen it closes, because a panel with no row
      above it belongs to nobody. */
   paintDetail(totals);
+}
+
+/*
+  THE WAY INTO ONE STUDENT'S HISTORY (WO-2.6): their own name, in the grid, exactly where Roll Call!
+  puts it — `.s-name-link` in dashboard.html, an onclick on the name that opens that student's
+  report. Lifted with the function: the name and the term line under it become the control, so the
+  target is the whole identity block rather than a strip of 13px text, and the row does not get
+  taller for it (the coarse block at the foot of src/attendance.css carries the arithmetic).
+
+  IT IS THE NAME AND NOT A SEVENTH BUTTON ON THE ROW. This grid's width is budgeted to the pixel —
+  dayColumnCount() spends it in 72px columns — and a control of its own here would be paid for with
+  a day column on the one screen where a missing column is a day nobody can see they forgot. The
+  name is already there, it already means "this student", and there is nothing else it could do.
+
+  IT WRITES NOTHING, which is what makes it safe to put on the critical-path screen: the cost of a
+  mis-tap is a dialog and an ✕, the same trade daysOffDoor() makes above and the cheapest wrong
+  outcome anything on this screen has. The cells a thumb is actually aiming at are on the far side
+  of the Passes column.
+
+  The `title` keeps the whole name in it, because this element is what `.attendance-name`'s title
+  used to be reachable through and a truncated surname still has to be readable on a laptop.
+*/
+function historyDoor(student) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'attendance-student-identity';
+  btn.setAttribute('data-attendance-history', student.id);
+  btn.setAttribute('aria-haspopup', 'dialog');
+  /* Named for what it opens rather than left to read out the name and the term totals under it,
+     which is what a screen reader would otherwise announce as this control's name. */
+  btn.setAttribute('aria-label', 'Attendance history for ' + fullName(student));
+  btn.title = rosterName(student) + ' — attendance day by day';
+  return btn;
 }
 
 /* The ⋯ at the end of a name. Its pressed state is the panel below it, which is why it is a toggle

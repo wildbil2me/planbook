@@ -247,6 +247,11 @@ import * as gradeEngine from './grade-engine.js';
 import * as letterScale from './letter-scale.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
+/* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
+   and a CSV. Its own module for the reason src/days-off.js is one: the registry is the flow that
+   runs while students walk in, and neither of these is opened standing up. It imports the ledger
+   from src/attendance.js one way and never writes through it. */
+import * as attendanceReport from './attendance-report.js';
 /* Imported here for the seam at the foot of this file and for nothing else — every control a hall
    pass has is on the registry, and src/attendance.js is what drives them. */
 import * as passes from './passes.js';
@@ -1029,11 +1034,28 @@ document.addEventListener('click', (e) => {
     afterAttendanceChange(); return;
   }
 
-  /* And six taps that move the view without writing anything, so none of them touches the home
+  /* And ten taps that move the view without writing anything, so none of them touches the home
      screen: opening a row's detail panel, unlocking a past column, closing it again, paging the
-     window, filtering, sorting. */
+     window, filtering, sorting, and WO-2.6's four — a student's name, the 🖨 Record door, and the
+     print and CSV controls inside the dialog it opens. Those last four reach a different module
+     for a reason src/attendance-report.js states at length: they are read-only surfaces built out
+     of the same ledger, and the only thing in this app that hands a file to the browser is
+     src/backup.js's helper, which that module borrows rather than copies. */
   const detail = e.target.closest('[data-attendance-detail]');
   if (detail) { attendance.toggleDetail(detail.getAttribute('data-attendance-detail')); return; }
+  const history = e.target.closest('[data-attendance-history]');
+  if (history) {
+    attendanceReport.openHistory(history.getAttribute('data-attendance-history'), history);
+    return;
+  }
+  const record = e.target.closest('[data-attendance-record]');
+  if (record) { attendanceReport.openRecord(record); return; }
+  if (e.target.closest('[data-attendance-record-print]')) {
+    attendanceReport.printRecord(); return;
+  }
+  if (e.target.closest('[data-attendance-record-csv]')) {
+    attendanceReport.downloadRecordCsv(); return;
+  }
   const editPast = e.target.closest('[data-attendance-edit]');
   if (editPast) { attendance.editPastDay(editPast.getAttribute('data-attendance-edit')); return; }
   if (e.target.closest('[data-attendance-lock]')) { attendance.lockPastDay(); return; }
@@ -1705,6 +1727,15 @@ window.planbook = {
      the app — which is the exact failure the three states exist to prevent. Nothing in the app
      reads window.planbook — see the block above for why the seam outlived the shelf. */
   attendance,
+  /* `attendanceReport` joined at WO-2.6, and its reason is the one src/backup.js's entry gives
+     rather than the reading reason `attendance` gives: a page cannot be handed a real file by a
+     script, and no harness can open a print dialog or read what came out of a spreadsheet. What it
+     CAN do is ask for the text — recordCsv() is that seam, the same split buildBackup() has, and it
+     takes a record and returns bytes with no DOM anywhere in it. "The CSV opens cleanly in a
+     spreadsheet with dates as columns" is otherwise a claim nobody can check without a spreadsheet.
+     Nothing in the app reads window.planbook — see the block above for why the seam outlived the
+     shelf. */
+  attendanceReport,
   /* `passes` joined at WO-2.8, and for the reading reason `attendance` gives rather than for a
      driving one: both pass controls are buttons on the registry and a teacher can touch all of
      them. What no click can show is the half this work order is about — whether an open pass is in

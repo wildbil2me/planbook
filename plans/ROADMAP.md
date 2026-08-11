@@ -56,14 +56,14 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
-| 2 | Attendance | 🔨 IN PROGRESS | 12/16 `[████████░░] 75%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 14/16 `[█████████░] 88%` |
 | 3 | Gradebook | 🔨 IN PROGRESS | 6/10 `[██████░░░░] 60%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **34/82 `[████░░░░░░] 41%`** |
+| | | **Overall** | **36/82 `[████░░░░░░] 44%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -302,11 +302,11 @@ meet is a second source of truth that's wrong by first period.)*
       its own. Both halves are real — all four Acceptance lines were confirmed by hand on the laptop
       **and** the iPad on 2026-08-08. What is still owed is the doorway itself: marking a live class
       while it walks in, which no desk can answer and which `TESTING.md` § WO-2.5 keeps open.)*
-- [ ] Per-student attendance history view.
+- [x] Per-student attendance history view.
 - [ ] **Roll Call! importer**: file input taking an exported class spreadsheet (`.csv`/`.xlsx`),
       zero permissions. Idempotent, and previews before it commits — re-running must not double a
       roster. *(Cut from Ship 1: August is a fresh year with pasted rosters.)*
-- [ ] Print/CSV output for the attendance record.
+- [x] Print/CSV output for the attendance record.
 
 ---
 

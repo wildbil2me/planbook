@@ -61,6 +61,30 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.6 — attendance you can hand to somebody.** Tap a student's name in the registry to see every
+  day the class met, what they were marked, and what their attendance percentage was after each one.
+  The new **🖨 Record** button in the toolbar opens the whole class's term — counts and percentage per
+  student, then the term day by day — ready to print, or to save as a CSV that opens in any
+  spreadsheet with the dates as columns. Both are read-only: nothing on either one can be edited, and
+  neither carries anything from a student's support details, in either presentation mode.
+
+  **The history and the percentage cannot disagree**, because they are not two calculations. Every
+  row and every number on both surfaces comes off one walk over one set of records, so a day that
+  counts in the percentage is a day in the list and there is no third place for the two to drift
+  apart. A dropped class and a day outside the term are absent from both.
+
+  **What "fits a class on a page" turned out to mean.** A class fits *down* a page. It is the term's
+  meetings that do not fit *across* one, so the day-by-day table is cut into slices of 24 date
+  columns, each starting a new page with the student column repeated, and the summary table above
+  them — every student's counts and percentage — always fits on its own. That summary is the page a
+  conference actually wants. What is on screen is what prints, page breaks included, so the dialog is
+  a preview rather than an approximation. Printed on real paper from a term of 42 meetings before
+  this went in.
+
+  **Printing is gated deliberately.** Ctrl+P anywhere else in the app still prints the page in front
+  of you, because Planbook has no default print surface — its registry is a six-day window rather
+  than a term, so an ungated print rule would have handed you a blank sheet from any other screen.
+
 - **WO-3.17 — the Assigned and Due dates.** A new assignment now starts with **both dates on today**,
   which is the day you are almost always writing it down on. Type over either one, or clear it and
   leave it blank — a date is still never required, and clearing one leaves it empty rather than

@@ -355,7 +355,7 @@ figure above is an emulated coarse pointer at 1024×768, which is a measurement 
 
 ## WO-2.6 — Attendance history & output
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.4
+**Ship** 2 · **Status** ✅ DONE — 2026-08-11 · **Size** M · **Depends on** WO-2.4
 **Closes roadmap** Phase 2 → "Per-student attendance history view" and "Print/CSV output for the
 attendance record."
 
@@ -368,10 +368,32 @@ follow. It becomes urgent the first time a guardian conference asks "which days?
 - Presentation-mode safe: no `supports` data on either surface.
 
 **Acceptance**
-- [ ] A student's history lists exactly the meetings counted in their percentage — the two agree.
-- [ ] The CSV opens cleanly in a spreadsheet with dates as columns.
-- [ ] The print view fits a class on a page and carries the class, term, and date range.
-- [ ] Neither surface emits accommodation, medical, or plan data.
+- [x] A student's history lists exactly the meetings counted in their percentage — the two agree.
+- [x] The CSV opens cleanly in a spreadsheet with dates as columns.
+- [x] The print view fits a class on a page and carries the class, term, and date range.
+- [x] Neither surface emits accommodation, medical, or plan data.
+
+*Three of the four measured at a desk on 2026-08-11 — `verify-shell.mjs` 582 of 582, eighteen of them
+new, six mutations reverted. `TESTING.md` § WO-2.6 carries the evidence line by line and the mutation
+table.*
+
+***The fourth was settled on paper the same day, and the two halves are worth keeping apart.*** *The
+desk half of the print line was always measurable and was measured — the header carries the class,
+the term, the date range and the count of recorded meetings, and a term of thirty meetings comes out
+as two slices of twenty-four and six columns rather than one table nobody could print. What no
+emulator has is a sheet of paper, and* **fits a class on a page** *is a claim about paper: the roster
+down the page and the margins around it. The owner printed one on 2026-08-11 on the printer she has,
+from a term of* **42 recorded meetings** *— the case that actually exercises the page break and the
+repeated student column, where anything under twenty-four draws a single slice and proves neither.
+All four* 👤 *lines in* `TESTING.md` *§ WO-2.6 were closed in the same sitting.*
+
+***The CSV line is the one to read carefully, because it was ticked at a desk and the desk could not
+have known.*** *The bytes were asserted character by character — BOM, CRLF, quoting, one row per
+student, ISO dates as the columns — and the verifier still called the tick unsupportable, on a sharp
+point: no name anywhere in the harness contains a non-ASCII character, so the* **BOM was asserted
+present and never asserted useful**. *The owner's own roster settled it on 2026-08-11, accents
+intact. The gap is worth remembering rather than closing quietly: an all-ASCII fixture set will keep
+passing a UTF-8 claim it never tests, and the next export surface inherits that hole.*
 
 ---
 

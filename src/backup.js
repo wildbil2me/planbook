@@ -229,8 +229,16 @@ function yearsNeverBackedUp(years) {
   proven with on the teacher's own iPad. That is why it takes a ready-made `blob` as an
   alternative to `text` rather than growing a second copy of these six lines for the zip — the
   bytes and the media type differ, and nothing else about handing a file to iOS may.
+
+  EXPORTED AT WO-2.6, and that is the same decision made a second time rather than a new one. The
+  attendance CSV is the third file this app hands over, it goes out on the same iPad, and it would
+  otherwise be six lines copied into src/attendance-report.js — where the revoke delay and the
+  one-download-per-tap rule would be six lines nobody had paid for yet. This file still decides HOW
+  a file reaches the browser; it does not decide what is in one it did not build. Note the rule that
+  travels with it: an installed home-screen PWA gets structurally ONE download event per tap, so a
+  caller that wants to hand over two files wants an archive, not a loop.
 */
-function handToBrowser(file) {
+export function handToBrowser(file) {
   const url = URL.createObjectURL(
     file.blob || new Blob([file.text], { type: 'application/json' }));
   const a = document.createElement('a');

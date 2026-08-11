@@ -2068,6 +2068,126 @@ are both in `SHELL`.*
 
 ---
 
+### WO-2.6 — Attendance history & output
+
+**What this adds.** Two read-back surfaces over the attendance ledger, both reached from the
+registry. **A student's own name in the grid** opens their history: a rate badge, a term-by-term
+table, and every recorded meeting in the open term with its mark and the percentage as it stood
+after it. **🖨 Record** in the toolbar opens the class's record for that term — a printed header, one
+row per student with their counts, and the whole term day by day — with **Print** and **Download
+CSV** on it.
+
+**Nothing here decides which meetings count.** Every row and every number comes out of three readers
+in `src/attendance.js` — `classRecord()`, `termHistory()`, `termTotals()` — and all three sit on one
+walk over one set of records. That is what the first acceptance line is actually about: it says *the
+two agree*, which is a claim about a shared source and not about two implementations landing on the
+same number. A second filter chain would agree with itself on any fixture anybody wrote and disagree
+in November, on the first retroactive snow day.
+
+**Neither surface can leak a support field, and not because it is hidden.** No accommodation,
+medical or plan data reaches either page or the CSV **in either presentation mode**, because
+`src/attendance-report.js` never receives it: `classRecord()` hands over `{ id, first, last, name,
+marks, totals }` and that module does not import `src/supports.js` at all. "Presentation-mode safe"
+is therefore trivially true rather than conditionally true — the implementation that reads those
+fields and hides them behind the visibility switch satisfies the deliverable and is a one-tap
+disclosure the day somebody flips the switch back.
+
+**What "fits a class on a page" was decided to mean**, because the work order leaves it open. A class
+fits *down* a page: one row per student at 8pt. It is the term's meetings that do not fit *across*
+one, so the day-by-day table is cut into **slices of 24 date columns**, each starting a new page and
+repeating the student column — A4 is 210mm, the print block's margin is 10mm a side, a 45mm student
+column leaves 145, and 24 columns at 6mm are 144. The slices are on screen as well as on paper, so
+the dialog is a preview rather than an approximation. The summary table above them — counts and
+percentage per student — always fits on its own, and it is the page a conference actually needs.
+
+**Printing is gated on an attribute**, Roll Call!'s `body[data-modal-print]` idiom lifted whole: the
+Print button sets `data-attendance-print` on `<body>`, prints, and takes it off. Without the gate a
+Ctrl+P made on any other screen would print a blank sheet, because Planbook has no default print
+surface at all — Roll Call! prints its registry and this app cannot, since its registry is a six-day
+window rather than a term.
+
+- [x] A student's history lists exactly the meetings counted in their percentage — the two agree.
+      *(Measured as a LIST of dates and not as a count: a fixture of six recorded meetings inside the
+      term, with a seventh record carrying an `exception` and an eighth outside the term's dates
+      sitting beside them. Both are absent from the history; the last row reads `4 of 6 · 67%`, the
+      badge reads `67%`, and the line under that student's name on the registry behind the dialog
+      reads `P 1 · T 1 · A 2 · E 1 · D 1 · 67%`. The planted student wears one of every mark plus a
+      `U`, which reads `Absent` and never `U`.)*
+- [x] The CSV opens cleanly in a spreadsheet with dates as columns. *(Measured **as bytes**, through
+      `recordCsv()` — the build-it/hand-it-over seam `src/backup.js` already uses — so every claim is
+      character by character: a BOM so Excel reads UTF-8, CRLF endings with no bare LF anywhere, Roll
+      Call!'s own column order `Last Name, First Name, Present, Tardy, Absent, Event, Dismissed,
+      Meetings, Att %`, then the six meeting dates in ISO, oldest first. Three rows for three
+      students, every row the header's width, and a student called `O"Brien, Jr` surviving as one
+      cell. **Opened by the owner on 2026-08-11** in the spreadsheet she actually uses, on a real
+      roster: dates across the top, and **the accents in a pasted roster intact** — the one thing the
+      BOM exists for and the one thing no fixture covered, since every name in the harness is ASCII.)*
+- [x] The print view fits a class on a page and carries the class, term, and date range. *(The second
+      half was measured at a desk: the header reads `WO-2.6 Term · February 2, 2026 – February 13,
+      2026 · 6 recorded meetings` over the class name, with `Printed August 11, 2026 · Planbook`
+      under it, and a term of thirty meetings is drawn as two slices of 24 and 6 columns rather than
+      one table. Also measured: all 24 `@media print` rules touching this surface are selected under
+      `body[data-attendance-print]`, and `<body>` carries no such attribute at rest. **The paper half
+      was settled by the owner on 2026-08-11 on her own printer, on a term of 42 recorded meetings**
+      — which is the case that matters, since anything under 24 draws a single slice and never
+      exercises the page break or the repeated student column at all.)*
+- [x] Neither surface emits accommodation, medical, or plan data. *(A plan, a case manager, a review
+      date, an accommodation, a medical line and a behavior plan are planted on the student first,
+      and their presence in the serialised document is asserted before anything is read — an absence
+      check over a student with nothing on file proves nothing. Then the history's text, the record's
+      text and the CSV's text are searched for all five sentinels and for the word `IEP`, **twice**:
+      once with presentation mode OFF, where the visibility switch answers true and the roster shows
+      everything, and once with it ON. Zero hits in either pass, over surfaces of 799, 744 and 1316
+      characters, so none of the three was empty.)*
+- [x] 👤 **Print one class's record on the printer you actually have.** A roster of ordinary size on
+      one sheet, the header readable, the five mark colours still telling P from T from A. Try it
+      from a term with more than twenty-four meetings too, where it should come out as more than one
+      page with the student column repeated and no columns lost between them. *(Owner, 2026-08-11 —
+      run on a term of **42 recorded meetings**, so the multi-page path and the repeated student
+      column were the thing under test rather than a single slice.)*
+- [x] 👤 **Open the CSV in the spreadsheet you actually use.** Dates across the top as columns, one
+      row per student, a name with a comma in it still in one cell, and the accents in a pasted
+      roster intact — that last one is what the BOM is for. *(Owner, 2026-08-11 — accents came
+      through. This is the check the desk half could not make: the harness has no non-ASCII name in
+      it, so until this sitting the BOM was asserted present and never asserted useful.)*
+- [x] 👤 **On the installed iPad PWA, tap Download CSV** and confirm the file lands somewhere you can
+      reach in Files. This is `src/backup.js`'s own hand-off helper, borrowed rather than copied, so
+      the mechanism is the one already proven on that device — what is new is the bytes. *(Owner,
+      2026-08-11.)*
+- [x] 👤 **Tap a student's name mid-class and confirm it is not in the way.** The name and the term
+      line under it are one 44px control now. It writes nothing and a mis-tap costs a dialog and an
+      ✕, but the row heights did not move and that is the thing to check by eye. *(Owner,
+      2026-08-11.)*
+
+*The desk half: `verify-shell.mjs` **582 checks · 582 passed · 0 failed · 0 skipped**, up from 564 on
+the tree this work order arrived on — seventeen in a new section at the foot of the file and one in
+the coarse sweep, which measures the 🖨 door for `scrollWidth` against `clientWidth` (the "Days off"
+spill from the first iPad sitting, asked of the next button of the same shape) and a student's name
+for 44px in both directions. `wo-sweep.mjs` is **16 checks · 15 passed · 0 failed · 1 to review** —
+the REVIEW is the standing sensitive-field-name sweep, now **181 mentions across 13 files** rather
+than 174 across 12: the seven new ones are `src/attendance-report.js`'s header stating, at the point
+where a future author would break it, that none of that data reaches these surfaces. `sw.js`'s
+`CACHE` is bumped to `planbook-shell-v44` in the same pass and `src/attendance-report.js` is added to
+`SHELL`.*
+
+*Six mutation runs, all reverted. One of them is in this table as a **failed run** rather than as a
+result, and it is the more useful row: the first attempt at the CSV-quoting mutation never applied —
+the edit script's own pattern did not match — and the harness went green over an unmutated tree. A
+green mutation run is indistinguishable from a vacuous check until you go and look at the file, which
+is why the row is here rather than quietly re-run.*
+
+| Mutation | Result |
+|---|---|
+| `classRecord()` carries `supports` and the record prints the medical line behind the visibility switch — the implementation the work order's brief predicts by name | **3 red** — both presentation-mode passes AND the summary-row check. The gated build fails the mode-OFF pass, which is the point; it fails the mode-ON pass too because the sweep searches `JSON.stringify(classRecord())` as well as the rendered text, and the data had still reached the shape |
+| `attendanceHistory()` walks `doc.attendance` itself, with no `stateOf()` in it | **3 red** — the history lists seven dates including the dropped day, and the detail line reads `last row "5 of 7 · 71%", badge "67%"`, which is acceptance line 1 failing in its own words |
+| `U` is not folded into `A` in `walkMeetings()` | **8 red** — four of WO-2.4's own totals checks and four of this work order's, which is also the proof that re-expressing `totalsFrom()` on top of the new walk did not quietly fork it |
+| `csvCell()` does no quoting | **2 red** — the `O"Brien, Jr` row parses to width 1 against a header of 15 |
+| `DATES_PER_SLICE` raised to 100 | **1 red** — thirty meetings come out as one 30-column table |
+| one `@media print` rule left ungated (`body[data-attendance-print]` prefix removed) | **1 red** — 23 of 24 gated, and the ungated selector is printed by name |
+| *(failed run)* the same `csvCell()` mutation, first attempt | **0 red, and it proved nothing** — the edit never landed. Re-run above |
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

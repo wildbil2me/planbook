@@ -671,6 +671,23 @@
                 title="Mark this class from the keyboard — press ? for the list">
           <span aria-hidden="true">⌨</span> Keys
         </button>
+        <!-- THE WAY OUT OF THE APP AND ONTO PAPER (WO-2.6). It is in the toolbar and not in the
+             action row above the grid for exactly the reason the ⌨ button beside it is: that row
+             holds the three controls a teacher aims at with a class walking through the door, and
+             this one writes nothing, acts on no day and opens a dialog. Search, filter, sort, the
+             key list and this are the five things on this screen that only change what you are
+             looking at.
+
+             It opens through its own hook rather than `data-modal-open`, the call
+             src/year-picker.js and the days-off panel both make: the dialog is built from the open
+             document at open time, and a modal that appears and then fills in is a modal that
+             flickers. -->
+        <button type="button" class="class-action-btn attendance-record-btn"
+                data-attendance-record aria-haspopup="dialog"
+                aria-label="Print or export this class’s attendance record"
+                title="The whole term, class by day — print it or save it as a spreadsheet">
+          <span aria-hidden="true">🖨</span> Record
+        </button>
       </div>
 
       <!-- Earlier · Today · Later, above the columns they move. -->
@@ -2193,6 +2210,70 @@
         didn’t meet. And they only ever write on the day the screen says it is editing, which is
         today unless you have unlocked something else.
       </p>
+    </div>
+  </div>
+</div>
+
+<!--
+  ONE STUDENT'S ATTENDANCE, DAY BY DAY (WO-2.6) — opened by tapping their name in the registry.
+
+  Roll Call!'s student report (`#studentModal` / `.sr-panel`) is the counterpart, and what came
+  across is its shape: the avatar and name, the rate badge, the term-by-term table. The body is
+  empty here because src/attendance-report.js draws it from the open document — the same call every
+  other list in this file makes, and for the same reason: a specimen row written here would be a
+  second truth to keep in step with the real one.
+
+  THERE IS NOTHING TO EDIT IN IT. Every mark on this screen is set on the registry, on the day it
+  belongs to, where the ⋯ panel holds the time and the note. A second place to change a mark is a
+  second writer, and src/attendance.js's header spends a paragraph on why there is one.
+-->
+<div class="modal-overlay hidden" id="attendanceHistoryModal">
+  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+       aria-labelledby="attendanceHistoryTitle">
+    <div class="modal-header">
+      <h2 id="attendanceHistoryTitle">Attendance history</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="attendanceHistoryBody"></div>
+  </div>
+</div>
+
+<!--
+  THE CLASS'S ATTENDANCE RECORD FOR A TERM (WO-2.6) — the print surface and the CSV, one dialog.
+
+  WHAT IS ON SCREEN IS WHAT PRINTS, including where the page breaks fall: the day-by-day table is
+  drawn in slices of twenty-four dates because that is what fits across a sheet of A4, and the
+  slices are here as well as on paper so that the preview is a preview. src/attendance-report.js
+  carries the arithmetic behind that number.
+
+  THE PRINT BUTTON PUTS AN ATTRIBUTE ON <body> and takes it off again — Roll Call!'s own
+  `data-modal-print` idiom, lifted. The `@media print` block at the foot of src/attendance.css is
+  what reads it, and it is gated on the attribute so that Ctrl+P anywhere else in the app still
+  prints the page rather than a blank sheet.
+
+  The two output buttons are in the body rather than in a `.modal-actions` row at the foot, because
+  the table between them is long: a control at the bottom of a term's worth of dates is a control a
+  teacher scrolls past the whole record to reach.
+-->
+<div class="modal-overlay hidden" id="attendanceRecordModal">
+  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+       aria-labelledby="attendanceRecordTitle">
+    <div class="modal-header">
+      <h2 id="attendanceRecordTitle">Attendance record</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="attendance-report-actions">
+        <button type="button" class="class-action-btn primary" data-attendance-record-print
+                title="Print this record, or save it as a PDF from the print dialog">
+          <span aria-hidden="true">🖨</span> Print
+        </button>
+        <button type="button" class="class-action-btn" data-attendance-record-csv
+                title="Save this record as a CSV file that opens in any spreadsheet">
+          <span aria-hidden="true">⬇</span> Download CSV
+        </button>
+      </div>
+      <div id="attendanceRecordBody"></div>
     </div>
   </div>
 </div>

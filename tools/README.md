@@ -545,7 +545,54 @@ rewrite that fixed one would have left the dialog contradicting itself an inch f
 Reverting only the editor's copy turns that check red with the list hint still correct. Four
 mutations, all reverted and tabulated in `TESTING.md` § WO-3.17.
 
-**`verify-shell.mjs` holds 571 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**582 at WO-2.6**, measured the same way: `582 checks · 582 passed · 0 failed · 0 skipped`, 14,038
+lines, 24.1 lines per check, 185s. Eighteen call sites added — seventeen in a new section at the foot
+of the file for the history dialog, the printed record and the CSV, plus one in the coarse sweep for
+the 🖨 door and the student's name, which became a control at this work order. Four things about the
+new section are worth knowing.
+
+**The fixture is built so that a second walk over the ledger cannot survive it.** Inside the open
+term there are six recorded meetings and, beside them, two records that must appear nowhere: one
+carrying an `exception`, and one outside the term's dates. Both are what a hand-rolled filter gets
+wrong, and both are why acceptance line 1 is written as *"the two agree"* — a history built from its
+own walk would list eight rows over a percentage computed from six and nothing on screen would look
+broken. The dates are written down in the harness and compared **as a list**, never counted. Proved:
+giving `attendanceHistory()` its own filter with no `stateOf()` in it turns three red, and the
+detail line reads `last row "5 of 7 · 71%", badge "67%"` — which is the acceptance line failing in
+its own words.
+
+**Acceptance line 4 is asserted in BOTH presentation modes, and the mode-off pass is the one that
+matters.** Support data is planted on the student first — a plan, a case manager, an accommodation,
+a medical line and a behavior plan, each with a sentinel — and its presence in the serialised
+document is asserted before either surface is read, because an absence check over a student with
+nothing on file proves nothing. Then the history, the record and the CSV **text** are searched for
+every sentinel with the toggle off (support data visible everywhere else in the app) and again with
+it on. The search covers `JSON.stringify(classRecord())` as well as the two rendered surfaces, which
+is deliberate: the strongest form of this guarantee is that the data never reaches the shape the
+surfaces are built from. Proved by the mutation the work order's brief predicts by name — carrying
+`supports` onto the record shape and printing it behind the visibility switch turns **three** red,
+including *both* mode passes, because the gated build still has the data in hand.
+
+**The CSV is read as text through the seam and never as a downloaded file**, which is `src/backup.js`'s
+own build-it/hand-it-over split reused: `recordCsv()` takes a record and returns bytes with no DOM in
+it, so the BOM, the CRLF endings, the column order and the quoting are asserted character by
+character. A student called `O"Brien, Jr` is in the fixture for one clause alone — a `join(',')` with
+no quoting turns that row into two extra columns, silently, in a file the teacher opens weeks later.
+Proved: removing the quoting turns two red, on a row that parses to width 1.
+
+**And the section never calls `printRecord()`.** `window.print()` in a headless browser prints
+nothing and can block, and no emulator has a sheet of paper, so *"the print view fits a class on a
+page"* stays owed to a human with a printer. What is measured instead is the two halves a laptop can
+see — the header carries the class, the term, the range and the meeting count, and a term of thirty
+meetings comes out as **two** slices of 24 and 6 rather than one table nobody could print (mutating
+the slice size to 100 turns one red) — plus the gate: every `@media print` rule touching this surface
+is selected under `body[data-attendance-print]`, and `<body>` carries no such attribute at rest, which
+is what keeps a Ctrl+P made anywhere else in the app from printing a blank sheet. Six mutations, all
+reverted and tabulated in `TESTING.md` § WO-2.6 — and one of the six is tabulated as a **failed
+mutation run** rather than as a result, because its edit never applied and the green run it produced
+meant nothing until it was re-run.
+
+**`verify-shell.mjs` holds 589 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10570` is why the
@@ -553,11 +600,14 @@ pattern is not line-anchored, and comment lines are excluded because the harness
 its prose constantly.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 571 − 564 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
+could go and name.** It is 589 − 582 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
-counts in it as the measurement of that tree rather than of this one. The gap moved by one because
-WO-3.17 added one fixture-guard failure arm — the first bullet below is the shape of it — and nothing
-about the reasoning changed. 560 − 554 = 6 reads like six unreached branches; the work order that
+counts in it as the measurement of that tree rather than of this one. The gap moved by one at WO-3.17,
+because that section added one fixture-guard failure arm — the first bullet below is the shape of it.
+**It did not move at WO-2.6, and that is a coincidence of both mechanisms below firing at once**: that
+section added one fixture-guard arm a green run never reaches AND one call site inside a two-pass loop
+that fires twice, so the eighteen sites it added produced exactly eighteen results. Nothing about the
+reasoning changed. 560 − 554 = 6 reads like six unreached branches; the work order that
 booked this check reasoned its way to *"roughly 541 call sites against 537 executed — four sites that a
 run does not reach"* on the same arithmetic, and both numbers are a coincidence of two unrelated
 quantities. Measured by instrumenting a throwaway copy of the harness — `new Error().stack` inside
