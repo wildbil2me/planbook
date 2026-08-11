@@ -212,7 +212,13 @@ the owner's real classes, before the numbers matter.
 - [ ] The printout order matches the SIS entry screen, confirmed against a real re-key.
 - [ ] Backup drill re-run now that grades exist.
 - [ ] `TESTING.md` Phase 3 section fully passing.
-- [ ] WO-3.10 OAuth paperwork **submitted**, with the date recorded.
+- [ ] WO-3.18 OAuth paperwork **submitted**, with the date recorded. *(This line said **WO-3.10**
+      until 2026-08-11. After the 2026-08-10 split WO-3.10 is the client and the consent screen and
+      submits nothing — so as written, the box named a work order that could never close it. **Read
+      this before Ship 2 rather than at it:** WO-3.18 needs the domain WO-8.7 settles, so if that
+      naming and hosting decision has not been made, this cannot be ticked. The answer is to make the
+      decision or to move this line to a later gate deliberately — waving it through is the one
+      option these trackers exist to prevent.)*
 - [ ] **The `**Ship** —` work orders get a ship, or keep `—` on purpose.** Phases 5–8 and WO-G4 carry
       `—` because the delivery table in [`../ROADMAP.md`](../ROADMAP.md) stops at Ship 3 — outreach,
       calendar, sync and packaging are all *"Then | Nov →"*. By the time this gate runs, Ship 3 is

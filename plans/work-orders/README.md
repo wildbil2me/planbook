@@ -474,13 +474,22 @@ close — its grade-calculation lines wait on WO-3.4 and WO-3.5 — and a `🔨`
 depends on it. **It is also the row to cut first if the fortnight tightens**, ahead of everything with
 a ✔: the gap it fixes has a hand workaround, and that workaround is written down in WO-3.1.*
 
-**Running in parallel, on nobody's critical path and its own clock:**
-[WO-3.10](phase-3-gradebook.md#wo-310--oauth-verification-paperwork-) — OAuth verification paperwork.
-It is a G2 dependency (*submitted*, with the date recorded), it depends on **nothing technical**, and
-it is the one item here that is **calendar-bound rather than work-bound**: submitting late does not
-cost a week of work, it costs however long Google takes. It also needs a decision the code cannot
-make — the hosting and domain call, which overlaps WO-8.6. *(The precedent is sitting on disk: Roll
-Call! is at 0.9.0-beta with every engineering blocker closed, held by exactly this class of task.)*
+**Running in parallel, on nobody's critical path and its own clock:** the OAuth work, **which was one
+work order until 2026-08-10 and is now three** — the split is described at WO-3.10, and the short
+version is that the half needing nothing was trapped behind the half needing a domain.
+
+- [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) — the client
+  and the consent screen. Depended on **nothing**, took an hour in a console, and was **done
+  2026-08-11**. It is what lets all of Phase 7 be built against a Testing-mode client long before any
+  paperwork clears.
+- [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) — the name and the host,
+  decided. **The real critical path**, because it is what a domain requires and a domain is what the
+  submission requires. It needs no code and nobody but the owner can do it.
+- [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) — policy, video, submission. The
+  G2 checklist item (*submitted*, with the date recorded), and the one item here that is
+  **calendar-bound rather than work-bound**: submitting late does not cost a week of work, it costs
+  however long Google takes. *(The precedent is sitting on disk: Roll Call! is at 0.9.0-beta with
+  every engineering blocker closed, held by exactly this class of task.)*
 
 **The hard ordering constraint:** WO-3.1 and WO-3.2 before everything else in the gradebook. Six of
 the ten Phase 3 work orders sit behind them, and WO-3.5 — the L, and the screen WO-G2 actually

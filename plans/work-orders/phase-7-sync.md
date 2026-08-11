@@ -2,10 +2,20 @@
 
 **Phase goal:** the same year on the laptop and the iPad, with one scope and no fear.
 
-Branch: `phase/7-sync`. **🔒 GATED on Google OAuth verification** — the paperwork starts at
-[WO-3.10](phase-3-gradebook.md#wo-310--oauth-verification-paperwork-), not here. The gate is
+Branch: `phase/7-sync`. **🔒 GATED on Google OAuth verification** — the paperwork is
+[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-), not here. The gate is
 calendar-bound rather than work-bound, which is why it is slotted in wherever it opens rather than
 scheduled.
+
+**But the gate is on public launch, not on building this phase.** The OAuth client
+([WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope), done in the
+console 2026-08-11) sits in **Testing** mode with the owner as a test user, and it runs `drive.file`
+today. So everything here can be built, run and used on the owner's own devices months before any
+paperwork clears — the unverified-app screen is a click-through for one person who knows what it is.
+**One caveat inherited from that client:** its only authorized origin is `https://localhost:8443`,
+because Google will not take a raw LAN address, so the auth handshake is drivable on the laptop only
+until [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) settles a domain. The rest
+of the protocol is ordinary code and tests anywhere.
 
 Read [`../../docs/sync.md`](../../docs/sync.md) first. The whole protocol is settled there.
 
@@ -16,7 +26,8 @@ acceptable, and it is why sync is last.
 
 ## WO-7.1 — Auth
 
-**Ship** — · **Status** 🔒 GATED · **Size** M · **Depends on** WO-3.10 submitted
+**Ship** — · **Status** 🔒 GATED · **Size** M · **Depends on** WO-3.10 — the client, not the
+verification: Testing mode issues real tokens
 **Closes roadmap** Phase 7 → "Google Identity Services token flow", "Sign-in is opt-in and
 reversible."
 
@@ -92,7 +103,8 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.3 — Verification complete
 
-**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.10, WO-7.2
+**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
+follow from a client nobody submitted
 **Closes roadmap** Phase 7 → "Verification complete."
 
 **Deliverables**

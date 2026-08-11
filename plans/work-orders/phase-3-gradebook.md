@@ -548,7 +548,7 @@ order's value.
 
 ## WO-3.10 — the OAuth client exists and asks for one scope
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — no domain, no name, no
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** nothing — no domain, no name, no
 policy · **Blocks** Phase 7 can be built and run once this exists
 **Closes roadmap** Phase 3 → *(no box. The roadmap's **Parallel, non-code** line at the end of Phase
 3 is a paragraph, not a checkbox, so there has never been anything here to tick — the quotation
@@ -583,11 +583,48 @@ is why it is not paperwork.
 - Publishing status left at **Testing**, with the owner added as a test user, and the client id
   written down where Phase 7 can read it.
 
+**The client, as built — 2026-08-11.** *This is what WO-7.1 reads.*
+
+| | |
+|---|---|
+| **Client id** | `953887983230-ub72ee8rs6r6ejggn55l83pva3e8pedl.apps.googleusercontent.com` |
+| **Client type** | Web application |
+| **Scope** | `https://www.googleapis.com/auth/drive.file`, and nothing else |
+| **Publishing status** | Testing, owner added as a test user |
+| **Authorized JS origin** | `https://localhost:8443` — accepted by the console 2026-08-11 |
+
+**The client id is not a secret and belongs in this file.** For a browser client it is an identifier
+rather than a credential: it ships in the served JavaScript of every app using Google Identity
+Services, so it is public the moment Planbook deploys, and this repository is public already. What
+protects the client is the **authorized JavaScript origin list**, which is why that row matters and
+the id itself does not. **A client *secret* is a different thing and never goes in here** — a browser
+token flow does not use one.
+
+**The port is part of the origin, not a detail.** A browser sends scheme + host + port whenever the
+port is not the scheme's default, and Google matches the registered origin exactly — so bare
+`http://localhost` means port 80 and matches nothing this project serves. `tools/serve-https.mjs`
+puts the app on **8443 over HTTPS**, and `tools/make-cert.mjs` deliberately writes `localhost` and
+`127.0.0.1` into the certificate so that same server answers this laptop's own browser. Hence
+`https://localhost:8443` — no path, no trailing slash. **The origin is also the only thing protecting
+this client**, which is why it is recorded here and the id is treated as public.
+
+**One origin means one place the token flow can be exercised, and it is not the iPad.** Google
+rejects raw private addresses, so `https://192.168.50.142:8443` — the LAN address the tablet reaches
+this laptop on — cannot be registered. *(Expected rather than measured: only the localhost origin was
+tried. If someone does test it, record the console's answer here.)* The consequence WO-7.1 inherits
+either way: **until WO-8.7 settles a real domain, sign-in and token refresh can be driven on the
+laptop only.** Every other Phase 7 behaviour — `rev`/`baseRev` ordering, the conflict copy — is
+ordinary code and is testable anywhere; it is specifically the OAuth handshake that is pinned to one
+machine. Do not plan an iPad sitting around the auth flow before that domain exists.
+
 **Acceptance**
-- [ ] The consent screen lists exactly one scope, and the scope string is `drive.file`.
+- [x] The consent screen lists exactly one scope, and the scope string is `drive.file`.
+      *(Owner, in the console, 2026-08-11.)*
 - [ ] A sign-in completes on the owner's own account and the app receives a token — driven, not
-      assumed. The unverified-app screen is expected here and is not a failure.
-- [ ] The client id is recorded where WO-7.1 will look for it.
+      assumed. The unverified-app screen is expected here and is not a failure. **Open on purpose:
+      there is no sign-in code in the app yet — this line names WO-7.1's token flow, and closes in
+      Phase 7's first hour.**
+- [x] The client id is recorded where WO-7.1 will look for it. *(The table above, 2026-08-11.)*
 
 **Traps** — Adding `spreadsheets` or a mail scope re-opens verification and puts the warning back in
 front of a teacher. `drive.file` is a sensitive scope, not a restricted one, so there is no CASA
