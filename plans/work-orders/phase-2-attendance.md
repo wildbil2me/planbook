@@ -1963,7 +1963,7 @@ order that quietly does its own Out of scope line is worse than one that argues 
 
 ## WO-2.23 — every date field in the app is short of 44px on the iPad
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-10 · **Size** S · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** *(no box. A defect in three shipped screens, found on the device after all three
 closed.)*
 
@@ -1976,12 +1976,18 @@ first draft of this line named WO-3.17 as an aside and `wo-gate.mjs` correctly r
 WO-2.16's rule doing its job.)*
 
 **Why it exists.** Three screens put an `<input type="date">` in front of the teacher — the assignment
-editor's *Assigned* and *Due* (`.assign-field-date`, `src/assignments.js:643`), the term editor's
-*Starts* and *Ends*, and the days-off form's *From* and *To* (both `.term-date`, `src/classes.js:1046`
-and `src/shell.css:843`). **All six are visibly about half the height of the text fields beside them,
-and all six are declared 44px**: `src/assignments.css:269` and `src/shell.css:1208` each name their
-date class in a `@media (pointer: coarse)` rule with `min-height: 44px`. The rules are right. The
-control ignores them.
+editor's *Assigned* and *Due* (`.assign-field-date`, built by `src/assignments.js`'s `dateField()`),
+the term editor's *Starts* and *Ends*, and the days-off form's *From* and *To* (both `.term-date`,
+built by `src/classes.js`'s `dateField()`, laid out by `.term-dates` and `.dayoff-dates` in
+`src/shell.css`). **All six are visibly about half the height of the text fields beside them, and all
+six are declared 44px**: `src/assignments.css` names `.assign-field-date` and `src/shell.css` names
+`.term-date`, each inside a `@media (pointer: coarse)` rule carrying `min-height: 44px`. The rules
+are right. The control ignores them.
+
+*(Cited by symbol rather than by line, per the rule in [`README.md`](README.md) → Citing code. This
+paragraph originally carried five line numbers; by the time WO-2.23 closed, three had drifted under
+WO-3.17's commit and two under this work order's own comment additions — pointers into a live tree
+that had silently stopped landing on what they named.)*
 
 **The cause, and it is one line missing from the whole codebase.** iOS Safari paints
 `<input type="date">` as a **native control**, and while its native appearance is in force the
@@ -2012,31 +2018,136 @@ stored or parsed, and the assignment dialog's *overlap*, which is WO-3.17's and 
 (that dialog is the only place a date input is given `width: 100%` inside a shrinking flex parent).
 
 **Acceptance**
-- [ ] The reset is applied to every date input in the app, in one place or with the per-sheet choice
-      argued at the rule.
-- [ ] 👤 On the iPad, portrait and landscape: the assignment editor's *Assigned* and *Due*, the term
+- [x] The reset is applied to every date input in the app, in one place or with the per-sheet choice
+      argued at the rule. **One rule in `src/shell.css`'s BASE section, keyed to `input[type="date"]`
+      rather than to the four date classes**, with the choice argued above it: this file may not name
+      a class another sheet owns, and a rule keyed to a class is one somebody has to remember for
+      every date field added after it — on the one defect nothing here can catch. WO-3.17's identical
+      copy on `.assign-field-date` is deliberately left standing rather than deleted, and the note at
+      that rule says why, so the tree does not hold two unexplained answers.
+- [x] 👤 On the iPad, portrait and landscape: the assignment editor's *Assigned* and *Due*, the term
       editor's *Starts* and *Ends*, and the days-off *From* and *To* are all full-height tappable
-      fields rather than squat ones.
-- [ ] 👤 **The iPadOS date picker still opens from all six**, and a date picked in it still lands in
-      the field. This is the thing the reset could plausibly break.
-- [ ] 👤 An empty date field still reads as a field on the device — iOS draws no placeholder in it,
+      fields rather than squat ones. *(Walked on the hardware by the owner, 2026-08-10. The plan
+      *Review date* on the student editor — a seventh field this work order never named, reached by
+      the same element-keyed rule — was walked with them and is good.)*
+- [x] 👤 **The iPadOS date picker still opens from all six**, and a date picked in it still lands in
+      the field. This is the thing the reset could plausibly break. *(Owner, 2026-08-10: opens from
+      every one. The Trap's stop-and-report condition never fired.)*
+- [x] 👤 An empty date field still reads as a field on the device — iOS draws no placeholder in it,
       so "empty" and "not there" are a real pair to tell apart, and empty is a legal value everywhere.
-- [ ] 👤 Days off: the dates still clear after a successful add. `src/days-off.js` discards and
+      *(Owner, 2026-08-10.)*
+- [x] 👤 Days off: the dates still clear after a successful add. `src/days-off.js` discards and
       rebuilds the element to beat the picker's retained selection (WO-2.3's scar, reported off the
-      hardware on 2026-08-08), and the reset must leave that working.
-- [ ] A date field is never allowed to collapse to its tap-target floor: `.term-date` carries
+      hardware on 2026-08-08), and the reset must leave that working. *(Owner, 2026-08-10: still
+      working under the reset.)*
+- [x] A date field is never allowed to collapse to its tap-target floor: `.term-date` carries
       `min-width: 44px` in the coarse block, and with the native intrinsic width gone the field still
-      has to be wide enough to show a whole date.
-- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` prints what it printed
-      before.
+      has to be wide enough to show a whole date. **Raised to 160px in the coarse block** — copied
+      rather than re-derived, and part of what the reset costs rather than a restyle. The source is
+      Roll Call!'s `#dateJumpInput` (`src/dashboard.html:437-440`), which is a date-*picking*
+      `<select>` under the same two reset declarations, **not** a date input: Roll Call!'s own date
+      inputs carry no reset and no `min-width`, so it lends a width for a rendered date and no
+      precedent for this control. Both rows the class sits in wrap, so the wider floor costs a
+      wrapped line and never an overflow — **reasoned from the box model rather than measured**,
+      since no check opens either dialog. *(What a laptop can say is that the floor is declared and that the rows it sits
+      in wrap. The 👤 lines above are what prove a date legible on glass.)*
+- [x] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` prints what it printed
+      before. **563 checks · 563 passed · 0 failed · 0 skipped**, and the sweep **16 checks · 15
+      passed · 0 failed · 1 to review** with the REVIEW unchanged at 174 mentions — the three PASS
+      details that move are the style-line count, the coarse-block check naming `.term-date` as the
+      one new selector (already in that block), and the CACHE bump reported as uncommitted. Both runs
+      quoted in `TESTING.md` § WO-2.23.
 
 **Traps** — **Do not book a harness check for this.** Chrome under an emulated coarse pointer honours
 `min-height` on a date input, so a check written for this defect goes green on the tree that has it —
 and a check that cannot fail is worse than no check, because it tells the next reader the rule is
 guarded. Record the limit instead. **Do not take the native picker away to win the pixels.** Both
-`src/assignments.js:644` and `src/days-off.js` state, in comments, that these are real date inputs
-specifically so iPadOS gives the teacher its own picker rather than a text field she types an ISO
-string into; if the reset costs the picker on this iPadOS, **stop and report it** rather than shipping
-the typed string those comments refuse. **And do not fix the assignment dialog's overlap here** — it
-looks like the same bug and it is the same *cause* through a different door, WO-3.17 owns it, and two
-work orders editing `.assign-field-date` in the same fortnight is how one of them gets reverted.
+`src/assignments.js`'s `dateField()` and `src/days-off.js` state, in comments, that these are real
+date inputs specifically so iPadOS gives the teacher its own picker rather than a text field she types
+an ISO string into; if the reset costs the picker on this iPadOS, **stop and report it** rather than
+shipping the typed string those comments refuse. **And do not fix the assignment dialog's overlap
+here** — it looks like the same bug and it is the same *cause* through a different door, WO-3.17 owns
+it, and two work orders editing `.assign-field-date` in the same fortnight is how one of them gets
+reverted.
+
+*(Closed 2026-08-10 after **five** verification rounds, every failure in the same comment paragraph
+and not one of them in the code: three false claims about Roll Call!, then a citation off by six
+lines. The code passed round 1 and never changed after it. What the rounds bought is written up as a
+standing rule — [`README.md`](README.md) → Citing code — and as WO-2.24 below, which closes the hole
+this work order could see and was right not to close from inside itself.)*
+
+---
+
+## WO-2.24 — nothing in the tree notices if the shared date reset is deleted
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.23 — this guards the rule
+that work order added · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19,
+WO-2.20, WO-2.21 and WO-2.22 made.)*
+
+**Not a go-live blocker, and in no ship.** Added 2026-08-10 out of WO-2.23's verification, which
+named the hole in as many words and correctly declined to close it from inside a work order about
+something else.
+
+**Why it exists.** WO-2.23 put one rule in `src/shell.css`'s BASE section —
+`input[type="date"] { -webkit-appearance: none; appearance: none; }` — and seven date fields across
+four screens depend on it. **Delete that rule and `node tools/verify-shell.mjs` still prints
+563 checks · 563 passed · 0 failed.** The harness's one computed-`appearance` assertion reads
+`.assign-field-date`, which keeps its own identical copy in `src/assignments.css` for WO-3.17's
+reasons; the five fields that depend on the shared rule *alone* — the term editor's two, the days-off
+form's two, and the student editor's plan *Review date* — live behind `.hidden` dialogs the harness
+never opens, so nothing measures them and nothing ever has.
+
+**The deletion this invites is a reasonable-looking one.** A reader who finds the same two
+declarations in two sheets, checks that the tests stay green, and removes the "duplicate" from
+`shell.css` has done what the evidence in front of them supports. Five fields silently revert to
+native-drawn, the defect WO-2.23 fixed comes back on three screens, and the tree is green. The
+duplicate is the *safe* copy to keep — `shell.css` may not name a class another sheet owns, so the
+shared rule cannot mention `.assign-field-date`, which means the copy in `assignments.css` is the one
+that cannot be the survivor.
+
+**Why this is not the check WO-2.23's Traps forbid, and the distinction is the whole work order.**
+That ban is on a **height** check: Chrome under an emulated coarse pointer honours `min-height` on a
+date input either way, so a check written for the *defect* passes on the broken tree and tells the
+next reader a rule is guarded when it is not. A **computed `appearance`** check is a different claim
+and fails cleanly — no rule, `appearance: auto`, red. The harness already makes exactly this
+assertion for WO-3.17 on `.assign-field-date`; this extends the assertion it has to the fields it
+cannot currently see. **Say this in the check's own message**, because the next reader will arrive
+holding the Trap and needs to know why this one is allowed.
+
+**Deliverables**
+- **`verify-shell.mjs` asserts computed `appearance: none` on a `.term-date` in the term editor, on a
+  `.term-date` in the days-off form, and on the student editor's `.student-date`** — the three
+  surfaces that today depend on the shared rule alone. This means opening those dialogs in the
+  harness, which nothing does yet.
+- **Deleting the BASE rule turns the run red.** Prove it by deleting it, running, and restoring —
+  and record the observed failure text in the work order's result, because a guard nobody has watched
+  fail is a guard nobody has tested.
+- **The check's message states what it does and does not cover**: the reset's presence in the
+  cascade, never the rendered height, which is device-only and stays 👤 forever.
+- **`TESTING.md` § WO-2.23's "why no check was booked" note gains a pointer to this work order**, so
+  the two read as one decision rather than as a reversal. That note stays true — no check was booked
+  *for the defect*, and this one is not that.
+
+**Out of scope** — any height or touch-target assertion on a date field (that is the forbidden check,
+and `@media (pointer: coarse)` measurement is WO-2.21's ground); any change to the reset itself or to
+`.assign-field-date`'s deliberate duplicate; and any change to what the two harnesses print or how
+they count, which is WO-2.19's and WO-2.22's.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs` asserts computed `appearance` on all three surfaces named above,
+      and the run is green on the tree as it stands.
+- [ ] With `input[type="date"]` deleted from `src/shell.css`'s BASE section, the run **fails**, and
+      the failure names which field and which sheet. The result file quotes the failure text.
+- [ ] The check's message distinguishes itself from the height check WO-2.23's Traps forbid, in its
+      own words rather than by reference.
+- [ ] `tools/README.md`'s check count and `TESTING.md` are updated from a run rather than by
+      arithmetic, per WO-2.19.
+- [ ] `node tools/wo-sweep.mjs` prints what it printed before, but for the check count.
+
+**Traps** — **The dialogs are not on screen at rest.** WO-2.21 is the scar: the 44px sweep was
+measuring a screen that was not the one on screen. Open the dialog, assert the element is actually
+rendered, and do not let a `display: none` node answer the question — a computed `appearance` read
+off a hidden node is the same class of lie. **And do not fold in the height.** It will be tempting,
+because the harness will finally have these fields open in front of it. The height on desktop Chrome
+says nothing about the height on iOS, which is the entire reason WO-2.23 exists.

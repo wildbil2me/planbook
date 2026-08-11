@@ -415,6 +415,30 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.23 — every date field in the app now takes the 44px touch target it was already declared.**
+  The assignment editor's *Assigned* and *Due*, the term editor's *Starts* and *Ends*, the days-off
+  *From* and *To*, and the plan *Review date* on the student editor — seven fields across four
+  screens, all of them about half the height of the text boxes beside them, and all of them declared
+  44px in a rule that was never wrong.
+
+  iOS Safari paints `<input type="date">` as a native control, and while it is doing that, the
+  author's box model is advisory: `min-height` does nothing on the date field and everything on the
+  text field 10px away. `-webkit-appearance: none` is the switch that hands the box back, and the app
+  had never used it anywhere. One rule now does, keyed to the element rather than to the four date
+  classes, so every date field added after this one is covered without anybody remembering to.
+
+  **Confirmed on the iPad on 2026-08-10**: full height in both orientations, the iPadOS picker still
+  opens from all seven fields and the date still lands, an empty field still reads as a field, and
+  the days-off dates still clear after an add. The date sits centred in the taller box — which
+  nobody knew, because no harness can ask.
+
+  *Two limits recorded rather than papered over.* Neither harness can see this defect: desktop
+  Chrome under an emulated coarse pointer honours `min-height` on a date input and reports a
+  compliant 44px on the broken tree, so a check written for it would have gone green and told the
+  next reader the rule was guarded. And the width floor that the reset makes necessary — a reset
+  date input has no intrinsic width, and iOS draws no placeholder to hold an empty one open — is
+  reasoned from the box model rather than measured. `TESTING.md` § WO-2.23 says both in writing.
+
 - **WO-2.20 — the orchestrator now waits for its implementer before reporting.** On 2026-08-10 a
   dispatch on WO-3.5 returned a complete, confident report sixty seconds in: the route with its
   reasoning, the claim written, the brief written, and *"the implementer is in the background. Expect

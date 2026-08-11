@@ -120,6 +120,31 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 
 ---
 
+## Citing code
+
+**Cite a symbol, not a line number.** `src/classes.js`'s `dateField()`, `.term-date` in
+`src/shell.css`'s coarse block, the DAYS OFF section of `src/shell.css` — never `src/classes.js:1046`.
+A symbol is found by grep and moves with the code it names; a line number is a claim about a tree
+that is still being edited, and it decays silently. Nothing checks these. No harness reads prose, no
+harness opens the sibling repo, and a wrong pointer costs nothing at write time and misleads a reader
+months later. The reader is the only instrument there is.
+
+**The two exceptions**, both narrow: a citation into a **frozen artifact** — a specific commit, a
+file in Roll Call! that this work is copying from, a dispatch result already written — where the line
+cannot move; and a citation a **tool parses**, which the tool's own format decides. When you cite a
+line in the sibling repo, cite the symbol *and* the line, because the symbol is what survives and the
+line is what a reader checks it against.
+
+*(The scar: WO-2.23, 2026-08-10. Its comment above `.term-date` failed verification **four times in a
+row**, every time on a checkably false claim about Roll Call! — three of substance, and then a fourth
+where the reasoning was right in every particular and the line number was off by six, pointing a
+reader at two modal-width rules. The same work order's own **Why it exists** paragraph carried five
+line numbers; by the time it closed, three had drifted under WO-3.17's commit and two under its own
+comment additions. It cost five verification rounds to learn that prose about code is unguarded by
+construction, and that the cheapest defence is to write pointers that cannot drift.)*
+
+---
+
 ## The files
 
 | File | Work orders | Roadmap phase |
@@ -142,7 +167,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
-| 2 — Attendance | 22 | 16 | 🔨 IN PROGRESS |
+| 2 — Attendance | 23 | 17 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 18 | 7 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -150,7 +175,7 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 7 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **80** | **37** | `[████░░░░░░] 46%` |
+| | **81** | **38** | `[████░░░░░░] 47%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

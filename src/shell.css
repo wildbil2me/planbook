@@ -45,6 +45,45 @@ body {
 /* Controls inherit the body font rather than the platform's form-control font. */
 button, input, select, textarea { font-family: inherit; }
 
+/* THE ONE PLACE THIS APP TELLS WEBKIT TO STOP DRAWING A CONTROL ITSELF (WO-2.23). Read this before
+   adding an eighth date field, and before adding a second `appearance` reset anywhere.
+
+   iOS Safari paints `<input type="date">` as a NATIVE control, and while that painting is in force
+   the author's box model is advisory — which is why `min-height: 44px` reaches the text field 10px
+   away and does nothing at all to the date field beside it. The owner photographed the result on
+   2026-08-10: six date fields across three screens at about half the height of their neighbours,
+   every one of them already declared 44px in a coarse block. `appearance: none` hands the box back.
+   It is not a restyle of anything; it is what makes rules already written reach the glass.
+
+   WHY ONE ELEMENT RULE RATHER THAN A CLASS PER SHEET. Three classes wear this element today, over
+   seven fields on four screens — `.term-date` (the term editor and the days-off form),
+   `.assign-field-date` (the assignment editor) and `.student-date` (the plan review date on the
+   student editor) — and the reasons not to name them are two, the second deciding:
+     · This file may never style a class another sheet owns; that is the rule in the header above,
+       and it is what keeps a per-file touch pass safe from the cascade. `.assign-field-date` is
+       src/assignments.css's. A grouped selector over all three classes would have to break that
+       rule in order to exist. Keyed to the element it does not have to — exactly as the
+       `font-family` line above states an app-wide fact about controls without naming anyone's class.
+     · A rule keyed to a class is a rule someone must REMEMBER for every date field added after this
+       one, and this is the one defect class here that no machine in this repo can catch: the 44px
+       sweep skips fields inside `.hidden` dialogs, and desktop Chromium honours `min-height` on a
+       date input, so a check written for this goes green on the broken tree. (TESTING.md
+       § WO-2.23 records that limit, which is why no check was booked for it.) Keyed to the element
+       there is nothing left to remember, and a date field added by a screen that does not exist yet
+       arrives fixed.
+
+   WHAT THE RESET COSTS, AND WHERE THAT IS PAID. The native painting takes the native intrinsic
+   WIDTH with it, and an empty date field on iOS draws no placeholder to hold the box open. A field
+   with no width of its own can therefore collapse onto whatever floor it carries: that is
+   `.term-date`, and its coarse rule below sets a legible-date minimum for it. The other two are
+   `width: 100%` inside panels that size them.
+
+   TYPE `date` AND NOTHING ELSE, and not `appearance: textfield` either. Every other control in this
+   app is drawn natively on purpose — the <select>s are iPadOS's own wheel over the whole screen
+   (the `.class-preset-row` comment below and src/days-off.js both say why they are avoided rather
+   than restyled), and `.backup-file` keeps its native button, which has its own 44px rule. */
+input[type="date"] { -webkit-appearance: none; appearance: none; }
+
 /* One grouped selector for every tappable class in the app. Add each new control
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
@@ -1205,7 +1244,53 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .rename-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
   .class-preset-label { font-size: 11px; }
   .term-label-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
-  .term-date { min-height: 44px; min-width: 44px; font-size: 14px; padding: 0 8px; }
+  /* The date fields on both screens this class serves — the term editor's Starts and Ends, and the
+     days-off form's From and To. The `min-height` was here from WO-1.6 and never reached the glass:
+     a natively drawn WebKit date widget paints at its own height and walks straight past it, which
+     is what the owner photographed on 2026-08-10. What makes this line true on the device is the
+     `input[type="date"]` reset in the BASE section at the top of this file (WO-2.23), and the
+     reasoning for putting it there rather than here is written at it.
+
+     THE `min-width` IS PART OF WHAT THAT RESET COSTS AND NOT A RESTYLE OF THE FIELD. This class
+     sets no width anywhere, in either screen, and has always been laid out at whatever the NATIVE
+     widget drew itself — content-sized items in `flex-wrap: wrap` rows, so the widget's intrinsic
+     width WAS its layout width. Take the native painting away and that intrinsic width goes with
+     it, and an empty date field on iOS draws no placeholder text to hold the box open. The 44px
+     this line used to carry is a tap-target floor, never a legible-date width, so the field could
+     have come out of this fix a 44px square showing a sliver of a date — full height and unusable,
+     which is the fix winning the pixels and losing the point.
+     160px is copied rather than re-derived per CLAUDE.md — but be exact about what it was copied
+     FROM, because the first draft of this comment was not and a reader acting on it would have been
+     misled. Roll Call!'s `#dateJumpInput` (its src/dashboard.html:437-440) carries the same two
+     reset declarations at the same `min-width: 160px`, and it is a date-PICKING `<select>`, its
+     options day labels — NOT an `<input type="date">`. Roll Call! has no reset date input anywhere:
+     its own date fields (`.config-date` at :696, `.wiz-term-row input[type="date"]` at :103) carry
+     neither an `appearance` reset nor any `min-width`. So there is no sibling precedent for the
+     control this rule governs — only for a width that has held a date open under these same two
+     reset declarations, on one real control, for a year of classroom use. That is the whole of the
+     borrowing.
+     AND NOTHING MORE IS BEING CLAIMED FOR IT — no headroom, no comparison of the two controls, no
+     measurement. Three drafts of this comment reached for one and each was checkably false; the
+     third asserted a disclosure arrow on a `<select>` whose arrow `appearance: none` is exactly
+     what removes, two sentences after correctly saying the reset ends the browser's own drawing.
+     The controls do not render alike — 12px there against 14px here, a select's label against a
+     rendered date — and a desktop browser's number for either says nothing about what iOS draws,
+     which is the entire reason this defect reached the glass unseen. So: do not re-derive this
+     floor from a laptop measurement, and do not narrow it because it looks generous in Chrome. It
+     is loose on purpose. A width tuned until it looks right at a desk is how this comes back on the
+     next device. Both rows this class sits in wrap (`.term-dates`, `.dayoff-dates`), so a wide
+     floor costs a wrapped line and never an overflow. (Roll Call! narrows that select to 130px under `max-width: 640px` at :990. Not copied
+     — and not for the reason an earlier draft of this comment gave, which was checkable and wrong.
+     `#dateJumpInput` sits in `.date-jump-ctrl` inside `.search-row`, the roster panel's search row
+     (its :1273-1291) — a panel header, not the app's header bar (`.header-top` at :149 and
+     `.header-bottom` at :153), and it does NOT hold a single line: :977 gives
+     it `flex-wrap: wrap` from ≤1024px down, so by the time the 130px applies the row has been
+     wrapping for 384px. The drop is a phone-width trim — it lets the `Jump to` label, the select and
+     the Today button share one narrow line once :989 stops pushing that cluster right. There is no
+     equivalent step to hang it on here: this rule lives in `@media (pointer: coarse)`, a pointer
+     query and not a width one, so a single floor serves the iPad and a phone alike. Given one
+     number for both, it is the wide end that is safe to pick, for the reason set out above.) */
+  .term-date { min-height: 44px; min-width: 160px; font-size: 14px; padding: 0 8px; }
   .term-date-label { font-size: 11px; }
   .class-delete-line { font-size: 13px; }
   /* Categories & weights (WO-3.1), in the same pass that adds them — there is no later one. The
@@ -1324,7 +1409,12 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
      lesson `.cls-tab` learned at WO-1.6. The picker and the date field carry their own 44 with the
      vertical padding zeroed, the `.search-box` defect's lesson again: a <select> and an
      <input type=date> are drawn by the browser, and neither inherits a height from the box it sits
-     in. `.accommodation-head` gets the 8px `.guardian-head` gets, and for the same reason — it is
+     in. That sentence was written here before anything acted on it, and the date half of it was
+     false on the device until WO-2.23 put the `input[type="date"]` reset in the BASE section — the
+     review date was the seventh field short of its own 44px, on a screen the 👤 list of that work
+     order never named. Height and appearance are the whole of what changed on this panel: the
+     reset touches no plan data, no export and no merge field, and nothing here may.
+     `.accommodation-head` gets the 8px `.guardian-head` gets, and for the same reason — it is
      the other place in this feature where a Remove sits shoulder to shoulder with something
      harmless. */
   .support-dot { width: 44px; height: 44px; font-size: 18px; }

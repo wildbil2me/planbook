@@ -253,7 +253,26 @@
    NOT THE SQUATNESS FIX. The date fields on *Classes & terms* and *Days off & drops* are equally
    short on the device and take their own `min-height: 44px` no better; that is one app-wide failure
    across three screens, it is booked separately, and copying this line onto `.term-date` here would
-   ship an untested change to two other dialogs under a work order about this one. */
+   ship an untested change to two other dialogs under a work order about this one.
+
+   THE SQUATNESS FIX HAS SINCE LANDED, AND IT IS WHY THE LINE BELOW IS NOW A RESTATEMENT RATHER THAN
+   THE ONLY COPY (WO-2.23, 2026-08-10). The app-wide answer is a single `input[type="date"]` rule in
+   src/shell.css's BASE section, which reaches this element too and carries the argument for being
+   one rule keyed to the element instead of four keyed to classes. So there are two declarations of
+   the same two properties in the tree on purpose, and this is the note that says so; the values are
+   identical, so nothing about the cascade has to be worked out — whichever wins, the answer is
+   `none`. The line stays for three reasons:
+     · shell.css may not name a class this sheet owns, so the shared rule CANNOT mention
+       `.assign-field-date` — and a reader who came here looking for the overlap fix would find it
+       gone with nothing in this file to point at.
+     · Deleting it would put WO-3.17's overlap fix inside WO-2.23's diff, where a revert of the
+       second silently takes the first with it. Two work orders a fortnight apart, one control.
+     · This codebase names a control in its own sheet even when another rule already covers it —
+       `.hdr-mode-btn` and `.cls-tab-home` are in shell.css's coarse block for that reason — so the
+       next reader does not have to go and prove the control is covered.
+   If this line is ever removed, check tools/verify-shell.mjs's WO-3.17 section first: it asserts
+   the COMPUTED `appearance` on both fields rather than the source of it, so it stays green either
+   way and cannot be read as proof that this declaration is load-bearing. */
 .assign-field-date { -webkit-appearance: none; appearance: none; }
 .assign-field-note { font-size: 11px; color: #8a9bb0; line-height: 1.5; }
 
