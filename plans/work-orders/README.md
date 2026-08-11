@@ -265,8 +265,11 @@ it is built to did.)*
 
 ## Ship 2 — first grades
 
-Eighteen work orders between 2026-08-09 and ~2026-09-15, ending at
-[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). Written 2026-08-09, the day after Ship 1 closed,
+Thirty work orders between 2026-08-09 and ~2026-09-15, ending at
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). *(Eighteen when this line was written on 2026-08-09;
+corrected 2026-08-10, having drifted every time a row was added — the same decay WO-2.23 booked the
+"cite a symbol, not a line number" rule against, arriving through a count instead of a pointer.)*
+Written 2026-08-09, the day after Ship 1 closed,
 because until it existed there was **no running order at all** past Ship 1 — `next` reads the tables
 in this file and had nothing left to read, and the ordering everyone was working from lived in three
 documents that disagreed. Naming the disagreements, since they are the reason this table is worth
@@ -313,17 +316,34 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 17 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
 | 18 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
 | 19 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
-| 20 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
-| 21 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 22 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 23 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
-| 24 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 25 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 26 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 27 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 28 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 29 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 30 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 20 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
+| 21 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | M | ✔ | Aug 25–28 |
+| 22 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
+| 23 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 24 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
+| 25 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 26 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 27 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 28 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 29 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 30 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 31 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-2.24 was given row #20 on 2026-08-10, the day it was booked out of WO-2.23's verification — **the
+third time this file has had to record the same failure**, after WO-3.12 and WO-3.10 below. A work
+order with no numbered row is invisible to `next`; it is never offered at all. The pattern is now
+specific enough to name: **all three were booked by a verifier, out of a work order that had already
+passed.** That is the right call every time — the finding does not belong in the passing work order's
+diff — but the booking ends with a `**Ship** —` header and nobody's hand on a row, so it lands in the
+directory and not in the order. **A work order booked out of a verification needs a row in the same
+sitting, or it needs saying out loud that it is deliberately unscheduled.***
+
+*It sits at #20 because #17, #18 and #19 are the other three harness-coverage items and this is a
+fourth of the same kind — four half-days that were all reading "Aug 25", which is why this one says
+Aug 26 and the block should be read as spilling into it. **It is the second row to cut if the
+fortnight tightens**, behind WO-3.12 and for the same reason: nothing in it is a defect. The rule it
+guards is correct today, and what is missing is only the check that would notice if somebody deleted
+it.*
 
 *WO-3.12 was given a row at #17 on 2026-08-10, having had none since it was booked out of WO-3.4's
 verification eight days earlier — **the same failure WO-3.10 had**, and the reason both are worth a
