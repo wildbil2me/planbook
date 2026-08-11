@@ -2686,6 +2686,47 @@ sensitive-field-name sweep, unchanged by this work order. `sw.js`'s `CACHE` is b
 `planbook-shell-v41` in the same pass, because `index.html`, `src/assignments.js` and
 `src/assignments.css` are all in `SHELL`.*
 
+### WO-3.14 — Percentages to two decimal places
+
+- [x] **`docs/grade-math-cases.md` case 1 reads `87.00%` on the grid, not `87.0%`, and the letter
+      beside it is unchanged.** The screen and the engine are asked separately rather than the screen
+      alone, so a formatter that agreed with a display that had drifted could not tick this.
+- [x] **A grade that is not exact reads to two decimals and is rounded, not truncated** — case 1's
+      row after the category move is 86.7272…%, which must render `86.73`. The assertion
+      discriminates: truncation gives `86.72`, so a build that cut the digits instead of rounding
+      them turns this red rather than passing on a number that happens to look right.
+- [x] **The class average and the grade column agree to the same precision, asserted together in one
+      check rather than three.** *There is no third surface to include.* WO-3.7's per-student detail
+      does not exist yet, and that was re-checked against the tracker rather than assumed — when it
+      lands it inherits this line.
+- [x] 👤 **One row re-keyed into the real SIS with no mental arithmetic between screen and box.**
+      *(Owner, 2026-08-11 — clean, no issues. This is the line the whole work order exists for: it is
+      the only one that can witness the absence of a conversion done in a teacher's head, and no
+      amount of desk checking can substitute, because a silent conversion produces a correct number.)*
+
+*The desk half is `verify-shell.mjs`, **564 of 564** with zero skips and zero failures — one check
+added, six existing string literals re-pointed from one decimal to two. `wo-sweep.mjs` is **16
+checks, 15 passed, 0 failed, 1 to review**, the REVIEW being the standing sensitive-field-name sweep,
+untouched by this work order. `sw.js`'s `CACHE` goes to `planbook-shell-v43`, because `src/scores.js`
+is in `SHELL` — without it the installed iPad app keeps serving `toFixed(1)` and the change is
+invisible on the one device it was written for.*
+
+***The work order's own acceptance text carried a wrong number, and it cost a round.*** *The line
+read "case 1's 86.666…", a figure back-inferred from the old one-decimal display and never checked
+against the engine. The dispatch brief propagated it and the first implementation asserted `86.67%`
+on its authority, leaving a comment headline contradicting the arithmetic three lines below it. The
+real value is 90 × 30/50 + 81.81…% × 20/50 = 86.7272…%. **The acceptance line has been corrected in
+place and says what it used to read**, so the next person to re-derive it does not re-derive the
+error. The general form: a number written into a spec from a rounded display is a measurement of the
+display, not of the thing.*
+
+***Two observations logged rather than fixed.*** *The summary now reads `Class average 87.00% ·
+Weights total 100%` at mixed precision, which is correct and deliberate — a weight is typed by the
+teacher and never transcribed out, so it is not the same kind of number as a re-keyed grade. And
+`tools/wo-sweep.mjs`'s `TOUCHES_MAPPING` is narrower than its own prose, missing
+`letterFromPercentage`; that is pre-existing, predates this work order, and wants a work order of its
+own rather than a quiet edit under this one.*
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

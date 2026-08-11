@@ -12579,6 +12579,9 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
                      chip: ((th.querySelector('.cat-chip')||{}).textContent||'')
                        .replace(/\\s+/g,' ').trim() }; }),
           summary: (summary ? summary.textContent : '').replace(/\\s+/g,' ').trim(),
+          summaryPercent: ((summary ? summary.querySelector('b') : null)||{}).textContent || '',
+          summaryLabel: ((summary ? summary.querySelector('span') : null)||{}).getAttribute
+            ? summary.querySelector('span').getAttribute('aria-label') || '' : '',
           bannerUp: banner ? !banner.classList.contains('hidden') : null,
           bannerText: ((document.getElementById('scoresNoGradeText')||{}).textContent||'')
             .replace(/\\s+/g,' ').trim(),
@@ -12769,12 +12772,22 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           var g = window.planbook.gradeEngine.weightedClassGrade(d, cls, 'tm_wo35', 'wo35-s20');
           return { percentage: g.percentage, letter: g.letter, reason: g.reason }; })()`);
         const row20 = case1.students.indexOf('wo35-s20');
-        check('the displayed grade is docs/grade-math-cases.md case 1 to the digit — 87.0% and a B — and the screen and the engine agree about it',
-          row20 >= 0 && case1.grades[row20] === '87.0%' && case1.letters[row20] === 'B'
+        check('the displayed grade is docs/grade-math-cases.md case 1 to the digit — 87.00% and a B — and the screen and the engine agree about it',
+          row20 >= 0 && case1.grades[row20] === '87.00%' && case1.letters[row20] === 'B'
             && engine.percentage === 87 && engine.letter === 'B' && engine.reason === null
             && case1.bannerUp === false && case1.provisional === false,
           'screen ' + case1.grades[row20] + ' ' + case1.letters[row20] + ' :: engine '
             + engine.percentage + ' ' + engine.letter);
+
+        /* WO-3.14: the per-student detail named by the work order is WO-3.7 and does not exist yet.
+           Assert the two percentage surfaces that do exist together, including the class average's
+           accessible rendering, so their precision cannot drift independently. */
+        check('the grade column and class average use the same two-decimal precision (WO-3.7 per-student detail does not exist yet)',
+          /^-?\d+\.\d{2}%$/.test(case1.grades[row20])
+            && /^-?\d+\.\d{2}%$/.test(case1.summaryPercent)
+            && /Class average -?\d+\.\d{2}%/.test(case1.summaryLabel),
+          'grid ' + JSON.stringify(case1.grades[row20]) + ' :: summary '
+            + JSON.stringify(case1.summaryPercent) + ' :: aria ' + JSON.stringify(case1.summaryLabel));
 
         /*
           ACCEPTANCE LINE 8, INHERITED FROM WO-3.3, and the box that only this claim can tick. The
@@ -12782,7 +12795,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           editor, and EVERY displayed grade in the class has to move on that keystroke — no weight
           changes, no score changes, and walking the weights across 100 could never have discharged it.
 
-          Case 1's row goes 87.0% -> 86.7%: Quizzes keep 90% at 30, Homework becomes (80 + 10) / 110 =
+          Case 1's row goes 87.00% -> 86.73%: Quizzes keep 90% at 30, Homework becomes (80 + 10) / 110 =
           81.81…% at 20, Tests is empty so its 50 redistributes, and 90 x 30/50 + 81.81… x 20/50 =
           86.72…%. Hand-computed here rather than asked of the engine, for the reason the case above is:
           an engine and a screen that agree with each other and disagree with the arithmetic is exactly
@@ -12813,8 +12826,8 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         const movedRows = afterMove.students.filter((id, i) =>
           afterMove.grades[i] !== beforeMove.grades[i]).length;
         const a1Head = afterMove.heads.filter((h) => h.name === 'Unit test')[0] || {};
-        check('moving an assignment to another category moves EVERY displayed grade in the class on the keystroke — case 1\'s row 87.0% -> 86.7%, with no weight and no score touched',
-          beforeMove.grades[row20] === '87.0%' && afterMove.grades[row20] === '86.7%'
+        check('moving an assignment to another category moves EVERY displayed grade in the class on the keystroke — case 1\'s row 87.00% -> 86.73%, with no weight and no score touched',
+          beforeMove.grades[row20] === '87.00%' && afterMove.grades[row20] === '86.73%'
             && movedRows === 25
             && /Homework/.test(a1Head.chip) && /20%/.test(a1Head.chip)
             && afterMoveDoc.all === beforeDoc.all
@@ -12832,7 +12845,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         await new Promise(r => setTimeout(r, 200));
         const backAgain = await evalJs(READ);
         check('and moving it back restores every displayed grade, so the chain runs in both directions rather than only on the way out',
-          backAgain.grades[row20] === '87.0%'
+          backAgain.grades[row20] === '87.00%'
             && JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades),
           'case 1\'s row is ' + backAgain.grades[row20] + ' again, and all 25 match = '
             + (JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades)));
@@ -12877,7 +12890,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         await typeWeight(50);
         const balanced = await evalJs(READ);
         check('and the grades come back the moment the weights reach 100 again — the crossing works in both directions, with the categories panel still open over the grid',
-          balanced.bannerUp === false && balanced.grades[row20] === '87.0%'
+          balanced.bannerUp === false && balanced.grades[row20] === '87.00%'
             && balanced.letters[row20] === 'B'
             && JSON.stringify(balanced.grades) === JSON.stringify(beforeMove.grades)
             && /Weights total 100%/.test(balanced.summary),

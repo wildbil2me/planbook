@@ -842,7 +842,7 @@ meaning, and the mapping step would be ceremony over the top of it.
 
 ## WO-3.14 — percentages to two decimal places
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-11 · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
 **Closes roadmap** *(no box.)*
 
 **Booked 2026-08-10 from WO-3.5's SIS re-keying box**, the first time a human read this app's
@@ -870,13 +870,17 @@ like reading.
 setting to maintain forever in exchange for a decision that can be made once.
 
 **Acceptance**
-- [ ] `docs/grade-math-cases.md` case 1 reads `87.00%` on the grid, not `87.0%`, and the letter beside
+- [x] `docs/grade-math-cases.md` case 1 reads `87.00%` on the grid, not `87.0%`, and the letter beside
       it is unchanged.
-- [ ] A grade that is not exact — case 1's 86.666… after the category move — reads to two decimals and
-      is **rounded, not truncated**.
-- [ ] The class average, the grade column and the per-student detail agree to the same precision,
+- [x] A grade that is not exact — case 1's 86.7272… after the category move — reads to two decimals and
+      is **rounded, not truncated** (`86.73`, where truncating gives `86.72`). **This line said 86.666…
+      until 2026-08-11**, a number back-inferred from the old one-decimal display and never checked
+      against the engine; the brief propagated it and the first implementation round asserted `86.67%`
+      because of it. The arithmetic is 90 × 30/50 + 81.81…% × 20/50 = 86.7272…%.
+- [x] The class average, the grade column and the per-student detail agree to the same precision,
       asserted together in one check rather than three.
-- [ ] 👤 One row re-keyed into the real SIS with no mental arithmetic between screen and box.
+- [x] 👤 One row re-keyed into the real SIS with no mental arithmetic between screen and box.
+      *(Owner, 2026-08-11.)*
 
 ## WO-3.15 — a way to add an assignment from the score grid
 

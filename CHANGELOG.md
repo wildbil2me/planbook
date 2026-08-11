@@ -36,6 +36,29 @@ and in this data model a fabricated meeting *is* a meeting: it sits in the denom
 percentage and in the recorded-meetings count, indistinguishable from a real one. The term should
 open in a fresh year, with the test data left in one labelled unmistakably.
 
+### Changed
+
+- **WO-3.14 — grade percentages now read to two decimal places.** The screen and the school's SIS
+  disagreed in precision — the SIS carries two decimals and this app showed one — so every grade
+  re-keyed into it went through a rounding step done in the teacher's head, at every row of a class
+  of twenty-five. That is the one place a transcription error costs a student a grade, and it is
+  silent, because converting a number looks exactly like reading one. The re-keying tax is the tax
+  this app cannot remove (the SIS has no import), so the one thing it can do is make the number on
+  the screen the number that goes in the box.
+
+  **Rounded, not truncated.** A grade of 86.7272… reads `86.73`, not `86.72`. One function formats
+  every percentage, so the grade column, the class average and the summary moved together or not at
+  all — a grid at two decimals beside a summary at one would be worse than the mismatch this fixes.
+
+  **Two things deliberately did not move.** The attendance percentage still reads as it did: it is
+  not re-keyed into anything, so precision there buys nothing and costs a digit of glanceability.
+  And `Weights total 100%` stays whole beside a `87.00%` average, which looks like mixed precision
+  and is not the same kind of number — a weight is typed by the teacher, never transcribed out.
+
+  **Letter grades are untouched**, and still computed from the unrounded percentage. A boundary of
+  89.5 is decided by the real value, not by what the screen happens to display, which is the rule
+  WO-3.2 set and this change was careful to leave standing.
+
 ### Added
 
 - **WO-3.17 — the Assigned and Due dates.** A new assignment now starts with **both dates on today**,

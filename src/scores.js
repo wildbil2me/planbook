@@ -244,8 +244,9 @@ function shortDate(iso) {
 }
 
 /*
-  HOW A PERCENTAGE IS WRITTEN DOWN HERE: one fixed decimal place, so 88 prints as `88.0%` beside
-  92.4% and the column reads as one column of numbers rather than a ragged one.
+  HOW A PERCENTAGE IS WRITTEN DOWN HERE: two fixed decimal places, because the SIS carries two
+  decimals and this number is re-keyed into it by hand. The grade column and class average both use
+  this formatter; WO-3.7's per-student detail does not exist yet, so there is no third surface today.
 
   IT IS DISPLAY FORMATTING AND NOTHING ELSE. The letter beside it is banded from the UNROUNDED
   percentage — src/grade-engine.js asks src/letter-scale.js, which compares against `min`
@@ -253,7 +254,7 @@ function shortDate(iso) {
   exactly what WO-3.2's design deletes. Nothing here is ever handed back to the arithmetic.
 */
 function formatPercent(p) {
-  return Number(p).toFixed(1) + '%';
+  return Number(p).toFixed(2) + '%';
 }
 
 /*

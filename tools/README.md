@@ -545,7 +545,7 @@ rewrite that fixed one would have left the dialog contradicting itself an inch f
 Reverting only the editor's copy turns that check red with the list hint still correct. Four
 mutations, all reverted and tabulated in `TESTING.md` § WO-3.17.
 
-**`verify-shell.mjs` holds 570 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 571 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10570` is why the
@@ -553,7 +553,7 @@ pattern is not line-anchored, and comment lines are excluded because the harness
 its prose constantly.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 570 − 563 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
+could go and name.** It is 571 − 564 = 7 on this tree and it was 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
 counts in it as the measurement of that tree rather than of this one. The gap moved by one because
 WO-3.17 added one fixture-guard failure arm — the first bullet below is the shape of it — and nothing
