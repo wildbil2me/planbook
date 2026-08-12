@@ -1939,8 +1939,15 @@ missing file is that same shape, one step further along.
 
 **The second is a premise the check relies on and does not state.** §11 pushes one entry per *line*
 that holds a `check(` call (`:620–623`), so its count is a count of lines. That equals the count of
-calls only while no line holds two, which is true of all 561 occurrences in the harness today and is
-nowhere written down. A second call appended to a line already holding one would be invisible: the
+calls only while no line holds two, which is true of all **596** call sites in the harness today and
+is nowhere written down.
+
+**That 596 was 561 when this work order was written on 2026-08-10, and it is re-measured here rather
+than carried forward** — WO-3.5, WO-2.21 and WO-3.12 have all added checks since. The premise is
+unchanged and so is every line citation above, which is the point: it is the *count* that rots, which
+is the whole reason §11 exists. **Measure it again at the start of the work rather than trusting this
+sentence** — `node tools/wo-sweep.mjs` prints the true figure in a second, and `tools/README.md:636`
+records it. *(Refreshed 2026-08-11, from a run.)* A second call appended to a line already holding one would be invisible: the
 count would not move, §11 would pass, and the number in `tools/README.md` would be quietly wrong —
 which is precisely the failure WO-2.19 exists to prevent, arriving through the one door that work
 order left open.
@@ -1976,8 +1983,11 @@ in `src/`.
 - [ ] `node tools/wo-sweep.mjs` FAILs and exits 1 with `tools/verify-shell.mjs` moved aside, and again
       with `tools/README.md` moved aside — both run, both outputs quoted, both reverted.
 - [ ] §11 FAILs when a second `check()` call is appended to a line that already holds one, naming the
-      line. **Proved non-vacuous by the count clause passing in that same run**: 560 lines still hold
-      calls, so the old clause is satisfied and the new one is the only thing red. Reverted.
+      line. **Proved non-vacuous by the count clause passing in that same run** — appending adds no
+      new line, so the line count is unchanged, the old clause is satisfied, and the new one is the
+      only thing red. **Quote that count from the run.** The figure here was `560` against a premise
+      of `561` when this was written, which is a relationship an append cannot produce; do not carry
+      either number in, and do not derive one by arithmetic — the Traps below say why. Reverted.
 - [ ] `tools/README.md` states why `wo-sweep.mjs`'s own count is left unguarded, and states that §11
       counts lines and what now guarantees that is a count of calls.
 - [ ] `tools/README.md` records why `verify-shell.mjs` does not assert its own summary, in enough
