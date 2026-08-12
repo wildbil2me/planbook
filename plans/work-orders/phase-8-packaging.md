@@ -168,7 +168,7 @@ with acceptance criteria is the only defense.
 
 ## WO-8.7 — the name and the host, decided
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing but a decision
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** nothing but a decision
 **Blocks** WO-3.18 — there is no domain to verify until this is answered
 **Closes roadmap** Phase 8 → "Name and distribution channel decided."
 
@@ -205,17 +205,18 @@ being neutral and the position that sells this app to a principal is gone.
 - **The domain**, registered and resolving.
 - **The distribution story in a sentence**: how a teacher finds it and what she types.
 
-**The name, the host and the origin, decided — 2026-08-12.** *Three of the four deliverables. Only the
-distribution sentence is still open, and the decisions below are still unexecuted — nothing is standing
-up at that URL yet. This work order stays `⬜ NOT STARTED` until it resolves in a browser.*
+**The name, the host and the origin, decided — 2026-08-12.** *Three of the four deliverables. The
+fourth — the distribution sentence — was written the same day and is below. The decisions here are
+still unexecuted: nothing is standing up at that URL yet, and this work order stays `⬜ NOT STARTED`
+until it resolves in a browser.*
 
 | | |
 |---|---|
 | **Name** | **Planbook** — one name, unchanged from the repo |
 | **Host** | **Cloudflare Pages**, static assets only, **no `functions/` directory** |
 | **Origin** | **`https://planbook.hwgteach.com/`** — its own subdomain |
-| **Domain** | **`hwgteach.com`**, held at GoDaddy |
-| **DNS** | Cloudflare, registration staying at GoDaddy |
+| **Domain** | **`hwgteach.com`**, registered at **Cloudflare Registrar** |
+| **DNS** | Cloudflare, on the registrar's own nameservers — nothing to migrate |
 
 **Why a subdomain and not the apex, which is the part that is expensive to undo.** `hwgteach.com` is a
 domain meant to carry more than one thing — Roll Call! is the obvious second. **IndexedDB and service
@@ -237,8 +238,9 @@ than assuming from one.
 
 **Why Pages, and it is not price.** Acceptance line 4 asks that nothing in the deployment runs
 server-side code **as a checked fact**. On a platform that has a runtime sitting there unused — GoDaddy's
-shared Apache/PHP hosting, which was the alternative already paid for — the honest claim is "we do not
-currently run any," which is a promise about behaviour. On Pages with no `functions/` directory there is
+shared Apache/PHP hosting, **which was genuinely on the table and was rejected for this**: the owner
+already pays for it to carry unrelated projects, so putting Planbook there would have cost nothing extra
+— the honest claim is "we do not currently run any," which is a promise about behaviour. On Pages with no `functions/` directory there is
 nowhere for it to run: crossing the line means adding a directory, which is a tripwire rather than a
 memory. Same deployment today, a stronger sentence to say to a principal. The rest is ordinary: free at
 this scale, custom domain with automatic HTTPS (**required** — no HTTPS, no service worker, no install,
@@ -249,14 +251,33 @@ or a teacher sits on a stale shell after a deploy and the `CACHE` bump this repo
 buys nothing. This is also what rules out GitHub Pages, which is otherwise a fair fit: free, custom
 domain, HTTPS, and no way to set a response header.
 
-**The apex trap, recorded before somebody walks into it.** Pages wants a CNAME, and an apex CNAME needs
-flattening/ALIAS support that GoDaddy's DNS has long not offered. The domain's **nameservers point at
-Cloudflare** — registration can stay at GoDaddy, this moves DNS only, and it is free and reversible. It
-also puts the TXT record for Google's domain verification in the same place as everything else, which is
-what WO-3.18 consumes.
+**Written — 2026-08-12.** `_headers` sits at the repository root, which is also the Pages output
+directory (step 1 below), because with no build there is nowhere else for it to be. It pins **three**
+paths rather than the two named above, and the third is the one a teacher actually requests: she types
+the bare origin, so the document that carries the shell arrives at `/`, and a rule written for
+`/index.html` does not match it. The file itself is consumed by Pages and never served. **It is a claim
+until the first deploy answers it** — nothing in this repository can test a header no server has sent
+yet, so step 2 reads both off the wire rather than off the file.
 
-**Cloudflare Registrar sells at cost** — no markup, no cheap-first-year-then-spike. Worth knowing if the
-name ever moves to a domain of its own.
+**The apex trap, recorded because it does not apply here rather than because it was dodged.** Pages wants
+a CNAME, and an apex CNAME needs the flattening/ALIAS support a good many registrars' DNS has never
+offered — the usual reason a project like this ends up on a subdomain whether it wanted one or not.
+**Cloudflare flattens at the apex**, and `hwgteach.com` is registered there with the zone already on
+Cloudflare's own nameservers, so the constraint is simply absent. **That takes nothing away from the
+subdomain decision**, which was never made on DNS: it rests on per-origin IndexedDB and service worker
+scope, above, and would hold unchanged on a registrar that served an apex CNAME perfectly. Recorded so
+that nobody later reads the subdomain as a workaround for a limitation that is not there and "fixes" it
+back onto the apex. The zone being native also means the TXT record for Google's domain verification has
+somewhere to live from the start, which is what WO-3.18 consumes.
+
+**Registrar and host are the same company, and that is the tradeoff to say out loud.** Cloudflare
+Registrar sells at cost — no markup, no cheap-first-year-then-spike — and Cloudflare also runs the DNS
+and serves the files, so one account holds the name, the zone and the deployment. Fewer moving parts and
+one less credential to lose, at the price of a single vendor whose loss takes all three at once.
+**The mitigation is already in this repository rather than in a contingency plan**: the app is static
+files in Git and the year document lives in the teacher's own browser, so changing hosts is a redeploy
+and changing DNS is a nameserver edit. Nothing student-facing is held at Cloudflare to be stranded —
+the same property that made the hosting choice cheap two paragraphs up.
 
 **One thing to say plainly rather than let a district IT person find.** Cloudflare serves the files and
 therefore sees request logs — IP, timestamp — like any host. That is not student data, and there is no
@@ -266,10 +287,130 @@ an installed PWA still runs from its own service worker cache, so a teacher mid-
 That is what makes this decision genuinely low-stakes, and it is why the work order says to choose on
 price and reliability alone.)*
 
+**The distribution story, in a sentence — 2026-08-12.** *The fourth deliverable, and the last one that
+was open.*
+
+> **A teacher hears about Planbook from another teacher, types `planbook.hwgteach.com`, and taps Add to
+> Home Screen — no store, no download, no account, and nothing to sign into before she marks her first
+> class.**
+
+**The sentence ends at the home screen and not at the first page load, which is the whole reason it is
+worth writing down.** iOS evicts IndexedDB after about seven days of non-use for sites that are not
+installed, and installed PWAs are exempt — so a teacher who bookmarks Planbook can come back from a
+holiday to an empty gradebook. Add to Home Screen is therefore not the polish at the end of the
+distribution story, it is the step that makes the app safe to keep a term of grades in, and a version of
+this sentence that stops at *"types the URL"* is describing a way to lose them. On the laptop the same
+step is the browser's own install; on the iPad it is Share → Add to Home Screen, and that is the one to
+say out loud, because it is the device a teacher will guess wrong about.
+
+**No store, and that is not a concession.** A store listing means a native wrapper, a developer account
+billed yearly, and a review queue standing between a teacher and a fix on a Tuesday morning. This app is
+static files over HTTPS, so **the URL is the distribution channel** — which is also what keeps the rest
+of the sentence true: nothing to download means nothing to consent to, and the app runs fully signed-out
+by rule, so there is no account gate in front of the first attendance mark.
+
+**What the sentence deliberately does not cover.** It describes a teacher who has already been told
+about Planbook by someone she trusts. Nothing here helps a stranger *evaluate* it, and that is
+**WO-8.2's demo build** — the top of the adoption funnel is a different sentence with a different
+work order behind it.
+
+**And one trap the sentence walks past, recorded rather than fixed here.** What she types is the whole
+subdomain. `hwgteach.com` on its own resolves to nothing until something is put at the apex, so a
+teacher who drops the first label — or a colleague who repeats the domain and not the app — lands on an
+error page and reasonably concludes the app does not exist. The cheap answer is a redirect from the apex
+to `planbook.hwgteach.com`; the better one is the landing page the apex was kept free for. Neither is
+this work order's, and both should be decided before the URL is said out loud to a second teacher.
+
+**The order the human steps have to happen in — 2026-08-12, re-cut the same day.** *None of these are an
+agent's: they need Cloudflare and Google Cloud credentials that no agent holds, and the three Acceptance
+lines below that are still open close on them and on nothing else. Written as a sequence rather than a
+list because the dependencies are real — the custom domain has nothing to attach to until a project
+exists, and the URL cannot be read in a browser until the certificate issues.*
+
+***Three steps shorter than the first draft, because the registrar is Cloudflare.*** *That draft assumed
+the name was registered elsewhere and opened with the standard migration — photograph the old zone,
+reconcile Cloudflare's import of it record by record, move the nameservers — including the step where a
+missed MX record quietly breaks mail. **The assumption was wrong and none of it applies.** `hwgteach.com`
+is registered at Cloudflare, so the zone is native and already Active: nothing migrates, there is no
+photograph to reconcile against, and no propagation to wait out. What is left is one sitting where the
+only waiting is a certificate. Recorded rather than silently deleted, because the migration is what a
+reader will assume was skipped by accident.*
+
+1. [ ] **Create the Pages project** against `github.com/wildbil2me/planbook`, production branch `main`.
+   Framework preset **None**, build command **empty**, output directory **`/`** — there is no build, so
+   the output is the repository as it sits, which is also what puts `_headers` where Pages reads it.
+   Attach **no Functions**, and add no `wrangler.toml` and no build command: that is the build system
+   this project does not have, and the absence of a `functions/` directory is what makes Acceptance line
+   4 a fact rather than a promise. *(Direct Upload — dragging the folder into the dashboard — is the
+   alternative if a Git connection is unwanted. Same files either way, and neither adds anything to this
+   repository. Note that with `main` as the production branch, nothing deploys while the work is sitting
+   on a phase branch.)*
+
+   > **The dashboard will try to put you in Workers instead, and it is not obvious — hit 2026-08-12.**
+   > Cloudflare now funnels a Git import into **Workers Builds**, which asks for a **deploy command** and
+   > prefills **`npx wrangler deploy`**. **That prompt is the tell that you are in the wrong flow**: the
+   > Pages path asks for a framework preset, a build command and an output directory, and never for a
+   > deploy command. Back out to **Workers & Pages → Create → Pages → Connect to Git**.
+   >
+   > Running it anyway does not work and would not be wanted if it did. `wrangler deploy` reads a
+   > `wrangler.jsonc`/`wrangler.toml` that this repository does not have and must not gain, and `npx`
+   > wants an npm this project does not use — `wo-sweep.mjs` asserts *no dependency manifest anywhere* on
+   > every run, so the config file that would make the command work is the one the sweep fails on.
+   >
+   > **If the Pages option is ever missing** — Cloudflare has been retiring Pages Git connections on some
+   > accounts — **that is a decision, not a workaround.** Workers with static assets can serve this app,
+   > but it arrives with a config file and a deploy command, and the "no `functions/` directory, so there
+   > is nowhere for server code to run" argument that makes Acceptance line 4 a checked fact has to be
+   > re-made in the Workers vocabulary rather than assumed to carry over. Pages Direct Upload keeps the
+   > present reasoning intact at the cost of the Git connection. Take it back to the work order.
+2. [ ] **Check that first deploy at its `*.pages.dev` URL, before the custom domain is attached.** HTTPS is
+   automatic there, so the app, the service worker registration and both `Cache-Control: no-cache`
+   headers can be confirmed on an origin that has nothing to do with the domain — which is what will
+   tell a DNS problem from an app problem an hour later. **Put no real class data in at that origin**:
+   it is a different origin, so it gets its own IndexedDB, and anything typed there is a second place a
+   teacher's grades live.
+3. [ ] **Attach `planbook.hwgteach.com`** in the Pages project → Custom domains. The zone is already at
+   Cloudflare, so Pages writes the CNAME itself and there is no record to paste anywhere and no
+   nameserver to check first. Wait for the certificate to issue — that is the one genuine wait left in
+   this sequence.
+4. [ ] **Load `https://planbook.hwgteach.com/` and read it, rather than assume it** — this is Acceptance
+   line 2. The padlock; the app rendering; the service worker **activated and running** (DevTools →
+   Application → Service Workers); `cache-control: no-cache` on the document and on `/sw.js` in the
+   Network panel. Then the same URL on the iPad, Share → Add to Home Screen, and a launch from the icon
+   with no browser chrome — which is the distribution sentence above, walked end to end.
+5. [ ] **Verify `hwgteach.com` with Google** — Acceptance line 3, and what WO-3.18 consumes. The
+   verification itself happens in **Search Console**, which is where the Cloud console sends you: add
+   `hwgteach.com` as a Domain property, take the TXT record it offers, and put it on the apex in
+   Cloudflare DNS. Verify the **apex and not the subdomain** — `hwgteach.com` covers everything under
+   it, and it is the name that goes in the client's authorized domains.
+6. [ ] **Write the two dates back into this work order** — the day the URL first resolved and the day the
+   domain verified — and tick Acceptance lines 2 and 3 on them, the way WO-3.10 records *(Owner, in the
+   console, 2026-08-11)* beside each line it closed.
+
+**What this hands WO-3.18** is a verified domain, plus a production origin — `https://planbook.hwgteach.com`
+— that will need adding to the OAuth client's authorized JavaScript origins beside the
+`https://localhost:8443` WO-3.10 recorded. **That addition is WO-3.18's**, not this work order's, and it is
+the point at which the token flow stops being pinned to one laptop.
+
 **Acceptance**
-- [ ] The name is written here, and it is one name rather than a preference between two.
+- [x] The name is written here, and it is one name rather than a preference between two.
+      *(`Planbook`, in the table above, settled by `08bd5b9` on 2026-08-12. There is no shortlist here
+      and no alternative named anywhere in this section; `manifest.webmanifest` already reads
+      `"name": "Planbook"` and `"short_name": "Planbook"`. Checked 2026-08-12. The manifest / README /
+      consent-screen consistency check is **WO-8.6's** third line and is not this one's.)*
 - [ ] The URL resolves over HTTPS and serves the app, with the service worker registering — checked
-      in a browser, not assumed from the host's marketing.
-- [ ] The domain is verified in the Cloud console, which is what WO-3.18 consumes.
+      in a browser, not assumed from the host's marketing. *(Step 4. Nothing is deployed, so nobody has
+      seen this; it closes on the owner in a browser and on nothing else.)*
+- [ ] The domain is verified in the Cloud console, which is what WO-3.18 consumes. *(Step 5. It has no
+      DNS prerequisite left — the zone is already at Cloudflare — so it can be done at any point in the
+      sitting, including while the certificate in step 3 is issuing.)*
 - [ ] Nothing in the deployment runs server-side code. Stated as a checked fact, because this is the
       line the architecture cannot cross without a decision nobody has made.
+      **The repository half is checked, 2026-08-12**: no `functions/` directory, no `package.json`, no
+      `wrangler.toml`, nothing server-side anywhere in the tree — what deploys is `index.html`, `src/`,
+      `sw.js`, the static assets and `_headers`, and `tools/*.mjs` is run by hand and invoked by no
+      deploy, no server and no page load (`tools/README.md` § The rule). `wo-sweep.mjs`'s
+      *no dependency manifest anywhere* check asserts that half on every run. **The deployment half is
+      the owner's** and cannot be checked before a deployment exists — a Pages project with no Functions
+      attached, which is step 1. The box stays open until both halves are true rather than being ticked
+      on the half that is.
