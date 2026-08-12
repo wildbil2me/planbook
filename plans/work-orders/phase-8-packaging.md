@@ -495,7 +495,7 @@ the point at which the token flow stops being pinned to one laptop.
 
 ## WO-8.8 — read the deployment, not the repository
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.7
+**Ship** 2 · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** WO-8.7
 **Closes roadmap** Phase 8 → *(no box. Tooling, not app — the same call as WO-2.19 through WO-2.22.
 Booked 2026-08-12, out of WO-8.7's deployment.)*
 
@@ -559,17 +559,31 @@ error reported as a failed assertion is worse than no check, and `verification-t
 precondition rule is the same argument in a different accent.
 
 **Acceptance**
-- [ ] Running it against the live origin today passes on every check.
-- [ ] **Each check is proved by the defect it is named for.** Point it at a URL that redirects and the
+- [x] Running it against the live origin today passes on every check. *(2026-08-12,
+      `https://planbook.hwgteach.com` — `12 checks · 12 passed · 0 failed`, exit 0. `/` and `/sw.js`
+      both `no-cache` off the wire, 42 SHELL entries read out of the **deployed** worker and all 200
+      with no 3xx, `CACHE` `planbook-shell-v46` on both sides. Printed run in `TESTING.md` § WO-8.8.)*
+- [x] **Each check is proved by the defect it is named for.** Point it at a URL that redirects and the
       redirect check goes red; construct a response with a wrong `Cache-Control` and that check goes
       red. Per `verification-tooling.md`'s precondition rule, a check that could not have caught the
       thing it exists for is not evidence — and both of this work order's motivating faults are still
       reproducible, which is a luxury most checks do not get.
-- [ ] An unreachable origin reports as unreachable, distinctly from any check failing.
-- [ ] It gates nothing: no hook, no CI, not referenced by any other script, and the app still ships
-      without it.
-- [ ] `tools/README.md` gains its section, including **when to run it** — after a deploy, and after
+      *(Thirteen fixture runs against a throwaway origin, tabulated in `TESTING.md` § WO-8.8. Both
+      motivating faults reproduced: `max-age=14400` on `/sw.js` turns 1 red, a `SHELL` carrying
+      `./index.html` against a host that 308s it turns 2 red. All twelve checks have been watched
+      failing, and the control fixture is green at 12 of 12.)*
+- [x] An unreachable origin reports as unreachable, distinctly from any check failing. *(Four shapes,
+      each exit **2** under `COULD NOT REACH THE ORIGIN` with no check added and no summary printed:
+      `ECONNREFUSED`, `ENOTFOUND`, `UND_ERR_CONNECT_TIMEOUT`, and the fixture killed mid-walk —
+      *"nothing was asserted after 7 check(s)"*, seven passes standing, nothing below turned red.)*
+- [x] It gates nothing: no hook, no CI, not referenced by any other script, and the app still ships
+      without it. *(`grep -rn "verify-deploy"` returns the file, its row and section in
+      `tools/README.md`, `TESTING.md`, this work order and the dispatch brief — no script, no
+      workflow. No `.github/`, and `.git/hooks` holds only git's samples.)*
+- [x] `tools/README.md` gains its section, including **when to run it** — after a deploy, and after
       any change to `_headers`, `sw.js`'s `SHELL` list, or the Cloudflare zone's caching settings.
+      *(§ "`verify-deploy.mjs` — the only check here that reads the deployment", plus the table row.
+      The when-to-run sentence is its second paragraph, and names all three inputs.)*
 
 **Traps** — **Do not read `SHELL` from the local `sw.js`.** The whole point is to compare what is
 deployed against what is intended; sourcing both sides from the working tree checks nothing and will
@@ -577,3 +591,51 @@ pass forever. **Do not follow redirects** — `fetch` does by default, and a fol
 like a 200, which is how the original defect stayed invisible. **Do not add a retry loop.** A flaky
 result is information; a retry that hides it turns this into the confident pass over nothing that
 `plans/dispatch-retro.md` keeps naming as worse than no check at all.
+
+---
+
+## WO-8.9 — the sweep cannot see `_headers`
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 8 → *(no box. Tooling, not app — the same call as WO-2.19 through WO-2.22
+and WO-8.8. Booked 2026-08-12, out of WO-8.8's follow-ups.)*
+
+**Why it exists.** `_headers` can be deleted from this repository and committed with every check
+green. `wo-sweep.mjs` gates the files it reads on `^(index\.html|sw\.js|manifest\.webmanifest|src/)`
+and `\.(css|html)$`; an extensionless root file matches neither, so the sweep has never had an
+opinion about it. **This is the half of WO-8.7's verifier finding that WO-8.8 deliberately declined**,
+recorded there as "the smaller half" — correctly, because the whole finding was that the deployment
+was invisible and that is the one WO-8.8 answered.
+
+**WO-8.8 narrowed this without closing it.** `verify-deploy.mjs` now reads `Cache-Control` off the
+wire, so a deleted `_headers` would show up as a red check — **but only when a human runs it**, and it
+gates nothing by design. Between deleting the file and the next by-hand run, every tool in this
+repository is green about a shell and a service worker that are no longer pinned. The gap is small
+and it is real, and the fix belongs in the grep-shaped tool rather than the network-shaped one.
+
+**Deliverables**
+- **A check in `tools/wo-sweep.mjs`** — a grep, in the tool that is made of greps — asserting that
+  `_headers` exists, and that it still pins the three paths it names to `no-cache`.
+- **Its failure text says what a green here does not mean.** A passing check proves the file asks for
+  the right thing, and nothing whatever about whether the host honours it — that is exactly the false
+  comfort WO-8.8 was written against, and this check must not quietly re-offer it. Point at
+  `verify-deploy.mjs` by name as the thing that reads the answer.
+- **`tools/README.md`'s recorded check count** moves with it. `wo-sweep.mjs` §11 asserts that count
+  against reality, so a change that forgets it turns the sweep red on itself.
+
+**Out of scope** — anything that makes a network request; any assertion that the header *binds*, which
+is `verify-deploy.mjs`'s job and cannot be answered from disk; widening the sweep's file gate in
+general, which is a bigger change with its own blast radius. Fix the one file, not the pattern.
+
+**Acceptance**
+- [ ] Deleting `_headers` turns `wo-sweep.mjs` red. *(Today it stays green — that is the defect.)*
+- [ ] Changing `/sw.js`'s pin from `no-cache` to `max-age=14400` — the WO-8.7 fault, written into the
+      file rather than imposed by the zone — turns it red.
+- [ ] The sweep is green on a clean tree, and its check count agrees with `tools/README.md`.
+- [ ] The failure text names `verify-deploy.mjs` as what proves the header actually binds.
+
+**Traps** — **This is not a second `verify-deploy.mjs`.** It reads a file on disk; it must not fetch
+anything, and the sweep must keep working on a plane. **Do not widen the file gate to fix one file** —
+the regex is load-bearing elsewhere and a broadened pattern pulls in every dotfile and config at the
+root. **Do not let it imply the deployment is checked.** The whole reason this work order is small is
+that the large version of it already shipped as WO-8.8.

@@ -158,7 +158,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.8 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.9 | Phase 8 |
 
 ---
 
@@ -173,9 +173,9 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 8 | 1 | 🔨 IN PROGRESS |
+| 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **83** | **48** | `[██████░░░░] 58%` |
+| | **84** | **49** | `[█████░░░░░] 58%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -328,7 +328,8 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 29 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
 | 30 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
 | 31 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 32 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 32 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
+| 33 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
 row below it moved down one. **It sits directly behind the work order that produced it, and ahead of
@@ -337,6 +338,16 @@ now; every deploy from here until someone writes this script is a deploy nobody 
 hand, and the two faults that motivated it were both found that way, both in production, both by the
 owner rather than by a tool. Half a day, and it removes the only class of defect in this project with
 no instrument pointed at it.*
+
+*WO-8.9 was booked on 2026-08-12 out of WO-8.8's follow-ups and given row #32, at the back of Ship 2
+rather than beside the work order it came from, with only WO-G2 below it. **That is deliberate, and it
+is the opposite call from WO-8.8's.** WO-8.8 went to the front because the defect it hunts is live and
+unwatched; this one guards a file that is present and correct today, against a deletion nobody has
+made. The exposure is the window between someone deleting `_headers` and someone next running
+`verify-deploy.mjs` by hand — narrow, and narrowed further by WO-8.8 having shipped. It earns a row
+because a known hole with no row is a hole nobody schedules; it earns a late one because scheduling it
+ahead of grade math would be paying for tidiness with the term. No row moved except WO-G2, which stays
+last where a gate belongs.*
 
 *WO-1.14 has no row and that is deliberate, which this file's own rule below requires saying rather
 than leaving to be noticed. It was booked and shipped inside the same hour, in `8de1ae4`, because the

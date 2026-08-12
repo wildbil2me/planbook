@@ -61,6 +61,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-8.8 — a check that reads the deployment instead of the repository.** `tools/verify-deploy.mjs`
+  makes one pass of HTTP requests against the live origin and reports what came back: status,
+  `Cache-Control` and the redirect chain for the shell and the service worker, every path in the
+  deployed `sw.js`'s precache list resolved without following a redirect, and the deployed `CACHE`
+  string compared against the working tree's so *"I forgot to push"* stops looking like *"the fix
+  didn't work"*. Run it by hand after a deploy, and after any change to `_headers`, the `SHELL` list,
+  or the Cloudflare zone's caching settings.
+
+  **It exists because the first deployment shipped two faults and every check in this repository was
+  green through both of them** — 628 of 628 before, 628 of 628 after, the same number both times.
+  One fault was the host's routing and one was a setting in a dashboard; neither is a fact that
+  exists in these files, so nothing that reads these files could have found either. What found them
+  was a single request against the live origin, typed by hand during a support conversation. This is
+  that request, written down.
+
+  **It reads the deployed `sw.js`, never the local one**, which is the whole point: sourcing both
+  sides from the working tree would compare the repository with itself and pass forever. It follows
+  no redirects, because a followed 308 is indistinguishable from a 200 and that is exactly how
+  WO-1.14 stayed invisible. And it does not retry — a flaky result is information, and a retry that
+  smooths it over turns this into the confident pass over nothing that is worse than no check.
+
+  **An origin it cannot reach reports as unreachable, not as a failure.** This is the first check
+  here that needs a network, so it is useless on a plane and will misbehave on bad hotel wifi; a
+  network error dressed up as a failed assertion would be worse than having no check at all. It has
+  its own exit code for that case, distinct from a red check, including when the connection dies
+  partway through — *"nothing was asserted after 7 check(s)."*
+
+  **Each check was proved against the defect it is named for**, on throwaway origins built to fail:
+  the zone rewriting `Cache-Control` on `/sw.js`, a shell path answering with a redirect, and a
+  precache entry that exists only on the wire — the last of which a repository-reading tool cannot
+  fail by construction. **It gates nothing**: no hook, no CI, referenced by no other script, and the
+  app ships without it.
+
 - **WO-8.7 — Planbook has an address: `planbook.hwgteach.com`.** The app is on the internet, over
   HTTPS, installing to a home screen. The distribution story is one sentence and no store is in it:
   *a teacher hears about Planbook from another teacher, types the URL, and taps Add to Home Screen —

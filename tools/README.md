@@ -3,6 +3,7 @@
 | Script | What it does |
 |---|---|
 | `verify-shell.mjs` | Drives the real app in headless Edge/Chrome and **measures** what a stylesheet review can only assert. `node tools/verify-shell.mjs` |
+| `verify-deploy.mjs` | Reads the **deployed** origin off the wire — status, `Cache-Control`, redirects, and the precache list as the deployment declares it. Run by hand after a deploy. `node tools/verify-deploy.mjs` |
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
@@ -172,6 +173,98 @@ And one that is not a certificate problem at all: **Windows Defender prompts on 
 a dismissed prompt — or a network typed Public — leaves the port open here and invisible from the
 tablet. Symptom is "Safari cannot open the page", same as a wrong address. Load the HTTPS URL in
 this laptop's browser first; if it works here and not there, it is the firewall.
+
+## `verify-deploy.mjs` — the only check here that reads the deployment
+
+```
+node tools/verify-deploy.mjs                          the production origin
+node tools/verify-deploy.mjs https://foo.pages.dev     any other one
+```
+
+**When to run it: by hand, straight after a deploy** — and again after any change to `_headers`, to
+`sw.js`'s `SHELL` list, or to the Cloudflare zone's caching settings, because those are the three
+inputs whose effect exists only at the origin. It is the mirror image of `verify-shell.mjs`, which is
+run *before* a deploy: that one drives the app on `localhost`, this one reads what the host actually
+served and asserts nothing about behaviour at all.
+
+**It exists because WO-8.7's first deploy shipped two faults and every check in this repository was
+green through both** — 628 of 628 before and 628 of 628 after the fix, the same number, because
+neither fault is in the repository. `sw.js` precached `./index.html`, Cloudflare Pages answers that
+path with a 308, `cache.addAll` followed it, and Safari then refused to serve the stored response to
+a navigation: a white screen on the home-screen icon (WO-1.14). And `_headers` pinned
+`Cache-Control: no-cache` on `/sw.js`, spelled correctly, and did not bind — the zone's own
+four-hour Browser Cache TTL rewrote it to `max-age=14400`. One is the host's routing and one is a
+setting in a dashboard. **What found both was a single HTTP request against the live origin.**
+
+Twelve checks, in five blocks: the shell document (200, HTML, `no-cache`), `/sw.js` (200,
+JavaScript, `no-cache`), the precache list read **out of the deployed worker** and walked entry by
+entry, the deployed `CACHE` string against the working tree's, and the four paths that would carry
+server-side code. Every request is printed with its status, content type, `Cache-Control` and byte
+count, so a run is evidence a human can read rather than a row of ticks.
+
+**Three things in it look like oversights and are the work order.** The `SHELL` list is read out of
+the **deployed** `sw.js` and never the local one — sourcing both sides from the working tree
+compares a file with itself and passes forever, including against a deploy that never landed. Every
+request is `redirect: 'manual'`, because `fetch` follows redirects by default and a followed 308 is
+indistinguishable from a 200: measured on the live origin, `/index.html` reads `308 → /` with the
+flag and `200` without it, which is exactly how the defect stayed invisible. And **there is no
+retry**: a flaky answer is information, and a loop that hides one turns this into the confident pass
+over nothing that `plans/dispatch-retro.md` keeps naming as worse than no check at all.
+
+**An unreachable origin is not a red check.** This is the first thing in `tools/` that needs a
+network, so a transport failure at any point — DNS, TLS, refused, timed out, or a socket dropped
+half way through the walk — stops the run under a `COULD NOT REACH THE ORIGIN` banner, adds no
+check, prints no summary, and exits **2** rather than 1. A network error reported as a failed
+assertion says the deployment is broken when what is broken is the hotel wifi, and it spends the
+credibility of the next red run. Exit codes: **0** all green, **1** a check failed, **2** could not
+reach.
+
+**Two things the host does that the checks are shaped around, both measured 2026-08-12.** This
+deployment answers *any* unknown path with the shell document at **200 `text/html`** —
+`/nope-does-not-exist` comes back byte-identical to `/` — so a status alone cannot see a file that
+was never deployed, and the walk asserts that each entry's content type matches what its name
+implies. That is also why the `_worker.js` / `_routes.json` / `/functions/` block asks whether those
+paths answer **as a script** rather than whether they answer at all. What that block cannot do is
+prove no worker is running: a live `_worker.js` intercepts every path including its own. The
+repository half of that claim is WO-8.7's, checked in the tree and in the dashboard.
+
+**Every one of the twelve was watched failing against the defect it is named for**, on a throwaway
+fixture origin, before this section was written: `/sw.js` answering `max-age=14400` (the zone fault,
+1 red), a `SHELL` carrying `./index.html` against a host that 308s it (the WO-1.14 fault, 2 red), a
+deployed `CACHE` of `v45` against a working tree at `v46` (1 red), a precached stylesheet answering
+the shell document at 200 (1 red), `/_worker.js` answering `application/javascript` (1 red), an
+apostrophe inside the deployed `SHELL` array (4 red — the parse floor, and the three walk checks
+reported *"not run"* rather than green over an empty list), a `SHELL` entry that exists only in the
+deployment and 404s (1 red, which is the proof the list is read off the wire), `/sw.js` served as
+HTML (6 red), `/` redirecting (4 red), `/` served as JSON (2 red), and the control fixture green at
+12 of 12. Plus the three unreachable shapes — refused, `ENOTFOUND`, and the fixture killed mid-walk,
+which stopped at *"nothing was asserted after 7 check(s)"* with **no** red check and exit 2.
+
+**And one finding that is not about the deployment at all: `process.exit()` after a `fetch` aborts
+the process on Windows.** Two of five runs on Node v24.16.0 exited `0xC0000409` — bash reports 127 —
+with the full, correct output already on the terminal. A tool whose entire product is an exit status
+handing back a random one is the worst defect available to it, so the exit code is **set**
+(`process.exitCode`) and the process ends naturally; that measured 3 of 3 correct and costs nothing,
+since the sockets are unref'd and the run still ends in about half a second. Worth knowing before
+anyone "tidies" it back.
+
+**The other scripts here were then looked at rather than left to a someday.** Only two of them can
+hold a socket at exit: this one, and `verify-shell.mjs`, whose CDP connection is a global
+`WebSocket` — which is undici, the same library. The rest (`wo-sweep.mjs`, `wo-gate.mjs`,
+`wo-brief.mjs`, `wo-cost.mjs`) read files and cannot be exposed, so they were left alone rather than
+converted on suspicion. `verify-shell.mjs` was converted to `process.exitCode` and measured three
+runs before and four after: **exit 0 every time, ~200s each, no abort and no hang.** The
+before-runs matter as much as the after-runs — they are why the conversion is not credited with
+fixing anything observable, and why it is the *hang* that was being watched for. The hang is the risk
+— that file kills a browser, closes a server and removes a profile directory before it ends, and if
+any of those ever stops releasing its handle the run will sit there forever instead of exiting. That
+would be a teardown bug, not an exit-code bug, and the comment at the bottom of the file says so.
+No abort was ever *observed* in `verify-shell.mjs`; the change was made because the exposure is the
+same and the cost is nothing, which is a different and weaker claim than the one above it.
+
+**It gates nothing**, like everything else in this directory: no hook, no CI, no schedule, no other
+script calls it, and the app ships whether or not it has ever been run. It closes no 👤 line either
+— it reads headers, and whether the app *works* on a teacher's iPad is `TESTING.md`'s question.
 
 ## `verify-shell.mjs` — and why it is not a test framework
 

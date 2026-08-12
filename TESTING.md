@@ -3440,7 +3440,95 @@ says where the loser went.
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*
 
-Nothing here yet — WO-8.1 through WO-8.6 append their acceptance lines as they land.
+WO-8.1 through WO-8.6 append their acceptance lines as they land. WO-8.8's are below, because a
+check that nobody watched fail is not evidence and the place that record goes is here.
+
+### WO-8.8 — read the deployment, not the repository
+
+**What this changes.** Nothing a teacher sees and nothing any other tool prints: `src/`,
+`index.html`, `sw.js` and `tools/verify-shell.mjs` are untouched. One new file,
+`tools/verify-deploy.mjs`, run by hand after a deploy, plus its section in `tools/README.md`. It
+reads the live origin over `fetch` and asserts twelve things about what came back. `verify-shell.mjs`
+was **628 of 628 green through both** of the faults it exists for, which is the whole argument.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.8 lives here
+and in `tools/README.md`.*
+
+- [x] **Acceptance 1 — green against the live origin.** `node tools/verify-deploy.mjs` against
+      `https://planbook.hwgteach.com`, 2026-08-12: `12 checks · 12 passed · 0 failed`, exit **0**.
+      Read off the wire: `/` 200 `text/html` `no-cache`; `/sw.js` 200 `application/javascript`
+      `no-cache`; **42 SHELL entries parsed out of the deployed worker**, all 200, none redirecting,
+      each matching the content type its name implies; `CACHE` both `planbook-shell-v46`; and
+      `/_worker.js`, `/_routes.json`, `/functions/`, `/functions/index.js` answering the shell at
+      200 `text/html` rather than as script or config.
+- [x] **Acceptance 2 — every check watched failing against its own defect**, on a throwaway fixture
+      origin in a scratchpad (not committed, the way every mutation in this file is run and
+      reverted). The table below. The control fixture is green at 12 of 12, which is what makes the
+      reds mean something.
+- [x] **Acceptance 3 — unreachable is not a red check.** Three shapes, each exiting **2** under a
+      `COULD NOT REACH THE ORIGIN` banner with no summary and no check added: a closed port
+      (`fetch failed [ECONNREFUSED]`), a name that does not resolve (`[ENOTFOUND]`), and an
+      unroutable address (`[UND_ERR_CONNECT_TIMEOUT]`). The fourth is the one that matters most —
+      **the fixture killed part way through the walk**, which stopped at *"nothing was asserted after
+      7 check(s)"*, `0 check(s) had failed before the connection did`, exit 2, with the seven passes
+      standing and nothing below them turned red.
+- [x] **Acceptance 4 — it gates nothing.** `grep -rn "verify-deploy"` over the repository returns
+      the file itself, its row and section in `tools/README.md`, this section, and the work order —
+      no script, no hook, no workflow. There is no `.github/`, no `.husky/`, no `.git/hooks` beyond
+      the samples git ships. The app is `index.html` and `src/` served as they sit on disk, and
+      nothing in the deploy path runs Node (`tools/README.md` § The rule).
+- [x] **Acceptance 5 — `tools/README.md` gains its section**, including **when to run it**: by hand
+      after a deploy, and again after any change to `_headers`, `sw.js`'s `SHELL` list, or the
+      Cloudflare zone's caching settings — the three inputs whose effect exists only at the origin.
+      Its table row is in place too.
+
+*Thirteen fixture mutations, all of them against a throwaway origin rather than against the
+repository, so there is nothing to revert:*
+
+| Fixture | Result |
+|---|---|
+| `/sw.js` served `public, max-age=14400` — **the WO-8.7 zone fault** | **1 red**: *"cache-control: public, max-age=14400 — a positive max-age here is the Cloudflare zone rewriting `_headers`, not the file being wrong"*, with the dashboard path in the same sentence |
+| `/` served `public, max-age=0, must-revalidate` | **1 red**. That value is what this host sends on every path nobody pinned, which is why the check asserts the literal `no-cache` token rather than a semantic equivalent |
+| deployed `SHELL` carries `./index.html`, host 308s it to `/` — **the WO-1.14 fault** | **2 red**: the redirect check naming the chain it followed *afterwards* to diagnose (`./index.html 308 → / 200`), and the 200 check. Both of those pass if `redirect: 'manual'` is dropped |
+| deployed `CACHE` is `planbook-shell-v45`, working tree `v46` | **1 red**: *"the origin is not serving this tree. Either the push has not landed, the build failed, or you are reading the wrong origin"* |
+| a precached stylesheet answering the shell document at 200 | **1 red** on the content type. **Status alone is green here** — this host answers unknown paths with the shell at 200, so a file that was never deployed is invisible to a 200 check |
+| `/_worker.js` answering `200 application/javascript` | **1 red**: *"server-side code in this deployment is a decision nobody has made"* |
+| an apostrophe inside the deployed `SHELL` array | **4 red**: the parse floor (*"3 entries parsed … below the floor of 10"*), and the three walk checks reporting **"not run"** rather than passing over an empty list. `sw.js`'s own WO-1.10 scar, arriving through the deployment |
+| deployed `SHELL` carries an entry the local `sw.js` does not, which 404s | **1 red** — and this is the one that proves the list is read **off the wire**. A build that parsed the local `sw.js` never requests that path and passes |
+| `/sw.js` served as `text/html` (the worker never deployed, host falls back to the shell) | **6 red**, cascading correctly: not JavaScript, no `SHELL` to read, three walk checks not run, no `CACHE` found |
+| `/` answering `308 → /app/` | **4 red**, including the shell-document check printing the chain and the walk catching `./` as a redirecting precache entry |
+| `/` answering `application/json` | **2 red**: the document is not HTML, and `./` fails the walk's type check by the same reading |
+| the control fixture, everything correct | **12 of 12 green, exit 0** — an all-red rig proves nothing about a check's aim |
+| the fixture killed after four requests | **not a red check**: `COULD NOT REACH THE ORIGIN`, `UND_ERR_SOCKET`, exit 2, seven passes standing and no summary printed |
+
+*The followed-redirect trap was also measured on the live origin rather than argued:
+`fetch('/index.html', { redirect: 'manual' })` reports `308 → /`, and the same request with `fetch`'s
+default reports `200`, `redirected: true`, `text/html`. That is the WO-1.14 defect being invisible,
+in two lines.*
+
+*No 👤 line. Nothing here renders, and nothing here says the app works — that is what the rest of
+this file is for.*
+
+**Two follow-ups from this work order, applied 2026-08-12 and measured the same way.**
+
+- **The content-type check printed the pass sentence under a FAIL.** Its condition also covers a
+  floor — fewer than ten of the walked paths carrying a type the check recognizes — but its detail
+  string branched only on a wrong type, so tripping the floor produced a red line reading *"…carry a
+  type this check knows, and each matched"*. A fourteenth fixture proves the new branch: a deployment
+  whose `SHELL` parses cleanly at **12 entries** but whose names are extensionless, so `typed` lands
+  at 1. Result **11 of 12, one red**, reading *"only 1 of 12 path(s) carry a type this check knows,
+  below the floor of 10 — … reported unproven rather than passed. Nothing here says a type is wrong;
+  `expectedType()` is what to suspect first."* The failure it describes is one nobody has seen yet,
+  which is how it survived review: the live origin types 42 of 42.
+- **`verify-shell.mjs` now sets its exit code instead of calling `process.exit()`**, for the reason
+  written up in `tools/README.md` — undici holding a socket at exit aborts the process on Windows
+  after the output has printed. It is the only other script here that can hold one, through the CDP
+  `WebSocket`. Measured **three runs before the change and four after: exit 0 every time, ~200 s
+  each, no abort and no hang** — the point of the after-runs being that it still *terminates*, and
+  the sweep still reads 629 `check()` call sites, because the change is one line and a comment. No
+  abort was ever observed in that file; the change is on exposure, not on a reproduction.
+
+---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the
 argument for filling it in as the work lands rather than at the end. It also carries the

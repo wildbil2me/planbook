@@ -15476,4 +15476,11 @@ try { ws.close(); } catch {}
 proc.kill();
 server.close();
 await fs.rm(udd, { recursive: true, force: true }).catch(() => {});
-process.exit(fails.length ? 1 : 0);
+/* Set, not called. `process.exit()` while undici still holds a socket aborts the process on Windows
+   (0xC0000409) AFTER the output above has printed — a run that said 628 of 628 and then handed the
+   shell a crash code. Measured in verify-deploy.mjs at 2 of 5 runs; this file has the same exposure
+   through the CDP WebSocket, which is undici's. Letting the process end naturally keeps the status.
+   The three teardown lines above are what make that safe: if this ever hangs instead of exiting,
+   one of them stopped releasing its handle, and that is the bug rather than this line. (WO-8.8
+   follow-up.) */
+process.exitCode = fails.length ? 1 : 0;
