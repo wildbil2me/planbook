@@ -3254,9 +3254,10 @@ blank sheet by a different route.
 - [x] It is a view in `<main>`, not a dialog. *(`#detailView`'s parent is `<main>`, it carries no
       `role`, and the tap that opened it left zero visible `.modal-overlay`s. Opened through the real
       door — a student's own name on the score grid, of which the fixture draws two.)*
-- [ ] One student's detail prints to one page carrying their name, the class, the term and the date it
+- [x] One student's detail prints to one page carrying their name, the class, the term and the date it
       was printed — and the nav strip, breadcrumb and any app chrome are not on it. *(**The chrome half
-      is measured; the paper half is the 👤 line below.** Driven through the real Print button and the
+      was measured; the paper half was the 👤 line below, answered on the owner's own printer
+      2026-08-12 — one page, two columns.** Driven through the real Print button and the
       real delegated handler, with `window.print()` stubbed — the stub takes the snapshot **at the
       moment the app asks to print**, under emulated print media, so nothing races the 500ms attribute
       release. The hero carries `Zoë Ñuñez-Öztürk`, `WO-3.7 Detail` and `WO-3.7 Term`; the stamp reads
@@ -3281,8 +3282,9 @@ blank sheet by a different route.
       over 2 column(s), side by side = true`. A second check sweeps every `max-width` rule in the app
       against the elements of this sheet and requires the gated block to restate what they declare —
       `5 rule/element pair(s) on the sheet, 0 unpinned`.)*
-- [ ] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII character
-      in it**. *(**The bytes are measured; the spreadsheet is the 👤 line below.** Read through the
+- [x] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII character
+      in it**. *(**The bytes were measured; the spreadsheet was the 👤 line below, opened by the owner
+      2026-08-12 and clean.** Read through the
       `detailModel()` / `studentCsv()` seam — `src/backup.js`'s build-it/hand-it-over split, reused so
       the file can be asserted character by character without a download. A BOM so Excel reads UTF-8, no
       bare LF anywhere, sections rather than one padded table, five category rows all seven cells wide,
@@ -3327,11 +3329,13 @@ blank sheet by a different route.
       name with a comma in it still in one cell. The accents are what the BOM is for — measured here as
       bytes for the first time, but bytes are not Excel. **This is the line WO-2.6 left open on the
       same grounds, closed the same way: by someone opening the file.**
-- [ ] 👤 **On the installed iPad PWA, tap a student's name on the score grid mid-lesson.** The name is a
+- [x] 👤 **On the installed iPad PWA, tap a student's name on the score grid mid-lesson.** ✅ **Done
+      2026-08-12 — no mis-taps, row heights unmoved.** The name is a
       44px control down a frozen column now, next to cells you are typing into. The thing to check by
       eye is that reaching for a score cell does not open somebody's conference screen, and that the row
       heights did not move.
-- [ ] 👤 **Read the screen with a parent sitting beside you, at arm's length.** The type sizes in the
+- [x] 👤 **Read the screen with a parent sitting beside you, at arm's length.** ✅ **Done 2026-08-12 —
+      readable across a desk, and the wording holds up said out loud.** The type sizes in the
       coarse block were chosen for this and nothing else. The specific question is whether the
       breakdown table is readable across a desk, and whether "what it would take to move" says
       something you would actually say out loud.
