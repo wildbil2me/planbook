@@ -146,6 +146,13 @@
        behind because nothing in that build showed a grade and so nothing had anywhere to not-show
        one. src/detail.css will wear it from here in turn. -->
   <link rel="stylesheet" href="src/scores.css">
+  <!-- The per-student detail's own sheet (WO-3.7), fifth instance of the same convention. It WEARS
+       `.screen-nav*` from src/assignments.css and `.grade-none` from src/scores.css and restyles
+       neither; what it adds that no earlier sheet has is the app's SECOND @media print block, gated
+       on its own `data-detail-print` attribute. Gated on its own rather than sharing the attendance
+       one because that block re-shows a dialog which is not on screen here — one idiom, one gate per
+       surface, and src/detail.css says so at length. -->
+  <link rel="stylesheet" href="src/detail.css">
 </head>
 <body>
 
@@ -999,6 +1006,79 @@
         — not a provisional one — and the banner above says what they come to. Nothing is blocked
         while they are wrong: keep entering scores, and the grades appear the moment the weights do.
       </p>
+    </div>
+  </div>
+</div>
+
+<!--
+  ONE STUDENT'S GRADE, TAKEN APART (WO-3.7) — the screen open during a guardian conference, and the
+  fourth screen of an open class.
+
+  IT IS A VIEW AND IT IS NOT A FOURTH TAB, which are two separate decisions and both are the owner's.
+  A screen a teacher sits in front of with a parent, scrolling and pointing, is not a dialog
+  (plans/gradebook-surfaces.md, settled), so it is here in <main> as a sibling of #homeView,
+  #classView, #assignmentsView and #scoresView, toggled by `.hidden`. And it owns NO navigation
+  target: the switcher below carries three segments and this is not one of them, because a tab you
+  cannot enter without first choosing a student is either dead on a freshly-opened class or it
+  invents a selection nobody made. You arrive from a NAME — the student's own name in the score grid,
+  or the door in their attendance history — and the strip shows that name as a BREADCRUMB while you
+  are standing here.
+
+  THE PANEL HEADER WEARS A SECOND CLASS, `.detail-header`, and it is not decoration. This screen
+  prints, and a print block that hides the header has to name it: `.panel-header` belongs to
+  src/shell.css, and src/detail.css styles only its own class names — gated block or not. So the
+  header carries a name this screen owns, and the print rule that hides the title row, the switcher
+  and the breadcrumb names that instead.
+
+  EVERYTHING BELOW THE ACTION ROW IS EMPTY IN THE MARKUP, like every other list in this app, because
+  it is drawn from the open document by src/detail.js. What IS markup is what does not change with
+  the document: the title row, the door home, the switcher and the two output controls.
+-->
+<div id="detailView" class="hidden">
+  <div class="panel detail-panel">
+    <div class="panel-header detail-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <!-- `tabindex="-1"` so src/detail.js can put focus here when this screen opens. It is the
+               only view in <main> that needs it, and the reason is the door in the attendance
+               history dialog: closing a modal hands focus back to whatever opened it, and what
+               opened that one is a button on the registry which is `.hidden` by the time the hand-off
+               happens. Focus would land on <body>. -->
+          <h2 id="detailStudentName" tabindex="-1"></h2>
+          <p id="detailSubtitle"></p>
+        </div>
+        <!-- The way back to the class grid, in the title row exactly as the score grid has it. The
+             way back to the class's OTHER screens is the switcher below: tapping Attendance,
+             Assignments or Scores leaves this screen and takes the breadcrumb with it, which is
+             src/screen-nav.js's rule and not this file's. Same `data-view-home` hook the header's
+             "All classes" tab carries — one route, more doors. -->
+        <button class="class-action-btn" type="button" data-view-home>
+          <span aria-hidden="true">←</span> All classes
+        </button>
+      </div>
+
+      <!-- The same empty strip the other three class screens carry, filled by the same module. This
+           screen adds no segment to it: what appears here that does not appear there is the open
+           student's name, appended by src/screen-nav.js while this view is the one on screen. -->
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
+    </div>
+
+    <div class="detail-body">
+      <!-- Print and Download CSV, at the top of the body — src/attendance.css says why over the same
+           pair on the attendance record: the page under them is long, and a control below it is a
+           control reached by scrolling past the whole thing. Both go away with the student: an
+           empty screen has nothing to print. -->
+      <div class="detail-actions" id="detailActions">
+        <button class="class-action-btn primary" type="button" data-detail-print>
+          <span aria-hidden="true">🖨</span> Print this page
+        </button>
+        <button class="class-action-btn" type="button" data-detail-csv>
+          <span aria-hidden="true">⬇</span> Download CSV
+        </button>
+      </div>
+
+      <p class="detail-empty hidden" id="detailEmpty"></p>
+      <div id="detailContent"></div>
     </div>
   </div>
 </div>

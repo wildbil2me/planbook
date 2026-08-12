@@ -764,6 +764,13 @@
   padding: 0 0 12px; margin: 0 0 4px;
   border-bottom: 1.5px solid #eef0f4;
 }
+/* The way from this student's attendance to the same student's grades (WO-3.7). Under the identity
+   row rather than in it: that row is the answer to "how often is this student here", and a door to
+   another screen sitting inside it reads as part of the answer. `.class-action-btn` worn as-is —
+   this sheet adds a margin and nothing else, so the control is the app's own and is already 44px
+   under a coarse pointer from src/shell.css's block. */
+.attendance-report-door { margin: 12px 0 4px; }
+
 .attendance-report-who { flex: 1 1 200px; min-width: 0; }
 .attendance-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 .attendance-report-sub {

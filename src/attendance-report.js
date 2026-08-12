@@ -219,6 +219,25 @@ export function openHistory(studentId, opener) {
   head.append(avatar, who, el('div', 'attendance-report-rate', percentText(student.totals)));
   body.append(head);
 
+  /*
+    AND THE WAY FROM HERE TO THE SAME STUDENT'S GRADES (WO-3.7). That screen owns no navigation
+    target of its own — you arrive from a name — and on the registry the name is already spoken for:
+    it opens this dialog, and historyDoor() in src/attendance.js records why it must not become a
+    seventh control on a row whose width is budgeted in day columns. So the door from attendance is
+    HERE, one step further in, on the surface that has already narrowed the question to one student.
+
+    It carries an id and nothing else. Nothing about the grade screen is imported into this file:
+    src/shell.js routes the hook, closes this dialog and swaps the view, which is where the order of
+    operations lives — and it keeps this module's promise that the only thing it knows about a
+    student is the name they are marked under and the marks against them.
+  */
+  const toGrades = el('button', 'class-action-btn attendance-report-door',
+    'Grades for ' + person);
+  toGrades.type = 'button';
+  toGrades.setAttribute('data-student-detail', student.id);
+  toGrades.title = 'Where ' + person + '’s grade comes from, and what it would take to move';
+  body.append(toGrades);
+
   /* ── every term, and the year ── */
   body.append(el('div', 'attendance-report-label', 'Term by term'));
   const summary = el('table', 'attendance-report-table');

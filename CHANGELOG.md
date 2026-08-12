@@ -61,6 +61,55 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.7 — a student's whole grade, on one screen you can hand across a desk.** Tap a student's
+  name on the score grid — or the new *Grades for…* button inside their attendance history — and
+  their grade opens as its own screen: where the number comes from category by category, what is
+  still missing and what it is worth, what score on the outstanding work would reach the next
+  letter, and their attendance for the same term. The student's name sits in the class switcher
+  while you are in it and leaves when you go.
+
+  **It prints, and it downloads as a CSV** — one student, the sheet a guardian takes away from a
+  conference. Neither carries anything from a student's support details, in either presentation
+  mode. That is not a filter that could be switched off: `src/detail.js` has no path to that data
+  at all, so the question is trivially true rather than conditionally true. The check that matters
+  is the one run with presentation mode **off** and a plan, a case manager, a review date, an
+  accommodation, a medical line and a behavior plan all planted on the student first and asserted
+  present in the document — a build that merely gated the screen on the toggle would pass the
+  mode-on pass and fail this one.
+
+  **The "what it would take to move" figure rounds up, never to nearest**, and the code argues it
+  at the site: a rate rounded down reads as reaching the next band and does not. Missing work and
+  zero-point bonus work each get their own line rather than being folded into the main figure,
+  because a percentage of nothing is nothing. A student with nothing outstanding is told so in
+  words instead of shown an empty number.
+
+  **The contribution column is rounded so that it adds up to the total printed under it.** On a
+  student where rounding each row on its own gives 36.71 + 25.00 + 21.18 = 82.89 under a total of
+  82.88, the screen prints 36.70 + 25.00 + 21.18. A column that does not sum is the one thing a
+  parent will check by hand.
+
+  **One defect is worth recording, because three green runs missed it.** The sheet shipped printing
+  in a single column — "two pages of half-empty paper" — and no run of the harness could see it.
+  Under print media a `max-width` query resolves against the **page box**, not the viewport, and
+  Letter at a 10mm margin is ≈740 CSS px, so a tablet-portrait `@media (max-width: 1024px)` rule
+  was live on paper and beating the print block's two-column grid. The harness snapshots at 1280px,
+  where that rule is dormant. It was found by rendering to an actual PDF, fixed by restating the
+  grid inside the gate, and then generalised: a check now requires **every** `max-width` rule that
+  touches this sheet to be restated inside the print gate (`0 unpinned`), which turned up two more
+  dormant instances of the same defect. Both new checks were watched failing against the pre-fix
+  stylesheet before being accepted green.
+
+  **The BOM is asserted useful rather than merely present**, which is the hole WO-2.6 left open:
+  both fixture surnames leave ASCII, and the same bytes decoded as Windows-1252 read
+  `Ã‘uÃ±ez-Ã–ztÃ¼rk` — the failure the BOM prevents, demonstrated rather than described. The paper
+  and the spreadsheet were then confirmed by hand, on a real printer and in the spreadsheet the
+  teacher actually uses, because bytes are not Excel and no emulator has paper.
+
+  This also settles the half of WO-3.3 that could never be demonstrated when it was built: there
+  was no per-student screen to enter or leave, so the breadcrumb name was never drawable. Both
+  directions are now shown, against each of the three tabs in turn rather than the one somebody
+  tested.
+
 - **WO-2.24 — the harness now notices if the shared date reset is deleted.** WO-2.23 put a single
   `input[type="date"] { -webkit-appearance: none; appearance: none; }` in `src/shell.css`, and seven
   date fields on four screens depend on it. Two of them — the assignment editor's — keep an identical

@@ -43,23 +43,35 @@ import { getPref, setPref } from './prefs.js';
    view when a class had one screen, it is the value sitting in `planbook_openView` on two devices
    already, and renaming it would rename a stored preference to make a word in this file read
    better. WO-3.3 added `assignments` beside it; WO-3.5 added `scores` the same way, in one line and
-   with no other change to this file than the two lists below. */
+   with no other change to this file than the two lists below. WO-3.7's `detail` is the third, and
+   the only one that is not a tab. */
 const VIEWS = {
   home: 'homeView',
   class: 'classView',
   assignments: 'assignmentsView',
   scores: 'scoresView',
+  detail: 'detailView',
 };
 
 /*
-  THE SCREENS OF ONE OPEN CLASS, in the order the switcher draws them (src/screen-nav.js).
+  THE SCREENS OF ONE OPEN CLASS.
 
   A class screen is a view like any other — same `.hidden` toggle, same `<main>`, no router — and
   this list is what lets the two callers that care ask the question without keeping their own copy
   of the answer: src/classes.js draws the class tabs on any of them, and src/shell.js paints the
-  right screen after a switch.
+  right screen after a switch. The question both of them are asking is "am I inside a class", which
+  src/classes.js's refreshClassBar() states in as many words.
+
+  THE FIRST THREE ARE THE SWITCHER'S, IN ITS ORDER, AND THE FOURTH IS NOT ON IT (WO-3.7). This list
+  said "in the order the switcher draws them" until per-student detail landed, and that sentence
+  stopped being true of the whole of it: `detail` is a screen of one open class — the header's class
+  tabs belong on it, and it is repainted when the class changes underneath it — but it is reached by
+  tapping a STUDENT'S NAME and never from the strip, so it has no segment there and adds no line to
+  src/screen-nav.js's own SCREENS. Adding one would draw a fourth tab that is dead until a student
+  is chosen, which is the shape the owner rejected on 2026-08-09
+  (plans/gradebook-surfaces.md § "Per-student detail is not a fourth tab").
 */
-const CLASS_SCREENS = ['class', 'assignments', 'scores'];
+const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail'];
 
 export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
 
@@ -78,10 +90,16 @@ export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1;
   a teacher reloads while standing on the new screen, and then it is a preference holding a value the
   owner's rule says cannot exist. WO-3.5's `scores` is the second entry for that reason.
 
+  WO-3.7's `detail` IS THE THIRD, AND IT IS THE ONE WITH A SECOND REASON. The owner's rule already
+  covers it — a class opens on Attendance — but this screen also names a student, and a browser that
+  reopened on a named student's failing grade would be putting that on the glass without anybody
+  having asked for it, on the screen most likely to be projected. The preference holds a view name
+  and never a student id either way; this line is what stops the view name being enough.
+
   It costs nothing that anybody asked for: `openView` answers "was this browser inside a class or
   looking at the grid", which is exactly the granularity src/shell.js's boot restores at.
 */
-const REMEMBERED_AS = { assignments: 'class', scores: 'class' };
+const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,

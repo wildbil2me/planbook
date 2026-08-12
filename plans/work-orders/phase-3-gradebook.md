@@ -174,7 +174,7 @@ functions over a document, a class and a scale, exported for exactly that consum
 
 ## WO-3.3 — Assignments
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1 · **Owes** WO-3.7
+**Ship** 2 · **Status** ✅ DONE — 2026-08-09 · **Size** M · **Depends on** WO-3.1
 **Closes roadmap** Phase 3 → "Assignments: name, points, category, assigned date, due date."
 
 **Why it exists.** The assignment list is the spine of the gradebook and of Phase 6's calendar,
@@ -230,13 +230,17 @@ which reads due dates rather than storing copies of them.
       one class on Assignments, opening a second class and coming back, not by reading the code:
       the failure mode is a per-class memory nobody asked for, and it is invisible until the second
       class.
-- [ ] The switcher carries three tabs and no student tab. A student's name appears in the strip only
+- [x] The switcher carries three tabs and no student tab. A student's name appears in the strip only
       while that student's detail is open, and switching away from it takes the name with it. **The
       first sentence is built and verified**, on both strips: three segments, no fourth, no student
-      among them. The second cannot be demonstrated in this build — there is no per-student detail
-      to enter or leave — so what is verified instead is the rule that makes it true, that a name set
-      with no detail screen open is drawn nowhere. Owed by
-      → WO-3.7 "The strip shows the open student's name as a breadcrumb segment while this screen is up"
+      among them. The second could not be demonstrated in this build — there was no per-student detail
+      to enter or leave — so what was verified instead is the rule that makes it true, that a name set
+      with no detail screen open is drawn nowhere. The other half was owed by
+      `→ WO-3.7 "The strip shows the open student's name as a breadcrumb segment while this screen is up"`
+      **Discharged 2026-08-12**, at WO-3.7, which is the first build that had a screen to enter: the
+      strip draws four segments with the student's name last, and each of the three tabs in turn takes
+      it off every strip on the page. Both directions, and all three tabs rather than the one somebody
+      tested. Backticked above so the pointer survives the tick that answers it.
 
 **Traps** — **Do not build the list inside the modal system.** Every class-scoped editor before this
 one is a modal and the precedent is misleading; the rule is in `../gradebook-surfaces.md`. **And
@@ -453,7 +457,7 @@ class. The due date is still useful, but **only as a prompt**.
 
 ## WO-3.7 — Per-student grade detail
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-3.4, WO-2.6
+**Ship** 2 · **Status** ✅ DONE — 2026-08-12 · **Size** L · **Depends on** WO-3.4, WO-2.6
 **Closes roadmap** Phase 3 → "Per-student detail: category breakdown, what's missing, what it would
 take to move."
 
@@ -506,24 +510,72 @@ between a report and a conversation.
     owner's own roster rather than by a check. Do not inherit that hole.
 
 **Acceptance**
-- [ ] The breakdown's contributions sum to the displayed overall grade.
-- [ ] With a category empty, the breakdown shows the redistribution rather than hiding it.
-- [ ] The "to move" figure is reproducible by hand.
-- [ ] No `supports` data appears on this screen in presentation mode.
-- [ ] It is a view in `<main>`, not a dialog.
-- [ ] One student's detail prints to one page carrying their name, the class, the term and the date
-      it was printed — and the nav strip, breadcrumb and any app chrome are not on it.
-- [ ] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII
-      character in it**.
-- [ ] Neither the printout nor the CSV emits accommodation, medical, or plan data — verified in both
-      presentation modes, with the data asserted present in the document first.
-- [ ] The strip shows the open student's name as a breadcrumb segment while this screen is up, and
+- [x] The breakdown's contributions sum to the displayed overall grade. *(Three claims, not one: the
+      column as PRINTED sums to the footer as PRINTED, and both agree with the engine's own answer.
+      `["36.71","19.12","9.41"]` sums to 65.24 under a footer and hero of `65.24%`, against an engine
+      answer of 65.23529411764706.)*
+- [x] With a category empty, the breakdown shows the redistribution rather than hiding it.
+      *(Participation carries 15% and holds nothing. Its row is drawn, in the caution wash, reading
+      `nothing graded in it yet — its 15% is shared across the others`, and the three rows beside it
+      print what they COUNT AT — `47.06% · 29.41% · 23.53%` — rather than their face weights.)*
+- [x] The "to move" figure is reproducible by hand. *(Every figure was computed by hand first and is
+      written down in the harness section's own header, then asserted as a string rather than read
+      back off the screen: floor `52.54%`, ceiling `75.09%`, next band D+ at 67, rate
+      `(67 − 52.5392…)/(75.0882… − 52.5392…)` rounded UP to `64.14%`, landing at `67.00%`.)*
+- [x] No `supports` data appears on this screen in presentation mode. *(Stronger than the line asks,
+      and deliberately: `src/detail.js` does not import `src/supports.js` and has no path to
+      `student.supports`, so there is nothing to suppress. Asserted with the data planted first —
+      five sentinels and `"plan":"IEP"` confirmed present in the serialised document — then absent
+      from the screen in BOTH modes.)*
+- [x] It is a view in `<main>`, not a dialog. *(`#detailView` is a child of `<main>`, carries no
+      `role`, and tapping a name opened zero `.modal-overlay`s. Reached through the real door.)*
+- [x] One student's detail prints to one page carrying their name, the class, the term and the date
+      it was printed — and the nav strip, breadcrumb and any app chrome are not on it. *(**Confirmed
+      on the owner's own printer, 2026-08-12 — one page, two columns.** The chrome half was measured
+      here; the page count could only ever be closed by paper, and now has been.
+      Snapshotted inside a stubbed
+      `window.print()` under emulated print media: the hero carries `Zoë Ñuñez-Öztürk`,
+      `WO-3.7 Detail` and `WO-3.7 Term`, the stamp reads `Printed August 12, 2026 · Planbook`, and
+      the app header, the panel header, the nav strip, the breadcrumb, the action row and every other
+      view are `display: none` with zero-height boxes — `0 element(s) still drawn outside
+      #detailView`. **Whether it came out as ONE SHEET no emulator could say** — that half was the 👤
+      line in `TESTING.md` § WO-3.7, exactly as WO-2.6's paper half was, and the owner answered it.)*
+      **Corrected 2026-08-12:** the verifier found the sheet was not the sheet this code was designed
+      to produce — under print media a `max-width` query resolves against the **page box**, Letter at
+      `@page { margin: 10mm }` is ≈740 CSS px, and `src/detail.css`'s tablet-portrait
+      `@media (max-width: 1024px)` therefore beat the gated block and printed one column, which is
+      the two-page sheet this line forbids. The gated block now restates `grid-template-columns` (and
+      the hero's `gap` and `text-align`, found by the same sweep), and the harness re-drives the Print
+      button at 740px with the narrow band asserted matching — `grid tracks
+      ["416.422px","308.469px"] over 2 column(s), side by side = true` — plus a second check requiring
+      every `max-width` rule that touches this sheet to be restated inside the gate (`0 unpinned`).
+      Both watched failing against the pre-fix stylesheet: `628 checks · 626 passed · 2 failed`.
+- [x] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII
+      character in it**. *(**Opened in the owner's own spreadsheet, 2026-08-12.** The bytes were
+      measured here; the spreadsheet was owed to the owner and is now answered. A BOM, no
+      bare LF anywhere, five category rows all seven cells wide, `Ó"Brien, Jr` surviving as one cell —
+      and the non-ASCII half asserted USEFUL rather than only present, which is the hole WO-2.6 left:
+      the same bytes decoded as Windows-1252 read `Ã‘uÃ±ez-Ã–ztÃ¼rk`, so the BOM is demonstrably doing
+      work. **Opening it in the spreadsheet they actually use was always theirs to do**, per WO-2.6's
+      own precedent — the 👤 line in `TESTING.md` § WO-3.7, now answered.)*
+- [x] Neither the printout nor the CSV emits accommodation, medical, or plan data — verified in both
+      presentation modes, with the data asserted present in the document first. *(A plan, a case
+      manager, a review date, an accommodation, a medical line and a behavior plan are planted on the
+      student and their presence in the serialised document asserted BEFORE anything is read. Then
+      the screen's text, the CSV's text and the model's JSON are searched for all five sentinels and
+      for the word `IEP`, twice — mode OFF where `supportsVisible()` answers true, and mode ON. Zero
+      hits in either pass over surfaces of 2,735, 716 and 1,322 characters, so none was empty.)*
+- [x] The strip shows the open student's name as a breadcrumb segment while this screen is up, and
       switching to any of the three tabs takes the name with it. *(Inherited from WO-3.3, which
       built the strip and the rule and could not demonstrate this half: there was no per-student
       detail to enter or to leave, so the name was never drawable. `setDetailBreadcrumb()` in
       `src/screen-nav.js` is the seam it is set through, and that module already refuses to draw a
       name unless its own view is the one on screen — the half that has to be shown here is the
-      name actually appearing, and then going.)*
+      name actually appearing, and then going.)* **Shown, 2026-08-12:** the strip draws four segments
+      with `Zoë Ñuñez-Öztürk` last, `detail: true`, carrying no `data-class-screen` of its own; each
+      of the three tabs in turn is then tapped and every strip on the page comes back to three
+      segments with the name nowhere on any of them, and re-entering puts it back. All three tabs,
+      not the one somebody tested.
 
 **Traps** — Do not build this in the modal system; see the Surface deliverable and
 `../gradebook-surfaces.md`. And note that presentation mode is a harder problem on a view than in a

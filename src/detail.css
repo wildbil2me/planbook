@@ -1,0 +1,426 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — one student's grade, taken apart (WO-3.7): the screen open during a
+   guardian conference.
+
+   The fifth per-screen stylesheet, following the rule src/shell.css's header sets
+   and src/home.css instanced first: one file per screen, loaded after the shell's,
+   styling only its own class names, with its own @media (pointer: coarse) block at
+   the end. No selector below names anything shell.css, home.css, attendance.css,
+   assignments.css or scores.css styles — the components here that ARE the shell's
+   (`.panel*`, `.class-action-btn`, `.avatar`, `.hidden`) are worn as-is and never
+   restyled from here; `.screen-nav*` belongs to src/assignments.css § SHARED and
+   `.grade-none` to src/scores.css § SHARED. THIS FILE WEARS ALL THREE SETS AND
+   RESTYLES NONE OF THEM: two stylesheets styling one class is how a per-file touch
+   pass stops being safe from the cascade.
+
+   NOTHING BELOW WAS DESIGNED HERE. Every value is lifted from
+   design/mockups/proposed.css § STUDENT DETAIL, which was drawn against these same
+   stylesheets on 2026-08-09 — before anything was built — and written to be carried
+   across almost as-is. The cut lines there are its section banners, and this file is
+   one of them plus the print block that has no drawing.
+
+   TWO THINGS THE DRAWING HAS THAT ARE DELIBERATELY NOT HERE, each said at the point
+   it would have gone, because a lift that quietly drops a rule reads as an oversight:
+
+     `.detail-support-btn` / `.detail-support-dot` — the accommodation indicator. It
+       is not built (src/detail.js's header argues it at length), and this screen
+       carries a print surface and a CSV, which is the reason. A rule for a control
+       nothing wears is a rule the next reader has to go and prove is dead.
+     `.detail-stack` and its legend — the contribution bar under the breakdown. It is
+       a second rendering of the column beside it, it is the one element on the
+       drawing that needs a colour per category (and this app has no category palette
+       — the class avatar colours are per STUDENT), and a bar that has to be read off
+       a legend is the wrong thing on a page a guardian reads once. The column adds
+       up, in words, which is what WO-3.7's first acceptance line is about.
+
+   THIS SCREEN ADDS NO CONTROL OF ITS OWN, and the coarse block at the foot says so
+   rather than being empty and leaving the next reader to check. Every control on it
+   is `.class-action-btn` (the door home, Print, Download CSV) or `.screen-nav-btn`
+   (the switcher and the breadcrumb), and both already carry their 44px floor in the
+   sheet that owns them. What the block below does carry is the type this screen is
+   read at with a parent sitting next to you.
+
+   The two things that read like mistakes here are the same two that read like
+   mistakes in every other sheet in this app: colours are written out inline rather
+   than as custom properties, and there is no dark variant of anything. Both are
+   deliberate suite conventions — read CLAUDE.md before tidying either one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The panel takes its main area's full width, the same call src/attendance.css records
+   the owner making about the registry on 2026-08-06: a panel narrower than the area it
+   sits in "reads as a window that never closed". */
+.detail-panel { width: 100%; max-width: 100%; }
+/* Matches `.attendance-body` and `.scores-body` exactly, and for the same reason: left
+   and right line up with `.panel-header`'s 20px, top is zero because the header above
+   already ends in a gap. */
+.detail-body { padding: 0 20px 20px; }
+
+/* Print and Download CSV, at the TOP of the body — src/attendance.css says why over
+   the same pair: the page under them is a term long, and a control below it is a
+   control reached by scrolling past the whole thing. */
+.detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+
+.detail-empty { font-size: 13px; color: #a0aab8; line-height: 1.6; margin: 8px 0; }
+.detail-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 16px; }
+.detail-card-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 10px; }
+
+/* THE DAY THIS CAME OFF THE PRINTER, and the only element on this screen that exists
+   for the printer. Hidden at rest, shown by the gated block at the foot of this file —
+   which is why the rule that reveals it lives there and not here. A screen does not
+   need a date stamp; a sheet in a folder next June is meaningless without one. */
+.detail-print-stamp { display: none; }
+
+/* THE HERO. Name, grade, band — the three things a guardian looks at first, and the
+   reason this screen is not a dialog: it is read across a desk with somebody sitting
+   next to you. */
+.detail-hero {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 14px;
+  border: 1.5px solid #eef0f4; border-radius: 10px; background: #f8f9fb;
+}
+/* The hero's avatar is BIGGER than the app's 32px one, and this is a second class worn
+   alongside `.avatar` rather than a rule targeting it. `.detail-hero .avatar { width:
+   44px }` would have been shorter and is exactly the thing src/shell.css's header
+   forbids — two stylesheets styling one class is how a per-file touch pass stops being
+   safe from the cascade. The sanctioned shape is the one `.hdr-mode-btn` uses: wear the
+   component for its grammar, add your own class for what differs. */
+.detail-avatar { width: 44px; height: 44px; font-size: 14px; }
+.detail-hero-who { flex: 1 1 200px; min-width: 0; }
+.detail-hero-name { font-size: 17px; font-weight: 800; color: #1a1a2e; }
+.detail-hero-sub { font-size: 12px; color: #6b7a8d; margin-top: 2px; }
+.detail-hero-grade { text-align: right; flex-shrink: 0; }
+.detail-grade-big {
+  font-size: 32px; font-weight: 800; color: #1a1a2e; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.detail-grade-band { font-size: 13px; font-weight: 700; color: #6b7a8d; margin-top: 3px; }
+/* The hero when there is no grade — the weights do not total 100, or nothing is graded
+   yet. An em dash in the quiet grey, with the reason under it where the letter band
+   would have been. Never blank: a hero with a hole in it reads as a screen that failed
+   to load, which is the one thing this page cannot afford in front of a guardian. */
+.detail-grade-big.none { color: #c0cad5; }
+
+.detail-cols {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 14px; align-items: start;
+}
+.detail-card { border: 1.5px solid #eef0f4; border-radius: 10px; padding: 14px 16px; }
+.detail-card + .detail-card { margin-top: 14px; }
+.detail-card-title {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px;
+}
+
+/* ── THE BREAKDOWN ── */
+/* Every category, its weight, what the student earned in it, and what that contributes
+   to the number in the hero. The contributions sum to the overall grade — that is
+   WO-3.7's first acceptance line, and this table is where a guardian gets to see the
+   arithmetic rather than be told it. src/detail.js's contributionCents() is what makes
+   the printed column add up as well as the computed one. */
+.detail-break { width: 100%; border-collapse: collapse; }
+.detail-break th {
+  padding: 0 8px 7px; text-align: right;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #eef0f4;
+}
+.detail-break td {
+  padding: 9px 8px; text-align: right;
+  border-bottom: 1px solid #f3f4f6; font-variant-numeric: tabular-nums;
+}
+/* The first column is the category name, in both directions: a `<th scope="col">` in the
+   head and a `<th scope="row">` on every row, so a screen reader reads "Tests, contributes
+   36.71" rather than a bare number. Both are left-aligned against the numbers beside them. */
+.detail-break th.detail-break-head-cat, .detail-break th.detail-break-cat { text-align: left; }
+.detail-break tbody th.detail-break-cat,
+.detail-break tfoot th.detail-break-cat {
+  padding: 9px 8px; border-bottom: 1px solid #f3f4f6;
+  font-size: 13px; font-weight: 600; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0;
+}
+.detail-break tfoot td, .detail-break tfoot th.detail-break-cat {
+  border-bottom: none; border-top: 1.5px solid #eef0f4;
+  font-weight: 800; color: #1a1a2e; padding-top: 10px;
+}
+.detail-break-num { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.detail-break-weak { font-size: 12px; color: #6b7a8d; }
+/* A category with nothing graded in it. Its weight redistributes across the others rather
+   than counting as a zero, and the breakdown SHOWS that rather than hiding the row —
+   WO-3.7's second acceptance line. A hidden row is how a teacher concludes the app lost an
+   assignment; a row printed as 0% is how a guardian concludes a student scored nothing. */
+.detail-break tr.empty td, .detail-break tr.empty th.detail-break-cat { background: #fff8e6; }
+.detail-break tr.empty th.detail-break-cat { color: #8a6d1a; }
+.detail-break-redist { font-size: 11px; font-weight: 700; color: #8a6d1a; text-align: left; }
+
+/* ── WHAT IT WOULD TAKE TO MOVE ── */
+/* The difference between a report and a conversation, per WO-3.7's own header.
+   Interactive indigo rather than caution amber: this is a route, not a warning. */
+.detail-move {
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; border-radius: 8px;
+  background: #eef2ff; padding: 12px 14px; margin-top: 14px;
+}
+.detail-move-head { font-size: 13px; font-weight: 800; color: #3a4a8a; margin-bottom: 6px; }
+.detail-move p { font-size: 12px; color: #3a4a8a; line-height: 1.6; }
+.detail-move p + p { margin-top: 8px; }
+/* When the next band is out of reach with the work that remains. Said plainly and quietly
+   rather than hidden — a teacher who does not know this walks into a conference and
+   promises something arithmetic will not give. */
+.detail-move.unreachable { border-color: #e0e4ea; border-left-color: #8a9bb0; background: #f8f9fb; }
+.detail-move.unreachable .detail-move-head { color: #1a1a2e; }
+.detail-move.unreachable p { color: #6b7a8d; }
+
+/* ── MISSING WORK ── */
+.detail-missing-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 0; border-bottom: 1px solid #f3f4f6;
+}
+.detail-missing-row:last-child { border-bottom: none; }
+.detail-missing-name {
+  flex: 1 1 auto; font-size: 13px; font-weight: 600; color: #1a1a2e; min-width: 0;
+}
+.detail-missing-pts {
+  font-size: 11px; font-weight: 800; color: #c0392b;
+  background: #fdeaea; border: 1.5px solid #e74c3c; border-radius: 999px;
+  padding: 2px 9px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+/* Bonus work in the same row shape and deliberately NOT in the alarm palette: it is the
+   one kind of outstanding work that can only help. */
+.detail-missing-bonus {
+  font-size: 11px; font-weight: 800; color: #27ae60;
+  background: #eafaf1; border: 1.5px solid #a3e4bc; border-radius: 999px;
+  padding: 2px 9px; white-space: nowrap;
+}
+.detail-missing-when { font-size: 11px; font-weight: 700; color: #8a9bb0; white-space: nowrap; }
+.detail-missing-none { font-size: 12px; color: #27ae60; font-weight: 700; }
+
+/* ── ATTENDANCE SUMMARY ── */
+/* From WO-2.4, counted in recorded meetings and never in calendar days — the phrasing is
+   the app's standing rule and the note says it out loud, because a percentage with no
+   denominator on a conference screen is a percentage a parent will read as days of school. */
+.detail-att { display: flex; flex-wrap: wrap; gap: 8px; }
+.detail-att-stat {
+  flex: 1 1 84px; border: 1.5px solid #eef0f4; border-radius: 8px;
+  padding: 9px 10px; text-align: center; background: #f8f9fb;
+}
+.detail-att-num {
+  font-size: 18px; font-weight: 800; color: #1a1a2e;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.detail-att-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px;
+}
+.detail-att-note { font-size: 11px; color: #8a9bb0; margin-top: 8px; line-height: 1.5; }
+
+/* ══════════════════════════ THE PRINTED PAGE (WO-3.7) ══════════════════════════
+
+   The app's SECOND @media print block, and the second thing it can print: one student's
+   detail, as the sheet a guardian leaves the conference holding.
+
+   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/detail.js's printDetail()
+   puts `data-detail-print` on <body>, calls window.print(), and takes it off again —
+   src/attendance.css § THE PRINTED PAGE's idiom, which is Roll Call!'s `body[data-modal-print]`,
+   lifted whole. Without the gate a Ctrl+P made anywhere else in the app would hide the
+   entire page and print a blank sheet. That regression has already happened once in this
+   app, and every rule below is therefore selected under the attribute — including the one
+   that only turns something ON.
+
+   A SECOND ATTRIBUTE RATHER THAN A SECOND IDIOM, and the difference matters. Sharing
+   `data-attendance-print` would be cheaper by one string and wrong: that block re-shows
+   `#attendanceRecordModal`, which is not on screen here, so a print from this screen would
+   hide the app and reveal a hidden dialog — a blank sheet by a different route. One idiom,
+   one gate per surface.
+
+   PRINTING A VIEW IS A HARDER PROBLEM THAN PRINTING A DIALOG, which is the trap WO-3.7
+   names against itself. A modal is a direct child of <body>: `body[...] > *` hides
+   everything and one `> #id` brings it back. This screen is inside <main>, under a panel
+   header carrying the title row, the three-tab switcher and the student's own breadcrumb —
+   none of which belongs on a sheet. So the hiding happens at TWO levels, and the panel
+   header is reached through a class of this screen's own (`.detail-header`) rather than
+   through `.panel-header`, so that nothing here names a class src/shell.css styles even
+   inside a gated block.
+
+   Colours go quiet rather than being kept. The registry's print block keeps its five mark
+   palettes because the letters ARE the data there; nothing on this page is encoded in a
+   colour, so the amber wash on an empty category and the indigo on the "to move" card
+   print as borders and black text, which is what a mono office printer would have made of
+   them anyway. */
+@media print {
+  /* Everything on the page goes, and the view comes back. `body > *` rather than a list of
+     chrome class names: this sheet styles its own class names and nothing else, and a list
+     would also be a list to keep in step with every panel a later work order adds. */
+  body[data-detail-print] > * { display: none !important; }
+  body[data-detail-print] { background: #fff; }
+  /* The element rather than `.main`, deliberately: the class belongs to src/shell.css and
+     this sheet does not name it, gated block or not. */
+  body[data-detail-print] > main {
+    display: block !important; max-width: none !important;
+    padding: 0 !important; margin: 0 !important;
+  }
+  /* The second level, and the half a modal never needed. Every other view in <main> is
+     already `.hidden`; saying so here as well is what makes the rule true of a document
+     where one is not. */
+  body[data-detail-print] main > *:not(#detailView) { display: none !important; }
+  body[data-detail-print] #detailView { display: block !important; }
+
+  body[data-detail-print] .detail-panel {
+    border: none !important; box-shadow: none !important; border-radius: 0 !important;
+    padding: 0 !important; margin: 0 !important; background: none !important;
+  }
+  /* The panel header is the app talking to the teacher — the title row, the switcher, and
+     the student's name as a breadcrumb — and none of it is the sheet. The name is on the
+     sheet because the hero below carries it, which is the element a guardian reads. */
+  body[data-detail-print] .detail-header,
+  body[data-detail-print] .detail-actions { display: none !important; }
+  body[data-detail-print] .detail-body { padding: 0 !important; }
+
+  body[data-detail-print] .detail-print-stamp {
+    display: block !important;
+    font-size: 8pt; color: #333; margin: 0 0 4mm;
+  }
+
+  body[data-detail-print] .detail-hero {
+    border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important;
+    background: none !important; padding: 0 0 4mm !important; margin: 0 0 4mm !important;
+    /* Pinned by the same sweep that found the columns below, and for the same reason. The
+       `max-width: 640px` block at the foot of this file declares `gap` on this element and
+       `text-align` on the grade beside it, and neither is restated by any rule above — so on
+       a page box under 640px the sheet would quietly take the phone layout. Letter (≈740px)
+       and A4 (≈718px) are both clear of it, so nothing the teacher prints is affected today;
+       restating the two base values costs two declarations and makes the sheet independent
+       of the paper it lands on, which is cheaper than a comment explaining why half sheets
+       and A5 come out differently. */
+    gap: 14px;
+  }
+  body[data-detail-print] .detail-hero-grade { text-align: right; }
+  body[data-detail-print] .detail-avatar { display: none !important; }
+  body[data-detail-print] .detail-hero-name { font-size: 14pt; color: #000; }
+  body[data-detail-print] .detail-hero-sub { font-size: 9pt; color: #333; }
+  body[data-detail-print] .detail-grade-big { font-size: 20pt; color: #000; }
+  body[data-detail-print] .detail-grade-band { font-size: 9pt; color: #333; }
+
+  /* ONE PAGE, WHICH IS THE POINT OF THE SHEET. Two columns on paper as on screen, because
+     a single column of four cards is two pages of half-empty paper; `break-inside: avoid`
+     on each card is what keeps a card that does not fit from being cut across the middle
+     rather than moved.
+
+     THE COLUMNS ARE RESTATED HERE RATHER THAN INHERITED, and that restatement is the only
+     reason the paragraph above is true of paper. A PAGE BOX IS A WIDTH: under `print` media
+     a `max-width` query resolves against the SHEET, not against the window, and Letter at
+     the `@page { margin: 10mm }` this app declares is about 740px (816 less 75.6) with
+     landscape Letter about 981px. Both are under the 1024px of the tablet-portrait block at
+     the foot of this file, so until 2026-08-12 every real sheet of paper took that block's
+     single column and printed the two pages of half-empty paper this rule exists to prevent.
+     It could not be seen on screen and it could not be seen in the harness either, which
+     emulates print MEDIA at a 1280px window — a width band no printer has. Found by
+     rendering to PDF at the page box; `tools/verify-shell.mjs` § WO-3.7 now measures the
+     column count at 740px with the narrow band asserted live, so the fixture can fail.
+     STILL GATED, and it must be: an ungated rule here is the blank sheet from every other
+     screen that this block's header describes. */
+  body[data-detail-print] .detail-cols {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 4mm;
+  }
+  body[data-detail-print] .detail-card,
+  body[data-detail-print] .detail-move { break-inside: avoid; }
+  body[data-detail-print] .detail-card {
+    border: 0.4mm solid #999 !important; border-radius: 0 !important; padding: 3mm !important;
+  }
+  body[data-detail-print] .detail-card + .detail-card { margin-top: 4mm; }
+  body[data-detail-print] .detail-card-title { font-size: 7pt; color: #000; }
+  body[data-detail-print] .detail-card-note { font-size: 7pt; color: #333; }
+
+  body[data-detail-print] .detail-break { font-size: 8pt; }
+  body[data-detail-print] .detail-break th,
+  body[data-detail-print] .detail-break td {
+    padding: 1mm 1.5mm; border-bottom: 0.2mm solid #999; color: #000;
+  }
+  body[data-detail-print] .detail-break thead th { font-size: 7pt; border-bottom: 0.4mm solid #000; }
+  body[data-detail-print] .detail-break tr.empty td,
+  body[data-detail-print] .detail-break tr.empty th { background: none !important; }
+  body[data-detail-print] .detail-break-redist { color: #000; }
+  body[data-detail-print] .detail-break-weak { color: #333; }
+
+  body[data-detail-print] .detail-move {
+    background: none !important; border: 0.4mm solid #999 !important;
+    border-left: 1mm solid #000 !important; border-radius: 0 !important; padding: 3mm !important;
+  }
+  body[data-detail-print] .detail-move-head { font-size: 9pt; color: #000; }
+  body[data-detail-print] .detail-move p { font-size: 8pt; color: #000; }
+
+  body[data-detail-print] .detail-missing-name { font-size: 8pt; color: #000; }
+  body[data-detail-print] .detail-missing-when { font-size: 7pt; color: #333; }
+  body[data-detail-print] .detail-missing-pts,
+  body[data-detail-print] .detail-missing-bonus {
+    font-size: 7pt; color: #000; background: none !important; border-color: #999 !important;
+  }
+  body[data-detail-print] .detail-missing-none { font-size: 8pt; color: #000; }
+
+  body[data-detail-print] .detail-att-stat {
+    background: none !important; border: 0.2mm solid #999 !important;
+    border-radius: 0 !important; padding: 1.5mm !important;
+  }
+  body[data-detail-print] .detail-att-num { font-size: 11pt; color: #000; }
+  body[data-detail-print] .detail-att-label { font-size: 6pt; color: #333; }
+  body[data-detail-print] .detail-att-note { font-size: 7pt; color: #333; }
+  body[data-detail-print] .detail-note { font-size: 7pt; color: #333; margin-top: 4mm; }
+  body[data-detail-print] .detail-empty { font-size: 9pt; color: #333; }
+}
+
+/* THERE IS NO @page RULE HERE, and that is the one place this sheet deliberately depends on
+   another. `@page { margin: 10mm }` is document-level rather than per-screen — it is not a
+   class and there is only one page box — and src/attendance.css already declares it, with
+   the arithmetic that produced the 10mm written down beside it. A second identical rule
+   here would be a second thing to keep in step for no gain, and a DIFFERENT one would mean
+   two sheets out of the same app for the same conference sitting at two insets. If that
+   sheet ever stops printing, this rule moves rather than being copied. */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH — and this screen's honest answer, which is that it adds no control
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* design/style-guide.md §6: 44px minimum under a coarse pointer, and this block comes last
+   so it can override the base rules it re-states.
+
+   THIS SHEET DECLARES NO 44px RULE, and that is a statement rather than an omission. Every
+   control on this screen is a component another sheet owns — `.class-action-btn` for the
+   door home, Print and Download CSV, and `.screen-nav-btn` for the switcher and the
+   breadcrumb — and each already carries its floor where it is defined (src/shell.css's
+   coarse block, and src/assignments.css § SHARED's). Restating either here would be this
+   file styling a class it does not own, which is the one rule src/shell.css's header will
+   not bend on. A control added to this screen later adds its own class and its own line
+   below, in the same pass.
+
+   What IS here is the type this page is read at with a parent sitting beside you. */
+@media (pointer: coarse) {
+  .detail-hero-name { font-size: 18px; }
+  .detail-hero-sub { font-size: 13px; }
+  .detail-grade-band { font-size: 14px; }
+  .detail-card-title { font-size: 11px; }
+  .detail-break { font-size: 14px; }
+  .detail-break-num, .detail-break-weak, .detail-break-redist { font-size: 13px; }
+  .detail-break td, .detail-break tbody th.detail-break-cat { padding: 11px 8px; }
+  .detail-move p, .detail-move-head { font-size: 14px; }
+  .detail-missing-name { font-size: 14px; }
+  .detail-missing-pts, .detail-missing-bonus, .detail-missing-when { font-size: 12px; }
+  .detail-missing-none { font-size: 13px; }
+  .detail-att-label { font-size: 11px; }
+  .detail-att-note, .detail-card-note, .detail-note, .detail-empty { font-size: 13px; }
+}
+
+/* THESE TWO BLOCKS ARE ABOUT A WINDOW AND THEY ALSO REACH PAPER, which is the trap this
+   file paid for once. A `max-width` query resolves against the page box under print media,
+   and every common page box is narrower than 1024px — so anything declared below is a
+   declaration about the printed sheet as well, unless the gated block above restates it.
+   Everything they declare IS restated up there now; a property added here needs a line
+   there in the same pass, or the sheet silently changes shape. */
+@media (max-width: 1024px) {
+  /* One column, breakdown first: on a tablet in portrait the grade and its arithmetic are
+     what the conversation is about, and the attendance panel can sit under them. */
+  .detail-cols { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .detail-hero { gap: 10px; }
+  .detail-hero-grade { text-align: left; }
+  .detail-grade-big { font-size: 26px; }
+}

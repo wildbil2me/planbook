@@ -3178,6 +3178,213 @@ WO-2.15 and WO-2.16 exist to catch.*
 
 ---
 
+### WO-3.7 — Per-student grade detail
+
+**What this adds.** The screen open during a guardian conference: one student's grade taken apart —
+a hero with the percentage and the band, the category breakdown with each category's weight, what it
+actually counts at, and what it contributes, the missing-work list with the points at stake, "what it
+would take to move", and the attendance summary for the same student and term. **Print** and
+**Download CSV** sit at the top of it.
+
+**It is a view, and it is not a fourth tab**, which are two separate decisions and both are the
+owner's. A screen a teacher sits in front of with a parent, scrolling and pointing, is not a dialog
+(`plans/gradebook-surfaces.md`), so `#detailView` is a sibling of the other four in `<main>`. And it
+owns **no navigation target**: you arrive from a NAME — the student's own name in the score grid, or
+a door inside their attendance history — and the switcher shows that name as a **breadcrumb** while
+you are standing there. A tab you cannot enter without first choosing a student is either dead on a
+freshly-opened class or it invents a selection nobody made.
+
+**Nothing on this screen computes a grade.** Every number comes out of `src/grade-engine.js`,
+including the projections behind "what it would take to move": `openWork()`, `nextBandFor()` and
+`projectedClassGrade()` were **added to the engine** for this screen rather than written into it,
+because a detail page that summed its own points is a detail page that disagrees with the grid the
+teacher just came from. `projectedClassGrade()` is linear in the rate — each category's percentage
+becomes `(earned + rate × owed) / (possible + owed)` — which is what makes the "to move" figure
+solvable rather than searched for, and reproducible with a calculator.
+
+**The contribution column is rounded so that it adds up.** Rounding each contribution on its own and
+printing the engine's total under it misses by a cent about half the time, and a guardian who adds
+the column up and gets a different number has been handed a page that is wrong in the only way that
+matters here. The cents are allocated by largest remainder instead.
+
+**No support data reaches this screen, and not because it is hidden.** `src/detail.js` does not
+import `src/supports.js` and has no path to `student.supports` — the same posture
+`src/attendance-report.js` takes, and stronger than "presentation-mode safe": an implementation that
+read those fields and hid them behind the visibility switch would satisfy acceptance line 4 and still
+be a one-tap disclosure the day somebody flips the switch back. The mockup's `.detail-support-btn`
+indicator is **deliberately not built**, and `src/detail.css` says so at the point where the rule
+would have gone: this screen carries a print surface and a CSV, so building it would put the one
+module that writes a sheet for a guardian to take home in reach of the one block of data that must
+never be on one.
+
+**Printing a view is a harder problem than printing a dialog**, which is the trap the work order names
+against itself. WO-2.6's surface is a modal — a direct child of `<body>`, so `body[…] > *` hides
+everything and one `> #id` brings it back. This one is inside `<main>`, under a panel header carrying
+the title row, the switcher and the breadcrumb. So the hiding happens at **two levels**
+(`body[data-detail-print] > *`, then `main > *:not(#detailView)`), the panel header is reached through
+a class of this screen's own so that nothing in `src/detail.css` names a class `src/shell.css` styles,
+and **every one of the rules is gated on the body attribute**. A second attribute rather than a second
+idiom: sharing `data-attendance-print` would re-show a dialog that is not on screen here, which is a
+blank sheet by a different route.
+
+- [x] The breakdown's contributions sum to the displayed overall grade. *(Three claims and not one,
+      because a build could satisfy any two: the column as PRINTED sums to the footer as PRINTED, and
+      both agree with the engine. `["36.71","19.12","9.41"]` → 65.24, footer `65.24%`, hero `65.24%`,
+      engine `65.23529411764706`. The fixture is four categories over a weight base of 85, so every
+      figure in the section is over 85 and not 100 — a fixture whose categories all had work in them
+      would pass an implementation that ignored redistribution entirely.)*
+- [x] With a category empty, the breakdown shows the redistribution rather than hiding it.
+      *(Participation carries 15% and holds nothing. Its row is drawn in the caution wash reading
+      `nothing graded in it yet — its 15% is shared across the others`, and the three rows beside it
+      print a **Counts at** column of `47.06% · 29.41% · 23.53%` rather than their face weights — which
+      is redistribution shown rather than described. A hidden row is how a teacher concludes the app
+      lost an assignment; a row printed as 0% is how a guardian concludes a student scored nothing.)*
+- [x] The "to move" figure is reproducible by hand. *(Every figure was computed by hand first and
+      written into the harness section's header, then asserted as a string — never read back off the
+      screen and compared to itself. `78×40 + 65×25 + 40×20` over 85 = `65.24%`, a D; nothing scored
+      on the outstanding 30 points leaves `52.54%`, full marks makes `75.09%`; the next reachable band
+      is D+ at 67, so the rate is `(67 − 52.5392…)/(75.0882… − 52.5392…) = 0.6413…`, rounded **up** to
+      `64.14%`, landing at `67.00%`. Rounded up and never to nearest: a rate rounded down is a figure
+      that reads as reaching the band and does not, which is the one direction this card must never be
+      wrong in. Handing in the one missing 10-pointer in full reads `77.00%` on its own line, and the
+      0-point bonus assignment gets its own line too rather than being folded into a percentage it
+      cannot move.)*
+- [x] No `supports` data appears on this screen in presentation mode. *(See line 8 — asserted in both
+      modes at once, with the data planted first.)*
+- [x] It is a view in `<main>`, not a dialog. *(`#detailView`'s parent is `<main>`, it carries no
+      `role`, and the tap that opened it left zero visible `.modal-overlay`s. Opened through the real
+      door — a student's own name on the score grid, of which the fixture draws two.)*
+- [ ] One student's detail prints to one page carrying their name, the class, the term and the date it
+      was printed — and the nav strip, breadcrumb and any app chrome are not on it. *(**The chrome half
+      is measured; the paper half is the 👤 line below.** Driven through the real Print button and the
+      real delegated handler, with `window.print()` stubbed — the stub takes the snapshot **at the
+      moment the app asks to print**, under emulated print media, so nothing races the 500ms attribute
+      release. The hero carries `Zoë Ñuñez-Öztürk`, `WO-3.7 Detail` and `WO-3.7 Term`; the stamp reads
+      `Printed August 12, 2026 · Planbook`. The app header, the panel header, the nav strip, the
+      breadcrumb, the action row and every other view are `display: none` with **zero-height boxes**,
+      and `0 element(s) still drawn outside #detailView`. Heights as well as `display`, because the
+      computed display of an element inside a `display: none` ancestor is its own value — asking the
+      switcher for its `display` reports `flex` on a build behaving perfectly. Also measured: **all 41
+      `@media print` rules touching this surface are selected under `body[data-detail-print]`**, none
+      ungated,
+      `<body>` carries no such attribute at rest, the attribute comes back off afterwards, and a print
+      with the attribute OFF leaves the whole app on the page — the blank-sheet regression the gate
+      exists for.*
+      *And since the correction round, **the sheet is also read at a real page box** — 740px, Letter
+      less its 10mm margins — because `setEmulatedMedia: 'print'` switches the media type and relayouts
+      nothing, so everything above was measured at 1280px, a width no printer has. The verifier caught
+      the sheet printing as ONE column there: the gated block set `gap` on `.detail-cols` and never
+      restated `grid-template-columns`, so `@media (max-width: 1024px)` — which resolves against the
+      page box under print media — won on every real sheet of paper. Fixed by restating the columns
+      inside the gate, and now measured at the page box with the narrow band asserted **matching**, so
+      the check cannot pass by quietly falling back to 1280: `grid tracks ["416.422px","308.469px"]
+      over 2 column(s), side by side = true`. A second check sweeps every `max-width` rule in the app
+      against the elements of this sheet and requires the gated block to restate what they declare —
+      `5 rule/element pair(s) on the sheet, 0 unpinned`.)*
+- [ ] The per-student CSV opens cleanly in a spreadsheet, **including a name with a non-ASCII character
+      in it**. *(**The bytes are measured; the spreadsheet is the 👤 line below.** Read through the
+      `detailModel()` / `studentCsv()` seam — `src/backup.js`'s build-it/hand-it-over split, reused so
+      the file can be asserted character by character without a download. A BOM so Excel reads UTF-8, no
+      bare LF anywhere, sections rather than one padded table, five category rows all seven cells wide,
+      `Ó"Brien, Jr` surviving as one cell. The figures are the screen's, character for character,
+      contribution column included, with the empty category named rather than dropped. The file is
+      `Planbook Ñuñez-Öztürk, Zoë WO-3.7 Detail WO-3.7 Term grades 2026-08-12.csv`. **And the BOM is
+      asserted USEFUL rather than only present**, which is the hole WO-2.6 left: both fixture surnames
+      leave ASCII, and the same bytes decoded as Windows-1252 read `Ã‘uÃ±ez-Ã–ztÃ¼rk` — the failure the
+      BOM prevents, demonstrated rather than described, over 727 bytes for 716 characters.)*
+- [x] Neither the printout nor the CSV emits accommodation, medical, or plan data — verified in both
+      presentation modes, with the data asserted present in the document first. *(A plan, a case
+      manager, a review date, an accommodation, a medical line and a behavior plan are planted on the
+      student whose detail is opened, and **their presence in the serialised document is asserted
+      before anything is read** — an absence check over a student with nothing on file proves nothing.
+      Then the screen's text, the CSV's text and the model's JSON are searched for all five sentinels
+      and for the word `IEP`, twice: once with presentation mode OFF, where `supportsVisible()` answers
+      true and the roster shows everything, and once with it ON. Zero hits in either pass over surfaces
+      of 2,735, 716 and 1,322 characters, so none of the three was empty. **The mode-OFF pass is the one
+      that matters** — a build that gated the screen and the file on the toggle would pass mode-ON and
+      fail this.)*
+- [x] The strip shows the open student's name as a breadcrumb segment while this screen is up, and
+      switching to any of the three tabs takes the name with it. *(Inherited from WO-3.3, which built
+      the strip and could not demonstrate this half: there was no per-student detail to enter or to
+      leave, so the name was never drawable. **Both directions, at last.** With the screen up the strip
+      draws four segments — `Attendance · Assignments · Scores · Zoë Ñuñez-Öztürk` — the fourth carrying
+      the `detail` class, `aria-current`, and no `data-class-screen` of its own. Then **each of the
+      three tabs in turn**, not the one somebody tested: every strip on the page comes back to three
+      segments with the name on none of them, and re-entering through the score grid puts it back.)*
+- [x] 👤 **Print one student's detail on the printer you actually have.** ✅ **Done 2026-08-12 — one
+      page, two columns, on the owner's own printer.** Two things, and the first one
+      is why this line existed after a green run: the sheet must come out **one page** and it must
+      come out **two columns**. No emulator has paper, so the page count is the half no run can close.
+      The column count *is* now measured — at 740px, the width Letter actually lays out at — but it was
+      measured only after the verifier found the shipped sheet printing as a single column that nothing
+      in the harness could see, so it is worth confirming with your own eyes on the first sheet you
+      pull off the tray. Then: the "to move" paragraphs readable at 8pt, no card cut across the middle,
+      and the date stamp at the top where a page found in a folder next June needs it. A student with a
+      long missing list is the case worth trying, since that is what pushes it to a second page.
+- [x] 👤 **Open the per-student CSV in the spreadsheet you actually use.** ✅ **Done 2026-08-12 —
+      opens clean in the owner's own spreadsheet.** Three sections down one
+      sheet, the contribution column adding to the total under it, a name with an accent intact and a
+      name with a comma in it still in one cell. The accents are what the BOM is for — measured here as
+      bytes for the first time, but bytes are not Excel. **This is the line WO-2.6 left open on the
+      same grounds, closed the same way: by someone opening the file.**
+- [ ] 👤 **On the installed iPad PWA, tap a student's name on the score grid mid-lesson.** The name is a
+      44px control down a frozen column now, next to cells you are typing into. The thing to check by
+      eye is that reaching for a score cell does not open somebody's conference screen, and that the row
+      heights did not move.
+- [ ] 👤 **Read the screen with a parent sitting beside you, at arm's length.** The type sizes in the
+      coarse block were chosen for this and nothing else. The specific question is whether the
+      breakdown table is readable across a desk, and whether "what it would take to move" says
+      something you would actually say out loud.
+
+*The desk half: `verify-shell.mjs` **628 checks · 628 passed · 0 failed · 0 skipped**, 207s, up from
+598 on the tree this work order arrived on — thirty in a new section at the foot of the file, and none
+anywhere else. (Twenty-eight of the thirty landed on the first pass at `626 checks · 626 passed`,
+205s; the last two came with the page-box fix on the correction round.) `wo-sweep.mjs` is **17 checks · 14 passed · 0 failed · 3 to review**. All three
+REVIEWs were read rather than waved at. The sensitive-field sweep is **188 mentions across 15 files**, and the
+two files new to that list are `src/detail.js` and `src/detail.css`. Their five mentions between them
+are all prose in comments, stating at the point where a future author would break it that none of
+that data reaches these surfaces; neither file has a `supports` identifier in executable code, and
+`src/detail.js` does not import `src/supports.js` at all. The coarse-block REVIEW lists thirteen new
+selectors. Twelve of them are layout containers or text nodes rather than controls: the detail screen
+adds no control of its own — every one is `.class-action-btn` or `.screen-nav-btn`, which carry their
+floors in the sheets that own them. The thirteenth, `.attendance-report-door`, **is** a new target and
+**is** on that list, first entry — which is exactly why the correction pass went and measured it
+instead of reasoning about it (see below). Of the two new targets, only `.scores-name-btn` is absent
+from the list. The due-date REVIEW is `src/detail.js:349`, a sentence on the missing-work card stating the rule
+it is flagged for: *"Missing is marked by you and is never worked out from a due date."* `sw.js`'s
+`CACHE` is bumped to `planbook-shell-v45` and `src/detail.js` and `src/detail.css` are added to
+`SHELL`.*
+
+*One check was added by the correction pass rather than by the original build, and it is the one worth
+knowing about: **the door from the attendance history dialog was claimed at 44px by inheritance and
+never measured**. `src/attendance.css` gives `.attendance-report-door` a margin and nothing else, on
+the correct grounds that it wears `.class-action-btn` and that component already carries its floor —
+but "it inherits one" answered by reading is the exact shape of the BOM this work order was told not to
+inherit. It is now opened at 1024px under a coarse pointer, on the surface a teacher reaches it from,
+and measured: `{"open":true,"found":true,"w":196.08,"h":44,"spill":0,"label":"Grades for Zoë
+Ñuñez-Öztürk"}`.*
+
+*A second correction round fixed **the one defect that reached paper**, and it is the more useful of
+the two to have written down. The gated print block declared `gap` on `.detail-cols` and never
+restated `grid-template-columns`, so `src/detail.css`'s `@media (max-width: 1024px)` — a rule written
+about a tablet in portrait — won on every sheet of paper, because under print media a `max-width`
+query resolves against the **page box** and Letter at this app's `@page { margin: 10mm }` is ≈740 CSS
+px (landscape ≈981, A4 ≈718). The sheet printed as one column: "two pages of half-empty paper", in the
+stylesheet's own words, under an acceptance line that says one page. **Twenty-eight green checks said
+nothing about it**, because the harness snapshots the printed page at the 1280px its own device
+metrics set and `setEmulatedMedia` relayouts nothing — 1280 is the one band where the shipped sheet
+still looked like the designed one. Found by the WO-3.7 verifier by rendering to PDF, not by any run
+in this repo. The fix is one restatement inside the gate (plus `gap` and `text-align` on the hero,
+found by the same sweep and exposed on paper narrower than 640px, which Letter and A4 are not). Two
+checks now express it, and **both were watched failing**: with the one line reverted the run is
+`628 checks · 626 passed · 2 failed`, exit 1, reading `grid tracks ["740px"] over 2 column(s), side by
+side = false` and `@media (max-width: 1024px) { .detail-cols { grid-template-columns } } unpinned on
+div.detail-cols` — everything else green, which is the escape restated as a measurement. Confirmed
+independently the way the verifier found it, by printing a page that links this stylesheet to PDF at
+Letter: **2 pages before the fix, 1 page after.** Recorded as trap 10 in `tools/README.md`.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

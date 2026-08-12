@@ -246,14 +246,20 @@ function shortDate(iso) {
 /*
   HOW A PERCENTAGE IS WRITTEN DOWN HERE: two fixed decimal places, because the SIS carries two
   decimals and this number is re-keyed into it by hand. The grade column and class average both use
-  this formatter; WO-3.7's per-student detail does not exist yet, so there is no third surface today.
+  this formatter.
+
+  EXPORTED AT WO-3.7, which is the third surface WO-3.14 said would inherit this line the day it
+  existed. The per-student detail imports it from here rather than declaring its own, for the reason
+  formatWeight() is imported from src/categories.js above: two formatters that have to agree is the
+  second answer this repo keeps refusing, and the one that drifts is the one nobody is looking at.
+  The import runs one way — nothing in this file knows src/detail.js exists.
 
   IT IS DISPLAY FORMATTING AND NOTHING ELSE. The letter beside it is banded from the UNROUNDED
   percentage — src/grade-engine.js asks src/letter-scale.js, which compares against `min`
   unmodified — because the boundary the teacher typed IS the rounding rule and a second one is
   exactly what WO-3.2's design deletes. Nothing here is ever handed back to the arithmetic.
 */
-function formatPercent(p) {
+export function formatPercent(p) {
   return Number(p).toFixed(2) + '%';
 }
 
@@ -648,7 +654,9 @@ export function renderScores() {
        that keeps this sheet's `.scores-grid tbody td` padding and rule applying to the frozen
        column. Nothing is lost to a screen reader by it: every input in the row names its student in
        full in its own accessible name, which is more than a row header would have given. */
-    row.append(el('td', 'scores-name', rosterName(student)));
+    const name = el('td', 'scores-name');
+    name.append(detailDoor(student));
+    row.append(name);
     /* Filled by paintGrades() below rather than here, so there is exactly one writer of a grade on
        this screen and the live path and the first paint cannot disagree. */
     row.append(el('td', 'scores-grade'));
@@ -659,6 +667,38 @@ export function renderScores() {
   });
 
   paintGrades(cls, termId, students);
+}
+
+/*
+  THE WAY INTO ONE STUDENT'S GRADE DETAIL (WO-3.7): their own name, in the frozen column, which is
+  the same door src/attendance.js's historyDoor() puts on the registry and lifted for the same
+  reason. WO-3.7 owns no navigation target of its own — you arrive there from a NAME, never from
+  the switcher — so the names this screen already draws are what have to become the way in.
+
+  IT IS THE NAME AND NOT A COLUMN OF ITS OWN. This grid's width is budgeted to the pixel and the
+  frozen pair is 190 + 84 of it; a control beside the name would be paid for with an assignment
+  column, on the screen where a column is a piece of work. The name is already there, it already
+  means "this student", and there is nothing else it could do.
+
+  IT WRITES NOTHING, which is what makes it safe on a screen built for typing: the cost of a mis-tap
+  is a screen change and one tap on the switcher to come back. The cells a hand is aiming at are on
+  the far side of the grade column, and the button carries `touch-action: manipulation` with the
+  rest of this sheet's controls.
+
+  The `title` keeps the whole name in it, because `.scores-name` is `white-space: nowrap` and a
+  surname that runs past the frozen column still has to be readable on a laptop.
+*/
+function detailDoor(student) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'scores-name-btn';
+  btn.setAttribute('data-student-detail', student.id);
+  /* Named for what it opens rather than left to read out as a bare name, which is what a screen
+     reader would otherwise announce this control as. */
+  btn.setAttribute('aria-label', 'Grade detail for ' + fullName(student));
+  btn.title = rosterName(student) + ' — where this grade comes from';
+  btn.textContent = rosterName(student);
+  return btn;
 }
 
 /* The key legend, and the button's own state. Drawn from `keysOpen` rather than by toggling a class

@@ -124,6 +124,16 @@
                                       an iPad
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
+      data-student-detail="<id>"      opens that student's grade detail — the category breakdown,
+                                      what is missing, and what it would take to move. Carried by
+                                      the student's own NAME in the score grid and by the door in
+                                      their attendance history, because that screen owns no
+                                      navigation target of its own: you arrive there from a name and
+                                      never from the switcher, which is why there is no
+                                      `data-class-screen="detail"` anywhere in this app
+      data-detail-print               prints the detail screen — sets the attribute the @media print
+                                      block in src/detail.css is gated on, and takes it off again
+      data-detail-csv                 downloads that one student's detail as a CSV
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
                                       question mark. `P` is a step and is still never STORED:
@@ -277,6 +287,12 @@ import * as assignments from './assignments.js';
    draws a grade. It imports src/grade-engine.js and nothing in it computes one; the chains below are
    what make "live" true from more than one direction. */
 import * as scores from './scores.js';
+/* WO-3.7's per-student detail — the fourth screen of an open class, and the only one with no
+   segment on the switcher: it is reached from a NAME, on the score grid or in a student's
+   attendance history, and the strip shows that name as a breadcrumb while it is up. It imports the
+   grade engine, the attendance readers and src/backup.js's file hand-off, and nothing imports it
+   back. */
+import * as detail from './detail.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -330,15 +346,63 @@ function afterClassChange() {
 /*
   WHICH OF THE OPEN CLASS'S SCREENS IS PAINTED, and the one place that mapping lives (WO-3.3).
 
-  A class has three screens — Attendance, Assignments and, since WO-3.5, Scores — and every caller
-  above that used to say `attendance.renderAttendance()` was really saying "paint whatever screen of
-  this class is up". Said once, here, because that is what this file is for: the day a fourth screen
-  exists, the modules that navigate do not each learn about it.
+  A class has four screens — Attendance, Assignments, Scores since WO-3.5, and one student's detail
+  since WO-3.7 — and every caller above that used to say `attendance.renderAttendance()` was really
+  saying "paint whatever screen of this class is up". Said once, here, because that is what this
+  file is for: the day a fourth screen exists, the modules that navigate do not each learn about it.
+  That day was WO-3.7 and this function is the only thing that changed for it.
 */
 function paintClassScreen(view) {
   if (view === 'assignments') assignments.renderAssignments();
   else if (view === 'scores') scores.renderScores();
+  else if (view === 'detail') detail.renderDetail();
   else attendance.renderAttendance();
+}
+
+/*
+  OPENING ONE STUDENT'S DETAIL — the whole of what a tap on a name means (WO-3.7).
+
+  Six calls, in this order and each for its own reason. The module is told whose screen this is,
+  which is also what sets the breadcrumb (src/detail.js says why those two are one act). The view
+  swaps. The class tab strip repaints, because it is drawn differently inside a class than on the
+  grid and `detail` is inside a class (src/views.js's CLASS_SCREENS). The screen is painted BEFORE
+  the switcher, and that ordering is the one thing here that is not arbitrary: renderDetail() re-sets
+  the breadcrumb from what it actually drew, so a student who is no longer on this class's roster
+  takes their name off the strip in the same pass — repaint the strip first and it would carry a name
+  the screen below it does not.
+
+  WHICH CLASS AND WHICH TERM ARE UNTOUCHED. This moves between screens of the class already open,
+  and `openView` writes this one down as `class` like the other three, so a reload lands on
+  Attendance (src/views.js's REMEMBERED_AS).
+
+  FOCUS MOVES, WHICH NO OTHER SCREEN SWITCH IN THIS FILE DOES, and the reason is the door in the
+  attendance history dialog: closing a modal hands focus back to whatever opened it, and what opened
+  that one is a button on the registry that is `.hidden` by the time the hand-off happens — so focus
+  would land on <body> and a keyboard user would be at the top of the document with no idea the
+  screen had moved. The heading carries `tabindex="-1"` for it. Said out loud as well, for the
+  reason selectClass() is: this is a screen a screen-reader user cannot see move.
+*/
+function showStudentDetail(studentId, opener) {
+  if (!classes.getSelectedClassId()) { showHome(); return; }
+  /* The dialog the door was in, if it was in one. Closed BEFORE the view swaps so the modal's own
+     focus return happens while its opener is still on screen; the heading below then takes focus
+     from wherever that left it. */
+  const overlay = opener && opener.closest ? opener.closest('.modal-overlay') : null;
+  if (overlay) closeModal(overlay);
+
+  detail.openDetail(studentId);
+  views.showView('detail');
+  classes.refreshClassBar();
+  detail.renderDetail();
+  screenNav.refreshScreenNav();
+
+  const heading = document.getElementById('detailStudentName');
+  if (heading && typeof heading.focus === 'function') heading.focus({ preventScroll: true });
+  const who = detail.openDetailName();
+  const cls = classes.getSelectedClass();
+  announce(who
+    ? 'Grade detail for ' + who + (cls ? ' in ' + cls.name : '') + '.'
+    : 'That student is not on this class’s roster any more.');
 }
 
 /*
@@ -405,6 +469,14 @@ function afterCategoryChange() {
     inputs for work that no longer exists.
   */
   if (views.currentView() === 'scores') scores.renderScores();
+  /* AND THE PER-STUDENT DETAIL (WO-3.7), the third screen a category is drawn on and the one where
+     it is drawn as a ROW OF ARITHMETIC: one line per category, with its weight, what that weight
+     actually counts at once the empty ones have redistributed, and what it contributes. Renaming a
+     category behind this screen leaves a row labelled with the name before last; reweighting or
+     removing one leaves a column that no longer adds up to the number in the hero an inch above it,
+     which is this work order's first acceptance line going quietly false on a screen a guardian is
+     reading. */
+  if (views.currentView() === 'detail') detail.renderDetail();
 }
 
 /*
@@ -438,6 +510,11 @@ function afterCategoryChange() {
 */
 function afterAssignmentChange() {
   if (views.currentView() === 'scores') scores.renderScores();
+  /* AND THE PER-STUDENT DETAIL (WO-3.7), where an assignment is not a column either: it is a NAME in
+     the missing-work list and a number in "what it would take to move". Renaming one leaves the old
+     name in a sentence a teacher is reading out to a parent; changing its points changes how many
+     points are at stake and the score needed to reach the next band; deleting it takes both away. */
+  if (views.currentView() === 'detail') detail.renderDetail();
 }
 
 /*
@@ -449,8 +526,10 @@ function afterAssignmentChange() {
   teacher who moves the A boundary from 90 to 89.5 while the grid is behind the panel would otherwise
   close it onto a column of letters computed against the old bands.
 
-  ONE BRANCH AND NOT THREE, because nothing else in the app draws a letter yet: no card, no row badge,
-  no header. WO-3.7's per-student detail adds the second one.
+  TWO BRANCHES SINCE WO-3.7, which is the second one this comment predicted by name. The per-student
+  detail prints the letter in its hero AND the NEXT band up in the line under it — "D · next C− at
+  70%" — and that second half is the target every "what it would take to move" figure on that screen
+  is solved against. Moving a boundary behind it changes the answer as well as the label.
 
   renderScores() rather than a narrower paint, and that is src/scores.js's own decision rather than a
   choice made here: it exposes one paint for outside callers on purpose, because the two inside it
@@ -460,6 +539,7 @@ function afterAssignmentChange() {
 */
 function afterLetterScaleChange() {
   if (views.currentView() === 'scores') scores.renderScores();
+  if (views.currentView() === 'detail') detail.renderDetail();
 }
 
 /*
@@ -504,6 +584,12 @@ function afterTermChange() {
   const view = views.currentView();
   if (view === 'assignments') assignments.renderAssignments();
   else if (view === 'scores') scores.renderScores();
+  /* THE PER-STUDENT DETAIL IS THE FOURTH SCREEN THIS CHAIN'S OWN COMMENT PREDICTED (WO-3.7), and it
+     is the widest paint of the four: the grade, the breakdown, the outstanding work, the missing
+     work AND the attendance summary are every one of them term-scoped, so a term change replaces the
+     whole page rather than a line of it. It is also the screen where forgetting the line would be
+     worst — a conference page carrying last quarter's grade under this quarter's heading. */
+  else if (view === 'detail') detail.renderDetail();
   else if (view === 'class') attendance.paintRenderedTotals();
 }
 
@@ -601,7 +687,16 @@ function flipPresentationMode() {
      student's `supports` block — a class name and a colour are not a student's file — so there is
      nothing on it for the flip to suppress. src/home.js's header comment carries the same note and
      the condition under which it stops being true, because WO-4.x putting a behavior note into a
-     card's signals slot is exactly how this list goes quietly out of date. */
+     card's signals slot is exactly how this list goes quietly out of date.
+
+     NEITHER IS THE PER-STUDENT DETAIL (WO-3.7), and that one is worth a second sentence because it
+     is the screen a reader would expect to find here: it is named for a student, it is the page open
+     at a conference, and it prints. It does not import src/supports.js and there is no path in it to
+     `student.supports`, so there is nothing on it to suppress — the same posture
+     src/attendance-report.js takes and the same one src/scores.js's decision 5 takes, and each of
+     the three says so in its own header. The condition under which that stops being true is a later
+     work order putting the roster's indicator on that screen; the day it does, its repaint belongs
+     on this list and its author will have to answer for the print surface and the CSV first. */
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -946,6 +1041,30 @@ document.addEventListener('click', (e) => {
   if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
 
+  /* ── one student's grade detail (WO-3.7) ──
+     Three hooks. The first is NAVIGATION and belongs beside the two above it in spirit — it is how
+     this screen is entered, and it is deliberately not a segment on the switcher — but it sits here
+     rather than up there because the two controls that carry it are on the screens below: the
+     student's own name in the score grid, and the door inside their attendance history dialog. One
+     hook, one route, whichever door it came through, exactly as `data-view-home` and
+     `data-class-tab` each have several.
+
+     The element is passed as well as the id, and it is not an opener in src/modal.js's sense —
+     nothing here opens a dialog. It is how showStudentDetail() finds out whether the tap came from
+     INSIDE one, because a door in a dialog has to close it on the way through and a name on a grid
+     has nothing to close.
+
+     The other two write no document and change no screen: one hands the browser a file and one asks
+     the browser to print. Neither chains a repaint, for the reason the score grid's two do not —
+     nothing behind this screen goes stale for a printout. */
+  const studentDetail = e.target.closest('[data-student-detail]');
+  if (studentDetail) {
+    showStudentDetail(studentDetail.getAttribute('data-student-detail'), studentDetail);
+    return;
+  }
+  if (e.target.closest('[data-detail-print]')) { detail.printDetail(); return; }
+  if (e.target.closest('[data-detail-csv]')) { detail.downloadDetailCsv(); return; }
+
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
      as from the home screen, and the two hooks must not be able to shadow each other. Nothing here
@@ -1041,8 +1160,18 @@ document.addEventListener('click', (e) => {
      for a reason src/attendance-report.js states at length: they are read-only surfaces built out
      of the same ledger, and the only thing in this app that hands a file to the browser is
      src/backup.js's helper, which that module borrows rather than copies. */
-  const detail = e.target.closest('[data-attendance-detail]');
-  if (detail) { attendance.toggleDetail(detail.getAttribute('data-attendance-detail')); return; }
+  /* `attDetail` rather than `detail`, and the rename is load-bearing rather than a matter of taste.
+     `detail` is the module binding this file imports src/detail.js under (WO-3.7), and a `const` of
+     that name ANYWHERE in this listener puts the whole arrow body inside its temporal dead zone —
+     so the two hooks 100 lines above, which run long before control reaches this line, threw
+     `Cannot access 'detail' before initialization` and the Print button silently did nothing. The
+     local is what moved because the module owns the name across ten uses in this file and this is
+     its only other one; `attFilter` and `attSort` below are the same shortening for the same
+     reason. Every other closest() local in this listener was checked against the import list. */
+  const attDetail = e.target.closest('[data-attendance-detail]');
+  if (attDetail) {
+    attendance.toggleDetail(attDetail.getAttribute('data-attendance-detail')); return;
+  }
   const history = e.target.closest('[data-attendance-history]');
   if (history) {
     attendanceReport.openHistory(history.getAttribute('data-attendance-history'), history);
@@ -1710,6 +1839,16 @@ window.planbook = {
      through the real field and then reads `scores` off the document to tell the two apart. Nothing in
      the app reads window.planbook — see the block above for why the seam outlived the shelf. */
   scores,
+  /* `detail` joined at WO-3.7, and its reason is src/backup.js's and src/attendance-report.js's
+     rather than the reading reason `classes` gives: a page cannot be handed a real file by a script
+     and no harness can open a print dialog or read what came out of a spreadsheet. detailModel() and
+     studentCsv() are the same build-it/hand-it-over split those two use — a model in, bytes out,
+     with no DOM anywhere between them — so the BOM, the CRLF endings, the section headers and a
+     non-ASCII surname can be asserted character by character. "The CSV opens cleanly in a
+     spreadsheet, including a name with a non-ASCII character in it" is otherwise a claim nobody can
+     check without a spreadsheet. Nothing in the app reads window.planbook — see the block above for
+     why the seam outlived the shelf. */
+  detail,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

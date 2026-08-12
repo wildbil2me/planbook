@@ -633,14 +633,17 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 599 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 629 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
 pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
 its prose constantly. WO-3.12 moved it from 592 to 596, four literal call sites (case 8's third
 direction and cases 13-15) added to the grade-engine block, none inside a loop; WO-2.24 moved it from
-596 to 599, three literal call sites in three different sections, likewise none inside a loop. *(The
+596 to 599, three literal call sites in three different sections, likewise none inside a loop; WO-3.7
+moved it from 599 to 627, twenty-eight in one new section at the foot of the file, of which one is a
+fixture-guard failure arm and one sits inside a two-pass loop, and then to 629 on its correction
+round — two more in the same section, both about the page box (see the WO-3.7 block below). *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -663,9 +666,13 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 599 − 598 = 1 on this tree (596 − 595 = 1 immediately before WO-2.24 and
+could go and name.** It is 629 − 628 = 1 on this tree (627 − 626 = 1 before WO-3.7's correction round,
+599 − 598 = 1 immediately before WO-3.7,
+596 − 595 = 1 before WO-2.24 and
 592 − 591 = 1 before WO-3.12 — the four sites WO-3.12 added and the three WO-2.24 added each execute
-exactly once, so the gap itself has not moved in three work orders), it was
+exactly once, WO-3.7's twenty-eight produced exactly twenty-eight results by the same accident
+WO-2.6's eighteen did, and its correction round's two are two more literal sites outside any loop, so
+the gap itself has not moved in four work orders), it was
 589 − 582 = 7 before WO-2.21, and it was
 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
@@ -807,7 +814,58 @@ exit 1, each detail reading `appearance auto, -webkit-appearance auto` and namin
 belongs in. The 595 that stayed green are the reason the work order existed. Tabulated in
 `TESTING.md` § WO-2.24; the rule was restored and `git diff -- src/` is empty.
 
-### Driving a browser over CDP — nine traps, all of which first look like app defects
+**628 at WO-3.7**, measured the same way: `628 checks · 628 passed · 0 failed · 0 skipped`, 15,480
+lines, 24.6 lines per check, 207s — thirty call sites, thirty results, of which twenty-eight landed
+on the first pass (`626 checks · 626 passed`, 15,311 lines, 205s) and two on the correction round
+below. **The gap did not move — which is the WO-2.6 coincidence happening a second time** rather than
+anything new: the section carries one fixture-guard failure arm a green run never reaches (`if
+(!plant.ok) check('the WO-3.7 fixture is real…')`) and one call site inside the two-pass
+presentation-mode loop that fires twice, so the two corrections cancel exactly. Worth knowing before
+the next reader reads a gap of 1 as a harness that has become tidier.
+
+**Two of those twenty-eight could not be made from a stylesheet review, and one of them is why.** The
+printed sheet is measured by **stubbing `window.print()` and taking the snapshot inside the stub**,
+under `Emulation.setEmulatedMedia: 'print'` — so the reading happens at the instant the app asks to
+print, with no race against the 500ms attribute release. It reads **box heights as well as computed
+`display`**, and that distinction is load-bearing: the computed display of an element inside a
+`display: none` ancestor is its own value, not `none`, so asking the nav strip for its `display`
+reports `flex` on a build that is behaving perfectly. What it does not have is a box. The stub also
+**reports that it took**, because a `window.print` that was not writable would produce no snapshot at
+all and the check would read *"the printed page is missing its header"* over a build whose printed
+page is perfect.
+
+**And that guard earned itself on the first correction round.** The Print button reached
+`printDetail()` — `{"ok":true,"label":"🖨 Print this page"}` — and `printCalls` was still 0, because
+the page threw `Cannot access 'detail' before initialization`: `src/shell.js` imports
+`src/detail.js` as `detail`, and a `const detail = e.target.closest(…)` further down the *same*
+delegated click listener put the whole arrow body inside that local's temporal dead zone. The two
+hooks 100 lines above it threw before they could run. Without the `attrRightAfter` / `printCalls`
+fork in the detail line, that reads as a CSS defect in a print block that is correct. The local was
+renamed; the module keeps the name.
+
+**And then the print pass was found measuring a width no printer has, which is trap 10 below and the
+reason two more checks exist.** Everything above snapshots the sheet at the 1280px the section's own
+`setDeviceMetricsOverride` set; `setEmulatedMedia: 'print'` switches the media *type* and relayouts
+nothing, so every `max-width` query in the app was still resolving against 1280 while the sheet was
+being read. A page box is narrower than that — Letter at `@page { margin: 10mm }` is about 740 CSS px,
+landscape Letter about 981, A4 about 718 — and all three fall inside `src/detail.css`'s
+`@media (max-width: 1024px)`, which drops the detail screen to one column. It shipped that way: the
+gated print block set `gap` on `.detail-cols` and never restated `grid-template-columns`, so the
+responsive rule won on paper and the sheet printed as one column under an acceptance line that says
+one page. **Twenty-eight green checks said nothing about it**, because 1280 is the one width band in
+which the stylesheet still looked like the design. The WO-3.7 verifier found it by rendering to PDF.
+The two checks added on the correction round re-drive the real Print button at 740px and (a) assert
+the grid still resolves to two tracks side by side **with `matchMedia('(max-width: 1024px)')` asserted
+matching**, so a metrics override that silently failed cannot pass the check at 1280 for the wrong
+reason, and (b) sweep every `max-width` rule in the app against the elements of the sheet and require
+each declared property to be restated by a gated `body[data-detail-print]` rule — the general form of
+the same defect. Watched failing before being written down: with the one line reverted the run is
+`628 checks · 626 passed · 2 failed`, exit 1, the first reading `grid tracks ["740px"] over 2
+column(s), side by side = false` and the second naming
+`@media (max-width: 1024px) { .detail-cols { grid-template-columns } } unpinned on div.detail-cols`.
+Everything else stayed green in that run, which is the escape restated as a measurement.
+
+### Driving a browser over CDP — ten traps, all of which first look like app defects
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
@@ -916,6 +974,22 @@ down here. That is the entire reason this section exists.
    second half — with one hand-off per tap, the browser only has to cooperate once, so the second
    run's check can assert what is *inside* the archive instead of narrowing itself to the one file
    the app decided about. Keep the mtime rule; the narrowing was a cost of the old shape.
+
+10. **`Emulation.setEmulatedMedia: 'print'` changes the media TYPE and nothing else — the page is
+    still laid out at the viewport width, so every `max-width` query answers about a window rather
+    than about paper.** This is the one trap in the list that hides an app defect instead of
+    imitating one: the harness looks perfect, the page it measured is not the page that comes out of
+    the printer, and a green run says nothing about the difference. A page box is small — Letter at
+    `@page { margin: 10mm }` is ≈740 CSS px, landscape Letter ≈981, A4 ≈718 — and this app's
+    responsive blocks start at 1024, so a print snapshot taken at 1280 sits in the one band where a
+    stylesheet with an unpinned responsive rule still looks right. It cost WO-3.7 a one-column sheet
+    that twenty-eight green checks agreed was fine (see the WO-3.7 block above). **Set
+    `setDeviceMetricsOverride` to the page box before you read a printed layout**, and then assert
+    the narrow band actually MATCHES before believing what you measured — otherwise an override that
+    quietly failed leaves you back at 1280, where the check passes for exactly the wrong reason
+    (trap 3's rule, applied to width instead of pointer). Nothing in CDP relayouts at the page box
+    on its own; `Page.printToPDF` renders one but hands back a PDF, which is bytes rather than a
+    tree you can measure, so the width has to be set by hand.
 
 ### Two rules that follow from those
 

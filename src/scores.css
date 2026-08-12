@@ -51,7 +51,7 @@
 /* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
-.scores-input, .scores-keys-btn, .scores-flag-btn {
+.scores-input, .scores-keys-btn, .scores-flag-btn, .scores-name-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -237,6 +237,24 @@
 .scores-grid tbody tr:hover .scores-name,
 .scores-grid tbody tr:hover .scores-grade { background: #fafbfc; }
 
+/* THE NAME AS A DOOR (WO-3.7) — the way into that student's grade detail, which owns no navigation
+   target of its own and is reached from a name. It is `src/attendance.css`'s
+   `.attendance-student-identity` one screen over: the name becomes the control, it takes the whole
+   cell rather than a strip of 13px text, and the row does not get taller for it.
+
+   NO UNDERLINE AND NO INDIGO AT REST. This column is twenty-five rows of it beside a grid a teacher
+   is typing into, and twenty-five links down the frozen edge would be the loudest thing on the
+   screen — where the loudest thing has to be the cell under the caret. The affordance is on hover
+   and on focus, which is the same restraint the registry's name door shows for the same reason. */
+.scores-name-btn {
+  display: block; width: 100%;
+  padding: 0; border: none; background: none;
+  text-align: left; font: inherit; color: inherit;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+}
+.scores-name-btn:hover { color: #5b6fcc; text-decoration: underline; }
+
 /* The student's live grade. Deliberately NOT coloured by band — no red for a failing number and no
    green for a passing one. Colouring a grade is a judgement this app has not made anywhere else, it
    would be the loudest thing on a screen a teacher projects, and it would put a red row next to a
@@ -368,6 +386,14 @@
   .scores-grade { left: 168px; }
 
   .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
+  /* THE NAME DOOR AT 44px (WO-3.7). It takes the whole cell, so the 44 comes from the button
+     rather than from the row it happens to sit in: a row that shrank because a term had one short
+     assignment name in its head would take this target down with it, and this is the control that
+     opens a conference screen. Full width for the same reason `.scores-input` widens — a target you
+     can miss sideways is a target. `line-height` rather than flex centring, because a flex container
+     makes the label an anonymous item and `text-overflow: ellipsis` stops applying to it — a long
+     surname would then spill out of the frozen column instead of trailing off. */
+  .scores-name-btn { min-height: 44px; min-width: 44px; line-height: 44px; }
   /* The four flag buttons are the ones a thumb reaches for on this screen, and a mis-tap here is a
      score marked missing. 10px between them, the widening `.category-row-actions` and
      `.roster-row-actions` both took, and for the same reason. */
