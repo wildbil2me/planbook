@@ -887,7 +887,7 @@ which this project still has no check for. WO-8.7's closing note proposes one.
 
 ## WO-1.15 — the restore compare cannot see what it is about to delete
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** 2 · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. A defect in code Phase 1 shipped, found on 2026-08-12 while
 reading `gates.md`'s iPad rules against `src/backup.js`. The same call as WO-1.14.)*
 
@@ -925,15 +925,38 @@ in the format records it, and inventing a field is a schema change this does not
 sync, which is Phase 7's.
 
 **Acceptance**
-- [ ] A backup holding zero marks, restored over a year holding a term of them, shows both counts
-      **before** the button is pressed, and the counts differ on screen.
-- [ ] The confirm text names what would be lost, not only what would be gained.
-- [ ] A restore of a *different* year is unaffected — it is a normal, safe act and must not acquire a
-      warning it does not deserve.
-- [ ] No accommodation, medical or plan data appears in the panel, in either presentation mode.
-- [ ] 👤 On the iPad the panel still fits and the confirm button keeps its 44px.
-- [ ] `verify-shell.mjs` gains checks for the new counts, proved against a fixture where the roster
-      matches and the record does not.
+- [x] A backup holding zero marks, restored over a year holding a term of them, shows both counts
+      **before** the button is pressed, and the counts differ on screen. *(`verify-shell.mjs`, "the
+      compare counts the record on both sides": the stored side reads `3 recorded meetings · 3
+      attendance marks` / `2 assignments · 3 scores`, the file side four zeros, with `1 class · 2
+      students` identical on both. Read out of `#restoreCompare` while the confirm is up and before
+      anything is clicked.)*
+- [x] The confirm text names what would be lost, not only what would be gained. *(A new
+      `#restoreConfirmLoss` paragraph in the same dialog, in the `.class-delete-facts` danger wash:
+      "…Replacing it loses 3 recorded meetings, 3 attendance marks, 2 assignments and 3 scores, which
+      this file does not have — and the only way back to that is a backup taken from this device."
+      The numbers are the **excess**, not the stored counts: a second fixture puts a file holding
+      1/1/1/1 against a device holding 3/3/2/3 and the sentence reads 2/2/1/2.)*
+- [x] A restore of a *different* year is unaffected — it is a normal, safe act and must not acquire a
+      warning it does not deserve. *(A file for a year the device does not hold: no warning, "Nothing
+      for 2031-2032 is stored here", button "Add 2031-2032". And the Traps line's other half is
+      checked with it — an own-backup of the same year, and a file holding MORE than the device, are
+      both silent.)*
+- [x] No accommodation, medical or plan data appears in the panel, in either presentation mode.
+      *(Nothing sensitive is counted — the four record numbers are it, deliberately. Asserted in both
+      modes over the whole dialog against three sentinels planted in the fixture and asserted present
+      in the file and the stored document first: `epi-pen in the nurse office`, `IEP`,
+      `extended-time`, none of them in 813 characters of dialog either way.)*
+- [x] 👤 On the iPad the panel still fits and the confirm button keeps its 44px. *(Owner, installed
+      iPad, 2026-08-12: all four lines of the checklist in `TESTING.md` § WO-1.15 confirmed good in
+      one sitting — the fit and scroll, the 44px Replace under the loss paragraph, the paragraph
+      reading as a stop, and the cold read naming the right thing.)*
+- [x] `verify-shell.mjs` gains checks for the new counts, proved against a fixture where the roster
+      matches and the record does not. *(Eight checks in the existing `backup & restore` section;
+      636 of 636, 0 failed, 0 skipped. The fixture is the file itself with a record added, so the two
+      rosters are identical by construction rather than by two lists kept in step, and the harness
+      asserts that before it asserts anything else. Five mutations, all reverted —
+      `TESTING.md` § WO-1.15.)*
 
 **Traps** — **Do not infer direction from the device.** There is no device field and there must not
 be one; the fix is to make the difference *visible*, not to make the app clever. **Do not treat every
@@ -1003,3 +1026,103 @@ arithmetic against a live roster, which is `gates.md`'s and cannot happen until 
 defect this work order exists to end, arriving by the door marked convenience. **Do not relabel the
 old year to something outside `YYYY-YYYY`** — the store rejects it, and the year picker is the only
 place the distinction is ever seen.
+
+---
+
+## WO-1.17 — the backup nag cannot see a year whose only content is grades
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. A latent defect in code Phase 1 shipped, found on 2026-08-12
+by the WO-1.15 verifier while reading `src/backup.js` for a different reason.)*
+
+**Why it exists.** `hasSomethingToLose()` (`src/backup.js:1055`) decides whether the backup nag is
+allowed to appear, and it does it by enumerating collections: `classes`, `students`, `assignments`,
+`attendance`, `log`, `events`, `templates`. **`scores`, `passes` and `openPasses` are not on that
+list.** The nag is the one thing standing between a teacher and the iOS eviction described in
+`CLAUDE.md`, and it stays silent on any document whose content lives only in the three it cannot see.
+
+**It is masked today, and that is the argument for booking it rather than watching it.** Score cells
+cannot exist without an assignment to hang them on, so `count(doc.assignments)` fires first and the
+nag appears anyway — the omission is invisible precisely because a second field happens to be doing
+its job. It stops being invisible the moment a document can hold scores with no assignment: an
+assignment deleted while its column is kept, an import, a partial restore. The failure is silent, it
+is about the only copy of a term of grades, and the code reads correct.
+
+**The same shape as WO-1.15**, one screen over. That work order fixed a panel that counted the roster
+and not the record; this is the nag counting most of the record and not the rest.
+
+**Deliverables**
+- **`hasSomethingToLose()` sees score cells and both hall-pass collections.** Scores go through
+  `countScores()` (`src/backup.js:112`), which WO-1.15 added for exactly this reason; `passes` and
+  `openPasses` are arrays and `count()` is right for them.
+- **The enumeration gains whatever makes the next omission loud** rather than silent — the point of
+  failure is that a list of collection names has to be kept in step with `docs/data-model.md` by
+  hand, and nothing today notices when it is not.
+
+**Out of scope** — when the nag is evaluated (boot, backup, restore, year switch — that list is
+correct and reasoned at the call sites); the wording of the nag; the compare panel, which is
+WO-1.15's and is done.
+
+**Acceptance**
+- [ ] A document holding score cells and **no** assignments raises the nag. *(The masked case, made
+      unmasked — this is the check that fails against today's build.)*
+- [ ] A document whose only content is a hall pass — open or closed — raises the nag.
+- [ ] A brand-new document still does **not** raise it. A year and a letter scale are not something
+      a teacher typed, and a nag on day one is wallpaper by October — the rule the current comment
+      states and which must survive the fix.
+- [ ] `verify-shell.mjs` gains checks proved against a fixture where the omitted collection is the
+      **only** content, so a check that would go green against the current build is not written.
+- [ ] The collection list is checked against `docs/data-model.md` rather than against memory, and the
+      way it is checked is written down.
+
+**Traps** — **`count(doc.scores)` is 0 for a full gradebook.** `scores` is an object keyed by
+assignment then student, not an array, and `count()` answers 0 — the exact trap WO-1.15 documented at
+`countScores()` and the reason that helper exists. Adding `count(doc.scores)` to the sum looks like
+the fix, changes nothing, and closes the work order. **Do not widen the nag into "anything non-empty"**
+— a document is never empty, and that is what the current comment is defending against.
+
+---
+
+## WO-1.18 — the harness section comment miscounts its own checks
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. Documentation drift inside the harness, found on 2026-08-12 by
+the WO-1.15 verifier.)*
+
+**Why it exists.** The section header at `tools/verify-shell.mjs:1860` opens *"Seven checks, and the
+fixture is the whole argument"* over a section that holds **eight**. The count was right when it was
+written and a check was added before the work order landed.
+
+**Booked rather than fixed in passing, because this repository already treats harness
+self-description as load-bearing.** WO-2.19 exists solely to check the harness's own check count, and
+`wo-sweep.mjs` asserts that the `check()` call-site total matches the number recorded in
+`tools/README.md` — currently 637, and it passes. A section header that miscounts is the same drift
+one level below where any of that looks. The number is not important; a reader who finds it wrong
+learns to skim the prose that carries the reasoning, and in this harness the prose is the reasoning.
+
+**Size is the floor, not the estimate.** `S` ≈ a sitting and this is a word. It is booked so it is not
+lost, and it is a natural pick-up alongside the next piece of harness work rather than a sitting of
+its own.
+
+**Deliverables**
+- **The comment says eight.**
+- **A judgment recorded, either way, on whether the sweep can see this class of drift** — a
+  section-header count that disagrees with the `check()` calls beneath it is mechanically checkable,
+  and the sweep already counts call sites per line. Do it or write down why it is not worth it; do
+  not leave the question unasked.
+
+**Out of scope** — renumbering or reorganising the section; any change to what the eight checks
+assert; the two standing `wo-sweep.mjs` REVIEW items, which are read and dismissed each run on
+purpose.
+
+**Acceptance**
+- [ ] The comment at `tools/verify-shell.mjs:1860` matches the number of `check()` calls in its
+      section, counted rather than assumed.
+- [ ] `verify-shell.mjs` still runs green at its then-current total, and `tools/README.md`'s recorded
+      call-site count still matches — a comment fix must not touch either, and if it does, something
+      other than a comment was changed.
+- [ ] The sweep question above is answered in writing, in the work order or in `tools/README.md`.
+
+**Traps** — **Do not "fix" the count by deleting a check.** **Do not renumber neighbouring section
+headers to match a scheme** — the other headers are not known to be wrong, and a sweep that changes
+twenty comments to fix one buries the fix in the diff that is supposed to show it.

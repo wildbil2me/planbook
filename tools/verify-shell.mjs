@@ -1855,6 +1855,269 @@ if (!backupBooted || !backupSeam) {
     'file rev ' + applied.fileRev + ', device was at ' + cancelled.storedRev
       + ', restored document is rev ' + applied.storedRev);
 
+  /* ─────────── WO-1.15: the compare can see what it is about to delete ───────────
+   *
+   * Seven checks, and the fixture is the whole argument. describe() used to count `classes` and
+   * `students` and nothing else, so a term of marks and an empty test document drew an IDENTICAL
+   * panel — which is precisely the pair of documents `plans/work-orders/gates.md` § "The iPad stays
+   * in the rotation" exists to keep apart. So the fixture here is a stored document whose ROSTER
+   * MATCHES THE FILE EXACTLY and whose record does not: same one class, same two students, and
+   * three recorded meetings, three marks, two assignments and three scores that the file has none
+   * of. A check written against a fixture whose rosters also differed would go green against the
+   * build this work order replaces.
+   *
+   * THE RECORD IS PLANTED ON DISK RATHER THAN THROUGH s.update(), because the compare's outgoing
+   * side is readStoredDocument() — a raw get, not the open document (src/backup.js) — so the disk
+   * IS the surface under test. It is lifted out first and put back byte for byte at the end, the
+   * same way the poisoned-year fixture above does it, and nothing between the plant and the put-back
+   * writes: restoreFromText() and cancelRestore() only read.
+   *
+   * FIVE FILES GO THROUGH THE SAME REAL PATH, and the three that must NOT warn matter as much as
+   * the two that must. The Traps line forbids treating every replace as dangerous — a red panel on
+   * a year restored from its own backup is one a teacher learns to tap through before she meets the
+   * one that can destroy a term — so an equal file, a richer file and a file for a year this device
+   * does not hold are each asserted silent.
+   */
+
+  /* The record planted on the stored side, and it is chosen for its arithmetic: THREE recorded
+     meetings (the fourth record carries an exception and is not one), THREE attendance marks (the
+     `U` is not one — docs/data-model.md: it means nobody has looked at that student yet and never
+     appears in a total), two assignments, and three score cells across two columns of an object
+     `count()` would answer 0 for. Every one of those three numbers is wrong on a naive counter, and
+     wrong in the direction that reports a full gradebook as nothing at stake. */
+  const WO115_FULL = {
+    attendance: [
+      { classId: 'c_b1', date: '2026-09-08', marks: { s_b1: { code: 'A' }, s_b2: { code: 'T' } } },
+      { classId: 'c_b1', date: '2026-09-09', marks: { s_b1: { code: 'E' }, s_b2: { code: 'U' } } },
+      { classId: 'c_b1', date: '2026-09-10', marks: {} },
+      { classId: 'c_b1', date: '2026-09-11', exception: 'dropped' },
+    ],
+    assignments: [
+      { id: 'a_wo115a', classId: 'c_b1', name: 'Cells quiz', points: 20 },
+      { id: 'a_wo115b', classId: 'c_b1', name: 'Cells test', points: 100 },
+    ],
+    scores: { a_wo115a: { s_b1: { v: 18 }, s_b2: { v: 15 } }, a_wo115b: { s_b1: { v: 88 } } },
+  };
+  /* One meeting, one mark, one assignment, one score — a file that holds SOME of the term rather
+     than none of it, which is the only fixture that can tell a sentence naming the DIFFERENCE from
+     one reprinting the count on this device. Against the record above the excesses are 2, 2, 1, 2. */
+  const WO115_THIN = {
+    attendance: [{ classId: 'c_b1', date: '2026-09-08', marks: { s_b1: { code: 'A' } } }],
+    assignments: [WO115_FULL.assignments[0]],
+    scores: { a_wo115a: { s_b1: { v: 18 } } },
+  };
+  /* The same record with one more meeting, one more mark and one more score in it: the file that is
+     AHEAD of the device, which is what every restore after an eviction looks like. */
+  const WO115_RICHER = {
+    attendance: WO115_FULL.attendance.concat(
+      [{ classId: 'c_b1', date: '2026-09-14', marks: { s_b1: { code: 'A' } } }]),
+    assignments: WO115_FULL.assignments,
+    scores: { a_wo115a: { s_b1: { v: 18 }, s_b2: { v: 15 } },
+      a_wo115b: { s_b1: { v: 88 }, s_b2: { v: 79 } } },
+  };
+  /* A backup file with a record dropped into it, built from the one this run already produced — so
+     it is a genuine Planbook backup of this year in every respect except what it holds. */
+  const wo115File = (record, year) => {
+    const d = JSON.parse(built.text);
+    if (record) { d.attendance = record.attendance; d.assignments = record.assignments; d.scores = record.scores; }
+    if (year) d.year = year;
+    return JSON.stringify(d, null, 2);
+  };
+  /* One file through the real restore path, one reading of the confirm, cancelled. Nothing here
+     confirms: the swap has its own checks above and a confirm would write the fixture to disk. */
+  const wo115Confirm = async (text, name) => await evalJs(`(async function(){
+    var b = window.planbook.backup;
+    var ok = await b.restoreFromText(${JSON.stringify(text)}, ${JSON.stringify(name)});
+    var m = document.getElementById('restoreConfirmModal');
+    var loss = document.getElementById('restoreConfirmLoss');
+    var sides = [], nodes = document.querySelectorAll('#restoreCompare .restore-side');
+    for (var i = 0; i < nodes.length; i++) sides.push(nodes[i].textContent.replace(/\\s+/g,' '));
+    var out = { ok: ok, open: !m.classList.contains('hidden'), sides: sides,
+      lossHidden: !loss || loss.classList.contains('hidden'),
+      loss: loss ? loss.textContent.replace(/\\s+/g,' ') : '(no #restoreConfirmLoss element)',
+      note: document.getElementById('restoreConfirmNote').textContent.replace(/\\s+/g,' '),
+      button: document.getElementById('restoreConfirmBtn').textContent,
+      whole: m.textContent.replace(/\\s+/g,' ') };
+    b.cancelRestore();
+    return out; })()`);
+
+  const wo115Plant = await evalJs(`(async function(){
+    var year = ${JSON.stringify(YEAR)}, record = ${JSON.stringify(WO115_FULL)};
+    var original = await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var q = db.transaction('years','readonly').objectStore('years').get(year);
+        q.onsuccess = function(){ res(q.result); db.close(); };
+        q.onerror = function(){ rej(q.error); }; }; });
+    if (!original) return { ok:false, why:'nothing is stored for ' + year + ' to build the fixture on' };
+    /* The file with a record added to it, so the rosters are identical BY CONSTRUCTION rather than
+       by two lists somebody kept in step. rev and updatedAt are the stored ones: a restore reads
+       rev off this record (src/store.js), and the checks after this section are about that number. */
+    var full = JSON.parse(${TEXT});
+    full.rev = original.rev;
+    full.updatedAt = original.updatedAt;
+    full.attendance = record.attendance;
+    full.assignments = record.assignments;
+    full.scores = record.scores;
+    await new Promise(function(res, rej){
+      var open = indexedDB.open('planbook');
+      open.onerror = function(){ rej(open.error); };
+      open.onsuccess = function(){ var db = open.result;
+        var t = db.transaction('years','readwrite');
+        t.objectStore('years').put(full);
+        t.oncomplete = function(){ db.close(); res(1); };
+        t.onerror = function(){ rej(t.error); }; }; });
+    var back = await window.planbook.store.readStoredDocument(year);
+    return { ok:true, original: original, mode: window.planbook.supports.presentationMode(),
+             storedRoster: JSON.stringify({ classes:(back.classes||[]).map(function(c){ return c.id; }),
+                                            students:(back.students||[]).map(function(s){ return s.id; }) }),
+             storedRecord: JSON.stringify({ attendance: back.attendance, assignments: back.assignments,
+                                            scores: back.scores }) }; })()`);
+
+  const fileRoster = (() => { const d = JSON.parse(built.text);
+    return JSON.stringify({ classes: d.classes.map(c => c.id), students: d.students.map(s => s.id) }); })();
+  const fileRecord = (() => { const d = JSON.parse(built.text);
+    return JSON.stringify({ attendance: d.attendance, assignments: d.assignments, scores: d.scores }); })();
+  check('the WO-1.15 fixture is real: the roster matches on both sides and only the record differs',
+    wo115Plant.ok === true && wo115Plant.storedRoster === fileRoster
+      && wo115Plant.storedRecord !== fileRecord
+      && JSON.parse(fileRecord).attendance.length === 0,
+    wo115Plant.ok
+      ? 'stored and file rosters are both ' + fileRoster + '; the file holds '
+        + JSON.parse(fileRecord).attendance.length + ' attendance record(s) and the stored document '
+        + JSON.parse(wo115Plant.storedRecord).attendance.length
+      : 'the fixture was never planted: ' + wo115Plant.why);
+
+  const wo115Zero = await wo115Confirm(built.text, 'Planbook ' + YEAR + ' backup 2026-05-04.json');
+  const wo115Stored = wo115Zero.sides[0] || '';
+  const wo115Incoming = wo115Zero.sides[1] || '';
+  check('the compare counts the record on both sides — meetings, marks, assignments and scores',
+    wo115Zero.open === true && wo115Zero.sides.length === 2
+      && /3 recorded meetings · 3 attendance marks/.test(wo115Stored)
+      && /2 assignments · 3 scores/.test(wo115Stored)
+      && /0 recorded meetings · 0 attendance marks/.test(wo115Incoming)
+      && /0 assignments · 0 scores/.test(wo115Incoming)
+      /* The roster line is the same sentence on both sides, twice on the panel: the counts that
+         differ are the record's, which is the whole claim. */
+      && (wo115Zero.sides.join(' ').match(/1 class · 2 students/g) || []).length === 2,
+    'on this device now: ' + JSON.stringify(wo115Stored.slice(0, 150))
+      + ' | in the backup file: ' + JSON.stringify(wo115Incoming.slice(0, 150))
+      + ' (the stored record holds 4 attendance records, one of them dropped, and 4 mark cells, one '
+      + 'of them a U — so 3 meetings and 3 marks is the dropped record and the U both excluded, and '
+      + '3 scores is an object count() would answer 0 for)');
+  check('and the confirm says in words what would be lost, before the button is pressed',
+    wo115Zero.lossHidden === false
+      && new RegExp('The ' + YEAR + ' school year on this device holds more than the file does')
+        .test(wo115Zero.loss)
+      && /loses 3 recorded meetings, 3 attendance marks, 2 assignments and 3 scores, which this file does not have/
+        .test(wo115Zero.loss)
+      && /backup taken from this device/.test(wo115Zero.loss)
+      && wo115Zero.button === 'Replace ' + YEAR,
+    JSON.stringify(wo115Zero.loss.slice(0, 300)) + ' · button "' + wo115Zero.button + '"');
+
+  const wo115Thin = await wo115Confirm(wo115File(WO115_THIN), 'Planbook ' + YEAR + ' backup thin.json');
+  check('what it names is the DIFFERENCE, not the count on this device — the reader does not subtract',
+    wo115Thin.lossHidden === false
+      && /loses 2 recorded meetings, 2 attendance marks, 1 assignment and 2 scores, which this file does not have/
+        .test(wo115Thin.loss)
+      && /1 recorded meeting · 1 attendance mark/.test(wo115Thin.sides[1] || '')
+      && /3 recorded meetings · 3 attendance marks/.test(wo115Thin.sides[0] || ''),
+    'device 3/3/2/3 against a file holding 1/1/1/1 → '
+      + JSON.stringify((wo115Thin.loss.match(/loses [^—]+/) || ['(no sentence)'])[0]));
+
+  const wo115Same = await wo115Confirm(wo115File(WO115_FULL), 'Planbook ' + YEAR + ' backup same.json');
+  const wo115More = await wo115Confirm(wo115File(WO115_RICHER), 'Planbook ' + YEAR + ' backup richer.json');
+  check('a file holding as much as this device, or more, gets no warning at all (the Traps line)',
+    wo115Same.open === true && wo115Same.lossHidden === true && wo115Same.loss === ''
+      && wo115More.open === true && wo115More.lossHidden === true && wo115More.loss === ''
+      /* Non-vacuous: both panels are still drawn, still name both sides, and the richer one really
+         is richer on screen — a build that never warns fails the two checks above, and a build that
+         drew no panel at all would fail here. */
+      && /3 recorded meetings · 3 attendance marks/.test(wo115Same.sides[1] || '')
+      && /4 recorded meetings · 4 attendance marks/.test(wo115More.sides[1] || '')
+      && /4 scores/.test(wo115More.sides[1] || ''),
+    'own backup (3/3/2/3 both sides): warning ' + (wo115Same.lossHidden ? 'absent' : 'SHOWN')
+      + '; a file at 4/4/2/4 over a device at 3/3/2/3: warning '
+      + (wo115More.lossHidden ? 'absent' : 'SHOWN'));
+
+  /* A year the device does not hold, ASKED FOR rather than assumed: `2030-2031` — gates.md's own
+     example of a label that cannot be mistaken for the term — is created by the year-picker section
+     three hundred lines above, so the first version of this check reported "could not be asked" and
+     went red. The label is derived from the years that are really there, and an empty answer stays a
+     red check rather than a silent skip. */
+  const wo115Other = await evalJs(`(async function(){ var years = await window.planbook.store.listYears();
+    return { years: years, open: window.planbook.store.getDoc().year }; })()`);
+  const WO115_OTHER = (() => {
+    for (let y = 2030; y < 2100; y++) {
+      const label = y + '-' + (y + 1);
+      if (wo115Other.years.indexOf(label) === -1) return label;
+    }
+    return '';
+  })();
+  const wo115Add = WO115_OTHER
+    ? await wo115Confirm(wo115File(WO115_THIN, WO115_OTHER), 'Planbook ' + WO115_OTHER + ' backup.json')
+    : null;
+  check('restoring a year this device does not hold is unaffected — no warning it does not deserve',
+    !!wo115Add && wo115Add.open === true && wo115Add.lossHidden === true && wo115Add.loss === ''
+      && new RegExp('Nothing for ' + WO115_OTHER + ' is stored here').test(wo115Add.sides[0] || '')
+      && /1 recorded meeting · 1 attendance mark/.test(wo115Add.sides[1] || '')
+      && wo115Add.button === 'Add ' + WO115_OTHER
+      && new RegExp('The year you have open, ' + wo115Other.open + ', is not touched')
+        .test(wo115Add.note || ''),
+    wo115Add
+      ? 'a ' + WO115_OTHER + ' file holding 1/1/1/1 over a device holding '
+        + JSON.stringify(wo115Other.years) + ': button "' + wo115Add.button + '", warning '
+        + (wo115Add.lossHidden ? 'absent' : 'SHOWN — a safe act must not acquire one')
+      : 'every label from 2030-2031 to 2099-2100 is already on this device, so this could not be asked');
+
+  /*
+    Acceptance line 4, in both presentation modes, and the mode-OFF pass is the one that matters:
+    with the toggle off, support data is visible everywhere else in the app, so a panel that leaked
+    it would leak it there. The sentinels are asserted present in both documents being described
+    FIRST — an absence check over a document with nothing on file proves nothing — and the whole
+    dialog is searched, not only the two columns, because the loss sentence and the lead are on it
+    too. This panel is projected in exactly the situation the mode exists for: a teacher restoring a
+    backup with the room watching.
+  */
+  const wo115Modes = [];
+  for (const mode of [false, true]) {
+    await evalJs('window.planbook.supports.setPresentationMode(' + (mode ? 'true' : 'false') + ');1');
+    const seen = await wo115Confirm(built.text, 'Planbook ' + YEAR + ' backup modes.json');
+    wo115Modes.push({ mode: mode, length: seen.whole.length,
+      hits: ['epi-pen in the nurse office', 'IEP', 'extended-time'].filter(s => seen.whole.includes(s)) });
+  }
+  await evalJs('window.planbook.supports.setPresentationMode('
+    + (wo115Plant.mode ? 'true' : 'false') + ');1');
+  check('no support detail reaches the restore panel, in either presentation mode',
+    /epi-pen in the nurse office/.test(built.text) && /"plan": "IEP"/.test(built.text)
+      && /extended-time/.test(wo115Plant.storedRecord + built.text)
+      && wo115Modes.length === 2 && wo115Modes.every(m => m.hits.length === 0 && m.length > 200),
+    wo115Modes.map(m => 'presentation ' + (m.mode ? 'on' : 'off') + ': ' + m.length
+      + ' characters of dialog, sentinels found = ' + JSON.stringify(m.hits)).join(' | ')
+      + ' (all three are in the file and in the stored document, asserted here)');
+
+  /* The stored record put back exactly as it was lifted — every check after this section reads this
+     year, and one of them compares the document on disk against the file byte for byte in content. */
+  await evalJs(`(async function(){ return new Promise(function(res, rej){
+    var open = indexedDB.open('planbook');
+    open.onerror = function(){ rej(open.error); };
+    open.onsuccess = function(){ var db = open.result;
+      var t = db.transaction('years','readwrite');
+      t.objectStore('years').put(${JSON.stringify(wo115Plant.original || {})});
+      t.oncomplete = function(){ db.close(); res(1); };
+      t.onerror = function(){ rej(t.error); }; }; }); })()`);
+  const wo115Back = await evalJs(`(async function(){
+    var d = await window.planbook.store.readStoredDocument(${JSON.stringify(YEAR)});
+    return { text: JSON.stringify(d), mode: window.planbook.supports.presentationMode(),
+             confirmOpen: !document.getElementById('restoreConfirmModal').classList.contains('hidden') }; })()`);
+  check('the WO-1.15 fixture is put back byte for byte, so the sections below inherit nothing',
+    wo115Plant.ok === true && wo115Back.text === JSON.stringify(wo115Plant.original)
+      && wo115Back.mode === wo115Plant.mode && wo115Back.confirmOpen === false,
+    'the stored ' + YEAR + ' record is identical to the one lifted out ('
+      + (wo115Back.text || '').length + ' characters), presentation mode is back to '
+      + wo115Back.mode + ', and no confirm was left open');
+
   /* The two entry points a teacher actually uses, driven as closely as a script can get. A page
      cannot be handed a File by a script — but it can be handed a DataTransfer holding one,
      which is exactly what a drop and a file picker deliver, so everything from the event inward

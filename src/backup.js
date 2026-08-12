@@ -38,6 +38,12 @@ import {
   readStoredDocument, restoreDocument, SCHEMA_VERSION,
 } from './store.js';
 import { openModal, closeModal } from './modal.js';
+/* One import for one function, and it is the only thing this module takes from a screen: what
+   counts as a recorded meeting is src/attendance.js's answer and has been since WO-2.1, so the
+   restore confirm asks it rather than testing `exception` for itself. A copy of that test here
+   could agree with itself and disagree with the ledger, in the dialog that decides whether a term
+   survives. See ledgerCountsIn()'s header for why it takes a document. */
+import { ledgerCountsIn } from './attendance.js';
 import { zipStored } from './zip.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
@@ -45,6 +51,7 @@ import { refreshYearButton } from './year-picker.js';
 
 const PANEL_ID = 'backupModal';
 const CONFIRM_ID = 'restoreConfirmModal';
+const LOSS_ID = 'restoreConfirmLoss';
 const NAG_ID = 'backupNag';
 const STATUS_ID = 'backupStatus';
 const LAST_ID = 'backupLast';
@@ -97,7 +104,28 @@ function showStatus(message, tone) {
 
 function count(list) { return Array.isArray(list) ? list.length : 0; }
 
+/* SCORE CELLS, WHICH IS NOT count(doc.scores). `scores` is an object keyed by assignment and then
+   by student (docs/data-model.md), so the list counter above answers 0 for a full gradebook —
+   which on this panel would be a term of marks reported as nothing at stake, the exact defect
+   WO-1.15 exists to remove. src/classes.js's deletionCounts() counts the same thing the same way
+   for the class-delete confirm: a key that is not there means ungraded and is not a score. */
+function countScores(scores) {
+  if (!scores || typeof scores !== 'object' || Array.isArray(scores)) return 0;
+  return Object.keys(scores).reduce((n, id) => {
+    const column = scores[id];
+    return n + (column && typeof column === 'object' && !Array.isArray(column)
+      ? Object.keys(column).length : 0);
+  }, 0);
+}
+
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+/* "a, b and c" — the join the delete confirms use in prose, in one place because the loss sentence
+   below is the first thing here to need a list a teacher reads as a sentence. */
+function andList(parts) {
+  if (parts.length < 2) return parts.join('');
+  return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+}
 
 /* A date a teacher can compare against her own memory of the week. toLocaleString rather than
    the ISO string: "4 Aug 2026, 1:12 PM" answers "is this the file I made on Friday?" and
@@ -112,16 +140,66 @@ function whenSaved(iso) {
   }
 }
 
-/* The facts the confirm dialog names, from a document that may never have been opened. */
+/*
+  The facts the confirm dialog names, from a document that may never have been opened.
+
+  IT COUNTS THE RECORD AND NOT ONLY THE ROSTER, since WO-1.15, and the four record numbers are the
+  whole of that work order. Until then this returned six things — year, classes, students, saved,
+  rev, schemaVersion — so two documents with the same five classes and the same twenty-five students
+  drew an identical panel whether one held a term of marks and scores and the other held none. That
+  is exactly the pair of documents `plans/work-orders/gates.md` § "The iPad stays in the rotation"
+  exists to keep apart: restore is a wholesale replace (src/store.js restoreDocument()), so a backup
+  taken off the test iPad and opened on the teaching laptop replaced the real ledger with test data,
+  silently, and reported success — under a panel a careful teacher could read and learn nothing from.
+
+  MEETINGS, MARKS, ASSIGNMENTS AND SCORES, and that list is exhaustive on purpose. It is the four
+  things a teacher typed, and the panel is a screen she may be projecting: `supports` is in the file
+  (see this module's header) and is deliberately not counted here, because "3 students with plans" on
+  a projector is a disclosure to thirty students and a number is enough to make it. Days that did not
+  meet are counted by ledgerCountsIn() and not shown either — a dropped class is not a meeting and
+  nothing was recorded in it.
+*/
 function describe(doc) {
+  const ledger = ledgerCountsIn(doc);
   return {
     year: doc.year,
     classes: count(doc.classes),
     students: count(doc.students),
+    meetings: ledger.meetings,
+    marks: ledger.marks,
+    assignments: count(doc.assignments),
+    scores: countScores(doc.scores),
     saved: whenSaved(doc.updatedAt),
     rev: Number(doc.rev) || 0,
     schemaVersion: doc.schemaVersion,
   };
+}
+
+/*
+  WHAT REPLACING ONE DOCUMENT WITH ANOTHER WOULD COST, in the four numbers above — the excess the
+  stored side holds over the file, category by category, and nothing else.
+
+  IT IS AN EXCESS RATHER THAN A DIFFERENCE, which is the whole of WO-1.15's Traps line. Restoring a
+  year from its own backup is what backups are FOR, and a file that holds as much as the device does
+  — or more, which is every restore after an eviction — produces an empty list here and no warning
+  at all. A warning on the safe case is a warning a teacher learns to tap through, and she will be
+  tapping through it on the unsafe one.
+
+  NO THRESHOLD, and that is a decision rather than an omission: any excess is real work that exists
+  on this device and in no file, so the honest sentence names it and lets her judge. The alternative
+  is a number in here deciding for her how many of her own marks are worth mentioning.
+*/
+function wouldBeLost(stored, file) {
+  if (!stored || !file) return [];
+  const gaps = [];
+  const gap = (key, one, many) => {
+    if (stored[key] > file[key]) gaps.push(plural(stored[key] - file[key], one, many));
+  };
+  gap('meetings', 'recorded meeting', 'recorded meetings');
+  gap('marks', 'attendance mark', 'attendance marks');
+  gap('assignments', 'assignment', 'assignments');
+  gap('scores', 'score', 'scores');
+  return gaps;
 }
 
 /* ────────────────────────────── the backup file ────────────────────────────── */
@@ -617,6 +695,15 @@ function side(parent, label, facts, extra) {
   line(box, 'restore-side-year', facts.year);
   line(box, 'restore-side-line', plural(facts.classes, 'class', 'classes') + ' · '
     + plural(facts.students, 'student', 'students'));
+  /* The record, in the same ` · ` grammar as the roster line above it and on two lines rather than
+     one: attendance and the gradebook are the two things a teacher would miss, and four counts run
+     together read as a serial number. The zeros are printed rather than hidden — "0 recorded
+     meetings" against "46" on the other side is the sentence this panel exists to say, and a line
+     that disappeared when it had nothing to report would take it away in exactly that case. */
+  line(box, 'restore-side-line', plural(facts.meetings, 'recorded meeting', 'recorded meetings')
+    + ' · ' + plural(facts.marks, 'attendance mark', 'attendance marks'));
+  line(box, 'restore-side-line', plural(facts.assignments, 'assignment', 'assignments') + ' · '
+    + plural(facts.scores, 'score', 'scores'));
   line(box, 'restore-side-line', 'Last saved ' + facts.saved);
   line(box, 'restore-side-note', plural(facts.rev, 'save', 'saves') + ' behind it');
   if (extra) line(box, 'restore-side-note', extra);
@@ -632,6 +719,12 @@ function side(parent, label, facts, extra) {
   The outgoing side is read straight off disk without opening it, so this works even when the
   stored document is one boot() refused: a year written by a newer build still has a roster
   worth counting, and that case is the whole reason there is an exit from the loading screen.
+
+  AND SINCE WO-1.15 IT SAYS THE ANSWER OUT LOUD when the stored side holds more of the record than
+  the file does, instead of leaving a teacher to subtract two columns of numbers in the two seconds
+  before she destroys a term. Nothing here guesses which DEVICE the file came from — there is no
+  field for that and there must not be one; the fix is to make the difference visible, not to make
+  the app clever.
 */
 async function openRestoreConfirm(doc, applied, opener) {
   const stored = await readStoredDocument(doc.year);
@@ -648,17 +741,44 @@ async function openRestoreConfirm(doc, applied, opener) {
         + 'this adds it and opens it.';
   }
 
+  /* Described once and read twice — the panel prints both sides and the sentence below compares
+     them, and two calls to describe() on one document is how one screen comes to hold two counts
+     of the same thing. */
+  const outgoing = stored ? describe(stored) : null;
+  const incoming = describe(doc);
+
   const compare = document.getElementById('restoreCompare');
   if (compare) {
     compare.textContent = '';
-    side(compare, 'On this device now', stored ? describe(stored) : null,
+    side(compare, 'On this device now', outgoing,
       stored
         ? (stored.schemaVersion !== SCHEMA_VERSION
             ? 'Written by a different version of Planbook (schema ' + stored.schemaVersion + ')'
             : '')
         : 'Nothing for ' + doc.year + ' is stored here.');
-    side(compare, 'In the backup file', describe(doc),
+    side(compare, 'In the backup file', incoming,
       applied && applied.length ? 'Brought up to date from an older version (' + applied.join(', ') + ')' : '');
+  }
+
+  /*
+    The subtraction, done for her, in the danger wash the delete confirms use — and only when there
+    is one to do. It sits between the numbers it summarises and the button it is about, because the
+    last thing read before a tap is the thing that stops it.
+
+    It names the file rather than the device, deliberately: "this file does not have them" is a fact
+    about what is in her hand, where "this file came from your iPad" would be a guess the format
+    cannot support. And it says what the way back is, because a teacher who has just been told what
+    she is about to lose is one sentence away from believing it is already gone.
+  */
+  const lost = document.getElementById(LOSS_ID);
+  if (lost) {
+    const gaps = wouldBeLost(outgoing, incoming);
+    lost.textContent = gaps.length
+      ? 'The ' + doc.year + ' school year on this device holds more than the file does. Replacing '
+        + 'it loses ' + andList(gaps) + ', which this file does not have — and the only way back '
+        + 'to that is a backup taken from this device. Check that this is the file you meant.'
+      : '';
+    lost.classList.toggle('hidden', !gaps.length);
   }
 
   const note = document.getElementById('restoreConfirmNote');

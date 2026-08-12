@@ -726,7 +726,7 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 629 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 637 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -736,7 +736,10 @@ direction and cases 13-15) added to the grade-engine block, none inside a loop; 
 596 to 599, three literal call sites in three different sections, likewise none inside a loop; WO-3.7
 moved it from 599 to 627, twenty-eight in one new section at the foot of the file, of which one is a
 fixture-guard failure arm and one sits inside a two-pass loop, and then to 629 on its correction
-round — two more in the same section, both about the page box (see the WO-3.7 block below). *(The
+round — two more in the same section, both about the page box (see the WO-3.7 block below); WO-1.15
+moved it from 629 to 637, eight literal call sites inside the existing `backup & restore` section,
+none of them in a loop and none of them a failure arm — its own two-pass presentation-mode loop is in
+Node, around one call site that fires once. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -759,13 +762,16 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 629 − 628 = 1 on this tree (627 − 626 = 1 before WO-3.7's correction round,
+could go and name.** It is 637 − 636 = 1 on this tree (629 − 628 = 1 before WO-1.15,
+627 − 626 = 1 before WO-3.7's correction round,
 599 − 598 = 1 immediately before WO-3.7,
 596 − 595 = 1 before WO-2.24 and
 592 − 591 = 1 before WO-3.12 — the four sites WO-3.12 added and the three WO-2.24 added each execute
 exactly once, WO-3.7's twenty-eight produced exactly twenty-eight results by the same accident
-WO-2.6's eighteen did, and its correction round's two are two more literal sites outside any loop, so
-the gap itself has not moved in four work orders), it was
+WO-2.6's eighteen did, its correction round's two are two more literal sites outside any loop, and
+WO-1.15's eight are eight more of the same — its presentation-mode loop is in the harness's own Node
+half rather than around a `check()`, which is why eight sites made eight results — so
+the gap itself has not moved in five work orders), it was
 589 − 582 = 7 before WO-2.21, and it was
 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
@@ -957,6 +963,47 @@ the same defect. Watched failing before being written down: with the one line re
 column(s), side by side = false` and the second naming
 `@media (max-width: 1024px) { .detail-cols { grid-template-columns } } unpinned on div.detail-cols`.
 Everything else stayed green in that run, which is the escape restated as a measurement.
+
+**636 at WO-1.15**, measured the same way: `636 checks · 636 passed · 0 failed · 0 skipped`, 15,750
+lines, 24.8 lines per check, 206s. Eight call sites, eight results, and **all eight are inside the
+existing `backup & restore` section rather than in a new one at the foot of the file** — that work
+order said so in as many words, and it is the right call: everything they need is already standing up
+there (a document with support data on it, a real backup file of it, the confirm driven through
+`restoreFromText()`), and a second section would have rebuilt all of it two hundred lines later. Four
+things about them are worth knowing.
+
+**The fixture is the whole argument, and it is built by ADDING to the file rather than by writing a
+second document.** `describe()` used to count `classes` and `students` and nothing else, so a term of
+marks and an empty test document drew an identical panel — the pair `plans/work-orders/gates.md`
+§ "The iPad stays in the rotation" exists to keep apart. A check written against a fixture whose
+rosters *also* differed would go green against that build. So the planted document IS the run's own
+backup file with a record dropped into it: same class, same two students, by construction rather than
+by two lists somebody kept in step, and the first of the eight asserts exactly that before any of the
+others reads a number.
+
+**The record is planted straight into IndexedDB, because the surface under test is the disk.** The
+compare's outgoing side is `readStoredDocument()` — a raw get that does not open the year and does not
+migrate (`src/backup.js`) — so `s.update()` would have been measuring the wrong document. It is lifted
+out first and put back byte for byte at the end, the poisoned-year fixture's own shape, and the
+put-back is asserted rather than assumed: everything after this section reads that year, and one check
+in it compares the record on disk against the file byte for byte in content.
+
+**Three of the five files it feeds through the dialog must produce NO warning, and those three carry
+the Traps line.** Replacing a year from its own backup is what backups are for, so an equal file, a
+file holding *more* than the device, and a file for a year the device does not hold are each asserted
+silent — a red panel on the safe case is one a teacher learns to tap through before she meets the case
+that can destroy a term. The two that must warn are a zero-record file (the acceptance line's own
+case) and a file holding *some* of the term, and the second exists for one reason: against a
+zero-record file, a sentence naming the difference and a sentence reprinting the count on this device
+are the same string. 1/1/1/1 against 3/3/2/3 is the only fixture that can tell them apart.
+
+**And the counter's three deliberate exclusions are all in one four-record fixture**, which is what
+makes `3 recorded meetings · 3 attendance marks · 2 assignments · 3 scores` a claim rather than a
+number: one record carries `exception: 'dropped'` (not a meeting), one mark cell carries `U` (not a
+mark — nobody has looked at that student yet), and `scores` is an object keyed by assignment then
+student, which `count()` answers **0** for. A naive counter reads 4/4/2/0 on that document, and every
+one of those three errors is in the direction that reports a full gradebook as nothing at stake. Five
+mutations, all reverted and tabulated in `TESTING.md` § WO-1.15.
 
 ### Driving a browser over CDP — ten traps, all of which first look like app defects
 

@@ -730,6 +730,74 @@ pull.*
 
 ---
 
+### WO-1.15 — the restore compare cannot see what it is about to delete
+
+**What this changes, in one sentence:** the restore confirm now counts recorded meetings, attendance
+marks, assignments and score cells on both sides, and says in words what replacing one document with
+the other would cost — when it would cost anything.
+
+**The defect it closes is silent, which is why it is worth a section.** `describe()` returned six
+things — `year`, `classes`, `students`, `saved`, `rev`, `schemaVersion` — so two documents with the
+same five classes and the same twenty-five students drew an **identical** panel whether one held a
+term of marks and scores and the other held none. That is exactly the pair
+[`plans/work-orders/gates.md`](plans/work-orders/gates.md) § *The iPad stays in the rotation* exists to
+keep apart: restore is a wholesale replace, so a backup taken off the test iPad and opened on the
+teaching laptop replaced the real ledger with test data, silently, reporting success, under a button
+that read *"Replace 2026-2027"*. The year label is still the primary guard and WO-1.16 is still the
+primary fix; this is defence in depth for the case where both devices hold the same label, which is
+the case today.
+
+*Evidence for the Acceptance list in
+[`plans/work-orders/phase-1-shell-store-roster.md`](plans/work-orders/phase-1-shell-store-roster.md)
+§ WO-1.15 lives there, beside each line. What is here is the desk pass, the mutation runs, and the one
+line still owed to a human.*
+
+**Desk pass, 2026-08-12.** `node tools/verify-shell.mjs` at **636 checks · 636 passed · 0 failed · 0
+skipped**, 15,750 lines, 206s, exit 0 — up from 628 of 628, eight checks added inside the existing
+`backup & restore` section. `node tools/wo-sweep.mjs` at **17 checks · 15 passed · 0 failed · 2 to
+review**, exit 0; both REVIEWs are the standing ones (the sensitive-field-name sweep at 188 mentions,
+unchanged file list, and `src/detail.js:349`). `sw.js`'s `CACHE` is bumped to **`planbook-shell-v47`**,
+because three files in `SHELL` changed.
+
+**The five mutations, all reverted.** Each was run against the whole harness, not just this section,
+so the number beside it is *everything* that noticed:
+
+| Mutation | Result |
+|---|---|
+| `ledgerCountsIn()` counts every attendance record as a meeting (the naive `doc.attendance.length`) | **4 red.** The stored side reads `4 recorded meetings`, the loss sentence says `loses 4 recorded meetings`, the difference check reads `3` where the fixture demands `2`, and the no-warning check catches the richer file at `5 recorded meetings` |
+| `describe()` uses `count(doc.scores)` instead of `countScores()` — the array counter over an object | **4 red**, each printing `0 scores` on a document holding three. This is the defect the work order's brief predicted by name |
+| `wouldBeLost()` fires on any difference (`!==`) instead of on an excess (`>`) | **1 red**, and it is the Traps line: *"a file at 4/4/2/4 over a device at 3/3/2/3: warning SHOWN"* |
+| the loss sentence prints the count on this device instead of the excess | **1 red**, the difference check: *"loses 3 recorded meetings, 3 attendance marks, 2 assignments and 3 scores"* where the file already holds 1/1/1/1 |
+| every replace is treated as dangerous (the warning fires whenever a document is stored) | **1 red**, the Traps line again and both halves of it this time: *"own backup (3/3/2/3 both sides): warning SHOWN"* |
+
+*Three of those five turn exactly one check red, which is the isolation worth having. The other two
+turn four red each and it is the same four every time — the counter feeds the panel, the sentence and
+the difference, so a counter that is wrong is wrong in three places at once.*
+
+**One thing the mutations say that no argument would have.** Nothing else in the harness noticed any
+of the five. 628 checks were green over a build whose restore confirm could not see a term of marks,
+and they stayed green through every mutation above except the eight added here — which is the same
+finding WO-1.14 recorded a week earlier in a different register: a check can only see what it was
+pointed at.
+
+**The 👤 line WO-1.15 owes**, on the installed iPad, at the confirm dialog with a real file:
+
+- [x] The compare panel still **fits** with four counts a side rather than two — at 390px the two
+      cards stack (`.restore-side` is `flex: 1 1 200px`), so the question is whether the dialog scrolls
+      to reach the button rather than whether the numbers wrap. 👤
+- [x] The **Replace** button still measures 44px and is still reachable without hunting, with the loss
+      paragraph above it pushing it down. 👤
+- [x] The loss paragraph reads as a **stop** rather than as decoration — same red as the class-delete
+      facts, and legible at arm's length at the 13px the coarse block gives it. 👤
+- [x] Restore a file that holds *less* than the device does and read the sentence cold, without
+      knowing what it was going to say. Does it name the right thing to check? 👤
+
+*A desk harness can measure the box and cannot answer any of those four: headless Chromium has no
+thumb, no safe-area inset, and no teacher in a hurry. All four confirmed by the owner on the
+installed iPad, 2026-08-12, in one sitting against the confirm dialog with a real backup file.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

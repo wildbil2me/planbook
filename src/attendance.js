@@ -1102,6 +1102,48 @@ export function meetingsBetween(from, to) {
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
+/*
+  HOW MUCH OF THE LEDGER A WHOLE DOCUMENT HOLDS — every class, every date, in three numbers.
+  Written for src/backup.js's restore confirm (WO-1.15), which used to count `students` and
+  `classes` and nothing else, so an empty term and a full one drew the same panel.
+
+  IT IS HERE FOR THE REASON meetingsBetween() GIVES ABOVE: "what is a meeting" is this file's
+  answer, and `doc.attendance.length` in the backup module would have been the second definition —
+  one that counts a dropped class as a meeting and would have gone quietly wrong in the dialog
+  that decides whether a term survives. Everything else in this app already asks stateOf().
+
+  IT TAKES A DOCUMENT INSTEAD OF READING getDoc(), which is what makes it the only reader here
+  shaped this way, and the restore confirm is why: the two documents it describes are a raw stored
+  record for a year that is NOT open (possibly written by an older build) and the parsed contents
+  of a file another browser wrote. stateOf() cannot answer about either, because its calendar rung
+  is a question about the current document — and it does not need to. Only the first two rungs of
+  plans/rotating-schedule.md § Precedence can be seen in a document at all:
+
+    a record with no `exception`  → the class MET, and this counts it
+    a record with an `exception`  → it did not meet, counted apart as `notMeeting`
+    no record                     → NOT TAKEN YET, which is not a thing any count can see
+
+  A `U` IS NOT A MARK. It means nobody has looked at that student yet, and the rule that arrives
+  with it is that it never appears in a total (docs/data-model.md) — a half-taken class must not
+  report twenty-five marks the teacher never made, least of all on a screen whose whole job is to
+  say how much is at stake. codeOf() does the reading, so a document from before WO-2.10 with bare
+  string cells counts identically to one written after it.
+*/
+export function ledgerCountsIn(doc) {
+  const records = attendanceIn(doc);
+  let meetings = 0;
+  let marks = 0;
+  records.forEach((r) => {
+    if (!r || r.exception) return;
+    meetings += 1;
+    const cells = marksOf(r);
+    Object.keys(cells).forEach((id) => {
+      if (codeOf(cells[id]) !== UNCONFIRMED) marks += 1;
+    });
+  });
+  return { meetings: meetings, notMeeting: records.length - meetings, marks: marks };
+}
+
 function coverTitle(event) {
   return event && typeof event.title === 'string' ? event.title.trim() : '';
 }

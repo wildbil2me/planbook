@@ -2079,10 +2079,17 @@
 </div>
 
 <!-- The restore confirm. It sits on top of the panel above — src/modal.js keeps a stack, so
-     Escape closes this one and leaves that one open. The three empty elements are filled by
+     Escape closes this one and leaves that one open. The four empty elements are filled by
      src/backup.js with facts read out of the file and off the disk: which year, how many
-     classes, how many students, and when each was last saved. They are empty here because a
-     hand-written specimen would be a second truth to keep in step with the real one. -->
+     classes and students, how much of the record — recorded meetings, marks, assignments and
+     scores — and when each was last saved. They are empty here because a hand-written specimen
+     would be a second truth to keep in step with the real one.
+
+     #restoreConfirmLoss is the fourth, added at WO-1.15, and it is the only one of them that is
+     sometimes SILENT: it carries the subtraction between the two columns in words, and it appears
+     only when the document on this device holds more of the record than the file does. Restoring a
+     year from its own backup is what backups are for, and a red panel on that case would be one a
+     teacher learns to tap through before she meets the case that can destroy a term. -->
 <div class="modal-overlay hidden" id="restoreConfirmModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
     <div class="modal-header">
@@ -2092,6 +2099,7 @@
     <div class="modal-body">
       <p id="restoreConfirmLead"></p>
       <div class="restore-compare" id="restoreCompare"></div>
+      <p class="restore-loss hidden" id="restoreConfirmLoss"></p>
       <p class="restore-note hidden" id="restoreConfirmNote"></p>
       <div class="modal-actions">
         <button class="class-action-btn danger" id="restoreConfirmBtn" data-backup-confirm>Replace</button>

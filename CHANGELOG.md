@@ -121,6 +121,36 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-1.15 — the restore confirmation could not see what it was about to delete.** It compared the
+  two documents by roster: which year, how many classes, how many students, when each was saved. A
+  roster barely changes across a term, so a file saved in week one and a device holding ten weeks of
+  marks looked *the same* on that screen — same year, same twenty-five names — and the only honest
+  thing on it was a date the teacher had no reason to read as a warning. Pressing **Replace** was
+  the correct-looking act that destroyed the term.
+
+  **The confirm now counts the record on both sides** — recorded meetings, attendance marks,
+  assignments and score cells — and when the year on this device holds more of it than the file
+  does, a red line says so in words, naming what would be lost before the button is reachable. The
+  numbers in that sentence are the **subtraction**, not the stored totals: a file holding one of
+  each against a device holding three meetings, three marks, two assignments and three scores reads
+  *loses 2 recorded meetings, 2 attendance marks, 1 assignment and 2 scores*.
+
+  **It is silent whenever the act is safe**, and that is the point rather than an omission.
+  Restoring a year from its own backup, or from a fuller one, or adding a year this device has
+  nothing for, says nothing extra — a red panel a teacher meets on every ordinary restore is one she
+  learns to tap through before the day it matters. The test is an excess, not a difference.
+
+  **Nothing sensitive is counted.** No accommodation, medical or plan data appears on the panel in
+  either presentation mode, not even as a bare number — the four record counts are the whole of it,
+  deliberately.
+
+  **What this is and is not.** The year label remains the primary guard, and opening the term in a
+  fresh year (WO-1.16) remains the primary fix; this is defence in depth for the case where both
+  devices carry the same label, which is the case today. Worth recording alongside it: the 628
+  existing automated checks were green over the whole of this defect and stayed green through every
+  mutation of it — the eight checks added here are the only ones that ever saw it. A check can only
+  see what it was pointed at.
+
 - **WO-1.14 — the app loaded once and then refused to load again.** On the first real deployment,
   Planbook came up, and every navigation after that failed. Safari said *"the response served by the
   service worker has redirections"*; on a home-screen icon that is a white screen where a term of

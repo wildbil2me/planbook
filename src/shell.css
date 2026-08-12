@@ -1175,6 +1175,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   margin-top: 12px; padding: 8px 11px; border-radius: 8px;
   background: #eef2ff; color: #5b6fcc; font-size: 12px; line-height: 1.5;
 }
+/* What a restore would DESTROY, in the same danger wash as `.class-delete-facts` and for the same
+   stated reason: it is the one thing on this panel that cannot be undone. Red rather than the amber
+   the nag and the never-downloaded line wear — amber in this app means "act on this" and red means
+   "this destroys something" (src/presentation.js says the same thing from the other end), and this
+   is the second one. It is drawn only when the stored side holds more of the record than the file
+   does, which is what keeps the red meaning something: a wash on every replace is a wash a teacher
+   taps through. Above `.restore-note`'s quiet indigo in the markup, because a warning under an
+   aside is a warning read second. */
+.modal-body .restore-loss {
+  margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #f0b0b0; background: #fdeaea;
+  color: #c0392b; font-size: 12px; line-height: 1.5;
+}
 
 /* ── RESPONSIVE ── */
 /* Declaration order is from design/style-guide.md §6 and is not alphabetical or
@@ -1443,6 +1456,11 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .modal-body .backup-other-years { font-size: 13px; }
   .modal-body .backup-status { font-size: 13px; }
   .modal-body .restore-note { font-size: 13px; }
+  /* Prose, not a target — the 44px next to it belongs to `.class-action-btn` above, which the
+     Replace and Cancel buttons under it both are. Named here for the size bump for the reason every
+     other line in this block gives: 12px is unreadable at arm's length on a tablet, and this is the
+     one paragraph in the app whose whole job is to be read before a tap. */
+  .modal-body .restore-loss { font-size: 13px; }
   .restore-side-line { font-size: 13px; }
   .restore-side-note, .restore-side-empty { font-size: 12px; }
   /* The 44px belongs to the <input>, not to the box around it. Giving `.search-box` the
