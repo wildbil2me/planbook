@@ -24,6 +24,20 @@
 #
 # no-cache is not no-store: the browser still keeps the copy and revalidates it, so a deploy
 # that changed nothing costs a 304 rather than a download.
+#
+# THIS FILE IS NOT THE WHOLE STORY, and the part it cannot say is the part that bit first.
+# A Cloudflare zone has its own Browser Cache TTL, and on a new zone it defaults to four hours.
+# It rewrites Cache-Control on anything the edge caches, which includes .js — so the first
+# deploy served /sw.js as `max-age=14400` with this file in place and correct, and the rule
+# above simply did not survive the trip. HTML escapes it only because the edge does not cache
+# HTML by default (cf-cache-status: DYNAMIC), which is why `/` looked right and hid the problem.
+# The zone must be set to **Respect Existing Headers** (Caching -> Configuration) or nothing
+# here binds. Measured on the wire, WO-8.7, 2026-08-12. Re-read /sw.js after any zone change:
+# a green file in the repo proves nothing about what a teacher's browser was told.
+#
+# /index.html 308-redirects to / on Pages. The rule below is kept anyway, because it costs
+# nothing and the redirect is the host's behaviour rather than ours. sw.js must NOT precache
+# that path — see the note on SHELL in sw.js for what happened when it did.
 
 /sw.js
   Cache-Control: no-cache

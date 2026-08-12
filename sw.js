@@ -34,14 +34,22 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v45';
+const CACHE = 'planbook-shell-v46';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
    absolute so the app still works served from a subdirectory. */
+/* `./index.html` is deliberately NOT on this list, and putting it back breaks the app on the
+   first navigation. Cloudflare Pages answers `/index.html` with a 308 to `/`. `addAll` follows
+   that redirect and stores a response whose `redirected` flag is set; serving one of those to a
+   navigation is a spec violation, and Safari refuses it outright with "the response served by
+   the service worker has redirections" — a white screen on the home-screen icon, which on this
+   app reads as a term of grades gone. The scar: WO-8.7's first deploy, 2026-08-12, found on the
+   owner's iPad within minutes of the domain going live. Nothing local could have caught it —
+   the redirect is the host's, so it does not exist until the app is on Pages.
+   `./` is the same bytes without the redirect, and it is what a teacher's URL asks for anyway. */
 const SHELL = [
   './',
-  './index.html',
   './manifest.webmanifest',
   './src/shell.css',
   './src/home.css',
@@ -85,7 +93,9 @@ const SHELL = [
   './icons/icon-512.png',
 ];
 
-const INDEX = new URL('./index.html', self.location).href;
+/* The shell's cache key, and it must stay the same string the precache stored — `./`, not
+   `./index.html`. See the note on SHELL: the second one is a redirect on Pages. */
+const INDEX = new URL('./', self.location).href;
 const SHELL_PATHS = new Set(SHELL.map((p) => new URL(p, self.location).pathname));
 
 self.addEventListener('install', (event) => {

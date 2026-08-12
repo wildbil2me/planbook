@@ -346,6 +346,14 @@ reader will assume was skipped by accident.*
    repository. Note that with `main` as the production branch, nothing deploys while the work is sitting
    on a phase branch.)*
 
+   > **Set the zone's Browser Cache TTL to "Respect Existing Headers" before trusting step 2.**
+   > `hwgteach.com` → Caching → Configuration. A new Cloudflare zone defaults it to four hours and
+   > rewrites `Cache-Control` on everything the edge caches, `.js` included — so the first deploy
+   > served `/sw.js` as `max-age=14400` with a correct `_headers` in place. **The document escapes
+   > it and the worker does not**, because HTML is not edge-cached by default, so `/` reads
+   > `no-cache` and the one file the pinning exists for reads four hours. Measured on the wire,
+   > 2026-08-12.
+   >
    > **The dashboard will try to put you in Workers instead, and it is not obvious — hit 2026-08-12.**
    > Cloudflare now funnels a Git import into **Workers Builds**, which asks for a **deploy command** and
    > prefills **`npx wrangler deploy`**. **That prompt is the tell that you are in the wrong flow**: the
