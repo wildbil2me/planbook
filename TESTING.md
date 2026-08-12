@@ -2243,6 +2243,92 @@ threshold and what is measured on each screen are untouched, deliberately: this 
 
 ---
 
+### WO-2.22 — A missing harness is a failure, and one call per line stops being an assumption
+
+**What this changes.** Nothing a teacher sees, and nothing `verify-shell.mjs` prints: `src/` and the
+harness are both byte-identical to HEAD by hash. `tools/wo-sweep.mjs` §11 changes in two places. A
+missing `tools/verify-shell.mjs` or `tools/README.md` now **FAILs** where it printed a `REVIEW` and
+exited 0 — the file's own header defines `REVIEW` as *"greppable evidence that needs a human
+decision"*, and a vanished harness is not a decision anybody is being asked to make. And the section
+gains a seventeenth check asserting that no call-site line in the harness holds a second `check(`,
+which turns *the count is a count of lines and that is the same as a count of calls* from an unstated
+premise into a check that names the line.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-2-attendance.md` § WO-2.22 lives here
+and in `tools/README.md`, not on the criteria themselves. Each block below names the line it closes.*
+
+- [x] **Acceptance 1 — a missing file FAILs and exits 1, both ways, both reverted.** Each file moved
+      out of the repo, the sweep run, the file moved back, `git status --porcelain tools/` showing
+      only `tools/wo-sweep.mjs` afterwards. With **`tools/verify-shell.mjs`** moved aside: exit **1**,
+      `16 checks · 14 passed · 1 failed · 1 to review`, and *"FAIL | the recorded `check()` call-site
+      count matches the harness :: tools/verify-shell.mjs is not where this check expects it — the
+      count is now watching nothing, and so is the one-call-per-line check beside it. Restore the file
+      or point this check at the new path."* With **`tools/README.md`** moved aside: exit **1**, the
+      same `16 checks · 14 passed · 1 failed · 1 to review`, and the same sentence naming
+      `tools/README.md` instead. Sixteen rather than seventeen in both, because the one-call-per-line
+      check cannot run when the file it reads is gone — which is what its detail line says.
+- [x] **Acceptance 2 — the append FAILs, names the line, and the proof is non-vacuous.** A second call
+      appended to `tools/verify-shell.mjs:495`, which already held one, leaving the file at the same
+      **14,295 lines** and still parsing (`node --check`). The sweep exits **1** at
+      `17 checks · 15 passed · 1 failed · 1 to review`, and the two clauses split exactly as the
+      criterion requires — the count clause **PASSes**, *"596 `check()` call site(s) in
+      tools/verify-shell.mjs, matching tools/README.md:636"*, the same 596 it prints on a clean tree,
+      because an append adds no line; and the new clause is the only thing red:
+      *"FAIL | one `check()` call per line in the harness :: tools/verify-shell.mjs:495 hold(s) more
+      than one `check(` — the count above pushes one entry per line, so a second call on a line that
+      already has one moves no number and leaves the count in tools/README.md quietly wrong."*
+      Reverted from a byte copy taken before the edit; `git hash-object tools/verify-shell.mjs` equals
+      `git rev-parse HEAD:tools/verify-shell.mjs` at `05bd4c06` afterwards.
+- [x] **Acceptance 3 — `tools/README.md` states both.** The paragraph under the call-site count says
+      the number is a count of lines, that a second call on an occupied line is the one edit that
+      moves nothing, and that the new clause is what makes it a count of calls. The paragraph under
+      the `wo-sweep.mjs` is **17 checks** sentence says why *that* number is deliberately unguarded:
+      the sweep prints its own true figure on the summary line of every run, in a second, in front of
+      the reader who is already running it — where the harness's count costs a three-minute browser
+      run nobody spends on a README sentence, which is how that one went stale three times.
+- [x] **Acceptance 4 — the refusal is recorded.** `tools/README.md` carries both grounds for
+      `verify-shell.mjs` not asserting its own summary: a red harness run means the app is broken and
+      must not also mean a stale sentence, and §11's failure text already tells the reader to fix the
+      executed count from a run, so every check added or removed trips the sweep and hands over both
+      numbers. What remains uncovered is named too, so the argument does not have to be rebuilt.
+- [x] **Acceptance 5 — the rest of the run is unchanged.** `diff` of the whole run before and after is
+      two hunks and nothing else: one added PASS line — *"one `check()` call per line in the harness
+      :: 596 call-site line(s) …"* — and `16 checks · 15 passed · 0 failed · 1 to review` →
+      `17 checks · 16 passed · 0 failed · 1 to review`. §11's count clause line is byte-identical,
+      still PASSing at **596** against `tools/README.md:636`. **No new REVIEW**, and the standing
+      sensitive-field-name REVIEW does not appear in the diff at all — still *"181 mention(s) in
+      index.html, src/attendance-report.js, src/attendance.js, src/home.js, src/letter-scale.js,
+      src/prefs.js, src/presentation.js, src/roster.js, src/scores.js, src/shell.css, src/shell.js,
+      src/supports.js, sw.js"*. Exit 0.
+- [x] **Acceptance 6 — the harness and `src/` are untouched, by hash.** `git hash-object
+      tools/verify-shell.mjs` = `git rev-parse HEAD:tools/verify-shell.mjs` = `05bd4c06c529…`, and
+      `git diff --stat -- src/ tools/verify-shell.mjs index.html sw.js` is empty. **No
+      `verify-shell.mjs` run was spent**, on the criterion's own instruction: nothing here is reachable
+      from a browser, and 177 seconds buys no claim the hash does not already make.
+
+*Three mutations, all reverted:*
+
+| Mutation | Result |
+|---|---|
+| `tools/verify-shell.mjs` moved out of the repo | **1 red, exit 1** — *"tools/verify-shell.mjs is not where this check expects it"*, where before WO-2.22 this printed `REVIEW` and the run exited **0** |
+| `tools/README.md` moved out of the repo | **1 red, exit 1** — the same sentence naming `tools/README.md`; likewise a `REVIEW` and a green run before |
+| a second `check('WO-2.22 mutation, reverted', …)` appended to `tools/verify-shell.mjs:495`, on the same line as the call already there | **1 red, exit 1**, and the count clause **green in the same run at 596** — the append moves no line, so the old clause is satisfied and the new one is the only thing red. *"tools/verify-shell.mjs:495 hold(s) more than one `check(`"* |
+
+*The false-`FAIL` shape the work order's Traps warn about was measured rather than assumed before the
+clause was written: instrumenting the sweep's own pattern over the harness reports **zero** call-site
+lines holding a second occurrence of any shape, and **zero** non-comment lines whose trailing `//`
+part mentions `check(` — so the clause is green today for a reason, not by luck. It reads the line as
+written, which is why its failure text says so: a trailing comment that came to mention `check(` on a
+call line would redden it, and the message names the line so that takes one look rather than a
+bisect. Counting occurrences into the number itself, which is the fix that looks obvious, is the one
+the Traps refuse — and the count in `tools/README.md` is untouched by this work order for the same
+reason: nothing here adds or removes a call site.*
+
+*No 👤 line. Two greps over two files in `tools/` have no iPad half, and nothing in this work order
+renders.*
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

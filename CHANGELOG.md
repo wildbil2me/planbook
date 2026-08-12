@@ -492,6 +492,69 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.22 — a vanished harness now turns the sweep red, and "one `check()` per line" stops being
+  something nobody had checked.** `wo-sweep.mjs` §11 has compared `tools/README.md`'s recorded
+  call-site count against `verify-shell.mjs` since WO-2.19, and it did two things quietly wrong. If
+  either file was **missing** it printed a `REVIEW` and **exited 0** — but this file's own header
+  defines `REVIEW` as *greppable evidence that needs a human decision*, and a harness that is not
+  there is not a decision anybody is being asked to make; it is the one condition under which every
+  claim the section makes is void. A run that exits green over a file that does not exist reads
+  correct from a distance and is not. It **FAILs** both ways now, naming which file went, proved by
+  moving each one out of the repo: exit 1, `16 checks · 14 passed · 1 failed · 1 to review` — sixteen
+  rather than seventeen, because the new check beside it cannot read a file that is gone, which its
+  own detail line says.
+
+  **And the count is a count of *lines*, which was true, load-bearing, and written down nowhere.**
+  The sweep pushes one entry per line holding a call, so it equals the number of calls only while no
+  line holds two — meaning a second `check()` appended to a line that already had one is the single
+  edit that moves nothing: no new line, so the number does not budge, the comparison passes, and the
+  sentence in `tools/README.md` goes silently wrong. A seventeenth check asserts it and names the
+  line. The proof is deliberately non-vacuous rather than merely red: with a second call packed onto
+  `tools/verify-shell.mjs:495` the file stayed at 14,295 lines, the count clause stayed **green at
+  596**, and the new clause was the only thing failing — which is the whole point, since an append
+  adds no line. **16 → 17 checks.** WO-2.19 named both of these gaps in its own changelog entry and
+  left them; this closes them.
+
+  **The obvious fix was refused, and it was refused on a measurement.** Counting occurrences per
+  line instead of lines looks like the correct repair and is the wrong one: `check(` also appears in
+  trailing comments and inside the harness's own quoted prose, and the comment filter drops whole
+  comment lines rather than trailing ones — so occurrence counting trades a hypothetical undercount
+  for a plausible overcount and a false red. Before the clause was written, the sweep's own pattern
+  was run over the harness to check the shape rather than assume it: **zero** call-site lines hold a
+  second occurrence and **zero** non-comment lines mention `check(` in a trailing comment. The clause
+  is green today for a reason, not by luck. The recorded count itself is untouched, for the same
+  reason — nothing here adds or removes a call site.
+
+  **Two numbers are left unguarded on purpose, and the reasoning is now in the file so the next
+  reader does not re-propose it.** `verify-shell.mjs` still does not assert its own summary against
+  `tools/README.md`, the eight-line follow-up WO-2.19's implementer suggested. First, a red harness
+  run means *the app is broken*; in week one of a live term that signal has to stay clean enough to
+  drop everything for, and making it also mean *a sentence in a README is stale* spends the one alarm
+  that must not be second-guessed. Second, the hole is already mostly shut sideways: §11's failure
+  text tells the reader to fix the executed count from a run rather than by arithmetic, so every
+  check added or removed trips the sweep and hands over both numbers. What is left over is somebody
+  mis-editing the executed count while touching no check at all, which is not the failure that has
+  happened three times. And the sweep's own **17 checks** stays unguarded because the asymmetry cuts
+  the other way there: the sweep prints its true figure on its summary line in about a second, in
+  front of the only reader who would care, who is by definition already running it — where the
+  harness's count costs a three-minute browser run nobody spends to settle a README sentence, which
+  is exactly how that line went stale at WO-1.5, WO-2.18 and WO-3.5.
+
+  **Nothing a teacher can see changed, and nothing a run prints changed.** `src/`, `index.html`,
+  `sw.js` and `verify-shell.mjs` are byte-identical to HEAD by hash, so no `verify-shell.mjs` run was
+  spent settling that — 177 seconds buys no claim a hash does not already make. The whole-run diff of
+  the sweep is two hunks: one added PASS line and the summary count. No new `REVIEW`.
+
+  *A practice ruling was settled on this dispatch and belongs beside the work, not inside it.* An
+  implementer reports evidence **beside** an Acceptance line, never **into** it: measured counts,
+  mutation results and failure text go in `TESTING.md` and `tools/README.md`, the criterion's own
+  words change only by the owner's ruling, and any amendment says on its face that it happened and
+  why. The scar is WO-3.12, which folded its measured counts into five of the lines it was being
+  judged against — an implementer editing the bar it is graded on, which is not a documentation
+  slip but a broken instrument. It held here: the work order file's diff is six checkbox characters
+  and a status line, and Acceptance 2's figures — stale *by design*, as a trap — are untouched.
+  Nothing mechanical enforces this; `wo-sweep.mjs` cannot tell a criterion from a note about one.
+
 - **WO-2.21 — the touch-target sweep now measures every screen, not whichever one happened to be
   open.** It enumerates every view in `<main>` off the document, opens each one the way a teacher
   does — the card, the "All classes" door, the switcher segments — and measures it there, with a

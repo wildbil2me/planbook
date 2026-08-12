@@ -601,6 +601,15 @@ function commentLines(file) {
      `paintDetail(totals)`), and a comment that came to mention `check()` would otherwise arrive here
      as a call site that does not exist — the false FAIL this file's header warns about twice. Zero
      comment lines match today.
+   - THE COUNT IS A COUNT OF LINES, not of occurrences: one entry is pushed per line that holds a
+     call, so it equals the count of calls only while no line holds two. That was a premise nowhere
+     written down until WO-2.22; the second check in this section now asserts it and names the line if
+     it stops being true, because a call appended to a line that already had one would move no number,
+     pass here, and leave `tools/README.md` quietly wrong. Counting occurrences instead is the wrong
+     fix and was refused: `check(` also appears in trailing comments and in the harness's own quoted
+     prose, and `commentLines()` excludes whole comment lines rather than trailing ones, so occurrence
+     counting would trade a hypothetical undercount for a plausible overcount and a false FAIL. No
+     call-site line in the harness held a second occurrence of any shape when this was written.
 
    The number is read out of `tools/README.md` by its sentence rather than a marker comment, because
    a marker is a thing to keep in sync with the prose beside it. If that sentence is reworded the
@@ -610,8 +619,13 @@ function commentLines(file) {
   const harnessPath = path.join(REPO, 'tools', 'verify-shell.mjs');
   const readmePath = path.join(REPO, 'tools', 'README.md');
   if (!fs.existsSync(harnessPath) || !fs.existsSync(readmePath)) {
-    review('the recorded `check()` call-site count matches the harness',
-      `${!fs.existsSync(harnessPath) ? 'tools/verify-shell.mjs' : 'tools/README.md'} is not where this check expects it — the count is now watching nothing. Point it at the new path.`);
+    // A missing file FAILs. It was a REVIEW until WO-2.22, and this file's header defines REVIEW as
+    // "greppable evidence that needs a human decision" — a vanished harness is not a decision anybody
+    // is being asked to make, it is the one condition under which every claim this section makes is
+    // void. It is also the same shape as the empty-grep failure below, one step further along: a run
+    // that exits 0 over a file that is not there reads green from a distance and is not.
+    check('the recorded `check()` call-site count matches the harness', false,
+      `${!fs.existsSync(harnessPath) ? 'tools/verify-shell.mjs' : 'tools/README.md'} is not where this check expects it — the count is now watching nothing, and so is the one-call-per-line check beside it. Restore the file or point this check at the new path.`);
   } else {
     const comments = commentLines(harnessPath);
     const CALL = /(^|[^A-Za-z0-9_$.])check\s*\(/;
@@ -649,6 +663,18 @@ function commentLines(file) {
       check('the recorded `check()` call-site count matches the harness', true,
         `${sites.length} \`check()\` call site(s) in tools/verify-shell.mjs, matching ${stated[0].at} — call sites, not executed checks; the gap is named there`);
     }
+
+    // The premise the count above rests on, asserted rather than assumed (WO-2.22). The push is one
+    // entry per line, so the number is a count of lines; it is a count of calls only while no line
+    // holds two. A second call appended to a line that already holds one is the one edit that moves
+    // nothing here — see the allowlist above for why this is the clause to make, and why counting
+    // occurrences into the number itself is not.
+    const OCCURRENCES = /(^|[^A-Za-z0-9_$.])check\s*\(/g;
+    const doubled = sites.filter(s => (s.text.match(OCCURRENCES) || []).length > 1);
+    check('one `check()` call per line in the harness', !doubled.length,
+      doubled.length
+        ? `${report(doubled)} hold(s) more than one \`check(\` — the count above pushes one entry per line, so a second call on a line that already has one moves no number and leaves the count in tools/README.md quietly wrong. Put it on its own line. (If the second occurrence is a trailing comment rather than a call, this clause still reads the line as written: move the comment.)`
+        : `${sites.length} call-site line(s) in tools/verify-shell.mjs, none holding a second \`check(\` — which is what makes the count above a count of calls`);
   }
 }
 

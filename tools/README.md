@@ -641,6 +641,22 @@ pattern is not line-anchored, and comment lines are excluded because the harness
 its prose constantly. WO-3.12 moved it from 592 to 596, four literal call sites (case 8's third
 direction and cases 13-15) added to the grade-engine block, none inside a loop.
 
+**That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
+sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
+only while no line holds two — and a second call appended to a line that already has one is the one
+edit that moves nothing: no new line, so the count does not budge, the comparison above passes, and
+the sentence above goes quietly wrong. A second clause in the same section now asserts that no
+call-site line holds a second occurrence, and names the line when one does —
+*"tools/verify-shell.mjs:495 hold(s) more than one `check(`"*, from the mutation that proved it, with
+the count clause still green in that same run at the 596 of the day, which is the proof it is not
+vacuous: an append adds no line. Counting occurrences into the number itself is the wrong fix, refused:
+`check(` also turns up in trailing comments and in the harness's own quoted prose, and the comment
+filter excludes whole comment lines rather than trailing ones, so occurrence counting trades a
+hypothetical undercount for a plausible overcount and a false red. **A missing `tools/verify-shell.mjs`
+or `tools/README.md` is a `FAIL` there too, since WO-2.22** — it printed a `REVIEW` and exited 0 until
+then, and a vanished harness is not a decision anybody is being asked to make; it is the one condition
+under which every claim that section makes is void.
+
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
 could go and name.** It is 596 − 595 = 1 on this tree (592 − 591 = 1 immediately before WO-3.12 — the
 four sites WO-3.12 added each execute exactly once, so the gap itself did not move), it was
@@ -680,8 +696,22 @@ than a check that passes when two different numbers are close. **If you add a ch
 move and neither moves by the same amount**: the sweep will tell you the first one by name, and the
 second one comes off the summary line of a run.
 
+**`verify-shell.mjs` does not assert its own summary against this file, and that is a decision rather
+than an omission.** WO-2.19's implementer proposed it as the obvious follow-up — eight lines at the
+foot of a run, and the executed count is the one number in this system that nothing watches — and
+WO-2.22 refused it on two grounds, written down here so the next reader who spots an unguarded number
+does not re-propose it. **First, a red `verify-shell.mjs` run means the app is broken.** In week one
+of a live term that signal has to stay clean enough to drop everything for, and making it also mean
+*"a sentence in a README is stale"* spends the one alarm that must not be second-guessed. **Second,
+the hole is already mostly closed, sideways.** §11's own failure text says in as many words to update
+the recorded call-site count *and the executed-check count in the paragraph beside it*, from a run
+rather than by arithmetic — so every event that makes the executed count stale, a check added or a
+check removed, trips the sweep and hands the reader both numbers to go and fix. What is left uncovered
+is somebody editing the executed count wrongly while touching no check at all, which is not the
+failure that happened three times.
+
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**16 checks** since WO-2.19, and the three added at WO-3.2's follow-up exist because this file's sibling
+**17 checks** since WO-2.22, and the three added at WO-3.2's follow-up exist because this file's sibling
 had already written down that they did. The letter-grades section of `verify-shell.mjs` said its
 fourth acceptance line — *there is no rounding code anywhere* — "is a grep, made in
 `tools/wo-sweep.mjs`", at a point when the sweep had no rounding check of any kind. The line had been
@@ -695,6 +725,18 @@ a grep it defers to was never written, and the sweep does not read the harness's
 of the form "this is checked over there" is exactly as load-bearing as a check and exactly as
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
+
+**The 17 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
+the other file and is not worth building for this one.** Nothing greps this sentence the way §11 greps
+the harness's count, and it does not need to: the sweep prints its own true figure on the summary line
+of every run — `17 checks · 16 passed · 0 failed · 1 to review` on this tree — in about a second, in
+front of the only reader who would care, who is by definition already running it. `verify-shell.mjs`'s
+count is different in kind, because confirming it costs a three-minute browser run that nobody spends
+to settle a sentence in a README, which is exactly how that line went stale three times (WO-1.5,
+WO-2.18, WO-3.5). A stale figure here is corrected for free by the next person to run the sweep; a
+stale one there survives until somebody instruments a copy of the harness. So when you add a check to
+the sweep, **do not increment this number by arithmetic** — run it and copy the summary line, which is
+the same instruction §11's own failure text gives about the two numbers it watches.
 
 **595 at WO-3.12**, measured the same way: `595 checks · 595 passed · 0 failed · 0 skipped`, 14,295
 lines, 24.0 lines per check, 194s. Four checks land inside the grade engine block (WO-3.4)'s own

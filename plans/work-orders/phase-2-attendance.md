@@ -1916,7 +1916,7 @@ threshold itself. This is about *which screens are looked at*, not about what is
 
 ## WO-2.22 — a missing harness is a failure, and one call per line stops being an assumption
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.19 — this is §11 of
+**Ship** — · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** WO-2.19 — this is §11 of
 `tools/wo-sweep.mjs`, which that work order wrote · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19,
 WO-2.20 and WO-2.21 made.)*
@@ -1980,22 +1980,22 @@ times. Also out of scope: any change to what `verify-shell.mjs` prints or how it
 in `src/`.
 
 **Acceptance**
-- [ ] `node tools/wo-sweep.mjs` FAILs and exits 1 with `tools/verify-shell.mjs` moved aside, and again
+- [x] `node tools/wo-sweep.mjs` FAILs and exits 1 with `tools/verify-shell.mjs` moved aside, and again
       with `tools/README.md` moved aside — both run, both outputs quoted, both reverted.
-- [ ] §11 FAILs when a second `check()` call is appended to a line that already holds one, naming the
+- [x] §11 FAILs when a second `check()` call is appended to a line that already holds one, naming the
       line. **Proved non-vacuous by the count clause passing in that same run** — appending adds no
       new line, so the line count is unchanged, the old clause is satisfied, and the new one is the
       only thing red. **Quote that count from the run.** The figure here was `560` against a premise
       of `561` when this was written, which is a relationship an append cannot produce; do not carry
       either number in, and do not derive one by arithmetic — the Traps below say why. Reverted.
-- [ ] `tools/README.md` states why `wo-sweep.mjs`'s own count is left unguarded, and states that §11
+- [x] `tools/README.md` states why `wo-sweep.mjs`'s own count is left unguarded, and states that §11
       counts lines and what now guarantees that is a count of calls.
-- [ ] `tools/README.md` records why `verify-shell.mjs` does not assert its own summary, in enough
+- [x] `tools/README.md` records why `verify-shell.mjs` does not assert its own summary, in enough
       detail that the argument does not have to be rebuilt.
-- [ ] `node tools/wo-sweep.mjs` otherwise prints what it printed before: §11 still PASSes at the true
+- [x] `node tools/wo-sweep.mjs` otherwise prints what it printed before: §11 still PASSes at the true
       call-site count, no new REVIEW, and the standing sensitive-field-name REVIEW unchanged — proved
       by diffing a whole run before and against after.
-- [ ] `tools/verify-shell.mjs` and `src/` are byte-identical to HEAD by hash. **A full harness run is
+- [x] `tools/verify-shell.mjs` and `src/` are byte-identical to HEAD by hash. **A full harness run is
       not required and should not be spent**: nothing in this work order touches `src/`, `index.html`,
       `sw.js` or the harness itself except inside a mutation that is reverted, and 177 seconds buys no
       claim that the hash does not already make.
