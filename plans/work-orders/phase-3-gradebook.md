@@ -625,17 +625,44 @@ compliance.
 types from. **Order it to match the SIS entry screen** — that single decision is most of this work
 order's value.
 
+**The order, answered by the owner — 2026-08-12.** *This is the fact the deliverable used to say "ask
+the owner" for. It is recorded here so nobody guesses it, and so a verifier can check the build
+against something other than the builder's memory.*
+
+| | |
+|---|---|
+| **Layout** | **Student-major grid** — one row per student, assignments as columns |
+| **Row order** | alphabetical by **last name** |
+| **Column order** | by **due date** |
+| **Name display** | `Last, First` — matching the SIS |
+| **Student ID column** | none. The SIS entry screen has no ID to match on, so the name is the join |
+
+**Student-major was chosen against a drawn mock-up of both**, not in the abstract: the alternative was
+one section per assignment with the roster repeated inside each, which reads straight down while
+typing but never puts a student's whole term in one place and costs several times the paper. The grid
+was chosen because a term fits on a page or two and the same sheet doubles as the at-a-glance class
+picture. **If a re-key with the real SIS turns out to want a finger held on one assignment column, that
+is the finding Acceptance line 1 exists to catch** — and the answer then is the assignment-major
+layout, already designed, not a redesign from nothing.
+
 **Deliverables**
-- Print view of a class's grades for a term, ordered to match the SIS entry screen. Ask the owner
-  what that order is; do not guess.
-- CSV export of the same.
+- Print view of a class's grades for a term: **a student-major grid**, students down the page
+  alphabetically by last name as `Last, First`, assignments across in due-date order, each column
+  carrying its due date and point value, and a total percentage and letter at the right.
+- CSV export of the same, **in the same order** — the printout and the file must not disagree, or the
+  order stops being a decision and becomes two of them.
 - Both carry class, term, date, and the letter scale in use.
+- **`late` and `missing` are shown as the teacher's marks**, and a blank stays blank. A printout that
+  turned a blank into a zero would be inventing a grade on the sheet the SIS gets typed from.
 - Presentation-mode safe; no `supports` data on either.
 
 **Acceptance**
-- [ ] The print order matches the SIS entry screen, confirmed by the owner against a real re-key.
+- [ ] 👤 The print order matches the SIS entry screen, confirmed by the owner against a real re-key.
+      *(The recorded answer above is what to build. This box is the one that says it was right, and
+      only a re-key against the live SIS can close it.)*
 - [ ] Percentages and letters on the printout match the app exactly.
-- [ ] The CSV opens cleanly in a spreadsheet.
+- [ ] The CSV opens cleanly in a spreadsheet, with its rows and columns in the same order as the
+      printout.
 - [ ] Neither surface emits accommodation, medical, or plan data.
 
 ---
