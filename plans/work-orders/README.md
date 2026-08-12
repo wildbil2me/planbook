@@ -330,8 +330,10 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 31 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
 | 32 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
 | 33 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
-| 34 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 35 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 34 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Sep 12–15, half a day |
+| 35 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Sep 12–15, a word |
+| 36 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 37 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
 row below it moved down one. **It sits directly behind the work order that produced it, and ahead of
@@ -350,6 +352,19 @@ made. The exposure is the window between someone deleting `_headers` and someone
 because a known hole with no row is a hole nobody schedules; it earns a late one because scheduling it
 ahead of grade math would be paying for tidiness with the term. No row moved except WO-G2, which stays
 last where a gate belongs.*
+
+*WO-1.17 and WO-1.18 were booked on 2026-08-12 out of WO-1.15's verification and given rows #34 and
+#35, on WO-8.9's reasoning above rather than WO-8.8's — both guard something that is correct today.
+They were briefly written with no row at all, which is the mistake that note exists to name: `next`
+reads only the numbered rows in this file (`wo-gate.mjs:544`), so a work order absent from both tables
+is one the queue can never reach, and neither `--audit` nor `wo-sweep.mjs` notices. The self-check at
+`wo-gate.mjs:1675` guards a row that **drops out** of the running order; it cannot see one that was
+never written. **WO-1.17 is latent rather than safe** — score cells cannot exist without an assignment
+to hang them on, so a field that is not omitted fires first and the nag appears anyway. It stops being
+latent the moment a document can hold scores with no assignment, which is what makes row #34 a
+judgment and not an obvious call: if anything before it lets an assignment be deleted while its column
+survives, this moves up. WO-3.18 and WO-G2 each moved down two; WO-3.18 stays the last row before the
+gate, which is its own deliberate placement.*
 
 *WO-1.15 and WO-1.16 were booked on 2026-08-12 at rows #17 and #18, and everything below them moved
 down two. **They are placed by the calendar rather than by the board**, which is why they sit in the
