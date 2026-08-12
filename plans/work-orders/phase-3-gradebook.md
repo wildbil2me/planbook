@@ -760,7 +760,7 @@ WO-3.3 is the next work order that lands in the position this fixes.
 
 ## WO-3.12 — the grade-engine cases cover the arguments the engine actually takes
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.4 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-11 · **Size** S · **Depends on** WO-3.4 · **Blocks** nothing, and
 that is deliberate — the arithmetic is right today, so this is a row to cut if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. Inventing a
 product box for harness work is the drift WO-2.15 and WO-2.16 exist to catch — the same call WO-2.17
@@ -823,20 +823,39 @@ is no graded work yet", which is factually off though the numeric answer is righ
 question for the screen that renders it, and it belongs to WO-3.5 or later.
 
 **Acceptance**
-- [ ] A case with weights `40.1 / 34.7 / 20` asserts the message string reads `94.8%`, not
+- [x] A case with weights `40.1 / 34.7 / 20` asserts the message string reads `94.8%`, not
       `94.80000000000001%`.
-- [ ] Reverting `formatWeight(total)` at `src/grade-engine.js:96` to raw concatenation turns that
+- [x] Reverting `formatWeight(total)` at `src/grade-engine.js:96` to raw concatenation turns that
       check red and leaves WO-3.4's thirteen green — run, not reasoned, with the counts before and
-      after quoted.
-- [ ] An assignment in a second class does not move the subject's grade, and dropping the `classId`
-      filter turns that check red on its own.
-- [ ] An assignment in a second term does not move the subject's grade, and dropping the `termId`
-      filter turns that check red on its own.
-- [ ] A second student's cells do not move the subject's grade, and reading the first student's cell
-      regardless of id turns that check red on its own.
-- [ ] The new cases are written into `docs/grade-math-cases.md` with hand-computed expected values.
-- [ ] `node tools/verify-shell.mjs` passes whole, and `node tools/wo-sweep.mjs` shows no new line.
-- [ ] `src/` is byte-identical to HEAD across the whole work order.
+      after quoted. Before: `595 checks · 595 passed · 0 failed`. During: `595 checks · 594 passed ·
+      1 failed`, the one red being the decimal-weight check.
+- [x] An assignment in a second class does not move the subject's grade, and dropping the `classId`
+      filter turns that check red on its own — `595 checks · 594 passed · 1 failed`, nothing else moved.
+- [x] An assignment in a second term does not move the subject's grade, and dropping the `termId`
+      filter turns that check red on its own — `595 checks · 594 passed · 1 failed`, nothing else moved.
+- [x] A second student's cells do not move the subject's grade, and dropping the `studentId` lookup in
+      `scoreCell()` turns that check red — **together with four of WO-3.5's grid checks**, which reach
+      the same lookup through the screen and fail on the same corrupted value. `595 checks · 590
+      passed · 5 failed`; nothing outside the per-student score path moved.
+      **Wording amended 2026-08-11** from "turns that check red *on its own*", by the owner, after
+      re-running the mutation at the desk rather than on the report. The original asked for something
+      the defect cannot produce: an engine that ignores `studentId` corrupts every cell in *any*
+      document holding two or more students, and WO-3.5's 25-student grid is such a document, so no
+      faithful narrowing of the mutation spares those four. What the desk run showed is that the four
+      extras are one defect observed downstream rather than a coupled fixture — all four report the
+      same wrong number (case 1's row at `77.50%` where it should read `87.00%`), and the check that
+      exists to catch the screen and the engine disagreeing fails with **both halves agreeing**
+      (`screen 77.50% C :: engine 77.5 C`), which is a single corrupted value propagating, not
+      independent breakage. Nothing outside the per-student score path reddened, which is what the
+      Traps line is actually guarding against. See `tools/README.md`'s WO-3.12 paragraph and
+      `TESTING.md` § WO-3.12 for the full account.
+- [x] The new cases are written into `docs/grade-math-cases.md` with hand-computed expected values.
+- [x] `node tools/verify-shell.mjs` passes whole at **595 checks · 595 passed · 0 failed · 0 skipped**,
+      and `node tools/wo-sweep.mjs` shows the same standing line as before this work order —
+      **16 checks · 15 passed · 0 failed · 1 to review** — after `tools/README.md:636`'s call-site
+      count was moved from 592 to 596 in step with the four checks added.
+- [x] `src/` is byte-identical to HEAD across the whole work order — `git diff --stat src/` empty,
+      confirmed after every mutation's revert and again at the end.
 
 **Traps** — **A mutation that reddens every check has proved nothing.** The point of each proof is
 that one check moves and the others do not; that is what separates a check that measures its own

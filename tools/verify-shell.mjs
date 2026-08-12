@@ -4092,12 +4092,19 @@ if (!classesBooted || !classSeam || !scaleSeam) {
  * why this section needs no classesBooted / classSeam gate the way the sections above it do: it
  * shares no screen and no document with the rest of the run.
  *
- * ONE CLASS, ONE TERM, ONE STUDENT — c1 / t1 / s1, matching every fixture in the source document.
- * A cold read of this suite found that an engine which ignored classId, termId or studentId
- * entirely would pass all twelve cases; the same read confirmed by direct probe that the three
- * filters do hold. Widening these fixtures to prove that here as a standing check is EXPLICITLY
- * OUT OF SCOPE for this round (owner's call, recorded in .claude/dispatch/WO-3.4-status.md) and is
- * left as a proposed follow-up work order rather than built into this section.
+ * ONE CLASS, ONE TERM, ONE STUDENT — c1 / t1 / s1, matching every fixture in the source document,
+ * for cases 1 through 12. A cold read of this suite at WO-3.4's verification found that an engine
+ * which ignored classId, termId or studentId entirely would pass all twelve; the same read
+ * confirmed by direct probe that the three filters do hold. Widening those twelve fixtures to
+ * prove that as a standing check was EXPLICITLY OUT OF SCOPE for that round (owner's call,
+ * recorded in .claude/dispatch/WO-3.4-status.md) and was left as a proposed follow-up.
+ *
+ * WO-3.12 is that follow-up: case 8's third direction (decimal weights, where the formatWeight()
+ * fix has room to matter) and cases 13 through 15 (a second class, a second term, a second and
+ * third student), each proved red by its own mutation and tabulated in TESTING.md § WO-3.12. They
+ * are NOT folded into cases 1-12 above — docs/grade-math-cases.md's own Traps line is explicit
+ * that the existing dozen stay single-class, single-term, single-student, because they are the
+ * hand-computed record WO-3.4 was verified against.
  */
 
 console.log('\n--- grade engine ---');
@@ -4253,6 +4260,18 @@ if (!gradeSeam) {
     case8balanced.grade.percentage === 87 && case8balanced.grade.reason === null,
     'class ' + case8balanced.grade.percentage + ', reason ' + case8balanced.grade.reason);
 
+  /* Case 8, third direction (WO-3.12) — decimal weights, the case integers cannot express. WO-3.4's
+     correction round routed this message's total through formatWeight() (src/grade-engine.js:96) so
+     it agrees with the categories editor's own banner, but the only unbalanced-weight fixture above
+     is 50/30/15 = 95 — integers, exactly the case where the float bug cannot appear. 40.1 + 34.7 + 20
+     is 94.8 in decimal and 94.80000000000001 in IEEE-754 double precision; this asserts the STRING,
+     because the string is what the teacher reads and what disagreed with the banner. */
+  const case8decimal = await gradeAt(case8Fixture([40.1, 34.7, 20]), 't1', 's1');
+  check('case 8, third direction: decimal weights totalling 94.8 read "94.8%", never "94.80000000000001%"',
+    case8decimal.grade.percentage === null && case8decimal.grade.reason === 'weights-unbalanced'
+      && case8decimal.grade.message === 'The category weights total 94.8%, so there is no grade yet.',
+    JSON.stringify({ reason: case8decimal.grade.reason, message: case8decimal.grade.message }));
+
   /* Case 9 — a missing flag scores zero; the same cell excused raises the grade. */
   const case9Fixture = (flag) => ({
     classes: [{ id: 'c1', categories: [{ id: 'tests', weight: 100 }] }],
@@ -4311,6 +4330,52 @@ if (!gradeSeam) {
       && case12.grade.message === 'There is no graded work yet.',
     JSON.stringify({ percentage: case12.grade.percentage, letter: case12.grade.letter,
       reason: case12.grade.reason }));
+
+  /* Case 13 (WO-3.12) — an assignment filed under another class does not move this class's grade.
+     Cases 1-12 are all one class, one term, one student; an engine that dropped the classId filter
+     at src/grade-engine.js:35 would pass every one of them. `a2` shares `a1`'s term and category id
+     but sits under `c2`. */
+  const case13 = await gradeAt({
+    classes: [{ id: 'c1', categories: [{ id: 'tests', weight: 100 }] },
+      { id: 'c2', categories: [{ id: 'tests', weight: 100 }] }],
+    assignments: [
+      { id: 'a1', classId: 'c1', termId: 't1', categoryId: 'tests', points: 40 },
+      { id: 'a2', classId: 'c2', termId: 't1', categoryId: 'tests', points: 100 },
+    ],
+    scores: { a1: { s1: { v: 34 } }, a2: { s1: { v: 100 } } },
+  }, 't1', 's1');
+  check("case 13 (an assignment filed under another class): c1's grade is 34/40 = 85%, unmoved by c2's a2",
+    case13.grade.percentage === 85,
+    'class ' + case13.grade.percentage);
+
+  /* Case 14 (WO-3.12) — an assignment filed under another term does not move this term's grade,
+     proving the termId filter at src/grade-engine.js:36. `a2` is the same class and category as
+     `a1` but filed under `t2`; the grade asked for is `t1`'s. */
+  const case14 = await gradeAt({
+    classes: [{ id: 'c1', categories: [{ id: 'tests', weight: 100 }] }],
+    assignments: [
+      { id: 'a1', classId: 'c1', termId: 't1', categoryId: 'tests', points: 40 },
+      { id: 'a2', classId: 'c1', termId: 't2', categoryId: 'tests', points: 100 },
+    ],
+    scores: { a1: { s1: { v: 34 } }, a2: { s1: { v: 100 } } },
+  }, 't1', 's1');
+  check("case 14 (an assignment filed under another term): t1's grade is 34/40 = 85%, unmoved by t2's a2",
+    case14.grade.percentage === 85,
+    'class ' + case14.grade.percentage);
+
+  /* Case 15 (WO-3.12) — a second and third student's cells do not move the subject's grade,
+     proving the studentId lookup at src/grade-engine.js:41-42. `s2`'s cell is written BEFORE `s1`'s
+     on purpose: a mutation that read "whichever cell is first" instead of the one keyed to the
+     requested student would land on `s2`'s and go red here, where insertion-order coincidence
+     could otherwise have hidden it. */
+  const case15 = await gradeAt({
+    classes: [{ id: 'c1', categories: [{ id: 'tests', weight: 100 }] }],
+    assignments: [{ id: 'a1', classId: 'c1', termId: 't1', categoryId: 'tests', points: 40 }],
+    scores: { a1: { s2: { v: 1 }, s1: { v: 34 }, s3: { v: 40 } } },
+  }, 't1', 's1');
+  check("case 15 (a second and third student's cells): s1's grade is 34/40 = 85%, unmoved by s2 or s3",
+    case15.grade.percentage === 85,
+    'class ' + case15.grade.percentage);
 }
 
 /* ───────────────── roster & contacts ─────────────────

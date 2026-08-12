@@ -633,15 +633,18 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 592 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 596 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
 pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
-its prose constantly.
+its prose constantly. WO-3.12 moved it from 592 to 596, four literal call sites (case 8's third
+direction and cases 13-15) added to the grade-engine block, none inside a loop.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 592 − 591 = 1 on this tree, it was 589 − 582 = 7 before WO-2.21, and it was
+could go and name.** It is 596 − 595 = 1 on this tree (592 − 591 = 1 immediately before WO-3.12 — the
+four sites WO-3.12 added each execute exactly once, so the gap itself did not move), it was
+589 − 582 = 7 before WO-2.21, and it was
 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
 counts in it as the measurement of that tree rather than of this one. **WO-2.21 moved it by six in
@@ -692,6 +695,29 @@ a grep it defers to was never written, and the sweep does not read the harness's
 of the form "this is checked over there" is exactly as load-bearing as a check and exactly as
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
+
+**595 at WO-3.12**, measured the same way: `595 checks · 595 passed · 0 failed · 0 skipped`, 14,295
+lines, 24.0 lines per check, 194s. Four checks land inside the grade engine block (WO-3.4)'s own
+section — case 8's third direction, and cases 13 through 15 — closing the gap that section's own
+header named as an explicit follow-up: cases 1-12 are all one class, one term, one student, so an
+engine that dropped `classId`, `termId` or `studentId` entirely passed every one of them, and the
+only unbalanced-weight fixture used integer weights, which cannot expose the `formatWeight()` bug
+WO-3.4's correction round fixed. Four mutations, three of them isolating cleanly and the fourth not,
+all reverted and tabulated in `TESTING.md` § WO-3.12.
+
+**The `studentId` mutation is the honest exception, in the WO-2.18 shape.** Dropping the `classId`
+and `termId` filters in `assignmentsFor()` (`src/grade-engine.js:35-36`) each turned exactly one
+check red, because the WO-3.5 fixture this harness already drives is one class and one term —
+nothing else in that document could spuriously qualify once either guard came off. Dropping the
+`studentId` lookup in `scoreCell()` (`:41-42`) is different in kind: it corrupts every student's cell
+in ANY multi-student document, and WO-3.5's own 25-student grid is exactly that, so the same mutation
+that proves case 15 also reddens four of WO-3.5's own checks — the ones that already ask
+`weightedClassGrade()` for one named student's grade on a real, rendered screen. That is not case 15
+measuring nothing; the check goes red on the mutation it names. It is that the argument is load-bearing
+enough that this harness was already watching it, from a different section, through the real grid
+rather than through a hand-built fixture — five red, not one, recorded as five rather than smoothed
+into "the proof worked," because a mutation that reddens more than its own check is not the clean
+isolation the other three gave and the honest count is worth more than a tidy one.
 
 ### Driving a browser over CDP — nine traps, all of which first look like app defects
 

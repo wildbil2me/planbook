@@ -2902,6 +2902,81 @@ teacher and never transcribed out, so it is not the same kind of number as a re-
 `letterFromPercentage`; that is pre-existing, predates this work order, and wants a work order of its
 own rather than a quiet edit under this one.*
 
+### WO-3.12 — The grade-engine cases cover the arguments the engine actually takes
+
+**What this changes.** Nothing a teacher sees: harness and worked-cases doc only, and `src/` is
+byte-identical to the tree WO-3.4 left. Four checks land in `verify-shell.mjs`'s grade engine
+(WO-3.4) block — case 8's third direction, and new cases 13 through 15 — closing the two gaps that
+block's own header named as an explicit follow-up: WO-3.4's twelve worked cases are all one class,
+one term, one student, and the only unbalanced-weight fixture among them (`50/30/15`) uses integer
+weights, which cannot expose the float bug the `formatWeight()` fix (`src/grade-engine.js:96`) was
+written for.
+
+- [x] **A `40.1 / 34.7 / 20` case asserts the message string, not the number.** `40.1 + 34.7 + 20` is
+      `94.8` in decimal and `94.80000000000001%` in IEEE-754 double precision; the check asserts the
+      message reads `The category weights total 94.8%, so there is no grade yet.`
+- [x] **Reverting `formatWeight(total)` at `src/grade-engine.js:96` to raw concatenation is run, not
+      reasoned**, and turns that check red on its own — table below.
+- [x] **An assignment filed under a second class (`c2`) does not move `c1`'s grade**, and dropping the
+      `classId` filter at `src/grade-engine.js:35` turns that check red on its own — table below.
+- [x] **An assignment filed under a second term (`t2`) does not move `t1`'s grade**, and dropping the
+      `termId` filter at `src/grade-engine.js:36` turns that check red on its own — table below.
+- [x] **A second and third student's cells do not move the subject's grade** — true, and asserted.
+      Reading the first cell in the score object regardless of the requested id turns that check red
+      **together with four of WO-3.5's own**, which reach the same lookup through the screen. The
+      acceptance line was amended 2026-08-11 to say so, by the owner, after re-running the mutation at
+      the desk; the original "on its own" asked for something this defect cannot produce. See the
+      honest exception below the table.
+- [x] `docs/grade-math-cases.md` gains case 8's third direction and cases 13 through 15, hand-computed
+      in the same form as the existing twelve, which are unedited.
+- [x] `node tools/verify-shell.mjs` is green at **595 checks · 595 passed · 0 failed · 0 skipped**
+      after every mutation is reverted, and `node tools/wo-sweep.mjs` shows the same standing line it
+      showed before this work order — **16 checks · 15 passed · 0 failed · 1 to review**, the REVIEW
+      being the pre-existing sensitive-field-name sweep, untouched here. (`tools/README.md:636`'s
+      call-site count moved from 592 to 596 in the same commit, which is what keeps that sweep line
+      itself green — see `tools/README.md`'s own WO-3.12 paragraph for the gap arithmetic.)
+- [x] `git diff --stat src/` is empty across the whole work order — confirmed after every mutation's
+      revert and again at the end. This work order is harness- and doc-only.
+
+Four mutations, all reverted:
+
+| Mutation | Result |
+|---|---|
+| `formatWeight(total)` at `src/grade-engine.js:96` reverted to raw string concatenation | **1 red**: case 8's third direction reads `"...94.80000000000001%..."` against the expected `"...94.8%..."`. Before: `595 checks · 595 passed`. During: `595 checks · 594 passed · 1 failed`. The other 594, including WO-3.4's thirteen, stayed green |
+| `assignment.classId === classId` dropped from `assignmentsFor()`'s filter (`:35`) | **1 red**: case 13, reading `class 95.71428571428572` where `class 85` was expected — `134/140`, `c2`'s `a2` wrongly pulled in. `595 checks · 594 passed · 1 failed`, nothing else moved |
+| `assignment.termId === termId` dropped from the same filter (`:36`) | **1 red**: case 14, the identical wrong value `95.71428571428572` for the identical reason one term over. `595 checks · 594 passed · 1 failed`, nothing else moved |
+| `scoreCell()` (`:41-42`) changed from `byAssignment[studentId]` (guarded by `hasOwnProperty`) to `byAssignment[Object.keys(byAssignment)[0]]` — reads whichever cell is first regardless of the id asked for | **5 red**, not 1: case 15 (`class 2.5`, matching the hand-computed `1/40` if `s2`'s cell were read for `s1`) **and four of WO-3.5's own checks**, whose 25-student grid depends on this same lookup returning each student's own cell. `595 checks · 590 passed · 5 failed`. Investigated rather than reported as a clean proof — see below |
+
+**The `studentId` mutation is the honest exception, in the WO-2.18 shape.** Dropping the `classId`
+and `termId` filters each isolated cleanly because the WO-3.5 fixture this harness already drives
+(`c_wo35` / `tm_wo35`) is one class and one term — there is nothing else in that document that could
+spuriously qualify once either guard came off. The `studentId` change is different in kind: it
+corrupts every student's cell in *any* multi-student document, and WO-3.5's own 25-student grid is
+exactly that — its own acceptance line 5 already asks `weightedClassGrade()` for one named student's
+grade on the real, rendered screen. The mutation that proves case 15 also reddens four of WO-3.5's
+checks. That is not case 15 measuring nothing — it goes red on the mutation it names, with the wrong
+value matching the hand-computed prediction exactly — it is that this argument is load-bearing enough
+that the harness was already watching it, from a different section, through a real screen rather than
+a hand-built fixture. No mutation that genuinely
+drops the `studentId` lookup can avoid this: any real multi-student document breaks the same way, and
+narrowing the mutation to spare WO-3.5's checks would mean it no longer represents the defect the
+Deliverables describe. Recorded honestly rather than smoothed into "the proof worked."
+
+**Re-run at the desk 2026-08-11**, by the owner, on the ruling that amended the acceptance line — a
+third independent reproduction after the implementer's and the verifier's. `595 · 590 passed · 5
+failed`, the same five. What settled it: all four extras fail on the *same* wrong number, case 1's
+row reading `77.50%` where `87.00%` is expected, three of them because they use that row as the
+anchor they measure their own behaviour against. And the second of the four is the check that exists
+to catch the screen and the engine disagreeing — under the mutation it reports `screen 77.50% C ::
+engine 77.5 C`, both halves in perfect agreement and both wrong, because both read through the one
+broken lookup. That is the signature of a single defect propagating. A coupled fixture would have
+reddened assertions with nothing to do with per-student scores; attendance, categories and backup all
+stayed green, 590 of 595 in total.
+
+*No 👤 line — this work order is explicit that it is harness, not app: `plans/work-orders/
+phase-3-gradebook.md`'s own "Closes roadmap" line says inventing a product box here is the drift
+WO-2.15 and WO-2.16 exist to catch.*
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

@@ -61,6 +61,36 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.12 — the grade engine's checks now exercise the three arguments it actually takes.** The
+  arithmetic was already right and still is; what was missing was the check that would notice if it
+  stopped being. WO-3.4's twelve worked cases are all one class, one term, one student — so an engine
+  that ignored `classId`, `termId` or `studentId` **entirely** passed all thirteen checks. Confirmed
+  by mutation rather than by reading: three separate mutants dropping those filters all stayed green.
+  A grade is the answer to *this student, in this class, in this term*, and none of those three words
+  was under test.
+
+  **A decimal-weight case catches the float the old fixture could not express.** The only unbalanced
+  fixture in the suite was `50 / 30 / 15` — integers, which is precisely the shape where the bug that
+  was fixed last week cannot appear. With `40.1 / 34.7 / 20` the banner and the engine had disagreed
+  about the same class on the same screen, `94.8%` against `94.80000000000001%`. Reverting that fix
+  left all thirteen checks green. It now turns one red. A fixture whose values cannot express the
+  failure is the shape this project has recorded three times.
+
+  **One proof came back messier than the work order predicted, and it is written down that way.**
+  Each new check had to be proved by breaking the thing it watches and confirming it — and only it —
+  goes red. Three of the four did exactly that. The fourth, dropping the student lookup, reddens
+  **five** checks: the new case, and four of WO-3.5's, whose 25-student grid reaches the same lookup
+  through the screen. That is not a coupled fixture. All four extras fail on the same wrong number,
+  and the check that exists to catch the screen and the engine disagreeing fails with both halves in
+  perfect agreement and both wrong — one defect propagating, watched from a second path. No faithful
+  version of that mutation can avoid it: an engine ignoring `studentId` corrupts every cell in any
+  document holding two or more students. The acceptance line asked for something the defect cannot
+  produce, so **the line was amended and the reason recorded**, rather than the result being trimmed
+  to fit it.
+
+  **No app code changed** — `src/` is byte-identical to where WO-3.4 left it, confirmed after every
+  mutation's revert — and nothing here is visible to a teacher. The suite stands at 595 checks.
+
 - **WO-2.6 — attendance you can hand to somebody.** Tap a student's name in the registry to see every
   day the class met, what they were marked, and what their attendance percentage was after each one.
   The new **🖨 Record** button in the toolbar opens the whole class's term — counts and percentage per

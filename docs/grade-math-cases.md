@@ -112,6 +112,14 @@ Change only the third weight from 15 to 20. The total is now 100 and the case-1 
 
 Expected at 100: percentage `87`; reason `null`. The same document crosses correctly both ways.
 
+Change the weights a third way, to `40.1`, `34.7` and `20`. Their total is `94.8` written in decimal,
+but `40.1 + 34.7 + 20` is `94.80000000000001` in IEEE-754 double precision — a value integer weights
+can never produce, and the message must still read the total rounded to two decimals rather than
+that raw float.
+
+Expected at 40.1/34.7/20: percentage `null`; reason `weights-unbalanced`; message
+`The category weights total 94.8%, so there is no grade yet.`
+
 ## 9. Missing compared with excused
 
 ```json
@@ -153,3 +161,47 @@ weighted average to calculate.
 
 Expected: percentage `null`; letter `null`; reason `no-graded-work`; message
 `There is no graded work yet.` It is neither `0%` nor `NaN`.
+
+## 13. An assignment filed under another class does not count
+
+```json
+{"classes":[{"id":"c1","categories":[{"id":"tests","weight":100}]},{"id":"c2","categories":[{"id":"tests","weight":100}]}],
+ "assignments":[{"id":"a1","classId":"c1","termId":"t1","categoryId":"tests","points":40},{"id":"a2","classId":"c2","termId":"t1","categoryId":"tests","points":100}],
+ "scores":{"a1":{"s1":{"v":34}},"a2":{"s1":{"v":100}}}}
+```
+
+The grade asked for belongs to `c1`. `a2` shares `a1`'s term and category id but is filed under
+`c2`, a different class, and must not be counted. Tests: `34 / 40 = 85%`, exactly case 2's
+arithmetic — unmoved by `a2`'s `100/100` sitting in the other class.
+
+Expected: class percentage `85`.
+
+## 14. An assignment filed under another term does not count
+
+```json
+{"classes":[{"id":"c1","categories":[{"id":"tests","weight":100}]}],
+ "assignments":[{"id":"a1","classId":"c1","termId":"t1","categoryId":"tests","points":40},{"id":"a2","classId":"c1","termId":"t2","categoryId":"tests","points":100}],
+ "scores":{"a1":{"s1":{"v":34}},"a2":{"s1":{"v":100}}}}
+```
+
+The grade asked for is `t1`'s. `a2` is the same class and category as `a1` but filed under `t2`
+and must not be counted. Tests: `34 / 40 = 85%`, unmoved by `a2`'s `100/100` sitting in the other
+term.
+
+Expected: class percentage `85`.
+
+## 15. A second and third student's cells do not count
+
+```json
+{"classes":[{"id":"c1","categories":[{"id":"tests","weight":100}]}],
+ "assignments":[{"id":"a1","classId":"c1","termId":"t1","categoryId":"tests","points":40}],
+ "scores":{"a1":{"s2":{"v":1},"s1":{"v":34},"s3":{"v":40}}}}
+```
+
+Two other students, `s2` and `s3`, are scored on the same assignment with values that differ sharply
+from `s1`'s. `s2`'s cell is written first in the document, on purpose, so that reading "whichever
+cell comes first" rather than the one keyed to the requested student cannot coincidentally land on
+the right answer. The grade asked for is `s1`'s: `34 / 40 = 85%`, unmoved by what `s2` or `s3`
+scored.
+
+Expected: class percentage `85`.
