@@ -151,7 +151,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.14 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.16 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.23 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.18 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -166,7 +166,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 14 | 14 | ✅ DONE — 2026-08-06 (reopened twice; last on 2026-08-12) |
+| 1 — Shell, store, roster | 16 | 14 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
 | 2 — Attendance | 23 | 21 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 18 | 11 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -175,7 +175,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **84** | **49** | `[█████░░░░░] 58%` |
+| | **86** | **49** | `[█████░░░░░] 57%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -313,23 +313,25 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 14 | [WO-3.14](phase-3-gradebook.md#wo-314--percentages-to-two-decimal-places) Percentages to two decimals | S | | Aug 22, half a day |
 | 15 | [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) OAuth client & consent screen | S | | Aug 22, an hour |
 | 16 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
-| 17 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
-| 18 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
-| 19 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
-| 20 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
-| 21 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
-| 22 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 23 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
-| 24 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 25 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
-| 26 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 27 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 28 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 29 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 30 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 31 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 32 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
-| 33 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 17 | [WO-1.15](phase-1-shell-store-roster.md#wo-115--the-restore-compare-cannot-see-what-it-is-about-to-delete) The restore compare cannot see what it deletes | S | | Aug 23, half a day |
+| 18 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | Aug 24, before the first class |
+| 19 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
+| 20 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
+| 21 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
+| 22 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
+| 23 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
+| 24 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
+| 25 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
+| 26 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 27 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
+| 28 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 30 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 31 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 32 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 33 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 34 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
+| 35 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
 row below it moved down one. **It sits directly behind the work order that produced it, and ahead of
@@ -348,6 +350,20 @@ made. The exposure is the window between someone deleting `_headers` and someone
 because a known hole with no row is a hole nobody schedules; it earns a late one because scheduling it
 ahead of grade math would be paying for tidiness with the term. No row moved except WO-G2, which stays
 last where a gate belongs.*
+
+*WO-1.15 and WO-1.16 were booked on 2026-08-12 at rows #17 and #18, and everything below them moved
+down two. **They are placed by the calendar rather than by the board**, which is why they sit in the
+middle of a run of half-day tooling items: from ~Aug 24 the owner is teaching, and WO-1.16 is a
+cutover that has to happen **before the first class** or not at all — once real marks land beside the
+rehearsal's fabricated ones, separating them means editing a live ledger during a term. That is the
+only deadline in Ship 2 that belongs to the world rather than to us.*
+
+*They are a pair, in that order, and the order is the point.* WO-1.15 makes a wrong-direction restore
+*visible*; WO-1.16 makes it *impossible*, because restore is keyed by year and an iPad living in
+`2030-2031` cannot replace the term at all. The guard lands first so that the rule is enforced before
+there is a real ledger worth destroying — but if only one of the two ever gets done, **it must be
+WO-1.16**, which is the actual fix. Both come out of the Ship 1 rehearsal's one unclosed note and
+`gates.md`'s iPad rules, read together against `src/backup.js` for the first time.*
 
 *WO-1.14 has no row and that is deliberate, which this file's own rule below requires saying rather
 than leaving to be noticed. It was booked and shipped inside the same hour, in `8de1ae4`, because the

@@ -882,3 +882,124 @@ More generally: a precache list is a list of *requests the host will answer with
 that is a property of the deployment, not of the repository. Any future entry needs the same question
 asked of it, and the only instrument that can answer is an HTTP request against the live origin —
 which this project still has no check for. WO-8.7's closing note proposes one.
+
+---
+
+## WO-1.15 — the restore compare cannot see what it is about to delete
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. A defect in code Phase 1 shipped, found on 2026-08-12 while
+reading `gates.md`'s iPad rules against `src/backup.js`. The same call as WO-1.14.)*
+
+**Why it exists.** `gates.md` § *The iPad stays in the rotation* carries a rule in bold — **restore
+only ever flows laptop → iPad, never the reverse** — and calls it "the one that can destroy a term".
+Restore is a wholesale replace, not a merge (`restoreDocument()`, `src/store.js:651`), so a backup
+taken off the test device and opened on the teaching one replaces the real ledger with test data,
+**silently, and reporting success.**
+
+**Nothing in the app enforces that rule, and worse, the screen that exists to catch it cannot.** The
+confirm modal builds a side-by-side compare from `describe()` (`src/backup.js:116`), and that function
+returns exactly six things: `year`, `classes`, `students`, `saved`, `rev`, `schemaVersion`. **It counts
+the roster and never the record.** Two documents with the same five classes and the same twenty-five
+students produce an identical panel whether one holds a term of marks and scores and the other holds
+none — which is precisely the pair of documents this rule exists to keep apart. The button then reads
+*"Replace 2026-2027"*, and a teacher reading carefully still has nothing to read.
+
+**The year label is the only real guard**, and it is doing more work than anyone wrote down: restore
+is keyed by year, so an iPad living in `2030-2031` cannot replace `2026-2027` at all. That is why
+WO-1.16 matters as much as this does, and why this work order is defence in depth rather than the
+primary fix. **The danger is confined to the case where both devices hold the same year label** —
+which is exactly the case today.
+
+**Deliverables**
+- **The compare panel counts the record, not just the roster.** Recorded meetings, marks, assignments
+  and scores on both sides, in whatever wording matches the panel it joins.
+- **When the stored side holds materially more than the file does, the confirm surface says so in
+  words** rather than leaving it to be inferred from two columns of numbers. A reader should not have
+  to subtract.
+- No new screen and no new flow: the same modal, the same button, the same one line in
+  `confirmRestore()` that touches disk.
+
+**Out of scope** — blocking or refusing the restore; guessing which device a file came from (nothing
+in the format records it, and inventing a field is a schema change this does not need); anything about
+sync, which is Phase 7's.
+
+**Acceptance**
+- [ ] A backup holding zero marks, restored over a year holding a term of them, shows both counts
+      **before** the button is pressed, and the counts differ on screen.
+- [ ] The confirm text names what would be lost, not only what would be gained.
+- [ ] A restore of a *different* year is unaffected — it is a normal, safe act and must not acquire a
+      warning it does not deserve.
+- [ ] No accommodation, medical or plan data appears in the panel, in either presentation mode.
+- [ ] 👤 On the iPad the panel still fits and the confirm button keeps its 44px.
+- [ ] `verify-shell.mjs` gains checks for the new counts, proved against a fixture where the roster
+      matches and the record does not.
+
+**Traps** — **Do not infer direction from the device.** There is no device field and there must not
+be one; the fix is to make the difference *visible*, not to make the app clever. **Do not treat every
+replace as dangerous** — replacing a year from its own backup is the whole point of backups, and a
+warning on the safe case trains the teacher to click through the unsafe one.
+
+---
+
+## WO-1.16 — the term opens in a fresh year
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Closes roadmap** Phase 1 → *(no box. Operational, not code — this work order is a cutover the owner
+performs, booked because the alternative is remembering it. Booked 2026-08-12 out of the Ship 1
+rehearsal's unclosed note.)*
+
+**Why it exists.** The Ship 1 rehearsal recorded one thing it could not close, and `CHANGELOG.md`
+still carries it: **the backfilled test data is in the live year.** The rehearsal was designed so it
+could not contaminate the ledger and it did not — but the ledger was already carrying fabricated
+meetings before the sitting began, and **in this data model a fabricated meeting *is* a meeting.** It
+sits in the denominator of every percentage and in the recorded-meetings count, indistinguishable from
+a real one. Everything counts recorded meetings, never calendar days, so there is no date filter that
+makes this go away.
+
+**This is the last moment it is cheap.** Once real marks land beside the fabricated ones, separating
+them means editing a live ledger during a term. Before the first class it is one act.
+
+**It depends on nothing, and that is deliberate rather than an omission.** The work order scheduled
+immediately before it makes a wrong-direction restore visible, and it would be natural to write it
+onto the `**Depends on**` line as an ordering hint. **It was, for about ten minutes on 2026-08-12,
+until `wo-gate` refused this work order** — correctly, because every `WO-` token on that line is a
+gate and not a suggestion. The refusal is the whole argument: a code change that is defence in depth
+would have blocked the cutover that is the actual fix, and the failure mode is the term opening with
+fabricated meetings in it because something optional slipped a week. **If only one of the two is ever
+done, it must be this one.** The ordering lives in the Ship 2 table, where a suggestion belongs.
+
+**It also arms `gates.md`'s iPad rule.** That rule survives on the two devices holding *different year
+labels*; restore is keyed by year, so an iPad in `2030-2031` cannot replace the term. Today both
+devices can hold the same label, which is the one arrangement in which a wrong-direction restore is
+silent and total.
+
+**Deliverables** *(an act, not a change — nothing here edits a file in this repository)*
+- **A fresh year for the term**, made the working year, with rosters entered fresh rather than carried
+  across.
+- **The rehearsal data kept, in a year whose label cannot be mistaken for the term.** Labels are
+  strictly `YYYY-YYYY` (`src/store.js:176`) so it cannot be called "TEST"; `gates.md` suggests
+  **2030-2031**, which is unmistakable in the year picker.
+- **The iPad restored from the laptop** so it holds the test year, in the one direction the rule
+  allows.
+- **A backup of the term year taken and stored off the device** before the first class.
+- **The date written into this work order and into `CHANGELOG.md`'s open note**, which is what closes
+  the rehearsal's loose end rather than leaving it recorded forever.
+
+**Out of scope** — deleting the rehearsal data, which is the evidence behind the attendance-arithmetic
+tick and must survive; any code change, which is WO-1.15's half; the week-one re-check of the
+arithmetic against a live roster, which is `gates.md`'s and cannot happen until a real class exists.
+
+**Acceptance**
+- [ ] 👤 The year the term is taught in contains no meeting the owner did not record — checked in the
+      app, not assumed from the act.
+- [ ] 👤 The rehearsal data is still openable, in a year whose label cannot be read as the term.
+- [ ] 👤 The iPad shows the test year and the laptop shows the term year, each confirmed on the device
+      itself.
+- [ ] 👤 A backup of the term year exists off-device, taken **before** the first class.
+- [ ] The date is recorded here and the `CHANGELOG.md` note is closed.
+
+**Traps** — **Do not carry the rehearsal's attendance across "to have some history".** That is the
+defect this work order exists to end, arriving by the door marked convenience. **Do not relabel the
+old year to something outside `YYYY-YYYY`** — the store rejects it, and the year picker is the only
+place the distinction is ever seen.
