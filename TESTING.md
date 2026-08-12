@@ -2055,6 +2055,19 @@ the next reader the rule is guarded.
   order's move to a shared rule; it guards the *effect*, not the source, and it should not be read
   as proof that any particular declaration is load-bearing.
 
+**Three checks were booked later, at WO-2.24, and they are the last bullet's check rather than this
+note's reversal.** What this note refuses is a **height** assertion on a date field, and every word
+of that refusal still stands, and WO-2.24 turned it from a prediction into a reading: the coarse
+sweep has measured these fields for 44px since WO-2.21, and **on the tree with the reset deleted
+every one of those height checks stayed green** while the new style checks went red. What WO-2.24
+added is the **computed-style** claim above, carried from the two assignment fields to the five that
+have no copy of the rule of their own — the term editor's *Starts* and *Ends*, the days-off *From*
+and *To*, and the plan *Review date* — read while the dialogs those fields live in are open, which
+is a thing the harness does for other reasons and had never once used to look at a *style*. It
+guards the same *effect* on more elements and makes no new claim about what any of them look like.
+**The 👤 lines above are untouched and stay owed forever**; § WO-2.24 below records the deletion
+that was watched to make sure the guard can fail.
+
 *The desk half of this work order: `verify-shell.mjs` **563 checks · 563 passed · 0 failed ·
 0 skipped**, unchanged from the run WO-3.17 recorded — no check added, per the Trap above.
 `wo-sweep.mjs` is **16 checks · 15 passed · 0 failed · 1 to review**, the REVIEW still the standing
@@ -2326,6 +2339,106 @@ reason: nothing here adds or removes a call site.*
 
 *No 👤 line. Two greps over two files in `tools/` have no iPad half, and nothing in this work order
 renders.*
+
+---
+
+### WO-2.24 — Nothing in the tree notices if the shared date reset is deleted
+
+**What this changes.** Nothing a teacher sees: `src/`, `index.html` and `sw.js` are byte-identical to
+HEAD. `tools/verify-shell.mjs` gains one helper and three checks. WO-2.23 put a single
+`input[type="date"] { -webkit-appearance: none; appearance: none; }` in `src/shell.css`'s BASE
+section and seven date fields on four screens depend on it; two of them, the assignment editor's,
+also keep an identical copy in `src/assignments.css` on purpose, and those two were the only date
+fields anything here had ever read a *style* off. **The other five could lose the shared rule and
+every check in the repo stayed green.** Now the computed `appearance` on each is read, at points in
+the run where their dialogs are already open.
+
+**The premise was re-measured rather than inherited, and half of it had gone stale.** The work order
+says these five fields "live behind `.hidden` dialogs the harness never opens, so nothing measures
+them and nothing ever has" — true when it was written, and no longer. WO-2.21 landed in between and
+the coarse sweep now opens all three of those dialogs and asserts 44px on every control in them,
+with the date fields named in the check messages. **That does not close this hole; it is the hole.**
+On the deleted-rule run those three sweeps stayed green — *"every control in the term editor measures
+>=44px, date fields included :: measured 22; under = []"*, *"…the days-off panel… date fields and
+class picker included :: measured 13"*, *"…the support panel… the kind picker and review date
+included :: measured 18"* — while the three new checks went red. So WO-2.23's Trap is no longer an
+argument about what a height check would do here. It is a measurement of what the height checks
+already in this harness *did* do, on the broken tree, in the same run.
+
+**This is not the check WO-2.23's Traps forbid, and the section above says so at the point where the
+refusal is recorded.** The ban is on measuring a date field's **height**: this engine honours an
+author's `min-height` on a date input with the reset and without it, so a height check is green on
+the broken tree and tells the next reader a rule is guarded when it is not — which is now a
+measurement and not a prediction, see the paragraph above. `appearance` is the value that actually
+moves between the two trees — `none` with the rule, `auto` without — which is what makes a guard out
+of it. **No height, width or touch-target assertion was added to any date field**,
+and the reader deliberately prints no box dimensions at all, so a number in a detail line cannot
+drift into the claim. The rendered field stays a 👤 line under WO-2.23 forever.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-2-attendance.md` § WO-2.24 lives here.
+Each block below names the line it closes.*
+
+- [x] **Acceptance 1 — all three surfaces, green on the tree as it stands.** `node
+      tools/verify-shell.mjs` at `598 checks · 598 passed · 0 failed · 0 skipped`, 14,398 lines,
+      24.1 lines per check, 193s, exit 0 — up from `595 checks · 595 passed` on the same tree before
+      the three were added. The three PASS lines report *"the term editor is open = true, 2 of 2
+      field(s) found :: term-date [date] appearance none, -webkit-appearance none · term-date [date]
+      appearance none"*, *"the days-off panel is open = true, 2 of 2 field(s) found :: daysOffFrom
+      … daysOffTo … appearance none"*, and *"the support panel is revealed on an open student editor
+      = true, 1 of 1 field(s) found :: supportsReviewDate [date] appearance none"*. Each is taken at
+      a point in the run where the dialog was **already** open for other reasons, and each asserts
+      that it is open, that the expected number of fields matched, and that every one of them is
+      laying out a client rect — a `display: none` node cannot answer here, which is WO-2.21's scar
+      applied to a style read.
+- [x] **Acceptance 2 — the deletion turns it red, and the failure names the field and the sheet.**
+      `input[type="date"] { -webkit-appearance: none; appearance: none; }` deleted from
+      `src/shell.css`'s BASE section (comment left in place — the "tidy" this guards against),
+      `git diff --stat src/shell.css` = `1 file changed, 1 deletion(-)`. The run exits **1** at
+      `598 checks · 595 passed · 3 failed · 0 skipped`, and the three red are exactly the three new
+      ones — **nothing else in the harness noticed**, which is the whole reason this work order
+      exists. Verbatim from the run:
+
+      | Field | Failure detail |
+      |---|---|
+      | term editor | *"the term editor is open = true, 2 of 2 field(s) found :: term-date [date] appearance auto, -webkit-appearance auto · term-date [date] appearance auto, -webkit-appearance auto — the only rule in this tree that puts `none` there is input[type="date"] { -webkit-appearance: none; appearance: none; } in src/shell.css's BASE section"* |
+      | days-off form | *"the days-off panel is open = true, 2 of 2 field(s) found :: daysOffFrom [date] appearance auto, -webkit-appearance auto · daysOffTo [date] appearance auto, -webkit-appearance auto — the only rule in this tree that puts `none` there is …"* |
+      | plan Review date | *"the support panel is revealed on an open student editor = true, 1 of 1 field(s) found :: supportsReviewDate [date] appearance auto, -webkit-appearance auto — the only rule in this tree that puts `none` there is …"* |
+
+      Restored with `git checkout -- src/shell.css`; `git hash-object src/shell.css` =
+      `git rev-parse HEAD:src/shell.css` = `09f21b55bca9…` and `git diff --stat -- src/` is empty.
+- [x] **Acceptance 3 — each check's own message draws the distinction, in its own words.** No
+      message cites WO-2.23, a Trap or a line number. The term editor's says the computed value *"goes
+      back to the platform's own the moment src/shell.css loses that one line, which is why it is a
+      style being read here and not a height: this engine gives a date input the height its
+      stylesheet asked for either way, and the height these fields actually draw at is the iPad's
+      answer and nobody else's"*; the days-off one says it is *"a claim about the cascade only, never
+      about how tall or wide these two fields come out, which is a question this browser answers
+      differently from the one on the teacher's desk"*; the Review date's says *"what it does not
+      touch is the height the field is drawn at, which this engine gets right whether the rule is
+      there or not and which only the device can settle"*. The long form of the argument is in the
+      block comment over `dateResetOn()` in the harness.
+- [x] **Acceptance 4 — both numbers in `tools/README.md` come off a run.** The call-site sentence
+      moves 596 → **599** (three literal sites, none in a loop) and a new paragraph records
+      **598 executed**, copied from the summary line above rather than added to the old one. The gap
+      paragraph goes `596 − 595 = 1` → `599 − 598 = 1`, unmoved for a third work order running. The
+      sweep is what forced the update: on the pre-update tree it printed *"FAIL | the recorded
+      `check()` call-site count matches the harness :: tools/verify-shell.mjs has 599 `check()` call
+      site(s), up 3 on the 596 recorded at tools/README.md:636"*, exit 1.
+- [x] **Acceptance 5 — the sweep prints what it printed before, but for the count.**
+      `17 checks · 16 passed · 0 failed · 1 to review`, exit 0, the one REVIEW still the standing
+      sensitive-field-name sweep — now at **181 mentions**, the same figure and the same file list as
+      the run WO-2.22 recorded. §11's count clause reads *"599 `check()` call site(s) in
+      tools/verify-shell.mjs, matching tools/README.md:636"* against 596 before, and the
+      one-call-per-line clause *"599 call-site line(s) … none holding a second `check(`"* against
+      596. No other line moved: no CSS was touched, so the coarse-block check still reports no new
+      selectors, and nothing in `SHELL` changed, so the CACHE-bump check is untroubled.
+
+*No 👤 line, and that is the point rather than an omission. Everything here is a computed style read
+in headless Chromium; the thing an iPad would be needed for is the one thing these checks are careful
+not to claim, and it is already owed under WO-2.23 § "Why neither harness can see this defect", where
+this work order is now cross-referenced so the two read as one decision.*
+
+*`sw.js`'s `CACHE` is **not** bumped: nothing in `SHELL` changed. Only `tools/` and two documents did.*
 
 ---
 

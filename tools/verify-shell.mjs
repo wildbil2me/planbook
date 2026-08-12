@@ -321,6 +321,77 @@ const INSTALL_WALKER = `(function(){
   return 1;
 })()`;
 
+/* ────── is the shared date reset still reaching this field? (WO-2.24) ──────
+ *
+ * WHAT IS BEING GUARDED. `src/shell.css`'s BASE section holds one rule —
+ * `input[type="date"] { -webkit-appearance: none; appearance: none; }` — and seven date fields on
+ * four screens are drawn the way their stylesheets say only because it is there. Two of the seven,
+ * the assignment editor's, also keep an identical copy of their own in `src/assignments.css` for
+ * reasons written at that rule, and the WO-3.17 section at the foot of this file already measures
+ * those two. The other five have nothing but the shared rule, and until this helper existed nothing
+ * here had ever read a *style* off one of them: the dialogs get driven and the fields get typed
+ * into, and the whole rule could still be deleted as a duplicate with every check in the repo
+ * green.
+ *
+ * WHY A COMPUTED STYLE AND NOT A HEIGHT, which is the question this helper exists to answer and
+ * the reason it is a helper rather than three lines of `min-height`. It is not that the boxes are
+ * unmeasured — since WO-2.21 the coarse sweep opens all three of these dialogs and asserts 44px on
+ * every control in them, date fields named in two of the three check messages. It is that those
+ * measurements CANNOT FAIL for this: this engine applies an author's height to a date input whether
+ * or not anything has told WebKit to stop painting the control itself, so 44px comes back on the
+ * fixed tree and on the broken one alike. Measured rather than argued — with the rule deleted from
+ * src/shell.css, all three of those sweeps stayed green (`measured 22 · 13 · 18; under = []`) while
+ * the three checks below went red. A height check written for this defect is one that tells the
+ * next reader a rule is guarded when it is not. Computed `appearance` is the one value that moves: it
+ * is `none` while the rule is in the cascade and it is not the moment the rule goes. So this reads
+ * a style and claims exactly one thing — the declaration is live on this element — and it claims
+ * nothing whatever about the box the teacher sees. The height, the width and the widget WebKit
+ * paints are iPad questions, they are owed to a human in `TESTING.md`, and no green run here pays
+ * any part of them off.
+ *
+ * THE FIELD MUST BE ON SCREEN WHEN IT IS READ, and that is asserted rather than arranged for.
+ * `getComputedStyle` answers for a `display: none` node as readily as for a drawn one, so a read
+ * taken over a dialog nobody opened would be green about a screen that was never there — the same
+ * lie as measuring a hidden view. Every call therefore carries the caller's own evidence that its
+ * dialog or panel is open, and the element itself has to be laying out a box before its style
+ * counts. A field that is missing or hidden is a FAIL here and never a quiet pass.
+ *
+ * IT READS COMPUTED STYLE AND NEVER `.value`. One of the three fields is the plan review date on
+ * the student editor, so nothing this returns — no detail, no console line — may carry what a
+ * teacher typed into it. Element ids and computed properties only. The box's dimensions are not
+ * printed either, on purpose: they are not what is being asserted and a number in the detail is
+ * how a height quietly becomes part of the claim.
+ *
+ * Shaped like homeVsDoc() in the classes section below — it returns `{ ok, detail }` and the caller
+ * writes the check, so each surface names itself in its own words and this file's check count stays
+ * one result per call site. */
+async function dateResetOn(sel, want, shownJs, shownWords) {
+  const r = await evalJs(`(function(){
+    var els = Array.prototype.slice.call(document.querySelectorAll(${JSON.stringify(sel)}));
+    return { shown: !!(${shownJs}), found: els.length,
+             fields: els.map(function(el){
+               var cs = getComputedStyle(el);
+               return { id: el.id || el.className, type: el.type,
+                        appearance: cs.appearance, webkit: cs.webkitAppearance,
+                        display: cs.display, visibility: cs.visibility,
+                        rects: el.getClientRects().length }; }) }; })()`);
+  const fields = r.fields || [];
+  const ok = r.shown === true && r.found === want && fields.length === want
+    && fields.every(f => f.type === 'date' && f.rects > 0 && f.display !== 'none'
+      && f.visibility !== 'hidden' && f.appearance === 'none' && f.webkit === 'none');
+  return { ok,
+    detail: shownWords + ' = ' + r.shown + ', ' + r.found + ' of ' + want + ' field(s) found :: '
+      + (fields.length
+        ? fields.map(f => f.id + ' [' + f.type + '] appearance ' + f.appearance
+          + ', -webkit-appearance ' + f.webkit
+          + (f.rects > 0 && f.display !== 'none' && f.visibility !== 'hidden'
+            ? '' : ' — NOT RENDERED: display ' + f.display + ', visibility ' + f.visibility
+              + ', ' + f.rects + ' client rect(s)')).join(' · ')
+        : 'nothing matched ' + sel)
+      + ' — the only rule in this tree that puts `none` there is input[type="date"] '
+      + '{ -webkit-appearance: none; appearance: none; } in src/shell.css\'s BASE section' };
+}
+
 /* Boot is asynchronous since WO-1.4 — the page hides its loading screen only once the year
    document is out of IndexedDB — so a fixed sleep is a race on a slow machine, and losing it
    would look like every check below failing at once. Poll instead, and report rather than
@@ -2477,6 +2548,15 @@ if (!classesBooted || !classSeam) {
   check('and that term can carry the whole school year, stored exactly as it was typed',
     JSON.stringify(dated.termDates[6]) === JSON.stringify([['2026-08-26', '2027-06-11']]),
     JSON.stringify(dated.termDates[6]));
+
+  /* Asked here because this is where the term editor is already open with its two date fields
+     drawn — Homeroom has one term by now, so `#termList .term-date` is exactly Starts and Ends
+     (WO-2.24). See dateResetOn() for what a computed `appearance` can and cannot say. */
+  const termReset = await dateResetOn('#termList .term-date', 2,
+    "!document.getElementById('termsModal').classList.contains('hidden')",
+    'the term editor is open');
+  check('the term editor\'s Starts and Ends carry the shared date reset as a live computed style — the value that goes back to the platform\'s own the moment src/shell.css loses that one line, which is why it is a style being read here and not a height: this engine gives a date input the height its stylesheet asked for either way, and the height these fields actually draw at is the iPad\'s answer and nobody else\'s',
+    termReset.ok, termReset.detail);
 
   /*
     Messy dates, which is an acceptance line stated as a promise about what does NOT happen: term 2
@@ -5291,6 +5371,21 @@ if (!supportSeam) {
         && editorOpen.details[0] === DETAIL_ONE && editorOpen.applies[0] === 'tests, quizzes',
       'plan ' + JSON.stringify(editorOpen.plan) + ', cards ' + editorOpen.cards
         + ', kinds ' + JSON.stringify(editorOpen.kinds));
+
+    /* The Review date, read while the panel is genuinely revealed — the same two facts the check
+       above asserts, `hidden` false and `aria-expanded` true, because a computed style taken off
+       this field with the panel shut would be a green answer about a field nobody could see
+       (WO-2.24). Nothing below reads or prints the field's value: the id and the computed
+       properties are all that leave the page. */
+    const reviewReset = await dateResetOn('#supportsReviewDate', 1,
+      "(function(){ var body = document.getElementById('supportsBody'),"
+      + " btn = document.getElementById('supportsRevealBtn');"
+      + " return !!body && body.classList.contains('hidden') === false"
+      + " && !!btn && btn.getAttribute('aria-expanded') === 'true'"
+      + " && !document.getElementById('studentModal').classList.contains('hidden'); })()",
+      'the support panel is revealed on an open student editor');
+    check('the plan Review date carries the shared date reset as a live computed style too — the fifth field in the app that has no copy of that rule of its own, so deleting src/shell.css\'s one line turns this red; what it does not touch is the height the field is drawn at, which this engine gets right whether the rule is there or not and which only the device can settle',
+      reviewReset.ok, reviewReset.detail);
     await clickSel('[data-supports-reveal]');
     const editorShutAgain = await evalJs('window.__panel()');
     check('and tapping it again takes them back off, fields emptied rather than merely unpainted',
@@ -9676,6 +9771,14 @@ if (!attBooted || !attSeam) {
 
   await clickSel('#homeView [data-dayoff-panel]');
   const panelOpen = await dayOffPanel();
+  /* The panel has just been opened from the home screen and its two dates are still empty, which is
+     the first point in this run where `#daysOffFrom` and `#daysOffTo` are on screen to be read at
+     all (WO-2.24). Read before the form is filled, so nothing below could be what makes it pass. */
+  const dayOffReset = await dateResetOn('#daysOffModal .term-date', 2,
+    "!document.getElementById('daysOffModal').classList.contains('hidden')",
+    'the days-off panel is open');
+  check('the days-off form\'s From and To carry the shared date reset as a live computed style, so a tidy-up of the one input[type="date"] rule in src/shell.css goes red here rather than nowhere — a claim about the cascade only, never about how tall or wide these two fields come out, which is a question this browser answers differently from the one on the teacher\'s desk',
+    dayOffReset.ok, dayOffReset.detail);
   await fillDayOff('no-school', 'Winter break', offFrom, offTo, []);
   const afterRange = await read();
   const rangeStates = await statesOver(offWeek);

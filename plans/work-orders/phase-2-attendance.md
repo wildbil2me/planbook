@@ -2131,7 +2131,7 @@ this work order could see and was right not to close from inside itself.)*
 
 ## WO-2.24 — nothing in the tree notices if the shared date reset is deleted
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.23 — this guards the rule
+**Ship** — · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** WO-2.23 — this guards the rule
 that work order added · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19,
 WO-2.20, WO-2.21 and WO-2.22 made.)*
@@ -2186,15 +2186,24 @@ and `@media (pointer: coarse)` measurement is WO-2.21's ground); any change to t
 they count, which is WO-2.19's and WO-2.22's.
 
 **Acceptance**
-- [ ] `node tools/verify-shell.mjs` asserts computed `appearance` on all three surfaces named above,
-      and the run is green on the tree as it stands.
-- [ ] With `input[type="date"]` deleted from `src/shell.css`'s BASE section, the run **fails**, and
+- [x] `node tools/verify-shell.mjs` asserts computed `appearance` on all three surfaces named above,
+      and the run is green on the tree as it stands. *(`598 checks · 598 passed · 0 failed ·
+      0 skipped`, 193s, exit 0. Each read is taken with the dialog asserted open and the element
+      laying out a client rect.)*
+- [x] With `input[type="date"]` deleted from `src/shell.css`'s BASE section, the run **fails**, and
       the failure names which field and which sheet. The result file quotes the failure text.
-- [ ] The check's message distinguishes itself from the height check WO-2.23's Traps forbid, in its
-      own words rather than by reference.
-- [ ] `tools/README.md`'s check count and `TESTING.md` are updated from a run rather than by
-      arithmetic, per WO-2.19.
-- [ ] `node tools/wo-sweep.mjs` prints what it printed before, but for the check count.
+      *(`598 checks · 595 passed · 3 failed`, exit 1 — the three new checks and nothing else.
+      Restored; `git hash-object src/shell.css` matches HEAD. Quoted in `TESTING.md` § WO-2.24 and
+      in the result file.)*
+- [x] The check's message distinguishes itself from the height check WO-2.23's Traps forbid, in its
+      own words rather than by reference. *(No message cites the work order, the Trap or a line
+      number; each says what a height would and would not prove on this engine.)*
+- [x] `tools/README.md`'s check count and `TESTING.md` are updated from a run rather than by
+      arithmetic, per WO-2.19. *(Call sites 596 → 599, executed count recorded as 598 off the
+      summary line, gap paragraph `599 − 598 = 1`.)*
+- [x] `node tools/wo-sweep.mjs` prints what it printed before, but for the check count.
+      *(`17 checks · 16 passed · 0 failed · 1 to review`, exit 0; the two §11 clauses move 596 → 599
+      and no other line changes.)*
 
 **Traps** — **The dialogs are not on screen at rest.** WO-2.21 is the scar: the 44px sweep was
 measuring a screen that was not the one on screen. Open the dialog, assert the element is actually

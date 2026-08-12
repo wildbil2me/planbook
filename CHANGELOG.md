@@ -61,6 +61,37 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.24 — the harness now notices if the shared date reset is deleted.** WO-2.23 put a single
+  `input[type="date"] { -webkit-appearance: none; appearance: none; }` in `src/shell.css`, and seven
+  date fields on four screens depend on it. Two of them — the assignment editor's — keep an identical
+  copy in `src/assignments.css` on purpose and were the only ones anything had ever read a style off.
+  **The other five could lose the shared rule and every check in the repo stayed green.** Three new
+  checks read the computed `appearance` on the term editor's dates, the days-off *From* and *To*, and
+  the plan *Review date*, each at a point in the run where that dialog is already open for other
+  reasons — and each asserting the dialog *is* open and the fields matched, because a `display: none`
+  node cannot answer a style question either. **595 → 598 executed checks**, 599 call sites.
+
+  **Deleting the rule turns exactly those three red and nothing else** — `598 checks · 595 passed ·
+  3 failed`, exit 1, each detail reading `appearance auto, -webkit-appearance auto` and naming the
+  sheet the rule belongs in. The 595 that stayed green are the reason the work order existed.
+
+  **The work order's premise was re-measured rather than inherited, and half of it had gone stale.**
+  It says these five fields live behind dialogs the harness never opens — true when written, and no
+  longer: WO-2.21 landed in between and its coarse sweep opens all three of them and asserts 44px on
+  every control, date fields named in the messages. That does not close the hole; it *is* the hole.
+  On the deleted-rule run those three sweeps stayed **green** — *"measured 22; under = []"* and its
+  two siblings — while the three new checks went red. So WO-2.23's Trap is no longer an argument
+  about what a height check would do here. It is a measurement of what the height checks already in
+  this harness *did* do, on the broken tree, in the same run.
+
+  **This is a claim about the cascade and never about the box, deliberately.** Desktop Chrome honours
+  an author's `min-height` on a date input with the reset and without it, so a height check is green
+  on the broken tree — which is the check WO-2.23's Traps forbid. `appearance` is the value that
+  actually moves between the two trees, which is what makes a guard out of it. No height, width or
+  touch-target assertion was added to any date field, and the reader prints no box dimensions at all
+  so that a number in a detail line cannot drift into the claim. **The rendered field stays owed to
+  the iPad** under `TESTING.md` § WO-2.23's existing 👤 lines, which this work did not touch.
+
 - **WO-3.12 — the grade engine's checks now exercise the three arguments it actually takes.** The
   arithmetic was already right and still is; what was missing was the check that would notice if it
   stopped being. WO-3.4's twelve worked cases are all one class, one term, one student — so an engine

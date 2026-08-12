@@ -633,13 +633,18 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 596 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 599 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
 pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
 its prose constantly. WO-3.12 moved it from 592 to 596, four literal call sites (case 8's third
-direction and cases 13-15) added to the grade-engine block, none inside a loop.
+direction and cases 13-15) added to the grade-engine block, none inside a loop; WO-2.24 moved it from
+596 to 599, three literal call sites in three different sections, likewise none inside a loop. *(The
+`else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
+The line number is illustration rather than something either tool resolves, and correcting it in one
+of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
+follows it does not think the allowlist has stopped applying.)*
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
@@ -658,8 +663,9 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 596 − 595 = 1 on this tree (592 − 591 = 1 immediately before WO-3.12 — the
-four sites WO-3.12 added each execute exactly once, so the gap itself did not move), it was
+could go and name.** It is 599 − 598 = 1 on this tree (596 − 595 = 1 immediately before WO-2.24 and
+592 − 591 = 1 before WO-3.12 — the four sites WO-3.12 added and the three WO-2.24 added each execute
+exactly once, so the gap itself has not moved in three work orders), it was
 589 − 582 = 7 before WO-2.21, and it was
 560 − 554 = 6 at WO-2.19; what
 follows is the WO-2.19 instrumentation, which has **not** been re-run since, so treat the three
@@ -760,6 +766,46 @@ enough that this harness was already watching it, from a different section, thro
 rather than through a hand-built fixture — five red, not one, recorded as five rather than smoothed
 into "the proof worked," because a mutation that reddens more than its own check is not the clean
 isolation the other three gave and the honest count is worth more than a tidy one.
+
+**598 at WO-2.24**, measured the same way: `598 checks · 598 passed · 0 failed · 0 skipped`, 14,398
+lines, 24.1 lines per check, 193s. Three call sites, three results, none of them in a loop — and they
+are the first checks in this file to open the term editor, the days-off form and the student editor's
+plan panel in order to read a computed *style* off a field rather than to drive it or measure its
+box. Each asserts that the one
+`input[type="date"]` reset in `src/shell.css`'s BASE section is live as a computed `appearance` on the
+date fields that have no copy of that rule of their own: the term editor's *Starts* and *Ends*, the
+days-off *From* and *To*, and the plan *Review date*. WO-3.17's pair keep an identical declaration in
+`src/assignments.css` on purpose, so they were the only date fields anything here had ever read a
+*style* off — which meant the shared rule could be deleted as a duplicate and all 595 checks stayed
+green. Three things about them are worth knowing.
+
+**They read a computed style and not a height, and this is where that stopped being an argument.**
+The defect the rule fixes is a squat field on iOS, so a height is the obvious thing to measure — and
+these fields have in fact been measured for 44px since WO-2.21, when the coarse sweep started opening
+these three dialogs; two of those three check messages say *"date fields included"* in as many words.
+It makes no difference, because the measurement cannot fail for this: the engine applies an author's
+`min-height` to a date input whether or not anything has told WebKit to stop painting the control. On
+the deleted-rule run those three sweeps were **green** — `measured 22 · 13 · 18; under = []` — in the
+same run where the three checks below went red. `appearance` is the value that moves, `none` with the
+rule in the cascade and `auto` without it, so it is what the guard hangs on. Nothing here claims the
+field is the right size on glass; that stays a 👤 line in `TESTING.md` § WO-2.23 forever, and the
+shared reader prints no box dimensions at all, so that a number in a detail line cannot quietly
+become part of the claim.
+
+**Being open is asserted rather than arranged for.** All five of those
+fields sit inside `.hidden` dialogs at rest and `getComputedStyle` answers just as happily for a
+`display: none` node, so each call carries its caller's own evidence that the surface is up — the
+modal's `hidden` class for two of them, and `hidden` false with `aria-expanded` true for the support
+panel — plus the element laying out a client rect and matching the expected field count. A selector
+that stopped matching is a `FAIL` and never a vacuous `every()` over an empty list. The reader never
+touches `.value` either: one of the three fields is the plan review date, and no detail line out of
+`tools/` may carry what a teacher typed into it.
+
+**The guard was watched failing before it was written down.** Deleting the rule from `src/shell.css`
+and re-running turns exactly these three red and nothing else — `598 checks · 595 passed · 3 failed`,
+exit 1, each detail reading `appearance auto, -webkit-appearance auto` and naming the sheet the rule
+belongs in. The 595 that stayed green are the reason the work order existed. Tabulated in
+`TESTING.md` § WO-2.24; the rule was restored and `git diff -- src/` is empty.
 
 ### Driving a browser over CDP — nine traps, all of which first look like app defects
 
