@@ -168,14 +168,14 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|---|
 | 1 — Shell, store, roster | 13 | 13 | ✅ DONE — 2026-08-06 (reopened and reclosed same day) |
 | 2 — Attendance | 23 | 19 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 18 | 9 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 18 | 10 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 7 | 0 | ⬜ NOT STARTED |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **81** | **42** | `[█████░░░░░] 52%` |
+| | **81** | **43** | `[█████░░░░░] 53%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

@@ -45,12 +45,25 @@ and the "Google hasn't verified this app" warning could never be cleared.
 - Silent re-auth (`prompt: ''`) attempted first; a visible sign-in prompt when it fails.
 
 **Acceptance**
+- [ ] A sign-in completes on the owner's own account and the app receives a token — driven, not
+      assumed. The unverified-app screen is expected while the client sits in Testing mode and is not
+      a failure.
 - [ ] The consent screen shows exactly one scope.
 - [ ] Every feature outside this phase works identically signed-out. Walk the app with sync off.
 - [ ] Sign-out leaves the local document intact and removes the token.
 - [ ] Token expiry after ~1 hour is handled without data loss and without a silent failure.
 - [ ] No refresh token is requested or stored — there isn't one in a browser flow, and building as
       if there were is how a background-sync assumption gets in.
+
+**The first Acceptance line was added 2026-08-11, and the hole it fills is worth naming.** This list
+already carried sign-*out*, token expiry, and the refusal to store a refresh token — three lines that
+each **presuppose a token was obtained**, and none that asserts obtaining one. The phase that builds
+the token flow had no check that the flow succeeds. It surfaced from the other end: WO-3.10 landed
+the OAuth client with its own sign-in line open on purpose, that line belongs here by the `Owes` rule
+WO-3.11 built, and there was no box for the pointer to land on. **A pointer with nowhere to resolve
+is precisely the signal that field exists to raise**, so the answer was the missing box rather than a
+fragment bent to fit an existing one. WO-3.10's `Owes` field now points at this line; **if it is
+reworded, that pointer has to be requoted with it** — which `--audit` will say out loud.
 
 **Traps** — **Never build a feature that assumes background or scheduled sync.** It is not possible
 here. Sync is a foreground act, while the app is open and the teacher is signed in.
