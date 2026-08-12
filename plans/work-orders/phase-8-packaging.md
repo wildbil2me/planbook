@@ -205,6 +205,67 @@ being neutral and the position that sells this app to a principal is gone.
 - **The domain**, registered and resolving.
 - **The distribution story in a sentence**: how a teacher finds it and what she types.
 
+**The name, the host and the origin, decided — 2026-08-12.** *Three of the four deliverables. Only the
+distribution sentence is still open, and the decisions below are still unexecuted — nothing is standing
+up at that URL yet. This work order stays `⬜ NOT STARTED` until it resolves in a browser.*
+
+| | |
+|---|---|
+| **Name** | **Planbook** — one name, unchanged from the repo |
+| **Host** | **Cloudflare Pages**, static assets only, **no `functions/` directory** |
+| **Origin** | **`https://planbook.hwgteach.com/`** — its own subdomain |
+| **Domain** | **`hwgteach.com`**, held at GoDaddy |
+| **DNS** | Cloudflare, registration staying at GoDaddy |
+
+**Why a subdomain and not the apex, which is the part that is expensive to undo.** `hwgteach.com` is a
+domain meant to carry more than one thing — Roll Call! is the obvious second. **IndexedDB and service
+worker scope are per-origin**, so two apps sharing an origin share a storage namespace and a registration
+scope, and this app keeps a year of grades in IndexedDB. A subdomain gives Planbook its own origin, its
+own storage, its own install and its own service worker at `/`, and leaves the apex free for a landing
+page. A path (`hwgteach.com/planbook/`) would have been the worst of the three: shared storage *and* a
+scope-confined service worker whose `start_url` and `scope` must both be pinned to the subpath.
+
+**Verification is unaffected by the choice** — verifying `hwgteach.com` covers its subdomains, which is
+what WO-3.18 consumes.
+
+**The name is `Planbook` and the domain does not say so, on purpose.** The consent screen will read
+"Planbook" while the URL reads `planbook.hwgteach.com`. That is a small trust cost on the one screen this
+architecture exists to keep clean, accepted deliberately: the alternative was renaming an app already
+written into `CLAUDE.md`, the docs, the repo and every work order, to chase a domain. **One name, in the
+manifest, the README and the consent screen** — WO-8.6's third Acceptance line checks all three rather
+than assuming from one.
+
+**Why Pages, and it is not price.** Acceptance line 4 asks that nothing in the deployment runs
+server-side code **as a checked fact**. On a platform that has a runtime sitting there unused — GoDaddy's
+shared Apache/PHP hosting, which was the alternative already paid for — the honest claim is "we do not
+currently run any," which is a promise about behaviour. On Pages with no `functions/` directory there is
+nowhere for it to run: crossing the line means adding a directory, which is a tripwire rather than a
+memory. Same deployment today, a stronger sentence to say to a principal. The rest is ordinary: free at
+this scale, custom domain with automatic HTTPS (**required** — no HTTPS, no service worker, no install,
+no eviction protection), and `_headers` control.
+
+**`_headers` is not optional here.** `sw.js` and `index.html` must be served `Cache-Control: no-cache`,
+or a teacher sits on a stale shell after a deploy and the `CACHE` bump this repo is disciplined about
+buys nothing. This is also what rules out GitHub Pages, which is otherwise a fair fit: free, custom
+domain, HTTPS, and no way to set a response header.
+
+**The apex trap, recorded before somebody walks into it.** Pages wants a CNAME, and an apex CNAME needs
+flattening/ALIAS support that GoDaddy's DNS has long not offered. The domain's **nameservers point at
+Cloudflare** — registration can stay at GoDaddy, this moves DNS only, and it is free and reversible. It
+also puts the TXT record for Google's domain verification in the same place as everything else, which is
+what WO-3.18 consumes.
+
+**Cloudflare Registrar sells at cost** — no markup, no cheap-first-year-then-spike. Worth knowing if the
+name ever moves to a domain of its own.
+
+**One thing to say plainly rather than let a district IT person find.** Cloudflare serves the files and
+therefore sees request logs — IP, timestamp — like any host. That is not student data, and there is no
+endpoint to send student data to, so the claim above holds. But the honest sentence is "they serve the
+files and see who fetched them," not "they see nothing." *(And an outage means the app will not **load** —
+an installed PWA still runs from its own service worker cache, so a teacher mid-lesson is unaffected.
+That is what makes this decision genuinely low-stakes, and it is why the work order says to choose on
+price and reliability alone.)*
+
 **Acceptance**
 - [ ] The name is written here, and it is one name rather than a preference between two.
 - [ ] The URL resolves over HTTPS and serves the app, with the service worker registering — checked
