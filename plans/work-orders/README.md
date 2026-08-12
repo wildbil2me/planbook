@@ -323,14 +323,14 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 24 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
 | 25 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
 | 26 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 27 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
-| 28 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 30 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 31 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 32 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 33 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 34 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
+| 27 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 28 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 29 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 30 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 31 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 32 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 33 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
+| 34 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
 | 35 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
@@ -357,6 +357,25 @@ middle of a run of half-day tooling items: from ~Aug 24 the owner is teaching, a
 cutover that has to happen **before the first class** or not at all — once real marks land beside the
 rehearsal's fabricated ones, separating them means editing a live ledger during a term. That is the
 only deadline in Ship 2 that belongs to the world rather than to us.*
+
+*WO-3.18 was moved from #25 to #34 on 2026-08-12 — **the last work order in Ship 2, immediately before
+the gate that consumes it** — and the rows between it and there moved up one. **This is a deliberate
+delay, decided by the owner, and it is booked as a decision rather than allowed to happen as a slip.**
+Three things make it affordable. It blocks nothing that is built here: WO-7.1 depends on WO-3.10, which
+is done, so the whole of Phase 7 can be built and run against a Testing-mode client while the paperwork
+waits — the only work order behind WO-3.18 is WO-7.3, and what that gates is a **stranger** signing in.
+WO-G2's checklist line asks for it **submitted with the date recorded, not approved**, so the gate can
+pass with the queue still running. And the board is roughly a fortnight ahead of the dates in this
+table: row #25 was suggested for Aug 28 and closed Aug 12.*
+
+*Its date column now reads a **submit-by** rather than a start, because that is the only shape of
+deadline this work order has — the work is an afternoon and the wait is somebody else's. **The risk the
+move accepts, stated plainly: it is now adjacent to the gate that needs it, with no slack in front of
+it.** If it slips again, WO-G2 cannot tick, and that gate's own note is explicit that the honest
+options are to submit it or to move the line to a later gate **deliberately** — waving it through is
+what these trackers exist to prevent. **The pairing worth remembering when the sitting comes:** its
+privacy policy and `docs/FERPA.md` (WO-8.5, currently unscheduled) say overlapping things to different
+readers, and WO-3.18 says in its own body — write them together or write them twice.*
 
 *They are a pair, in that order, and the order is the point.* WO-1.15 makes a wrong-direction restore
 *visible*; WO-1.16 makes it *impossible*, because restore is keyed by year and an iPad living in
@@ -531,7 +550,11 @@ version is that the half needing nothing was trapped behind the half needing a d
   G2 checklist item (*submitted*, with the date recorded), and the one item here that is
   **calendar-bound rather than work-bound**: submitting late does not cost a week of work, it costs
   however long Google takes. *(The precedent is sitting on disk: Roll Call! is at 0.9.0-beta with
-  every engineering blocker closed, held by exactly this class of task.)*
+  every engineering blocker closed, held by exactly this class of task.)* **Moved to #34 on
+  2026-08-12**, last before the gate — the reasoning is in the row note above, and the short version is
+  that nothing built here waits on it and G2 needs it *submitted* rather than approved. **It is the one
+  row in this table that cannot be cut**, only rescheduled: cutting it does not descope a feature, it
+  descopes the gate.
 
 **The hard ordering constraint:** WO-3.1 and WO-3.2 before everything else in the gradebook. Six of
 the ten Phase 3 work orders sit behind them, and WO-3.5 — the L, and the screen WO-G2 actually
