@@ -490,3 +490,90 @@ the point at which the token flow stops being pinned to one laptop.
       a `functions/` directory or a `_worker.js` appears, it is live on `/*` immediately, with no
       routing step to forget. Adding the file is still the deliberate act. Nothing is armed by
       accident, and nothing is one config change away from being armed either.
+
+---
+
+## WO-8.8 — read the deployment, not the repository
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.7
+**Closes roadmap** Phase 8 → *(no box. Tooling, not app — the same call as WO-2.19 through WO-2.22.
+Booked 2026-08-12, out of WO-8.7's deployment.)*
+
+**Why it exists.** WO-8.7's first deploy shipped two faults, and **every check in this repository was
+green through both of them.** `verify-shell.mjs` ran 628 of 628 with zero skips before the deploy and
+628 of 628 after the fix — the same number, because it never had anything to say about either one.
+
+- **The shell was served from a redirect** the host invented. `sw.js` precached `/index.html`;
+  Cloudflare Pages answers that path with a 308; the cached copy carried the redirect and Safari
+  refused to serve it to a navigation. The app loaded once and then would not load again (WO-1.14).
+- **`_headers` was correct and did not bind.** The Cloudflare zone's own four-hour browser cache TTL
+  rewrote `Cache-Control` on `/sw.js`, so the one file the pinning exists for was served
+  `max-age=14400`. The shell document escaped only because HTML is not edge-cached — which is
+  precisely why it looked fine.
+
+**Neither fact exists in this repository.** One is the host's routing, one is a dashboard setting in
+someone's Cloudflare account. No amount of reading files finds either. **What found both was a single
+HTTP request against the live origin**, run by hand during a support conversation, and that is the
+instrument this project does not have.
+
+**The verifier saw the edge of this and understated it.** Its WO-8.7 finding was that `_headers` is
+invisible to the sweep — `wo-sweep.mjs` gates on `^(index\.html|sw\.js|manifest\.webmanifest|src/)`
+and `\.(css|html)$`, and an extensionless root file matches neither, so deleting `_headers` outright
+leaves every tool green. True, and the smaller half. **The whole finding is that the deployment is
+invisible**, and a check that only asserts `_headers` exists would have passed both of the faults
+above: the file was present, correct, and overridden.
+
+**What this is not.** Not a monitor, not an uptime check, not a thing that runs on a schedule or in
+CI. `plans/verification-tooling.md` § The boundary is explicit — *"It gates nothing. No git hook, no
+CI, no commit check"* — and that rule holds here without amendment. This is a script the owner runs
+by hand after a deploy, the way `verify-shell.mjs` is run by hand before one.
+
+**Deliverables**
+- **`tools/verify-deploy.mjs`**, bare Node, no dependencies, one file. It takes an origin (defaulting
+  to the production one) and reports on what came back.
+- **The checks the two faults would have failed**, at minimum:
+  - `/` returns 200, is HTML, and carries `Cache-Control: no-cache`.
+  - `/sw.js` returns 200, is JavaScript, and carries `Cache-Control: no-cache` — **the check that
+    catches a zone setting silently overriding `_headers`.**
+  - **Every path in `sw.js`'s `SHELL` list resolves without a redirect.** Read the list out of the
+    deployed `sw.js` rather than the local one, and follow nothing: a 3xx on any entry is a failure,
+    because that is the WO-1.14 defect in its general form rather than the one instance of it.
+  - The deployed `sw.js`'s `CACHE` string matches the working tree's, so "I forgot to push" and "the
+    deploy failed" stop looking like "the fix didn't work".
+  - No `_worker.js`, no `_routes.json` and no `/functions/` path answers as a script.
+- **It says what it read.** Status, `Cache-Control` and redirect chain per path, printed — so a run
+  is evidence a human can check rather than a row of green ticks.
+
+**Out of scope** — anything that runs unattended; anything that writes; a second browser harness
+(this is `fetch`, not CDP); checking the app's *behaviour* at the origin, which is `TESTING.md`'s and
+a real device's job. Do not extend `verify-shell.mjs`: that file boots a browser and is already the
+largest thing in `tools/`, and these are header and status assertions that need neither.
+
+**The one genuine departure, and it needs saying out loud.** **This is the first check in this project
+that requires a network.** Everything in `tools/` today runs against files on disk or a browser
+pointed at `localhost`, which is why it all works on a plane. This one is useless offline and will
+fail confusingly on a bad hotel connection. That cost is accepted because the alternative is what
+already happened: a class of defect that only production can express, found by a teacher. **It must
+fail loudly and unmistakably as "could not reach the origin" rather than as a red check** — a network
+error reported as a failed assertion is worse than no check, and `verification-tooling.md`'s
+precondition rule is the same argument in a different accent.
+
+**Acceptance**
+- [ ] Running it against the live origin today passes on every check.
+- [ ] **Each check is proved by the defect it is named for.** Point it at a URL that redirects and the
+      redirect check goes red; construct a response with a wrong `Cache-Control` and that check goes
+      red. Per `verification-tooling.md`'s precondition rule, a check that could not have caught the
+      thing it exists for is not evidence — and both of this work order's motivating faults are still
+      reproducible, which is a luxury most checks do not get.
+- [ ] An unreachable origin reports as unreachable, distinctly from any check failing.
+- [ ] It gates nothing: no hook, no CI, not referenced by any other script, and the app still ships
+      without it.
+- [ ] `tools/README.md` gains its section, including **when to run it** — after a deploy, and after
+      any change to `_headers`, `sw.js`'s `SHELL` list, or the Cloudflare zone's caching settings.
+
+**Traps** — **Do not read `SHELL` from the local `sw.js`.** The whole point is to compare what is
+deployed against what is intended; sourcing both sides from the working tree checks nothing and will
+pass forever. **Do not follow redirects** — `fetch` does by default, and a followed 308 looks exactly
+like a 200, which is how the original defect stayed invisible. **Do not add a retry loop.** A flaky
+result is information; a retry that hides it turns this into the confident pass over nothing that
+`plans/dispatch-retro.md` keeps naming as worse than no check at all.

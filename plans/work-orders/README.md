@@ -158,7 +158,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.7 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.8 | Phase 8 |
 
 ---
 
@@ -173,9 +173,9 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 7 | 1 | ⬜ NOT STARTED |
+| 8 — 1.0 packaging | 8 | 1 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **82** | **48** | `[██████░░░░] 59%` |
+| | **83** | **48** | `[██████░░░░] 58%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -319,15 +319,30 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 20 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
 | 21 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
 | 22 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 23 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 24 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
-| 25 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 26 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 27 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 28 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 29 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 30 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 31 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 23 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
+| 24 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 25 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | Sep 2, then a queue |
+| 26 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 27 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 28 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 29 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 30 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 31 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 32 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
+row below it moved down one. **It sits directly behind the work order that produced it, and ahead of
+everything else, because what it checks is already live.** `planbook.hwgteach.com` is serving the app
+now; every deploy from here until someone writes this script is a deploy nobody can verify except by
+hand, and the two faults that motivated it were both found that way, both in production, both by the
+owner rather than by a tool. Half a day, and it removes the only class of defect in this project with
+no instrument pointed at it.*
+
+*WO-1.14 has no row and that is deliberate, which this file's own rule below requires saying rather
+than leaving to be noticed. It was booked and shipped inside the same hour, in `8de1ae4`, because the
+app was broken in production while the owner watched. A row would schedule work that is already done.
+The rule below is about work orders that arrive **open** — the failure it names is a finding that
+lands in the directory and never in the order, and a `✅ DONE` work order cannot fail that way.*
 
 *WO-2.24 was given row #20 on 2026-08-10, the day it was booked out of WO-2.23's verification — **the
 third time this file has had to record the same failure**, after WO-3.12 and WO-3.10 below. A work
