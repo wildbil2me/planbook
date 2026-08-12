@@ -686,6 +686,26 @@ is why it is not paperwork.
 | **Scope** | `https://www.googleapis.com/auth/drive.file`, and nothing else |
 | **Publishing status** | Testing, owner added as a test user |
 | **Authorized JS origin** | `https://localhost:8443` — accepted by the console 2026-08-11 |
+| **Owning Google account** | the owner's **personal Gmail**, not the `@stjohnshigh.org` Workspace account — confirmed 2026-08-12 against the Search Console verification, and named this way on purpose (see below) |
+
+**The account that owns this project was never written down, and WO-8.7 is where that started to
+cost — 2026-08-12.** The table records what the client *is* and nothing about *whose* it is. That was
+fine while the only consumer was a laptop already signed in, and stopped being fine the moment a second
+Google surface had to agree with this one: **domain verification is per-account**. Search Console can
+report the owner as a verified owner of `hwgteach.com` — it does, from a TXT record predating this
+project — while the Cloud console refuses that same domain, if the two are different accounts. The
+symptom appears in WO-3.18 as an authorized-domain field rejecting a domain that is visibly verified,
+which is a genuinely hard hour if nobody wrote the account down. **Checked 2026-08-12: they match**,
+and WO-8.7's third Acceptance line closed on it.
+
+**The row describes the account rather than spelling it out, and that is deliberate.** This repository
+is public — the note below says so about the client id, and the same fact points the other way here.
+An address in a public file is a spam and phishing target, and unlike a client id it is not protected
+by an origin list. What a future reader actually needs is *which of the owner's two accounts*, and
+"the personal Gmail, not the school Workspace one" answers that completely. **The distinction is also
+the one that matters long-term**: the `@stjohnshigh.org` account belongs to an employer and disappears
+with the job, taking a Cloud project and a domain verification with it. The project sitting on the
+personal account is the right call and is now written down as a choice rather than an accident.
 
 **The client id is not a secret and belongs in this file.** For a browser client it is an identifier
 rather than a credential: it ships in the served JavaScript of every app using Google Identity

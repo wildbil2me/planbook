@@ -62,8 +62,8 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
-| 8 | 1.0 packaging | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
-| | | **Overall** | **37/82 `[████░░░░░░] 45%`** |
+| 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
+| | | **Overall** | **38/82 `[█████░░░░░] 46%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -464,7 +464,7 @@ it. If it can't be acted on, it doesn't earn a place.
       **must address accommodation and medical data directly**, not only grades.
 - [ ] Print stylesheets for every printable surface.
 - [ ] Onboarding: install → marking attendance with no documentation.
-- [ ] Name and distribution channel decided. *Roll Call! sat at 0.9.0-beta with every engineering
+- [x] Name and distribution channel decided. *Roll Call! sat at 0.9.0-beta with every engineering
       blocker closed, held up by exactly this. It isn't an engineering task and it doesn't resolve
       itself.*
 

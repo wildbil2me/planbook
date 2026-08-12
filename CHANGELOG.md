@@ -61,6 +61,60 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-8.7 — Planbook has an address: `planbook.hwgteach.com`.** The app is on the internet, over
+  HTTPS, installing to a home screen. The distribution story is one sentence and no store is in it:
+  *a teacher hears about Planbook from another teacher, types the URL, and taps Add to Home Screen —
+  no store, no download, no account, and nothing to sign into before she marks her first class.*
+
+  **That sentence ends at the home screen on purpose.** iOS evicts a non-installed site's storage
+  after about a week of non-use, and installed PWAs are exempt — so *Add to Home Screen* is not the
+  polish at the end of the distribution story, it is the step that makes the app safe to keep a term
+  of grades in. A version of the sentence that stops at "types the URL" is describing a way to lose
+  them.
+
+  **Its own subdomain, not the apex, and that choice is about storage rather than tidiness.**
+  IndexedDB and service worker scope are per-origin. Sharing an origin with anything else on
+  `hwgteach.com` would mean sharing a storage namespace with it, and this app keeps a year of grades
+  in there.
+
+  **Cloudflare Pages, chosen on a property rather than on price.** With no `functions/` directory
+  there is nowhere for server-side code to run, so "no vendor server ever touches student data" is a
+  checked fact about the deployment instead of a promise about our future behaviour. Confirmed in the
+  build log and the dashboard, not assumed. `_headers` pins the shell and the service worker to
+  `no-cache` so a deploy actually reaches a teacher who already has the app.
+
+  **`hwgteach.com` is verified with Google**, which is what unblocks Drive sync reaching a second
+  device. Nothing about sync ships yet, and the app works fully signed-out as it always has.
+
+### Fixed
+
+- **WO-1.14 — the app loaded once and then refused to load again.** On the first real deployment,
+  Planbook came up, and every navigation after that failed. Safari said *"the response served by the
+  service worker has redirections"*; on a home-screen icon that is a white screen where a term of
+  grades used to be.
+
+  The service worker precached `index.html`, the host answers that path with a redirect to `/`, and
+  the cached copy carried the redirect with it — which a browser is not allowed to serve to a page
+  navigation. The worker now caches and serves `/`, the same bytes without the redirect, and the
+  cache version was bumped so the bad copy is deleted rather than inherited. **Anyone who loaded the
+  broken version is fixed by opening the app again**; no reinstall, and nothing stored was ever at
+  risk — the failure was in delivering the app, not in the data it holds.
+
+  **Worth saying plainly: every automated check passed the whole time.** All 628 of them, before the
+  deploy and after the fix, with the same number both times. The redirect belongs to the host and
+  does not exist anywhere in this repository, so nothing that reads the repository could have seen
+  it. The first deployment was the instrument, which is the argument for having done one three weeks
+  before the term rather than three days.
+
+- **WO-8.7 — the service worker was being cached for four hours despite the rule that said not to.**
+  `_headers` asked for `no-cache` and was correct; the Cloudflare zone's own four-hour browser cache
+  setting rewrote it on the way out. The shell document escaped only because HTML is not edge-cached,
+  so the one file the pinning exists for was the one file it failed on, and the page it protects
+  looked fine. Fixed by setting the zone to respect existing headers, and read back off the wire
+  rather than off the file.
+
+### Added
+
 - **WO-3.7 — a student's whole grade, on one screen you can hand across a desk.** Tap a student's
   name on the score grid — or the new *Grades for…* button inside their attendance history — and
   their grade opens as its own screen: where the number comes from category by category, what is

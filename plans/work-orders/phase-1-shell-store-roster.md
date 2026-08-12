@@ -819,3 +819,66 @@ produces a dialog pretending to be a page: focus trapping, an Escape key that na
 screen reader announcing a dialog that never closes. Move it or leave it, but do not disguise it.
 And **do not build a router.** Roll Call! switches views with `.hidden` and a class name; the suite
 rule is no dependencies, no framework, and a hand-rolled URL router is a framework with one user.
+
+---
+
+## WO-1.14 — The shell was served from a redirect, and Safari refused it
+
+**Ship** — · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** WO-1.3
+**Closes roadmap** Phase 1 → *(no box. A defect in code Phase 1 shipped and the roadmap counted as
+done — the WO-2.17 and WO-2.23 pattern. Booked 2026-08-12, out of WO-8.7's first deployment.)*
+**Fixed in `8de1ae4`, on `main`, before this work order was written.** *The app was broken in
+production while the owner watched, so the fix shipped first and the record caught up. That order is
+the exception this project allows for a live defect, not the habit — everything below is what was
+actually done, not a plan.*
+
+**Why it exists.** WO-8.7 put the app on a real host for the first time. It loaded once, then every
+navigation after it failed with *"the response served by the service worker has redirections"*. The
+mechanism, end to end:
+
+- `sw.js`'s `SHELL` list precached **`./index.html`**, and `INDEX` — the entry every navigation is
+  answered from — pointed at the same URL.
+- **Cloudflare Pages answers `/index.html` with a 308 to `/`.** Measured, not assumed.
+- `cache.addAll()` follows redirects by default and stores the *final* response under the *requested*
+  key, with its `redirected` flag set.
+- Handing a response with that flag to a navigation is a spec violation. Safari rejects it outright;
+  the first load works only because no worker is controlling the page yet.
+
+**On a home-screen icon that is a white screen where a term of grades used to be** — the exact failure
+the install path in WO-1.3 exists to prevent, arriving through the install path itself.
+
+**Why no local tool could have caught it, which is the part worth keeping.** The redirect is the
+host's behaviour. It does not exist on `tools/serve-https.mjs`, it is not in this repository, and it
+cannot be derived from anything in it. `verify-shell.mjs` ran **628 of 628, zero skipped, against the
+broken worker** — before the deploy and again after the fix, with the same number both times. The
+harness was not wrong; it was looking at the only thing it can see.
+
+**What shipped**
+- `./index.html` removed from `SHELL`. `./` is the same bytes without the redirect, and it is what a
+  teacher's URL asks for anyway.
+- `INDEX` repointed at `./`, so the navigation lookup matches the key the precache actually stored.
+- `CACHE` bumped to `planbook-shell-v46`, so `activate` deletes the v45 cache holding the poisoned
+  entry. **Teachers already on the broken version heal on next open** — the worker script is fetched
+  by the browser's update check rather than through the fetch handler, so the bug cannot block its own
+  replacement.
+- The whole reasoning recorded above the `SHELL` list, at the point where someone would put the line
+  back, rather than in a commit message nobody reads at the moment of temptation.
+
+**Acceptance**
+- [x] `sw.js` precaches no path that the host answers with a redirect, and `INDEX` names an entry the
+      precache actually stored. *(`SHELL` starts `'./', './manifest.webmanifest'`; `INDEX` is
+      `new URL('./', self.location).href`. Read back off the deployed worker at
+      `https://planbook.hwgteach.com/sw.js`, not off the working tree — 2026-08-12.)*
+- [x] `CACHE` is bumped in the same change, so the poisoned entry is deleted rather than inherited.
+      *(`planbook-shell-v46`, confirmed live.)*
+- [x] The app loads, and **keeps loading** — a second and third navigation after the worker has taken
+      control, which is the case the first load cannot test. 👤 *(Owner, laptop and iPad, 2026-08-12.)*
+- [x] `verify-shell.mjs` still runs green with no checks lost. *(628 of 628, 0 skipped, before and
+      after — and that identical number is the finding, not the reassurance.)*
+
+**Traps** — **Do not "restore" `./index.html` to the shell list.** It looks like an omission, the
+comment above the list exists to say it is not, and putting it back reproduces this bug exactly.
+More generally: a precache list is a list of *requests the host will answer without redirecting*, and
+that is a property of the deployment, not of the repository. Any future entry needs the same question
+asked of it, and the only instrument that can answer is an HTTP request against the live origin —
+which this project still has no check for. WO-8.7's closing note proposes one.

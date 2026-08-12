@@ -168,7 +168,7 @@ with acceptance criteria is the only defense.
 
 ## WO-8.7 — the name and the host, decided
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** nothing but a decision
+**Ship** — · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** nothing but a decision
 **Blocks** WO-3.18 — there is no domain to verify until this is answered
 **Closes roadmap** Phase 8 → "Name and distribution channel decided."
 
@@ -336,7 +336,7 @@ photograph to reconcile against, and no propagation to wait out. What is left is
 only waiting is a certificate. Recorded rather than silently deleted, because the migration is what a
 reader will assume was skipped by accident.*
 
-1. [ ] **Create the Pages project** against `github.com/wildbil2me/planbook`, production branch `main`.
+1. [x] **Create the Pages project** against `github.com/wildbil2me/planbook`, production branch `main`.
    Framework preset **None**, build command **empty**, output directory **`/`** — there is no build, so
    the output is the repository as it sits, which is also what puts `_headers` where Pages reads it.
    Attach **no Functions**, and add no `wrangler.toml` and no build command: that is the build system
@@ -371,29 +371,61 @@ reader will assume was skipped by accident.*
    > is nowhere for server code to run" argument that makes Acceptance line 4 a checked fact has to be
    > re-made in the Workers vocabulary rather than assumed to carry over. Pages Direct Upload keeps the
    > present reasoning intact at the cost of the Git connection. Take it back to the work order.
-2. [ ] **Check that first deploy at its `*.pages.dev` URL, before the custom domain is attached.** HTTPS is
+2. [x] **Check that first deploy at its `*.pages.dev` URL, before the custom domain is attached.** HTTPS is
    automatic there, so the app, the service worker registration and both `Cache-Control: no-cache`
    headers can be confirmed on an origin that has nothing to do with the domain — which is what will
    tell a DNS problem from an app problem an hour later. **Put no real class data in at that origin**:
    it is a different origin, so it gets its own IndexedDB, and anything typed there is a second place a
    teacher's grades live.
-3. [ ] **Attach `planbook.hwgteach.com`** in the Pages project → Custom domains. The zone is already at
+3. [x] **Attach `planbook.hwgteach.com`** in the Pages project → Custom domains. The zone is already at
    Cloudflare, so Pages writes the CNAME itself and there is no record to paste anywhere and no
    nameserver to check first. Wait for the certificate to issue — that is the one genuine wait left in
    this sequence.
-4. [ ] **Load `https://planbook.hwgteach.com/` and read it, rather than assume it** — this is Acceptance
+4. [x] **Load `https://planbook.hwgteach.com/` and read it, rather than assume it** — this is Acceptance
    line 2. The padlock; the app rendering; the service worker **activated and running** (DevTools →
    Application → Service Workers); `cache-control: no-cache` on the document and on `/sw.js` in the
    Network panel. Then the same URL on the iPad, Share → Add to Home Screen, and a launch from the icon
    with no browser chrome — which is the distribution sentence above, walked end to end.
-5. [ ] **Verify `hwgteach.com` with Google** — Acceptance line 3, and what WO-3.18 consumes. The
+5. [x] **Verify `hwgteach.com` with Google** — Acceptance line 3, and what WO-3.18 consumes. *(Already
+   true on 2026-08-12; nothing was added. The TXT below was on the apex from an earlier property. What
+   remains is the account check, on the Acceptance line.)* The
    verification itself happens in **Search Console**, which is where the Cloud console sends you: add
    `hwgteach.com` as a Domain property, take the TXT record it offers, and put it on the apex in
    Cloudflare DNS. Verify the **apex and not the subdomain** — `hwgteach.com` covers everything under
    it, and it is the name that goes in the client's authorized domains.
-6. [ ] **Write the two dates back into this work order** — the day the URL first resolved and the day the
+6. [x] **Write the two dates back into this work order** — the day the URL first resolved and the day the
    domain verified — and tick Acceptance lines 2 and 3 on them, the way WO-3.10 records *(Owner, in the
    console, 2026-08-11)* beside each line it closed.
+
+**What the first deploy broke, and why nothing in this repository could have predicted it — 2026-08-12.**
+*The URL resolved, the certificate issued, and the app was broken anyway. Both faults live in the gap
+between what this repository contains and what the host does with it, which is the gap no local tool
+looks into. `verify-shell.mjs` was 628/628 green through both of them.*
+
+- **The shell was served from a redirect, and Safari refused it.** `sw.js` precached `./index.html`;
+  Pages answers that path with a **308 to `/`**; `cache.addAll` follows the redirect and stores a
+  response with `redirected` set; serving one of those to a navigation is a spec violation. The page
+  loaded once and every load after it failed — *"the response served by the service worker has
+  redirections"*. On a home-screen icon that is a white screen where a term of grades used to be.
+  Fixed in `8de1ae4`: `SHELL` carries `./` alone, `INDEX` points at it, `CACHE` to v46 so `activate`
+  drops the poisoned entry. **An earlier draft of this work order called this redirect "harmless
+  either way."** It was not, and the only instrument that could say so was a deployment.
+- **`_headers` was correct and did not bind.** A Cloudflare zone defaults **Browser Cache TTL to four
+  hours** and rewrites `Cache-Control` on anything the edge caches, `.js` included — so `/sw.js` came
+  back `max-age=14400` with the `no-cache` rule in place and spelled right. The document escaped only
+  because HTML is not edge-cached, so `/` read correctly and hid it. Fixed in the dashboard, not the
+  repository: **Caching → Configuration → Respect Existing Headers**, now step 1's first note.
+
+**The two together are one lesson, and it is the verifier's — restated by events rather than argued.**
+It flagged that `_headers` is invisible to both harnesses: `wo-sweep.mjs` gates on
+`^(index\.html|sw\.js|manifest\.webmanifest|src/)` and `\.(css|html)$`, and an extensionless root file
+matches neither. That was right, and understated. **Neither harness can see the deployment at all** —
+not the header a zone setting rewrote, not the redirect a host invented, not a file deleted outright.
+The follow-up the verifier proposed (fail the sweep when `_headers` is missing or the shell document is
+unpinned) covers the third and none of the first two. **What actually caught these was one HTTP request
+against the live origin**, and that is the shape the check wants: read `/`, `/sw.js` and `/index.html`
+off the wire after a deploy and assert status, `Cache-Control` and redirect behaviour. Not written here
+— it needs its own work order, and it is the first check in this project that would require a network.
 
 **What this hands WO-3.18** is a verified domain, plus a production origin — `https://planbook.hwgteach.com`
 — that will need adding to the OAuth client's authorized JavaScript origins beside the
@@ -406,19 +438,55 @@ the point at which the token flow stops being pinned to one laptop.
       and no alternative named anywhere in this section; `manifest.webmanifest` already reads
       `"name": "Planbook"` and `"short_name": "Planbook"`. Checked 2026-08-12. The manifest / README /
       consent-screen consistency check is **WO-8.6's** third line and is not this one's.)*
-- [ ] The URL resolves over HTTPS and serves the app, with the service worker registering — checked
-      in a browser, not assumed from the host's marketing. *(Step 4. Nothing is deployed, so nobody has
-      seen this; it closes on the owner in a browser and on nothing else.)*
-- [ ] The domain is verified in the Cloud console, which is what WO-3.18 consumes. *(Step 5. It has no
-      DNS prerequisite left — the zone is already at Cloudflare — so it can be done at any point in the
-      sitting, including while the certificate in step 3 is issuing.)*
-- [ ] Nothing in the deployment runs server-side code. Stated as a checked fact, because this is the
+- [x] The URL resolves over HTTPS and serves the app, with the service worker registering — checked
+      in a browser, not assumed from the host's marketing. *(Owner, in a browser and on the iPad,
+      **2026-08-12** — the day the URL first resolved. `https://planbook.hwgteach.com/` returns 200
+      with the real shell, `cache-control: no-cache` on the document and on `/sw.js`, both read off
+      the wire rather than off `_headers`. **It did not pass on the first attempt** and the second
+      Acceptance line in this repository that a green harness could not have closed is why — see
+      "What the first deploy broke" above.)*
+- [x] The domain is verified in the Cloud console, which is what WO-3.18 consumes.
+      **Verified already, and by nobody in this work order — 2026-08-12.** Search Console reports the
+      owner as a verified owner of `hwgteach.com` with no action taken, because a
+      `google-site-verification` TXT was already on the apex, left over from an earlier property on
+      this domain (`edhsets`). Confirmed live from a public resolver rather than from the console's
+      say-so: `google-site-verification=J2HPTTQjdrkn3g5CScSsmABZYvF9dd6SlWnM9W1KTPE`. **Leave that
+      record alone** — Google re-checks and silently unverifies if it disappears, which would break
+      sync months later with no visible cause.
+      **The box stays open on one thing: which Google account.** Verification is per-account, and
+      WO-3.10 recorded the client id without recording the account that owns its Cloud project. If
+      the verified account and the project account differ, Search Console goes on saying "verified
+      owner" while the Cloud console refuses the domain — a failure that surfaces in WO-3.18 rather
+      than here. **Confirmed by the owner 2026-08-12: the two match**, and the account is now named
+      beside the client id in WO-3.10 — described rather than spelled out, because this repository is
+      public. It is the personal Gmail rather than the school Workspace account, which is also the
+      right one to hold it: a school account ends with the job and takes the project and this
+      verification with it.
+- [x] Nothing in the deployment runs server-side code. Stated as a checked fact, because this is the
       line the architecture cannot cross without a decision nobody has made.
-      **The repository half is checked, 2026-08-12**: no `functions/` directory, no `package.json`, no
-      `wrangler.toml`, nothing server-side anywhere in the tree — what deploys is `index.html`, `src/`,
+      **The repository half is checked, 2026-08-12**: no `functions/` directory, no `_worker.js`, no
+      `_routes.json`, no `package.json`, no `wrangler.toml`, nothing server-side anywhere in the tree — what deploys is `index.html`, `src/`,
       `sw.js`, the static assets and `_headers`, and `tools/*.mjs` is run by hand and invoked by no
       deploy, no server and no page load (`tools/README.md` § The rule). `wo-sweep.mjs`'s
-      *no dependency manifest anywhere* check asserts that half on every run. **The deployment half is
-      the owner's** and cannot be checked before a deployment exists — a Pages project with no Functions
-      attached, which is step 1. The box stays open until both halves are true rather than being ticked
-      on the half that is.
+      *no dependency manifest anywhere* check asserts part of that half on every run.
+      **`_worker.js` was missing from this list until 2026-08-12 and is the one that mattered most.**
+      A `functions/` directory is a visible thing somebody adds on purpose; `_worker.js` is a *single
+      file* at the output root that converts a Pages project into a Worker wholesale, and it needs no
+      directory, no config and no build. The tripwire this line describes had a hole exactly the width
+      of one file. `_routes.json` is listed for the same reason — it exists only to steer requests at
+      a worker that should not be there.
+      **The deployment half is checked too, by the owner in the dashboard, 2026-08-12.** The build log
+      reports no functions directory and skips the step; the deployment's Functions tab shows the
+      onboarding copy rather than a script, and Bindings shows the same — no KV, D1, R2, Durable
+      Object, Queue, Service or AI binding exists to be reached. Both halves are now true, which is
+      what this box was waiting for.
+      **One thing on that screen reads worse than it is, and is recorded so nobody re-opens it in
+      alarm.** The Functions tab lists an *Invocation route* of
+      `{"include": ["/*"], "exclude": [], "description": "Catch-all rule generated by Pages CI"}`,
+      which looks like a server-side handler mounted on every path. It is not. Pages CI writes that
+      default whether or not a script exists, and **a route with nothing at the end of it invokes
+      nothing** — the panels directly above it are the evidence, and so is the repository. What the
+      catch-all actually means is that the tripwire is *tighter* than this work order claimed: the day
+      a `functions/` directory or a `_worker.js` appears, it is live on `/*` immediately, with no
+      routing step to forget. Adding the file is still the deliberate act. Nothing is armed by
+      accident, and nothing is one config change away from being armed either.
