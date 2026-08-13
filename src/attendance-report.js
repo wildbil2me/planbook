@@ -52,10 +52,16 @@
 
   ── PRINTING, AND WHY IT IS AN ATTRIBUTE ON <body> ──
 
-  Lifted from Roll Call!'s printStudentReport() (dashboard.html): the button sets
-  `data-attendance-print` on <body>, calls window.print(), and takes it off again on a timer. The
-  @media print block at the foot of src/attendance.css hides everything on the page EXCEPT the open
-  record dialog, and it only does that while the attribute is there.
+  Lifted from Roll Call!'s printStudentReport() (dashboard.html): `data-attendance-print` goes on
+  <body> and the @media print block at the foot of src/attendance.css hides everything on the page
+  EXCEPT the open record dialog, and only while the attribute is there.
+
+  WHO PUTS IT THERE IS src/print-gate.js AND IT IS NOT A TIMER ANY MORE (WO-2.25). This file used to
+  set the attribute, call window.print() and take it off 500ms later, on the reasoning that
+  window.print() blocks while the browser's dialog is up. It does not always — the owner printed the
+  whole app twice over on 2026-08-12 — so the gate is answered from a `beforeprint` listener at the
+  moment the browser serialises the page, by asking whether the record dialog is on screen. The
+  reasoning is written out once, over there; this file hands in its attribute and its predicate.
 
   The attribute is what keeps Ctrl+P honest. A print block that hid the app whenever it felt like it
   would answer a keyboard print on any other screen with a blank sheet of paper, which is the kind
@@ -90,6 +96,9 @@ import { fullName } from './roster.js';
    the revoke delay and the one-download-per-tap rule were both paid for on the owner's own iPad,
    and a second copy of those six lines here would be a second thing to get right. */
 import { handToBrowser } from './backup.js';
+/* The print gate, for the same reason and with the same scar behind it (WO-2.25): this file used to
+   carry its own copy of the mechanism, and that copy is how one bug came to live in three places. */
+import { registerPrintGate } from './print-gate.js';
 /*
   The ledger, and every number on both surfaces. Read-only, all of it: there is no writer in
   src/attendance.js that this file imports, and there is no path through here that changes a mark.
@@ -105,12 +114,13 @@ const RECORD_MODAL = 'attendanceRecordModal';
 const RECORD_BODY = 'attendanceRecordBody';
 
 /* The attribute the @media print block keys on. One string, named once, because the stylesheet and
-   this file have to agree about it and a typo would print a blank page rather than throw. */
+   this file have to agree about it and a typo would print a blank page rather than throw.
+
+   IT STAYS THIS SURFACE'S OWN. `data-detail-print` re-shows #detailView and `data-grades-print`
+   re-shows #gradesRecordModal; either one borrowed here would hide the app and reveal something
+   that is not on screen — a blank sheet by a different route. One mechanism, one gate per
+   surface. */
 const PRINT_ATTR = 'data-attendance-print';
-/* How long the attribute stays on. Roll Call!'s own number (dashboard.html, printStudentReport):
-   window.print() blocks while the browser's own dialog is up in every engine this app runs in, so
-   this is the margin after it rather than a bet on how long printing takes. */
-const PRINT_RELEASE_MS = 500;
 
 /*
   HOW MANY DATE COLUMNS GO ON ONE PRINTED PAGE, and the arithmetic is the whole of it.
@@ -445,16 +455,26 @@ function slice(record, dates, from, total) {
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */
 
+/* WHETHER THE RECORD IS WHAT IS ON SCREEN, asked of the DOM every time rather than remembered from
+   the tap. This is the predicate src/print-gate.js answers the attribute from; that file carries
+   the reasoning, including the two ways the timer this replaced came apart. */
+function recordOnScreen() {
+  const modal = document.getElementById(RECORD_MODAL);
+  return !!modal && !modal.classList.contains('hidden');
+}
+
+/* Registered at module scope, not around each print: the Ctrl+P a teacher presses with this dialog
+   already open never comes through printRecord() and wants the same gate. src/shell.js imports this
+   module at startup, so it is live from the first paint. */
+const syncPrintGate = registerPrintGate(PRINT_ATTR, recordOnScreen);
+
 export function printRecord() {
   const body = document.body;
   if (!body) return false;
-  body.setAttribute(PRINT_ATTR, '1');
+  /* Set here as well, for an engine that fires neither event: the gate has to be on before print()
+     is called, and the listeners registered above only correct it later. */
+  syncPrintGate();
   window.print();
-  /* Off on a timer rather than immediately, which is Roll Call!'s own arrangement: window.print()
-     returns when the browser's dialog closes in every engine here, and the margin covers the
-     engines where it does not. An attribute left on would cost nothing on screen — the block that
-     reads it is @media print — but it would make the NEXT Ctrl+P print this dialog. */
-  setTimeout(() => body.removeAttribute(PRINT_ATTR), PRINT_RELEASE_MS);
   return true;
 }
 

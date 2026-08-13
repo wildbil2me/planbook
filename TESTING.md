@@ -2510,6 +2510,228 @@ this work order is now cross-referenced so the two read as one decision.*
 
 ---
 
+### WO-2.25 — The print gate is answered when it is read, on every surface
+
+**What this changes.** Nothing a teacher sees on screen, and one thing they see on paper: the second
+tap of a sitting now prints the right sheet on the **attendance record** and the **student detail**,
+as it already did on the grade sheet. `src/print-gate.js` is a new module — one mechanism for all
+three surfaces — and `src/attendance-report.js`, `src/detail.js` and `src/grades-report.js` each hand
+it their own attribute and a predicate answering whether that surface is on screen. **Every
+`PRINT_RELEASE_MS` and every timer around a print attribute is gone from the tree.**
+
+**The bug is WO-3.9's, found by the owner on 2026-08-12 and fixed on one surface only.** Set the
+attribute, call `window.print()`, clear it 500ms later — on the reasoning that `window.print()`
+blocks while the browser's dialog is up. It does not always. Chrome refuses a repeated `print()`
+with *"This website has been blocked from automatically printing"* and a **refused `print()` returns
+at once**, so the timer cleared the gate while the teacher read the message and the print they then
+allowed came out as **the whole app**. Turning a preview to landscape does it by the other road: the
+preview re-generates from the **live DOM**, long after the timer. One mistake, not two — the gate was
+*set* when the app asked to print and *read* when the browser actually printed. It is now answered
+from a `beforeprint` listener at the moment the page is serialised, by asking the DOM.
+
+**Why the copies went and not just the bug.** The idiom was lifted three times — WO-2.6 wrote it,
+WO-3.7 copied it, WO-3.9 copied it again — which is exactly how one mistake came to live in three
+places and be fixed in one. **The three attributes stay three** and that part was always right:
+`data-attendance-print`, `data-detail-print` and `data-grades-print` each re-show a different
+surface. It is the mechanism that stopped being copied, and the module takes the attribute and the
+predicate as arguments so that Phase 4's signal lists and Phase 6's glance page cannot arrive with a
+fourth timer in them.
+
+**One decision the work order left open, taken here and written down.** `syncAll()` answers **every**
+registered gate rather than only the caller's. On `beforeprint` this makes no difference — every
+listener fires on the same event — but the belt-and-braces call made immediately before
+`window.print()` is the case that matters: a teacher who *blocks* a print outright leaves that
+attribute on, and on an engine that fires no `beforeprint` at all, printing a second surface
+afterwards would serialise a page carrying two gates. The module still knows nothing about modals,
+views or `.hidden`; it holds a list of `{ attr, isOnScreen }` and nothing else.
+
+**The stale `@media print` headers are corrected.** `src/attendance.css` and `src/detail.css` both
+described the timer in prose; `src/scores.css`'s header said so, at the point where a reader would
+lift it a fourth time, and that sentence is now the census of one mechanism instead.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-2-attendance.md` § WO-2.25 lives here.
+Each block below names the line it closes.*
+
+- [x] **Acceptance 1 — the module exists and no timer clears a print attribute.**
+      `grep -rn "PRINT_RELEASE_MS" src/` returns **nothing**. The seven `setTimeout`s left in `src/`
+      are `src/attendance.js:987` (the rotation settle), `src/backup.js:328` (the object-URL revoke),
+      `src/live-region.js:25`, `src/save-indicator.js:70` (the fade) and `src/store.js:422`, `:423`,
+      `:468` (debounce, max-wait, retry). None of them touches an attribute.
+- [x] **Acceptance 2 — three surfaces, three attributes, asserted per surface.** One check on each,
+      reading all three attributes and the boxes of all three surfaces out of the same snapshot taken
+      inside the stubbed `window.print()`: *"at the moment the app asks to print, `<body>` carries
+      this surface's own attribute and neither of the other two"* —
+      `{"attr":true,"detailAttr":false,"gradesAttr":false,"recordH":407,"detailH":0,"gradesH":0,"headerH":0,"mainH":0}`
+      for the record, `data-detail-print = true, data-attendance-print = false, data-grades-print =
+      false; #attendanceRecordModal 0px, #gradesRecordModal 0px` for the detail, and the mirror of it
+      for the grade sheet.
+- [x] **Acceptance 3 — the same five readings on all three, the timed release gone, the run green.**
+      `node tools/verify-shell.mjs` at **`674 checks · 674 passed · 0 failed · 0 skipped`**, 16,921
+      lines, 25.1 lines per check, 206s, exit 0 — up from 662 on the tree this arrived on. Each
+      surface now reads: the gate ON at print time, still on 700ms after the tap, re-armed by a
+      `beforeprint` the app never asked for, cleared by `afterprint`, and cleared by a `beforeprint`
+      raised while that surface is **not** up.
+
+      **The line says "the two checks that asserted a timed release are gone" and there was only
+      one.** The detail section's *"and the attribute comes back off, so the next Ctrl+P is the
+      browser's business again"* is deleted here. The attendance section had none to delete — it
+      never called `printRecord()` at all, and the one thing it measured about the gate was that
+      `<body>` carried no attribute **at rest**, which is green on a build that prints the whole app
+      on the second tap. The grade sheet's was already deleted at WO-3.9. Nothing in the harness
+      asserts a release now.
+- [x] **Acceptance 4 — every new check watched failing.** Thirteen call sites added, one deleted.
+      **Four of the thirteen fail on the tree as it stands**; the other nine are shaped as absences
+      that the timer build also satisfies — it had already cleared the attribute, so they passed for
+      the wrong reason — and were watched failing under three mutations instead. **This box is ticked
+      on thirteen of thirteen watched red, not on thirteen of thirteen failing pre-fix**, and the
+      table says which is which.
+
+      | Tree | Result |
+      |---|---|
+      | **The unfixed `src/attendance-report.js` and `src/detail.js`, verbatim as shipped** (`git stash push` on those two files only) | **4 red**, `674 checks · 670 passed · 4 failed`, exit 1. *"the gate is still on while the record is on screen … `<body>` carries data-attendance-print 700ms after the tap = **false**"*, *"a print the browser refused and the teacher then allowed re-gates itself … beforeprint with the record on screen left data-attendance-print on = **false**"*, and the same two on the detail: *"`<body>` carries data-detail-print 700ms after the tap = false"*, *"beforeprint with the detail on screen left data-detail-print on = false"*. **The other nine passed on the broken tree**, which is the point of the rest of this table |
+      | `syncAll()` never removes an attribute, **and** the `afterprint` listener stops removing one (two independent edits, one run) | **6 red** — *"`afterprint` clears it … after afterprint = **true**"* and *"a Ctrl+P made when the surface is NOT up clears the gate … left the attribute on = **true**"*, on **all three** surfaces. The two failures are attributable by construction: the first is the listener, the second is the `else` arm |
+      | All three print entry points call `window.print()` twice, **and** `syncAll()` sets every gate's attribute whenever any surface is on screen | **7 red** — the three *"one tap … calls window.print() exactly once"* checks at `= 2`, the detail and grade-sheet isolation checks (`data-detail-print = true, data-attendance-print = **true**`; all three true on the grade sheet), and two collateral: *"9 element(s) still drawn outside the sheet"* on the grade sheet and *"4 element(s) still drawn outside #detailView"*, naming `DIV.modal-panel attendance-report-panel` — which is the shared-attribute defect printing the wrong surface, exactly as the three `@media print` headers say it would |
+      | `src/attendance-report.js`'s `PRINT_ATTR` set to `data-detail-print` — the Trap, made literal | **3 red.** The attendance isolation check reports `{"attr":**false**,…,"recordH":900,"headerH":**100**,"mainH":**816**}` — the whole app on the page, because the record surface set a gate that re-shows a screen nobody is looking at. The two timer readings go red with it. *(This mutation exists because the previous one cancels itself for the first-registered gate: attendance is `gates[0]`, so the later gates removed the attributes it had just set, and its isolation check stayed green for a mechanical reason rather than a good one.)* |
+
+      **Nine of the thirteen new checks are in those three mutation rows** — four in the first (the
+      attendance and detail `afterprint` and not-up readings; the other two red are the grade
+      sheet's own, which is this work order re-verifying the surface that already worked), four in
+      the second (the attendance and detail one-tap readings, and the detail and grade-sheet
+      isolation readings), and one in the third (the attendance isolation reading). Four plus nine is
+      thirteen, and every added check has been seen red at least once.
+
+      All four trees restored; `src/print-gate.js` and `src/attendance-report.js` were diffed against
+      byte copies taken before each mutation, and the **final green run above was made on the
+      restored tree**, not on the tree before the mutations.
+- [x] 👤 **Print the attendance record twice in one sitting, and the detail sheet twice**, allowing
+      Chrome's block when it appears, and turn one preview to landscape. The right sheet comes out
+      every time. **Run by the owner 2026-08-13 and passing on all three readings** — the four
+      verbatim results are below, and the same sitting found the *Ignore* defect that correction
+      round 2 fixed; the re-run against that fix closes the last box in this section. This is the
+      only reading that matters
+      and no emulator has it — the grade sheet's identical fix was confirmed this way on 2026-08-13,
+      and this is that confirmation asked of the other two surfaces. Expect Chrome to show *"This
+      website has been blocked from automatically printing"* on the second tap: **that is the browser
+      and not the app**, one tap calls `window.print()` exactly once and there is now a check saying
+      so on all three surfaces. What to notice is what comes out **after** you press Allow, and what
+      the preview turns into when you rotate it.
+- [x] **Acceptance 6 — both numbers off a run, and the sweep otherwise unmoved.** `tools/README.md`
+      goes 663 → **675** call sites and 662 → **674** executed, each copied off a summary line rather
+      than added up; the gap paragraph goes `659 − 658 = 1` → `675 − 674 = 1`, unmoved for a sixth
+      work order. The sweep forced it: before the edit, *"FAIL | the recorded `check()` call-site
+      count matches the harness :: tools/verify-shell.mjs has 675 `check()` call site(s), up 12 on
+      the 663 recorded at tools/README.md:729"*. After it, **`17 checks · 15 passed · 0 failed · 2 to
+      review`, exit 0 — the same line WO-3.9 recorded, but for the count.** Both REVIEWs are the
+      standing pair and both were read rather than waved at: the sensitive-field sweep is **191
+      mentions across 16 files**, the same figure and the same list as the WO-3.9 run (`src/print-gate.js`
+      is not in it — the module names no field and imports nothing), and the due-date REVIEW is
+      `src/detail.js:364, src/grades-report.js:509`, the same two lines of printed prose as before at
+      new line numbers — `:364` is `git show HEAD:src/detail.js`'s `:349`, moved down by the fifteen
+      lines this work order added above it. No CSS selector was added, so the coarse-block check
+      still reports no new selectors, and the CACHE-bump check reads *"planbook-shell-v50 is not in
+      any commit yet — the bump is uncommitted, which is the rule being followed"*.
+
+*`sw.js`'s `CACHE` goes **v49 → v50** and `./src/print-gate.js` joins `SHELL`. A new file in `src/`
+that is not in that list works in every test anybody runs — a live network serves it — and is missing
+the first time a teacher opens the app on a plane.*
+
+*One thing that is **not** here, and was not attempted: Chrome's throttle message. It is browser
+policy, the work order's Out of scope line settles it, and the reading that says it is not ours — one
+tap, one `print()` — is now a check on all three surfaces rather than on one.*
+
+#### Correction round 2 — the owner's own run, and the regression it found (2026-08-13)
+
+**The owner ran the 👤 checklist on her own machine and found a bug this work order introduced.** Her
+four results, verbatim:
+
+> ✅ Attendance record printed twice in one sitting, Chrome's block allowed — the record came out, not
+> the app.
+> ✅ Student grade detail, same, twice in one sitting with the block allowed.
+> ✅ Portrait → landscape inside a preview — the sheet survived the rotation.
+> ✅ Ctrl+P with no print surface open prints the ordinary page — **verified on the laptop only.**
+
+**The fourth is a desktop-only verification and is recorded as one.** iOS has no Ctrl+P: the shortcut
+raises no print dialog on the iPad at all, so nothing on that device can perform that step as written.
+The guarantee itself is reachable there by another route — **Share → Print raises the same
+`beforeprint`** the gate answers, and that is the version an iPad can actually run. It was not
+claimed at the time, because it had not been run; **the owner ran it on 2026-08-13 as part of the
+round-2 re-check below, and it passes both ways** — the sheet with one open, the ordinary page with
+none.
+
+**And then the fifth thing, which was not on the checklist.** Pressing **Ignore** on Chrome's *"blocked
+from automatically printing"* prompt left every subsequent click anywhere on screen re-opening the
+print dialog. The cause is one string used for two jobs: `src/print-gate.js` leaves
+`data-detail-print` on `<body>` when a print is refused — **which is the fix working as designed** —
+and the detail screen's Print button was *also* `data-detail-print`, so `src/shell.js`'s delegated
+`e.target.closest('[data-detail-print]')` matched **every** click, because `closest()` walks up to
+`<body>`. The deleted 500ms timer had been hiding this for three copies of the idiom by clearing the
+attribute within half a second. **The fix that stopped clearing the gate is what made the collision
+reachable**, and there was no check for it anywhere.
+
+**Fixed by renaming the button, not by scoping the selector.** `data-detail-sheet-print` in
+`index.html`, in `src/shell.js`'s delegated hook and in its attribute census. `button[data-detail-print]`
+would have been a smaller diff and would have left the collision live for whoever copies the pattern
+next. **The invariant, now written in `src/print-gate.js` where every future print surface reads it: a
+gate attribute is never also a click hook.** The other two surfaces have that today only by luck of
+naming — `data-attendance-record-print` against `data-attendance-print`, `data-grades-record-print`
+against `data-grades-print`.
+
+- [x] **The check that was missing exists, and was watched red before the fix.** One `check()` over
+      all three gates at the foot of `tools/verify-shell.mjs`: with that gate stuck on `<body>`, a
+      click on three things that are not controls — `<body>` itself, the header's own box, `<main>` —
+      calls `window.print()` zero times. Green: `677 checks · 677 passed · 0 failed · 0 skipped`,
+      17,011 lines, 25.1 lines per check, 214s.
+
+      | Tree | Result |
+      |---|---|
+      | **The rename reverted — `data-detail-print` on the button, the hook and the harness's selector, i.e. the tree the owner ran** | **1 red**, `677 checks · 676 passed · 1 failed`. *"with `data-detail-print` stuck on <body> … a click on something that is not a control does NOT print :: window.print() calls per neutral target = `{"body":1,"header.header":1,"main":1}` — printed from ["body","header.header","main"]"*. The attendance and grade-sheet readings passed on that same run, **by luck of naming**, which is exactly why the check asks all three |
+      | Two lines added to `src/shell.js` giving the other two surfaces the same collision (`closest('[data-attendance-print]')` and `closest('[data-grades-print]')` beside their real hooks) — a fourth surface's mistake, made literal | **2 red**, `677 checks · 675 passed · 2 failed`, both reading `{"body":1,"header.header":1,"main":1}`. Nothing else moved, which is what makes those two greens above real rather than accidental |
+
+      `src/shell.js`, `index.html` and `tools/verify-shell.mjs` were restored from byte copies taken
+      before each mutation and `diff`ed clean; the green run above was made **after** the restoration.
+- [x] 👤 **Re-run the printer checklist against this fix, including the Ignore path.** The four
+      results above stood for the tree they were run on, and the Ignore path had not been through a
+      real printer since. **Closed by the owner 2026-08-13, against correction round 2.** Five
+      readings, at a real printer in one sitting: after pressing **Ignore** on Chrome's block on the
+      detail sheet, clicking the header and a blank patch of page opened **no** print dialog — the
+      regression is gone; the same Ignore probe on the attendance record and the class grade sheet
+      is likewise silent; printing twice with the block **allowed** puts the sheet on the paper and
+      not the app; a preview turned portrait → landscape is still the sheet; and on the iPad,
+      **Share → Print** gives the open sheet with one up and the ordinary page with none — the iOS
+      stand-in for the Ctrl+P reading, run on the device for the first time here.
+
+- [x] **Both numbers off a run, and the sweep otherwise unmoved.** `tools/README.md` goes 675 →
+      **676** call sites and 674 → **677** executed. The gap paragraph goes `675 − 674 = 1` →
+      `676 − 677 = −1` — **negative for the first time in this file's history**, because the three
+      new readings come from ONE call site inside a loop over the three gates, which is the second
+      bullet of that paragraph outrunning the first and nothing more. The sweep forced the edit:
+      *"FAIL | … tools/verify-shell.mjs has 676 `check()` call site(s), up 1 on the 675 recorded at
+      tools/README.md:766"*. After it, **`17 checks · 15 passed · 0 failed · 2 to review`, exit 0** —
+      the same line as the first round. Both REVIEWs read again: the sensitive-field sweep is the
+      same **191 mentions across the same 16 files**, and the due-date REVIEW is
+      `src/detail.js:369, src/grades-report.js:509` — the same two lines of printed prose as the
+      first round's `:364`, moved down five by the comment added over `PRINT_ATTR`. No CSS selector
+      was added, so the coarse-block check still reports no new selectors, and no control was added,
+      so there is no 44px work in this round.
+
+*The sweep for the same collision elsewhere found **nothing else**. `src/print-gate.js` is the only
+module in the tree that writes an attribute to `<body>` at all (`grep -n "body.setAttribute" src/`),
+so the three gates are the only attributes any `closest()` can pick up from an ancestor of everything.
+Cross-referencing all 141 delegated `closest('[data-…]')` hooks in `src/shell.js` against every
+`data-` attribute written in `index.html` and in `src/*.js` leaves two hooks carried by a container
+rather than a control — `data-pill-group` and `data-backup-drop`, both `<div>`s — and both are
+deliberate: they exist to catch clicks on their own children, and nothing else in the tree sets
+either string. Every other hook is written on the control it belongs to.*
+
+*`sw.js`'s `CACHE` stays at **v50**, set in the first round and still uncommitted. `planbook-shell-v50`
+appears in no commit, so no installed app has ever fetched a shell under that name; the bump made for
+the first round carries this round's `index.html` and `src/shell.js` into the same still-unshipped
+version. A v51 would name a version nothing ever served. The sweep agrees in as many words:
+*"planbook-shell-v50 is not in any commit yet — the bump is uncommitted, which is the rule being
+followed"*.*
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

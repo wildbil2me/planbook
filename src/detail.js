@@ -57,10 +57,17 @@
 
   ── PRINTING A VIEW, WHICH IS A HARDER PROBLEM THAN PRINTING A DIALOG ──
 
-  WO-2.6's idiom is borrowed whole rather than re-derived: a button sets an attribute on <body>,
-  calls window.print(), and takes it off again, and every rule in the @media print block is gated on
-  that attribute. Without the gate a Ctrl+P made anywhere else in the app prints a blank sheet, and
-  that regression has already happened once in this app.
+  An attribute on <body> gates every rule in the @media print block. Without the gate a Ctrl+P made
+  anywhere else in the app prints a blank sheet, and that regression has already happened once in
+  this app.
+
+  WHO PUTS IT THERE IS src/print-gate.js AND IT IS NOT A TIMER ANY MORE (WO-2.25). This file used to
+  carry WO-2.6's arrangement verbatim — set it, print, clear it 500ms later — and that is how one
+  bug came to live in three places: the owner printed the whole app off the grade sheet twice over
+  on 2026-08-12, because a refused print() does not block and a preview turned to landscape
+  re-generates from the live DOM. The gate is answered from a `beforeprint` listener now, at the
+  moment the browser serialises the page, by asking whether this screen is the view on screen. The
+  reasoning is written out once, over there; this file hands in its attribute and its predicate.
 
   The DIFFERENCE is where the printed thing sits. WO-2.6 prints a modal, which is a direct child of
   <body>, so `body[...] > *` hides everything and one `> #id` rule brings it back. This screen is
@@ -113,8 +120,15 @@ import { MARKS, termTotals, percentText, plainDate, todayISO } from './attendanc
 /* The breadcrumb this screen is the only setter of. A leaf that imports src/views.js and nothing
    else, so wearing it closes no loop. */
 import { setDetailBreadcrumb } from './screen-nav.js';
+/* Which view is on screen, read off the DOM by the module that owns the answer — the print gate's
+   predicate below is the only caller here. src/screen-nav.js, imported just above, already imports
+   src/views.js and nothing else, so naming it directly here closes no loop either. */
+import { currentView } from './views.js';
 /* The one way a file reaches the browser in this app. Imported rather than copied — see the header. */
 import { handToBrowser } from './backup.js';
+/* The print gate, and the reason this file no longer owns one: WO-2.6's mechanism was copied here
+   and then copied again, so one bug lived in three places and was fixed in one (WO-2.25). */
+import { registerPrintGate } from './print-gate.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -123,12 +137,18 @@ const CONTENT_ID = 'detailContent';
 const EMPTY_ID = 'detailEmpty';
 
 /* The attribute the @media print block keys on. One string, named once, because src/detail.css and
-   this file have to agree about it and a typo would print a blank page rather than throw. */
+   this file have to agree about it and a typo would print a blank page rather than throw.
+
+   IT STAYS THIS SURFACE'S OWN. `data-attendance-print` re-shows #attendanceRecordModal and
+   `data-grades-print` re-shows #gradesRecordModal, neither of which is on screen here, so either
+   one borrowed would hide the app and reveal a hidden dialog — a blank sheet by a different route.
+   One mechanism, one gate per surface.
+
+   IT IS ALSO NOT THE BUTTON'S NAME, which is `data-detail-sheet-print` in index.html. This attribute
+   goes on <body> and src/shell.js's delegated hook reaches its control with `closest()`, which walks
+   to <body>: one string doing both jobs matched every click on screen for as long as the gate was on.
+   src/print-gate.js states the invariant; this is the surface it was found on. */
 const PRINT_ATTR = 'data-detail-print';
-/* How long it stays on. WO-2.6's number, which is Roll Call!'s: window.print() blocks while the
-   browser's own dialog is up in every engine this app runs in, so this is the margin after it
-   rather than a bet on how long printing takes. */
-const PRINT_RELEASE_MS = 500;
 
 /*
   WHOSE DETAIL IS ON SCREEN. An id and never a student object, for the reason src/scores.js gives
@@ -626,17 +646,31 @@ export function renderDetail() {
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */
 
+/* WHETHER THIS SCREEN IS WHAT IS ON SCREEN, asked of the DOM every time rather than remembered from
+   the tap. This is the predicate src/print-gate.js answers the attribute from; that file carries the
+   reasoning, including the two ways the timer this replaced came apart.
+
+   THE QUESTION GOES TO src/views.js RATHER THAN TO `.hidden` HERE, and that is the one difference
+   from the two dialog surfaces: this screen is a view in <main>, `.hidden` on those siblings IS the
+   view system (src/views.js's header), and currentView() is where this app already reads it back
+   off the DOM. A second copy of "which view is showing" is exactly the second answer this repo
+   keeps refusing. */
+function detailOnScreen() {
+  return currentView() === 'detail';
+}
+
+/* Registered at module scope, not around each print: the Ctrl+P a teacher presses while standing on
+   this screen never comes through printDetail() and wants the same gate. src/shell.js imports this
+   module at startup, so it is live from the first paint. */
+const syncPrintGate = registerPrintGate(PRINT_ATTR, detailOnScreen);
+
 export function printDetail() {
   const body = document.body;
   if (!body) return false;
-  body.setAttribute(PRINT_ATTR, '1');
+  /* Set here as well, for an engine that fires neither event: the gate has to be on before print()
+     is called, and the listeners registered above only correct it later. */
+  syncPrintGate();
   window.print();
-  /* Off on a timer rather than immediately, which is WO-2.6's arrangement and Roll Call!'s before
-     it: window.print() returns when the browser's dialog closes in every engine here, and the
-     margin covers the engines where it does not. An attribute left on would cost nothing on
-     screen — the block that reads it is @media print — but it would make the NEXT Ctrl+P print
-     this page from wherever the teacher had got to. */
-  setTimeout(() => body.removeAttribute(PRINT_ATTR), PRINT_RELEASE_MS);
   return true;
 }
 

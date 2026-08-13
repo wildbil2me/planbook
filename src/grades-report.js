@@ -115,6 +115,10 @@ import { plainDate, shortDate, todayISO } from './attendance.js';
 /* The one way a file reaches the browser in this app (src/backup.js). Imported rather than copied:
    the revoke delay and the one-download-per-tap rule were both paid for on the owner's own iPad. */
 import { handToBrowser } from './backup.js';
+/* The print gate, and the only mechanism there is for one: this file is where it was written
+   (WO-3.9) and WO-2.25 moved it out so that all three print surfaces answer their attribute the same
+   way. The attribute stays this file's own; the reasoning is told once, over there. */
+import { registerPrintGate } from './print-gate.js';
 
 const RECORD_MODAL = 'gradesRecordModal';
 const RECORD_BODY = 'gradesRecordBody';
@@ -510,58 +514,26 @@ export function openGrades(opener) {
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */
 
-/*
-  ── THE GATE IS ANSWERED WHEN IT IS READ, NOT SET ON A TIMER (owner's bug, 2026-08-12) ──
-
-  WO-2.6's arrangement, lifted here and into src/detail.js, was: set the attribute, call
-  window.print(), take it off 500ms later, on the reasoning that window.print() blocks while the
-  browser's own dialog is up. It does not always, and the owner found both ways it comes apart on
-  the SECOND tap of one sitting:
-
-    CHROME THROTTLES A REPEATED print(). The second call in a short window is refused with "This
-    website has been blocked from automatically printing" — and a REFUSED print() does not block, it
-    returns at once. 500ms later the timer took the gate off. Then the teacher pressed Allow, the
-    print finally happened with no gate on, and what came out of the printer was the whole app.
-
-    CHANGING PORTRAIT TO LANDSCAPE re-generates the preview from the LIVE DOM. Whatever the
-    attribute is at that moment is what prints, and by then the timer had long since cleared it.
-
-  Both are one mistake, not two: the gate was SET at the moment we asked to print and READ at the
-  moment the browser actually printed, and those are not the same moment — the gap is however long
-  the teacher looks at the preview. So it is answered at the moment it is read instead. `beforeprint`
-  fires immediately before the page is serialised — on the delayed print the teacher allowed, and
-  again on each re-layout inside the preview — and the answer is not remembered from the tap. It is
-  asked of the DOM: is the grade sheet the thing on screen?
-
-  THAT MAKES IT SELF-CORRECTING RATHER THAN BALANCED, which is the property the timer never had. A
-  print the teacher BLOCKS outright leaves the attribute on, and nothing takes it off; that costs
-  nothing, because the only block that reads it is @media print, and the next print of anything at
-  all asks the question again and clears it. There is no state here that can get stuck on.
-*/
+/* WHETHER THIS SHEET IS WHAT IS ON SCREEN, asked of the DOM every time rather than remembered from
+   a tap. This is the predicate the gate is answered from; src/print-gate.js carries the whole
+   reasoning, including the two ways the timer it replaced came apart on 2026-08-12. It was written
+   there first (WO-3.9) and moved out at WO-2.25 so that the other two surfaces stopped carrying
+   their own copy of the mistake. */
 function gradesOnScreen() {
   const modal = document.getElementById(RECORD_MODAL);
   return !!modal && !modal.classList.contains('hidden');
 }
 
-function syncPrintGate() {
-  if (gradesOnScreen()) document.body.setAttribute(PRINT_ATTR, '1');
-  else document.body.removeAttribute(PRINT_ATTR);
-}
-
-/* Registered at import rather than around each print, and the reason is a print that never came
-   through printGrades() at all: the Ctrl+P a teacher presses with this dialog already open is the
-   same sheet and wants the same gate. src/shell.js imports this module at startup, so both are live
-   from the first paint. */
-window.addEventListener('beforeprint', syncPrintGate);
-/* Off once the browser is finished, so that <body> outside a print carries nothing. This is the
-   tidy path; syncPrintGate() above is the safety one, and it does not depend on this firing. */
-window.addEventListener('afterprint', () => document.body.removeAttribute(PRINT_ATTR));
+/* Registered at module scope, not around each print: the Ctrl+P a teacher presses with this dialog
+   already open never comes through printGrades() and wants the same gate. src/shell.js imports this
+   module at startup, so it is live from the first paint. */
+const syncPrintGate = registerPrintGate(PRINT_ATTR, gradesOnScreen);
 
 export function printGrades() {
   const body = document.body;
   if (!body) return false;
   /* Set here as well, for an engine that fires neither event: the gate has to be on before print()
-     is called, and the listeners above only correct it later. */
+     is called, and the listeners registered above only correct it later. */
   syncPrintGate();
   window.print();
   return true;

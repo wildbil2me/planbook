@@ -643,13 +643,14 @@
    already happened once in this app, so every rule below is selected under the attribute —
    including the ones that only turn something ON.
 
-   WHO PUTS IT THERE IS NOT WHAT THE OTHER TWO BLOCKS SAY, and this block is the one that is right.
-   src/grades-report.js answers the attribute from a `beforeprint` listener, at the moment the
-   browser serialises the page, by asking whether the grade sheet is on screen. WO-2.6's version —
-   set it, print, clear it 500ms later — printed the whole app when Chrome throttled a second tap or
-   when the teacher turned the preview to landscape. The reasoning is written out at printGrades(),
-   and until src/attendance.css and src/detail.css say the same thing, theirs still describe a timer
-   and still carry the bug.
+   WHO PUTS IT THERE IS ONE ANSWER FOR ALL THREE BLOCKS, and since WO-2.25 it is src/print-gate.js.
+   The attribute is answered from a `beforeprint` listener, at the moment the browser serialises the
+   page, by asking whether the grade sheet is on screen. WO-2.6's version — set it, print, clear it
+   500ms later — printed the whole app when Chrome throttled a second tap or when the teacher turned
+   the preview to landscape. This block was the first to say so and the other two said the opposite
+   until 2026-08-13, when the mechanism moved into one module and both of their headers were
+   corrected. The reasoning lives in that file now, told once; a fourth print surface takes the
+   attribute and a predicate and inherits it rather than lifting it.
 
    A THIRD ATTRIBUTE RATHER THAN A THIRD IDIOM, and the difference matters. Sharing
    `data-attendance-print` or `data-detail-print` would be cheaper by one string and wrong: those

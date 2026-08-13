@@ -673,7 +673,9 @@ character. A student called `O"Brien, Jr` is in the fixture for one clause alone
 no quoting turns that row into two extra columns, silently, in a file the teacher opens weeks later.
 Proved: removing the quoting turns two red, on a row that parses to width 1.
 
-**And the section never calls `printRecord()`.** `window.print()` in a headless browser prints
+**And the section never calls `printRecord()`.** *(True until WO-2.25, which taught it WO-3.7's stub
+and drove the real 🖨 Print button — see that block below. Everything else in this paragraph still
+holds, including what stays owed to a human with a printer.)* `window.print()` in a headless browser prints
 nothing and can block, and no emulator has a sheet of paper, so *"the print view fits a class on a
 page"* stays owed to a human with a printer. What is measured instead is the two halves a laptop can
 see — the header carries the class, the term, the range and the meeting count, and a term of thirty
@@ -726,7 +728,59 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 663 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**674 at WO-2.25**, measured the same way: `674 checks · 674 passed · 0 failed · 0 skipped`, 16,921
+lines, 25.1 lines per check, 206s. Thirteen call sites added and one deleted, all literal, none in a
+loop and none a fixture-guard arm — so the executed count moves by the same twelve, 662 → 674. The
+work order is one module (`src/print-gate.js`) replacing three copies of a print gate, and the
+harness half of it is that **all three print surfaces now make the same five readings**, where two of
+them made almost none. Three things about it are worth knowing.
+
+**The check that was deleted is the reason the work order exists.** *"and the attribute comes back
+off, so the next Ctrl+P is the browser's business again"* asserted that `data-detail-print` was gone
+700ms after the tap. It passed on every run and the surface was broken anyway — it measured the
+release timer, and the timer was the bug. The grade sheet's equivalent had already gone the same way
+at WO-3.9; this is the second and last of them. **What a gate is 700ms after a tap is not what it is
+when the browser prints.**
+
+**The attendance section drives `printRecord()` for the first time.** Its header used to say it never
+could — `window.print()` blocks in a headless browser — and WO-3.7's answer, stubbing `window.print`
+and taking the reading inside the stub, is what it now borrows. Until this work order the only thing
+measured about that gate was that `<body>` carried no attribute **at rest**, which is green on a
+build that prints the whole app on the second tap of a sitting.
+
+**Four of the thirteen fail on the tree as it stands, and the other nine were watched failing under
+mutation instead**, which is the honest version of the acceptance line that asks for all of them.
+Thirteen is the denominator and not twelve: twelve is the net after the deleted check, and a check
+that no longer exists is not one anybody can watch fail. Against the unfixed
+`src/attendance-report.js` and `src/detail.js` — the timer, verbatim, as shipped — the run is `674
+checks · 670 passed · 4 failed`, and the four are *"the gate is still on"* and *"a print the browser
+refused and the teacher then allowed re-gates itself"* on **both** surfaces. Of the nine that passed
+there, four are shaped as absences the buggy build also satisfies — the timer had already cleared the
+attribute, so *"`afterprint` clears it"* and *"a Ctrl+P made when the surface is NOT up clears it"*
+pass for the wrong reason — and they went red on mutating `src/print-gate.js`'s `afterprint` listener
+and `syncAll()`. The other five are not absence-shaped at all: the two one-tap readings and the three
+isolation readings, four of them red under a doubled `print()` with the gates shared, the fifth under
+`src/attendance-report.js` gating on `data-detail-print`. Four plus four plus four plus one — the
+table under `TESTING.md` § WO-2.25 has each mutation, with the failure text.
+
+**677 at WO-2.25's second correction round**, and it is the first section in this file whose subject
+is not a screen: `677 checks · 677 passed · 0 failed · 0 skipped`, 17,011 lines, 25.1 lines per check,
+214s. **A gate attribute is not a click hook**, asked of all three gates, at the foot of the file after
+the WO-3.9 teardown because it depends on no fixture. The owner found the bug it covers on her own
+machine the day the work order passed: pressing **Ignore** on Chrome's *"blocked from automatically
+printing"* leaves the gate on `<body>` — which is the fix behaving correctly — and the detail screen's
+Print button was named `data-detail-print`, the same string as its gate, so `src/shell.js`'s delegated
+`closest()` walked up to `<body>` and matched **every click anywhere on screen**. Every click re-opened
+the print dialog. The deleted 500ms timer had been hiding it for a year of copies; **the fix that made
+the gate self-correcting is what made the collision reachable**, which is why there was no check for it
+anywhere in this file. The check sets each gate on `<body>` in turn, clicks three things that are not
+controls — `<body>` itself, the header's own box, `<main>` — and counts `window.print()`. On the
+unfixed tree it reads `{"body":1,"header.header":1,"main":1}`. **It asks all three surfaces on
+purpose:** the other two are safe by luck of naming (`data-attendance-record-print` against
+`data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
+print surface Phase 4 and Phase 6 want is the one this is really for.
+
+**`verify-shell.mjs` holds 676 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -753,7 +807,15 @@ collected since it was written and never asserted**, promoted to a check the day
 Chrome still showing "blocked from automatically printing" after the fix. One tap calls
 `window.print()` once, so the throttle is the browser's policy and not a delegated handler firing
 twice — which is the difference between a bug and a browser, and there was no reading that told them
-apart until this one. *(The
+apart until this one. **WO-2.25 moved it from 663 to 675**: thirteen added and one deleted, all
+literal and none in a loop — six in the attendance section, which had never driven `printRecord()` at
+all; six in the detail section; and one in the grade sheet's, so that each of the three surfaces
+asserts on its own that a print carries its own attribute and neither of the other two. The deleted
+one is the detail section's *"the attribute comes back off"*, which is the paragraph above happening
+a second time on a second surface — same lifted idiom, same timer, same check green over it. **Its
+second correction round moved it from 675 to 676**, and that one site is the first this file has added
+inside a loop since WO-2.21: one `check()` over the three gate attributes, three results, which is why
+the gap below is negative for the first time. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -776,7 +838,13 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 659 − 658 = 1 on this tree (637 − 636 = 1 before WO-3.9 — whose
+could go and name.** It is 676 − 677 = **−1** on this tree, and the sign is the point: WO-2.25's
+second correction round added **one** call site that produces **three** results — a single `check()`
+inside a loop over the three print gates — so the executed count has overtaken the call sites for the
+first time in this file's history. A negative gap is the second bullet below outrunning the first, and
+nothing more. It was 675 − 674 = 1 before that round (WO-2.25's thirteen added and one deleted are
+all literal sites outside any loop, so both numbers moved by the same twelve and the gap did not
+budge for a sixth work order running; 659 − 658 = 1 at WO-3.9, and 637 − 636 = 1 before it — whose
 twenty-two sites produced exactly twenty-two results, by the same coincidence WO-2.6's eighteen did
 and for the same two reasons at once: one fixture-guard arm a green run never reaches, and one call
 site inside a two-pass presentation-mode loop that fires twice — 629 − 628 = 1 before WO-1.15,

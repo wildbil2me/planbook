@@ -128,8 +128,12 @@
                                       surface and the CSV, one dialog, built from the document at
                                       open time. Students down the page by last name, assignments
                                       across by DUE DATE, which is the order the SIS is typed in
-      data-grades-record-print        prints that sheet — sets the attribute the @media print block
-                                      in src/scores.css is gated on, and takes it off again
+      data-grades-record-print        prints that sheet. Like the detail button below, it only ASKS:
+                                      `data-grades-print` — the attribute src/scores.css's @media
+                                      print block is selected under — is answered by
+                                      src/print-gate.js at `beforeprint` and taken off by nothing
+                                      here. The hook and the gate are different strings, which this
+                                      one had by accident and the one below now has on purpose
       data-grades-record-csv          downloads the same sheet as a CSV
       data-student-detail="<id>"      opens that student's grade detail — the category breakdown,
                                       what is missing, and what it would take to move. Carried by
@@ -138,8 +142,19 @@
                                       navigation target of its own: you arrive there from a name and
                                       never from the switcher, which is why there is no
                                       `data-class-screen="detail"` anywhere in this app
-      data-detail-print               prints the detail screen — sets the attribute the @media print
-                                      block in src/detail.css is gated on, and takes it off again
+      data-detail-sheet-print         prints the detail screen. It ASKS to print and nothing more:
+                                      src/print-gate.js answers `data-detail-print` on <body> — the
+                                      attribute src/detail.css's @media print block is selected
+                                      under — from a `beforeprint` listener, at the moment the
+                                      browser serialises the page, and no timer takes it off.
+                                      THE `-sheet-` IS LOAD-BEARING and this line is where it is
+                                      written down: `closest()` walks up to <body>, so a hook named
+                                      for the gate matches EVERY click on screen for as long as the
+                                      gate is on — and a print the teacher blocks leaves it on by
+                                      design. The button was `data-detail-print` until 2026-08-13
+                                      and every click re-opened the print dialog. A gate attribute
+                                      and a click hook never share a string; the other two print
+                                      surfaces have that only by luck of naming (WO-2.25)
       data-detail-csv                 downloads that one student's detail as a CSV
       data-attendance-cell="<id>" + data-attendance-date="<iso>": cycles that student's mark on
                                       that day — P → A → E → T → D → P, entered at P from a
@@ -1088,7 +1103,12 @@ document.addEventListener('click', (e) => {
     showStudentDetail(studentDetail.getAttribute('data-student-detail'), studentDetail);
     return;
   }
-  if (e.target.closest('[data-detail-print]')) { detail.printDetail(); return; }
+  /* `-sheet-` in the hook and not in the gate, and the two must never converge again: the attribute
+     src/print-gate.js writes is `data-detail-print`, on <body>, and `closest()` walks to <body>.
+     While this button carried that same string, a gate left on by a print the browser refused and
+     the teacher then dismissed matched every click on screen — see the census at the head of this
+     file and the markup comment in index.html. */
+  if (e.target.closest('[data-detail-sheet-print]')) { detail.printDetail(); return; }
   if (e.target.closest('[data-detail-csv]')) { detail.downloadDetailCsv(); return; }
 
   /* ── days off & planned drops (WO-2.3) ──

@@ -221,13 +221,20 @@
    is: src/attendance.css § THE PRINTED PAGE is the first, this is the second, that is the
    third, and each is gated on an attribute of its own.
 
-   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/detail.js's printDetail()
-   puts `data-detail-print` on <body>, calls window.print(), and takes it off again —
+   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. `data-detail-print` on <body> —
    src/attendance.css § THE PRINTED PAGE's idiom, which is Roll Call!'s `body[data-modal-print]`,
    lifted whole. Without the gate a Ctrl+P made anywhere else in the app would hide the
    entire page and print a blank sheet. That regression has already happened once in this
    app, and every rule below is therefore selected under the attribute — including the one
    that only turns something ON.
+
+   WHO PUTS IT THERE, AND IT IS NOT A TIMER (corrected at WO-2.25). This header said "printDetail()
+   puts it on, calls window.print(), and takes it off again" until 2026-08-13, and that sentence was
+   the bug it had inherited along with the idiom: a refused print() does not block and a preview
+   turned to landscape re-generates from the live DOM, so the timer had cleared the gate before the
+   browser ever serialised the page. src/print-gate.js answers it from a `beforeprint` listener
+   instead, by asking whether this screen is the view on screen. The reasoning is written out in
+   that file, once, for all three blocks.
 
    A SECOND ATTRIBUTE RATHER THAN A SECOND IDIOM, and the difference matters. Sharing
    `data-attendance-print` would be cheaper by one string and wrong: that block re-shows

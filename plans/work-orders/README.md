@@ -167,7 +167,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 19 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 24 | 21 | 🔨 IN PROGRESS |
+| 2 — Attendance | 24 | 22 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 18 | 12 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -175,7 +175,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **90** | **51** | `[█████░░░░░] 57%` |
+| | **90** | **52** | `[█████░░░░░] 58%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

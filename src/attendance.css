@@ -1213,12 +1213,19 @@
    naming its own surface, and this census is the only one there is. Planbook still has no DEFAULT
    print surface: nothing prints unless a button asked for it, which is what the gate below is.
 
-   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/attendance-report.js's printRecord()
-   puts `data-attendance-print` on <body>, calls window.print(), and takes it off again — Roll Call!'s
-   `body[data-modal-print]` idiom (dashboard.html), lifted whole. Without the gate, a Ctrl+P made
-   anywhere else in the app would hide the entire page and print a blank sheet, which is the kind of
-   thing nobody finds until the day it matters. With it, a keyboard print is the browser's business
-   and this block is silent.
+   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. `data-attendance-print` on <body> —
+   Roll Call!'s `body[data-modal-print]` idiom (dashboard.html), lifted whole. Without the gate, a
+   Ctrl+P made anywhere else in the app would hide the entire page and print a blank sheet, which is
+   the kind of thing nobody finds until the day it matters. With it, a keyboard print is the
+   browser's business and this block is silent.
+
+   WHO PUTS IT THERE, AND IT IS NOT A TIMER (corrected at WO-2.25). This header said "printRecord()
+   puts it on, calls window.print(), and takes it off again" until 2026-08-13, and that sentence was
+   the bug: the gate was set when the app asked to print and read when the browser actually printed,
+   and the gap between those is however long a teacher looks at a preview. src/print-gate.js answers
+   it from a `beforeprint` listener instead, at the moment the page is serialised, by asking whether
+   the record dialog is on screen. The reasoning is written out in that file, once, for all three
+   blocks.
 
    ONE DEPARTURE FROM ROLL CALL!, and it is forced. Over there the DEFAULT print target is the
    registry table, because that table IS the term. Ours is a six-day window (src/attendance.js's

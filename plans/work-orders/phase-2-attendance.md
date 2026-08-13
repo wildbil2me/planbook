@@ -2216,7 +2216,7 @@ says nothing about the height on iOS, which is the entire reason WO-2.23 exists.
 
 ## WO-2.25 — the print gate is answered when it is read, on every surface
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.9 — the fix this carries is
+**Ship** — · **Status** ✅ DONE — 2026-08-13 · **Size** S · **Depends on** WO-3.9 — the fix this carries is
 written there, and reading it is the first step · **Blocks** nothing
 **Closes roadmap** *(no box. A defect in shipped work, not a promise anyone made — the same call
 WO-2.13 made.)*
@@ -2293,23 +2293,70 @@ Chrome's throttle message**, which is browser policy and was settled on 2026-08-
 `print()` exactly once, so there is nothing here to fix and a work order that tries will fail.
 
 **Acceptance**
-- [ ] `src/print-gate.js` exists, and `grep -rn "PRINT_RELEASE_MS\|setTimeout" src/` returns no line
-      that clears a print attribute anywhere in the tree.
-- [ ] All three surfaces gate through it, and each keeps its own attribute — a print from one shows
+- [x] `src/print-gate.js` exists, and `grep -rn "PRINT_RELEASE_MS\|setTimeout" src/` returns no line
+      that clears a print attribute anywhere in the tree. *(`PRINT_RELEASE_MS` returns nothing at
+      all; the seven remaining `setTimeout`s in `src/` are the rotation settle, the object-URL
+      revoke, the live region, the save-indicator fade and the store's debounce, max-wait and retry —
+      none of them touches an attribute. `TESTING.md` § WO-2.25 lists them.)*
+- [x] All three surfaces gate through it, and each keeps its own attribute — a print from one shows
       that one and hides the other two, asserted per surface rather than argued from the shared call.
-- [ ] `verify-shell.mjs` makes the same five readings of each of the three surfaces, and **the two
-      checks that asserted a timed release are gone.** The run is green.
-- [ ] **Each new check fails on the tree as it stands.** Run them against the unfixed
+      *(One check per surface, each reading all three attributes and the boxes of all three surfaces
+      out of the same snapshot, taken inside the stubbed `window.print()`.)*
+- [x] `verify-shell.mjs` makes the same five readings of each of the three surfaces, and **the two
+      checks that asserted a timed release are gone.** The run is green. *(`674 checks · 674 passed ·
+      0 failed · 0 skipped`, exit 0. **One correction to the line, not a shortfall:** there was only
+      ever ONE timed-release check in the tree — the detail section's, deleted here. The attendance
+      section never called `printRecord()` at all, so it had nothing of the kind to delete, and the
+      grade sheet's was already deleted at WO-3.9. `grep -n "700" tools/verify-shell.mjs` now finds
+      no assertion about a release. **Correction round 2, 2026-08-13:** three more checks and a
+      re-run — `677 checks · 677 passed · 0 failed · 0 skipped`, 17,011 lines, 25.1 lines per check,
+      214s.)*
+- [x] **Each new check fails on the tree as it stands.** Run them against the unfixed
       `attendance-report.js` and `detail.js` before the fix and record the failure text — a guard
       nobody has watched fail is a guard nobody has tested (WO-2.24's rule, and the reason this bug
-      shipped: the check that was watching it was green throughout).
-- [ ] 👤 **On the owner's own machine: print the attendance record twice in one sitting, and the
+      shipped: the check that was watching it was green throughout). *(Thirteen call sites were
+      added and one deleted, a net twelve. **Four of the thirteen fail on the unfixed tree** —
+      `674 checks · 670 passed · 4 failed`, exit 1, the failure text in `TESTING.md` § WO-2.25. The
+      other nine are shaped as ABSENCES that the timer build also satisfies — it had already cleared
+      the attribute — so they were watched failing under three mutations instead. **This box is
+      ticked on thirteen of thirteen watched red, not on thirteen of thirteen failing pre-fix**, and
+      the four-row table in `TESTING.md` says which is which. **Correction round 2's three checks
+      were each watched red before the box moved**: the detail one on the unfixed tree — `677 checks
+      · 676 passed · 1 failed`, `window.print() calls per neutral target = {"body":1,"header.header":
+      1,"main":1}` — and the attendance and grade-sheet ones under a two-line mutation that gives
+      each of them the collision the detail screen had, `677 checks · 675 passed · 2 failed`.)*
+- [x] 👤 **On the owner's own machine: print the attendance record twice in one sitting, and the
       detail sheet twice**, allowing Chrome's block when it appears, and turn one preview to
       landscape. The right sheet comes out every time. *(This is the only reading that matters and no
       emulator has it — the grade sheet's fix was confirmed this way on 2026-08-13.)*
-- [ ] `tools/README.md`'s check count and `TESTING.md` are updated from a run rather than by
+      **Owner's run, 2026-08-13, verbatim — four results, and the box stays open:**
+      ✅ *Attendance record printed twice in one sitting, Chrome's block allowed — the record came
+      out, not the app.* ✅ *Student grade detail, same, twice in one sitting with the block allowed.*
+      ✅ *Portrait → landscape inside a preview — the sheet survived the rotation.* ✅ *Ctrl+P with no
+      print surface open prints the ordinary page —* **verified on the laptop only.** iOS has no
+      Ctrl+P equivalent; the shortcut raises no print dialog on the iPad at all, so that fourth
+      reading is a **desktop-only** verification and not an iPad pass. The same guarantee IS reachable
+      on iOS — Share → Print raises the same `beforeprint` the gate answers — and that is the version
+      an iPad can run. **Why the box stayed open, and what closed it:** the same run found the
+      *Ignore* path broken — dismissing Chrome's block left `data-detail-print` on `<body>`, where
+      `src/shell.js`'s `closest('[data-detail-print]')` matched every click on screen and re-opened
+      the print dialog. Fixed in correction round 2 by renaming the button to
+      `data-detail-sheet-print`. **The owner re-ran the checklist against that fix on 2026-08-13 and
+      it passes** — after pressing *Ignore*, clicking the header and a blank patch of page opens no
+      dialog on any of the three surfaces; print-twice-and-Allow still puts the sheet on the paper;
+      the rotation still survives; and **Share → Print on the iPad** gives the open sheet with one
+      up and the ordinary page with none, which is the Ctrl+P guarantee finally read on the device
+      rather than on the laptop. The five readings are recorded in `TESTING.md` § WO-2.25.
+- [x] `tools/README.md`'s check count and `TESTING.md` are updated from a run rather than by
       arithmetic, per WO-2.19, and `node tools/wo-sweep.mjs` prints what it printed before but for
-      the count.
+      the count. *(Call sites 663 → **675**, executed 662 → **674**, both copied off the runs rather
+      than added up; the gap paragraph goes `659 − 658 = 1` → `675 − 674 = 1`. The sweep is what
+      forced it: before the edit it printed `FAIL | … has 675 check() call site(s), up 12 on the 663
+      recorded at tools/README.md:729`. **Correction round 2** moves them again — sites 675 → **676**,
+      executed 674 → **677**, and the gap with them: `676 − 677 = −1`, the first time this file's
+      executed count has exceeded its call sites, because the three new checks are one call site
+      inside a loop over the three gate attributes. Forced by the sweep the same way: `FAIL | … has
+      676 check() call site(s), up 1 on the 675 recorded at tools/README.md:766`.)*
 
 **Traps** — **Do not share the attribute.** Three surfaces, three attributes; the module takes it as
 an argument for exactly this reason, and `src/scores.css`'s header explains what sharing one costs.

@@ -196,6 +196,35 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.25 — the second print of a sitting came out wrong, and dismissing the browser's warning
+  made the app unusable.** Printing the attendance record or a student's grade detail twice without
+  leaving the screen, or turning a preview to landscape, could put **the whole app** on the paper
+  instead of the sheet asked for. Chrome refuses a repeated `print()` with *"This website has been
+  blocked from automatically printing"* — and a refused `print()` does not block, it returns at
+  once, so the half-second timer that un-marked the page had long since run by the time **Allow**
+  was pressed. Rotating a preview does the same thing by a different road: the sheet is re-drawn
+  from the live page, and by then the mark was gone too.
+
+  **The page is now marked at the moment the browser prints it, not half a second after the tap.**
+  Both failures were one mistake — the question was answered when we asked to print and read when
+  the browser actually printed, and the gap between those is however long a teacher looks at a
+  preview. All three print surfaces share one mechanism for it, so the next printable screen
+  inherits the fix instead of copying the bug; it had already been copied twice.
+
+  **The fix's own regression, found at the printer and fixed the same day.** Pressing **Ignore**
+  rather than Allow deliberately leaves the page marked — harmless by design, since only the print
+  stylesheet was supposed to read that mark. The detail screen's Print button carried the *same
+  name* as the mark, so afterwards **every click anywhere on screen re-opened the print dialog**,
+  which is an app a teacher cannot use until reload. The button was renamed; the two other surfaces
+  had escaped by luck of naming and are now guarded by the same check, which asks all three rather
+  than the one that broke.
+
+  **What a teacher should notice.** Chrome still shows the block on the second print — that is the
+  browser's own repeat-print policy and nothing on the page can suppress it. What changed is what
+  comes out **after** Allow, and what happens after Ignore. Verified at a real printer on
+  2026-08-13, including Share → Print on the iPad, which is that device's only route to the same
+  guarantee.
+
 - **WO-1.15 — the restore confirmation could not see what it was about to delete.** It compared the
   two documents by roster: which year, how many classes, how many students, when each was saved. A
   roster barely changes across a term, so a file saved in week one and a device holding ten weeks of

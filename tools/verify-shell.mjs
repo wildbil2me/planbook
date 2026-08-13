@@ -14256,13 +14256,19 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
  * clause alone: a naive join(',') writes a row with two extra columns in it, and every other check
  * in this section passes over the top of it.
  *
- * WHAT THIS SECTION CANNOT DO, AND DOES NOT PRETEND TO. It never calls printRecord(). window.print()
- * in a headless browser prints nothing and can block, and no emulator has a sheet of paper — so
- * "the print view fits a class on a page" stays owed to a human with a printer. What is measured
- * instead is the two halves of it a laptop can see: the header carries the class, the term and the
- * date range, and a term of thirty meetings is laid out in TWO slices rather than one table nobody
- * could print. The gate is measured too — <body> carries no print attribute at rest, which is what
- * keeps a Ctrl+P made anywhere else in the app from printing a blank sheet.
+ * WHAT THIS SECTION CANNOT DO, AND DOES NOT PRETEND TO. No emulator has a sheet of paper, so "the
+ * print view fits a class on a page" stays owed to a human with a printer. What is measured instead
+ * is the two halves of it a laptop can see: the header carries the class, the term and the date
+ * range, and a term of thirty meetings is laid out in TWO slices rather than one table nobody could
+ * print.
+ *
+ * IT DID NOT CALL printRecord() AT ALL UNTIL WO-2.25, and that sentence used to stand here as a
+ * limitation of the harness: window.print() blocks in a headless browser. WO-3.7 answered it by
+ * stubbing window.print, and this section does the same now — because the one thing that was
+ * measured about the gate, that <body> carries no print attribute AT REST, was green on every run
+ * over a surface that printed the whole app on the second tap of a sitting. The five readings at
+ * the foot of this section are the ones that can see that; the at-rest one stays, because it is
+ * what keeps a Ctrl+P made anywhere else in the app from printing a blank sheet.
  */
 console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
 {
@@ -14604,6 +14610,130 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
       JSON.stringify(csv.name));
 
     /*
+      ── THE PRINT GATE, THROUGH THE REAL 🖨 Print BUTTON (WO-2.25) ──
+
+      This section could not call printRecord() when it was written — the paragraph at the head of it
+      said so, and said why: window.print() blocks in a headless browser. WO-3.7 answered that by
+      stubbing window.print, and the stub is what makes this stronger rather than weaker, because the
+      reading is taken AT THE MOMENT THE APP ASKS TO PRINT rather than after it.
+
+      FIVE READINGS, THE SAME FIVE THE GRADE SHEET MAKES, and they are here because the timer this
+      surface shipped with had exactly one check watching it: "<body> carries no print attribute at
+      rest", which was green throughout and could not see the bug. The gate is ON at print time and
+      carries THIS surface's attribute and neither of the other two; it is still on while the record
+      is up, however long the teacher looks at the preview; a `beforeprint` the app never asked for
+      re-arms it, which is the print Chrome refused and the teacher then allowed; `afterprint` clears
+      it; and a `beforeprint` raised while the record is NOT up clears it, which is the guarantee the
+      deleted timer used to give.
+
+      Clicked from the page with element.click() rather than by dispatching a mouse event at computed
+      coordinates — WO-3.7's note, obeyed rather than rediscovered: this is a click made while
+      Emulation.setEmulatedMedia holds the page in `print`, where viewport coordinates land somewhere
+      else and the symptom is "window.print() was never called", which reads as a Print button that
+      does nothing.
+    */
+    await clickSel('#classView [data-attendance-record]');
+    await new Promise(r => setTimeout(r, 200));
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    await new Promise(r => setTimeout(r, 120));
+    /* THE STUB REPORTS THAT IT TOOK, which is the guard against the failure that looks exactly like
+       an app defect: if window.print were not writable the snapshot would simply never be taken, and
+       the check would read as a Print button that does not reach the module. */
+    const printStubbed = await evalJs(`(function(){
+      window.__realPrint = window.print;
+      window.__wo225called = 0;
+      window.print = function(){
+        window.__wo225called++;
+        try {
+          /* HEIGHTS RATHER THAN DISPLAY, for the reason WO-3.7's snapshot gives: the computed
+             display of an element inside a display:none ancestor is its OWN value, not none. What a
+             hidden surface does not have is a BOX. NO BACKTICKS IN THIS COMMENT: it is inside a
+             template literal. */
+          var box = function(sel){ var e = document.querySelector(sel);
+            return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+          window.__wo225print = {
+            attr: document.body.hasAttribute('data-attendance-print'),
+            detailAttr: document.body.hasAttribute('data-detail-print'),
+            gradesAttr: document.body.hasAttribute('data-grades-print'),
+            recordH: box('#attendanceRecordModal'),
+            detailH: box('#detailView'), gradesH: box('#gradesRecordModal'),
+            headerH: box('header.header'), mainH: box('main') };
+        } catch (err) { window.__wo225printErr = String((err && err.message) || err); }
+      };
+      return window.print !== window.__realPrint; })()`);
+    const printClicked = await evalJs(`(function(){
+      var b = document.querySelector('#attendanceRecordModal [data-attendance-record-print]');
+      if (!b) return { ok:false, why:'no Print control in the open record dialog' };
+      b.click();
+      return { ok:true, label: (b.textContent || '').trim(),
+        printCalls: window.__wo225called || 0,
+        snapshotError: window.__wo225printErr || '' }; })()`);
+    const printedSheet = await evalJs('window.__wo225print || null');
+    await new Promise(r => setTimeout(r, 700));
+    const gateHeldOn = await evalJs("document.body.hasAttribute('data-attendance-print')");
+    /* THE PRINT THE BROWSER DELAYED AND THE TEACHER THEN ALLOWED. Not a second tap — the gate is
+       cleared by hand first, so that the only thing that can turn it back on is the event the
+       browser fires when it finally serialises the page. Under the shipped build this comes back
+       false and the whole app prints. */
+    const gateRearmed = await evalJs(`(function(){
+      document.body.removeAttribute('data-attendance-print');
+      window.dispatchEvent(new Event('beforeprint'));
+      return document.body.hasAttribute('data-attendance-print'); })()`);
+    const gateClearedAfter = await evalJs(`(function(){
+      window.dispatchEvent(new Event('afterprint'));
+      return document.body.hasAttribute('data-attendance-print'); })()`);
+    /* AND THE GUARANTEE THE TIMER EXISTED TO GIVE, which must survive losing the timer: a Ctrl+P
+       made anywhere else in the app must not hide the page and print a blank sheet. The dialog is
+       hidden and put back exactly as it was, and the last event leaves <body> as the app would. */
+    const gateOffWhenRecordIsNotUp = await evalJs(`(function(){
+      var m = document.getElementById('attendanceRecordModal');
+      var wasHidden = m.classList.contains('hidden');
+      m.classList.add('hidden');
+      window.dispatchEvent(new Event('beforeprint'));
+      var gated = document.body.hasAttribute('data-attendance-print');
+      if (!wasHidden) m.classList.remove('hidden');
+      window.dispatchEvent(new Event('afterprint'));
+      return gated; })()`);
+    await evalJs('window.print = window.__realPrint; delete window.__realPrint;'
+      + ' delete window.__wo225print; delete window.__wo225printErr; delete window.__wo225called; 1');
+    await send('Emulation.setEmulatedMedia', { media: '' });
+
+    check('one tap on 🖨 Print calls window.print() exactly once — a second call from one gesture is '
+      + 'what Chrome\'s auto-print block is for, so this is the reading that says the block is not '
+      + 'ours to fix',
+      printClicked && printClicked.ok && printClicked.printCalls === 1,
+      'window.print() calls from a single tap = '
+        + (printClicked && printClicked.ok ? printClicked.printCalls
+          : JSON.stringify(printClicked)));
+    check('at the moment the app asks to print, <body> carries this surface\'s own attribute and '
+      + 'neither of the other two, and the record is the only one of the three surfaces with a box '
+      + 'on the page',
+      !!printedSheet && printedSheet.attr === true
+        && printedSheet.detailAttr === false && printedSheet.gradesAttr === false
+        && printedSheet.recordH > 0 && printedSheet.detailH === 0 && printedSheet.gradesH === 0
+        && printedSheet.headerH === 0 && printedSheet.mainH === 0,
+      printedSheet
+        ? JSON.stringify(printedSheet)
+        : 'no snapshot :: the stub took = ' + printStubbed + ', the control was clicked = '
+          + JSON.stringify(printClicked));
+    check('and the gate is still on while the record is on screen — a print the browser DELAYS is '
+      + 'still this record when it finally happens, not a timer\'s idea of how long that takes',
+      gateHeldOn === true, '<body> carries data-attendance-print 700ms after the tap = '
+        + gateHeldOn);
+    check('a print the browser refused and the teacher then allowed re-gates itself: `beforeprint` '
+      + 'with the record up puts the attribute back (the 2026-08-12 bug, in one reading)',
+      gateRearmed === true,
+      'beforeprint with the record on screen left data-attendance-print on = ' + gateRearmed);
+    check('and `afterprint` clears it, so <body> outside a print carries nothing',
+      gateClearedAfter === false,
+      '<body> still carries data-attendance-print after afterprint = ' + gateClearedAfter);
+    check('and a Ctrl+P made when the record is NOT up clears the gate rather than printing a blank '
+      + 'page — the guarantee the timer used to give, kept without it',
+      gateOffWhenRecordIsNotUp === false,
+      'beforeprint with the record closed left data-attendance-print on = '
+        + gateOffWhenRecordIsNotUp);
+
+    /*
       ACCEPTANCE LINE 4, IN BOTH MODES. The support block is on this student, it is in the document,
       and this app shows it on the roster — none of it may reach either of these surfaces or the
       file, whatever the presentation toggle says. The mode is driven through the module the header
@@ -14714,11 +14844,12 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
  * nothing. A build that gated the screen and the file on the presentation toggle would pass the
  * mode-ON pass and fail the mode-OFF one.
  *
- * THE PRINT SURFACE IS DRIVEN THROUGH THE REAL BUTTON, which WO-2.6's section could not do. The one
- * thing standing in the way is that window.print() blocks in a headless browser, so it is stubbed —
- * and the stub is what makes this stronger rather than weaker: it takes its snapshot AT THE MOMENT
- * THE APP ASKS TO PRINT, under emulated print media, so there is no timer to race against the
- * 500ms attribute release. What it measures is what is left on the sheet: the panel header, the
+ * THE PRINT SURFACE IS DRIVEN THROUGH THE REAL BUTTON, which WO-2.6's section could not do until
+ * WO-2.25 taught it the same trick. The one thing standing in the way is that window.print() blocks
+ * in a headless browser, so it is stubbed — and the stub is what makes this stronger rather than
+ * weaker: it takes its snapshot AT THE MOMENT THE APP ASKS TO PRINT, under emulated print media,
+ * which is the only moment the gate is a fact rather than a bet. What it measures is what is left
+ * on the sheet: the panel header, the
  * switcher, the breadcrumb, the action row and every other view are display:none, the hero and the
  * breakdown are not, and NOTHING outside #detailView has a box at all. What it still cannot say is
  * that the result fits one sheet of paper — no emulator has one, and that stays owed to a human.
@@ -15122,7 +15253,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
 
     /* THE SHEET ITSELF, snapshotted at the instant the app asks to print. window.print() is stubbed
        because it blocks in a headless browser and there is no paper anyway; the stub takes the
-       reading, so nothing here races the 500ms attribute release.
+       reading at the one moment the gate is a fact rather than a bet.
 
        THE STUB REPORTS THAT IT TOOK, which is the guard against the failure that looks exactly like
        an app defect: if `window.print` were not writable the snapshot would simply never be taken,
@@ -15151,6 +15282,14 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
         });
         window.__wo37print = {
           attr: document.body.hasAttribute('data-detail-print'),
+          /* THE OTHER TWO GATES, read at the same instant (WO-2.25). One mechanism now answers all
+             three, and the claim that it keeps three attributes rather than sharing one is a claim
+             about this moment: the two surfaces this print is not of carry no attribute and have no
+             box. Sharing one would re-show a dialog that is not on screen — a blank sheet by a
+             different route, which is what src/detail.css's header says at length. */
+          attendanceAttr: document.body.hasAttribute('data-attendance-print'),
+          gradesAttr: document.body.hasAttribute('data-grades-print'),
+          recordH: box('#attendanceRecordModal'), gradesH: box('#gradesRecordModal'),
           header: d('header.header'), classView: d('#classView'), scoresView: d('#scoresView'),
           panelHeader: d('#detailView .detail-header'),
           actions: d('#detailView .detail-actions'),
@@ -15180,17 +15319,19 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       src/detail.js's printDetail() — would have been the thing worth refusing.
     */
     const clicked = await evalJs(`(function(){
-      var b = document.querySelector('#detailView [data-detail-print]');
+      /* THE CONTROL IS NOT NAMED FOR THE GATE (WO-2.25, correction 2). The button is
+         data-detail-SHEET-print; data-detail-print is the attribute on <body>, and while the two were
+         one string src/shell.js's closest() matched every click on screen. NO BACKTICKS. */
+      var b = document.querySelector('#detailView [data-detail-sheet-print]');
       if (!b) return { ok:false, why:'no Print control on the open detail view' };
       window.__wo37err = '';
       var onErr = function(ev){ window.__wo37err += String(ev.message || ev.reason || ev) + ' | '; };
       window.addEventListener('error', onErr);
       b.click();
       window.removeEventListener('error', onErr);
-      /* Read straight after the click and before the 500ms release: the attribute being ON here is
-         the proof printDetail() ran at all, which is the fork this detail line has to be able to
-         name — a Print button that never reaches the module and a snapshot that threw look
-         identical from the outside. */
+      /* Read straight after the click: the attribute being ON here is the proof printDetail() ran at
+         all, which is the fork this detail line has to be able to name — a Print button that never
+         reaches the module and a snapshot that threw look identical from the outside. */
       return { ok:true, label: (b.textContent || '').trim(),
         attrRightAfter: document.body.hasAttribute('data-detail-print'),
         printCalls: window.__wo37called || 0,
@@ -15199,8 +15340,50 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     const sheet = await evalJs('window.__wo37print || null');
     const today = await evalJs('window.planbook.attendance.plainDate('
       + 'window.planbook.attendance.todayISO())');
+    /*
+      ── THE GATE AFTER THE TAP, AND WHAT THIS PASS USED TO ASSERT (WO-2.25) ──
+
+      There was one check here and it asserted the OPPOSITE of the first one below: that 700ms after
+      the tap the attribute was off again, on WO-2.6's reasoning that window.print() blocks until the
+      browser's own dialog closes. It went green on every run and the surface was broken anyway —
+      the same bug the grade sheet shipped with, from the same lifted idiom, found by the owner on
+      2026-08-12. Chrome refuses a repeated print() with "This website has been blocked from
+      automatically printing"; a REFUSED print() does not block, so the timer cleared the gate while
+      the teacher read the message, and the print they then allowed came out as the whole app. A
+      preview turned from portrait to landscape did it by the other road: it re-generates from the
+      live DOM, and the timer had cleared the gate by then too.
+
+      So the contract is no longer "on, then off after a moment" — that sentence is precisely the
+      bug. It is: ON while this screen is what is on screen, ANSWERED at the moment the browser asks
+      rather than remembered from the tap, and off the moment it is not. Four readings below, and the
+      middle two are the ones the deleted check could not have caught.
+    */
     await new Promise(r => setTimeout(r, 700));
-    const released = await evalJs("document.body.hasAttribute('data-detail-print')");
+    const heldOn = await evalJs("document.body.hasAttribute('data-detail-print')");
+    /* THE PRINT THE BROWSER DELAYED AND THE TEACHER THEN ALLOWED. Not a second tap — the gate is
+       cleared by hand first, so that the only thing that can turn it back on is the event the
+       browser fires when it finally serialises the page. Under the shipped build this comes back
+       false and the whole app prints. */
+    const onDelayedPrint = await evalJs(`(function(){
+      document.body.removeAttribute('data-detail-print');
+      window.dispatchEvent(new Event('beforeprint'));
+      return document.body.hasAttribute('data-detail-print'); })()`);
+    const clearedAfter = await evalJs(`(function(){
+      window.dispatchEvent(new Event('afterprint'));
+      return document.body.hasAttribute('data-detail-print'); })()`);
+    /* AND THE GUARANTEE THE TIMER EXISTED TO GIVE, which must survive losing the timer: a Ctrl+P
+       made anywhere else in the app must not hide the page and print a blank sheet. This surface is
+       a VIEW rather than a dialog, so "not up" is another view being the one on screen — it is put
+       back exactly as it was, and nothing below this reads a disturbed page. */
+    const offWhenViewIsNotUp = await evalJs(`(function(){
+      var v = document.getElementById('detailView');
+      var wasHidden = v.classList.contains('hidden');
+      v.classList.add('hidden');
+      window.dispatchEvent(new Event('beforeprint'));
+      var gated = document.body.hasAttribute('data-detail-print');
+      if (!wasHidden) v.classList.remove('hidden');
+      window.dispatchEvent(new Event('afterprint'));
+      return gated; })()`);
     await evalJs('window.print = window.__realPrint; delete window.__realPrint;'
       + ' delete window.__wo37print; delete window.__wo37printErr; delete window.__wo37called;'
       + ' delete window.__wo37err; 1');
@@ -15235,8 +15418,36 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
         + '; ' + sheet.outsideCount + ' element(s) still drawn outside #detailView'
         + (sheet.outsideCount ? ': ' + JSON.stringify(sheet.outside) : '')
         : 'no snapshot');
-    check('and the attribute comes back off, so the next Ctrl+P is the browser\'s business again',
-      released === false, '<body> carries data-detail-print after the print = ' + released);
+    check('one tap on 🖨 Print calls window.print() exactly once — a second call from one gesture is '
+      + 'what Chrome\'s auto-print block is for, so this is the reading that says the block is not '
+      + 'ours to fix',
+      clicked && clicked.ok && clicked.printCalls === 1,
+      'window.print() calls from a single tap = '
+        + (clicked && clicked.ok ? clicked.printCalls : JSON.stringify(clicked)));
+    check('and the print carries this surface\'s own attribute and neither of the other two — the '
+      + 'record dialog and the grade sheet are not on this page and have no box on it',
+      !!sheet && sheet.attr === true
+        && sheet.attendanceAttr === false && sheet.gradesAttr === false
+        && sheet.recordH === 0 && sheet.gradesH === 0,
+      sheet
+        ? 'data-detail-print = ' + sheet.attr + ', data-attendance-print = ' + sheet.attendanceAttr
+          + ', data-grades-print = ' + sheet.gradesAttr + '; #attendanceRecordModal '
+          + sheet.recordH + 'px, #gradesRecordModal ' + sheet.gradesH + 'px'
+        : 'no snapshot');
+    check('and the gate is still on while this screen is on screen — a print the browser DELAYS is '
+      + 'still this sheet when it finally happens, not a timer\'s idea of how long that takes',
+      heldOn === true, '<body> carries data-detail-print 700ms after the tap = ' + heldOn);
+    check('a print the browser refused and the teacher then allowed re-gates itself: `beforeprint` '
+      + 'with this screen up puts the attribute back (the 2026-08-12 bug, in one reading)',
+      onDelayedPrint === true,
+      'beforeprint with the detail on screen left data-detail-print on = ' + onDelayedPrint);
+    check('and `afterprint` clears it, so <body> outside a print carries nothing',
+      clearedAfter === false,
+      '<body> still carries data-detail-print after afterprint = ' + clearedAfter);
+    check('and a Ctrl+P made when this screen is NOT the view on screen clears the gate rather than '
+      + 'printing a blank page — the guarantee the timer used to give, kept without it',
+      offWhenViewIsNotUp === false,
+      'beforeprint with the detail view hidden left data-detail-print on = ' + offWhenViewIsNotUp);
 
     /*
       ── THE PAGE BOX, WHICH IS THE WIDTH THE SHEET IS ACTUALLY LAID OUT AT ──
@@ -15364,7 +15575,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
             offenderCount: offenders.length, offenders: offenders.slice(0, 8) };
         } catch (err) { window.__wo37paperErr = String((err && err.message) || err); }
       };
-      var btn = document.querySelector('#detailView [data-detail-print]');
+      var btn = document.querySelector('#detailView [data-detail-sheet-print]');
       if (btn) btn.click();
       var out = { clicked: !!btn, sheet: window.__wo37paper,
         err: window.__wo37paperErr, stub: window.print !== window.__realPrint };
@@ -16139,8 +16350,8 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
 
     /* THE SHEET ITSELF, snapshotted at the instant the app asks to print — window.print() is
        stubbed because it blocks in a headless browser, and the stub is what makes this stronger
-       rather than weaker: the reading is taken while the attribute is genuinely on, so nothing races
-       the 500ms release. THE STUB REPORTS THAT IT TOOK, which is the guard against the failure that
+       rather than weaker: the reading is taken while the attribute is genuinely on, at the one
+       moment it is a fact. THE STUB REPORTS THAT IT TOOK, which is the guard against the failure that
        looks exactly like an app defect — if window.print were not writable the snapshot would simply
        never be taken and the check would read as a sheet with no header on it. */
     const stubbed = await evalJs(`(function(){
@@ -16165,6 +16376,13 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
         });
         window.__wo39print = {
           attr: document.body.hasAttribute('data-grades-print'),
+          /* THE OTHER TWO GATES, read at the same instant (WO-2.25). One mechanism answers all three
+             now, and the claim that it keeps three attributes rather than sharing one is a claim
+             about this moment: the two surfaces this print is not of carry no attribute and have no
+             box. NO BACKTICKS IN THIS COMMENT. */
+          attendanceAttr: document.body.hasAttribute('data-attendance-print'),
+          detailAttr: document.body.hasAttribute('data-detail-print'),
+          recordH: box('#attendanceRecordModal'), detailH: box('#detailView'),
           header: d('header.header'), main: d('main'),
           /* THE VIEW BEHIND THE DIALOG IS ASKED FOR ITS BOX AND NOT FOR ITS DISPLAY, and the
              difference cost this check a red run. #scoresView is the view a teacher was standing on
@@ -16273,6 +16491,20 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
         + ' :: ' + JSON.stringify(sheet.headText.slice(0, 120))
         : 'no snapshot :: the stub took = ' + stubbed + ', the control was clicked = '
           + JSON.stringify(clicked));
+    /* THE THREE ATTRIBUTES STAY THREE (WO-2.25). One module answers all of them now, which is what
+       makes this worth asserting on each surface separately rather than arguing it from the shared
+       call: sharing one attribute would re-show a surface that is not on screen, and every one of
+       the three print blocks says so in its own header. */
+    check('and the print carries this surface\'s own attribute and neither of the other two — the '
+      + 'record dialog and the detail screen are not on this page and have no box on it',
+      !!sheet && sheet.attr === true
+        && sheet.attendanceAttr === false && sheet.detailAttr === false
+        && sheet.recordH === 0 && sheet.detailH === 0,
+      sheet
+        ? 'data-grades-print = ' + sheet.attr + ', data-attendance-print = ' + sheet.attendanceAttr
+          + ', data-detail-print = ' + sheet.detailAttr + '; #attendanceRecordModal '
+          + sheet.recordH + 'px, #detailView ' + sheet.detailH + 'px'
+        : 'no snapshot');
     /* ONE TAP, ONE print(). Collected since the section was written and never asserted until the
        owner reported Chrome's "blocked from automatically printing" on 2026-08-13. A delegated
        handler that matched a tap twice would call print() twice from one gesture, which is exactly
@@ -16649,6 +16881,93 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
       c.refreshClassBar();
       await s.flush();
       return 1; })()`);
+  }
+}
+
+/*
+  ══════════ A GATE ATTRIBUTE IS NOT A CLICK HOOK (WO-2.25, correction 2) ══════════
+
+  THE BUG THIS SECTION IS THE ONLY COVERAGE FOR, and there was none of it before: the owner ran the
+  👤 printer checklist on 2026-08-13, pressed IGNORE on Chrome's "blocked from automatically
+  printing", and from then on EVERY CLICK ANYWHERE ON SCREEN re-opened the print dialog.
+
+  Why. src/print-gate.js leaves the gate attribute on <body> when a print is refused — that is the
+  fix, and it is right: the next print of anything asks again and clears it. But src/shell.js's
+  delegated click handler reaches its controls with `closest()`, which walks all the way up to
+  <body>. The detail screen's Print button was named `data-detail-print`, the same string as its own
+  gate, so with the gate stuck on <body> every click matched that hook. The deleted 500ms timer had
+  been hiding it inside half a second; the fix that stopped clearing the gate is what made it
+  reachable. The button is `data-detail-sheet-print` now.
+
+  WHY THIS ASKS ALL THREE SURFACES AND NOT ONLY THE ONE THAT BROKE. The other two escape by luck of
+  naming — `data-attendance-record-print` against `data-attendance-print`,
+  `data-grades-record-print` against `data-grades-print` — and a check that re-asserted today's
+  accident would be worth nothing. This one is the invariant itself, asked of every gate the app
+  has: with that gate stuck on <body>, a click on something that is not a control does not print. A
+  fourth print surface (Phase 4's signal lists, Phase 6's glance page) that names its button after
+  its gate arrives here red on the run that adds it, which is the whole reason the module boundary
+  was drawn.
+
+  IT IS ALSO CHEAP TO GET WRONG IN THE OTHER DIRECTION, so the readings are taken per gate and per
+  target, window.print is stubbed and restored, and every attribute this block puts on <body> comes
+  off before it returns. Three neutral targets: <body> itself (the empty page a teacher taps to
+  dismiss nothing), the app header's own box, and <main>. None of the three carries a hook of its
+  own — verified by sweeping index.html's containers against the census at the head of src/shell.js
+  — so anything that prints from a click on them came down through <body>.
+
+  Last section in the file, after the WO-3.9 teardown, because it depends on no fixture: it needs a
+  booted page with the delegated listener live and the three print modules imported, which is every
+  page this app draws.
+*/
+{
+  const GATES = ['data-attendance-print', 'data-detail-print', 'data-grades-print'];
+  const stuck = await evalJs(`(function(){
+    var GATES = ${JSON.stringify(GATES)};
+    var TARGETS = ['body', 'header.header', 'main'];
+    var atRest = GATES.filter(function(a){ return document.body.hasAttribute(a); });
+    var real = window.print;
+    var calls = 0;
+    window.print = function(){ calls++; };
+    var out = {}, missing = [], errs = [];
+    GATES.forEach(function(attr){
+      out[attr] = {};
+      TARGETS.forEach(function(sel){
+        var el = document.querySelector(sel);
+        if (!el) { missing.push(sel); return; }
+        /* Re-set before every click: on a build that prints, the first click's own syncAll() takes
+           the attribute off again, so a single set would leave the second and third targets asking
+           a question that is no longer stuck. NO BACKTICKS IN THIS COMMENT. */
+        document.body.setAttribute(attr, '1');
+        calls = 0;
+        try { el.click(); } catch (e) { errs.push(sel + ': ' + ((e && e.message) || e)); }
+        out[attr][sel] = calls;
+        document.body.removeAttribute(attr);
+      });
+    });
+    window.print = real;
+    GATES.forEach(function(a){ document.body.removeAttribute(a); });
+    return { out: out, atRest: atRest, missing: missing, errs: errs,
+      targets: TARGETS.length, restored: window.print === real,
+      left: GATES.filter(function(a){ return document.body.hasAttribute(a); }) }; })()`);
+  /* One check per gate rather than one loop over three, for the reason the isolation checks above
+     are written per surface: the claim is about that attribute, and a run that reports "one of them
+     printed" has made the reader go and find out which. */
+  for (const attr of GATES) {
+    const readings = stuck && stuck.out ? stuck.out[attr] : null;
+    const printed = readings ? Object.keys(readings).filter((sel) => readings[sel] !== 0) : [];
+    check('with `' + attr + '` stuck on <body> — a print the browser refused and the teacher '
+      + 'dismissed — a click on something that is not a control does NOT print: the gate is read by '
+      + '@media print, never matched as a click hook',
+      !!readings && stuck.missing.length === 0 && stuck.errs.length === 0
+        && Object.keys(readings).length === stuck.targets && printed.length === 0
+        && stuck.restored === true && stuck.left.length === 0,
+      'window.print() calls per neutral target = ' + JSON.stringify(readings)
+        + (printed.length ? ' — printed from ' + JSON.stringify(printed) : '')
+        + '; gates on <body> at rest = ' + JSON.stringify(stuck && stuck.atRest)
+        + ', targets not found = ' + JSON.stringify(stuck && stuck.missing)
+        + ', click errors = ' + JSON.stringify(stuck && stuck.errs)
+        + ', window.print restored = ' + (stuck && stuck.restored)
+        + ', attributes left on <body> = ' + JSON.stringify(stuck && stuck.left));
   }
 }
 

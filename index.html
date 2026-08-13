@@ -1083,9 +1083,18 @@
       <!-- Print and Download CSV, at the top of the body — src/attendance.css says why over the same
            pair on the attendance record: the page under them is long, and a control below it is a
            control reached by scrolling past the whole thing. Both go away with the student: an
-           empty screen has nothing to print. -->
+           empty screen has nothing to print.
+
+           THE HOOK IS NOT THE GATE, and `-sheet-` in the name is the whole of what keeps them apart.
+           This button carried `data-detail-print` until 2026-08-13 — the same string src/print-gate.js
+           puts on <body> while this screen prints — and src/shell.js's delegated
+           `closest('[data-detail-print]')` walks up to <body>, so a gate left on by a print the
+           teacher blocked (Chrome's "blocked from automatically printing" → Ignore) made EVERY click
+           anywhere on screen ask to print again. The other two print surfaces escaped it by luck of
+           naming. The rule the fourth one inherits: a gate attribute and a click hook never share a
+           string. The gate stays `data-detail-print`; the button is `data-detail-sheet-print`. -->
       <div class="detail-actions" id="detailActions">
-        <button class="class-action-btn primary" type="button" data-detail-print>
+        <button class="class-action-btn primary" type="button" data-detail-sheet-print>
           <span aria-hidden="true">🖨</span> Print this page
         </button>
         <button class="class-action-btn" type="button" data-detail-csv>
