@@ -1517,7 +1517,7 @@ that changes nothing a teacher sees has no business landing in the week the term
 
 ## WO-3.21 — nothing notices if the accommodation prompt stops counting students
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.8 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** XS · **Depends on** WO-3.8 · **Blocks** nothing, and
 that is deliberate — the dedupe is correct today, so this is a row to cut if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
 WO-3.12 made, and for the same reason.)*
@@ -1557,16 +1557,16 @@ behaviour. If a new check goes red against current code, **that is a defect foun
 work order** — do not fix the app from inside this one.
 
 **Acceptance**
-- [ ] A fixture student carries two rows of the same kind, both matching the category under test, and
+- [x] A fixture student carries two rows of the same kind, both matching the category under test, and
       the prompt still reads **"3 students have extended time, 2 need a separate setting."** — the
       count is unchanged by the second row, which is the whole claim.
-- [ ] The reveal still lists **five** names, with that student named **once**.
-- [ ] Deleting the `seen` Set at `src/accommodation-prompt.js:186` turns a check red, with the counts
+- [x] The reveal still lists **five** names, with that student named **once**.
+- [x] Deleting the `seen` Set at `src/accommodation-prompt.js:186` turns a check red, with the counts
       before and during quoted — run, not reasoned. **A mutation that reddens nothing means this work
       order did not land**, and a mutation that reddens everything means the fixture is coupled.
-- [ ] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
+- [x] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
       step with any check added.
-- [ ] `git diff --stat src/` is empty across the whole work order, confirmed after the mutation's
+- [x] `git diff --stat src/` is empty across the whole work order, confirmed after the mutation's
       revert and again at the end.
 
 **Traps** — **The second row must match the category, or the fixture proves nothing.** A row scoped

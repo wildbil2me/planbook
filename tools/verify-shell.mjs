@@ -17567,7 +17567,12 @@ console.log('\n--- accommodation prompts at point of use (WO-3.8) ---');
           terms:[{ id:'tm_wo38b', label:'WO-3.8 Term B', start:'', end:'' }],
           categories:[{ id:'k_wo38b_home', name:'Homework', weight:100 }],
           roster:['wo38-s7'] });
-        doc.students.push(person('wo38-s1', 'Ashdown', [row('extended-time', ['tests'])]));
+        /* WO-3.21: a second REAL row of the SAME kind, scoped to something the match rule already
+           fires on (wo38-s3 Corvane below proves ['unit tests'] matches Tests) - the dedupe in
+           groupsFor()'s seen Set (src/accommodation-prompt.js:186) is what this second row exists
+           to exercise, and the WO-3.8 fixture never had a chance to prove wrong. */
+        doc.students.push(person('wo38-s1', 'Ashdown',
+          [row('extended-time', ['tests']), row('extended-time', ['unit tests'])]));
         doc.students.push(person('wo38-s2', 'Braemore', [row('extended-time', ['Tests'])]));
         doc.students.push(person('wo38-s3', 'Corvane', [row('extended-time', ['unit tests'])]));
         doc.students.push(person('wo38-s4', 'Dunmarrow',

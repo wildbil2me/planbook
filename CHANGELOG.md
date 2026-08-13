@@ -92,6 +92,30 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.21 — the harness now proves the accommodation prompt counts students, not rows.** WO-3.8's
+  prompt says *"3 students have extended time"*, and `groupsFor()` keeps that true by deduping on
+  student id. Nothing tested that it did: the WO-3.8 fixture never gave one student two rows of the
+  same kind, so **the `seen` Set could be deleted outright and all 710 checks stayed green** —
+  measured at that work order's own verification rather than assumed. `wo38-s1` Ashdown now carries a
+  second real `extended-time` row scoped `['unit tests']` beside the original scoped `['tests']`,
+  both matching **Tests** through the same lean-toward-showing match rule the prompt already relies
+  on, so a row being ignored as unreal is not what the check is measuring.
+
+  **Five red, and which five is the whole point.** With the dedupe gone the run reads `710 checks ·
+  705 passed · 5 failed`, exit 1: the sentence becomes *"4 students have extended time"*, the reveal
+  puts six chips on screen with Ashdown named twice, and both readings fail again on the round trip
+  back from Homework and on each edge of the presentation-mode flip. Nothing in attendance,
+  categories or backup moved. **Nothing reddening would have meant the fixture proves nothing;
+  everything reddening would have meant it is coupled to something it should not be.** The failure
+  text for each of the five is tabulated in `tools/README.md` § WO-3.21.
+
+  **No check was added, and that is the result rather than a shortfall.** The work order asked for a
+  new one only if the existing checks did not already carry the case, and the mutation showed they
+  did — so `verify-shell.mjs` still holds 713 call sites and still executes 710 of them, and the
+  count in `tools/README.md:783` that `wo-sweep.mjs` greps for correctly did not move. The single
+  edit is the fixture row. `src/accommodation-prompt.js` was reverted and confirmed byte-identical to
+  `HEAD` by hash, twice — once by the implementer and once independently.
+
 - **WO-3.8 — accommodations announce themselves where the work is written down.** Create an
   assignment and, if anyone on that roster has an accommodation that applies to the category you
   picked, the editor says so: *"3 students have extended time, 2 need a separate setting."* Beside it,

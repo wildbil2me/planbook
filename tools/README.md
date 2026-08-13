@@ -1107,6 +1107,45 @@ mutations, all reverted and tabulated in `TESTING.md` § WO-1.15.
 lines, 25.3 lines per check, 205s. Twenty-two call sites in a new section at the foot of the file,
 twenty-two results, and none anywhere else. Four things about them are worth knowing.
 
+**WO-3.21 lands no call site at all — the mutation proved the existing checks already carry the
+case, so the third deliverable's "add one only if it does not" resolved to adding nothing.**
+`groupsFor()` counts students, not rows (`src/accommodation-prompt.js:186`'s `seen` Set), and the
+WO-3.8 fixture never gave one student two rows of the same kind to prove that dedupe does anything —
+measured at that work order's own verification: delete the `seen` Set and all 710 checks stay green.
+The only change here is to the fixture itself: `wo38-s1` Ashdown (`tools/verify-shell.mjs:17574`) now
+carries a second `extended-time` row scoped `['unit tests']` beside the original scoped `['tests']` —
+both rows real, both matching Tests (`wo38-s3` Corvane already proves `['unit tests']` fires), so
+`isRealRow()` is not why the dedupe was never exercised. `tools/README.md:783`'s 713 call sites and
+the 710 executed results beside it are both unchanged by this work order — nothing here is a new
+`check(`.
+
+**Before, unmutated, with the new fixture in place**: `710 checks · 710 passed · 0 failed · 0
+skipped`, 18,135 lines, 25.5 lines per check, 227s. The sentence still reads *"3 students have
+extended time, 2 need a separate setting."* and the reveal still lists five names with Ashdown named
+once — Acceptance lines 1 and 2, unmoved by the second row.
+
+**During, with the `seen` Set deleted** (`const seen = new Set();` and its two call sites at
+`:190-191`): `710 checks · 705 passed · 5 failed · 0 skipped`, exit 1. Five of WO-3.8's own checks go
+red and nothing else moves — every one of them a moment that reads the sentence or the reveal, not a
+new assertion:
+
+| Check | Failure detail |
+|---|---|
+| *"creating a test surfaces the counts … 3 students have extended time, 2 need a separate setting."* | category = "Tests — 60%", prompt says "4 students have extended time, 2 need a separate setting.", host hidden = false |
+| *"one deliberate tap puts the five names on screen …"* | 6 chip(s): `["Ashdown, Wo38","Ashdown, Wo38","Braemore, Wo38","Corvane, Wo38","Dunmarrow, Wo38","Everleigh, Wo38"]` |
+| *"and back to Tests recomputes the same sentence …"* | says "4 students have extended time, 2 need a separate setting.", aria-expanded = false, name chips = 0 |
+| *"in presentation mode nothing appears at all …"* | names showing before the flip = 6; after: hidden = true, display = none, host text = "", reveal hooks = 0, kind phrases left on the page = [], names left in the dialog = [] |
+| *"flipping presentation mode back off brings the same counts back …"* | says "4 students have extended time, 2 need a separate setting.", reveal hooks = 1, aria-expanded = false, name chips = 0 |
+
+**Five red, not one and not seven-hundred-ten — the middle ground the work order's own Traps line
+asks for.** Nothing had reddened means the fixture proves nothing; everything reddening means the
+fixture is coupled to something it should not be. Five is exactly WO-3.8's own checks that read the
+sentence or the reveal across the four moments it is asked for it — first paint, the round trip back
+from Homework, and both edges of the presentation-mode flip — and nothing in attendance, categories,
+backup or any other section moved. Reverted with `git checkout -- src/accommodation-prompt.js`;
+`git hash-object src/accommodation-prompt.js` = `git rev-parse HEAD:src/accommodation-prompt.js` =
+`30a6ef4b9cd4…`, and `git diff --stat src/` is empty.
+
 **The fixture is built to fail a build that got the order right by accident**, because the whole of
 this work order is an ORDER and an order is the easiest thing in the world to assert against itself.
 The roster is stored in a third order — neither the answer nor its reverse — so a sheet that printed
