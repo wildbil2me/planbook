@@ -125,8 +125,11 @@ negotiable and are easy to break by accident:
   classroom walls. IEP status on that wall is a disclosure to thirty students.
 - **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
   paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
-- **Backups now contain this data.** The backup UI says so, and `docs/FERPA.md` addresses it
-  directly rather than only discussing grades.
+- **Backups now contain this data.** The backup UI says so in as many words (`index.html`, the backup
+  panel). **`docs/FERPA.md` does not exist yet** — it is a WO-8.5 deliverable, still ⬜ NOT STARTED,
+  and when it is written it must address the backup directly rather than only discussing grades. Until
+  then the disclosure lives in the UI alone, which is the weaker half of the obligation in
+  `docs/data-model.md` § Accommodations.
 
 ## How work is run here
 
@@ -169,9 +172,9 @@ it gets re-run locally before any box is ticked.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
 - **Git:** one integration branch `main`, phase branches `phase/<n>-<slug>`, short imperative commit
   summaries. A work order is a commit or a short stack of them, worked on its **phase** branch — not a
-  branch per work order. *(This drifted during the August sprint: WO-3.9 and the eight commits before it
-  landed straight on `main`, leaving `phase/3-gradebook` nine behind. The convention stands; the
-  branches need catching up.)*
+  branch per work order. *(This drifted during the August sprint — a run of work orders through WO-3.9
+  landed straight on `main`, and all three `phase/*` branches now trail it. The convention stands; the
+  branches need catching up. `git rev-list --count phase/3-gradebook..main` for how far.)*
 
 ## Working agreements with the teacher
 
