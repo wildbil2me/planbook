@@ -61,6 +61,50 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.9 — grade sheets you can print and re-key from.** A class's whole term on one page.
+  **🖨 Grade sheet** on the Scores screen opens the sheet in the order the SIS is typed in: students
+  down the page by last name as `Last, First`, assignments across by due date, each column carrying
+  its due date and what it is out of, and the grade and letter at the right. The same sheet downloads
+  as a CSV in the same order. Your marks print as your marks — a late score keeps its number *and* its
+  `L`, missing is `M`, excused is `Ex` — and an ungraded cell prints as nothing, because a blank is
+  not a zero. **Nothing from a student's support details is on either one, in either mode.**
+
+  **The order is the whole value of this, and it was answered rather than guessed.** The SIS has no
+  import, so every grade in it is typed by hand off a sheet of paper, five classes at a time. A
+  student-major grid was chosen against a drawn mock-up of the alternative — one section per
+  assignment with the roster repeated inside each — which reads straight down while typing but never
+  puts a student's whole term in one place and costs several times the paper. Confirmed against a real
+  re-key on 2026-08-12: the order matches.
+
+  **Nothing here computes a grade.** Every percentage and letter comes from the one grade engine, and
+  what a cell holds is asked of the score grid the sheet is printed from — two implementations of one
+  arithmetic is exactly how a sheet comes to disagree with the screen it came off. The printed page
+  and the CSV take every cell string from the same function, so *"the printout and the file must not
+  disagree"* is a fact rather than a promise.
+
+  **Fixed before it left the desk: the second print came out as the whole app.** The Print button
+  worked exactly once per sitting. Chrome refuses a repeated `window.print()` with *"This website has
+  been blocked from automatically printing"* — and a refused `print()` does not block, so the 500ms
+  timer that cleared the print gate had run by the time you pressed Allow, and the print that finally
+  happened was ungated. Turning the preview from portrait to landscape did the same thing by the other
+  road: the preview re-generates from the live page, also after the timer. One mistake, not two — the
+  gate was *set* when the app asked to print and *read* when the browser actually printed, and the gap
+  between those is however long you look at a preview. **It is now answered at the moment the browser
+  serialises the page**, by asking whether the grade sheet is what is on screen, which is
+  self-correcting rather than balanced: a print you block outright leaves the gate on, costing nothing
+  because only `@media print` reads it, and the next print of anything clears it.
+
+  **The check that was watching this went green through the whole bug.** It asserted the gate was off
+  again 700ms after the tap — measuring the release timer rather than what comes out of the printer,
+  and the timer *was* the bug. It is gone, replaced by four that fail on the build that shipped, plus
+  a fifth that settles what the timer never could: one tap calls `window.print()` exactly once, so the
+  message Chrome still shows on a second tap is the browser's own repeat-print policy and not a
+  handler firing twice. That one is left alone — nothing on the page can suppress it.
+
+  ⚠️ **The same timer is still in the attendance record and the per-student detail sheet**, lifted
+  there first and copied here from them, so both of those print surfaces still have this bug. Left for
+  a decision of its own rather than folded in here.
+
 - **WO-8.8 — a check that reads the deployment instead of the repository.** `tools/verify-deploy.mjs`
   makes one pass of HTTP requests against the live origin and reports what came back: status,
   `Cache-Control` and the redirect chain for the shell and the service worker, every path in the
