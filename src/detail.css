@@ -215,7 +215,11 @@
 /* ══════════════════════════ THE PRINTED PAGE (WO-3.7) ══════════════════════════
 
    The app's SECOND @media print block, and the second thing it can print: one student's
-   detail, as the sheet a guardian leaves the conference holding.
+   detail, as the sheet a guardian leaves the conference holding. There is a THIRD since
+   2026-08-12 — src/scores.css's class grade sheet (WO-3.9), the class-wide sibling of this
+   one — and it is named here because these headers are the only census of the three there
+   is: src/attendance.css § THE PRINTED PAGE is the first, this is the second, that is the
+   third, and each is gated on an attribute of its own.
 
    IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/detail.js's printDetail()
    puts `data-detail-print` on <body>, calls window.print(), and takes it off again —

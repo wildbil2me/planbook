@@ -366,6 +366,163 @@
    the drawing with the argument, and this file has no `tfoot` rule to explain. */
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   § THE CLASS'S GRADE SHEET (WO-3.9)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The term as one page: students down, assignments across in due-date order, a total at the right.
+   It is a dialog over this screen and it is drawn by src/grades-report.js, so its rules are here
+   rather than in a sheet of its own — the same call src/attendance.css makes about the registry's
+   two read-back surfaces, and the same one the ⌨ key list above makes.
+
+   THE GRAMMAR IS THE ATTENDANCE RECORD'S, deliberately and almost line for line: an identity block
+   with the class over a quiet subtitle, a section label in the app's uppercase micro-label voice, a
+   12px table on 6px/8px cells with a 10px uppercase #8a9bb0 head, and slices that scroll sideways on
+   screen and break to a page on paper. A teacher who prints attendance and grades in the same
+   afternoon gets two sheets out of one app, and they should not look like two apps.
+
+   THE VALUES ARE NOT RE-CHOSEN HERE EITHER: every size and colour below is the one
+   `.attendance-report-*` already carries at the same job, or the one the grid above carries for the
+   same thing (the three flag palettes are `.scores-input.late` and its two siblings, which are the
+   registry's own oranges, reds and purples one screen further out). A second amber for a late score
+   would be a second answer to "what colour is late". */
+
+/* Wider than a form dialog because a term's worth of columns is what is in it. `.modal-panel`
+   supplies the frame and the 95vw; this raises the cap only, so a narrow screen is unchanged. */
+.grades-report-panel { max-width: 980px; }
+
+/* The door in the toolbar. Wears shell.css's `.class-action-btn`; the name exists so the control is
+   listed by name in the coarse block below and to carry the one rule that is its own — it does not
+   shrink, for the reason `.scores-keys-btn` beside it does not. */
+.scores-sheet-btn { flex-shrink: 0; }
+
+/* Print and Download CSV, at the TOP of the body — index.html says why over the same pair on the
+   attendance record: the table under them is a term long, and a control below it is a control
+   reached by scrolling past the whole sheet. */
+.grades-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+
+.grades-report-head {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding: 0 0 12px; margin: 0 0 4px;
+  border-bottom: 1.5px solid #eef0f4;
+}
+.grades-report-who { flex: 1 1 200px; min-width: 0; }
+.grades-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+.grades-report-sub {
+  font-size: 12px; font-weight: 600; color: #8a9bb0; line-height: 1.5; margin-top: 2px;
+}
+/* The bands in force, and whose they are. Its own class rather than a third `.grades-report-sub`
+   because it is the one line here that can run to a dozen bands and has to wrap without stepping on
+   the two above it. */
+.grades-report-scale {
+  font-size: 11px; font-weight: 600; color: #a0aab8; line-height: 1.6; margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grades-report-label {
+  margin: 18px 0 8px;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+
+.grades-report-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.grades-report-table th, .grades-report-table td {
+  padding: 6px 8px; text-align: center; vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+}
+.grades-report-table thead th {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  border-bottom: 1.5px solid #eef0f4; vertical-align: bottom;
+}
+/* The name column and its head read left; everything else in this table is a number under a
+   centred head. */
+.grades-report-student-head, .grades-report-row-head { text-align: left; }
+.grades-report-row-head { font-weight: 600; color: #1a1a2e; }
+.grades-report-total-head, .grades-report-total { text-align: right; white-space: nowrap; }
+
+/* ── ONE COLUMN HEAD ── */
+/* Three lines, the same three the score grid's own head carries and in the same order of
+   importance: what it is, when it was due, and what it is out of. The due date is on this sheet
+   because the COLUMNS ARE IN ITS ORDER — a column ordered by a fact the reader cannot see is a
+   sheet that looks arbitrary — and it is a plain date compared to nothing (WO-3.6 owns everything
+   about a past due date, and nothing in src/grades-report.js reads a clock). */
+.grades-report-col { min-width: 74px; }
+.grades-report-col-name {
+  display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0; max-width: 110px;
+  overflow: hidden; text-overflow: ellipsis; margin: 0 auto 3px;
+}
+.grades-report-col-due { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; }
+.grades-report-col-pts {
+  display: block; font-size: 10px; font-weight: 700; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+
+/* ── ONE CELL ── */
+/* A score, a mark, or nothing. The three washes are the score grid's exactly — `late` here and
+   `late` there are the same orange, which is the same orange a tardy wears on the registry — and
+   they are worn by a span rather than by the cell so that a row of marks reads as marks rather than
+   as a striped table.
+
+   AN EMPTY CELL IS EMPTY, which is this sheet's one departure from the attendance record's grid
+   (that one draws a dash into a blank because an empty attendance cell would read as "present").
+   Blank means ungraded here and counts toward nothing, an empty cell is exactly what that looks
+   like, and the key under the table says so in words. src/grades-report.js's header carries the
+   long version. */
+.grades-report-cell { padding-left: 4px; padding-right: 4px; }
+.grades-report-mark {
+  display: inline-block; min-width: 22px; padding: 2px 6px;
+  border: 1.5px solid transparent; border-radius: 6px;
+  font-size: 11px; font-weight: 700; text-align: center;
+  color: #1a1a2e;
+}
+.grades-report-mark.late    { background: #fef5ea; border-color: #e67e22; color: #b35f0f; }
+.grades-report-mark.missing { background: #fdeaea; border-color: #e74c3c; color: #c0392b; }
+.grades-report-mark.excused { background: #f3eaff; border-color: #7c3aed; color: #7c3aed; }
+
+/* ── THE TOTAL, AT THE RIGHT ── */
+/* At the right and not beside the name, which is where the same number sits on the screen this
+   sheet is printed off — and that difference is the owner's layout, not a slip: the grid freezes
+   the grade next to the name because it is the number a teacher watches change while typing, and
+   the sheet puts it at the end of the row because that is where a row of marks is read to.
+
+   NOT COLOURED BY BAND, exactly as the grid is not: colouring a grade is a judgement this app has
+   not made anywhere, and a red row beside a student's name is the last thing that belongs on a
+   sheet left face-up on a desk. */
+.grades-report-pct {
+  display: block; font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.2;
+}
+.grades-report-pct.none { color: #c0cad5; }
+.grades-report-letter { display: block; font-size: 10px; font-weight: 700; color: #8a9bb0; }
+
+/* ── THE SLICES ── */
+/* One printed page's worth of assignment columns, with the student and grade columns repeated. On
+   screen the slice scrolls sideways inside its own wrapper exactly as the grid above does; on paper
+   it is a page. */
+.grades-report-slice { margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.grades-report-slice-label {
+  font-size: 11px; font-weight: 700; color: #8a9bb0; margin-bottom: 4px;
+}
+
+/* ── THE KEY, AND THE TWO NOTES ── */
+/* What L, M, Ex and an empty cell mean, for the teacher re-keying off this six weeks from now. The
+   legend strip's own grammar from the score grid's `.scores-keys`, at reading size rather than at
+   keyboard size. */
+.grades-report-key {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  margin: 12px 0 0; padding: 9px 12px; border-radius: 8px;
+  background: #f8f9fb; border: 1.5px solid #eef0f4;
+  font-size: 11px; color: #6b7a8d; line-height: 1.6;
+}
+.grades-report-key-item { flex: 1 1 240px; }
+.grades-report-key-item b { color: #1a1a2e; font-weight: 800; }
+.grades-report-empty { font-size: 13px; color: #a0aab8; line-height: 1.5; margin: 8px 0; }
+.grades-report-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 16px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
    § TOUCH — every control above, at the floor, in one place
    ══════════════════════════════════════════════════════════════════════════════ */
 /* design/style-guide.md §6: 44px minimum under a coarse pointer, and this block comes last so it
@@ -411,9 +568,210 @@
   .scores-grade-none { font-size: 15px; }
   .scores-empty, .scores-hint { font-size: 13px; }
   .grade-none { font-size: 14px; }
+
+  /* ── WO-3.9's door and the dialog it opens ──
+
+     THE DOOR IS MEASURED AND NOT INHERITED. It wears `.class-action-btn`, which already carries its
+     44px floor in src/shell.css's own coarse block, and that reasoning was correct about
+     `.attendance-report-door` at WO-3.7 and still cost that work order a correction round: "it
+     inherits one" answered by reading is the shape of a claim nobody checks. So the floor is
+     declared here as well, the way `.attendance-record-btn` declares it one screen over, and
+     tools/verify-shell.mjs measures the drawn control. `flex-shrink` is restated for the reason that
+     button restates it — a glyph-plus-two-words label in a flex row is the shape that clears 44px in
+     both directions and still spills through its own border. */
+  .scores-sheet-btn { min-height: 44px; min-width: 44px; flex-shrink: 0; }
+  /* The two output buttons inside the dialog wear `.class-action-btn` and take their 44px from it;
+     this row is here for its spacing. Nothing else in the dialog is tappable — the ✕ is
+     src/shell.css's `.modal-close` — so the rest of the names below are text and tables, listed for
+     the reason src/attendance.css lists its own: a rule missing from this block is a rule the next
+     reader has to go and prove was considered. What they get is one step up in size, because a
+     coarse pointer is the device held at arm's length. */
+  .grades-report-actions { gap: 10px; margin-bottom: 18px; }
+  .grades-report-panel { max-width: 980px; }
+  .grades-report-head { gap: 14px; padding-bottom: 14px; }
+  .grades-report-who { min-width: 0; }
+  .grades-report-name { font-size: 17px; }
+  .grades-report-sub { font-size: 13px; }
+  .grades-report-scale { font-size: 12px; }
+  .grades-report-label { font-size: 11px; margin-top: 20px; }
+  .grades-report-table { font-size: 13px; }
+  .grades-report-student-head, .grades-report-row-head { font-weight: 600; }
+  .grades-report-total-head, .grades-report-total { white-space: nowrap; }
+  .grades-report-slice { margin-bottom: 18px; }
+  .grades-report-slice-label { font-size: 12px; }
+  .grades-report-key { font-size: 12px; }
+  .grades-report-key-item { flex: 1 1 260px; }
+  .grades-report-empty { font-size: 14px; }
+  .grades-report-note { font-size: 12px; }
+  /* The grid itself does NOT grow with the rest, which is the same call src/attendance.css makes
+     about its day-by-day table for the same reason: it is students by assignments, it already
+     scrolls sideways inside its own slice, and a step up in padding here costs columns on the screen
+     with the least room for them. Named, considered, tightened rather than grown. */
+  .grades-report-grid th, .grades-report-grid td { padding: 5px 5px; }
+  .grades-report-col { min-width: 82px; }
+  .grades-report-col-name { font-size: 12px; }
+  .grades-report-col-due { font-size: 10px; }
+  .grades-report-col-pts { font-size: 11px; }
+  .grades-report-cell { padding-left: 4px; padding-right: 4px; }
+  .grades-report-mark { font-size: 12px; padding: 3px 7px; }
+  .grades-report-pct { font-size: 14px; }
+  .grades-report-letter { font-size: 11px; }
 }
 
 @media (max-width: 640px) {
   .scores-summary { gap: 4px 10px; }
   .scores-summary .sep { display: none; }
 }
+
+/* ══════════════════════════ THE PRINTED PAGE (WO-3.9) ══════════════════════════
+
+   The app's THIRD @media print block, and the third thing it can print: a class's grades for a
+   term, as the sheet the SIS is typed off. It is HERE, in the score grid's own sheet, because that
+   dialog belongs to this screen the way the ⌨ key list does — the same call src/attendance.css
+   made about the attendance record.
+
+   THE CENSUS, since both of the other two blocks count themselves in their own headers and both
+   were right when they were written: src/attendance.css § THE PRINTED PAGE is the FIRST (WO-2.6,
+   the attendance record dialog), src/detail.css § THE PRINTED PAGE is the SECOND (WO-3.7, one
+   student's grade detail), and this is the third. Those two comments were corrected in this pass —
+   they are the only census there is, and a stale one is how the next author concludes there is
+   nothing to keep in step with.
+
+   IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. `data-grades-print` on <body> — Roll
+   Call!'s `body[data-modal-print]` idiom, lifted through WO-2.6. Without the gate a Ctrl+P made
+   anywhere else in the app would hide the entire page and print a blank sheet. That regression has
+   already happened once in this app, so every rule below is selected under the attribute —
+   including the ones that only turn something ON.
+
+   WHO PUTS IT THERE IS NOT WHAT THE OTHER TWO BLOCKS SAY, and this block is the one that is right.
+   src/grades-report.js answers the attribute from a `beforeprint` listener, at the moment the
+   browser serialises the page, by asking whether the grade sheet is on screen. WO-2.6's version —
+   set it, print, clear it 500ms later — printed the whole app when Chrome throttled a second tap or
+   when the teacher turned the preview to landscape. The reasoning is written out at printGrades(),
+   and until src/attendance.css and src/detail.css say the same thing, theirs still describe a timer
+   and still carry the bug.
+
+   A THIRD ATTRIBUTE RATHER THAN A THIRD IDIOM, and the difference matters. Sharing
+   `data-attendance-print` or `data-detail-print` would be cheaper by one string and wrong: those
+   blocks re-show #attendanceRecordModal and #detailView, neither of which is what the teacher is
+   looking at here, so a print from this dialog would hide the app and reveal something else — a
+   blank sheet by a different route. One idiom, one gate per surface.
+
+   PRINTING A DIALOG IS THE EASY HALF of the two shapes this app has: a modal is a direct child of
+   <body>, so `body[...] > *` hides everything and one `> #id` brings it back. WO-3.7's block is the
+   hard one, and it says so.
+
+   WHAT MAKES A CLASS FIT. Down the page: one row per student at 7pt, and a roster of ordinary size
+   lands on one sheet. Across it: the grid is already drawn in slices of eight assignment columns by
+   the module (ASSIGNMENTS_PER_SLICE, and the millimetres are written down there), and each slice
+   starts a new page carrying the student column and the grade column again.
+   `display: table-header-group` on the thead is what repeats the column heads when a table breaks,
+   which is the one thing a long roster needs and the one thing browsers only do if you ask.
+
+   Colours go quiet rather than being kept, which is the opposite of what the registry's block does
+   and is the right answer here for the reason that block gives for its own: over there the five
+   mark palettes ARE the data, because the cell holds nothing else. Here every mark is a LETTER
+   beside a number — `18 L`, `M`, `Ex` — so a mono office printer loses nothing at all, and a wash
+   behind every late score would be the loudest thing on a page a teacher reads a column of numbers
+   off. */
+@media print {
+  /* Everything on the page goes, and the sheet comes back. `body > *` rather than a list of chrome
+     class names: this sheet styles its own class names and nothing else, and a list would also be a
+     list to keep in step with every panel a later work order adds. */
+  body[data-grades-print] > * { display: none !important; }
+  body[data-grades-print] { background: #fff; }
+  body[data-grades-print] > #gradesRecordModal {
+    display: block !important; position: static !important;
+    overflow: visible !important; background: none !important; padding: 0 !important;
+  }
+  /* `width` and `max-width` are restated here rather than inherited, and the restatement is what
+     makes this block true of PAPER rather than of a 1280px window. `.modal-panel` is 480px wide
+     with a 95vw cap, and a page box is a WIDTH: Letter at this app's `@page { margin: 10mm }` is
+     about 740px and A4 about 718, so the 95vw cap never bites and the 480px would decide — a grade
+     sheet printed down the left-hand third of the sheet. WO-3.7's correction round is the scar
+     (tools/README.md trap 10: a print snapshot taken at the browser's own width is a snapshot of a
+     page no printer produces), and tools/verify-shell.mjs measures this one at the page box. */
+  body[data-grades-print] #gradesRecordModal .modal-panel {
+    display: block !important; width: 100% !important; max-width: none !important;
+    max-height: none !important; overflow: visible !important;
+    border-radius: 0 !important; box-shadow: none !important; animation: none !important;
+  }
+  body[data-grades-print] #gradesRecordModal .modal-body {
+    overflow: visible !important; max-height: none !important; padding: 0 !important;
+  }
+  /* The dialog's own furniture is not part of the sheet: the title bar says "Grade sheet" where the
+     printed header already says which class and which term, the ✕ is a control, and so are Print
+     and Download CSV. */
+  body[data-grades-print] #gradesRecordModal .modal-header,
+  body[data-grades-print] .grades-report-actions { display: none !important; }
+
+  body[data-grades-print] .grades-report-head {
+    border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 4mm;
+  }
+  body[data-grades-print] .grades-report-name { font-size: 14pt; color: #000; }
+  body[data-grades-print] .grades-report-sub { font-size: 9pt; color: #333; }
+  body[data-grades-print] .grades-report-scale { font-size: 8pt; color: #333; }
+  body[data-grades-print] .grades-report-label {
+    font-size: 8pt; color: #000; margin: 6mm 0 2mm;
+  }
+  body[data-grades-print] .grade-none {
+    background: none !important; border: 0.4mm solid #999 !important;
+    border-left: 1mm solid #000 !important; border-radius: 0 !important;
+    color: #000; font-size: 8pt; padding: 2mm !important;
+  }
+
+  body[data-grades-print] .grades-report-table { font-size: 7pt; }
+  body[data-grades-print] .grades-report-table th,
+  body[data-grades-print] .grades-report-table td {
+    padding: 1mm 1mm; border-bottom: 0.2mm solid #999; color: #000;
+  }
+  body[data-grades-print] .grades-report-table thead th {
+    font-size: 6.5pt; color: #000; border-bottom: 0.4mm solid #000;
+  }
+  /* Repeat the column heads on the second page of a long roster, and never break a student's row in
+     half. */
+  body[data-grades-print] .grades-report-table thead { display: table-header-group; }
+  body[data-grades-print] .grades-report-table tr { break-inside: avoid; }
+  /* The slice IS the page. `overflow: visible` because the on-screen sideways scroll has nothing to
+     scroll on paper, and a slice that kept `overflow-x: auto` would print clipped at the sheet edge
+     with no way to reach the rest. */
+  body[data-grades-print] .grades-report-slice {
+    overflow: visible !important; break-before: page; margin-bottom: 0;
+  }
+  body[data-grades-print] .grades-report-slice-label { font-size: 8pt; color: #000; }
+  /* The millimetres ASSIGNMENTS_PER_SLICE is computed from, declared where the browser can act on
+     them: 42 + 16 + 8 x 16 = 186mm inside A4's 190. The name is clipped rather than allowed to
+     widen the column, because one long surname must not take a column of work off the page. */
+  body[data-grades-print] .grades-report-row-head {
+    max-width: 42mm; overflow: hidden; text-align: left;
+  }
+  body[data-grades-print] .grades-report-col { width: 16mm; min-width: 0; }
+  body[data-grades-print] .grades-report-col-name { font-size: 6pt; max-width: 16mm; }
+  body[data-grades-print] .grades-report-col-due { font-size: 5.5pt; color: #333; }
+  body[data-grades-print] .grades-report-col-pts { font-size: 5.5pt; color: #333; }
+  body[data-grades-print] .grades-report-cell { padding: 1mm 0.5mm; }
+  body[data-grades-print] .grades-report-mark {
+    min-width: 0; padding: 0; border: none !important;
+    background: none !important; color: #000; font-size: 7.5pt;
+  }
+  body[data-grades-print] .grades-report-total { width: 16mm; text-align: right; }
+  body[data-grades-print] .grades-report-pct { font-size: 8pt; color: #000; }
+  body[data-grades-print] .grades-report-pct.none { color: #000; }
+  body[data-grades-print] .grades-report-letter { font-size: 6.5pt; color: #333; }
+  body[data-grades-print] .grades-report-key {
+    background: none !important; border: 0.2mm solid #999 !important; border-radius: 0 !important;
+    padding: 2mm !important; margin-top: 3mm; font-size: 6.5pt; color: #000;
+  }
+  body[data-grades-print] .grades-report-key-item { flex: 1 1 60mm; }
+  body[data-grades-print] .grades-report-note { font-size: 6.5pt; color: #333; margin-top: 3mm; }
+  body[data-grades-print] .grades-report-empty { font-size: 9pt; color: #333; }
+}
+
+/* THERE IS NO @page RULE HERE, and that is the one place this sheet deliberately depends on another.
+   `@page { margin: 10mm }` is document-level rather than per-screen — it is not a class and there is
+   only one page box — and src/attendance.css already declares it, with the arithmetic that produced
+   the 10mm written down beside it. The eight-column arithmetic above is against that same 10mm. A
+   second identical rule here would be a second thing to keep in step for no gain, and a DIFFERENT
+   one would mean two sheets out of the same app sitting at two insets. src/detail.css says the same
+   thing at the same point, and if that attendance rule ever stops printing it moves rather than
+   being copied a third time. */

@@ -3457,6 +3457,208 @@ Letter: **2 pages before the fix, 1 page after.** Recorded as trap 10 in `tools/
 
 ---
 
+### WO-3.9 — Grades print & CSV
+
+**What this adds.** A class's grades for a term as one sheet: **🖨 Grade sheet** in the score grid's
+toolbar opens a dialog carrying the printed page and a CSV of the same thing. Students down the page
+alphabetically by **last name** as `Last, First`, assignments across in **due-date** order with each
+column carrying its due date and what it is out of, and the total percentage and letter at the right.
+Both surfaces carry the class, the term, the day it was printed and the letter scale in use.
+
+**The order is the whole work order, and the order is the owner's** — recorded in the work order on
+2026-08-12 against a drawn mock-up of both layouts, not decided here. Student-major, because a term
+fits on a page or two and the same sheet doubles as the at-a-glance class picture; the alternative
+(one section per assignment, the roster repeated inside each) reads straight down while typing and
+never puts a student's whole term in one place. **No student-id column**, because the SIS entry screen
+has no id to match on and the name is the join. If a real re-key wants a finger held on one assignment
+column, that is the finding the first 👤 line below exists to catch — and the answer then is the
+assignment-major layout, already designed.
+
+**Three cases make the column order, and all three are in the fixture.** Sort by due date; a same-day
+tie keeps the order the teacher put the work in with the assignment list's ↑ ↓; work with **no due
+date at all** goes last rather than first, because a sheet whose first columns are the undated ones
+opens on the work least likely to be what is being typed in.
+
+**It is a dialog over the score grid, not a print of the score grid.** `plans/gradebook-surfaces.md`'s
+rule is what the teacher is doing — printing a term is a task you finish and dismiss — and WO-2.6 made
+the same call one screen over. Printing `#scoresView` itself would also have been wrong on the
+artifact: that screen's columns are in the order the teacher arranged them and this sheet's are by due
+date, its cells are ~250 live `<input>`s, and its grade column is frozen beside the name where this
+sheet's total belongs at the right.
+
+**Nothing on this sheet computes a grade, and nothing on it reads a cell for itself.** Every
+percentage and letter comes out of `src/grade-engine.js`; the row order and the reading of a cell come
+out of `src/scores.js` (`gridOrder()` and `scoreMark()`, both exported for this). The printout is what
+gets typed into the SIS, and two implementations of one arithmetic is exactly how a sheet comes to
+disagree with the screen it was printed from.
+
+**`late` and `missing` are the teacher's marks and a blank stays blank.** One function turns a cell
+into a string and **both surfaces call it**, so the page and the file carry identical text in every
+cell. A late score prints `18 L` — it counts in full; late is a record, not a penalty — `missing` is
+`M` because it holds no number, `excused` is `Ex`, and an ungraded cell prints **nothing at all**.
+That last one is the one departure from `src/attendance-report.js`, which draws a dash into a blank
+because an empty attendance cell would read as "present": here blank means ungraded, an empty cell is
+what that looks like, and a printout that turned a blank into anything would be inventing a grade on
+the sheet the SIS gets typed from. The key under the table says all four in words.
+
+**No support data reaches this file, and not because it is hidden.** `src/grades-report.js` does not
+import `src/supports.js` and has no path to `student.supports` — the same posture
+`src/attendance-report.js` and `src/detail.js` take, and stronger than "presentation-mode safe": an
+implementation that read those fields and hid them behind the visibility switch would satisfy the
+deliverable and still be a one-tap disclosure the day somebody flips the switch back.
+
+**This is the app's third `@media print` block and its third attribute** (`data-grades-print`, at the
+foot of `src/scores.css`). Sharing either of the other two would re-show a surface that is not on
+screen here — a blank sheet by a different route. The two older blocks each counted themselves in
+their own headers and were both right when they were written; **both were corrected in this pass**,
+because those comments are the only census there is.
+
+**The print gate is answered when it is read, and that is a bug fix rather than a design (owner,
+2026-08-12).** As shipped, the Print button worked exactly once. The second tap printed **the whole
+app**: Chrome refuses a repeated `print()` with *"This website has been blocked from automatically
+printing"*, and a **refused `print()` does not block** — it returns at once, so the 500ms timer that
+clears the gate had long since run by the time the owner pressed Allow, and the print that finally
+happened was ungated. Turning the preview from portrait to landscape did the same thing by the other
+road: the preview **re-generates from the live DOM**, also after the timer. One mistake, not two — the
+gate was *set* when we asked to print and *read* when the browser actually printed, and the gap
+between those is however long a teacher looks at a preview. It is now answered from a `beforeprint`
+listener, at the moment the page is serialised, by asking the DOM whether the grade sheet is on
+screen. That is **self-correcting rather than balanced**: a print the teacher blocks outright leaves
+the attribute on, which costs nothing because only `@media print` reads it, and the next print of
+anything clears it. Four checks cover it below, and **the shipped build fails two of them.**
+
+> ⚠️ **`src/attendance-report.js` (WO-2.6) and `src/detail.js` (WO-3.7) still carry the timer
+> verbatim, so both of those print surfaces still have this bug.** It was lifted three times, which is
+> how three copies came to share one defect. Deliberately **not** fixed here — that is a call about two
+> closed work orders. Their `@media print` headers still describe a timer, and `src/scores.css`'s
+> header now says so at the point where the next author would lift it a fourth time.
+
+- [x] 👤 The print order matches the SIS entry screen, confirmed by the owner against a real re-key.
+      **Closed by the owner 2026-08-12 — the order matches**, so the assignment-major layout this line
+      existed to catch stays undrawn. **This could not be closed at a desk and was not.** What was
+      measured here is that the build IS the
+      recorded answer: rows `["Ñuñez-Öztürk, Zoë","Ó\"Brien, Jr, Ida","Zabkowski, Abe"]` off a roster
+      stored as `["wo39-s3","wo39-s1","wo39-s2"]` — neither the answer nor its reverse, so the check
+      cannot pass by printing what it was handed — columns `Unit 1 Test [9/18] · Cell Quiz [9/18] ·
+      Ch 1 Homework [9/25] · Practice 1–6 [10/1–10/6] · Bonus poster [no due date]` off a document
+      order that starts with Ch 1 Homework, and zero id-ish columns. Whether that order is the SIS's
+      order is a question only the SIS can answer.
+- [x] Percentages and letters on the printout match the app exactly. *(Three ways and not one, because
+      "match the app" is a claim about two surfaces: the sheet is compared to arithmetic done by hand,
+      to what `src/grade-engine.js` answers through the seam, and to what the score grid behind the
+      dialog is drawing for the same three students at the same moment. `73.00% C · 63.53% D ·
+      122.22% A` on all three, against engine answers of `73 · 63.529411764705884 ·
+      122.22222222222223`. The fixture is four categories over a shifting weight base — Ñuñez-Öztürk
+      has two empty categories so her base is 65 rather than 100, Zabkowski's Tests are excused so his
+      is 45 — and his 122.22% is over 100 on purpose: extra credit is a scored zero-point assignment
+      and nothing caps a percentage.)*
+- [x] The CSV opens cleanly in a spreadsheet, with its rows and columns in the same order as the
+      printout. **Closed by the owner 2026-08-12 — it opens cleanly.** Half was measured and half was
+      owed to the owner, exactly as WO-2.6 and WO-3.7 left the same claim. *The ORDER half is asserted cell for cell: the file's grid
+      section is reassembled against the DOM's slices and every column head, every row head and every
+      cell has to be the same string in the same place, so a build whose slicing quietly reordered
+      anything fails here rather than on paper. The FORMAT half is measured too — a BOM, no bare LF
+      anywhere, four sections each at a consistent width (10 assignment rows of 4 cells, 3 student
+      rows of 13), and `Ó"Brien, Jr, Ida` surviving as one cell through a doubled quote and two
+      commas. What no run here can say is that it opens in the spreadsheet the owner actually uses.*
+- [x] Neither surface emits accommodation, medical, or plan data. *(A plan, a case manager, a review
+      date, an accommodation, a medical line and a behavior plan are planted on the first student and
+      **their presence in the serialised document is asserted before anything is read** — an absence
+      check over a student with nothing on file proves nothing. Then the dialog's text, the CSV's text
+      and the model's JSON are searched for all five sentinels and for the word `IEP`, twice: with
+      presentation mode OFF, where `supportsVisible()` answers true and the roster shows everything,
+      and with it ON. Zero hits in either pass over surfaces of 1,503, 882 and 2,631 characters, so
+      none of the three was empty. **The mode-OFF pass is the one that matters** — a build that gated
+      the sheet on the toggle would pass mode-ON and fail this.)*
+- [x] 👤 **Re-key a term into the SIS off the printed sheet.** **Done 2026-08-12: the order matches.**
+      This is the acceptance line above, and
+      it is the reason this work order exists: the sheet is only right if a teacher can type down it
+      without losing her place. What to notice — whether the eye wants the assignment column held
+      still rather than the student row (that is the assignment-major finding), whether `Last, First`
+      matches what the SIS shows, and whether the total at the right-hand end is where you look for it
+      or whether it wants to be beside the name the way the score grid has it.
+- [x] 👤 **Tap 🖨 Print twice in one sitting, and turn the preview to landscape.** **Closed by the
+      owner 2026-08-13: the preview is correct.** The second tap prints the grade sheet, and so does
+      the preview after a turn to landscape. *(The third part of this line — Ctrl+P with the dialog
+      **closed** giving the ordinary page rather than a blank sheet — is asserted directly by the
+      harness, `beforeprint` with the sheet not on screen clearing the gate, so it is not owed to a
+      human the way the paper is.)*
+
+      **Chrome still shows "This website has been blocked from automatically printing" on the second
+      tap, and that is the browser rather than the app.** It was the *symptom* that led to the bug, not
+      the bug: the defect was what printed after you pressed Allow, and that is fixed. The reading that
+      separates the two is now a check — **one tap calls `window.print()` exactly once**, so this is
+      not a delegated handler firing twice from one gesture, which is the thing that throttle exists to
+      stop. Nothing on the page can suppress it; it is Chrome's own repeat-print policy and the site
+      can only be granted the exception from the bubble itself. **Left as a known browser behaviour
+      rather than chased.** Worth knowing for the marketability goal: a teacher printing five classes
+      back to back meets it four times, one click each.
+- [x] 👤 **Print the grade sheet on the printer you actually have.** **Closed by the owner
+      2026-08-13.** *No finding was reported against any of the four things below, including the
+      one-slice page-break question the verifier raised — so the forced break stays as it is, and if
+      a header ever does strand itself on page 1 that is a new report rather than a known one.*
+      Eight assignment columns to a
+      page is arithmetic against A4's 190mm — 42mm of name, 16mm of grade, 8 × 16mm of work — and
+      arithmetic is not paper. The things to check by eye: that a column head's name is readable at
+      6pt, that a row is not cut across the middle at a page break, that the second slice starts on a
+      fresh sheet with the student and grade columns repeated on it, and that the whole thing is worth
+      carrying to a computer. The page box is measured here at 740px (`panel 740px, table 740px`), so
+      the sheet is known to take the full width of the paper rather than the dialog's own 480px — but
+      **how many sheets it comes out on is a question no emulator has an answer to.**
+- [x] 👤 **Open the class CSV in the spreadsheet you actually use.** **Done 2026-08-12: it opens
+      cleanly.** The bytes are measured here for
+      the first time — 894 bytes for 882 characters, the BOM asserted **useful** rather than only
+      present (the same bytes decoded as Windows-1252 read `ï»¿Planbook â€” class grade sheet`) — but
+      bytes are not Excel. Four sections down one sheet, the grid's row order matching the printout,
+      and a surname holding a quote and two commas still in one cell. **This is the line WO-2.6 and
+      WO-3.7 both left open on the same grounds and both closed the same way: by someone opening the
+      file.**
+- [x] 👤 **Tap 🖨 Grade sheet on the installed iPad, on a real class.** **Closed by the owner
+      2026-08-13** — the preview is usable at arm's length on a real roster. Measured here at 1024px under
+      a coarse pointer — the door is `112.47 × 44` with `spill: 0`, and every control in the dialog it
+      opens clears 44px over a sheet that actually drew — but a real roster is twenty-five rows and a
+      real term is more than ten columns, and the thing to find out is whether the preview is
+      readable at arm's length or whether it is a wall of numbers you have to print to use.
+
+*The desk half: `verify-shell.mjs` **662 checks · 662 passed · 0 failed · 0 skipped**, up from 636 on
+the tree this work order arrived on — twenty-six in a new section at the foot of the file, and none
+anywhere else. Twenty-two of those were the build; the print-gate fix replaced one check with four,
+and **two of the four fail on the build the owner tested**, which is what makes them a regression test
+rather than a description. The twenty-sixth came out of the re-test: a print-call counter the section
+had collected from the first day and never asserted, promoted to a check to answer whether Chrome's
+throttle message was ours.*
+
+*The one they replaced asserted that the attribute was off again 700ms after the tap — it went green
+on every run and the surface was broken anyway, because it measured the timer rather than the paper.
+That is the check to remember the next time a print surface is verified: what a gate is 700ms after a
+tap is not what it is when the browser prints.*
+
+*The rest of the desk half: `wo-sweep.mjs` is **17 checks · 15 passed · 0 failed · 2 to review**. Both REVIEWs
+were read rather than waved at. The sensitive-field sweep is **191 mentions across 16 files**, and the
+file new to that list is `src/grades-report.js`: its three mentions are prose in comments, stating at
+the point where a future author would break it that none of that data reaches these surfaces, plus the
+note the dialog prints saying the same thing to the teacher. That file has no `supports` identifier in
+executable code and does not import `src/supports.js` at all. The due-date REVIEW is
+`src/grades-report.js:509`, which is that same printed note stating the rule it is flagged for:
+*"Nothing on this sheet was worked out from a due date either: late and missing are only ever there
+because you marked them."* The coarse-block sweep reports **29 new selectors, all covered** — this
+sheet's block names every one of them, including the two that are text rather than targets, for the
+reason `src/attendance.css`'s does. `src/grades-report.js` is added to `SHELL`, and `sw.js`'s `CACHE` went to `planbook-shell-v48` for the
+build and then to **`v49` for the print-gate fix** — a second bump on an uncommitted change, which the
+"one bump per deploy" rule does not obviously ask for and which is right anyway: the owner had already
+installed v48, so v48's cache holds the **buggy** `src/grades-report.js`. Without the bump the re-test
+would have been served the defect it was testing for.*
+
+*Three mutations, all reverted, and the first two are the ones worth knowing about.*
+
+| Mutation | Result |
+|---|---|
+| `sheetOrder()` returns the list untouched — the sheet prints assignments in document order | **3 red.** The column-order check names the order it got (`Ch 1 Homework [9/25]` first); the marks check goes red because the cells move with the columns; the CSV check goes red on the assignment key. `658 · 655 · 3` |
+| A blank cell prints `0` instead of nothing | **1 red**, and the interesting part is which one. The hand-written cell matrix catches it (`0 empty cell(s), 21 reading "0"`) and **the CSV-versus-page comparison stays green** — both surfaces take their strings from one function, deliberately, so a defect they share keeps them in agreement. The two checks are complementary rather than redundant, and this is what established that rather than a reading of the code. `658 · 657 · 1` |
+| The rows are resolved in stored roster order instead of through `gridOrder()` | **3 red.** The row-order check names `["Zabkowski, Abe","Ñuñez-Öztürk, Zoë",…]`, the totals check goes red because the totals move with the rows, and the marks check goes red on the flag positions. `658 · 655 · 3` |
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

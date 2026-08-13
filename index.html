@@ -940,6 +940,22 @@
                 title="The keys for entering scores without the mouse">
           <span aria-hidden="true">⌨</span> Keys
         </button>
+
+        <!-- THE WAY OUT OF THE APP AND ONTO PAPER (WO-3.9), and the pair to the registry's
+             🖨 Record one screen over. It is in this toolbar rather than in the flag bar below for
+             the reason the ⌨ beside it is: that bar acts on the cell a teacher is typing in, and
+             this writes nothing, touches no score and opens a dialog.
+
+             It opens through its own hook rather than `data-modal-open`, the call
+             src/attendance-report.js, src/year-picker.js and the days-off panel all make: the
+             dialog is built from the open document at open time, and a modal that appears and then
+             fills in is a modal that flickers. -->
+        <button class="class-action-btn scores-sheet-btn" type="button" data-grades-record
+                aria-haspopup="dialog"
+                aria-label="Print or export this class’s grade sheet for this term"
+                title="The term as one sheet, in the order the SIS is typed in — print it or save it as a spreadsheet">
+          <span aria-hidden="true">🖨</span> Grade sheet
+        </button>
       </div>
 
       <!-- THE FLAG BAR. Four buttons, the four letters, acting on the cell the teacher is in — and
@@ -2362,6 +2378,53 @@
         </button>
       </div>
       <div id="attendanceRecordBody"></div>
+    </div>
+  </div>
+</div>
+
+<!--
+  THE CLASS'S GRADE SHEET FOR A TERM (WO-3.9) — the print surface and the CSV, one dialog.
+
+  IT IS THE SHEET THE SIS IS TYPED OFF, so its ORDER is the whole of it and the order is the
+  owner's, recorded in the work order on 2026-08-12: students down the page alphabetically by last
+  name as `Last, First`, assignments across in due-date order, and the total percentage and letter
+  at the right. src/grades-report.js carries the reasoning and builds every row of this from the
+  open document — the body is empty here for the same reason every other list in this file is.
+
+  WHAT IS ON SCREEN IS WHAT PRINTS, including where the page breaks fall: the grid is drawn in
+  slices of eight assignment columns because that is what fits across a sheet of A4, and the slices
+  are here as well as on paper so that the preview is a preview.
+
+  THE PRINT BUTTON PUTS AN ATTRIBUTE ON <body> and takes it off again — Roll Call!'s own
+  `data-modal-print` idiom, lifted through WO-2.6. The `@media print` block at the foot of
+  src/scores.css is what reads it, and it is gated on the attribute so that Ctrl+P anywhere else in
+  the app still prints the page rather than a blank sheet. This is the app's THIRD such block and
+  its third attribute; sharing either of the other two would re-show a surface that is not on
+  screen here, which is a blank sheet by a different route.
+
+  The two output buttons are in the body rather than in a `.modal-actions` row at the foot, because
+  the table between them is a term long: a control at the bottom of it is a control a teacher
+  scrolls past the whole sheet to reach.
+-->
+<div class="modal-overlay hidden" id="gradesRecordModal">
+  <div class="modal-panel grades-report-panel" role="dialog" aria-modal="true"
+       aria-labelledby="gradesRecordTitle">
+    <div class="modal-header">
+      <h2 id="gradesRecordTitle">Grade sheet</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grades-report-actions">
+        <button type="button" class="class-action-btn primary" data-grades-record-print
+                title="Print this sheet, or save it as a PDF from the print dialog">
+          <span aria-hidden="true">🖨</span> Print
+        </button>
+        <button type="button" class="class-action-btn" data-grades-record-csv
+                title="Save this sheet as a CSV file that opens in any spreadsheet">
+          <span aria-hidden="true">⬇</span> Download CSV
+        </button>
+      </div>
+      <div id="gradesRecordBody"></div>
     </div>
   </div>
 </div>

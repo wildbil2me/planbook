@@ -168,8 +168,16 @@ function rosterOf(cls) {
   control is really about — whether a pasted column of marks lines up against the roster's own order
   or an alphabetical one — belongs to WO-3.13, which owns pasting a column and its alignment rules.
   That is the seam this screen leaves for it rather than a surface it builds ahead of it.
+
+  EXPORTED AT WO-3.9, which asked for exactly this order under its own name: the printed grade sheet
+  lists students alphabetically by last name, which is what this already is. The import runs one
+  way — nothing in this file knows src/grades-report.js exists — and it is one function rather than
+  two copies of a sort for the reason src/attendance-report.js gives about its own readers: a second
+  comparator could be right about a hyphen or an empty surname in a way this one is not, and a sheet
+  that listed a class in a different order from the screen it was printed off is a sheet a teacher
+  re-keying from it loses her place in.
 */
-function gridOrder(cls) {
+export function gridOrder(cls) {
   return rosterOf(cls).slice().sort((a, b) => {
     const lead = String(a.last || '').localeCompare(String(b.last || ''));
     if (lead !== 0) return lead;
@@ -198,6 +206,25 @@ function valueOf(cell) {
   if (!cell || cell.v === null || cell.v === undefined) return null;
   const n = Number(cell.v);
   return Number.isFinite(n) ? n : null;
+}
+
+/*
+  WHAT ONE CELL HOLDS, AS THIS SCREEN READS IT — the number and the teacher's mark, and nothing else.
+
+  EXPORTED AT WO-3.9, whose printed grade sheet has to say what is in every cell of a term. It is
+  the three private readers above handed over as one answer rather than as three exports, because
+  what a caller wants is never "the raw cell" — that is the shape src/grade-engine.js and this file
+  each refuse to accept two versions of, and a third module resolving `{ v: null, flag: 'late' }` for
+  itself is the copy that eventually disagrees about a late blank.
+
+  `{ value: number|null, flag: '' | 'late' | 'missing' | 'excused' }`, and the pair is the whole of
+  it: a cell with no key, a cell holding a bare number from a hand-edited document, and a cell whose
+  value cannot be parsed all answer `value: null`, which is what ungraded means (docs/data-model.md).
+  The import runs one way — nothing in this file knows src/grades-report.js exists.
+*/
+export function scoreMark(doc, assignmentId, studentId) {
+  const cell = cellOf(doc, assignmentId, studentId);
+  return { value: valueOf(cell), flag: flagOf(cell) };
 }
 
 /* A points value that is a number, for the sentence that says what a missing mark costs. What is

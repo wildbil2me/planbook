@@ -124,6 +124,13 @@
                                       an iPad
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
+      data-grades-record              opens the class's grade sheet for the open term — the print
+                                      surface and the CSV, one dialog, built from the document at
+                                      open time. Students down the page by last name, assignments
+                                      across by DUE DATE, which is the order the SIS is typed in
+      data-grades-record-print        prints that sheet — sets the attribute the @media print block
+                                      in src/scores.css is gated on, and takes it off again
+      data-grades-record-csv          downloads the same sheet as a CSV
       data-student-detail="<id>"      opens that student's grade detail — the category breakdown,
                                       what is missing, and what it would take to move. Carried by
                                       the student's own NAME in the score grid and by the door in
@@ -293,6 +300,12 @@ import * as scores from './scores.js';
    grade engine, the attendance readers and src/backup.js's file hand-off, and nothing imports it
    back. */
 import * as detail from './detail.js';
+/* WO-3.9's class grade sheet — the term as a page that prints and a file that opens in a
+   spreadsheet, one dialog over the score grid. Its own module for the reason
+   src/attendance-report.js is one beside src/attendance.js: the grid is the flow a teacher types
+   in, and nothing about a printed sheet belongs in it. It reads the grade engine, the score grid's
+   own order and cell reader, and src/backup.js's file hand-off; nothing imports it back. */
+import * as gradesReport from './grades-report.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -1040,6 +1053,19 @@ document.addEventListener('click', (e) => {
   const scoreFlag = e.target.closest('[data-score-flag]');
   if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+
+  /* ── the class's grade sheet (WO-3.9) ──
+     Three hooks, and none of them writes a document or changes a screen: one opens a dialog built
+     from the open document, one asks the browser to print and one hands the browser a file. Nothing
+     chains a repaint, for the reason the two above do not — nothing behind this dialog goes stale
+     for a printout. They reach a different module for the reason src/attendance-report.js states
+     over the identical three: it is a read-only surface built out of the same document, and the
+     only thing in this app that hands a file to the browser is src/backup.js's helper, which that
+     module borrows rather than copies. */
+  const gradeSheet = e.target.closest('[data-grades-record]');
+  if (gradeSheet) { gradesReport.openGrades(gradeSheet); return; }
+  if (e.target.closest('[data-grades-record-print]')) { gradesReport.printGrades(); return; }
+  if (e.target.closest('[data-grades-record-csv]')) { gradesReport.downloadGradesCsv(); return; }
 
   /* ── one student's grade detail (WO-3.7) ──
      Three hooks. The first is NAVIGATION and belongs beside the two above it in spirit — it is how
@@ -1849,6 +1875,16 @@ window.planbook = {
      check without a spreadsheet. Nothing in the app reads window.planbook — see the block above for
      why the seam outlived the shelf. */
   detail,
+  /* `gradesReport` joined at WO-3.9, and its reason is `detail`'s and `attendanceReport`'s rather
+     than the reading reason `classes` gives: a page cannot be handed a real file by a script, and
+     no harness can open a print dialog or read what came out of a spreadsheet. gradesRecord() and
+     gradesCsv() are the same build-it/hand-it-over split those two use — a model in, bytes out,
+     with no DOM anywhere between them — so the row order, the column order, the marks in every cell
+     and the BOM can be asserted character by character. "The CSV opens cleanly in a spreadsheet,
+     with its rows and columns in the same order as the printout" is otherwise a claim nobody can
+     check without a spreadsheet and a printer. Nothing in the app reads window.planbook — see the
+     block above for why the seam outlived the shelf. */
+  gradesReport,
   /* `roster` joined at WO-1.7, for the same reason `classes` did and with one addition. The
      acceptance lines are driven by typing into the real paste box and clicking the real controls;
      this is how the result is READ — what the document holds, how a line was split — without a

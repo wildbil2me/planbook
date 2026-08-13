@@ -1203,10 +1203,15 @@
 
 /* ══════════════════════════ THE PRINTED PAGE (WO-2.6) ══════════════════════════
 
-   The one @media print block in this app, and the only surface it prints is the attendance record
+   The FIRST @media print block in this app, and the only surface it prints is the attendance record
    dialog. It is HERE, in the registry's own sheet, because that dialog belongs to this screen the
-   way the ⌨ key list does — and because there is nothing else to print: Planbook has no default
-   print surface at all.
+   way the ⌨ key list does.
+
+   It said "the one @media print block in this app" until 2026-08-12, and it was true when it was
+   written. There are three now — this one, src/detail.css's for one student's grade detail (WO-3.7)
+   and src/scores.css's for the class grade sheet (WO-3.9) — each gated on its own attribute, each
+   naming its own surface, and this census is the only one there is. Planbook still has no DEFAULT
+   print surface: nothing prints unless a button asked for it, which is what the gate below is.
 
    IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. src/attendance-report.js's printRecord()
    puts `data-attendance-print` on <body>, calls window.print(), and takes it off again — Roll Call!'s

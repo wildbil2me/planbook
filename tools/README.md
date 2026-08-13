@@ -726,7 +726,7 @@ the page back for the sections below depended on the last view opened having a s
 an empty one does not. It now goes out to the grid and back in through the class's own card, which is
 the route a teacher has when a screen has no door onward.
 
-**`verify-shell.mjs` holds 637 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 663 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -739,7 +739,21 @@ fixture-guard failure arm and one sits inside a two-pass loop, and then to 629 o
 round — two more in the same section, both about the page box (see the WO-3.7 block below); WO-1.15
 moved it from 629 to 637, eight literal call sites inside the existing `backup & restore` section,
 none of them in a loop and none of them a failure arm — its own two-pass presentation-mode loop is in
-Node, around one call site that fires once. *(The
+Node, around one call site that fires once; WO-3.9 moved it from 637 to 659, twenty-two in one new
+section at the foot of the file, of which one is a fixture-guard failure arm that never fires on a
+green run and one sits inside a two-pass presentation-mode loop that fires twice — so the section
+contributes twenty-two executed results to the 636 the tree already ran, and the run prints 658; then
+WO-3.9's print-gate fix moved it from 659 to 662, a net three in that same section — one call site
+deleted and four added, all literal and none in a loop — and the run prints 661. **The deleted one is
+the reason this entry is worth reading.** It asserted that the print gate was off again 700ms after
+the tap, it passed on every run, and the surface was broken anyway: it was measuring the release
+timer rather than what the browser prints, and the timer was the bug. Two of the four that replaced
+it fail on the build that shipped. Then 662 to 663 on the re-test: **a counter the section had
+collected since it was written and never asserted**, promoted to a check the day the owner reported
+Chrome still showing "blocked from automatically printing" after the fix. One tap calls
+`window.print()` once, so the throttle is the browser's policy and not a delegated handler firing
+twice — which is the difference between a bug and a browser, and there was no reading that told them
+apart until this one. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -762,7 +776,10 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 637 − 636 = 1 on this tree (629 − 628 = 1 before WO-1.15,
+could go and name.** It is 659 − 658 = 1 on this tree (637 − 636 = 1 before WO-3.9 — whose
+twenty-two sites produced exactly twenty-two results, by the same coincidence WO-2.6's eighteen did
+and for the same two reasons at once: one fixture-guard arm a green run never reaches, and one call
+site inside a two-pass presentation-mode loop that fires twice — 629 − 628 = 1 before WO-1.15,
 627 − 626 = 1 before WO-3.7's correction round,
 599 − 598 = 1 immediately before WO-3.7,
 596 − 595 = 1 before WO-2.24 and
@@ -1004,6 +1021,39 @@ mark — nobody has looked at that student yet), and `scores` is an object keyed
 student, which `count()` answers **0** for. A naive counter reads 4/4/2/0 on that document, and every
 one of those three errors is in the direction that reports a full gradebook as nothing at stake. Five
 mutations, all reverted and tabulated in `TESTING.md` § WO-1.15.
+
+**658 at WO-3.9**, measured the same way: `658 checks · 658 passed · 0 failed · 0 skipped`, 16,628
+lines, 25.3 lines per check, 205s. Twenty-two call sites in a new section at the foot of the file,
+twenty-two results, and none anywhere else. Four things about them are worth knowing.
+
+**The fixture is built to fail a build that got the order right by accident**, because the whole of
+this work order is an ORDER and an order is the easiest thing in the world to assert against itself.
+The roster is stored in a third order — neither the answer nor its reverse — so a sheet that printed
+what it was handed lands somewhere the check names; the ten assignments are stored out of due-date
+order, two of them share a due date and one has none at all, which is the three cases the column rule
+is made of. Proved rather than argued: `sheetOrder()` returning the list untouched turns **three**
+checks red, and resolving the roster in stored order instead of through `src/scores.js`'s
+`gridOrder()` turns **three** red.
+
+**The sheet is compared to the SCREEN as well as to the arithmetic.** "Percentages and letters on the
+printout match the app exactly" is a claim about two surfaces, so the check reads the score grid's own
+`.scores-grade-num` and `.scores-grade-letter` for the same three students before the dialog is
+opened, and asserts those, the engine's answers through the seam, and three hand-computed strings.
+A sheet that agreed with itself and disagreed with the grid a teacher just came from is the failure the
+work order names, and nothing that only read the sheet could see it.
+
+**The CSV is compared to the printed page cell for cell, and that check cannot catch everything —
+which is why the cell texts are also written down by hand.** Both surfaces take their strings from one
+function in `src/grades-report.js`, deliberately, so a defect they SHARE keeps them in agreement:
+making a blank print as `0` leaves the file/page comparison green and turns the hand-written cell
+matrix red. The two checks are complementary rather than redundant, and the mutation is what
+established that rather than a reading of the code.
+
+**And the page box is read at 740px**, which is trap 10 obeyed rather than rediscovered: `.modal-panel`
+is `width: 480px`, so without the restatement inside the gated block the whole grade sheet prints down
+the left-hand third of the paper — and at the 1280px the rest of the section runs at, 480 of 1280
+looks like a dialog rather than like a mistake. Three mutations, all reverted and tabulated in
+`TESTING.md` § WO-3.9.
 
 ### Driving a browser over CDP — ten traps, all of which first look like app defects
 
