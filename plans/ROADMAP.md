@@ -66,13 +66,13 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 14/16 `[█████████░] 88%` |
-| 3 | Gradebook | 🔨 IN PROGRESS | 8/10 `[████████░░] 80%` |
+| 3 | Gradebook | 🔨 IN PROGRESS | 9/10 `[█████████░] 90%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **39/82 `[█████░░░░░] 48%`** |
+| | | **Overall** | **40/82 `[█████░░░░░] 49%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -342,8 +342,14 @@ meet is a second source of truth that's wrong by first period.)*
 - [x] **`late` and `missing` are marked, never inferred.** Raw score plus a flag. `missing` counts
       as zero; `late` is a record, not a penalty; `EX` leaves the denominator; blank is simply
       ungraded and affects nothing.
-- [ ] Past-due blanks generate a **prompt** — "6 blanks are past due, mark them missing?" — that
+- [x] Past-due blanks generate a **prompt** — "6 blanks are past due, mark them missing?" — that
       the teacher accepts or dismisses. Never arithmetic that happens to them.
+      *(WO-3.6, 2026-08-13. Two things this line did not predict. **Not every past-due blank is in
+      it**: `excused` and a scoreless `late` are teacher decisions and are never swept, so the
+      prompt's count and the grid's "N blanks" can legitimately differ on screen at once. And it is
+      a **banner in the view rather than a dialog** — a dialog would trap focus in front of the
+      column she came to type, and would break WO-3.5's shipped `Esc` line. The overdue tint on the
+      column head is drawn in the mockups and deliberately did not ship with it.)*
 - [x] Weighted grade with **empty categories redistributing their weight** — otherwise every grade
       is wrong until each category has an assignment.
 - [x] Per-student detail: category breakdown, what's missing, what it would take to move.

@@ -25,7 +25,10 @@ dependencies.
 ## Data invariants
 
 - **`late` and `missing` are teacher-marked, never inferred from a due date.** Blank means ungraded
-  and affects nothing. A grade must never change because a date rolled over.
+  and affects nothing. A grade must never change because a date rolled over. The date may still
+  **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only what the
+  teacher accepts. It is the one place the clock may be read, and `excused` and a scoreless `late`
+  are never in the set. Do not widen it, and do not add a second reader of the date.
 - **Empty categories redistribute their weight.**
 - **Taken · dropped · not-taken-yet are three states, not two.** Everything counts *recorded
   meetings*, never calendar days. There is deliberately no schedule model — see

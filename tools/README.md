@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 676 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 695 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -815,7 +815,11 @@ one is the detail section's *"the attribute comes back off"*, which is the parag
 a second time on a second surface — same lifted idiom, same timer, same check green over it. **Its
 second correction round moved it from 675 to 676**, and that one site is the first this file has added
 inside a loop since WO-2.21: one `check()` over the three gate attributes, three results, which is why
-the gap below is negative for the first time. *(The
+the gap below is negative for the first time. **WO-3.6 moved it from 676 to 695**: nineteen literal
+call sites in one new section at the foot of the file, none of them inside a loop, of which **two are
+fixture-guard failure arms** that never fire on a green run — one for a build with no `[data-past-due]`
+host to paint into, one for a fixture that could not be planted — so the section contributes seventeen
+executed results. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

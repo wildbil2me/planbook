@@ -92,6 +92,48 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.6 — the past-due prompt.** Open a class's scores or its assignment list and, if work whose
+  due date has gone by still has blank cells, a banner asks: *"6 blanks are past due — mark them
+  missing?"* **Review the 6** lists exactly which cells it means, student by student. **Mark them
+  missing** writes them all at once. **Not now** writes nothing and stops the prompt asking about that
+  work on this device.
+
+  **It is a prompt and it is never arithmetic.** An earlier draft of this app computed `missing` from
+  the due date — blank plus past-due equalled zero — which meant a teacher who hadn't finished grading
+  was failing half the class by Sunday. No grade in Planbook has ever changed because a date rolled
+  over, and none does now: nothing is written until you tap the button that says in words what it will
+  do. Work due *today* has not gone by, and work with no due date can never be past due.
+
+  **What the prompt will not touch is the safety of the feature.** A cell it offers to fill is one
+  carrying *nothing at all*. A cell you marked `excused` is a decision, and sweeping it into `missing`
+  would turn that decision into a zero — the most expensive mistake this feature could make. A `late`
+  with no score yet records that the work *arrived*; marking it missing would record that it never did.
+  Both are left alone. So this count and the grid's own "N blanks" summary can legitimately differ on
+  screen at once — they answer two different questions, and this one is allowed to be the smaller.
+
+  **A dismissal is a preference, not part of your year.** It lives beside the other UI settings as an
+  assignment id and nothing else — no name, no date, no student, no score. The year document was the
+  other candidate and is the wrong home: it syncs and is restored from backup, so a restore would
+  resurrect or destroy dismissals along with the grades, making a nudge part of the record of a school
+  year. The accepted cost, stated rather than hidden: **dismiss on the laptop and the iPad still asks
+  once.** For a prompt whose whole job is to ask, that is the right way round — accepting on either
+  device writes the same cells.
+
+  **It is a banner, not a dialog, and that was the decision most likely to go wrong.** A dialog on
+  arrival would put a focus trap between you and the first cell of the column you came to type, and
+  would break WO-3.5's shipped guarantee that `Esc` mid-column closes nothing. So it is the same inline
+  notice the no-grade banner beside it is, in the overdue tint's own amber, with the review expanding
+  inline underneath. Checked on the hardware on 2026-08-13: the three controls are separately tappable,
+  **"Mark them missing" is not caught while reaching for "Not now"**, the banner reads as an offer
+  rather than an error above a grid, and the screen comes up offline from the precache.
+
+  **What the desk check could not have caught on its own.** Three of the four acceptance criteria are
+  satisfied perfectly by a build that draws no prompt at all, so every "nothing moved" reading is taken
+  beside an accept that proves the screen *can* move — one row from 68.00% to 50.00% on the same cells
+  the checks above assert are still. Two deliberate breakages confirmed the set is the part under test:
+  reusing the score grid's own idea of "ungraded" turns the excused cell into a zero and goes 8 red,
+  and counting today as past due goes 9 red.
+
 - **WO-3.9 — grade sheets you can print and re-key from.** A class's whole term on one page.
   **🖨 Grade sheet** on the Scores screen opens the sheet in the order the SIS is typed in: students
   down the page by last name as `Last, First`, assignments across by due date, each column carrying

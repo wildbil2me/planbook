@@ -3881,6 +3881,170 @@ would have been served the defect it was testing for.*
 
 ---
 
+### WO-3.6 — The past-due prompt
+
+**What this adds.** A banner above the score grid and above the assignment list: *"6 blanks are past
+due — mark them missing?"*, with **Review the 6**, **Mark them missing** and **Not now** beside it.
+Accept writes `{ v: null, flag: "missing" }` to exactly the cells the review listed; dismiss writes no
+cell at all and stops the prompt asking about that work on this browser.
+
+**It is a prompt and it is never arithmetic**, which is the whole work order. An earlier draft of this
+app computed `missing` from the due date — blank plus past-due equalled zero — and the rule that
+replaced it is stated in four places before this build: `CLAUDE.md`, `docs/data-model.md` § *"Missing
+is marked, never inferred"*, `src/assignments.js` decision 1 and `src/scores.js` decision 1. Nothing
+here writes until the teacher taps the button that says in words what it will do, and the sentence
+under the question says the same thing the overdue tint's tooltip says one screen over: *nothing has
+been marked and no grade has changed*.
+
+**A past-due blank is narrower than an empty cell, and that is the safety of the feature.** The set is
+a cell carrying **nothing** — no key at all, or (from a restore or a hand edit) neither a value nor a
+flag — on an assignment whose due date is a real date **strictly before today**, in the open class and
+term, for a student on that class's roster. `excused` is not in it, because an excused student swept
+into `missing` is a teacher's decision turned into a zero. Neither is a `late` with no score yet: that
+flag records that the work arrived, and marking it missing would record that it never did. So this
+count and the score grid's own "N blanks" can legitimately differ on screen at once — they answer two
+different questions, and this one is allowed to be the smaller.
+
+**It is a banner in the view rather than a dialog, and that was the decision most likely to go wrong.**
+`plans/gradebook-surfaces.md`'s test — a surface you work in is a view, a task you finish and dismiss
+is a modal — does not settle a prompt that appears unasked. Three things do. WO-3.5 shipped *"`Esc`
+mid-column closes nothing, because there is no dialog to close"* as a tested acceptance line, and a
+dialog on arrival would put something on screen for that key to close. A focus trap on arrival stands
+between the teacher and the first cell of the column she came to type. And the prompt is not a task she
+came to finish: it is the screen telling her something before she starts, which is exactly what the
+no-grade banner one row above it is — so it is the **same component**, Roll Call!'s inline notice
+banner as `src/scores.css` already lifted it, in the overdue tint's own amber. The review expands
+**inline** under the sentence for the same reason.
+
+**A dismissal is a UI preference, not a field in the year document.** `planbook_pastDueDismissed` holds
+`{ "<assignmentId>": true }` and nothing from inside a document — no name, no due date, no student, no
+score — which is the same category of fact as `openClassId`. The year document was the other candidate
+and is the wrong home: it syncs and is restored from backup, so a field there would be a schema change
+for a banner, and a restore would resurrect or destroy dismissals along with the grades. The accepted
+cost, stated rather than hidden: **dismiss on the laptop and the iPad still asks once.** For a prompt
+whose job is to ask, that is the right way round.
+
+- [x] On opening the class gradebook the prompt is up and says the work order's own sentence word for
+      word — **"6 blanks are past due — mark them missing?"** — asserted as that string rather than as
+      a regex over a number, because the copy is a deliverable.
+- [x] It names the two assignments it means, and the one due **today**, the one due **tomorrow** and
+      the one with **no due date** are named nowhere. An empty due date is valid and can never be past
+      due; a date that is today has not gone by.
+- [x] It is a **banner in the view** — inside `<main>`, no `role="dialog"`, no `aria-modal`, no overlay
+      anywhere in the score grid and nothing open over it — carrying exactly three controls.
+- [x] `Esc` pressed **twice** with the prompt on screen closes nothing: the banner is still up, the
+      grid is still up, no dialog appeared, and the caret is still in the cell it was in. This is
+      WO-3.5's acceptance line 7 re-asserted over the new surface, because the obvious build of this
+      work order is the one that breaks it.
+- [x] The review lists **exactly the six cells** the sentence counted, and the excused cell, the late
+      blank, the scored cell and every cell on the three assignments that are not past due are none of
+      them.
+- [x] The same prompt, from the same computed set, is on the **assignment list** — the other screen the
+      work order names — saying the same sentence.
+- [x] **Dismissing changes no score.** Every score cell in the whole document is byte identical either
+      side of the tap — asked of `scores` entire rather than of this fixture's own columns, so a build
+      that wrote somewhere else could not pass by being out of frame.
+- [x] **Dismissing changes no grade.** All five displayed grades are the same strings after the tap as
+      before it, and both agree with the engine asked separately.
+- [x] What a dismissal *did* write is one UI preference and nothing else: `planbook_pastDueDismissed`
+      holds the two assignment ids and `true`, and nothing from inside the document.
+- [x] **A dismissed prompt does not reappear on every render** — four renders, each a real navigation:
+      the repaint the dismissal itself did, a switch to the assignment list, a switch back to the grid,
+      and a **full page reload**, which is the one that tells a preference apart from a variable
+      somebody set.
+- [x] And the dismissal is **per assignment rather than global**: on the same reloaded page the other
+      class's prompt is still up, still counting six. This is the half a build passes by switching the
+      feature off.
+- [x] **The grade before accepting is identical to the grade with the prompt never shown.** The second
+      arm is a twin class — same weights, same points, same scores — whose prompt was dismissed before a
+      reload, so the render being read has never drawn one. Both arms also agree with the engine.
+- [x] **Accepting writes to exactly the previewed cells.** The set of cells that changed in the document
+      is the set the review listed, with nothing added and nothing left out — and the previewed ids are
+      read off the **screen** rather than out of the module, because the acceptance line is about what a
+      teacher could have read.
+- [x] And what it wrote is `{ v: null, flag: "missing" }` in exactly that shape, six times, while the
+      excused cell, the late blank, the scored cell and the cell on the assignment due today are byte
+      identical to what they were.
+- [x] **The grades move when she accepts** — row 1 from a hand-computed 68.00% to a hand-computed
+      50.00%, all five rows moving — which is what makes every "nothing changed" reading above a claim
+      rather than a screen that cannot move at all.
+- [x] After accepting there is nothing left to ask about, so the prompt goes, and the six cells wear the
+      **missing flag in the grid**, where any of them can be taken off again.
+- [x] All three of the prompt's controls measure **≥44px on an emulated coarse pointer**, on a banner
+      that is actually up. The standing WO-2.21 sweep opens every view and cannot find these: it runs
+      thousands of lines before this fixture, where nothing in the document is past due, so the banner
+      is not on screen to be walked.
+- [x] On the iPad, the three controls are separately tappable and **"Mark them missing" is not
+      mis-tapped for "Not now"** — the one control in this app that writes a flag onto a column of cells
+      the teacher did not point at. 👤 *(Owner, 2026-08-13, on the installed app. The boxes are measured
+      above; no emulator has a thumb.)*
+- [x] On the iPad, the banner reads as **an offer rather than an error** at a glance, in amber, above a
+      grid the teacher came to type in — and it does not push the first row of the grid off the fold in
+      landscape. 👤 *(Owner, 2026-08-13. This is the WO-2.11 question again — a lifted component can be
+      right in every measurement and wrong in the room, and this time the lift held.)*
+- [x] Offline launch with the network off, `src/past-due.js` served from the precache
+      (`planbook-shell-v51`). 👤 *(Owner, 2026-08-13.)*
+
+*The three 👤 lines were run by the owner in one sitting on 2026-08-13, on the installed home-screen
+app against `planbook-shell-v51`, and all three passed as written. The banner reads as an offer.*
+
+*The desk half is `verify-shell.mjs`, **694 of 694 with zero skips**, in 226s, 17 checks added in one new
+section at the foot of the file (19 call sites, two of them fixture-guard failure arms that never fire
+on a green run). Three things about the fixture are worth knowing.*
+
+***It is two classes, and it has to be.*** *Acceptance line 2 is "the grade before accepting is
+identical to the grade with the prompt never shown", and one class cannot hold both arms of that — the
+prompt has been shown on it. So `c_wo36` and `c_wo36b` are twins, the run dismisses the prompt on the
+second one and then reloads the page, and the dismissal is already true in `localStorage` before the
+document is open on the way back up. That is a render where the prompt was never drawn, obtained
+rather than argued for.*
+
+***Five assignments, and each one is a case.*** *Due yesterday (2 blanks, plus the scored, excused and
+late cells that must survive every tap); due yesterday again (4 blanks, which is what makes the "In A
+and B" sentence and the per-assignment dismissal testable); due **today**, which is the off-by-one the
+whole feature turns on; due tomorrow; and no due date at all. Two plus four is six, which is the work
+order's own sentence. The dates are derived in Node off the same machine clock and never asked of the
+app, for the reason `nodeToday` states above the assignments section: a check that asked the page what
+yesterday was would agree perfectly with a build that read UTC.*
+
+***Every "nothing moved" reading is taken beside one that proves the screen could move.*** *Three of
+the four acceptance lines are satisfied perfectly by a build that draws no prompt at all, so the accept
+at the foot of the section is the negative control for all of them: row 1 goes from a hand-computed
+68.00% to a hand-computed 50.00% on the same rows the checks above assert are still.*
+
+*`wo-sweep.mjs` is **17 checks, 14 passed, 0 failed, 3 to review**, and all three REVIEWs were read and
+answered rather than silenced. The sensitive-field-name line now names `src/past-due.js`; the hit is
+that file's own prose saying the review lists **student names and nothing else** — no plan, no
+accommodation, no indicator — which is `src/scores.js` decision 5 applied to a list of names on a
+screen a teacher projects. The due-date REVIEW names five lines in `src/past-due.js` and one in
+`src/shell.js`, and every one of them is prose or teacher-facing copy: the header's account of the
+draft this work order replaced, the button label "Mark them missing", its `title`, and the sentence
+itself. **The comparison that actually reads the clock is `assignment.due < today`, on a line that does
+not contain the word `missing` at all** — which is a fact about how the grep is written rather than a
+claim, and is the reason that check is a REVIEW. The four selectors with no coarse-block rule —
+`.past-due-said`, `.past-due-lead`, `.past-due-review`, `.past-due-names` — are two containers and two
+text elements; not one is tappable, and the three real controls inside them are measured above.
+`src/past-due.js` is added to `SHELL` and `sw.js`'s `CACHE` went to `planbook-shell-v51`.*
+
+*Two mutations, both reverted, and both are about the set rather than about the plumbing — because the
+plumbing is the part a green run over the wrong set would still report.*
+
+| Mutation | Result |
+|---|---|
+| `isUntouched()` stops asking about the flag — every cell with no number is a past-due blank, which is the score grid's own `isUngraded()` and the obvious thing to reuse | **8 red**, and the one to read is *"the excused cell reads `{"v":null,"flag":"missing"}`"*. The sentence goes to *"8 blanks are past due"*, the review lists the excused and late cells, and accept turns a teacher's decision into a zero. `694 · 686 · 8` |
+| `assignment.due < today` becomes `<=` — a date that IS today counts as past due | **9 red.** *"10 blanks are past due"*, the cell on the assignment due today stops being byte identical, and the dismissal preference picks up a third assignment id. `694 · 685 · 9` |
+
+*What is **not** here. The **overdue tint on a score-grid column head** is drawn in
+`design/mockups/proposed.css` and is still not built: `src/scores.css` says the rule belongs to this
+work order, and this work order's Deliverables are the prompt, the accept/dismiss and the review. It is
+written up as a proposed follow-up in `.claude/dispatch/WO-3.6-result.md` rather than folded in.
+`shortDate()` is now the **third** copy of the same eight lines in `src/` — `src/scores.js` and
+`src/assignments.js` carry the other two, each with a note saying why it is not an import — and the
+honest fix is one exported formatter, which is two shipped files this work order does not own. Also in
+the result file.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

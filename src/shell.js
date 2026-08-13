@@ -124,6 +124,21 @@
                                       an iPad
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
+      data-past-due                   not a control: the empty host each screen carries for the
+                                      past-due prompt, painted by src/past-due.js. Two of them, on
+                                      the score grid and on the assignment list
+      data-past-due-review            shows or hides the list of blanks the prompt is about, inline
+                                      under it. A disclosure and not a preference, like the key
+                                      legend above; and inline rather than a dialog because the
+                                      score grid has no dialog in it by acceptance line
+      data-past-due-accept            writes `{ v: null, flag: "missing" }` to exactly the cells the
+                                      review listed, in one update, and redraws the screen under it.
+                                      THE ONLY PLACE IN THIS APP A FLAG IS WRITTEN ONTO A CELL THE
+                                      TEACHER DID NOT POINT AT — it is a suggestion she accepted,
+                                      and nothing infers it from a date (docs/data-model.md)
+      data-past-due-dismiss           "Not now". Writes no cell and moves no grade; it records the
+                                      assignment id in `planbook_pastDueDismissed` so the prompt
+                                      stops asking about that work on this browser
       data-grades-record              opens the class's grade sheet for the open term — the print
                                       surface and the CSV, one dialog, built from the document at
                                       open time. Students down the page by last name, assignments
@@ -309,6 +324,12 @@ import * as assignments from './assignments.js';
    draws a grade. It imports src/grade-engine.js and nothing in it computes one; the chains below are
    what make "live" true from more than one direction. */
 import * as scores from './scores.js';
+/* WO-3.6's past-due prompt — the banner both of those two screens wear, and the one module in this
+   app that reads a due date and offers to act on it. It is imported here for one hook only: accept
+   writes score cells, and the screen standing under the banner has to be redrawn afterwards. That
+   module imports neither screen — it paints its own hosts and answers whether it wrote — so the
+   chain lives here, where every other "what has to be redrawn now" answer in this file lives. */
+import * as pastDue from './past-due.js';
 /* WO-3.7's per-student detail — the fourth screen of an open class, and the only one with no
    segment on the switcher: it is reached from a NAME, on the score grid or in a student's
    attendance history, and the strip shows that name as a breadcrumb while it is up. It imports the
@@ -1068,6 +1089,26 @@ document.addEventListener('click', (e) => {
   const scoreFlag = e.target.closest('[data-score-flag]');
   if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+
+  /* ── the past-due prompt (WO-3.6) ──
+     Three hooks, and the chain is the whole difference between them. Review and "Not now" write no
+     cell and move no grade, so they repaint nothing but the banner and src/past-due.js does that
+     itself. ACCEPT writes a flag onto however many cells the review listed, which is a score change
+     like any other — so the screen under it is redrawn here, through the same paintClassScreen()
+     every other navigation in this file goes through. It is redrawn from THIS side rather than from
+     that module for the reason afterCategoryChange() gives one function up: src/past-due.js would
+     have to import both screens to know which one it is standing on, and the import already runs
+     the other way.
+
+     The redraw is conditional on something having been written, which is not an optimisation: a
+     tap that wrote nothing — every cell having taken a score while the banner was up — must not
+     rebuild a grid the teacher is typing in. */
+  if (e.target.closest('[data-past-due-review]')) { pastDue.togglePastDueReview(); return; }
+  if (e.target.closest('[data-past-due-accept]')) {
+    if (pastDue.acceptPastDue()) paintClassScreen(views.currentView());
+    return;
+  }
+  if (e.target.closest('[data-past-due-dismiss]')) { pastDue.dismissPastDue(); return; }
 
   /* ── the class's grade sheet (WO-3.9) ──
      Three hooks, and none of them writes a document or changes a screen: one opens a dialog built

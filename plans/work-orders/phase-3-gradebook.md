@@ -434,7 +434,7 @@ the Surface deliverable above and `../gradebook-surfaces.md`.
 
 ## WO-3.6 — Past-due prompt
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5
+**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** S · **Depends on** WO-3.5
 **Closes roadmap** Phase 3 → "Past-due blanks generate a prompt."
 
 **Why it exists.** An earlier draft computed missing from the due date — blank plus past-due equalled
@@ -448,10 +448,37 @@ class. The due date is still useful, but **only as a prompt**.
 - A way to review which blanks it means before accepting.
 
 **Acceptance**
-- [ ] Dismissing the prompt changes no score and no grade.
-- [ ] The grade before accepting is identical to the grade with the prompt never shown.
-- [ ] Accepting writes `{ v: null, flag: "missing" }` to exactly the previewed cells.
-- [ ] A dismissed prompt does not reappear on every render.
+- [x] Dismissing the prompt changes no score and no grade. *(Both halves asserted over a twin class:
+      every score cell in the whole document byte identical either side of the tap, and all five
+      displayed grades the same strings, agreeing with the engine asked separately.)*
+- [x] The grade before accepting is identical to the grade with the prompt never shown. *(The
+      never-shown arm is the twin class reloaded with its prompt already dismissed in `localStorage`,
+      so the render being read has never drawn one.)*
+- [x] Accepting writes `{ v: null, flag: "missing" }` to exactly the previewed cells. *(The previewed
+      ids are read off the screen, not out of the module; the excused cell, the late blank, the scored
+      cell and every cell on the three assignments that are not past due are byte identical after.)*
+- [x] A dismissed prompt does not reappear on every render. *(Four renders including a full page
+      reload — and it is per assignment rather than global: the other class still asks.)*
+
+**Surface, and the two decisions the work order left open** *(taken 2026-08-13, at the build)*. The
+prompt is a **banner in the view**, not a dialog: WO-3.5's `Esc` acceptance line forbids anything on
+that screen for the key to close, and `plans/gradebook-surfaces.md`'s test does not settle a prompt
+that appears unasked, so it is the same inline-notice component the no-grade banner beside it is, with
+an **inline** review under it. A **past-due blank** is a cell carrying nothing at all — no key, or
+neither value nor flag — so `excused` and a scoreless `late` are deliberately not in the set. And a
+**dismissal is a UI preference**, `planbook_pastDueDismissed`, an assignment id and `true`: the year
+document syncs and is restored from backup, and a nudge does not belong in the record of a school
+year. The reasoning for all three is in `src/past-due.js`'s header and in
+`.claude/dispatch/WO-3.6-result.md`.
+
+**Out of scope, and left undone deliberately** — the **overdue tint on a score-grid column head**,
+which `design/mockups/proposed.css` draws and `src/scores.css` says belongs to this work order. It is
+not in the Deliverables, and it is proposed as a follow-up in the result file rather than folded in.
+
+**The 👤 sitting is paid.** The three lines this work order owed — the three controls under a thumb,
+whether the banner reads as an offer rather than an error above a grid, and an offline launch on
+`planbook-shell-v51` — were run by the owner on 2026-08-13 on the installed app and all three passed.
+`TESTING.md` § WO-3.6 carries them, and the **Owes** field came off with them.
 
 ---
 
@@ -1344,3 +1371,120 @@ scheduled in Phase 8 and this is not, so whoever reaches this first should expec
 - [ ] The submission date is written into this work order. *(Fill it in when submitted, so the wait is
       measurable rather than remembered.)*
 - [ ] 👤 A teacher who is not the owner completes sign-in and sees nothing that frightens them.
+
+---
+
+## WO-3.19 — the overdue tint on a score-grid column head
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.6 · **Blocks** nothing
+**Closes roadmap** *(no box. The roadmap's Phase 3 past-due line is WO-3.6's and is ticked; this is
+the half of the drawing that work order deliberately did not ship.)*
+
+**Booked 2026-08-13, out of WO-3.6's close.** Two things are true at once and one of them has to give.
+`design/mockups/proposed.css` draws `.scores-col-due.overdue { color: #8a6d1a; }`, and **nine comment
+sites across five files name WO-3.6 as the owner of every rule about a past due date on the score
+grid** — `src/scores.css:41` and `:301`, `src/scores.css:450`, `src/assignments.css:203`,
+`src/assignments.js:353`, `src/scores.js:49`, `design/mockups/proposed.css:298` among them. WO-3.6
+closed ✅ DONE on 2026-08-13 without the tint, on the correct call that it was not in its Deliverables.
+
+**Why it exists.** *The promise is the problem, not the pixel.* Those comments now point a reader at a
+**closed** work order for work that was never done — the exact drift class `wo-gate.mjs --audit`
+exists to catch and the one shape of it the tool cannot see, because comments are not a tracker.
+Three score-grid work orders sit below this one in the queue (WO-3.13, WO-3.15, WO-3.16); every one of
+them opens `src/scores.css` and `src/scores.js` and reads those comments on the way in. This is booked
+ahead of them so they read a true one.
+
+The tint also earns its place on its own: the banner says *"6 blanks are past due"* and cannot say
+**which columns** without the teacher opening the review. A tinted column head says it at a glance,
+writes nothing, and is already the idiom on the assignment list one screen over.
+
+**Deliverables**
+- **The tint on the score-grid column head** — `.scores-col-due.overdue`, in `#8a6d1a`, lifted from
+  `design/mockups/proposed.css` rather than re-derived, and matching the assignment list's own overdue
+  colour exactly. Same date test as the prompt: `due` is a real date **strictly before today**.
+- **The nine comment sites are repointed or rewritten**, and this is not optional garnish — it is the
+  reason the work order exists. A comment that said "WO-3.6 owns this" says what is true after this
+  lands. `src/scores.css:299-303` in particular claims the rule is absent *and why*, and that
+  paragraph is now the wrong shape.
+- **One reader of the clock, not two.** The tint asks the same question the prompt asks. If that means
+  exporting a predicate from `src/past-due.js` rather than writing `due < today` a second time in
+  `src/scores.js`, do that — `AGENTS.md` now says in as many words not to add a second reader of the
+  date.
+
+**Out of scope** — any change to what the prompt counts, any tint on a *cell*, and the assignment
+list's existing tint, which already works and is not being re-derived.
+
+**Acceptance**
+- [ ] A column whose due date has gone by is tinted; a column due **today**, one due tomorrow, and one
+      with no due date are not. The off-by-one is the same one WO-3.6's mutation testing caught.
+- [ ] The tint writes nothing: every score cell in the document is byte identical with the tint on
+      screen, and no grade moves. It is a colour, not a mark.
+- [ ] The tinted columns are **exactly** the assignments the banner's sentence names, asserted against
+      the prompt's own set rather than recomputed in the check.
+- [ ] A column stops being tinted when its blanks are filled or marked, on the same render — because
+      the thing it is reporting has stopped being true.
+- [ ] `grep -rn "WO-3.6" src/ design/` returns no comment claiming WO-3.6 owns unbuilt work.
+- [ ] 👤 The tint is visible on the iPad in a lit classroom without being mistaken for an error state,
+      and is legible against the column head's existing `#a0aab8`.
+
+---
+
+## WO-3.20 — one date formatter, and a name that means one thing
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.13, WO-3.15, WO-3.16
+**Blocks** nothing · **Closes roadmap** *(no box. Internal consistency; nothing a teacher sees changes,
+which is the acceptance criterion rather than a caveat.)*
+
+**Booked 2026-08-13, out of WO-3.6's close**, which added the third byte-identical copy of the same
+eight lines and said so at the copy rather than paying it. The count in that result file was low. There
+are **five** `function shortDate` in `src/`, in three different formats:
+
+| File | Output | On an empty or bad date |
+|---|---|---|
+| `src/assignments.js`, `src/scores.js`, `src/past-due.js` | `Sep 4` | `''` |
+| `src/days-off.js` | `Thu, Sep 4` | the raw string |
+| `src/attendance.js` — **exported** | `9/4` | the raw string |
+
+**Why it exists.** *The duplication is the boring half; the name is the trap.* `src/attendance.js`
+**exports** a `shortDate` that formats `9/4`, and `src/attendance-report.js` imports it correctly. Any
+future gradebook screen that reaches for a date formatter finds that export first, in good faith, and
+renders `9/4` in a column beside one that says `Sep 4` — and nothing in the harness or the sweep would
+fail, because both are correct dates. `src/attendance-report.js`'s own header prose already argues this
+case for the printed page: *a printout that has left the building and disagrees with the screen* is the
+failure. The same argument applies one file over and has not been applied.
+
+The three identical copies are the cheap part. Each carries a comment explaining why it is not an
+import; two copies was a defensible convention and five is a formatter waiting to disagree with itself.
+
+**Deliverables**
+- **One `Mon D` formatter, exported from one place**, replacing the three identical copies. A leaf
+  module with no imports of its own — the suite has no bundler and a cycle here would be paid at load
+  time on every screen.
+- **A ruling on the other two, in a sentence each.** `days-off.js`'s `Thu, Sep 4` and
+  `attendance.js`'s `9/4` are different formats for good reasons and may well stay — but **they may
+  not keep the same name**. Either they compose from the shared formatter or they are renamed to say
+  what they produce. The deliverable is that no two functions called `shortDate` return different
+  strings for the same input.
+- **The empty-date behaviour is decided once**, not inherited. Three copies return `''` and two return
+  the raw input; one of those is wrong on some screen right now.
+
+**Out of scope** — every other formatter (`plainDate`, `dayAbbr`, `percentText`), the attendance
+family's internals, and any change to what any screen displays. **This work order is behaviour-neutral
+by construction**; if a date on any screen changes, it has failed.
+
+**Scheduling note.** This sits **after** WO-3.13, WO-3.15 and WO-3.16 rather than before them, and the
+dependency is real. All three open the score-grid files, and consolidating a set that is still growing
+means doing it twice. It is also deliberately behind WO-1.16 in the running order: a five-file refactor
+that changes nothing a teacher sees has no business landing in the week the term opens.
+
+**Acceptance**
+- [ ] `grep -rn "function shortDate" src/` returns **one** definition of the `Mon D` formatter, and no
+      two surviving functions of that name return different strings for the same input.
+- [ ] Every date on every screen is character-for-character what it was before this work order —
+      asserted on the assignment list, the score grid, the past-due prompt and review, the days-off
+      list, the attendance grid and both printed reports.
+- [ ] An empty date, a malformed date and a real date each produce one documented answer, and the
+      choice is written down at the definition rather than implied by three call sites.
+- [ ] `verify-shell.mjs` is green with no check rewritten to accommodate a changed string. **A check
+      edited to match new output is this work order failing**, not passing.
+- [ ] No import cycle: the shared module imports nothing from `src/`.

@@ -41,11 +41,20 @@
 
   ── FIVE THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS ──
 
-  1. NOTHING READS A CLOCK. Not `todayISO()`, not `new Date()`, nothing. src/assignments.js tints an
-     overdue due date and the drawing of this screen tinted a column head the same way, and it is
-     deliberately absent here: everything about a past due date on this screen is WO-3.6's prompt,
-     and this work order's Traps line names it. The due date is printed as a plain date and compared
-     to nothing. `late` and `missing` are marked by the teacher, never inferred (CLAUDE.md).
+  1. NOTHING IN THIS FILE READS A CLOCK. Not `todayISO()`, not `new Date()`, nothing. The due date
+     is printed in a column head as a plain date and compared to nothing, and the drawing's overdue
+     tint on that head is still deliberately absent. `late` and `missing` are marked by the teacher,
+     never inferred (CLAUDE.md).
+
+     WHAT CHANGED AT WO-3.6, because this decision said "everything about a past due date on this
+     screen is WO-3.6's prompt" and that work order has now landed: the prompt is here, in the
+     banner above the grid, and the clock it reads is src/past-due.js's. That module owns the
+     comparison, the set of blanks it names, and the one write it offers; this file calls
+     paintPastDue() at the end of its render and knows nothing else about a date. The split is the
+     point rather than an accident of layering — a screen that both reads a clock and writes score
+     cells is a screen where "the grade changed because a date rolled over" becomes a one-line
+     mistake. So the sentence above still holds for this file, and the tint the drawing wanted on a
+     column head is still not built (see src/scores.css, which says the same thing about the rule).
 
   2. A CELL IS ALWAYS AN OBJECT, AND CLEARING ONE DELETES THE KEY. There is no `{ v: null }` with no
      flag anywhere in the writes below — writeCell() refuses to store one, and that is acceptance
@@ -89,6 +98,12 @@ import { categoriesOf, formatWeight, weightTotal } from './categories.js';
 import { rosterName, fullName } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
 import { letterFromPercentage, weightedClassGrade } from './grade-engine.js';
+/* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
+   deliberately not in this file — see decision 1. This file draws it by calling one function and
+   passing nothing: that module asks src/classes.js which class and term are open, exactly as this
+   one does. The import runs one way; nothing in src/past-due.js knows this file exists, which is
+   what keeps the write it offers out of the typing path. */
+import { paintPastDue } from './past-due.js';
 
 const CLASS_NAME_ID = 'scoresClassName';
 const HEADLINE_ID = 'scoresHeadline';
@@ -654,6 +669,10 @@ export function renderScores() {
   if (actions) actions.classList.toggle('hidden', !!emptyText);
   if (flags) flags.classList.toggle('hidden', !!emptyText);
   paintKeys();
+  /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below: with no
+     term, no roster or no work there is nothing past due, and a banner left standing from the class
+     before would be asking about work this screen is not showing. */
+  paintPastDue();
   if (emptyText) {
     const banner = document.getElementById(NO_GRADE_ID);
     if (banner) banner.classList.add('hidden');

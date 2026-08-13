@@ -128,6 +128,31 @@ export const PREF_DEFAULTS = {
      src/supports.js is the only reader — its one visibility switch is where this becomes an
      answer — and src/presentation.js owns the header control that writes it. */
   presentationMode: false,
+
+  /* Which assignments this browser has answered "Not now" to on the past-due prompt (WO-3.6):
+     { "a_3f9a1b2c4d": true }. An empty object means it has never been dismissed for anything.
+
+     AN ASSIGNMENT ID ON ONE SIDE AND `true` ON THE OTHER, and nothing from inside a document on
+     either — no name, no due date, no student, no score. That is what makes a fact about a
+     gradebook full of students legal in localStorage at all, and it is the same shape `openClassId`
+     takes for the same reason: an ID and never a name, because a name is teacher-typed content that
+     belongs in the year document.
+
+     WHY IT IS A PREFERENCE AND NOT A FIELD IN THE YEAR DOCUMENT, which was the other candidate and
+     is the question src/past-due.js's decision 4 answers at length. The document syncs and is
+     restored from backup, so a field there is a schema change docs/data-model.md would have to
+     carry — for a banner — and a restore would then resurrect or destroy dismissals along with the
+     grades. What is stored here is which nudge this browser has waved off, which is a fact about
+     this browser's chrome in exactly the way `installBannerDismissedAt` above is.
+
+     THE ACCEPTED COST: dismiss on the laptop and the iPad still asks once. For a prompt whose whole
+     job is to ask, that is the right way round — accepting on either device writes the same cells.
+
+     Entries for assignments that no longer exist are left where they are, exactly as `openTermIds`
+     leaves a stale class key: src/past-due.js resolves this against the open document on every
+     read, so a dead id is inert, and a preference file that prunes itself is a preference file that
+     has to know what an assignment is. */
+  pastDueDismissed: {},
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

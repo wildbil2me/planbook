@@ -112,6 +112,62 @@
 .cat-chip.zero { border-style: dashed; color: #a0aab8; }
 .cat-chip.zero b { color: #a0aab8; }
 
+/* THE PAST-DUE PROMPT (WO-3.6), worn by this list and by the score grid — which is why it is here in
+   § SHARED rather than in either screen's own block, and src/scores.css must never restyle it.
+
+   IT IS THE SAME COMPONENT AS `.grade-none`, DELIBERATELY: Roll Call!'s inline notice banner
+   (design/portable-components.md § 6) as src/scores.css already lifted it — the wash, the 1.5px
+   edge, the 5px left rule, 13px/700, and the caution amber. Those two banners stack on one screen
+   and they are the same KIND of thing (the screen saying something before you start), so a second
+   banner shape here would be the WO-2.11 correction run backwards. What separates them is the
+   content: this one ends in a question mark and carries three buttons.
+
+   THE INK IS #8a6d1a, WHICH IS THE OVERDUE TINT'S INK — `.assign-date.overdue` above, and the
+   drawing's `.scores-col-due.overdue`. The tint and this prompt are the same signal at two volumes,
+   so they are the same colour; a teacher who has learned what the amber date means has already
+   learned what this banner is about. */
+.past-due {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin: 0 0 12px; padding: 10px 14px;
+  border: 1.5px solid #f0dfa8; border-left: 5px solid #e0b940; border-radius: 8px;
+  background: #fff8e6; color: #8a6d1a;
+  font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.past-due-said { flex: 1 1 260px; }
+/* The question, and then what it is about. Two lines rather than one sentence: the number and the
+   offer are what a teacher reads at a glance, and the reassurance underneath is what she reads if
+   the offer worries her. */
+.past-due-lead { display: block; }
+.past-due-where { display: block; font-weight: 600; font-size: 12px; color: #a08340; }
+.past-due-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The three buttons are `.class-action-btn` worn as-is — `.primary` on the one that writes. This
+   class only gives the coarse block below something to name; it never restyles the button. */
+.past-due-btn { }
+
+/* THE REVIEW, INLINE. It is a disclosure under the sentence rather than a dialog, for the reason
+   src/past-due.js's decision 3 gives: nothing on the score grid may open something Escape closes.
+   White on the wash so the list reads as content inside the notice rather than as more notice. */
+.past-due-review {
+  flex: 1 1 100%;
+  margin-top: 2px; padding: 10px 12px;
+  border: 1.5px solid #f0dfa8; border-radius: 8px; background: #fff;
+}
+.past-due-row + .past-due-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
+.past-due-row-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.past-due-row-head b { color: #1a1a2e; font-size: 13px; font-weight: 800; }
+.past-due-row-due { font-size: 11px; font-weight: 700; color: #8a6d1a; }
+/* What accepting would cost, in the row rather than in a tooltip: "each would count 0 out of 20" is
+   the fact that makes a count of blanks mean something. */
+.past-due-row-cost { font-size: 11px; font-weight: 700; color: #6b7a8d; }
+.past-due-names { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 6px; }
+/* One name per chip, and NOTHING ELSE ON IT — no dot, no plan, no indicator. This list is drawn on
+   two screens a teacher projects, and the safest form of CLAUDE.md § Accommodations rule 1 on a list
+   of names is to have nothing to suppress (src/scores.js decision 5, same call). */
+.past-due-name {
+  padding: 2px 7px; border-radius: 999px; border: 1.5px solid #eef0f4; background: #fafbfc;
+  font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    § ASSIGNMENT LIST
    ══════════════════════════════════════════════════════════════════════════════ */
@@ -324,6 +380,23 @@
   .assign-field-select { min-height: 44px; font-size: 14px; padding: 8px 10px; }
   .assign-copy-classes { gap: 10px; }
   .cat-chip { font-size: 11px; padding: 3px 9px; }
+  /* THE PROMPT'S THREE BUTTONS (WO-3.6). `.class-action-btn` already carries the 44px floor in
+     src/shell.css's own coarse block, and this line is here anyway for the reason `.assign-row-btn`
+     above is: a control covered only by some other sheet's rule is a control the next reader has to
+     go and prove is covered — and one of these three writes a flag onto a column of cells. The gap
+     widens with them, the same 10px `.scores-flags` and `.roster-row-actions` both took: "Mark them
+     missing" must not be shoulder to shoulder with "Not now". */
+  .past-due-btn { min-height: 44px; min-width: 44px; }
+  .past-due-actions { gap: 10px; }
+  .past-due { font-size: 14px; }
+  .past-due-where { font-size: 13px; }
+  .past-due-row-head b { font-size: 14px; }
+  .past-due-row-due, .past-due-row-cost { font-size: 12px; }
+  /* The name chips are not controls — nothing in the review is tappable, which is deliberate: this
+     is a list to read before deciding, and a tappable name here would be a second way to write a
+     flag on one cell that the grid already does properly. They take the type size anyway, because
+     it is a list a teacher reads on a tablet at arm's length. */
+  .past-due-name { font-size: 12px; padding: 3px 9px; }
 }
 
 @media (max-width: 640px) {

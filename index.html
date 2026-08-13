@@ -805,6 +805,15 @@
         </button>
       </div>
 
+      <!-- THE SAME PAST-DUE PROMPT (WO-3.6), on the other screen its work order names: "on opening
+           an assignment or a class gradebook". This list is where a teacher scans the term's work
+           in the week before grades are due, and it is where the overdue TINT on the Due column
+           already tells her a date has gone by — the prompt is that tint at the volume that can
+           offer to do something about it. One module paints both hosts from one computed set, so
+           the two screens can never disagree about the number, and a dismissal on either is a
+           dismissal on both because it is recorded per assignment. -->
+      <div class="past-due hidden" id="assignmentsPastDue" data-past-due></div>
+
       <div class="assign-table-wrap">
         <table class="assign-table">
           <caption class="sr-only" id="assignmentsCaption"></caption>
@@ -921,6 +930,23 @@
         <button class="class-action-btn" type="button" data-category-manage
                 aria-haspopup="dialog">Open Categories</button>
       </div>
+
+      <!-- THE PAST-DUE PROMPT (WO-3.6), and it is a BANNER rather than a dialog on purpose. A modal
+           closes on Escape, and this screen's acceptance line is that Escape does nothing here
+           because there is nothing to close; a focus trap on arrival would also stand between the
+           teacher and the first cell of a column she came here to type. So the prompt sits where
+           the no-grade banner above it sits, in the same inline-notice component, and the teacher
+           may ignore it and start typing. src/past-due.js carries the reasoning in full.
+
+           EMPTY IN THE MARKUP and hidden until there is something to ask about — it is drawn from
+           the open document like every other list in this app. The `data-past-due` hook is what
+           that module paints into: a third screen wearing this prompt costs one element here and no
+           line there, the same contract `[data-screen-nav]` has with src/screen-nav.js.
+
+           `aria-live` is deliberately NOT on it. Every answer this prompt gives goes through
+           src/live-region.js like the rest of the app, and a second live region that announced a
+           six-line banner rebuilding itself would talk over the one that says what was written. -->
+      <div class="past-due hidden" id="scoresPastDue" data-past-due></div>
 
       <!-- The class average, what is still blank, and what the weights come to. Drawn by
            src/scores.js on every keystroke, which is the whole of "live". -->

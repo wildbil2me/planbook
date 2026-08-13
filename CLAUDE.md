@@ -112,7 +112,10 @@ Four things that will bite:
   forget?" is the question the home screen exists to answer. Everything counts *recorded meetings*,
   never calendar days.
 - **`late` and `missing` are marked by the teacher, never inferred from a due date.** Blank means
-  ungraded and affects nothing. The grade must never change because a date rolled over.
+  ungraded and affects nothing. The grade must never change because a date rolled over. The date may
+  still **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only
+  what the teacher accepts. That is the one place the rule allows the clock to be read, and the
+  set is narrower than "empty" — `excused` and a scoreless `late` are decisions and are never swept.
 - **Empty categories redistribute their weight.** Otherwise every grade is wrong until each
   category has an assignment.
 

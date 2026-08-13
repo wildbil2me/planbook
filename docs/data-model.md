@@ -267,6 +267,17 @@ accidentally failing half the class. The due date is still useful, but only as a
 blanks are past due — mark them missing?" A suggestion the teacher accepts, not arithmetic that
 happens to them.
 
+*(Built at WO-3.6, 2026-08-13, and the paragraph above is its specification word for word.* `src/past-due.js`
+*owns it: a banner above the score grid and the assignment list, a review of the exact cells it means, and
+one write of* `{ "v": null, "flag": "missing" }` *to those cells and no others. Three things it decided that
+this paragraph did not say. **The set is narrower than "the cell is empty"**: a cell carrying no key at all,
+or neither value nor flag — so an* `excused` *student is never swept (that would turn a decision into a
+zero) and neither is a* `late` *with no score yet (that flag records that the work arrived). **A due date
+that is today has not gone by**, and an empty one can never be past due. And **the dismissal is not in this
+document**: it is* `planbook_pastDueDismissed` *in* `localStorage` — *an assignment id and* `true`, *nothing
+from inside a year — because this file would otherwise have to carry a field, and a restore would resurrect
+or destroy a UI nudge along with the grades.)*
+
 `late` carries no penalty. If a penalty is ever wanted it becomes a per-category setting, and it
 must be visible in the cell — a score that silently isn't what you typed is the worst thing a
 gradebook can do.

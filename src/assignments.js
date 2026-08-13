@@ -103,6 +103,12 @@ import { categoriesOf, formatWeight } from './categories.js';
    Used in exactly two places, both of them today: the creation-time default both dates arrive on,
    and the overdue tint — see decision 1. */
 import { todayISO } from './attendance.js';
+/* THE PAST-DUE PROMPT (WO-3.6). The tint below is this file's own answer to "this date has gone
+   by"; the banner that OFFERS to do something about it is that module's, on this screen and on the
+   score grid both. Drawn by calling one function and passing nothing: it asks src/classes.js which
+   class and term are open, exactly as this file does. The import runs one way — nothing in
+   src/past-due.js knows this file exists. */
+import { paintPastDue } from './past-due.js';
 
 const EDITOR_MODAL_ID = 'assignmentModal';
 const COPY_MODAL_ID = 'assignmentCopyModal';
@@ -500,6 +506,13 @@ export function renderAssignments() {
     empty.classList.toggle('hidden', !emptyText);
   }
   if (wrap) wrap.classList.toggle('hidden', !!emptyText);
+  /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below for the
+     reason src/scores.js gives at the same point in its own render: with no term or no work there
+     is nothing past due, and a banner left standing from the class before would be asking about
+     work this screen is not showing. It is the same prompt, from the same computed set, on the
+     other screen this work order names — the tint on the Due column beside it is the quiet half of
+     the same fact. */
+  paintPastDue();
   if (emptyText) return;
 
   /* Grouped by the class's OWN category order, which is the order the teacher put them in
