@@ -480,6 +480,17 @@ app was broken in production while the owner watched. A row would schedule work 
 The rule below is about work orders that arrive **open** — the failure it names is a finding that
 lands in the directory and never in the order, and a `✅ DONE` work order cannot fail that way.*
 
+*WO-2.7 has no row and that is deliberate too, and it is the **only open work order in the directory
+without one** — which is why it is said here rather than left to a count. It was deferred out of Ship 2
+on 2026-08-09 by the owner, and the reasoning is in its own header: no live data is coming across from
+Roll Call!, the 2026-27 rosters are pasted fresh, and the ledger starts empty, so there is nothing
+historical that anyone wants imported. **The deferral is about *when*, not about whether** — it keeps
+its work order, its roadmap box and its dependency, and it comes back the first time someone wants a
+prior year read in. It also came off WO-G2's `Depends on` line the same day, for the reason recorded
+there: a gate that waits on work nobody intends to do is a gate that gets waived. The rule below is
+satisfied by that paragraph; this line exists because the paragraph lives in
+`phase-2-attendance.md` and the question "why is this not in the running order" gets asked here.*
+
 *WO-2.24 was given row #20 on 2026-08-10, the day it was booked out of WO-2.23's verification — **the
 third time this file has had to record the same failure**, after WO-3.12 and WO-3.10 below. A work
 order with no numbered row is invisible to `next`; it is never offered at all. The pattern is now
