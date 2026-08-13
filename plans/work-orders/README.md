@@ -314,25 +314,25 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 15 | [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) OAuth client & consent screen | S | | Aug 22, an hour |
 | 16 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
 | 17 | [WO-1.15](phase-1-shell-store-roster.md#wo-115--the-restore-compare-cannot-see-what-it-is-about-to-delete) The restore compare cannot see what it deletes | S | | Aug 23, half a day |
-| 18 | [WO-2.25](phase-2-attendance.md#wo-225--the-print-gate-is-answered-when-it-is-read-on-every-surface) The print gate is answered when it is read | S | | Aug 23–24, a sitting |
-| 19 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | Aug 24, before the first class |
-| 20 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
-| 21 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
-| 22 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
-| 23 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
-| 24 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
-| 25 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 26 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
-| 27 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 28 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 30 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 31 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 32 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 33 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 34 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
-| 35 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Sep 12–15, half a day |
-| 36 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Sep 12–15, a word |
+| 18 | [WO-2.25](phase-2-attendance.md#wo-225--the-print-gate-is-answered-when-it-is-read-on-every-surface) The print gate is answered when it is read | S | | Aug 13–14, a sitting |
+| 19 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
+| 20 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
+| 21 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
+| 22 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
+| 23 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
+| 24 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
+| 25 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
+| 26 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 27 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Aug 14 |
+| 28 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Aug 14–15 |
+| 29 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Aug 15–16 |
+| 30 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
+| 31 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
+| 32 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
+| 33 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
+| 34 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
+| 35 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
+| 36 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
 | 37 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
 | 38 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
@@ -363,6 +363,29 @@ made. The exposure is the window between someone deleting `_headers` and someone
 because a known hole with no row is a hole nobody schedules; it earns a late one because scheduling it
 ahead of grade math would be paying for tidiness with the term. No row moved except WO-G2, which stays
 last where a gate belongs.*
+
+***The open rows were re-dated on 2026-08-13, and WO-1.16 moved from #19 to #36 as a consequence of
+that rather than as a decision of its own.*** The trigger was a dispatch problem: `next` hands out the
+first ⬜ row in document order, so every `/wo` with no argument was being handed **WO-1.16 — a cutover
+the owner performs, where four of five Acceptance lines are 👤 and nothing edits a file here.** The
+first instinct was to move the row down, and that was wrong: **row position is the only place this
+work order's deadline is written**, so sliding it into the September rows would have made the board
+state something false about when it is due. The real fault was that the dates were stale, not that the
+row was misplaced. Rows #1–#26 were planned Aug 10–28 and closed Aug 9–13; the board had been running
+about a fortnight ahead since WO-8.7, and every note above says so without any of them fixing the
+column. **Re-dated against observed throughput — five to seven rows a day, sustained since Aug 9 —
+the remaining work lands Aug 13–19, and WO-1.16 falls after it naturally, on Aug 20–23, still before
+the first class.** It stops being row #19 because the work that used to sit behind it now sits in
+front of it, which is what "ahead of schedule" actually means.
+
+**Two rows did not move up, and neither exception is about pace.** WO-G2 is data-bound — its checklist
+wants a real class's weighted grade computed by hand, grades entered across all five classes, and a
+backup drill run *after* grades exist — so it cannot happen before the term regardless of how fast the
+code lands. WO-3.18 was deliberately delayed to the last row before the gate on 2026-08-12, one day
+before this, and its cell is a submit-by rather than a start; re-dating a tail is not a licence to
+quietly undo a decision booked the day before. **The ✅ rows keep their original dates on purpose.**
+They are a record of what was planned, not a claim about what happened — the same convention that let
+row #17 read *Aug 23* while WO-1.15 closed on Aug 12, which is the evidence this re-date is built on.
 
 *WO-1.17 and WO-1.18 were booked on 2026-08-12 out of WO-1.15's verification and given rows #34 and
 #35, on WO-8.9's reasoning above rather than WO-8.8's — both guard something that is correct today.
