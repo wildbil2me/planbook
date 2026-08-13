@@ -42,3 +42,10 @@ once the work has been verified, and no agent has the authority to tick a box.
 A separate verifier reads your work cold against the **Acceptance** list, so report honestly:
 what you did, what you could not satisfy, and anything you were unsure about. Claiming an acceptance
 line you did not actually meet costs you a correction round, not a pass.
+
+**`node tools/verify-shell.mjs` may not run where you are.** It drives headless Edge over CDP, which a
+sandboxed agent usually cannot do. If it fails to start, say **"could not run"** and say why — that is
+an environment report, not a result, and the teacher re-runs it locally before any box is ticked.
+Never infer a pass from a harness you could not execute.
+
+**Never tick a 👤 line.** Those need a real iPad, a thumb, or the live SIS, and you have none of them.

@@ -290,6 +290,33 @@ Hence the standing question in the verifier's definition: *name the fixture assu
 hide a bug in this surface, and say whether the harness breaks it.* A green run over a fixture that
 cannot express the failure is not evidence.
 
+## The briefing layer was outside the protocol — nine days, ~50 dispatches
+
+**`CLAUDE.md` told every dispatch in the August sprint that the project had no code in it.** Its status
+paragraph read *"pre-code, Phase 0 complete… no app code exists yet"* and its Conventions section read
+*"Git: not yet initialized"* until 2026-08-13 — by which point there were 133 commits, 25.5k lines of
+app, and a live deployment. Its Commands table said *"No code yet, so nothing to build or test"* while
+ten scripts sat in `tools/`, including the two an implementer most needs: `serve-https.mjs` and
+`verify-shell.mjs`.
+
+**The sharp edge is that `AGENTS.md` was correct the whole time, and points here.** Its first line is
+*"Read `CLAUDE.md` first — it is the real briefing… the two must never drift apart."* So every Codex
+implementer was routed, by a current document, into a stale one.
+
+**Nothing caught it, and that is the finding.** The roadmap boxes, the dashboard, the `CHANGELOG.md`
+entries and the work-order status lines all stayed accurate to the commit across those nine days —
+`wo-gate.mjs --audit` checks three of the four against each other every run. The discipline was real.
+`CLAUDE.md` simply was not a member of any set anything iterated over: the maintenance protocol named
+the roadmap, the dashboard and the changelog, and stopped. **A protocol that lists its artifacts by
+name silently exempts every artifact added after it was written.**
+
+The fix is `ROADMAP.md`'s maintenance step 5, added the same day. The open question for the Ship 2
+pipeline audit is the one this exposes rather than answers: **there are now five documents that brief
+agents** — `CLAUDE.md`, `AGENTS.md`, the three definitions in `.claude/agents/`, this file, and
+`verification-tooling.md` — roughly 1,400 lines with overlapping content and no stated boundary. That
+split was made incrementally under the cost pressure described below, never designed. Deciding what
+belongs where is dispatchable work; noticing that nobody has is not.
+
 ## What the pipeline costs, as of WO-1.6
 
 Six dispatches: **549,554 output tokens of implementation, 100,472 of orchestration, 178,902 of

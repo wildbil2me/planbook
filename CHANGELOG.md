@@ -38,6 +38,37 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **The briefing layer is true again, and now inside the maintenance protocol.** `CLAUDE.md` told
+  every session and every dispatched agent that this project was *"pre-code… no app code exists yet"*
+  and that git was *"not yet initialized"* — through 133 commits, 25.5k lines of app, a live
+  deployment, and roughly fifty dispatches. Its Commands table read *"No code yet, so nothing to build
+  or test"* while ten scripts sat in `tools/`, including the two an implementer reaches for first.
+  `AGENTS.md` was accurate the whole time and opens by pointing at `CLAUDE.md` as "the real briefing,"
+  so every Codex run was routed by a current document into a stale one.
+
+  **Nothing caught it, and that is the part worth recording.** The roadmap boxes, the dashboard, the
+  work-order status lines and this file all stayed accurate to the commit across those nine days, and
+  `wo-gate.mjs --audit` checks three of the four against each other on every run. `CLAUDE.md` was
+  simply not a member of any set anything iterated over. **A protocol that lists its artifacts by name
+  silently exempts every artifact added after it was written** — which is now `ROADMAP.md`'s
+  maintenance **step 5**: if the work changed what a cold reader needs to know, `CLAUDE.md` and
+  `AGENTS.md` move in the same sitting, both or neither.
+
+  **What the file says now.** Ship 1 delivered and Ship 2 in flight, the deploy origin, a real
+  Commands table, and a short pointer section naming the orchestrator → implementer → verifier
+  pipeline without restating its rules. No progress count is written into it at all — the file now
+  says to take those from the dashboard, because a number kept in two places is a number that rots in
+  one. The phase-branch convention is restated as standing, with its August drift recorded rather than
+  quietly ratified: WO-3.9 and the eight commits before it landed straight on `main`.
+
+  **Two operating rules reached `AGENTS.md`** that had never been written down anywhere: a sandboxed
+  agent that cannot start `verify-shell.mjs` reports *"could not run"* as an environment, not a
+  result — a pass is never inferred from a harness that did not execute — and no agent ever ticks a
+  👤 line. The five-document briefing layer this exposes (~1,400 lines across `CLAUDE.md`,
+  `AGENTS.md`, the three agent definitions, and two `plans/` files, split under cost pressure and
+  never designed) is written up in `plans/dispatch-retro.md` as a question for the Ship 2 pipeline
+  audit, not answered here.
+
 - **WO-3.14 — grade percentages now read to two decimal places.** The screen and the school's SIS
   disagreed in precision — the SIS carries two decimals and this app showed one — so every grade
   re-keyed into it went through a rounding step done in the teacher's head, at every row of a class

@@ -15,9 +15,13 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: pre-code, Phase 0 complete.** The data model and sync design are settled; no app code
-exists yet. The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its maintenance
-protocol and delivery plan before working a phase. The roadmap is cut into work orders in
+**Status: Ship 1 delivered; Ship 2 — first grades — in flight.** The day-one gate (WO-G1) closed
+2026-08-08, ahead of its ~2026-08-24 target: install, backup/restore, classes and terms, roster with
+accommodations, attendance marking, days off, home screen. The app is deployed at
+`https://planbook.hwgteach.com/`. The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
+maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
+from its dashboard, never from this file**; a count written here is a count nothing maintains. The
+roadmap is cut into work orders in
 [`plans/work-orders/`](plans/work-orders/README.md); **that is where to start when building
 something.** Each carries its own dependencies and testable acceptance criteria.
 
@@ -124,16 +128,38 @@ negotiable and are easy to break by accident:
 - **Backups now contain this data.** The backup UI says so, and `docs/FERPA.md` addresses it
   directly rather than only discussing grades.
 
+## How work is run here
+
+Every change goes through a **work order**. The pipeline is orchestrator → implementer → verifier,
+defined in [`.claude/agents/`](.claude/agents/); the scars behind its rules are in
+[`plans/dispatch-retro.md`](plans/dispatch-retro.md), and the harness reasoning is in
+[`plans/verification-tooling.md`](plans/verification-tooling.md). Start a dispatch by checking the
+gates — `node tools/wo-gate.mjs next` — never by opening an editor.
+
+If you were dispatched *with* a work order, [`AGENTS.md`](AGENTS.md) has your rules. The two files
+must never drift apart: **a rule changed here is changed there in the same sitting.**
+
 ## Commands
 
-No code yet, so nothing to build or test. The intended toolchain is nearly nothing, by suite
-convention (`plans/b-hygiene.md` in Roll Call!): **no dependencies, no linter, no test framework.**
+The toolchain is nearly nothing, by suite convention (`plans/b-hygiene.md` in Roll Call!): **no
+dependencies, no linter, no test framework, and no `package.json`** — not even "just for scripts,"
+because that is how a bundler arrives six weeks later. Anything scripted is a `.mjs` under `tools/`
+run by bare Node. Full notes: [`tools/README.md`](tools/README.md).
 
 | Task | Command |
 |---|---|
-| Run locally | Any static server (a service worker won't register from `file://`) |
-| Deploy | Push static files to a static host |
-| Test | Manual checklist, following Roll Call!'s `plans/TESTING.md` pattern |
+| Run locally | `node tools/serve-https.mjs` — app on `:8443` over HTTPS, iPad setup page on `:8080` |
+| Once per machine | `node tools/make-cert.mjs` — and again if the LAN address changes |
+| Verify before a deploy | `node tools/verify-shell.mjs` — drives the app in headless Edge over CDP |
+| Verify after a deploy | `node tools/verify-deploy.mjs` — the only check that reads the live origin |
+| Work-order gates | `node tools/wo-gate.mjs next` (or a `WO-` id) · `--audit` · `--self-check` |
+| Deploy | Cloudflare Pages, static assets only — no `functions/` directory, ever |
+| Test | [`TESTING.md`](TESTING.md) is the gate |
+
+**A green harness closes no 👤 item.** `verify-shell.mjs` drives a page, not an installed app, and has
+never seen a service worker — no emulator has a thumb or a safe-area inset. It also **cannot run in a
+sandboxed agent**: a dispatch reporting "could not run" has reported an environment, not a result, and
+it gets re-run locally before any box is ticked.
 
 ## Conventions
 
@@ -141,8 +167,11 @@ convention (`plans/b-hygiene.md` in Roll Call!): **no dependencies, no linter, n
   **No dark mode**; the suite is light-theme only. 44px touch targets under `@media (pointer: coarse)`.
 - **Components:** lift from Roll Call!'s `design/portable-components.md` rather than hand-designing.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
-- **Git:** not yet initialized. Roll Call!'s convention is one integration branch `main`, phase
-  branches `phase/<letter>-<slug>`, short imperative commit summaries.
+- **Git:** one integration branch `main`, phase branches `phase/<n>-<slug>`, short imperative commit
+  summaries. A work order is a commit or a short stack of them, worked on its **phase** branch — not a
+  branch per work order. *(This drifted during the August sprint: WO-3.9 and the eight commits before it
+  landed straight on `main`, leaving `phase/3-gradebook` nine behind. The convention stands; the
+  branches need catching up.)*
 
 ## Working agreements with the teacher
 

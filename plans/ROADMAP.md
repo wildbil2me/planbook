@@ -14,10 +14,11 @@ with the risk stated and accepted — reorders everything below. See
 
 ## Work orders
 
-Every phase below is cut into work orders in [`work-orders/`](work-orders/) — 65 of them, each with
-its own dependencies, deliverables, and testable acceptance criteria. **Start there when you sit
-down to build something**; this roadmap says what and why, the work orders say how the work is cut
-and in what order.
+Every phase below is cut into work orders in [`work-orders/`](work-orders/), each with its own
+dependencies, deliverables, and testable acceptance criteria. **Start there when you sit down to build
+something**; this roadmap says what and why, the work orders say how the work is cut and in what order.
+The count lives in the dashboard in [`work-orders/README.md`](work-orders/README.md) and nowhere else —
+it read "65 of them" here until 2026-08-13, by which time there were 88.
 
 - [`work-orders/README.md`](work-orders/README.md) — the index, the dashboard, and the day-by-day
   Ship 1 sequence
@@ -35,6 +36,14 @@ Same discipline as Roll Call!'s `plans/roadmap2.md`, because it works:
 2. Append an *(italic paren note)* whenever the outcome differed from what the plan predicted.
 3. Update the phase's row in the dashboard.
 4. Add a `CHANGELOG.md` entry under `## [Unreleased]`.
+5. **If the work changed what a cold reader needs to know, update `CLAUDE.md` and `AGENTS.md` — in
+   the same sitting, and both or neither.** New command, new convention, a status that is no longer
+   true: the briefing layer is what every session and every dispatched agent starts from, and it is
+   the one artifact here that nothing else checks.
+
+*(Step 5 added 2026-08-13. Steps 1–4 held for nine days and 133 commits while `CLAUDE.md` still said
+"pre-code… no app code exists yet" and "Git: not yet initialized" — read by every dispatch in that
+window. The tracked artifacts stayed accurate to the commit; the briefing was simply outside the loop.)*
 
 **Do not tick a box for work that is written but unverified.** Written-but-unproven is still `- [ ]`.
 
