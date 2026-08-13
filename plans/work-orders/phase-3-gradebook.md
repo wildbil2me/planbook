@@ -618,8 +618,33 @@ compliance.
 
 ## WO-3.9 — Grades print & CSV
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4
+**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** M · **Depends on** WO-3.4
 **Closes roadmap** Phase 3 → "Print/CSV for grades."
+
+*Built 2026-08-12. **All four Acceptance boxes are ticked** — the owner closed lines 1 and 3 the same
+day, against the live SIS and a real spreadsheet, exactly as WO-2.6 and WO-3.7 closed the same half.*
+
+***The same sitting found a bug: the Print button worked once, and the second tap printed the whole
+app.*** *Chrome refuses a repeated `print()` with "This website has been blocked from automatically
+printing"; a refused `print()` does not block, so the 500ms timer that clears the print gate had run
+by the time the owner pressed Allow. Turning the preview from portrait to landscape did the same thing
+by the other road — the preview re-generates from the live DOM, also after the timer. Fixed by
+answering the gate from a `beforeprint` listener at the moment the browser serialises the page rather
+than setting it on a timer at the moment we ask; the reasoning is at `src/grades-report.js`
+printGrades(), and four checks cover it, two of which the shipped build fails.*
+
+***Re-tested by the owner 2026-08-13: the preview is correct on the second tap and after a turn to
+landscape.*** *Chrome still shows the throttle message there, which is the browser and not this app —
+one tap calls `window.print()` exactly once, and that is now a check rather than a claim. Left as a
+known browser behaviour.*
+
+***Closed 2026-08-13.** The owner also printed the sheet on their own printer and tapped it on the
+installed iPad, which are the last two 👤 lines in `TESTING.md` § WO-3.9. No finding against either,
+so the eight-column slice, the forced page break and the 6pt column head all stand as built.*
+
+***The timer is WO-2.6's, and `src/attendance-report.js` and `src/detail.js` still carry it verbatim —
+so both of those print surfaces still have this bug.*** *Not fixed here; that is a call about two
+closed work orders, not this one. See `TESTING.md` § WO-3.9.*
 
 **Why it exists.** The SIS has no import, so re-keying is manual and the printout is what the owner
 types from. **Order it to match the SIS entry screen** — that single decision is most of this work
@@ -657,13 +682,33 @@ layout, already designed, not a redesign from nothing.
 - Presentation-mode safe; no `supports` data on either.
 
 **Acceptance**
-- [ ] 👤 The print order matches the SIS entry screen, confirmed by the owner against a real re-key.
-      *(The recorded answer above is what to build. This box is the one that says it was right, and
-      only a re-key against the live SIS can close it.)*
-- [ ] Percentages and letters on the printout match the app exactly.
-- [ ] The CSV opens cleanly in a spreadsheet, with its rows and columns in the same order as the
-      printout.
-- [ ] Neither surface emits accommodation, medical, or plan data.
+- [x] 👤 The print order matches the SIS entry screen, confirmed by the owner against a real re-key.
+      **Closed by the owner 2026-08-12: the order matches.** *The recorded answer above was right, so
+      the assignment-major layout this line existed to catch stays undrawn.* **Built as recorded, and
+      measured as such: the rows come out `Ñuñez-Öztürk, Zoë · Ó"Brien, Jr, Ida · Zabkowski, Abe`
+      off a roster stored in a third order, the columns come out in due-date order off a document
+      order that is not it, and there is no id column. Whether that order is the SIS's is the one
+      thing no run can answer — see `TESTING.md` § WO-3.9.**
+- [x] Percentages and letters on the printout match the app exactly. *(Three ways rather than one,
+      because "match the app" is a claim about two surfaces: the sheet against arithmetic done by
+      hand, against `src/grade-engine.js` through the seam, and against what the score grid behind
+      the dialog is drawing for the same three students at the same moment — `73.00% C · 63.53% D ·
+      122.22% A` on all three. The fixture's weight base moves per student (65 with two empty
+      categories, 45 with an excused test) and one grade is over 100 because extra credit is a
+      scored zero-point assignment.)*
+- [x] The CSV opens cleanly in a spreadsheet, with its rows and columns in the same order as the
+      printout. **Closed by the owner 2026-08-12: it opens cleanly.** *(The ORDER half is asserted
+      cell for cell — the file's grid reassembled against the
+      page's slices, every column head, row head and cell the same string in the same place — and the
+      format half is measured: a BOM, no bare LF, four sections at consistent widths, `Ó"Brien, Jr,
+      Ida` surviving as one cell. **Opening it in the spreadsheet the owner actually uses was always
+      theirs to do**, exactly as at WO-2.6 and WO-3.7; it is the 👤 line in `TESTING.md` § WO-3.9.)*
+- [x] Neither surface emits accommodation, medical, or plan data. *(Stronger than the line asks, and
+      deliberately: `src/grades-report.js` does not import `src/supports.js` and has no path to
+      `student.supports`, so there is nothing to suppress. Asserted with the data planted first — five
+      sentinels and `"plan":"IEP"` confirmed present in the serialised document — then absent from the
+      dialog, the CSV and the model in BOTH presentation modes, over surfaces of 1,503, 882 and 2,631
+      characters so none was empty.)*
 
 ---
 
