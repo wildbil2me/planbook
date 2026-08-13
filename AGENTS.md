@@ -35,9 +35,24 @@ Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 ## If you were dispatched with a work order
 
-Stay inside its **Deliverables** and honor its **Out of scope** line. Do not tick roadmap boxes,
-edit anything under `plans/`, or touch `CHANGELOG.md` / `TESTING.md` — the teacher does maintenance
-once the work has been verified, and no agent has the authority to tick a box.
+Stay inside its **Deliverables** and honor its **Out of scope** line.
+
+**You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go.** This
+file said the opposite until 2026-08-13 — *"no agent has the authority to tick a box"* — and that
+ban was **retired on 2026-08-06**, so the sentence outlived the rule by a week and briefed Codex
+into a policy Claude implementers had already stopped following. The reasoning is in
+[`plans/work-orders/ROUTING.md`](plans/work-orders/ROUTING.md) § "Implementers may tick" and is
+worth reading once: the ban was ignored by every implementer that had the opportunity, and enforcing
+it never caught a single defect — WO-1.8 drew a FAIL for breaking it whose own opening line was
+*"All five Acceptance lines verify clean. The failure is on the boundary rule, not the code."* A
+tracker that is current is worth more than one that is ceremonially clean.
+
+**What replaced it is narrower and harder: a tick has to be true.** Anything you tick must be
+something you actually checked, and a tick you cannot point at evidence for is worse than a blank
+box — WO-1.8's real defect was ticking three lines its own result file listed under "what I could
+not verify." Two carve-outs survive the retirement whole: **never tick a 👤 line** (see the bottom of
+this section — that is a claim about hardware, not about authority), and **leave the `CHANGELOG.md`
+entry to the teacher**, who decides what a change means to a classroom.
 
 A separate verifier reads your work cold against the **Acceptance** list, so report honestly:
 what you did, what you could not satisfy, and anything you were unsure about. Claiming an acceptance
