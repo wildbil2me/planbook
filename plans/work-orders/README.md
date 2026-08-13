@@ -152,7 +152,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.18 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.23 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.25 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.18 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -167,7 +167,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 18 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 23 | 21 | 🔨 IN PROGRESS |
+| 2 — Attendance | 24 | 21 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 18 | 12 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -175,7 +175,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **88** | **51** | `[█████░░░░░] 58%` |
+| | **89** | **51** | `[█████░░░░░] 57%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -314,26 +314,37 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 15 | [WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) OAuth client & consent screen | S | | Aug 22, an hour |
 | 16 | [WO-2.6](phase-2-attendance.md#wo-26--attendance-history--output) Attendance history & output | M | ✔ | Aug 21–24 |
 | 17 | [WO-1.15](phase-1-shell-store-roster.md#wo-115--the-restore-compare-cannot-see-what-it-is-about-to-delete) The restore compare cannot see what it deletes | S | | Aug 23, half a day |
-| 18 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | Aug 24, before the first class |
-| 19 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
-| 20 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
-| 21 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
-| 22 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
-| 23 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
-| 24 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
-| 25 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
-| 26 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
-| 27 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
-| 28 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
-| 29 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
-| 30 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
-| 31 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
-| 32 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
-| 33 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
-| 34 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Sep 12–15, half a day |
-| 35 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Sep 12–15, a word |
-| 36 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 37 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 18 | [WO-2.25](phase-2-attendance.md#wo-225--the-print-gate-is-answered-when-it-is-read-on-every-surface) The print gate is answered when it is read | S | | Aug 23–24, a sitting |
+| 19 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | Aug 24, before the first class |
+| 20 | [WO-2.21](phase-2-attendance.md#wo-221--the-44px-sweep-can-see-a-screen-that-is-not-the-one-on-screen) 44px sweep sees every view | S | | Aug 25, half a day |
+| 21 | [WO-3.12](phase-3-gradebook.md#wo-312--the-grade-engine-cases-cover-the-arguments-the-engine-actually-takes) Grade-engine cases cover real arguments | S | | Aug 25, half a day |
+| 22 | [WO-2.22](phase-2-attendance.md#wo-222--a-missing-harness-is-a-failure-and-one-call-per-line-stops-being-an-assumption) A missing harness fails; one call per line is checked | S | | Aug 25, half a day |
+| 23 | [WO-2.24](phase-2-attendance.md#wo-224--nothing-in-the-tree-notices-if-the-shared-date-reset-is-deleted) The shared date reset is guarded against deletion | S | | Aug 26, half a day |
+| 24 | [WO-3.7](phase-3-gradebook.md#wo-37--per-student-grade-detail) Per-student grade detail | L | ✔ | Aug 25–29 |
+| 25 | [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) **The name and the host, decided** | S | | Aug 28, a sitting |
+| 26 | [WO-8.8](phase-8-packaging.md#wo-88--read-the-deployment-not-the-repository) Read the deployment, not the repository | S | | Aug 28, half a day |
+| 27 | [WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) Grades print & CSV | M | ✔ | Aug 28–Sep 2 |
+| 28 | [WO-3.6](phase-3-gradebook.md#wo-36--past-due-prompt) Past-due prompt | S | ✔ | Sep 2–4 |
+| 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Sep 4–8 |
+| 30 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Sep 8–11 |
+| 31 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Sep 11 |
+| 32 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Sep 11–12 |
+| 33 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Sep 12 |
+| 34 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Sep 12–15 |
+| 35 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Sep 12–15, half a day |
+| 36 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Sep 12–15, a word |
+| 37 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 38 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-2.25 was inserted at #18 on 2026-08-13 and every row below it moved down one — **ahead of WO-1.16,
+which is the one row here with a real classroom deadline, and that placement is a decision rather than
+an oversight.** It was booked out of WO-3.9's own printing: the owner tapped Print twice in one sitting
+and the second print came out as the whole app. That bug is fixed on the grade sheet, and the two
+older print surfaces still have it, because the mechanism was lifted three times and corrected once.
+The argument for going first is that the fix is already written and already proven on one surface, so
+this is carrying it rather than finding it — and that the same lift is due a fourth time in Phase 4.
+The argument against is WO-1.16's date. **The owner made the call on 2026-08-13.** If the sprint
+tightens, this is the row to move, not that one.*
 
 *WO-8.8 was given row #23 on 2026-08-12, the day it was booked out of WO-8.7's deployment, and every
 row below it moved down one. **It sits directly behind the work order that produced it, and ahead of
