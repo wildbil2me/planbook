@@ -345,14 +345,15 @@ moved down one. **Both are debts WO-3.6 created and named rather than paid**, wh
 twice over — neither was in its Deliverables — but a follow-up that lives only in a dispatch result
 file is a follow-up nothing reads.*
 
-***WO-3.19 goes early, at #29, and it is the promise rather than the pixel that puts it there.*** *Nine
-comment sites in five files say WO-3.6 owns every rule about a past due date on the score grid, and
-WO-3.6 closed ✅ DONE without the tint. Three score-grid work orders sit below it at #31, #32 and #33;
-each opens `src/scores.css` and `src/scores.js` and reads those comments on the way in. Half a day now
+***WO-3.19 was placed early on 2026-08-13, and it is the promise rather than the pixel that put it
+there.*** *Nine comment sites in five files say WO-3.6 owns every rule about a past due date on the
+score grid, and WO-3.6 closed ✅ DONE without the tint. The three score-grid work orders — WO-3.15,
+WO-3.16 and WO-3.13 — sit below it; each opens `src/scores.css` and `src/scores.js` and reads those
+comments on the way in. Half a day now
 buys three dispatches a true briefing — and `--audit` cannot see this kind of drift, because comments
 are not a tracker.*
 
-***WO-3.20 goes late, at #39, behind WO-1.16.*** *It depends on the three grid work orders above it for
+***WO-3.20 goes late, behind WO-1.16.*** *It depends on the three grid work orders above it for
 a real reason: they open the same files, and consolidating a set that is still growing means doing it
 twice. And a five-file refactor that changes nothing a teacher sees has no business landing in the week
 the term opens. It sits after the fresh-year cutover and still ahead of WO-3.18, which keeps its place
@@ -361,12 +362,20 @@ as the last row before the gate.*
 ***WO-3.21 was inserted at #23 on 2026-08-13, out of WO-3.8's verification, and every row below it
 moved down one.*** *It is the **fifth** harness-coverage item booked this way, and it is rowed in the
 same sitting it was booked — which is the whole point of the rule four paragraphs down, recorded there
-three times over WO-3.10, WO-3.12 and WO-2.24 and now not repeated a fourth. It sits at #23 to keep
-that block contiguous at #19–#23, and it belongs to the same cut band: **nothing in it is a defect**,
-the `seen` Set it guards is correct today, and what is missing is only the check that would notice if
-somebody deleted it. It is an hour rather than the half-day the other four are — the fixture already
+three times over WO-3.10, WO-3.12 and WO-2.24 and now not repeated a fourth. It went in directly below
+WO-2.24, keeping the harness-coverage block contiguous, and it belongs to the same cut band: **nothing
+in it is a defect**, the `seen` Set it guards is correct today, and what is missing is only the check
+that would notice if somebody deleted it. It is an hour rather than the half-day the other four are — the fixture already
 exists and the case is one extra accommodation row on a student who is already there — so it is the
 **last** of the five to cut, not the first.*
+
+***It went in ahead of WO-3.19, and that placement is a decision rather than an oversight.*** *WO-3.19
+has its own written argument for going early, two paragraphs up: nine comment sites name WO-3.6 as
+owner of the tint, and three score-grid work orders read them on the way in. That argument is not
+weakened by an hour. WO-3.21 is the smaller row and the fixture it needs is fresh out of the sitting
+that booked it, while WO-3.19's briefing value is spent against dispatches that sit further down than
+either of them. **The owner made the call on 2026-08-13.** If the fortnight tightens, WO-3.21 is the
+row to move, not WO-3.19.*
 
 *WO-2.25 was inserted at #18 on 2026-08-13 and every row below it moved down one — **ahead of WO-1.16,
 which is the one row here with a real classroom deadline, and that placement is a decision rather than
@@ -480,7 +489,7 @@ diff — but the booking ends with a `**Ship** —` header and nobody's hand on 
 directory and not in the order. **A work order booked out of a verification needs a row in the same
 sitting, or it needs saying out loud that it is deliberately unscheduled.***
 
-*It sits at #20 because #17, #18 and #19 are the other three harness-coverage items and this is a
+*It went in beside WO-2.21, WO-3.12 and WO-2.22, the other three harness-coverage items, this being a
 fourth of the same kind — four half-days that were all reading "Aug 25", which is why this one says
 Aug 26 and the block should be read as spilling into it. **It is the second row to cut if the
 fortnight tightens**, behind WO-3.12 and for the same reason: nothing in it is a defect. The rule it
@@ -502,9 +511,9 @@ its own deliverables required a verified domain, which required a naming decisio
 in Phase 8. **So the one item on the board paced by an outside party was also the one nobody could pick
 up**, and it was invisible here — it had no numbered row, so `next` never offered it.*
 
-*It is now **WO-3.10** (the client and the consent screen — an hour, needs nothing, at #15),
-**WO-8.7** (the name and the host — split out of WO-8.6, at #21) and **WO-3.18** (policy, video,
-submission — at #23, and then a queue that is not ours). **The three are ordered by what unblocks
+*It became three rows: **WO-3.10** (the client and the consent screen — an hour, needs nothing),
+**WO-8.7** (the name and the host — split out of WO-8.6) and **WO-3.18** (policy, video,
+submission — and then a queue that is not ours). **The three are ordered by what unblocks
 what**, not by size: WO-8.7 is the critical path for sync ever reaching another teacher, and it sat
 five phases away from where it was needed.*
 
@@ -514,8 +523,8 @@ review queue.*
 
 ***And the thing the old shape hid: verification gates public launch, not development.*** *An OAuth
 client in Testing mode runs `drive.file` today, so the whole of Phase 7 can be built and used on the
-owner's own devices long before any paperwork clears. That is why #15 is an hour rather than a phase,
-and why it is worth doing whether or not the distribution question is ever answered yes.*
+owner's own devices long before any paperwork clears. That is why WO-3.10 is an hour rather than a
+phase, and why it is worth doing whether or not the distribution question is ever answered yes.*
 
 *WO-2.21 was inserted on 2026-08-10, out of WO-3.5's verification, and it is **deliberately ahead of
 WO-3.7** — the next work order that adds a view. Every screen added before it lands arrives with the
@@ -557,13 +566,13 @@ on real hardware — the four things a working teacher found that no agent and n
 split two and two, and the split is by when the thing bites rather than by how big it is** (all four
 are S).*
 
-***WO-3.17 and WO-3.14 come before the term opens, at #12 and #14.*** *WO-3.17's first half is a real
+***WO-3.17 and WO-3.14 come before the term opens.*** *WO-3.17's first half is a real
 defect on real hardware — the Assigned and Due fields overlap and push off screen on the iPad — on the
 dialog that creates every assignment the gradebook holds, and the term opens ~Aug 24. WO-3.14 is the
 precision mismatch against the school's SIS, which lands on the teacher every time she re-keys a row,
 which is week one. Both sit right after the two tooling rows and before WO-2.6.*
 
-***WO-3.15 and WO-3.16 stay late, at #27 and #28.*** *A button that saves three navigations and a pair
+***WO-3.15 and WO-3.16 stay late.*** *A button that saves three navigations and a pair
 of arrow keys are conveniences on a screen that already works, and WO-3.16 in particular carries a real
 trap — left and right are also how a caret moves inside a number — which is worth taking slowly rather
 than early.*
@@ -572,7 +581,7 @@ than early.*
 inside a window that runs to ~Sep 15, the same call the WO-2.17 note below records. WO-3.13 moved down
 to keep the three convenience-shaped rows together ahead of the gate. **If the fortnight turns out
 not to hold two extra sittings, #12 and #14 are not the rows to move** — they are the two that bite in
-week one. The rows to move are the three convenience rows at #27 through #29.*
+week one. The rows to move are the three convenience rows — WO-3.15, WO-3.16 and WO-3.13.*
 
 *WO-2.17 was inserted at #2 on 2026-08-09, out of WO-3.3's verification, and every row below it moved
 down one. It is dated Aug 10–11 alongside WO-3.1 rather than given a slot of its own — it is half a
