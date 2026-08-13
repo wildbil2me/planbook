@@ -637,6 +637,13 @@
    they are the only census there is, and a stale one is how the next author concludes there is
    nothing to keep in step with.
 
+   A FOURTH `@media print` BLOCK EXISTS AND IS NOT A FOURTH PRINT SURFACE (WO-3.8, 2026-08-13).
+   src/assignments.css § THE ACCOMMODATION PROMPT NEVER PRINTS holds one rule, it re-shows nothing,
+   it is ungated on purpose, and the only thing it can do is hide itself — so it is counted here
+   rather than numbered above: three things this app can print, four blocks in the tree. It is
+   recorded because a reader counting blocks would otherwise find four against a census saying
+   three, which is the stale-census failure this paragraph exists to prevent.
+
    IT IS GATED ON AN ATTRIBUTE, AND THE GATE IS THE POINT. `data-grades-print` on <body> — Roll
    Call!'s `body[data-modal-print]` idiom, lifted through WO-2.6. Without the gate a Ctrl+P made
    anywhere else in the app would hide the entire page and print a blank sheet. That regression has

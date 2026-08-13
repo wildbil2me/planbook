@@ -1565,6 +1565,21 @@
         another category is one tap on the list below it.
       </p>
       <div class="assign-fields" id="assignmentFields"></div>
+      <!-- THE ACCOMMODATION PROMPT (WO-3.8). Empty in the markup and filled by
+           src/accommodation-prompt.js, which is painted by src/assignments.js whenever the category
+           chosen above could have changed — the same contract [data-past-due] has with its own
+           module. A specimen sentence here would be a second truth, and on this surface it would be
+           a second truth about a student.
+
+           IT IS EMPTY AND `.hidden` AT REST, AND THAT IS ALSO ITS PRESENTATION-MODE STATE. There is
+           no greyed-out version and no collapsed version with a number left in it: with the mode on,
+           this element holds nothing, because a count is a disclosure too — "3 students have
+           extended time" on a projected screen, in a room of thirty, beside a roster on the wall,
+           narrows to individuals. docs/data-model.md § Accommodations rule 1.
+
+           It sits under the fields and above the two hints because it is about the category picked
+           in them, and before the actions because it is something to read before tapping Done. -->
+      <div class="supports-panel accommodation-prompt hidden" data-accommodation-prompt></div>
       <p class="class-hint">
         <strong>Both dates are plain dates, and a new assignment starts them on today.</strong>
         Type over either one, or clear it and leave it blank. Nothing moves them after that:

@@ -332,6 +332,76 @@
 .assign-field-date { -webkit-appearance: none; appearance: none; }
 .assign-field-note { font-size: 11px; color: #8a9bb0; line-height: 1.5; }
 
+/* ── THE ACCOMMODATION PROMPT (WO-3.8) ── */
+/* The summary that appears in this dialog when the chosen category is one somebody's accommodation
+   applies to: *"3 students have extended time, 2 need a separate setting."*
+
+   IT WEARS `.supports-panel` RATHER THAN RE-DRAWING ONE, and that is the whole of its visual
+   identity — the subdued card from design/style-guide.md §1, `1.5px #e0e4f0` on `#f8f9fc`, which is
+   the box the student editor's support section already is (src/shell.css). Two reasons, and the
+   second is the one that matters. A shell component is worn as-is here and never restyled from this
+   sheet, which is this file's own rule at its head. And CLAUDE.md's standing instruction about the
+   sibling app applies inside this app too: a teacher who has learned what that box means on the
+   roster has learned what this one means, and inventing a second visual language for the same
+   secret is the WO-2.11 correction run again.
+
+   DELIBERATELY NOT AMBER AND NOT RED. src/shell.css says it one screen over and it is worth
+   repeating where somebody might reach for the past-due wash twenty lines up this file: amber means
+   "act on this" in this app (the install banner, the backup nag, the past-due question) and red
+   means "this destroys something". An accommodation is neither an alarm nor a hazard — it is a fact
+   about a student the teacher is obliged to implement, and dressing it as a warning is a wrong
+   sentence about a child, projected or not.
+
+   Everything below is layout and type. Nothing here has a hover state, because nothing in the box
+   is tappable except `.class-action-btn`, which brings its own. */
+.accommodation-prompt {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px;
+  line-height: 1.5;
+}
+.accommodation-prompt-said { flex: 1 1 240px; min-width: 0; }
+/* The sentence, and then its scope. Two lines rather than one: the counts are what a teacher reads
+   at a glance, and which category they came from — plus the promise that this goes nowhere — is
+   what she reads if the box makes her uneasy. */
+.accommodation-prompt-lead {
+  display: block; font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.accommodation-prompt-where {
+  display: block; margin-top: 2px; font-size: 11px; font-weight: 600; color: #6b7a8d;
+}
+.accommodation-prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The one control: `.class-action-btn` worn as-is. This class only gives the coarse block below
+   something to name; it never restyles the button — the same note `.assign-row-btn` and
+   `.past-due-btn` each carry, and for the same reason: a control covered only by some other sheet's
+   rule is a control the next reader has to go and prove is covered. */
+.accommodation-prompt-btn { }
+
+/* THE NAMES, INLINE AND ONLY AFTER THE TAP. White on the card's wash so the list reads as content
+   inside the prompt rather than as more prompt — the same relationship `.past-due-review` has with
+   its banner. It is a disclosure under a sentence rather than a second dialog, for the reason
+   src/past-due.js's decision 3 gives about its own review and the plainer one here: a dialog opened
+   from inside a dialog is a thing to dismiss twice. */
+.accommodation-prompt-names {
+  flex: 1 1 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e0e4f0; border-radius: 8px; background: #fff;
+}
+.accommodation-prompt-group + .accommodation-prompt-group {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f4f6;
+}
+.accommodation-prompt-kind {
+  display: block; font-size: 11px; font-weight: 800; color: #1a1a2e;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.accommodation-prompt-people { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 5px; }
+/* One name per chip, and NOTHING ELSE ON IT — no dot, no plan, no kind glyph. The kind is the row's
+   own heading and is said once; repeating it per name would make each chip a sentence about a
+   child. Grey rather than accented: this is a list to read, not a row of controls, and nothing in
+   it is tappable. */
+.accommodation-prompt-name {
+  padding: 2px 7px; border-radius: 999px; border: 1.5px solid #eef0f4; background: #fafbfc;
+  font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
+}
+
 /* ── DUPLICATING ── */
 /* The class picker is `.pill`s worn as-is, in the shape src/letter-scale.js's subject row uses; this
    class only holds them in a wrapping row. */
@@ -397,6 +467,52 @@
      flag on one cell that the grid already does properly. They take the type size anyway, because
      it is a list a teacher reads on a tablet at arm's length. */
   .past-due-name { font-size: 12px; padding: 3px 9px; }
+
+  /* THE ACCOMMODATION PROMPT (WO-3.8), in the same pass that added it. Its one control is
+     `.class-action-btn`, which already carries the floor in src/shell.css's own coarse block — named
+     here anyway for the reason `.past-due-btn` above is named, and with more reason than most: this
+     is the tap that puts students' names on screen, so a thumb that misses it is a teacher tapping
+     twice at exactly the moment the iPad may be facing the room. The name chips are not controls
+     and take only the type size, the same call `.past-due-name` records. */
+  .accommodation-prompt { gap: 12px; }
+  .accommodation-prompt-btn { min-height: 44px; min-width: 44px; }
+  .accommodation-prompt-actions { gap: 10px; }
+  .accommodation-prompt-lead { font-size: 14px; }
+  .accommodation-prompt-where { font-size: 12px; }
+  .accommodation-prompt-said { flex-basis: 100%; }
+  .accommodation-prompt-kind { font-size: 12px; }
+  /* Not a control — nothing in this list is tappable — but the rule between two kinds carries the
+     whole of "these names belong to that one", and 8px of it at arm's length on a tablet is a rule
+     nobody sees. The same call `.past-due-name` records one block up: a list to read grows with the
+     type it is read at. */
+  .accommodation-prompt-group + .accommodation-prompt-group { margin-top: 10px; padding-top: 10px; }
+  .accommodation-prompt-name { font-size: 12px; padding: 3px 9px; }
+  .accommodation-prompt-names { padding: 12px; }
+  .accommodation-prompt-people { gap: 6px 8px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § THE ACCOMMODATION PROMPT NEVER PRINTS (WO-3.8)
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* THIS IS NOT A PRINT SURFACE AND IT DOES NOT JOIN THE CENSUS. The three @media print blocks in
+   this app each re-show one thing and hide everything else, and they are counted in one place
+   (src/scores.css § THE PRINTED PAGE, which now names this block so the count stays true). This one
+   prints nothing, re-shows nothing, and cannot produce a blank sheet however it is reached: it
+   hides one element and stops.
+
+   WHY IT IS HERE AT ALL, given the three gates already cover it. Each of those hides `body > *`, so
+   #assignmentModal and everything in it is gone from a gated print — which is every print the app's
+   own buttons produce. What is left is Ctrl+P from the keyboard with this dialog open, where the
+   app sets no gate and the page prints as it stands. Everywhere else in Planbook that is merely
+   untidy; here it is a sheet of paper with a student's accommodations counted on it, and
+   CLAUDE.md's rule is that this data reaches no print surface at all. One `display: none` is the
+   whole cost of closing it.
+
+   It is unconditional on purpose — no attribute, no gate — because there is no state in which this
+   block belongs on paper. The gate rule the print work orders follow is about blocks that HIDE THE
+   APP; a rule that only ever hides itself has nothing to gate. */
+@media print {
+  .accommodation-prompt { display: none !important; }
 }
 
 @media (max-width: 640px) {

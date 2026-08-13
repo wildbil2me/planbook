@@ -111,6 +111,13 @@
       data-assignment-copy-term       a <select> in the copy dialog; which term the copy lands in
       data-assignment-copy-category   a <select>; which of the TARGET class's categories it lands in
       data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed
+      data-accommodation-prompt       on a container inside the assignment editor: the host
+                                      src/accommodation-prompt.js paints the summary into. Markup,
+                                      never a click target
+      data-accommodation-names        the one control in that prompt; shows or hides WHICH students
+                                      the counts are about. Refused while presentation mode is on,
+                                      by the module rather than here — this file states no part of
+                                      that rule (src/supports.js owns all of it)
       data-score-cell="<assignmentId>" + data-score-student="<id>": ONE SCORE. It is four hooks in one
                                       element, which nothing else in this file is: an input that saves
                                       as it is typed, a keydown target (Enter down the column, L M X
@@ -320,6 +327,11 @@ import * as views from './views.js';
    this file paints whatever the switch landed on. */
 import * as screenNav from './screen-nav.js';
 import * as assignments from './assignments.js';
+/* WO-3.8's prompt, imported here for one control and one redraw — the tap that shows which students
+   the counts are about, and the flip below that takes the whole prompt off the glass. It is a leaf:
+   it imports src/supports.js, src/roster.js and src/store.js and nothing imports it back except
+   src/assignments.js, which paints it. */
+import * as accommodationPrompt from './accommodation-prompt.js';
 /* WO-3.5's score grid — the third screen of an open class, and the first thing in this app that
    draws a grade. It imports src/grade-engine.js and nothing in it computes one; the chains below are
    what make "live" true from more than one direction. */
@@ -732,6 +744,14 @@ function afterRestore() {
 function flipPresentationMode() {
   presentation.togglePresentationMode();
   roster.refreshSupportSurfaces();
+  /* AND THE ACCOMMODATION PROMPT IN THE ASSIGNMENT EDITOR (WO-3.8) — the second screen in the app
+     that can be holding support data, and the first one added since this comment predicted it. The
+     summary is inside a dialog, which makes the flip MORE urgent rather than less: a teacher who
+     reaches for this switch with the editor open is a teacher whose iPad is about to face the room
+     with that dialog still on it. It goes by not being drawn, exactly as the roster dot does —
+     src/accommodation-prompt.js empties its host rather than styling it away, and asks
+     src/supports.js the same one question rather than testing the preference itself. */
+  assignments.refreshAccommodationPrompt();
   /* The home screen is deliberately NOT in this list. Nothing on a class card comes out of a
      student's `supports` block — a class name and a colour are not a student's file — so there is
      nothing on it for the flip to suppress. src/home.js's header comment carries the same note and
@@ -1075,6 +1095,16 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-assignment-delete-cancel]')) {
     assignments.cancelAssignmentDelete(); return;
+  }
+
+  /* ── the accommodation prompt in that editor (WO-3.8) ──
+     Straight to the module that owns the prompt, the same way `data-past-due-review` goes straight
+     to src/past-due.js: it holds what it painted, so the tap needs nothing from this file and this
+     file learns nothing about a student's `supports` block by routing it. NOTHING IS CHAINED — no
+     screen behind this dialog carries accommodation data, and putting one there is the change that
+     would owe this line a chain (src/home.js's header records the same condition for the cards). */
+  if (e.target.closest('[data-accommodation-names]')) {
+    accommodationPrompt.toggleAccommodationNames(); return;
   }
 
   /* ── the score grid (WO-3.5) ──
@@ -2006,6 +2036,15 @@ window.planbook = {
      fixtures of every check after it. Nothing in the app reads window.planbook — see the
      block above for why the seam outlived the shelf. */
   presentation,
+  /* `accommodationPrompt` joined at WO-3.8, for one acceptance line and not for convenience. Its
+     visible controls are all reachable by a thumb and are driven that way; what a thumb CANNOT do
+     is reach the reveal while presentation mode is on, because with the mode on the button is not
+     drawn — and "it must not be reachable at all" is a claim about the guard rather than about the
+     button. So the harness calls toggleAccommodationNames() straight through this seam with the
+     mode on, which is the only way to ask whether the function refuses or whether the missing
+     button was the whole of the protection. Nothing in the app reads window.planbook — see the
+     block above for why the seam outlived the shelf. */
+  accommodationPrompt,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

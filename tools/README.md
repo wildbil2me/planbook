@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 695 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 713 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -819,7 +819,11 @@ the gap below is negative for the first time. **WO-3.6 moved it from 676 to 695*
 call sites in one new section at the foot of the file, none of them inside a loop, of which **two are
 fixture-guard failure arms** that never fire on a green run — one for a build with no `[data-past-due]`
 host to paint into, one for a fixture that could not be planted — so the section contributes seventeen
-executed results. *(The
+executed results. **WO-3.8 moved it from 695 to 713**: eighteen literal call sites in one new section
+at the foot of the file, ahead of the print-gate block, none of them inside a loop, of which **two are
+fixture-guard failure arms** that never fire on a green run — one for a build with no
+`[data-accommodation-prompt]` host, one for a fixture that could not be planted — so the section
+contributes sixteen executed results and the run prints 710. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -842,11 +846,16 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 676 − 677 = **−1** on this tree, and the sign is the point: WO-2.25's
-second correction round added **one** call site that produces **three** results — a single `check()`
-inside a loop over the three print gates — so the executed count has overtaken the call sites for the
-first time in this file's history. A negative gap is the second bullet below outrunning the first, and
-nothing more. It was 675 − 674 = 1 before that round (WO-2.25's thirteen added and one deleted are
+could go and name.** It is 713 − 710 = **3** on this tree: WO-3.8's eighteen sites include two
+fixture-guard failure arms a green run never reaches, which is the first bullet below and moved the
+gap by two. It was 695 − 694 = 1 after WO-3.6 (nineteen sites, two arms, seventeen results — that
+work order moved the gap by two as well, and this paragraph was not updated for it at the time; the
+number below it was `676 − 677` for two work orders and is corrected here). **It was 676 − 677 =
+−1 at WO-2.25's second correction round**, and that sign was the point: that round added **one** call
+site producing **three** results — a single `check()` inside a loop over the three print gates — so
+the executed count had overtaken the call sites for the first time in this file's history. A negative
+gap is the second bullet below outrunning the first, and nothing more. It was 675 − 674 = 1 before
+that round (WO-2.25's thirteen added and one deleted are
 all literal sites outside any loop, so both numbers moved by the same twelve and the gap did not
 budge for a sixth work order running; 659 − 658 = 1 at WO-3.9, and 637 − 636 = 1 before it — whose
 twenty-two sites produced exactly twenty-two results, by the same coincidence WO-2.6's eighteen did

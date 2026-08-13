@@ -138,6 +138,12 @@ thirty seconds will never be used during a class period.
 - [ ] Entries are never mutated or deleted — verify by inspecting the document after a "correction".
 - [ ] Behavior entries feed WO-4.2's behavior rule and the count matches.
 - [ ] Behavior notes are suppressed in presentation mode.
+- [ ] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
+      exists, and nothing appears in presentation mode. *(Re-homed from WO-3.8, 2026-08-13. That work
+      order built the accommodation prompt in the assignment editor and could not build this half:
+      `supports` has no attendance-clause field to read and `signals` has no threshold to compare
+      against, so the clause and its N are both this work order's to shape. `src/attendance.js` and
+      its counts have shipped — the behavior log was never what it was waiting on.)*
 
 ---
 

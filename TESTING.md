@@ -4045,6 +4045,143 @@ the result file.*
 
 ---
 
+### WO-3.8 — Accommodation prompts at point of use
+
+**What this adds.** A summary inside the assignment editor, for the category the teacher has chosen:
+*"3 students have extended time, 2 need a separate setting."* — with **Show which students** beside it
+and nothing else. The counts are the default, the names are one deliberate tap away, and the whole box
+is **absent from the DOM** while presentation mode is on.
+
+**"A list nobody opens protects nobody."** `docs/data-model.md` § Accommodations rule 3 asks for
+exactly this and gives the sentence above as its worked example; the shipped build produces that
+string rather than approximating it, which is why the check asserts it as a string. A teacher is
+legally obligated to implement an accommodation, and a roster field she has to remember to open is a
+field she opens in September and not in March.
+
+**The match between `appliesTo` and a category is between two pieces of teacher prose, and it leans
+toward firing.** `appliesTo` is free text typed on the roster (`src/supports.js`'s `parseAppliesTo`
+records why there is deliberately no id to join on: an accommodation follows the student across five
+classes whose categories differ), and a category name is free text typed in the categories editor. So
+`appliesToMatches()` folds both sides to lower case, splits on anything that is not a letter or a
+digit, stems each word, and matches when either side's words are a **subset** of the other's — `tests`
+covers `Unit Tests` and `unit tests` covers `Tests`. Word sets rather than substrings, because `art`
+is a substring of `Participation`. **Under-firing is the failure that matters**: a prompt that does
+not appear is a legal obligation not surfaced, and it is invisible. A prompt that appears when it need
+not is one extra line in a dialog.
+
+**Presentation mode means nothing at all, and a count is a disclosure too.** *"3 students have extended
+time"* on a projected screen, in a room of thirty, beside a roster on the wall, narrows to individuals
+— so there is no greyed-out version, no collapsed version with a number in it, and no styling that
+only looks absent. The host is emptied and hidden, `src/accommodation-prompt.js` asks
+`src/supports.js`'s one question rather than testing the preference, and every string that comes out
+of `supports` is written through `setSensitiveText()` so a caller cannot route one somewhere else.
+
+- [x] Creating a test surfaces the counts, in the data model's own words — **"3 students have extended
+      time, 2 need a separate setting."** — through the real **+ New assignment**, which files into the
+      class's first category.
+- [x] It says where the counts came from, so a count with no scope on it is not left to be guessed at:
+      *"They apply to work in “Tests”… never printed, exported or put in a draft… presentation mode
+      hides it entirely."*
+- [x] **The default view is counts, not names**: the reveal is drawn and collapsed, and not one of the
+      five students is named anywhere in a dialog of 1,094 characters.
+- [x] One deliberate tap puts the five names on screen, grouped under the kind they belong to — and
+      the sixth student, whose accommodation is scoped to `labs, field work`, is not among them.
+- [x] **Changing the same open editor to Homework surfaces nothing at all.** Host hidden, host text
+      `""`, zero reveal hooks, kind phrases gone from a page of 23,771 characters. The roster still
+      carries an accommodation, so this is a scope that does not match rather than a class with
+      nothing on file — and the summary is recomputed rather than remembered, which is the failure a
+      summary computed once on open would be.
+- [x] Changing back to Tests restates the same sentence **with the names back behind the tap.**
+- [x] **In presentation mode nothing appears at all — not even the count.** Host empty, `.hidden`,
+      `display: none`, zero reveal hooks, no kind phrase left on a page of 24,104 characters, read
+      with the editor still open on the category that was showing all of it a moment earlier.
+- [x] And the reveal is **not merely un-drawn**: called straight through the seam with the mode on, it
+      writes nothing either — so the guard is in the module rather than in the absence of a button.
+- [x] Flipping the mode back off brings the same counts back to the **same open dialog**, names still
+      behind the tap. This is the negative control for every absence above.
+- [x] A flip made the way a teacher can actually make one — **with the editor shut**, because a modal
+      scrim owns the viewport while it is open — leaves no summary sitting in the shut dialog, where
+      it would be out of sight and still in the DOM.
+- [x] **An empty `appliesTo` means everything, and a blank accommodation row means nothing.** The
+      second class's one student carries a `breaks` row scoped to nothing and a blank row of the kind
+      a mis-tap writes; its homework assignment says exactly *"1 student needs breaks."*
+- [x] The match rule answers **thirteen cases** as described — case, whitespace, plurals and both
+      directions of narrowing all fire; `tests` against `Homework` and `art` against `Participation`
+      do not; an empty `appliesTo` fires on everything including no category at all.
+- [x] **A keyboard print with no gate set leaves the whole app on the page and takes this prompt off
+      it.** The three gated print blocks already hide every child of `<body>` but their own surface;
+      what is left is a Ctrl+P made with this dialog open, and one ungated `display: none` closes it.
+- [x] The reveal measures **≥44px on an emulated coarse pointer**, on a prompt that is actually up.
+      The standing WO-2.21 sweep cannot find this one: it runs thousands of lines before this fixture,
+      and the prompt is only on screen while a matching category is chosen.
+- [x] On the iPad, **"Show which students" reads as a disclosure rather than as a "more" link**, and
+      is not mis-tapped for Done or Delete… beneath it. 👤 *(The box is measured above; no emulator
+      has a thumb.)*
+- [x] On the iPad, the box reads as **a fact about students rather than as a warning** — it wears the
+      student editor's subdued support card, deliberately not the past-due amber twenty lines up the
+      same stylesheet. 👤 *(This is the WO-2.11 question again: a lifted component can be right in
+      every measurement and wrong in the room.)*
+- [x] On the iPad, a teacher who turns presentation mode on with this dialog open can **tell that the
+      box has gone** rather than wondering whether the assignment lost something. 👤 *(There is no
+      replacement sentence where the box was — deliberately, since any placeholder says that
+      something is being hidden about this class. Whether that silence is the right call is a
+      judgement to make in the room.)*
+- [x] Offline launch with the network off, `src/accommodation-prompt.js` served from the precache
+      (`planbook-shell-v52`). 👤
+
+*The desk half is `verify-shell.mjs`, **710 of 710 with zero skips**, in 226s, 16 executed checks in
+one new section at the foot of the file ahead of the print-gate block (18 call sites, two of them
+fixture-guard failure arms that never fire on a green run).*
+
+***The fixture is two classes, and each exists for a line the other cannot make.*** *`c_wo38` carries
+six students and **not one empty `appliesTo`**, which is what lets Homework be genuinely empty while
+the roster still has accommodations on it. Its Tests half is arranged to produce the data model's own
+sentence: three students scoped `tests` / `Tests` / `unit tests` and two scoped `quizzes, tests` /
+`TESTS ` — exact, case-only, narrower-category, multi-term and trailing-whitespace, in one reading.
+`c_wo38b` carries one student with two rows, `breaks` scoped to nothing and a blank row, so a build
+counting rows rather than answers says "1 student needs breaks, 1 has an accommodation on file" and is
+red there and nowhere else.*
+
+***The first run found the check wrong rather than the app.*** *Written as one sentinel set swept over
+the whole page, five checks went red naming all five students — on the first paint, with zero name
+chips drawn. The names were real and were not this prompt's: the class's attendance registry inside
+`#classView` had drawn its six rows, the Assignments segment hides that view rather than emptying it,
+and `document.documentElement.textContent` reaches every hidden element by design. **A student's name
+is not the secret** — it is on the roster, the registry, the grid and the printed sheet. What is
+secret is the pairing, and the kind phrase on its own. So the sets split: kind phrases are swept over
+the whole page, names over the assignment editor.*
+
+*`wo-sweep.mjs` is **17 checks, 15 passed, 0 failed, 2 to review**, and both REVIEWs were read. The
+sensitive-field-name line now names three more files: `src/accommodation-prompt.js`, which is the
+feature and whose every hit is its own prose or its own imports; `src/assignments.js`, whose nine hits
+are one paragraph of header comment and one `import` line — that file reads no student's `supports`
+block and has no path to one; and `src/assignments.css`, whose hits are class names and comments. The
+due-date REVIEW is unchanged from WO-3.6 and names no line this work order wrote.
+`src/accommodation-prompt.js` is added to `SHELL` and `sw.js`'s `CACHE` went to `planbook-shell-v52`.*
+
+*Three mutations, all reverted.*
+
+| Mutation | Result |
+|---|---|
+| the module's own `supportsVisible()` guard dropped from both `groupsFor()` and `draw()` — the presentation-mode suppression removed, leaving only the `setSensitiveText()` funnel under it | **2 red.** The funnel held the parts it covers — the sentence blanked, the name chips blanked, zero kind phrases and zero names on the page — and **the box, its scope line and the reveal button survived**: *"They apply to work in “Tests”… Show which students"*, `hidden = false`, `display = flex`, 1 reveal hook. Which is the acceptance line failing exactly as written: *not even the count*, and a box saying something applies here is a disclosure with the number taken out. `710 · 708 · 2` |
+| `isRealRow()` dropped, so a blank accommodation row counts | **1 red**, and only the class that has one: *"says `1 student needs breaks, 1 has an accommodation on file.`"* One student, counted twice, over a row a mis-tap wrote. `710 · 709 · 1` |
+| `appliesToMatches()` tightened to exact equality — the tidy rule, and the one that under-fires | **6 red.** The sentence drops to *"2 students have extended time"*, the reveal lists four names instead of five, and the rule table names both directions that stopped working: `unit tests` against `Tests` and `tests` against `Unit Tests`. This is the invisible failure the design leans against, made visible. `710 · 704 · 6` |
+
+*What is **not** here. **Acceptance line 4 is deferred to WO-4.4 and its box stays `- [ ]`**, with a
+`→ WO-4.4` pointer and a `**Owes**` field on the header — `wo-gate.mjs --audit` resolves it. The
+deferral is for a narrower reason than the work order's own parenthetical guessed: attendance marking
+and its counts shipped at WO-2.1 and WO-2.4, so the behavior log was never what it was waiting on.
+What is missing is the clause. `supports` has no attendance-clause field, `appliesTo` is documented as
+being about grading categories, and `signals` is deliberately empty in `src/store.js` — so both the
+clause's shape and its N are Phase 4's to decide, and a heuristic over the free-text `behaviorPlan`
+would be this app guessing at a teacher's prose about a child. Also not here: a `closeModal` hook that
+lets a dialog wipe sensitive DOM at the moment it closes. This prompt clears on the next paint and on
+a presentation-mode flip, which is the same posture `src/roster.js`'s student editor has held since
+WO-1.8 — the general fix would improve both and is two shipped files this work order does not own. It
+is written up in `.claude/dispatch/WO-3.8-result.md`.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

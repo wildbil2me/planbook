@@ -92,6 +92,58 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.8 — accommodations announce themselves where the work is written down.** Create an
+  assignment and, if anyone on that roster has an accommodation that applies to the category you
+  picked, the editor says so: *"3 students have extended time, 2 need a separate setting."* Beside it,
+  **Show which students** — and nothing else. Change the category to one nothing applies to and the box
+  goes; change it back and the sentence returns.
+
+  **It exists because a list nobody opens protects nobody.** A teacher is legally obligated to
+  implement an accommodation, and a roster field you have to remember to open is a field you open in
+  September and not in March. So the prompt goes where the decision is actually made — in the dialog
+  where a test is written down, at the moment its category is chosen — and it says *how many*, not
+  *who*, until you ask.
+
+  **Counts are the default and names are a deliberate tap, and the names do not stay.** They re-hide on
+  every repaint: a category change, a re-opened dialog, a presentation-mode flip. A panel that sprang
+  back open by itself would be putting a student's file on screen without the tap the rule asks for.
+  The box also says where the counts came from — *"They apply to work in 'Tests', which is where this
+  assignment counts"* — because a count with no scope on it is a count you have to guess at, and it
+  states in the same breath that this is on screen only: never printed, never exported, never put in a
+  draft.
+
+  **In presentation mode there is nothing at all — not even the count.** No greyed-out version, no
+  collapsed box with a number in it, nothing that only looks absent. *"3 students have extended time"*
+  on a projected screen, in a room of thirty, beside a roster on the wall, narrows to individuals. So
+  the box is gone from the page rather than hidden on it, and the reveal cannot be reached even by
+  someone who goes looking for it — the guard is in the code that writes the names, not in the absence
+  of a button. Deliberately there is **no placeholder** where the box was: any "something is hidden
+  here" sentence announces that this class has accommodations on it, which is the disclosure being
+  prevented.
+
+  **The match leans toward showing, on purpose.** What an accommodation applies to and what a category
+  is called are both prose you typed, months apart — so `tests` covers `Unit Tests`, `unit tests`
+  covers `Tests`, and case, spacing and plurals do not matter. Under-firing is the failure that counts:
+  a prompt that does not appear is a legal obligation not surfaced, and it is invisible. A prompt that
+  appears when it needn't is one extra line in a dialog.
+
+  **It counts students, not rows.** Two extended-time notes on one student is one student who needs
+  extended time. A number larger than the room is the kind of number that makes you stop believing the
+  prompt.
+
+  **Checked on the hardware on 2026-08-13.** "Show which students" reads as a disclosure rather than a
+  "more" link and is not caught while reaching for the buttons below it; the box reads as a fact about
+  students rather than as a warning, wearing the roster's own subdued support card rather than the
+  past-due amber twenty lines up the same stylesheet; turning presentation mode on with the editor open
+  reads as the box having gone rather than as the assignment having lost something; and the screen
+  comes up offline from the precache.
+
+  **What is not here.** An accommodation with an attendance clause — *"call home on the third
+  absence"* — does not surface anywhere yet. It waits on Phase 4, and for a narrower reason than it
+  first looked: attendance marking and its counts have shipped, so the behaviour log was never the
+  blocker. What is missing is the clause itself. There is no field to hold it, and guessing at one out
+  of the free-text behaviour plan would be this app inventing a teacher's intent about a child.
+
 - **WO-3.6 — the past-due prompt.** Open a class's scores or its assignment list and, if work whose
   due date has gone by still has blank cells, a banner asks: *"6 blanks are past due — mark them
   missing?"* **Review the 6** lists exactly which cells it means, student by student. **Mark them

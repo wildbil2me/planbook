@@ -276,3 +276,75 @@ export function parseAppliesTo(text) {
 export function appliesToText(list) {
   return Array.isArray(list) ? list.join(', ') : '';
 }
+
+/*
+  DOES ONE ACCOMMODATION'S `appliesTo` COVER A CATEGORY THE TEACHER NAMED (WO-3.8).
+
+  It is here rather than in the screen that asks it, for the reason supportsVisible() is here: a
+  match rule copied into a screen is a match rule that can disagree with the next screen's, and the
+  disagreement is silent in the direction that costs something. This file already owns the two
+  halves of `appliesTo` — the split on the way in and the join on the way out — so it owns the
+  question they exist to answer too. Note what it is NOT: it returns a boolean about one
+  accommodation, never a count, a list, or a sentence. The aggregation lives in
+  src/accommodation-prompt.js, and the header above says why nothing shaped like a summary may live
+  in this file.
+
+  BOTH SIDES ARE TEACHER PROSE, and there is deliberately never going to be an id to join on —
+  parseAppliesTo's comment above says why: an accommodation follows the student across five classes
+  whose categories differ, so the field is free text on purpose. So this is a comparison between two
+  spellings of the same word: `Tests` against `tests`, `Unit Tests` against `test`.
+
+  THE RULE.
+    · An empty `appliesTo` means everything. That is docs/data-model.md's own rule and the reason
+      the field can be left alone entirely.
+    · Both sides are folded to lower case and split on anything that is not a letter or a digit,
+      and each word is stemmed by stem() below.
+    · One term matches when its words are a SUBSET of the category's words, or the category's are a
+      subset of the term's — so `tests` covers `Unit Tests`, and `unit tests` covers `Tests`.
+      Word sets rather than substrings, because `art` is a substring of `Participation`, and a
+      prompt that fired on that would teach a teacher to stop reading them.
+    · A scoped accommodation against an assignment filed under NO category matches nothing. There is
+      no name to compare with, and "everything" is what an empty `appliesTo` already means.
+
+  IT LEANS TOWARD FIRING, AND THAT IS THE DECISION — said here so nobody tightens it later. A prompt
+  that does not appear is a legal obligation not surfaced, and it is invisible: nothing is on screen
+  and nothing says nothing is on screen. A prompt that appears when it need not is one extra line in
+  a dialog. Those are not the same size of mistake, so the tie goes to showing — which is also why a
+  term that stems to no words at all (`—`, `?`) is treated as no scope rather than as a scope
+  nothing can satisfy.
+*/
+export function appliesToMatches(appliesTo, categoryName) {
+  const terms = (Array.isArray(appliesTo) ? appliesTo : parseAppliesTo(appliesTo))
+    .map(matchWords).filter((words) => words.length > 0);
+  if (!terms.length) return true;
+  const cat = matchWords(categoryName);
+  if (!cat.length) return false;
+  return terms.some((words) => covers(words, cat) || covers(cat, words));
+}
+
+function covers(a, b) {
+  return a.every((word) => b.indexOf(word) >= 0);
+}
+
+function matchWords(text) {
+  return String(text == null ? '' : text).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(stem);
+}
+
+/*
+  A crude stem, and crude is the point: this has to agree with itself about two words a teacher
+  typed on two different screens, not to be right about English. Four steps, in order, each guarded
+  so a short word is left alone.
+
+    tests  → test    quizzes → quizze → quizz → quiz    classes → classe → class → clas
+    test   → test    quiz    → quiz                     class   → clas
+
+  The pairs are what matter: `test`/`tests` land on one string and `quiz`/`quizzes` land on another.
+  Nothing here is exported, and no other file may grow a second copy of it.
+*/
+function stem(word) {
+  let w = word;
+  if (w.length > 3 && w.slice(-1) === 's') w = w.slice(0, -1);
+  if (w.length > 3 && w.slice(-1) === 'e' && 'sxzhc'.indexOf(w.slice(-2, -1)) >= 0) w = w.slice(0, -1);
+  if (w.length > 2 && w.slice(-1) === w.slice(-2, -1)) w = w.slice(0, -1);
+  return w;
+}

@@ -619,7 +619,7 @@ same way, or a Ctrl+P from any other screen starts producing blank paper again.
 
 ## WO-3.8 — Accommodation prompts at point of use
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.8, WO-3.3
+**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** S · **Depends on** WO-1.8, WO-3.3 · **Owes** WO-4.4
 **Closes roadmap** Phase 3 → "Accommodation prompts at point of use."
 
 **Why it exists.** "A list nobody opens protects nobody." A teacher is legally obligated to
@@ -635,11 +635,35 @@ compliance.
 - **Suppressed entirely in presentation mode.**
 
 **Acceptance**
-- [ ] Creating a test surfaces the counts; creating a homework assignment scoped elsewhere doesn't.
-- [ ] The default view is counts, not names.
-- [ ] In presentation mode nothing appears at all — not even the count.
+- [x] Creating a test surfaces the counts; creating a homework assignment scoped elsewhere doesn't.
+      *(Both halves on one fixture. A new assignment lands in the class's first category — `Tests` —
+      and the prompt says docs/data-model.md's own worked sentence word for word: **"3 students have
+      extended time, 2 need a separate setting."** Changing the same open editor to `Homework` empties
+      it: host hidden, host text `""`, zero `[data-accommodation-names]` hooks on the page, and the
+      kind phrases gone from a page of 23,771 characters. The roster still carries an accommodation
+      there — one scoped to `labs, field work` — so this is a scope that does not match rather than a
+      class with nothing on file.)*
+- [x] The default view is counts, not names. *(The reveal is drawn and collapsed —
+      `aria-expanded="false"`, labelled "Show which students" — with zero name chips and none of the
+      five students named anywhere in a dialog of 1,094 characters. One tap puts five names on screen
+      grouped under their kind, and a category change puts them back behind the tap.)*
+- [x] In presentation mode nothing appears at all — not even the count. *(Absent from the DOM, not
+      styled away: host empty, `.hidden`, `display: none`, zero reveal hooks, and no kind phrase left
+      on a page of 24,104 characters — read with the editor still open on the category that was
+      showing all of it a moment earlier. The reveal is not merely un-drawn: called straight through
+      the seam under the mode it writes nothing either. Flipping back brings the same sentence back to
+      the same open dialog, which is what makes the absence a suppression rather than a build that
+      cannot draw one.)*
 - [ ] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
-      exists. *(Deferred to Phase 4 if the behavior log isn't ready; note it if so.)*
+      exists. *(Deferred to Phase 4 if the behavior log isn't ready; note it if so.)* **It is
+      deferred, and for a reason narrower than the parenthetical guessed** *(2026-08-13, WO-3.8):
+      attendance marking and its counts have shipped, so the behavior log is not what this was
+      waiting on. What is missing is the clause itself. `supports` has no attendance-clause field —
+      `plan`, `caseManager`, `reviewDate`, `accommodations[]`, `medical`, `behaviorPlan`, and
+      `appliesTo` is documented as being about grading categories — and `signals` is deliberately
+      empty in `src/store.js`, so there is no N either. Inventing both, plus a surface on the
+      registry, is three decisions this work order's Deliverables never name.*
+      → WO-4.4 "surfaces an attendance-related plan clause if one exists"
 
 ---
 
@@ -1488,3 +1512,63 @@ that changes nothing a teacher sees has no business landing in the week the term
 - [ ] `verify-shell.mjs` is green with no check rewritten to accommodate a changed string. **A check
       edited to match new output is this work order failing**, not passing.
 - [ ] No import cycle: the shared module imports nothing from `src/`.
+
+---
+
+## WO-3.21 — nothing notices if the accommodation prompt stops counting students
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.8 · **Blocks** nothing, and
+that is deliberate — the dedupe is correct today, so this is a row to cut if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
+WO-3.12 made, and for the same reason.)*
+
+**Not a go-live blocker, and nothing here is a defect.** Booked 2026-08-13, out of WO-3.8's
+verification. `src/accommodation-prompt.js` is correct as shipped and all 710 harness checks pass.
+**Do not go hunting for a bug; there isn't one.** What is missing is the check that would notice if
+the code stopped being correct.
+
+**Why it exists.** `groupsFor()` counts **students, not rows** — `src/accommodation-prompt.js:186`
+carries a `seen` Set so that a student holding two `extended-time` rows is one student who needs
+extended time. The file's own comment says why that matters: *"4 students have extended time" over a
+roster of three is the kind of number that makes a teacher stop believing the prompt.* Measured at
+WO-3.8's verification: **delete the `seen` Set and all 710 checks stay green.** No fixture student
+carries two rows of the same kind, so an inflated count has nowhere to show up.
+
+This is the WO-3.12 shape again — *a fixture whose values cannot express the failure* — in the one
+place where the number a teacher reads is a claim about how many children are in the room. The
+neighbouring case is already covered and is not this one: `c_wo38b`'s `wo38-s7` holds two rows, but
+of **different** kinds (`breaks` and a blank one a mis-tap wrote), which is what proves `isRealRow()`
+rather than the dedupe.
+
+**Deliverables**
+- **A fixture student carrying two rows of the same kind, both matching the chosen category.** The
+  cheapest is `wo38-s1` Ashdown at `tools/verify-shell.mjs:17570`, whose one `extended-time` row is
+  scoped `['tests']`: give it a second scoped `['unit tests']`, which the match rule already fires on.
+  Both rows are real, so `isRealRow()` does not mask the case.
+- **No new assertion unless the mutation proves one is needed.** WO-3.8's existing check asserts the
+  exact sentence *"3 students have extended time, 2 need a separate setting."*, and a build counting
+  rows says `4 students`. Confirm by mutation whether that check alone carries it; add one only if it
+  does not.
+- **The mutation is run, and the proof is written down.** Delete the `seen` Set, run the harness, and
+  record the counts before and during in `tools/README.md` the way WO-3.12's and WO-2.24's are.
+
+**Out of scope** — anything in `src/`. The dedupe is verified correct; this work order adds no
+behaviour. If a new check goes red against current code, **that is a defect found and it gets its own
+work order** — do not fix the app from inside this one.
+
+**Acceptance**
+- [ ] A fixture student carries two rows of the same kind, both matching the category under test, and
+      the prompt still reads **"3 students have extended time, 2 need a separate setting."** — the
+      count is unchanged by the second row, which is the whole claim.
+- [ ] The reveal still lists **five** names, with that student named **once**.
+- [ ] Deleting the `seen` Set at `src/accommodation-prompt.js:186` turns a check red, with the counts
+      before and during quoted — run, not reasoned. **A mutation that reddens nothing means this work
+      order did not land**, and a mutation that reddens everything means the fixture is coupled.
+- [ ] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
+      step with any check added.
+- [ ] `git diff --stat src/` is empty across the whole work order, confirmed after the mutation's
+      revert and again at the end.
+
+**Traps** — **The second row must match the category, or the fixture proves nothing.** A row scoped
+to something `Tests` does not match never reaches the `seen` Set at all, and the check would stay
+green with the dedupe deleted — which is this work order failing while appearing to pass.

@@ -84,6 +84,15 @@
      appears and says so, rather than being dropped and leaving her to wonder whether the app lost
      something. At weight 0 it says something else, because there the redistribution is a no-op and
      the sentence would be false.
+
+  6. NO SUPPORT DATA IS READ IN THIS FILE, AND THE PROMPT IN THE EDITOR IS NOT AN EXCEPTION (WO-3.8).
+     The dialog carries a summary — *"3 students have extended time, 2 need a separate setting"* —
+     for the category the teacher has chosen, and every part of it that touches a student's
+     `supports` block lives in src/accommodation-prompt.js: the counting, the presentation-mode
+     suppression, the names behind a deliberate tap, and the words. What this file does is say WHICH
+     class and WHICH CATEGORY NAME, which is the one fact the dialog knows and that module cannot
+     ask for. Grep this file for `student.supports`, `supportsVisible` or `accommodationsOf` and the
+     answer must stay zero — the mentions below are this paragraph and the import beneath it.
 */
 
 import { getDoc, update, newId } from './store.js';
@@ -109,6 +118,13 @@ import { todayISO } from './attendance.js';
    class and term are open, exactly as this file does. The import runs one way — nothing in
    src/past-due.js knows this file exists. */
 import { paintPastDue } from './past-due.js';
+/* THE ACCOMMODATION PROMPT (WO-3.8), which is the other prompt in this phase and the one with rules
+   under it. This file passes it the class and the category NAME chosen in the editor and gets back a
+   count; it never reads a student's `supports` block, never asks whether presentation mode is on,
+   and holds no part of the match rule — all three live behind that module and src/supports.js
+   behind it. The import runs one way: nothing in src/accommodation-prompt.js knows this file
+   exists. */
+import { paintAccommodationPrompt } from './accommodation-prompt.js';
 
 const EDITOR_MODAL_ID = 'assignmentModal';
 const COPY_MODAL_ID = 'assignmentCopyModal';
@@ -691,6 +707,45 @@ function dateField(assignment, field) {
   return wrap;
 }
 
+/*
+  THE ACCOMMODATION PROMPT FOR WHATEVER THE EDITOR IS OPEN ON (WO-3.8), computed from the document
+  rather than from anything this module remembers — so a category picked a moment ago, a category
+  renamed in the panel behind the dialog, and a document replaced by a restore all give the same
+  answer as opening the dialog fresh would.
+
+  IT IS THE CATEGORY'S NAME THAT GOES ACROSS, NOT ITS ID. `appliesTo` is free text a teacher typed
+  on the roster and a category name is free text she typed in the categories editor
+  (src/supports.js's parseAppliesTo says why there is deliberately no id to join on), so the name is
+  the only thing the two sides have in common. An assignment filed under nothing sends '', which is
+  a real answer: an accommodation scoped to everything still applies to it, and a scoped one does
+  not.
+*/
+function paintEditorSupports() {
+  const assignment = findAssignment(editingId);
+  const cls = assignment ? findClass(assignment.classId) : null;
+  const cat = cls ? findCategory(cls, assignment.categoryId) : null;
+  return paintAccommodationPrompt(cls, cat ? (cat.name || '') : '');
+}
+
+/*
+  AND THE SAME PAINT AFTER A PRESENTATION-MODE FLIP, called from src/shell.js's
+  flipPresentationMode() — which is where this app states the order things happen in, and which asks
+  every screen that can be holding support data to redraw the glass rather than waiting for the next
+  render. src/roster.js's refreshSupportSurfaces() is the same seam one feature over.
+
+  WITH ONE EXTRA GUARD THAT MODULE DOES NOT NEED: this dialog is not re-opened on a flip, and
+  `editingId` outlives a close (nothing clears it but a delete). So a flip made with the editor SHUT
+  would otherwise paint a summary into a hidden dialog's DOM — not on screen, but present, which is
+  the distinction src/supports.js's sensitiveValue() draws and the one this feature is held to. Shut
+  means cleared.
+*/
+export function refreshAccommodationPrompt() {
+  const modal = document.getElementById(EDITOR_MODAL_ID);
+  const open = !!modal && !modal.classList.contains('hidden');
+  if (!open) { paintAccommodationPrompt(null, ''); return; }
+  paintEditorSupports();
+}
+
 function renderEditorFields() {
   const box = document.getElementById(EDITOR_FIELDS_ID);
   const title = document.getElementById(EDITOR_TITLE_ID);
@@ -704,7 +759,7 @@ function renderEditorFields() {
       ? (assignment.name || 'Untitled assignment') + ' — ' + cls.name
       : 'Assignment';
   }
-  if (!assignment || !cls) return;
+  if (!assignment || !cls) { paintAccommodationPrompt(null, ''); return; }
 
   const first = document.createElement('div');
   first.className = 'assign-field-row';
@@ -722,6 +777,12 @@ function renderEditorFields() {
   third.append(dateField(assignment, 'assigned'));
   third.append(dateField(assignment, 'due'));
   box.append(third);
+
+  /* Last, and outside `box`, because the prompt is about the fields rather than one of them — it
+     lives in its own host in index.html, under this panel and above the two hints. Painted from
+     here so that every door into this editor gets it: Edit on a row, the Delete… that comes back,
+     and the brand-new assignment createAssignment() writes before opening. */
+  paintEditorSupports();
 }
 
 /* Opened through its own hook rather than data-modal-open, for the reason src/classes.js gives:
@@ -899,9 +960,35 @@ export function setAssignmentCategory(select) {
   update(() => { assignment.categoryId = want; });
   showAssignmentError('');
   renderAssignments();
+
+  /*
+    AND THE ACCOMMODATION PROMPT MOVES WITH THE PICKER (WO-3.8). This is the line that work order's
+    brief names as the one to get wrong: a summary computed once when the dialog opened and left
+    standing while the teacher changes the category is worse than no summary at all, because it is
+    read as current — "3 students have extended time" over a homework assignment is a sentence the
+    app made up. Recomputed here rather than by re-rendering the fields, for the reason
+    editAssignmentField() gives: rebuilding this dialog's controls would replace the <select> the
+    teacher just used, and on iPadOS that closes the wheel under her finger.
+  */
+  const applies = paintEditorSupports();
+
+  /*
+    SAID OUT LOUD AS A POINTER AND NEVER AS THE SENTENCE ITSELF, and the asymmetry with the screen
+    is deliberate. The prompt on screen is a disclosure the teacher opened a dialog to see; the live
+    region is read aloud, in a room, to whoever is near the iPad — so what is announced is that
+    something applies here, and the counts and the kinds stay on the glass. That is the rule
+    src/roster.js's toggleSupports() and src/presentation.js both state: announce that support
+    details are showing, never a word of what they say.
+
+    Announced HERE and not when the dialog opens, because an announcement exists for a change a
+    screen-reader user cannot see happen. On open, the prompt is new content in a dialog she is
+    about to read; on a category change it is a block rewritten behind her while the focus is on a
+    picker, and nothing else would say so.
+  */
   announce((assignment.name || 'That assignment') + ' now counts in '
     + (cat ? (cat.name || 'that category') + ', worth ' + formatWeight(Number(cat.weight) || 0)
-      + ' percent of the grade' : 'no category, so nothing counts it') + '.');
+      + ' percent of the grade' : 'no category, so nothing counts it') + '.'
+    + (applies ? ' Accommodations apply to work in this category — this dialog says which.' : ''));
 }
 
 /* Reorder, inside the group the row is drawn in. Swaps with the neighbour, exactly as

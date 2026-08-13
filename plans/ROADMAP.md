@@ -66,13 +66,13 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 14/16 `[█████████░] 88%` |
-| 3 | Gradebook | 🔨 IN PROGRESS | 9/10 `[█████████░] 90%` |
+| 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **40/82 `[█████░░░░░] 49%`** |
+| | | **Overall** | **41/82 `[█████░░░░░] 50%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -353,7 +353,7 @@ meet is a second source of truth that's wrong by first period.)*
 - [x] Weighted grade with **empty categories redistributing their weight** — otherwise every grade
       is wrong until each category has an assignment.
 - [x] Per-student detail: category breakdown, what's missing, what it would take to move.
-- [ ] **Accommodation prompts at point of use** — creating a test surfaces "3 students have
+- [x] **Accommodation prompts at point of use** — creating a test surfaces "3 students have
       extended time, 2 need a separate setting." A list nobody opens protects nobody.
 - [x] Print/CSV for grades. The SIS has no import, so re-keying is manual and the printout is what
       the owner types from — **order it to match the SIS entry screen.**
