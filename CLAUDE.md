@@ -67,8 +67,9 @@ predecessor. Read its `CLAUDE.md` and `design/README.md` before writing code her
 
 **Take from it:** the design system (`design/style-guide.md`, `design/portable-components.md`,
 `design/starter-template.html`) — visual identity, modal patterns, touch targets, the setup-flow
-skeleton. The at-risk threshold model. The FERPA stance in `docs/FERPA.md`, which Planbook
-strengthens rather than weakens. Its `CLAUDE.md` is also a model of the kind of documentation this
+skeleton. The at-risk threshold model. The FERPA stance in **Roll Call!'s** `docs/FERPA.md` — the
+path is relative to the reference implementation above, not to this repository, where no such file
+exists yet — which Planbook strengthens rather than weakens. Its `CLAUDE.md` is also a model of the kind of documentation this
 project wants: every gotcha carries the scar that produced it.
 
 **Lift the design with the function — copy, don't re-derive.** When a screen here has a counterpart

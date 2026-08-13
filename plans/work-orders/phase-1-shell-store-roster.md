@@ -1126,3 +1126,65 @@ purpose.
 **Traps** — **Do not "fix" the count by deleting a check.** **Do not renumber neighbouring section
 headers to match a scheme** — the other headers are not known to be wrong, and a sweep that changes
 twenty comments to fix one buries the fix in the diff that is supposed to show it.
+
+---
+
+## WO-1.19 — the phase-branch convention is dead and still written down
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. Process, not app — the convention it settles is `CLAUDE.md`'s
+and this directory's, and neither is a roadmap promise. Booked 2026-08-13.)*
+
+**Why it exists.** `CLAUDE.md` says work happens on phase branches — *"one integration branch `main`,
+phase branches `phase/<n>-<slug>`… A work order is a commit or a short stack of them, worked on its
+**phase** branch — not a branch per work order."* **Nothing has worked that way for the whole August
+sprint.** Measured 2026-08-13: `phase/1-shell-store-roster` is **104** commits behind `main`,
+`phase/2-attendance` **67**, `phase/3-gradebook` **16**. Their last commits are Aug 6, Aug 8 and
+Aug 12.
+
+**The convention has already been rewritten twice to describe its own decay rather than to end it.**
+It first gained a note admitting the drift, then on 2026-08-13 that note was corrected — because it
+had named one branch and a commit count that was wrong within a day — into a note saying all three
+trail and giving a command for how far. **Two edits, both of which made the sentence more accurate
+and neither of which made it true.** A rule every session reads and no session follows is worse than
+no rule: it costs a paragraph of attention per session and buys nothing, and it is the one kind of
+documentation defect this project has otherwise been ruthless about.
+
+**The decision is cheap, and that is the finding that should drive it.** All three branches hold
+**zero commits that are not already on `main`** — they are strictly behind, so there is nothing to
+merge, nothing to rebase, and nothing at risk. Catching them up is a fast-forward; retiring them is a
+delete. The reason this has not been done is not difficulty, it is that nobody has been asked to
+choose.
+
+**Deliverables** *(the deliverable is a decision, and then whichever act it implies)*
+- **A choice, written down with its reasoning**, between the two honest options:
+  **(a) revive** — fast-forward all three, and say what changes so the next work order actually lands
+  on a phase branch; or **(b) retire** — `main` is the integration branch in practice, `CLAUDE.md`
+  says so plainly, and the stale branches are deleted locally and on `origin`.
+- **`CLAUDE.md`'s Git line matches whatever was chosen**, with no note describing a gap between the
+  rule and the practice. If a note is still needed after this work order, the wrong option was picked.
+- **`plans/work-orders/README.md` § *How to use one* step 3 moves with it** — it carries the same
+  instruction (*"Work on the phase branch… not a branch per work order"*) and is the copy a dispatched
+  agent actually reads.
+
+**Out of scope** — pushing anything to `origin`, which is the owner's call and is not what this
+decides; the 9 unpushed commits on `main`; any change to commit-message convention, which is working.
+
+**Acceptance**
+- [ ] `CLAUDE.md` and `plans/work-orders/README.md` say the same thing about branching, and it is
+      the thing that is actually happening.
+- [ ] Neither file contains a note admitting a gap between the branching rule and the practice.
+- [ ] If **(a)**: all three `phase/*` branches are at `main`, and the next work order after this one
+      demonstrably landed on a phase branch — this is the line that decides whether (a) was real.
+- [ ] If **(b)**: the three branches are gone locally, and the decision names what is lost — the
+      per-phase history view — and why that is acceptable.
+- [ ] 👤 The owner has said which option, on the record. This is a preference about how the owner's
+      own repository is worked and cannot be inferred from the code.
+
+**Traps** — **Do not "catch the branches up" as a tidy-up without making the choice.** Three
+fast-forwarded branches that then sit unused for another sprint is this work order's own defect,
+re-created with fresher timestamps. **Do not delete anything on `origin` in the same pass as the
+local decision** — the remote branches are the only copy if the call is later reversed, and nothing
+here is urgent enough to need both halves at once. **Do not read "zero unique commits" as permanent**;
+re-measure before acting, because a dispatch working a phase branch between the booking and the doing
+would make it false.
