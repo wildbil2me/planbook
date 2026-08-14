@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 754 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 759 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -874,7 +874,21 @@ existing WO-2.9 hall-pass block, none in a loop and none a failure arm — the f
 the next two assert the missing-banner-node fixture and its document-driven alert, and the fourth
 asserts the state and screen restoration. **The run prints 752** — measured on the delivered tree
 rather than derived, `752 checks · 752 passed · 0 failed · 0 skipped`, the gap to 754 being the two
-allowlisted non-calls rather than anything that failed to fire. *(The
+allowlisted non-calls rather than anything that failed to fire. **WO-2.29 moved it from 754 to 758**:
+four literal call sites in that same WO-2.9 hall-pass block, none in a loop and none a failure arm —
+one reading the two tones the escalation walk's own winds asked for, and three around the header mute
+(the switch and its preference, a threshold crossed with the sound off, and the same threshold
+crossed again with it back on). **The run prints 756**, measured on the delivered tree:
+`756 checks · 756 passed · 0 failed · 0 skipped`, 254s. *(That work order also upgraded an existing
+clause rather than adding a site — the missing-node fixture guard's bare `!!beforeMissingNodePass`
+now asserts the saved record carries no `alerted` key, which is a precondition for the alert check
+below it and deliberately not a new claim.)* **Its correction round moved it from 758 to 759**: one
+literal call site beside the tone reading in the same block, not in a loop and not a failure arm, and
+it is there because the four before it went green through a device failure — it asserts the
+*mechanism* the corrected iOS unlock turns on (one AudioContext for the life of the page, born in a
+gesture, still open, carrying both tones) rather than the audio path, which reports the same numbers
+whether or not a sound leaves the device. **The run prints 757**, measured on the corrected tree:
+`757 checks · 757 passed · 0 failed · 0 skipped`, 243s. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

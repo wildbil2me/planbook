@@ -3107,6 +3107,267 @@ to WO-2.29's iOS `AudioContext` unlock, not here.
 
 ---
 
+### WO-2.29 — The overdue alert gets its primary channel back
+
+**What this changes.** A new module, `src/alert-sound.js`, holding Roll Call!'s two alert tones
+(`dashboard.html:3448`–`3508`) at its own frequencies, note counts, durations and gains, its iOS
+`touchstart` unlock, and the `soundsOn` preference. `paintPassElapsed()` asks it for a tone at a level
+and knows nothing else about it. A speaker button joins the header beside presentation mode.
+
+*This section is two rounds, and it is written in the order they happened. The `touchstart` unlock
+named above **is gone** — the 👤 run below failed and falsified the premise it was built on. What
+replaced it is at **THE CORRECTION** at the foot of this section; the tones, the preference and the
+control are the same as they were. Read the failed run before the correction: it is the evidence.*
+
+**What a teacher gets.** The alert reaches her when she is not looking at the registry, which since
+WO-2.28 is where it is computed and where it was still inaudible. And one tap silences it for a test.
+
+- [x] Crossing either threshold plays its tone, and the two are distinguishable from each other.
+- [x] `announce()` still fires at both thresholds with the same sentence, and its comment now names
+      itself the accessible equivalent of the sound (WCAG 1.4.1) rather than the alert.
+- [x] `soundsOn` silences the tone and leaves the announcement and the card tint alone; it is
+      `planbook_soundsOn` and the string never appears in the year document.
+- [x] The tone is asserted through the `alertSoundLog()` seam, and both thresholds' arms were watched
+      failing under mutation (below).
+- [x] No comment in `src/attendance.js` still says this app has no sound.
+- [ ] The alert is audible on the teaching iPad from an installed PWA, on a screen that is not the
+      registry, after the app has been backgrounded and resumed. 👤
+
+*Desk pass 2026-08-14: `verify-shell.mjs` **756 of 756, 0 failed, 0 skipped**, 254s, exit 0 — four new
+call sites in the existing WO-2.9 hall-pass block, none in a loop and none a failure arm.
+`wo-sweep.mjs` **18 checks · 16 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the
+standing pair, and the sensitive-name REVIEW now lists `src/alert-sound.js` for two lines of prose —
+a cross-reference to `src/supports.js` and a sentence saying this module is never handed a student.
+Neither emits anything; the module has no student data in it at all.*
+
+**What the seam measures, and what it cannot.** *[Every figure in this paragraph is true, and none of
+it was evidence of a sound — it is the reading that stayed green through the failure two blocks below.
+What the seam can and cannot say is restated honestly under **THE CORRECTION**.]* `alertSoundLog()`
+records an entry only after the
+oscillators have been constructed, connected and **started** on a real `AudioContext`, and carries how
+many there were and the context's state. On this run that reads
+`{"level":1,"notes":10,"first":660,"peak":0.32,"played":true,"oscillators":10,"state":"running"}` and
+`{"level":2,"notes":12,"first":700,"peak":0.4,"played":true,"oscillators":12,"state":"running"}` —
+the audio path ran end to end on a live context. **No machine heard anything and none can.** Whether
+a room hears it is the 👤 line.
+
+**The mutations, and they are two because the acceptance line says *either* threshold.** Both are one
+line of `src/attendance.js`, the `playOverdueAlert()` call gated to a single level:
+
+| mutation | result | what went red |
+|---|---|---|
+| fires at level 2 only | `756 · 754 passed · 2 failed` | *"each threshold asks for its own tone"* (`1 tone(s) requested`) and *"with the sound off the tone is not played"* (`what the tick asked for = []`) |
+| fires at level 1 only | `756 · 754 passed · 2 failed` | *"each threshold asks for its own tone"* (`1 tone(s) requested`) and *"turning it back on is the same one tap"* (`what the tick asked for = []`) |
+
+**Two red rather than four each time**, and the split is the point: the checks that stayed green under
+each mutation are the ones about the *other* threshold. A check that went red under both would have
+been a check about the module rather than about a threshold. `src/attendance.js` was restored
+byte-identical afterwards (md5 `e065501fb1ac2354a3b81a2bed2d242f`).
+
+*The fixture assumption that would hide a bug here: the two winds are the escalation walk's own, and
+the mute walk rides on the fresh quick pass the "starts clean" check leaves behind — so nothing here
+plants a pass or a level by hand. What it does assume is that `alertSoundLog()` is written by the same
+code path the device runs, which is why the entry is pushed inside `playToneSequence()` after the
+oscillators start rather than by the caller.*
+
+**The 👤 line, and exactly what closes it.** *[SUPERSEDED — this recipe tests a mechanism that no
+longer exists, and its "tap once more to tell the prime dying from the prime never taking" is the
+distinction the run below replaced. Kept because it is the recipe that produced that run. The current
+one is at the foot of this section.]* On the teaching iPad, from the installed PWA (not
+Safari), with the header speaker un-slashed: send a student out, tap **anything once** (that is the
+unlock), move to **Scores**, background the app for six minutes, and come back. **Pass:** a tone on
+the way in — five two-note beeps — with the pass card still tinted behind it. **Fail:** silence, with
+the card tinted and the sentence in the live region, which is the pre-WO-2.29 behaviour. If it fails,
+the primed context did not survive the suspend: the design already re-arms the primer on
+`visibilitychange → visible`, so the next screen touch after the resume should restore it — tap once
+more and cross the ten-minute threshold to tell "the prime died and re-arming works" apart from "the
+prime never took at all". Either finding goes in this section.
+
+**👤 RUN 2026-08-14 — FAILED. The premise this module is built on is false on current WebKit.** The
+alert was silent on the teaching iPad at both thresholds, backgrounded and not, while the same build
+sounded on the laptop. It is neither of the two things the section above anticipated: not the suspend,
+and not Silent Mode.
+
+An isolated probe (`audio-probe.html`, temporary, served on a second port so the service worker could
+not swap the page out) ran `playToneSequence()`'s exact note pattern four ways on the iPad. Safari,
+`standalone PWA: false`, `audioSession API: yes, type=auto`:
+
+| probe | log | heard |
+|---|---|---|
+| 1 — context built **inside** the tap | created `suspended` → `resume() RESOLVED` → `running`, `currentTime=0.99` | **audible** |
+| 2 — context built 8 s **after** a tap | created `suspended` → `resume() RESOLVED` → `running`, `currentTime=0.84` | **SILENT** |
+| 3 — primer first, then 8 s | created `suspended` → **no `resume()` settlement at all** → `suspended`, `currentTime=0.00` | **SILENT** |
+| 4 — `<audio>` element, in the tap | `play() resolved` | **audible** |
+
+**Read 1 against 2: identical logs, opposite outcomes.** The only difference is that 1's context was
+constructed inside the user gesture and 2's was constructed eight seconds later. So a context created
+outside a gesture reports `running`, advances `currentTime`, and starts its oscillators onto no
+output. `src/alert-sound.js`'s comment at the unlock — *"WebKit then treats the document as one whose
+audio was started by a gesture and lets later contexts run"* — is what this run falsifies. The silent
+primer buffer buys nothing, because what carries is the **context**, not the document.
+
+Probe 1 being audible is what rules out Silent Mode and the ambient session: raw Web Audio was heard
+on this device, so the mute switch is not the story and `navigator.audioSession` is not the fix.
+
+Probe 3 adds a second defect on top: `resume()` **hung** — neither resolving nor rejecting — on a
+context created after the primer had already minted and closed one. `currentTime` never left 0.00.
+iOS caps concurrent `AudioContext`s, and this module mints one per alert (`playToneSequence()`) and
+another on every `visibilitychange → visible`, so the budget is spent by ordinary classroom use.
+
+**Why the harness reported green throughout.** `alertSoundLog()` records that oscillators were started
+on a context reading `running` — which is exactly what silent probe 2 reported. The seam cannot
+distinguish audible from inaudible, the implementer said so (*"No machine heard anything and none
+can"*), and this 👤 line is the only thing that could have found it. It did.
+
+**What the fix has to be**, and it is a shape change rather than a tuning: one `AudioContext` created
+inside the first gesture, held for the life of the page, never `close()`d, with every later tone
+scheduled on that same context; `visibilitychange` resumes that one context instead of priming a new
+one, and re-arms a touch listener for the case where a resume outside a gesture does not restore
+output. Carried by WO-2.29's correction round.
+
+*Also worth checking separately: Roll Call!'s `dashboard.html:3451`–`3462` is the origin of this
+unlock and Planbook's is a faithful lift of it, so that app's 5- and 10-minute tones may have been
+failing the same way on iPad, masked by its visual banner. It is the live classroom fallback.*
+
+**THE CORRECTION, 2026-08-14 — one context, born in a gesture, held for the life of the page.**
+
+**What changed, and it is only the unlock.** `src/alert-sound.js` now constructs an `AudioContext` in
+exactly one place, `unlockAudio()`, which runs from a `touchstart` / `pointerdown` / `keydown`
+listener and from nowhere else. That one context is held for the life of the page and **never
+`close()`d** — the close-on-a-timeout that came across with the lift is what spent iOS's cap — and
+every later tone is scheduled on it. `visibilitychange → visible` **resumes that same context**
+instead of priming a new one, and re-arms the listener **unconditionally**, because a context reading
+`running` after an interruption is exactly the thing this section has just learned not to trust. An
+alert arriving before the page has ever been touched schedules nothing and records `state: "locked"`
+rather than minting a context that would be silent (probe 2) and would cost a slot (probe 3); in this
+app that gap is nearly hypothetical, since sending a student out is a tap and the pass has to be five
+minutes old before anything asks for a tone. `keydown` joins the two touch events so that a teacher
+driving the app from a keyboard is not left permanently locked.
+
+**The tuned half of the lift did not move.** Frequencies, note counts, durations and gains are
+unchanged, and `playToneSequence()`'s scheduling loop is still Roll Call!'s line for line. The
+departure is argued in the module at the point of departure, with the probe table above named as the
+evidence that beats the lifted rule — which is what `CLAUDE.md` asks of a Roll Call! rule that must
+not come across.
+
+**Two `visibilitychange` listeners now, and their order is load-bearing rather than lucky.**
+`src/attendance.js` imports `src/alert-sound.js`, so the sound module's body — and its listener —
+evaluates first, and listeners fire in registration order: coming back from a suspend, the context is
+**resumed before `paintPassElapsed()` computes the alert that the same event fires**. That is written
+into the module, because importing the other way round would silently reverse it.
+
+**What the seam can now assert, and what it still cannot.** `alertSoundLog()` is unchanged in kind,
+and it is the reading that said `played: true, oscillators: 10, state: "running"` throughout a silent
+iPad — so on its own it never was evidence of a sound, and nothing here pretends otherwise. Each entry
+now also carries `ctx` (how many contexts the page had constructed when the tone was scheduled) and
+`ctxTime` (that context's own clock at that moment), and a second function `alertAudioState()` reports
+the mechanism: contexts constructed, whether the held one was born in a gesture, its live state, its
+clock, and whether the touch listener is armed. **None of that is audibility.** What it is, is the
+shape the fix turns on, and it is machine-checkable where a sound is not.
+
+*Desk pass 2026-08-14 (correction): `verify-shell.mjs` **757 of 757, 0 failed, 0 skipped**, 243s,
+exit 0 — one new call site, in the same WO-2.9 hall-pass block, not in a loop and not a failure arm.
+`wo-sweep.mjs` **18 checks · 16 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the
+standing pair, `src/alert-sound.js` still on the sensitive-name list for the same two lines of prose,
+and the CACHE check reads `planbook-shell-v60` — bumped from v59, without which the installed iPad
+would keep serving the build that failed and would fail line 6 for a reason that is not audio.*
+
+The new check reads:
+
+> *both tones were scheduled on the ONE AudioContext the first gesture made — the alerts and the
+> wake-ups mint no others, and nothing closes it* :: before the winds
+> `{"contexts":1,"origin":"gesture","state":"running","currentTime":12.731,"armed":true}`, after them
+> `{…,"currentTime":13.432,…}`; the five-minute tone was scheduled on context 1 at its clock 12.901s
+> and the ten-minute tone on context 1 at 13.171s; `src/alert-sound.js` constructs a context at
+> line(s) `[162]`, in `"function unlockAudio() {"`
+
+**The mutations, and the first one is the whole argument for this round.** Both are `src/alert-sound.js`:
+
+| mutation | result | what went red |
+|---|---|---|
+| `playToneSequence()` mints its own context again — **the build that shipped and failed** | `757 · 756 passed · 1 failed` | only the new check: *"the five-minute tone was scheduled on context 1 at its clock **0s** and the ten-minute tone on context 1 at **0s**"*, and two constructor call sites |
+| the `visibilitychange` handler mints and closes a context, as the shipped one did | `757 · 756 passed · 1 failed` | only the new check, and **only its source clause**: `line(s) [162,210]`, *"(2 constructor call sites)"* — every dynamic reading was identical to the green run |
+
+**One red each time, and the four checks from the first round stayed green under both** — which is
+not a weakness in this round's check, it is the fact this whole entry exists to record. Mutation 1 is
+the field failure reproduced exactly: the tones are requested, at the right frequencies, in the right
+order, with ten and twelve oscillators started on a context reading `running`, and on an iPad it makes
+no sound. A harness cannot tell that apart by listening. It can tell it apart by the clock: `0s` says
+the context was born at the alert, `11.901s` says it was born at a tap and kept.
+
+Mutation 2 is the honest limit stated as a result: a context minted **outside** the module's own
+unlock moves none of the numbers, because nothing in the page can observe a construction it was not
+told about. That is why one clause of the check is read off the source — exactly one
+`new (window.AudioContext …)` in the file, and the nearest function declaration above it must be
+`unlockAudio`. It is the clause a future edit is most likely to break and the only one that catches
+that shape. `src/alert-sound.js` was restored byte-identical after both
+(md5 `f49d75845807edce9dbfdf16d9beb5bc`, the file both mutations departed from); the delivered file is
+that plus one line of comment rewrapping (md5 `d14cd751221b16ca30933f10b8acdc48`), and the desk pass
+above is a run of the delivered file rather than of the one the mutations used.
+
+*The fixture assumption that would hide a bug here, named as the verifier's standing question asks:
+the context under test is made by the section's own taps rather than by anything this check does, and
+`audioBefore` is read **before** either wind so that "older than the alert" is a comparison against a
+reading rather than against a number written into the harness. What it assumes is that the browser
+under CDP treats `Input.dispatchMouseEvent` as a real gesture — if it ever stopped doing so, the
+context would never be constructed, `contexts` would read 0 and every tone would record `locked`, so
+the assumption fails loudly rather than quietly. What it cannot reach is the only question that
+matters on the device: **whether a sound left the speaker.***
+
+**The 👤 line, and exactly what closes it now.** *(This replaces the recipe above; the old one tests a
+mechanism that no longer exists.)* On the teaching iPad, from the **installed PWA** (not Safari), with
+the header speaker un-slashed. **First confirm the device actually has this build** — an iPad still on
+`planbook-shell-v59` is running the build that failed. Two legs, in this order, because they separate
+the two things that could be wrong:
+
+**Leg 1 — the mechanism, no suspend.** Open a class, send a student out on a pass (that tap *is* the
+unlock — there is no separate "tap anything once" step any more, which is the point), move to
+**Scores**, and stay there without leaving the app. At five minutes: **Pass** = five two-note beeps
+while Scores is on screen. **Fail** = silence. A failure here says the held context does not sound
+from outside a gesture on this device at all, and the suspend is irrelevant — the alert would have to
+be *held* until the next touch instead of played, which is a queue and a work order of its own.
+
+**Leg 2 — Acceptance line 6 proper.** Same setup: send a student out, move to Scores, **background the
+app for six minutes**, come back. **Pass** = a tone on the way in, with the pass card tinted behind it
+on the registry. **Fail** = silence, card tinted, sentence in the live region.
+
+**If leg 1 passes and leg 2 fails**, the resume outside a gesture does not restore output after an
+interruption on this device: tap once anywhere after coming back and stay past the ten-minute
+threshold. If the second tone then sounds, the re-arm is doing its job and what is owed is deferring
+an alert to the next gesture rather than playing it into a dead context. If nothing sounds even after
+that tap, with the speaker un-slashed and Silent Mode off, it is not the unlock at all —
+`audio-probe.html`'s probe 1 answers in one tap whether raw Web Audio can sound on that device today.
+Whatever happens, it goes here.
+
+**What this correction still cannot prove.** That a room hears anything. No machine heard the tone,
+none can, and the seam that says `running` is the same seam that said `running` all through the
+failure above. Every claim added this round is about the *mechanism* — one context, born in a gesture,
+never closed, carrying both tones — and the mechanism being right is a necessary condition for the
+sound, not a sufficient one. Line 6 stays open and stays 👤.
+
+**👤 RUN 2026-08-14, second sitting — PASSED. Line 6 closes.** Both legs on the teaching iPad, from
+the **installed** PWA in standalone, service worker active: the five-minute tone sounded while the
+teacher stayed in the app and off the registry (leg 1, the mechanism), and a tone sounded on the way
+back in after the app had been backgrounded for six minutes (leg 2, line 6 as written). The card was
+tinted behind it, as it was in the failing run. The correction works on glass.
+
+*What the build under test was, stated precisely because the last round's lesson was that an
+imprecise reading is worse than none.* The app was installed from **the LAN server at
+`192.168.50.142:8443` serving `planbook-shell-v60`**, not from `planbook.hwgteach.com` — that origin
+was on `planbook-shell-v51` at the time of the run and had received neither this work order nor
+WO-2.28. The origin's hostname is not what line 6 asks about: what it asks about is an installed PWA
+in standalone with its own service worker, surviving an iOS suspend, and a LAN-origin install
+exercises all three. **What this run therefore does not cover** is the deployed artefact itself —
+Cloudflare Pages' headers, the precache as `verify-deploy.mjs` reads it, and the update path from an
+older installed shell. Those are that tool's question and the deploy's, not line 6's.
+
+*And the thing that was actually proven, against the failure above:* the shipped-and-failed build
+put an audible tone on the laptop and silence on the iPad from the same source. This build sounds on
+both. The variable that changed between them is the one the correction changed — where the
+`AudioContext` is born — which is what makes this a fix rather than a coincidence.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

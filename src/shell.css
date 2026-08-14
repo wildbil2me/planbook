@@ -194,14 +194,21 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .hdr-year-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
 
-/* Presentation mode's header control (WO-1.9). It wears `.hdr-icon-btn` for its shape and this
-   class for one thing only: the ON state.
+/* The header's MODE switches — presentation mode (WO-1.9) and alert sounds (WO-2.29). Both wear
+   `.hdr-icon-btn` for their shape and this class for one thing only: the state.
+
+   `.active` MEANS "THIS SWITCH IS AWAY FROM ITS DEFAULT", which is one rule and not two, though it
+   reads as two the first time: presentation mode defaults off, so lit means support details are
+   hidden; alert sounds default on, so lit means MUTED. In both cases what the fill says is that the
+   teacher put this switch somewhere and has to be able to see she did — which for the mute is the
+   more important direction, because the thing it silences is a safety alert.
 
    Solid white with the header's own navy inside it — the same inversion `.q-btn.active` uses, and
    design/style-guide.md §5's rule for an active control on a dark surface. It is the loudest thing
    available in a 32px square, which is what the work order's "obviously on when it's on" needs from
-   a control with no room for a word beside it. The strip under the header is the rest of that
-   answer.
+   a control with no room for a word beside it. Presentation mode has a strip under the header as
+   the rest of that answer; the mute deliberately does not (src/alert-sound.js says why), so for
+   that one the icon does the other half — a speaker with a slash through it.
 
    The hover rule is restated rather than inherited: `.hdr-icon-btn:hover` brightens a translucent
    white wash, and applied on top of a solid white fill it does nothing visible, which reads as a
@@ -1199,15 +1206,27 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    listing the control by class. */
 @media (pointer: coarse) {
   button { min-height: 44px; }
-  .header-top { min-height: 60px; }
+  .header-top { min-height: 60px; gap: 8px; }
   .header-bottom { min-height: 52px; }
+  /* WHERE WO-2.29's FOURTH CONTROL CAME FROM, and it is a measurement rather than a taste. This is
+     not a touch target itself — it is the flex row that holds the year button and the three icon
+     buttons — and it is named here for the reason `.panel-title-row` below is: the gap between 44px
+     targets is part of the touch pass, and this is the block that changed it.
+
+     At 390px on a coarse pointer the row measured 344.1px of content against 390px of viewport:
+     45.9px of slack, where a 44px control plus this row's gap wants 52. Something had to give, and
+     the two gaps are the cheapest thing in the row — the alternative was taking the 📓 out at phone
+     width, and WO-1.9 already spent the title to buy its own button (see the 640px block). 8→6 here
+     over four gaps and 12→8 on `.header-top` frees 12px, which leaves ~8px of slack rather than an
+     overflow. `tools/verify-shell.mjs` measures that width at 390x844 on every run. */
+  .header-actions { gap: 6px; }
   .hdr-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-icon-btn svg { width: 18px; height: 18px; }
-  /* Presentation mode's button takes its 44x44 from `.hdr-icon-btn` above, which it also wears.
-     It is named here anyway, with the radius the coarse pass gives every icon button, so that the
-     control appears in this block by name — the rule this stylesheet's own header states is that
-     every interactive control does, and a control that is only covered by another class's rule is
-     a control the next reader has to go and prove is covered. */
+  /* Both mode buttons take their 44x44 from `.hdr-icon-btn` above, which they also wear. Named here
+     anyway, with the radius the coarse pass gives every icon button, so that the control appears in
+     this block by name — the rule this stylesheet's own header states is that every interactive
+     control does, and a control that is only covered by another class's rule is a control the next
+     reader has to go and prove is covered. */
   .hdr-mode-btn { width: 44px; height: 44px; border-radius: 10px; }
   .presentation-strip { font-size: 13.5px; }
   .presentation-strip-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }

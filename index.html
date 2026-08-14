@@ -254,6 +254,30 @@
           <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
       </button>
+      <!-- Alert sounds (WO-2.29). Beside presentation mode rather than in a settings screen, and
+           that is the work order's own call: a teacher about to proctor a test needs ONE tap to
+           silence the overdue-pass alert, mid-period, without leaving the registry. It is the same
+           kind of control as the three beside it — a switch for the whole app rather than a way
+           into the class that is open — which is what puts it in this row.
+
+           The icon carries the state and the fill repeats it: `.hdr-mode-btn.active` here means
+           MUTED, which is this switch away from its default, exactly as it means "support details
+           are hidden" on the button before it. Both are the position a teacher chose and has to be
+           able to see she chose. src/alert-sound.js owns the swap and the labels.
+
+           The fourth control in this row is what the coarse block's `.header-actions` gap pays for:
+           at 390px on a coarse pointer the row had 45.9px of slack and a 44px control plus its gap
+           wants 52, so the gaps come in rather than the 📓 going out (src/shell.css). -->
+      <button class="hdr-icon-btn hdr-mode-btn" id="soundsBtn" data-sounds-toggle
+              aria-pressed="false"
+              title="Alert sounds are on. Tap to silence the overdue-pass alert."
+              aria-label="Alert sounds are on. Tap to silence the overdue-pass alert.">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-sound-icon>
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
       <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"/>

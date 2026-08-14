@@ -129,6 +129,28 @@ export const PREF_DEFAULTS = {
      answer — and src/presentation.js owns the header control that writes it. */
   presentationMode: false,
 
+  /* Alert sounds: true while an overdue hall pass may make a noise (WO-2.29). Default ON, which is
+     the only defensible default for a safety alert — a teacher who never finds this control still
+     gets told that a student has been gone ten minutes.
+
+     A FACT ABOUT THIS BROWSER AND THIS ROOM, exactly as `presentationMode` above is, and legal here
+     for the same reason: what is stored is a switch position, and a switch position says nothing
+     about any student. Nothing about a pass, a name or a time comes near it.
+
+     WHY IT IS NOT A FIELD IN THE YEAR DOCUMENT, which is the other place it could have gone and the
+     one src/past-due.js's `pastDueDismissed` argues against at length. The document syncs and is
+     restored from backup: a teacher who silenced her iPad to proctor a test would have silenced the
+     laptop too, and a restore would carry the silence along with the grades. It is also right for it
+     to differ per device — the iPad in her hand is the one that has to make a noise, and the laptop
+     wired to the projector may well be the one that must not.
+
+     PERSISTED, AND THAT ROUNDS THE UNSAFE WAY ON PURPOSE. A remembered `false` means an alert that
+     stays silent after the test is over, which is the failure mode; forgetting it would mean the
+     sound coming back on its own mid-period, which is the other one. The muted speaker in the
+     header is what pays for the choice — the state is on the glass rather than in a settings screen
+     nobody opens. src/alert-sound.js is the only reader and owns the control that writes it. */
+  soundsOn: true,
+
   /* Which assignments this browser has answered "Not now" to on the past-due prompt (WO-3.6):
      { "a_3f9a1b2c4d": true }. An empty object means it has never been dismissed for anything.
 

@@ -21,6 +21,11 @@
       data-install-dismiss            snoozes the install banner
       data-presentation-toggle        turns presentation mode on or off — on the header button and
                                       on the strip's own "Turn it off", which are the same flip
+      data-sounds-toggle              silences the overdue-pass tone, or lets it sound again
+                                      (WO-2.29). One control, in the header beside the switch above,
+                                      because a teacher about to proctor a test needs it in one tap
+                                      mid-period. It silences the TONE only: the announcement and the
+                                      card colour are not a preference and are never taken away
       data-year-picker                renders the year list, then opens the year modal
       data-year-switch="<year>"       opens that year document
       data-year-create                on a <form>: creates the year typed into it
@@ -348,6 +353,11 @@ import * as daysOff from './days-off.js';
 import * as roster from './roster.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
+/* WO-2.29's overdue-pass tone, its iOS unlock and the header switch that silences it. Imported here
+   for the control and the boot paint only: src/attendance.js imports the module directly for the
+   one thing it wants from it, which is a tone at a level. A leaf — it imports src/prefs.js and
+   src/live-region.js and nothing imports it back except src/attendance.js. */
+import * as alertSound from './alert-sound.js';
 import * as teacher from './teacher.js';
 import * as views from './views.js';
 /* WO-3.3, and two modules rather than one because they are two different things. src/screen-nav.js
@@ -849,6 +859,12 @@ document.addEventListener('click', (e) => {
      only ever mean off. High in this listener rather than low: it is the control a teacher reaches
      for with a class already in the room. */
   if (e.target.closest('[data-presentation-toggle]')) { flipPresentationMode(); return; }
+
+  /* Beside it in this listener as well as in the header, and for the same reason: it is a control a
+     teacher reaches for with a class already in the room. Nothing is chained onto it — the flip
+     changes what the NEXT alert does and touches no screen that is currently drawn, which is the
+     opposite of the mode above, where the redraw is the point. */
+  if (e.target.closest('[data-sounds-toggle]')) { alertSound.toggleAlertSounds(); return; }
 
   const picker = e.target.closest('[data-year-picker]');
   if (picker) { openYearPicker(picker); return; }
@@ -1860,6 +1876,11 @@ document.addEventListener('DOMContentLoaded', async () => {
      painted whether or not IndexedDB opens. This is also the whole of "it survives a reload and an
      app relaunch" — nothing else remembers, because the preference is the memory. */
   presentation.refreshPresentationChrome();
+  /* And the mute, beside it and for the same three reasons: a fact about this browser, read from
+     localStorage, painted whether or not IndexedDB opens. A teacher who silenced the alert to
+     proctor a test yesterday must find the header still saying so today — the preference is the
+     memory, and this is the only thing that paints it. */
+  alertSound.refreshSoundChrome();
   try {
     await store.boot();
     refreshYearButton();
@@ -2132,6 +2153,25 @@ window.planbook = {
      fixtures of every check after it. Nothing in the app reads window.planbook — see the
      block above for why the seam outlived the shelf. */
   presentation,
+  /* `alertSound` joined at WO-2.29, and its reason is the one src/backup.js's entry gives rather
+     than the reading reason `classes` gives: a headless browser cannot hear anything, and no check
+     anywhere can assert that a room heard a beep. What it CAN be handed is what the audio path
+     actually DID — alertSoundLog() is that seam, and an entry is written only after the oscillators
+     have been constructed, connected and started, carrying how many of them there were. That is how
+     a tone the preference SILENCED (an entry with no oscillators) is told from a threshold that
+     stopped asking for one at all (no entry).
+
+     AND THE SECOND FUNCTION IS HERE BECAUSE THE FIRST ONE WAS NOT ENOUGH, which the 2026-08-14 iPad
+     run proved at this app's expense: alertSoundLog() read `played: true, oscillators: 10,
+     state: "running"` throughout a failure in which the device made no sound, because a context
+     created outside a gesture reports exactly that and plays to nothing. So alertAudioState()
+     reports the MECHANISM the corrected unlock turns on — how many AudioContexts this page has ever
+     constructed, whether the one it holds was born in a gesture, and whether it is still open —
+     which is machine-checkable in the way audibility is not. Neither function closes the 👤 line.
+     The switch itself is a button in the header a teacher can touch, and the harness taps it.
+     Nothing in the app reads window.planbook — see the block above for why the seam outlived the
+     shelf. */
+  alertSound,
   /* `accommodationPrompt` joined at WO-3.8, for one acceptance line and not for convenience. Its
      visible controls are all reachable by a thumb and are driven that way; what a thumb CANNOT do
      is reach the reveal while presentation mode is on, because with the mode on the button is not

@@ -383,6 +383,10 @@ import { rosterName, fullName } from './roster.js';
    DOM, reads no clock and never calls the store, so this file can hand it the live document inside
    an update() without the two modules being able to disagree about who is out of the room. */
 import * as passes from './passes.js';
+/* WO-2.29's overdue tone. This file asks for an alert at a level and knows nothing else about it —
+   no oscillator, no AudioContext, no preference — which is the module boundary that work order
+   exists to draw. src/alert-sound.js is never handed a student. */
+import * as alertSound from './alert-sound.js';
 /* The calendar model (WO-2.3), imported the same one way src/passes.js is and for the same reason:
    it holds no DOM, reads no clock and never calls the store, so this file can ask it what covers a
    date without the two modules being able to disagree about whether a class met. It is imported
@@ -2914,9 +2918,11 @@ const PASS_CLOCK_MS = 1000;
 
   So the cost is one interval, the open-class computation and at most three text writes a second
   while a pass is open, and the thing it buys is the alert. WO-2.28 supplied the alerts with the
-  driver of their own that WO-2.27 said they needed for that computation. It did not make the alert
-  perceptible to a sighted teacher away from the registry; that remaining channel is WO-2.29, a
-  decision and a work order rather than a reason to make this interval depend on hidden markup.
+  driver of their own that WO-2.27 said they needed for that computation, and WO-2.29 gave what that
+  driver produces somewhere to go: paintPassElapsed() plays a tone at each threshold, so a teacher
+  entering scores with a student twenty minutes gone is now told by the one channel that does not
+  need a screen. This paragraph used to end by saying she was told nothing — that was true for two
+  days and is the reason this interval was worth keeping alive through both work orders.
 */
 function startPassClock() {
   if (passClock) return;
@@ -3003,15 +3009,27 @@ function paintPassElapsed() {
   update((d) => {
     fired.forEach((f) => { passes.markAlerted(d, cls.id, f.studentId, f.level); });
   });
+  /* THE TONE IS THE ALERT (WO-2.29), and it goes first because it is the channel that reaches a
+     teacher who is not looking at this screen — which, off the registry, is every teacher. What it
+     is handed is a level and nothing else: src/alert-sound.js owns the two patterns, the iOS
+     unlock and the `soundsOn` preference that silences it, and is never told who is out.
+
+     ONE TONE AT THE WORSE LEVEL when two students cross on the same tick, which is the same choice
+     the single sentence below makes and for a sharper reason: two three-second sequences started
+     together are one smear nobody can count. The module's own comment carries the rest. */
+  alertSound.playOverdueAlert(Math.max.apply(null, fired.map((f) => f.level)));
+
   /* ONE SENTENCE FOR ALL OF THEM, because src/live-region.js holds one message: two announce()
      calls in the same tick would leave a screen reader with the second student and no first.
 
      IT NAMES THE STUDENT, like every other announcement this screen makes about a pass — the
      alternative ("a student is overdue") is an alert a teacher has to go and look for, on the one
      surface where knowing WHO is the whole of the information. Roll Call! does the same, for the
-     accessibility reason its own comment gives: over there the alert is a sound, and the sentence
-     is what a deaf teacher gets instead. Here there is no sound at all, so this sentence and the
-     colour on the card are the alert.
+     accessibility reason its own comment gives: this sentence is the ACCESSIBLE EQUIVALENT of the
+     tone above, so that the alarm is not sound-only for a deaf or hard-of-hearing teacher
+     (WCAG 1.4.1). It is the mirror of the alert and not the alert, which is why it stays exactly as
+     it is whether or not the sound is switched on — and why `soundsOn` reaches the tone alone and
+     never this line or the colour on the card.
 
      AND IT SAYS HOW LONG IT ACTUALLY IS, not which threshold was crossed. Roll Call! announces
      `config.alertOneMin` minutes; a backgrounded PWA that comes back at nineteen minutes would say

@@ -10066,10 +10066,23 @@ if (!attBooted || !attSeam) {
     return { nodes: box ? box.querySelectorAll(sel).length : -1,
              scores: !!scores && !scores.classList.contains('hidden'),
              registry: !!registry && !registry.classList.contains('hidden') }; })()`);
-  check('the document-driven alert fixture removes this pass\'s elapsed node while Scores remains up, before the stamp moves',
-    !!beforeMissingNodePass && missingNodeFixture.nodes === 0
+  /* THE PRECONDITION, AND WHY IT IS A CLAUSE HERE RATHER THAN A CHECK OF ITS OWN (WO-2.29). The
+     alert check below asserts `alerted === 1` after the stamp moves and never that it was not 1
+     before, and waitForPassAlert() loops UNTIL the flag reads 1 — so a pass that arrived here
+     already alerted would return on the first read and that check would go green having proved
+     nothing. It is not vacuous today and not by luck: the pass was cancelled and re-issued above, so
+     this record is new and carries no `alerted` key at all. What was missing is the guard that keeps
+     that true when someone reorders the block, which is the shape plans/dispatch-retro.md
+     § "Fixture assumptions" says escapes a green run. It rides on the truthiness test that was
+     already here rather than arriving as a new call site: a fixture guard is not a new claim, and
+     the count in tools/README.md had just settled. */
+  const beforeMissingNodeFresh = !!beforeMissingNodePass
+    && !('alerted' in JSON.parse(beforeMissingNodePass));
+  check('the document-driven alert fixture removes this pass\'s elapsed node while Scores remains up, before the stamp moves — over a pass that has not already alerted',
+    beforeMissingNodeFresh && missingNodeFixture.nodes === 0
       && missingNodeFixture.scores && !missingNodeFixture.registry,
-    'saved pass = ' + !!beforeMissingNodePass + ', matching elapsed nodes = '
+    'saved pass = ' + (beforeMissingNodePass || '(none)') + ', carrying no `alerted` key = '
+      + beforeMissingNodeFresh + ', matching elapsed nodes = '
       + missingNodeFixture.nodes + ', Scores shown = ' + missingNodeFixture.scores
       + ', registry shown = ' + missingNodeFixture.registry);
 
@@ -10325,6 +10338,26 @@ if (!attBooted || !attSeam) {
     half, which is the second. The card's state and the sentence are read at each step, and the
     thing being proved between them is that the first alert did not fire twice on the way.
   */
+  /* WO-2.29's seam, read either side of the two winds below. It is a record of what the AUDIO PATH
+     DID rather than of what the caller meant to do: src/alert-sound.js writes an entry only after
+     the oscillators have been constructed, connected and started, and the entry carries how many of
+     them there were. A build that stopped scheduling oscillators cannot produce these numbers, and
+     a build that stopped asking for a tone produces no entry at all.
+
+     WHAT IT DOES NOT SAY, AND THE SENTENCE HERE USED TO IMPLY OTHERWISE. These entries read
+     `played: true, oscillators: 10, state: "running"` for two days on a build that could not make a
+     sound on iOS at all, because a context created outside a user gesture reports exactly that and
+     plays to nothing (TESTING.md § WO-2.29, the 2026-08-14 run). Nothing in this file listens to
+     anything and no browser automation can: audibility is Acceptance line 6 and it belongs to a
+     human with an iPad. What the second seam below CAN say is whether the mechanism the corrected
+     unlock turns on is in place, which is a different claim and a checkable one. */
+  const soundLog = () => evalJs('window.planbook.alertSound.alertSoundLog()');
+  const audioState = () => evalJs('window.planbook.alertSound.alertAudioState()');
+  const soundBeforeB = await soundLog();
+  /* Read BEFORE either threshold: the context under test has to already exist here, made by one of
+     the taps this section has been doing all along, not by the alert that is about to fire. */
+  const audioBefore = await audioState();
+
   await hush();
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
   const woundB1 = await windBack(outB, 5.2);
@@ -10363,6 +10396,96 @@ if (!attBooted || !attSeam) {
       + JSON.stringify(saidTen));
 
   /*
+    ── WO-2.29: AND EACH OF THOSE TWO THRESHOLDS ASKED FOR ITS OWN TONE ──
+
+    The two winds above are the whole fixture — one student, one threshold at a time — so what is
+    added here is a reading rather than a walk. Exactly two entries appear across them, in order, and
+    they are the two Roll Call! patterns at Roll Call!'s own numbers: five two-note pairs at 660 Hz
+    at the default gain, then six rising pairs from 700 Hz at 0.4. THE THREE FIGURES ARE HOW THE
+    HARNESS TELLS THEM APART WITHOUT EARS — note count, first frequency and peak gain — and they are
+    the same three things that make the tones tellable apart in an occupied classroom, which is why
+    they are the ones recorded. A build that "simplified" the two sequences into one parameterised
+    call fails here rather than in a room.
+
+    `oscillators` is what makes this more than a note of intent: it is counted inside the loop that
+    creates and starts them, so it can only equal the note count on a build where the audio path ran
+    to the end. What it cannot tell you is whether a sound came out — no headless browser can, and
+    Acceptance line 6 stays owed to a human with an iPad.
+  */
+  const soundAfterB = await soundLog();
+  const newTones = soundAfterB.slice(soundBeforeB.length);
+  const five = newTones[0] || {};
+  const ten = newTones[1] || {};
+  check('each threshold asks for its own tone, and the two are not the same tone — five pairs at 660Hz, then six rising from 700Hz at a higher gain',
+    newTones.length === 2
+      && five.level === 1 && five.played === true && five.notes === 10 && five.first === 660
+      && five.peak === 0.32 && five.oscillators === 10 && five.error === ''
+      && ten.level === 2 && ten.played === true && ten.notes === 12 && ten.first === 700
+      && ten.peak === 0.4 && ten.oscillators === 12 && ten.error === ''
+      /* Distinguishable on all three axes, asserted rather than implied by the numbers above. */
+      && five.notes !== ten.notes && five.first !== ten.first && five.peak !== ten.peak,
+    newTones.length + ' tone(s) requested across the two winds: ' + JSON.stringify(newTones));
+
+  /*
+    ── WO-2.29 (CORRECTION): AND BOTH WERE SCHEDULED ON THE ONE CONTEXT THE FIRST GESTURE MADE ──
+
+    THIS CHECK EXISTS BECAUSE THE ONE ABOVE WENT GREEN THROUGH A FAILURE. The build it passed on
+    minted a fresh AudioContext inside every tone and another on every `visibilitychange`, and on
+    current WebKit a context created outside a user gesture reports `running`, advances its clock and
+    starts its oscillators onto no output — so every figure above was produced, in order, at the right
+    frequencies, on an iPad that was silent (TESTING.md § WO-2.29, "👤 RUN 2026-08-14 — FAILED",
+    probe 1 against probe 2). Audibility is still not assertable here. WHAT IS ASSERTABLE IS THE
+    MECHANISM THE FIX TURNS ON, and it is these four things: one context for the life of the page,
+    born in a gesture, still open, and carrying both tones.
+
+    `ctxTime` IS THE CLAUSE THAT CANNOT BE FAKED BY A FRESH CONTEXT, and it is why this check is not
+    just a counter reading itself back. `contexts` counts the constructions src/alert-sound.js makes
+    through its own unlock, so a build that went back to `new AudioContext()` inside the tone would
+    leave that number at 1 and slip past it — but a context constructed at alert time reads a
+    `currentTime` of ~0, where the held one has been running since the first tap of this section,
+    minutes ago. The second tone's clock must also be strictly past the first's, which is the same
+    claim from the other end: two readings of one clock, not two clocks each starting at zero.
+
+    AND ONE CLAUSE IS READ OFF THE SOURCE RATHER THAN THE PAGE, which this file does elsewhere for
+    the same reason (the prefs sweep at the head of the run). A context minted somewhere the module
+    does not count — the shipped build did it on every `visibilitychange` — is invisible to every
+    reading above: it is constructed, it is closed, and nothing observable moves. What IS observable
+    is that the file contains exactly one constructor call and that it sits in the gesture listener,
+    so that is asserted directly. It is the clause a future edit is most likely to break.
+  */
+  const soundSrc = await fs.readFile(path.join(ROOT, 'src', 'alert-sound.js'), 'utf8');
+  const soundLines = soundSrc.split('\n');
+  const ctorAt = soundLines
+    .map((line, i) => ({ n: i + 1, text: line.trim() }))
+    .filter((l) => /new\s+\(window\.AudioContext/.test(l.text) && !/^([*]|\/\/|\/\*)/.test(l.text));
+  /* Whose function it is in: the nearest declaration above it. */
+  const ctorHome = ctorAt.length === 1
+    ? ((soundLines.slice(0, ctorAt[0].n).reverse().find((l) => /^function\s+\w+/.test(l)) || '').trim())
+    : '(' + ctorAt.length + ' constructor call sites)';
+  const audioAfter = await audioState();
+  check('both tones were scheduled on the ONE AudioContext the first gesture made — the alerts and the wake-ups mint no others, and nothing closes it',
+    audioBefore.contexts === 1 && audioBefore.origin === 'gesture'
+      && audioAfter.contexts === 1 && audioAfter.origin === 'gesture'
+      /* One constructor call in the module, and it is the gesture listener's. */
+      && ctorAt.length === 1 && /^function unlockAudio\(/.test(ctorHome)
+      /* Still open. A build that closed it after the last note — which is what the lift does and
+         what spends iOS's cap — reports `closed` here, live off the context. */
+      && audioAfter.state !== 'closed' && audioAfter.state !== 'none'
+      && five.ctx === 1 && ten.ctx === 1
+      /* Older than the alert that used it, and one clock across both — measured against the reading
+         taken BEFORE the winds rather than against a number written down here, which is what makes
+         it a comparison rather than a guess about how long this section takes. A context minted at
+         alert time reads ~0.00 and fails both. */
+      && audioBefore.currentTime > 1 && five.ctxTime >= audioBefore.currentTime
+      && ten.ctxTime > five.ctxTime
+      && audioAfter.currentTime >= ten.ctxTime,
+    'before the winds ' + JSON.stringify(audioBefore) + ', after them ' + JSON.stringify(audioAfter)
+      + '; the five-minute tone was scheduled on context ' + five.ctx + ' at its clock '
+      + five.ctxTime + 's and the ten-minute tone on context ' + ten.ctx + ' at ' + ten.ctxTime
+      + 's; src/alert-sound.js constructs a context at line(s) ' + JSON.stringify(ctorAt.map((l) => l.n))
+      + ', in ' + JSON.stringify(ctorHome));
+
+  /*
     ── AND NOT AGAIN AFTER THE STUDENT RETURNS, which is the clause the state has to reset for ──
 
     The same student comes back and is sent straight out again. The new pass carries no `alerted` at
@@ -10396,6 +10519,93 @@ if (!attBooted || !attSeam) {
       + ', its card is at level ' + cardB2.over + ' reading ' + JSON.stringify(cardB2.elapsed)
       + ', and the live region still holds '
       + (saidAfter === SR_WO29 ? 'the sentinel' : JSON.stringify(saidAfter)));
+
+  /*
+    ── WO-2.29: THE OFF SWITCH, WHICH IS THE OTHER HALF OF SHIPPING A SOUND ──
+
+    Driven through the real control in the header — a teacher proctoring a test has one tap and this
+    is it — and then two more thresholds are crossed, the first with the sound off and the second
+    with it back on. What must survive the mute is everything that is NOT the tone: the sentence, the
+    card colour and the level on the record. The preference silences an alert's loudest channel; it
+    does not turn the alert off, and a build that took the announcement with it fails here.
+
+    THE FIXTURE IS THE FRESH PASS THE CHECK ABOVE JUST LEFT ON outB, so this costs no new trip and no
+    new student — the quick pass is wound to five minutes and then to ten, and is returned ten
+    minutes older than it would have been. The history block below counts every figure it asserts out
+    of the log in Node rather than assuming any of them, which is what makes that safe.
+  */
+  const mutedBefore = await soundLog();
+  await clickSel('#soundsBtn');
+  const muteChrome = await evalJs(`(function(){
+    var b = document.getElementById('soundsBtn');
+    if (!b) return null;
+    return { pressed: b.getAttribute('aria-pressed'), lit: b.classList.contains('active'),
+             label: b.getAttribute('aria-label') || '',
+             slashes: b.querySelectorAll('[data-sound-icon] line').length,
+             stored: localStorage.getItem('planbook_soundsOn'),
+             inDoc: JSON.stringify(window.planbook.store.getDoc()).indexOf('soundsOn') >= 0 }; })()`);
+  check('one tap on the header switch mutes the alert, says so on the button, and writes a `planbook_` preference and nothing in the year document',
+    !!muteChrome && muteChrome.pressed === 'true' && muteChrome.lit === true
+      && /OFF/.test(muteChrome.label) && muteChrome.slashes === 2
+      && muteChrome.stored === 'false' && muteChrome.inDoc === false,
+    muteChrome ? 'aria-pressed = ' + muteChrome.pressed + ', lit = ' + muteChrome.lit
+      + ', slash strokes on the icon = ' + muteChrome.slashes
+      + ', planbook_soundsOn = ' + JSON.stringify(muteChrome.stored)
+      + ', the string "soundsOn" anywhere in the year document = ' + muteChrome.inDoc
+      + ', label = ' + JSON.stringify(muteChrome.label)
+      : 'there is no #soundsBtn in the header');
+
+  await hush();
+  const woundMute = await windBack(outB, 5.2);
+  await wakeUp();
+  await new Promise(r => setTimeout(r, 250));
+  const atMuted = await read();
+  const cardMuted = (atMuted.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
+  const saidMuted = await heard();
+  const mutedTones = (await soundLog()).slice(mutedBefore.length);
+  check('with the sound off the tone is not played — and the announcement, the card colour and the level on the record are all exactly as they were',
+    !!woundMute.now && mutedTones.length === 1
+      && mutedTones[0].played === false && mutedTones[0].oscillators === 0
+      && mutedTones[0].level === 1
+      /* The same sentence it says with the sound on, word for word — this is the accessible mirror
+         of the tone and it is not a preference. */
+      && /has been out on a quick pass for 5 minutes\./.test(saidMuted)
+      && cardMuted.over === 1 && /^5:\d{2}$/.test(cardMuted.elapsed || '')
+      && (atMuted.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 1,
+    'what the tick asked for = ' + JSON.stringify(mutedTones) + ', the card is at level '
+      + cardMuted.over + ' reading ' + JSON.stringify(cardMuted.elapsed) + ', alerted = '
+      + JSON.stringify((atMuted.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted)
+      + ', and the announcement was ' + JSON.stringify(saidMuted));
+
+  /* AND IT IS THE PREFERENCE DOING IT, not a build that has stopped playing anything. The switch
+     goes back on through the same control and the next threshold sounds again — without this, the
+     silence above would be indistinguishable from a broken oscillator, which is the failure a check
+     written around an absence is always one step away from. It also leaves the browser with the
+     sound ON, which is the default every fixture after this one is entitled to. */
+  const unmutedBefore = await soundLog();
+  await clickSel('#soundsBtn');
+  await hush();
+  const woundBack = await windBack(outB, 5.2);
+  await wakeUp();
+  await new Promise(r => setTimeout(r, 250));
+  const atUnmuted = await read();
+  const unmutedTones = (await soundLog()).slice(unmutedBefore.length);
+  const soundBackOn = await evalJs(`(function(){
+    var b = document.getElementById('soundsBtn');
+    return { pressed: b ? b.getAttribute('aria-pressed') : '', lit: !!b && b.classList.contains('active'),
+             slashes: b ? b.querySelectorAll('[data-sound-icon] line').length : -1,
+             stored: localStorage.getItem('planbook_soundsOn') }; })()`);
+  check('and turning it back on is the same one tap: the next threshold sounds again, at the second pattern',
+    !!woundBack.now && unmutedTones.length === 1
+      && unmutedTones[0].played === true && unmutedTones[0].level === 2
+      && unmutedTones[0].oscillators === 12 && unmutedTones[0].first === 700
+      && unmutedTones[0].error === ''
+      && (atUnmuted.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 2
+      && soundBackOn.pressed === 'false' && soundBackOn.lit === false && soundBackOn.slashes === 0
+      && soundBackOn.stored === 'true',
+    'what the tick asked for = ' + JSON.stringify(unmutedTones) + ', aria-pressed = '
+      + soundBackOn.pressed + ', lit = ' + soundBackOn.lit + ', slash strokes = ' + soundBackOn.slashes
+      + ', planbook_soundsOn = ' + JSON.stringify(soundBackOn.stored));
 
   /*
     ── ACCEPTANCE LINE 3: THE HISTORY, AGAINST A COUNT THIS FILE MAKES ITSELF ──

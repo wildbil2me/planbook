@@ -2836,7 +2836,7 @@ closes this line has fixed who the alert is *computed* for, not who can perceive
 
 ## WO-2.29 — the overdue alert gets its primary channel back
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.9, WO-2.28
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** M · **Depends on** WO-2.9, WO-2.28
 
 **Booked 2026-08-14, out of WO-2.27's close and a reading of Roll Call!.** WO-2.27 asked whether the
 pass clock should keep running once the teacher leaves the registry. Answering it turned up something
@@ -2871,18 +2871,30 @@ have to be negotiated; a tone does not go near it.
 **What to lift, and the scar that comes with it.** All of `src/dashboard.html:3448`–`3508`, in this
 project's idiom:
 
-- `playToneSequence(notes)` — AudioContext oscillators, **no audio assets**, a fresh context per
-  sequence closed on a timeout after the last note. This is the shape that keeps the no-dependencies
-  rule: it is a browser API, not a library, and nothing is fetched.
+- `playToneSequence(notes)` — AudioContext oscillators, **no audio assets**. This is the shape that
+  keeps the no-dependencies rule: it is a browser API, not a library, and nothing is fetched.
+  ⚠️ **The context lifetime below is the one thing NOT to lift, and this paragraph originally said to
+  lift it.** Roll Call! builds a fresh context per sequence and closes it on a timeout after the last
+  note; that is what this work order shipped on 2026-08-14 and it was **inaudible on the iPad**, while
+  sounding perfectly on the laptop. On current WebKit a context constructed outside a user gesture
+  reports `state: "running"`, advances `currentTime`, starts its oscillators — and plays to nothing.
+  The correction holds **one** context, born in the first gesture, for the life of the page. Evidence,
+  including the probe that separates it from Silent Mode: `TESTING.md` § WO-2.29.
 - `playAlertFive()` — a steady two-note 660 Hz beep, five times over ~3 s. `playAlertTen()` — six
   rising pairs from 700 Hz at a higher gain, deliberately more insistent than the first. **Take the
   frequencies and the patterns as they are.** They are tuned to carry across an occupied classroom
   and to be told apart from each other without counting; re-deriving them is the WO-2.11 scar again.
-- **The iOS unlock, which is the whole risk.** iOS Safari will not let an `AudioContext` created
-  outside a user gesture make a sound, so Roll Call! primes one inside a one-shot `touchstart`
-  listener and removes it (`src/dashboard.html:3451`–`3462`). Planbook is an installed PWA that iOS
-  suspends; the question this work order must actually answer on glass is whether a context primed at
-  the start of a period is still good after a suspend-and-resume, and what to do if it is not.
+- **The iOS unlock, which is the whole risk — and the premise stated here was wrong.** ⚠️ Roll Call!
+  primes a context inside a one-shot `touchstart` listener and discards it
+  (`src/dashboard.html:3451`–`3462`), on the understanding that the *document* is thereby unlocked and
+  later contexts may run. **The iPad falsified that on 2026-08-14.** The priming act carries nothing:
+  what is unlocked is the **context**, not the document, so a discarded primer buys exactly nothing
+  and every later context is born dead. The probe that settles it is in `TESTING.md` § WO-2.29 —
+  identical logs, opposite outcomes, the only difference being whether the context was constructed
+  inside the tap. What this work order had to answer on glass turned out not to be the suspend
+  question at all; the suspend was never reached, because the mechanism never worked. *Roll Call! is
+  the source of this premise and is still in daily classroom use — its own alert tones may be failing
+  the same way behind its visual banner, and nobody has checked.*
 
 **The preference.** `soundsOn`, defaulting on, in `localStorage` under `planbook_` — a UI preference
 and therefore allowed there (`CLAUDE.md`, Conventions), never in the year document. A teacher
@@ -2924,18 +2936,23 @@ rather than buried in a settings screen nobody opens mid-period.
   `:10324` uses it. No injury, no wound to assert on.)*
 
 **Acceptance**
-- [ ] Crossing either threshold plays its tone, and the two are distinguishable from each other.
-- [ ] `announce()` still fires at both thresholds, with the same sentence it says today, and the
+- [x] Crossing either threshold plays its tone, and the two are distinguishable from each other.
+- [x] `announce()` still fires at both thresholds, with the same sentence it says today, and the
       comment beside it says it is the accessible equivalent of the sound rather than the alert.
-- [ ] The `soundsOn` preference silences the tone and leaves the announcement and the card tint
+- [x] The `soundsOn` preference silences the tone and leaves the announcement and the card tint
       alone; it lives under `planbook_` and never in the year document.
-- [ ] The tone is asserted in `tools/verify-shell.mjs` through a seam rather than by listening, and
+- [x] The tone is asserted in `tools/verify-shell.mjs` through a seam rather than by listening, and
       the check fails if either threshold stops requesting it.
-- [ ] No comment in `src/attendance.js` still says this app has no sound.
-- [ ] **The alert is audible on the teaching iPad from an installed PWA, on a screen that is not the
+- [x] No comment in `src/attendance.js` still says this app has no sound.
+- [x] **The alert is audible on the teaching iPad from an installed PWA, on a screen that is not the
       registry, after the app has been backgrounded and resumed.** If the primed context does not
       survive the suspend, the finding and what was done about it are written down here. 👤
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      *Failed on the first sitting 2026-08-14 — silent at both thresholds — and the finding is the
+      reason this work order has a correction round: an `AudioContext` built outside a user gesture
+      reports `running`, advances its clock, and plays to nothing on current WebKit. Passed on the
+      second sitting the same day, both legs, installed PWA on `planbook-shell-v60`. Both runs and
+      the probe evidence are in `TESTING.md` § WO-2.29.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
 **Traps** — **Do not make `#srLive` visible** as a shortcut to a sighted alert. It is one string
@@ -3019,3 +3036,83 @@ see the refusal at `src/attendance.js:2970`–`2981`, which is now three work or
 real objection: an alert about a child in a room the teacher is not in, with no card, no Return
 button and nothing to act on. **This is not a WO-2.28 regression** and its fix does not belong in
 `paintPassElapsed()`'s loop.
+
+---
+
+## WO-2.31 — the held audio context has two ways to die that nothing watches
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.29
+
+**Booked 2026-08-14 out of WO-2.29's correction round, and both halves are doors left open by the
+fix rather than faults in it.** WO-2.29 shipped a fresh `AudioContext` per alert; the iPad proved on
+2026-08-14 that a context built outside a user gesture reports `running`, advances its clock and
+plays to nothing, and the correction replaced it with **one** context born in the first gesture and
+held for the life of the page. That is the right shape and it is audible on glass. These are the two
+ways the held context can still end up dead with nothing saying so — one in the app, one in the
+harness that guards it. Both were raised by the correction round's verifier; neither blocked it.
+They are one work order because they are one file and one sitting.
+
+**The bug: an interruption that never hides the app disarms it silently.** The held context is
+resumed from `visibilitychange → visible`, which is the right hook for a suspend — the app goes to
+the background and comes back. **An iOS interruption that leaves the app foregrounded fires no
+`visibilitychange` at all.** An incoming call, a FaceTime request, an alarm: iOS interrupts the audio
+session, the held context is left interrupted, and because the page never hid, nothing re-arms the
+gesture listener and nothing calls `resume()`. The next overdue alert schedules its oscillators onto
+a dead context and the teacher hears silence — *the exact failure WO-2.29 was written to fix, through
+a door the fix did not close.* It does not self-heal: with the primer consumed and the re-arm bound
+only to `visibilitychange`, the audio stays dead until the app is backgrounded and returned, or
+reloaded.
+
+**Why it sits at the back of Ship 2 rather than beside the work order that found it.** It needs an
+interruption during a period with a student out on a pass, which is rare. It is in Ship 2 rather than
+deferred for the same reason WO-2.30 is: **no harness check in this project can reach it** — there is
+no way to interrupt an audio session from CDP — so a green run will never find it, and what it
+produces is silence rather than an error anybody sees. That combination is what earns a row.
+
+**The harness half: the check that guards the fix can be walked past.** WO-2.29's correction added a
+source clause asserting that exactly one `AudioContext` is ever constructed, and it matches the
+literal string `new (window.AudioContext`. A bare `new AudioContext()` — which is what anyone writing
+this fresh on a modern browser would type, and which is what the file itself would use if the
+`webkit` fallback were ever tidied away — **satisfies the code and slips the check**. The guarantee
+the whole correction rests on is one refactor away from being unguarded, and the failure mode is a
+green harness, which is the failure mode this work order series has already been bitten by twice.
+
+**Deliverables**
+
+- `src/alert-sound.js` — resume the held context on the paths `visibilitychange` cannot see. The
+  candidates, and the work order does not settle which: the context's own `statechange`, which fires
+  when iOS interrupts it; `focus`/`blur` on the window; or re-arming the gesture listener whenever
+  the context is found in any state other than `running` at alert time. **Whichever is chosen, the
+  fallback that must exist is the cheap one** — if a tone is asked for and the context is not
+  `running`, re-arm the listener so the teacher's next touch anywhere restores audio, and say in a
+  comment that the cost is one missed alert rather than a dead feature.
+- `tools/verify-shell.mjs` — widen the clause so a bare `new AudioContext(` is caught as well as the
+  `window.`-qualified form, and assert against the count of construction sites rather than a literal
+  spelling wherever that is possible.
+
+**Acceptance**
+
+- [ ] An interrupted context is recovered without the app being backgrounded and returned: the seam
+      shows the alert's tone scheduled on a `running` context after a simulated interruption, and the
+      recovery path is driven rather than asserted from source.
+- [ ] If the context cannot be recovered without a gesture, the gesture listener is re-armed and the
+      seam records that it was — so "waiting for a touch" and "dead" are not the same absence, which
+      is the distinction `alertSoundLog()` already draws for the muted case.
+- [ ] Rewriting `new (window.AudioContext || window.webkitAudioContext)()` as a bare
+      `new AudioContext()` leaves the harness **red**, not green. Watched failing.
+- [ ] Still exactly one context over the life of the page, still born in a gesture — WO-2.29's
+      guarantees are unchanged and its checks still pass.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      for the count.
+- [ ] 👤 On the teaching iPad: with a pass running, take an interruption that does not background the
+      app, then let a threshold pass. The finding goes in `TESTING.md` § WO-2.31 whichever way it
+      falls. 👤
+
+**Traps** — **Do not go back to a context per alert.** That is the shape the iPad falsified on
+2026-08-14 and the evidence is in `TESTING.md` § WO-2.29; a context built outside a gesture reports
+`running` and plays to nothing. **Do not tune the frequencies, note counts, durations or gains** —
+they are Roll Call!'s, tuned by a year of classroom use, and re-deriving them is the WO-2.11 scar.
+**Do not accept a source-only assertion for the recovery path.** The seam saying `running` is exactly
+what it said all through the failure WO-2.29 shipped with; what has to be shown is a tone scheduled
+on a context that was interrupted first. **And no machine can hear anything** — the audible half
+stays 👤 and goes to the iPad, as it did twice for WO-2.29.
