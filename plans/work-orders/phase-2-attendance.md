@@ -2606,14 +2606,23 @@ bound only; the two harness items below are that gap and its neighbour.
 - **A harness comment points at something that is not there.** `tools/verify-shell.mjs:10077` reads
   *"a build that fired off a variable would say it again after the reload below."* There is no reload
   below. The check is sound; the sentence explaining why it is sound is not.
-- **`src/shell.js`'s hook inventory claims to be one and is not.** The block at ~lines 200–235 lists
-  every delegated attribute in the app, four pass hooks among them (`data-pass-issue`,
-  `data-pass-return`, `data-pass-cancel`, `data-pass-note`) — and **none** of the three
-  `data-pass-history*` hooks WO-2.9 added. Checked 2026-08-14: zero mentions. An inventory is a
-  promise of completeness in a way a paragraph is not, so a missing row reads as "no such hook
-  exists" rather than as "this list is partial" — and this list is the first thing a dispatch looking
-  for the delegation seam finds. WO-2.26's first verifier raised it and correctly left it alone; it
-  was out of scope there and is exactly in scope here.
+- **`src/shell.js`'s hook inventory claims to be one and is not — and it is missing SEVEN, not three.**
+  The block under *"The hooks, all handled by the one listener below"* lists every delegated attribute
+  in the app. Diffed 2026-08-14 against every `closest('[data-…')` in the same file, these are
+  delegated and absent:
+
+      data-pass-history · data-pass-history-all · data-pass-history-student      (WO-2.9)
+      data-attendance-history · data-attendance-record
+      data-attendance-record-csv · data-attendance-record-print                  (earlier)
+
+  WO-2.26's first verifier found the **three** because it was reading WO-2.9. **The other four have
+  been missing longer and nobody ever flagged them**, and that is the finding rather than the count:
+  this list does not rot when one person forgets once, it has been rotting continuously across at
+  least two work orders, in silence. An inventory is a promise of completeness in a way a paragraph is
+  not, so a missing row reads as *"no such hook exists"* rather than *"this list is partial"* — and it
+  is the first thing a dispatch looking for the delegation seam reads.
+
+  **The diff is trustworthy in ONE direction only, and the other direction is a trap** — see Traps.
 
 **And two gaps in the harness, from WO-2.26's verification**
 
@@ -2638,9 +2647,15 @@ the whole term filter — but proving *a* filter is load-bearing is not proving 
 - The stacking argument is written down at the point a reader will look for it, with the date it was
   confirmed on the device.
 - `tools/verify-shell.mjs:10077` says what the check actually rests on.
-- `src/shell.js`'s hook inventory lists the three `data-pass-history*` hooks, or says in one line that
-  it is not exhaustive. **Either discharges it; a third option — adding one row and leaving two out —
-  discharges nothing** and leaves the same false promise one row shorter.
+- `src/shell.js`'s hook inventory lists all **seven** missing hooks, or says in one line that it is not
+  exhaustive. **Either discharges it; a third option — adding some rows and leaving others out —
+  discharges nothing** and leaves the same false promise a few rows shorter.
+- **A sweep rule in `tools/wo-sweep.mjs` that diffs the delegated hooks against the inventory**, so the
+  eighth omission is a red check rather than a discovery. *This is the deliverable that matters more
+  than the seven rows.* Four of this work order's debts were found by a human reading and thinking
+  "that looks odd"; this is the only one a script can hold, and it is the only one that has recurred.
+  Listing the seven by hand fixes today and leaves the mechanism that produced them running — the same
+  reasoning that took the count out of this work order's own title.
 - **A trip planted after `term.end`**, and the upper bound of `passesForStudentInTerm()` thereby made
   load-bearing.
 - **One assertion that the hall-pass card is on the Student Report screen when it is reached from the
@@ -2653,8 +2668,12 @@ the whole term filter — but proving *a* filter is load-bearing is not proving 
 - [ ] A reader of `src/shell.js:747` can tell why WO-2.9's surface is not registered there without
       opening a dispatch result file or this work order.
 - [ ] `tools/verify-shell.mjs:10077` describes the mechanism the check actually uses.
-- [ ] A reader of `src/shell.js`'s hook inventory who searches it for `data-pass-history` either finds
-      the hooks or finds a sentence telling them the list is partial.
+- [ ] A reader of `src/shell.js`'s hook inventory who searches it for any of the **seven** named above
+      either finds the hook or finds a sentence telling them the list is partial.
+- [ ] **`wo-sweep.mjs` fails when a delegated hook is missing from the inventory.** Prove it the way
+      WO-2.26's verifier proved the term filter: delete one row from the inventory in a copy of the
+      tree, watch the sweep go red, and state that in the result file. A rule that has only ever been
+      run against a list somebody just finished fixing has not been shown to catch anything.
 - [ ] **The term window's upper bound is load-bearing:** with a trip planted after `term.end`,
       reducing `passesForStudentInTerm()` to its `from` bound alone turns the suite red. State the
       count in the result file, the way WO-2.26's verifier stated 739/746 for the whole-filter case —
@@ -2670,6 +2689,17 @@ be reasoned about again by everyone after. **Do not delete the promise in `src/a
 instead of making it true** — "a run with an empty room costs nothing" is a real guarantee about a
 device that suspends, and the cheap fix is to honour it on the fourth path rather than to stop
 claiming it.
+
+**THE HOOK DIFF RUNS ONE WAY, AND RUNNING IT THE OTHER WAY WILL DESTROY THE INVENTORY.** Attributes
+found in a `closest('[data-…')` call and missing from the list are real omissions — that is the seven.
+The reverse comparison produces **twenty-odd inventory entries with no `closest()` call, and they are
+mostly correct entries**: `data-pass-type`, `data-score-student`, `data-term-id`, `data-assignment-id`
+and `data-model` are value-carrying companions read off an element some *other* hook matched, and
+several more are reached by `matches()` or `getAttribute()` rather than by `closest()`. A dispatch that
+diffs both ways and deletes the difference will strip working documentation and call it tidying. **The
+sweep rule must assert one direction only**, and its comment must say why — that sentence is itself one
+of this work order's deliverables in spirit, since a rule whose asymmetry is undocumented is the next
+comment debt.
 
 **No `src/` file needs to change for either harness gap**, and if one starts to, stop: both are
 fixtures and assertions, and a source edit made to satisfy a test this work order is writing is the
