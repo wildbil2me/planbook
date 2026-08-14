@@ -5,7 +5,40 @@
       "Bash(codex exec:*)",
       "Bash(cat:*)",
       "PowerShell(codex exec:*)",
-      "PowerShell(Get-Content:*)"
+      "PowerShell(Get-Content:*)",
+      "Bash(node tools/wo-gate.mjs:*)",
+      "Bash(node tools/wo-sweep.mjs:*)",
+      "Bash(node tools/verify-shell.mjs:*)",
+      "Bash(node tools/verify-deploy.mjs:*)",
+      "Bash(node tools/serve-https.mjs:*)",
+      "PowerShell(node tools/wo-gate.mjs:*)",
+      "PowerShell(node tools/wo-sweep.mjs:*)",
+      "PowerShell(node tools/verify-shell.mjs:*)",
+      "PowerShell(node tools/verify-deploy.mjs:*)",
+      "PowerShell(node tools/serve-https.mjs:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git branch --show-current)",
+      "Bash(ls:*)",
+      "PowerShell(git status:*)",
+      "PowerShell(git log:*)",
+      "PowerShell(git diff:*)",
+      "PowerShell(git ls-files:*)",
+      "PowerShell(git rev-list:*)"
+    ],
+    "ask": [
+      "Bash(node tools/wo-gate.mjs --tick:*)",
+      "Bash(node tools/wo-gate.mjs --start:*)",
+      "Bash(node tools/wo-gate.mjs --release:*)",
+      "PowerShell(node tools/wo-gate.mjs --tick:*)",
+      "PowerShell(node tools/wo-gate.mjs --start:*)",
+      "PowerShell(node tools/wo-gate.mjs --release:*)"
     ]
   }
 }
