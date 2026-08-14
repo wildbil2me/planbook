@@ -3058,6 +3058,55 @@ device would add is confirming the modal stacking by hand, and the owner already
 
 ---
 
+### WO-2.28 — The pass tick reads the document, not the banner
+
+**What this changes.** One guard, in `paintPassElapsed()`. It used to be `if (!node) return;` at the
+top of the per-pass loop, which was written for the empty-banner case and killed **the overdue alert**
+along with the text write. It now wraps the two DOM writes only, so the threshold comparison, the
+`fired` collection and the single `update()` run for every open pass of the open class, card or no
+card. **The alert is computed from the year document; the cards are only where figures get written.**
+
+**What a teacher gets.** A pass left open while she moves to Scores or a student's detail still
+alerts, and — the case this is really for — an installed iPad that iOS suspended, coming back on a
+screen that is not the registry, alerts **on the way in** rather than waiting for the registry to be
+painted. The delay it removes was unbounded: it lasted as long as she stayed off the registry.
+
+**What it does NOT do, and the line matters:** it fixes who the alert is *computed* for, not who can
+*perceive* it. `#srLive` is visually hidden by design, so off the registry a sighted teacher is still
+told nothing. That is **WO-2.29**, and this work order deliberately does not claim it.
+
+*Desk pass 2026-08-14: `verify-shell.mjs` **752 of 752, 0 failed, 0 skipped**, 249s, exit 0 — four new
+call sites, all in the existing WO-2.9 hall-pass block, none in a loop and none a failure arm.
+`wo-sweep.mjs` **18 checks · 16 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the
+standing pair.*
+
+**The mutation, and this is the count Acceptance line 2 asks for.** Restoring `if (!node) return;` to
+the top of the loop — the exact pre-fix code — turns the suite **red at 751 of 752, one failure**:
+
+> *"with no banner node for the pass, the document still drives its overdue alert while the registry
+> stays unpainted"* — reporting `alerted = undefined` and the live region **still holding the hush
+> sentinel**, i.e. nothing announced at all.
+
+**One red rather than four**, and the arithmetic is the point: the other three new checks stay green
+under that mutation, because the Scores walk's card is still in the banner and the fixture and restore
+checks do not depend on the guard. A check that went red along with it would have been a check about
+the banner rather than about the alert. `src/attendance.js` was restored byte-identical afterwards
+(md5 `2bc9914f76939da6729e1cfbb10e572e`).
+
+*The fixture assumption that would hide a bug here, named as the verifier's standing question asks:
+the hole is punched in the DOM by hand rather than reached through the app. Three things it does
+break — a banner still holding the node (asserted 0 before the stamp moves **and** after the alert
+lands), a pass carrying a stale `alerted` (cancelled and re-issued onto a fresh record), and a
+registry repaint during the poll (`registry shown = false` asserted at the read). What it cannot
+reach is the app-level route, for the reason recorded in the backlog row on the `list[0]` fallback.*
+
+**No 👤 line.** The static preconditions were ruled out rather than deferred: the `visibilitychange`
+listener exists (`src/attendance.js:3039`), the interval is started (`:2921`), and `sw.js` carries
+`planbook-shell-v58` so an installed iPad will actually receive the fix. The physical residue belongs
+to WO-2.29's iOS `AudioContext` unlock, not here.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

@@ -9986,6 +9986,150 @@ if (!attBooted || !attSeam) {
       + ', and the row still reads ' + JSON.stringify(((clock0.rows
         .filter((r) => r.student === outA)[0] || {}).pass || {}).since));
 
+  /*
+    ── WO-2.28: THE ALERT READS THE DOCUMENT AFTER THE TEACHER LEAVES THE REGISTRY ──
+
+    BOTH WALKS LEAVE THE REGISTRY. The first keeps this class open on Scores. The second asserts the
+    named property directly: while Scores is still up, remove this pass's elapsed node from the
+    hidden banner, prove it is gone, and then cross the threshold. This is stronger than depending
+    on how a node went missing. The earlier navigation version was dropped because selectClass()
+    always shows the registry, so a deliberate class switch necessarily paints the banner.
+
+    POLLED RATHER THAN SLEPT for tools/README.md trap 5 and the background-page timer throttling this
+    section already documents below. hush() runs before windBack() in both walks because the live
+    interval can announce on the first tick after the stamp moves.
+  */
+  const waitForPassAlert = async (studentId) => {
+    let state = await read();
+    let said = await heard();
+    for (let i = 0; i < 24 && studentId
+      && (state.openPasses.filter((p) => p.studentId === studentId)[0] || {}).alerted !== 1; i++) {
+      await new Promise(r => setTimeout(r, 250));
+      state = await read();
+      said = await heard();
+    }
+    const view = await evalJs(`(function(){
+      var scores = document.getElementById('scoresView');
+      var registry = document.getElementById('classView');
+      return { scores: !!scores && !scores.classList.contains('hidden'),
+               registry: !!registry && !registry.classList.contains('hidden') }; })()`);
+    return { state, said, view };
+  };
+
+  await clickSel('#classView [data-class-screen="scores"]');
+  await hush();
+  const scoresWound = await windBack(outA, 5.2);
+  const scoresAlert = await waitForPassAlert(outA);
+  check('with a pass open, crossing a threshold still fires the alert while the teacher is on Scores — on a walk that left the registry',
+    !!scoresWound.now && scoresAlert.view.scores && !scoresAlert.view.registry
+      && (scoresAlert.state.openPasses.filter((p) => p.studentId === outA)[0] || {}).alerted === 1
+      && /has been out on a bathroom pass for 5 minutes\./.test(scoresAlert.said),
+    'Scores shown = ' + scoresAlert.view.scores + ', registry shown = ' + scoresAlert.view.registry
+      + ', alerted = ' + JSON.stringify((scoresAlert.state.openPasses
+        .filter((p) => p.studentId === outA)[0] || {}).alerted)
+      + ', announcement = ' + JSON.stringify(scoresAlert.said));
+
+  /* Put outA back on a fresh record so WO-2.9's asleep-past-both-thresholds fixture below still
+     starts at level zero and proves exactly what it proved before this walk was added. */
+  await clickSel('#scoresView [data-class-screen="class"]');
+  await clickSel('[data-pass-cancel="' + outA + '"]');
+  await clickSel('[data-pass-issue="' + outA + '"][data-pass-type="bathroom"]');
+  const propertyPass = ((await read()).openPasses.filter((p) => p.studentId === outA)[0] || {});
+  const propertyStudent = await evalJs(`(function(){
+    var d = window.planbook.store.getDoc();
+    var cls = (d.classes || []).filter(function(c){
+      return c.id === ${JSON.stringify(passClass)}; })[0];
+    var id = cls && (cls.roster || []).filter(function(x){
+      return x === ${JSON.stringify(outA)}; })[0];
+    var s = id && (d.students || []).filter(function(x){ return x.id === id; })[0];
+    return s ? { first: s.first || '', last: s.last || '' } : { first: '', last: '' }; })()`);
+
+  /* Save the exact teacher-data state and the live-region text before making the DOM-only hole.
+     The restoration check below compares the whole document apart from its two save stamps. */
+  const beforeMissingNodeDoc = await evalJs(`(function(){
+    var d = JSON.parse(JSON.stringify(window.planbook.store.getDoc()));
+    delete d.rev; delete d.updatedAt;
+    return JSON.stringify(d); })()`);
+  const beforeMissingNodePass = await evalJs(`(function(){
+    var p = (window.planbook.store.getDoc().openPasses || []).filter(function(x){
+      return x.id === ${JSON.stringify(propertyPass.id)}; })[0];
+    return p ? JSON.stringify(p) : ''; })()`);
+  const beforeMissingNodeLive = await heard();
+  await clickSel('#classView [data-class-screen="scores"]');
+  const missingNodeFixture = await evalJs(`(function(){
+    var box = document.getElementById('attendancePassBanner');
+    var scores = document.getElementById('scoresView');
+    var registry = document.getElementById('classView');
+    var sel = '[data-pass-elapsed="' + ${JSON.stringify(propertyPass.id)} + '"]';
+    var node = box && box.querySelector(sel);
+    if (node) node.remove();
+    return { nodes: box ? box.querySelectorAll(sel).length : -1,
+             scores: !!scores && !scores.classList.contains('hidden'),
+             registry: !!registry && !registry.classList.contains('hidden') }; })()`);
+  check('the document-driven alert fixture removes this pass\'s elapsed node while Scores remains up, before the stamp moves',
+    !!beforeMissingNodePass && missingNodeFixture.nodes === 0
+      && missingNodeFixture.scores && !missingNodeFixture.registry,
+    'saved pass = ' + !!beforeMissingNodePass + ', matching elapsed nodes = '
+      + missingNodeFixture.nodes + ', Scores shown = ' + missingNodeFixture.scores
+      + ', registry shown = ' + missingNodeFixture.registry);
+
+  await hush();
+  const missingNodeWound = await windBack(outA, 5.2);
+  const missingNodeAlert = await waitForPassAlert(outA);
+  const missingNodeAfter = await evalJs(`(function(){
+    var box = document.getElementById('attendancePassBanner');
+    var sel = '[data-pass-elapsed="' + ${JSON.stringify(propertyPass.id)} + '"]';
+    return box ? box.querySelectorAll(sel).length : -1; })()`);
+  check('with no banner node for the pass, the document still drives its overdue alert while the registry stays unpainted',
+    !!missingNodeWound.now && missingNodeAlert.view.scores && !missingNodeAlert.view.registry
+      && (missingNodeAlert.state.openPasses.filter((p) => p.id === propertyPass.id)[0] || {}).alerted === 1
+      && /has been out on a bathroom pass for 5 minutes\./.test(missingNodeAlert.said)
+      /* The card renders "Last, First"; the sentence renders the document name as "First Last". */
+      && !!propertyStudent.first && missingNodeAlert.said.indexOf(propertyStudent.first) >= 0
+      && !!propertyStudent.last && missingNodeAlert.said.indexOf(propertyStudent.last) >= 0
+      && missingNodeAfter === 0,
+    'Scores shown = ' + missingNodeAlert.view.scores + ', registry shown = '
+      + missingNodeAlert.view.registry + ', matching elapsed nodes = ' + missingNodeAfter
+      + ', alerted = ' + JSON.stringify((missingNodeAlert.state.openPasses
+        .filter((p) => p.id === propertyPass.id)[0] || {}).alerted)
+      + ', announcement = ' + JSON.stringify(missingNodeAlert.said));
+
+  /* Restore the exact pass record (out stamp and absence of alerted), then the registry. Its normal
+     paint restores the elapsed node removed above and announces, so the prior live-region text goes
+     back only after that final navigation. */
+  await evalJs(`(async function(){
+    var s = window.planbook.store;
+    var saved = JSON.parse(${JSON.stringify(beforeMissingNodePass || '{}')});
+    s.update(function(d){
+      var i = (d.openPasses || []).findIndex(function(p){ return p.id === saved.id; });
+      if (i >= 0) d.openPasses[i] = saved;
+    });
+    await s.flush();
+    return 1; })()`);
+  await clickSel('#scoresView [data-class-screen="class"]');
+  await evalJs(`(function(){
+    var live = document.getElementById('srLive');
+    if (live) live.textContent = ${JSON.stringify(beforeMissingNodeLive)};
+    return 1; })()`);
+  const handedBack228 = await read();
+  const afterMissingNodeDoc = await evalJs(`(function(){
+    var d = JSON.parse(JSON.stringify(window.planbook.store.getDoc()));
+    delete d.rev; delete d.updatedAt;
+    return JSON.stringify(d); })()`);
+  const restoredLive228 = await heard();
+  check('and the missing-node walk restores the document, live region, registry, and elapsed node it disturbed',
+    afterMissingNodeDoc === beforeMissingNodeDoc && handedBack228.openClass === passClass
+      && handedBack228.viewShown
+      && (handedBack228.openPasses.filter((p) => p.id === propertyPass.id)[0] || {}).alerted == null
+      && (handedBack228.passBanner.cards || []).some((c) => c.elapsedFor === propertyPass.id)
+      && restoredLive228 === beforeMissingNodeLive,
+    'document content byte-identical apart from save stamps = '
+      + (afterMissingNodeDoc === beforeMissingNodeDoc) + ', open class = '
+      + JSON.stringify(handedBack228.openClass) + ', registry shown = ' + handedBack228.viewShown
+      + ', elapsed node restored = ' + (handedBack228.passBanner.cards || [])
+        .some((c) => c.elapsedFor === propertyPass.id) + ', live region restored = '
+      + (restoredLive228 === beforeMissingNodeLive));
+
   /* THE FIXTURE FOR THE 👤 LINE, and both halves of it are asserted before they are used: the stamp
      moves 41 minutes into the past through the store, and a sentinel goes on the card element so
      that "the figure was patched" and "the card was rebuilt" cannot be confused. A rebuild is the

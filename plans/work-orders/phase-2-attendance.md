@@ -2739,7 +2739,7 @@ describe, and the reason that bullet got no wider when this work order did.
 
 ## WO-2.28 — the pass tick reads the document, not the banner
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.27
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** S · **Depends on** WO-2.9, WO-2.27
 
 **Booked 2026-08-14 out of WO-2.27's verification, and re-cut the same day once the reference
 implementation was read.** It was written as the decision WO-2.27 could not take — *how far should
@@ -2786,21 +2786,39 @@ called *"a driver of their own"* and priced as a work order. It is four lines.
   card.
 - `startPassClock()`'s paragraph corrected: the interval survives leaving the registry **and** a class
   change, and the alert is scoped to the open class rather than to the last paint.
-- Two checks in `tools/verify-shell.mjs`, both on walks that leave the registry rather than stay on
-  it: the alert fires with a pass open and the Scores screen up, and it fires for a class switched to
-  while off the registry.
+- Two checks in `tools/verify-shell.mjs`. The first is a walk that leaves the registry: the alert
+  fires with a pass open and the Scores screen up. The second asserts the property this work order is
+  named for, directly — see the re-cut below.
+
+**Acceptance line 2 was re-cut 2026-08-14, on the owner's call, after the first build failed it.**
+It read *"switching class while off the registry no longer silences the alert for either class"*, and
+**that scenario is not reachable.** `selectClass()` (`src/classes.js:467`–`475`) calls
+`showView('class')` unconditionally, and `src/shell.js:39` documents `data-class-tab` as opening a
+class *to its registry* — so every deliberate class switch lands on the registry and paints the
+banner on the way. The harness proved it rather than argued it: the check fired the right alert for
+the right class with the banner unrepainted, and failed on `registry shown = true`. The one route that
+moves `openClass()` without a registry paint is `getSelectedClassId()`'s stale-id fallback
+(`src/classes.js:165`–`170`) — archiving or deleting the open class while standing on Scores — **and
+that turned out to be a different bug with a different cause, now booked as WO-2.30.** It is not
+fixed by the guard this work order moves, and an earlier draft of this paragraph described it wrongly
+as hitting `paintPassElapsed()`'s first guard; it does not, except in the tail case where no active
+class survives at all. Rather than assert a rare route, the
+line now asserts **the property itself**, which is what the title of this work order claims and what
+makes the fix worth having on every route, including ones nobody has thought of yet.
 
 **Acceptance**
-- [ ] With a pass open and the teacher on the Scores screen, crossing a threshold still fires the
+- [x] With a pass open and the teacher on the Scores screen, crossing a threshold still fires the
       alert — asserted, on a walk that leaves the registry.
-- [ ] **Switching class while off the registry no longer silences the alert for either class.** With
-      an open pass in the newly-opened class over a threshold, the alert fires without the registry
-      being painted; asserted, and it fails if the guard moves back.
-- [ ] The card tint and the elapsed figure are unchanged on the registry itself — every existing
+- [x] **The alert is computed from the document, not from the banner.** With no `[data-pass-elapsed]`
+      node in the banner for the pass — the banner emptied, or holding another class's cards — a pass
+      over a threshold still fires: `alerted` is written and the sentence names the student. Asserted
+      without the registry being painted, and **it goes red if the guard moves back** above the DOM
+      writes; state the red count.
+- [x] The card tint and the elapsed figure are unchanged on the registry itself — every existing
       hall-pass check still prints what it printed.
-- [ ] `src/attendance.js:2899` describes the shipped behaviour, and no longer implies the banner is
+- [x] `src/attendance.js:2899` describes the shipped behaviour, and no longer implies the banner is
       what the alert is driven from.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
 **Traps** — **Do not repaint the hidden banner to fix this.** It is the tempting one-liner in
@@ -2881,6 +2899,15 @@ rather than buried in a settings screen nobody opens mid-period.
   comment debt WO-2.27 existed to pay, and it will be false the moment this lands.
 - A harness check that the tone is requested at each threshold and suppressed when the preference is
   off. The harness cannot hear anything — assert the call, through a seam that exists for that.
+- **A precondition clause on WO-2.28's missing-node check, while you are in that block.** It asserts
+  `alerted === 1` after the wind-back and never asserts it was **not** `1` before it, so a refactor
+  that pre-set the flag would make it pass vacuously. Today that is closed by evidence rather than by
+  assertion — the WO-2.28 mutation run reported `alerted = undefined`, and the restore check's
+  `== null` at `tools/verify-shell.mjs:10120`–`10123` reads it on the way out — which is exactly the
+  shape [`../dispatch-retro.md`](../dispatch-retro.md) § "Fixture assumptions" says escapes a green
+  run. **Add it as a clause on the existing wound assertion, not as a new `check()` site**: a new site
+  churns the 754 call-site count `tools/README.md:783` has just settled, for a fixture guard rather
+  than a new claim.
 
 **Acceptance**
 - [ ] Crossing either threshold plays its tone, and the two are distinguishable from each other.
@@ -2907,3 +2934,74 @@ not make the off switch a year-document field: a teacher who cannot silence it d
 silence the whole app instead. **The 👤 line is not optional and no harness closes it.** The unlock
 path is the entire risk and `verify-shell.mjs` has never seen a service worker, an installed app, or
 a suspend.
+
+---
+
+## WO-2.30 — archiving the open class misdirects the pass alert
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.28
+
+**Booked 2026-08-14 out of WO-2.28's close-out, and it is a separate bug rather than a loose end of
+that work order.** WO-2.28 made the overdue alert independent of the banner. This is independent of
+that fix: it would have been a bug before WO-2.28 and it is still one after, because its cause is not
+in `src/attendance.js` at all.
+
+**The bug.** `getSelectedClassId()` (`src/classes.js:165`–`170`) resolves rather than trusts — a
+deliberate and correct design, and its comment says why: *"the preference can name a class that has
+since been archived or deleted … the answer is the first one that exists rather than nothing. A
+header that goes blank because a stored id went stale reads as the app losing the class."* So when
+the open class is archived or deleted:
+
+```js
+return list.some((c) => c.id === want) ? want : list[0].id;
+```
+
+`openClass()` becomes **`list[0]` — the first surviving class, which is not the one that went away.**
+`paintPassElapsed()` then walks a *different* class's open passes, on the next tick and every tick
+after. A student still out on a pass from the class that was just archived is **never alerted on
+again**: no guard fires, nothing returns early, and the loop is busily and correctly processing
+somebody else's room.
+
+**It is misdirection, not silence, and that distinction is the work.** An earlier note in this file's
+close-out described it as hitting `paintPassElapsed()`'s first guard
+(`if (!box || !cls || !doc) return;`, `src/attendance.js:2962`). **That is wrong and the wording has
+been corrected.** The first guard only fires when there is no active class left *at all* — the last
+class archived — which is the rare tail of a rare case. The ordinary case is that another class
+exists, so `cls` is truthy, the function runs happily, and the alert is computed for the wrong room.
+A silent return is a feature that stopped; a silent misdirection looks exactly like a working app.
+
+**Why no harness check reaches it today.** WO-2.28's missing-node check punches its hole in the DOM by
+hand, which is the honest limit its own `TESTING.md` entry records. This path has to be reached
+*through the app* — issue a pass, archive that class from the class manager, and let the clock tick —
+and no check in the suite archives a class with a pass open. That is what makes this worth a work
+order rather than a comment: **it is invisible to every green run the project currently makes.**
+
+**Deliverables**
+- The behaviour decided and implemented. The three candidates, and the decision belongs in the work
+  order before code is written: close the open passes of a class being archived (the pass's room no
+  longer exists, so the trip is over); or leave the passes and refuse to let `openClass()` silently
+  become a class whose passes nobody is watching; or alert across the boundary, which
+  `src/attendance.js:2970`–`2981` has now refused on the record three times and should not be
+  reopened casually.
+- Whatever is chosen, `src/passes.js` and the archive path in `src/classes.js` agree about what
+  happens to an open pass when its class stops being open.
+- A harness check that reaches it **through the app** — a pass issued, the class archived, the clock
+  ticked — rather than by editing the DOM.
+
+**Acceptance**
+- [ ] Archiving a class with a student out on a pass has a defined, written-down outcome, and the
+      work order says which of the three it is and why.
+- [ ] A student out on a pass in the archived class is not silently left un-alerted while a different
+      class's passes are processed in their place.
+- [ ] The check drives the real path — issue, archive, tick — and fails on today's build.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      for the count.
+
+**Traps** — **Do not "fix" `getSelectedClassId()`'s fallback.** Returning `''` instead of `list[0]`
+would blank the header on a stale id, which is the exact failure its comment was written to prevent,
+and it would reach far beyond hall passes. The fallback is right; what is missing is anything that
+notices a pass was left behind by it. **Do not reach for the cross-class alert** as the easy answer —
+see the refusal at `src/attendance.js:2970`–`2981`, which is now three work orders deep and names the
+real objection: an alert about a child in a room the teacher is not in, with no card, no Return
+button and nothing to act on. **This is not a WO-2.28 regression** and its fix does not belong in
+`paintPassElapsed()`'s loop.

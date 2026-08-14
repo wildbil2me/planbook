@@ -38,6 +38,25 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **Hall-pass overdue alerts are computed from the year document rather than from the banner's cards,
+  so leaving the registry no longer delays them.** One guard, in the code that ticks the pass clock
+  once a second, had been written for the empty-banner case and was switching off the alert as well
+  as the on-screen figure. The practical effect: a student who has been out twenty minutes is
+  announced while you are entering scores, and an iPad that iOS suspended mid-period alerts on the
+  way back in rather than waiting for you to return to the attendance screen. The delay this removes
+  had no upper bound — it lasted as long as you stayed off that one screen.
+
+  **What it does not do, stated because the distinction is easy to lose.** This fixes who the alert
+  is *computed* for, not who can *perceive* it. The announcement goes to a region that is deliberately
+  invisible, so away from the registry a sighted teacher is still told nothing. Restoring the sound
+  that Roll Call! has always had is the next work order, not this one.
+
+  **A second bug was found on the way and deliberately not fixed here.** Archiving a class while a
+  student is out on a pass silently re-points the alert at a different class's passes — the student
+  in the archived room is simply never alerted on again. It has its own cause, in how the app
+  resolves which class is open, and no check in the project can currently reach it. It is booked
+  rather than folded in, because a fix smuggled into an unrelated work order is a fix nobody reviews.
+
 - **Nothing you can see, and one thing you can now trust.** Four comments in the hall-pass code were
   saying things the code beside them did not do, and two checks in the harness were passing over
   behaviour that could have been deleted without turning them red. Both are fixed. The one that

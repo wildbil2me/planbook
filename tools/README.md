@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 750 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 754 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -869,7 +869,12 @@ WO-2.26's fixture, dated sixty days after `term.end`, which adds no call site an
 existing ones assert: until then every trip in the fixture fell on or before the term's end, so
 `passesForStudentInTerm()` reduced to its `from` bound alone passed the whole suite. It now fails
 seven of them, 741 of 748, in the copy of the tree that proved it — the count is in `TESTING.md`
-beside the work order.)* *(The
+beside the work order.)* **WO-2.28 moved it from 750 to 754**: four literal call sites inside the
+existing WO-2.9 hall-pass block, none in a loop and none a failure arm — the first drives Scores,
+the next two assert the missing-banner-node fixture and its document-driven alert, and the fourth
+asserts the state and screen restoration. **The run prints 752** — measured on the delivered tree
+rather than derived, `752 checks · 752 passed · 0 failed · 0 skipped`, the gap to 754 being the two
+allowlisted non-calls rather than anything that failed to fire. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

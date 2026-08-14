@@ -317,6 +317,61 @@ agents** — `CLAUDE.md`, `AGENTS.md`, the three definitions in `.claude/agents/
 split was made incrementally under the cost pressure described below, never designed. Deciding what
 belongs where is dispatchable work; noticing that nobody has is not.
 
+## A brief's scope line can switch off a standing rule — WO-2.28, 2026-08-14
+
+The brief said, in the orchestrator's own words at the foot of its reading list:
+
+> **Scope.** Exactly two files should change: `src/attendance.js` and `tools/verify-shell.mjs`. If a
+> third file starts to change, stop and say why in the result file.
+
+It was written to stop sprawl. What it actually did was **suppress the service-worker `CACHE` bump**,
+which is a standing project rule stated at the constant itself (`sw.js:14`–`17`) and enforced by
+`wo-sweep.mjs` on every run. The implementer obeyed the brief, hit the sweep failure, and correctly
+declined to widen scope — it flagged the conflict in its result file instead of silently resolving it,
+which is exactly the behaviour the instruction is supposed to produce. The orchestrator had to
+withdraw its own line in a correction round.
+
+**The cost of getting this wrong is not a tidiness problem.** A `SHELL` file that changes without a
+`CACHE` bump means every installed iPad keeps serving the old build. This work order fixed an alert
+that a teacher relies on, and without the bump the fix would have been invisible on the only device it
+was written for — a green harness, a passing verifier, and nothing whatsoever reaching the classroom.
+
+**The rule: state scope as a boundary, never as a file count, and never in a form that a standing
+project rule can collide with.** "Do not touch the merge-field resolver" is a boundary. "Exactly two
+files" is a budget, and a budget silently outranks every convention the implementer would otherwise
+follow. If a count is genuinely wanted, it needs the escape hatch attached in the same breath —
+*"plus whatever the standing rules oblige; `wo-sweep.mjs` is the arbiter, not this sentence."*
+
+## An implementer that cannot run the harness cannot converge on it — WO-2.28
+
+Codex's sandbox could not launch Edge (`DevToolsActivePort` never written), so `verify-shell.mjs` was
+unrunnable for it throughout. **It reported this honestly every single round and never once claimed a
+pass it had not seen** — which is the behaviour the WO-1.7 zero-exit scar asks for, and it is worth
+recording as a success on its own.
+
+But the work order's remaining deliverable was *two browser-harness checks*, and that took **three
+correction rounds**, every one of them an assertion defect rather than a code defect:
+
+1. A neighbouring class selected by index, landing on the class this run leaves rosterless on purpose
+   — documented 60 lines above where it was working (`verify-shell.mjs:9272`–`9279`). It threw, and
+   took the remaining ~9,500 lines of the file down with it.
+2. An announcement compared against `card0.name`, which renders **"Last, First"**, while `announce()`
+   renders **"First Last"** — an equality that could never hold on a correct build.
+3. A live-region restore performed *before* the navigation that re-announces and clobbers it, plus
+   `await heard()` read twice across a running interval.
+
+Every one is the kind of thing a single run surfaces in seconds and no amount of source reading
+reliably catches. The source change itself — the actual work order — was **right on the first
+attempt and never touched again.**
+
+**The routing lesson is not "Codex is bad at harness work."** It is that *writing assertions is not
+the same task as writing code*, because assertions are only finished when a runner says so. Where a
+work order's deliverable includes checks against `verify-shell.mjs`, the route should ask a second
+question: **can this implementer execute the harness?** If not, either the orchestrator budgets for
+being the runner in the loop — reading the reds and handing back exact diagnoses, which is what
+happened here — or the harness half goes to someone who can run it. The rubric in
+[`work-orders/ROUTING.md`](work-orders/ROUTING.md) currently has no row for this, and it should.
+
 ## What the pipeline costs, as of WO-1.6
 
 Six dispatches: **549,554 output tokens of implementation, 100,472 of orchestration, 178,902 of

@@ -2904,17 +2904,19 @@ const PASS_CLOCK_MS = 1000;
   and not the one it left — so a pass left open while the teacher moves to Scores, to a student's
   detail or back to the class grid leaves this interval running.
 
-  THE TICKS ARE NOT NO-OPS THERE. The cards the last paint left in the banner are still in the
-  document, so paintPassElapsed() still finds their `[data-pass-elapsed]` nodes, still recomputes
-  from the stamps, and STILL FIRES THE TWO OVERDUE ALERTS — into the live region, on whatever screen
-  the teacher is standing on. That is the alert doing exactly what its own comment says it is for:
-  *"the whole point of an overdue alert is that nobody is [looking]"*, and a teacher entering scores
-  with a student twenty minutes gone is the case it is for rather than a case to be quiet about.
+  THE ALERT IS NOT DRIVEN BY THOSE CARDS. paintPassElapsed() reads every open pass for the open class
+  from the document and computes its elapsed seconds and alert level from the stored stamp whether
+  or not the banner has a matching `[data-pass-elapsed]` node. When a node exists, the same tick also
+  patches its figure and card tint; when one does not, only those DOM writes are skipped. Leaving the
+  registry and switching class while away from it therefore both leave the alert computation alive,
+  scoped to the class the teacher has opened rather than to whichever class the last banner paint
+  happened to draw.
 
-  So the cost is one interval and at most three text writes a second, while a pass is open, and the
-  thing it buys is the alert. Standing the clock down when `currentView() !== 'class'` would be four
-  lines and would silence the alert on every screen but one; if that is ever wanted, the alerts need
-  a driver of their own first, and that is a decision and a work order rather than a tidy.
+  So the cost is one interval, the open-class computation and at most three text writes a second
+  while a pass is open, and the thing it buys is the alert. WO-2.28 supplied the alerts with the
+  driver of their own that WO-2.27 said they needed for that computation. It did not make the alert
+  perceptible to a sighted teacher away from the registry; that remaining channel is WO-2.29, a
+  decision and a work order rather than a reason to make this interval depend on hidden markup.
 */
 function startPassClock() {
   if (passClock) return;
@@ -2979,17 +2981,18 @@ function paintPassElapsed() {
   */
   passes.openPassesFor(doc, cls.id).forEach((pass) => {
     const node = box.querySelector('[data-pass-elapsed="' + pass.id + '"]');
-    if (!node) return;
     const seconds = passes.elapsedSeconds(pass.out, now);
-    node.textContent = elapsedText(seconds);
     const level = passes.alertLevelFor(seconds);
-    /* The card carries the escalation rather than the figure alone, and that is deliberate: a
-       colour on 40px of digits is a signal you have to already be looking at, and the whole point
-       of an overdue alert is that nobody is. The stylesheet owns what the two states look like. */
-    const card = node.closest('.attendance-pass-card');
-    if (card) {
-      card.classList.toggle('over-one', level === 1);
-      card.classList.toggle('over-two', level >= 2);
+    if (node) {
+      node.textContent = elapsedText(seconds);
+      /* The card carries the escalation rather than the figure alone, and that is deliberate: a
+         colour on 40px of digits is a signal you have to already be looking at, and the whole point
+         of an overdue alert is that nobody is. The stylesheet owns what the two states look like. */
+      const card = node.closest('.attendance-pass-card');
+      if (card) {
+        card.classList.toggle('over-one', level === 1);
+        card.classList.toggle('over-two', level >= 2);
+      }
     }
     if (level > passes.alertedLevel(pass)) {
       fired.push({ studentId: pass.studentId, type: pass.type, level: level, seconds: seconds });
@@ -3030,8 +3033,17 @@ function paintPassElapsed() {
 
   IT IS THE ONE PATH THE 👤 ACCEPTANCE LINE IS ABOUT. An installed PWA that iOS suspended for ten
   minutes comes back with a timer that has not run; this fires on the way back in and every figure
-  on the banner is recomputed from the stamps before the first tick would have. The paint costs
-  nothing when no card is up — paintPassElapsed() finds no nodes and returns.
+  on the banner is recomputed from the stamps before the first tick would have.
+
+  AND SINCE WO-2.28 THIS IS NOT A NO-OP WHEN NO CARD IS UP. It used to be — paintPassElapsed()
+  found no `[data-pass-elapsed]` node and returned per pass — and that sentence stood here until the
+  guard moved. It is now the opposite, and the difference is the whole of what WO-2.28 bought: a
+  device that came back on the Scores screen, with a trip that crossed a threshold while it slept,
+  ALERTS ON THE WAY IN rather than waiting for the registry. The alert is computed from the open
+  passes of openClass(), and the cards are only where the figures get written.
+
+  The early return that does still exist is paintPassElapsed()'s first line (the banner element, the
+  open class, the document) — a screen with no class open at all, not a screen with no cards on it.
 */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') paintPassElapsed();
