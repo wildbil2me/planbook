@@ -54,14 +54,22 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   on the grounds that reading the code right is not the same as delivering what was asked. Both were
   right, and what they had actually found was a decision nobody had taken.
 
-  So the line was re-cut to what the work really delivered, and **the question became WO-2.28: how
-  far should the overdue alert follow you off the registry?** Closing that turned up two more things
-  nobody had noticed. Off the attendance screen the alert only ever reaches a screen reader — the
-  card that changes colour is on a banner you are not looking at, and the spoken sentence goes to a
-  region that is invisible by design — so a sighted teacher entering scores is told nothing, while
-  the alert is spent all the same. And switching class while you are off the registry silences it for
-  *both* classes until you go back. Neither is a regression; both have been true since the alert
-  shipped, and both are booked.
+  So the line was re-cut to what the work really delivered, and the question — *how far should the
+  overdue alert follow you off the registry?* — went to a work order of its own. Asking it turned up
+  two things nobody had noticed, and they are not the same kind of thing.
+
+  **One is a plain bug, and it is booked as WO-2.28.** Switch class while you are anywhere but the
+  attendance screen and the overdue alert goes quiet for *both* classes until you go back to it. One
+  guard, written for an empty banner, was stopping the alert as well as the clock face.
+
+  **The other turned out to be a missing half of the feature, and it is booked as WO-2.29.** Off the
+  attendance screen the alert only ever reaches a screen reader: the card that changes colour is on a
+  banner you are not looking at, and the spoken sentence goes to a region that is invisible by
+  design. Roll Call! is where this alert was lifted from, and over there the thing that gets your
+  attention is **a sound** — the spoken sentence sits beside it as the version for a teacher who
+  cannot hear it. Planbook took the second half and left the first, and then a comment was written
+  claiming the second half was the whole alert. The sound is being brought across, with an off switch
+  for test days. Neither of these is a regression; both have been true since the alert shipped.
 
 - **The briefing layer is true again, and now inside the maintenance protocol.** `CLAUDE.md` told
   every session and every dispatched agent that this project was *"pre-code… no app code exists yet"*

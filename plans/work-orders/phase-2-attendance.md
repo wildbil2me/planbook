@@ -2737,93 +2737,173 @@ describe, and the reason that bullet got no wider when this work order did.
 
 ---
 
-## WO-2.28 — how far the overdue alert follows the teacher
+## WO-2.28 — the pass tick reads the document, not the banner
 
 **Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.27
 
-**Booked 2026-08-14, out of WO-2.27's verification, and it is the line WO-2.27 could not close.**
-WO-2.27 asked for the pass clock to be stopped "on every path that leaves the banner". Its implementer
-declined the navigation half and wrote the argument down instead; its verifier agreed the reading was
-right and failed the line anyway, on the grounds that a correct reading is not a discharged
-deliverable. Both were right, and what they had actually found was a **decision nobody has taken**:
-*when a pass is open and the teacher walks away from the registry, how far should the overdue alert
-follow her?* WO-2.27's line 1 was re-cut to what it really delivered; this is the rest.
+**Booked 2026-08-14 out of WO-2.27's verification, and re-cut the same day once the reference
+implementation was read.** It was written as the decision WO-2.27 could not take — *how far should
+the overdue alert follow the teacher off the registry?* — carrying a bug and a design question in one
+brief. **The design question turned out to be answered already, in Roll Call!, and it is now WO-2.29.**
+What is left here is the bug, and it should not wait behind a decision: WO-2.9's overdue alert stops
+firing for **both** classes when the teacher switches class while standing anywhere but the registry.
 
-**What is true today** — read out of the tree on 2026-08-14, each claim at a named line.
+**The bug, and it is one line.** `paintPassElapsed()` (`src/attendance.js:2956`) iterates the open
+passes of `openClass()` and then, per pass, does `if (!node) return;` (`src/attendance.js:2982`) when
+the banner holds no card for it. That guard was written for the empty-banner case and it kills the
+**alert** as well as the text write. So:
 
-- `paintPassBanner()` is called from exactly two places, `paintPasses()` (`src/attendance.js:3050`)
-  and the registry render (`src/attendance.js:3886`). **Nothing calls it on the way out of the
-  screen.** `showClassScreen()` paints the screen it arrives at, `src/views.js:120` hides views by
-  toggling `.hidden` rather than removing them, and `#attendancePassBanner` is static markup
-  (`index.html:627`).
-- So the 1-second interval survives leaving the registry, **and its ticks are not no-ops**: the cards
-  from the last paint are still in the document, `paintPassElapsed()` (`src/attendance.js:2956`)
-  still finds their `[data-pass-elapsed]` nodes, still recomputes from the stamps, and still fires
-  WO-2.9's two overdue alerts. That is written up at `startPassClock()` (`src/attendance.js:2899`).
+- `afterClassChange()` (`src/shell.js:427`) repaints only the class screen currently on view, and
+  `paintPassBanner()` is called from just two places, `paintPasses()` (`src/attendance.js:3050`) and
+  the registry render (`src/attendance.js:3886`).
+- Switch from period 2 to period 3 while standing on Scores and `openClass()` moves while the banner
+  still holds period 2's cards. `paintPassElapsed()` then scopes to period 3, finds no matching
+  `[data-pass-elapsed]` node for any of its passes, and returns on every one of them.
+- **Nothing alerts, for either class**, until the registry is next painted. It recovers there — the
+  level is recomputed from elapsed and `markAlerted()` still refuses a non-increase, so a crossed
+  threshold announces once on arrival — so this is a delay and not a permanent loss. The delay is
+  unbounded: it lasts as long as the teacher stays off the registry.
 
-**And two things that are NOT written up anywhere, which are why this is a work order and not a
-comment.**
+The honest statement of the alert's reach today is therefore **whatever the last registry paint
+drew**, which is narrower than anything the code says about itself, `startPassClock()`'s WO-2.27
+paragraph (`src/attendance.js:2899`) included.
 
-- **Off the registry, the alert is screen-reader-only.** The two things WO-2.9 calls "the alert" are
-  a class on the card and `announce()`. The card is inside a banner nobody is looking at, and
-  `announce()` writes `#srLive`, which lives inside `.sr-only` (`src/live-region.js:4`) and is
-  visually hidden. So a *sighted* teacher entering scores with a student twenty minutes gone is told
-  **nothing** — while the alert is nonetheless spent, because `markAlerted()` writes `alerted` to the
-  pass and `level > alertedLevel(pass)` is false ever after. She gets the tint when she returns,
-  which a single repaint on arrival would also have given her. The comment at `startPassClock()`
-  argues the interval buys the alert; **it buys it for one class of user**, and that sentence needs
-  either a fix or a qualifier.
-- **A class change off the registry silences it for both classes.** `afterClassChange()`
-  (`src/shell.js:427`) repaints only the class screen currently on view, so switching from period 2
-  to period 3 while standing on Scores moves `openClass()` and leaves period 2's cards in the banner.
-  `paintPassElapsed()` scopes to `openPassesFor(doc, cls.id)` — the new class — finds no matching
-  `[data-pass-elapsed]` node for any of them, and returns. **Nothing alerts for either class** until
-  the registry is next painted. It is a delay rather than a permanent loss (the level is recomputed
-  from elapsed on arrival, and a crossed threshold still announces once), and the honest statement of
-  the alert's reach is therefore *whatever the last registry paint drew* — which is narrower than
-  anything the code says about itself.
+**How Roll Call! does it, which is the fix.** Its timer tick (`src/dashboard.html:3511`–`3538`) loops
+over `activePasses` — its data — computes elapsed, writes the two DOM figures **guarded** (`if (el)`,
+`if (bl)`), and then runs the threshold checks unconditionally. The alert never asks whether an
+element exists. That is the same loop this file wants: move the guard so it skips the two DOM writes
+and falls through to the threshold check.
 
-**The decision, and it is the owner's.** Three coherent answers, and the deliverable is whichever one
-is chosen plus the code that makes it true:
-
-1. **It does not follow.** Stop the clock on a view change (`currentView() !== 'class'`, four lines,
-   the idiom is already at `syncDayColumns()`), repaint on arrival, and say in the comment that the
-   registry is where the app tells you. Cheapest, and honest about what a sighted teacher gets today.
-2. **It follows, properly.** The alert needs a driver that is not the banner paint — a timeout
-   scheduled to the next threshold, reading the document rather than the DOM — and a *visible*
-   surface off the registry, because a hidden live region is not an alert for most teachers. That is
-   the version WO-2.9's own words describe and the app does not have.
-3. **It follows exactly as far as it does now, on purpose**, with the class-change hole closed and
-   both bounds above written down. Legitimate, and the smallest of the three, but it must be chosen
-   rather than inherited.
+**Why this is the fix and not a workaround.** The alternative — call `paintPassBanner()` from
+`afterClassChange()` so the hidden banner keeps up — repairs the symptom by painting a screen nobody
+is looking at, which is the thing `afterClassChange()`'s own comment declines to do. Reading the
+document instead makes the alert independent of the DOM altogether, which is what WO-2.27's paragraph
+called *"a driver of their own"* and priced as a work order. It is four lines.
 
 **Deliverables**
-- The decision, recorded here with its date and reasoning, the way `plans/rotating-schedule.md`
-  records one that went the other way.
-- The code that makes it true, whichever it is — including the class-change case, which is a hole
-  under all three answers.
-- A harness check that fails if the chosen behaviour is reverted. **This is the half that has no
-  cover at all today:** every existing overdue-alert check runs with the registry on screen.
-- `src/attendance.js:2899`'s paragraph updated to match, and its "the interval buys the alert" claim
-  either fixed or qualified with who it is bought for.
+- `paintPassElapsed()`'s per-pass guard skips the DOM writes only. The threshold comparison, the
+  `fired` collection and the single `update()` run for every open pass of the open class, card or no
+  card.
+- `startPassClock()`'s paragraph corrected: the interval survives leaving the registry **and** a class
+  change, and the alert is scoped to the open class rather than to the last paint.
+- Two checks in `tools/verify-shell.mjs`, both on walks that leave the registry rather than stay on
+  it: the alert fires with a pass open and the Scores screen up, and it fires for a class switched to
+  while off the registry.
 
 **Acceptance**
-- [ ] The decision is written down in this file with its date, its reasoning, and what it costs.
-- [ ] With a pass open and the teacher on the Scores screen, the app behaves as the decision says —
-      asserted in `tools/verify-shell.mjs`, on a walk that leaves the registry rather than one that
-      stays on it.
-- [ ] **Switching class while off the registry no longer silences the alert for both classes**, and
-      there is a check that fails if it starts doing so again.
-- [ ] `src/attendance.js:2899` describes the shipped behaviour, and no longer claims an alert reaches
-      a teacher who cannot see or hear it — or says plainly which teacher it reaches.
+- [ ] With a pass open and the teacher on the Scores screen, crossing a threshold still fires the
+      alert — asserted, on a walk that leaves the registry.
+- [ ] **Switching class while off the registry no longer silences the alert for either class.** With
+      an open pass in the newly-opened class over a threshold, the alert fires without the registry
+      being painted; asserted, and it fails if the guard moves back.
+- [ ] The card tint and the elapsed figure are unchanged on the registry itself — every existing
+      hall-pass check still prints what it printed.
+- [ ] `src/attendance.js:2899` describes the shipped behaviour, and no longer implies the banner is
+      what the alert is driven from.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
-**Traps** — **Do not take answer 1 by reflex because it is four lines.** It is the cheapest and it is
-a real reduction in what the app promises; if it is chosen, it is chosen with that said out loud.
-**Do not make the live region visible** as a way of getting a sighted alert: `#srLive` is one string
-shared by the whole app (`src/live-region.js`), and a pass alert is not the only thing that lands in
-it. **A visible off-registry alert names a student on whatever screen the teacher is projecting** —
-that is the presentation-mode rule in `CLAUDE.md`, and answer 2 has to answer it before it draws
-anything. **Do not widen this to the cross-class alert**: WO-2.11 left that door open and WO-2.26 and
-WO-2.9 both declined it on the record (`src/attendance.js:2968`), and it is a third work order.
+**Traps** — **Do not repaint the hidden banner to fix this.** It is the tempting one-liner in
+`afterClassChange()` and it treats the symptom; `paintPassElapsed()` reading the document is the fix,
+and the two do not both need doing. **Do not widen the scope to cross-class alerts.** The alert stays
+scoped to `openClass()` — WO-2.11 left that door open and WO-2.9 and WO-2.26 both declined it on the
+record (`src/attendance.js:2968`), and an alert naming a student from the room the teacher is not in
+is a third work order with a surface of its own. **Do not touch the `alerted` field's semantics**
+while you are in here: it is the record that makes the alert fire once, it is deliberately not copied
+by `closePass()` (`src/passes.js:447`), and it is the reason a returning app announces the worse
+threshold rather than both. **This does not make the alert reachable** — see WO-2.29. A build that
+closes this line has fixed who the alert is *computed* for, not who can perceive it.
+
+---
+
+## WO-2.29 — the overdue alert gets its primary channel back
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.9, WO-2.28
+
+**Booked 2026-08-14, out of WO-2.27's close and a reading of Roll Call!.** WO-2.27 asked whether the
+pass clock should keep running once the teacher leaves the registry. Answering it turned up something
+better than an answer: **the alert is missing the half that makes the question moot**, and the half
+is sitting finished in the reference implementation.
+
+**What WO-2.9 shipped, and what it lifted from.** Planbook's overdue alert is two things: a class on
+the pass card, and `announce()` into `#srLive`. `#srLive` lives inside `.sr-only`
+(`src/live-region.js:4`) and is **visually hidden by design**. So off the registry the card is on a
+banner nobody is looking at and the sentence is inaudible to anyone not running a screen reader — a
+sighted teacher entering scores with a student twenty minutes gone is told **nothing**, while the
+alert is spent all the same, because `markAlerted()` has written `alerted` to the pass and
+`level > alertedLevel(pass)` is false ever after. `src/attendance.js:3008`–`3011` says this is by
+design: *"there is no sound at all, so this sentence and the colour on the card are the alert."*
+
+**Roll Call! is where that sentence comes from, and it says the opposite.** Its tick fires
+`playAlertFive()` / `playAlertTen()` on the two thresholds, gated on `config.soundsOn`
+(`src/dashboard.html:3528`–`3536`), and calls `announce()` beside them under a comment naming its
+job: *"Announce as text too, so the alarm isn't sound-only (WCAG 1.4.1 / deaf & hard-of-hearing
+users)."* **`announce()` is the accessible mirror of an alert, not the alert.** Planbook lifted the
+mirror, left the primary channel behind, and then wrote a comment promoting the mirror to primary.
+That is a re-derivation of a decision a year of classroom use already tuned, which is the failure
+`CLAUDE.md` names under *"Lift the design with the function."*
+
+**Why a sound is the right surface here specifically, and not just the inherited one.** It follows
+the teacher across every screen at no cost, because it is not a screen. And **it names nobody** —
+which matters more in this app than in Roll Call!, since the alternative surface, a visible
+off-registry indicator, would have to put a student's name or a count on whatever the teacher is
+projecting onto a classroom wall. The presentation-mode rule in `CLAUDE.md` is the one that would
+have to be negotiated; a tone does not go near it.
+
+**What to lift, and the scar that comes with it.** All of `src/dashboard.html:3448`–`3508`, in this
+project's idiom:
+
+- `playToneSequence(notes)` — AudioContext oscillators, **no audio assets**, a fresh context per
+  sequence closed on a timeout after the last note. This is the shape that keeps the no-dependencies
+  rule: it is a browser API, not a library, and nothing is fetched.
+- `playAlertFive()` — a steady two-note 660 Hz beep, five times over ~3 s. `playAlertTen()` — six
+  rising pairs from 700 Hz at a higher gain, deliberately more insistent than the first. **Take the
+  frequencies and the patterns as they are.** They are tuned to carry across an occupied classroom
+  and to be told apart from each other without counting; re-deriving them is the WO-2.11 scar again.
+- **The iOS unlock, which is the whole risk.** iOS Safari will not let an `AudioContext` created
+  outside a user gesture make a sound, so Roll Call! primes one inside a one-shot `touchstart`
+  listener and removes it (`src/dashboard.html:3451`–`3462`). Planbook is an installed PWA that iOS
+  suspends; the question this work order must actually answer on glass is whether a context primed at
+  the start of a period is still good after a suspend-and-resume, and what to do if it is not.
+
+**The preference.** `soundsOn`, defaulting on, in `localStorage` under `planbook_` — a UI preference
+and therefore allowed there (`CLAUDE.md`, Conventions), never in the year document. A teacher
+proctoring a test needs one tap to silence it, and it belongs beside the presentation-mode control
+rather than buried in a settings screen nobody opens mid-period.
+
+**Deliverables**
+- The two alert tones and the unlock, lifted, in a module of their own rather than inside
+  `src/attendance.js` — the pass code should ask for an alert, not own an oscillator.
+- Both thresholds fire the tone as well as `announce()`, and `announce()` stays, with Roll Call!'s
+  reason for it carried across in the comment rather than re-invented.
+- The `soundsOn` preference, its control, and the sound respecting it.
+- `src/attendance.js:3008`–`3011` rewritten: the sentence claiming the app has no sound is the exact
+  comment debt WO-2.27 existed to pay, and it will be false the moment this lands.
+- A harness check that the tone is requested at each threshold and suppressed when the preference is
+  off. The harness cannot hear anything — assert the call, through a seam that exists for that.
+
+**Acceptance**
+- [ ] Crossing either threshold plays its tone, and the two are distinguishable from each other.
+- [ ] `announce()` still fires at both thresholds, with the same sentence it says today, and the
+      comment beside it says it is the accessible equivalent of the sound rather than the alert.
+- [ ] The `soundsOn` preference silences the tone and leaves the announcement and the card tint
+      alone; it lives under `planbook_` and never in the year document.
+- [ ] The tone is asserted in `tools/verify-shell.mjs` through a seam rather than by listening, and
+      the check fails if either threshold stops requesting it.
+- [ ] No comment in `src/attendance.js` still says this app has no sound.
+- [ ] **The alert is audible on the teaching iPad from an installed PWA, on a screen that is not the
+      registry, after the app has been backgrounded and resumed.** If the primed context does not
+      survive the suspend, the finding and what was done about it are written down here. 👤
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      for the count.
+
+**Traps** — **Do not make `#srLive` visible** as a shortcut to a sighted alert. It is one string
+shared by the whole app (`src/live-region.js`) and a pass alert is not the only thing that lands in
+it; exposing it would put every announcement the app makes on the glass. **Do not add a visible
+off-registry indicator in this work order.** It is a defensible feature and it collides with the
+presentation-mode rule — a count is arguable, a name is a disclosure — so it needs its own argument
+and its own work order, not a corner of this one. **Do not ship a sound with no off switch**, and do
+not make the off switch a year-document field: a teacher who cannot silence it during a test will
+silence the whole app instead. **The 👤 line is not optional and no harness closes it.** The unlock
+path is the entire risk and `verify-shell.mjs` has never seen a service worker, an installed app, or
+a suspend.

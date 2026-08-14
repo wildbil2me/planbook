@@ -152,7 +152,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.19 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.28 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.29 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.20 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -167,7 +167,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 19 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 27 | 25 | 🔨 IN PROGRESS |
+| 2 — Attendance | 28 | 25 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 21 | 16 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -175,7 +175,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **96** | **59** | `[██████░░░░] 61%` |
+| | **97** | **59** | `[██████░░░░] 61%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -330,18 +330,19 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 31 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Aug 15–16 |
 | 32 | [WO-2.26](phase-2-attendance.md#wo-226--the-student-report-screen-shows-the-hall-passes) The Student Report screen shows the hall passes | S | | Aug 16, a sitting |
 | 33 | [WO-2.27](phase-2-attendance.md#wo-227--where-the-pass-work-says-one-thing-and-does-another) Where the pass work says one thing and does another | S | | Aug 16, a sitting |
-| 34 | [WO-2.28](phase-2-attendance.md#wo-228--how-far-the-overdue-alert-follows-the-teacher) How far the overdue alert follows the teacher | S | | Aug 17, a sitting |
-| 35 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
-| 36 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
-| 37 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
-| 38 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
-| 39 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
-| 40 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
-| 41 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
-| 42 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
-| 43 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
-| 44 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 45 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 34 | [WO-2.28](phase-2-attendance.md#wo-228--the-pass-tick-reads-the-document-not-the-banner) The pass tick reads the document, not the banner | S | | Aug 17, a sitting |
+| 35 | [WO-2.29](phase-2-attendance.md#wo-229--the-overdue-alert-gets-its-primary-channel-back) The overdue alert gets its primary channel back | M | | Aug 18, a day + an iPad sitting |
+| 36 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
+| 37 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
+| 38 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
+| 39 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
+| 40 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
+| 41 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
+| 42 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
+| 43 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
+| 44 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
+| 45 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 46 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.28 was booked on 2026-08-14 at row #34, out of WO-2.27's verification, and the rows below it
 moved down one. **It is the acceptance line WO-2.27 could not close**, and the reason it became a
@@ -350,11 +351,36 @@ the verifier both read the code right, and what they had found was a decision no
 **It sits directly under the work order that produced it, and that placement is the argument.** The
 context is hot — two agents and the owner have just read this code closely — and the thing under
 discussion is a live-classroom behaviour on a surface that ships this term, not a tidy that can wait
-for the quiet week. **The sharper reason is the half nobody had noticed at all**: switching class
-while off the registry silences the overdue alert for both classes until the registry is repainted,
-and off the registry the alert only ever reaches a screen-reader user in the first place. Both are
-gaps under every answer to the decision, so they get fixed whichever way it goes. A sitting, ahead of
-the term opening ~Aug 24.*
+for the quiet week.*
+
+***Re-cut the same day, and split.*** *As first written it carried a bug and a design question in one
+brief — "how far should the overdue alert follow the teacher?" — and said both halves needed fixing
+whichever way the question went. **That was true of one half only, and the correction is the reason
+this note is being rewritten rather than left standing.** The bug is real under every answer:
+switching class while off the registry silences the alert for both classes until the registry is
+repainted, because `paintPassElapsed()`'s per-pass guard kills the threshold check along with the
+text write. **The other half was not a gap, it was the question restated** — off the registry the
+alert reaches a screen-reader user only, and whether that is wrong depends entirely on the answer.
+So WO-2.28 is now the fix alone, which needs no decision and should not wait behind one, and the
+question moved to WO-2.29 — where reading the reference implementation answered it.*
+
+***WO-2.29 was booked on 2026-08-14 at row #35, and it exists because the answer was already
+written.*** *Roll Call!'s hall-pass alert is a **sound**, with `announce()` beside it under a comment
+naming it the accessible mirror for deaf and hard-of-hearing users (`src/dashboard.html:3528`).
+Planbook lifted the mirror and left the primary channel behind, then wrote a comment promoting the
+mirror to primary — which is the WO-2.11 scar again, and `CLAUDE.md`'s "lift the design with the
+function" is the rule it breaks. Once the tone exists, WO-2.28's original question stops being a
+question: the alert follows the teacher because it is not on a screen, and it names nobody, so it
+walks past the presentation-mode rule that any visible off-registry indicator would collide with.*
+
+***It goes before the term, and it costs a day that WO-1.16 would otherwise have had.*** *That is the
+one placement here worth arguing about. The case for early: this is the only WO-2.9 surface that
+fails **silently** — a teacher is told nothing and the alert is spent all the same — and its 👤 line
+needs an installed PWA, a real iPad and a quiet room to test a suspend-and-resume, none of which the
+first week of term provides. The case against is simply that WO-1.16 is the one row with a real
+classroom deadline. **If the fortnight tightens, WO-2.29 is the row to move**, not WO-1.16 and not
+WO-2.28 — the fix is a sitting and closes a live hole; the sound is a day and closes a design gap
+that has been open since WO-2.9 shipped.*
 
 *WO-2.27 was booked on 2026-08-14 at row #33, out of WO-2.9's verification, and the rows below it
 moved down one. **Widened the same day, out of WO-2.26's**, from XS to S: two more comment debts and
