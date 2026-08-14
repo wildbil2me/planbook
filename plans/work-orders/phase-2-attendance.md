@@ -2899,15 +2899,29 @@ rather than buried in a settings screen nobody opens mid-period.
   comment debt WO-2.27 existed to pay, and it will be false the moment this lands.
 - A harness check that the tone is requested at each threshold and suppressed when the preference is
   off. The harness cannot hear anything — assert the call, through a seam that exists for that.
-- **A precondition clause on WO-2.28's missing-node check, while you are in that block.** It asserts
-  `alerted === 1` after the wind-back and never asserts it was **not** `1` before it, so a refactor
-  that pre-set the flag would make it pass vacuously. Today that is closed by evidence rather than by
-  assertion — the WO-2.28 mutation run reported `alerted = undefined`, and the restore check's
-  `== null` at `tools/verify-shell.mjs:10120`–`10123` reads it on the way out — which is exactly the
-  shape [`../dispatch-retro.md`](../dispatch-retro.md) § "Fixture assumptions" says escapes a green
-  run. **Add it as a clause on the existing wound assertion, not as a new `check()` site**: a new site
-  churns the 754 call-site count `tools/README.md:783` has just settled, for a fixture guard rather
-  than a new claim.
+- **A precondition clause on WO-2.28's missing-node fixture, while you are in that block.** The alert
+  check at `tools/verify-shell.mjs:10083` asserts `alerted === 1` after the clock is wound back and
+  never asserts it was **not** `1` before, and `waitForPassAlert()` (`:10005`–`10006`) loops *until*
+  the flag is `1` — so a pre-set flag returns on the first read and the check goes green having
+  proved nothing.
+
+  **It is not vacuous today, and not by luck:** `:10035`–`10036` cancel the pass and re-issue it, so
+  the record the fixture starts from is new and carries no `alerted` key at all — the same property
+  the key-set check at `:10209` pins down. What is missing is the guard that keeps that true when
+  someone later reorders the block, which is exactly the shape
+  [`../dispatch-retro.md`](../dispatch-retro.md) § "Fixture assumptions" says escapes a green run.
+
+  **Put the clause on the fixture check at `:10069`, not on the alert check at `:10083`** — that is
+  where the precondition belongs, and `beforeMissingNodePass` (`:10053`–`10056`) is already captured
+  there and already asserted, as a bare `!!beforeMissingNodePass` truthiness test. Upgrade that one
+  clause to assert the saved record carries no `alerted` key. **A clause on a check that exists, not
+  a new `check()` site**: a new site churns the 754 call-site count `tools/README.md:783` has just
+  settled, for a fixture guard rather than a new claim.
+
+  *(An earlier draft of this line said "the wound assertion", which is a misreading worth naming
+  because it points at the wrong check. `missingNodeWound` is the return of `windBack()` at `:9936` —
+  **wound** as the past tense of **wind**, the clock wound back 5.2 minutes, as the comment at
+  `:10324` uses it. No injury, no wound to assert on.)*
 
 **Acceptance**
 - [ ] Crossing either threshold plays its tone, and the two are distinguishable from each other.
