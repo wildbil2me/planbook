@@ -36,6 +36,33 @@ and in this data model a fabricated meeting *is* a meeting: it sits in the denom
 percentage and in the recorded-meetings count, indistinguishable from a real one. The term should
 open in a fresh year, with the test data left in one labelled unmistakably.
 
+### Added
+
+- **Overdue hall passes now make a sound.** A student five minutes out gets a steady double beep;
+  ten minutes gets a faster, rising one, so the two are tellable apart without counting. The alert
+  follows you off the registry — it reaches you on the score grid or a student's detail, where it
+  was silent before. The spoken announcement and the colour on the pass card are unchanged, and a
+  new speaker button in the header silences the sound in one tap for a test, showing a slash through
+  itself while it is off. The announcement and the card colour stay either way, so silencing the
+  room does not silence the alert.
+
+  The tones are the ones Roll Call! has used for a year — the same frequencies, note counts and
+  gains — because they were tuned against an occupied classroom and re-deriving them would be
+  guessing at an answer somebody already has.
+
+  **This shipped inaudible on the iPad and had to be corrected the same day, which is worth
+  recording rather than quietly fixing.** The first build created a new audio context each time an
+  alert came due, which is what the source app does. On current WebKit an audio context created
+  outside a user gesture reports itself healthy and plays to nothing: it says it is running, its
+  clock advances, its notes are scheduled, and no sound leaves the device. It was audible on the
+  laptop throughout, which is exactly how it passed. The app now holds a single audio context from
+  the teacher's first touch and plays every later tone through it.
+
+  **No automated check could have caught it, and none can.** The harness can confirm that notes were
+  scheduled on a context that claims to be running — which is precisely what the silent build
+  reported. Whether a room hears anything is a question only a person in a room can answer, and it
+  took two sittings on the teaching iPad: one that found it, one that confirmed the fix.
+
 ### Changed
 
 - **Hall-pass overdue alerts are computed from the year document rather than from the banner's cards,
