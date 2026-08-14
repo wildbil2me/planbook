@@ -17073,6 +17073,8 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
           document.querySelectorAll('#scoresBody tr[data-score-row]'));
         var btns = Array.prototype.slice.call(host.querySelectorAll('button'));
         var chips = Array.prototype.slice.call(host.querySelectorAll('[data-past-due-cell]'));
+        var heads = Array.prototype.slice.call(
+          document.querySelectorAll('#scoresHead th[data-score-col]'));
         return {
           up: !host.classList.contains('hidden'),
           altUp: alt ? !alt.classList.contains('hidden') : null,
@@ -17087,6 +17089,26 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
           labels: btns.map(function(b){ return (b.textContent||'').trim(); }),
           expanded: btns.length ? btns[0].getAttribute('aria-expanded') : '',
           previewed: chips.map(function(c){ return c.getAttribute('data-past-due-cell'); }),
+          /* THE OVERDUE TINT ON A COLUMN HEAD (WO-3.19), read as ids rather than as a count — the
+             acceptance line is about WHICH columns. The data-score-col attribute is on the head for
+             exactly this reason (src/scores.js's columnHead), so nothing here maps a head position
+             onto a cell position and then reports the wrong column when one is inserted.
+             dueHeads is the vacuous-pass guard the two rules under tools/README.md's CDP traps ask
+             for: a run where no head printed a due date at all would otherwise report "nothing is
+             tinted" and look like a pass.
+             (No backticks anywhere in this block — it is inside a template literal, and one of them
+             ends the string thirty lines early with a syntax error that reads like a broken app.) */
+          tinted: heads.filter(function(h){ return !!h.querySelector('.scores-col-due.overdue'); })
+            .map(function(h){ return h.getAttribute('data-score-col'); }),
+          dueHeads: heads.filter(function(h){ return !!h.querySelector('.scores-col-due'); })
+            .map(function(h){ return h.getAttribute('data-score-col'); }),
+          /* The ink, off the drawn element on each of the two screens that carry one. No hover rule
+             on either sheet names the color property — the registry-style hover rules on both tables
+             set a background and nothing else — so trap 7 does not reach this reading. */
+          tintInk: (function(){ var t = document.querySelector('#scoresHead .scores-col-due.overdue');
+            return t ? getComputedStyle(t).color : ''; })(),
+          altTintInk: (function(){ var t = document.querySelector('#assignmentsView .assign-date.overdue');
+            return t ? getComputedStyle(t).color : ''; })(),
           students: rows.map(function(r){ return r.getAttribute('data-score-row'); }),
           grades: rows.map(function(r){
             var n = r.querySelector('.scores-grade-num');
@@ -17239,6 +17261,37 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
             || k === 'wo36-past/wo36-s2'),
         'previewed = ' + JSON.stringify(previewedSet));
 
+      /*
+        ── THE OVERDUE TINT ON A COLUMN HEAD (WO-3.19) ──
+
+        Four acceptance lines, and they ride on THIS fixture rather than on one of their own because
+        the third of them is an identity with the prompt's set — "exactly the assignments the banner's
+        sentence names" — and two fixtures could only ever be compared for agreeing. The five
+        assignments planted above are already the four cases the tint has to tell apart: due
+        yesterday twice, due TODAY, due tomorrow, and no due date at all.
+
+        THE TINTED SET IS COMPARED AGAINST THE PREVIEWED CELLS ON SCREEN, not against a list written
+        here. The review is open at this point, so `previewed` is the six `assignment/student` keys a
+        teacher could have read; the assignment half of those keys is what the banner is about, and
+        that is what the heads have to match. A check that named `wo36-past` and `wo36-past2` itself
+        would be re-deriving the answer and would agree with a build that tinted by its own clock.
+      */
+      const tintedIds = (reviewed && reviewed.tinted ? reviewed.tinted : []).slice().sort();
+      const askedAbout = [...new Set((reviewed && reviewed.previewed ? reviewed.previewed : [])
+        .map((k) => String(k).split('/')[0]))].sort();
+      check('the overdue tint is on exactly the column heads the prompt is asking about — the same '
+        + 'set the review just listed, taken off the screen rather than recomputed here — and the '
+        + 'assignment due TODAY, the one due tomorrow and the one with no date are none of them, '
+        + 'though three of those four columns do print a due date to tint',
+        tintedIds.length === 2 && askedAbout.length === 2
+          && JSON.stringify(tintedIds) === JSON.stringify(askedAbout)
+          && reviewed.dueHeads.length === 4
+          && reviewed.dueHeads.indexOf('wo36-today') !== -1
+          && !tintedIds.some((id) => /wo36-today|wo36-soon|wo36-nodate/.test(id)),
+        'tinted heads = ' + JSON.stringify(tintedIds) + ' :: the prompt is asking about '
+          + JSON.stringify(askedAbout) + ' :: heads printing a due date = '
+          + JSON.stringify(reviewed.dueHeads));
+
       /* The other surface this work order names — "on opening an assignment or a class gradebook".
          One module paints both hosts from one computed set, so the number cannot disagree between
          the two screens; this is that asserted rather than assumed. */
@@ -17250,11 +17303,43 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
           && onList.altLead === '6 blanks are past due — mark them missing?',
         'the list\'s banner is up = ' + (onList && onList.altUp) + ' and reads '
           + JSON.stringify(onList && onList.altLead));
+
+      /* WO-3.19's deliverable is "#8a6d1a, lifted rather than re-derived, and matching the assignment
+         list's own overdue colour exactly", which is a claim about two stylesheets that a review of
+         either one on its own cannot make. Both are read here, on this screen, because this is the
+         one moment in the run where a tinted date exists on the list AND a tinted head exists on the
+         grid behind it. Asserted as the resolved rgb() rather than as the hex, since that is what
+         both sheets have to agree ON rather than agree about. */
+      check('the tint is the assignment list\'s own overdue ink and the drawing\'s — rgb(138, 109, 26), '
+        + 'which is #8a6d1a — on the score grid\'s column head and on the list\'s due date both, so '
+        + 'the two screens carry one amber rather than two',
+        !!onList && onList.tintInk === 'rgb(138, 109, 26)'
+          && onList.altTintInk === 'rgb(138, 109, 26)',
+        'the column head reads ' + JSON.stringify(onList && onList.tintInk) + ' and the assignment '
+          + 'list\'s due date reads ' + JSON.stringify(onList && onList.altTintInk));
+
       await goScreen('#assignmentsView', 'scores');
 
       const beforeAnything = await evalJs(READ);
       const cellsBefore = await readCells();
       const engineA = await engineGrades(A, 'tm_wo36', 'wo36');
+
+      /* WO-3.19's acceptance line 2 — the tint is a COLOUR AND NOT A MARK. The document is compared
+         entire against the read taken when the fixture was planted, across every render the tint has
+         been on screen for since: a coarse pass, two reloads, four navigations and an Esc. Taken over
+         all of `scores` rather than over this fixture's own columns for the reason the dismissal
+         check gives — a build that wrote somewhere else entirely would pass a narrower reading by
+         being out of frame — and beside a reading that says the tint was actually drawn, or a build
+         with no tint at all would pass it perfectly. */
+      check('the tint writes NOTHING: with two column heads amber on screen, every score cell in the '
+        + 'whole document is byte identical to what was planted, and all five grades still agree with '
+        + 'the engine asked separately',
+        beforeAnything.tinted.length === 2 && cellsBefore.all === planted.all
+          && JSON.stringify(beforeAnything.grades) === JSON.stringify(engineA),
+        'amber heads on screen = ' + JSON.stringify(beforeAnything.tinted)
+          + '; scores byte-identical to the plant = ' + (cellsBefore.all === planted.all)
+          + '; grades ' + JSON.stringify(beforeAnything.grades) + ' :: engine '
+          + JSON.stringify(engineA));
 
       /*
         ACCEPTANCE LINE 1, ON THE TWIN. Dismiss is driven on `c_wo36b` rather than on the class the
@@ -17418,6 +17503,21 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
           && afterAccept.shown === true,
         'banner up = ' + (afterAccept && afterAccept.up) + ', missing glyphs in the grid = '
           + (afterAccept && afterAccept.missingGlyphs));
+
+      /* WO-3.19's acceptance line 4, on the same render as the check above and out of the same
+         reading: the thing the amber was reporting has stopped being true, so it goes with the
+         banner. The two columns still carry their due dates — this is a colour coming off, not a
+         head being emptied — and `beforeAccept` is the negative control that says they were amber a
+         moment ago. */
+      check('and the two column heads stop being amber on that same render, because their blanks are '
+        + 'marked now — the dates are still printed, and it is only the tint that goes',
+        beforeAccept.tinted.length === 2 && !!afterAccept && afterAccept.tinted.length === 0
+          && JSON.stringify(afterAccept.dueHeads) === JSON.stringify(beforeAccept.dueHeads)
+          && afterAccept.dueHeads.length === 4,
+        'amber heads ' + JSON.stringify(beforeAccept.tinted) + ' -> '
+          + JSON.stringify(afterAccept && afterAccept.tinted) + '; heads printing a due date '
+          + JSON.stringify(beforeAccept.dueHeads) + ' -> '
+          + JSON.stringify(afterAccept && afterAccept.dueHeads));
     }
 
     /*

@@ -4035,9 +4035,11 @@ plumbing is the part a green run over the wrong set would still report.*
 | `assignment.due < today` becomes `<=` — a date that IS today counts as past due | **9 red.** *"10 blanks are past due"*, the cell on the assignment due today stops being byte identical, and the dismissal preference picks up a third assignment id. `694 · 685 · 9` |
 
 *What is **not** here. The **overdue tint on a score-grid column head** is drawn in
-`design/mockups/proposed.css` and is still not built: `src/scores.css` says the rule belongs to this
-work order, and this work order's Deliverables are the prompt, the accept/dismiss and the review. It is
-written up as a proposed follow-up in `.claude/dispatch/WO-3.6-result.md` rather than folded in.
+`design/mockups/proposed.css` and was not built here: this work order's Deliverables are the prompt,
+the accept/dismiss and the review. It was written up as a proposed follow-up in
+`.claude/dispatch/WO-3.6-result.md` rather than folded in, booked the same day as **WO-3.19**, and
+landed there — see § WO-3.19 below, which rides on this section's own fixture because its third
+acceptance line is an identity with the set this one computes.
 `shortDate()` is now the **third** copy of the same eight lines in `src/` — `src/scores.js` and
 `src/assignments.js` carry the other two, each with a note saying why it is not an import — and the
 honest fix is one exported formatter, which is two shipped files this work order does not own. Also in
@@ -4179,6 +4181,80 @@ lets a dialog wipe sensitive DOM at the moment it closes. This prompt clears on 
 a presentation-mode flip, which is the same posture `src/roster.js`'s student editor has held since
 WO-1.8 — the general fix would improve both and is two shipped files this work order does not own. It
 is written up in `.claude/dispatch/WO-3.8-result.md`.*
+
+---
+
+### WO-3.19 — The overdue tint on a score-grid column head
+
+**What this adds.** One colour. A column head whose work the past-due prompt is asking about prints
+its due date in `#8a6d1a` instead of `#a0aab8` — the amber the assignment list's own due dates already
+wear and the banner is already written in. The banner says *"6 blanks are past due"*; this says
+**which columns**, without the teacher opening the review.
+
+**The comments were the deliverable, not the pixel.** Nine comment sites across five files named
+WO-3.6 as the owner of every rule about a past due date on the score grid, and WO-3.6 closed ✅ DONE
+without the tint — correctly, since it was not in its Deliverables. That left prose pointing the next
+reader at a closed work order for work nobody was going to do, on the two files (`src/scores.css`,
+`src/scores.js`) that WO-3.13, WO-3.15 and WO-3.16 each open on their way in. `src/scores.css`'s rule
+had a paragraph explaining why it was *absent*; that paragraph now explains what it is.
+
+**One reader of the clock.** `src/scores.js` still contains no comparison against a date and imports
+no `todayISO()` — its decision 1 is unchanged and is the reason the tint is built this way.
+`columnHead()` asks `src/past-due.js`'s `pastDueAsksAbout()`, a read of the set the banner was drawn
+from a few lines earlier in the same render. So the amber heads and the sentence cannot name different
+work, and `AGENTS.md`'s *"do not add a second reader of the date"* is honoured by there being nothing
+new to read it with.
+
+- [x] The tint is on **exactly** the column heads the prompt is asking about — `["wo36-past",
+      "wo36-past2"]` against the assignment half of the review's own previewed cell ids, taken off the
+      screen rather than recomputed in the check.
+- [x] The assignment due **today**, the one due **tomorrow** and the one with **no due date** are none
+      of them — and three of those four columns do print a due date, so the untinted ones are present
+      and grey rather than missing.
+- [x] The tint **writes nothing**: with two heads amber on screen, every score cell in the whole
+      document is byte identical to what was planted — through a coarse pass, two reloads, four
+      navigations and two `Esc` presses — and all five grades still agree with the engine asked
+      separately.
+- [x] A column **stops being amber on the same render** its blanks are marked: `["wo36-past",
+      "wo36-past2"] -> []` on the redraw after **Mark them missing**, with all four due dates still
+      printed. The tint comes off; the head does not empty.
+- [x] The ink is **`rgb(138, 109, 26)` — `#8a6d1a` — on both screens at once**, read off the drawn
+      column head and the drawn assignment-list date in the same reading. Lifted from
+      `design/mockups/proposed.css`, matching `.assign-date.overdue` and the `.past-due` banner: one
+      amber at three volumes.
+- [x] `grep -rn "WO-3.6" src/ design/` names no comment claiming WO-3.6 owns unbuilt work. Nineteen
+      hits across eight files, each read; the accurate ones are still there, because a blanket rewrite
+      would destroy true provenance — which is this work order's own failure pointed the other way.
+- [x] 👤 On the iPad in a lit classroom, the tint reads as a **nudge rather than an error state**, and
+      is legible at the coarse-pointer 10px against the head's existing `#a0aab8` beside it. *(Owner,
+      on the teaching iPad, 2026-08-13. Asked in the same sitting: is the amber staying up for one
+      render after **Not now** noticeable or confusing? Answered **no** — which is the one behavioural
+      question the desk could not settle, and it closes in favour of the existing behaviour.)*
+
+*The desk half is `verify-shell.mjs`, **714 of 714 with zero skips**, in 233s — four checks added
+inside the existing WO-3.6 section rather than in a new one, because acceptance line 3 is an identity
+with that section's own set and a second fixture could only ever have been compared for agreeing with
+the first. `wo-sweep.mjs` is **17 checks, 15 passed, 0 failed, 2 to review**, and both REVIEWs are
+WO-3.6's unchanged: the sensitive-field-name line names no file this work order wrote a field into,
+and the due-date line names the same eight prose lines it named before this landed. The one new CSS
+selector, `.scores-col-due.overdue`, is covered in the coarse block by its own base rule — it is a
+colour on a label, not a control, and there is no target here to hold at 44px. `sw.js`'s `CACHE` went
+to `planbook-shell-v53`.*
+
+*One mutation, reverted.*
+
+| Mutation | Result |
+|---|---|
+| `pastDueAsksAbout()` answers its own `due < today` off the document instead of reading the prompt's set — the obvious build, and the one the work order's third deliverable forbids | **1 red**, and it is the line that matters: *"amber heads `["wo36-past","wo36-past2"]` -> `["wo36-past","wo36-past2"]`"* after **Mark them missing**. Every other check stays green, including the two that compare the tinted set to the prompt's — a date-only tint agrees with the prompt right up until the blanks are filled, which is why acceptance line 4 exists and why the first three could not have caught this. `714 · 713 · 1` |
+
+*What is **not** here. **No tint on a cell**, and no change to what the prompt counts — both are the
+work order's Out of scope line. The **assignment list's own tint is untouched**, and it deliberately
+does not match this one after a dismissal: it asks "this date has gone by with the column unfinished",
+this one asks "the prompt is asking about this column", and `src/assignments.js`'s import comment now
+says so at the point a reader would ask. A **"Not now" leaves the amber up until the next render** —
+`src/past-due.js` paints its own banner and cannot touch a grid it does not import, and rebuilding the
+grid under a teacher who may have a digit half-typed is a cost `src/shell.js` already refuses to pay
+for a tap that wrote nothing. That is written down at the chain rather than left to be found.*
 
 ---
 

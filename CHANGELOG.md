@@ -92,6 +92,32 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-3.19 — the score grid says *which* columns are past due, in one colour.** A column head whose
+  work the past-due prompt is asking about prints its due date in `#8a6d1a` instead of `#a0aab8` — the
+  same amber the assignment list's dates have always worn for the same fact, and the same the banner is
+  written in. The banner says *"6 blanks are past due"*; the tint says which columns, without opening
+  the review. It writes nothing and marks nobody, and it goes as soon as the blanks are filled or marked.
+
+  **The comments were the deliverable; the pixel was the smaller half.** Nineteen comment sites across
+  eight files named WO-3.6 as the owner of every rule about a past due date on the score grid, and
+  WO-3.6 closed ✅ DONE without the tint — correctly, since it was never in its Deliverables. That left
+  prose pointing the next reader at a *closed* work order for work nobody was going to do, on the two
+  files (`src/scores.css`, `src/scores.js`) that WO-3.13, WO-3.15 and WO-3.16 each open on their way in.
+  `src/scores.css` carried a paragraph explaining why the rule was *absent*; it now explains what the
+  rule is, with the old paragraph preserved verbatim under a dated heading rather than deleted. Six
+  comments were rewritten, four gained a clause, nine were left exactly as they stood — because WO-3.6
+  really does own the prompt, and a blanket rewrite would have destroyed true provenance, which is this
+  work order's own failure pointed the other way.
+
+  **One reader of the clock, and the check that proves it.** `src/scores.js` still contains no
+  comparison against a date and imports no `todayISO()`. `columnHead()` asks `src/past-due.js`'s new
+  `pastDueAsksAbout()`, a read of the same `previewed` set the sentence and the review are drawn from a
+  few lines earlier in the same render — so the amber heads and the sentence *cannot* name different
+  work, by construction rather than by two comparisons happening to agree. Mutation-tested: a build
+  whose tint answers its own `due < today` off the document reddens exactly one check, and it is the
+  one that matters — the heads stay amber after **Mark them missing**. The first three acceptance lines
+  stay green under that mutation, which is why the fourth exists.
+
 - **WO-3.21 — the harness now proves the accommodation prompt counts students, not rows.** WO-3.8's
   prompt says *"3 students have extended time"*, and `groupsFor()` keeps that true by deduping on
   student id. Nothing tested that it did: the WO-3.8 fixture never gave one student two rows of the

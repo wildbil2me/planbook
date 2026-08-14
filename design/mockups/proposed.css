@@ -297,7 +297,12 @@
 /* Past its due date with blanks still in the column. NOT arithmetic and not a
    mark — WO-3.6 owns the prompt that offers to fill them, and nothing in this app
    ever infers `missing` from a date. This is a nudge on a column head and it
-   changes no grade. */
+   changes no grade.
+
+   CARRIED ACROSS AT WO-3.19, and it is the one rule in this section that WO-3.5
+   did not take: the screen it belongs to reads no clock, so it had no answer to
+   draw from until the prompt existed. src/scores.css has it now, in this colour,
+   with the set decided in src/past-due.js. */
 .scores-col-due.overdue { color: #8a6d1a; }
 
 /* ── ONE CELL ── */

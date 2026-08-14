@@ -122,10 +122,10 @@
    banner shape here would be the WO-2.11 correction run backwards. What separates them is the
    content: this one ends in a question mark and carries three buttons.
 
-   THE INK IS #8a6d1a, WHICH IS THE OVERDUE TINT'S INK — `.assign-date.overdue` above, and the
-   drawing's `.scores-col-due.overdue`. The tint and this prompt are the same signal at two volumes,
-   so they are the same colour; a teacher who has learned what the amber date means has already
-   learned what this banner is about. */
+   THE INK IS #8a6d1a, WHICH IS THE OVERDUE TINT'S INK — `.assign-date.overdue` above, and
+   `.scores-col-due.overdue` in src/scores.css, which the drawing drew and WO-3.19 carried across.
+   The tints and this prompt are the same signal at three volumes, so they are one colour; a teacher
+   who has learned what the amber date means has already learned what this banner is about. */
 .past-due {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   margin: 0 0 12px; padding: 10px 14px;

@@ -34,12 +34,17 @@
    registry and this grid are the same object with different cells in it, and a
    teacher moving between them should not be able to feel a seam.
 
-   THREE THINGS THE DRAWING HAS THAT ARE DELIBERATELY NOT HERE, each said at the
+   TWO THINGS THE DRAWING HAS THAT ARE DELIBERATELY NOT HERE, each said at the
    point it would have gone, because a lift that quietly drops a rule reads as an
-   oversight: the paste column's button (WO-3.13), the per-assignment footer
+   oversight: the paste column's button (WO-3.13) and the per-assignment footer
    averages (the drawing's own caption says they are not in this work order's
-   deliverables), and the overdue tint on a column head (WO-3.6 owns everything
-   about a due date, and nothing in this file reads a clock).
+   deliverables).
+
+   THERE WERE THREE UNTIL 2026-08-13. The third was the overdue tint on a column
+   head — left in the drawing by WO-3.5, left there again by WO-3.6 on the correct
+   call that it was not in that work order's deliverables, and carried across at
+   WO-3.19. It is below, with the rule that draws it, and this file still reads no
+   clock: which head is amber is src/past-due.js's answer.
 
    The two things that read like mistakes here are the same two that read like
    mistakes in shell.css, home.css, attendance.css and assignments.css: colours are
@@ -296,11 +301,26 @@
   font-variant-numeric: tabular-nums; margin-bottom: 4px;
 }
 .scores-col-due { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; margin-top: 4px; }
-/* `.scores-col-due.overdue` is in the drawing and is NOT here. A tint is not arithmetic and
-   src/assignments.css carries one on its own due column — but everything about a past due date on
-   THIS screen belongs to WO-3.6, which owns the prompt that offers to fill the blanks in, and this
-   work order's Traps line says so by name. So nothing in src/scores.js reads a clock, there is
-   nothing for the class to be put on, and the rule goes with it. */
+/* THE HEAD OF A COLUMN THE PROMPT IS ASKING ABOUT (WO-3.19). The banner above the grid says "6 blanks
+   are past due" and cannot say WHICH columns without the teacher opening the review; this says it at
+   a glance, and it is the idiom already running on the assignment list one screen over.
+
+   #8a6d1a IS LIFTED, NOT CHOSEN. It is `.assign-date.overdue`'s ink in src/assignments.css and the
+   `.past-due` banner's own text colour in the same sheet — one signal at three volumes rather than
+   three ambers a teacher has to tell apart. COLOUR ONLY: the size, the weight and the margin stay the
+   base rule's, because a column head that grew when a date went by would move a grid somebody has a
+   thumb in.
+
+   IT IS A TINT AND NOTHING ELSE — no cell written, no student marked, no grade moved; nothing in this
+   app ever infers `missing` from a date. WHICH heads wear it is decided in neither this sheet nor
+   src/scores.js: the class comes from src/past-due.js's own set, so the amber heads are exactly the
+   assignments the banner names and nothing on this screen compares a date to today.
+
+   WHAT STOOD HERE UNTIL 2026-08-13 was a paragraph saying the rule was absent because "everything
+   about a past due date on THIS screen belongs to WO-3.6" — which pointed the next reader at a closed
+   work order for work nobody was going to do. WO-3.19 exists as much for that sentence as for the
+   pixel. */
+.scores-col-due.overdue { color: #8a6d1a; }
 
 /* ── ONE CELL ── */
 .scores-cell { position: relative; display: inline-flex; }
@@ -447,8 +467,15 @@
 /* Three lines, the same three the score grid's own head carries and in the same order of
    importance: what it is, when it was due, and what it is out of. The due date is on this sheet
    because the COLUMNS ARE IN ITS ORDER — a column ordered by a fact the reader cannot see is a
-   sheet that looks arbitrary — and it is a plain date compared to nothing (WO-3.6 owns everything
-   about a past due date, and nothing in src/grades-report.js reads a clock). */
+   sheet that looks arbitrary — and it is a plain date compared to nothing: nothing in
+   src/grades-report.js reads a clock.
+
+   AND IT STAYS A PLAIN DATE NOW THAT THE GRID'S OWN HEAD DOES TINT ONE (WO-3.19,
+   `.scores-col-due.overdue` above), which is a departure and not an omission. This sheet is the
+   thing a teacher PRINTS to re-key the SIS off, and the print block at the foot of this file takes
+   every other colour on it down to black and grey for the reason stated there. An amber date would
+   either come out as grey — a rule that does nothing — or, on a colour printer, put a nudge meant
+   for the person entering grades onto a page that gets handed to somebody else. */
 .grades-report-col { min-width: 74px; }
 .grades-report-col-name {
   display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
@@ -562,6 +589,11 @@
   .scores-col-name { font-size: 12px; }
   .scores-col-pts { font-size: 11px; }
   .scores-col-due { font-size: 10px; }
+  /* `.scores-col-due.overdue` takes that step up with it and gets no line of its own: the tint is a
+     colour and nothing else, on a label rather than on a control, so there is no target here to hold
+     at 44px. Named rather than left out, for the reason this block names everything it only
+     re-states — a rule missing from here is a rule the next reader has to go and prove was
+     considered. */
   .scores-name { font-size: 14px; }
   .scores-grade-num { font-size: 15px; }
   .scores-grade-letter { font-size: 11px; }

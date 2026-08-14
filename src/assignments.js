@@ -116,7 +116,15 @@ import { todayISO } from './attendance.js';
    by"; the banner that OFFERS to do something about it is that module's, on this screen and on the
    score grid both. Drawn by calling one function and passing nothing: it asks src/classes.js which
    class and term are open, exactly as this file does. The import runs one way — nothing in
-   src/past-due.js knows this file exists. */
+   src/past-due.js knows this file exists.
+
+   THE SCORE GRID'S COLUMN HEAD ASKS THAT MODULE INSTEAD (WO-3.19), and the asymmetry is deliberate
+   rather than a file that was missed. Nothing in src/scores.js reads a clock — its decision 1 — so
+   its tint has to be somebody's answer, and it takes the prompt's. This file already reads the clock
+   for the creation-time default above, so its own tint stays its own comparison over its own set: a
+   column not fully ENTERED, which is a wider question than the prompt's untouched blanks and is not
+   silenced by a "Not now". Two questions with two answers, said here because a reader who found them
+   drawn in one amber would otherwise read the second one as a bug. */
 import { paintPastDue } from './past-due.js';
 /* THE ACCOMMODATION PROMPT (WO-3.8), which is the other prompt in this phase and the one with rules
    under it. This file passes it the class and the category NAME chosen in the editor and gets back a
@@ -368,6 +376,11 @@ function assignmentRow(assignment, cls, index, siblings) {
     ever inferred from a date (docs/data-model.md § Grade math, and this phase's own standing
     rule). WO-3.6 owns the prompt that OFFERS to fill the blanks in; this is only the colour that
     makes the teacher look at the row.
+
+    THE `title` BELOW IS COPIED, WORD FOR WORD, IN TWO OTHER PLACES: onto the score grid's own
+    overdue column head (WO-3.19) and into the prompt's second line (src/past-due.js's paintHost).
+    Three surfaces, one sentence, kept identical on purpose — the reassurance is the same
+    reassurance, and a teacher who reads it twice in two wordings has been told two things.
   */
   if (assignment.due && assignment.due < todayISO()
       && enteredCount(assignment, cls) < rosterOf(cls).length) {

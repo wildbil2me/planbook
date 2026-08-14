@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 713 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 717 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -823,7 +823,12 @@ executed results. **WO-3.8 moved it from 695 to 713**: eighteen literal call sit
 at the foot of the file, ahead of the print-gate block, none of them inside a loop, of which **two are
 fixture-guard failure arms** that never fire on a green run — one for a build with no
 `[data-accommodation-prompt]` host, one for a fixture that could not be planted — so the section
-contributes sixteen executed results and the run prints 710. *(The
+contributes sixteen executed results and the run prints 710. **WO-3.19 moved it from 713 to 717**:
+four literal call sites, none in a loop and none a failure arm, added *inside* the existing WO-3.6
+section rather than in a new one — the tint's third acceptance line is an identity with the past-due
+prompt's own set, and two fixtures could only ever have been compared for agreeing with each other.
+Its own reading rides on the same `READ` block, which is why the section's other checks are unchanged
+and its executed count goes up by exactly four. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

@@ -1400,7 +1400,7 @@ scheduled in Phase 8 and this is not, so whoever reaches this first should expec
 
 ## WO-3.19 — the overdue tint on a score-grid column head
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.6 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE · **Size** XS · **Depends on** WO-3.6 · **Blocks** nothing
 **Closes roadmap** *(no box. The roadmap's Phase 3 past-due line is WO-3.6's and is ticked; this is
 the half of the drawing that work order deliberately did not ship.)*
 
@@ -1439,17 +1439,40 @@ writes nothing, and is already the idiom on the assignment list one screen over.
 list's existing tint, which already works and is not being re-derived.
 
 **Acceptance**
-- [ ] A column whose due date has gone by is tinted; a column due **today**, one due tomorrow, and one
+- [x] A column whose due date has gone by is tinted; a column due **today**, one due tomorrow, and one
       with no due date are not. The off-by-one is the same one WO-3.6's mutation testing caught.
-- [ ] The tint writes nothing: every score cell in the document is byte identical with the tint on
-      screen, and no grade moves. It is a colour, not a mark.
-- [ ] The tinted columns are **exactly** the assignments the banner's sentence names, asserted against
-      the prompt's own set rather than recomputed in the check.
-- [ ] A column stops being tinted when its blanks are filled or marked, on the same render — because
-      the thing it is reporting has stopped being true.
-- [ ] `grep -rn "WO-3.6" src/ design/` returns no comment claiming WO-3.6 owns unbuilt work.
-- [ ] 👤 The tint is visible on the iPad in a lit classroom without being mistaken for an error state,
-      and is legible against the column head's existing `#a0aab8`.
+      *(On WO-3.6's own fixture, which is already the four cases: `["wo36-past","wo36-past2"]` amber
+      against `["wo36-past","wo36-past2","wo36-today","wo36-soon"]` printing a date at all — so the
+      column due TODAY is present and untinted rather than absent, and the undated one has no date
+      line for a class to go on. The comparison is not restated anywhere: the tint reads
+      `src/past-due.js`'s set, so WO-3.6's `<=` mutation is still the one test of the off-by-one.)*
+- [x] The tint writes nothing: every score cell in the document is byte identical with the tint on
+      screen, and no grade moves. It is a colour, not a mark. *(Compared over all of `scores` against
+      the read taken when the fixture was planted — through a coarse pass, two reloads, four
+      navigations and two `Esc` presses with the tint up — beside a reading that says two heads were
+      actually amber, and all five grades still string-identical to the engine asked separately.)*
+- [x] The tinted columns are **exactly** the assignments the banner's sentence names, asserted against
+      the prompt's own set rather than recomputed in the check. *(The check takes the assignment half
+      of the review's own `data-past-due-cell` ids off the screen and compares sets. It is held by
+      construction as well as by the check: `columnHead()` asks `pastDueAsksAbout()`, which is a read
+      of the same `previewed` the sentence and the review are drawn from.)*
+- [x] A column stops being tinted when its blanks are filled or marked, on the same render — because
+      the thing it is reporting has stopped being true. *(`["wo36-past","wo36-past2"] -> []` on the
+      render after **Mark them missing**, with all four due dates still printed — the tint comes off,
+      the head does not empty. Mutation-tested: a build whose tint answers its own `due < today`
+      instead of asking the prompt reddens this line and nothing else.)*
+- [x] `grep -rn "WO-3.6" src/ design/` returns no comment claiming WO-3.6 owns unbuilt work. *(19
+      hits across 8 files, all read. Six rewritten where they had become false, four gained a clause,
+      nine left exactly as they were because WO-3.6 really does own the prompt and saying so is true.
+      Which is which is in `.claude/dispatch/WO-3.19-result.md`.)*
+- [x] 👤 The tint is visible on the iPad in a lit classroom without being mistaken for an error state,
+      and is legible against the column head's existing `#a0aab8`. *(Owner, on the teaching iPad,
+      2026-08-13. Reads as a nudge and not a fault, legible at the coarse-pointer 10px beside the grey
+      heads next to it. The third question the desk could not settle — whether the amber staying up for
+      one render after **Not now** is noticeable — was put to the owner in the same sitting and answered
+      no. That is the behavioural call the work order left open, and it is now closed in favour of the
+      cost `src/shell.js` already refuses to pay: no grid rebuild under a half-typed digit for a tap that
+      wrote nothing.)*
 
 ---
 

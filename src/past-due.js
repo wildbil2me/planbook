@@ -99,6 +99,12 @@
      be past due; a date that IS today has not gone by, which is the same comparison the overdue tint
      on the assignment list makes one file over.
 
+     ONE COMPARISON, TWO THINGS DRAWN (WO-3.19). The score grid's column head wears the drawing's
+     amber for exactly the assignments in the set below, and it gets there by asking
+     pastDueAsksAbout() at the foot of this file rather than by comparing a due date of its own.
+     AGENTS.md forbids a second reader of the date in as many words, and two readers is also how a
+     banner and a column head come to name different work on the same screen.
+
   6. NOTHING HERE COMPUTES A GRADE, AND NO SUPPORT DATA IS ON THIS SURFACE. The banner names a count
      of blanks and the points each one would count against — src/grade-engine.js owns every
      percentage in the app and none of them is needed to ask this question. And the review lists
@@ -428,6 +434,40 @@ export function paintPastDue() {
   if (!blanks) reviewOpen = false;
   const hosts = Array.prototype.slice.call(document.querySelectorAll(HOST_SEL));
   hosts.forEach((host) => paintHost(host, previewed, blanks));
+}
+
+/*
+  WHETHER THE PROMPT IS ASKING ABOUT THIS ASSIGNMENT (WO-3.19) — the quiet half of the same nudge,
+  and what lets the score grid tint a column head without src/scores.js learning what a due date is.
+
+  IT IS A READ OF `previewed` AND NOT A SECOND WALK, which is the whole reason it is exported.
+  AGENTS.md's data invariant says the clock may be read in one place and that no second reader of the
+  date may be added; the drawing's `.scores-col-due.overdue` asks the same question this module has
+  already answered, so it gets the answer rather than a `due < today` of its own. That also makes the
+  tint and the sentence incapable of naming different work — WO-3.19's acceptance line 3 is "exactly
+  the assignments the banner's sentence names", and it is held here by construction rather than by
+  two comparisons happening to agree.
+
+  IT ANSWERS ABOUT THE LAST PAINT, so the caller has to have painted. paintPastDue() recomputes
+  `previewed`, and the screen that draws a tinted head calls it earlier in the same render — see
+  src/scores.js at the call, which says what moving that line would cost. A caller asking before
+  painting would be asking about the class before.
+
+  TWO CONSEQUENCES, STATED RATHER THAN LEFT TO BE FOUND. A dismissed assignment is not in `previewed`,
+  so "Not now" takes the tint off that column head as well as taking the banner down — ON THE NEXT
+  RENDER, because dismissPastDue() repaints this banner and cannot touch a grid it does not import, and
+  rebuilding the grid under a half-typed digit is a cost src/shell.js refuses to pay for a tap that
+  wrote nothing. The owner checked the one-render lag on the iPad on 2026-08-13 and called it
+  unnoticeable. The same qualifier is on the sibling comments at src/shell.js:1139 and src/prefs.js:136;
+  it was missing here until WO-3.19's own verification caught it, in prose written by a work order about
+  keeping comments true. They are one signal at two volumes (src/assignments.css § the past-due prompt, on the shared ink), and an amber
+  head with nothing on screen to explain it is the worse half to keep. And the assignment list's own
+  amber date is NOT this answer: that is src/assignments.js's own comparison over its own set — a
+  column not fully entered, dismissed or not — which is a different question and stays amber after a
+  "Not now". Two questions, deliberately, and each is asked where it is answered.
+*/
+export function pastDueAsksAbout(assignmentId) {
+  return previewed.some((work) => work.id === assignmentId);
 }
 
 /* The review, opened and closed on the same button. A disclosure and not a preference — decision 3

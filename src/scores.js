@@ -41,20 +41,26 @@
 
   ── FIVE THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS ──
 
-  1. NOTHING IN THIS FILE READS A CLOCK. Not `todayISO()`, not `new Date()`, nothing. The due date
-     is printed in a column head as a plain date and compared to nothing, and the drawing's overdue
-     tint on that head is still deliberately absent. `late` and `missing` are marked by the teacher,
-     never inferred (CLAUDE.md).
+  1. NOTHING IN THIS FILE READS A CLOCK. Not `todayISO()`, not `new Date()`, nothing — and that is
+     still true now that the drawing's overdue tint on a column head is built, which is the whole
+     reason it is built the way it is. `late` and `missing` are marked by the teacher, never inferred
+     (CLAUDE.md).
 
      WHAT CHANGED AT WO-3.6, because this decision said "everything about a past due date on this
      screen is WO-3.6's prompt" and that work order has now landed: the prompt is here, in the
      banner above the grid, and the clock it reads is src/past-due.js's. That module owns the
      comparison, the set of blanks it names, and the one write it offers; this file calls
-     paintPastDue() at the end of its render and knows nothing else about a date. The split is the
-     point rather than an accident of layering — a screen that both reads a clock and writes score
-     cells is a screen where "the grade changed because a date rolled over" becomes a one-line
-     mistake. So the sentence above still holds for this file, and the tint the drawing wanted on a
-     column head is still not built (see src/scores.css, which says the same thing about the rule).
+     paintPastDue() at the end of its render and knows nothing else about a date.
+
+     WHAT CHANGED AT WO-3.19 is the tint itself, which WO-3.5 left in the drawing and WO-3.6
+     deliberately did not ship. It is DRAWN here and DECIDED there: columnHead() asks
+     pastDueAsksAbout(), which is a read of the set paintPastDue() has already computed this render,
+     rather than comparing a due date to today. So the amber heads are exactly the assignments the
+     banner's sentence names, and there is still no comparison against a date anywhere in this file.
+
+     THE SPLIT IS THE POINT rather than an accident of layering — a screen that both reads a clock
+     and writes score cells is a screen where "the grade changed because a date rolled over" becomes
+     a one-line mistake. src/scores.css says the same thing about the rule that colours it.
 
   2. A CELL IS ALWAYS AN OBJECT, AND CLEARING ONE DELETES THE KEY. There is no `{ v: null }` with no
      flag anywhere in the writes below — writeCell() refuses to store one, and that is acceptance
@@ -102,8 +108,14 @@ import { letterFromPercentage, weightedClassGrade } from './grade-engine.js';
    deliberately not in this file — see decision 1. This file draws it by calling one function and
    passing nothing: that module asks src/classes.js which class and term are open, exactly as this
    one does. The import runs one way; nothing in src/past-due.js knows this file exists, which is
-   what keeps the write it offers out of the typing path. */
-import { paintPastDue } from './past-due.js';
+   what keeps the write it offers out of the typing path.
+
+   THE SECOND IMPORT IS THE COLUMN-HEAD TINT (WO-3.19) and it is a QUESTION rather than a paint:
+   pastDueAsksAbout() answers, per assignment, whether the banner drawn a moment ago is asking about
+   that column. It is imported for the same reason letterFromPercentage() is — the answer is already
+   owned somewhere, and a local copy of the comparison would be a second reader of the date that
+   AGENTS.md forbids by name. */
+import { paintPastDue, pastDueAsksAbout } from './past-due.js';
 
 const CLASS_NAME_ID = 'scoresClassName';
 const HEADLINE_ID = 'scoresHeadline';
@@ -390,6 +402,13 @@ function el(tag, className, text) {
 function columnHead(assignment, cls) {
   const th = el('th', 'scores-col');
   th.scope = 'col';
+  /* WHICH assignment this column is, said on the head as well as on every cell under it
+     (`data-score-cell` in scoreCell() below). Nothing in the app reads it: it is here so that a check
+     about which COLUMNS are tinted can name them rather than count them, which is the same job the
+     ids on src/past-due.js's review chips do — "exactly the previewed cells" is otherwise a claim
+     nobody can read back. A check that mapped head position to cell position would go quietly wrong
+     the day a column is inserted, which is the shape of wrong this repo is worst at noticing. */
+  th.setAttribute('data-score-col', assignment.id);
   th.append(el('span', 'scores-col-name', assignment.name || 'Untitled assignment'));
   th.append(el('span', 'scores-col-pts', 'out of ' + pointsOf(assignment)));
 
@@ -410,10 +429,27 @@ function columnHead(assignment, cls) {
   th.append(chip);
 
   const due = shortDate(assignment.due);
-  /* A plain date and no comparison — decision 1. An empty due date is valid and stays empty
-     (src/assignments.js decision 1), so the line is simply absent rather than printing a dash that
-     would read as a date somebody deleted. */
-  if (due) th.append(el('span', 'scores-col-due', 'due ' + due));
+  /* No comparison here — decision 1. An empty due date is valid and stays empty (src/assignments.js
+     decision 1), so the line is simply absent rather than printing a dash that would read as a date
+     somebody deleted; that is also what makes an undated column impossible to tint, since there is
+     no element for the class to go on.
+
+     THE TINT (WO-3.19), AND IT IS A COLOUR AND NOTHING ELSE: it writes no cell, marks no student and
+     moves no grade. WHICH columns wear it is src/past-due.js's answer rather than this file's, so
+     they are exactly the assignments the banner above the grid names — and a column stops being
+     amber on the render after its blanks are filled or marked, because the set it comes out of has
+     stopped holding it. The `title` is the assignment list's own overdue tint word for word
+     (src/assignments.js's renderRow), and the prompt's second line is the same sentence again: three
+     surfaces saying one thing, kept identical on purpose. */
+  if (due) {
+    const dueLine = el('span', 'scores-col-due', 'due ' + due);
+    if (pastDueAsksAbout(assignment.id)) {
+      dueLine.classList.add('overdue');
+      dueLine.title = 'This date has gone by and not everyone has a score yet. Nothing has been '
+        + 'marked and no grade has changed — Planbook never decides anything from a date.';
+    }
+    th.append(dueLine);
+  }
   return th;
 }
 
@@ -671,7 +707,13 @@ export function renderScores() {
   paintKeys();
   /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below: with no
      term, no roster or no work there is nothing past due, and a banner left standing from the class
-     before would be asking about work this screen is not showing. */
+     before would be asking about work this screen is not showing.
+
+     IT IS ALSO WHAT MAKES THE COLUMN HEADS TINTABLE (WO-3.19), which is why this call sits ABOVE the
+     head row rather than under the finished grid. paintPastDue() recomputes the set the banner is
+     drawn from; columnHead() then asks pastDueAsksAbout() which columns are in it. Move this line
+     below the loop and every head answers about the class the teacher was on before — a wrong colour
+     on a right date, which is the kind of stale nothing throws about. */
   paintPastDue();
   if (emptyText) {
     const banner = document.getElementById(NO_GRADE_ID);

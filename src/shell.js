@@ -1132,7 +1132,16 @@ document.addEventListener('click', (e) => {
 
      The redraw is conditional on something having been written, which is not an optimisation: a
      tap that wrote nothing — every cell having taken a score while the banner was up — must not
-     rebuild a grid the teacher is typing in. */
+     rebuild a grid the teacher is typing in.
+
+     WHAT WO-3.19 ADDS TO THAT TRADE, said here because this is where a reader would look for it:
+     the score grid's overdue column heads are drawn from the same set as the banner, so "Not now"
+     takes their amber off too — but not until the next render, because src/past-due.js paints its
+     own banner and cannot touch a grid it does not import. An amber date over a banner that has just
+     gone is a colour one render stale, and rebuilding the grid under a teacher who may have a digit
+     half-typed is the cost this paragraph already refuses to pay for something that wrote nothing.
+     Accept is the other way round and redraws, which is what makes a column stop being amber the
+     moment its blanks are marked. */
   if (e.target.closest('[data-past-due-review]')) { pastDue.togglePastDueReview(); return; }
   if (e.target.closest('[data-past-due-accept]')) {
     if (pastDue.acceptPastDue()) paintClassScreen(views.currentView());

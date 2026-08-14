@@ -132,6 +132,14 @@ export const PREF_DEFAULTS = {
   /* Which assignments this browser has answered "Not now" to on the past-due prompt (WO-3.6):
      { "a_3f9a1b2c4d": true }. An empty object means it has never been dismissed for anything.
 
+     SINCE WO-3.19 IT SILENCES TWO THINGS RATHER THAN ONE. The score grid's overdue column head is
+     drawn from the same computed set as the banner, so a dismissal takes the amber off that head on
+     the next render as well as taking the banner down — they are one signal at two volumes, and an
+     amber head with no banner to explain it is the worse half to leave up. The assignment list's own
+     amber date is a different comparison over a different set and stays; src/past-due.js's
+     pastDueAsksAbout() carries the long version. Nothing about that changes what is STORED here,
+     which is still an assignment id and `true`.
+
      AN ASSIGNMENT ID ON ONE SIDE AND `true` ON THE OTHER, and nothing from inside a document on
      either — no name, no due date, no student, no score. That is what makes a fact about a
      gradebook full of students legal in localStorage at all, and it is the same shape `openClassId`
