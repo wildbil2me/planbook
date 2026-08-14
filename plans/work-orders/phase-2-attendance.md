@@ -2564,7 +2564,7 @@ both ends — do not write "this file does not import that module" above an impo
 
 ## WO-2.27 — where the pass work says one thing and does another
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.26
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** S · **Depends on** WO-2.9, WO-2.26
 
 **Booked 2026-08-14, out of WO-2.9's verification, and widened the same day out of WO-2.26's.** Two
 dispatches' worth of findings that were correctly **not** acceptance failures — nothing either work
@@ -2588,8 +2588,23 @@ bound only; the two harness items below are that gap and its neighbour.
 - **The pass clock outlives its banner.** `src/attendance.js:2833` — `paintPassBanner()` returns at
   line 2835 when the banner element is not in the document, so the `stopPassClock()` at line 2860 is
   unreachable on that path and navigating off the registry with a pass open leaves a 1-second
-  interval running. Every tick is a no-op, which is why this is XS and not a bug report. **What makes
-  it a comment problem is line 2856**: *"A run with an empty room costs nothing at all, not one timer
+  interval running. Every tick is a no-op, which is why this is XS and not a bug report.
+
+  > **Two of those sentences are wrong, and they are left standing because the correction is the
+  > finding (2026-08-14, at close).** Leaving the registry never reaches that early return — the
+  > banner is static markup in `index.html:627` and `src/views.js:120` hides views rather than
+  > removing them, so nothing calls `paintPassBanner()` on the way out at all. And the ticks are
+  > **not** no-ops: the cards the last paint left behind are still in the document, so
+  > `paintPassElapsed()` keeps recomputing from the stamps and keeps firing **WO-2.9's overdue
+  > alerts** on whatever screen the teacher is standing on. Stopping the clock on a view change —
+  > which is what this bullet asks for, read plainly — would silence that alert on four screens out
+  > of five. The early return was fixed anyway and the comment made true; the navigation half became
+  > **WO-2.28**, because it is a decision about an alert's reach and not a tidy. *A work order booked
+  > to pay comment debt got its own diagnosis wrong, which is the argument for the sweep rule below
+  > rather than against it: the four debts a person found by reading are exactly the ones a person
+  > can also mis-read.*
+
+  **What makes it a comment problem is line 2856**: *"A run with an empty room costs nothing at all, not one timer
   doing nothing once a second."* That is true of the empty-room path and false of the navigated-away
   path, and it is the sentence a reader would trust instead of checking. A live timer on a device
   that suspends is also the exact hazard class WO-2.9's own Traps section is about.
@@ -2662,25 +2677,34 @@ the whole term filter — but proving *a* filter is load-bearing is not proving 
   score grid**, on the walk WO-3.7's block already takes.
 
 **Acceptance**
-- [ ] Navigating off the registry with a pass open leaves no interval running, and there is a check
-      that fails if the early return stops stopping it.
-- [ ] `src/attendance.js:2856`'s comment is true of every path through the function it describes.
-- [ ] A reader of `src/shell.js:747` can tell why WO-2.9's surface is not registered there without
+- [x] **`paintPassBanner()` leaves no interval running on any path out of it, the early return
+      included**, and there is a check that fails if that stop is removed.
+      *(**Re-cut by the owner on 2026-08-14, after the verifier failed the line as written.** It
+      read "navigating off the registry with a pass open leaves no interval running", which rests on
+      the diagnosis corrected under the first comment-debt bullet above: leaving the registry does
+      not reach the early return, and the interval it leaves running is carrying WO-2.9's overdue
+      alerts to whatever screen the teacher is on. The line now asks for what the deliverable
+      actually discharges. **The behaviour question it used to smuggle in is booked as WO-2.28** —
+      it is a decision about how far an alert should follow the teacher, and the verifier was right
+      that no correction round could close it. `.claude/dispatch/WO-2.27-result.md` carries the
+      implementer's full argument.)*
+- [x] `src/attendance.js:2856`'s comment is true of every path through the function it describes.
+- [x] A reader of `src/shell.js:747` can tell why WO-2.9's surface is not registered there without
       opening a dispatch result file or this work order.
-- [ ] `tools/verify-shell.mjs:10077` describes the mechanism the check actually uses.
-- [ ] A reader of `src/shell.js`'s hook inventory who searches it for any of the **seven** named above
+- [x] `tools/verify-shell.mjs:10077` describes the mechanism the check actually uses.
+- [x] A reader of `src/shell.js`'s hook inventory who searches it for any of the **seven** named above
       either finds the hook or finds a sentence telling them the list is partial.
-- [ ] **`wo-sweep.mjs` fails when a delegated hook is missing from the inventory.** Prove it the way
+- [x] **`wo-sweep.mjs` fails when a delegated hook is missing from the inventory.** Prove it the way
       WO-2.26's verifier proved the term filter: delete one row from the inventory in a copy of the
       tree, watch the sweep go red, and state that in the result file. A rule that has only ever been
       run against a list somebody just finished fixing has not been shown to catch anything.
-- [ ] **The term window's upper bound is load-bearing:** with a trip planted after `term.end`,
+- [x] **The term window's upper bound is load-bearing:** with a trip planted after `term.end`,
       reducing `passesForStudentInTerm()` to its `from` bound alone turns the suite red. State the
       count in the result file, the way WO-2.26's verifier stated 739/746 for the whole-filter case —
       *"it would go red"* is the claim this line exists to stop anyone making by reading.
-- [ ] The hall-pass card is asserted present on the Student Report screen reached from
+- [x] The hall-pass card is asserted present on the Student Report screen reached from
       `#scoresBody [data-student-detail="…"]`, not only on WO-2.26's own route.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
 **Traps** — **Do not add the presentation-mode redraw.** The finding is a missing *comment*, not a
@@ -2710,3 +2734,96 @@ its bullet above is not an instruction to register anything**: WO-2.26 *did* add
 `detail.renderDetail()` there, guarded on the view being on screen, so the standing instruction now
 has two obeyers and one documented exception — which is the state the missing comment has to
 describe, and the reason that bullet got no wider when this work order did.
+
+---
+
+## WO-2.28 — how far the overdue alert follows the teacher
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.27
+
+**Booked 2026-08-14, out of WO-2.27's verification, and it is the line WO-2.27 could not close.**
+WO-2.27 asked for the pass clock to be stopped "on every path that leaves the banner". Its implementer
+declined the navigation half and wrote the argument down instead; its verifier agreed the reading was
+right and failed the line anyway, on the grounds that a correct reading is not a discharged
+deliverable. Both were right, and what they had actually found was a **decision nobody has taken**:
+*when a pass is open and the teacher walks away from the registry, how far should the overdue alert
+follow her?* WO-2.27's line 1 was re-cut to what it really delivered; this is the rest.
+
+**What is true today** — read out of the tree on 2026-08-14, each claim at a named line.
+
+- `paintPassBanner()` is called from exactly two places, `paintPasses()` (`src/attendance.js:3050`)
+  and the registry render (`src/attendance.js:3886`). **Nothing calls it on the way out of the
+  screen.** `showClassScreen()` paints the screen it arrives at, `src/views.js:120` hides views by
+  toggling `.hidden` rather than removing them, and `#attendancePassBanner` is static markup
+  (`index.html:627`).
+- So the 1-second interval survives leaving the registry, **and its ticks are not no-ops**: the cards
+  from the last paint are still in the document, `paintPassElapsed()` (`src/attendance.js:2956`)
+  still finds their `[data-pass-elapsed]` nodes, still recomputes from the stamps, and still fires
+  WO-2.9's two overdue alerts. That is written up at `startPassClock()` (`src/attendance.js:2899`).
+
+**And two things that are NOT written up anywhere, which are why this is a work order and not a
+comment.**
+
+- **Off the registry, the alert is screen-reader-only.** The two things WO-2.9 calls "the alert" are
+  a class on the card and `announce()`. The card is inside a banner nobody is looking at, and
+  `announce()` writes `#srLive`, which lives inside `.sr-only` (`src/live-region.js:4`) and is
+  visually hidden. So a *sighted* teacher entering scores with a student twenty minutes gone is told
+  **nothing** — while the alert is nonetheless spent, because `markAlerted()` writes `alerted` to the
+  pass and `level > alertedLevel(pass)` is false ever after. She gets the tint when she returns,
+  which a single repaint on arrival would also have given her. The comment at `startPassClock()`
+  argues the interval buys the alert; **it buys it for one class of user**, and that sentence needs
+  either a fix or a qualifier.
+- **A class change off the registry silences it for both classes.** `afterClassChange()`
+  (`src/shell.js:427`) repaints only the class screen currently on view, so switching from period 2
+  to period 3 while standing on Scores moves `openClass()` and leaves period 2's cards in the banner.
+  `paintPassElapsed()` scopes to `openPassesFor(doc, cls.id)` — the new class — finds no matching
+  `[data-pass-elapsed]` node for any of them, and returns. **Nothing alerts for either class** until
+  the registry is next painted. It is a delay rather than a permanent loss (the level is recomputed
+  from elapsed on arrival, and a crossed threshold still announces once), and the honest statement of
+  the alert's reach is therefore *whatever the last registry paint drew* — which is narrower than
+  anything the code says about itself.
+
+**The decision, and it is the owner's.** Three coherent answers, and the deliverable is whichever one
+is chosen plus the code that makes it true:
+
+1. **It does not follow.** Stop the clock on a view change (`currentView() !== 'class'`, four lines,
+   the idiom is already at `syncDayColumns()`), repaint on arrival, and say in the comment that the
+   registry is where the app tells you. Cheapest, and honest about what a sighted teacher gets today.
+2. **It follows, properly.** The alert needs a driver that is not the banner paint — a timeout
+   scheduled to the next threshold, reading the document rather than the DOM — and a *visible*
+   surface off the registry, because a hidden live region is not an alert for most teachers. That is
+   the version WO-2.9's own words describe and the app does not have.
+3. **It follows exactly as far as it does now, on purpose**, with the class-change hole closed and
+   both bounds above written down. Legitimate, and the smallest of the three, but it must be chosen
+   rather than inherited.
+
+**Deliverables**
+- The decision, recorded here with its date and reasoning, the way `plans/rotating-schedule.md`
+  records one that went the other way.
+- The code that makes it true, whichever it is — including the class-change case, which is a hole
+  under all three answers.
+- A harness check that fails if the chosen behaviour is reverted. **This is the half that has no
+  cover at all today:** every existing overdue-alert check runs with the registry on screen.
+- `src/attendance.js:2899`'s paragraph updated to match, and its "the interval buys the alert" claim
+  either fixed or qualified with who it is bought for.
+
+**Acceptance**
+- [ ] The decision is written down in this file with its date, its reasoning, and what it costs.
+- [ ] With a pass open and the teacher on the Scores screen, the app behaves as the decision says —
+      asserted in `tools/verify-shell.mjs`, on a walk that leaves the registry rather than one that
+      stays on it.
+- [ ] **Switching class while off the registry no longer silences the alert for both classes**, and
+      there is a check that fails if it starts doing so again.
+- [ ] `src/attendance.js:2899` describes the shipped behaviour, and no longer claims an alert reaches
+      a teacher who cannot see or hear it — or says plainly which teacher it reaches.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      for the count.
+
+**Traps** — **Do not take answer 1 by reflex because it is four lines.** It is the cheapest and it is
+a real reduction in what the app promises; if it is chosen, it is chosen with that said out loud.
+**Do not make the live region visible** as a way of getting a sighted alert: `#srLive` is one string
+shared by the whole app (`src/live-region.js`), and a pass alert is not the only thing that lands in
+it. **A visible off-registry alert names a student on whatever screen the teacher is projecting** —
+that is the presentation-mode rule in `CLAUDE.md`, and answer 2 has to answer it before it draws
+anything. **Do not widen this to the cross-class alert**: WO-2.11 left that door open and WO-2.26 and
+WO-2.9 both declined it on the record (`src/attendance.js:2968`), and it is a third work order.

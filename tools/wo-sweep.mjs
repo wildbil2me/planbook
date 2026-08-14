@@ -678,6 +678,122 @@ function commentLines(file) {
   }
 }
 
+/* ══════════════════════ 12. every delegated hook is in the inventory ══════════════════════
+   `src/shell.js` opens with a list under *"The hooks, all handled by the one listener below"* that
+   names every `data-*` attribute the one click listener routes on. It is the first thing a dispatch
+   looking for the delegation seam reads, and an inventory is a promise of completeness in a way a
+   paragraph is not: a missing row does not read as "this list is partial", it reads as "no such hook
+   exists".
+
+   IT HAD BEEN ROTTING ACROSS AT LEAST TWO WORK ORDERS WHEN THIS WAS WRITTEN. Seven hooks were
+   delegated and absent — WO-2.9's three (`data-pass-history`, `-history-all`, `-history-student`)
+   and four older ones from WO-2.6 (`data-attendance-history`, `data-attendance-record`, and that
+   record's print and CSV controls). WO-2.26's verifier found the three because it happened to be
+   reading WO-2.9; nobody had ever flagged the other four. Listing them by hand fixes today and
+   leaves the mechanism running, which is why WO-2.27's own deliverable says this rule matters more
+   than the seven rows.
+
+   THE DIFF RUNS ONE WAY, AND THE OTHER WAY WOULD DESTROY THE LIST. Delegated-and-not-listed is a
+   real omission, every time: the hook exists, the listener handles it, and the file's own census
+   does not mention it. Listed-and-not-delegated is NOT the mirror of that and is mostly correct
+   documentation — it came to twenty-two entries on the day this was written, and the ones that are
+   not `closest()` targets are there for good reasons. **That number is a snapshot and not a
+   promise**: it moves whenever a row is added, and it moved once before this comment was a day old
+   (see the gates below). Recount it, do not trust it:
+     · VALUE-CARRYING COMPANIONS read off an element some OTHER hook matched — `data-pass-type`,
+       `data-score-student`, `data-term-id`, `data-assignment-id`, `data-accommodation-index`,
+       `data-guardian-index`, `data-paste-index`, `data-band-index`, `data-category-id`,
+       `data-attendance-date`, `data-attendance-note-date`.
+     · FORM AND FIELD HOOKS reached by the `submit` and `input` listeners further down that file,
+       through `matches()` or `getAttribute()` rather than `closest()` — `data-year-create`,
+       `data-class-create`, `data-class-rename-save`, `data-dayoff-create`, `data-roster-create`.
+     · MARKUP THAT IS NOT A CONTROL AT ALL — the empty hosts a module paints into (`data-past-due`,
+       `data-accommodation-prompt`), and three GATE attributes the inventory names in prose precisely
+       so that the next reader does not confuse a gate with a hook (`data-grades-print`,
+       `data-detail-print`, `data-attendance-print`; WO-2.25's scar is written out at that row).
+       **The third one is why the count above carries a warning.** `data-attendance-print` entered
+       the block inside the prose of the `data-attendance-record-print` row that WO-2.27 itself
+       added — the hook ASKS, the gate ANSWERS, and the row says so — so this enumeration was one
+       short before the file it describes had been saved twice. Corrected 2026-08-14.
+     · AND ONE THAT IS NOT AN ATTRIBUTE AT ALL: `data-model`, which is the scan reading
+       `docs/data-model.md` out of a sentence. It is harmless in the direction this rule runs and it
+       is the clearest possible demonstration of why the other direction cannot be automated.
+   A sweep that asserted both directions and deleted the difference would strip working
+   documentation and call it tidying. So this asserts one direction and says so out loud, because a
+   rule whose asymmetry is undocumented is the next comment debt.
+
+   WHAT IS SEARCHED, AND THE TWO BOUNDS ON IT:
+   - The delegated set is every `data-*` token inside a `closest('…')` selector in `src/shell.js` —
+     tokens rather than the first match, so a compound selector (`closest('[data-pill-group] .pill')`
+     today, `closest('[data-a][data-b]')` tomorrow) contributes both. `src/shell.js` holds the only
+     DELEGATED listener, which is the convention its own header sets — but it is **not** the only
+     file calling `closest()` on a `data-` attribute, and the difference is the reason this scan is
+     not widened to `src/`. `src/attendance.js:2327` walks to `tr[data-attendance-row]`: an
+     intra-module marker the same module painted and reads back, never routed by the one listener
+     and correctly absent from the inventory. Widening the scan would make that the rule's first
+     false positive, and a rule that cries wolf on correct code is un-run within a month. The bound
+     that matters is the other one: if a second file ever grows a DELEGATED listener, this rule will
+     not see it — worth knowing rather than worth a clause today.
+     *(Corrected 2026-08-14, the sitting after this section landed. It read "the only file in `src/`
+     that calls `closest()` on a `data-` attribute", which was wrong when it was written — inside a
+     work order about comment debt, in the comment arguing the rule's own scope.)*
+   - The inventory side is every `data-*` token ANYWHERE in the block, not just the ones in the
+     left-hand column. That is deliberately the permissive read, because it is the reader's: the
+     acceptance line this rule stands on says a reader who SEARCHES the list either finds the hook
+     or finds a sentence saying the list is partial, and a reader searches with Ctrl-F. A hook
+     mentioned only inside another row's paragraph passes here and is a documentation smell rather
+     than a broken promise.
+
+   The block is found by the two sentences that open and close it, and a rewording FAILs loudly for
+   the reason §11's count does: a check that goes quiet when its anchor moves is worse than no check.
+   A run with an empty delegated set FAILs for the same reason — it reads exactly like an app with no
+   hooks in it. */
+
+{
+  const shellPath = path.join(REPO, 'src', 'shell.js');
+  if (!fs.existsSync(shellPath)) {
+    check('every delegated hook is in src/shell.js\'s inventory', false,
+      'src/shell.js is not where this check expects it — the delegation seam moved, and this rule is now watching nothing. Point it at the new path.');
+  } else {
+    const lines = fs.readFileSync(shellPath, 'utf8').split('\n');
+    const OPENS = /The hooks, all handled by the one listener below/;
+    const CLOSES = /Delegation also means markup rendered later/;
+    const from = lines.findIndex(l => OPENS.test(l));
+    const to = lines.findIndex(l => CLOSES.test(l));
+
+    // Every data-* token inside a closest('…') selector, with the line it was found on, so a FAIL
+    // says where to go and not just what is missing.
+    const delegated = new Map();
+    lines.forEach((line, i) => {
+      for (const call of line.matchAll(/closest\(\s*'([^']*)'/g)) {
+        for (const m of call[1].matchAll(/data-[a-z0-9-]+/g)) {
+          if (!delegated.has(m[0])) delegated.set(m[0], `src/shell.js:${i + 1}`);
+        }
+      }
+    });
+
+    if (from < 0 || to < 0 || to <= from) {
+      check('every delegated hook is in src/shell.js\'s inventory', false,
+        'the hook inventory in src/shell.js no longer opens with "The hooks, all handled by the one listener below" and close with "Delegation also means markup rendered later" — restore the wording or re-point this check; a reworded header must not read as a passing diff');
+    } else if (!delegated.size) {
+      check('every delegated hook is in src/shell.js\'s inventory', false,
+        'no closest(\'[data-…\') call found in src/shell.js at all — the pattern in tools/wo-sweep.mjs has stopped matching, which reads green from a distance and is not');
+    } else {
+      const listed = new Set();
+      for (let i = from; i < to; i++) {
+        for (const m of lines[i].matchAll(/data-[a-z0-9-]+/g)) listed.add(m[0]);
+      }
+      const missing = [...delegated].filter(([hook]) => !listed.has(hook));
+      check('every delegated hook is in src/shell.js\'s inventory',
+        !missing.length,
+        missing.length
+          ? missing.map(([hook, where]) => `${hook} (${where})`).join(', ')
+            + ` — delegated by the one listener and absent from the census at src/shell.js:${from + 1}. Add the row, or say in one line that the list is not exhaustive; a list a few rows short is the same false promise. (This diff runs ONE WAY: an entry with no closest() call is not the mirror of this and is usually correct — see the comment at this check.)`
+          : `${delegated.size} delegated attribute(s) in the one listener, all of them findable in the ${listed.size}-attribute census at src/shell.js:${from + 1} — the diff run delegated→inventory only, on purpose`);
+    }
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

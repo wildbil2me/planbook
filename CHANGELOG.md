@@ -38,6 +38,31 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **Nothing you can see, and one thing you can now trust.** Four comments in the hall-pass code were
+  saying things the code beside them did not do, and two checks in the harness were passing over
+  behaviour that could have been deleted without turning them red. Both are fixed. The one that
+  matters is a new standing check: `src/shell.js` keeps a list of every hook in the app, that list
+  had been quietly seven rows short across two work orders, and a missing one now turns the sweep red
+  instead of waiting for somebody to notice.
+
+  **The work order got its own diagnosis wrong, and that is the part worth recording.** WO-2.27 was
+  booked to pay comment debt and opened by asserting that the pass clock keeps ticking pointlessly
+  after you leave the attendance screen. It does keep ticking — the ticks are not pointless. They are
+  what fires the overdue alert when a student has been gone twenty minutes, and stopping them, which
+  is what the work order asked for in as many words, would have silenced that alert on every screen
+  but one. The implementer declined and wrote the argument down; the verifier failed the line anyway,
+  on the grounds that reading the code right is not the same as delivering what was asked. Both were
+  right, and what they had actually found was a decision nobody had taken.
+
+  So the line was re-cut to what the work really delivered, and **the question became WO-2.28: how
+  far should the overdue alert follow you off the registry?** Closing that turned up two more things
+  nobody had noticed. Off the attendance screen the alert only ever reaches a screen reader — the
+  card that changes colour is on a banner you are not looking at, and the spoken sentence goes to a
+  region that is invisible by design — so a sighted teacher entering scores is told nothing, while
+  the alert is spent all the same. And switching class while you are off the registry silences it for
+  *both* classes until you go back. Neither is a regression; both have been true since the alert
+  shipped, and both are booked.
+
 - **The briefing layer is true again, and now inside the maintenance protocol.** `CLAUDE.md` told
   every session and every dispatched agent that this project was *"pre-code… no app code exists yet"*
   and that git was *"not yet initialized"* — through 133 commits, 25.5k lines of app, a live

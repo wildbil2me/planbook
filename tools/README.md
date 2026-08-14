@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 748 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 750 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -858,7 +858,18 @@ with it and is not in the count: WO-2.6's "every print rule is gated" now sorts 
 surface's attribute gates them, because `src/attendance.css` grew a second arm under
 `data-detail-print` for the trip table WO-2.26 draws onto the Student Report card. Ungated is still a
 failure; the borrowed arm is counted so that losing it goes red rather than reading as a tidier
-stylesheet.)* *(The
+stylesheet.)* **WO-2.27 moved it from 748 to 750**: two call sites, neither in a loop and neither a
+failure arm, and they sit in two different sections because they answer two different work orders'
+gaps — one in the hall-pass block, driving the early-return path out of `paintPassBanner()` and
+watching the elapsed interval through wrappers on `setInterval`/`clearInterval`, and one inside
+WO-3.7's section, asserting that WO-2.26's hall-pass card is on the Student Report screen when that
+screen is reached from `#scoresBody [data-student-detail="…"]` rather than only from the door in the
+attendance history dialog. So the run prints **748**. *(That work order also planted a third trip in
+WO-2.26's fixture, dated sixty days after `term.end`, which adds no call site and changes what four
+existing ones assert: until then every trip in the fixture fell on or before the term's end, so
+`passesForStudentInTerm()` reduced to its `from` bound alone passed the whole suite. It now fails
+seven of them, 741 of 748, in the copy of the tree that proved it — the count is in `TESTING.md`
+beside the work order.)* *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

@@ -10074,7 +10074,19 @@ if (!attBooted || !attSeam) {
   /* NOT REPEATEDLY, over the sixty renders a minute this screen makes: the live region is cleared,
      three seconds of ticks go by with the pass still far past both thresholds, and nothing new is
      said. A build that fired off the elapsed time rather than off the record would say it three
-     times, and a build that fired off a variable would say it again after the reload below. */
+     times.
+
+     WHAT THIS CHECK DOES NOT REST ON IS A RELOAD, and the sentence here claimed one until WO-2.27:
+     *"a build that fired off a variable would say it again after the reload below"* — there is no
+     reload below. The nearest `Page.reload` in this file is thousands of lines away in either
+     direction, and these passes are closed and this fixture is gone long before it. Three seconds of
+     ticks in one page cannot tell a level stored on the record from a level held in a module
+     variable, because both survive a wait.
+     WHAT SETTLES THAT IS THE KEY SET, one check above: `alerted41.keys` is read verbatim off the
+     pass in `doc.openPasses` and has to be `alerted,classId,id,note,out,studentId,type`. A build
+     holding the level in a variable leaves no `alerted` key on the record, so it fails there rather
+     than here — and `read()` says the same thing at the field it collects. Two checks, two claims:
+     that one is where the level LIVES, this one is that the tick does not re-fire it. */
   await hush();
   await new Promise(r => setTimeout(r, 3200));
   const quiet = await read();
@@ -10089,6 +10101,78 @@ if (!attBooted || !attSeam) {
       + ', alerted = ' + JSON.stringify((quiet.openPasses
         .filter((p) => p.studentId === outA)[0] || {}).alerted) + ', the card reads '
       + JSON.stringify(((quiet.passBanner.cards || [])[0] || {}).elapsed));
+
+  /*
+    ── AND THE CLOCK COMES DOWN WITH THE BANNER, INCLUDING ON THE PATH THAT RETURNS EARLY (WO-2.27) ──
+
+    paintPassBanner() has two exits. The foot of it stops the clock when nothing was drawn, and its
+    own comment promises that *"a run with an empty room costs nothing at all, not one timer doing
+    nothing once a second"* — which was true of that exit and false of the other one: the guard at
+    the top returns the moment `#attendancePassBanner` is not in the document, and the stop was
+    below it. A banner that has gone leaves a 1-second interval behind, ticking over nothing.
+
+    THE PATH IS DRIVEN RATHER THAN DESCRIBED, and the cheapest honest way in is the id: getElementById
+    is what the guard asks with, so blanking the attribute for the length of one repaint puts the
+    real function down the real branch with no DOM surgery and nothing to put back but a string. The
+    element never leaves the page and its cards are rebuilt on the way out.
+
+    THE INTERVAL IS WATCHED THROUGH WRAPPERS ON setInterval/clearInterval, because the id lives in a
+    module-scoped variable this file cannot read. The clock this section already has running was
+    created before the wrappers went on, so it is deliberately stopped and started again through
+    them first — the id under test is one the probe watched being made, and `started` being empty is
+    itself the unfixed build failing: with no stop on the early return, startPassClock() finds its
+    variable still set and creates nothing.
+
+    The filter is the callback's NAME, which ties this check to `paintPassElapsed` by string. That is
+    on purpose and it is why every live name is printed beside the verdict: a rename turns this red
+    with the answer in the detail line rather than turning it quiet.
+  */
+  const clockProbe = await evalJs(`(function(){
+    var a = window.planbook.attendance;
+    var box = document.getElementById('attendancePassBanner');
+    if (!box) return { ok:false, why:'no pass banner in the document to take away' };
+    var live = {}, si = window.setInterval, ci = window.clearInterval;
+    window.setInterval = function(fn, ms){
+      var id = si.call(window, fn, ms);
+      live[id] = (fn && fn.name) || 'anonymous';
+      return id; };
+    window.clearInterval = function(id){ delete live[id]; return ci.call(window, id); };
+    var ticking = function(){
+      var out = []; for (var k in live) out.push(live[k]); return out; };
+    try {
+      /* Down and up once, so what is measured below is an interval this probe saw created.
+         NO BACKTICKS IN THIS COMMENT: it is inside a template literal. */
+      box.id = '';
+      a.renderAttendance();
+      box.id = 'attendancePassBanner';
+      a.renderAttendance();
+      var started = ticking();
+      var cards = box.children.length;
+      /* And now the path itself. */
+      box.id = '';
+      a.renderAttendance();
+      var afterEarly = ticking();
+      box.id = 'attendancePassBanner';
+      a.renderAttendance();
+      return { ok:true, cards: cards, started: started, afterEarly: afterEarly,
+               afterBack: ticking(), backCards: box.children.length };
+    } finally {
+      box.id = 'attendancePassBanner';
+      window.setInterval = si;
+      window.clearInterval = ci;
+    } })()`);
+  const clocks = (list) => (list || []).filter((n) => n === 'paintPassElapsed').length;
+  check('the elapsed clock is stopped on EVERY path out of the banner paint, including the early return a missing banner takes — and starts again when the banner comes back',
+    clockProbe.ok === true && clockProbe.cards > 0 && clockProbe.backCards === clockProbe.cards
+      && clocks(clockProbe.started) === 1
+      && clocks(clockProbe.afterEarly) === 0
+      && clocks(clockProbe.afterBack) === 1,
+    clockProbe.ok
+      ? 'with the banner up ' + clockProbe.cards + ' card(s) and interval(s) '
+        + JSON.stringify(clockProbe.started) + '; with it taken away '
+        + JSON.stringify(clockProbe.afterEarly) + '; with it back '
+        + JSON.stringify(clockProbe.afterBack) + ' over ' + clockProbe.backCards + ' card(s)'
+      : clockProbe.why);
 
   /*
     ── AND THE ESCALATION ITSELF, one threshold at a time, on a second student ──
@@ -10432,12 +10516,21 @@ if (!attBooted || !attSeam) {
     Every trip the run has authored fell on today, so a term-scoped surface and a year-wide one
     would print the same number and the scoping would be INVISIBLE: a check that cannot fail when
     passesForStudentInTerm() is reduced to passesForStudent() is not a check. So the class is put on
-    a DATED term whose window holds today, and two trips are planted on the busiest student — one
-    inside the window carrying a note, one sixty days outside it. They go in through the store
-    rather than through the registry because there is no control that sends a student out last June,
-    which is the same door this section already opens to wind a stamp backwards. Both come out again
-    at the foot of the block, with the class's own terms, and the section hands on the state it
-    always did.
+    a DATED term whose window holds today, and THREE trips are planted on the busiest student — one
+    inside the window carrying a note, one sixty days BEFORE its start, and one sixty days AFTER its
+    end. They go in through the store rather than through the registry because there is no control
+    that sends a student out last June, which is the same door this section already opens to wind a
+    stamp backwards. All three come out again at the foot of the block, with the class's own terms,
+    and the section hands on the state it always did.
+
+    THE TRIP ON EACH SIDE IS WO-2.27, AND IT IS THE DIFFERENCE BETWEEN ONE BOUND AND TWO. WO-2.26's
+    verifier proved this scoping falsifiable by deleting the whole filter and watching 739 of 746
+    checks stand — but every trip in the fixture then fell on or before the term's end, so the UPPER
+    bound had nothing beyond it to exclude. passesForStudentInTerm() reduced to `(from)` alone — the
+    commonest way a date window rots, and a one-character deletion — passed the suite. A bound with
+    no trip beyond it is decoration, so the third trip is dated sixty days past `term.end` and
+    carries its own sentinel note. Both sentinels are asked for by name below, on the card, on the
+    printed sheet, and in the year-wide fallback where they must both come BACK.
 
     NOTHING BELOW IS CLICKED BEFORE IT IS ASKED FOR. The block this one replaces called clickSel on
     the deleted door; it threw, and took WO-2.3 and everything under it down with it before a
@@ -10455,8 +10548,12 @@ if (!attBooted || !attSeam) {
   const TERM_FROM = dayFrom(-7);
   const TERM_TO = dayFrom(7);
   const TRIP_OUTSIDE = dayFrom(-60);
+  /* WO-2.27: the other side of the window. Sixty days past `term.end`, which is what makes the `to`
+     bound load-bearing — see the paragraph above. */
+  const TRIP_AFTER = dayFrom(60);
   const NOTE_IN = 'WO-2.26 note — typed on a trip inside the open term';
   const NOTE_OUT = 'WO-2.26 sentinel — this trip is sixty days outside the open term';
+  const NOTE_AFTER = 'WO-2.27 sentinel — this trip is sixty days AFTER the open term ends';
 
   const plant226 = await evalJs(`(function(){
     var s = window.planbook.store, c = window.planbook.classes;
@@ -10490,6 +10587,13 @@ if (!attBooted || !attSeam) {
         out:${JSON.stringify(TRIP_OUTSIDE)} + 'T09:00:00' + zone,
         back:${JSON.stringify(TRIP_OUTSIDE)} + 'T09:07:00' + zone,
         minutes:7, endedBy:'return', note:${JSON.stringify(NOTE_OUT)} });
+      /* WO-2.27: the same trip on the far side of the window, so the upper bound has something to
+         exclude. NO BACKTICKS IN THIS COMMENT: it is inside a template literal. */
+      doc.passes.push({ id:'wo226-after', studentId:${JSON.stringify(busiest)},
+        classId:${JSON.stringify(passClass)}, type:'nurse',
+        out:${JSON.stringify(TRIP_AFTER)} + 'T11:00:00' + zone,
+        back:${JSON.stringify(TRIP_AFTER)} + 'T11:11:00' + zone,
+        minutes:11, endedBy:'return', note:${JSON.stringify(NOTE_AFTER)} });
     });
     window.planbook.attendance.renderAttendance();
     var open = c.getSelectedTerm() || {};
@@ -10602,20 +10706,28 @@ if (!attBooted || !attSeam) {
   const cardDoor226 = '#attendanceHistoryModal [data-student-detail="' + busiest + '"]';
   const cardDoorLive = rowLive226 ? await has(cardDoor226) : false;
 
+  /* One on each side, counted in Node off the log rather than assumed off the plant: `before` and
+     `after` are what make BOTH bounds of the window load-bearing, and a fixture that lost either one
+     would leave the corresponding bound provable by nothing (WO-2.27). */
+  const before226 = busyAll.filter((p) => String(p.out || '').slice(0, 10) < TERM_FROM);
+  const after226 = busyAll.filter((p) => String(p.out || '').slice(0, 10) > TERM_TO);
   const fixture226 = plant226.ok === true && plant226.termId === 'tm_wo226'
-    && inWindow.length > 1 && busyAll.length === inWindow.length + 1
-    && daysIn.length === 1 && daysAll.length === 2
+    && inWindow.length > 1 && busyAll.length === inWindow.length + 2
+    && daysIn.length === 1 && daysAll.length === 3
+    && before226.length === 1 && after226.length === 1
     && inWindow.some((p) => p.note === NOTE_IN)
     && busyAll.some((p) => p.note === NOTE_OUT)
+    && busyAll.some((p) => p.note === NOTE_AFTER)
     && wantTerm.total !== wantYear.total && wantTerm.minutes !== wantYear.minutes
     && rowLive226 && cardDoorLive;
-  check('the WO-2.26 fixture is real: the class is on a DATED term, that student holds trips inside its window and one sixty days outside it, and a term count and a year count therefore cannot both be right',
+  check('the WO-2.26 fixture is real: the class is on a DATED term, that student holds trips inside its window and one sixty days on EACH side of it, and a term count and a year count therefore cannot both be right',
     fixture226,
     (plant226.ok ? 'the open term is ' + JSON.stringify(plant226.label) + ' ' + plant226.start
       + '..' + plant226.end : 'the plant did not land: ' + plant226.why)
       + '; that student holds ' + busyAll.length + ' trip(s) on the log across '
       + daysAll.length + ' day(s), ' + inWindow.length + ' of them inside the window on '
-      + daysIn.length + ' day(s) — ' + JSON.stringify(countText226(wantTerm)) + ' against '
+      + daysIn.length + ' day(s), with ' + before226.length + ' before it and '
+      + after226.length + ' after it — ' + JSON.stringify(countText226(wantTerm)) + ' against '
       + JSON.stringify(countText226(wantYear)) + ' for the year; the registry row is there = '
       + rowLive226 + ', the door to the grades is there = ' + cardDoorLive);
 
@@ -10665,10 +10777,14 @@ if (!attBooted || !attSeam) {
         + '; the note reads ' + JSON.stringify(onCard && onCard.note.slice(0, 120)));
 
     /*
-      ACCEPTANCE LINE 2, AND THE CLAIM THE OLD BLOCK COULD NOT MAKE. The trip sixty days out is on
+      ACCEPTANCE LINE 2, AND THE CLAIM THE OLD BLOCK COULD NOT MAKE. The trips sixty days out are on
       the log and off the card. Four ways of saying it, because each fails differently: the sentinel
-      note is absent, the count is the term's and not the year's, the card covers one day where the
-      log covers two, and the card names the term it is over.
+      notes are absent, the count is the term's and not the year's, the card covers one day where the
+      log covers three, and the card names the term it is over.
+
+      BOTH SENTINELS ARE ASKED FOR SEPARATELY (WO-2.27), and that is the whole of the second bound:
+      the one before `term.start` fails a build with no `from`, the one after `term.end` fails a
+      build with no `to`, and asking for them in one clause would let either half carry the other.
 
       AND THE APP'S OWN TWO READERS ARE ASKED TO DISAGREE, through the seam. If
       passesForStudentInTerm() were ever reduced to passesForStudent() those two numbers would be
@@ -10682,8 +10798,9 @@ if (!attBooted || !attSeam) {
           ${JSON.stringify(busiest)}, t).length,
         year: p.passesForStudent(d, ${JSON.stringify(passClass)},
           ${JSON.stringify(busiest)}).length }; })()`);
-    check('the list is the open TERM\'s and says which term: the trip sixty days outside the window is on the log and off the card, the count is the term\'s and not the year\'s, and the card covers one day where the log covers two',
+    check('the list is the open TERM\'s and says which term: the trips sixty days on either side of the window are on the log and off the card, the count is the term\'s and not the year\'s, and the card covers one day where the log covers three',
       !!onCard && onCard.text.indexOf(NOTE_OUT) < 0
+        && onCard.text.indexOf(NOTE_AFTER) < 0
         && onCard.text.indexOf(NOTE_IN) >= 0
         && onCard.title === wantLine && onCard.title !== wantYearLine
         && cardDays.length === daysIn.length && daysIn.length < daysAll.length
@@ -10692,8 +10809,9 @@ if (!attBooted || !attSeam) {
       'the card says ' + JSON.stringify(onCard && onCard.title) + ' where the year would say '
         + JSON.stringify(wantYearLine) + ', over ' + cardDays.length + ' distinct day(s) '
         + JSON.stringify(cardDays) + ' against the log\'s ' + daysAll.length
-        + '; the out-of-term sentinel is on the card = '
-        + (!!onCard && onCard.text.indexOf(NOTE_OUT) >= 0) + '; the app\'s own readers answer '
+        + '; the sentinel before the term is on the card = '
+        + (!!onCard && onCard.text.indexOf(NOTE_OUT) >= 0) + ', the one after it = '
+        + (!!onCard && onCard.text.indexOf(NOTE_AFTER) >= 0) + '; the app\'s own readers answer '
         + scoped.inTerm + ' in the term against ' + scoped.year + ' on the year');
 
     /*
@@ -10741,7 +10859,10 @@ if (!attBooted || !attSeam) {
         && onBare.note.indexOf('WO-2.26 window only') < 0
         && onBare.title === wantYearLine
         && onBare.trips.length === busyAll.length
-        && onBare.text.indexOf(NOTE_OUT) >= 0,
+        /* Both sentinels come BACK when the window goes, which is the other direction of the same
+           claim: a bound that excluded them is gone, not a list that never had them (WO-2.27). */
+        && onBare.text.indexOf(NOTE_OUT) >= 0
+        && onBare.text.indexOf(NOTE_AFTER) >= 0,
       'with the dates gone the card says ' + JSON.stringify(onBare && onBare.title) + ' over '
         + (onBare ? onBare.trips.length : '?') + ' row(s) — the year\'s ' + busyAll.length
         + ' — and the note reads ' + JSON.stringify(onBare && onBare.note.slice(0, 100)));
@@ -10816,7 +10937,8 @@ if (!attBooted || !attSeam) {
         && sheet226.cardH > 0 && sheet226.tableH > 0 && sheet226.heroH > 0
         && sheet226.rows === inWindow.length + inWindow.filter((p) => p.note).length
         && sheet226.text.indexOf(NOTE_IN) >= 0
-        && sheet226.text.indexOf(NOTE_OUT) < 0,
+        && sheet226.text.indexOf(NOTE_OUT) < 0
+        && sheet226.text.indexOf(NOTE_AFTER) < 0,
       printed226.ok
         ? 'window.print() calls from one tap = ' + printed226.calls + ', gate on at the snapshot = '
           + (sheet226 && sheet226.attr) + '; the card measured ' + (sheet226 && sheet226.cardH)
@@ -10989,7 +11111,7 @@ if (!attBooted || !attSeam) {
   await evalJs(`(function(){
     window.planbook.store.update(function(doc){
       doc.passes = (doc.passes || []).filter(function(p){
-        return p && p.id !== 'wo226-in' && p.id !== 'wo226-out'; });
+        return p && p.id !== 'wo226-in' && p.id !== 'wo226-out' && p.id !== 'wo226-after'; });
       var cls = (doc.classes || []).filter(function(x){
         return x.id === ${JSON.stringify(passClass)}; })[0];
       if (cls && window.__wo226) cls.terms = JSON.parse(window.__wo226.terms);
@@ -11003,8 +11125,9 @@ if (!attBooted || !attSeam) {
     await new Promise(r => setTimeout(r, 200));
   }
   const handedBack = await openCard(passClass);
-  const leftovers = handedBack.passLog.filter((p) => p.id === 'wo226-in' || p.id === 'wo226-out');
-  check('and the fixture comes out again: both planted trips are off the log, the class is back on its own terms, and the registry this section hands on is the one it was handed',
+  const leftovers = handedBack.passLog.filter((p) => p.id === 'wo226-in' || p.id === 'wo226-out'
+    || p.id === 'wo226-after');
+  check('and the fixture comes out again: all three planted trips are off the log, the class is back on its own terms, and the registry this section hands on is the one it was handed',
     leftovers.length === 0 && handedBack.openClass === passClass && handedBack.viewShown,
     leftovers.length + ' planted trip(s) still on the log; the open class is '
       + JSON.stringify(handedBack.openClass) + ' with the registry up = ' + handedBack.viewShown);
@@ -16201,6 +16324,18 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       'in <' + d.inMain + '>, role ' + JSON.stringify(d.role) + ', dialogs open '
         + JSON.stringify(d.dialogs) + ', ' + gridDoors + ' name door(s) on the grid, heading '
         + JSON.stringify(d.heading));
+
+    /* AND WO-2.26's HALL-PASS CARD IS ON THE SCREEN THIS DOOR OPENED (WO-2.27). That work order put
+       the card here and asserts it on its own route — the door inside the attendance history dialog
+       — so nothing checked that it is built when the screen is reached from a NAME IN THE SCORE
+       GRID, which is the route a teacher uses most. One assertion, on a walk this block already
+       takes. It asks for the title and its position and not for trips: this fixture's class has no
+       pass log behind it, so the card reads `Hall passes · none`, and what is being asked is whether
+       the card was drawn on this route at all. */
+    const passCard37 = d.attTitle.filter((t) => t.indexOf('Hall passes') === 0);
+    check('the hall-pass card is on the Student Report screen when that screen is reached from a name in the score grid, and not only from the door inside the attendance history dialog',
+      passCard37.length === 1 && d.attTitle[d.attTitle.length - 1] === passCard37[0],
+      'the cards this route drew are ' + JSON.stringify(d.attTitle));
 
     /* ACCEPTANCE LINE 9, first half — the name is drawn on the strip, as a fourth segment that is
        NOT one of the three tabs. WO-3.3 could assert only the safe direction of this rule (a name

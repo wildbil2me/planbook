@@ -190,6 +190,22 @@
       data-attendance-detail="<id>"   opens that row's own panel — the time, the note, the un-confirm
       data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
                                       that student's mark as it is typed
+      data-attendance-history="<id>"  opens that student's own attendance report — every mark they
+                                      have in the open term, and since WO-2.26 their hall-pass count
+                                      for it. Carried by the name in the registry row
+      data-attendance-record          opens the class's attendance record for the open term: the
+                                      printed page and the CSV, one dialog, built at open time
+      data-attendance-record-print    prints that record. Like the two other print doors it only
+                                      ASKS — src/print-gate.js answers `data-attendance-print` on
+                                      <body> at `beforeprint`, and the hook and the gate are
+                                      different strings, which this pair has by luck of naming
+                                      rather than on purpose (WO-2.25)
+      data-attendance-record-csv      downloads the same record as a CSV
+                                      (These four reach src/attendance-report.js rather than
+                                      src/attendance.js, for the reason that module's header gives:
+                                      they are read-only surfaces over the same ledger, and nothing
+                                      about a printed page belongs in the flow that runs while
+                                      students walk in)
       data-dayoff-panel               fills the days-off panel, then opens it — carried by the home
                                       screen's own header button and by the 📅 in a covered column's
                                       head on the registry, which are two doors onto one route
@@ -229,6 +245,16 @@
       data-pass-note="<studentId>"    on an <input>: a note on that student's open pass, written as
                                       it is typed and carried into the log entry on return.
                                       None of these four touches attendance
+      data-pass-history               the 🚪 door in the registry's toolbar: the class's whole pass
+                                      log, year-wide, one row per student (WO-2.9)
+      data-pass-history-student="<id>"  one student's trips inside that dialog. In presentation mode
+                                      that view is REFUSED outright rather than drawn with the name
+                                      blanked, which src/pass-history.js argues at the point it
+                                      does it
+      data-pass-history-all           the way back from that student to the whole class. Three taps
+                                      onto one dialog, all reaching src/pass-history.js, and none of
+                                      them chains anything: opening a dialog over the registry
+                                      changes nothing behind it
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
       data-roster-paste               opens the paste box over the roster panel
@@ -744,6 +770,24 @@ function afterRestore() {
   order things happen in. A LATER SCREEN THAT CAN SHOW SUPPORT DATA ADDS ITS REDRAW TO THIS
   FUNCTION — and only its redraw. Whether it may show the data at all it already inherits, because
   it asks src/supports.js like everything else; this line is about what is on the glass right now.
+
+  THAT INSTRUCTION HAS TWO OBEYERS AND ONE EXCEPTION, AND THE EXCEPTION IS GEOMETRY (WO-2.27).
+  WO-2.9's hall-pass history is a third surface that draws names and goes quiet in this mode, and it
+  is deliberately NOT redrawn here. It cannot need to be: that surface is a MODAL, and the two
+  controls this function is wired to — `#presentationBtn` in the header and the strip's own "Turn it
+  off" — are both behind the scrim while a modal is up. `.modal-overlay` is `position: fixed; inset: 0`
+  at `z-index: 1000` (src/shell.css § MODAL, and the ladder comment above it), and the header is
+  unpositioned normal flow with no z-index at all, so it does not merely lose the stacking contest —
+  it is covered edge to edge, and a tap at its coordinates lands on the backdrop. The first tap
+  closes the dialog and the second reaches the control, which the owner walked on the iPad on
+  2026-08-14 and read as the sensible flow. THE GEOMETRY IS ALSO THE SAFER HALF: a flip that reached
+  through an open dialog would repaint a list of student names in front of whoever is sitting on the
+  other side of the screen, which is the disclosure this mode exists to prevent.
+
+  So there is nothing to add here, and adding it would wire a repaint for a state that cannot
+  occur. What would change that is the day one student's trips are drawn somewhere that is not a
+  modal — which has already happened once, on the Student Report screen, and that surface DID take
+  its line below.
 */
 function flipPresentationMode() {
   presentation.togglePresentationMode();

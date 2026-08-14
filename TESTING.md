@@ -2885,11 +2885,15 @@ class-wide, year-wide view it has always been.
 - [x] The list is the **open term's**. A trip planted sixty days outside the window is on the log and
       on the year-wide 🚪 Passes view, and it is **off the card** — asserted four ways, because each
       fails differently: the note on that trip is absent, the count is the term's (`4 trips · 14
-      minutes out`) and not the year's (`5 trips · 21 minutes out`), the card covers one day where
-      the log covers two, and the note names the term. *(The fixture is the point of this line. Every
-      trip the run authors falls on today, so before this the scoping was invisible and a check that
-      cannot fail when `passesForStudentInTerm()` is reduced to `passesForStudent()` is not a check.
-      The app's own two readers are asked through the seam as well, and answer 4 and 5.)*
+      minutes out`) and not the year's, the card covers one day where the log covers more, and the
+      note names the term. *(The fixture is the point of this line. Every trip the run authors falls
+      on today, so before this the scoping was invisible and a check that cannot fail when
+      `passesForStudentInTerm()` is reduced to `passesForStudent()` is not a check. The app's own two
+      readers are asked through the seam as well.)* *(**WO-2.27 planted a second out-of-window trip,
+      after `term.end`**, because both of WO-2.26's fell on or before it and the upper bound
+      therefore had nothing to exclude. The figures in this line moved with it: the year now reads
+      `6 trips · 32 minutes out` over three days, the seam answers 4 against 6, and both sentinel
+      notes are asked for separately.)*
 - [x] The attendance history dialog shows the **same count and no door**: its line and the card's
       title are the same string character for character, `🚪 Every trip` is gone from the dialog, and
       no label reconciles the two — the number is one number because it is one call.
@@ -2962,6 +2966,95 @@ deliberately draws no button there to call it with.*
 - [x] The trip table is legible under a thumb on the real device: it wears `.attendance-report-table`
       and takes its coarse sizes from `src/attendance.css`'s own block, which was tuned inside a
       dialog and has never been read inside a card. 👤
+
+### WO-2.27 — Where the pass work says one thing and does another
+
+**What this changes.** Nothing a teacher can see. Four comment debts left behind by WO-2.9 and
+WO-2.26 — a promise the code beside it did not keep, a standing instruction with an undocumented
+exception, a harness comment pointing at a reload that does not exist, and a hook inventory missing
+seven of its own rows — plus **two checks that could not fail**, which is the half that matters: a
+comment that lies is found by the next reader and a green check that proves nothing is found by
+nobody.
+
+**The one thing here that is a mechanism rather than a fix** is the new sweep rule. Four of these
+debts were found by a person reading and thinking *"that looks odd"*. The inventory is the only one a
+script can hold, and it is the only one that had recurred — silently, across at least two work
+orders. **The diff runs one way only**: an attribute found in a `closest('[data-…')` call and absent
+from the census is a real omission; the reverse comparison turns up twenty-two entries that are
+mostly *correct* documentation (value-carrying companions, form and field hooks reached by
+`matches()`, three gate attributes named in prose on purpose, and one that is `docs/data-model.md`
+read out of a sentence). The asymmetry and its reasons are written at the check.
+
+- [x] `src/attendance.js`'s *"a run with an empty room costs nothing at all, not one timer doing
+      nothing once a second"* is true of **every** path out of `paintPassBanner()`. The early return
+      taken when the banner is not in the document now stops the clock too, and there is a check that
+      drives that exact path — the banner's `id` is blanked for the length of one repaint, and the
+      interval is watched through wrappers on `setInterval`/`clearInterval`, because the id lives in
+      a module variable no harness can read. It reads `["paintPassElapsed"]` → `[]` → `["paintPassElapsed"]`.
+- [x] **Re-cut rather than closed, and the finding is the reason (owner, 2026-08-14).** The line read
+      *"navigating off the registry with a pass open leaves no interval running"*. It still does, and
+      whether it should is now **WO-2.28**. `#attendancePassBanner`
+      is static markup in `index.html` and `src/views.js` hides views rather than removing them, so
+      leaving the registry never reaches that early return at all — nothing calls `paintPassBanner()`
+      on the way out. And the ticks are **not** no-ops there: the cards the last paint left in the
+      banner are still in the document, so `paintPassElapsed()` keeps recomputing from the stamps and
+      keeps firing **WO-2.9's two overdue alerts**, on whatever screen the teacher is standing on.
+      Standing the clock down when `currentView() !== 'class'` is four lines and would silence the
+      overdue alert everywhere but the registry — a teacher entering scores with a student twenty
+      minutes gone is the case that alert is *for*. Written down at `startPassClock()`. **Two things
+      the close then turned up, both booked into WO-2.28**: off the registry that alert reaches a
+      screen-reader user only, since `announce()` writes into `.sr-only` and the tinted card is on a
+      hidden banner; and switching class while off the registry silences it for *both* classes until
+      the registry is repainted, because `afterClassChange()` repaints only the screen on view.
+- [x] A reader of `flipPresentationMode()` can tell **why WO-2.9's hall-pass history is not
+      registered there** without opening a dispatch result file: the surface is a modal, and
+      `.modal-overlay` is `position: fixed; inset: 0` at `z-index: 1000` while the header is
+      unpositioned normal flow with no `z-index` at all — so the flip cannot happen while that
+      dialog is up. The first tap closes it, the second reaches the control. Walked on the iPad by
+      the owner on 2026-08-14, and named as the safer behaviour: a flip reaching through an open
+      dialog would repaint names in front of whoever is sitting there. *(The work order recorded the
+      header as `z-index: 999`; that value is `#loadingScreen`. The conclusion is unchanged and the
+      real reason is stronger, so the comment states the geometry rather than the number.)*
+- [x] `tools/verify-shell.mjs`'s *"not repeatedly"* check says what it actually rests on. It claimed
+      *"a build that fired off a variable would say it again after the reload below"* and there is no
+      reload below — the nearest `Page.reload` is thousands of lines away in either direction. What
+      settles record-versus-variable is the **key set** on the pass one check above,
+      `alerted,classId,id,note,out,studentId,type`, and that is what the comment now names.
+- [x] `src/shell.js`'s hook inventory holds all seven that were missing — WO-2.9's three
+      (`data-pass-history`, `-history-all`, `-history-student`) and four older ones from WO-2.6
+      (`data-attendance-history`, `data-attendance-record`, and that record's print and CSV
+      controls). 142 delegated attributes, all findable in the census.
+- [x] **`wo-sweep.mjs` goes red when a delegated hook leaves the inventory.** Proved rather than
+      asserted: the `data-pass-history-all` row was deleted from `src/shell.js` in a copy of the tree
+      and the sweep failed with *"data-pass-history-all (src/shell.js:1422) — delegated by the one
+      listener and absent from the census at src/shell.js:17"*, **exit 1**. *(In that copy the two
+      git-backed checks REVIEW rather than pass, because the copy has no `.git`.)*
+- [x] **The term window's upper bound is load-bearing.** A third trip is planted sixty days *after*
+      `term.end`, and with it there `passesForStudentInTerm()` reduced to its `from` bound alone —
+      one deletion — turns the suite red: **741 of 748, 7 failed**, exit 1, in a copy of the tree.
+      The same deletion against the pre-WO-2.27 tree is the reason this line exists; that run is
+      recorded below. All three planted trips come off the log at the foot of the block.
+- [x] The hall-pass card is asserted present on the Student Report screen **reached from the score
+      grid** — `#scoresBody [data-student-detail="…"]`, the route a teacher uses most — and not only
+      on WO-2.26's own route through the attendance history dialog. One assertion on a walk WO-3.7's
+      block already takes; it reads `["Where the grade comes from","Missing work · 10 points at
+      stake","Attendance · 83%","Hall passes · none"]`.
+
+*Desk pass 2026-08-14: `verify-shell.mjs` **748 of 748, 0 failed, 0 skipped**, 245s, exit 0 — two new
+call sites, in two different sections, neither in a loop. `wo-sweep.mjs` **18 checks · 16 passed · 0
+failed · 2 to review**, exit 0; both REVIEWs are the standing pair. `wo-gate.mjs --audit` and
+`--self-check` both clean.*
+
+*Three runs, and the third is the one worth reading.* Dropping the `to` bound against the tree **as
+it stood before this work order** — the same deletion, on WO-2.26's own fixture, in a tree checked
+out of `HEAD` — left the suite **green: 746 of 746, 0 failed, exit 0**. That is what "a check that cannot fail" means, and it is why the fix is a planted
+trip rather than an extra assertion: **a bound with no trip beyond it is decoration.** WO-2.26's
+verifier had proved *a* filter load-bearing by deleting the whole thing (739 of 746); proving one
+bound is not proving both.
+
+**No 👤 line.** Nothing here changes a pixel, a touch target or a printed page. The one thing a
+device would add is confirming the modal stacking by hand, and the owner already walked it on
+2026-08-14 — which is the fact the new comment records.
 
 ---
 

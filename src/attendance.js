@@ -2832,7 +2832,14 @@ function passCard(student, pass) {
 */
 function paintPassBanner() {
   const box = document.getElementById(PASS_BANNER_ID);
-  if (!box) return;
+  /* AND THE CLOCK GOES DOWN WITH THE BANNER ON THIS PATH TOO (WO-2.27). It is one word rather than
+     a rule of its own: the stop at the foot of this function is the only one there was, so a build
+     whose banner had gone from the document left a 1-second interval behind it with nothing on
+     screen to put a figure on — and the promise written at that stop said otherwise. Unreachable in
+     today's markup, because `#attendancePassBanner` is static in index.html and src/views.js hides
+     views rather than removing them; a guard that is only true while nobody moves the markup is the
+     kind that gets found the hard way. */
+  if (!box) { stopPassClock(); return; }
   const cls = openClass();
   const doc = getDoc();
   const open = cls && doc ? passes.openPassesFor(doc, cls.id) : [];
@@ -2856,7 +2863,10 @@ function paintPassBanner() {
   /* THE CLOCK RUNS ONLY WHILE THERE IS A CARD TO PUT A FIGURE ON (WO-2.9), and it is started and
      stopped here rather than at the four writers because this is the function that knows whether
      any card was drawn. A run with an empty room costs nothing at all, not one timer doing nothing
-     once a second. */
+     once a second — and since WO-2.27 that sentence is true of EVERY path out of this function
+     rather than of this one, because the early return above stops it as well. What it does NOT
+     claim is that the interval is down whenever the registry is off the glass: it is not, it is
+     carrying WO-2.9's overdue alerts, and startPassClock() below is where that is written out. */
   if (drawn) { paintPassElapsed(); startPassClock(); } else stopPassClock();
 }
 
@@ -2885,6 +2895,27 @@ let passClock = 0;
    than a coarse one. It is three text writes at most — the cap is three students out of a room. */
 const PASS_CLOCK_MS = 1000;
 
+/*
+  IT KEEPS TICKING AFTER THE TEACHER LEAVES THE REGISTRY, AND THAT IS THE FEATURE (WO-2.27).
+
+  Written down here because it reads like an oversight and was booked as one. Nothing calls
+  paintPassBanner() on the way out of this screen — src/views.js swaps views by toggling `.hidden`,
+  the banner is static markup in index.html, and showClassScreen() paints the screen it arrives at
+  and not the one it left — so a pass left open while the teacher moves to Scores, to a student's
+  detail or back to the class grid leaves this interval running.
+
+  THE TICKS ARE NOT NO-OPS THERE. The cards the last paint left in the banner are still in the
+  document, so paintPassElapsed() still finds their `[data-pass-elapsed]` nodes, still recomputes
+  from the stamps, and STILL FIRES THE TWO OVERDUE ALERTS — into the live region, on whatever screen
+  the teacher is standing on. That is the alert doing exactly what its own comment says it is for:
+  *"the whole point of an overdue alert is that nobody is [looking]"*, and a teacher entering scores
+  with a student twenty minutes gone is the case it is for rather than a case to be quiet about.
+
+  So the cost is one interval and at most three text writes a second, while a pass is open, and the
+  thing it buys is the alert. Standing the clock down when `currentView() !== 'class'` would be four
+  lines and would silence the alert on every screen but one; if that is ever wanted, the alerts need
+  a driver of their own first, and that is a decision and a work order rather than a tidy.
+*/
 function startPassClock() {
   if (passClock) return;
   passClock = setInterval(paintPassElapsed, PASS_CLOCK_MS);
