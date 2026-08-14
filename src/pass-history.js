@@ -15,6 +15,17 @@
   so putting it in there would mean writing "this file does not import that module" directly above
   the import. Two files, two promises, both true.
 
+  WO-2.26 JOINED THREE SURFACES WITHOUT JOINING ANY OF THE FILES. Two blocks below are built here
+  and drawn somewhere else — studentPassCard(), the hall-pass card inline on WO-3.7's Student Report
+  screen, and studentPassSummary(), the count line on the attendance history dialog. In both cases
+  the host owns the container and this file owns everything inside it, the way src/assignments.js's
+  editor appends src/accommodation-prompt.js's summary one screen over. The imports run one way —
+  nothing here knows either of those files exists — and BOTH of their headers make the promise this
+  one cannot: src/detail.js's firewall (its lines 36–56) is the same shape as
+  src/attendance-report.js's above and is the more exposed of the two, because that screen prints
+  and writes a CSV. Neither may ask whether presentation mode is on. So neither asks: the block
+  arrives built, and the sentence above stays literally true of both of them.
+
   ── WHAT IT READS, AND WHY THAT MAKES ACCEPTANCE LINE 4 FREE ──
 
   `passes` and nothing else, through src/passes.js's own readers. A cancelled pass was taken out of
@@ -154,11 +165,18 @@ function presentationStrip() {
   line is *"the history view's totals match the log; a hand count of one student's passes agrees"*,
   and a total nobody can see is not a total anybody can check.
 
-  WHAT IS NOT FILTERED IS THE TERM. Everything else read back on this screen is scoped to the open
-  term, and this is not: a pass is not a term-shaped thing — it has a stamp and no term id — and
-  scoping it would mean this file inventing a second date-window rule beside the one
-  src/attendance.js owns. So the dialog says what it holds in as many words, and the date span in
-  the subtitle is what tells a teacher which stretch of the year she is reading.
+  WHAT IS NOT FILTERED HERE IS THE TERM, AND THAT IS NOW TRUE OF THIS DIALOG ONLY (WO-2.26). This
+  view is the class's whole record — "who is out of my room the most, all year" — and the owner kept
+  it that way on 2026-08-14 in the same sitting that scoped the other two. The date span in the
+  subtitle is what tells a teacher which stretch of the year she is reading.
+
+  The two PER-STUDENT surfaces below went the other way and are term-scoped, because each of them
+  sits on a page that is already about one term and a second date window on one page is the thing
+  the work order's traps line refuses. What that cost is not a rule in this file: the window lives
+  in src/passes.js's passesForStudent()/passesForStudentInTerm(), beside passDate() and the other
+  readers, so the sentence this paragraph used to end with — "scoping it would mean this file
+  inventing a second date-window rule" — is answered rather than overruled. This file asks for a
+  term's worth of trips; it does not decide what one is.
 */
 export function openPassHistory(opener) {
   const body = document.getElementById(BODY);
@@ -344,6 +362,25 @@ export function openStudentPasses(studentId, opener) {
     return;
   }
 
+  body.append(tripTable(list));
+  body.append(note());
+
+  show(opener, tripsText(list.length) + ' on screen for one student.');
+}
+
+/*
+  THE TRIP LIST ITSELF, AND IT IS ONE BUILDER BECAUSE IT IS ONE LIST (WO-2.26).
+
+  The view above renders it into a modal; studentPassCard() below renders it into a card on WO-3.7's
+  Student Report screen. Writing it twice was the failure that work order was re-cut to prevent: two
+  renderings of one log drift the first time a column moves, and the two surfaces a teacher compares
+  are the dialog she marks attendance on and the page she is sitting at a conference with.
+
+  IT TAKES A LIST AND NOTHING ELSE — no class, no student, no term. Which trips are in the list is
+  the caller's question (src/passes.js answers it), and a builder that also decided the window would
+  be a second place to look for one.
+*/
+function tripTable(list) {
   const table = el('table', 'attendance-report-table');
   const thead = el('thead');
   const hrow = el('tr');
@@ -398,10 +435,7 @@ export function openStudentPasses(studentId, opener) {
     }
   });
   table.append(tbody);
-  body.append(table);
-  body.append(note());
-
-  show(opener, tripsText(list.length) + ' on screen for one student.');
+  return table;
 }
 
 /* The way back to the class summary. A control rather than a second door in the toolbar: this
@@ -423,13 +457,168 @@ function backDoor() {
     · a student who is out RIGHT NOW is not here either, because a trip is counted when it ends —
       which is why the banner and this dialog can disagree by one and both be right,
     · and nothing on this page is attendance. A student at the bathroom was present.
+
+  THE THREE CLAUSES ARE A CONSTANT SINCE WO-2.26 and the sentence in front of them is not, because
+  the card below covers a TERM and these two views cover the class's whole life. What differs
+  between the surfaces is the WINDOW; what does not differ is what a trip in the log means, and a
+  second copy of that would be three rules to get right twice.
 */
+const TRIP_RULES = 'A pass that was cancelled never happened and was never written down, and a '
+  + 'student who is out of the room right now is counted when they come back. None of this is '
+  + 'attendance: a student on a hall pass was present.';
+
 function note() {
   return el('p', 'attendance-report-note',
-    'Every trip that ended is here, oldest first, for as long as this class has existed — a pass '
-      + 'that was cancelled never happened and was never written down, and a student who is out of '
-      + 'the room right now is counted when they come back. None of this is attendance: a student '
-      + 'on a hall pass was present.');
+    'Every trip that ended is here, oldest first, for as long as this class has existed. '
+      + TRIP_RULES);
+}
+
+/* ────────── the same list, on two surfaces this file does not own (WO-2.26) ──────────
+
+  ONE STUDENT'S TRIPS, ON THE TWO SCREENS A TEACHER IS ALREADY LOOKING AT WHEN SHE ASKS ABOUT ONE
+  STUDENT. The owner asked it on the build, in front of both surfaces, the day WO-2.9's manual lines
+  passed: *"where do I see a record of the hall pass?"* — the answer was 🖨 Record, close it,
+  🚪 Passes, find the name, and that is the teacher paying for a seam between two modules.
+
+  WHY BOTH BLOCKS ARE BUILT HERE AND NOT THERE, which is the whole of WO-2.26's shape. The card
+  belongs to src/detail.js's Student Report screen and the count line to src/attendance-report.js's
+  history dialog; each of those files owns its container, and each appends what comes back without
+  looking inside it. Everything the blocks need is something THIS file already owns and neither of
+  those files is allowed to acquire:
+
+    · the trips, off passesForStudentInTerm() — src/passes.js's own reader, with the date window
+      inside it, so no screen in this app holds a second opinion about what a term is,
+    · the count, off tallyPasses() over that same list, which is the one counter WO-2.9's third
+      acceptance line rests on. Two surfaces, one call, no second loop anywhere,
+    · the trip table, off tripTable() above — the same builder openStudentPasses() renders, which is
+      what makes "the card and the dialog cannot drift" a fact about the code rather than a promise,
+    · and presentationMode(), which is the one that decides where these two functions live. That
+      answer comes from src/supports.js. src/attendance-report.js's header promises it never imports
+      that module; src/detail.js's promises the same thing and stakes its PRINTED PAGE and its CSV
+      on it in both modes. Blocks built over there would have needed the answer and had nowhere
+      honest to get it.
+
+  This is src/accommodation-prompt.js's arrangement with src/assignments.js, one screen over: the
+  host owns the surface, the module that has to ask owns the rule, the import runs one way, and
+  nothing in this file knows which screen the element ends up on.
+
+  WHAT CROSSES IS TWO IDS AND A TERM. Not a student object, not a name, and nothing whatever about a
+  support block — this file has no path to one and neither has either caller.
+
+  IN PRESENTATION MODE THERE IS NO LIST AND NO COUNT, on either surface, and both halves are
+  deliberate. openStudentPasses() refuses the whole per-student view while the mode is on, and these
+  two blocks are that view inline: a card that stayed would be the thing that refusal exists to
+  prevent, drawn on the screen most likely to be facing a room. The COUNT goes with the list, which
+  is where this differs from the class table above — a row up there is anonymous and its counts
+  disclose nothing, while both of these sit under a heading naming the student, and "Mary Van Dyke ·
+  12 trips" on a projector is one sentence about one child. The class's own counts are still one tap
+  away on 🚪 Passes, which is the surface that stays useful with the mode on.
+
+  AND A STUDENT WITH NO TRIPS IS TOLD SO ON BOTH. Roll Call! draws its inline table only when there
+  are passes (dashboard.html:4718, `if (passes.length)`) and that is the half deliberately not
+  lifted: a missing block is read as "this build does not show that" rather than as "none", and the
+  work order says so in as many words. */
+
+/* Whether this term is a stretch of dates or just a name. The same test attendanceCard() makes in
+   src/detail.js and classRecord() makes in src/attendance.js — a boolean about the term in front of
+   us, not a second date-window rule; the window itself is src/passes.js's. */
+function termDated(term) {
+  return !!(term && term.start && term.end);
+}
+
+/* "3 trips · 14 minutes out", or "none". The one phrasing both blocks print, off the same two
+   helpers the dialog's own subtitle uses, so the number a teacher reads on the card and the number
+   she reads on the report are one string built once. */
+function countText(totals) {
+  return totals.total
+    ? tripsText(totals.total) + ' · ' + minutesText(totals.minutes)
+    : 'none';
+}
+
+/*
+  THE HALL-PASS CARD, INLINE ON THE STUDENT REPORT SCREEN — Roll Call!'s one-page report
+  (dashboard.html:4718), where the Hall Pass History table sits on the page a teacher is already on
+  rather than behind a tap. Built as attendanceCard()'s sibling in src/detail.js, class for class: a
+  `.detail-card`, a `.detail-card-title` carrying its own summary, the body, and a
+  `.detail-card-note` underneath saying what the list is counted out of. Those four are src/detail.css's
+  and are worn here exactly as `.class-action-btn` is worn everywhere — this file styles nothing.
+
+  THE TABLE INSIDE IS THIS SHEET'S OWN (`.attendance-report-table`, `.pass-history-*`), which is the
+  one place the two stylesheets meet. It is the same markup the dialog draws, because it is the same
+  builder; giving the card a parallel set of class names would have meant a second set of rules to
+  keep in step and a second thing for a column change to miss. How it prints is declared in
+  src/attendance.css § THE HALL PASS HISTORY beside the classes themselves, under WO-3.7's gate.
+
+  THE TERM IS THE WINDOW AND THE NOTE SAYS SO (owner, 2026-08-14): the whole screen answers one
+  question about one stretch of time, and a year-wide list would be the only thing on it that does
+  not. A term with no dates falls back to the whole year in attendanceCard()'s own words rather than
+  in new ones, because a reader who meets both sentences on one screen should meet one sentence.
+*/
+export function studentPassCard(classId, studentId, term) {
+  const card = el('div', 'detail-card');
+
+  if (presentationMode()) {
+    card.append(el('div', 'detail-card-title', 'Hall passes'));
+    card.append(modeHidden());
+    return card;
+  }
+
+  const list = passes.passesForStudentInTerm(getDoc(), classId, studentId, term);
+  const dated = termDated(term);
+  const label = (term && term.label) || 'this term';
+  const where = dated ? ' in ' + label : '';
+  card.append(el('div', 'detail-card-title',
+    'Hall passes · ' + countText(passes.tallyPasses(list))));
+
+  if (!list.length) {
+    card.append(el('p', 'attendance-report-empty',
+      'No hall passes are recorded for this student' + where + '.'));
+  } else {
+    card.append(tripTable(list));
+  }
+
+  /* WHICH TERM THIS IS, and — when there is no term to speak of — attendanceCard()'s own fallback
+     words rather than new ones: src/detail.js:517 says "this term has no dates set, so this is every
+     meeting on the year" two cards up the same column, and a reader who meets both sentences on one
+     screen should meet one sentence. The three clauses after it are note()'s, shared. */
+  card.append(el('p', 'detail-card-note', 'Every trip that ended is here, oldest first'
+    + (dated ? ' — ' + label + ' only'
+      : ' — this term has no dates set, so this is every trip on the year')
+    + '. ' + TRIP_RULES));
+  return card;
+}
+
+/*
+  AND THE COUNT LINE ON THE ATTENDANCE HISTORY DIALOG — the fact a teacher sees while she is marking
+  attendance, on the surface where the question usually comes up. There is no door under it: since
+  the re-cut the breakdown has one home, and it is the card above.
+
+  IT CARRIES NO LABEL RECONCILING IT WITH ANYTHING, and that is WO-2.26's third acceptance line
+  rather than a saving. It is the same call over the same window as the card, so the two numbers are
+  one number; and the dialog it lands in already prints its term and its dates one line above
+  (recordCaption()), so a scope note here would be the second date window the traps line refuses.
+*/
+export function studentPassSummary(classId, studentId, term) {
+  const wrap = el('div', 'attendance-report-passes');
+
+  if (presentationMode()) {
+    wrap.append(modeHidden());
+    return wrap;
+  }
+
+  const totals = passes.tallyPasses(
+    passes.passesForStudentInTerm(getDoc(), classId, studentId, term));
+  wrap.append(el('p', 'attendance-report-sub', 'Hall passes · ' + countText(totals)));
+  return wrap;
+}
+
+/* Why the trips are gone, in the same purple strip and the same sentence structure the dialog's own
+   presentationStrip() uses — same mode, same colour, said on whichever of the two surfaces the
+   teacher is standing on. One sentence for both, because they are hidden for one reason. */
+function modeHidden() {
+  return el('p', 'pass-history-quiet',
+    'Presentation mode is on, so this student’s hall passes are not shown. Turn the mode off in the '
+      + 'header to read them — the class’s own counts are on 🚪 Passes either way.');
 }
 
 /* A pass names a student by id and never by name (docs/data-model.md), so this is the one lookup

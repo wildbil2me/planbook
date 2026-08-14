@@ -55,6 +55,22 @@
   this screen's repaint to src/shell.js's flipPresentationMode(), and it will have to answer what
   the print and CSV paths do about it first.
 
+  AND WO-2.26 SPENT NONE OF THAT EITHER, which is worth its own paragraph because it is the one
+  change to this file that could have. The hall-pass card in the right-hand column is drawn by
+  src/pass-history.js's studentPassCard(), which is handed a class id, a student id and the open
+  term and hands back an element this file appends without looking inside it. That is the
+  arrangement src/assignments.js has with src/accommodation-prompt.js, and the one
+  src/attendance-report.js's own header records at the same seam: the host owns the surface, the
+  module that has to ask owns the rule. It is worth the import because the alternatives were both
+  worse and both were tried on paper first — a card built here would have had to ask whether
+  presentation mode is on, which is a question only src/supports.js answers and which this file may
+  not ask; and a list of trips counted here would be a second walk over a log this file cannot see.
+  So this file asks nobody. What crosses the import is two ids and a term, and what comes back is
+  DOM. There is still no import of src/supports.js here, still no path to `student.supports`, and
+  the paragraph above is still true of the printed page and the CSV in both modes. The one thing
+  this DOES oblige, and it is on the list at src/shell.js's flipPresentationMode(): a screen whose
+  content changes with the mode has to be repainted when the mode flips, and this one now is.
+
   ── PRINTING A VIEW, WHICH IS A HARDER PROBLEM THAN PRINTING A DIALOG ──
 
   An attribute on <body> gates every rule in the @media print block. Without the gate a Ctrl+P made
@@ -78,6 +94,28 @@
   attribute is DIFFERENT from WO-2.6's, and that is not a second idiom: it is the same idiom with a
   second subject, because the attendance block re-shows a dialog that is not on screen here and
   sharing the attribute would print an empty page.
+
+  AND THE HALL-PASS TRIPS PRINT WITH THE GRADE (WO-2.26's third decision, made here because this is
+  where the gate is). Four reasons, in the order they decided it:
+
+    · THE SHEET IS THE SCREEN. This app's standing rule is written into three headers — a printout
+      that has left the building and disagrees with the screen it was taken from is worse than no
+      printout — and a card the teacher and the guardian have just read together, silently missing
+      from the page the guardian takes home, is that disagreement in its most confusing form.
+    · IT IS NOT SUPPORT DATA AND CANNOT BECOME ANY. A pass is `{classId, type, out, back, minutes,
+      note}` keyed by a student id; src/passes.js's header refuses to keep passes in the `log` array
+      precisely so that no rule ever has to filter them, and nothing on this card comes from
+      `student.supports`. The paragraph above stays true of the printed page in both modes.
+    · IT IS THE CONVERSATION THE CARD WAS BOOKED OUT OF. "How often is she out of the room" is a
+      question asked at the desk this sheet is printed at, and the note under the card carries the
+      three clauses that stop a trip count being read as attendance.
+    · AND THE MODE ANSWER STAYS ONE ANSWER. In presentation mode the card draws the sentence saying
+      why it is empty, so the sheet prints that too. What prints is what is on screen, which is one
+      rule rather than a second policy about paper.
+
+  WHAT DID NOT CHANGE IS studentCsv(), and that is a boundary rather than an oversight: WO-2.26 says
+  nothing about the file, and a column of trips in it is a separate decision with its own reasons on
+  both sides. If it is ever wanted it is a work order, not a line here.
 
   ── THE FILE ──
 
@@ -129,6 +167,19 @@ import { handToBrowser } from './backup.js';
 /* The print gate, and the reason this file no longer owns one: WO-2.6's mechanism was copied here
    and then copied again, so one bug lived in three places and was fixed in one (WO-2.25). */
 import { registerPrintGate } from './print-gate.js';
+/*
+  THE HALL-PASS CARD (WO-2.26), drawn by the module that owns the pass log rather than by this one —
+  the header's own paragraph says why at length, and it is the reason this is an import of a SCREEN
+  where every other one above is an import of a model or a shared component.
+
+  This file passes a class id, a student id and the open term, and appends what comes back. It never
+  reads `passes`, never counts a trip, never words one, and never asks whether presentation mode is
+  on — all three live behind that module, and src/supports.js behind the third. The same one-way
+  arrangement src/assignments.js has with src/accommodation-prompt.js, and the one
+  src/attendance-report.js records at the same seam: nothing in src/pass-history.js knows this file
+  exists.
+*/
+import { studentPassCard } from './pass-history.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -635,13 +686,24 @@ export function renderDetail() {
   const right = el('div');
   right.append(missingCard(grade, rows, person));
   right.append(attendanceCard(cls, student, term));
+  /* AND THE TRIPS, UNDER THE ATTENDANCE THEY ARE NOT (WO-2.26). Roll Call! carries the Hall Pass
+     History table inline on its Student Report (dashboard.html:4718) and this is that table, in this
+     app's card grammar: `.detail-card + .detail-card` gives it attendanceCard()'s own spacing, and
+     the two sit together because a teacher reading "92%" is one line away from asking how often this
+     student is out of the room. The card arrives built — see the import — so the only decision made
+     here is where it goes. It is the last card in the column deliberately: it is the answer to a
+     follow-up question, and the grade is what the screen is for. */
+  right.append(studentPassCard(cls.id, student.id, term));
   cols.append(left, right);
   content.append(cols);
 
+  /* The sentence names what IS on the page as well as what is not, so it has to keep step with the
+     page: hall passes joined grades and attendance at WO-2.26. A list that goes stale is a list that
+     stops being read, and this one is the screen's own statement of the firewall in its header. */
   content.append(el('p', 'detail-note',
-    'This page is grades and attendance and nothing else. Nothing from ' + person + '’s support '
-      + 'details is on it, on the printed sheet or in the CSV, in either mode — those live on the '
-      + 'roster and go nowhere but your own backup file.'));
+    'This page is grades, attendance and hall passes and nothing else. Nothing from ' + person
+      + '’s support details is on it, on the printed sheet or in the CSV, in either mode — those '
+      + 'live on the roster and go nowhere but your own backup file.'));
 }
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */

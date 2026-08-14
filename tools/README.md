@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 734 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 748 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -837,7 +837,28 @@ two-orientation loop** in the pass-card sweep, so it prints twice: the section c
 executed results and the run prints **732**. That loop is where the elapsed figure had to be measured
 rather than in the new section — it arrived into a card row whose single-line property was paid for
 with two iPad sittings, and the reading beside it is `scrollWidth` against `clientWidth`, which is the
-"Days off" spill asked of the element that grew. *(The
+"Days off" spill asked of the element that grew. **WO-2.26 moved it from 734 to 748**: fourteen call
+sites, none inside a loop and none a failure arm, added *inside* that same hall-pass section rather
+than in a new one — the join between the pass log and the Student Report screen is only checkable
+against a log that already has trips in it, and this section spends forty checks filling one. A block
+of its own beside WO-2.6's would have had to plant the fixture it then read back. So the run prints
+**746**, and the section's own reader (`reportPasses()`) is a second reader beside `readHistory()`
+rather than a change to it: they read two different dialogs, and `detailCard()` beside them reads a
+screen rather than either. **The number went 734 → 742 → 748 inside one day, and the middle figure is
+the part worth reading.** That was the work order's first cut, aimed at a 🚪 Every trip door on the
+attendance history dialog; the owner re-cut the work order the same day against the running build and
+the door was deleted, so those eight checks were asserting a control that no longer exists. They were
+not re-run — a green harness against the wrong target is not evidence — and the crash they left
+behind is why this entry is here at all: the first check clicked the deleted door, `clickSel` threw,
+and **the run died before WO-2.3 and everything under it**, with no summary printed. A failing check
+is a red line in a report; a `clickSel` on a hook that has gone is the whole rest of the file not
+running. The replacement asks for every door with `has()` before it clicks one, and a fixture that
+does not land now FAILS one check and SKIPS the rest by name. *(One check outside this section moved
+with it and is not in the count: WO-2.6's "every print rule is gated" now sorts rules by WHICH
+surface's attribute gates them, because `src/attendance.css` grew a second arm under
+`data-detail-print` for the trip table WO-2.26 draws onto the Student Report card. Ungated is still a
+failure; the borrowed arm is counted so that losing it goes red rather than reading as a tidier
+stylesheet.)* *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

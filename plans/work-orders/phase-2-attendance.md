@@ -2397,11 +2397,23 @@ order rewires it — the surface that is already correct is the one nobody will 
 
 ---
 
-## WO-2.26 — the student report shows the hall passes
+## WO-2.26 — the Student Report screen shows the hall passes
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-2.9
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** S ·
+**Depends on** WO-2.6, WO-2.9, WO-3.7
 **Closes roadmap** *(no box. Phase 2's pass-history line is WO-2.9's and is ticked; this is the join
 between two surfaces that work order deliberately left apart.)*
+
+**RE-CUT 2026-08-14, same day, by the owner against the running build — and the fault was in this
+document, not in the dispatch that read it.** The first version was built exactly as written and
+landed on the wrong screen. The title said *"the student report"*; every deliverable and every
+acceptance line underneath it said *"the student **attendance** report"*, and those are two different
+surfaces one door apart. The body won, as it should have. **"Student report" is a name this
+repository had not spent, and both surfaces answered to it**: `src/attendance-report.js` renders what
+its own code calls the student attendance report, and WO-3.7's `src/detail.js` is the screen a teacher
+means when she says she is looking at a student's report. From here the second is **the Student Report
+screen** and gets called that by name; the first is **the attendance history dialog**. Anything that
+still reads "the student report" unqualified is this work order's ambiguity and not a third surface.
 
 **Booked 2026-08-14, out of WO-2.9's iPad sitting.** All seven manual lines passed, and the first
 question after them was *"where do I see a record of the hall pass?"* — asked by the owner, on the
@@ -2419,36 +2431,118 @@ mode, and the pass history has to ask about presentation mode. Two files, two pr
 What was never decided on purpose is that the **teacher** pays for the seam. This joins the two
 surfaces in the UI and leaves both promises standing.
 
-**The join is a door, not a move.** `src/shell.js:1357` already delegates
-`[data-pass-history-student]` to `openStudentPasses()` off a document-level click handler. A button
-carrying that attribute, drawn on the student attendance report, opens that student's trips with **no
-new import in `src/attendance-report.js` at all** — which is why this is S rather than M, and why it
-cannot quietly undo the promise above. An implementation that imports `src/pass-history.js` into
-`src/attendance-report.js` has taken the harder road to the same place and should say why.
+**The breakdown is a card on the Student Report screen, not a door on a dialog.** Roll Call! puts the
+Hall Pass History table **inline** on its Student Report (`src/dashboard.html` ~4718) and that is the
+part to copy — a teacher at a conference reads the trips on the page she is already on, without
+opening anything. `src/detail.js` already builds exactly this shape at `attendanceCard()` (~line 503):
+a `.detail-card` with a title carrying its own summary, a body, and a note underneath that says what
+the numbers are counted out of. **The pass card is that card's sibling and is built the same way.**
+
+**The per-student trip rendering already exists** — WO-2.26's first cut wrote `openStudentPasses()` in
+`src/pass-history.js`, verified, and it renders every trip with times and notes. It renders into a
+modal. What this re-cut needs is that same rendering returned as a **card**, so both callers share one
+list-builder and the two surfaces cannot drift. Extracting it is the work; writing it again is not.
+
+**`src/detail.js` carries the same firewall `src/attendance-report.js` does** — its header (lines
+36–42) promises no import of `src/supports.js` and no path to `student.supports`, and WO-3.7's eighth
+acceptance line extends that to the printout and the CSV in **both** presentation modes. The pass card
+needs to know whether the mode is on; that answer lives in `src/supports.js`; this file may not ask.
+**The precedent is already set and upheld:** the first cut had `src/pass-history.js` build the block
+and hand it over, the verifier checked that against the same arrangement `src/assignments.js` has with
+`src/accommodation-prompt.js`, and it held. Take that road deliberately this time rather than
+rediscovering it — and say so at both ends, as the first cut did.
 
 **Deliverables**
-- **A door to this student's hall passes on the student attendance report**, per Roll Call!'s
-  one-page report, drawn through the existing delegated attribute rather than a new import.
-- **The trip count beside it**, so the door says whether it is worth opening. A door labelled only
-  "Hall passes" is one a teacher opens to find nothing on the afternoon she is busiest.
-- **Presentation-mode safe on both halves.** The report already is; the door must not become the hole
-  in it. `src/pass-history.js`'s per-student view refuses in presentation mode — a door in front of
-  it must not offer what the room behind it will not give.
-- **A way back.** A teacher who walks from the report into the trips is mid-conversation; the return
-  path is part of the deliverable rather than the browser's back button.
+- **A hall-pass card on the Student Report screen**, inline beside the attendance card, listing this
+  student's trips — per Roll Call!'s one-page report. Not a door, not a dialog, not a second tap.
+- **Term-scoped, with the attendance card's own fallback.** The trips listed are the open term's, and
+  when a term has no dates set the card says so in the words `attendanceCard()` already uses rather
+  than in new ones. *(Owner, 2026-08-14: the whole screen answers one question about one stretch of
+  time, and a year-wide list would be the only thing on it that does not.)*
+- **The count line stays on the attendance history dialog, and the door comes off.** *(Owner,
+  2026-08-14.)* The dialog keeps `Hall passes · N trips · N minutes out` as a fact a teacher sees
+  while marking attendance; 🚪 **Every trip** is deleted, because the breakdown now has one home.
+- **The two per-student counts agree, which means the dialog's line is term-scoped too.** This is what
+  the first cut's acceptance line 1 got wrong, and it is corrected below rather than carried forward.
+- **Presentation-mode safe on both surfaces**, by the arrangement described above — the card and the
+  count line both go, and the screen that remains is a screen, not a hole.
+- **A decision about print, made out loud.** `src/detail.js` gates printing on `data-detail-print`
+  and WO-3.7's eighth line covers the printed page in both modes. Whether the trips print with the
+  grade is a choice; make it, and write the reason where the gate is.
 
 **Acceptance**
-- [ ] The student attendance report shows this student's hall-pass count, and it agrees with the
-      number 🚪 Passes shows for the same student.
-- [ ] The door opens that student's trip list — the same view 🚪 Passes reaches, not a second
-      rendering of it.
-- [ ] A student with no trips is stated as none rather than left blank, and the door does not strand
-      a teacher on an empty page.
-- [ ] Presentation mode: the report carries no door onto a named page it will not draw.
-- [ ] `src/attendance-report.js` still imports nothing from `src/supports.js` and has no path to
+- [x] **The Student Report screen lists this student's trips inline** — every trip in the open term,
+      with its date, its clock and its note, on the screen itself and behind no tap.
+- [x] The list is **term-scoped**, and says which term it covers. A term with no dates set falls back
+      to the whole year in `attendanceCard()`'s existing words, not in new ones.
+- [x] **The attendance history dialog shows the count and no door.** `🚪 Every trip` is gone from it,
+      and the count line that remains agrees — **exactly** — with the Student Report card for the same
+      student in the same term. One number, two surfaces, no label reconciling them.
+- [x] A student with no trips is **stated as none on both surfaces**, rather than left blank or given
+      an empty card.
+- [x] Presentation mode: the card and the count line are both suppressed, and the Student Report
+      screen still draws. A negative control proves suppression rather than a screen that failed.
+- [x] `src/attendance-report.js` still imports nothing from `src/supports.js` and has no path to
       `student.supports` — the grep WO-2.6's fourth acceptance line rests on still comes back empty.
-- [ ] The door and the way back clear 44px, and the walk from the report into the trips and out again
-      reads as one conversation rather than two dialogs. 👤
+- [x] **`src/detail.js` holds the same line** — no import of `src/supports.js`, no path to
+      `student.supports`, and WO-3.7's eighth acceptance line still true of the printed page and the
+      CSV in both modes.
+- [x] The trips **print or do not print** as decided, and the printed page matches the decision. 👤
+- [x] The card reads at arm's length beside a guardian, and the Student Report screen still reads as
+      one page rather than as a page with a table bolted to it. 👤
+
+*(**Re-cut 2026-08-14. The ticks above are deliberately mostly empty**, and the one that survives is
+the one whose subject did not move: `src/attendance-report.js`'s firewall was proved by the first cut
+and the re-cut does not touch it. Everything else was verified **against the wrong screen** — the
+`verify-shell.mjs` run was real (740 of 740, 0 failed, 0 skipped, eight new checks) and its checks are
+sound, but they assert a door this re-cut deletes. **A green harness against a wrong target is not
+evidence, and re-ticking those lines because they were once ticked is the failure this note exists to
+prevent.** The eight checks get re-pointed at the card, not re-run at the dialog.*
+
+*What carries forward, and should not be rebuilt: `openStudentPasses()` and its trip rendering; the
+`studentPassSummary()` arrangement whereby `src/pass-history.js` builds a block and the calling
+surface only provides a container, which the verifier upheld against the `src/assignments.js` ↔
+`src/accommodation-prompt.js` precedent; and the count's single source in `tallyPasses()`. What comes
+out: the `🚪 Every trip` door, its CSS, its harness checks, and the "whole year, not just this term"
+label, which the term-scoping decision makes untrue rather than merely unnecessary.)*
+
+*(**The note above is the owner's and is kept as written; the seven ticks it describes as empty were
+closed on 2026-08-14 by the re-cut's own run, at the card and not at the door.** `verify-shell.mjs`
+**746 of 746, 0 failed, 0 skipped**, 246s — fourteen call sites inside the existing hall-pass
+section, replacing the first cut's eight, which were deleted rather than re-run. `wo-sweep.mjs` 17
+checks, 0 failed, 2 standing reviews. The two 👤 lines stay open and were not ticked: the printed
+page is measured under emulated print media in a headless window, which is not paper, and the second
+is a page read at arm's length beside a guardian.*
+
+*The re-cut left **three decisions** to the implementation and each is written at the code that makes
+it. **The date window lives in `src/passes.js`** — `passesForStudent()` took optional `from`/`to`
+compared as strings the way `meetingDates()` does, and `passesForStudentInTerm()` wraps it — so three
+callers ask one question and no screen holds a second opinion about what a term is. **The no-dates
+fallback is `attendanceCard()`'s own sentence**, adapted rather than rewritten, because a reader who
+meets both on one screen should meet one sentence. **And the trips print with the grade**, for the
+four reasons at `src/detail.js` § PRINTING A VIEW, of which the first governs: the sheet is the
+screen, and a card the teacher and the guardian have just read together, silently missing from the
+page the guardian takes home, is that rule broken in its most confusing form. `studentCsv()` is
+deliberately untouched — a column of trips in the file is a separate decision and would be a work
+order rather than a line here.*
+
+*Both blocks are built by `src/pass-history.js` and handed over already built, which costs **one
+import of that module into each of `src/attendance-report.js` and `src/detail.js`** against both
+headers' expectation of none. The reason is written at both ends of both seams, and it is the
+precedent `src/assignments.js` set with `src/accommodation-prompt.js`: acceptance line 5 needs these
+surfaces to suppress under presentation mode, that answer is `presentationMode()`, it comes from
+`src/supports.js`, and both files' firewalls forbid them from asking. So neither asks. Everything the
+traps line protects is intact — no import of `src/supports.js` in either file, no path to
+`student.supports`, and no second loop over the log.*
+
+*Two things the harness run is the record of. **The first cut's block did not fail, it crashed:** its
+first check clicked the deleted door, `clickSel` threw, and the run died before WO-2.3 and everything
+under it with no summary printed. The replacement asks for every door with `has()` before clicking
+one. **And the crash was hiding a real defect** — WO-2.6's "every print rule is gated" check went red
+the moment the run reached it, because the first cut's `body[data-detail-print]` rules for the trip
+table live in `src/attendance.css`, correctly, and that check demanded `data-attendance-print` on
+every rule touching those class names. It now sorts rules by which surface's attribute gates them;
+ungated is still a failure, and the borrowed arm is counted so that losing it goes red.)*
 
 **Traps** — **The promise in `src/attendance-report.js`'s header is the thing to protect**, and it is
 protected by the shape of the join rather than by care. Read that header before writing, and if the
@@ -2456,9 +2550,15 @@ design ends up needing an import, stop and say so rather than writing "this file
 module" above an import. **The count is a number two surfaces now show**: it comes from
 `src/passes.js`'s `tallyPasses()` like every other one, never from a loop written here — WO-2.9's
 third acceptance line is about exactly this, and a second loop agrees with the first on every fixture
-anybody writes. **The pass history is not term-scoped and the attendance report is.** A trip count on
-a term report, sourced from a log that holds the whole year, is two date windows on one page: either
-scope it and say so, or label it and say so, but do not leave a reader to assume.
+anybody writes. **The pass history is not term-scoped and both surfaces here are.** A trip count on a
+term report, sourced from a log that holds the whole year, is two date windows on one page. The first
+cut left this to the implementation and got the label; **the re-cut decides it — scope it, both
+places** (owner, 2026-08-14), and the class-wide 🚪 Passes dialog stays the year-wide view it already
+is. **`src/detail.js`'s header firewall is now the second one to protect**, and it is the more
+exposed of the two: WO-3.7's eighth acceptance line covers its printed page and its CSV in both
+presentation modes, and this is the screen most likely to be handed across a desk. Read lines 36–42
+before writing, and if the design needs an import, take the road the first cut proved and say why at
+both ends — do not write "this file does not import that module" above an import.
 
 ---
 

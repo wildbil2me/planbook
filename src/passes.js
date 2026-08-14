@@ -182,8 +182,43 @@ export function passesFor(doc, classId) {
   return passesIn(doc).filter((p) => p && p.classId === classId);
 }
 
-export function passesForStudent(doc, classId, studentId) {
-  return passesIn(doc).filter((p) => p && p.classId === classId && p.studentId === studentId);
+/*
+  ONE STUDENT'S FINISHED TRIPS, AND — SINCE WO-2.26 — OPTIONALLY ONLY THE ONES INSIDE A DATE WINDOW.
+
+  THE WINDOW IS HERE AND NOWHERE ELSE, which is the whole of that work order's first decision. Two
+  surfaces are term-scoped now (the card on the Student Report screen and the count line on the
+  attendance history dialog) and one is not (the class-wide 🚪 Passes dialog, which stays the
+  year-wide view it has always been), so the question "is this trip in that stretch of the year?"
+  is asked by three callers and answered in one place. A second copy of it in a screen would be a
+  second date-window rule beside the one src/attendance.js owns, which is exactly what the WO-2.9
+  header refused when it declined to scope the class dialog.
+
+  THE ARGUMENTS ARE `from`/`to` AND THE COMPARISON IS ON STRINGS, both lifted from
+  src/attendance.js's meetingDates(): an empty bound is an open one, both ends are INCLUSIVE, and
+  `2026-09-09` sorts as text exactly as it sorts as a day, which is why nothing here parses a date.
+  The day a trip belongs to is passDate() below — the first ten characters of `out`, per
+  docs/data-model.md — and never Date.parse, which moves an 11:40pm trip to the next day in one time
+  zone and not in another.
+
+  A CALLER THAT PASSES NOTHING GETS THE WHOLE YEAR, so the two readers above this line and every
+  pre-WO-2.26 call site mean what they always meant.
+*/
+export function passesForStudent(doc, classId, studentId, from = '', to = '') {
+  return passesIn(doc).filter((p) => p && p.classId === classId && p.studentId === studentId
+    && (!from || passDate(p) >= from) && (!to || passDate(p) <= to));
+}
+
+/*
+  The same list, narrowed to a TERM — src/attendance.js's termTotals() over attendanceTotals(),
+  shape for shape, so "which trips does this term hold" and "which meetings does this term hold" are
+  asked in the same words on the two surfaces that ask both.
+
+  A term with no dates is a term with no bounds, so this hands back the whole year rather than
+  nothing. That is the same fallback classRecord() takes, and the two screens that call this say so
+  in the words attendanceCard() already uses.
+*/
+export function passesForStudentInTerm(doc, classId, studentId, term) {
+  return passesForStudent(doc, classId, studentId, term && term.start, term && term.end);
 }
 
 /*

@@ -798,6 +798,16 @@
    under a coarse pointer from src/shell.css's block. */
 .attendance-report-door { margin: 12px 0 4px; }
 
+/* How often this student has been out of the room (WO-2.26) — one line under the door above it, and
+   no door of its own: the trips themselves are inline on the Student Report screen. A block rather
+   than a bare paragraph so the margin belongs to the line and not to the button above, which is
+   inline-block and would otherwise decide the gap. The count wears `.attendance-report-sub` — the
+   quiet 12px line the identity row above already uses — because it is the same kind of sentence
+   about the same student and a third grey is a third thing to keep in step. src/pass-history.js
+   draws what goes in here, and nothing in this block is a control. */
+.attendance-report-passes { margin: 12px 0 4px; }
+.attendance-report-passes .attendance-report-sub { margin: 0; }
+
 .attendance-report-who { flex: 1 1 200px; min-width: 0; }
 .attendance-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 .attendance-report-sub {
@@ -878,6 +888,15 @@
    is named here is only what that block has no answer for — a door made of a name, the three pass
    types as chips on a LIGHT surface, how a trip that ended in a dismissal is marked, and the note
    row underneath a trip.
+
+   SINCE WO-2.26 THE TRIP TABLE IS ALSO DRAWN OFF THIS SHEET, inside a `.detail-card` on WO-3.7's
+   Student Report screen: one builder in src/pass-history.js renders it for the dialog and for the
+   card, so the two cannot drift, and the card wears these class names rather than a parallel set of
+   its own. Nothing was added below for it — the table is the same table at the same sizes, the
+   coarse block already steps it up, and the card carries NO CONTROL, so there is no touch target on
+   that screen this sheet owes a floor to. What the card did need is a print rule, and that is in
+   the block at the foot of this file, under WO-3.7's gate and beside these classes rather than in
+   src/detail.css.
 
    The door in the toolbar is `.attendance-passes-btn`, beside `.attendance-record-btn` and carrying
    the same one rule for the same reason. */
@@ -1253,6 +1272,26 @@
   .attendance-report-grid th, .attendance-report-grid td { padding: 5px 5px; }
   .attendance-report-day { text-align: center; }
   .attendance-report-cell { text-align: center; }
+  /* ── THE DOORS OUT OF THE HISTORY DIALOG (WO-3.7, WO-2.9) ──
+
+     THE FLOOR IS DECLARED AND NOT INHERITED. Both controls wearing this class — the "Grades for …"
+     door out of a student's history and the "← All students" way back inside the trips — also wear
+     `.class-action-btn`, which already carries 44px in src/shell.css's own coarse block. That
+     reasoning was correct about this exact selector at WO-3.7 and still cost that work order a
+     correction round: src/scores.css's own block records it. "It inherits one", answered by reading,
+     is the shape of a claim nobody checks, so the floor is stated here.
+
+     There is no `flex-shrink` beside it, and that is the difference from `.attendance-record-btn`
+     and `.scores-sheet-btn` rather than an omission: those two sit in a flex toolbar, where the
+     `min-width` below replaces `min-width: auto` and hands a nowrap label permission to spill
+     through its own border (src/shell.css:410 has the scar). These are block children of a dialog
+     body, so nothing is shrinking them and a rule saying otherwise would be a rule about nothing.
+
+     `.attendance-report-passes` is WO-2.26's count line and holds NO control at all — its door was
+     deleted in that work order's re-cut. It gets the block's margin and nothing more; the line
+     itself is `.attendance-report-sub`, which took its step up with the identity row above. */
+  .attendance-report-door { min-height: 44px; min-width: 44px; }
+  .attendance-report-passes { margin: 14px 0 4px; }
   /* ── THE HALL PASS HISTORY (WO-2.9) ──
      One real touch target in this dialog: the name that opens a student's own trips. It is a row of
      a table rather than a button-shaped button, so it takes its 44px as a MIN-HEIGHT and gets it
@@ -1419,6 +1458,49 @@
   }
   body[data-attendance-print] .attendance-report-note { font-size: 7pt; color: #333; }
   body[data-attendance-print] .attendance-report-empty { font-size: 9pt; color: #333; }
+
+  /* ── AND THE TRIP TABLE WHEN IT RIDES ONTO SOMEBODY ELSE'S SHEET (WO-2.26) ──
+
+     THIS BLOCK NOW HAS TWO ARMS AND STILL ONE SURFACE OF ITS OWN. Everything above is the record
+     dialog under `data-attendance-print`; these rules are gated on `data-detail-print`, which is
+     WO-3.7's gate and not this file's — src/print-gate.js's census of three attributes is unchanged
+     and no fourth print SURFACE has been added here.
+
+     WHY THEY ARE IN THIS FILE ANYWAY: the classes are this sheet's. src/pass-history.js's
+     studentPassCard() renders the same `.attendance-report-table` and the same `.pass-history-*`
+     chips into a card on the Student Report screen — one builder, so the dialog and the card cannot
+     drift — and the one rule src/shell.css's header will not bend on is that a stylesheet does not
+     style another sheet's class names. src/detail.css therefore says nothing about these, and their
+     print behaviour is declared here, beside the screen rules they belong to. The decision that they
+     print at all is written where the gate is, in src/detail.js § PRINTING A VIEW.
+
+     COLOURS GO QUIET, which is the opposite of what the record above does and for its own stated
+     reason: up there the five mark letters ARE the data, so the palettes are kept. Here the pass
+     type is a WORD in the chip, so the fill is decoration and a mono printer would have flattened
+     it anyway — the same call src/detail.css makes about the amber and indigo on the cards around
+     this one. */
+  body[data-detail-print] .attendance-report-table { font-size: 8pt; }
+  body[data-detail-print] .attendance-report-table th,
+  body[data-detail-print] .attendance-report-table td {
+    padding: 1mm 1.5mm; border-bottom: 0.2mm solid #999; color: #000;
+  }
+  body[data-detail-print] .attendance-report-table thead th {
+    font-size: 7pt; color: #000; border-bottom: 0.4mm solid #000;
+  }
+  /* A term of trips can outrun the card it is in: repeat the column heads on the page it breaks
+     onto, and never cut one trip in half. */
+  body[data-detail-print] .attendance-report-table thead { display: table-header-group; }
+  body[data-detail-print] .attendance-report-table tr { break-inside: avoid; }
+  body[data-detail-print] .attendance-report-dow { font-size: 6pt; min-width: 0; }
+  body[data-detail-print] .attendance-report-date { font-size: 7pt; }
+  body[data-detail-print] .attendance-report-empty { font-size: 8pt; color: #333; }
+  body[data-detail-print] .pass-history-type,
+  body[data-detail-print] .pass-history-ended {
+    padding: 0.3mm 1mm; font-size: 7pt; background: none !important; color: #000;
+  }
+  body[data-detail-print] .pass-history-note {
+    padding: 0.5mm 1.5mm 1.5mm 5mm; font-size: 7pt; color: #333;
+  }
 }
 
 /* The sheet, and the margin the twenty-four-column arithmetic is against: A4 is 210mm wide, 10mm

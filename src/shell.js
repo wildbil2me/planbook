@@ -760,16 +760,26 @@ function flipPresentationMode() {
      student's `supports` block — a class name and a colour are not a student's file — so there is
      nothing on it for the flip to suppress. src/home.js's header comment carries the same note and
      the condition under which it stops being true, because WO-4.x putting a behavior note into a
-     card's signals slot is exactly how this list goes quietly out of date.
+     card's signals slot is exactly how this list goes quietly out of date. */
 
-     NEITHER IS THE PER-STUDENT DETAIL (WO-3.7), and that one is worth a second sentence because it
-     is the screen a reader would expect to find here: it is named for a student, it is the page open
-     at a conference, and it prints. It does not import src/supports.js and there is no path in it to
-     `student.supports`, so there is nothing on it to suppress — the same posture
-     src/attendance-report.js takes and the same one src/scores.js's decision 5 takes, and each of
-     the three says so in its own header. The condition under which that stops being true is a later
-     work order putting the roster's indicator on that screen; the day it does, its repaint belongs
-     on this list and its author will have to answer for the print surface and the CSV first. */
+  /*
+    AND THE PER-STUDENT DETAIL IS ON THIS LIST NOW (WO-2.26), which is a correction to what stood
+    here until 2026-08-14 rather than an addition beside it. This comment used to say that screen
+    was deliberately absent, on the ground that it holds no support data — and that ground is still
+    true, said in its own header and in src/scores.js's decision 5. What it did not anticipate is the
+    other way a screen becomes mode-dependent: WO-2.26 put a hall-pass card on it, drawn by
+    src/pass-history.js, which suppresses one student's trips while the mode is on for the reason
+    WO-2.9's per-student view refuses outright. So there IS something on that screen for the flip to
+    suppress, and suppression that only applies to the next render is the exact defect the paragraph
+    above this function describes — worse here, because this is the screen most likely to be facing a
+    room or a guardian when the switch is reached for.
+
+    Guarded on the view being the one on screen, like the four other renderDetail() calls in this
+    file: every path onto that screen renders it on arrival, so a repaint of a hidden view is work
+    nobody sees. The condition the old comment named still stands beside this one — a later work
+    order putting the roster's INDICATOR here answers for the print surface and the CSV first.
+  */
+  if (views.currentView() === 'detail') detail.renderDetail();
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -1351,7 +1361,12 @@ document.addEventListener('click', (e) => {
      Three taps onto one dialog: the 🚪 door in the registry's toolbar, a student's name inside it,
      and the way back out to the whole class. They reach a different module for the reason WO-2.6's
      four do — a read-only surface built out of a log this file's other hooks write — and none of
-     them chains anything, because opening a dialog over the registry changes nothing behind it. */
+     them chains anything, because opening a dialog over the registry changes nothing behind it.
+
+     STILL THREE AFTER WO-2.26. That work order's first cut drew a fourth button carrying the same
+     attribute on the student attendance report; the re-cut deleted it, because one student's trips
+     are now a card on the Student Report screen rather than a room reached through two doors. What
+     joins those surfaces is an import and not a hook, so this list did not move. */
   const passHistoryDoor = e.target.closest('[data-pass-history]');
   if (passHistoryDoor) { passHistory.openPassHistory(passHistoryDoor); return; }
   const passHistoryStudent = e.target.closest('[data-pass-history-student]');

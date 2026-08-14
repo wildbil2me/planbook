@@ -255,7 +255,16 @@
    palettes because the letters ARE the data there; nothing on this page is encoded in a
    colour, so the amber wash on an empty category and the indigo on the "to move" card
    print as borders and black text, which is what a mono office printer would have made of
-   them anyway. */
+   them anyway.
+
+   ONE THING ON THIS SHEET IS NOT STYLED BELOW, AND THAT IS DELIBERATE (WO-2.26). The
+   hall-pass card in the right-hand column is a `.detail-card` — so its border, its title
+   and its note are the rules below, like every other card — but the TABLE inside it is
+   `.attendance-report-table` and `.pass-history-*`, which src/attendance.css owns. It is
+   the same builder the pass dialog renders, and one sheet does not style another sheet's
+   class names, gated block or not. So its print rules are over there, at the foot of that
+   file, selected under THIS surface's attribute; the decision that the trips print at all
+   is in src/detail.js § PRINTING A VIEW, where the gate is. */
 @media print {
   /* Everything on the page goes, and the view comes back. `body > *` rather than a list of
      chrome class names: this sheet styles its own class names and nothing else, and a list
@@ -400,6 +409,11 @@
    file styling a class it does not own, which is the one rule src/shell.css's header will
    not bend on. A control added to this screen later adds its own class and its own line
    below, in the same pass.
+
+   IT WAS STILL TRUE AFTER WO-2.26, the first work order to add a whole card here since: the
+   hall-pass card is a list and a note and holds no button, no link and no field at all —
+   the door it might have had was deleted in that work order's re-cut. Its table takes its
+   coarse sizes from src/attendance.css's own block, beside the classes it wears.
 
    What IS here is the type this page is read at with a parent sitting beside you. */
 @media (pointer: coarse) {

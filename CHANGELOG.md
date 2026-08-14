@@ -92,6 +92,21 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.26 — the hall passes are on the student's page now.** Open a student from the score grid — or
+  from *Grades for …* on their attendance — and the trips they took **this term** sit on the page
+  beside the grade and the attendance: the day, the time out, the time back, the minutes, and whatever
+  was typed on the pass. It prints with the sheet. The attendance history dialog still says how many
+  trips and how many minutes while you are marking attendance, and that number is the same number,
+  because it is the same count over the same term. Presentation mode takes both of them off the screen.
+
+  **Two decisions worth knowing.** The count is **term-scoped on both surfaces**, which the class-wide
+  **🚪 Passes** dialog is not — that one stays the year-wide view it has always been, and the date
+  window telling them apart lives in `src/passes.js` alone rather than in either screen, so three
+  callers ask one question. And the breakdown has **one home**: the first cut of this work order put a
+  🚪 Every trip door on the attendance history dialog, one screen upstream of where a teacher actually
+  talks about a student. The door was deleted and the trips became a card on the page itself, which is
+  where Roll Call! has always carried them.
+
 - **WO-2.9 — a hall pass says how long, and the record says how often.** The pass card now carries the
   elapsed time, counted from the moment the student left rather than by a timer running — so it is
   still right after the iPad has spent ten minutes in a bag. The card turns amber at five minutes and

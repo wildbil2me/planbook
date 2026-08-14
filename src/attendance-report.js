@@ -44,6 +44,25 @@
   docs/data-model.md § "Accommodations" and src/supports.js's own header are the rule; the teacher's
   JSON backup is the single exception in this app and its UI says so in words.
 
+  AND WO-2.26 DID NOT SPEND ANY OF THAT, which is worth a paragraph because it is the one change to
+  this file that could have. The history dialog now carries a hall-pass count for the student whose
+  history it is, and NOT ONE LINE OF IT IS COMPUTED OR WORDED HERE: src/pass-history.js's
+  studentPassSummary() is handed a class id, a student id and the open term, and hands back an
+  element this file appends without looking inside it. That is the arrangement src/assignments.js
+  has with src/accommodation-prompt.js one screen over — the host owns the dialog, the module owns
+  the rule — and it is why the sentence above is still true rather than nearly true. The alternative
+  shapes were both worse and both were tried on paper first: a count summed here would be a second
+  loop over a log this file cannot see (the same defect the paragraph above refuses about meetings),
+  and a line drawn here would have had to ask whether presentation mode is on, which is a question
+  only src/supports.js answers and which this file may not ask. So it asks nobody. The import that
+  pays for that is at the foot of the list below, with its own note; what crosses it is two ids and
+  the term this dialog is already about.
+
+  WHAT IS NOT HERE ANY MORE IS THE DOOR. The first cut of WO-2.26 put a 🚪 Every trip button under
+  that line, and the re-cut deleted it (owner, 2026-08-14): the breakdown of one student's trips now
+  lives inline on WO-3.7's Student Report screen, which is the page a teacher is on when she wants
+  it, and one room with two doors is two rooms to the teacher who found the second one first.
+
   ── THE TWO DOORS ──
 
   A student's own name in the grid opens their history. 🖨 Record in the registry's toolbar opens the
@@ -107,6 +126,18 @@ import {
   MARKS, classRecord, termHistory, termTotals, attendanceTotals,
   percentText, plainDate, shortDate, dayAbbr, todayISO,
 } from './attendance.js';
+/*
+  THE HALL-PASS COUNT (WO-2.26), drawn by the module that owns the pass log rather than by this one —
+  the header's own paragraph says why, and it is the reason this is an import of a SCREEN where every
+  other one above is an import of a model.
+
+  This file passes two ids and the open term, and appends what comes back. It never reads `passes`,
+  never counts a trip, never words one, and never asks whether presentation mode is on — all three
+  live behind that module, and src/supports.js behind the third. The same one-way arrangement
+  src/assignments.js has with src/accommodation-prompt.js: nothing in src/pass-history.js knows this
+  file exists.
+*/
+import { studentPassSummary } from './pass-history.js';
 
 const HISTORY_MODAL = 'attendanceHistoryModal';
 const HISTORY_BODY = 'attendanceHistoryBody';
@@ -247,6 +278,23 @@ export function openHistory(studentId, opener) {
   toGrades.setAttribute('data-student-detail', student.id);
   toGrades.title = 'Where ' + person + '’s grade comes from, and what it would take to move';
   body.append(toGrades);
+
+  /*
+    AND HOW OFTEN THIS STUDENT HAS BEEN OUT OF THE ROOM (WO-2.26) — one line, no door. The breakdown
+    is inline on the Student Report screen the button above leads to, so this is the fact rather than
+    the way to it: a teacher marking attendance wants to know there were nine trips, and the teacher
+    who wants to see the nine is one tap away on a page that lists them without opening anything.
+
+    IT IS THE SAME NUMBER THAT CARD SHOWS, over the same term, because it is the same call — the
+    block arrives built (see the import) and the window is src/passes.js's. That is this work order's
+    third acceptance line, and it is a property of there being one function rather than of two
+    surfaces being kept in step.
+
+    It sits directly under the door to the grades because both are facts about this one student, and
+    a teacher who opened this dialog to talk about one child should not have to scroll a term of
+    dates to find either.
+  */
+  body.append(studentPassSummary(cls.id, student.id, getSelectedTerm()));
 
   /* ── every term, and the year ── */
   body.append(el('div', 'attendance-report-label', 'Term by term'));

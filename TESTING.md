@@ -2847,6 +2847,124 @@ was raised, and the owner left it as it stands on 2026-08-14.*
 
 ---
 
+### WO-2.26 — The Student Report screen shows the hall passes
+
+**What this adds.** A **hall-pass card inline on the Student Report screen** — WO-3.7's per-student
+grade page, reached from a student's own name on the score grid or from *Grades for …* inside the
+attendance history dialog. It sits last in the right-hand column, under the attendance card it is
+not, and it lists every trip that student took in the open term with its date, its clock, its minutes
+and the note that was typed on it. Behind no tap: the trips are on the page a teacher is already
+reading. The **attendance history dialog** keeps a one-line count of the same trips — *"Hall passes ·
+4 trips · 14 minutes out"* — and that is all it keeps.
+
+*This work order was re-cut by the owner on the day it was built.* Its first cut put the count line
+**and a 🚪 Every trip door** on the attendance history dialog; the re-cut deleted the door, because
+the breakdown now has one home and one room with two doors is two rooms to the teacher who found the
+second one first. **The 🚪 Passes dialog in the registry's toolbar is untouched** and is still the
+class-wide, year-wide view it has always been.
+
+**Two decisions, both recorded in the code that makes them.**
+
+- **The card and the count line are both scoped to the open term** (owner, 2026-08-14): the whole
+  screen answers one question about one stretch of time, and a year-wide list would be the only
+  thing on it that does not. The date window lives in `src/passes.js` and nowhere else, so no screen
+  in this app holds a second opinion about what a term is. A term with **no dates set** falls back to
+  the whole year in `attendanceCard()`'s own words — *"this term has no dates set, so this is every
+  trip on the year"* — rather than in new ones.
+- **The trips print with the grade.** The sheet is the screen; a card the teacher and the guardian
+  have just read together, silently missing from the page the guardian takes home, is the worst kind
+  of disagreement. The reasoning is written where the gate is, in `src/detail.js` § PRINTING A VIEW.
+  `studentCsv()` is deliberately untouched — a column of trips in the file is a separate decision
+  with its own reasons on both sides, and it would be a work order rather than a line here.
+
+- [x] The Student Report screen lists the trips **inline** — one row per trip in the open term, the
+      minutes that were stored, and the note that was typed under the row it belongs to, with **no
+      dialog open over it**, which is what makes "behind no tap" a claim about where the list is.
+- [x] It is built as `attendanceCard()`'s sibling and not as a table bolted to the page: a titled
+      `.detail-card` carrying its own count, the note underneath, last in the right-hand column.
+- [x] The list is the **open term's**. A trip planted sixty days outside the window is on the log and
+      on the year-wide 🚪 Passes view, and it is **off the card** — asserted four ways, because each
+      fails differently: the note on that trip is absent, the count is the term's (`4 trips · 14
+      minutes out`) and not the year's (`5 trips · 21 minutes out`), the card covers one day where
+      the log covers two, and the note names the term. *(The fixture is the point of this line. Every
+      trip the run authors falls on today, so before this the scoping was invisible and a check that
+      cannot fail when `passesForStudentInTerm()` is reduced to `passesForStudent()` is not a check.
+      The app's own two readers are asked through the seam as well, and answer 4 and 5.)*
+- [x] The attendance history dialog shows the **same count and no door**: its line and the card's
+      title are the same string character for character, `🚪 Every trip` is gone from the dialog, and
+      no label reconciles the two — the number is one number because it is one call.
+- [x] A term with **no dates set** falls back to the whole year in the attendance card's existing
+      words. Asserted on the *same* term, stripped of its two dates and repainted, so what changed
+      between the two readings is the window and nothing else.
+- [x] The trips **print with the grade**: at the instant the sheet is taken, `data-detail-print` is
+      on, the hall-pass card has a box (239px over a 138px table of five rows, beside a 63px hero),
+      the rows are the term's, and the note typed on a trip is on the paper. *(A measurement under
+      emulated print media in a headless window. The paper itself is the 👤 line below.)*
+- [x] Presentation mode takes the card's list **and** its count off the Student Report screen — on
+      the screen **already open** rather than at the next navigation, which is `src/shell.js`'s
+      standing instruction obeyed — and says why, on a page that otherwise still draws in full.
+- [x] And off the **attendance history dialog** too, on a dialog otherwise still drawn in full.
+- [x] Both have a negative control: flipping the mode back off brings the same list and the same
+      count back to the same card and the same line, which is what makes each absence a suppression
+      rather than a screen that could not draw one.
+- [x] A student with no trips is **stated as none on both surfaces** — `Hall passes · none` on the
+      dialog, and a card that says *"No hall passes are recorded for this student in …"* rather than
+      an empty table. Roll Call! omits its inline table when there are no passes
+      (`dashboard.html:4718`); that is the half deliberately **not** lifted, because a missing block
+      reads as "this build does not show that" rather than as "none".
+- [x] The room behind the class dialog's own per-student door still strands nobody: called for a
+      student the log never mentions, it says there are none and offers the ← back to the class.
+- [x] The card holds **no control at all** — no button, no link, no field, nothing focusable —
+      measured on the card as drawn, which is the only honest reason a new block on a touch screen
+      owes no 44px floor. `.attendance-report-door` still declares its 44px **by name** in the coarse
+      block for the two controls that do wear it: WO-3.7's *Grades for …* and WO-2.9's *← All
+      students*.
+- [x] `src/attendance-report.js` **and** `src/detail.js` both still import nothing from
+      `src/supports.js` and hold no path to `student.supports`. Both greps come back empty on the
+      shipped tree; every occurrence of either string in either file is prose in its own header,
+      arguing why. The card and the count line are built by `src/pass-history.js` and handed over
+      already built, which is the arrangement `src/assignments.js` has with
+      `src/accommodation-prompt.js` one screen over.
+
+*Desk pass 2026-08-14: `verify-shell.mjs` **746 of 746, 0 failed, 0 skipped**, 245s — fourteen call
+sites inside the existing hall-pass section, replacing the first cut's eight, which asserted the door
+the re-cut deleted and were **not** re-run. `wo-sweep.mjs` **17 checks · 15 passed · 0 failed · 2 to
+review**, exit 0; both REVIEWs are the standing pair.*
+
+*Two things the run itself is the record of, and both are worth reading.* **The first cut's harness
+did not fail, it crashed** — its first check clicked the deleted door, `clickSel` threw, and the run
+died before WO-2.3 and everything under it with no summary printed. The replacement asks for every
+door with `has()` before it clicks one, and a fixture that does not land now fails one check and
+skips the rest by name. **And the crash was hiding a real defect:** WO-2.6's *"every print rule is
+gated"* check went red the moment the run got that far, because the first cut's eight
+`body[data-detail-print]` rules for the trip table live in `src/attendance.css` — correctly, since
+that is where those class names live — and that check demanded `data-attendance-print` on every one
+of them. It now sorts rules by which surface's attribute gates them; ungated is still a failure, and
+the borrowed arm is counted so that losing it goes red rather than reading as a tidier stylesheet.
+
+*Everything is driven through the controls a teacher touches: the dialog is opened from a student's
+name in the registry, the card is reached through the *Grades for …* door, the way back is the
+screen switcher, and presentation mode is flipped with the real header control. Two exceptions, both
+named at the check. The trip sixty days in the past is written through the store, because no control
+in this app sends a student out last June — the same door this section already opens to wind a stamp
+backwards, and both planted trips and the class's own terms are put back at the foot of the block.
+And the trip view for a student with **no** trips is called through the seam, because the app
+deliberately draws no button there to call it with.*
+
+**The 👤 iPad sitting this work order owes.** Neither the harness nor a stylesheet can answer these.
+
+- [x] The **printed page matches the decision**: print a student's report from the iPad and check the
+      hall-pass card is on the sheet, that the table has not been cut across a trip, and that the
+      column heads repeat if it breaks onto a second page. 👤
+- [x] The card **reads at arm's length beside a guardian**, and the Student Report screen still reads
+      as one page rather than as a page with a table bolted to it — four cards down two columns, with
+      the trips last. 👤
+- [x] The trip table is legible under a thumb on the real device: it wears `.attendance-report-table`
+      and takes its coarse sizes from `src/attendance.css`'s own block, which was tuned inside a
+      dialog and has never been read inside a card. 👤
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

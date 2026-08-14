@@ -167,7 +167,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 19 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 26 | 23 | 🔨 IN PROGRESS |
+| 2 — Attendance | 26 | 24 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 21 | 16 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
@@ -175,7 +175,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **95** | **57** | `[██████░░░░] 60%` |
+| | **95** | **58** | `[██████░░░░] 61%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -328,7 +328,7 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Aug 14–15 |
 | 30 | [WO-3.19](phase-3-gradebook.md#wo-319--the-overdue-tint-on-a-score-grid-column-head) The overdue tint on a column head | XS | | Aug 15, half a day |
 | 31 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Aug 15–16 |
-| 32 | [WO-2.26](phase-2-attendance.md#wo-226--the-student-report-shows-the-hall-passes) The student report shows the hall passes | S | | Aug 16, a sitting |
+| 32 | [WO-2.26](phase-2-attendance.md#wo-226--the-student-report-screen-shows-the-hall-passes) The Student Report screen shows the hall passes | S | | Aug 16, a sitting |
 | 33 | [WO-2.27](phase-2-attendance.md#wo-227--three-places-where-the-pass-work-says-one-thing-and-does-another) Three places the pass work says one thing and does another | XS | | Aug 16, an hour |
 | 34 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
 | 35 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |

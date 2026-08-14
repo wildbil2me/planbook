@@ -10411,6 +10411,604 @@ if (!attBooted || !attSeam) {
       + ', footer ' + JSON.stringify(backOn.foot[0].cells) : 'no dialog to read');
   await clickSel('#passHistoryModal [data-modal-close]');
 
+  /*
+    ══ WO-2.26: THE CARD ON THE STUDENT REPORT SCREEN, AND THE COUNT LINE THAT AGREES WITH IT ══
+
+    THIS BLOCK USED TO BE AIMED AT A DOOR THAT NO LONGER EXISTS. The first cut of this work order
+    drew a 🚪 Every trip button on the attendance history dialog and hung eight checks on it; the
+    re-cut deleted the door (owner, 2026-08-14) and put the breakdown inline on WO-3.7's Student
+    Report screen. Two of those eight were about that door and about the modal it stacked over, and
+    they are gone outright; the rest are re-pointed below, and not one of them was re-run as it
+    stood. A green harness against the wrong target is not evidence — which is the sentence the work
+    order's own note under the acceptance list is written around. One survives unchanged: the
+    per-student doors INSIDE the class-wide 🚪 Passes dialog are still there, and only the report's
+    went.
+
+    WHAT IS PROVED HERE IS AN AGREEMENT AND A WINDOW. Every number below is either computed in Node
+    off `doc.passes` — the tally() above, this file's own arithmetic — or read off a surface the app
+    drew. Nothing asks the app what it thinks its count is and then compares it with itself.
+
+    AND THE WINDOW IS WHY THIS BLOCK PLANTS A FIXTURE, which nothing else in this section does.
+    Every trip the run has authored fell on today, so a term-scoped surface and a year-wide one
+    would print the same number and the scoping would be INVISIBLE: a check that cannot fail when
+    passesForStudentInTerm() is reduced to passesForStudent() is not a check. So the class is put on
+    a DATED term whose window holds today, and two trips are planted on the busiest student — one
+    inside the window carrying a note, one sixty days outside it. They go in through the store
+    rather than through the registry because there is no control that sends a student out last June,
+    which is the same door this section already opens to wind a stamp backwards. Both come out again
+    at the foot of the block, with the class's own terms, and the section hands on the state it
+    always did.
+
+    NOTHING BELOW IS CLICKED BEFORE IT IS ASKED FOR. The block this one replaces called clickSel on
+    the deleted door; it threw, and took WO-2.3 and everything under it down with it before a
+    summary was printed. A missing fixture is a failed check in this file and never a crash — the
+    roster block says so in as many words, and WO-3.5's door says it again.
+  */
+  /* The dates this fixture is cut against, in Node, the way the pre-drop day below this section is:
+     a window that holds today, and a day well outside it. */
+  const dayFrom = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    const p = (x) => (x < 10 ? '0' : '') + x;
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  };
+  const TERM_FROM = dayFrom(-7);
+  const TERM_TO = dayFrom(7);
+  const TRIP_OUTSIDE = dayFrom(-60);
+  const NOTE_IN = 'WO-2.26 note — typed on a trip inside the open term';
+  const NOTE_OUT = 'WO-2.26 sentinel — this trip is sixty days outside the open term';
+
+  const plant226 = await evalJs(`(function(){
+    var s = window.planbook.store, c = window.planbook.classes;
+    var d = s.getDoc();
+    if (!d) return { ok:false, why:'no year document is open' };
+    var cls = (d.classes || []).filter(function(x){
+      return x.id === ${JSON.stringify(passClass)}; })[0];
+    if (!cls) return { ok:false, why:'the class this section has been filling is not in the document' };
+    var mine = (d.passes || []).filter(function(p){
+      return p && p.classId === ${JSON.stringify(passClass)}; });
+    if (!mine.length) return { ok:false, why:'the pass log is empty, so there is nothing to scope' };
+    /* THE OFFSET IS TAKEN OFF A STAMP THIS RUN WROTE rather than invented: an hour carrying the
+       wrong zone is a different instant, and the two planted trips have to be the same kind of
+       record as the ones around them. NO BACKTICKS IN THIS COMMENT: it is inside a template. */
+    var zone = String(mine[0].out || '').slice(-6);
+    /* Parked on the window and not carried back through CDP, like the WO-2.17 plant: the teardown
+       has to put the SAME terms back, and a document that made the round trip would come back as a
+       copy of a copy. Nothing between here and the restore reloads the page. */
+    window.__wo226 = { terms: JSON.stringify(cls.terms || []) };
+    s.update(function(doc){
+      cls.terms = [{ id:'tm_wo226', label:'WO-2.26 window',
+        start:${JSON.stringify(TERM_FROM)}, end:${JSON.stringify(TERM_TO)} }];
+      if (!Array.isArray(doc.passes)) doc.passes = [];
+      doc.passes.push({ id:'wo226-in', studentId:${JSON.stringify(busiest)},
+        classId:${JSON.stringify(passClass)}, type:'quick',
+        out:${JSON.stringify(nodeToday)} + 'T13:02:00' + zone,
+        back:${JSON.stringify(nodeToday)} + 'T13:06:00' + zone,
+        minutes:4, endedBy:'return', note:${JSON.stringify(NOTE_IN)} });
+      doc.passes.push({ id:'wo226-out', studentId:${JSON.stringify(busiest)},
+        classId:${JSON.stringify(passClass)}, type:'nurse',
+        out:${JSON.stringify(TRIP_OUTSIDE)} + 'T09:00:00' + zone,
+        back:${JSON.stringify(TRIP_OUTSIDE)} + 'T09:07:00' + zone,
+        minutes:7, endedBy:'return', note:${JSON.stringify(NOTE_OUT)} });
+    });
+    window.planbook.attendance.renderAttendance();
+    var open = c.getSelectedTerm() || {};
+    return { ok:true, zone: zone, termId: open.id || '', label: open.label || '',
+             start: open.start || '', end: open.end || '' };
+  })()`);
+
+  /*
+    THE SAME QUESTION src/passes.js ANSWERS, ASKED AGAIN IN NODE. The day a trip belongs to is the
+    first ten characters of `out` and both bounds are inclusive — docs/data-model.md's rule, written
+    out a second time here on purpose, because a harness that called the app's own reader to decide
+    what it should be seeing would agree with whatever window the app happened to use.
+  */
+  const planted226 = await read();
+  const busyAll = planted226.passLog.filter((p) => p.classId === passClass
+    && p.studentId === busiest);
+  const inWindow = busyAll.filter((p) => {
+    const on = String(p.out || '').slice(0, 10);
+    return on >= TERM_FROM && on <= TERM_TO;
+  });
+  const daysIn = [...new Set(inWindow.map((p) => String(p.out || '').slice(0, 10)))];
+  const daysAll = [...new Set(busyAll.map((p) => String(p.out || '').slice(0, 10)))];
+  const wantTerm = tally(inWindow);
+  const wantYear = tally(busyAll);
+  /* The two sentences src/pass-history.js builds out of tripsText() and minutesText(), spelled out
+     here so that a build which reworded either one has to reword this line too. */
+  const countText226 = (t) => (t.total
+    ? t.total + (t.total === 1 ? ' trip' : ' trips') + ' · '
+      + t.minutes + (t.minutes === 1 ? ' minute out' : ' minutes out')
+    : 'none');
+  const wantLine = 'Hall passes · ' + countText226(wantTerm);
+  const wantYearLine = 'Hall passes · ' + countText226(wantYear);
+
+  /*
+    THE COUNT LINE ON THE ATTENDANCE HISTORY DIALOG, and the door that must no longer be under it.
+    The heading is read as well as the absences, so that "no door" can be told apart from "no
+    dialog": a report that failed to draw at all would satisfy every absence below and pass for the
+    wrong reason.
+  */
+  const reportPasses = () => evalJs(`(function(){
+    var m = document.getElementById('attendanceHistoryModal');
+    var body = document.getElementById('attendanceHistoryBody');
+    if (!m || !body) return null;
+    var block = body.querySelector('.attendance-report-passes');
+    var line = block ? block.querySelector('.attendance-report-sub') : null;
+    return {
+      shown: !m.classList.contains('hidden'),
+      heading: ((body.querySelector('.attendance-report-name') || {}).textContent || '').trim(),
+      block: !!block,
+      line: line ? (line.textContent || '').trim() : '',
+      quiet: !!(block && block.querySelector('.pass-history-quiet')),
+      /* Counted across the WHOLE dialog rather than inside the block: a door that moved somewhere
+         else in it is not a door that went. */
+      doors: body.querySelectorAll('[data-pass-history-student]').length,
+      toGrades: body.querySelectorAll('[data-student-detail]').length,
+      len: (body.textContent || '').length,
+      text: (body.textContent || '').replace(/\\s+/g, ' ') }; })()`);
+
+  /*
+    AND THE CARD ITSELF, on a screen rather than in a dialog. It is found by its TITLE and not by
+    its position, so that "the pass card is last in the right-hand column" stays a separate claim
+    from "the pass card is on the page"; both are read, and both are asserted.
+
+    THE CONTROL CENSUS IS THE 44px CHECK, RE-AIMED. src/detail.css records that this card holds no
+    control at all, which is the only honest reason a new block on a touch screen owes no floor — so
+    the card is asked for buttons, links, fields and anything focusable, and the answer has to be
+    none rather than "they inherit one from somewhere", which is the answer that cost WO-3.7 a
+    correction round.
+  */
+  const detailCard = () => evalJs(`(function(){
+    var v = document.getElementById('detailView');
+    if (!v) return null;
+    var cards = Array.prototype.slice.call(v.querySelectorAll('.detail-card'));
+    var titleOf = function(c){
+      return ((c.querySelector('.detail-card-title') || {}).textContent || '').trim(); };
+    var card = cards.filter(function(c){ return titleOf(c).indexOf('Hall passes') === 0; })[0] || null;
+    var table = card ? card.querySelector('.attendance-report-table') : null;
+    var rows = table ? Array.prototype.slice.call(table.querySelectorAll('tbody tr')) : [];
+    var cells = function(tr){
+      return Array.prototype.slice.call(tr.querySelectorAll('th,td'))
+        .map(function(c){ return (c.textContent || '').trim(); }); };
+    return {
+      up: !v.classList.contains('hidden'),
+      dialogs: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
+        .filter(function(o){ return !o.classList.contains('hidden'); })
+        .map(function(o){ return o.id; }),
+      heading: (document.getElementById('detailStudentName') || {}).textContent || '',
+      cards: cards.map(titleOf),
+      card: !!card,
+      title: card ? titleOf(card) : '',
+      note: card ? ((card.querySelector('.detail-card-note') || {}).textContent || '').trim() : '',
+      empty: card ? ((card.querySelector('.attendance-report-empty') || {}).textContent || '').trim() : '',
+      quiet: !!(card && card.querySelector('.pass-history-quiet')),
+      table: !!table,
+      trips: rows.filter(function(tr){ return !/pass-history-note-row/.test(tr.className); })
+        .map(cells),
+      notes: rows.filter(function(tr){ return /pass-history-note-row/.test(tr.className); })
+        .map(function(tr){ return (tr.textContent || '').trim(); }),
+      controls: card ? Array.prototype.slice.call(card.querySelectorAll(
+        'button, a, input, select, textarea, [tabindex], [role="button"], [data-pass-history-student]'))
+        .map(function(e){ return e.tagName + '.' + (e.className || ''); }) : [],
+      len: (v.textContent || '').length,
+      text: (v.textContent || '').replace(/\\s+/g, ' ') }; })()`);
+
+  /* The two doors this block walks through, asked for before either is used. */
+  const rowDoor226 = '#attendanceBody [data-attendance-history="' + busiest + '"]';
+  const rowLive226 = await has(rowDoor226);
+  if (rowLive226) await clickSel(rowDoor226);
+  const onDialog = rowLive226 ? await reportPasses() : null;
+  const cardDoor226 = '#attendanceHistoryModal [data-student-detail="' + busiest + '"]';
+  const cardDoorLive = rowLive226 ? await has(cardDoor226) : false;
+
+  const fixture226 = plant226.ok === true && plant226.termId === 'tm_wo226'
+    && inWindow.length > 1 && busyAll.length === inWindow.length + 1
+    && daysIn.length === 1 && daysAll.length === 2
+    && inWindow.some((p) => p.note === NOTE_IN)
+    && busyAll.some((p) => p.note === NOTE_OUT)
+    && wantTerm.total !== wantYear.total && wantTerm.minutes !== wantYear.minutes
+    && rowLive226 && cardDoorLive;
+  check('the WO-2.26 fixture is real: the class is on a DATED term, that student holds trips inside its window and one sixty days outside it, and a term count and a year count therefore cannot both be right',
+    fixture226,
+    (plant226.ok ? 'the open term is ' + JSON.stringify(plant226.label) + ' ' + plant226.start
+      + '..' + plant226.end : 'the plant did not land: ' + plant226.why)
+      + '; that student holds ' + busyAll.length + ' trip(s) on the log across '
+      + daysAll.length + ' day(s), ' + inWindow.length + ' of them inside the window on '
+      + daysIn.length + ' day(s) — ' + JSON.stringify(countText226(wantTerm)) + ' against '
+      + JSON.stringify(countText226(wantYear)) + ' for the year; the registry row is there = '
+      + rowLive226 + ', the door to the grades is there = ' + cardDoorLive);
+
+  if (!fixture226) {
+    skip('the rest of WO-2.26 — the trips inline on the Student Report screen, the two counts agreeing exactly, the term window and its no-dates fallback, "none" on both surfaces, presentation mode on both surfaces, the card holding no control, and the trips on the printed sheet',
+      'the fixture did not land, so nothing below it could be driven the way a teacher reaches it — and a check driven over a fixture that is not there passes for the wrong reason');
+  } else {
+    await clickSel(cardDoor226);
+    await new Promise(r => setTimeout(r, 250));
+    const onCard = await detailCard();
+    const cardTrips = onCard ? onCard.trips : [];
+    const cardDays = [...new Set(cardTrips.map((r) => r[0]))];
+
+    /*
+      ACCEPTANCE LINE 1. Every trip in the open term, with its date, its clock and its note, ON THE
+      SCREEN — not in a dialog over it. The dialog the door was in is asserted CLOSED for exactly
+      that reason: "behind no tap" is a claim about where the list is, and a list that had arrived
+      in a modal would satisfy every other clause here.
+    */
+    check('the Student Report screen lists this student\'s trips inline: one row per trip in the open term, with the minutes that were stored and the note that was typed under the row it belongs to, on the page itself and behind no tap',
+      !!onCard && onCard.up && onCard.dialogs.length === 0 && onCard.card && onCard.table
+        && cardTrips.length === inWindow.length
+        && cardTrips.every((r) => r.length === 5 && /\d/.test(r[0]) && r[2] !== '' && r[3] !== '')
+        && cardTrips.every((r, i) => r[4] === String(inWindow[i].minutes))
+        && inWindow.every((p) => !p.note || onCard.text.indexOf(p.note) >= 0)
+        && onCard.notes.length === inWindow.filter((p) => p.note).length
+        && onCard.notes.length > 0,
+      'the log holds ' + inWindow.length + ' trip(s) for that student inside the window ('
+        + inWindow.filter((p) => p.note).length + ' noted); the card drew ' + cardTrips.length
+        + ' trip row(s) and ' + (onCard ? onCard.notes.length : '?') + ' note row(s), with '
+        + JSON.stringify(onCard && onCard.dialogs) + ' dialog(s) open over it; the rows read '
+        + JSON.stringify(cardTrips));
+
+    /*
+      AND IT IS THE CARD attendanceCard() IS THE SIBLING OF, which is the shape half of the same
+      line and the half a table bolted onto the page would fail: a titled `.detail-card` carrying
+      its own summary, with the note underneath saying what the list is counted out of, LAST in the
+      right-hand column under the attendance it is not.
+    */
+    check('and it is built as the attendance card\'s sibling — a titled `.detail-card` carrying its own count, the note underneath it, last in the right-hand column',
+      !!onCard && onCard.title === wantLine
+        && onCard.cards[onCard.cards.length - 1] === onCard.title
+        && onCard.cards.filter((t) => t.indexOf('Attendance · ') === 0).length === 1
+        && /^Every trip that ended is here, oldest first/.test(onCard.note)
+        && /a student on a hall pass was present/.test(onCard.note),
+      'the cards down the column are ' + JSON.stringify(onCard && onCard.cards)
+        + '; the note reads ' + JSON.stringify(onCard && onCard.note.slice(0, 120)));
+
+    /*
+      ACCEPTANCE LINE 2, AND THE CLAIM THE OLD BLOCK COULD NOT MAKE. The trip sixty days out is on
+      the log and off the card. Four ways of saying it, because each fails differently: the sentinel
+      note is absent, the count is the term's and not the year's, the card covers one day where the
+      log covers two, and the card names the term it is over.
+
+      AND THE APP'S OWN TWO READERS ARE ASKED TO DISAGREE, through the seam. If
+      passesForStudentInTerm() were ever reduced to passesForStudent() those two numbers would be
+      equal, the card above would carry the year's count, and both checks would go red together.
+    */
+    const scoped = await evalJs(`(function(){
+      var p = window.planbook.passes, d = window.planbook.store.getDoc();
+      var t = window.planbook.classes.getSelectedTerm();
+      return {
+        inTerm: p.passesForStudentInTerm(d, ${JSON.stringify(passClass)},
+          ${JSON.stringify(busiest)}, t).length,
+        year: p.passesForStudent(d, ${JSON.stringify(passClass)},
+          ${JSON.stringify(busiest)}).length }; })()`);
+    check('the list is the open TERM\'s and says which term: the trip sixty days outside the window is on the log and off the card, the count is the term\'s and not the year\'s, and the card covers one day where the log covers two',
+      !!onCard && onCard.text.indexOf(NOTE_OUT) < 0
+        && onCard.text.indexOf(NOTE_IN) >= 0
+        && onCard.title === wantLine && onCard.title !== wantYearLine
+        && cardDays.length === daysIn.length && daysIn.length < daysAll.length
+        && onCard.note.indexOf('WO-2.26 window only') > 0
+        && scoped.inTerm === inWindow.length && scoped.year === busyAll.length,
+      'the card says ' + JSON.stringify(onCard && onCard.title) + ' where the year would say '
+        + JSON.stringify(wantYearLine) + ', over ' + cardDays.length + ' distinct day(s) '
+        + JSON.stringify(cardDays) + ' against the log\'s ' + daysAll.length
+        + '; the out-of-term sentinel is on the card = '
+        + (!!onCard && onCard.text.indexOf(NOTE_OUT) >= 0) + '; the app\'s own readers answer '
+        + scoped.inTerm + ' in the term against ' + scoped.year + ' on the year');
+
+    /*
+      ACCEPTANCE LINE 3. One number on two surfaces, compared as STRINGS rather than as tallies: a
+      build that agreed on the count and disagreed on the wording would still be two answers to one
+      question. The door is asked for across the whole dialog, and so is the year-wide label the
+      first cut put on that line — the term-scoping decision makes it untrue rather than merely
+      unnecessary.
+    */
+    check('the attendance history dialog shows the same count and no door: `Hall passes · N trips · N minutes out` character for character with the card, `Every trip` gone from the dialog, and no label reconciling the two',
+      !!onDialog && onDialog.shown && onDialog.block
+        && onDialog.line === wantLine
+        && onDialog.doors === 0
+        && onDialog.text.indexOf('Every trip') < 0
+        && !/whole year, not just this term/.test(onDialog.text)
+        /* The rest of the dialog drew, so the missing door is a decision rather than a dialog that
+           failed to build — and the ONE door that belongs there is still there. */
+        && onDialog.heading.length > 0 && onDialog.len > 200 && onDialog.toGrades === 1,
+      'the dialog said ' + JSON.stringify(onDialog && onDialog.line) + ' and the card said '
+        + JSON.stringify(onCard && onCard.title) + '; ' + (onDialog ? onDialog.doors : '?')
+        + ' trip door(s) and ' + (onDialog ? onDialog.toGrades : '?') + ' door(s) to the grades in '
+        + (onDialog ? onDialog.len : 0) + ' character(s) of dialog');
+
+    /*
+      AND THE OTHER HALF OF ACCEPTANCE LINE 2: a term with no dates set falls back to the whole year
+      in attendanceCard()'s own words rather than in new ones. The SAME term is stripped of its two
+      dates and the screen repainted, so what changes between the two readings is the window and
+      nothing else — a second class carrying a bare term would have changed the student too.
+    */
+    const undated = await evalJs(`(function(){
+      var s = window.planbook.store;
+      s.update(function(doc){
+        var cls = (doc.classes || []).filter(function(x){
+          return x.id === ${JSON.stringify(passClass)}; })[0];
+        if (cls && cls.terms && cls.terms[0]) { delete cls.terms[0].start; delete cls.terms[0].end; }
+      });
+      window.planbook.detail.renderDetail();
+      var t = window.planbook.classes.getSelectedTerm() || {};
+      return { start: t.start || '', end: t.end || '' }; })()`);
+    const onBare = await detailCard();
+    check('and a term with no dates set falls back to the whole year in the attendance card\'s own words rather than in new ones — the same term, stripped of its two dates, on the same screen',
+      undated.start === '' && undated.end === ''
+        && !!onBare && onBare.card
+        && /this term has no dates set, so this is every trip on the year/.test(onBare.note)
+        && onBare.note.indexOf('WO-2.26 window only') < 0
+        && onBare.title === wantYearLine
+        && onBare.trips.length === busyAll.length
+        && onBare.text.indexOf(NOTE_OUT) >= 0,
+      'with the dates gone the card says ' + JSON.stringify(onBare && onBare.title) + ' over '
+        + (onBare ? onBare.trips.length : '?') + ' row(s) — the year\'s ' + busyAll.length
+        + ' — and the note reads ' + JSON.stringify(onBare && onBare.note.slice(0, 100)));
+
+    /* The dates go back on before anything else is read, so every check under this one is over the
+       window again. */
+    await evalJs(`(function(){
+      window.planbook.store.update(function(doc){
+        var cls = (doc.classes || []).filter(function(x){
+          return x.id === ${JSON.stringify(passClass)}; })[0];
+        if (cls && cls.terms && cls.terms[0]) {
+          cls.terms[0].start = ${JSON.stringify(TERM_FROM)};
+          cls.terms[0].end = ${JSON.stringify(TERM_TO)};
+        }
+      });
+      window.planbook.detail.renderDetail();
+      return 1; })()`);
+
+    /*
+      THE TRIPS PRINT WITH THE GRADE — this work order's third decision, made in src/detail.js §
+      PRINTING A VIEW and measured here. WO-3.7's own apparatus, borrowed rather than reinvented:
+      window.print() blocks in a headless browser, so it is stubbed, and the stub takes the reading
+      at the one instant the gate is a fact rather than a bet. THE STUB REPORTS THAT IT TOOK, which
+      is the guard against the failure that looks exactly like an app defect — a print that was
+      never called reads as a sheet with a card missing from it.
+
+      HEIGHTS RATHER THAN DISPLAY, for the reason that section gives: the computed display of an
+      element inside a display:none ancestor is its own value, not none. What a hidden card does not
+      have is a BOX. This does NOT close the 👤 line on the printed page — nobody here has held the
+      paper, and no headless window is a sheet of it.
+    */
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    await new Promise(r => setTimeout(r, 120));
+    const printed226 = await evalJs(`(function(){
+      var b = document.querySelector('#detailView [data-detail-sheet-print]');
+      if (!b) return { ok:false, why:'no Print control on the open Student Report screen' };
+      window.__realPrint = window.print;
+      window.print = function(){
+        window.__wo226called = (window.__wo226called || 0) + 1;
+        try {
+          var v = document.getElementById('detailView');
+          var hero = v.querySelector('.detail-hero');
+          var cards = Array.prototype.slice.call(v.querySelectorAll('.detail-card'));
+          var card = cards.filter(function(c){
+            var t = c.querySelector('.detail-card-title');
+            return t && (t.textContent || '').trim().indexOf('Hall passes') === 0; })[0] || null;
+          var table = card ? card.querySelector('.attendance-report-table') : null;
+          var high = function(e){ return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+          window.__wo226print = {
+            attr: document.body.hasAttribute('data-detail-print'),
+            cardH: high(card), tableH: high(table), heroH: high(hero),
+            rows: table ? table.querySelectorAll('tbody tr').length : -1,
+            text: card ? (card.textContent || '').replace(/\\s+/g, ' ') : '' };
+        } catch (err) { window.__wo226printErr = String((err && err.message) || err); }
+      };
+      var stubbed = window.print !== window.__realPrint;
+      b.click();
+      var out = { ok:true, stubbed: stubbed, calls: window.__wo226called || 0,
+        snapshotError: window.__wo226printErr || '', sheet: window.__wo226print || null };
+      window.print = window.__realPrint;
+      delete window.__realPrint;
+      delete window.__wo226print;
+      delete window.__wo226printErr;
+      delete window.__wo226called;
+      window.dispatchEvent(new Event('afterprint'));
+      return out; })()`);
+    await send('Emulation.setEmulatedMedia', { media: '' });
+    const sheet226 = printed226.ok ? printed226.sheet : null;
+    check('the trips print WITH the grade, which is the decision this work order made out loud: at the instant the sheet is taken the hall-pass card has a box on it, its rows are the term\'s, and the note typed on a trip is on the paper',
+      printed226.ok === true && printed226.stubbed === true && printed226.calls === 1
+        && !!sheet226 && sheet226.attr === true
+        && sheet226.cardH > 0 && sheet226.tableH > 0 && sheet226.heroH > 0
+        && sheet226.rows === inWindow.length + inWindow.filter((p) => p.note).length
+        && sheet226.text.indexOf(NOTE_IN) >= 0
+        && sheet226.text.indexOf(NOTE_OUT) < 0,
+      printed226.ok
+        ? 'window.print() calls from one tap = ' + printed226.calls + ', gate on at the snapshot = '
+          + (sheet226 && sheet226.attr) + '; the card measured ' + (sheet226 && sheet226.cardH)
+          + 'px over a ' + (sheet226 && sheet226.tableH) + 'px table of '
+          + (sheet226 && sheet226.rows) + ' row(s), beside a ' + (sheet226 && sheet226.heroH)
+          + 'px hero' + (printed226.snapshotError
+            ? '; the snapshot threw ' + printed226.snapshotError : '')
+        : printed226.why);
+
+    /*
+      ACCEPTANCE LINE 5, FIRST HALF: the card goes and the screen stays a screen. The mode is
+      flipped with the real header control while the Student Report is ON SCREEN, which is the half
+      that is not about the card at all — src/shell.js's flipPresentationMode() carried this view on
+      its "deliberately absent" list until this work order, and suppression that only applies to the
+      NEXT render is the defect that list's own paragraph describes.
+    */
+    await evalJs("document.getElementById('presentationBtn').click(); 1");
+    await new Promise(r => setTimeout(r, 150));
+    const projected = await detailCard();
+    check('presentation mode takes the card\'s list AND its count off the Student Report screen — on the screen already open rather than at the next navigation — and says why, on a page that otherwise still draws in full',
+      !!projected && projected.up && projected.card
+        && projected.quiet === true && projected.table === false
+        && projected.trips.length === 0 && projected.notes.length === 0
+        && projected.title === 'Hall passes'
+        && projected.text.indexOf(countText226(wantTerm)) < 0
+        && projected.text.indexOf(NOTE_IN) < 0
+        /* The screen that remains is a screen and not a hole: the heading and the attendance card
+           beside it are both still on it. */
+        && projected.heading.length > 0 && projected.len > 400
+        && projected.cards.filter((t) => t.indexOf('Attendance · ') === 0).length === 1,
+      'with the mode on the card is titled ' + JSON.stringify(projected && projected.title)
+        + ' over ' + (projected ? projected.trips.length : '?') + ' row(s), says why = '
+        + (projected && projected.quiet) + ', and the screen still holds '
+        + (projected ? projected.len : 0) + ' character(s) across '
+        + JSON.stringify(projected && projected.cards));
+
+    /* THE NEGATIVE CONTROL. Without it the check above is equally true of a screen that failed to
+       draw at all, which is the shape of vacuous pass this section keeps refusing. */
+    await evalJs("document.getElementById('presentationBtn').click(); 1");
+    await new Promise(r => setTimeout(r, 150));
+    const modeOff = await detailCard();
+    check('and flipping the mode back off brings the same list and the same count back to the same card on the same screen',
+      !!modeOff && modeOff.card && modeOff.quiet === false
+        && modeOff.title === wantLine
+        && modeOff.trips.length === inWindow.length
+        && modeOff.text.indexOf(NOTE_IN) >= 0,
+      'the card is back at ' + JSON.stringify(modeOff && modeOff.title) + ' over '
+        + (modeOff ? modeOff.trips.length : '?') + ' row(s), strip up = '
+        + (modeOff && modeOff.quiet));
+
+    /*
+      AND THE SAME PAIR ON THE OTHER SURFACE. Back to the registry through the switcher a teacher
+      taps, because the count line lives on a dialog opened from a row there. Both flips are made
+      with no dialog on screen: the header is BEHIND the scrim, and a click at its coordinates with
+      an overlay up lands on the backdrop — the note at the WO-2.9 check above.
+    */
+    await clickSel('#detailView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 200));
+    await evalJs("document.getElementById('presentationBtn').click(); 1");
+    await clickSel(rowDoor226);
+    const dialogOn = await reportPasses();
+    await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
+    await evalJs("document.getElementById('presentationBtn').click(); 1");
+    await clickSel(rowDoor226);
+    const dialogOff = await reportPasses();
+    check('and it takes the count line off the attendance history dialog too, on a dialog otherwise still drawn in full — and flipping back brings the same number to the same line',
+      !!dialogOn && dialogOn.shown && dialogOn.block && dialogOn.quiet === true
+        && dialogOn.text.indexOf(countText226(wantTerm)) < 0
+        && dialogOn.heading.length > 0 && dialogOn.len > 200
+        && !!dialogOff && dialogOff.quiet === false && dialogOff.line === wantLine,
+      'with the mode on the dialog says why = ' + (dialogOn && dialogOn.quiet) + ' over '
+        + (dialogOn ? dialogOn.len : 0) + ' character(s), and the count '
+        + JSON.stringify(countText226(wantTerm)) + ' is on it = '
+        + (!!dialogOn && dialogOn.text.indexOf(countText226(wantTerm)) >= 0)
+        + '; with it off the line reads ' + JSON.stringify(dialogOff && dialogOff.line));
+
+    /*
+      ACCEPTANCE LINE 4: A STUDENT WITH NO TRIPS IS STATED AS NONE ON BOTH SURFACES. Roll Call!
+      draws its inline table only when there are passes (dashboard.html:4718, `if (passes.length)`)
+      and that is the half deliberately not lifted — a missing block reads as "this build does not
+      show that" rather than as "none". The student is found rather than named, and outD is excluded
+      because their pass was CANCELLED, which is a different sentence about a different fact and is
+      asserted further up.
+    */
+    const noTrips = passRoster.filter((id) => !byStudent[id] && id !== outD && id !== busiest)[0];
+    await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
+    const quietRow = '#attendanceBody [data-attendance-history="' + noTrips + '"]';
+    const quietRowLive = await has(quietRow);
+    if (quietRowLive) await clickSel(quietRow);
+    const quietDialog = quietRowLive ? await reportPasses() : null;
+    const quietDoor = '#attendanceHistoryModal [data-student-detail="' + noTrips + '"]';
+    if (quietRowLive && await has(quietDoor)) await clickSel(quietDoor);
+    await new Promise(r => setTimeout(r, 250));
+    const quietCard = await detailCard();
+    check('a student with no trips is stated as none on BOTH surfaces — `Hall passes · none` on the dialog, and a card that says so in a sentence rather than an empty table — on two surfaces that otherwise drew in full',
+      !!quietDialog && quietDialog.block && quietDialog.line === 'Hall passes · none'
+        && quietDialog.heading.length > 0 && quietDialog.len > 200
+        && !!quietCard && quietCard.card && quietCard.title === 'Hall passes · none'
+        && quietCard.table === false && quietCard.trips.length === 0
+        && /No hall passes are recorded for this student in WO-2\.26 window\./.test(quietCard.empty)
+        && quietCard.heading.length > 0 && quietCard.len > 400,
+      'the dialog said ' + JSON.stringify(quietDialog && quietDialog.line) + ' over '
+        + (quietDialog ? quietDialog.len : 0) + ' character(s); the card said '
+        + JSON.stringify(quietCard && quietCard.title) + ' and '
+        + JSON.stringify(quietCard && quietCard.empty) + ' over '
+        + (quietCard ? quietCard.len : 0) + ' character(s) of screen');
+
+    /*
+      AND THE ROOM BEHIND THE CLASS DIALOG'S OWN DOOR IS NOT AN EMPTY PAGE EITHER. This one survives
+      the re-cut unchanged: the per-student doors inside the class-wide 🚪 Passes dialog are still
+      there and only the report's went. Asked through the seam because the app deliberately draws no
+      button for a student the log never mentions.
+    */
+    const forcedEmpty = await evalJs('(function(){ window.planbook.passHistory.openStudentPasses('
+      + JSON.stringify(noTrips) + '); return 1; })()');
+    const emptyView = await readHistory();
+    check('and the view behind the class dialog\'s own door strands nobody: called directly for that student it says there are none and offers the way back to the class',
+      forcedEmpty === 1 && !!emptyView && emptyView.shown && emptyView.rows.length === 0
+        && /No hall passes are recorded for this student/.test(emptyView.text)
+        && emptyView.back === 1,
+      'the forced view holds ' + (emptyView ? emptyView.rows.length : '?') + ' row(s), '
+        + (emptyView ? emptyView.back : '?') + ' way(s) back, and reads '
+        + JSON.stringify(emptyView && emptyView.text.slice(0, 90)));
+    await clickSel('#passHistoryModal [data-modal-close]');
+
+    /*
+      AND THE TOUCH FLOOR, RE-AIMED. The old check asserted a 44px rule for a door this re-cut
+      deletes. Two claims replace it, and the first is the one that matters: the card on the Student
+      Report screen holds NO CONTROL AT ALL, which is the only honest reason a new block on a touch
+      screen owes no floor — src/detail.css says so in as many words, and this is that sentence
+      measured rather than read. The second is that `.attendance-report-door` still declares its
+      floor BY NAME for the two controls that do wear it — WO-3.7's "Grades for …" and WO-2.9's
+      ← All students — because deleting the third one must not take the rule with it. That half is a
+      RULE and not a measurement, and it is weaker on purpose: the coarse sweep at the foot of this
+      file measures `#classView` and the modals it opens, and this dialog is reached from a
+      student's name with no roster on screen by the time that sweep runs. "It inherits one from
+      `.class-action-btn`" was correct at WO-3.7 and still cost that work order a correction round.
+      The thumb stays 👤.
+    */
+    const doorRule = await evalJs(`(function(){
+      var out = [];
+      for (var i = 0; i < document.styleSheets.length; i++) {
+        var rules; try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
+        for (var j = 0; j < rules.length; j++) {
+          var r = rules[j];
+          if (!r.media || String(r.media.mediaText).indexOf('pointer: coarse') < 0) continue;
+          for (var k = 0; k < r.cssRules.length; k++) {
+            var s = r.cssRules[k];
+            if (!s.selectorText || s.selectorText.indexOf('.attendance-report-door') < 0) continue;
+            out.push({ sel: s.selectorText, h: s.style.minHeight, w: s.style.minWidth });
+          }
+        }
+      }
+      return out; })()`);
+    const floored = doorRule.filter((r) => parseFloat(r.h) >= 44 && parseFloat(r.w) >= 44);
+    check('the hall-pass card holds no control at all, which is why this screen owes it no 44px floor — and the class the two surviving doors DO wear still declares one by name in the coarse block',
+      !!onCard && onCard.controls.length === 0 && floored.length >= 1,
+      'the card drew ' + (onCard ? onCard.controls.length : '?') + ' control(s) '
+        + JSON.stringify(onCard && onCard.controls) + '; the coarse rules naming that class are '
+        + JSON.stringify(doorRule));
+  }
+
+  /*
+    THE FIXTURE COMES OUT AND THE CLASS GOES BACK ON ITS OWN TERMS. The trips are removed BY ID
+    rather than by restoring a snapshot of `passes`, because this section keeps filling that log
+    after this block and a snapshot would take the trips it writes next with it.
+  */
+  await evalJs("['attendanceHistoryModal','passHistoryModal']"
+    + ".forEach(function(m){ window.planbook.closeModal(m); }); 1");
+  await evalJs(`(function(){
+    window.planbook.store.update(function(doc){
+      doc.passes = (doc.passes || []).filter(function(p){
+        return p && p.id !== 'wo226-in' && p.id !== 'wo226-out'; });
+      var cls = (doc.classes || []).filter(function(x){
+        return x.id === ${JSON.stringify(passClass)}; })[0];
+      if (cls && window.__wo226) cls.terms = JSON.parse(window.__wo226.terms);
+    });
+    delete window.__wo226;
+    return 1; })()`);
+  /* Back onto the registry through the switcher first, because openCard() below starts by tapping
+     the class grid's door and that control is on the class bar rather than in the detail view. */
+  if (await has('#detailView [data-class-screen="class"]')) {
+    await clickSel('#detailView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 200));
+  }
+  const handedBack = await openCard(passClass);
+  const leftovers = handedBack.passLog.filter((p) => p.id === 'wo226-in' || p.id === 'wo226-out');
+  check('and the fixture comes out again: both planted trips are off the log, the class is back on its own terms, and the registry this section hands on is the one it was handed',
+    leftovers.length === 0 && handedBack.openClass === passClass && handedBack.viewShown,
+    leftovers.length + ' planted trip(s) still on the log; the open class is '
+      + JSON.stringify(handedBack.openClass) + ' with the registry up = ' + handedBack.viewShown);
+
   /* Two back out, which is the state the section is required to hand on — see below. */
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
   await clickSel('[data-pass-issue="' + outC + '"][data-pass-type="nurse"]');
@@ -15045,9 +15643,23 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
 
     /* THE PRINT GATE. Nothing here calls window.print(); what is asserted is that the attribute the
        @media print block keys on is NOT on <body> at rest, which is the whole reason a Ctrl+P made
-       on any other screen still prints the page rather than a blank sheet. */
+       on any other screen still prints the page rather than a blank sheet.
+
+       SINCE WO-2.26 THESE CLASS NAMES ARE PRINTED BY TWO SURFACES, and the reading has to know it or
+       it fails on a build that is behaving. src/pass-history.js renders the same
+       `.attendance-report-table` into a card on WO-3.7's Student Report screen — one builder, so the
+       dialog and the card cannot drift — and src/attendance.css therefore carries a second arm of
+       print rules for it, selected under `data-detail-print` rather than under this surface's
+       attribute. That is the rule "a stylesheet does not style another sheet's class names" being
+       obeyed, not a gate going missing: the rules are where the classes are, gated on the surface
+       they draw for.
+
+       SO THE CLAIM IS SHARPENED RATHER THAN LOOSENED. Every rule is still gated on SOMETHING — an
+       ungated one is still a failure, and it is still the failure that prints a record dialog onto a
+       Ctrl+P from anywhere else — and the borrowed arm is COUNTED, so a build that lost WO-2.26's
+       print rules goes red here too instead of quietly reading as a tidier stylesheet. */
     const printRules = await evalJs(`(function(){
-      var seen = 0, gated = 0, ungated = 0, selectors = [];
+      var seen = 0, gated = 0, borrowed = 0, ungated = 0, selectors = [];
       window.__eachRule(function(rule, sel){
         if (String(sel).indexOf('attendance-report') === -1
           && String(sel).indexOf('attendanceRecordModal') === -1) return;
@@ -15057,13 +15669,17 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         if (media !== 'print') return;
         seen++;
         if (String(sel).indexOf('data-attendance-print') !== -1) { gated++; }
+        else if (String(sel).indexOf('data-detail-print') !== -1) { borrowed++; }
         else { ungated++; selectors.push(sel); }
       });
-      return { seen: seen, gated: gated, ungated: ungated, selectors: selectors.slice(0, 4) }; })()`);
-    check('the print rules exist and every one of them is gated on the attribute the button sets, and nothing carries that attribute at rest',
-      printRules.seen >= 10 && printRules.ungated === 0 && rec.printAttr === false,
-      printRules.seen + ' print rule(s) touching the record surface, ' + printRules.gated
-        + ' gated on data-attendance-print, ' + printRules.ungated + ' ungated '
+      return { seen: seen, gated: gated, borrowed: borrowed, ungated: ungated,
+               selectors: selectors.slice(0, 4) }; })()`);
+    check('the print rules exist and every one of them is gated on the attribute of the surface it draws for — this dialog\'s, or the Student Report card that borrows these class names — and nothing carries this one at rest',
+      printRules.seen >= 10 && printRules.ungated === 0 && printRules.gated >= 10
+        && printRules.borrowed > 0 && rec.printAttr === false,
+      printRules.seen + ' print rule(s) touching these class names, ' + printRules.gated
+        + ' gated on data-attendance-print and ' + printRules.borrowed
+        + ' on data-detail-print for WO-2.26\'s card, ' + printRules.ungated + ' ungated '
         + JSON.stringify(printRules.selectors) + '; <body> carries the attribute at rest = '
         + rec.printAttr);
 
