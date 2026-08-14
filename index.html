@@ -695,6 +695,20 @@
                 title="The whole term, class by day — print it or save it as a spreadsheet">
           <span aria-hidden="true">🖨</span> Record
         </button>
+        <!-- WHO HAS BEEN OUT OF THIS ROOM, AND HOW OFTEN (WO-2.9). The sixth of the things in this
+             toolbar that only change what you are looking at, and the second that opens a dialog
+             built from the open document at the moment it is tapped — so it carries its own hook
+             rather than `data-modal-open`, exactly as 🖨 Record beside it does.
+
+             The banner above the grid says who is out RIGHT NOW; this says who has been. They are
+             two different questions and the second one is asked sitting down, which is why it is a
+             dialog here rather than a second band on the screen a class is marked from. -->
+        <button type="button" class="class-action-btn attendance-passes-btn"
+                data-pass-history aria-haspopup="dialog"
+                aria-label="Every hall pass recorded for this class"
+                title="Who has been out of the room, how often, and for how long">
+          <span aria-hidden="true">🚪</span> Passes
+        </button>
       </div>
 
       <!-- Earlier · Today · Later, above the columns they move. -->
@@ -2476,6 +2490,31 @@
       </div>
       <div id="gradesRecordBody"></div>
     </div>
+  </div>
+</div>
+
+<!--
+  HALL PASSES, READ BACK (WO-2.9) — one dialog carrying two readings of the same append-only log:
+  every student in this class with the trips they have taken, and one student's trips with their
+  times, their minutes and any note. src/pass-history.js fills it and owns the door between them.
+
+  IT IS THE ONE SURFACE IN THIS APP THAT HIDES NAMES. Presentation mode suppresses every name here,
+  which the pass BANNER above the grid deliberately does not (WO-2.11): a pass is issued during a
+  live class and this is what gets opened beside a guardian at a conference. The counts stay — what
+  is protected is whose they are.
+
+  It wears `.attendance-report-panel` because it is the registry's third read-back dialog and the
+  two before it set the width; there is no Print and no CSV on it, which is why the body starts
+  where the actions row starts on those two.
+-->
+<div class="modal-overlay hidden" id="passHistoryModal">
+  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+       aria-labelledby="passHistoryTitle">
+    <div class="modal-header">
+      <h2 id="passHistoryTitle">Hall passes</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="passHistoryBody"></div>
   </div>
 </div>
 

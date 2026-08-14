@@ -126,6 +126,7 @@ holds is the only recovery path that survives eviction, a wiped browser, and a d
   "openPasses": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
                    "type": "bathroom|nurse|quick",
                    "out": "2026-09-09T09:12:00-04:00",
+                   "alerted": 1,                    // 1 or 2, absent until an overdue alert fires
                    "note": "went on to the counsellor" }],
   "passes": [{ "id": "p_…", "studentId": "s_…", "classId": "c_…",
                "type": "bathroom|nurse|quick",
@@ -234,6 +235,18 @@ Seven shape decisions that matter:
   lives on the `openPasses` entry, and `closePass()` copies it onto the `passes` entry on the way
   past — a note that died on the return would be a note nothing could ever render. An empty or
   whitespace-only field deletes the key rather than storing `""`.
+  **An OPEN pass may also carry `alerted`** *(added 2026-08-13, WO-2.9)*, `1` or `2`: the highest
+  overdue alert this trip has already produced, at five and ten minutes out. It is absent until the
+  first one fires and it exists so that "each alert fires once" survives a repaint, a reload and a
+  force-quit — the same reason the pass itself is a record rather than a module variable, since the
+  screen that decides to alert re-renders every second. **It is the one pass field that does not
+  cross into history**: `closePass()` builds its entry field by field and this is not one of them,
+  so a finished trip records how long it took and not what the app said about it while it was
+  happening. Nothing resets it, because nothing has to — the record it lives on is gone the moment
+  the student is back, and a student sent out again gets a new pass with no `alerted` on it. The
+  **elapsed** time a card shows is not stored anywhere at all: it is `now` minus `out`, computed at
+  every paint, because iOS suspends timers in a backgrounded PWA and a stored count would come back
+  wrong without saying so.
 - **Cancelling a pass removes it from `openPasses` and writes nothing at all.** *(Added 2026-08-07,
   WO-2.11.)* A pass issued by mis-tap is not a trip: the student never left the room, so there is no
   history to append and `passes` is not read, written, or reached by `cancelPass()` — which is

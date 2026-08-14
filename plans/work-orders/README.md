@@ -167,15 +167,15 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 19 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 24 | 22 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 21 | 15 | 🔨 IN PROGRESS |
+| 2 — Attendance | 26 | 23 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 21 | 16 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **93** | **55** | `[█████░░░░░] 59%` |
+| | **95** | **57** | `[██████░░░░] 60%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -328,17 +328,39 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 29 | [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use) Accommodation prompts at point of use | S | ✔ | Aug 14–15 |
 | 30 | [WO-3.19](phase-3-gradebook.md#wo-319--the-overdue-tint-on-a-score-grid-column-head) The overdue tint on a column head | XS | | Aug 15, half a day |
 | 31 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Aug 15–16 |
-| 32 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
-| 33 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
-| 34 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
-| 35 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
-| 36 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
-| 37 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
-| 38 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
-| 39 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
-| 40 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
-| 41 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 42 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 32 | [WO-2.26](phase-2-attendance.md#wo-226--the-student-report-shows-the-hall-passes) The student report shows the hall passes | S | | Aug 16, a sitting |
+| 33 | [WO-2.27](phase-2-attendance.md#wo-227--three-places-where-the-pass-work-says-one-thing-and-does-another) Three places the pass work says one thing and does another | XS | | Aug 16, an hour |
+| 34 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
+| 35 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
+| 36 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
+| 37 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
+| 38 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
+| 39 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
+| 40 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
+| 41 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
+| 42 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
+| 43 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 44 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-2.27 was booked on 2026-08-14 at row #33, out of WO-2.9's verification, and the rows below it
+moved down one. **It is three findings that were correctly not acceptance failures**, which is
+exactly the kind that evaporates: WO-2.9 passed, so nothing in the tracker was ever going to carry
+them. They are placed here rather than late because one of the three is a live timer on a device that
+suspends, and the term opens ~Aug 24. **The other two are comments**, and this project has now booked
+four work orders whose deliverable is a true sentence — WO-1.18, WO-3.19, WO-3.20 and this one. That
+is not four accidents either: every dispatch here is briefed by comments before it is briefed by
+anything else, so a comment that lies costs a whole run.*
+
+*WO-2.26 was booked on 2026-08-14 at row #32, out of WO-2.9's iPad sitting, and the rows below it
+moved down one. **It is placed adjacent to the work order that created it, and that is the argument
+for the placement rather than urgency.** Nothing waits on it — a guardian conference is not in the
+week the term opens — but it is one sitting against two files whose reasoning is currently in
+somebody's head, and both of them, `src/attendance-report.js` and `src/pass-history.js`, open with
+headers about a promise the join must not break. The cheap version of this work order is the one
+written while the seam is still fresh. **It was found by the owner using the thing**, which is the
+fourth time in this phase — WO-2.10, WO-2.11 and WO-2.12 are the others — and that run is worth
+reading as a pattern rather than as four accidents: the surfaces this app is judged on are the ones
+nobody opens until they need an answer in front of another adult.*
 
 *WO-3.19 and WO-3.20 were inserted on 2026-08-13, out of WO-3.6's close, and the rows between them
 moved down one. **Both are debts WO-3.6 created and named rather than paid**, which is the right call

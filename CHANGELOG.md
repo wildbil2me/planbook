@@ -92,6 +92,25 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.9 — a hall pass says how long, and the record says how often.** The pass card now carries the
+  elapsed time, counted from the moment the student left rather than by a timer running — so it is
+  still right after the iPad has spent ten minutes in a bag. The card turns amber at five minutes and
+  red at ten, and says so once each rather than once a second. And **🚪 Passes** in the registry
+  toolbar opens the record: who has been out of this room, how often and for how long, and one tap
+  further in, one student's own trips with their times, their minutes and any note typed on the card.
+  Names on that screen disappear in presentation mode — the first surface in the app where what the
+  switch hides is a **name** rather than a support field.
+
+  **Two decisions worth knowing.** Whether an alert has fired is a field on the pass itself
+  (`alerted: 1|2`) rather than a variable in a module — the same inversion WO-2.8 made about the pass —
+  so "fires once" survives a repaint, a reload and a force-quit, and a trip that crossed both
+  thresholds while the app was shut announces once at the level it actually reached rather than twice
+  on the way up. And the history is its own file, `src/pass-history.js`, rather than a section of the
+  attendance report: that module's header promises it never imports `src/supports.js`, and this surface
+  has to ask about presentation mode. Two files, two promises, both true — **at the cost of two dialogs
+  where Roll Call! gives one page.** The owner found that the same afternoon, asking where the record
+  of a hall pass was; WO-2.26 is booked to join them without either file breaking its promise.
+
 - **WO-3.19 — the score grid says *which* columns are past due, in one colour.** A column head whose
   work the past-due prompt is asking about prints its due date in `#8a6d1a` instead of `#a0aab8` — the
   same amber the assignment list's dates have always worn for the same fact, and the same the banner is

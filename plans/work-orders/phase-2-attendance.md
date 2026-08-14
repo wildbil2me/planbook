@@ -536,7 +536,21 @@ pass are independent, and the `D` rule above is the only coupling between them.
 
 ## WO-2.9 — Pass banner, overdue alerts, and history
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.11
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** M · **Depends on** WO-2.11
+**Closes roadmap** Phase 2 → "Overdue alerts, the elapsed clock, and pass history" *(field added
+2026-08-13, on the build: the box has existed since the Ship 1 cut and no work order named it, so
+nothing would have ticked it. `--audit` resolves it to exactly one box.)*
+
+*Built 2026-08-13 — `verify-shell.mjs` **732 of 732**, `wo-sweep.mjs` 15 passed / 0 failed / 2
+standing reviews, with four mutation proofs behind the new checks. Four of the five acceptance lines
+are closed at the desk; **acceptance line 1 stays open on purpose** — ten minutes of a real
+backgrounded PWA is not something a headless browser has, and `TESTING.md` § WO-2.9 lists the sitting
+it is owed along with five other 👤 lines. Two things worth knowing about the build: the fired-ness of
+an alert is a field on the open pass (`alerted`, documented in `docs/data-model.md`) rather than a
+module variable, which is the same inversion WO-2.8 made about the pass itself and is what makes
+"fires once" survive a force-quit; and the history is a new module, `src/pass-history.js`, rather than
+a section of `src/attendance-report.js`, because that file's header promises never to import
+`src/supports.js` and this surface has to ask it.*
 
 **Why it exists.** Cut from Ship 1 deliberately: WO-2.8 makes the daily flow work, and everything
 here is what makes it comfortable. The data is recorded either way, so these views can follow
@@ -563,12 +577,24 @@ order is still M and still carries the Traps section below.
   this view.)*
 
 **Acceptance**
-- [ ] Elapsed time is correct after the app has been backgrounded for ten minutes. 👤 *(See Traps.)*
-- [ ] Both alerts fire once each, not repeatedly, and not again after the student returns.
-- [ ] The history view's totals match the log; a hand count of one student's passes agrees.
-- [ ] A cancelled pass appears in no history view and in no total — WO-2.11 writes nothing, and this
-      is the work order that would notice if that stopped being true.
-- [ ] Presentation mode suppresses names in the history view.
+- [x] Elapsed time is correct after the app has been backgrounded for ten minutes. 👤 *(Closed by the
+      owner 2026-08-14, on the installed iPad, along with the other six 👤 lines in one sitting — the
+      Traps warning is the thing that was measured and the clock survived it. The desk half stands
+      behind it: the stored stamp is wound 41 minutes into the past through the store with no timer
+      running, and the next paint reads `41:0x` — a build that counted ticks reads `0:0x`.)*
+- [x] Both alerts fire once each, not repeatedly, and not again after the student returns. *(All
+      three clauses measured. The fired level is a field on the pass — `alerted` — so it survives a
+      repaint, a reload and a force-quit, and it is gone with the record when the student is back.)*
+- [x] The history view's totals match the log; a hand count of one student's passes agrees. *(The
+      expected numbers are computed in Node off `doc.passes`, so the dialog is compared with the
+      record rather than with the module that drew it.)*
+- [x] A cancelled pass appears in no history view and in no total — WO-2.11 writes nothing, and this
+      is the work order that would notice if that stopped being true. *(Measured as a before-and-
+      after over the whole dialog; mutating `cancelPass()` into a zero-minute return turns five
+      checks red, one of them this one.)*
+- [x] Presentation mode suppresses names in the history view. *(Both readings: no name and no door
+      in the class table, and the student view refuses through the module rather than through a
+      missing button. The mode-off pass is asserted first, so the absence means something.)*
 
 **Traps** — **iOS suspends timers when Safari backgrounds a PWA.** An elapsed counter that ticks
 will read "2 minutes" after twenty, and it will do it silently. Compute elapsed from the stored
@@ -2368,3 +2394,132 @@ print surface is up must leave the ordinary page alone, and that is now the `bef
 clearing the attribute rather than a timeout having fired. There is a check for it on the grade
 sheet; write the other two. **And re-verify the grade sheet too.** It works today, and this work
 order rewires it — the surface that is already correct is the one nobody will think to re-test.
+
+---
+
+## WO-2.26 — the student report shows the hall passes
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-2.9
+**Closes roadmap** *(no box. Phase 2's pass-history line is WO-2.9's and is ticked; this is the join
+between two surfaces that work order deliberately left apart.)*
+
+**Booked 2026-08-14, out of WO-2.9's iPad sitting.** All seven manual lines passed, and the first
+question after them was *"where do I see a record of the hall pass?"* — asked by the owner, on the
+build, with both surfaces in front of her. That is the whole of the evidence and it is enough: the
+record is two dialogs away from the screen a teacher opens to talk about one student.
+
+**Why it exists.** *Roll Call! puts it on one page and Planbook puts it on two.* Roll Call!'s Student
+Report carries the **Hall Pass History** table inline (`src/dashboard.html` ~4718), so a teacher at a
+conference opens one thing. Here 🖨 Record and 🚪 Passes are separate dialogs that share no data:
+`src/attendance-report.js` contains no reference to a pass, and `src/pass-history.js` contains no
+attendance. **The split itself is correct and is not what this work order undoes** —
+`src/attendance-report.js`'s header promises it never imports `src/supports.js` and has no path to
+`student.supports`, which is what keeps its printed page and its CSV clean in either presentation
+mode, and the pass history has to ask about presentation mode. Two files, two promises, both true.
+What was never decided on purpose is that the **teacher** pays for the seam. This joins the two
+surfaces in the UI and leaves both promises standing.
+
+**The join is a door, not a move.** `src/shell.js:1357` already delegates
+`[data-pass-history-student]` to `openStudentPasses()` off a document-level click handler. A button
+carrying that attribute, drawn on the student attendance report, opens that student's trips with **no
+new import in `src/attendance-report.js` at all** — which is why this is S rather than M, and why it
+cannot quietly undo the promise above. An implementation that imports `src/pass-history.js` into
+`src/attendance-report.js` has taken the harder road to the same place and should say why.
+
+**Deliverables**
+- **A door to this student's hall passes on the student attendance report**, per Roll Call!'s
+  one-page report, drawn through the existing delegated attribute rather than a new import.
+- **The trip count beside it**, so the door says whether it is worth opening. A door labelled only
+  "Hall passes" is one a teacher opens to find nothing on the afternoon she is busiest.
+- **Presentation-mode safe on both halves.** The report already is; the door must not become the hole
+  in it. `src/pass-history.js`'s per-student view refuses in presentation mode — a door in front of
+  it must not offer what the room behind it will not give.
+- **A way back.** A teacher who walks from the report into the trips is mid-conversation; the return
+  path is part of the deliverable rather than the browser's back button.
+
+**Acceptance**
+- [ ] The student attendance report shows this student's hall-pass count, and it agrees with the
+      number 🚪 Passes shows for the same student.
+- [ ] The door opens that student's trip list — the same view 🚪 Passes reaches, not a second
+      rendering of it.
+- [ ] A student with no trips is stated as none rather than left blank, and the door does not strand
+      a teacher on an empty page.
+- [ ] Presentation mode: the report carries no door onto a named page it will not draw.
+- [ ] `src/attendance-report.js` still imports nothing from `src/supports.js` and has no path to
+      `student.supports` — the grep WO-2.6's fourth acceptance line rests on still comes back empty.
+- [ ] The door and the way back clear 44px, and the walk from the report into the trips and out again
+      reads as one conversation rather than two dialogs. 👤
+
+**Traps** — **The promise in `src/attendance-report.js`'s header is the thing to protect**, and it is
+protected by the shape of the join rather than by care. Read that header before writing, and if the
+design ends up needing an import, stop and say so rather than writing "this file does not import that
+module" above an import. **The count is a number two surfaces now show**: it comes from
+`src/passes.js`'s `tallyPasses()` like every other one, never from a loop written here — WO-2.9's
+third acceptance line is about exactly this, and a second loop agrees with the first on every fixture
+anybody writes. **The pass history is not term-scoped and the attendance report is.** A trip count on
+a term report, sourced from a log that holds the whole year, is two date windows on one page: either
+scope it and say so, or label it and say so, but do not leave a reader to assume.
+
+---
+
+## WO-2.27 — three places where the pass work says one thing and does another
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.9
+
+**Booked 2026-08-14, out of WO-2.9's verification.** Three findings the verifier raised that were
+correctly **not** acceptance failures — nothing WO-2.9 promised is unmet — and that would otherwise
+live only in `.claude/dispatch/WO-2.9-result.md`. The rule that puts them here is the one written
+under the Ship 2 table when WO-3.19 and WO-3.20 were booked: *a follow-up that lives only in a
+dispatch result file is a follow-up nothing reads.*
+
+**Why it exists.** *They look like three chores and they are one defect.* In each case a comment
+makes a promise the code beside it does not keep — which is the failure mode this repository treats
+as expensive, because every dispatch here is briefed by comments before it is briefed by anything
+else. WO-3.19 was booked for the same reason one phase over and its note says the pixel was the
+smaller half.
+
+**The three**
+- **The pass clock outlives its banner.** `src/attendance.js:2833` — `paintPassBanner()` returns at
+  line 2835 when the banner element is not in the document, so the `stopPassClock()` at line 2860 is
+  unreachable on that path and navigating off the registry with a pass open leaves a 1-second
+  interval running. Every tick is a no-op, which is why this is XS and not a bug report. **What makes
+  it a comment problem is line 2856**: *"A run with an empty room costs nothing at all, not one timer
+  doing nothing once a second."* That is true of the empty-room path and false of the navigated-away
+  path, and it is the sentence a reader would trust instead of checking. A live timer on a device
+  that suspends is also the exact hazard class WO-2.9's own Traps section is about.
+- **`flipPresentationMode()` carries a standing instruction that WO-2.9 did not obey.**
+  `src/shell.js:747` tells the next screen that shows support data to add its redraw there; WO-3.8
+  obeyed it, and WO-2.9 added a third name-bearing surface without one. **It is not a bug and must
+  not be "fixed" by adding the redraw**: the header sits at `z-index: 999` under the modal overlay's
+  `1000`, so the mode cannot be flipped while the pass dialog is showing names — the first tap closes
+  the dialog and the second reaches the control. The owner confirmed that walk on glass on
+  2026-08-14 and read it as the sensible flow. **The geometry is also the safer behaviour**, since a
+  flip reaching through an open dialog would repaint names in front of whoever is sitting there. What
+  is missing is that none of this is written anywhere. One comment, at the instruction or at the
+  dialog, naming the stacking as the reason and the date it was checked on a device.
+- **A harness comment points at something that is not there.** `tools/verify-shell.mjs:10077` reads
+  *"a build that fired off a variable would say it again after the reload below."* There is no reload
+  below. The check is sound; the sentence explaining why it is sound is not.
+
+**Deliverables**
+- The clock is stopped on every path that leaves the banner, including the one that returns early.
+- The stacking argument is written down at the point a reader will look for it, with the date it was
+  confirmed on the device.
+- `tools/verify-shell.mjs:10077` says what the check actually rests on.
+
+**Acceptance**
+- [ ] Navigating off the registry with a pass open leaves no interval running, and there is a check
+      that fails if the early return stops stopping it.
+- [ ] `src/attendance.js:2856`'s comment is true of every path through the function it describes.
+- [ ] A reader of `src/shell.js:747` can tell why WO-2.9's surface is not registered there without
+      opening a dispatch result file or this work order.
+- [ ] `tools/verify-shell.mjs:10077` describes the mechanism the check actually uses.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+      for the count.
+
+**Traps** — **Do not add the presentation-mode redraw.** The finding is a missing *comment*, not a
+missing call; adding the redraw would wire a repaint for a state that cannot occur and would have to
+be reasoned about again by everyone after. **Do not delete the promise in `src/attendance.js:2856`
+instead of making it true** — "a run with an empty room costs nothing" is a real guarantee about a
+device that suspends, and the cheap fix is to honour it on the fourth path rather than to stop
+claiming it.

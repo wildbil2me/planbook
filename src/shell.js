@@ -309,6 +309,10 @@ import * as attendanceReport from './attendance-report.js';
 /* Imported here for the seam at the foot of this file and for nothing else — every control a hall
    pass has is on the registry, and src/attendance.js is what drives them. */
 import * as passes from './passes.js';
+/* WO-2.9's read-back of that log, and its own module for the reason attendanceReport above is one —
+   plus a second that belongs to it alone: this is the surface that hides names in presentation
+   mode, so it asks src/supports.js, which that module's header promises never to do. */
+import * as passHistory from './pass-history.js';
 /* WO-2.3's two halves, and they are two modules for the reason src/passes.js and
    src/attendance.js are: src/calendar.js is the MODEL — no DOM, no clock, no store — and
    src/days-off.js is the only screen that writes one. The registry reads the first and never the
@@ -1343,6 +1347,22 @@ document.addEventListener('click', (e) => {
   const passCancel = e.target.closest('[data-pass-cancel]');
   if (passCancel) { attendance.cancelPass(passCancel.getAttribute('data-pass-cancel')); return; }
 
+  /* ── and the log those three write, read back (WO-2.9) ──
+     Three taps onto one dialog: the 🚪 door in the registry's toolbar, a student's name inside it,
+     and the way back out to the whole class. They reach a different module for the reason WO-2.6's
+     four do — a read-only surface built out of a log this file's other hooks write — and none of
+     them chains anything, because opening a dialog over the registry changes nothing behind it. */
+  const passHistoryDoor = e.target.closest('[data-pass-history]');
+  if (passHistoryDoor) { passHistory.openPassHistory(passHistoryDoor); return; }
+  const passHistoryStudent = e.target.closest('[data-pass-history-student]');
+  if (passHistoryStudent) {
+    passHistory.openStudentPasses(passHistoryStudent.getAttribute('data-pass-history-student'),
+      passHistoryStudent);
+    return;
+  }
+  const passHistoryAll = e.target.closest('[data-pass-history-all]');
+  if (passHistoryAll) { passHistory.openPassHistory(passHistoryAll); return; }
+
   /* ── roster, contacts, and the teacher's own details ── */
 
   const rosterManage = e.target.closest('[data-roster-manage]');
@@ -2019,6 +2039,14 @@ window.planbook = {
      from the one that copied Roll Call!'s `activePasses`. Nothing in the app reads window.planbook
      — see the block above for why the seam outlived the shelf. */
   passes,
+  /* `passHistory` joined at WO-2.9, and for a driving reason rather than a reading one: both of its
+     views are reached by tapping, and tools/verify-shell.mjs taps them — what it is here for is the
+     ONE path no control can produce, which is opening a student's own trips while presentation mode
+     is on. In the app that door is text rather than a button precisely so that it cannot be tapped,
+     and the check that proves the refusal is real has to ask the module directly, the same way
+     WO-2.11's cancel gate is asked about a pass that has already been returned. Nothing in the app
+     reads window.planbook — see the block above for why the seam outlived the shelf. */
+  passHistory,
   /* `calendar` joined at WO-2.3, and for the reading reason `attendance` gives. Every control the
      feature has is on a screen and a teacher can touch all of them; what no click can show is the
      claim the work order actually makes, which is about what is NOT in the document. "Authoring an

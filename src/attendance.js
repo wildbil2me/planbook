@@ -288,9 +288,21 @@
   card: WHEN LIFTING FROM ROLL CALL!, TAKE THE DESIGN WITH THE FUNCTION. It has been in a classroom
   for a year and this app has not.
 
-  The one piece still left behind is the ELAPSED CLOCK, and only that: a counter that ticks is the
-  thing iOS stops ticking when it suspends a PWA, and that trap is WO-2.9's, cut to Ship 2. Its
-  place on the card is held open in the stylesheet so it lands without re-flowing anything.
+  ── THE ELAPSED CLOCK AND THE TWO OVERDUE ALERTS (WO-2.9) ──
+
+  The piece WO-2.11 left behind, and it landed into the place the stylesheet had held open for it:
+  the big orange figure between the name block and the buttons, counting `m:ss` since they left.
+
+  IT IS NOT A COUNTER. Every figure is a subtraction — the stamp in the document from a `now` read
+  at the moment of painting — so an iPad that spent ten minutes asleep in a bag paints ten minutes.
+  A counter that ticked would paint two, silently, because iOS stops timers when Safari backgrounds
+  an installed PWA. That is the trap that kept this work order at M, and the arithmetic lives in
+  src/passes.js so nothing on this screen can have a second opinion about it.
+
+  AND AT FIVE AND TEN MINUTES THE CARD ESCALATES AND SAYS SO ONCE. What has already been said is a
+  field on the pass — in the document, like the pass itself — so it survives a repaint, a reload and
+  a force-quit, and it is gone the moment the student is back because the record it was on is.
+  paintPassElapsed() carries the three clauses of that acceptance line, one per paragraph.
 
   CANCEL LIVES HERE AND NOWHERE ELSE, and that is the point of the banner rather than a consequence
   of it. The Passes column is 160px and already holds three targets; a fourth one beside Return is
@@ -341,15 +353,15 @@
   doors onto those surfaces are on this screen: a student's own name in the grid, and 🖨 Record in
   the toolbar.
 
+  The pass history reads the same way and is the same shape of thing: src/pass-history.js owns that
+  dialog, this file owns the 🚪 Passes door in the toolbar that opens it, and the counting lives in
+  src/passes.js where the passes do.
+
   Out of scope and deliberately absent: percentages and counts over history (WO-2.4)
   and the AUTHORING of calendar events
   (WO-2.3, src/days-off.js) — this screen reads them and never writes one, which is why the only
   control it offers on a covered day is a door to the screen that owns
-  them — plus the elapsed clock on the card, the two
-  overdue alerts and the pass history view, which are WO-2.9's and are deliberately missing here.
-  What is on the screen is the time a student LEFT, which acceptance line 1 asks for; the elapsed
-  count that ticks beside it is the next work order's, and it is the one that has to survive iOS
-  suspending a timer.
+  them.
 */
 
 import { getDoc, update } from './store.js';
@@ -506,8 +518,13 @@ function stampNow(now = new Date()) {
    `new Date()`. The string already holds the wall clock the teacher saw; parsing it into an instant
    and formatting it back would re-express it in whatever zone the reading device is in, which is
    the one thing the offset above exists to prevent. An unparseable value renders as nothing at all
-   rather than as "Invalid Date". */
-function clockTime(iso) {
+   rather than as "Invalid Date".
+
+   EXPORTED SINCE WO-2.9 for src/pass-history.js, which prints the two stamps on a finished trip.
+   Same reason plainDate() and shortDate() below are exported for src/attendance-report.js: a second
+   copy of these four lines in a dialog is a second opinion about what hour a stamp says, and it
+   would be wrong in exactly the case this one exists for. */
+export function clockTime(iso) {
   const m = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/.exec(String(iso || ''));
   if (!m) return '';
   const h = Number(m[1]);
@@ -518,6 +535,24 @@ function clockTime(iso) {
 function compactTime(iso) {
   const said = clockTime(iso);
   return said ? said.slice(0, -3) + said.charAt(said.length - 2).toLowerCase() : '';
+}
+
+/*
+  HOW LONG THEY HAVE BEEN GONE, as a figure (WO-2.9): `0:07`, `4:31`, `73:04`.
+
+  Roll Call!'s own format — `m + ':' + pad(s)` (dashboard.html:3425), minutes uncapped, seconds
+  always two digits — lifted rather than re-chosen, because it is the string the owner has been
+  reading at a glance for a year and because tabular-nums makes a two-character seconds field stop
+  moving under the eye.
+
+  IT FORMATS A NUMBER AND READS NO CLOCK. The number comes from src/passes.js's elapsedSeconds(),
+  which subtracts the stored stamp from a `now` the caller hands it; this half is here with the two
+  other time formatters because how a time READS is this file's job everywhere else on this screen.
+*/
+function elapsedText(seconds) {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0));
+  const rest = s % 60;
+  return Math.floor(s / 60) + ':' + (rest < 10 ? '0' : '') + rest;
 }
 
 /*
@@ -2633,7 +2668,9 @@ function passButton(student, kind, disabled) {
   whole safety property this feature is built around — a teacher relaunching the app has to see who
   is out and since when. In the room: the three types, disabled together at the cap.
 
-  The elapsed count that would tick beside that time is WO-2.9's and is deliberately not here.
+  The elapsed count is on the CARD and deliberately not here (WO-2.9): the column is 160px, a
+  figure that changes every second beside a Return button is movement under a thumb aiming at it,
+  and the banner above the grid is where a teacher looks to see who is still gone.
 */
 function passControls(student, classId, doc, full) {
   const wrap = el('div', 'attendance-pass-cell');
@@ -2714,13 +2751,38 @@ function passCard(student, pass) {
      is a line across the panel, so the reason `.attendance-pass-since` says "9:12a" does not apply
      to a surface with room for "out 9:12 AM".
 
-     THIS IS THE TIME THEY LEFT, NOT HOW LONG THEY HAVE BEEN GONE. The elapsed counter belongs in
-     the slot after this block — `.attendance-pass-card-elapsed`, whose geometry the stylesheet
-     already holds open — and it is WO-2.9's, because it is the one that has to survive iOS
-     suspending a backgrounded PWA. Nothing here ticks. */
+     THIS IS THE TIME THEY LEFT, NOT HOW LONG THEY HAVE BEEN GONE. The elapsed counter is the slot
+     after this block — `.attendance-pass-card-elapsed`, whose geometry the stylesheet has held open
+     since WO-2.11 and which WO-2.9 has now filled. */
   meta.append(el('span', 'attendance-pass-card-out', at ? 'out ' + at : 'out'));
   info.append(meta);
   main.append(info);
+
+  /*
+    AND HOW LONG THAT IS BY NOW (WO-2.9). The figure Roll Call! puts in exactly this place
+    (dashboard.html:3437), at its own measurements, and the one piece of this card that changes
+    while nobody touches it.
+
+    IT IS ADDRESSED BY PASS ID, not by student, because that is what paintPassElapsed() below
+    patches in place every second: the cards are REBUILT by every other writer on this screen, and
+    rebuilding them once a second would take the note field's caret and the software keyboard with
+    it (setPassNote's rule, one function up). One text node changes; the card does not.
+
+    Its value is computed here as well as there, so the figure is right in the frame the card is
+    drawn in rather than up to a second later — every one of those computations is the same
+    subtraction from the stored stamp, and none of them is a count.
+
+    ARIA-HIDDEN, like `.attendance-pass-since` on the row and the mark cell's time caption: "12:04"
+    read out loud is not a thing anybody says, and the Return button beside it already carries the
+    time out in full in its accessible name. What a screen reader gets about a trip that has gone on
+    too long is the announcement paintPassElapsed() makes when it crosses a threshold, which is a
+    sentence rather than a pair of numbers.
+  */
+  const elapsed = el('span', 'attendance-pass-card-elapsed',
+    elapsedText(passes.elapsedSeconds(pass.out, Date.now())));
+  elapsed.setAttribute('data-pass-elapsed', pass.id);
+  elapsed.setAttribute('aria-hidden', 'true');
+  main.append(elapsed);
 
   const back = el('button', 'attendance-pass-card-btn back', '✓ Return');
   back.type = 'button';
@@ -2791,7 +2853,158 @@ function paintPassBanner() {
   } else {
     box.removeAttribute('aria-label');
   }
+  /* THE CLOCK RUNS ONLY WHILE THERE IS A CARD TO PUT A FIGURE ON (WO-2.9), and it is started and
+     stopped here rather than at the four writers because this is the function that knows whether
+     any card was drawn. A run with an empty room costs nothing at all, not one timer doing nothing
+     once a second. */
+  if (drawn) { paintPassElapsed(); startPassClock(); } else stopPassClock();
 }
+
+/* ── THE ELAPSED CLOCK, AND THE TWO OVERDUE ALERTS (WO-2.9) ──
+
+   The half of the pass banner that changes while nobody is touching the screen, and the one place
+   in this app that is allowed to notice a clock moving on its own.
+
+   TWO RULES, AND THE FIRST IS THE WORK ORDER. Nothing accumulates: every figure below is
+   src/passes.js's elapsedSeconds() over the stamp in the document and a `now` read at the moment of
+   painting, so a device that was asleep for twenty minutes paints twenty minutes rather than the
+   two it managed to tick. iOS stops timers when Safari backgrounds an installed PWA and says
+   nothing about it, which is why a counter that added a second per tick would be right on a desk
+   and wrong in a classroom.
+
+   And the second: THIS PATCHES, IT DOES NOT REPAINT. paintPassBanner() above rebuilds every card,
+   and a rebuild once a second would replace the note field mid-sentence — the same rule
+   setPassNote() is written around, applied to the thing that runs on its own. What changes here is
+   one text node per card and two class names. */
+
+/* The interval, and the module reference that is its own off switch. Nothing else reads it. */
+let passClock = 0;
+
+/* One second, which is Roll Call!'s own tick (dashboard.html:3539) and is what a seconds field on
+   screen obliges: a figure showing `:07` that updates every five seconds is a broken clock rather
+   than a coarse one. It is three text writes at most — the cap is three students out of a room. */
+const PASS_CLOCK_MS = 1000;
+
+function startPassClock() {
+  if (passClock) return;
+  passClock = setInterval(paintPassElapsed, PASS_CLOCK_MS);
+}
+
+function stopPassClock() {
+  if (!passClock) return;
+  clearInterval(passClock);
+  passClock = 0;
+}
+
+/*
+  EVERY FIGURE ON THE BANNER, RECOMPUTED FROM THE DOCUMENT.
+
+  Called on the tick, at the end of every banner paint, and when the tab comes back to the front —
+  that last one because the tick is exactly what iOS stops, so the first thing a returning app does
+  is ask the stamps rather than wait up to a second to be told.
+
+  THE ALERTS FIRE FROM HERE, and the three clauses of the acceptance line are three different lines
+  of this function:
+
+    · ONCE EACH — the level that has already fired is `alerted` on the pass, in the document, and
+      markAlerted() refuses anything that is not an increase. This function proposes; the model
+      decides, and it decides against a record rather than against a variable.
+    · NOT REPEATEDLY — the comparison is `level > alertedLevel(pass)`, so the second and every later
+      tick over the same threshold produces nothing. This runs 60 times a minute; anything weaker
+      than a stored answer would announce 60 times a minute.
+    · AND NOT AGAIN AFTER THE STUDENT RETURNS — there is nothing to reset, which is the point of
+      putting the state on the pass: the pass is gone from `openPasses` the moment Return is tapped,
+      and the entry closePass() appends to `passes` never carried the field. A student sent out
+      again is a new pass with no `alerted` on it.
+
+  A TRIP THAT CROSSED BOTH THRESHOLDS WHILE THE APP WAS ASLEEP ANNOUNCES ONLY THE SECOND. It is one
+  update() to level 2, so level 1 never fires — which is what "escalating" means: the teacher is
+  told the worse thing, once, rather than told the smaller thing first about a student who is
+  already twenty minutes gone.
+*/
+function paintPassElapsed() {
+  const box = document.getElementById(PASS_BANNER_ID);
+  const cls = openClass();
+  const doc = getDoc();
+  if (!box || !cls || !doc) return;
+
+  const now = Date.now();
+  /* Collected first and written afterwards, in ONE update(): two students crossing a threshold on
+     the same tick is two facts about one document, and the store's debounce is happier with one
+     write than with two — the same reason setMark() does the mark and the pass it closes inside a
+     single update(). */
+  const fired = [];
+  /*
+    SCOPED TO THE CLASS ON SCREEN — openPassesFor(), the same choice the banner makes and for the
+    same reason, made again here rather than inherited. WO-2.11 leaves the door open ("the
+    cross-class case, if it ever wants one, belongs to WO-2.9's overdue alerts"), and this work
+    order does not walk through it: an alert about a student from period 2, announced into period 3,
+    names a child from a room the teacher is not in and about a pass she cannot see, act on or
+    return from — there is no card for that student on this screen and no Return button to offer
+    with the sentence. The pass is not lost while she is next door: its own row in period 2's grid
+    keeps its Return and its time out, which is the surface the owner confirmed reads as a reminder.
+    A cross-class alert is a real feature and it needs a surface of its own; it is a work order,
+    not three lines here.
+  */
+  passes.openPassesFor(doc, cls.id).forEach((pass) => {
+    const node = box.querySelector('[data-pass-elapsed="' + pass.id + '"]');
+    if (!node) return;
+    const seconds = passes.elapsedSeconds(pass.out, now);
+    node.textContent = elapsedText(seconds);
+    const level = passes.alertLevelFor(seconds);
+    /* The card carries the escalation rather than the figure alone, and that is deliberate: a
+       colour on 40px of digits is a signal you have to already be looking at, and the whole point
+       of an overdue alert is that nobody is. The stylesheet owns what the two states look like. */
+    const card = node.closest('.attendance-pass-card');
+    if (card) {
+      card.classList.toggle('over-one', level === 1);
+      card.classList.toggle('over-two', level >= 2);
+    }
+    if (level > passes.alertedLevel(pass)) {
+      fired.push({ studentId: pass.studentId, type: pass.type, level: level, seconds: seconds });
+    }
+  });
+  if (!fired.length) return;
+
+  update((d) => {
+    fired.forEach((f) => { passes.markAlerted(d, cls.id, f.studentId, f.level); });
+  });
+  /* ONE SENTENCE FOR ALL OF THEM, because src/live-region.js holds one message: two announce()
+     calls in the same tick would leave a screen reader with the second student and no first.
+
+     IT NAMES THE STUDENT, like every other announcement this screen makes about a pass — the
+     alternative ("a student is overdue") is an alert a teacher has to go and look for, on the one
+     surface where knowing WHO is the whole of the information. Roll Call! does the same, for the
+     accessibility reason its own comment gives: over there the alert is a sound, and the sentence
+     is what a deaf teacher gets instead. Here there is no sound at all, so this sentence and the
+     colour on the card are the alert.
+
+     AND IT SAYS HOW LONG IT ACTUALLY IS, not which threshold was crossed. Roll Call! announces
+     `config.alertOneMin` minutes; a backgrounded PWA that comes back at nineteen minutes would say
+     "ten" under that rule, which is the elapsed-time trap arriving in the sentence instead of in
+     the figure. */
+  announce(fired.map((f) => {
+    const student = findStudent(f.studentId);
+    const kind = passes.passType(f.type);
+    const mins = Math.floor(f.seconds / 60);
+    return (student ? fullName(student) : 'A student') + ' has been out on a '
+      + (kind ? kind.said : 'hall') + ' pass for ' + mins + (mins === 1 ? ' minute.' : ' minutes.');
+  }).join(' '));
+}
+
+/*
+  THE TAB CAME BACK. Registered at module scope beside the rotation listener above and for the same
+  reason: this is not a delegated DOM event on a control, it is this module's own reading of a clock
+  becoming stale, and the code that owns the figure is the code that should notice.
+
+  IT IS THE ONE PATH THE 👤 ACCEPTANCE LINE IS ABOUT. An installed PWA that iOS suspended for ten
+  minutes comes back with a timer that has not run; this fires on the way back in and every figure
+  on the banner is recomputed from the stamps before the first tick would have. The paint costs
+  nothing when no card is up — paintPassElapsed() finds no nodes and returns.
+*/
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') paintPassElapsed();
+});
 
 /*
   THE PASSES COLUMN, REPAINTED IN PLACE, after anything that changes who is out — a pass issued,

@@ -65,14 +65,14 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
-| 2 | Attendance | 🔨 IN PROGRESS | 14/16 `[█████████░] 88%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 15/16 `[█████████░] 94%` |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **41/82 `[█████░░░░░] 50%`** |
+| | | **Overall** | **42/82 `[█████░░░░░] 51%`** |
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -254,7 +254,7 @@ meet is a second source of truth that's wrong by first period.)*
       offered four columns, five, or six bought by cutting the name to an avatar, the owner rejected
       the question. **Portrait shows today; landscape shows the week.** The `Passes` column stops
       competing for width in portrait, full names fit, and the grid repaints when the iPad turns.)*
-- [ ] Overdue alerts, the elapsed clock, and pass history. *(Cut to Ship 2 — WO-2.9. The banner
+- [x] Overdue alerts, the elapsed clock, and pass history. *(Cut to Ship 2 — WO-2.9. The banner
       itself moved to WO-2.11 on 2026-08-07; what stays here is the half that has to survive iOS
       suspending a backgrounded PWA.)*
 - [x] 🚩 **The pass banner, and cancelling a pass issued by mistake** — writing nothing to the log.

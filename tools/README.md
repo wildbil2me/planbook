@@ -780,7 +780,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 717 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 734 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -828,7 +828,16 @@ four literal call sites, none in a loop and none a failure arm, added *inside* t
 section rather than in a new one — the tint's third acceptance line is an identity with the past-due
 prompt's own set, and two fixtures could only ever have been compared for agreeing with each other.
 Its own reading rides on the same `READ` block, which is why the section's other checks are unchanged
-and its executed count goes up by exactly four. *(The
+and its executed count goes up by exactly four. **WO-2.9 moved it from 717 to 734**: seventeen call
+sites, **sixteen of them a new section** at the foot of the hall-pass block — the elapsed clock, the
+two overdue alerts and the pass history — none inside a loop and none a failure arm, plus a
+`skip()` beside one of them for the run in which no trip in the log carries a note (a `skip` is not
+a `check(` and is not in this count). The seventeenth is **one call site inside the existing
+two-orientation loop** in the pass-card sweep, so it prints twice: the section contributes eighteen
+executed results and the run prints **732**. That loop is where the elapsed figure had to be measured
+rather than in the new section — it arrived into a card row whose single-line property was paid for
+with two iPad sittings, and the reading beside it is `scrollWidth` against `clientWidth`, which is the
+"Days off" spill asked of the element that grew. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

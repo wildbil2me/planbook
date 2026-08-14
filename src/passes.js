@@ -64,6 +64,18 @@
     - Phase 4 and WO-2.9 both want passes by name. A named array is a thing a rule can opt into;
       a `kind` inside somebody else's array is a thing every rule has to opt out of.
 
+  ── WHAT WO-2.9 ADDED, AND WHY IT IS IN HERE RATHER THAN ON THE SCREEN ──
+
+  Three things: elapsedSeconds() and the two alert thresholds, the `alerted` field markAlerted()
+  writes, and the readers the history view counts with. All of them are arithmetic and rules over
+  the two collections above, which is what this file is; what stays in src/attendance.js is the
+  clock it is asked with, the element the figure lands in, and the sentence a screen reader hears.
+
+  THE ONE RULE THAT MATTERS HERE IS THAT NOTHING IN THIS FILE ACCUMULATES. elapsedSeconds() takes
+  `now` as an argument and subtracts, every time; there is no counter, no interval, and nothing this
+  module remembers between two calls. iOS stops timers in a backgrounded PWA, and a count kept
+  anywhere would come back wrong and say nothing about it.
+
   ── WHAT A PASS DOES NOT DO ──
 
   It does not touch attendance. A student at the bathroom is PRESENT — issuing and returning a pass
@@ -104,6 +116,20 @@ export const MAX_OPEN_PASSES = 3;
 export const BY_RETURN = 'return';
 export const BY_DISMISSAL = 'dismissed';
 
+/*
+  WHEN A TRIP HAS GONE ON TOO LONG (WO-2.9), in minutes, escalating once.
+
+  Roll Call!'s `alertOneMin: 5` / `alertTwoMin: 10` (dashboard.html:1659), at its own numbers. Over
+  there they are two fields on the settings dialog; here they are constants, and that is a decision
+  rather than an omission — this app has no settings surface at all yet, and a preference no control
+  can move is a preference that exists to be read. When one arrives, src/prefs.js is where the two
+  numbers go (a fact about this browser, never about a student) and these become its defaults; that
+  is one line each and nothing else in this file changes, because everything below asks
+  alertLevelFor() rather than the numbers.
+*/
+export const ALERT_ONE_MIN = 5;
+export const ALERT_TWO_MIN = 10;
+
 /* The descriptor for a stored type, or null for one this build does not know — a hand-edited or
    foreign document, the same posture src/attendance.js takes toward an unknown mark code. */
 export function passType(type) {
@@ -140,6 +166,68 @@ export function atCap(doc, classId) {
   return openPassesFor(doc, classId).length >= MAX_OPEN_PASSES;
 }
 
+/* ── AND THE HISTORY, READ BACK (WO-2.9) ──
+
+   Every trip this class has finished, and every trip one student has finished in it, oldest first —
+   `passes` is appended to on return and never reordered, so the array's own order IS the order they
+   happened in and nothing here sorts.
+
+   THEY READ `passes` AND NOTHING ELSE, which is what makes WO-2.9's fourth acceptance line free
+   rather than checked: a cancelled pass was removed from `openPasses` and never written here, so
+   there is no filter for it to be missing from. A history built by walking BOTH collections and
+   marking the open ones "still out" would have had to remember to leave the cancelled ones out, and
+   that is exactly the kind of rule that is right on the day it is written. */
+
+export function passesFor(doc, classId) {
+  return passesIn(doc).filter((p) => p && p.classId === classId);
+}
+
+export function passesForStudent(doc, classId, studentId) {
+  return passesIn(doc).filter((p) => p && p.classId === classId && p.studentId === studentId);
+}
+
+/*
+  THE LOCAL DATE OF A TRIP: the first ten characters of `out`, per docs/data-model.md — *"the local
+  date of a pass is the first ten characters of `out` and is deliberately not a second field"*. Here
+  rather than in the history view because that rule is a fact about the record and not about a
+  screen, and because Date.parse-ing the stamp to ask which day it was is how a trip at 11:40pm
+  moves to the next day in one time zone and not in another.
+*/
+export function passDate(entry) {
+  return entry && typeof entry.out === 'string' ? entry.out.slice(0, 10) : '';
+}
+
+/*
+  ONE ROW'S WORTH OF ARITHMETIC over a list of finished passes: how many of each type, how many
+  altogether, and how many minutes they add up to.
+
+  IT IS THE ONLY COUNTER, and both halves of the history view use it — the per-student rows and the
+  line under them that totals the class. Roll Call! counts its Hall Pass Summary rows in one loop
+  and prints no class total at all (dashboard.html:4812), so the total here is a Planbook addition
+  and it exists for WO-2.9's third acceptance line: *"the history view's totals match the log"* is a
+  claim a teacher can check by eye only when the number she is checking is on the screen. Summing
+  the rows a second time in the view would make that check a comparison between two copies of the
+  same loop.
+
+  `minutes` is the number closePass() stored, never re-derived from the two stamps: it was computed
+  at the moment of return and must not change because a clock did (docs/data-model.md § passes). An
+  entry from a hand-edited file whose `minutes` is not a number contributes nothing rather than NaN,
+  which would silently make every total in the dialog unreadable. A type this build does not know
+  counts toward `total` and its minutes and toward no column — the same posture passType() takes
+  everywhere else in this file, and the alternative is a trip that happened going missing from the
+  one number the acceptance line asks a teacher to check.
+*/
+export function tallyPasses(list) {
+  const out = { bathroom: 0, nurse: 0, quick: 0, total: 0, minutes: 0 };
+  (Array.isArray(list) ? list : []).forEach((p) => {
+    if (!p) return;
+    if (passType(p.type)) out[p.type] += 1;
+    out.total += 1;
+    if (typeof p.minutes === 'number' && isFinite(p.minutes)) out.minutes += p.minutes;
+  });
+  return out;
+}
+
 /*
   MINUTES OUT, from the two stamps rather than from a counter.
 
@@ -157,6 +245,48 @@ export function minutesBetween(out, back) {
   const b = Date.parse(String(back || ''));
   if (!isFinite(a) || !isFinite(b)) return 0;
   return Math.max(0, Math.round((b - a) / 60000));
+}
+
+/*
+  AND HOW LONG THEY HAVE BEEN GONE SO FAR (WO-2.9) — the same subtraction as above with the second
+  stamp still in the future, which is why it is here beside it rather than in the screen.
+
+  THE WHOLE WORK ORDER IS IN THE SIGNATURE. `now` is an argument, so this function counts nothing
+  and remembers nothing: every answer it gives is `now` minus the stamp the document is holding.
+  iOS suspends timers when Safari backgrounds an installed PWA, so a counter that ADDED a second per
+  tick would read "2 minutes" after twenty and would do it silently — the same class of bug as the
+  eviction hazard in CLAUDE.md, correct on a desk and wrong on the device this ships to. The caller
+  passes Date.now() at the moment it paints, and a caller that has been asleep for ten minutes gets
+  ten minutes.
+
+  SECONDS RATHER THAN MINUTES, because the card shows m:ss the way Roll Call!'s does
+  (dashboard.html:3424) and because the two alert thresholds below are crossed at a second rather
+  than at a rounding. Floored at zero for minutesBetween()'s reason: a device clock that steps
+  backwards should read 0:00 and not a negative number nobody can read.
+*/
+export function elapsedSeconds(out, now) {
+  const a = Date.parse(String(out || ''));
+  const b = typeof now === 'number' ? now : Date.parse(String(now || ''));
+  if (!isFinite(a) || !isFinite(b)) return 0;
+  return Math.max(0, Math.floor((b - a) / 1000));
+}
+
+/* Which alert a trip of this length has earned: 0 none, 1 the first, 2 the second. Both thresholds
+   in one function so that "is this overdue" has one answer — the card's colour, the announcement
+   and the fired-ness written on the pass are three readings of it, and three copies of `>=` is how
+   they come to disagree. */
+export function alertLevelFor(seconds) {
+  if (seconds >= ALERT_TWO_MIN * 60) return 2;
+  if (seconds >= ALERT_ONE_MIN * 60) return 1;
+  return 0;
+}
+
+/* WHICH ALERTS THIS PASS HAS ALREADY GIVEN — 0, 1 or 2, and 0 for a pass carrying no `alerted` key
+   at all, which is every pass at the moment it is issued and every pass written by a build before
+   this one. */
+export function alertedLevel(pass) {
+  const n = pass && typeof pass.alerted === 'number' ? pass.alerted : 0;
+  return n >= 2 ? 2 : (n >= 1 ? 1 : 0);
 }
 
 /* ────────────────────────────── writing ──────────────────────────────
@@ -210,6 +340,41 @@ export function notePass(d, classId, studentId, text) {
 }
 
 /*
+  AN ALERT HAS BEEN GIVEN (WO-2.9). One field on the open pass, holding the HIGHEST alert this trip
+  has already produced: absent or 0 before either fires, 1 after the first, 2 after the second.
+
+  IT IS STATE ON THE PASS, exactly as Roll Call!'s `pass.alertFired.five` / `.ten` is
+  (dashboard.html:3528) — and being state on the pass in THIS app means it is in the year document,
+  which is the same inversion the header argues about `openPasses` itself. Roll Call!'s fired-ness
+  lives in a module variable, so over there a reload re-alarms every overdue student; here the
+  teacher who relaunches a force-quit app is not told twice about a trip she already knows about.
+  That is what the acceptance line's *"fires once each"* is worth on the device this ships to, and
+  it costs one small write at the moment of the alert.
+
+  ONE NUMBER RATHER THAN TWO BOOLEANS, and the divergence is deliberate: `five` and `ten` bake the
+  DEFAULT thresholds into the schema, so a teacher who ever moves the first alert to seven minutes
+  is left with a field called `five` that means something else. A level is a level whatever minute
+  it was crossed at.
+
+  IT ONLY EVER GOES UP. A second call at the same level is refused rather than rewritten, which is
+  what makes "not repeatedly" a property of the writer instead of a promise made by the renderer
+  that calls it — the renderer runs every second.
+
+  NOTHING CARRIES IT INTO HISTORY. closePass() below builds its entry field by field and this is not
+  one of them, so a finished trip in `passes` says what happened rather than what the app said about
+  it while it was happening. The reset on return is the same fact: the record this lives on is gone.
+*/
+export function markAlerted(d, classId, studentId, level) {
+  if (!d || !classId || !studentId) return null;
+  const open = openPassFor(d, classId, studentId);
+  if (!open) return null;
+  const want = level >= 2 ? 2 : (level >= 1 ? 1 : 0);
+  if (want <= alertedLevel(open)) return null;
+  open.alerted = want;
+  return open;
+}
+
+/*
   AND COMES BACK. The open pass leaves `openPasses`, one entry is appended to `passes`, and the
   minutes are computed from the two stamps.
 
@@ -242,7 +407,12 @@ export function closePass(d, classId, studentId, at, endedBy) {
   };
   /* The note the teacher typed while they were out, if there was one, and NO KEY AT ALL if there
      was not — notePass() above never leaves an empty one to copy, and this is where that rule
-     reaches the permanent record. */
+     reaches the permanent record.
+
+     WHAT IS NOT COPIED IS `alerted` (WO-2.9), and the field list above is where that is decided:
+     the note is the teacher's own words about the trip and belongs to it forever, while the alert
+     level is the app's bookkeeping about a trip that had not finished yet. `minutes` is the honest
+     record of how long it took; "and it was announced twice" is not a fact about the student. */
   if (open.note) done.note = open.note;
   d.passes.push(done);
   return done;
@@ -331,7 +501,13 @@ export function reopenPass(d, passId) {
   /* And the note comes back with it (WO-2.11), for the same reason the time out does: this is a
      retraction of the app's own write, so what it puts back has to be what was there. A note
      silently dropped by an undo is a note the teacher typed and the app deleted. Absent stays
-     absent — the key is set only when there was one, which is the shape rule everywhere else. */
+     absent — the key is set only when there was one, which is the shape rule everywhere else.
+
+     `alerted` DOES NOT COME BACK (WO-2.9), and the asymmetry is the point: closePass() never
+     carried it into `passes`, so there is nothing here to restore, and a student who is out of the
+     room again with an hour-old time out should be announced again. The note is the teacher's
+     words; the alert is the app noticing, and it is allowed to notice twice about two spells out
+     of the room. */
   if (done.note) open.note = done.note;
   d.openPasses.push(open);
   return open;

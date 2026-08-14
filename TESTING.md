@@ -2732,6 +2732,121 @@ followed"*.*
 
 ---
 
+### WO-2.9 — The elapsed clock, the overdue alerts, and the pass history
+
+**What this adds.** Three things on top of the pass banner WO-2.11 shipped. The **elapsed clock** —
+the big orange `m:ss` figure in the slot that card has been holding open — computed from the stored
+time out on every paint and never counted up. **Two overdue alerts** at five and ten minutes: the
+card lights amber and then red, and each one is announced once. And a **pass history**: one dialog
+behind 🚪 Passes in the registry toolbar, carrying every student's trips in this class and, one tap
+in, one student's own trips with their times, minutes and notes. Names on that dialog disappear in
+presentation mode — the first surface in the app where a NAME rather than a support field is what
+the switch hides.
+
+- [x] **Elapsed time is correct after the app has been backgrounded for ten minutes.** 👤 — closed by
+      the owner 2026-08-14 on the installed app; see the sitting below. The desk half is measured and
+      is the strongest form a desk has: the stored stamp is wound 41 minutes into the past through
+      the store while no timer is running, and the next paint reads `41:0x`. A build that counted
+      ticks reads `0:0x` after the same fixture.
+- [x] Both alerts fire **once each**, not repeatedly, and **not again after the student returns**.
+      All three clauses measured: the level is written on the pass (`alerted: 1|2`), three seconds
+      of ticks over the same threshold announce nothing new, and a student who comes back and goes
+      out again gets a pass with no `alerted` key at all.
+- [x] A trip that crossed **both** thresholds while nothing was running escalates straight to the
+      second alert — one announcement, not two — and the sentence says how long it really has been
+      (41 minutes), never which threshold was crossed.
+- [x] The history view's totals match the log, student by student and in total. The expected numbers
+      are computed **in Node** off `doc.passes`, so the dialog is compared with the record rather
+      than with the module that drew it.
+- [x] A hand count of one student's passes agrees: one row per trip, the stored minutes, the note
+      typed on the card under the row it belongs to, and a trip that ended in a dismissal marked as
+      one rather than reading "back after 4 minutes".
+- [x] **A cancelled pass appears in no history view and in no total.** A trip is issued, noted with a
+      phrase nothing else in the document uses, seen on the card, and cancelled — and the dialog's
+      rows, footer and subtitle are exactly what they were, with the phrase nowhere in it.
+- [x] **Presentation mode suppresses names in the history view**, in both readings: no name in the
+      class table, no door into a student, and the strip saying why. The counts stay, which is the
+      deliberate difference from a support surface (where even the count is a disclosure).
+- [x] And the guard is in the module rather than in the absent button: calling `openStudentPasses()`
+      directly under presentation mode names nobody either.
+- [x] Flipping the mode back off brings the same names and the same doors back to the same open
+      dialog — which is what makes every absence above a suppression rather than a screen that
+      cannot draw one.
+- [x] The elapsed figure did not cost WO-2.11's single-row card: three cards at the cap, in both
+      orientations under a coarse pointer, still one row, with the figure measured at 52px and the
+      row not spilling through its own box.
+
+*Desk pass 2026-08-13: `verify-shell.mjs` **732 of 732, 0 failed, 0 skipped**, 241s — up from 714
+executed, seventeen new call sites (sixteen in a new section at the foot of the hall-pass block, one
+inside the pass-card sweep's two-orientation loop). `wo-sweep.mjs` **17 checks · 15 passed · 0 failed
+· 2 to review**, exit 0; both REVIEWs are the standing pair, and `src/pass-history.js` joins the
+sensitive-field-name list on its header prose alone — it holds no path to `student.supports` and
+imports nothing that does.*
+
+*Everything is driven through the controls a teacher touches: the passes are issued and returned from
+the real buttons, the note is typed into the card's own field, the dialog is opened from the 🚪 door
+in the toolbar and its student view from the name in the table, and presentation mode is flipped with
+the real header control. Two exceptions, both named at the check: the wind-back that stands in for a
+suspended device goes through the store (a desk cannot suspend an installed PWA), and the student view
+under presentation mode is called through the seam, because it deliberately has no button there.*
+
+*Four mutation proofs, run before this was written:*
+
+| Mutation | Result |
+|---|---|
+| the elapsed figure **accumulates** a count per tick instead of subtracting from the stamp — the Traps line's own defect | **6 red**, the first reading `the card now reads "0:02"` where the stamp says 41 minutes; both alert thresholds stop being reachable with it |
+| alerts fire off the elapsed time (`level > 0`) instead of off the level stored on the pass | **2 red** — the live region repeats the same sentence three seconds later, and the "starts clean" check hears it too |
+| `cancelPass()` writes a zero-minute return — WO-2.11's forbidden defect | **5 red**, four of them WO-2.11's own and the fifth this work order's: the cancelled student gains a row and the footer goes from 10 trips to 11 |
+| `src/pass-history.js` stops asking `presentationMode()` for names | **1 red** — four names on the projected dialog, doors still absent, which is why the check reads names rather than counting buttons |
+
+*All four were reverted and the run above is green on the shipped tree.*
+
+*One check was written wrong first and the run caught it, which is worth recording because it is the
+vacuous-fixture failure in a new place: the presentation check searched for `First Last` and this
+dialog draws `Last, First`, so it reported **0 names with the mode off** — the precondition, not the
+assertion, is what failed. It now searches **both spellings** of every name in the document, which is
+also what makes the student view's own heading (`First Last`) covered. And the note-row clause on the
+per-student check was **true and vacuous** on the first green run — the busiest student had no notes —
+so a second check now picks the student who has one and asserts the row under the trip.*
+
+*One harness reading is deliberately a poll rather than a fixed wait, per `tools/README.md` trap 5: a
+headless page that has been open for minutes is a background page to Chrome and its timers are
+budget-throttled, so a 1-second interval measured over a fixed 1.4s window really did report "no
+tick" on a build that ticks. The claim being made is that the figure advances on its own, not that it
+advances on a particular second — the second is what the device this ships to gives it.*
+
+**The 👤 iPad sitting this work order owes.** Neither the harness nor a stylesheet can answer these.
+
+- [x] **Elapsed time is correct after the app has been backgrounded for ten minutes.** Issue a pass
+      on the installed app, note the time out, switch to another app (or lock the iPad) for ten
+      minutes, and come back: the figure must read ~10:00 and not ~0:0x or the number it had when
+      the app went away. This is acceptance line 1 and no emulator can answer it — nothing has ever
+      suspended a headless browser. 👤
+- [x] The two alerts are noticeable from across a room without being alarming: amber at five, red at
+      ten, on a card among two others. 👤
+- [x] A pass that goes overdue while the iPad is asleep announces **once** on the way back in, not
+      twice and not on every tap afterwards. 👤
+- [x] The 🚪 Passes door, the names inside the dialog and the ← back control all clear 44px under a
+      thumb, and the door does not spill through its own border in the toolbar beside ⌨ Keys and
+      🖨 Record — the "Days off" failure, on the sixth control in that row. 👤
+- [x] The history dialog is readable held at arm's length with a guardian beside you, and
+      presentation mode leaves it usable rather than blank. 👤
+- [x] VoiceOver reads an overdue announcement as a sentence about a student, and the elapsed figure
+      is not read out as a pair of numbers on every tick (it is `aria-hidden`; the Return button
+      beside it carries the time out in full). 👤
+
+*The six 👤 lines were run by the owner in one sitting on 2026-08-14, on the installed home-screen
+app, and all six passed. **One of them was a question rather than a check and came back an answer.**
+The presentation-mode strip tells a teacher to turn the mode off "in the header," and the header sits
+under the modal overlay — so the first tap closes the dialog and the second reaches the control. That
+is not the dead first tap it was written up as: the dialog visibly disappearing is the feedback, and
+the owner read the three-step walk (close, toggle, reopen) as the sensible flow. **It is also the
+safer geometry** — a mode flip that reached through an open dialog would repaint names in front of
+whoever is sitting there. The strip's wording still describes one action where there are three; that
+was raised, and the owner left it as it stands on 2026-08-14.*
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

@@ -7552,6 +7552,11 @@ const INSTALL_ATT_READER = `(function(){
          (No backticks in this comment: it is inside a template literal.) */
       openPasses: (doc.openPasses || []).map(function(p){
         return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
+                 /* WO-2.9: which overdue alert this trip has already given, on the record rather
+                    than in a variable — which is what makes "fires once" survive a reload. Read
+                    verbatim, and the key set beside it is what proves it does NOT exist before the
+                    first alert and does not cross into the log. */
+                 alerted: p.alerted,
                  note: p.note, keys: Object.keys(p).sort().join(',') }; }),
       passLog: (doc.passes || []).map(function(p){
         return { id: p.id, studentId: p.studentId, classId: p.classId, type: p.type, out: p.out,
@@ -7601,6 +7606,11 @@ const INSTALL_ATT_READER = `(function(){
                      var back = c.querySelector('[data-pass-return]');
                      var drop = c.querySelector('[data-pass-cancel]');
                      var note = c.querySelector('[data-pass-note]');
+                     /* WO-2.9: the elapsed figure, and the escalation the whole CARD carries. Read
+                        as text and as class names rather than as a colour — what is being asserted
+                        is that the state moved, and a computed colour would tie the check to a
+                        palette this sheet is allowed to re-tune. */
+                     var clock = c.querySelector('[data-pass-elapsed]');
                      return { name: ((c.querySelector('.attendance-pass-card-name') || {}).textContent || '').trim(),
                               type: ((c.querySelector('.attendance-pass-card-type') || {}).textContent || '').trim(),
                               out: ((c.querySelector('.attendance-pass-card-out') || {}).textContent || '').trim(),
@@ -7609,6 +7619,14 @@ const INSTALL_ATT_READER = `(function(){
                               backText: back ? (back.textContent || '').trim() : '',
                               cancelText: drop ? (drop.textContent || '').trim() : '',
                               cancelLabel: drop ? (drop.getAttribute('aria-label') || '') : '',
+                              elapsed: clock ? (clock.textContent || '').trim() : null,
+                              elapsedFor: clock ? clock.getAttribute('data-pass-elapsed') : '',
+                              over: (c.classList.contains('over-two') ? 2
+                                : (c.classList.contains('over-one') ? 1 : 0)),
+                              /* The sentinel WO-2.9's "patched, not repainted" check plants: it is
+                                 on the card element, so it survives a text patch and dies with a
+                                 rebuild. Absent on every other read. */
+                              sentinel: c.getAttribute('data-wo29-sentinel') || '',
                               note: note ? note.value : null }; }) }; })(),
       /* Every name in the document, so that "the log is keyed by student id, never by name" can be
          asked as "does the serialised pass log contain any of these strings" rather than as "does
@@ -9887,6 +9905,511 @@ if (!attBooted || !attSeam) {
       + emptyRoom.passBanner.shown + ' with ' + emptyRoom.passBanner.cards.length
       + ' card(s), and the log unchanged by the last cancel = '
       + (emptyRoom.passLogJson === returnedE.passLogJson));
+
+  /*
+    ────────────── WO-2.9: the elapsed clock, the two overdue alerts, and the history ──────────────
+
+    FIVE ACCEPTANCE LINES, AND THE FIRST OF THEM IS 👤. "Elapsed time is correct after the app has
+    been backgrounded for ten minutes" needs an installed PWA that iOS actually suspended, and no
+    headless browser has been suspended by anything. What a desk CAN do is the property underneath
+    it, and it is the property the work order's Traps section is really about: the figure is a
+    SUBTRACTION from the stored stamp rather than a count of ticks. So the fixture below moves the
+    stamp while no timer is watching — a wind-back through the store with no repaint in between —
+    and asks what the card says next. A build that accumulated would read `0:0x` after that and a
+    build that subtracts reads `41:0x`, which is the same difference an hour in a bag makes.
+
+    THE ALERTS ARE ASSERTED IN ALL THREE OF THEIR CLAUSES, and the middle one is the reason the
+    fired-ness is on the pass: this screen re-renders every second, so "not repeatedly" is a claim
+    about sixty renders a minute and is asked by clearing the live region, letting several ticks go
+    by, and reading it back empty.
+
+    AND THE HISTORY IS COMPARED AGAINST THE LOG THIS FILE COUNTS FOR ITSELF, in Node, out of the
+    document — not against the app's own tally, which would be the dialog agreeing with the module
+    that drew it. The cancelled-pass line is asked the way WO-2.11's is: a trip is issued, noted,
+    seen on the card, and cancelled, and what is compared is the whole dialog before and after.
+  */
+  console.log('\n--- hall passes: the elapsed clock, the alerts and the history (WO-2.9) ---');
+
+  /* Winds one open pass's time out backwards through the store, with NO repaint: the card on screen
+     keeps whatever figure it was last painted with, which is what makes the next paint's answer
+     mean something. Returns what it moved, and the check that uses it asserts the move first. */
+  const windBack = (studentId, minutes) => evalJs(`(async function(){
+    var s = window.planbook.store;
+    var was = '';
+    s.update(function(d){
+      d.openPasses.forEach(function(p){
+        if (p.studentId !== ${JSON.stringify(studentId)}) return;
+        was = p.out;
+        var t = new Date(Date.parse(p.out) - ${JSON.stringify(minutes)} * 60000);
+        var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+        var off = -t.getTimezoneOffset(), abs = Math.abs(off);
+        p.out = t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate())
+          + 'T' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds())
+          + (off < 0 ? '-' : '+') + pad(Math.floor(abs/60)) + ':' + pad(abs % 60);
+      }); });
+    await s.flush();
+    return { was: was, now: (s.getDoc().openPasses.filter(function(p){
+      return p.studentId === ${JSON.stringify(studentId)}; })[0] || {}).out }; })()`);
+
+  /* The one path a suspended PWA takes back onto the screen. Dispatched rather than simulated with
+     a hand render, for the reason WO-2.12's rotation checks give: a harness that repaints by hand
+     goes green against a build with no listener in it. `visibilityState` is asserted with it,
+     because a headless page that reported `hidden` would make every reading below vacuous. */
+  const wakeUp = () => evalJs(`(function(){
+    document.dispatchEvent(new Event('visibilitychange'));
+    return { state: document.visibilityState }; })()`);
+
+  const SR_WO29 = 'nothing has been announced since this sentinel was written';
+  const hush = () => evalJs('(function(){ var l = document.getElementById("srLive");'
+    + ' if (l) l.textContent = ' + JSON.stringify(SR_WO29) + '; return 1; })()');
+  const heard = () => evalJs('(function(){ var l = document.getElementById("srLive");'
+    + ' return l ? l.textContent : ""; })()');
+
+  /* One student out, on a fresh stamp, with the room otherwise empty. */
+  await clickSel('[data-pass-issue="' + outA + '"][data-pass-type="bathroom"]');
+  const clock0 = await read();
+  const card0 = (clock0.passBanner.cards || [])[0] || {};
+  const open0 = clock0.openPasses[0] || {};
+  check('the card carries an elapsed figure from the moment it is drawn, and the document holds no count of it',
+    clock0.openPasses.length === 1 && clock0.passBanner.cards.length === 1
+      && /^0:\d{2}$/.test(card0.elapsed || '')
+      /* Addressed by pass id, which is what the patch below finds it by. */
+      && card0.elapsedFor === open0.id && card0.over === 0
+      /* THE FIGURE IS NOWHERE IN THE RECORD. A build that stored the count it was showing would
+         carry a sixth key here, and it would be the count that comes back wrong after a suspend. */
+      && open0.keys === 'classId,id,out,studentId,type'
+      /* And the ROW is unchanged: the 160px column still shows the time they left and no ticking
+         figure beside a Return button (src/attendance.js's note at passControls). */
+      && /^\d+:\d{2}[ap]$/.test(((clock0.rows.filter((r) => r.student === outA)[0] || {}).pass || {}).since || ''),
+    'the card reads ' + JSON.stringify(card0.elapsed) + ' for pass ' + card0.elapsedFor
+      + ', the open pass carries keys ' + JSON.stringify(open0.keys)
+      + ', and the row still reads ' + JSON.stringify(((clock0.rows
+        .filter((r) => r.student === outA)[0] || {}).pass || {}).since));
+
+  /* THE FIXTURE FOR THE 👤 LINE, and both halves of it are asserted before they are used: the stamp
+     moves 41 minutes into the past through the store, and a sentinel goes on the card element so
+     that "the figure was patched" and "the card was rebuilt" cannot be confused. A rebuild is the
+     failure that would take the note field's caret and the software keyboard with it. */
+  await evalJs('(function(){ var c = document.querySelector(".attendance-pass-card");'
+    + ' if (c) c.setAttribute("data-wo29-sentinel", "planted"); return 1; })()');
+  await typeNote('[data-pass-note="' + outA + '"]', 'half-typed while the clock ran');
+  /* Hushed BEFORE the stamp moves, not after: the clock is running, so the alert this wind-back
+     earns can land on any tick from here on, and a sentinel written afterwards would erase the very
+     announcement the check below is looking for. */
+  await hush();
+  const winded = await windBack(outA, 41);
+  const planted = await read();
+  check('the fixture for a backgrounded app is real: the stamp moved 41 minutes into the past, through the store, on a card this run has had on screen for about a second',
+    !!winded.was && !!winded.now
+      && Math.round((Date.parse(winded.was) - Date.parse(winded.now)) / 60000) === 41
+      /* The sentinel is on the card that was drawn a moment ago, which is what makes "patched, not
+         rebuilt" readable below rather than a claim about an element nobody marked. */
+      && ((planted.passBanner.cards || [])[0] || {}).sentinel === 'planted',
+    'out went from ' + winded.was + ' to ' + winded.now + '; the card carries sentinel '
+      + JSON.stringify(((planted.passBanner.cards || [])[0] || {}).sentinel) + ' and reads '
+      + JSON.stringify(((planted.passBanner.cards || [])[0] || {}).elapsed));
+
+  const woke = await wakeUp();
+  await new Promise(r => setTimeout(r, 250));
+  const backAwake = await read();
+  const cardAwake = (backAwake.passBanner.cards || [])[0] || {};
+  check('and coming back to the screen recomputes it from the stamp — 41 minutes, not the two a ticking counter would have kept (the desk half of a 👤 line)',
+    woke.state === 'visible'
+      && /^41:\d{2}$/.test(cardAwake.elapsed || '')
+      /* PATCHED, NOT REPAINTED: the sentinel is still on the card and the half-typed note is still
+         in the field. A rebuild once a second is the defect this shape exists to avoid. */
+      && cardAwake.sentinel === 'planted'
+      && cardAwake.note === 'half-typed while the clock ran',
+    'the page was ' + woke.state + ' and the card now reads ' + JSON.stringify(cardAwake.elapsed)
+      + '; sentinel = ' + JSON.stringify(cardAwake.sentinel) + ', note field = '
+      + JSON.stringify(cardAwake.note));
+
+  /* And it does it on its own, with no repaint and no wake-up: the seconds field has to move while
+     this file does nothing but watch. The only check here that watches the TIMER rather than the
+     arithmetic, and it is what goes red if the interval is never started.
+
+     POLLED RATHER THAN SLEPT, which is trap 5 in tools/README.md and matters here for a specific
+     reason: a headless page that has been open for minutes is a BACKGROUND page to Chrome, and
+     background pages get their timers budget-throttled — a 1000ms interval measured over a fixed
+     1.4s window in this browser really did report "no tick" on a build that ticks. The claim is
+     that the figure advances on its own, not that it advances on a particular second, and the poll
+     is what says the first without asserting the second. On the device this ships to the interval
+     is a foreground one and the tick is the second it asks for. */
+  const before1s = cardAwake.elapsed;
+  let cardTicked = {};
+  let ticked = null;
+  for (let i = 0; i < 24; i++) {
+    await new Promise(r => setTimeout(r, 250));
+    ticked = await read();
+    cardTicked = (ticked.passBanner.cards || [])[0] || {};
+    if (cardTicked.elapsed !== before1s) break;
+  }
+  check('the figure moves on its own, with no repaint and no wake-up — the interval is running',
+    /^4[12]:\d{2}$/.test(cardTicked.elapsed || '') && cardTicked.elapsed !== before1s
+      && cardTicked.sentinel === 'planted',
+    'it read ' + JSON.stringify(before1s) + ' and then read ' + JSON.stringify(cardTicked.elapsed)
+      + ' with nothing but a wait in between');
+
+  /*
+    ── ACCEPTANCE LINE 2, and this student is the "asleep past both thresholds" case ──
+
+    41 minutes out means both thresholds were crossed while nothing was running. What must NOT
+    happen is two alerts: the level goes straight to 2, the first one never fires, and the sentence
+    says how long it has actually been rather than which threshold was crossed — "ten minutes" about
+    a student who has been gone for forty-one is the elapsed-time trap arriving in the words.
+  */
+  const said41 = await heard();
+  const alerted41 = ticked.openPasses.filter((p) => p.studentId === outA)[0] || {};
+  check('a trip that crossed BOTH thresholds while nothing was watching escalates once, to the second alert, and says how long it really is',
+    alerted41.alerted === 2 && cardTicked.over === 2
+      && alerted41.keys === 'alerted,classId,id,note,out,studentId,type'
+      && /has been out on a bathroom pass for 41 minutes\./.test(said41)
+      && said41.indexOf(SR_WO29) < 0
+      /* One sentence, not two: the five-minute alert is not also in there. */
+      && said41.indexOf('for 5 minutes') < 0 && said41.indexOf('for 10 minutes') < 0,
+    'the pass now carries alerted = ' + JSON.stringify(alerted41.alerted) + ' with keys '
+      + JSON.stringify(alerted41.keys) + ', the card is at level ' + cardTicked.over
+      + ', and what was announced is ' + JSON.stringify(said41));
+
+  /* NOT REPEATEDLY, over the sixty renders a minute this screen makes: the live region is cleared,
+     three seconds of ticks go by with the pass still far past both thresholds, and nothing new is
+     said. A build that fired off the elapsed time rather than off the record would say it three
+     times, and a build that fired off a variable would say it again after the reload below. */
+  await hush();
+  await new Promise(r => setTimeout(r, 3200));
+  const quiet = await read();
+  const stillQuiet = await heard();
+  check('and it does not fire again on the next tick, or the next, while the same student is still out',
+    stillQuiet === SR_WO29
+      && (quiet.openPasses.filter((p) => p.studentId === outA)[0] || {}).alerted === 2
+      && (quiet.passBanner.cards || [])[0].over === 2
+      && /^4[12]:\d{2}$/.test(((quiet.passBanner.cards || [])[0] || {}).elapsed || ''),
+    'after three seconds of ticks the live region still holds '
+      + (stillQuiet === SR_WO29 ? 'the sentinel' : JSON.stringify(stillQuiet))
+      + ', alerted = ' + JSON.stringify((quiet.openPasses
+        .filter((p) => p.studentId === outA)[0] || {}).alerted) + ', the card reads '
+      + JSON.stringify(((quiet.passBanner.cards || [])[0] || {}).elapsed));
+
+  /*
+    ── AND THE ESCALATION ITSELF, one threshold at a time, on a second student ──
+
+    Wound to five and a half minutes, which is the first alert and not the second; then to ten and a
+    half, which is the second. The card's state and the sentence are read at each step, and the
+    thing being proved between them is that the first alert did not fire twice on the way.
+  */
+  await hush();
+  await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
+  const woundB1 = await windBack(outB, 5.2);
+  await wakeUp();
+  await new Promise(r => setTimeout(r, 250));
+  const atFive = await read();
+  const cardB5 = (atFive.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
+  const saidFive = await heard();
+  check('the first alert fires at five minutes: the card escalates, the pass records the level, and the sentence names the student',
+    !!woundB1.now
+      && (atFive.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 1
+      && cardB5.over === 1 && /^5:\d{2}$/.test(cardB5.elapsed || '')
+      && /has been out on a nurse pass for 5 minutes\./.test(saidFive)
+      /* The other card is untouched by it — one alert is about one student. */
+      && (atFive.passBanner.cards || []).filter((c) => c.student === outA)[0].over === 2,
+    'the card is at level ' + cardB5.over + ' reading ' + JSON.stringify(cardB5.elapsed)
+      + ', the pass records alerted = ' + JSON.stringify((atFive.openPasses
+        .filter((p) => p.studentId === outB)[0] || {}).alerted) + ', and the announcement was '
+      + JSON.stringify(saidFive));
+
+  await hush();
+  const woundB2 = await windBack(outB, 5.2);
+  await wakeUp();
+  await new Promise(r => setTimeout(r, 250));
+  const atTen = await read();
+  const cardB10 = (atTen.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
+  const saidTen = await heard();
+  check('and the second fires at ten, once, taking the card with it',
+    !!woundB2.now
+      && (atTen.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 2
+      && cardB10.over === 2 && /^10:\d{2}$/.test(cardB10.elapsed || '')
+      && /has been out on a nurse pass for 10 minutes\./.test(saidTen),
+    'the card is at level ' + cardB10.over + ' reading ' + JSON.stringify(cardB10.elapsed)
+      + ', alerted = ' + JSON.stringify((atTen.openPasses
+        .filter((p) => p.studentId === outB)[0] || {}).alerted) + ', announced as '
+      + JSON.stringify(saidTen));
+
+  /*
+    ── AND NOT AGAIN AFTER THE STUDENT RETURNS, which is the clause the state has to reset for ──
+
+    The same student comes back and is sent straight out again. The new pass carries no `alerted` at
+    all and its card is at level 0 — a build that kept the fired-ness anywhere but on the pass would
+    have carried it across, and a build that carried it into `passes` would be shipping the app's
+    own bookkeeping in the permanent record.
+  */
+  await clickSel('[data-pass-return="' + outB + '"]');
+  const backIn = await read();
+  const loggedB = backIn.passLog.filter((p) => p.studentId === outB).slice(-1)[0] || {};
+  await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="quick"]');
+  /* Hushed AFTER both taps, because both of them announce something of their own — what the
+     sentinel is holding the line against here is an ALERT arriving on a pass that is ten seconds
+     old, which is what a fired-ness kept anywhere but on the record would produce. */
+  await hush();
+  await wakeUp();
+  await new Promise(r => setTimeout(r, 1500));
+  const outAgain = await read();
+  const cardB2 = (outAgain.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
+  const saidAfter = await heard();
+  check('a student who comes back and goes out again starts clean: no alert level on the new pass, none in the log entry, and nothing announced',
+    loggedB.minutes === 10 && loggedB.alerted === undefined
+      && loggedB.keys === 'back,classId,endedBy,id,minutes,out,studentId,type'
+      && (outAgain.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === undefined
+      && (outAgain.openPasses.filter((p) => p.studentId === outB)[0] || {}).keys
+        === 'classId,id,out,studentId,type'
+      && cardB2.over === 0 && /^0:\d{2}$/.test(cardB2.elapsed || '')
+      && saidAfter === SR_WO29,
+    'the finished trip is ' + JSON.stringify(loggedB) + '; the new pass carries keys '
+      + JSON.stringify((outAgain.openPasses.filter((p) => p.studentId === outB)[0] || {}).keys)
+      + ', its card is at level ' + cardB2.over + ' reading ' + JSON.stringify(cardB2.elapsed)
+      + ', and the live region still holds '
+      + (saidAfter === SR_WO29 ? 'the sentinel' : JSON.stringify(saidAfter)));
+
+  /*
+    ── ACCEPTANCE LINE 3: THE HISTORY, AGAINST A COUNT THIS FILE MAKES ITSELF ──
+
+    Everyone comes back in first, so the log holds every trip this section has produced and the two
+    surfaces cannot disagree about a student who is still out. The expected numbers are computed in
+    NODE, from the `passes` array read off the document — not from the app's own tally, which would
+    be the dialog being compared with the module that drew it.
+  */
+  await clickSel('[data-pass-return="' + outA + '"]');
+  await clickSel('[data-pass-return="' + outB + '"]');
+  const settled = await read();
+
+  /* The dialog, read as rows of text. The student column is read as its rendered text AND as the
+     hook behind it, so "a name is on screen" and "a door leads to that student" stay two facts. */
+  const readHistory = () => evalJs(`(function(){
+    var m = document.getElementById('passHistoryModal');
+    var body = document.getElementById('passHistoryBody');
+    if (!m || !body) return null;
+    var cells = function(tr){ return Array.prototype.slice.call(tr.querySelectorAll('td'))
+      .map(function(td){ return (td.textContent || '').trim(); }); };
+    var table = body.querySelector('table');
+    return {
+      shown: !m.classList.contains('hidden'),
+      title: ((document.getElementById('passHistoryTitle') || {}).textContent || '').trim(),
+      sub: ((body.querySelector('.attendance-report-sub') || {}).textContent || '').trim(),
+      text: (body.textContent || '').replace(/\\s+/g, ' '),
+      strip: !!body.querySelector('.pass-history-quiet'),
+      doors: Array.prototype.slice.call(body.querySelectorAll('[data-pass-history-student]'))
+        .map(function(b){ return b.getAttribute('data-pass-history-student'); }),
+      back: body.querySelectorAll('[data-pass-history-all]').length,
+      rows: table ? Array.prototype.slice.call(table.querySelectorAll('tbody tr'))
+        .map(function(tr){
+          var head = tr.querySelector('th');
+          var door = tr.querySelector('[data-pass-history-student]');
+          return { head: head ? (head.textContent || '').trim() : '',
+                   student: door ? door.getAttribute('data-pass-history-student') : '',
+                   cls: tr.className,
+                   cells: cells(tr) }; }) : [],
+      foot: table ? Array.prototype.slice.call(table.querySelectorAll('tfoot tr'))
+        .map(function(tr){ return { head: (tr.querySelector('th') || {}).textContent || '',
+                                    cells: cells(tr) }; }) : [] }; })()`);
+
+  /* The same arithmetic the dialog is claiming, done here over the log this run wrote. */
+  const tally = (list) => {
+    const out = { bathroom: 0, nurse: 0, quick: 0, total: 0, minutes: 0 };
+    list.forEach((p) => {
+      if (out[p.type] !== undefined) out[p.type] += 1;
+      out.total += 1;
+      out.minutes += p.minutes;
+    });
+    return out;
+  };
+  const mine = settled.passLog.filter((p) => p.classId === passClass);
+  const byStudent = {};
+  mine.forEach((p) => {
+    if (!byStudent[p.studentId]) byStudent[p.studentId] = [];
+    byStudent[p.studentId].push(p);
+  });
+  const expectAll = tally(mine);
+
+  await clickSel('[data-pass-history]');
+  const hist = await readHistory();
+  const foot = (hist && hist.foot[0]) || { cells: [] };
+  const rowFor = (id) => (hist ? hist.rows.filter((r) => r.student === id)[0] : null) || { cells: [] };
+  const everyRowAgrees = Object.keys(byStudent).every((id) => {
+    const want = tally(byStudent[id]);
+    const got = rowFor(id).cells;
+    return got.length === 5
+      && got[0] === (want.bathroom || '—') + '' && got[1] === (want.nurse || '—') + ''
+      && got[2] === (want.quick || '—') + '' && got[3] === String(want.total)
+      && got[4] === String(want.minutes);
+  });
+  check('the history view\'s totals match the log: every student\'s row, and the class total under them, against a count this file makes in Node',
+    !!hist && hist.shown && hist.rows.length === Object.keys(byStudent).length
+      && everyRowAgrees
+      && foot.cells.join(',') === [expectAll.bathroom, expectAll.nurse, expectAll.quick,
+        expectAll.total, expectAll.minutes].join(',')
+      /* The subtitle carries the same total in words, so the number a teacher reads first is the
+         number the table adds up to. */
+      && hist.sub.indexOf(expectAll.total + ' trips') === 0
+      && hist.sub.indexOf(expectAll.minutes + ' minutes out') > 0,
+    'the log holds ' + mine.length + ' trip(s) across ' + Object.keys(byStudent).length
+      + ' student(s); the dialog drew ' + (hist ? hist.rows.length : 0)
+      + ' row(s), every row agreeing = ' + everyRowAgrees + ', footer = '
+      + JSON.stringify(foot.cells) + ' against ' + JSON.stringify([expectAll.bathroom,
+        expectAll.nurse, expectAll.quick, expectAll.total, expectAll.minutes])
+      + ', subtitle ' + JSON.stringify(hist && hist.sub));
+
+  /* A HAND COUNT OF ONE STUDENT'S PASSES, which is the second half of that acceptance line. Driven
+     through the name in the table, which is also the only door this view has to a student. */
+  const busiest = Object.keys(byStudent).sort((a, b) => byStudent[b].length - byStudent[a].length)[0];
+  const wantRows = byStudent[busiest];
+  await clickSel('[data-pass-history-student="' + busiest + '"]');
+  const one = await readHistory();
+  const trips = one ? one.rows.filter((r) => !/pass-history-note-row/.test(r.cls)) : [];
+  const endedByD = wantRows.filter((p) => p.endedBy === 'dismissed').length;
+  const withNotes = wantRows.filter((p) => p.note).length;
+  check('and one student\'s own trips are one row each, with the minutes that were stored, the notes that were typed, and a dismissal marked as one',
+    !!one && trips.length === wantRows.length
+      && trips.every((r, i) => r.cells[3] === String(wantRows[i].minutes))
+      /* Every note that was typed is on the page, under the trip it belongs to. */
+      && wantRows.every((p) => !p.note || one.text.indexOf(p.note) >= 0)
+      && one.rows.filter((r) => /pass-history-note-row/.test(r.cls)).length === withNotes
+      /* "back after 4 minutes" and "dismissed after 4 minutes" are different facts, and this is the
+         surface src/passes.js stores `endedBy` for. */
+      && (one.text.match(/dismissed/g) || []).length === endedByD
+      && one.back === 1,
+    'the log holds ' + wantRows.length + ' trip(s) for that student ('
+      + endedByD + ' by dismissal, ' + withNotes + ' noted); the dialog drew ' + trips.length
+      + ' trip row(s) and ' + (one ? one.rows.length - trips.length : 0) + ' note row(s), with '
+      + (one ? (one.text.match(/dismissed/g) || []).length : 0) + ' dismissal marker(s)');
+
+  /*
+    ── AND THE NOTE ROW, ON A STUDENT WHO HAS ONE ──
+
+    Asked of a SECOND student rather than of the one above, because the one above is chosen for
+    having the most trips and this run's busiest student has no notes at all: the note clause up
+    there is true and vacuous, and a vacuous clause is how "the note field renders nowhere" ships.
+    The note it looks for is the one WO-2.11's own section typed on a card and watched ride through
+    a Return into `passes` — which is what that field was added early for.
+  */
+  const notedTrip = mine.filter((p) => p.note)[0];
+  if (!notedTrip) {
+    skip('a note typed on the card while the student was out is on the trip in their history',
+      'no entry in the pass log carries a note at this point in the run — a state, not a pass');
+  } else {
+    await clickSel('[data-pass-history-all]');
+    await clickSel('[data-pass-history-student="' + notedTrip.studentId + '"]');
+    const noteView = await readHistory();
+    const noteRows = noteView ? noteView.rows.filter((r) => /pass-history-note-row/.test(r.cls)) : [];
+    const wantNotes = mine.filter((p) => p.studentId === notedTrip.studentId && p.note);
+    check('a note typed on the card while the student was out is on the trip in their history, under the row it belongs to',
+      noteRows.length === wantNotes.length
+        && wantNotes.every((p) => noteView.text.indexOf('Note: ' + p.note) >= 0),
+      noteRows.length + ' note row(s) against ' + wantNotes.length + ' noted trip(s): '
+        + JSON.stringify(noteRows.map((r) => r.cells[0])));
+  }
+
+  /*
+    ── ACCEPTANCE LINE 4: A CANCELLED PASS IS IN NO HISTORY AND IN NO TOTAL ──
+
+    Asked as a before-and-after over the WHOLE dialog rather than as an absence on its own: a trip
+    is issued, noted with a phrase nothing else in the document uses, watched onto the card, and
+    cancelled. WO-2.11 writes nothing to `passes` on a cancel, so this is the check that would
+    notice if that ever stopped being true — and the note is searched for across the dialog's text
+    because a cancelled note reaching a history view would arrive through the note row.
+  */
+  await clickSel('#passHistoryModal [data-modal-close]');
+  const CANCELLED_NOTE = 'this trip was cancelled and must appear nowhere';
+  await clickSel('[data-pass-issue="' + outD + '"][data-pass-type="bathroom"]');
+  await typeNote('[data-pass-note="' + outD + '"]', CANCELLED_NOTE);
+  const onCard = await read();
+  await clickSel('[data-pass-cancel="' + outD + '"]');
+  await clickSel('[data-pass-history]');
+  const after = await readHistory();
+  check('a cancelled pass appears in no row, in no total and nowhere in the dialog — the pass was on the card and its note was in the document a moment earlier',
+    onCard.openPasses.some((p) => p.studentId === outD)
+      && onCard.docJson.indexOf(CANCELLED_NOTE) >= 0
+      /* Nothing about the dialog moved: same rows, same footer, same sentence. */
+      && !!after && after.rows.length === hist.rows.length
+      && after.foot[0].cells.join(',') === foot.cells.join(',')
+      && after.sub === hist.sub
+      && after.text.indexOf(CANCELLED_NOTE) < 0
+      && after.rows.every((r) => r.student !== outD),
+    'the cancelled student has ' + (after ? after.rows.filter((r) => r.student === outD).length : '?')
+      + ' row(s); the footer reads ' + JSON.stringify(after && after.foot[0].cells)
+      + ' (was ' + JSON.stringify(foot.cells) + ') and the note phrase is in the dialog = '
+      + (!!after && after.text.indexOf(CANCELLED_NOTE) >= 0));
+
+  /*
+    ── ACCEPTANCE LINE 5: PRESENTATION MODE SUPPRESSES NAMES IN THE HISTORY VIEW ──
+
+    The mode is flipped with the real header control, and every name in the document is searched for
+    in the dialog's text — the shape WO-2.6's own support check uses, because a check that looked
+    for the names it remembered to plant would miss the twenty-fourth row.
+
+    THE MODE-OFF PASS IS WHAT MAKES THE ABSENCE MEAN SOMETHING, so it is asserted first: this dialog
+    names people when the switch is off. And the door into one student's trips is asked TWICE — once
+    as a control that must not be drawn, and once through the module, because the missing button is
+    not the protection.
+  */
+  /* BOTH SPELLINGS OF EVERY NAME, and the pair is the check rather than a nicety: this dialog draws
+     "Van Dyke, Mary" in the class table and "Mary Van Dyke" in a student's own heading, so a search
+     for one form would have gone green over a table full of the other. Written as this run's first
+     attempt at it did not: `settled.names` alone found none of the four names that were plainly on
+     the screen, and the precondition below is what caught that rather than the assertion. */
+  const NAME_FORMS = settled.names
+    .concat((settled.roster || []).map((p) => p[0] + ', ' + p[1]));
+  const namesIn = (text) => NAME_FORMS.filter((n) => text.indexOf(n) >= 0);
+  const namesOff = namesIn(after.text);
+  /* The dialog is closed before the toolbar is reached for: the door is BEHIND the scrim, and a
+     click at its coordinates with the dialog up lands on the backdrop and dismisses it — which
+     would read as a door that does nothing. The header control is `.click()`ed rather than aimed
+     at for the same reason the accommodation-prompt section gives. */
+  await clickSel('#passHistoryModal [data-modal-close]');
+  await evalJs("document.getElementById('presentationBtn').click(); 1");
+  await clickSel('[data-pass-history]');
+  const hidden = await readHistory();
+  const namesOn = namesIn(hidden ? hidden.text : '');
+  check('presentation mode suppresses every name in the history view, and leaves the counts a teacher opened it for',
+    namesOff.length > 0
+      && !!hidden && hidden.shown && namesOn.length === 0
+      && hidden.doors.length === 0 && hidden.strip === true
+      /* The numbers are still there: this view hides who, not how many — which is the difference
+         between it and a support surface, where even the count is a disclosure. */
+      && hidden.rows.length === after.rows.length
+      && hidden.foot[0].cells.join(',') === after.foot[0].cells.join(','),
+    'with the mode off the dialog named ' + namesOff.length + ' of the ' + NAME_FORMS.length
+      + ' name form(s) in the document; with it on it names ' + namesOn.length
+      + ' (' + JSON.stringify(namesOn) + '), draws ' + hidden.doors.length + ' door(s), '
+      + (hidden.strip ? 'says why' : 'says nothing about why') + ', and still shows '
+      + hidden.rows.length + ' row(s) totalling ' + JSON.stringify(hidden.foot[0].cells));
+
+  /* And the guard is in the module rather than in the absence of the button: the student view is
+     asked for directly, with the mode still on. */
+  const forcedOne = await evalJs('(function(){ window.planbook.passHistory.openStudentPasses('
+    + JSON.stringify(busiest) + '); return 1; })()');
+  const forcedView = await readHistory();
+  check('and calling the student view directly under presentation mode names nobody either — the missing door is not what is doing the work',
+    forcedOne === 1 && !!forcedView && forcedView.shown
+      && namesIn(forcedView.text).length === 0
+      && forcedView.rows.length === 0 && forcedView.strip === true
+      && forcedView.back === 1,
+    'the forced view holds ' + forcedView.rows.length + ' row(s), names '
+      + JSON.stringify(namesIn(forcedView.text)) + ', and offers '
+      + forcedView.back + ' way(s) back to the class');
+
+  /* THE NEGATIVE CONTROL, and the run must not walk away in presentation mode: everything after
+     this section would quietly measure a suppressed app (the reason WO-1.9's own block gives). */
+  await evalJs("document.getElementById('presentationBtn').click(); 1");
+  await clickSel('[data-pass-history-all]');
+  const backOn = await readHistory();
+  check('flipping the mode back off brings the same names and the same doors back to the same open dialog',
+    !!backOn && namesIn(backOn.text).length === namesOff.length
+      && backOn.doors.length === after.rows.length
+      && backOn.strip === false
+      && backOn.foot[0].cells.join(',') === after.foot[0].cells.join(','),
+    backOn ? 'names back = ' + namesIn(backOn.text).length + ' of ' + namesOff.length
+      + ', doors = ' + backOn.doors.length + ', strip up = ' + backOn.strip
+      + ', footer ' + JSON.stringify(backOn.foot[0].cells) : 'no dialog to read');
+  await clickSel('#passHistoryModal [data-modal-close]');
 
   /* Two back out, which is the state the section is required to hand on — see below. */
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
@@ -12344,7 +12867,16 @@ console.log('\n--- the pass card is one row at the cap of three (emulated iPad, 
              that was explicitly not allowed to give in buying this row back. */
           gap: (back && cancel) ? Math.round(cancel.l - (back.l + back.w)) : null,
           chip: ((c.querySelector('.attendance-pass-card-type') || {}).textContent || '').trim(),
-          name: ((c.querySelector('.attendance-pass-card-name') || {}).textContent || '').trim()
+          name: ((c.querySelector('.attendance-pass-card-name') || {}).textContent || '').trim(),
+          /* WO-2.9's figure, which arrived into this row after it had been measured and paid for
+             twice. scrollWidth against clientWidth is the "Days off" spill from the first iPad
+             sitting asked of the element that grew: a nowrap row can clear every height check and
+             still be wider than the card it is in, and 22px of tabular digits is what would do it. */
+          clock: (function(){ var e = c.querySelector('[data-pass-elapsed]');
+            if (!e) return null; var r = e.getBoundingClientRect();
+            return { w: Math.round(r.width), h: Math.round(r.height),
+                     text: (e.textContent || '').trim() }; })(),
+          spill: Math.round(main.scrollWidth - main.clientWidth)
         };
       }).filter(Boolean); })()`;
 
@@ -12382,6 +12914,11 @@ console.log('\n--- the pass card is one row at the cap of three (emulated iPad, 
           small.length === 0 && tight.length === 0,
           cards.map(c => (c.back ? c.back.w + '×' + c.back.h : 'no Return') + ' / '
             + (c.cancel ? c.cancel.w + '×' + c.cancel.h : 'no Cancel') + ' gap ' + c.gap).join(' · '));
+        check('the elapsed clock is on every card and the row still fits inside it, iPad ' + label,
+          cards.every(c => c.clock && /^\d+:\d{2}$/.test(c.clock.text) && c.clock.w > 0)
+            && cards.every(c => c.spill <= 0),
+          cards.map(c => (c.clock ? c.clock.text + ' at ' + c.clock.w + '×' + c.clock.h + 'px'
+            : 'NO CLOCK') + ', row over its own box by ' + c.spill + 'px').join(' · '));
         if (label === 'portrait') {
           /* The chip carries the word and NOT the glyph, asserted where it was spent: the emoji came
              off to buy this row, and portrait is the orientation that could not afford it. */

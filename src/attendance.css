@@ -421,16 +421,43 @@
 .attendance-pass-card-type.nurse    { background: rgba(231,76,60,0.3);  color: #ff9999; }
 .attendance-pass-card-type.quick    { background: rgba(39,174,96,0.3);  color: #7defa7; }
 .attendance-pass-card-out { font-size: 10px; color: rgba(255,255,255,0.45); white-space: nowrap; }
-/* THE ELAPSED CLOCK'S SLOT, HELD OPEN AND DELIBERATELY EMPTY. WO-2.9 owns the counter itself —
-   it is the half that has to survive iOS suspending a backgrounded PWA, and it was cut to Ship 2.
-   What is kept here is its GEOMETRY, at Roll Call!'s numbers: the big orange tabular-nums figure
-   sits between the info block and the buttons, and reserving that place now means the counter
-   lands into a card that already fits it instead of re-flowing one a teacher has learned. */
+/* THE ELAPSED CLOCK (WO-2.9), in the slot WO-2.11 held open for it and at the geometry that was
+   reserved then — Roll Call!'s numbers, unchanged: the big orange tabular-nums figure between the
+   info block and the buttons. Reserving the place is what let the counter land without re-flowing a
+   card the owner had already learned, and `tabular-nums` is what stops `1:09 → 1:10` shifting the
+   two buttons sideways sixty times a minute. */
 .attendance-pass-card-elapsed {
   font-size: 20px; font-weight: 800; color: #e67e22;
   font-variant-numeric: tabular-nums; white-space: nowrap;
   min-width: 52px; text-align: right;
 }
+/* AND THE TWO OVERDUE STATES, ON THE WHOLE CARD RATHER THAN ON THE FIGURE.
+
+   THIS IS THE PART THAT IS NOT LIFTED, and the departure is named here because everything else on
+   this card is Roll Call!'s. Over there an overdue pass is a SOUND — two AudioContext tone
+   sequences, five minutes and ten (dashboard.html:3488, 3499) — and the card itself never changes.
+   Planbook has no audio anywhere in it, and adding a first one here would be a feature of its own
+   with an iOS gesture-unlock problem attached (their own comment at dashboard.html:3449). So the
+   alert has to be VISIBLE, and the thing that has to be visible from across a room is the card and
+   not forty pixels of digits inside it.
+
+   THE COLOUR IS NOT THE ONLY CHANNEL, which is the rule Roll Call!'s own alert comment cites
+   (WCAG 1.4.1): the figure beside it reads `5:02` and then `10:14`, the elapsed time IS the
+   information, and the wash is the emphasis. The third channel is the announcement
+   src/attendance.js makes as each threshold is crossed.
+
+   Amber then red, at the style guide's warning and danger tones, mixed into the dark card the way
+   the type chips are — a wash at alpha rather than the flat hue, because #e74c3c on #0d1f2f is a
+   colour you have to look for and a lit card is one you cannot miss. */
+.attendance-pass-card.over-one {
+  background: rgba(230,126,34,0.16); border-color: rgba(230,126,34,0.55);
+}
+.attendance-pass-card.over-two {
+  background: rgba(231,76,60,0.18); border-color: rgba(231,76,60,0.7);
+}
+/* The figure goes with the card at the second threshold — to the same on-dark red the Nurse chip
+   wears, which is the readable weight of #e74c3c on this background rather than a second red. */
+.attendance-pass-card.over-two .attendance-pass-card-elapsed { color: #ff9999; }
 /* THE TWO BUTTONS ARE DIFFERENT SHAPES ON PURPOSE, and this is the half of "Return and Cancel
    cannot be confused at speed" that a stylesheet owns: Return is FILLED and green, Cancel is an
    OUTLINE that only turns red under a finger. The glyph and the word do the other two thirds. Both
@@ -843,6 +870,68 @@
 .attendance-report-cell { text-align: center; }
 .attendance-report-grid .attendance-report-mark { min-width: 20px; padding: 1px 4px; }
 
+/* ══════════════════ THE HALL PASS HISTORY (WO-2.9) ══════════════════
+
+   The registry's THIRD read-back dialog, and it wears the block above rather than a grammar of its
+   own: `.attendance-report-table`, `-head`, `-label`, `-num`, `-note` and the panel width are all
+   shared, because this is the same kind of thing about the same class read at the same desk. What
+   is named here is only what that block has no answer for — a door made of a name, the three pass
+   types as chips on a LIGHT surface, how a trip that ended in a dismissal is marked, and the note
+   row underneath a trip.
+
+   The door in the toolbar is `.attendance-passes-btn`, beside `.attendance-record-btn` and carrying
+   the same one rule for the same reason. */
+.attendance-passes-btn { flex-shrink: 0; }
+
+/* A name that opens that student's own trips. It is a button and it is drawn as the row it is in —
+   no fill, no border, the app's link-blue on hover — because a table of twenty-six students where
+   every row carries a coloured button is a table nobody can read down. `text-align: left` because a
+   <button> centres by default and the column beside it is a table's left-hand column. */
+.pass-history-who {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 0; border: none; background: none;
+  font-family: inherit; font-size: 12px; font-weight: 600; color: #1a1a2e; text-align: left;
+}
+.pass-history-door { cursor: pointer; }
+.pass-history-door:hover .pass-history-who-name { color: #5b6fcc; }
+.pass-history-who-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The three types, at the row buttons' own fills from the top of this sheet — the same wash the
+   teacher taps to send a student out is the one she reads the trip back in. Roll Call!'s pass
+   history table uses these three pairs too (dashboard.html:4728), which is where they came from. */
+.pass-history-type {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.pass-history-type.bathroom { background: #eef0fb; color: #5b6fcc; }
+.pass-history-type.nurse    { background: #fdeaea; color: #e74c3c; }
+.pass-history-type.quick    { background: #eafaf1; color: #27ae60; }
+
+/* HOW THE TRIP ENDED, when it did not end by the student walking back in. The style guide's
+   "special state" purple, which is the colour a dismissal already wears across the suite — and it
+   is a word rather than a colour on the time, because "back at 9:20" and "dismissed at 9:20" are
+   different facts and one of them must not be read off a hue. */
+.pass-history-ended {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px;
+  background: #f3eaff; color: #7c3aed; font-size: 10px; font-weight: 700;
+}
+
+/* The note the teacher typed while the student was out, on its own row under the trip — Roll Call!'s
+   `.sr-pass-note`, italic and indented, so a row of times stays a row of times. */
+.pass-history-note-row > * { border-bottom: 1px solid #f3f4f6; }
+.pass-history-note {
+  padding: 2px 8px 8px 26px; font-size: 11px; font-style: italic; color: #8090a8; line-height: 1.5;
+}
+.pass-history-note-label { font-style: normal; font-weight: 700; }
+
+/* Why the names are gone. src/shell.css's presentation strip in a dialog's width — same mode, same
+   purple, same sentence structure: what is on, and what to do about it. */
+.pass-history-quiet {
+  margin: 12px 0 4px; padding: 8px 12px; border-radius: 8px;
+  background: #f3eaff; border: 1.5px solid #c8a0f0; color: #7c3aed;
+  font-size: 12px; font-weight: 600; line-height: 1.55;
+}
+
 /* ── RESPONSIVE ── */
 /* Same order design/style-guide.md §6 names and both other sheets follow: (pointer: coarse)
    first, then the width blocks. */
@@ -1164,6 +1253,26 @@
   .attendance-report-grid th, .attendance-report-grid td { padding: 5px 5px; }
   .attendance-report-day { text-align: center; }
   .attendance-report-cell { text-align: center; }
+  /* ── THE HALL PASS HISTORY (WO-2.9) ──
+     One real touch target in this dialog: the name that opens a student's own trips. It is a row of
+     a table rather than a button-shaped button, so it takes its 44px as a MIN-HEIGHT and gets it
+     across the whole cell — a 26-row table where the tappable part is the twelve pixels of the text
+     itself is the WO-1.2 defect (a 44px wrapper around a 19px control) in a new place. The ←
+     back to the class wears `.class-action-btn` and is already covered by it, and is named for the
+     reason `.attendance-record-btn` above is named.
+
+     The rest are text: chips, a marker and two blocks of prose, listed here because a rule missing
+     from this block is a rule the next reader has to go and prove was considered. */
+  .pass-history-who { min-height: 44px; font-size: 13px; gap: 10px; }
+  .pass-history-door { min-height: 44px; }
+  .pass-history-who-name { overflow: hidden; text-overflow: ellipsis; }
+  .pass-history-type { font-size: 12px; padding: 3px 9px; }
+  .pass-history-ended { font-size: 11px; padding: 2px 7px; }
+  .pass-history-note { font-size: 12px; padding: 3px 9px 9px 28px; }
+  .pass-history-note-row > * { border-bottom: 1px solid #f3f4f6; }
+  .pass-history-note-label { font-weight: 700; }
+  .pass-history-quiet { font-size: 13px; padding: 10px 14px; }
+  .attendance-passes-btn { min-height: 44px; min-width: 44px; flex-shrink: 0; }
 }
 
 /* The tablet. There is no width rule here and there does not need to be one: the coarse block above
