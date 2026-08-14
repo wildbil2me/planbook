@@ -329,7 +329,7 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 30 | [WO-3.19](phase-3-gradebook.md#wo-319--the-overdue-tint-on-a-score-grid-column-head) The overdue tint on a column head | XS | | Aug 15, half a day |
 | 31 | [WO-2.9](phase-2-attendance.md#wo-29--pass-banner-overdue-alerts-and-history) Pass overdue alerts & history | M | | Aug 15–16 |
 | 32 | [WO-2.26](phase-2-attendance.md#wo-226--the-student-report-screen-shows-the-hall-passes) The Student Report screen shows the hall passes | S | | Aug 16, a sitting |
-| 33 | [WO-2.27](phase-2-attendance.md#wo-227--three-places-where-the-pass-work-says-one-thing-and-does-another) Three places the pass work says one thing and does another | XS | | Aug 16, an hour |
+| 33 | [WO-2.27](phase-2-attendance.md#wo-227--where-the-pass-work-says-one-thing-and-does-another) Where the pass work says one thing and does another | S | | Aug 16, a sitting |
 | 34 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
 | 35 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
 | 36 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
@@ -343,10 +343,15 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 44 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.27 was booked on 2026-08-14 at row #33, out of WO-2.9's verification, and the rows below it
-moved down one. **It is three findings that were correctly not acceptance failures**, which is
-exactly the kind that evaporates: WO-2.9 passed, so nothing in the tracker was ever going to carry
-them. They are placed here rather than late because one of the three is a live timer on a device that
-suspends, and the term opens ~Aug 24. **The other two are comments**, and this project has now booked
+moved down one. **Widened the same day, out of WO-2.26's**, from XS to S: two more comment debts and
+two harness gaps, and the count came out of its title because it rotted inside a day. **They are
+findings that were correctly not acceptance failures**, which is
+exactly the kind that evaporates: WO-2.9 and WO-2.26 both passed, so nothing in the tracker was ever
+going to carry
+them. They are placed here rather than late because one of them is a live timer on a device that
+suspends, and the term opens ~Aug 24. **One of the harness gaps is the sharper reason to keep it
+early**: WO-2.26's term window has an unproven upper bound, so a date filter that half-rots would
+ship green. **Most of the rest are comments**, and this project has now booked
 four work orders whose deliverable is a true sentence — WO-1.18, WO-3.19, WO-3.20 and this one. That
 is not four accidents either: every dispatch here is briefed by comments before it is briefed by
 anything else, so a comment that lies costs a whole run.*

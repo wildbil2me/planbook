@@ -2562,23 +2562,29 @@ both ends — do not write "this file does not import that module" above an impo
 
 ---
 
-## WO-2.27 — three places where the pass work says one thing and does another
+## WO-2.27 — where the pass work says one thing and does another
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.9
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.26
 
-**Booked 2026-08-14, out of WO-2.9's verification.** Three findings the verifier raised that were
-correctly **not** acceptance failures — nothing WO-2.9 promised is unmet — and that would otherwise
-live only in `.claude/dispatch/WO-2.9-result.md`. The rule that puts them here is the one written
-under the Ship 2 table when WO-3.19 and WO-3.20 were booked: *a follow-up that lives only in a
-dispatch result file is a follow-up nothing reads.*
+**Booked 2026-08-14, out of WO-2.9's verification, and widened the same day out of WO-2.26's.** Two
+dispatches' worth of findings that were correctly **not** acceptance failures — nothing either work
+order promised is unmet — and that would otherwise live only in `.claude/dispatch/WO-2.9-result.md`
+and `.claude/dispatch/WO-2.26-result.md`. The rule that puts them here is the one written under the
+Ship 2 table when WO-3.19 and WO-3.20 were booked: *a follow-up that lives only in a dispatch result
+file is a follow-up nothing reads.* **The count came out of the title on 2026-08-14** for the reason
+this work order is otherwise about: a number in a heading is a promise that rots the next time
+anything is added, and this one rotted within a day of being written.
 
-**Why it exists.** *They look like three chores and they are one defect.* In each case a comment
-makes a promise the code beside it does not keep — which is the failure mode this repository treats
-as expensive, because every dispatch here is briefed by comments before it is briefed by anything
-else. WO-3.19 was booked for the same reason one phase over and its note says the pixel was the
-smaller half.
+**Why it exists.** *Two kinds of debt, and the second is the one that can cost a term.* The first
+kind is a comment making a promise the code beside it does not keep — the failure mode this
+repository treats as expensive, because every dispatch here is briefed by comments before it is
+briefed by anything else. WO-3.19 was booked for the same reason one phase over and its note says the
+pixel was the smaller half. **The second kind is a check that cannot fail**, which is worse, because a
+comment that lies is found by the next reader and a green check that proves nothing is found by
+nobody. WO-2.26 went to real trouble to make its term-scoping check falsifiable and got the lower
+bound only; the two harness items below are that gap and its neighbour.
 
-**The three**
+**The comment debts**
 - **The pass clock outlives its banner.** `src/attendance.js:2833` — `paintPassBanner()` returns at
   line 2835 when the banner element is not in the document, so the `stopPassClock()` at line 2860 is
   unreachable on that path and navigating off the registry with a pass open leaves a 1-second
@@ -2600,12 +2606,45 @@ smaller half.
 - **A harness comment points at something that is not there.** `tools/verify-shell.mjs:10077` reads
   *"a build that fired off a variable would say it again after the reload below."* There is no reload
   below. The check is sound; the sentence explaining why it is sound is not.
+- **`src/shell.js`'s hook inventory claims to be one and is not.** The block at ~lines 200–235 lists
+  every delegated attribute in the app, four pass hooks among them (`data-pass-issue`,
+  `data-pass-return`, `data-pass-cancel`, `data-pass-note`) — and **none** of the three
+  `data-pass-history*` hooks WO-2.9 added. Checked 2026-08-14: zero mentions. An inventory is a
+  promise of completeness in a way a paragraph is not, so a missing row reads as "no such hook
+  exists" rather than as "this list is partial" — and this list is the first thing a dispatch looking
+  for the delegation seam finds. WO-2.26's first verifier raised it and correctly left it alone; it
+  was out of scope there and is exactly in scope here.
+
+**And two gaps in the harness, from WO-2.26's verification**
+
+Both are checks that pass and would keep passing if the thing they cover were removed. Neither is a
+failure of WO-2.26 — its verifier ran 746 of 746 and proved the scoping check falsifiable by deleting
+the whole term filter — but proving *a* filter is load-bearing is not proving *both bounds* are.
+
+- **Nothing is planted after `term.end`, so a dropped upper bound stays green.** Every trip in the
+  hall-pass fixture falls on or before the term's end, and the out-of-term trip WO-2.26 planted to
+  make scoping visible sits *before* `term.start`. So `passesForStudentInTerm()` reduced to
+  `(from)` only — the `to` bound dropped, the commonest way a date window rots — passes the suite.
+  **The fix is one more planted trip, dated after `term.end`**, and the check that proves the fix is
+  the same one the verifier already ran by hand: drop the bound in a copy of the tree and watch it go
+  red. A bound with no trip beyond it is decoration.
+- **WO-3.7's `#scoresBody` route is walked but not asserted.** WO-3.7's block opens the Student Report
+  screen through `#scoresBody [data-student-detail="…"]` and WO-2.26's asserts the card — but on its
+  own route. Nothing checks the card is on the screen *when it is reached from the score grid*, which
+  is the route a teacher actually uses most. It is one assertion on a walk that already happens.
 
 **Deliverables**
 - The clock is stopped on every path that leaves the banner, including the one that returns early.
 - The stacking argument is written down at the point a reader will look for it, with the date it was
   confirmed on the device.
 - `tools/verify-shell.mjs:10077` says what the check actually rests on.
+- `src/shell.js`'s hook inventory lists the three `data-pass-history*` hooks, or says in one line that
+  it is not exhaustive. **Either discharges it; a third option — adding one row and leaving two out —
+  discharges nothing** and leaves the same false promise one row shorter.
+- **A trip planted after `term.end`**, and the upper bound of `passesForStudentInTerm()` thereby made
+  load-bearing.
+- **One assertion that the hall-pass card is on the Student Report screen when it is reached from the
+  score grid**, on the walk WO-3.7's block already takes.
 
 **Acceptance**
 - [ ] Navigating off the registry with a pass open leaves no interval running, and there is a check
@@ -2614,6 +2653,14 @@ smaller half.
 - [ ] A reader of `src/shell.js:747` can tell why WO-2.9's surface is not registered there without
       opening a dispatch result file or this work order.
 - [ ] `tools/verify-shell.mjs:10077` describes the mechanism the check actually uses.
+- [ ] A reader of `src/shell.js`'s hook inventory who searches it for `data-pass-history` either finds
+      the hooks or finds a sentence telling them the list is partial.
+- [ ] **The term window's upper bound is load-bearing:** with a trip planted after `term.end`,
+      reducing `passesForStudentInTerm()` to its `from` bound alone turns the suite red. State the
+      count in the result file, the way WO-2.26's verifier stated 739/746 for the whole-filter case —
+      *"it would go red"* is the claim this line exists to stop anyone making by reading.
+- [ ] The hall-pass card is asserted present on the Student Report screen reached from
+      `#scoresBody [data-student-detail="…"]`, not only on WO-2.26's own route.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
@@ -2623,3 +2670,13 @@ be reasoned about again by everyone after. **Do not delete the promise in `src/a
 instead of making it true** — "a run with an empty room costs nothing" is a real guarantee about a
 device that suspends, and the cheap fix is to honour it on the fourth path rather than to stop
 claiming it.
+
+**No `src/` file needs to change for either harness gap**, and if one starts to, stop: both are
+fixtures and assertions, and a source edit made to satisfy a test this work order is writing is the
+tail wagging the dog. **The planted trip is put back the way WO-2.26's block puts its own back** —
+that block already plants trips and terms and restores both at its foot, and a second plant that
+leaks would be read as a scoping bug by every check after it. **`src/shell.js:747` is unchanged and
+its bullet above is not an instruction to register anything**: WO-2.26 *did* add
+`detail.renderDetail()` there, guarded on the view being on screen, so the standing instruction now
+has two obeyers and one documented exception — which is the state the missing comment has to
+describe, and the reason that bullet got no wider when this work order did.
