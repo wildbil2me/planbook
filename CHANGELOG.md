@@ -38,6 +38,9 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **The score grid answers both axes.** `←` and `→` move one assignment along the row, and step
+  aside for the caret when you are correcting a number.
+
 - **A new assignment can be made from the score grid.** The quiz you just gave gets its column
   without leaving the screen: **+ New assignment** sits above the grid beside **⌨ Keys** and opens
   the same editor the assignment list opens — same fields, same rules, no second set of them — with

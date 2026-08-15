@@ -1030,6 +1030,105 @@ function moveWithinColumn(input, step) {
 }
 
 /*
+  MOVING ACROSS THE ROW (WO-3.16) — the other half of a two-dimensional grid, and until it was built
+  a teacher fixing a handful of cells along one student's row had the keyboard for the column and the
+  trackpad for everything else.
+
+  IT CLAMPS AND SAYS SO, exactly as moveWithinColumn() does above, because a different edge behaviour
+  on this axis would read as a preference rather than as a rule. What it SAYS is shorter, and that is
+  the one thing decided here rather than copied:
+
+    down a column  — "<assignment>: that is the last student. 25 of 25 entered."
+    across a row   — "<student>: that is the last assignment."
+
+  The fixed thing is named first on both axes — the column being worked down, the student being
+  worked along — and the count is dropped. "N of M entered" down a column is progress through a task
+  the teacher is in the middle of and is what tells her the column is finished. Along a row there is
+  no such task: the columns with no score in them mostly have no score for anybody yet. Worse, "4 of
+  10 entered" spoken beside a student's name invites being heard as how that student is doing, and
+  the grade two columns to the left is this app's only answer to that question — weighted, and
+  computed by the engine rather than counted here.
+
+  THE CARET IS LEFT ALONE AT THE EDGE, where moveWithinColumn() re-selects, and this is the same
+  asymmetry caretCanLeave() below is about: this axis can be pressed with the caret parked inside a
+  number, and re-selecting would throw away the position the teacher put it in. Where she arrived by
+  keyboard the value is already selected and doing nothing keeps it that way, so the overtype
+  affordance survives either way.
+*/
+function moveAcrossRow(input, step) {
+  const at = resolveCell(input);
+  if (!at) return false;
+  /* Document order along the row IS the drawn column order, the same way the column mover reads the
+     drawn rows: a check that mapped stored order to screen order would go quietly wrong the day a
+     column is inserted. */
+  const row = Array.prototype.slice.call(document.querySelectorAll('#' + BODY_ID
+    + ' tr[data-score-row="' + at.student.id + '"] [data-score-cell]'));
+  const index = row.indexOf(input);
+  if (index === -1) return false;
+  const next = row[index + step];
+  if (!next) {
+    announce(fullName(at.student) + ': that is the ' + (step > 0 ? 'last' : 'first') + ' assignment.');
+    return true;
+  }
+  next.focus();
+  next.select();
+  return true;
+}
+
+/*
+  WHETHER A SIDEWAYS ARROW BELONGS TO THIS GRID OR TO THE NUMBER IN THE CELL (WO-3.16), which is the
+  whole of that work order rather than a detail of it.
+
+  `ArrowLeft` and `ArrowRight` are ALSO how a caret moves inside a score being corrected. Taking them
+  unconditionally would buy a sideways move at the price of making the middle digit of `100`
+  unreachable without the pointer — a worse tax than the one the move removes. So THE HORIZONTAL PAIR
+  IS DELIBERATELY NOT SYMMETRIC WITH THE VERTICAL ONE: up and down mean nothing to a caret in a
+  one-line field, and left and right mean everything. The edge BEHAVIOUR is symmetric; which presses
+  reach the edge at all is not.
+
+  THE RULE: the key moves a cell only when the caret has nowhere left to go in the direction pressed.
+
+    · the field is empty — there is no number to move through;
+    · the whole value is selected, which is what every arrival leaves behind (moveWithinColumn(),
+      moveAcrossRow() and the flag bar all select) and is "ready to overtype" rather than a caret
+      position somebody chose;
+    · or the caret is collapsed against that end — at the end of the value for `→`, at 0 for `←`.
+
+  Anything else is an edit in progress, and the key goes back to the browser by answering false —
+  the same contract every other key on this screen has, stated in the block below. A PARTIAL
+  selection counts as an edit position: it is something the teacher made, and collapsing it is
+  exactly what the arrow natively does with it.
+
+  WHAT THE RULE COSTS, written down because it was accepted rather than missed: in a cell arrived at
+  BY KEYBOARD, with the value selected, no arrow puts a caret inside the number — both of them move a
+  cell. The ways in are a tap, which puts the caret where the finger went, and the first digit typed,
+  which collapses the selection and hands the arrows straight back. The alternative was a first press
+  that only collapses the selection and a second that moves; it was refused because stepping four
+  columns along a row would take eight presses and the odd-numbered ones would look like keys that
+  were not received — the failure the sentence at the edge exists to prevent.
+
+  MODIFIERS ARE NOT READ, because src/shell.js passes a key name rather than an event and the
+  vertical pair has never read them either. `Shift`+`←` over a full selection therefore moves a cell
+  where a plain text field would shrink the selection. Named rather than fixed: the fix is a wider
+  seam through shell.js for a gesture this screen has no other use for.
+*/
+function caretCanLeave(input, step) {
+  const len = String(input.value).length;
+  if (!len) return true;
+  const from = input.selectionStart;
+  const to = input.selectionEnd;
+  /* Both read as numbers here because the cells are `type="text"` with `inputmode="decimal"` and not
+     `type="number"`, which answers null to this question — see scoreCell(), where that choice is
+     made for a different reason and this one now rides on it. A reading that is not a number is one
+     this rule cannot be built on, so it is treated as a caret with nowhere to go: the move is the
+     behaviour the key is FOR, and losing it silently is the worse of the two failures. */
+  if (typeof from !== 'number' || typeof to !== 'number') return true;
+  if (from === 0 && to === len) return true;
+  if (from !== to) return false;
+  return step > 0 ? from === len : from === 0;
+}
+
+/*
   THE GRID'S KEYS, routed from src/shell.js's `keydown` listener because focus is inside an <input>
   and the registry's own handler correctly refuses to look at those.
 
@@ -1058,6 +1157,11 @@ export function handleScoreKey(key, input) {
   if (key === 'Enter') return moveWithinColumn(input, 1);
   if (key === 'ArrowDown') return moveWithinColumn(input, 1);
   if (key === 'ArrowUp') return moveWithinColumn(input, -1);
+
+  /* WO-3.16, and the `&&` is the contract rather than a shorthand: caretCanLeave() answering false
+     answers false from here, so src/shell.js does not preventDefault and the caret gets the key. */
+  if (key === 'ArrowRight') return caretCanLeave(input, 1) && moveAcrossRow(input, 1);
+  if (key === 'ArrowLeft') return caretCanLeave(input, -1) && moveAcrossRow(input, -1);
 
   if (key === 'Backspace' || key === 'Delete') {
     /* Native editing while there is text to edit — a teacher correcting 187 to 18 expects a

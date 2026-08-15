@@ -4896,6 +4896,91 @@ for a tap that wrote nothing. That is written down at the chain rather than left
 
 ---
 
+### WO-3.16 — Left and right arrows move across the grid
+
+**The rule the work order refused to decide in advance, and what it came out as.** `←` and `→` are
+also how a caret moves inside a score being corrected, so they belong to the grid only when the caret
+has nowhere left to go in the direction pressed: the field is empty, the whole value is selected —
+which is what every keyboard arrival leaves behind — or the caret is collapsed against that end.
+Anything else is an edit in progress, `handleScoreKey()` answers `false`, and `src/shell.js` does not
+`preventDefault`, so the browser moves the caret. **The edge behaviour is symmetric with the vertical
+pair and which presses reach the edge deliberately is not**: up and down mean nothing to a caret in a
+one-line field, and left and right mean everything.
+
+**What it costs, accepted rather than missed.** In a cell arrived at *by keyboard*, with the value
+selected, neither arrow puts a caret inside the number — both move a cell. The ways in are a tap and
+the first digit typed, which collapses the selection and hands the arrows straight back. The
+alternative — a first press that only collapses the selection and a second that moves — would make
+four columns eight presses, and the odd-numbered ones would read as keys that were not received.
+
+**What it says at the edge, and what it does not.** *"Score Row12: that is the first assignment."*
+The fixed thing is named first on both axes — the column being worked down, the student being worked
+along — and the count is dropped. *"N of M entered"* down a column is progress through a task the
+teacher is in the middle of; along a row it would count one student's blanks, which is not a task
+anybody is finishing, and a bare *"4 of 10 entered"* beside a name invites being heard as how that
+student is doing. The grade two columns to the left is this app's only answer to that question, and
+it is weighted.
+
+- [x] `→` from a full cell moves **one column right along the drawn row**, same student, with the
+      arrived-at value selected for overtyping — `wo35-a1 "72" → wo35-a2 "15" → wo35-a3 "10"`, each
+      arriving selected `0..2`, asserted as an **index along the row** rather than by assignment id so
+      that a grid drawing its columns in another order could not pass.
+- [x] `←` at the first assignment **clamps rather than wrapping**: the caret and its selection do not
+      move, the whole score map is byte-identical either side of the press, and the live region says
+      *"Score Row12: that is the first assignment."* — **exactly once**, counted through a
+      `MutationObserver` on `#srLive` rather than inferred from what the region holds afterwards,
+      because `announce()` replaces its text and a second sentence would leave one `textContent`
+      behind and read as a single one. **The right edge is pressed too**, added on the correction
+      round: `→` walked out to the tenth of ten drawn columns with the key itself says *"Score
+      Row12: that is the last assignment."* — once, with the caret unmoved and the score map
+      byte-identical. Until then that sentence, which the Deliverables name by hand, existed only as
+      the `step > 0` arm of a ternary no keystroke had reached.
+- [x] **With the caret mid-value, `←` moves the caret and not the cell.** Driven with real keystrokes:
+      15 corrected to 100 over the selection, which leaves the caret at 3, then two `←` presses take
+      it to 2 and to 1 with the cell unchanged and `{"v":100}` still stored. Pressed at the column
+      **one in from the edge**, so there is a column to its left for a build that stole the key to
+      land on — at the first column it would have passed by geography.
+- [x] The vertical pair is unchanged and its checks are green unchanged — `Enter` at the bottom of a
+      column, `↑` mid-column, and `Esc` twice, all still passing with no edit to their code. The two
+      movers are separate functions; `moveWithinColumn()` was not refactored into a shared one.
+- [x] Twenty-five scores down a column is still **twenty-five keystroke-groups and no mouse** — the
+      pre-existing check, with its page-side mouse counter still reading 0.
+
+*The desk half is `verify-shell.mjs`, **762 of 762 with zero skips**, in 246s on the corrected tree
+(761 in 253s on the first) — four checks added at
+the foot of the existing WO-3.5 score-grid block rather than in a section of their own, because the
+horizontal pair needs twenty-five rows and ten drawn columns to move across and a second fixture
+could only have been that one retyped. They go last in the section deliberately: the third types a
+correction into a cell in order to press `←` inside it, and every arithmetic claim above is made
+against case 1's row, so row **s12** is used and case 1's **s20** is never touched. The fourth
+carries on from where the third leaves the caret and walks to the right edge with the key, so the
+two presses that only move the caret inside `100` are part of what it proves. `wo-sweep.mjs` is
+**18 checks, 16 passed, 0 failed, 2 to review**, and both REVIEWs are the pair WO-3.19 recorded,
+unchanged: no line added here names a due date or a support field. `sw.js`'s `CACHE` went to
+`planbook-shell-v62`. **No new CSS and no new control** — the arrows are keys, and the one legend
+entry added to `index.html` reuses `.scores-key`, so there is nothing new for the coarse block to
+hold at 44px.*
+
+*The correction round was two visible strings and nothing else. The legend entry and the standing
+hint both said the pair steps sideways **"from the end of the number"**, which is true of `→` and
+backwards for `←`: the implemented rule leaves the cell when the caret has run out of number **in
+the direction pressed**, so `←` goes sideways from position 0. The code and the rule were right and
+the documentation was wrong — the worse way round for a key whose whole defect mode is reading as
+"not received". They now say **"once the caret runs out of number in that direction"** (legend) and
+name both ends explicitly (hint). The wording here in `TESTING.md` was correct throughout and is
+unchanged.*
+
+*Two things a desk cannot answer and one it can, all three left open. **Nothing here was pressed on
+the iPad**, which for this work order is a smaller gap than usual — a hardware keyboard is optional on
+that device and the on-screen number pane has no arrow keys — but "optional" is not "absent", and a
+Smart Keyboard is how the owner grades at a desk. **The `Shift`+arrow case is named in the code and
+not fixed**: `src/shell.js` passes `handleScoreKey()` a key name rather than an event, so a modified
+arrow is read as a plain one, exactly as the vertical pair has always read `Shift`+`↓`. And **nothing
+asserts what a tap-then-arrow does**, because where the caret lands from a tap is the browser's
+answer to where the finger went.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

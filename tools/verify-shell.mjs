@@ -14753,6 +14753,12 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
     const skEsc = () => sk('Escape', 'Escape', 27);
     const skBack = () => sk('Backspace', 'Backspace', 8);
     const skUp = () => sk('ArrowUp', 'ArrowUp', 38);
+    /* WO-3.16's pair, and they take the same `rawKeyDown` shape as Backspace above for the same
+       reason it matters here: the check below needs the BROWSER's own caret movement when
+       src/scores.js hands the key back, and that path is the one the cleared-cell check already
+       proves reaches the editing pipeline. */
+    const skRight = () => sk('ArrowRight', 'ArrowRight', 39);
+    const skLeft = () => sk('ArrowLeft', 'ArrowLeft', 37);
     const skLetter = (L) => sk(L, 'Key' + L, L.charCodeAt(0), L);
     const skDigits = async (n) => {
       for (const d of String(n).split('')) await sk(d, 'Digit' + d, d.charCodeAt(0), d);
@@ -15402,6 +15408,171 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             + (cleared.keys.indexOf('wo35-p1') >= 0) + '); nulls with no flag anywhere = '
             + JSON.stringify(cleared.nulls) + '; bare numbers anywhere = '
             + JSON.stringify(cleared.bare));
+
+        /*
+          ── WO-3.16: THE HORIZONTAL PAIR, AND THE CARET RULE THAT DECIDES WHO OWNS THE KEY ──
+
+          Three checks inside this section rather than in one of their own, because they need what
+          this fixture already is: twenty-five rows, ten drawn columns, and scores typed into them
+          from the keyboard. They sit at the FOOT of it deliberately — every arithmetic claim above
+          is made against case 1's row, and the third of these types a correction into a cell in
+          order to press `←` inside it. Row s12 is used rather than case 1's s20 so that nothing
+          above can be disturbed by what happens down here.
+
+          THE MIDDLE COLUMN IS FILLED FIRST. A row needs three ADJACENT numbers before "moved one
+          column and selected the value" can be told apart from "moved somewhere and found
+          something": wo35-a2 holds one cell in this fixture and it belongs to s20.
+
+          ACCEPTANCE LINE 3 IS THE REASON THIS IS DRIVEN AND NOT REASONED ABOUT. The claim is that a
+          real `←` at a partly corrected number reaches the CARET rather than the grid, and that is a
+          claim about what src/shell.js does with handleScoreKey()'s return value. Setting
+          `selectionStart` from script and calling the handler would be asserting the rule against
+          itself; every keystroke below goes at the page like the rest of this section's.
+        */
+        await focusCell(A2, 'wo35-s12');
+        await skDigits(15);
+        /* Arrived at with a key, so the value is SELECTED — the state a teacher is in after Enter,
+           and the one the caret rule reads as "ready to overtype" rather than as a caret position
+           somebody chose. */
+        await focusCell(A1, 'wo35-s11');
+        await skEnter();
+
+        /* Where the caret is, which cell it is in, and WHERE THAT CELL IS ALONG THE DRAWN ROW —
+           an index rather than an id, because "one assignment right" is a claim about the order on
+           screen and an id comparison would still pass if the grid drew its columns in another
+           order. */
+        const ROW12 = `(function(){
+          var a = document.activeElement;
+          var row = Array.prototype.slice.call(document.querySelectorAll(
+            '#scoresBody tr[data-score-row="wo35-s12"] [data-score-cell]'));
+          return { cell: a ? a.getAttribute('data-score-cell') : '',
+                   student: a ? a.getAttribute('data-score-student') : '',
+                   index: row.indexOf(a), columns: row.length,
+                   value: a ? a.value : '',
+                   from: a ? a.selectionStart : -1, to: a ? a.selectionEnd : -1 }; })()`;
+
+        const atFirst = await evalJs(ROW12);
+        await skRight();
+        const right1 = await evalJs(ROW12);
+        await skRight();
+        const right2 = await evalJs(ROW12);
+        check('ArrowRight from a full cell moves one assignment right along the drawn row, same student, with the arrived-at value selected for overtyping',
+          atFirst.columns === 10 && atFirst.index === 0 && atFirst.cell === A1
+            && atFirst.value === '72'
+            && right1.index === 1 && right1.student === 'wo35-s12' && right1.value === '15'
+            && right1.from === 0 && right1.to === right1.value.length
+            && right2.index === 2 && right2.student === 'wo35-s12' && right2.value === '10'
+            && right2.from === 0 && right2.to === right2.value.length,
+          JSON.stringify(atFirst) + ' -> ' + JSON.stringify(right1) + ' -> '
+            + JSON.stringify(right2));
+
+        await skLeft();
+        const left1 = await evalJs(ROW12);
+        await skLeft();
+        const left2 = await evalJs(ROW12);
+        /* "SAYS SO ONCE" IS COUNTED, not inferred from what the region holds afterwards: the live
+           region is REPLACED on every announcement (src/live-region.js), so a second sentence would
+           leave exactly one textContent behind and read as a single one. Every non-empty write
+           between the press and the read is collected instead. */
+        await evalJs(`(function(){
+          window.__wo316said = [];
+          var el = document.getElementById('srLive');
+          window.__wo316obs = new MutationObserver(function(){
+            var t = (el.textContent || '').trim();
+            if (t) window.__wo316said.push(t); });
+          window.__wo316obs.observe(el, { childList: true, characterData: true, subtree: true });
+          return 1; })()`);
+        const beforeClamp = await readDoc();
+        await skLeft();
+        const clamped = await evalJs(ROW12);
+        const saidAtEdge = await evalJs('(function(){ window.__wo316obs.disconnect();'
+          + ' return window.__wo316said; })()');
+        const afterClamp = await readDoc();
+        check('ArrowLeft at the first assignment clamps rather than wrapping — the caret and its selection do not move, no score is written, and the live region says so exactly once',
+          left1.index === 1 && left2.index === 0 && left2.cell === A1
+            && clamped.index === 0 && clamped.cell === A1 && clamped.student === 'wo35-s12'
+            && clamped.value === left2.value && clamped.from === left2.from
+            && clamped.to === left2.to
+            && saidAtEdge.length === 1 && /^Score Row12: /.test(saidAtEdge[0])
+            && /that is the first assignment\.$/.test(saidAtEdge[0])
+            && afterClamp.all === beforeClamp.all,
+          JSON.stringify(left2) + ' -> ' + JSON.stringify(clamped) + '; said '
+            + JSON.stringify(saidAtEdge) + '; scores byte-identical = '
+            + (afterClamp.all === beforeClamp.all));
+
+        /*
+          ACCEPTANCE LINE 3, at the cell one column IN from the edge — so there is a column to the
+          left for a build that stole the key to land on, which is what makes this fail rather than
+          pass by geography. 15 is corrected to 100 the way a teacher does it, over the selection,
+          which collapses the caret to the end of what she typed; the two `←` presses after it are
+          the caret's, and the cell must still be the one she is correcting.
+        */
+        await skRight();
+        await skDigits(100);
+        const typedIn = await evalJs(ROW12);
+        await skLeft();
+        const caret1 = await evalJs(ROW12);
+        await skLeft();
+        const caret2 = await evalJs(ROW12);
+        const midEdit = await readDoc();
+        const midCell = (JSON.parse(midEdit.all)[typedIn.cell] || {})['wo35-s12'] || null;
+        check('with the caret mid-value ArrowLeft moves the caret and not the cell — driven with real keystrokes at a partly corrected number, with a column to its left it does not take',
+          typedIn.index === 1 && typedIn.value === '100'
+            && typedIn.from === 3 && typedIn.to === 3
+            && caret1.index === 1 && caret1.cell === typedIn.cell && caret1.value === '100'
+            && caret1.from === 2 && caret1.to === 2
+            && caret2.index === 1 && caret2.cell === typedIn.cell && caret2.value === '100'
+            && caret2.from === 1 && caret2.to === 1
+            && !!midCell && midCell.v === 100,
+          JSON.stringify(typedIn) + ' -> ' + JSON.stringify(caret1) + ' -> '
+            + JSON.stringify(caret2) + '; stored ' + JSON.stringify(midCell));
+
+        /*
+          AND THE RIGHT EDGE, which the three checks above never press. *"That is the last
+          assignment"* is named in the work order's own Deliverables, and until this check it
+          existed only as the `step > 0` arm of a ternary inside moveAcrossRow() — the half of the
+          clamp no keystroke had ever reached, so a build that announced the wrong end (or nothing)
+          on the right would have gone green.
+
+          WALKED OUT TO THE EDGE WITH THE KEY rather than with a click, because a click puts the
+          caret where the coordinate landed and this is a claim about a caret with nowhere left to
+          go. The first presses are still the CARET's — it is sitting at 1 inside `100` from the
+          check above — and every press after that is a column, which is why the walk is a capped
+          loop against the drawn index rather than a counted number of presses.
+        */
+        let atLastCol = await evalJs(ROW12);
+        let stepsRight = 0;
+        while (atLastCol.index >= 0 && atLastCol.index < atLastCol.columns - 1 && stepsRight < 20) {
+          await skRight();
+          atLastCol = await evalJs(ROW12);
+          stepsRight++;
+        }
+        await evalJs(`(function(){
+          window.__wo316said = [];
+          var el = document.getElementById('srLive');
+          window.__wo316obs = new MutationObserver(function(){
+            var t = (el.textContent || '').trim();
+            if (t) window.__wo316said.push(t); });
+          window.__wo316obs.observe(el, { childList: true, characterData: true, subtree: true });
+          return 1; })()`);
+        const beforeRightEdge = await readDoc();
+        await skRight();
+        const rightClamped = await evalJs(ROW12);
+        const saidAtRight = await evalJs('(function(){ window.__wo316obs.disconnect();'
+          + ' return window.__wo316said; })()');
+        const afterRightEdge = await readDoc();
+        check('ArrowRight at the last assignment clamps the same way and says THAT end — "that is the last assignment", exactly once, with nothing moved and nothing written',
+          atLastCol.columns === 10 && atLastCol.index === atLastCol.columns - 1
+            && rightClamped.index === atLastCol.index && rightClamped.cell === atLastCol.cell
+            && rightClamped.student === 'wo35-s12'
+            && rightClamped.value === atLastCol.value && rightClamped.from === atLastCol.from
+            && rightClamped.to === atLastCol.to
+            && saidAtRight.length === 1 && /^Score Row12: /.test(saidAtRight[0])
+            && /that is the last assignment\.$/.test(saidAtRight[0])
+            && afterRightEdge.all === beforeRightEdge.all,
+          stepsRight + ' press(es) out to ' + JSON.stringify(atLastCol) + ' -> '
+            + JSON.stringify(rightClamped) + '; said ' + JSON.stringify(saidAtRight)
+            + '; scores byte-identical = ' + (afterRightEdge.all === beforeRightEdge.all));
 
         /*
           THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE. The grade column's

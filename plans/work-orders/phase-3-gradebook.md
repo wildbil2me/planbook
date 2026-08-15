@@ -1219,7 +1219,7 @@ visited anyway.
 
 ## WO-3.16 — left and right arrows move across the grid
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
 **Closes roadmap** *(no box.)*
 
 **Booked 2026-08-10 from the owner's first sitting with the grid.** `ArrowDown` and `ArrowUp` move
@@ -1254,12 +1254,12 @@ caret in a one-line field and left and right mean everything.**
 dialog partly so that Tab still reaches the rest of the screen.
 
 **Acceptance**
-- [ ] `ArrowRight` from a full cell moves one assignment right, same student, value selected.
-- [ ] `ArrowLeft` at the first assignment clamps, says so once, and moves nothing.
-- [ ] **With the caret mid-value, `ArrowLeft` moves the caret and not the cell** — driven with a real
+- [x] `ArrowRight` from a full cell moves one assignment right, same student, value selected.
+- [x] `ArrowLeft` at the first assignment clamps, says so once, and moves nothing.
+- [x] **With the caret mid-value, `ArrowLeft` moves the caret and not the cell** — driven with a real
       keystroke at a partly corrected number, not reasoned about.
-- [ ] The vertical pair still behaves exactly as WO-3.5 shipped it; its checks stay green unchanged.
-- [ ] Twenty-five scores down a column is still twenty-five keystroke-groups and no mouse.
+- [x] The vertical pair still behaves exactly as WO-3.5 shipped it; its checks stay green unchanged.
+- [x] Twenty-five scores down a column is still twenty-five keystroke-groups and no mouse.
 
 ## WO-3.17 — the Assigned and Due fields
 

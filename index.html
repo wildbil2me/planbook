@@ -1044,11 +1044,22 @@
                 title="Clear the cell back to blank. Blank means ungraded and changes no grade.">Clear</button>
       </div>
 
-      <!-- Closed to begin with, opened by the button above. The two keys at the top do what the
-           browser and src/shell.js already do; the four below are the same four the bar carries. -->
+      <!-- Closed to begin with, opened by the button above. Three kinds of key: `↵` and `⇥` are
+           documented here but belong to src/shell.js and to the browser's tab order; the arrow pair
+           is this module's own and gives the key back to the browser inside a number
+           (caretCanLeave() in src/scores.js); the four below are the same four the bar carries. -->
       <div class="scores-keys hidden" id="scoresKeys">
         <span class="scores-key"><kbd>↵</kbd> next student, down the column</span>
         <span class="scores-key"><kbd>⇥</kbd> next assignment, across the row</span>
+        <!-- WO-3.16. The pair is listed with its condition attached, because the condition is the
+             whole of the key: inside a number it is still the caret's, and it steps to the next
+             assignment only once the caret has run out of number to cross IN THE DIRECTION PRESSED
+             — the end of the score for `→`, the start of it for `←`. The first wording here said
+             "from the end of the number", which is true of one key and backwards for the other: a
+             teacher who reads that, presses `←` at the end of `100` and watches the caret move
+             concludes the key was not received, which is the exact failure the sentence at the edge
+             was built to prevent. Any rewording keeps the asymmetry visible. -->
+        <span class="scores-key"><kbd>←</kbd> <kbd>→</kbd> across the row, once the caret runs out of number in that direction</span>
         <span class="scores-key"><kbd>L</kbd> late</span>
         <span class="scores-key"><kbd>M</kbd> missing</span>
         <span class="scores-key"><kbd>X</kbd> excused</span>
@@ -1069,7 +1080,11 @@
         <strong>Enter</strong>, and the caret drops to the next student in the same assignment — so a
         class of twenty-five is twenty-five numbers and no mouse. It stops at the last name rather
         than wrapping round to the first. <strong>Tab</strong> steps sideways to the next assignment,
-        and <strong>↑ ↓</strong> move within the column as well. Everything on this grid is
+        and <strong>↑ ↓</strong> move within the column as well. <strong>← →</strong> step sideways
+        too, once the caret has run out of number to cross in the direction you press — the end of
+        the score for <strong>→</strong>, the start of it for <strong>←</strong>. Inside a number
+        they still move the caret, so a score can be corrected without the mouse. Everything on this
+        grid is
         <strong id="scoresHintTerm"></strong>, and nothing else. Every keystroke saves as you make it;
         there is nothing to submit, and <strong>Escape</strong> does nothing here because there is no
         dialog to close.

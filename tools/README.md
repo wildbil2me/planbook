@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 760 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 764 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -923,7 +923,20 @@ inadvertently deleted WO-3.14's standalone precision check while folding those a
 case-1 check. The correction restores that pre-existing call site under its original name, including
 the `docs/grade-math-cases.md` reference, and removes the folded assertions, so WO-3.15's final
 inventory is one added and none deleted. **The run prints 758**, measured on the corrected tree:
-`758 checks · 758 passed · 0 failed · 0 skipped`, 252s. *(The
+`758 checks · 758 passed · 0 failed · 0 skipped`, 252s. **WO-3.16 moved it from 760 to 763**: three
+literal call sites, none in a loop and none a failure arm, added at the FOOT of that same WO-3.5
+score-grid block — the horizontal pair needs twenty-five rows and ten drawn columns to move across,
+and a second fixture would have been this one retyped. They go last in the section on purpose: the
+third of them types a correction into a cell in order to press `←` inside it, and every arithmetic
+claim above it is made against case 1's row. **The run prints 761**, measured on the delivered tree:
+`761 checks · 761 passed · 0 failed · 0 skipped`, 253s. **Its correction round moved it from 763 to
+764**: one literal call site in that same block, not in a loop and not a failure arm, pressing the
+RIGHT edge — the three checks it joins walked left to the clamp and never right, so *"that is the
+last assignment"*, which the work order's Deliverables name by hand, lived only as the `step > 0`
+arm of a ternary that no keystroke reached. The correction itself was two visible strings in
+`index.html` that described `←` backwards; the check is here because the string the strings got
+wrong was one nothing asserted. **The run prints 762**, measured on the corrected tree:
+`762 checks · 762 passed · 0 failed · 0 skipped`, 246s. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
