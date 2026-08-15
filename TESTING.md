@@ -5190,6 +5190,80 @@ this file is for.*
   the sweep still reads 629 `check()` call sites, because the change is one line and a comment. No
   abort was ever observed in that file; the change is on exposure, not on a reproduction.
 
+### WO-8.10 — the app cannot say which build it is running
+
+**What a teacher sees.** One line at the foot of the About modal's *This build* section, written
+every time the panel opens from what `caches.keys()` answers on that device. Five states, and none
+of them is blank:
+
+| What Cache Storage holds | The line |
+|---|---|
+| one shell cache | *"Running from **planbook-shell-v64** — one stored copy on this device, which is what it should be."* — 11px hint grey, read past in a second |
+| more than one | *"⚠ More than one copy of Planbook is stored on this device: **A** and **B**. The last update did not finish, so parts of what you are looking at may still be coming from the older one. Quit Planbook from the app switcher and open it again — if this line still names more than one, send this screen to whoever set Planbook up."* — the style guide's caution amber (§1, the install banner's and the backup nag's) |
+| none | *"No copy of Planbook is stored on this device yet, so it will not open without a network…"* |
+| `window.caches` absent | *"This browser will not let Planbook see its own stored copies, so it cannot tell you which build it is running. That is not the same as none being stored."* |
+| the read rejected | *"Planbook could not read its stored copies on this device… The browser said: `<reason>`"* |
+
+**Only the second state is amber, deliberately.** The caution palette has to mean exactly one thing
+for a teacher to act on it, and *"Planbook cannot answer"* is not the same fact as *"Planbook has
+answered and the answer is bad"*.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.10.*
+
+- [x] **Acceptance 1 — a freshly loaded app names the running cache, and it matches `sw.js`.**
+      `caches.keys()` filtered to this app reads `["planbook-shell-v64"]`; the modal, opened by
+      clicking the real *About Planbook* button in the header, reads *"Running from
+      planbook-shell-v64 — one stored copy…"* with
+      `planbook-shell-v64` in its own `<strong>` and no warning class. The comparison is against
+      `CACHE` **parsed out of `sw.js` at run time**, never a number typed into the harness.
+- [x] **Acceptance 2 — the second cache is planted by the harness and both are named.**
+      `caches.open('planbook-shell-v1')` from the page, then the modal reads *"⚠ More than one copy
+      of Planbook is stored on this device: planbook-shell-v64 and planbook-shell-v1…"*, drawn on
+      `rgb(255, 248, 230)` in `rgb(138, 109, 26)` — the caution amber measured as a computed colour
+      rather than read off a class name. Deleting the plant puts the line back to one name with the
+      amber gone, which is what makes the three checks above claims about Cache Storage rather than
+      about text.
+- [x] **Acceptance 3 — unavailable says which failure.** Both shapes, with the environment changed
+      rather than the app's own path deleted: `window.caches` redefined to `undefined` (the
+      non-secure-origin shape) and redefined to an object whose `keys()` rejects (the private-window
+      shape). Two different sentences, both naming the inability, and the second carries the
+      browser's own reason. The original property descriptor is restored in a `finally`.
+- [x] **Acceptance 4 — `verify-shell.mjs` covers both states and cleans up after itself.** Twelve
+      checks in a new section at the foot of the file; the plant and the two `window.caches`
+      overrides come off in a `finally`, and a thirteenth reading at the end asserts Cache Storage
+      is byte-for-byte the list the section found. **778 of 778, 0 failed, 0 skipped, 253s.**
+- [ ] 👤 **Acceptance 5 — on the installed iPad, after a deploy.** Open About and read the line: it
+      should name the cache just deployed, and name only one. **Not run — this needs a real
+      installed app on hardware after a real deploy, and no emulator has either.** Two things to
+      know when it is run: the deploy has to have happened first (the line reports the device, not
+      the origin — `verify-deploy.mjs` is what reads the origin), and if it names two, quitting
+      Planbook from the app switcher and reopening is the first thing to try, because that is what
+      the line itself tells the teacher to do.
+
+*Five mutations, all reverted, and the fourth is the one worth reading:*
+
+| Mutation | Result |
+|---|---|
+| the line becomes a constant — the exact Traps mutation, painting `planbook-shell-v64` from a string | **6 red** of 778: the static clause naming `src/shell.js:2053`, both plant checks, the palette, and **both failure states**, which is the shape of the defect — a constant is confidently right on the one screen where it happens to be true and wrong on every other |
+| `.warn` is never applied | **1 red**: the palette check alone, at `background = rgba(0, 0, 0, 0)`. The words are still correct, which is the point of measuring the colour separately |
+| the line is painted once and never re-read | **5 red**: everything after the first open. This is the "generated at open time" half of the Traps line, and nothing else in the section can see it |
+| the opening sentence is deleted, leaving *"⚠ Stored on this device: A and B"* | **0 red — the check was vacuous, and this is how it was found.** The line ENDS with *"if this line still names more than one, send this screen on"*, so a bare `/more than one/i` over the whole string passed a build that never said how many. The check now compares POSITIONS — the count has to be said before the names are listed — which is the claim the acceptance line actually makes and survives a rewrite of the sentence. **Re-run against the corrected check: 1 red**, reading *"more than one" at 256, first cache name at 25* |
+| both failure states go blank instead of saying which | **2 red**, both reading `line = ""` — the blank that reads as *"no caches"*, which is a different fact and a wrong one |
+
+*What the desk cannot pay off here, beyond the 👤 line. **Nothing in this repository has ever seen
+two caches on a real device**: the two-cache state is planted, because the only way to produce it
+honestly is a deploy whose `activate` was interrupted on the teacher's iPad. The plant proves the
+display, not the diagnosis — that more than one cache is what a half-finished activation looks like
+comes from `sw.js`'s own `activate` handler and not from a measurement.*
+
+*One thing this work order did not do, and it is not an oversight: `src/shell.js` is in `SHELL`, so
+`wo-sweep.mjs` §9 correctly asks for a `CACHE` bump, and the work order's Out-of-scope line forbids
+any edit to `sw.js`. **The bump is owed by the commit that lands this** — `planbook-shell-v64` →
+`v65` — exactly as `430e867` paid `f63792f`'s. Until it is made the sweep reads **20 checks · 17
+passed · 1 failed · 2 to review**, the one failure being *"src/shell.css, src/shell.js changed since
+planbook-shell-v64 was set at 3c6b8c5"*, and that red is correct. The two REVIEWs are the standing
+pair and are unchanged.*
+
 ---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the

@@ -1239,6 +1239,14 @@
         button in the header, because nothing that stores a student's name ships before the way to
         get it back.
       </p>
+      <!-- WHICH COPY OF PLANBOOK THIS DEVICE IS ACTUALLY RUNNING (WO-8.10), and it is EMPTY HERE ON
+           PURPOSE: src/shell.js writes it from what caches.keys() answers, every time this modal
+           opens, and never from a string. A version typed into this file is a claim rather than
+           evidence — it would read v64 while the browser held v63, which is the exact failure this
+           line exists to catch, wearing a badge saying it did not happen. The comment above the
+           section label is the same argument about the prose; this is the half of it a machine can
+           be made to keep true. #yearList is empty in the markup for the same kind of reason. -->
+      <p class="build-caches" id="buildCaches"></p>
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Close</button>
       </div>

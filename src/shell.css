@@ -610,6 +610,32 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    top margin is added. */
 .modal-actions { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 4px; }
 
+/* ── ABOUT: WHICH BUILD THIS DEVICE IS RUNNING ── */
+/* The last line of #aboutModal's "This build" section, written by src/shell.js at open time.
+   Qualified with `.modal-body` because it is a <p> in there and `.modal-body p` is more specific
+   than a bare class — the same reason `.year-hint` and `.category-total` are qualified.
+
+   TWO STATES, AND ONLY ONE OF THEM IS AMBER. At rest it is a hint: 11px in the muted label grey,
+   like `.year-hint`, because one stored copy is the ordinary state and a teacher should be able
+   to read past it. `.warn` is the style guide's caution banner (§1, "Caution banner
+   (offline/stale)") — the same #fff8e6 / #f0dfa8 / #8a6d1a the install banner and the backup nag
+   wear, and Roll Call!'s `#staleBanner` before them — because more than one stored copy IS a
+   stale shell, which is what that palette means in both apps.
+
+   The two failure states — no Cache Storage, and a read that threw — deliberately stay in the
+   quiet style. The amber has to mean exactly one thing for a teacher to act on it, and "Planbook
+   cannot answer" is not the same fact as "Planbook has answered and the answer is bad".
+
+   Nothing here is a control, so there is nothing owed to the coarse-pointer block. */
+.modal-body .build-caches {
+  font-size: 11px; color: #8a9bb0; margin-top: 12px; line-height: 1.5;
+}
+.modal-body .build-caches.warn {
+  padding: 8px 11px; border-radius: 8px;
+  background: #fff8e6; border: 1.5px solid #f0dfa8; color: #8a6d1a;
+  font-size: 12px; font-weight: 600;
+}
+
 /* ── YEAR PICKER ── */
 /* The contents of #yearModal. A row per year document on this device, and a field to start
    another. Rows are full-width buttons rather than a <select>: on an iPad a select is a

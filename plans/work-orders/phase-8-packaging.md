@@ -649,7 +649,7 @@ that the large version of it already shipped as WO-8.8.
 
 ## WO-8.10 — the app cannot say which build it is running
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** 2 · **Status** 🤖 CLAIMED — 2026-08-15 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 8 → *(no box. The same call as WO-8.7 through WO-8.9 — this is instrument,
 not feature. Booked 2026-08-15, out of the v63 deploy.)*
 
@@ -681,13 +681,13 @@ banner, which is a real decision `sw.js:127` already frames and is not this work
 network request; any edit to `sw.js`.
 
 **Acceptance**
-- [ ] On a freshly loaded app, the About modal names the running cache and it matches `sw.js`'s
+- [x] On a freshly loaded app, the About modal names the running cache and it matches `sw.js`'s
       `CACHE`.
-- [ ] With a second cache planted by hand — `caches.open('planbook-shell-v1')` — the modal says there
+- [x] With a second cache planted by hand — `caches.open('planbook-shell-v1')` — the modal says there
       is more than one and names both. *(This is the line that earns the feature. A display that only
       ever shows one name has proved nothing about the case it exists for.)*
-- [ ] With Cache Storage unavailable, the line says so rather than going blank.
-- [ ] `verify-shell.mjs` covers both states, planting and clearing the second cache itself. *(The
+- [x] With Cache Storage unavailable, the line says so rather than going blank.
+- [x] `verify-shell.mjs` covers both states, planting and clearing the second cache itself. *(The
       harness has never seen a service worker — but Cache Storage is reachable from the page it
       drives, so this case is inside its reach even though the worker is not.)*
 - [ ] 👤 On the **installed** iPad, after a deploy: the modal names the cache just deployed, and names

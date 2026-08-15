@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 769 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 781 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -946,7 +946,25 @@ against the unfixed `hasSomethingToLose()` first, on the same tree, and two of t
 `766 checks · 764 passed · 2 failed`. A check that would have passed against the build the work order
 replaces is not evidence, and for a defect this well masked — a score cell cannot exist without an
 assignment, and the assignment is what the old enumeration saw — it is the only way to tell the two
-builds apart.)* *(The
+builds apart.)* **WO-8.10 moved it from 769 to 781**: twelve literal call sites in a new section at
+the very foot of the file, none inside a loop and none a failure arm, so the section contributes
+twelve executed results and **the run prints 778**, measured on the delivered tree:
+`778 checks · 778 passed · 0 failed · 0 skipped`, 20,570 lines, 26.4 lines per check, 254s. The gap
+below does not move. **It is the first block in this file that reads a service worker's work**, and
+the sentence at the head of this section — *"it drives a page, not an installed app, and it has
+never seen a service worker"* — is still true as written: nothing installs an app, inspects a
+registration or asserts anything about `fetch` interception. What the block reads is Cache Storage,
+which is a window API like `localStorage`, and which the worker happens to be the only writer of.
+That it works at all was measured before it was relied on — `http://127.0.0.1:<port>` is a secure
+context, so `sw.js` registers, activates and precaches within about a second and a half of a run's
+first navigation, and this block runs three minutes later. **Two of the twelve are worth knowing
+about.** The second cache is PLANTED by the harness (`caches.open('planbook-shell-v1')`) and cleared
+in a `finally` along with two `window.caches` overrides, because a display that has only ever shown
+one name has proved nothing about the case it exists for — and a stray cache would make every later
+reading of that line report a broken app. And one clause is STATIC, in Node: no file the browser
+loads may contain a versioned cache name, `sw.js` excepted. That is WO-8.10's Traps line as a grep,
+and it sits here rather than in `wo-sweep.mjs` because it is half of one claim — nothing types the
+name, and the thing that reads it moves when Cache Storage moves. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who

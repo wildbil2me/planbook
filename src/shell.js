@@ -15,7 +15,9 @@
     throw at click time rather than at load time, which is the worst place to find out.
 
     The hooks, all handled by the one listener below:
-      data-modal-open="<overlayId>"   opens that overlay
+      data-modal-open="<overlayId>"   opens that overlay. `aboutModal` is the one exception and it
+                                      is handled in the listener rather than here: its last line is
+                                      written from Cache Storage before the panel is shown (WO-8.10)
       data-modal-close                closes the overlay it sits inside
       data-pill-group                 on a container: its .pill children single-select
       data-install-dismiss            snoozes the install banner
@@ -844,7 +846,21 @@ document.addEventListener('click', (e) => {
      focus a button when you tap it, so document.activeElement here is <body>. Without
      this argument the modal has nowhere to give focus back to on the iPad. */
   const open = e.target.closest('[data-modal-open]');
-  if (open) { openModal(open.getAttribute('data-modal-open'), open); return; }
+  if (open) {
+    const overlayId = open.getAttribute('data-modal-open');
+    /* The one overlay with something to read before it is on screen (WO-8.10). It keeps the plain
+       hook rather than taking one of its own — the About button opens a panel of prose and nothing
+       about that changed — so the exception is stated here, in the one listener, instead of in the
+       markup. The read is awaited first for the reason `data-year-picker` exists: a modal that
+       opens and then fills in is a modal that flickers. Both arms open it, because a panel that
+       failed to say which build this is still has to say everything else. */
+    if (overlayId === 'aboutModal') {
+      paintBuildLine().then(() => openModal(overlayId, open), () => openModal(overlayId, open));
+      return;
+    }
+    openModal(overlayId, open);
+    return;
+  }
 
   const close = e.target.closest('[data-modal-close]');
   if (close) {
@@ -1972,6 +1988,112 @@ if ('serviceWorker' in navigator) {
         + 'http instead. Cause: ' + e.message);
     });
   });
+}
+
+/*
+  WHICH BUILD THIS DEVICE IS ACTUALLY RUNNING — the last line of the About modal (WO-8.10).
+
+  IT LIVES BESIDE THE REGISTRATION ABOVE AND NOT IN A MODULE OF ITS OWN, which is the one place
+  this file departs from src/README.md's "one concern per file". A new src/*.js has to join sw.js's
+  SHELL list and bump CACHE in the same commit (sw.js's own rule 2), and this work order may not
+  edit sw.js at all: its cache name is the fact being reported, and a change that edits both the
+  fact and the report of it can agree with itself while being wrong. So it goes where the shell's
+  caching already lives — the comment above says registration is here rather than in
+  install-banner.js because caching the shell and nagging about the home screen are two concerns,
+  and this is the first concern, read back.
+
+  WHY A CACHE NAME AND NOT A VERSION NUMBER. After a deploy the only way to learn whether the
+  installed iPad took the new shell was Safari Web Inspector over USB from a Mac, which is a
+  procedure nobody runs in September. And the useful question is not which version: sw.js uses
+  skipWaiting + clients.claim, so `activate` deletes every cache that is not the current one.
+  ONE CACHE IS THE HEALTHY STATE. More than one means `activate` did not finish and the app may be
+  serving a mix — the failure that actually breaks a screen, and the one a version string typed
+  into index.html would hide, because it would report the new name while the old cache sat beside
+  it. Nothing here may become a constant: the line is generated from caches.keys() every time the
+  modal opens, and no file in this app but sw.js contains a versioned cache name.
+
+  It reads from the page and never from the worker — no postMessage, no registration inspected, no
+  network request. Cache Storage is a window API and answers the whole question on its own.
+*/
+const BUILD_LINE_ID = 'buildCaches';
+/* Every cache this app has ever made is `planbook-shell-<version>` (sw.js). The filter is the
+   prefix rather than a list, so a cache from a future version — the one this line exists to
+   catch — is named rather than hidden, and a cache belonging to something else on the origin is
+   not reported as Planbook's. */
+const SHELL_CACHE_PREFIX = 'planbook-shell-';
+
+/* Written with textContent and one created <strong>, never innerHTML: these strings come out of
+   Cache Storage, which anything on this origin can write into, and a cache name is not markup. */
+function buildLine(el, warn, parts) {
+  el.textContent = '';
+  el.classList.toggle('warn', warn);
+  parts.forEach((part) => {
+    if (typeof part === 'string') { el.appendChild(document.createTextNode(part)); return; }
+    const strong = document.createElement('strong');
+    strong.textContent = part.name;
+    el.appendChild(strong);
+  });
+}
+
+/*
+  Called before the About modal opens, never after — a modal that opens and then fills in is a
+  modal that flickers, which is the reason `data-year-picker` is not `data-modal-open="yearModal"`
+  (the header comment at the top of this file). It resolves in every path including a rejection, so
+  the caller opens the panel either way.
+
+  A BLANK LINE WOULD READ AS "NO CACHES", which is a different fact and a wrong one, so each of the
+  five states says which one it is. Two of them are failures to answer rather than answers:
+  `window.caches` is undefined on a non-secure origin, and the read can reject in a private window.
+  Neither takes the amber (src/shell.css says why) — the caution palette has to mean exactly one
+  thing, and that thing is more than one stored copy.
+*/
+async function paintBuildLine() {
+  const el = document.getElementById(BUILD_LINE_ID);
+  if (!el) return;
+
+  if (!window.caches || typeof window.caches.keys !== 'function') {
+    buildLine(el, false, ['This browser will not let Planbook see its own stored copies, so it '
+      + 'cannot tell you which build it is running. That is not the same as none being stored.']);
+    return;
+  }
+
+  let names;
+  try {
+    /* Left in the order Cache Storage answers rather than sorted: that order is roughly the order
+       they were made, so on the two-cache screen the survivor of a finished update reads last. */
+    names = (await window.caches.keys()).filter((n) => n.indexOf(SHELL_CACHE_PREFIX) === 0);
+  } catch (e) {
+    buildLine(el, false, ['Planbook could not read its stored copies on this device, so it cannot '
+      + 'tell you which build it is running. That is not the same as none being stored. The '
+      + 'browser said: ' + String(e && e.message ? e.message : e)]);
+    return;
+  }
+
+  if (!names.length) {
+    buildLine(el, false, ['No copy of Planbook is stored on this device yet, so it will not open '
+      + 'without a network. If it was just installed or just updated, opening it again in a minute '
+      + 'usually settles that.']);
+    return;
+  }
+
+  if (names.length === 1) {
+    buildLine(el, false, ['Running from ', { name: names[0] },
+      ' — one stored copy on this device, which is what it should be.']);
+    return;
+  }
+
+  /* The line the whole feature is for. It names every one of them, and it says the number out
+     loud: a teacher who reads "more than one" forwards the screen, and one who reads two cache
+     names and no sentence shrugs at it. */
+  const parts = ['⚠ More than one copy of Planbook is stored on this device: '];
+  names.forEach((name, i) => {
+    if (i) parts.push(i === names.length - 1 ? ' and ' : ', ');
+    parts.push({ name });
+  });
+  parts.push('. The last update did not finish, so parts of what you are looking at may still be '
+    + 'coming from the older one. Quit Planbook from the app switcher and open it again — if this '
+    + 'line still names more than one, send this screen to whoever set Planbook up.');
+  buildLine(el, true, parts);
 }
 
 /*
