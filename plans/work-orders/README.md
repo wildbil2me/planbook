@@ -168,14 +168,14 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|---|
 | 1 — Shell, store, roster | 19 | 15 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
 | 2 — Attendance | 30 | 27 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 21 | 18 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 23 | 18 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 9 | 2 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **99** | **63** | `[██████░░░░] 64%` |
+| | **101** | **63** | `[██████░░░░] 62%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -343,7 +343,9 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 44 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
 | 45 | [WO-2.30](phase-2-attendance.md#wo-230--archiving-the-open-class-misdirects-the-pass-alert) Archiving the open class misdirects the pass alert | S | | Aug 24, a sitting |
 | 46 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
-| 47 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 47 | [WO-3.22](phase-3-gradebook.md#wo-322--the-key-legend-omits-a-pair-the-hint-beside-it-promises) The key legend omits a pair the hint promises | S | | Aug 24, a sitting |
+| 48 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
+| 49 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

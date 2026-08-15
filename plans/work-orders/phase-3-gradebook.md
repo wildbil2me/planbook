@@ -1631,3 +1631,118 @@ work order** — do not fix the app from inside this one.
 **Traps** — **The second row must match the category, or the fixture proves nothing.** A row scoped
 to something `Tests` does not match never reaches the `seen` Set at all, and the check would stay
 green with the dedupe deleted — which is this work order failing while appearing to pass.
+
+---
+
+## WO-3.22 — the key legend omits a pair the hint beside it promises
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. The roadmap's Phase 3 list names the score grid and the `late`/`missing`
+rule; which keys the legend documents is inside what WO-3.5 already closed.)*
+
+**Why it exists.** The ⌨ Keys panel at `index.html:1051` lists `↵`, `⇥`, `← →`, `L`, `M`, `X` and
+`⌫`. It does not list `↑ ↓`. The hint two inches below it, at `index.html:1083`, says *"**↑ ↓** move
+within the column as well"* — and they do. So the reference card a teacher opens **to learn the
+keys** is the one surface in this app that does not mention a working pair, while the prose beside
+it does.
+
+**It is WO-3.5's gap and WO-3.16 is why it is visible.** The vertical pair shipped with the grid and
+was documented only in the hint. WO-3.16 then added a `← →` row to the legend on 2026-08-15 — one
+line above where the missing one belongs — which turned a quiet omission into a legend that
+enumerates three arrow directions out of four. Booked against this work order rather than folded
+into WO-3.16, because that one had shipped and been ticked, and a legend row is not an arrow-key
+behaviour.
+
+**Not a candidate for WO-3.20.** That work order is behaviour-neutral by construction and a new
+legend row is a visible change; it says so itself.
+
+**Deliverables**
+- **An `↑ ↓` entry in the legend**, in the panel's own idiom and placed with the other movement keys
+  rather than appended after the flags. The four flag rows stay last, because the panel's own
+  comment describes them as a group and the bar carries the same four.
+- **The wording agrees with the hint** at `index.html:1083`, which is already correct — the legend is
+  what is wrong, and a rewrite of both that leaves them disagreeing differently is a worse outcome
+  than the current state.
+- **A harness check that the legend enumerates every key the grid actually binds.** The defect is not
+  a missing string, it is that nothing compares the panel against the keys `handleScoreKey()` answers
+  to; a fix without that check is the same omission waiting for the next key. If the comparison
+  cannot be made mechanically, write down why rather than leaving the question unasked — the WO-1.18
+  precedent.
+
+**Out of scope** — rewording entries that are already right, restyling the panel, and `Home`/`End`,
+which is not bound and is deliberately not being booked (see WO-3.23's note).
+
+**Acceptance**
+- [ ] The legend lists `↑ ↓` with the movement keys, and the flag rows are still last.
+- [ ] The legend and the hint at `index.html:1083` describe the vertical pair the same way.
+- [ ] A check fails when a key the grid binds is missing from the legend — proved by removing an
+      entry and watching it go red, not by reasoning about it.
+- [ ] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+
+**Traps** — **The panel is `nowrap` and its rows are measured.** `.scores-key` does not wrap and the
+`← →` row added at WO-3.16 is already the longest in the panel; a verbose `↑ ↓` entry can spill
+through its own border on an iPad with every 44px check green. That is the "Days off" spill from the
+first iPad sitting, and `wo-sweep`'s `scrollWidth` against `clientWidth` measurement is the shape
+that catches it.
+
+---
+
+## WO-3.23 — the score grid never learns which modifier keys were held
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.16 · **Blocks** nothing
+**Closes roadmap** *(no box. A defect inside what WO-3.5 and WO-3.16 already closed.)*
+
+**Why it exists.** `src/shell.js:1626` hands the grid a key **name** and nothing else:
+
+    if (scores.handleScoreKey(e.key, scoreCell)) e.preventDefault();
+
+`e.shiftKey`, `e.ctrlKey`, `e.metaKey` and `e.altKey` never cross the seam, so `handleScoreKey()`
+cannot tell `→` from `Shift`+`→` and answers both the same way. Where it answers *yes* it also
+`preventDefault()`s, and the browser's own behaviour for the modified key is lost.
+
+**The failing case is narrow and real.** `caretCanLeave()` hands the key back whenever the caret has
+room to move in the direction pressed, which is most of the time and is why this has not been
+noticed — the browser gets the key and extends the selection correctly by accident. It breaks at the
+edges the arrow rule was written for: `Shift`+`→` with the caret already at the end of the value is
+read as a plain `→` and **jumps to the next assignment instead of extending the selection**, and
+`Shift`+`←` at position 0 does the same backwards. `Ctrl`/`Cmd`+arrow, which is word- and
+line-motion on both platforms, has the identical shape.
+
+**Named in the code rather than left silent**, at the `handleScoreKey()` comment WO-3.16 wrote, which
+is why this is a work order and not a discovery. **It is the seam that is wrong, not the grid**: the
+fix is what crosses `src/shell.js:1626`, and every other delegated key in that listener has the same
+exposure the moment one of them wants a modifier.
+
+**Deliverables**
+- **The modifier state reaches `handleScoreKey()`**, by whatever shape survives review — the event
+  itself, or a small explicit record of the four flags. Passing the event is the obvious move and has
+  a cost the decision should name: it hands a module that currently receives a string the ability to
+  read and cancel anything on the event.
+- **A modified arrow is the browser's**, at the edges as everywhere else. The grid answers *no* and
+  does not `preventDefault()`.
+- **A judgment recorded on the other delegated keys** in that listener — whether any of the rest can
+  be pressed with a modifier and mean something different, and whether they are wrong today. Do it or
+  write down why not; the seam is shared and this is the one work order that will be looking at it.
+
+**Out of scope** — binding any new modifier combination, `Home`/`End`, and changing what an unmodified
+arrow does. This work order makes the grid **stop** answering keys that were never its own; it adds
+nothing.
+
+*(**`Home`/`End` was proposed on 2026-08-15 out of WO-3.16's verification and deliberately not
+booked.** It would move to the first or last assignment in the row. Nothing asks for it, no sitting
+has wanted it, and it is a convenience with no demand behind it — the same shape as WO-3.13, struck
+the same day for the same reason. It is written down here so the proposal is not invisible, and it
+comes back the first time somebody presses the key and finds nothing there.)*
+
+**Acceptance**
+- [ ] `Shift`+`→` with the caret at the end of a full cell extends the selection and does **not**
+      change cell — a real keystroke with the modifier set, not a synthesised key name.
+- [ ] `Shift`+`←` at position 0 does the same backwards.
+- [ ] `Ctrl`/`Cmd`+arrow at both edges is the browser's, not the grid's.
+- [ ] Unmodified `←` and `→` behave exactly as WO-3.16 shipped them, its checks green unchanged.
+- [ ] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+
+**Traps** — **A check that synthesises a key name proves nothing here**, because the defect *is* that
+only the name crosses the seam: a harness that calls `handleScoreKey('ArrowRight', cell)` cannot tell
+a fixed build from a broken one. The keystroke has to be dispatched with the modifier actually held,
+the way WO-3.16's caret checks dispatch real ones.
