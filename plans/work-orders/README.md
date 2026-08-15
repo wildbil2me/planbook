@@ -340,14 +340,14 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 40 | [WO-8.10](phase-8-packaging.md#wo-810--the-app-cannot-say-which-build-it-is-running) The app cannot say which build it is running | S | | Aug 19, a sitting |
 | 41 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
 | 42 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
-| 43 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
-| 44 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
-| 45 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 46 | [WO-2.30](phase-2-attendance.md#wo-230--archiving-the-open-class-misdirects-the-pass-alert) Archiving the open class misdirects the pass alert | S | | Aug 24, a sitting |
-| 47 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
-| 48 | [WO-3.22](phase-3-gradebook.md#wo-322--the-key-legend-omits-a-pair-the-hint-beside-it-promises) The key legend omits a pair the hint promises | S | | Aug 24, a sitting |
-| 49 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
-| 50 | [WO-1.20](phase-1-shell-store-roster.md#wo-120--the-retired-phase-branch-rule-is-still-live-in-roadmapmd-and-testingmd) The retired branch rule is still live in `ROADMAP.md` | S | | Aug 24, a sitting |
+| 43 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
+| 44 | [WO-2.30](phase-2-attendance.md#wo-230--archiving-the-open-class-misdirects-the-pass-alert) Archiving the open class misdirects the pass alert | S | | Aug 24, a sitting |
+| 45 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
+| 46 | [WO-3.22](phase-3-gradebook.md#wo-322--the-key-legend-omits-a-pair-the-hint-beside-it-promises) The key legend omits a pair the hint promises | S | | Aug 24, a sitting |
+| 47 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
+| 48 | [WO-1.20](phase-1-shell-store-roster.md#wo-120--the-retired-phase-branch-rule-is-still-live-in-roadmapmd-and-testingmd) The retired branch rule is still live in `ROADMAP.md` | S | | Aug 24, a sitting |
+| 49 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 50 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
 | 51 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,

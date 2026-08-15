@@ -972,6 +972,35 @@ warning on the safe case trains the teacher to click through the unsafe one.
 performs, booked because the alternative is remembering it. Booked 2026-08-12 out of the Ship 1
 rehearsal's unclosed note.)*
 
+> **AMENDED 2026-08-15 — the premise expired, and most of this work order went with it.** The owner
+> reports **no year at all on any device: a clean slate.** The rehearsal data this work order was
+> written to quarantine **is gone**, so there are no fabricated meetings to get out of the term year
+> and nothing to relabel `2030-2031`. Everything below under **Why it exists** describes the state on
+> 2026-08-08 and is kept as the record of why this was booked, not as a description of today.
+>
+> **Three consequences, and the third is the one that matters.**
+>
+> 1. **The deliverable about keeping the rehearsal data is moot** — there is no rehearsal data. The
+>    **Out of scope** line protecting it from deletion is likewise moot; the deletion it forbade has
+>    already happened by other means.
+> 2. **What survives is smaller but still real**: the term year gets created fresh when the roster
+>    arrives; the laptop and the iPad must not end up holding the same year label, which is
+>    `gates.md`'s rule and is the arrangement in which a wrong-direction restore is silent and total;
+>    and a backup of the term year goes off-device before the first class.
+> 3. **The evidence behind a ticked gate item no longer exists.** `gates.md` records the
+>    attendance-arithmetic check as run *"against backfilled test data plus current entries, not a
+>    real class,"* and this work order's **Out of scope** called that data *"the evidence behind the
+>    attendance-arithmetic tick"* and said it **must survive**. It did not. The tick stands — the
+>    check was run and observed on 2026-08-08 — but it can no longer be re-derived from stored data,
+>    and `gates.md`'s week-one re-check against a live roster is now the **only** path to confirming
+>    that arithmetic. **This is flagged, not fixed, and it is not this work order's to fix.**
+>
+> **Re-queued** from Aug 20–23 to *when the roster arrives, before the first class*. The urgency
+> argument below — *"this is the last moment it is cheap"* — was about separating fabricated marks
+> from real ones, and with no fabricated marks it no longer binds. **`CHANGELOG.md`'s open note is
+> deliberately left as written**; it records what was true and planned on 2026-08-08, and the entry
+> that closes it will say what actually happened instead of pretending the plan was followed.
+
 **Why it exists.** The Ship 1 rehearsal recorded one thing it could not close, and `CHANGELOG.md`
 still carries it: **the backfilled test data is in the live year.** The rehearsal was designed so it
 could not contaminate the ledger and it did not — but the ledger was already carrying fabricated
@@ -1016,11 +1045,18 @@ arithmetic against a live roster, which is `gates.md`'s and cannot happen until 
 **Acceptance**
 - [ ] 👤 The year the term is taught in contains no meeting the owner did not record — checked in the
       app, not assumed from the act.
-- [ ] 👤 The rehearsal data is still openable, in a year whose label cannot be read as the term.
-- [ ] 👤 The iPad shows the test year and the laptop shows the term year, each confirmed on the device
-      itself.
+- [ ] 👤 The iPad and the laptop do not hold the same year label, each confirmed on the device itself.
+      *(Amended 2026-08-15. Was "the iPad shows the test year and the laptop shows the term year" —
+      there is no test year now, but the rule it served is `gates.md`'s and survives: two devices
+      sharing a label is the one arrangement in which a wrong-direction restore is silent and total.)*
 - [ ] 👤 A backup of the term year exists off-device, taken **before** the first class.
 - [ ] The date is recorded here and the `CHANGELOG.md` note is closed.
+
+*(A fifth Acceptance line — "the rehearsal data is still openable, in a year whose label cannot be
+read as the term" — **was removed on 2026-08-15 and is recorded here rather than deleted silently.**
+It can never become true: the rehearsal data is gone, so a checkbox asking that it survive would pin
+this work order open forever. That the evidence was lost is the finding in the amendment above, not a
+line to keep ticking against.)*
 
 **Traps** — **Do not carry the rehearsal's attendance across "to have some history".** That is the
 defect this work order exists to end, arriving by the door marked convenience. **Do not relabel the
