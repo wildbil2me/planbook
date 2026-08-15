@@ -334,17 +334,16 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 35 | [WO-2.29](phase-2-attendance.md#wo-229--the-overdue-alert-gets-its-primary-channel-back) The overdue alert gets its primary channel back | M | | Aug 18, a day + an iPad sitting |
 | 36 | [WO-3.15](phase-3-gradebook.md#wo-315--a-way-to-add-an-assignment-from-the-score-grid) Add an assignment from the grid | S | | Aug 17 |
 | 37 | [WO-3.16](phase-3-gradebook.md#wo-316--left-and-right-arrows-move-across-the-grid) Left and right arrows across the grid | S | | Aug 17 |
-| 38 | [WO-3.13](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) Paste a column of scores | S | | Aug 18 |
-| 39 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
-| 40 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
-| 41 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
-| 42 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
-| 43 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
-| 44 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
-| 45 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 46 | [WO-2.30](phase-2-attendance.md#wo-230--archiving-the-open-class-misdirects-the-pass-alert) Archiving the open class misdirects the pass alert | S | | Aug 24, a sitting |
-| 47 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
-| 48 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 38 | [WO-8.9](phase-8-packaging.md#wo-89--the-sweep-cannot-see-_headers) The sweep cannot see `_headers` | S | | Aug 18 |
+| 39 | [WO-1.17](phase-1-shell-store-roster.md#wo-117--the-backup-nag-cannot-see-a-year-whose-only-content-is-grades) The backup nag cannot see a grades-only year | S | | Aug 19, half a day |
+| 40 | [WO-1.18](phase-1-shell-store-roster.md#wo-118--the-harness-section-comment-miscounts-its-own-checks) The harness comment miscounts its checks | S | | Aug 19, a word |
+| 41 | [WO-1.19](phase-1-shell-store-roster.md#wo-119--the-phase-branch-convention-is-dead-and-still-written-down) The phase-branch convention is dead and still written | S | | Aug 19–20, a sitting |
+| 42 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **Aug 20–23**, after the row above and before the first class |
+| 43 | [WO-3.20](phase-3-gradebook.md#wo-320--one-date-formatter-and-a-name-that-means-one-thing) One date formatter, and a name that means one thing | S | | Aug 24, a sitting |
+| 44 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 45 | [WO-2.30](phase-2-attendance.md#wo-230--archiving-the-open-class-misdirects-the-pass-alert) Archiving the open class misdirects the pass alert | S | | Aug 24, a sitting |
+| 46 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
+| 47 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left
@@ -444,6 +443,15 @@ WO-3.16 and WO-3.13 — sit below it; each opens `src/scores.css` and `src/score
 comments on the way in. Half a day now
 buys three dispatches a true briefing — and `--audit` cannot see this kind of drift, because comments
 are not a tracker.*
+
+*(**The three became two on 2026-08-15**, and both had already gone through before WO-3.19 was
+picked up: WO-3.15 and WO-3.16 landed on 2026-08-14 and 2026-08-15 reading the untrue comments, and
+WO-3.13 was struck. The case for placing WO-3.19 early has therefore expired — it bought nothing,
+because the dispatches it was meant to brief overtook it. **The work itself is not expired**: the
+nine comment sites still say WO-3.6 owns a tint WO-3.6 never shipped, and they now lie to a reader
+rather than to a queue. It stays booked, on its own merits, at its own place in the order — and the
+lesson is about placement, which is that booking a briefing ahead of dispatches only pays if it is
+actually done first.)*
 
 ***WO-3.20 goes late, behind WO-1.16.*** *It depends on the three grid work orders above it for
 a real reason: they open the same files, and consolidating a set that is still growing means doing it
@@ -686,6 +694,10 @@ to keep the three convenience-shaped rows together ahead of the gate. **If the f
 not to hold two extra sittings, #12 and #14 are not the rows to move** — they are the two that bite in
 week one. The rows to move are the three convenience rows — WO-3.15, WO-3.16 and WO-3.13.*
 
+*(**That relief valve is spent as of 2026-08-15**, and it went without being pulled: WO-3.15 and
+WO-3.16 both landed, and WO-3.13 was struck. None of the three is available to move any more, so if
+the fortnight comes up short the next candidates have to be found somewhere with a cost attached.)*
+
 *WO-2.17 was inserted at #2 on 2026-08-09, out of WO-3.3's verification, and every row below it moved
 down one. It is dated Aug 10–11 alongside WO-3.1 rather than given a slot of its own — it is half a
 day, and the two do not touch the same files — so **no other row's dates were re-flowed**. If that
@@ -720,6 +732,14 @@ WO-G2 does not depend on it, and a teacher who cannot paste can still type the c
 one row here whose worth is not yet established — see the question at the head of the work order, which
 is whether scores routinely arrive in a pasteable column at all. If the answer is paper, this row comes
 out rather than moving.*
+
+***The answer was paper, and the row came out on 2026-08-15.** WO-3.13 is struck: `**Ship** —`, out of
+the running order, and off WO-3.20's dependency line, which is the half that would have done damage —
+the gate accepts only `✅ DONE` and a struck work order can never reach it. Every row below #38 moved
+up one. The work order itself is kept for the positional-paste risk analysis in its Deliverables,
+which any future attempt at this has to answer. **This is the first row here retired by asking its
+question instead of building it**, and it cost the queue nothing: eight days between the split and the
+answer, and no code was written in between.*
 
 *WO-3.11 was inserted at #5 on 2026-08-09 and was the one row here that bought nothing a teacher can
 see, until WO-2.18 joined it on 2026-08-10.

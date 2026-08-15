@@ -193,8 +193,14 @@ function rosterOf(cls) {
   THERE IS NO SORT CONTROL, and the drawing has one ("Sort: roster order"). It is deliberately not
   built: nothing in this work order's deliverables asks for a second order, and the question the
   control is really about — whether a pasted column of marks lines up against the roster's own order
-  or an alphabetical one — belongs to WO-3.13, which owns pasting a column and its alignment rules.
-  That is the seam this screen leaves for it rather than a surface it builds ahead of it.
+  or an alphabetical one — belonged to WO-3.13, which owned pasting a column and its alignment rules.
+
+  WO-3.13 WAS STRUCK ON 2026-08-15: the owner's scores arrive on paper, so there is no column to
+  paste and the alignment question has nobody to answer it. The control stays unbuilt, and the
+  reason is now simpler than a seam being held open — nothing needs a second order. Do not read
+  this as a feature waiting its turn. If pasting is ever wanted the work order is still written in
+  plans/work-orders/phase-3-gradebook.md, kept for its positional-paste risk analysis, and this
+  paragraph is where its alignment question comes back.
 
   EXPORTED AT WO-3.9, which asked for exactly this order under its own name: the printed grade sheet
   lists students alphabetically by last name, which is what this already is. The import runs one

@@ -381,6 +381,11 @@ size L**: the split removes a self-contained surface, it does not reclassify wha
 the keyboard path, the flags, the live grades, the touch path and the three inherited debts below are
 what makes it L, and none of them moved.
 
+*(**WO-3.13 was struck on 2026-08-15** — the owner's answer to the question at its head is that scores
+arrive on paper, so there is no column to paste. The split was still the right call: it is what let
+that deliverable be answered on its own merits instead of riding into the grid unexamined. Pasting is
+not coming to the score grid, and nothing here waits on it.)*
+
 **Acceptance**
 - [x] Entering 25 scores down a column takes 25 keystroke-groups and no mouse.
 - [x] `Enter` at the bottom of a column does something sensible and predictable.
@@ -1064,10 +1069,33 @@ Add cases; do not complicate the ones that exist.
 
 ## WO-3.13 — paste a column of scores
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
 **Closes roadmap** *(no box. The roadmap's Phase 3 list names the score grid and the `late`/`missing`
 rule; pasting is a way into the grid, not a thing the grid must do. It closes what WO-3.5 closes or
 nothing, and it closes nothing.)*
+
+**STRUCK on 2026-08-15, by the owner, on the question this work order asks of itself below: scores
+arrive on paper.** They are read off a stack one at a time and keyed in, so there is no column
+anywhere to copy from and the clipboard has nothing to carry. The work order asked to be answered
+before it was dispatched and said that if the answer was paper the honest move was to strike it
+rather than build it and find out; this is that, taken at its word.
+
+**It is struck rather than deferred, and that is a different thing from WO-2.7.** A deferral is about
+*when* and keeps its place in the queue. This is about *whether*: nothing about the classroom that
+would make pasting worth an S is expected to change, and if it does — an auto-graded quiz platform,
+a spreadsheet the owner starts keeping — the answer changes with it and this work order is still
+written and still correct. **It is kept, not deleted**, because the Deliverables carry a risk
+analysis that any future paste feature has to answer: a pasted column is positional, value 7 lands
+on student 7, and a count mismatch has to refuse rather than truncate. That reasoning is worth more
+than the row it occupied.
+
+**Removed from the running order and from WO-3.20's dependency line the same day.** The second is
+the one that mattered: WO-3.20 gated on this, and `wo-gate.mjs` passes a dependency only when it is
+`✅ DONE`, so a struck work order left on that line would have held WO-3.20 shut for good and said
+nothing about why. WO-2.7's note names the principle and it applies unchanged — *a gate that waits
+on work nobody intends to do is a gate that gets waived, and a waived gate teaches the next one that
+gates are advisory.* Its own **Blocks nothing** was wrong when this was written, which is how the
+dependency survived being read twice.
 
 **Split out of WO-3.5 on 2026-08-10**, where it was one deliverable line. It is not on WO-G2's
 dependency list and it is deliberately not being added: a teacher who cannot paste can still type,
@@ -1479,9 +1507,14 @@ list's existing tint, which already works and is not being re-derived.
 
 ## WO-3.20 — one date formatter, and a name that means one thing
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.13, WO-3.15, WO-3.16
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.15, WO-3.16
 **Blocks** nothing · **Closes roadmap** *(no box. Internal consistency; nothing a teacher sees changes,
 which is the acceptance criterion rather than a caveat.)*
+
+*(WO-3.13 was on this line and came off it on 2026-08-15, when it was struck. It was never going to
+reach `✅ DONE`, which is the only status the gate accepts, so leaving it here would have held this
+work order shut permanently — and quietly, since a gate reports the dependency and not the reason
+nobody intends to satisfy it.)*
 
 **Booked 2026-08-13, out of WO-3.6's close**, which added the third byte-identical copy of the same
 eight lines and said so at the copy rather than paying it. The count in that result file was low. There
@@ -1520,9 +1553,11 @@ import; two copies was a defensible convention and five is a formatter waiting t
 family's internals, and any change to what any screen displays. **This work order is behaviour-neutral
 by construction**; if a date on any screen changes, it has failed.
 
-**Scheduling note.** This sits **after** WO-3.13, WO-3.15 and WO-3.16 rather than before them, and the
-dependency is real. All three open the score-grid files, and consolidating a set that is still growing
-means doing it twice. It is also deliberately behind WO-1.16 in the running order: a five-file refactor
+**Scheduling note.** This sits **after** WO-3.15 and WO-3.16 rather than before them, and the
+dependency is real. Both open the score-grid files, and consolidating a set that is still growing
+means doing it twice. *(This read "after WO-3.13, WO-3.15 and WO-3.16" and "all three" until
+2026-08-15, when WO-3.13 was struck. The set stopped growing that day, which is the one thing the
+strike does for this work order.)* It is also deliberately behind WO-1.16 in the running order: a five-file refactor
 that changes nothing a teacher sees has no business landing in the week the term opens.
 
 **Acceptance**
