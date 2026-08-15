@@ -1,0 +1,162 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planbook audio probe</title>
+<!--
+  Hand-run diagnostic for the overdue alert's sound. Not part of the app, not in sw.js, and
+  never imported by anything — it is `tools/` in the same sense every .mjs beside it is:
+  optional, run by a human, gates nothing.
+
+  WHAT IT ANSWERS. Whether raw Web Audio can sound on this device today, and if not, which of
+  the two indistinguishable causes it is: iOS Silent Mode, or an AudioContext that will not
+  start outside a user gesture. Both present as silence from a build whose logs say `running`.
+  Probe 1 (context built inside the tap) against probe 2 (built 8s after one) is the whole
+  discrimination — 1 audible and 2 silent is the gesture rule, both silent is the hardware
+  switch. It runs playToneSequence()'s exact note pattern from src/alert-sound.js, unchanged,
+  so a difference between this page and the app is a difference in the app.
+
+  IT WAS WRITTEN TO BE THROWN AWAY AND IS BEING KEPT. It was cut for WO-2.29 and its header
+  said "delete when done"; it is still here because WO-2.29's acceptance line 6 is still 👤 and
+  still failing — the 2026-08-14 sitting was silent on the teaching iPad at both thresholds,
+  and TESTING.md's procedure names probe 1 as the one-tap answer for the next run. It goes when
+  that line closes, not before.
+
+  SERVE IT FROM AN ORIGIN THE SERVICE WORKER DOES NOT CONTROL, or it will not load at all.
+  sw.js answers EVERY navigation with the cached shell whatever path it asked for (the offline
+  clause, sw.js's fetch handler), so both the deployed origin and tools/serve-https.mjs's 8443
+  hand back the Planbook app instead of this page on any device that has installed the worker.
+  The 2026-08-14 run reached it on a second port for exactly this reason. Committing it gave it
+  a home, not a URL — and the symptom, if you forget, is the app opening and looking fine.
+-->
+<style>
+  body { font: 17px/1.45 -apple-system, system-ui, sans-serif; margin: 0; padding: 16px;
+         background: #fff; color: #1f2933; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: #52606d; font-size: 15px; }
+  button { display: block; width: 100%; min-height: 60px; margin: 0 0 12px; font-size: 17px;
+           font-weight: 600; border: 0; border-radius: 10px; background: #2563eb; color: #fff; }
+  button.alt { background: #7c3aed; }
+  button.ghost { background: #e4e7eb; color: #1f2933; }
+  #log { white-space: pre-wrap; font: 13px/1.4 ui-monospace, Menlo, monospace; background: #f5f7fa;
+         border: 1px solid #cbd2d9; border-radius: 8px; padding: 10px; margin-top: 8px; }
+</style>
+
+<h1>Planbook audio probe</h1>
+<p class="sub">WO-2.29. Tap 1 first, then 2. Read the log at the bottom.</p>
+
+<button id="b1">1 — Beep NOW (inside the tap)</button>
+<button id="b2" class="alt">2 — Beep in 8 seconds (no touch, like a real alert)</button>
+<button id="b3" class="ghost">3 — Prime, then beep in 8 seconds</button>
+<button id="b4" class="ghost">4 — Beep NOW via &lt;audio&gt; element</button>
+
+<div id="log">ready…</div>
+
+<script>
+var logEl = document.getElementById('log');
+var lines = [];
+function log(s) {
+  lines.unshift(new Date().toLocaleTimeString() + '  ' + s);
+  logEl.textContent = lines.slice(0, 24).join('\n');
+}
+
+log('AudioContext: ' + (!!(window.AudioContext || window.webkitAudioContext)));
+log('audioSession API: ' + (navigator.audioSession ? ('yes, type=' + navigator.audioSession.type) : 'no (pre-16.4)'));
+log('standalone PWA: ' + (window.navigator.standalone === true));
+
+/* The 5-minute pattern from src/alert-sound.js, unchanged. */
+function fiveNotes() {
+  var notes = [], t = 0;
+  for (var i = 0; i < 5; i++) {
+    notes.push({ f: 660, t: t, dur: 0.18 });
+    notes.push({ f: 660, t: t + 0.24, dur: 0.18 });
+    t += 0.6;
+  }
+  return notes;
+}
+
+/* src/alert-sound.js's playToneSequence(), with the state reported on screen. */
+function play(notes, tag) {
+  var made = 0;
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    log(tag + ' ctx created, state=' + ctx.state);
+    var t0 = ctx.currentTime, last = 0;
+    notes.forEach(function (n) {
+      var start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.frequency.value = n.f; osc.type = 'square';
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, end);
+      osc.start(start); osc.stop(end + 0.02);
+      made += 1;
+      if (n.t + n.dur > last) last = n.t + n.dur;
+    });
+    if (ctx.state === 'suspended' && ctx.resume) {
+      ctx.resume().then(function () {
+        log(tag + ' resume() RESOLVED, state=' + ctx.state);
+      }, function (e) {
+        log(tag + ' resume() REJECTED: ' + (e && e.name));
+      });
+    }
+    setTimeout(function () {
+      log(tag + ' state after 1s = ' + ctx.state + ', currentTime=' + ctx.currentTime.toFixed(2));
+    }, 1000);
+    setTimeout(function () { try { ctx.close(); } catch (e) {} }, (last + 0.4) * 1000);
+    log(tag + ' scheduled ' + made + ' oscillators');
+  } catch (e) {
+    log(tag + ' THREW: ' + ((e && e.name) || 'Error'));
+  }
+}
+
+/* The primer from src/alert-sound.js. */
+function prime(tag) {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var buf = ctx.createBuffer(1, 1, 22050);
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    log(tag + ' primer ctx state=' + ctx.state);
+    ctx.close();
+  } catch (e) { log(tag + ' primer THREW: ' + ((e && e.name) || 'Error')); }
+}
+
+document.getElementById('b1').addEventListener('click', function () {
+  log('--- 1: in-gesture ---'); play(fiveNotes(), '[1]');
+});
+
+document.getElementById('b2').addEventListener('click', function () {
+  log('--- 2: 8s, no gesture ---');
+  setTimeout(function () { play(fiveNotes(), '[2]'); }, 8000);
+});
+
+document.getElementById('b3').addEventListener('click', function () {
+  log('--- 3: primed, then 8s ---');
+  prime('[3]');
+  setTimeout(function () { play(fiveNotes(), '[3]'); }, 8000);
+});
+
+/* An <audio> element uses a different audio session path than raw Web Audio on iOS.
+   If this one is audible while 1 is not, the ambient/playback category is the whole story. */
+document.getElementById('b4').addEventListener('click', function () {
+  log('--- 4: <audio> element ---');
+  var sr = 44100, secs = 1.2, n = Math.floor(sr * secs);
+  var buf = new ArrayBuffer(44 + n * 2), view = new DataView(buf);
+  function str(o, s) { for (var i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); }
+  str(0, 'RIFF'); view.setUint32(4, 36 + n * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true); view.setUint32(24, sr, true); view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  str(36, 'data'); view.setUint32(40, n * 2, true);
+  for (var i = 0; i < n; i++) {
+    var on = (Math.floor(i / (sr * 0.2)) % 2) === 0;
+    var v = on ? Math.sin(2 * Math.PI * 660 * i / sr) * 0.35 : 0;
+    view.setInt16(44 + i * 2, v * 32767, true);
+  }
+  var blob = new Blob([buf], { type: 'audio/wav' });
+  var a = new Audio(URL.createObjectURL(blob));
+  a.play().then(function () { log('[4] <audio> play() resolved'); },
+                function (e) { log('[4] <audio> play() REJECTED: ' + (e && e.name)); });
+});
+</script>

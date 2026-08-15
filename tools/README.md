@@ -12,6 +12,7 @@
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
 | `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path>` |
+| `audio-probe.html` | **Not a script** — a page, opened on the device. Tells iOS Silent Mode apart from an AudioContext that will not start outside a gesture, which are the same silence otherwise. See below; it has a way to be served wrong that looks like nothing being wrong. |
 
 The four `wo-*.mjs` scripts and `codex-invoke.mjs` are **dispatch plumbing**, not app tooling — they
 read `plans/` and the agent transcripts, and none of them touches `src/`. They exist because the
@@ -124,6 +125,34 @@ arrives six weeks later; it has been proposed and rejected before (see `CLAUDE.m
   has to be regenerated to serve the app is a build step by another name.
 - **Exit non-zero on failure and say what failed.** These get run once every few months by
   someone who has forgotten how they work.
+
+## `audio-probe.html` — the one thing here that is not a `.mjs`
+
+It is a page rather than a script because the question it asks can only be asked from inside a
+tap on the device itself, and Node cannot make a sound. The rule above is about how scripts get
+**run** — no `npm run`, no bash, no `package.json` — and a hand-opened diagnostic page does not
+put a crack in it. It still meets every other line: optional, run by a human, gates nothing, and
+no deploy, server or page load ever reaches it.
+
+**What it is for.** The overdue-pass alert (WO-2.29) is silent on the teaching iPad, and silence
+has two causes a log cannot tell apart — Silent Mode, and an AudioContext that reports `running`
+and produces nothing because it was not born in a gesture. The page runs
+`playToneSequence()`'s exact note pattern from `src/alert-sound.js` four ways; probe 1 against
+probe 2 is the discrimination, and probe 4 (`<audio>` element) separates the audio-session
+category from Web Audio proper.
+
+**It has to be served from an origin the service worker does not control.** `sw.js` answers
+*every* navigation with the cached shell, whatever path was asked for — the offline clause, and
+correct — so both the deployed origin and `serve-https.mjs`'s 8443 hand back the Planbook app
+instead of this page on any device that has installed the worker. The 2026-08-14 sitting reached
+it on a second port for that reason. **The symptom of getting this wrong is the app opening and
+looking fine**, which is why it is written here and in the file's own header rather than left to
+be rediscovered: nothing errors, and the tool you came for is simply not the thing on screen.
+
+**It is kept on a condition.** Its first header said "delete when done" and it is still here
+because WO-2.29's acceptance line 6 is still 👤 and still failing; `TESTING.md` names probe 1 as
+the one-tap answer for the next run. When that line closes, this goes with it — the row above,
+this section, and the two references in `TESTING.md`.
 
 ## Testing on the iPad — `make-cert.mjs` and `serve-https.mjs`
 

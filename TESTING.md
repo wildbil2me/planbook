@@ -3188,7 +3188,7 @@ alert was silent on the teaching iPad at both thresholds, backgrounded and not, 
 sounded on the laptop. It is neither of the two things the section above anticipated: not the suspend,
 and not Silent Mode.
 
-An isolated probe (`audio-probe.html`, temporary, served on a second port so the service worker could
+An isolated probe (`tools/audio-probe.html`, served on a second port so the service worker could
 not swap the page out) ran `playToneSequence()`'s exact note pattern four ways on the iPad. Safari,
 `standalone PWA: false`, `audioSession API: yes, type=auto`:
 
@@ -3336,8 +3336,10 @@ interruption on this device: tap once anywhere after coming back and stay past t
 threshold. If the second tone then sounds, the re-arm is doing its job and what is owed is deferring
 an alert to the next gesture rather than playing it into a dead context. If nothing sounds even after
 that tap, with the speaker un-slashed and Silent Mode off, it is not the unlock at all —
-`audio-probe.html`'s probe 1 answers in one tap whether raw Web Audio can sound on that device today.
-Whatever happens, it goes here.
+`tools/audio-probe.html`'s probe 1 answers in one tap whether raw Web Audio can sound on that device
+today. **Serve it from a second port**, not from 8443 and not from the deployed origin: `sw.js`
+answers every navigation with the cached shell, so the app opens instead of the probe and nothing
+looks wrong. Whatever happens, it goes here.
 
 **What this correction still cannot prove.** That a room hears anything. No machine heard the tone,
 none can, and the seam that says `running` is the same seam that said `running` all through the
