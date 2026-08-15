@@ -180,6 +180,28 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **Phase branches are retired. There is one branch, `main`.** The convention was dead for the whole
+  August sprint and still written down in two files every session reads.
+  `phase/1-shell-store-roster`, `phase/2-attendance` and `phase/3-gradebook` sat 138, 101 and 50
+  commits behind `main` with **zero** commits of their own — strictly behind, nothing to merge,
+  nothing at risk. The rule had already been rewritten twice to describe its own decay rather than
+  end it.
+
+  The owner's call was to retire rather than revive (WO-1.19). The deciding argument is one the work
+  order did not contain: the eighteen commits before the retirement interleave Phases 1, 2, 3 and 8.
+  **A dispatch stream that hops phases between consecutive work orders cannot sit on one phase
+  branch** without constant switching and merging back, for isolation nothing has needed since
+  Ship 1.
+
+  What is lost is the per-phase history view, and it had already stopped being one — the branches
+  were fast-forwards, so `git log phase/2-attendance` was never Phase 2's story but `main`'s history
+  truncated at Aug 8. The phase files and this changelog answer the same question better. All three
+  survive on `origin`, untouched.
+
+  **This does not settle branching.** When Ship 3 opens, development should be deliberate about
+  happening on branches rather than straight on `main` — what shape that takes is a decision for
+  then, deliberately not written down in advance.
+
 - **Hall-pass overdue alerts are computed from the year document rather than from the banner's cards,
   so leaving the registry no longer delays them.** One guard, in the code that ticks the pass clock
   once a second, had been written for the empty-banner case and was switching off the alert as well

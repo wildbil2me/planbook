@@ -174,11 +174,18 @@ it gets re-run locally before any box is ticked.
   **No dark mode**; the suite is light-theme only. 44px touch targets under `@media (pointer: coarse)`.
 - **Components:** lift from Roll Call!'s `design/portable-components.md` rather than hand-designing.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
-- **Git:** one integration branch `main`, phase branches `phase/<n>-<slug>`, short imperative commit
-  summaries. A work order is a commit or a short stack of them, worked on its **phase** branch — not a
-  branch per work order. *(This drifted during the August sprint — a run of work orders through WO-3.9
-  landed straight on `main`, and all three `phase/*` branches now trail it. The convention stands; the
-  branches need catching up. `git rev-list --count phase/3-gradebook..main` for how far.)*
+- **Git:** one branch — `main`. Work lands on it directly, in short imperative commit summaries, and a
+  work order is a commit or a short stack of them. *(**Phase branches were retired on 2026-08-15**, the
+  owner's call, WO-1.19 — they were the WO-1.1 convention and no work order had used one since Aug 12.
+  A dispatch stream that hops phases between consecutive work orders cannot sit on one phase branch:
+  the eighteen commits before the retirement interleave Phases 1, 2, 3 and 8. All three branches held
+  **zero** commits that were not already on `main`, so the delete cost only the per-phase history view —
+  which had already stopped being one, since a fast-forward of `main` logs every other phase's commits
+  too. The phase files in `plans/work-orders/` and `CHANGELOG.md` carry that story instead, and the
+  branches survive on `origin` if the call is ever reversed. **This fits how the current sprint is
+  worked; it does not settle branching.** When Ship 3 opens, be deliberate about development happening
+  on branches rather than straight on `main` — what shape that takes is a decision for then, not one
+  written down here in advance.)*
 
 ## Working agreements with the teacher
 

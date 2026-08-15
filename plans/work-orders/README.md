@@ -15,8 +15,9 @@ up, finished, and verified without needing to hold the rest of the project in yo
 1. Open the work order. Read its **Why it exists** — it carries the reasoning that must not be
    undone, restated so you don't have to go find it.
 2. Check **Depends on**. If a dependency isn't ✅, you are about to build on sand.
-3. Work on the phase branch (`phase/<n>-<slug>`), not a branch per work order. A work order is a
-   commit or a short stack of them.
+3. Work on `main`. A work order is a commit or a short stack of them, not a branch — of any kind.
+   *(Phase branches were retired on 2026-08-15 by WO-1.19; the reasoning is in `CLAUDE.md`
+   § Conventions and in the work order itself.)*
 4. Move its **Acceptance** lines into `TESTING.md` and run them. They are written to be checklist
    items already.
 5. Then, and only then, do the roadmap maintenance protocol: tick the roadmap box, note any
@@ -166,7 +167,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 19 | 17 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
+| 1 — Shell, store, roster | 20 | 18 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
 | 2 — Attendance | 30 | 27 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 18 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -175,13 +176,13 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 10 | 4 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **102** | **67** | `[██████░░░░] 66%` |
+| | **103** | **68** | `[██████░░░░] 66%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
 itself, and nothing swaps the panel underneath. That is a Phase 1 gap discovered by Phase 2, so it
 is booked where it belongs (WO-1.13) rather than smuggled into an attendance work order to keep a
-dashboard tidy. The work lands on `phase/2-attendance`, because that is where the tree is.*
+dashboard tidy. The work landed on `phase/2-attendance`, because that is where the tree was.*
 
 ---
 
@@ -346,7 +347,8 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 47 | [WO-2.31](phase-2-attendance.md#wo-231--the-held-audio-context-has-two-ways-to-die-that-nothing-watches) The held audio context has two ways to die | S | | Aug 24, a sitting |
 | 48 | [WO-3.22](phase-3-gradebook.md#wo-322--the-key-legend-omits-a-pair-the-hint-beside-it-promises) The key legend omits a pair the hint promises | S | | Aug 24, a sitting |
 | 49 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
-| 50 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 50 | [WO-1.20](phase-1-shell-store-roster.md#wo-120--the-retired-phase-branch-rule-is-still-live-in-roadmapmd-and-testingmd) The retired branch rule is still live in `ROADMAP.md` | S | | Aug 24, a sitting |
+| 51 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

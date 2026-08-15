@@ -1162,7 +1162,7 @@ twenty comments to fix one buries the fix in the diff that is supposed to show i
 
 ## WO-1.19 — the phase-branch convention is dead and still written down
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. Process, not app — the convention it settles is `CLAUDE.md`'s
 and this directory's, and neither is a roadmap promise. Booked 2026-08-13.)*
 
@@ -1187,6 +1187,50 @@ merge, nothing to rebase, and nothing at risk. Catching them up is a fast-forwar
 delete. The reason this has not been done is not difficulty, it is that nobody has been asked to
 choose.
 
+**Somebody was asked on 2026-08-15, and the answer is (b) retire.** The owner's call, put to them with
+that day's measurements and relayed through the coordinator that cut the brief, in these words:
+*"Retire it, but when we hit the next ship we should be more mindful about development happening on
+branches and not on main."* Both halves are the decision. `main` is the integration branch, `CLAUDE.md`
+§ Conventions and this directory's § *How to use one* step 3 now say so with no note about a gap, and
+the three local branches are deleted — `phase/1-shell-store-roster` at `f628a04`, `phase/2-attendance`
+at `25cd527`, `phase/3-gradebook` at `9a2dc05`. **Re-measured immediately before the delete**, as the
+Traps require: 138, 101 and 50 commits behind `main` and **zero** unique commits each, which has only
+grown from the 104 / 67 / 16 booked on 08-13. All three remain on `origin`, untouched here, and all
+three `origin/phase/*` refs are ancestors of `main` — nothing is unreachable and the call is
+reversible with `git branch <name> origin/<name>`. One wrinkle worth writing down rather than
+discovering later: `phase/3-gradebook`'s local tip was **12 commits ahead of
+`origin/phase/3-gradebook`** (`9a2dc05` local, `7235969` remote), so restoring that one from `origin`
+returns an older marker than the one deleted. It is also why `git branch -d` deleted the first two and
+**refused the third** — `-d` measures "merged" against the upstream, not against `HEAD`, and said so:
+*"not deleting branch 'phase/3-gradebook' that is not yet merged to 'refs/remotes/origin/…', even
+though it is merged to HEAD."* Each of those 12 commits was confirmed an ancestor of `main` one at a
+time before `-D` was used. The exact local tips are recorded above and every one of them is reachable
+from `main`, so nothing is lost either way.
+
+**What is lost is the per-phase history view, and it is acceptable because it had already stopped
+being one.** The three branches were fast-forwards of `main` rather than divergent lines of work, so
+`git log phase/2-attendance` was never Phase 2's story — it is `main`'s whole history truncated at
+2026-08-08, WO-1.13's Phase 1 commits included (`git branch --contains 79e6a6a`, WO-1.13's landing
+commit, named `phase/2-attendance` and `phase/3-gradebook` alongside `main` — `phase/1` sits behind it
+and so did not carry its own phase's work either). What the refs really carried was a **marker** of
+where the tree stood the last time each
+phase saw work, and a marker is worth less here than the two records that already answer the same
+question by date and by work order: the phase file in this directory, and `CHANGELOG.md`. The `origin`
+copies keep even the marker.
+
+**Why not (a), when reviving them was the same three fast-forwards.** The dispatch stream hops phases
+between consecutive work orders — the eighteen commits before this one interleave WO-1.18, WO-8.10,
+WO-1.17, WO-8.9, WO-3.16, WO-2.29, WO-2.28 and WO-3.15, four phases inside a week — so a branch per
+phase means near-constant switching and merging back, for isolation nothing has asked for since Ship 1.
+Three fast-forwarded branches that then sit unused for another sprint is this work order's own defect
+with fresher timestamps, and its own Traps say so.
+
+**This retires a convention for how the current sprint is worked; it does not settle branching.** The
+owner's second half stands as written: when Ship 3 opens, be deliberate about development happening on
+branches rather than straight on `main`. **What shape that takes is not decided here**, deliberately —
+naming a scheme now would put a second branching rule on paper that nobody has agreed to follow, which
+is the exact defect this work order exists to remove.
+
 **Deliverables** *(the deliverable is a decision, and then whichever act it implies)*
 - **A choice, written down with its reasoning**, between the two honest options:
   **(a) revive** — fast-forward all three, and say what changes so the next work order actually lands
@@ -1202,15 +1246,32 @@ choose.
 decides; the 9 unpushed commits on `main`; any change to commit-message convention, which is working.
 
 **Acceptance**
-- [ ] `CLAUDE.md` and `plans/work-orders/README.md` say the same thing about branching, and it is
-      the thing that is actually happening.
-- [ ] Neither file contains a note admitting a gap between the branching rule and the practice.
-- [ ] If **(a)**: all three `phase/*` branches are at `main`, and the next work order after this one
-      demonstrably landed on a phase branch — this is the line that decides whether (a) was real.
-- [ ] If **(b)**: the three branches are gone locally, and the decision names what is lost — the
-      per-phase history view — and why that is acceptable.
-- [ ] 👤 The owner has said which option, on the record. This is a preference about how the owner's
-      own repository is worked and cannot be inferred from the code.
+- [x] `CLAUDE.md` and `plans/work-orders/README.md` say the same thing about branching, and it is
+      the thing that is actually happening. *(Both now say work lands on `main`; `main` is the only
+      local branch. `AGENTS.md` was grepped for `branch` — zero matches, so the same-sitting sync
+      rule had nothing to move.)*
+- [x] Neither file contains a note admitting a gap between the branching rule and the practice.
+      *(The note each carries is a decision record — why the rule is what it is, and the owner's
+      forward intent for Ship 3. There is no gap left to admit: the rule says `main` and the
+      practice is `main`.)*
+- [x] If **(b)**: the three branches are gone locally, and the decision names what is lost — the
+      per-phase history view — and why that is acceptable. *(Deleted 2026-08-15 at `f628a04` /
+      `25cd527` / `9a2dc05`, each re-measured at 0 unique commits first. `origin` untouched.)*
+- [x] 👤 The owner has said which option, on the record. This is a preference about how the owner's
+      own repository is worked and cannot be inferred from the code. *(Ticked on the owner's explicit
+      say-so, 2026-08-15. The artifact is the decision record above, which quotes the call verbatim;
+      `.claude/dispatch/WO-1.19-brief.md` § 2b carries it too. Ticked by an agent, which the standing
+      ban on 👤 ticks would normally forbid — that ban exists because no agent has an iPad, and this
+      line asks for no hardware, only that the owner have chosen. The owner had, and then said to
+      tick it.)*
+
+*(The option-**(a)** Acceptance line — "all three `phase/*` branches are at `main`, and the next work
+order after this one demonstrably landed on a phase branch" — **is not applicable and has been
+rewritten out of the checklist deliberately.** It was a conditional that resolved to "not
+applicable" when (b) was chosen, so it could never become true; left as a checkbox it would have
+held this work order at 🔨 IN PROGRESS forever, since `wo-gate.mjs --tick` reads any `- [ ]` as
+unfinished and cannot know a line is moot. Recorded here rather than deleted, because the shape of
+the choice is part of the decision.)*
 
 **Traps** — **Do not "catch the branches up" as a tidy-up without making the choice.** Three
 fast-forwarded branches that then sit unused for another sprint is this work order's own defect,
@@ -1219,3 +1280,69 @@ local decision** — the remote branches are the only copy if the call is later 
 here is urgent enough to need both halves at once. **Do not read "zero unique commits" as permanent**;
 re-measure before acting, because a dispatch working a phase branch between the booking and the doing
 would make it false.
+
+---
+
+## WO-1.20 — the retired phase-branch rule is still live in ROADMAP.md and TESTING.md
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.19
+**Closes roadmap** Phase 1 → *(no box. Process, not app — same reasoning as WO-1.19, which this
+finishes. Booked 2026-08-15.)*
+
+**Why it exists.** WO-1.19 retired phase branches and rewrote the two files its Deliverables named —
+`CLAUDE.md` and `plans/work-orders/README.md`. **It named two files and there were six.** The rule it
+retired is still written down, in rule voice, in files every phase reads:
+
+- **`plans/ROADMAP.md`, § Cross-cutting rules** — *"One integration branch `main`; phase branches
+  `phase/<n>-<slug>`, so a shippable state always exists. Delete once merged."* This is the retired
+  convention, stated as a standing rule, in the document that governs every phase. **It is the whole
+  reason this work order exists**; the rest are smaller.
+- **`plans/ROADMAP.md`, same section** and **`TESTING.md`, line 3** — both gate on *"before merging
+  any phase branch."* There are no phase branches, so both now name an event that cannot occur.
+  `TESTING.md`'s is the regression gate's **first sentence**, which makes it the copy most likely to
+  be read by someone deciding whether to run the checklist at all.
+- **`plans/work-orders/phase-8-packaging.md`** — *"nothing deploys while the work is sitting on a
+  phase branch."* Inside a Cloudflare Pages setup note, describing a state that can no longer happen.
+- **The `Branch: phase/<n>-<slug>` header on every phase file**, phase 1 through phase 8. **This one
+  is a genuine judgment call and is deliberately not pre-decided here** — it reads as per-phase
+  metadata rather than as an instruction, and phases 4 through 8 have not started, so their headers
+  describe a plan rather than a lie. Decide it, act, and say which way you went.
+
+**This is WO-1.19's own defect with a narrower blast radius**, and the same argument applies: a rule
+every session reads and no session follows costs attention and buys nothing. WO-1.19's title —
+*the convention is dead and still written down* — describes `ROADMAP.md` word for word.
+
+**Why it was not folded into WO-1.19.** Its Deliverables named two files and its Acceptance graded
+those two. Widening a work order past its own Acceptance during the dispatch is how scope stops being
+reviewable, so the residue was reported to the owner and booked instead. That was the right call and
+this is the other half of it.
+
+**Deliverables**
+- **`plans/ROADMAP.md` § Cross-cutting rules** no longer states the phase-branch convention as a
+  standing rule, and its `TESTING.md` gate names something that can happen.
+- **`TESTING.md` line 3** likewise — the regression gate says when to run, in terms that are true.
+- **`plans/work-orders/phase-8-packaging.md`** no longer describes deploys waiting on a phase branch.
+- **A decision on the per-phase `Branch:` headers**, written down with its reasoning either way.
+- **Nothing re-argues the retirement.** It was decided in WO-1.19 on 2026-08-15; this work order
+  points at that record rather than restating the case, and **must not reopen it**.
+
+**Out of scope** — the branching shape for Ship 3, which WO-1.19 explicitly left undecided and which
+is the owner's call, not a documentation cleanup's; anything on `origin`; `CHANGELOG.md` history,
+which records what was true when written and is not edited to match later decisions.
+
+**Acceptance**
+- [ ] `grep -rn "phase branch\|phase/<n>" plans/ROADMAP.md TESTING.md` returns nothing that states or
+      assumes the retired convention.
+- [ ] No file in the repository instructs a reader to work on, merge, or wait on a phase branch.
+      *(`CHANGELOG.md` and closed work orders are history and are exempt — they record what was true
+      when written.)*
+- [ ] The per-phase `Branch:` headers were decided deliberately, and the reasoning is written down
+      wherever they ended up.
+- [ ] `node tools/wo-gate.mjs --audit` passes.
+
+**Traps** — **Do not reopen the decision.** This is cleanup after a call the owner already made; a
+dispatch that re-argues revive-versus-retire has failed the work order. **Do not edit `CHANGELOG.md`
+to match** — entries record what was true when written, and rewriting them to agree with a later
+decision destroys the only record of the change. **Do not delete the historical notes**, in
+`README.md` or the phase files, that describe work having landed on a phase branch; that happened,
+and it is the evidence WO-1.19's reasoning rests on. Tense, not deletion.
