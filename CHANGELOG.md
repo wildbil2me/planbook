@@ -68,6 +68,34 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-8.10 — the About screen says which copy of Planbook this device is running.** After a deploy,
+  the only way to learn whether the installed iPad had actually taken the new shell was Safari Web
+  Inspector over USB from a Mac — a procedure nobody runs in September, which is how the question
+  stopped being asked. The last line of the About modal now answers it, generated from `caches.keys()`
+  every time the panel opens and never from a string typed into the markup: a constant would read
+  `v65` while the browser held `v64`, which is the exact failure this exists to catch.
+
+  **The useful question turned out not to be "which version".** `sw.js` uses `skipWaiting` +
+  `clients.claim`, so `activate` deletes every cache that is not the current one — one cache is the
+  healthy state, and more than one means the activation did not finish and the app may be serving a
+  mix. So the line says the number out loud before it lists the names, in the same caution amber the
+  install banner and the backup nag wear, and tells the teacher to quit from the app switcher and
+  send the screen on if it happens again. Where Cache Storage cannot be read at all — a non-secure
+  origin, a private window — it says which failure that was, because a blank line reads as "no
+  caches", which is a different fact and a wrong one.
+
+  `verify-shell.mjs` plants the second cache itself and clears it again, **766 → 778** checks: a
+  display that has only ever shown one name has proved nothing about the case it exists for. Six
+  mutation runs, and the fourth caught a check of its own that passed a build with the warning
+  sentence deleted — the line ends by saying "if this line still names more than one", so the phrase
+  was in the string either way. It now asserts the count is said *before* the names are listed.
+
+  **It found something on its first day, before it ever reached a device.** The live origin was
+  serving `planbook-shell-v63` while the repository had carried `v64` since WO-1.17 — a committed
+  shell that never reached anyone, and the only way to notice was to go looking. The deploy carrying
+  this work order took the origin to `v65`, and the installed iPad then confirmed `v65`, one stored
+  copy.
+
 - **WO-8.9 — `_headers` can no longer be deleted with every check green.** `wo-sweep.mjs` gains a
   check on it, **18 → 19**: the file has to exist, and `/sw.js`, `/index.html` and `/` each have to
   be pinned to `no-cache` by a live stanza. The sweep gates the files it reads on a regex an
