@@ -1061,6 +1061,47 @@ check removed, trips the sweep and hands the reader both numbers to go and fix. 
 is somebody editing the executed count wrongly while touching no check at all, which is not the
 failure that happened three times.
 
+**Nor does the sweep check a SECTION header's count against the checks underneath it, and that is
+WO-1.18's answer rather than its omission.** That work order fixed one — `tools/verify-shell.mjs:1869`
+opened *"Seven checks, and the fixture is the whole argument"* over eight, correct when it was written
+and stale before its own commit landed — and then asked whether the drift is mechanically catchable,
+since §11 already counts `check()` call sites per line. It is, in the sense that a grep can produce a
+number; it is not, in the sense that the number would be right.
+
+**Finding the two sentences is the easy half, and an early draft of this note spent its best argument
+there.** The worry was decoys: 43 lines in the file mention a number of checks, and only two of them
+are headers — the rest are relative references (*"the two checks above"*), scars (*"cost four checks in
+the section below it"*), and summary lines quoted out of a run (*"766 checks · 764 passed · 2 failed"*).
+But a check has no reason to read those lines. Anchored to the 50 banner lines and the three lines under
+each, the candidate set is exactly two, measured 2026-08-15: the WO-1.15 block, and WO-1.17's. Recorded
+because it is the measurement most likely to be re-proposed as the obstacle, and it is not one.
+
+**What kills it is that a section has no machine-readable end, and that its header counts meaning
+rather than syntax.** The WO-1.15 block is nested inside `backup & restore`, and what terminates it is
+a check *named* *"the WO-1.15 fixture is put back byte for byte, so the sections below inherit
+nothing"*. Banner to banner — the only boundary a grep has — that stretch contains 19 `check()` call
+sites against the 8 the header is about, so the check's first act on the very defect it was written for
+would be to demand seven be changed to nineteen. The second header shows the same fault from the other
+side: WO-1.17's opens *"FOUR CHECKS AND A FIXTURE GUARD THAT NEVER FIRES ON A GREEN RUN"* over five
+call sites and is precisely right, because it is counting what the checks *are* and saying so in its
+own text. A call-site comparison scores the one header in the file most careful about its own arithmetic
+as the wrong one. Both are the sweep's oldest failure shape, the one its header warns about twice: a
+green-looking wrong answer, and a check that cries wolf and is turned off within a month.
+
+**The escape exists and was rejected on cost, which is the honest reason rather than impossibility.**
+Give sections a machine-readable end — a closing marker, or a declared count in parseable form — and
+the inference problem becomes bookkeeping that works. It is also a convention retrofit across 50 banners
+in a file with no build step and no parser, to catch a defect that has occurred once and cost one word
+to fix. If that ratio ever changes, this is the design to reach for.
+
+**Emitting a `REVIEW` instead of a `FAIL` was the near miss, and it was refused for what it costs the
+channel.** The sweep's two standing REVIEWs are read and dismissed on every run, which is affordable
+because there are two of them; a third, permanent, over two comment lines spends that. What is left
+uncovered, said out loud so nobody over-trusts it: a section header that miscounts stays something only
+a reader catches — the one known instance was found by the WO-1.15 verifier on 2026-08-12 while reading
+the section for another reason, and the fix was a word. §11 goes on watching the number that has
+actually rotted three times, which is the file's total and not a section's.
+
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
 **20 checks** after WO-1.17: the newest reconciles the backup nag's collection list against the
 document sketch in `docs/data-model.md` — `hasSomethingToLose()` in `src/backup.js` now carries two

@@ -1866,7 +1866,7 @@ if (!backupBooted || !backupSeam) {
 
   /* ─────────── WO-1.15: the compare can see what it is about to delete ───────────
    *
-   * Seven checks, and the fixture is the whole argument. describe() used to count `classes` and
+   * Eight checks, and the fixture is the whole argument. describe() used to count `classes` and
    * `students` and nothing else, so a term of marks and an empty test document drew an IDENTICAL
    * panel — which is precisely the pair of documents `plans/work-orders/gates.md` § "The iPad stays
    * in the rotation" exists to keep apart. So the fixture here is a stored document whose ROSTER

@@ -1097,7 +1097,7 @@ the fix, changes nothing, and closes the work order. **Do not widen the nag into
 
 ## WO-1.18 — the harness section comment miscounts its own checks
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. Documentation drift inside the harness, found on 2026-08-12 by
 the WO-1.15 verifier.)*
 
@@ -1128,12 +1128,31 @@ assert; the two standing `wo-sweep.mjs` REVIEW items, which are read and dismiss
 purpose.
 
 **Acceptance**
-- [ ] The comment at `tools/verify-shell.mjs:1860` matches the number of `check()` calls in its
-      section, counted rather than assumed.
-- [ ] `verify-shell.mjs` still runs green at its then-current total, and `tools/README.md`'s recorded
+- [x] The comment at `tools/verify-shell.mjs:1860` matches the number of `check()` calls in its
+      section, counted rather than assumed. — it reads *"Eight checks"*. **The header has moved to
+      `:1869`** since this line was written: `git show 87000a7f:tools/verify-shell.mjs` has it at
+      `:1860`, and WO-1.17 (`3c6b8c5`) added a block above it that pushed it nine lines. Counted with
+      `wo-sweep.mjs` §11's own predicate — comment lines and the definition excluded — over the block
+      that runs from the banner at `:1867` to the check named *"the WO-1.15 fixture is put back byte
+      for byte, so the sections below inherit nothing"*, which is what terminates it: **eight** call
+      sites, at `:1991, 2004, 2018, 2029, 2040, 2070, 2101, 2123`, and `git blame` puts all eight in
+      WO-1.15's own commit `87000a7`. Nothing was deleted or renumbered to reach the number.
+- [x] `verify-shell.mjs` still runs green at its then-current total, and `tools/README.md`'s recorded
       call-site count still matches — a comment fix must not touch either, and if it does, something
-      other than a comment was changed.
-- [ ] The sweep question above is answered in writing, in the work order or in `tools/README.md`.
+      other than a comment was changed. — `778 checks · 778 passed · 0 failed · 0 skipped`, 20,570
+      lines, 26.4 lines per check, 253s, exit 0. `wo-sweep.mjs`: `20 checks · 18 passed · 0 failed ·
+      2 to review` (both REVIEWs standing), §11 green at *"781 `check()` call site(s) …, matching
+      tools/README.md:812"*. Both numbers are the ones the tree already carried — 781 − 778 = 3 is
+      the gap `tools/README.md` names — and the harness diff is one word inside a `/* */`.
+- [x] The sweep question above is answered in writing, in the work order or in `tools/README.md`. —
+      `tools/README.md`, § `verify-shell.mjs`, the paragraph opening *"Nor does the sweep check a
+      SECTION header's count against the checks underneath it"*, beside the WO-2.22 refusal it is the
+      same shape as. **Not built**, on three measurements rather than on effort: 49 banner lines in
+      the harness and only two state a count; one of those two is WO-1.17's *"FOUR CHECKS AND A
+      FIXTURE GUARD THAT NEVER FIRES"* over five call sites, which a call-site comparison would score
+      wrong; a section has no machine-readable end, so banner-to-banner over this very block counts
+      19 against the 8 the header is about; and 41 further lines say things like *"the two checks
+      above"*. A `REVIEW` instead of a `FAIL` is recorded as the near miss and why it was refused.
 
 **Traps** — **Do not "fix" the count by deleting a check.** **Do not renumber neighbouring section
 headers to match a scheme** — the other headers are not known to be wrong, and a sweep that changes

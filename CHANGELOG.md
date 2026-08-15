@@ -38,6 +38,20 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-1.18 — a section header in the verification harness claimed seven checks over eight.** The
+  header was right when it was written and stale before its own commit landed; the fix is one word.
+  Nothing the harness runs changed, and nothing it runs could have caught this — the sentence lives
+  inside a block comment, so `verify-shell.mjs` reports every check passing whether the header says
+  seven, eight or nineteen.
+
+  **Why the sweep is not extended to catch the next one is written down in `tools/README.md`.**
+  Section headers count what their checks *are* rather than how many call sites follow, and a section
+  has no machine-readable end — so a grep-based comparison would have demanded the one header in the
+  file that is most careful about its own arithmetic be changed, and would have gotten the header it
+  was written for wrong in the other direction. Giving sections a parseable end marker would work and
+  was rejected on retrofit cost against a defect that has happened once. What stays uncovered is said
+  out loud there rather than left to be assumed closed.
+
 - **WO-1.17 — the backup reminder could not see a year whose only content was grades or hall
   passes.** It counted classes, students, assignments, attendance, notes, calendar events and
   templates, and stopped there — so a document holding nothing but score cells, or nothing but a
