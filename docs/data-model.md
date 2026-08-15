@@ -32,6 +32,14 @@ Every save writes to IndexedDB. Additionally the app offers a one-click download
 document (plain JSON) and nags if the last download is more than a week old. A file the teacher
 holds is the only recovery path that survives eviction, a wiped browser, and a dead laptop.
 
+**The nag only fires on a document that holds something a teacher typed** — a fresh year has a
+letter scale and nothing else, and a warning on day one is wallpaper by October. Which collections
+count is `hasSomethingToLose()` in `src/backup.js`, and every top-level key of the sketch below is
+either counted there or listed with the reason it is not. **Adding a collection to that sketch and
+nowhere else turns `tools/wo-sweep.mjs` red** (§ 14) until it is classified, because the last two
+collections added — WO-2.8's `openPasses` and `passes` — reached the document and never reached the
+nag, and nothing noticed until a verifier read the line for another reason.
+
 ## The document
 
 ```jsonc

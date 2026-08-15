@@ -798,6 +798,76 @@ installed iPad, 2026-08-12, in one sitting against the confirm dialog with a rea
 
 ---
 
+### WO-1.17 — the backup nag cannot see a year whose only content is grades
+
+**What this changes, in one sentence:** the backup nag now counts score cells and both hall-pass
+collections when it decides whether there is anything to lose, and the list it counts is reconciled
+against `docs/data-model.md` by the sweep instead of by somebody remembering.
+
+**The defect it closes had never been seen, and could not have been.** `hasSomethingToLose()` summed
+seven collections and left out `scores`, `passes` and `openPasses` — but a score cell needs an
+assignment to hang on, so `count(doc.assignments)` fired first and the strip appeared anyway. The
+omission is invisible until a document can hold scores with no assignment (a column kept after its
+assignment is deleted, an import, a partial restore), and then the one strip standing between a
+teacher and the iOS eviction in `CLAUDE.md` goes quiet about a term of grades. `openPasses` and
+`passes` were never masked at all: a document holding only hall passes nagged about nothing.
+
+*Evidence for the Acceptance list in
+[`plans/work-orders/phase-1-shell-store-roster.md`](plans/work-orders/phase-1-shell-store-roster.md)
+§ WO-1.17 lives there, beside each line. What is here is the desk pass and the red run that makes the
+new checks evidence.*
+
+**Desk pass, 2026-08-15.** `node tools/verify-shell.mjs` at **766 checks · 766 passed · 0 failed · 0
+skipped**, 20,362 lines, 26.6 lines per check, 246s, exit 0 — up from 762 of 762, four checks added
+in a new block at the foot of the existing `backup & restore` section (a fifth call site is a
+fixture-guard failure arm that never fires on a green run). `node tools/wo-sweep.mjs` at **20 checks ·
+18 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the standing ones (the
+sensitive-field-name sweep at 297 mentions, and the due-date/`late`-`missing` list). `sw.js`'s `CACHE`
+is bumped to **`planbook-shell-v64`**, because `src/backup.js` is in `SHELL`.
+
+**The red run is the point, and it was run first.** The four new checks went against the *unfixed*
+`hasSomethingToLose()` on the same tree before the fix was restored:
+
+| Fixture — a `newYearDocument()` with exactly one collection filled | Unfixed | Fixed |
+|---|---|---|
+| one score column, two cells, **no assignment** | **red** — nag down | green — nag up |
+| one open hall pass (`openPasses`) | **red** — nag down | green — nag up |
+| one finished hall pass (`passes`) | **red** — nag down | green — nag up |
+| nothing at all (12 seeded letter bands, no more) | green — nag down | green — nag down |
+
+`766 checks · 764 passed · 2 failed` on the unfixed tree, the two failures being the two content
+checks. *A check written against any ordinary document — one with a class, a roster or an assignment
+in it — passes on both trees and proves nothing, which is why every fixture here holds one collection
+and no other.* The pass/fail split also does the second job the work order asks for: the brand-new
+sample is green on **both** trees, so the day-one rule is one the fix preserved rather than one
+nothing ever tested.
+
+**The sweep's new § 14 was mutated too, because a reconciliation that cannot go red is decoration.**
+Three mutations, all reverted, each one run against the whole sweep:
+
+| Mutation | Result |
+|---|---|
+| a `"rubrics"` collection added to the sketch in `docs/data-model.md` and classified nowhere | **red** — *"rubrics — documented in docs/data-model.md and in neither list in src/backup.js … the nag is silent about it until you do"*. This is the work order's own defect, replayed |
+| `scores` paired with `count` instead of `countScores` — the Traps line, as an edit | **red** — *"scores is documented as an object and paired with count() — count() answers 0 for anything that is not an array, so a map counted with it reads as an empty year"* |
+| `templates` misspelled `template` in `CONTENT_COLLECTIONS` | **red twice** — once for the documented key nothing classifies, once for *"a misspelled key, which counts 0 forever and throws nothing"*. The second half is why this diff runs both ways where § 12's runs one |
+
+**Beyond that, no mutation table, which is a smaller claim than WO-1.15's.** For the app fix the
+unfixed build *is* the mutation, and it is the real one rather than an invented one. What was not asked and is worth
+recording: nothing else in the harness noticed the difference between the two trees — 762 checks were
+green over a build whose nag could not see a term of grades, exactly as WO-1.15 recorded a week
+earlier. A check can only see what it was pointed at.
+
+**WO-1.17 owes no 👤 line, and that is a claim rather than an omission.** Nothing on the screen
+changed: the strip's markup, wording, styling, touch targets and the moments it is evaluated are all
+untouched (the work order puts each of those out of scope). What changed is the predicate that
+decides whether it is drawn, and a predicate is exactly what a desk harness settles. The two 👤 lines
+this strip has ever owed are about how it *reads* on the device — *"the backup panel's amber line is
+legible on an installed iPad and names the year"* (closed 2026-08-04) and *"confirm the backup nag is
+down for every year, not just the one on screen"* (WO-1.11) — and neither is re-opened by a change to
+what the predicate counts.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

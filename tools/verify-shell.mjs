@@ -1417,7 +1417,15 @@ if (!backupBooted || !backupSeam) {
     */
     const beforeAll = await evalJs(`(async function(){ var s = window.planbook.store, p = window.planbook,
         b = window.planbook.backup, was = s.getDoc().year, out = [];
+      /* A deliberately INDEPENDENT restatement of hasSomethingToLose(), not a call through the seam:
+         what it is for is deciding which years OUGHT to be nagging, and asking the app that would
+         make the assertion below agree with itself. Corrected at WO-1.17, when the rule it restates
+         gained score cells and the two pass collections — n() is right for the arrays and wrong for
+         scores, which is an object keyed by assignment (docs/data-model.md), so that one is asked
+         for its columns. It is a boolean either way: any column means somebody entered a grade.
+         NO BACKTICKS IN THIS COMMENT — it lives inside a template literal. */
       function n(a){ return Array.isArray(a) ? a.length : 0; }
+      function cols(o){ return o && typeof o === 'object' && !Array.isArray(o) ? Object.keys(o).length : 0; }
       p.setPref('lastBackupAt', {});
       var years = await s.listYears();
       for (var i = 0; i < years.length; i++) {
@@ -1426,7 +1434,8 @@ if (!backupBooted || !backupSeam) {
         var d = s.getDoc();
         out.push({ year: years[i],
                    hasSomethingToLose: (n(d.classes) + n(d.students) + n(d.assignments)
-                     + n(d.attendance) + n(d.log) + n(d.events) + n(d.templates)) > 0,
+                     + n(d.attendance) + n(d.log) + n(d.events) + n(d.templates)
+                     + cols(d.scores) + n(d.openPasses) + n(d.passes)) > 0,
                    nagUp: !document.getElementById('backupNag').classList.contains('hidden') });
       }
       await s.openYear(was);
@@ -2495,6 +2504,173 @@ if (!backupBooted || !backupSeam) {
         + solo.records.length + ' away), open = ' + restoredAll.open + ' at schema '
         + restoredAll.schemaVersion + ', stamps back = '
         + (JSON.stringify(restoredAll.stamps) === JSON.stringify(solo.stamps || {})));
+  }
+
+  /* ─────────── WO-1.17: the nag can see a year whose only content is grades ───────────
+   *
+   * FOUR CHECKS AND A FIXTURE GUARD THAT NEVER FIRES ON A GREEN RUN, and the fixture is the whole
+   * argument. hasSomethingToLose() (src/backup.js) used to enumerate seven collections and leave out
+   * `scores`, `passes` and `openPasses`, so the one strip standing between a teacher and the iOS
+   * eviction in CLAUDE.md stayed down on a document whose content lived only in those three. THE
+   * DEFECT IS MASKED ON EVERY ORDINARY DOCUMENT: a score cell needs an assignment to hang on, so
+   * `count(doc.assignments)` fires first and the strip appears anyway. A check written against a
+   * document that has a class, or a roster, or an assignment in it goes green against the build this
+   * work order replaces and proves nothing.
+   *
+   * So every fixture below is newYearDocument() with EXACTLY ONE collection filled and nothing else
+   * touched — the omitted collection as the only content there is. All four were run against the
+   * unfixed build before they were run against the fixed one, 2026-08-15: `scores only` and the two
+   * pass samples are RED there (766 checks · 764 passed · 2 failed) and the brand-new sample is
+   * green, which is what makes the two red ones evidence and the day-one one a rule that survived
+   * the fix rather than a rule that was never tested.
+   *
+   * WHY A SCRATCH YEAR RATHER THAN THE OPEN ONE. The nag asks about the document in memory, so the
+   * fixture has to BE the open document — and the years this run has built by now are the fixtures
+   * every section below reads. A label no year on the device uses is planted straight into IndexedDB
+   * (the idiom the poisoned-year and WO-1.15 blocks use), opened through the real openYear(), read,
+   * and deleted again in a `finally` so that a throw part-way through cannot leave it behind.
+   *
+   * NO STAMP IS WRITTEN FOR IT, deliberately: with no `lastBackupAt` entry for the scratch year the
+   * age half of refreshBackupNag()'s test is satisfied for every sample, so the strip is up if and
+   * only if hasSomethingToLose() answers true. That is the only variable these four checks move.
+   */
+  const wo117 = await evalJs(`(async function(){
+    var s = window.planbook.store, p = window.planbook, b = window.planbook.backup;
+    var open = s.getDoc();
+    var was = open ? open.year : '';
+    var stamps = p.getPref('lastBackupAt') || {};
+    var years = await s.listYears();
+    /* Whatever the strip was doing before this fixture ran is what it has to be doing after it.
+       Asserting it is DOWN afterwards would be asserting something about the sections above rather
+       than about this one, which is a check that goes red about its neighbours. */
+    var nagBefore = !document.getElementById('backupNag').classList.contains('hidden');
+    var scratch = '';
+    for (var y = 2040; y < 2100 && !scratch; y++) {
+      var label = y + '-' + (y + 1);
+      if (years.indexOf(label) === -1) scratch = label;
+    }
+    if (!was || !scratch || typeof s.newYearDocument !== 'function') {
+      return { ok:false, why: !was ? 'no year is open at this point in the run, and the nag is a fact about the open year'
+        : !scratch ? 'every label from 2040-2041 to 2099-2100 is already on this device'
+          : 'no newYearDocument() on the store seam, so a document with exactly one collection filled cannot be built' }; }
+    function write(doc){ return new Promise(function(res, rej){
+      var req = indexedDB.open('planbook');
+      req.onerror = function(){ rej(req.error); };
+      req.onsuccess = function(){ var db = req.result;
+        var t = db.transaction('years','readwrite');
+        t.objectStore('years').put(doc);
+        t.oncomplete = function(){ db.close(); res(1); };
+        t.onerror = function(){ rej(t.error); }; }; }); }
+    function forget(year){ return new Promise(function(res, rej){
+      var req = indexedDB.open('planbook');
+      req.onerror = function(){ rej(req.error); };
+      req.onsuccess = function(){ var db = req.result;
+        var t = db.transaction('years','readwrite');
+        t.objectStore('years').delete(year);
+        t.oncomplete = function(){ db.close(); res(1); };
+        t.onerror = function(){ rej(t.error); }; }; }); }
+    /* One sample: a brand-new document with one collection filled, planted, opened, and asked. What
+       it reports back is what the document HOLDS as well as what the strip did — a check whose
+       fixture turned out to be empty, or to have grown a class from somewhere, would otherwise pass
+       for the wrong reason. */
+    async function sample(name, fill){
+      var doc = s.newYearDocument(scratch);
+      fill(doc);
+      await write(doc);
+      await s.openYear(scratch);
+      var times = p.getPref('lastBackupAt') || {};
+      delete times[scratch];
+      p.setPref('lastBackupAt', times);
+      b.refreshBackupNag();
+      var d = s.getDoc();
+      return { name:name, year:d.year,
+               up: !document.getElementById('backupNag').classList.contains('hidden'),
+               lead: (document.getElementById('backupNagLead')||{}).textContent,
+               holds: { classes:d.classes.length, students:d.students.length,
+                        assignments:d.assignments.length, attendance:d.attendance.length,
+                        log:d.log.length, events:d.events.length, templates:d.templates.length,
+                        scoreColumns:Object.keys(d.scores).length,
+                        scoreCells:Object.keys(d.scores).reduce(function(n, id){
+                          return n + Object.keys(d.scores[id]).length; }, 0),
+                        openPasses:d.openPasses.length, passes:d.passes.length },
+               letterScale: d.letterScale.length }; }
+    var out = [], threw = '';
+    try {
+      out.push(await sample('brand new', function(){}));
+      out.push(await sample('scores only', function(d){
+        d.scores = { a_wo117: { s_wo117a: { v:90 }, s_wo117b: { v:null, flag:'missing' } } }; }));
+      out.push(await sample('one open pass', function(d){
+        d.openPasses = [{ id:'p_wo117', studentId:'s_wo117a', classId:'c_wo117', type:'bathroom',
+                          out:'2026-09-09T09:12:00-04:00' }]; }));
+      out.push(await sample('one finished pass', function(d){
+        d.passes = [{ id:'p_wo117b', studentId:'s_wo117a', classId:'c_wo117', type:'nurse',
+                      out:'2026-09-09T09:12:00-04:00', back:'2026-09-09T09:20:00-04:00',
+                      minutes:8, endedBy:'return' }]; }));
+    } catch (e) {
+      /* Reported rather than thrown on. A fixture that dies here would otherwise take the rest of
+         the file with it — the WO-2.26 scar in tools/README.md is a clickSel() on a deleted door
+         ending a run with no summary at all. It comes back as a FAIL below, with the message. */
+      threw = String((e && e.message) || e);
+    } finally {
+      /* Runs whether or not the samples did, so a throw part-way through cannot leave a scratch
+         year on the device for every section below to count. */
+      try { await s.openYear(was); await forget(scratch); p.setPref('lastBackupAt', stamps); }
+      catch (e2) { threw = threw || ('the fixture could not be cleaned up: ' + ((e2 && e2.message) || e2)); }
+      b.refreshBackupNag();
+    }
+    var after = await s.listYears();
+    return { ok: !threw, threw: threw, scratch:scratch, was:was, samples:out, yearsBefore:years,
+             yearsAfter:after, openAfter: s.getDoc() && s.getDoc().year,
+             stampsBefore: JSON.stringify(stamps),
+             stampsAfter: JSON.stringify(p.getPref('lastBackupAt') || {}),
+             nagBefore: nagBefore,
+             nagAfter: !document.getElementById('backupNag').classList.contains('hidden') }; })()`);
+
+  if (wo117.threw) {
+    check('the WO-1.17 fixture plants a one-collection document, opens it and asks the nag', false,
+      'the fixture threw and the checks it feeds never ran: ' + wo117.threw + ' — the scratch year '
+        + wo117.scratch + ' was cleaned up in a finally, but nothing below this line was measured');
+  } else if (!wo117.ok) {
+    skip('the backup nag sees a document whose only content is scores, or a hall pass (WO-1.17)',
+      wo117.why);
+  } else {
+    const wo117Sample = (name) => (wo117.samples || []).filter(s => s.name === name)[0]
+      || { name: name + ' (never ran)', up: null, holds: {}, lead: '' };
+    const wo117Only = (s, key) => Object.keys(s.holds).filter(k => k !== 'scoreCells' && s.holds[k] > 0)
+      .join(', ') === key;
+    const wo117New = wo117Sample('brand new');
+    const wo117Scores = wo117Sample('scores only');
+    const wo117Open = wo117Sample('one open pass');
+    const wo117Closed = wo117Sample('one finished pass');
+    const wo117Says = (s) => s.name + ': nag ' + (s.up ? 'UP' : 'down') + ' over '
+      + JSON.stringify(s.holds);
+
+    check('a document holding score cells and NO assignments raises the nag',
+      wo117Scores.up === true && wo117Scores.holds.scoreCells === 2
+        && wo117Scores.holds.assignments === 0 && wo117Only(wo117Scores, 'scoreColumns'),
+      wo117Says(wo117Scores) + ' — two score cells in one column, with no assignment, no class and '
+        + 'no roster to be seen by instead; lead = ' + JSON.stringify(wo117Scores.lead));
+    check('a document whose only content is a hall pass — open or finished — raises the nag',
+      wo117Open.up === true && wo117Only(wo117Open, 'openPasses')
+        && wo117Closed.up === true && wo117Only(wo117Closed, 'passes'),
+      wo117Says(wo117Open) + ' | ' + wo117Says(wo117Closed)
+        + ' — the two collections are asked separately because they are two collections '
+        + '(docs/data-model.md § "Hall passes are two collections")');
+    check('a brand-new document still does NOT raise it — the day-one rule survives the fix',
+      wo117New.up === false && wo117New.letterScale > 0
+        && Object.keys(wo117New.holds).every(k => wo117New.holds[k] === 0),
+      wo117Says(wo117New) + ' with a seeded letter scale of ' + wo117New.letterScale
+        + ' bands in it — not empty, and still nothing a teacher typed. Non-vacuous against the '
+        + 'sample above it: the same document with one score column in it nags ('
+        + (wo117Scores.up ? 'it did' : 'IT DID NOT') + ')');
+    check('and the scratch year is taken away again, so the sections below inherit nothing',
+      wo117.samples.length === 4 && wo117.openAfter === wo117.was
+        && JSON.stringify(wo117.yearsAfter) === JSON.stringify(wo117.yearsBefore)
+        && wo117.stampsAfter === wo117.stampsBefore && wo117.nagAfter === wo117.nagBefore,
+      wo117.scratch + ' was planted and deleted; years are back to '
+        + JSON.stringify(wo117.yearsAfter) + ', ' + wo117.openAfter + ' is open again, the stamps '
+        + 'are unchanged (' + (wo117.stampsAfter === wo117.stampsBefore) + ') and the strip is '
+        + (wo117.nagAfter ? 'up' : 'down') + ', which is where this fixture found it');
   }
 }
 

@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 19-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 20-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers` and the backup nag's collection list against `docs/data-model.md`. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 764 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 769 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -936,7 +936,17 @@ last assignment"*, which the work order's Deliverables name by hand, lived only 
 arm of a ternary that no keystroke reached. The correction itself was two visible strings in
 `index.html` that described `←` backwards; the check is here because the string the strings got
 wrong was one nothing asserted. **The run prints 762**, measured on the corrected tree:
-`762 checks · 762 passed · 0 failed · 0 skipped`, 246s. *(The
+`762 checks · 762 passed · 0 failed · 0 skipped`, 246s. **WO-1.17 moved it from 764 to 769**: five
+literal call sites in a new block at the foot of the existing `backup & restore` section, none of them
+inside a loop, of which **one is a fixture-guard failure arm** that never fires on a green run — it
+reports a fixture that threw rather than letting it end the run, which is the WO-2.26 shape two
+paragraphs up. So the block contributes four executed results and **the run prints 766**, measured on
+the delivered tree: `766 checks · 766 passed · 0 failed · 0 skipped`, 246s. *(Those four were run
+against the unfixed `hasSomethingToLose()` first, on the same tree, and two of them are red there:
+`766 checks · 764 passed · 2 failed`. A check that would have passed against the build the work order
+replaces is not evidence, and for a defect this well masked — a score cell cannot exist without an
+assignment, and the assignment is what the old enumeration saw — it is the only way to tell the two
+builds apart.)* *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
@@ -1034,7 +1044,20 @@ is somebody editing the executed count wrongly while touching no check at all, w
 failure that happened three times.
 
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**19 checks** after WO-8.9: the newest reads `_headers` directly and requires active `no-cache`
+**20 checks** after WO-1.17: the newest reconciles the backup nag's collection list against the
+document sketch in `docs/data-model.md` — `hasSomethingToLose()` in `src/backup.js` now carries two
+lists, `CONTENT_COLLECTIONS` (each key paired with the counter its documented shape needs) and
+`NOT_CONTENT` (every other top-level key with the reason it is not something a teacher would miss),
+and between them they must name exactly the sketch's top-level keys. It is the mechanism that half of
+that work order asked for: the enumeration used to be a sum of `count()` calls kept in step with the
+documentation by remembering, WO-2.8 added two collections that never reached it, and the nag went
+silent on a document whose only content was grades or hall passes for six days before a verifier
+happened to read the line. **What it catches is the omission; what it cannot catch is a wrong
+decision** — an entry parked in `NOT_CONTENT` with a plausible sentence beside it passes, which is
+the intended split and is written out at the check. It also asserts the counter against the
+documented shape, because `count()` over the `scores` object answers 0 for a full gradebook and
+"add `scores` to the sum" is the fix that looks right and changes nothing. The check before it reads
+`_headers` directly and requires active `no-cache`
 stanzas for `/sw.js`, `/index.html` and `/`, without widening either of the sweep's general file
 gates. It proves only what the file asks for; `verify-deploy.mjs` is what proves the header actually
 binds on the host. The three checks added at WO-3.2's follow-up exist because this file's sibling
@@ -1052,10 +1075,10 @@ of the form "this is checked over there" is exactly as load-bearing as a check a
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
 
-**The 19 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
+**The 20 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
 the other file and is not worth building for this one.** Nothing greps this sentence the way §11 greps
 the harness's count, and it does not need to: the sweep prints its own true figure on the summary line
-of every run — `19 checks` on this tree — in about a second, in
+of every run — `20 checks` on this tree — in about a second, in
 front of the only reader who would care, who is by definition already running it. `verify-shell.mjs`'s
 count is different in kind, because confirming it costs a three-minute browser run that nobody spends
 to settle a sentence in a README, which is exactly how that line went stale three times (WO-1.5,

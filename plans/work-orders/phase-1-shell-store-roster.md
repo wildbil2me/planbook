@@ -1031,7 +1031,7 @@ place the distinction is ever seen.
 
 ## WO-1.17 — the backup nag cannot see a year whose only content is grades
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. A latent defect in code Phase 1 shipped, found on 2026-08-12
 by the WO-1.15 verifier while reading `src/backup.js` for a different reason.)*
 
@@ -1064,16 +1064,28 @@ correct and reasoned at the call sites); the wording of the nag; the compare pan
 WO-1.15's and is done.
 
 **Acceptance**
-- [ ] A document holding score cells and **no** assignments raises the nag. *(The masked case, made
-      unmasked — this is the check that fails against today's build.)*
-- [ ] A document whose only content is a hall pass — open or closed — raises the nag.
-- [ ] A brand-new document still does **not** raise it. A year and a letter scale are not something
+- [x] A document holding score cells and **no** assignments raises the nag. *(The masked case, made
+      unmasked — this is the check that fails against today's build.)* — `verify-shell.mjs`, *"a
+      document holding score cells and NO assignments raises the nag"*: two cells in one column over a
+      `newYearDocument()` with nothing else in it, nag **UP**. Red on the unfixed tree, green here.
+- [x] A document whose only content is a hall pass — open or closed — raises the nag. — same block,
+      the two collections sampled separately (`openPasses` alone, then `passes` alone). Red on the
+      unfixed tree for both, green here.
+- [x] A brand-new document still does **not** raise it. A year and a letter scale are not something
       a teacher typed, and a nag on day one is wallpaper by October — the rule the current comment
-      states and which must survive the fix.
-- [ ] `verify-shell.mjs` gains checks proved against a fixture where the omitted collection is the
-      **only** content, so a check that would go green against the current build is not written.
-- [ ] The collection list is checked against `docs/data-model.md` rather than against memory, and the
-      way it is checked is written down.
+      states and which must survive the fix. — a bare `newYearDocument()` with its 12 seeded letter
+      bands: nag **down**, on both trees. The comment that states the rule is unchanged.
+- [x] `verify-shell.mjs` gains checks proved against a fixture where the omitted collection is the
+      **only** content, so a check that would go green against the current build is not written. —
+      four checks, each over a document with exactly one collection filled. Run against the unfixed
+      `hasSomethingToLose()` first: `766 checks · 764 passed · 2 failed`, the two failures being the
+      two content lines above. Fixed tree: `766 checks · 766 passed · 0 failed · 0 skipped`, 247s.
+- [x] The collection list is checked against `docs/data-model.md` rather than against memory, and the
+      way it is checked is written down. — `tools/wo-sweep.mjs` § 14 reconciles `CONTENT_COLLECTIONS`
+      and `NOT_CONTENT` (`src/backup.js`) against the top-level keys of the sketch under
+      *## The document*, both directions, and checks each counter against the documented shape. The
+      reasoning is at the check, at the lists, and in `tools/README.md`. Sweep: `20 checks · 18
+      passed · 0 failed · 2 to review` (both REVIEWs standing).
 
 **Traps** — **`count(doc.scores)` is 0 for a full gradebook.** `scores` is an object keyed by
 assignment then student, not an array, and `count()` answers 0 — the exact trap WO-1.15 documented at

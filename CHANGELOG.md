@@ -36,6 +36,36 @@ and in this data model a fabricated meeting *is* a meeting: it sits in the denom
 percentage and in the recorded-meetings count, indistinguishable from a real one. The term should
 open in a fresh year, with the test data left in one labelled unmistakably.
 
+### Fixed
+
+- **WO-1.17 — the backup reminder could not see a year whose only content was grades or hall
+  passes.** It counted classes, students, assignments, attendance, notes, calendar events and
+  templates, and stopped there — so a document holding nothing but score cells, or nothing but a
+  hall pass, read as empty and said nothing while a week's grades sat on one device with no copy of
+  them anywhere. A brand-new year still stays silent, which is the whole point of the rule and was
+  re-proved rather than assumed.
+
+  **The list is no longer written from memory.** `hasSomethingToLose()` now carries two lists: the
+  collections that count as something a teacher typed, each paired with the counter its documented
+  shape needs, and every other top-level key with the reason it is *not* content. The sweep
+  reconciles both against the document sketch in `docs/data-model.md` in both directions — a
+  collection in the sketch and in neither list is red, a list entry that is not in the sketch is red,
+  and a collection counted with the wrong counter for its shape is red, because that last one is an
+  edit that looks correct and measures nothing.
+
+  **It would have caught this on the day it was made.** The two pass collections were added to the
+  data model on 2026-08-06 and to nothing else; the sweep goes red on that exact tree, naming them.
+  What it cannot catch is a wrong decision — a key parked in the not-content list with a plausible
+  sentence beside it passes — so the sentences are in the code where they can be argued with rather
+  than in a commit message. `teacher` is the one worth a second opinion: a name, a school and two
+  addresses are typed by a teacher, and they are excluded because they are re-typed from memory in a
+  minute while a term of scores is not.
+
+  **One thing the fix does not reach, recorded here so it is not lost.** The reminder answers about
+  the year that is open. A second year on the device holding nothing but scores stays silent until
+  the teacher switches to it. The backup panel names that year by label, so it is not a hole — but it
+  is the same shape of problem one screen over, and it belongs to the panel rather than to the strip.
+
 ### Added
 
 - **WO-8.9 — `_headers` can no longer be deleted with every check green.** `wo-sweep.mjs` gains a

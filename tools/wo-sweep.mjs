@@ -829,6 +829,127 @@ function commentLines(file) {
         : 'all three active stanzas ask for no-cache on disk; verify-deploy.mjs is what proves the header actually binds on the host');
 }
 
+/* ══════════ 14. every documented collection is classified by the backup nag ══════════
+   `hasSomethingToLose()` in `src/backup.js` decides whether the backup nag is allowed to appear, and
+   it decides it by enumerating the collections that count as content. That enumeration is the one
+   thing standing between a teacher and the iOS eviction in `CLAUDE.md`, and until WO-1.17 it was
+   kept in step with `docs/data-model.md` by hand — which is to say it was not kept in step at all.
+   WO-2.8 added `openPasses` and `passes` to the document on 2026-08-06 and neither reached the sum;
+   `scores` had never been in it. The nag could not see a year whose only content was grades. Nothing
+   noticed for six days, and what did notice was a verifier reading the file for another reason.
+
+   SO THE LIST IS RECONCILED AGAINST THE DOCUMENTATION RATHER THAN AGAINST MEMORY, here, in a command
+   every dispatch already runs. `src/backup.js` carries two lists — `CONTENT_COLLECTIONS`, each row
+   pairing a key with the counter that is right for its shape, and `NOT_CONTENT`, every other
+   top-level key with the reason it is not content. Between them they must name exactly the top-level
+   keys of the document sketch under `## The document` in `docs/data-model.md`. A collection added
+   there and classified in neither list FAILs by name; so does a key classified in both, and so does
+   one classified in code that the document does not describe — which is what a typo in a key name
+   looks like (`count(doc.scoress)` is 0 forever and throws nothing).
+
+   THE DIFF RUNS BOTH WAYS, unlike § 12's, and the difference is worth stating because that section
+   argues the opposite. There, the two sides are a listener and a prose census with twenty-two
+   legitimate extra rows. Here both sides are closed sets of the same thing — the top-level keys of
+   one document — so an asymmetry would just be a hole, and the direction § 12 has to give up
+   (listed-and-not-delegated) is the direction that catches the typo here.
+
+   AND THE COUNTER IS CHECKED AGAINST THE DOCUMENTED SHAPE, which is the same defect's other half.
+   `count(doc.scores)` answers 0 for a full gradebook — `scores` is an object keyed by assignment and
+   then by student, not an array — so "add `scores` to the sum" looks exactly like the fix and
+   changes nothing. The sketch says which shape each key is (`[` or `{`), so this asserts that a
+   collection documented as a list uses the list counter and a collection documented as an object
+   does NOT: `countScores()` is the one that exists today, and a future map with a different shape
+   needs a counter of its own rather than either of them.
+
+   WHAT THIS CANNOT CATCH, said out loud so the next reader does not over-trust it: a wrong DECISION.
+   An entry parked in `NOT_CONTENT` with a plausible sentence beside it passes here — the rule forces
+   the decision to be made and written down, not to be right. Nor does it see a collection that
+   reaches `src/store.js` and never reaches `docs/data-model.md`: that document is the source of
+   truth this rule is built on, and a collection missing from it is a different rot with a different
+   owner. Worth knowing rather than worth a clause today.
+
+   Both anchors — the `## The document` fence, and the two `const` lines — FAIL loudly when they move
+   rather than going quiet, for the reason § 11's count does. */
+
+{
+  const modelPath = path.join(REPO, 'docs', 'data-model.md');
+  const backupPath = path.join(REPO, 'src', 'backup.js');
+  const NAME = 'every collection docs/data-model.md names is classified by hasSomethingToLose()';
+  if (!fs.existsSync(modelPath) || !fs.existsSync(backupPath)) {
+    check(NAME, false,
+      `${!fs.existsSync(modelPath) ? 'docs/data-model.md' : 'src/backup.js'} is not where this check expects it — the nag's collection list is now reconciled against nothing. Restore the file or point this check at the new path.`);
+  } else {
+    // The document sketch: the first fenced block after `## The document`. Top-level keys are the
+    // ones at exactly two spaces of indent — everything inside a class, a student or a score column
+    // is deeper — and the first character of the value says which shape the key is.
+    const modelLines = fs.readFileSync(modelPath, 'utf8').split('\n');
+    const heading = modelLines.findIndex(l => /^##\s+The document\s*$/.test(l));
+    const fence = heading < 0 ? -1 : modelLines.findIndex((l, i) => i > heading && /^```/.test(l));
+    const close = fence < 0 ? -1 : modelLines.findIndex((l, i) => i > fence && /^```\s*$/.test(l));
+    const documented = new Map();
+    if (fence >= 0 && close > fence) {
+      for (let i = fence + 1; i < close; i++) {
+        const m = /^ {2}"([A-Za-z][A-Za-z0-9_]*)":\s*(\S)/.exec(modelLines[i]);
+        if (m) documented.set(m[1], m[2] === '[' ? 'list' : m[2] === '{' ? 'map' : 'scalar');
+      }
+    }
+
+    // The two lists in src/backup.js, by their own `const` lines. The row shape is asserted rather
+    // than assumed: a regex that quietly matched nothing would read green from a distance.
+    const backupText = fs.readFileSync(backupPath, 'utf8');
+    const listAt = (name) => {
+      const from = backupText.indexOf(`const ${name} = [`);
+      if (from < 0) return null;
+      const to = backupText.indexOf('\n];', from);
+      return to < 0 ? null : backupText.slice(from, to);
+    };
+    const contentBlock = listAt('CONTENT_COLLECTIONS');
+    const notBlock = listAt('NOT_CONTENT');
+    const content = new Map();
+    const notContent = new Set();
+    if (contentBlock) {
+      for (const m of contentBlock.matchAll(/\{\s*key:\s*'([A-Za-z][A-Za-z0-9_]*)',\s*counter:\s*([A-Za-z][A-Za-z0-9_]*)\s*\}/g)) {
+        content.set(m[1], m[2]);
+      }
+    }
+    if (notBlock) {
+      for (const m of notBlock.matchAll(/\{\s*key:\s*'([A-Za-z][A-Za-z0-9_]*)',\s*why:/g)) notContent.add(m[1]);
+    }
+
+    if (!documented.size) {
+      check(NAME, false,
+        'the document sketch in docs/data-model.md could not be read — this check looks for a fenced block after a `## The document` heading and takes the keys indented by exactly two spaces. Restore that shape or re-point the check; a sketch it cannot parse must not read as a passing diff');
+    } else if (!contentBlock || !notBlock || !content.size || !notContent.size) {
+      check(NAME, false,
+        `src/backup.js no longer carries both lists in the shape this check reads (\`const CONTENT_COLLECTIONS = [\` and \`const NOT_CONTENT = [\`, rows of \`{ key: '…', counter: … }\` and \`{ key: '…', why: … }\`) — found ${content.size} content row(s) and ${notContent.size} exclusion(s). Restore the shape or re-point the check: an enumeration this sweep cannot see is the exact state WO-1.17 exists to end`);
+    } else {
+      const classified = new Set([...content.keys(), ...notContent]);
+      const unclassified = [...documented.keys()].filter(k => !classified.has(k));
+      const unknown = [...classified].filter(k => !documented.has(k));
+      const both = [...content.keys()].filter(k => notContent.has(k));
+      // Only over keys the sketch actually describes: a content row naming a key that is not in the
+      // document at all is already reported above, and saying anything about its "shape" here would
+      // be describing a shape nobody wrote down.
+      const misCounted = [...content].filter(([key, counter]) => {
+        const shape = documented.get(key);
+        if (!shape) return false;
+        if (shape === 'list') return counter !== 'count';
+        if (shape === 'map') return counter === 'count';
+        return true;      // a scalar is not a collection and cannot be content
+      });
+      const faults = [];
+      if (unclassified.length) faults.push(`${unclassified.join(', ')} — documented in docs/data-model.md and in neither list in src/backup.js. Add it to CONTENT_COLLECTIONS with the counter its shape needs, or to NOT_CONTENT with the reason it is not something a teacher would miss; the nag is silent about it until you do`);
+      if (unknown.length) faults.push(`${unknown.join(', ')} — classified in src/backup.js and not a top-level key of the sketch in docs/data-model.md. Either the document grew a collection nobody wrote down, or this is a misspelled key, which counts 0 forever and throws nothing`);
+      if (both.length) faults.push(`${both.join(', ')} — in CONTENT_COLLECTIONS and NOT_CONTENT at once; one of the two is a decision somebody made twice`);
+      if (misCounted.length) faults.push(misCounted.map(([key, counter]) => `${key} is documented as ${documented.get(key) === 'map' ? 'an object' : documented.get(key) === 'list' ? 'a list' : 'a scalar'} and paired with ${counter}()`).join('; ')
+        + ' — count() answers 0 for anything that is not an array, so a map counted with it reads as an empty year (see countScores() in src/backup.js); a scalar is not a collection at all');
+      check(NAME, !faults.length,
+        faults.length ? faults.join(' · ')
+          : `${documented.size} top-level key(s) in docs/data-model.md § The document, all of them classified in src/backup.js — ${content.size} counted as content (${[...content].map(([k, c]) => k + ' by ' + c + '()').join(', ')}) and ${notContent.size} excluded with a reason`);
+    }
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

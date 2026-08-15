@@ -1049,13 +1049,88 @@ function refreshOtherYearsLine(years) {
         + pending.join(', ') + ') — ' + control + ' writes them out too.');
 }
 
+/*
+  WHAT A DOCUMENT HOLDS THAT A TEACHER WOULD MISS — as a list rather than as a sum, and the list is
+  what WO-1.17 is really for. The three names it added to it are the smaller half.
+
+  THE DEFECT IT REPLACES. Until 2026-08-15 the test below was seven count() calls in one expression,
+  and `scores`, `passes` and `openPasses` were not among them: the nag could not see a year whose
+  only content was grades or hall passes. It was masked rather than harmless — a score cell needs an
+  assignment to hang on, so count(doc.assignments) fired first and the strip appeared anyway — and it
+  stops being masked the moment scores can outlive their column: an assignment deleted with its
+  scores kept, an import, a partial restore. What the omission costs is silence about the only copy
+  of a term of grades, on the one strip standing between a teacher and the iOS eviction CLAUDE.md
+  describes. Found on 2026-08-12 by WO-1.15's verifier, reading this file for another reason.
+
+  WHY A LIST AND NOT A SUM. A sum can only be kept in step with docs/data-model.md by somebody
+  remembering to, and nobody did for the six days between WO-2.8 adding two collections to the
+  document and a verifier happening to read this line. A list is machine-readable, so it does not
+  depend on remembering: tools/wo-sweep.mjs § 14 reconciles BOTH halves of it against the document
+  sketch in docs/data-model.md, and a collection that appears there and is classified in neither half
+  FAILs the sweep by name, in a command every dispatch already runs. What that catches is the
+  omission, on the day it is made. What it cannot catch is a wrong DECISION — an entry parked below
+  with a plausible sentence beside it is a judgment this file records and nothing audits — and that
+  split is deliberate: the sweep makes the next reader decide, it does not decide for them.
+
+  EACH ROW CARRIES ITS OWN COUNTER, which is the same defect's other half. `count(doc.scores)` is 0
+  for a full gradebook — `scores` is an object keyed by assignment and then by student, not an array
+  (countScores(), above, and the trap WO-1.15 wrote out there) — so adding `scores` to a sum of
+  count() calls would have looked like this fix and changed nothing. The counter is therefore paired
+  with the shape docs/data-model.md documents, and the sweep checks the pairing too: a collection
+  written there as an object may not be counted with the list counter.
+
+  THE ALTERNATIVE CONSIDERED AND REJECTED was deriving this from newYearDocument()'s keys, the way
+  parseBackup() derives its shape check ("so this check cannot drift away from the document it is
+  checking"). Three reasons it is not right here. It reconciles against a second hand-written list in
+  src/store.js rather than against the documentation, which is where the collections are argued. It
+  has nowhere to hold the REASON a key is excluded, and every exclusion below is a judgment somebody
+  will want to re-open. And "every collection except these" is one careless refactor away from
+  "anything non-empty", which is exactly what the day-one rule under it is defending against — a
+  document is never empty, it always has a year and a letter scale.
+*/
+const CONTENT_COLLECTIONS = [
+  { key: 'classes', counter: count },
+  { key: 'students', counter: count },
+  { key: 'assignments', counter: count },
+  /* NOT count(). See countScores() above, and EACH ROW CARRIES ITS OWN COUNTER in the block. */
+  { key: 'scores', counter: countScores },
+  { key: 'attendance', counter: count },
+  { key: 'log', counter: count },
+  /* WO-2.8's two, and both of them rather than one: `openPasses` is a child who is out of the room
+     right now and `passes` is the history Phase 4 reads as a signal. Either one alone is a document
+     with something in it a teacher typed. */
+  { key: 'openPasses', counter: count },
+  { key: 'passes', counter: count },
+  { key: 'events', counter: count },
+  { key: 'templates', counter: count },
+];
+
+/* The other half of the same list: every top-level key docs/data-model.md names that is NOT content,
+   each with the reason it is not. NOTHING IN THIS MODULE READS IT, on purpose — it is the half that
+   lets the sweep tell "decided against" from "forgotten", which is the entire difference this work
+   order is about, and it gives the next reader who disagrees with one of these calls a sentence to
+   argue with instead of a silence. Deleting it as dead code turns § 14 red, which is the point. */
+const NOT_CONTENT = [
+  { key: 'schemaVersion', why: 'stamped by the build, not typed by anybody' },
+  { key: 'docId', why: 'generated with the document' },
+  { key: 'year', why: 'the label; every document is for some year' },
+  { key: 'rev', why: 'counts saves, not work' },
+  { key: 'deviceId', why: 'generated with the document' },
+  { key: 'updatedAt', why: 'a clock reading' },
+  { key: 'teacher', why: 'a name, a school and two addresses, typed once at setup and re-typed from '
+    + 'memory in a minute. The nag is about the record that cannot be reconstructed' },
+  { key: 'letterScale', why: 'seeded by newYearDocument(); the day-one rule below names it out loud' },
+  { key: 'signals', why: 'thresholds that default when absent (docs/data-model.md § Signal '
+    + 'thresholds). Empty in every document this build writes, and a tuned threshold is a preference '
+    + 'rather than a record. Worth re-opening when Phase 4 lets a teacher tune them' },
+];
+
 /* Anything that would be lost. A brand-new document is not empty of meaning — it has a year and
    a letter scale — but it holds nothing a teacher typed, and nagging about it on day one is how
    a warning becomes wallpaper before there is anything to warn about. */
 function hasSomethingToLose(doc) {
   if (!doc) return false;
-  return count(doc.classes) + count(doc.students) + count(doc.assignments)
-    + count(doc.attendance) + count(doc.log) + count(doc.events) + count(doc.templates) > 0;
+  return CONTENT_COLLECTIONS.reduce((n, row) => n + row.counter(doc[row.key]), 0) > 0;
 }
 
 /*
