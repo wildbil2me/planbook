@@ -673,6 +673,10 @@ export function renderScores() {
   }
 
   if (!head || !body) return;
+  /* Rows and columns are the structure this render replaces; the toolbar is deliberately not.
+     That leaves the data-assignment-new opener alive while its modal is up, so Done or Cancel can
+     use modal.js's ordinary focus return to put the caret on a stable, useful control instead of
+     losing it with a rebuilt grid cell. It also makes another assignment one deliberate tap away. */
   head.textContent = '';
   body.textContent = '';
 

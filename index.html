@@ -991,6 +991,11 @@
       <div class="scores-summary" id="scoresSummary"></div>
 
       <div class="scores-actions" id="scoresActions">
+        <!-- This is not the navigation door ruled out below: it performs the same create action as
+             the assignment list's button, through the same data-assignment-new hook and editor. -->
+        <button class="class-action-btn primary" type="button" data-assignment-new
+                aria-haspopup="dialog">+ New assignment</button>
+
         <!-- The key legend, behind a button, exactly as the registry's is (WO-2.5) — and for the same
              two halves of one reason: it has to be reachable by someone who does not already know the
              keys, and it must not take a line of the screen from someone who does. It is a disclosure
@@ -1630,7 +1635,13 @@
       </p>
       <div class="modal-actions">
         <button class="class-action-btn primary" type="button" data-modal-close>Done</button>
-        <button class="class-action-btn delete" type="button" data-assignment-delete
+        <!-- A create is already in the document so every field can keep autosaving. Cancel is the
+             explicit exception: it removes that new row again. Close, Escape and Done still keep
+             typed work, which is the no-lost-draft contract above. src/assignments.js shows this
+             only while the editor is on the assignment just created, on either opening screen. -->
+        <button class="class-action-btn hidden" id="assignmentCreateCancel" type="button"
+                data-assignment-create-cancel>Cancel</button>
+        <button class="class-action-btn delete" id="assignmentDeleteDoor" type="button" data-assignment-delete
                 aria-haspopup="dialog">Delete…</button>
       </div>
       <p class="class-error hidden" id="assignmentError"></p>

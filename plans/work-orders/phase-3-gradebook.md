@@ -1178,7 +1178,7 @@ setting to maintain forever in exchange for a decision that can be made once.
 
 ## WO-3.15 — a way to add an assignment from the score grid
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-14 · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
 **Closes roadmap** *(no box.)*
 
 **Booked 2026-08-10 from the owner's first sitting with the grid.** The grid is where a teacher stands
@@ -1206,15 +1206,16 @@ where points, category and dates are set, and a column created without them is a
 visited anyway.
 
 **Acceptance**
-- [ ] Tapping it on the grid opens the same editor the assignment list opens, on a new assignment in
+- [x] Tapping it on the grid opens the same editor the assignment list opens, on a new assignment in
       the open class and term.
-- [ ] Committing it adds the column to the grid **without a manual repaint or a screen change**, and
+- [x] Committing it adds the column to the grid **without a manual repaint or a screen change**, and
       the grade column is still correct beside it.
-- [ ] Cancelling it leaves no assignment behind and no empty column on the grid.
-- [ ] It measures ≥44px under the coarse pointer, inside the section that opens the view first —
+- [x] Cancelling it leaves no assignment behind and no empty column on the grid.
+- [x] It measures ≥44px under the coarse pointer, inside the section that opens the view first —
       `tools/verify-shell.mjs`'s WO-3.5 block, which exists because the standing sweep cannot see this
       screen.
-- [ ] 👤 Reachable under a thumb on the iPad without covering the first score cell.
+- [x] 👤 Reachable under a thumb on the iPad without covering the first score cell. *(Owner, on the
+      iPad, 2026-08-14.)*
 
 ## WO-3.16 — left and right arrows move across the grid
 

@@ -95,6 +95,7 @@
                                       here writes down which screen was left (src/views.js)
       data-assignment-new             adds an assignment to the open class and term, and opens the
                                       editor on it
+      data-assignment-create-cancel   removes the assignment written by that still-open create flow
       data-assignment-edit="<id>"     opens the editor for that assignment
       data-assignment-move-up="<id>"  moves it one place earlier inside its own category group
       data-assignment-move-down="<id>"  one place later
@@ -1121,6 +1122,9 @@ document.addEventListener('click', (e) => {
      focus back to, and Safari does not focus a button when you tap it. */
   const assignmentNew = e.target.closest('[data-assignment-new]');
   if (assignmentNew) { assignments.createAssignment(assignmentNew); afterAssignmentChange(); return; }
+  if (e.target.closest('[data-assignment-create-cancel]')) {
+    assignments.cancelCreatedAssignment(); afterAssignmentChange(); return;
+  }
   const assignmentEdit = e.target.closest('[data-assignment-edit]');
   if (assignmentEdit) {
     assignments.openAssignmentEditor(assignmentEdit.getAttribute('data-assignment-edit'),

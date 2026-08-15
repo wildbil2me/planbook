@@ -38,6 +38,19 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **A new assignment can be made from the score grid.** The quiz you just gave gets its column
+  without leaving the screen: **+ New assignment** sits above the grid beside **⌨ Keys** and opens
+  the same editor the assignment list opens — same fields, same rules, no second set of them — with
+  the new column appearing in the grid the moment you are done. No repaint, no navigating back. It
+  replaces a four-step trip out to Assignments and home again.
+
+  **Cancel now does what it says, on both doors.** The editor writes the assignment first so every
+  field can save as you type, which meant backing out of a create used to leave an *Untitled*
+  assignment behind. There is now an explicit Cancel that removes it and its empty column, and
+  because it belongs to the shared create flow rather than to the new button, the assignment list
+  gained the same way out. Close, Escape and a tap outside still leave your typing where it is —
+  those are interruptions, not decisions.
+
 - **Overdue hall passes now make a sound.** A student five minutes out gets a steady double beep;
   ten minutes gets a faster, rising one, so the two are tellable apart without counting. The alert
   follows you off the registry — it reaches you on the score grid or a student's detail, where it

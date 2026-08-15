@@ -14955,6 +14955,133 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             + ', openView preference = ' + JSON.stringify(openView));
 
         /*
+          WO-3.15: THE SAME CREATOR, ON THE GRID. The list button and this one are compared as
+          markup before either is touched: same hook, class, label and dialog promise. The tap is on
+          the grid's real control; the document read proves createAssignment() used the open class
+          and term, and the editor's own field id proves it is the shared dialog rather than a copy.
+
+          CANCEL IS THE PRE-EXISTING GAP THIS WORK ORDER FOUND. Before WO-3.15 the shared editor had
+          Done, Delete and generic Close, and createAssignment() documented that dismissing it left
+          an Untitled assignment behind. The explicit Cancel now belongs to that shared create flow,
+          not to this grid door, so the same rule serves the assignment list too. It is driven here
+          before a second create is committed, and both the document and the column count have to
+          return byte-for-byte to their starting point.
+
+          FOCUS RETURNS TO THE NEW-ASSIGNMENT BUTTON. renderScores() rebuilds the rows and columns but
+          deliberately leaves #scoresActions standing, so modal.js's ordinary return-to-opener rule
+          has a stable target. That is a useful landing place after both outcomes: the teacher can
+          make the next column, reach Keys beside it, or Tab into the grid; body is not an answer.
+        */
+        const createDoors = await evalJs(`(function(){
+          function read(sel){ var b = document.querySelector(sel); return b ? {
+            hook: b.hasAttribute('data-assignment-new'), cls: b.className,
+            label: (b.textContent || '').trim(), popup: b.getAttribute('aria-haspopup') } : null; }
+          return { list: read('#assignmentsView [data-assignment-new]'),
+                   grid: read('#scoresActions [data-assignment-new]') }; })()`);
+        const gridCreateDoorOk = !!createDoors.list && !!createDoors.grid
+          && JSON.stringify(createDoors.list) === JSON.stringify(createDoors.grid);
+        let wo315Result = { pass:false, doors:createDoors };
+
+        if (!gridCreateDoorOk) {
+          skip('creating, cancelling and committing an assignment from the score grid',
+            'the grid does not carry the shared New assignment button, so there is no real door to drive');
+        } else {
+          const createBaseline = await evalJs(`(function(){
+            var d = window.planbook.store.getDoc(); var live = ${READ};
+            return { ids:d.assignments.filter(function(a){ return a.classId === 'c_wo35'
+                && a.termId === 'tm_wo35'; }).map(function(a){ return a.id; }),
+              heads:live.heads, grades:live.grades }; })()`);
+          await clickSel('#scoresActions [data-assignment-new]');
+          await new Promise(r => setTimeout(r, 250));
+          const createdFromGrid = await evalJs(`(function(){
+            var d = window.planbook.store.getDoc();
+            var mine = d.assignments.filter(function(a){ return a.classId === 'c_wo35'
+              && a.termId === 'tm_wo35' && ${JSON.stringify(createBaseline.ids)}.indexOf(a.id) < 0; });
+            var name = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+            return { count:mine.length, id:mine[0] ? mine[0].id : '',
+              classId:mine[0] ? mine[0].classId : '', termId:mine[0] ? mine[0].termId : '',
+              modalUp:!document.getElementById('assignmentModal').classList.contains('hidden'),
+              editorId:name ? name.getAttribute('data-assignment-id') : '',
+              focused:document.activeElement === name,
+              cancelUp:!!document.querySelector('#assignmentModal [data-assignment-create-cancel]:not(.hidden)'),
+              deleteUp:!!document.querySelector('#assignmentModal [data-assignment-delete]:not(.hidden)'),
+              columns:document.querySelectorAll('#scoresHead th.scores-col').length,
+              viewUp:!document.getElementById('scoresView').classList.contains('hidden') }; })()`);
+          const createdPass = createdFromGrid.count === 1 && createdFromGrid.classId === 'c_wo35'
+              && createdFromGrid.termId === 'tm_wo35' && createdFromGrid.modalUp
+              && createdFromGrid.editorId === createdFromGrid.id && createdFromGrid.focused
+              && createdFromGrid.cancelUp && !createdFromGrid.deleteUp
+              && createdFromGrid.columns === createBaseline.heads.length + 1
+              && createdFromGrid.viewUp;
+
+          if (createdFromGrid.cancelUp) {
+            await clickSel('#assignmentModal [data-assignment-create-cancel]');
+            await new Promise(r => setTimeout(r, 250));
+          }
+          const afterCreateCancel = await evalJs(`(function(){
+            var d = window.planbook.store.getDoc(); var live = ${READ};
+            var active = document.activeElement;
+            return { ids:d.assignments.filter(function(a){ return a.classId === 'c_wo35'
+                && a.termId === 'tm_wo35'; }).map(function(a){ return a.id; }),
+              scoreLeft:!!(d.scores && d.scores[${JSON.stringify(createdFromGrid.id)}]),
+              heads:live.heads, grades:live.grades,
+              modalUp:!document.getElementById('assignmentModal').classList.contains('hidden'),
+              focusBack:!!active && active.matches('#scoresActions [data-assignment-new]') }; })()`);
+          const cancelPass = createdFromGrid.cancelUp
+              && JSON.stringify(afterCreateCancel.ids) === JSON.stringify(createBaseline.ids)
+              && afterCreateCancel.scoreLeft === false
+              && JSON.stringify(afterCreateCancel.heads) === JSON.stringify(createBaseline.heads)
+              && JSON.stringify(afterCreateCancel.grades) === JSON.stringify(createBaseline.grades)
+              && !afterCreateCancel.modalUp && afterCreateCancel.focusBack;
+
+          await clickSel('#scoresActions [data-assignment-new]');
+          await new Promise(r => setTimeout(r, 200));
+          await evalJs(`(function(){
+            var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+            if (!f) return 0; f.value = 'Exit ticket';
+            f.dispatchEvent(new Event('input', { bubbles:true })); return 1; })()`);
+          await new Promise(r => setTimeout(r, 250));
+          const committedId = await evalJs(`(function(){
+            var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+            return f ? f.getAttribute('data-assignment-id') : ''; })()`);
+          const liveWhileEditing = await evalJs(READ);
+          await clickSel('#assignmentModal .modal-actions [data-modal-close]');
+          await new Promise(r => setTimeout(r, 250));
+          const afterCreateCommit = await evalJs(`(function(){
+            var d = window.planbook.store.getDoc(); var live = ${READ};
+            var cells = Array.prototype.slice.call(document.querySelector('#scoresHead tr').children);
+            var active = document.activeElement;
+            return { assignment:d.assignments.filter(function(a){ return a.id === ${JSON.stringify(committedId)}; })[0] || null,
+              heads:live.heads, grades:live.grades, viewUp:live.shown,
+              gradeSecond:cells.length > 1 && cells[1].classList.contains('scores-grade')
+                && cells[1].textContent.trim() === 'Grade',
+              modalUp:!document.getElementById('assignmentModal').classList.contains('hidden'),
+              focusBack:!!active && active.matches('#scoresActions [data-assignment-new]') }; })()`);
+          const commitPass = !!afterCreateCommit.assignment
+              && afterCreateCommit.assignment.classId === 'c_wo35'
+              && afterCreateCommit.assignment.termId === 'tm_wo35'
+              && liveWhileEditing.heads.some(function(h){ return h.name === 'Exit ticket'; })
+              && afterCreateCommit.heads.some(function(h){ return h.name === 'Exit ticket'; })
+              && afterCreateCommit.heads.length === createBaseline.heads.length + 1
+              && JSON.stringify(afterCreateCommit.grades) === JSON.stringify(createBaseline.grades)
+              && afterCreateCommit.viewUp && afterCreateCommit.gradeSecond
+              && !afterCreateCommit.modalUp && afterCreateCommit.focusBack;
+
+          /* Fixture cleanup: the create itself was the claim, and leaving its empty column in the
+             ten-column fixture would change every count and width assertion below it. */
+          await evalJs(`(function(){ var s = window.planbook.store;
+            s.update(function(d){ d.assignments = d.assignments.filter(function(a){
+              return a.id !== ${JSON.stringify(committedId)}; });
+              if (d.scores) delete d.scores[${JSON.stringify(committedId)}]; });
+            window.planbook.scores.renderScores(); return 1; })()`);
+          wo315Result = { pass:createdPass && cancelPass && commitPass, doors:createDoors,
+            created:createdFromGrid, cancelled:afterCreateCancel, committed:afterCreateCommit };
+        }
+        check('the grid wears the exact shared New assignment button; create opens the shared editor in the open class and term, Cancel leaves no row or column, and commit repaints with Grade beside it and focus back on the door',
+          gridCreateDoorOk && wo315Result.pass,
+          JSON.stringify(wo315Result));
+
+        /*
           ACCEPTANCE LINE 1. Twenty-five scores down one column in twenty-five keystroke-groups, with no
           mouse — and "no mouse" is COUNTED rather than asserted by the harness not having called
           clickSel. A page-side listener installed after the arrival tap catches a build that needs a
@@ -15092,11 +15219,13 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           an engine and a screen that agree with each other and disagree with the arithmetic is exactly
           what this file exists to catch.
 
-          THE EDITOR IS OPENED THROUGH THE SEAM, and that is the one exception in this block. No control
-          on the score grid opens an assignment editor — there is deliberately no second door to the
-          assignment list from here, and index.html says why — so no tap can get the dialog on screen
-          over this view. What is DRIVEN is the part the acceptance line is about: the real <select>,
-          the real `change` event, and src/shell.js's real hook.
+          THE EDITOR IS OPENED THROUGH THE SEAM, and that is the one exception in this block. WO-3.15
+          did put a + New assignment button on this grid, but that control CREATES: nothing here opens
+          the editor on an assignment that already exists, because data-assignment-edit is drawn on the
+          assignment list's rows and nowhere else, and index.html says why there is no second door to
+          that list. So no tap can get THIS assignment's dialog on screen over this view. What is
+          DRIVEN is the part the acceptance line is about: the real <select>, the real `change` event,
+          and src/shell.js's real hook.
         */
         const beforeMove = await evalJs(READ);
         const beforeDoc = await readDoc();
@@ -15398,11 +15527,20 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
 
         const grid44 = await evalJs(measureIn('#scoresView'));
         const under44 = grid44.filter((m) => m.h < 44 || m.w < 44);
-        check('every control on the open score grid measures >=44px on a coarse pointer, the score cells and the four flag buttons included',
-          grid44.length >= 200 && under44.length === 0,
+        const create44 = await evalJs(`(function(){
+          var b = document.querySelector('#scoresActions [data-assignment-new]');
+          if (!b) return null; var r = b.getBoundingClientRect();
+          return { w:Math.round(r.width * 100) / 100, h:Math.round(r.height * 100) / 100,
+            label:(b.textContent || '').trim(), shown:getComputedStyle(b).display !== 'none' }; })()`);
+        check('every control on the open score grid measures >=44px on a coarse pointer — the score cells, four flag buttons and visible New assignment door included',
+          grid44.length >= 200 && under44.length === 0
+            && coarseNow === true && !!create44 && create44.shown
+            && create44.h >= 44 && create44.w >= 44
+            && create44.label === '+ New assignment',
           'measured ' + grid44.length + ' visible control(s) with the grid open; under = '
             + JSON.stringify(under44.slice(0, 6))
-            + (under44.length > 6 ? ' … and ' + (under44.length - 6) + ' more' : ''));
+            + (under44.length > 6 ? ' … and ' + (under44.length - 6) + ' more' : '')
+            + '; New assignment = ' + JSON.stringify(create44));
 
         const pinnedCoarse = await evalJs(PIN);
         check('and the frozen pair holds on the coarse pointer too, where the name column is narrower and the offset had to move with it',

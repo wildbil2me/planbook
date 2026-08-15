@@ -149,6 +149,8 @@ const HINT_TERM_ID = 'assignmentsHintTerm';
 const EDITOR_TITLE_ID = 'assignmentModalTitle';
 const EDITOR_FIELDS_ID = 'assignmentFields';
 const EDITOR_ERROR_ID = 'assignmentError';
+const EDITOR_CREATE_CANCEL_ID = 'assignmentCreateCancel';
+const EDITOR_DELETE_DOOR_ID = 'assignmentDeleteDoor';
 
 const COPY_LEAD_ID = 'assignmentCopyLead';
 const COPY_CLASSES_ID = 'assignmentCopyClasses';
@@ -174,6 +176,11 @@ const DEFAULT_POINTS = 100;
    src/classes.js gives: the document can be replaced underneath this module by a restore or a year
    switch, and an object held across that is a reference to work in a document nobody has open. */
 let editingId = '';
+/* Set only for the assignment made by the currently open create flow. An explicit Cancel removes
+   it; every ordinary dismissal keeps it, preserving this app's no-lost-draft rule. Opening any row
+   through Edit clears the marker, so an assignment that has once been accepted is never mistaken
+   for a pending create. */
+let creatingId = '';
 let copyId = '';
 let pendingDeleteId = '';
 
@@ -767,6 +774,14 @@ function renderEditorFields() {
 
   const assignment = findAssignment(editingId);
   const cls = assignment ? findClass(assignment.classId) : null;
+  const cancelling = document.getElementById(EDITOR_CREATE_CANCEL_ID);
+  const deleting = document.getElementById(EDITOR_DELETE_DOOR_ID);
+  const isCreating = !!assignment && assignment.id === creatingId;
+  if (cancelling) cancelling.classList.toggle('hidden', !isCreating);
+  /* A pending create already has an explicit Cancel that removes its new row and empty score
+     column. Hide Delete here so the shared editor does not offer two doors to the same outcome;
+     ordinary assignment edits still expose Delete exactly as before. */
+  if (deleting) deleting.classList.toggle('hidden', isCreating);
   if (title) {
     title.textContent = assignment && cls
       ? (assignment.name || 'Untitled assignment') + ' — ' + cls.name
@@ -803,6 +818,7 @@ function renderEditorFields() {
 export function openAssignmentEditor(id, opener) {
   if (!findAssignment(id)) return;
   editingId = id;
+  creatingId = '';
   showAssignmentError('');
   renderEditorFields();
   openModal(EDITOR_MODAL_ID, opener);
@@ -813,9 +829,9 @@ export function openAssignmentEditor(id, opener) {
 
   There is no draft and no Save, which is this app's standing contract everywhere a teacher types
   (src/classes.js, src/categories.js, src/roster.js): a teacher interrupted mid-sentence must not
-  lose what she typed because she never reached the bottom of a form. The cost is an "Untitled
-  assignment" row if she closes the dialog without typing anything, and that is the right cost —
-  it is visible, it is one Delete away, and the alternative loses work that was typed.
+  lose what she typed because she never reached the bottom of a form. Close, Escape, the backdrop
+  and Done therefore keep the row. The explicit Cancel is different because it names the loss: it
+  removes the assignment this create flow wrote, through cancelCreatedAssignment() below.
 */
 export function createAssignment(opener) {
   const cls = getSelectedClass();
@@ -856,6 +872,7 @@ export function createAssignment(opener) {
   });
 
   editingId = assignment.id;
+  creatingId = assignment.id;
   showAssignmentError('');
   renderAssignments();
   renderEditorFields();
@@ -872,6 +889,26 @@ export function createAssignment(opener) {
   const box = document.getElementById(EDITOR_FIELDS_ID);
   const field = box && box.querySelector('.assign-field-input');
   if (field) { field.focus(); field.select(); }
+}
+
+/* THE EXPLICIT WAY OUT OF A CREATE, shared by every data-assignment-new opener. Creation writes
+   first so the editor can autosave every field; Cancel removes exactly that just-created assignment
+   and its necessarily-empty score column. It is deliberately not wired to Close, Escape or the
+   backdrop: those are interruptions and keep typed work under the standing no-lost-draft rule. */
+export function cancelCreatedAssignment() {
+  const id = creatingId;
+  const assignment = id ? findAssignment(id) : null;
+  if (!assignment || editingId !== id) return false;
+  update((doc) => {
+    doc.assignments = assignmentsIn(doc).filter((a) => a.id !== id);
+    if (doc.scores) delete doc.scores[id];
+  });
+  editingId = '';
+  creatingId = '';
+  closeModal(EDITOR_MODAL_ID);
+  renderAssignments();
+  announce('Cancelled the new assignment. Nothing was added.');
+  return true;
 }
 
 /*
