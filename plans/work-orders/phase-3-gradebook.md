@@ -1507,7 +1507,7 @@ list's existing tint, which already works and is not being re-derived.
 
 ## WO-3.20 — one date formatter, and a name that means one thing
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.15, WO-3.16
+**Ship** 2 · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** WO-3.15, WO-3.16
 **Blocks** nothing · **Closes roadmap** *(no box. Internal consistency; nothing a teacher sees changes,
 which is the acceptance criterion rather than a caveat.)*
 
@@ -1561,16 +1561,36 @@ strike does for this work order.)* It is also deliberately behind WO-1.16 in the
 that changes nothing a teacher sees has no business landing in the week the term opens.
 
 **Acceptance**
-- [ ] `grep -rn "function shortDate" src/` returns **one** definition of the `Mon D` formatter, and no
-      two surviving functions of that name return different strings for the same input.
-- [ ] Every date on every screen is character-for-character what it was before this work order —
+- [x] `grep -rn "function shortDate" src/` returns **one** definition of the `Mon D` formatter, and no
+      two surviving functions of that name return different strings for the same input. *(One hit:
+      `src/date-text.js:84`. The other two formats survive as `weekdayShortDate()` in
+      `src/days-off.js` and `numericDate()` in `src/attendance.js` — named for what they produce, so
+      no two functions of one name answer differently. `verify-shell.mjs` now asserts both halves,
+      including the alias shape `import { numericDate as shortDate }`.)*
+- [x] Every date on every screen is character-for-character what it was before this work order —
       asserted on the assignment list, the score grid, the past-due prompt and review, the days-off
-      list, the attendance grid and both printed reports.
-- [ ] An empty date, a malformed date and a real date each produce one documented answer, and the
-      choice is written down at the definition rather than implied by three call sites.
-- [ ] `verify-shell.mjs` is green with no check rewritten to accommodate a changed string. **A check
-      edited to match new output is this work order failing**, not passing.
-- [ ] No import cycle: the shared module imports nothing from `src/`.
+      list, the attendance grid and both printed reports. *(Two runs. **The formatters**: the five old
+      implementations pulled out of `git show HEAD:src/…` and the three new ones out of the working
+      tree, over 1,118 inputs — every day of 2025–2027 plus empty, malformed, `null`, `{}`, `NaN` —
+      **no differences, 5 of 5**. **The screens**: a full `verify-shell.mjs` before and after, diffed;
+      every rendered date is identical, and three of the six surfaces print theirs into the run's own
+      output — `due 9/18`/`10/1`–`10/6` on the printed grade sheet, `due Aug 14` in the past-due
+      banner, `Mon, Aug 3 – Fri, Aug 7` in the days-off list. The other three (assignment list, score
+      grid, attendance grid and its printed report) print no date into the harness output, so their
+      evidence is the equivalence above plus a diff showing their call sites were renamed and nothing
+      else. Named that way in the result file rather than blurred.)*
+- [x] An empty date, a malformed date and a real date each produce one documented answer, and the
+      choice is written down at the definition rather than implied by three call sites. *(`src/date-text.js`
+      § "What an unreadable date produces": `''` for empty and for malformed, the caller choosing what
+      that looks like on its screen. The two renamed formatters still echo their input, which is now a
+      ruling with its reason at the definition — changing it would change a screen, which this work
+      order forbids.)*
+- [x] `verify-shell.mjs` is green with no check rewritten to accommodate a changed string. **A check
+      edited to match new output is this work order failing**, not passing. *(`780 checks · 780 passed
+      · 0 failed · 0 skipped`, 247s, against `778 · 778 · 0 · 0` before. No existing check was edited;
+      the two added are static and new, and the 778 old result lines are unchanged.)*
+- [x] No import cycle: the shared module imports nothing from `src/`. *(`src/date-text.js` holds no
+      `import` statement at all — asserted by the harness, and mutation-tested by adding one.)*
 
 ---
 

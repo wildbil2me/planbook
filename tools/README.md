@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 781 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 783 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -968,7 +968,17 @@ name, and the thing that reads it moves when Cache Storage moves. *(The
 `else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
 The line number is illustration rather than something either tool resolves, and correcting it in one
 of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
-follows it does not think the allowlist has stopped applying.)*
+follows it does not think the allowlist has stopped applying.)* **WO-3.20 moved it from 781 to 783**:
+two literal call sites in a new static block beside the precache one near the head of the file,
+neither inside a loop and neither a failure arm, so the block contributes two executed results and
+**the run prints 780**, measured on the delivered tree: `780 checks · 780 passed · 0 failed · 0
+skipped`, 20,624 lines, 26.4 lines per check, 247s. Both read source rather than a page, for the
+reason that work order exists: five functions in `src/` were called `shortDate` and returned three
+different formats, and **no run of this harness could tell**, because every one of them returns a
+correct date. So what is asserted is the NAME — one definition, in `src/date-text.js`, and no module
+binding that name to anything else — plus the leaf rule that keeps a shared formatter out of an
+import cycle. The alias case (`import { numericDate as shortDate }`) is caught by the binding rather
+than by the format, since the format is the part a check cannot judge.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

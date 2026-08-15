@@ -116,6 +116,13 @@ import { letterFromPercentage, weightedClassGrade } from './grade-engine.js';
    owned somewhere, and a local copy of the comparison would be a second reader of the date that
    AGENTS.md forbids by name. */
 import { paintPastDue, pastDueAsksAbout } from './past-due.js';
+/* How a due date reads on a column head — `Sep 18`. THIS IS STILL THE ONLY DATE CODE ON THIS SCREEN
+   AND IT STILL READS NO CLOCK (decision 1): src/date-text.js formats the string it is handed and
+   asks nothing about today, so importing it spends none of that decision. It replaces the local copy
+   this file carried until WO-3.20 — the copy's own comment said the assignment list carried an
+   identical one and why neither was an import, which stopped being an argument at the fifth
+   shortDate() in src/ and the third that returned a different string. */
+import { shortDate } from './date-text.js';
 
 const CLASS_NAME_ID = 'scoresClassName';
 const HEADLINE_ID = 'scoresHeadline';
@@ -286,22 +293,6 @@ function isUngraded(cell) {
 }
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
-
-/* `2026-09-08` → `Sep 8`. Read field by field rather than handed to `new Date('2026-09-08')`, which
-   the spec reads as UTC midnight and which is one timezone away from being the day before —
-   src/attendance.js's parseISO() carries the long version of that scar. A local copy for the reason
-   src/assignments.js gives beside its own: the registry's short form is `9/8` for a column head and
-   this grid wants a month a teacher can read at a glance. THIS IS THE ONLY DATE CODE IN THIS FILE
-   AND IT READS NO CLOCK — see decision 1. */
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function shortDate(iso) {
-  const parts = String(iso || '').split('-');
-  if (parts.length !== 3) return '';
-  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  if (isNaN(d.getTime())) return '';
-  return MON[d.getMonth()] + ' ' + d.getDate();
-}
 
 /*
   HOW A PERCENTAGE IS WRITTEN DOWN HERE: two fixed decimal places, because the SIS carries two

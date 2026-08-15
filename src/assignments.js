@@ -112,6 +112,14 @@ import { categoriesOf, formatWeight } from './categories.js';
    Used in exactly two places, both of them today: the creation-time default both dates arrive on,
    and the overdue tint — see decision 1. */
 import { todayISO } from './attendance.js';
+/* How a due date reads on this list — `Sep 8`, and `—` where there is no date to read. Imported
+   rather than kept locally since WO-3.20: this file used to carry its own copy, and the comment
+   above that copy argued the registry's `9/8` was a second format rather than a second opinion. That
+   argument is still true about the format and was overruled about the copy — there were five
+   functions called shortDate() in src/ by then, and a name that means three things is how a future
+   screen renders `9/4` beside a `Sep 4` in good faith. src/date-text.js is a leaf that imports
+   nothing and reads no clock, so this is not a second thing in this file that looks at today. */
+import { shortDate } from './date-text.js';
 /* THE PAST-DUE PROMPT (WO-3.6). The tint below is this file's own answer to "this date has gone
    by"; the banner that OFFERS to do something about it is that module's, on this screen and on the
    score grid both. Drawn by calling one function and passing nothing: it asks src/classes.js which
@@ -264,22 +272,6 @@ function scoreCount(assignmentId) {
 }
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
-
-/* `2026-09-08` → `Sep 8`. Read field by field rather than handed to `new Date('2026-09-08')`,
-   which the spec reads as UTC midnight and which is one timezone away from being the day before —
-   src/attendance.js's parseISO() carries the long version of that scar. A local copy rather than an
-   import for the reason src/days-off.js gives beside its own: the registry's short form is `9/8`
-   for a column head and this list wants a month a teacher can read at a glance, so these are two
-   formats rather than one function with a flag. */
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function shortDate(iso) {
-  const parts = String(iso || '').split('-');
-  if (parts.length !== 3) return '';
-  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  if (isNaN(d.getTime())) return '';
-  return MON[d.getMonth()] + ' ' + d.getDate();
-}
 
 /* ────────────────────────────── the screen ────────────────────────────── */
 

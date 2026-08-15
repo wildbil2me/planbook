@@ -180,6 +180,33 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **One date formatter instead of five, and no two functions named `shortDate` that answer
+  differently.** The duplication was the boring half. The trap was the name: `src/attendance.js`
+  **exported** a `shortDate` producing `9/4`, while three other files defined their own producing
+  `Sep 4` and a fifth produced `Thu, Sep 4`. Any future gradebook screen reaching for a date
+  formatter would find the export first, in good faith, and render `9/4` in a column beside one
+  saying `Sep 4` — and nothing in the harness or the sweep would fail, because both are correct
+  dates. `src/attendance-report.js` already argues this case for the printed page: *a printout that
+  has left the building and disagrees with the screen* is the failure. The same argument applied one
+  file over and had not been applied.
+
+  The `Mon D` formatter now lives once in `src/date-text.js` — a leaf that imports nothing and reads
+  no clock, so every screen can wear it without a load-time cycle in a suite with no bundler. The
+  other two formats were good for their own reasons and survive under names that say what they
+  produce: `weekdayShortDate()` and `numericDate()`.
+
+  **No date on any screen changed**, which is the acceptance criterion rather than a caveat: proved
+  against 1,118 inputs — every day of 2025–2027 plus empty, malformed, `null`, `{}`, `NaN` — across
+  all five old implementations and the three new ones, and by a before-and-after run of the whole
+  harness diffed line for line.
+
+  What an unreadable date produces is now decided once, at the definition rather than implied by
+  three call sites: the shared formatter returns `''` and the caller chooses what that looks like on
+  its own screen — `—` on the assignment list, the raw value on the past-due prompt so a half-typed
+  date stays findable, no due line at all on the score grid. The two renamed formatters still echo
+  their input when they cannot read it, left standing deliberately: changing that would change a
+  screen, which this work order forbids.
+
 - **Phase branches are retired. There is one branch, `main`.** The convention was dead for the whole
   August sprint and still written down in two files every session reads.
   `phase/1-shell-store-roster`, `phase/2-attendance` and `phase/3-gradebook` sat 138, 101 and 50

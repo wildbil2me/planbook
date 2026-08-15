@@ -525,7 +525,7 @@ function stampNow(now = new Date()) {
    rather than as "Invalid Date".
 
    EXPORTED SINCE WO-2.9 for src/pass-history.js, which prints the two stamps on a finished trip.
-   Same reason plainDate() and shortDate() below are exported for src/attendance-report.js: a second
+   Same reason plainDate() and numericDate() below are exported for src/attendance-report.js: a second
    copy of these four lines in a dialog is a second opinion about what hour a stamp says, and it
    would be wrong in exactly the case this one exists for. */
 export function clockTime(iso) {
@@ -670,8 +670,17 @@ export function plainDate(iso) {
 
    EXPORTED AT WO-2.6, with dayAbbr() below it, for the same one-clock reason plainDate() gives: the
    printed record's date columns and the history's own rows are the same dates the grid draws, said
-   the same way, out of the same parser. */
-export function shortDate(iso) {
+   the same way, out of the same parser.
+
+   CALLED shortDate() UNTIL WO-3.20, AND THE RENAME IS THAT WORK ORDER'S WHOLE POINT. Four other
+   functions of that name existed in src/, three of them returning `Sep 8` — so the export a new
+   screen found first, in good faith, was the one that says `9/8`, and a column of one format beside
+   a column of the other is two correct dates that read as a bug. One name, one string: the `Sep 8`
+   formatter keeps the name shortDate() and lives in src/date-text.js, and this one is named for what
+   it produces. It does not compose from that file — `9/8` shares no substring with `Sep 8` — so
+   nothing here changed but the name and its call sites. The format itself is untouched and is
+   still this file's own decision, argued in the paragraph above. */
+export function numericDate(iso) {
   const d = parseISO(iso);
   return d ? (d.getMonth() + 1) + '/' + d.getDate() : String(iso || '');
 }
@@ -3140,7 +3149,7 @@ function dayHead(date, state, today, editing, unconfirmed, cover) {
   th.setAttribute('data-attendance-col', date);
 
   th.append(el('span', 'attendance-day-dow', dayAbbr(date)));
-  th.append(el('span', 'attendance-day-date', shortDate(date)));
+  th.append(el('span', 'attendance-day-date', numericDate(date)));
   const chip = el('span', 'attendance-day-state', stateChip(state, unconfirmed, cover, date > today));
   /* The count is the alarm, so it is coloured like one rather than like the taken column it sits
      on — the first of the three places a half-taken class has to be loud. */
@@ -3518,8 +3527,8 @@ function paintPager(columns) {
   /* And a one-day window is one date rather than "Aug 7 – Aug 7". */
   pager.append(el('span', 'attendance-pager-range',
     columns.length
-      ? (many ? shortDate(columns[columns.length - 1]) + ' – ' + shortDate(columns[0])
-        : shortDate(columns[0]))
+      ? (many ? numericDate(columns[columns.length - 1]) + ' – ' + numericDate(columns[0])
+        : numericDate(columns[0]))
       : ''));
 
   /* NOT forced off in portrait, unlike the two page controls either side of it. `Today` is also the

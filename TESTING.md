@@ -4751,7 +4751,10 @@ acceptance line is an identity with the set this one computes.
 `shortDate()` is now the **third** copy of the same eight lines in `src/` — `src/scores.js` and
 `src/assignments.js` carry the other two, each with a note saying why it is not an import — and the
 honest fix is one exported formatter, which is two shipped files this work order does not own. Also in
-the result file.*
+the result file. **That follow-up became WO-3.20 and landed 2026-08-15**: the three copies are one
+exported formatter in `src/date-text.js`, and the two other formats were renamed rather than merged —
+§ WO-3.20 below. The count in this paragraph was low, which is the other thing that work order found:
+there were five, not three.*
 
 ---
 
@@ -5048,6 +5051,72 @@ not fixed**: `src/shell.js` passes `handleScoreKey()` a key name rather than an 
 arrow is read as a plain one, exactly as the vertical pair has always read `Shift`+`↓`. And **nothing
 asserts what a tap-then-arrow does**, because where the caret lands from a tap is the browser's
 answer to where the finger went.*
+
+---
+
+### WO-3.20 — One date formatter, and a name that means one thing
+
+**What this changes for a teacher: nothing, and that is the acceptance criterion.** Every date on
+every screen is character-for-character what it was before. What changed is underneath: five
+functions called `shortDate` in `src/`, in three formats, became one exported `Sep 8` formatter in
+`src/date-text.js` and two functions named for what they produce — `weekdayShortDate()` in
+`src/days-off.js` (`Thu, Nov 26`) and `numericDate()` in `src/attendance.js` (`9/8`).
+
+**The duplication was the boring half; the name was the trap.** Three of the five were byte-identical
+copies, each carrying a comment saying why it was not an import. The one that mattered was
+*exported*: a screen reaching for a date formatter finds `shortDate` in `src/attendance.js` first, in
+good faith, and renders `9/4` in a column beside one that says `Sep 4` — and no check anywhere goes
+red, because both are correct dates. `src/grades-report.js` is that import, already made: it prints
+**assignment** due dates as `due 9/18` on the printed grade sheet while the score grid it is taken
+from prints `Sep 18`. **That was left exactly as it was** — this work order changes nothing a teacher
+sees, and choosing between two formats on a printed page is a decision about paper. It is written up
+as a proposed follow-up in `.claude/dispatch/WO-3.20-result.md` and named in a comment at the import.
+
+- [x] `grep -rn "function shortDate" src/` returns **one** definition — `src/date-text.js:84` — and no
+      two surviving functions of that name return different strings, because there is only one such
+      name left in the app.
+- [x] **Every date on every screen is unchanged.** Two evidence lines, both run rather than reasoned.
+      The five old implementations were extracted from `git show HEAD:src/…` and the three new ones
+      from the working tree, then run over **1,118 inputs** — every day of 2025, 2026 and 2027, plus
+      empty, `null`, `undefined`, `0`, `{}`, `NaN`, `'garbage'`, `'2026-09'`, `'2026-9-8'`,
+      `'2026-13-45'`, `'2026-02-30'` and a full timestamp: **no differences, five formatters out of
+      five.** And a full `verify-shell.mjs` run before and after, diffed: every rendered date string in
+      the two outputs is identical — `due 9/18` · `due 10/1…10/6` · `due 9/25` on the printed grade
+      sheet, `due Aug 14` twice in the past-due banner, `Winter break · Mon, Aug 3 – Fri, Aug 7` in the
+      days-off list. The only lines that differ at all are wall-clock stamps, generated ids and the
+      port, ten minutes apart.
+- [x] **Empty, malformed and real each have one documented answer**, written at the definition rather
+      than implied by three call sites: `src/date-text.js` § *"What an unreadable date produces"*.
+      `shortDate()` answers `''` for anything it cannot read, and the caller decides what that looks
+      like on its own screen — `—` on the assignment list, the raw value in the past-due prompt, no
+      due line at all on a score-grid column head. The other two still echo their input, which is now
+      a ruling with a reason beside it instead of an inheritance.
+- [x] `verify-shell.mjs` is green with **no check rewritten**: `780 checks · 780 passed · 0 failed · 0
+      skipped`, 247s, against `778 · 778 · 0 · 0` before. The two new ones are added, not edited, and
+      the run's 778 old lines are unchanged.
+- [x] **No import cycle**: `src/date-text.js` contains no `import` statement at all, asserted by the
+      harness rather than by reading it.
+
+*The desk half is `verify-shell.mjs`, **780 of 780 with zero skips**, 247s — two checks added in a new
+static block beside the precache one, both reading source rather than a page, because the whole point
+is that a page cannot show the difference between two correct dates. `wo-sweep.mjs` is **20 checks, 18
+passed, 0 failed, 2 to review**, and both REVIEWs are the standing ones, naming exactly the lines they
+named before this landed. `src/date-text.js` is in `SHELL` and `sw.js`'s `CACHE` went to
+`planbook-shell-v66`.*
+
+*Three mutations, all reverted, run against the two new checks on a copy of `src/` rather than on the
+tree.*
+
+| Mutation | Result |
+|---|---|
+| A local `function shortDate` comes back in `src/scores.js` — the state this work order ended | **red**: *"defined in src/date-text.js, src/scores.js"* |
+| `src/scores.js` takes the other format under the old name: `import { numericDate as shortDate } from './attendance.js'` — the good-faith import the work order exists to prevent, in its most plausible shape | **red**: *"bound from elsewhere by src/scores.js ← ./attendance.js"*. The format is not judged and cannot be; the binding is |
+| `src/date-text.js` grows `import { todayISO } from './attendance.js'` | **red** on the leaf check, and green on the name check — the two failures do not overlap |
+
+*What is **not** here. The **`9/18` on the printed grade sheet** (above) and any change to what
+`numericDate()` or `weekdayShortDate()` answer for a malformed date — both would change a screen, and
+both are follow-ups in the result file. `plainDate()`, `spokenDate()`, `dayAbbr()`, `clockTime()` and
+`percentText()` are untouched: this work order owned one format and the name collision around it.*
 
 ---
 

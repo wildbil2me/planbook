@@ -107,11 +107,22 @@ import { hasOwnScale, scaleForClass } from './letter-scale.js';
    from the screen this sheet is printed off, so that the paper and the screen cannot come apart.
    The import runs one way: nothing in src/scores.js knows this file exists. */
 import { formatPercent, gridOrder, scoreMark } from './scores.js';
-/* One clock, one parser. plainDate() and shortDate() are the same date formatters the registry and
+/* One clock, one parser. plainDate() and numericDate() are the same date formatters the registry and
    its printed record use, so a date on this sheet reads the way a date reads everywhere else — and
    neither of them is handed to `new Date('2026-09-08')`, which the spec reads as UTC midnight and
-   which is one timezone away from being the day before. */
-import { plainDate, shortDate, todayISO } from './attendance.js';
+   which is one timezone away from being the day before.
+
+   numericDate() WAS CALLED shortDate() UNTIL WO-3.20, and this import is the reason that work order
+   was about a name rather than about duplication. What it prints below is an ASSIGNMENT due date, in
+   the attendance grid's `9/18` — while the score grid this sheet is taken from prints the same due
+   date as `Sep 18` (src/scores.js, through src/date-text.js). Both are correct dates and nothing in
+   the harness could tell them apart, which is exactly the good-faith import WO-3.20 exists to make
+   impossible for the next screen. It was NOT changed there: that work order is behaviour-neutral by
+   construction and this is a printed page, so choosing between the two formats is a decision about
+   what a teacher's paper says. Written up as a proposed follow-up in
+   .claude/dispatch/WO-3.20-result.md; until it is taken, this sheet prints what it has always
+   printed. */
+import { plainDate, numericDate, todayISO } from './attendance.js';
 /* The one way a file reaches the browser in this app (src/backup.js). Imported rather than copied:
    the revoke delay and the one-download-per-tap rule were both paid for on the owner's own iPad. */
 import { handToBrowser } from './backup.js';
@@ -376,7 +387,7 @@ function slice(record, from) {
     th.append(el('span', 'grades-report-col-name', assignment.name));
     /* An empty due date is valid and stays empty, so the line is simply absent rather than printing
        a dash that would read as a date somebody deleted. */
-    const due = assignment.due ? shortDate(assignment.due) : '';
+    const due = assignment.due ? numericDate(assignment.due) : '';
     if (due) th.append(el('span', 'grades-report-col-due', 'due ' + due));
     th.append(el('span', 'grades-report-col-pts', 'out of ' + assignment.points));
     /* The whole date and the category, for a reader who is not looking at a printed page. */

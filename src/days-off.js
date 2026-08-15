@@ -100,6 +100,10 @@ import * as calendar from './calendar.js';
 /* Read-only, and one function of it: what counts as a recorded meeting is src/attendance.js's
    answer and must not get a second copy here — see meetingsBetween() there. */
 import { meetingsBetween, spokenDate } from './attendance.js';
+/* The month and day of a date, in the words every other screen uses for them (WO-3.20). This list
+   puts a weekday in front of it and nothing else — see weekdayShortDate() below, which is composed
+   rather than copied so that `Nov 26` is one string in this app rather than four. */
+import { shortDate } from './date-text.js';
 
 const MODAL_ID = 'daysOffModal';
 const CONFIRM_ID = 'daysOffConfirmModal';
@@ -142,26 +146,38 @@ function classNameOf(id) {
   return cls ? cls.name : '';
 }
 
-/* `2026-11-26` → `Thu, Nov 26`. Shorter than src/attendance.js's spokenDate(), which is the full
-   sentence a screen reader gets; a list of ten rows wants the short one and the accessible name
-   wants the long one, so both appear below and neither is re-derived here — this reads the ISO
-   string field by field for the reason that file gives at parseISO(): `new Date('2026-11-26')` is
-   UTC midnight and one timezone away from being the day before. */
+/* `2026-11-26` → `Thu, Nov 26`.
+
+   NOT CALLED shortDate(), AND THAT IS THE POINT OF WO-3.20: it produces a different string from the
+   src/date-text.js function of that name, and two functions with one name and two answers is how a
+   later screen renders one format beside another in good faith. The name says what comes out. The
+   MONTH AND DAY come from that file rather than from a second copy of the same lookup, so this list
+   and the assignment list cannot drift apart about what `Nov 26` looks like; the weekday in front is
+   this screen's own, because a day off is checked against a school week and the weekday IS the fact
+   being read.
+
+   Shorter than src/attendance.js's spokenDate(), which is the full sentence a screen reader gets: a
+   list of ten rows wants the short one and the accessible name wants the long one, so both appear
+   below and neither is re-derived here.
+
+   AN UNREADABLE DATE IS ECHOED BACK rather than dropped — this row's own answer, kept as it was
+   because WO-3.20 changed no screen. The shared formatter answers '' instead and its definition
+   carries the ruling for both. The guard is shortDate()'s: it returns a non-empty string only for
+   three numeric fields that make a real day, so the parse below cannot be reached with anything
+   `new Date()` would call invalid. */
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function shortDate(iso) {
-  const parts = String(iso || '').split('-');
-  if (parts.length !== 3) return String(iso || '');
+function weekdayShortDate(iso) {
+  const said = shortDate(iso);
+  if (!said) return String(iso || '');
+  const parts = String(iso).split('-');
   const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  if (isNaN(d.getTime())) return String(iso || '');
-  return DOW[d.getDay()] + ', ' + MON[d.getMonth()] + ' ' + d.getDate();
+  return DOW[d.getDay()] + ', ' + said;
 }
 
 /* The range in words, and a one-day event says one date rather than the same date twice. */
 function rangeText(event) {
   const to = event.endDate && event.endDate > event.date ? event.endDate : '';
-  return shortDate(event.date) + (to ? ' – ' + shortDate(to) : '');
+  return weekdayShortDate(event.date) + (to ? ' – ' + weekdayShortDate(to) : '');
 }
 
 /* Who it covers, in the teacher's own class names. An empty `classIds` is school-wide, which is the

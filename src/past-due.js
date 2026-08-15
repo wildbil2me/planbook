@@ -127,6 +127,13 @@ import { rosterName } from './roster.js';
 import { getPref, setPref } from './prefs.js';
 /* What today is, and this is the ONE thing in this file that reads a clock — decision 5. */
 import { todayISO } from './attendance.js';
+/* How a due date reads in the banner's sentence and on a review row — `Sep 8`, with the raw value
+   printed where the date cannot be read (`shortDate(w.due) || w.due`), so a half-typed due date
+   stays findable rather than becoming a blank. This file's own copy of that formatter — the third
+   byte-identical one in src/, written up at WO-3.6's close as the follow-up that became WO-3.20 —
+   is gone; the copies are one function now. It reads no clock, which is why it is not decision 5's
+   business: todayISO() above is still the only line here that asks what day it is. */
+import { shortDate } from './date-text.js';
 
 const DISMISS_PREF = 'pastDueDismissed';
 
@@ -216,24 +223,6 @@ function isUntouched(cell) {
 function pointsOf(assignment) {
   const n = Number(assignment && assignment.points);
   return Number.isFinite(n) ? n : 0;
-}
-
-/* `2026-09-08` → `Sep 8`. THE THIRD COPY of these eight lines in this repo — src/scores.js and
-   src/assignments.js each carry one, and each says why it is not an import: the registry's short
-   form is `9/8` and these three surfaces want a month a teacher can read in a sentence. A third copy
-   is one too many and the honest fix is one exported formatter, which is two shipped files this
-   work order does not own; it is written up in .claude/dispatch/WO-3.6-result.md as a follow-up
-   rather than taken here. Read field by field rather than handed to `new Date('2026-09-08')`, which
-   the spec reads as UTC midnight and which is one timezone away from being the day before —
-   src/attendance.js's parseISO() carries the long version of that scar. */
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function shortDate(iso) {
-  const parts = String(iso || '').split('-');
-  if (parts.length !== 3) return '';
-  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  if (isNaN(d.getTime())) return '';
-  return MON[d.getMonth()] + ' ' + d.getDate();
 }
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }

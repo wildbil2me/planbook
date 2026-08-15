@@ -20,10 +20,12 @@
   shared source, not about two implementations landing on the same number. A second filter chain in
   this file would agree with itself on any fixture anybody wrote and disagree in November.
 
-  The formatters come from there too — percentText(), plainDate(), shortDate(), dayAbbr() — so a
+  The formatters come from there too — percentText(), plainDate(), numericDate(), dayAbbr() — so a
   printed page and the line above the grid it was taken from say a percentage in the same words, out
   of the same date parser. A printout that has left the building and disagrees with the screen is
-  worse than no printout.
+  worse than no printout. *(numericDate() was called shortDate() until WO-3.20, which applied this
+  paragraph's own argument one file over: the app had five functions of that name in three formats,
+  and the one this file imports is the `9/8` that fits a column head. Nothing printed changed.)*
 
   ── WHAT A STUDENT IS, TO THIS FILE ──
 
@@ -124,7 +126,7 @@ import { registerPrintGate } from './print-gate.js';
 */
 import {
   MARKS, classRecord, termHistory, termTotals, attendanceTotals,
-  percentText, plainDate, shortDate, dayAbbr, todayISO,
+  percentText, plainDate, numericDate, dayAbbr, todayISO,
 } from './attendance.js';
 /*
   THE HALL-PASS COUNT (WO-2.26), drawn by the module that owns the pass log rather than by this one —
@@ -471,7 +473,7 @@ function slice(record, dates, from, total) {
   dates.forEach((date) => {
     const th = cell('th', 'attendance-report-day', '');
     th.append(el('span', 'attendance-report-dow', dayAbbr(date)));
-    th.append(el('span', 'attendance-report-date', shortDate(date)));
+    th.append(el('span', 'attendance-report-date', numericDate(date)));
     /* The whole date, for a reader who is not looking at a printed page. */
     th.title = plainDate(date);
     hrow.append(th);
