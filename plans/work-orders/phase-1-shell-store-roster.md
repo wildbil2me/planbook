@@ -1382,3 +1382,75 @@ to match** — entries record what was true when written, and rewriting them to 
 decision destroys the only record of the change. **Do not delete the historical notes**, in
 `README.md` or the phase files, that describe work having landed on a phase branch; that happened,
 and it is the evidence WO-1.19's reasoning rests on. Tense, not deletion.
+
+---
+
+## WO-1.21 — the tracker has no word for work that is not coming
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. Process, not app — this is the tracker being wrong about
+itself, which no roadmap promise covers. Booked 2026-08-15.)*
+
+**Why it exists.** `wo-gate.mjs` knows four statuses — `⬜ NOT STARTED`, `🤖 CLAIMED`,
+`🔨 IN PROGRESS`, `✅ DONE` — and **none of them means "this is not coming."** Two work orders are
+currently in that state and both are parked in `⬜ NOT STARTED`, which is the one status that is
+actively false about them:
+
+- **WO-3.13 — paste a column of scores. STRUCK** by the owner on 2026-08-15: scores arrive on paper,
+  so there is no column to copy and the clipboard has nothing to carry. The strike is a *whether*.
+- **WO-2.7 — Roll Call! importer. DEFERRED** by the owner on 2026-08-09: no live data is coming
+  across, rosters are pasted fresh, the ledger starts empty. The deferral is a *when*, and it returns
+  the first time someone wants a prior year read in.
+
+Both were handled correctly everywhere it was dangerous — pulled from the running order, and pulled
+from the dependency lines that would otherwise have held live work shut. **The residue is arithmetic,
+which is why nobody caught it: nothing is blocked, the numbers are just wrong, quietly and forever.**
+
+**What the wrong numbers actually are.** WO-3.13 is one of Phase 3's 23, so **Phase 3 can never read
+23/23**. WO-2.7 owns a roadmap box — Phase 2 → *"Roll Call! importer"* — so **`ROADMAP.md`'s Phase 2
+row can never read 16/16**, and the 15/16 sitting in that dashboard today is not a gap anyone is
+working on. The overall count carries both. **A completion percentage with a floor below 100% teaches
+everyone to stop reading it**, which is the same defect as a rule nobody follows: it costs attention
+per session and buys nothing.
+
+**Struck and deferred must stay distinct, and that is the design constraint rather than a preference.**
+They are different facts with different futures: a strike says the thing should not be built and its
+roadmap box, if any, should stop being counted; a deferral says not now, keeps its box, and expects to
+come back. Collapsing them into one "not happening" status is simpler and destroys the distinction
+that WO-2.7's and WO-3.13's own notes were careful to draw — WO-3.13 says so in as many words,
+*"it is struck rather than deferred, and that is a different thing from WO-2.7."*
+
+**Deliverables**
+- **A way to record struck and deferred that `wo-gate.mjs` understands**, keeping them distinct.
+  Whether that is two new statuses, or a status plus a field, or an explicitly uncounted section, is
+  the implementer's call — argue it in the work order and pick one.
+- **The dashboards stop counting work nobody intends to do**, in both `plans/work-orders/README.md`
+  and `ROADMAP.md`, in a way that still shows the reader those work orders exist and why. **A number
+  that goes up because something was hidden is worse than the number it replaced** — if the count
+  drops, the file says next to it what dropped out and where it went.
+- **`--audit` still agrees with itself**, and its dashboard-versus-boxes check understands the new
+  shape rather than being taught to skip it.
+- **`--self-check` covers the new status**, since it exists to plant every violation the script is
+  supposed to catch and a status it has never seen is a status nothing guards.
+- **WO-3.13 and WO-2.7 are moved onto whatever this creates**, which is the only proof it works.
+
+**Out of scope** — reversing either decision, both of which are the owner's and are recorded with
+their reasoning; `next` and the running order, which already handle these two correctly by omission
+and need no change; any new tool, per `tools/README.md` — this is an edit to `wo-gate.mjs`.
+
+**Acceptance**
+- [ ] `wo-gate.mjs --list` reports WO-3.13 and WO-2.7 as something other than `⬜ NOT STARTED`, and
+      reports them differently from each other.
+- [ ] No dashboard in `plans/work-orders/README.md` or `ROADMAP.md` counts either one as outstanding
+      work, and each file shows a reader that they exist and why they are out.
+- [ ] `node tools/wo-gate.mjs --audit` passes.
+- [ ] `node tools/wo-gate.mjs --self-check` passes, and plants a violation involving the new status.
+- [ ] `node tools/wo-sweep.mjs` totals are unchanged — this work order ships no app code.
+
+**Traps** — **Do not collapse struck and deferred.** The distinction is the point, and both work
+orders argue it explicitly. **Do not make the percentage rise by hiding things.** The goal is a
+denominator that means something, not a bigger number; a reader who cannot find where the missing
+work orders went will assume they were lost. **Do not touch `next` or the running order** — both
+already omit these two, which is why the problem is arithmetic and not a stall. **Do not reverse
+either decision**; a dispatch that re-argues whether pasting scores is worth building has failed this
+work order.
