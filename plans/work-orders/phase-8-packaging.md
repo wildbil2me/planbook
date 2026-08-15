@@ -596,7 +596,7 @@ result is information; a retry that hides it turns this into the confident pass 
 
 ## WO-8.9 — the sweep cannot see `_headers`
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** 2 · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 8 → *(no box. Tooling, not app — the same call as WO-2.19 through WO-2.22
 and WO-8.8. Booked 2026-08-12, out of WO-8.8's follow-ups.)*
 
@@ -628,11 +628,16 @@ is `verify-deploy.mjs`'s job and cannot be answered from disk; widening the swee
 general, which is a bigger change with its own blast radius. Fix the one file, not the pattern.
 
 **Acceptance**
-- [ ] Deleting `_headers` turns `wo-sweep.mjs` red. *(Today it stays green — that is the defect.)*
-- [ ] Changing `/sw.js`'s pin from `no-cache` to `max-age=14400` — the WO-8.7 fault, written into the
+- [x] Deleting `_headers` turns `wo-sweep.mjs` red. *(Today it stays green — that is the defect.)*
+- [x] Changing `/sw.js`'s pin from `no-cache` to `max-age=14400` — the WO-8.7 fault, written into the
       file rather than imposed by the zone — turns it red.
-- [ ] The sweep is green on a clean tree, and its check count agrees with `tools/README.md`.
-- [ ] The failure text names `verify-deploy.mjs` as what proves the header actually binds.
+- [x] The sweep is green on a clean tree, and its check count agrees with `tools/README.md`.
+      *19 checks · 17 passed · 0 failed · 2 to review, 2026-08-15. Left open at the dispatch: the
+      count agreed at 19, but the green clause was blocked by a pre-existing stale-CACHE failure
+      owned by f63792f, which changed `src/scores.css` and `src/scores.js` after
+      `planbook-shell-v62`. Closed the same day by the bump to `v63` — a debt outside this work
+      order, correctly refused by the implementer and paid by the owner.*
+- [x] The failure text names `verify-deploy.mjs` as what proves the header actually binds.
 
 **Traps** — **This is not a second `verify-deploy.mjs`.** It reads a file on disk; it must not fetch
 anything, and the sweep must keep working on a plane. **Do not widen the file gate to fix one file** —

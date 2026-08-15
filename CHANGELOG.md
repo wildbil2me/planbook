@@ -38,6 +38,33 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-8.9 — `_headers` can no longer be deleted with every check green.** `wo-sweep.mjs` gains a
+  check on it, **18 → 19**: the file has to exist, and `/sw.js`, `/index.html` and `/` each have to
+  be pinned to `no-cache` by a live stanza. The sweep gates the files it reads on a regex an
+  extensionless root file matches neither half of, so it had never held an opinion about the one file
+  standing between an installed app and a stale shell. This is the smaller half of WO-8.7's finding,
+  which WO-8.8 declined on purpose — the larger half was that the deployment was invisible at all.
+
+  **The failure text says what a green here does not mean**, because that is the whole hazard of
+  reading a header off the disk: it proves the file asks for the right thing and nothing whatever
+  about whether the host honours it. The check names `verify-deploy.mjs` (WO-8.8) as what reads the
+  answer off the wire. It makes no network request and the sweep still runs on a plane.
+
+  It is comment-aware, and that was proved rather than assumed — a commented-out stanza, a commented
+  path with a live header beneath it, a decoy comment above a live bad pin, directive lists,
+  whitespace and case, and CRLF. None of the seven talked it into a false green.
+
+- **A stale service-worker cache, recorded here because it was recorded nowhere else.** `sw.js`'s
+  `CACHE` sat at `planbook-shell-v62` while `f63792f` changed `src/scores.css` and `src/scores.js`
+  after it, which is a shell an installed iPad would have kept serving from the old cache. **The
+  changes were comments only** — prose re-pointing two WO-3.13 references from pending to struck — so
+  nothing would have behaved differently, and that is exactly how it survived being read twice.
+  Bumped to `v63`.
+
+  The check that caught it cannot tell a comment from a statement and should not learn to. A rule
+  that adjudicates whether a diff was *really* behavioural is a rule you argue with instead of one
+  you obey, and the next stale cache will not be comments.
+
 - **The score grid answers both axes.** `←` and `→` move one assignment along the row, and step
   aside for the caret when you are correcting a number.
 

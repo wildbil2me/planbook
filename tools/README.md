@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 19-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -1034,7 +1034,10 @@ is somebody editing the executed count wrongly while touching no check at all, w
 failure that happened three times.
 
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**17 checks** since WO-2.22, and the three added at WO-3.2's follow-up exist because this file's sibling
+**19 checks** after WO-8.9: the newest reads `_headers` directly and requires active `no-cache`
+stanzas for `/sw.js`, `/index.html` and `/`, without widening either of the sweep's general file
+gates. It proves only what the file asks for; `verify-deploy.mjs` is what proves the header actually
+binds on the host. The three checks added at WO-3.2's follow-up exist because this file's sibling
 had already written down that they did. The letter-grades section of `verify-shell.mjs` said its
 fourth acceptance line — *there is no rounding code anywhere* — "is a grep, made in
 `tools/wo-sweep.mjs`", at a point when the sweep had no rounding check of any kind. The line had been
@@ -1049,10 +1052,10 @@ of the form "this is checked over there" is exactly as load-bearing as a check a
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
 
-**The 17 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
+**The 19 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
 the other file and is not worth building for this one.** Nothing greps this sentence the way §11 greps
 the harness's count, and it does not need to: the sweep prints its own true figure on the summary line
-of every run — `17 checks · 16 passed · 0 failed · 1 to review` on this tree — in about a second, in
+of every run — `19 checks` on this tree — in about a second, in
 front of the only reader who would care, who is by definition already running it. `verify-shell.mjs`'s
 count is different in kind, because confirming it costs a three-minute browser run that nobody spends
 to settle a sentence in a README, which is exactly how that line went stale three times (WO-1.5,

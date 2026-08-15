@@ -794,6 +794,41 @@ function commentLines(file) {
   }
 }
 
+/* ══════════════════════ 13. the update path is pinned in _headers ══════════════════════
+   `_headers` is deliberately outside CODE and STYLE: it is an extensionless root file, while both
+   gates are load-bearing and intentionally narrow. Read this one file directly instead of widening
+   either gate and pulling unrelated root files into every other check.
+
+   Cloudflare Pages syntax is a path on an unindented line with its headers indented below it. Lines
+   beginning with `#` are comments, so they are discarded before stanza parsing; a commented-out
+   path or Cache-Control line must not satisfy this check. This only proves what the repository asks
+   for. Whether the host honours it exists on the wire and belongs to `verify-deploy.mjs`. */
+
+{
+  const headersPath = path.join(REPO, '_headers');
+  const expected = ['/sw.js', '/index.html', '/'];
+  const pinned = new Set();
+  if (fs.existsSync(headersPath)) {
+    let stanza = '';
+    for (const line of fs.readFileSync(headersPath, 'utf8').split('\n')) {
+      if (/^\s*#/.test(line) || !line.trim()) continue;
+      if (!/^\s/.test(line)) {
+        stanza = line.trim();
+        continue;
+      }
+      const header = /^\s+Cache-Control\s*:\s*(.*?)\s*$/i.exec(line);
+      if (header && header[1].split(',').some(directive => directive.trim().toLowerCase() === 'no-cache')) pinned.add(stanza);
+    }
+  }
+  const missing = expected.filter(route => !pinned.has(route));
+  check('_headers asks for no-cache on /sw.js, /index.html and /', fs.existsSync(headersPath) && !missing.length,
+    !fs.existsSync(headersPath)
+      ? '_headers is missing — this disk check proves only what the repository asks for; run verify-deploy.mjs to prove the header actually binds on the host'
+      : missing.length
+        ? `${missing.join(', ')} ${missing.length === 1 ? 'is not pinned' : 'are not pinned'} to no-cache by an active stanza in _headers — this disk check proves only what the repository asks for; run verify-deploy.mjs to prove the header actually binds on the host`
+        : 'all three active stanzas ask for no-cache on disk; verify-deploy.mjs is what proves the header actually binds on the host');
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');
