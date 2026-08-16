@@ -1825,7 +1825,12 @@ are in its own prose above and the prose is deliberately left standing.** *(2026
   Deliverable 2's "a modified **arrow** is the browser's" and inside *Out of scope*, which forbids
   binding new combinations and changing what an **unmodified** arrow does — this does neither, it
   takes a key away. Flagged by the implementer as the call most open to challenge and affirmed by the
-  verifier. **The revert, if it is ever wanted, is two `!held &&`s and one check.**
+  verifier. **Closed as shipped by the owner on 2026-08-16, and it is not an open question.** The
+  gesture needs a hardware keyboard and a deliberately held `Shift`, which puts it outside the way
+  this app is used — the on-screen number pane has no arrow keys at all, so on the teaching iPad it
+  does not exist unless the Smart Keyboard is attached. Recorded rather than left as a pending
+  decision, because a note that reads as owed gets re-litigated by the next reader. If it ever is
+  reversed, the revert is two `!held &&`s at `src/scores.js:1184-1185` and one check.
 
 *(And a fourth, harmless: `src/shell.js:1626` in *Why it exists* was already stale at dispatch — that
 call site was at `1642` when the dispatch opened and is at `1668` now. Left alone; the prose is the
