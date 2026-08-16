@@ -1104,10 +1104,13 @@ function moveAcrossRow(input, step) {
   columns along a row would take eight presses and the odd-numbered ones would look like keys that
   were not received — the failure the sentence at the edge exists to prevent.
 
-  MODIFIERS ARE NOT READ, because src/shell.js passes a key name rather than an event and the
-  vertical pair has never read them either. `Shift`+`←` over a full selection therefore moves a cell
-  where a plain text field would shrink the selection. Named rather than fixed: the fix is a wider
-  seam through shell.js for a gesture this screen has no other use for.
+  MODIFIERS ARE READ SINCE WO-3.23, and until then they were not: src/shell.js passed a key name
+  and nothing else, so `Shift`+`←` over a full selection moved a cell where a plain text field
+  shrinks the selection. It now passes a record of the four flags alongside the name, and a HELD
+  MODIFIER TAKES THE ARROW AWAY FROM THIS MODULE ALTOGETHER — see handleScoreKey() below, where the
+  rule is one clause rather than four. This function is not the place it is applied: the caret rule
+  is about where the caret IS, and whether the key belongs here at all is a question asked before
+  that one.
 */
 function caretCanLeave(input, step) {
   const len = String(input.value).length;
@@ -1149,16 +1152,44 @@ function caretCanLeave(input, step) {
   contract above and it is not optional: a letter that fell through to a decimal field would be
   typed into the score. They always write something, so the question is theoretical — but the guard
   is where a later edit would break it.
+
+  THE THIRD ARGUMENT IS THE FOUR MODIFIER FLAGS (WO-3.23), a plain record rather than the event they
+  were read off — src/shell.js says why it is not the event. `mods` may be absent, and an absent
+  record reads as no modifier held, which is what every call written before that work order meant.
+
+  A HELD MODIFIER TAKES THE FOUR ARROWS AWAY FROM THIS SCREEN, and only the arrows:
+
+    · `Shift`+`←` and `Shift`+`→` extend or shrink a selection inside the number, and at the two
+      caret edges the browser's own answer is to do nothing at all — which is still not "step to the
+      next assignment". `Ctrl`/`Cmd`+arrow is word motion. `Alt`+`←` is BACK.
+    · `Shift`+`↑` and `↓` select to the start and end of the value in a one-line field, which is a
+      real gesture this screen was spending on changing student at EVERY caret position, since the
+      vertical pair has no caretCanLeave() gate.
+    · `L`, `M` and `X` DO NOT get the same treatment, and must not: `e.key` is `'L'` exactly when
+      Shift is held, so refusing a modified letter would refuse the capital every teacher types.
+    · `Enter` and `⌫` keep theirs. Nothing native happens on `Shift`+`Enter` in a one-line input,
+      and `⌫` only acts on an EMPTY cell, where there is nothing for any modifier to have meant.
+
+  WHAT THAT LEAVES EXPOSED, named rather than coded around: `Ctrl`+`X` on a score cell would apply
+  Excused and swallow the browser's Cut. It cannot happen today — src/shell.js's listener returns on
+  Ctrl, Alt and Meta before the score branch is reached, which was measured rather than read — so
+  the branch that would refuse it is one no keystroke can drive red, and an unreachable guard with
+  no check behind it is worth less than this sentence. The day that guard moves, this is the line to
+  come back to.
 */
-export function handleScoreKey(key, input) {
+export function handleScoreKey(key, input, mods) {
+  const held = !!(mods && (mods.shift || mods.ctrl || mods.alt || mods.meta));
+
   if (key === 'Enter') return moveWithinColumn(input, 1);
-  if (key === 'ArrowDown') return moveWithinColumn(input, 1);
-  if (key === 'ArrowUp') return moveWithinColumn(input, -1);
+  if (key === 'ArrowDown') return !held && moveWithinColumn(input, 1);
+  if (key === 'ArrowUp') return !held && moveWithinColumn(input, -1);
 
   /* WO-3.16, and the `&&` is the contract rather than a shorthand: caretCanLeave() answering false
-     answers false from here, so src/shell.js does not preventDefault and the caret gets the key. */
-  if (key === 'ArrowRight') return caretCanLeave(input, 1) && moveAcrossRow(input, 1);
-  if (key === 'ArrowLeft') return caretCanLeave(input, -1) && moveAcrossRow(input, -1);
+     answers false from here, so src/shell.js does not preventDefault and the caret gets the key.
+     WO-3.23's `!held` is the same contract one clause earlier — a modified arrow never gets as far
+     as asking where the caret is, because the answer would not change whose key it is. */
+  if (key === 'ArrowRight') return !held && caretCanLeave(input, 1) && moveAcrossRow(input, 1);
+  if (key === 'ArrowLeft') return !held && caretCanLeave(input, -1) && moveAcrossRow(input, -1);
 
   if (key === 'Backspace' || key === 'Delete') {
     /* Native editing while there is text to edit — a teacher correcting 187 to 18 expects a

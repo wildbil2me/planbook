@@ -1719,7 +1719,7 @@ that catches it.
 
 ## WO-3.23 — the score grid never learns which modifier keys were held
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.16 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-3.16 · **Blocks** nothing
 **Closes roadmap** *(no box. A defect inside what WO-3.5 and WO-3.16 already closed.)*
 
 **Why it exists.** `src/shell.js:1626` hands the grid a key **name** and nothing else:
@@ -1765,17 +1765,71 @@ the same day for the same reason. It is written down here so the proposal is not
 comes back the first time somebody presses the key and finds nothing there.)*
 
 **Acceptance**
-- [ ] `Shift`+`→` with the caret at the end of a full cell extends the selection and does **not**
-      change cell — a real keystroke with the modifier set, not a synthesised key name.
-- [ ] `Shift`+`←` at position 0 does the same backwards.
-- [ ] `Ctrl`/`Cmd`+arrow at both edges is the browser's, not the grid's.
-- [ ] Unmodified `←` and `→` behave exactly as WO-3.16 shipped them, its checks green unchanged.
-- [ ] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+- [x] `Shift`+`→` with the caret at the end of a full cell extends the selection and does **not**
+      change cell — a real keystroke with the modifier set, not a synthesised key name. *(Driven with
+      `modifiers: 8` on `Input.dispatchKeyEvent`: the caret stays at `[3,3]` in `wo35-a2` and the cell
+      does not move, where the same walk on the unfixed tree stepped a column. **The selection does
+      not extend, and cannot**: at the end of the value there is no character to its right, and the
+      browser's own answer there — measured on a bare `<input>` in the same build before the
+      assertion was written — is to do nothing at all. The half of this line that is a real
+      behaviour is asserted where the browser really does grow a selection: `Shift`+`←` over the
+      full selection a keyboard arrival leaves behind goes `[0,3]` → `[0,2]` in the same cell.)*
+- [x] `Shift`+`←` at position 0 does the same backwards. *(Same shape and the same caveat — `[0,0]`
+      before and after, cell unchanged, with `wo35-a1` sitting there for a build that stole the key
+      to land on. It landed on it before the fix.)*
+- [x] `Ctrl`/`Cmd`+arrow at both edges is the browser's, not the grid's. *(Four presses at both caret
+      edges: word motion collapses the caret where the browser puts it and nothing changes column,
+      student or score. **This was already true before this work order and the check is green on the
+      unfixed tree** — `src/shell.js`'s listener returns on Alt, Ctrl and Meta above the score-cell
+      branch, measured with a `window` `keydown` reading `defaultPrevented` after the app's own:
+      `false` for Ctrl and Cmd, `true` for Shift. Only `Shift` was ever the defect. What the fix buys
+      is that the answer no longer depends on that guard.)*
+- [x] Unmodified `←` and `→` behave exactly as WO-3.16 shipped them, its checks green unchanged.
+      *(All four of its checks pass with detail strings **byte-identical** to the pre-WO-3.23 run —
+      diffed, not eyeballed — and no old check line changed at all: the two runs differ by exactly
+      the five lines added.)*
+- [x] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+      *(`795 checks · 795 passed · 0 failed · 0 skipped`, 21,302 lines, 26.8 lines per check, 263s,
+      against `790 · 790 · 0 · 0` before. The call-site count moved 793 → 798 and `wo-sweep.mjs`
+      asserts it. All five new checks were watched failing first, on the tree as it stood:
+      `795 · 790 · 5 failed · 0`.)*
 
 **Traps** — **A check that synthesises a key name proves nothing here**, because the defect *is* that
 only the name crosses the seam: a harness that calls `handleScoreKey('ArrowRight', cell)` cannot tell
 a fixed build from a broken one. The keystroke has to be dispatched with the modifier actually held,
 the way WO-3.16's caret checks dispatch real ones.
+
+**Three ways the outcome differed from what this work order predicted, recorded because two of them
+are in its own prose above and the prose is deliberately left standing.** *(2026-08-16, at the tick.)*
+
+- **Only `Shift` ever crossed the seam.** *Why it exists* names all four flags. `src/shell.js`'s
+  `keydown` listener opens `if (e.altKey || e.ctrlKey || e.metaKey) return;` — its **first**
+  statement, thirty-three lines above the score-cell branch — so Ctrl, Cmd and Alt never reached
+  `handleScoreKey()` at all, and `Shift` is out of that guard because `?` is typed with it. Measured
+  rather than read off the source (`defaultPrevented` on a `window` listener running after the app's
+  own: false for Ctrl and Cmd, true for Shift). **Acceptance line 3 was therefore already true before
+  this work order and its check is green on the unfixed tree** — said so at the check, in
+  `tools/README.md`, in `TESTING.md` and inside the tick itself, so that nobody reads its green as
+  proof of the fix. What the fix buys is that the grid's answer no longer *depends* on a guard above
+  it that a later work order may want to move.
+- **Acceptance lines 1 and 2 ask for a state Chromium cannot produce.** "Extends the selection" at a
+  collapsed edge has no character to extend over; the browser's own answer there is to do nothing, so
+  "the key is the browser's" reads as *a cell that did not change*. The lines are ticked with the
+  correction written into the tick rather than reworded — the Acceptance list is the test that was
+  graded, and the verifier declined to edit a test it had just judged. Where a selection really does
+  grow it is asserted separately: `Shift`+`←` over the full selection a keyboard arrival leaves
+  behind goes `[0,3]` → `[0,2]` in the same cell.
+- **The vertical pair went with it**, which is wider than the failing case described. `moveWithinColumn()`
+  has no `caretCanLeave()` gate, so `↑`/`↓` were swallowed at **every** caret position rather than
+  only at an edge, and `Shift`+`↑`/`↓` select to the start and end of the number. Taken under
+  Deliverable 2's "a modified **arrow** is the browser's" and inside *Out of scope*, which forbids
+  binding new combinations and changing what an **unmodified** arrow does — this does neither, it
+  takes a key away. Flagged by the implementer as the call most open to challenge and affirmed by the
+  verifier. **The revert, if it is ever wanted, is two `!held &&`s and one check.**
+
+*(And a fourth, harmless: `src/shell.js:1626` in *Why it exists* was already stale at dispatch — that
+call site was at `1642` when the dispatch opened and is at `1668` now. Left alone; the prose is the
+record of what was asked, not a document the change falsified.)*
 
 ---
 

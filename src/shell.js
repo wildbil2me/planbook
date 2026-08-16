@@ -1617,6 +1617,23 @@ document.addEventListener('submit', (e) => {
 const MARK_KEYS = ['P', 'T', 'A', 'E', 'D'];
 const KEYS_MODAL = 'attendanceKeysModal';
 
+/*
+  THE FOUR MODIFIER FLAGS, AS A RECORD RATHER THAN THE EVENT THEY CAME OFF (WO-3.23).
+
+  Passing `e` itself was the obvious move and is the one that was refused. This listener is the
+  only thing in the app that decides whether a keystroke is swallowed — every branch below routes
+  to a module that answers a BOOLEAN and comes back here for the preventDefault, which is what
+  makes "a key this screen could not use belongs to the browser" a rule with one enforcement point
+  instead of a convention every module is trusted to keep. Handing a module the event hands it
+  `preventDefault`, `stopPropagation` and every other field on it, and the next module to want the
+  target, or the timestamp, or to cancel something itself, would take them without anything having
+  to be decided. Four booleans cost one object per keystroke and can be read for nothing else.
+
+  It is a function rather than four arguments so that the next delegated branch that needs the
+  modifiers spells it the same way, which is the whole of the convention being set here.
+*/
+const modifiersOf = (e) => ({ shift: e.shiftKey, ctrl: e.ctrlKey, alt: e.altKey, meta: e.metaKey });
+
 document.addEventListener('keydown', (e) => {
   if (e.altKey || e.ctrlKey || e.metaKey) return;
   if (anyModalOpen()) return;
@@ -1636,10 +1653,22 @@ document.addEventListener('keydown', (e) => {
     that matters: it is NOT in that module's list, so it falls through here, reaches src/modal.js's own
     handler, finds no modal open and does nothing at all. That is WO-3.5's seventh acceptance line,
     kept by there being no code rather than by code.
+
+    THE MODIFIERS GO WITH THE NAME (WO-3.23), AND UNTIL THEN THEY DID NOT. This line passed `e.key`
+    alone, so `Shift`+`→` and `→` arrived as the same string, were answered the same way, and were
+    swallowed the same way — and a swallowed `Shift`+`→` is a selection the browser never made.
+    Only `Shift` was ever reaching here: the modifier guard at the top of this listener returns on
+    Alt, Ctrl and Meta BEFORE this branch, and Shift is deliberately not in that guard because it is
+    how `?` is typed. That was measured before it was believed — a `keydown` listener on `window`,
+    reading `defaultPrevented` after this one had run, answered false for Ctrl and Cmd and true for
+    Shift (`.claude/dispatch/WO-3.23-result.md`) — and what stands in the harness now is the
+    behaviour rather than the reading: tools/verify-shell.mjs presses Ctrl and Cmd + arrow at both
+    caret edges and asserts nothing moves. The record carries all four flags anyway, so that the
+    grid's answer does not depend on a guard above it that a later work order may want to move.
   */
   const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
   if (scoreCell) {
-    if (scores.handleScoreKey(e.key, scoreCell)) e.preventDefault();
+    if (scores.handleScoreKey(e.key, scoreCell, modifiersOf(e))) e.preventDefault();
     return;
   }
 

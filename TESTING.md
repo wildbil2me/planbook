@@ -5300,6 +5300,11 @@ arrow is read as a plain one, exactly as the vertical pair has always read `Shif
 asserts what a tap-then-arrow does**, because where the caret lands from a tap is the browser's
 answer to where the finger went.*
 
+*(**The `Shift`+arrow half of that paragraph was true until WO-3.23**, which widened the seam and is
+written up in its own section below. The sentence is left standing as the record of what this work
+order shipped and what it knowingly left behind; the two that are still open — the iPad and
+tap-then-arrow — are still open.)*
+
 ---
 
 ### WO-3.20 — One date formatter, and a name that means one thing
@@ -5442,6 +5447,92 @@ of it** — it reads `key === '…'` and `letter === '…'` out of that one func
 written as a `switch`, a lookup table or a call into another module would arrive as a key this check
 never knew about. The guards are what keep that from reading green: fewer than eight bound keys,
 eight glyphs or seven rows is itself a failure.*
+
+---
+
+### WO-3.23 — The score grid stops answering keys that were never its own
+
+**What this changes for a teacher: a held `Shift` now belongs to the number, not to the grid.**
+`Shift`+`←` over a score she has just arrived at shrinks the selection where it used to jump her to
+the previous assignment. `Shift`+`↓` and `Shift`+`↑` select to the end and the start of the number
+instead of changing student. At the two caret edges — `Shift`+`→` with the caret already past the
+last digit, `Shift`+`←` at position 0 — the browser's own answer is to do nothing, and now nothing
+is what happens. **Nothing an unmodified arrow does has changed**, and no new key combination was
+bound: this work order only takes keys away from the screen.
+
+**The seam was the defect, not the grid.** `src/shell.js` passed `handleScoreKey()` a key *name*, so
+`Shift`+`→` and `→` arrived as the same string and were answered — and swallowed — the same way. It
+now passes a small record of the four flags beside the name. **Not the event itself**, which was the
+obvious move: this listener is the only place in the app that decides whether a keystroke is
+swallowed, every branch under it answers a boolean and comes back for the `preventDefault()`, and
+handing a module the event hands it `preventDefault` and `stopPropagation` too. Four booleans cost
+one object per keystroke and can be read for nothing else.
+
+**One thing the work order got wrong, and it narrows the fix.** Its *Why it exists* names all four
+flags as crossing the seam. Only `Shift` ever did: the listener opens
+`if (e.altKey || e.ctrlKey || e.metaKey) return;` **above** the score-cell branch, so Ctrl, Cmd and
+Alt have never reached the grid at all — `Shift` is deliberately not in that guard because it is how
+`?` is typed. Measured rather than read off the source, with a `keydown` listener on `window` reading
+`defaultPrevented` after the app's own: **false** for Ctrl and Cmd, **true** for Shift. That was a
+development probe rather than a check that survives in the harness — the harness carries the
+behaviour instead — and it is written up in `.claude/dispatch/WO-3.23-result.md`. The record still
+carries all four flags, so the grid's answer no longer depends on a guard above it that a later work
+order may want to move.
+
+- [x] **`Shift`+`→` with the caret at the end of a full cell does not change cell**, driven with the
+      modifier actually held (`modifiers: 8`) rather than as a synthesised key name — the caret is
+      `[3,3]` before and after and the cell is the one it was, where the same walk on the unfixed
+      tree stepped a column. **It does not *extend* the selection, and cannot**: there is no
+      character to the right of the last digit. That was measured on a bare `<input>` in the same
+      headless build before the assertion was written, and the acceptance line's wording is
+      corrected here rather than asserted around.
+- [x] **`Shift`+`←` at position 0 does the same backwards** — `[0,0]` either side, cell unchanged,
+      and with a previous assignment sitting right there for a build that stole the key to land on.
+      Before the fix it landed on it.
+- [x] **`Ctrl` and `Cmd` + arrow are the browser's at both caret edges** — word motion collapses the
+      caret where the browser puts it, and none of the four presses changes assignment, student or
+      score. **This check is green on the unfixed tree too**, which is the finding above rather than
+      a weakness in it, and the block says so at its own comment so that nobody reads its green as
+      proof of the fix. `Alt`+arrow is deliberately not pressed: `Alt`+`←` is Back, and driven once
+      during development it navigated the page out from under the run and killed the harness three
+      checks later — which is the best argument in the block for the work order it belongs to.
+- [x] **Unmodified `←` and `→` are exactly what WO-3.16 shipped**: all four of its checks pass with
+      detail strings **byte-identical** to the pre-WO-3.23 run, diffed rather than eyeballed, and the
+      two runs differ by exactly the five lines added.
+- [x] **`verify-shell.mjs` passes whole** — `795 checks · 795 passed · 0 failed · 0 skipped`, 263s,
+      against `790 · 790 · 0 · 0` before — with the call-site count in `tools/README.md` moved
+      793 → 798, which `wo-sweep.mjs` asserts.
+
+*The desk half is `verify-shell.mjs`, **795 of 795 with zero skips**, 21,302 lines, 26.8 lines per
+check, 263s — five checks added at the foot of the existing WO-3.16 group, because the walk needs the
+twenty-five rows and ten drawn columns that fixture already is. `wo-sweep.mjs` is **20 checks, 18
+passed, 0 failed, 2 to review**, and both REVIEWs are the standing pair, naming exactly the lines
+they named before this landed. `sw.js`'s `CACHE` went to `planbook-shell-v71`. **No new CSS, no new
+control and no new string on any screen** — this work order adds nothing a teacher can see, so there
+is nothing for the coarse block to hold at 44px and nothing new on the ⌨ Keys card. The legend and
+the hint under the grid describe the unmodified keys and are still true; neither was touched.*
+
+*Two mutations, both run rather than reasoned, both reverted.*
+
+| Mutation | Result |
+|---|---|
+| **The fix itself, absent** — the five new checks added first, on the tree as it stood | **red, all five**: `795 checks · 790 passed · 5 failed · 0 skipped`. `Shift`+`←` over the full selection stepped from `wo35-a2` to `wo35-a1`, exactly the sentence `src/scores.js` used to carry |
+| `if (key === 'ArrowUp')` deleted from `handleScoreKey()`, `↑` left on the ⌨ Keys card — WO-3.22's own proof, re-run because WO-3.23 changed the signature its parser finds by literal string | **red, 2 of 795**: *"9 key(s) bound … ON THE LEGEND AND NOT BOUND: ↑"*, and beside it the cell-clearing section, which presses `↑`. Reverted; `git diff` carries no trace. The check reads `10 key(s) bound by handleScoreKey() [Enter ArrowDown ArrowUp ArrowRight ArrowLeft Backspace Delete L M X]` on the delivered tree — character for character what it read before the signature changed |
+
+*The judgment on every other key the grid answers to, which is a deliverable rather than a courtesy,
+is written at `handleScoreKey()` in `src/scores.js` and argued at length in
+`.claude/dispatch/WO-3.23-result.md`. The short of it: `Enter` and `⌫` keep theirs, because nothing
+native happens on `Shift`+`Enter` in a one-line input and `⌫` only acts on a cell that is already
+empty; `L`, `M` and `X` must **not** be refused on `Shift`, because `e.key` is `'L'` exactly when
+Shift is held and refusing it would refuse the capital every teacher types. One exposure is named
+and deliberately not coded around — `Ctrl`+`X` on a score cell would apply Excused and swallow the
+browser's Cut, which cannot happen while the listener's own guard stands above the branch, and the
+guard is the right place for it.*
+
+*What a desk cannot answer. **Nothing here was pressed on an iPad**, and this work order is entirely
+about keys a hardware keyboard makes: the on-screen number pane has no arrows and no `Shift`+arrow,
+so a Smart Keyboard at the owner's desk is the only place these gestures exist on that device. No 👤
+line was ticked and none was added.*
 
 ---
 

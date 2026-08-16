@@ -15466,9 +15466,13 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
        same helper and the same reasoning as the WO-2.5 keyboard section above. A printable key needs
        `keyDown` with `text` or `e.key` arrives as the raw code; Enter, Escape, the arrows and
        Backspace take the `rawKeyDown` shape, which still reaches the editing pipeline. */
-    const sk = async (k, code, vk, text) => {
+    /* `mods` is Input.dispatchKeyEvent's own bitmask — Alt 1, Ctrl 2, Meta 4, Shift 8 — and it is
+       the whole of WO-3.23's evidence: a modifier that is only NAMED proves nothing about a seam
+       whose defect was that only the name crossed it. It defaults to 0, so every call written
+       before that work order still dispatches an unmodified key. */
+    const sk = async (k, code, vk, text, mods = 0) => {
       const ev = { key: k, code: code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk,
-        modifiers: 0 };
+        modifiers: mods };
       if (text) ev.text = text;
       await send('Input.dispatchKeyEvent',
         Object.assign({ type: text ? 'keyDown' : 'rawKeyDown' }, ev));
@@ -15485,6 +15489,14 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
        proves reaches the editing pipeline. */
     const skRight = () => sk('ArrowRight', 'ArrowRight', 39);
     const skLeft = () => sk('ArrowLeft', 'ArrowLeft', 37);
+    /* WO-3.23's pair of helpers: the four flags by name, and one arrow dispatched with them
+       actually held down. `''` for `text` keeps the `rawKeyDown` shape the four above use — an
+       arrow carries no text — so the only thing that differs from a plain press is the bitmask,
+       which is exactly the difference under test. */
+    const ALT = 1, CTRL = 2, META = 4, SHIFT = 8;
+    const ARROW = { right: ['ArrowRight', 'ArrowRight', 39], left: ['ArrowLeft', 'ArrowLeft', 37],
+      down: ['ArrowDown', 'ArrowDown', 40], up: ['ArrowUp', 'ArrowUp', 38] };
+    const skHeld = (mods, dir) => sk(ARROW[dir][0], ARROW[dir][1], ARROW[dir][2], '', mods);
     const skLetter = (L) => sk(L, 'Key' + L, L.charCodeAt(0), L);
     const skDigits = async (n) => {
       for (const d of String(n).split('')) await sk(d, 'Digit' + d, d.charCodeAt(0), d);
@@ -16299,6 +16311,176 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           stepsRight + ' press(es) out to ' + JSON.stringify(atLastCol) + ' -> '
             + JSON.stringify(rightClamped) + '; said ' + JSON.stringify(saidAtRight)
             + '; scores byte-identical = ' + (afterRightEdge.all === beforeRightEdge.all));
+
+        /*
+          ── WO-3.23: THE MODIFIERS, WHICH UNTIL THIS WORK ORDER DID NOT CROSS THE SEAM ──
+
+          `src/shell.js` handed `handleScoreKey()` a key NAME and nothing else, so `Shift`+`→` and a
+          bare `→` arrived as the same string and were answered the same way — and where the grid
+          answers yes it also `preventDefault()`s, so the browser's own selection never happened.
+
+          EVERY PRESS BELOW HOLDS THE MODIFIER DOWN, through `Input.dispatchKeyEvent`'s bitmask, and
+          that is the whole of the evidence rather than a detail of it. A check that called
+          `handleScoreKey('ArrowRight', cell)` would be RE-TYPING the defect instead of measuring
+          it: only the name ever crossed, so a synthesised name passes on the fixed build and the
+          broken one alike. ALL FIVE WENT RED ON THE PRE-WO-3.23 TREE — they were written first and
+          the run read `795 checks · 790 passed · 5 failed` — but read that with the Ctrl and Cmd
+          one's own comment beside it: four of the five fail on their own claim, and the fifth fails
+          only because a stolen `Shift`+`←` earlier in the walk has carried it onto the wrong cell.
+          Cascade, not independent evidence.
+
+          ONE WALK ACROSS ONE CELL, and the order is load-bearing: each step leaves the caret where
+          the next one needs it, and every intermediate reading is asserted rather than assumed.
+          `wo35-a2` — column index 1, holding `100` from the check above — is used rather than index
+          0 so that a build which stole the key HAS SOMEWHERE TO GO. At the first assignment
+          moveAcrossRow() clamps, the cell would not change either way, and the check would pass by
+          geography rather than by behaviour, which is the trap the check above this one names.
+
+          WHAT THE BROWSER ITSELF DOES at each caret position was MEASURED before these assertions
+          were written — a bare `<input value="100">` in this same headless build, driven with the
+          same helper — rather than assumed from what a text field "should" do. Two of those
+          measurements are worth having in front of you, because they are why two of these checks
+          assert that NOTHING moved: with the caret collapsed at the end of the value there is
+          nothing to the right for `Shift`+`→` to extend over, and at position 0 there is nothing to
+          the left for `Shift`+`←`. The browser's own answer at those two positions is to do nothing
+          at all, so "the key is the browser's" reads here as a cell that did not change rather than
+          as a selection that grew. The selection growing IS asserted, twice, where the browser
+          really does grow one: over the full selection a keyboard arrival leaves behind, and on the
+          vertical pair mid-number.
+        */
+        /*
+          BACK TO COLUMN INDEX 1 WITH THE KEY, never with a click. By the time this block runs the
+          grid is scrolled to its right-hand end — the walk above put it there — and at that scroll
+          offset a click at `wo35-a1`'s coordinates lands on the frozen name column sitting over it,
+          which is the viewport-coordinate trap in clickSel's own comment arriving through the
+          fixture. Left to the clamp at index 0 and then one step right, so the starting state is
+          reached the same way from wherever the check above left the caret; every arrival selects
+          the value, so each press is a whole column.
+        */
+        const walkToSecondColumn = async () => {
+          let at = await evalJs(ROW12);
+          for (let i = 0; i < 20 && at.index !== 0; i++) {
+            await skLeft();
+            at = await evalJs(ROW12);
+          }
+          await skRight();
+          return await evalJs(ROW12);
+        };
+
+        const modStart = await walkToSecondColumn();
+        const beforeMods = await readDoc();
+
+        /* The sentence src/scores.js carried until this work order — *"`Shift`+`←` over a full
+           selection therefore moves a cell where a plain text field would shrink the selection"* —
+           driven rather than described. This is the one press in the walk where the pre-WO-3.23
+           build is unambiguously visible: it lands on wo35-a1 with `72` selected. */
+        await skHeld(SHIFT, 'left');
+        const shiftLeftSel = await evalJs(ROW12);
+        check('Shift+← over the value a keyboard arrival selects shrinks that selection and stays in the cell — the modifier actually held, which is the only way this can be told from a plain ←',
+          modStart.index === 1 && modStart.cell === A2 && modStart.student === 'wo35-s12'
+            && modStart.value === '100' && modStart.from === 0 && modStart.to === 3
+            && shiftLeftSel.index === 1 && shiftLeftSel.cell === A2
+            && shiftLeftSel.student === 'wo35-s12' && shiftLeftSel.value === '100'
+            && shiftLeftSel.from === 0 && shiftLeftSel.to === 2,
+          JSON.stringify(modStart) + ' -> ' + JSON.stringify(shiftLeftSel));
+
+        /* A plain `←` first, which collapses the selection to 0 because caretCanLeave() answers
+           false over a partial selection and hands the key back — WO-3.16's rule, unchanged, and
+           asserted here so that the state the next press is made from is a reading and not a
+           belief. */
+        await skLeft();
+        const collapsedAtZero = await evalJs(ROW12);
+        await skHeld(SHIFT, 'left');
+        const shiftAtZero = await evalJs(ROW12);
+        check('Shift+← with the caret at position 0 does not step to the previous assignment — with a previous assignment sitting there for a build that stole the key to land on',
+          collapsedAtZero.index === 1 && collapsedAtZero.from === 0 && collapsedAtZero.to === 0
+            && shiftAtZero.index === 1 && shiftAtZero.cell === A2
+            && shiftAtZero.student === 'wo35-s12' && shiftAtZero.value === '100'
+            && shiftAtZero.from === 0 && shiftAtZero.to === 0,
+          JSON.stringify(collapsedAtZero) + ' -> ' + JSON.stringify(shiftAtZero));
+
+        /* Out to the far end of the number with three plain `→`, each of them the caret's for the
+           same reason, and then the modified one at the edge the arrow rule was written for. */
+        await skRight();
+        await skRight();
+        await skRight();
+        const collapsedAtEnd = await evalJs(ROW12);
+        await skHeld(SHIFT, 'right');
+        const shiftAtEnd = await evalJs(ROW12);
+        check('Shift+→ with the caret at the end of a full cell stays in that cell — there is no character to its right to extend over, so the browser\'s own answer is to do nothing and doing nothing is what has to happen',
+          collapsedAtEnd.index === 1 && collapsedAtEnd.from === 3 && collapsedAtEnd.to === 3
+            && shiftAtEnd.index === 1 && shiftAtEnd.cell === A2
+            && shiftAtEnd.student === 'wo35-s12' && shiftAtEnd.value === '100'
+            && shiftAtEnd.from === 3 && shiftAtEnd.to === 3,
+          JSON.stringify(collapsedAtEnd) + ' -> ' + JSON.stringify(shiftAtEnd));
+
+        /*
+          CTRL AND CMD AT BOTH CARET EDGES — and this one is GREEN ON THE PRE-WO-3.23 TREE, which is
+          a finding rather than a weakness and is written down here so that nobody reads its green
+          as proof of the fix. `src/shell.js`'s keydown listener opens
+          `if (e.altKey || e.ctrlKey || e.metaKey) return;`, ABOVE the score-cell branch, so those
+          three modifiers have never reached `handleScoreKey()` at all — the work order's "Why it
+          exists" names all four flags, and only `Shift` was ever the defect, because `Shift` is
+          deliberately not in that guard (it is how `?` is typed). Measured, not read off the
+          source: with `Ctrl` held, a `keydown` listener on `window` sees `defaultPrevented false`
+          and the caret collapses where the browser's word motion puts it, while the same press
+          with `Shift` held read `defaultPrevented true` and changed column.
+
+          What this check is for is that the answer now holds in TWO places rather than one: the
+          guard above, and the grid itself, which since WO-3.23 refuses a modified arrow whatever
+          let it through. Move the score branch above that guard — which a work order wanting
+          `Cmd`+`Z` would do — and this stays green.
+
+          `Alt`+ARROW IS NOT PRESSED HERE, and the reason is the best argument in this block for the
+          whole work order: in this browser `Alt`+`←` is BACK. Driven once during development it
+          navigated the page out from under the run, `window.planbook` went undefined and the
+          harness died three checks later. That is what a screen swallowing a modified arrow costs
+          somebody — the difference being that the teacher does not get a stack trace.
+        */
+        await skHeld(CTRL, 'right');
+        const ctrlAtEnd = await evalJs(ROW12);
+        await skHeld(CTRL, 'left');
+        const ctrlWordLeft = await evalJs(ROW12);
+        await skHeld(CTRL, 'left');
+        const ctrlAtZero = await evalJs(ROW12);
+        await skHeld(META, 'right');
+        const metaAtZero = await evalJs(ROW12);
+        const heldRuns = [ctrlAtEnd, ctrlWordLeft, ctrlAtZero, metaAtZero];
+        check('Ctrl and Cmd + arrow are the browser\'s at both caret edges — word motion collapses the caret where the browser puts it and no press of the four changes assignment, student or score',
+          ctrlAtEnd.from === 3 && ctrlAtEnd.to === 3
+            && ctrlWordLeft.from === 0 && ctrlWordLeft.to === 0
+            && ctrlAtZero.from === 0 && ctrlAtZero.to === 0
+            && metaAtZero.from === 0 && metaAtZero.to === 0
+            && heldRuns.every((s) => s.index === 1 && s.cell === A2
+              && s.student === 'wo35-s12' && s.value === '100'),
+          JSON.stringify(heldRuns));
+
+        /*
+          AND THE VERTICAL PAIR, which the work order's failing case does not mention and which is
+          the WIDER half of the same defect. moveWithinColumn() has no caretCanLeave() gate — by
+          design, since up and down mean nothing to a caret in a one-line field — so `↑` and `↓`
+          were swallowed at EVERY caret position rather than only at an edge. Held with `Shift`
+          they are not nothing: measured in this build, `Shift`+`↓` selects from the caret to the
+          end of the number and `Shift`+`↑` selects back to its start. Both were being spent on
+          changing student.
+        */
+        await skRight();
+        const midCaret = await evalJs(ROW12);
+        await skHeld(SHIFT, 'down');
+        const shiftDown = await evalJs(ROW12);
+        await skHeld(SHIFT, 'up');
+        const shiftUp = await evalJs(ROW12);
+        const afterMods = await readDoc();
+        check('Shift+↓ and Shift+↑ select to the ends of the number instead of changing student, and the whole modified walk writes nothing — every score in the document byte-identical across fifteen presses',
+          midCaret.index === 1 && midCaret.from === 1 && midCaret.to === 1
+            && shiftDown.cell === A2 && shiftDown.student === 'wo35-s12'
+            && shiftDown.value === '100' && shiftDown.from === 1 && shiftDown.to === 3
+            && shiftUp.cell === A2 && shiftUp.student === 'wo35-s12'
+            && shiftUp.value === '100' && shiftUp.from === 0 && shiftUp.to === 1
+            && afterMods.all === beforeMods.all,
+          JSON.stringify(midCaret) + ' -> ' + JSON.stringify(shiftDown) + ' -> '
+            + JSON.stringify(shiftUp) + '; scores byte-identical = '
+            + (afterMods.all === beforeMods.all));
 
         /*
           THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE. The grade column's

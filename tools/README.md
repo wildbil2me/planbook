@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 793 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 798 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1094,6 +1094,55 @@ re-run the cheap way rather than at 252s each — this block sliced out of this 
 and executed with `fs.readFile` handed mutated copies in memory, nothing written to the tree — so
 they are the real code answering, on inputs the disk never saw. The `ArrowUp` case is the one that
 was worth the full run, because it is the one that had been green.
+
+**WO-3.23 moved it from 793 to 798**: five literal call sites, none in a loop and none a failure
+arm, added at the foot of the existing WO-3.16 group inside the score-grid section, so the section
+contributes five executed results and **the run prints 795**, measured on the delivered tree: `795
+checks · 795 passed · 0 failed · 0 skipped`, 21,302 lines, 26.8 lines per check, 263s. **They are
+the first checks in this file that hold a modifier down.** `sk()` grew a fifth argument carrying
+`Input.dispatchKeyEvent`'s own bitmask — Alt 1, Ctrl 2, Meta 4, Shift 8 — defaulted to 0 so that
+every press written before this work order still dispatches a bare key, and `skHeld(mods, dir)` is
+the one caller. That is the whole of the evidence rather than a detail of it: the defect WO-3.23
+fixes is that only the key NAME crossed `src/shell.js`'s seam into `handleScoreKey()`, so a check
+calling `handleScoreKey('ArrowRight', cell)` would have been re-typing the defect and would read
+green on the broken build and the fixed one alike. **All five were watched failing**, which is the
+one time this file has been able to run its own mutation without mutating anything: they went in
+first, on the tree as it stood, and the run read `795 checks · 790 passed · 5 failed · 0 skipped`.
+
+**Three things about the block are worth knowing before it is edited.** It walks back to column
+index 1 **with the key and never with a click** — by the time it runs, the WO-3.16 walk has scrolled
+the grid to its right-hand end, and at that offset a click at `wo35-a1`'s coordinates lands on the
+frozen name column sitting over it. Found the honest way: the first draft clicked, focus went
+nowhere, and the run died four checks later against a fixture it had navigated away from. **What the
+browser itself does at each caret position was measured before the assertions were written**, on a
+bare `<input value="100">` in the same headless build, because two of the five assert that NOTHING
+moved and that is only correct if the browser's own answer at a collapsed edge is to do nothing:
+`Shift`+`→` at the end of a value has no character to its right to extend over. The selection
+growing IS asserted, twice, where the browser really does grow one — over the full selection a
+keyboard arrival leaves behind, and on the vertical pair mid-number. And **`Alt`+arrow is not
+pressed**, which is the best argument in the block for the work order it belongs to: `Alt`+`←` is
+Back, it navigated the page out from under the run, `window.planbook` went undefined and the harness
+died three checks later. The difference between that and a teacher losing her place is that the
+harness printed a stack trace.
+
+**The Ctrl and Cmd check is green on the pre-WO-3.23 tree**, and it says so at its own comment so
+that nobody reads its green as proof of the fix. `src/shell.js`'s keydown listener opens
+`if (e.altKey || e.ctrlKey || e.metaKey) return;` **above** the score-cell branch, so those three
+modifiers have never reached `handleScoreKey()` at all — only `Shift` was ever the defect, because
+`Shift` is deliberately not in that guard (it is how `?` is typed). That was measured rather than
+read off the source — a development probe, not a check that survives in this file: a `keydown`
+listener on `window` reading `defaultPrevented` after the app's own, where `Ctrl`+`←` and `Cmd`+`←`
+over a full selection read **false** and did not change column, while the same press with `Shift`
+read **true** and moved one. It is written up in `.claude/dispatch/WO-3.23-result.md`; what stands
+here is the behaviour rather than the reading. What the check buys is that the
+answer now holds in two places rather than one, so that moving the score branch above that guard —
+which a work order wanting `Cmd`+`Z` would do — cannot quietly re-open it.
+
+**WO-3.22's static legend check was re-proved rather than assumed**, because WO-3.23 changed the
+signature that check finds by literal string. It still reads `10 key(s) bound by handleScoreKey()
+[Enter ArrowDown ArrowUp ArrowRight ArrowLeft Backspace Delete L M X]`, character for character what
+it read before, and the mutation was run again on the delivered tree: `if (key === 'ArrowUp')`
+deleted from `handleScoreKey()` with `↑` left on the legend.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

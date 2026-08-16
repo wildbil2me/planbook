@@ -38,6 +38,29 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-3.23 — on the score grid, a held `Shift` belonged to the grid instead of to the number.**
+  `Shift`+`←` over a score you have just arrived at now shrinks the selection where it used to jump
+  you to the previous assignment, and `Shift`+`↑`/`↓` select to the start and end of the number
+  instead of changing student. At the edges of a number, where the browser itself would do nothing,
+  nothing happens. Unmodified arrows are exactly what they were, and no new key combination was
+  bound — this only takes keys away from the screen.
+
+  **The seam was the defect, not the grid.** The keyboard listener handed the grid a key *name* and
+  nothing else, so `Shift`+`→` and `→` arrived as the same string and were answered — and swallowed —
+  the same way. It now passes a small record of the four modifier flags beside the name, and
+  deliberately **not** the event itself: that listener is the one place in the app that decides
+  whether a keystroke is swallowed, every branch under it answers a boolean and comes back for the
+  `preventDefault()`, and handing a module the event hands it `preventDefault` and `stopPropagation`
+  too. Every other key the grid answers to was judged in the same sitting and written down at the
+  code — `L`, `M` and `X` must **not** refuse a modifier, because `Shift` is how the capital is typed.
+
+  **The work order was wrong about the scale of it, which is worth recording.** It named all four
+  modifiers as reaching the grid; only `Shift` ever did, because the listener returns on Alt, Ctrl and
+  Meta thirty-three lines above the score-cell branch. So one of the five acceptance lines was already
+  true before the fix and its check is green on the unfixed tree — said so at the check, in the test
+  notes and in the tick, rather than letting a green run imply otherwise. What the fix buys there is
+  that the answer no longer depends on a guard some later work order may want to move.
+
 - **WO-3.22 — the ⌨ Keys card on the score grid now lists `↑ ↓`.** The pair has moved up and down a
   column since the grid shipped, and the hint underneath the grid always said so — but the card a
   teacher opens *to learn the keys* did not carry them. WO-3.16 then added a `← →` row one line above
