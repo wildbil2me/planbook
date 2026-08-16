@@ -2,8 +2,8 @@
 
 **Phase goal:** open the app at 7:40am and know what the day asks of you.
 
-Branch: `phase/6-calendar-glance`. Deliberately late: **the glance page comes after the things it
-glances at.** Build it before signals and outreach exist and you build it twice.
+Deliberately late: **the glance page comes after the things it glances at.** Build it before signals
+and outreach exist and you build it twice.
 
 Most of this calendar is **free** — assignment due dates, term boundaries, and which classes met or
 were dropped are already stored by Phases 2 and 3, and WO-2.3 already authors days off and

@@ -2,8 +2,8 @@
 
 **Phase goal:** open the app and see who needs you today — in both directions.
 
-Branch: `phase/4-signals`. Ship 3, target October 2026 — deliberately after 4–6 weeks of real data
-exist to run the rules against. Building these in August means tuning thresholds against nothing.
+Ship 3, target October 2026 — deliberately after 4–6 weeks of real data exist to run the rules
+against. Building these in August means tuning thresholds against nothing.
 
 **The praise half is not decoration.** It is what makes this a teacher's assistant rather than a
 gradebook with alarms. And it has a design trap that kills it: **rank by delta, not by level.**

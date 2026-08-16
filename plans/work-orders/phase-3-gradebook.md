@@ -2,7 +2,7 @@
 
 **Phase goal:** grades entered once or twice a week, in minutes, for five classes.
 
-Branch: `phase/3-gradebook`. Ship 2, target ~2026-09-15.
+Ship 2, target ~2026-09-15.
 
 Grade math lives in [`../../docs/data-model.md`](../../docs/data-model.md) § Grade math. Two rules
 govern this whole phase, and both are about the teacher never being surprised:

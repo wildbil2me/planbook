@@ -2,8 +2,10 @@
 
 **Phase goal:** the app installs, holds data, survives everything, and can hand that data back.
 
-Branch: `phase/1-shell-store-roster`. Read [`../ROADMAP.md`](../ROADMAP.md) Phase 1 and
-[`../../docs/data-model.md`](../../docs/data-model.md) before starting anything here.
+Read [`../ROADMAP.md`](../ROADMAP.md) Phase 1 and [`../../docs/data-model.md`](../../docs/data-model.md)
+before starting anything here. Work lands on `main` — this file opened with a
+`Branch: phase/1-shell-store-roster` line until 2026-08-16, as all eight phase files did, and
+[`README.md`](README.md) § *How to use one* step 3 says why they went.
 
 **The ordering rule for this phase:** WO-1.5 (backup & restore) lands before WO-1.6 and everything
 after it. No feature that writes student data ships before the path that gets it back out.
@@ -1321,7 +1323,7 @@ would make it false.
 
 ## WO-1.20 — the retired phase-branch rule is still live in ROADMAP.md and TESTING.md
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.19
+**Ship** — · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-1.19
 **Closes roadmap** Phase 1 → *(no box. Process, not app — same reasoning as WO-1.19, which this
 finishes. Booked 2026-08-15.)*
 
@@ -1367,14 +1369,31 @@ is the owner's call, not a documentation cleanup's; anything on `origin`; `CHANG
 which records what was true when written and is not edited to match later decisions.
 
 **Acceptance**
-- [ ] `grep -rn "phase branch\|phase/<n>" plans/ROADMAP.md TESTING.md` returns nothing that states or
-      assumes the retired convention.
-- [ ] No file in the repository instructs a reader to work on, merge, or wait on a phase branch.
+- [x] `grep -rn "phase branch\|phase/<n>" plans/ROADMAP.md TESTING.md` returns nothing that states or
+      assumes the retired convention. *(Four hits survive and every one is in the past tense.
+      `ROADMAP.md:520` and `TESTING.md:4–8` are the retirement notes themselves, which name the old
+      wording in order to record that it went — the same move `CLAUDE.md`'s Git bullet makes, and it
+      is why the line grades on "states or assumes" rather than on a zero count. `TESTING.md:205` is
+      WO-1.1's ticked check on what `git log` showed in August 2026. Neither of the two live rules
+      survives: the gate now names a work order landing and a ship, and the integration-branch
+      bullet names one branch.)*
+- [x] No file in the repository instructs a reader to work on, merge, or wait on a phase branch.
       *(`CHANGELOG.md` and closed work orders are history and are exempt — they record what was true
-      when written.)*
-- [ ] The per-phase `Branch:` headers were decided deliberately, and the reasoning is written down
-      wherever they ended up.
-- [ ] `node tools/wo-gate.mjs --audit` passes.
+      when written.)* *(Whole tree swept for `branch`, case-insensitive, not just the two files.
+      Three live instructions found and all three fixed: `ROADMAP.md:516` and `TESTING.md:3` gated on
+      a merge that cannot happen, and `phase-8-packaging.md:346` told a reader deploys wait on a
+      phase branch — which had become the opposite of true. Everything else is a record: `gates.md`
+      and WO-1.1's own lines, WO-1.19's decision record, `README.md`'s note on where WO-1.13 landed,
+      `CHANGELOG.md`, and the closed dispatch briefs under `.claude/dispatch/`. Those last are the
+      one judgment: `WO-1.2-brief.md:5` does say "work on the phase branch" in the imperative, but it
+      is a dated brief for a work order that closed in August, and editing it to agree with a later
+      decision is the offence the Traps name for `CHANGELOG.md`.)*
+- [x] The per-phase `Branch:` headers were decided deliberately, and the reasoning is written down
+      wherever they ended up. *(All eight removed. The reasoning is in [`README.md`](README.md)
+      § *How to use one* step 3 — one copy, because writing the answer into eight headers is what
+      would guarantee this work order a successor — with a one-line pointer to it left in this file's
+      own header, where the first of the eight stood.)*
+- [x] `node tools/wo-gate.mjs --audit` passes.
 
 **Traps** — **Do not reopen the decision.** This is cleanup after a call the owner already made; a
 dispatch that re-argues revive-versus-retire has failed the work order. **Do not edit `CHANGELOG.md`

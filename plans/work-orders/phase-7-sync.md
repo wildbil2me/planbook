@@ -2,10 +2,9 @@
 
 **Phase goal:** the same year on the laptop and the iPad, with one scope and no fear.
 
-Branch: `phase/7-sync`. **🔒 GATED on Google OAuth verification** — the paperwork is
-[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-), not here. The gate is
-calendar-bound rather than work-bound, which is why it is slotted in wherever it opens rather than
-scheduled.
+**🔒 GATED on Google OAuth verification** — the paperwork is
+[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-), not here. The gate is calendar-bound
+rather than work-bound, which is why it is slotted in wherever it opens rather than scheduled.
 
 **But the gate is on public launch, not on building this phase.** The OAuth client
 ([WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope), done in the

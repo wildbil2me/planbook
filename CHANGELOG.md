@@ -244,6 +244,37 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-1.20 — the retired phase-branch rule was written in six files, not two. It is gone from all
+  of them.** WO-1.19 made the call and rewrote the two documents it knew about; the convention
+  turned out to be spelled out in `plans/ROADMAP.md` § Cross-cutting rules, in the `TESTING.md`
+  gate — in both of its copies — in a Cloudflare note in `phase-8-packaging.md`, and in a `Branch:`
+  header at the top of all eight phase files. A rule that half the repository still states is not
+  retired; it is ambiguous, which is worse than either answer.
+
+  **The `TESTING.md` gate now names something that can happen.** It said "run this before merging
+  any phase branch," an event that no longer occurs. The obvious replacement — "before every
+  deploy" — was drafted and thrown out: with `main` as the Pages production branch every push
+  deploys, so that rule would demand the full sheet several times a week and nobody would run it,
+  which is precisely the decay this pair of work orders exists to end. It now names the two
+  cadences both documents already describe between them: a work order's own lines when it lands,
+  the whole sheet before a ship.
+
+  **One sentence had inverted rather than gone stale.** The Cloudflare note in
+  `phase-8-packaging.md` read "nothing deploys while the work is sitting on a phase branch" — a
+  reassurance. With `main` as the production branch the true sentence is a warning, and it now says
+  so: every push to `main` is a production deploy, and there is no branch to stage on.
+
+  **The eight `Branch:` headers were removed rather than rewritten, once.** No single tense fitted
+  them — Phases 1–3 named branches that existed and were deleted, Phases 4–8 named branches never
+  cut, so for five of them there is no past tense to move to and "work landed on `phase/5-outreach`"
+  would be a new false sentence. And the answer is now identical for every phase: writing it eight
+  times would guarantee a third round of this the day Ship 3 settles branching. The reasoning lives
+  in `plans/work-orders/README.md` § How to use one, step 3, and nowhere else.
+
+  Nothing about the 2026-08-15 decision was reopened, and no historical note describing work that
+  did land on a phase branch was touched — the retirement notes, WO-1.1's ticked checks, and this
+  changelog's own account all stand as written.
+
 - **WO-2.32 — the overdue-pass alert no longer makes a sound, on any device. The colour still
   changes.** Four testing sittings on the teaching iPad across three days could not make the tone
   sound reliably: it survived being rebuilt around a single held audio context (WO-2.29), it

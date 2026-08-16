@@ -2,7 +2,7 @@
 
 **Phase goal:** something a stranger can find, evaluate, install, and trust.
 
-Branch: `phase/8-packaging`. The 1.0.0 call itself is [WO-G4](gates.md#wo-g4--the-100-call).
+The 1.0.0 call itself is [WO-G4](gates.md#wo-g4--the-100-call).
 
 ---
 
@@ -343,8 +343,10 @@ reader will assume was skipped by accident.*
    this project does not have, and the absence of a `functions/` directory is what makes Acceptance line
    4 a fact rather than a promise. *(Direct Upload — dragging the folder into the dashboard — is the
    alternative if a Git connection is unwanted. Same files either way, and neither adds anything to this
-   repository. Note that with `main` as the production branch, nothing deploys while the work is sitting
-   on a phase branch.)*
+   repository. Note that with `main` as the production branch and work landing straight on it, **every
+   push to `main` is a production deploy** — there is no branch to stage on. This sentence read
+   "nothing deploys while the work is sitting on a phase branch" until 2026-08-16; phase branches were
+   retired the day before by WO-1.19, and the reassurance became its opposite.)*
 
    > **Set the zone's Browser Cache TTL to "Respect Existing Headers" before trusting step 2.**
    > `hwgteach.com` → Caching → Configuration. A new Cloudflare zone defaults it to four hours and

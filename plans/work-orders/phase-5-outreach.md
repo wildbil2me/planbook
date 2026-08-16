@@ -3,8 +3,7 @@
 **Phase goal:** from "this student needs a conversation" to a sent message, without leaving the app
 or granting a mail scope.
 
-Branch: `phase/5-outreach`. After Phase 4, because **a draft is worthless if the list of who to
-write to is wrong.**
+After Phase 4, because **a draft is worthless if the list of who to write to is wrong.**
 
 Merge fields are specified in [`../../docs/data-model.md`](../../docs/data-model.md) § Outreach
 templates. Two rules dominate this phase, and both are about what must never leave the app:

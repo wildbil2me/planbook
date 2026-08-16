@@ -17,7 +17,16 @@ up, finished, and verified without needing to hold the rest of the project in yo
 2. Check **Depends on**. If a dependency isn't ✅, you are about to build on sand.
 3. Work on `main`. A work order is a commit or a short stack of them, not a branch — of any kind.
    *(Phase branches were retired on 2026-08-15 by WO-1.19; the reasoning is in `CLAUDE.md`
-   § Conventions and in the work order itself.)*
+   § Conventions and in the work order itself. **This step is the only per-phase answer to "where
+   does this work go?" — the `Branch: phase/<n>-<slug>` line that opened all eight phase files went
+   on 2026-08-16, WO-1.20.** Deleted rather than put in the past tense, for two reasons. No single
+   tense fitted: Phases 1–3 named a branch that existed and was deleted, Phases 4–8 named one that
+   was never cut, and eight headers in two voices read worse than none. And the answer is now the
+   same for every phase, so writing it eight more times would guarantee this work order a successor
+   — WO-1.19 rewrote the two files it knew about and there turned out to be six, which is the whole
+   reason WO-1.20 exists. When Ship 3 settles branching, this step is the one line that changes.
+   The branches themselves are history and the history is kept: `CHANGELOG.md`, WO-1.19's decision
+   record, and the dashboard note below on where WO-1.13 landed.)*
 4. Move its **Acceptance** lines into `TESTING.md` and run them. They are written to be checklist
    items already.
 5. Then, and only then, do the roadmap maintenance protocol: tick the roadmap box, note any
@@ -167,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
-| 1 — Shell, store, roster | 21 | 18 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
+| 1 — Shell, store, roster | 21 | 19 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
 | 2 — Attendance | 33 | 29 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 24 | 21 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
@@ -176,7 +185,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 10 | 4 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **108** | **73** | `[██████░░░░] 68%` |
+| | **108** | **74** | `[██████░░░░] 69%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

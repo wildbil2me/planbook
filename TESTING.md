@@ -1,6 +1,12 @@
 # Planbook — manual test checklist
 
-Run this before merging any phase branch. It is the regression gate.
+Run a work order's own lines when it lands, and the whole sheet before a ship. It is the regression
+gate. *(This said "run this before merging any phase branch" until 2026-08-16, and named an event
+that can no longer occur: phase branches were retired the day before — WO-1.19, the owner's call —
+and work lands on `main`. The two cadences above are what § *How to use it* step 1 and the 1.0 gate
+in `plans/ROADMAP.md` already describe between them, so this sentence now agrees with them instead
+of setting a third rule. Ticked boxes below that mention a phase branch are history and stay as
+they were written.)*
 
 **There is no automated test suite, and that is a decision rather than an omission.** The suite
 carries no dependencies, no linter, and no test framework; `plans/ROADMAP.md` names an automated

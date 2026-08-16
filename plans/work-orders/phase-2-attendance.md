@@ -2,10 +2,10 @@
 
 **Phase goal:** the owner stops opening Roll Call!.
 
-Branch: `phase/2-attendance`. **Read [`../rotating-schedule.md`](../rotating-schedule.md) before
-starting anything in this phase.** It is a decision record, and it exists because the next session
-will want to build a cycle model. There is no schedule object, no rotation, no meeting pattern: a
-class met if it has an attendance record without an `exception`.
+**Read [`../rotating-schedule.md`](../rotating-schedule.md) before starting anything in this phase.**
+It is a decision record, and it exists because the next session will want to build a cycle model.
+There is no schedule object, no rotation, no meeting pattern: a class met if it has an attendance
+record without an `exception`.
 
 WO-2.1 through WO-2.4 are Ship 1 (day one). WO-2.5 through WO-2.7 are explicitly cut from Ship 1
 and land in Ship 2.

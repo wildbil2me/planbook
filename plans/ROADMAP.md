@@ -513,11 +513,15 @@ and any vendor-hosted backend.
 
 ## Cross-cutting rules
 
-- Run `TESTING.md` before merging any phase branch; update `CHANGELOG.md` as you go. **Both start
-  in Phase 1 and accrete** — a checklist written at the end documents what you remember, not what
-  you built.
-- One integration branch `main`; phase branches `phase/<n>-<slug>`, so a shippable state always
-  exists. Delete once merged.
+- Run a work order's own `TESTING.md` lines when it lands, and the whole sheet before a ship;
+  update `CHANGELOG.md` as you go. **Both start in Phase 1 and accrete** — a checklist written at
+  the end documents what you remember, not what you built.
+- One integration branch, `main`. Work lands on it directly and it is what deploys, so a shippable
+  state always exists. *(Phase branches `phase/<n>-<slug>` were the rule here until 2026-08-15,
+  when WO-1.19 retired them on the owner's call — the record is `CLAUDE.md` § Conventions and
+  [`work-orders/README.md`](work-orders/README.md) § *How to use one*, and it is not re-argued
+  here. That settles how the current sprint is worked and **not branching in general**: when Ship 3
+  opens, be deliberate about development happening on branches rather than straight on `main`.)*
 - **No dependencies, no linter, no test framework, no bundler.** Suite convention. The service
   worker is the only build-adjacent piece.
 - Every visible element comes from `design/style-guide.md` or Roll Call!'s
