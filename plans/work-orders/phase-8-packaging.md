@@ -702,3 +702,74 @@ comment about going stale** (`index.html:1216`) and that comment is the argument
 generated every time the modal opens, because a build identifier that can be wrong is worse than
 none. **Do not touch `sw.js`.** Its cache name is the fact being reported; a work order that edits
 both the fact and the report of it can agree with itself while being wrong.
+
+## WO-8.11 — the build line can name a version the screen is not running
+
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.10
+**Closes roadmap** *(no box. Instrument, not feature — the same call WO-8.7 through WO-8.10 made.
+Booked 2026-08-16, out of WO-3.24's close-out sitting.)*
+
+**Why it exists.** WO-8.10 gave the About modal a build line read live from `caches.keys()`, and its
+central argument is that the useful question is *how many* caches rather than *which version*: one
+cache is healthy, two means `activate` did not finish. That is right for the half-landed deploy it
+was built for. It does not cover the case found on 2026-08-16.
+
+**A single, correct, healthy cache can sit behind a stale rendered page.** `sw.js` uses `skipWaiting`
++ `clients.claim`, so a new worker takes over the moment it activates and deletes every other cache —
+but it does not re-render an open window. The document on screen was fetched before the swap. For
+exactly one launch the app therefore reports the new cache on the build line while every pixel came
+from the old one, and both statements are true of different things: Cache Storage answers what the
+device has **stored**, never what the window was **built from**.
+
+**Found the expensive way.** WO-3.24 reworded one legend row; the owner read the installed iPad three
+times and the first two showed the wrong string — first the pre-dispatch wording, then a superseded
+attempt — while About read `planbook-shell-v72` throughout. A force-quit from the app switcher and a
+cold relaunch produced the delivered text. Two of the three round trips were spent on the assistant
+misdiagnosing the device from the desk, against a build line that was reporting honestly. **A support
+surface that can be confidently wrong during an update is worse than one that admits it cannot tell**,
+and the modal's own closing sentence invites a teacher to forward that screen.
+
+**The decision this settles is the one `sw.js:127` already frames**, and WO-8.10 explicitly declined:
+an update prompt was in its Out of scope as *"a real decision ... not this work order's to make"*.
+
+**Deliverables**
+- **Choose the route, and write the reasoning where the route is taken.** Two are open:
+  - **Page-side only, `skipWaiting` kept.** `navigator.serviceWorker`'s `controllerchange` fires when
+    a new worker claims an already-loaded client — which is this case exactly. The page learns it is
+    running markup its controller no longer serves, and the build line says so. **Preferred**: it
+    edits no `sw.js`, so WO-8.10's "do not touch `sw.js`" trap stands unbroken, and it leaves the
+    boot-time guarantee in `sw.js:127` alone.
+  - **Drop `skipWaiting`** and tell the teacher an update is ready, which is what the comment at
+    `sw.js:127` suggests. Larger blast radius, in the file WO-8.7's white-screen scar lives in.
+- **The build line distinguishes stored from rendered.** Where they disagree it says so in a sentence
+  a teacher can act on — quit from the app switcher and reopen — rather than naming two versions side
+  by side. **A pull-to-refresh is not sufficient and the wording must not imply it is**; that was
+  tried on 2026-08-16 and did not clear it.
+- **Silence in the healthy case.** The overwhelmingly common state is one cache, freshly rendered,
+  and it must stay the quiet single-sentence line WO-8.10 built. A banner on every launch teaches the
+  teacher to dismiss the one launch that matters.
+
+**Out of scope** — the update *policy* (whether Planbook ever auto-reloads, prompts, or defers); any
+surface outside the About modal; anything about deploys on the host side, which is WO-8.8's.
+
+**Acceptance**
+- [ ] With a document loaded from cache A and a worker that has since activated cache B, the build
+      line says the screen is stale and names the action that fixes it. Driven, not reasoned.
+- [ ] In the healthy case — one cache, document served from it — the line is exactly what WO-8.10
+      ships today, with nothing added.
+- [ ] The **first-ever load**, where a worker claims a page that had no controller at all, is read as
+      healthy and not as staleness. *(This is the trap below, written as a check: `controllerchange`
+      fires for both, and conflating them puts a scary sentence in front of every new install.)*
+- [ ] `verify-shell.mjs` covers both states and hands Cache Storage back as it found it, the way
+      WO-8.10's own section does.
+- [ ] 👤 On the **installed** iPad: deploy, launch once without force-quitting, and confirm the app
+      says the screen is stale — the exact sequence that misled the reader on 2026-08-16.
+
+**Traps** — **`controllerchange` fires on first control as well as on replacement.** A page that has
+never had a controller gets one when the worker claims it, and that is not staleness; keying off the
+event alone puts a warning in front of every first install. Read `navigator.serviceWorker.controller`
+*before* registering to tell the two apart. **Do not add a second source of truth for the version.**
+WO-8.10's trap holds — no constant in `index.html` — and this work order adds a fact about the
+*document*, not a second claim about the *build*. **Do not make the healthy line longer.** The reason
+WO-8.10's sentence works is that a teacher reads it in one glance; a caveat attached to the normal
+case is a caveat nobody reads in the abnormal one.

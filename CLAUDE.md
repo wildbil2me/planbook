@@ -171,6 +171,18 @@ on 2026-08-16 — that is a green run and not a tick, and the first sentence sti
 from a flat "cannot" that day, WO-1.21, so this file and `AGENTS.md` say one thing: a rule that calls
 a true report impossible teaches its reader to disbelieve one.)*
 
+**Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
+neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over
+and deletes the old cache the moment it activates — but it does not re-render the open window, whose
+document was fetched before the swap. **The About modal will name the new build while the screen you
+are reading is the old one**, both true, for exactly one launch. On 2026-08-16 (WO-3.24) that cost
+three readings of one legend row: the first showed the pre-dispatch wording, the second a superseded
+attempt, and only a cold relaunch showed what was actually on disk — with the build line reading v72
+throughout. Two of those round trips were spent diagnosing the device from the desk against a build
+line that was reporting honestly. Fixing the report is WO-8.11; until it lands, the force-quit is the
+procedure. **And bump `CACHE` in `sw.js` for any change to a file in `SHELL`** — `./` is entry one,
+so an `index.html` edit counts, and without the bump no device sees the change at all.
+
 ## Conventions
 
 - **Visual language:** `design/style-guide.md`. Colors inline, not CSS variables — deliberate.

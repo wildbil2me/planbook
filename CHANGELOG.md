@@ -244,6 +244,31 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-3.24 — the ⌨ Keys legend is measured for spill now, and the first run found one.** Every row
+  on the score grid's key card is measured at 390px and 1024px under a coarse pointer, with the panel
+  opened through its own button rather than unhidden. `.scores-key` is `white-space: nowrap`, so a row
+  wider than the panel pushes through the panel's own border instead of wrapping, and nothing in this
+  repository had ever opened `#scoresKeys` to look. It was booked with **no defect known** — the owner
+  had read that exact panel on the installed iPad two days earlier and nothing spilled. That is still
+  true. At 390px, a width no iPad reaches, WO-3.16's `← →` row measured `470/304`.
+
+  **So the row was reworded, twice.** It now reads *"across the row when the caret runs out"*, where
+  it used to read *"across the row, once the caret runs out of number in that direction"*. The first
+  attempt kept WO-3.16's asymmetry — *"→ end, ← start"* — measured fine and read badly: sitting one
+  line under *"⇥ next assignment, across the row"*, a bare *"→ end"* reads as a destination, when the
+  key clamps one step and only once the number is exhausted. The wording that shipped names no
+  direction, which is silent about the asymmetry rather than wrong about it. **No teacher ever saw the
+  spill** — no iPad is 390px wide — but nothing had ever pointed an instrument at that panel, and the
+  row that shipped has three pixels of headroom at the narrowest width measured, which the harness now
+  watches.
+
+  **What the measurement cost to confirm on glass is the part worth keeping.** The installed app
+  served a document from its previous cache while the About modal, reading `caches.keys()` live,
+  correctly named the new one — the build line said v72 and the screen was v71, at the same time, for
+  exactly one launch. Two readings went to the wrong string before a force-quit and cold relaunch
+  produced the right one. WO-8.10 built that line to answer *how many caches are stored*, which it
+  does; what it cannot answer is *which one the open window was built from*. Booked as WO-8.11.
+
 - **WO-1.21 — the tracker had no word for work that is not coming, so it counted it forever.**
   `wo-gate.mjs` knew four statuses and none of them meant *this is not happening*. Two work orders
   were in that state and both sat in `⬜ NOT STARTED`, the one status actively false about them:

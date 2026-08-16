@@ -1057,8 +1057,10 @@
         <span class="scores-key"><kbd>↵</kbd> next student, down the column</span>
         <span class="scores-key"><kbd>⇥</kbd> next assignment, across the row</span>
         <!-- Kept short on purpose: `.scores-key` is `white-space: nowrap`, so a row longer than the
-             panel is wide spills through its own border rather than wrapping inside it, and the
-             `← →` row below is already the longest one here. -->
+             panel is wide spills through its own border rather than wrapping inside it. Which row
+             reads longest has already changed once — the `← →` row two below held that title until
+             WO-3.24 shortened it — so this is measured per row at 390px and 1024px by
+             tools/verify-shell.mjs rather than argued from whichever row currently looks longest. -->
         <span class="scores-key"><kbd>↑</kbd> <kbd>↓</kbd> within the column, up as well as down</span>
         <!-- WO-3.16. The pair is listed with its condition attached, because the condition is the
              whole of the key: inside a number it is still the caret's, and it steps to the next
@@ -1067,8 +1069,23 @@
              "from the end of the number", which is true of one key and backwards for the other: a
              teacher who reads that, presses `←` at the end of `100` and watches the caret move
              concludes the key was not received, which is the exact failure the sentence at the edge
-             was built to prevent. Any rewording keeps the asymmetry visible. -->
-        <span class="scores-key"><kbd>←</kbd> <kbd>→</kbd> across the row, once the caret runs out of number in that direction</span>
+             was built to prevent. Measured rather than assumed, this row was the one
+             `tools/verify-shell.mjs` (WO-3.24) found spilling through the panel's own border at
+             390px, the narrowest width this app is measured at, and it had to be shortened.
+
+             WO-3.16 asked that any rewording keep the asymmetry visible — name `→` with the end and
+             `←` with the start. THE WORDING BELOW DEPARTS FROM THAT, deliberately, and the rule it
+             answers to instead is the scar above rather than the summary of it. WO-3.24's first
+             attempt kept the letter, `across the row — → end, ← start`, and bought the ambiguity the
+             asymmetry was meant to prevent: it sits one line under `⇥ next assignment, across the
+             row`, so a naked `→ end` reads as a DESTINATION — jump to the last assignment — when the
+             key clamps one step and only once the number is exhausted. Naming a direction is not the
+             point; not lying about direction is. Run the wording below against WO-3.16's own failure
+             case, `←` pressed at the end of `100`: it predicts the caret moving, which is what
+             happens, because leftward the caret has not run out. Silent on direction, wrong about
+             neither. A future rewording may restore the asymmetry if it can do so in the width — but
+             it inherits the test, not the phrasing. -->
+        <span class="scores-key"><kbd>←</kbd> <kbd>→</kbd> across the row when the caret runs out</span>
         <span class="scores-key"><kbd>L</kbd> late</span>
         <span class="scores-key"><kbd>M</kbd> missing</span>
         <span class="scores-key"><kbd>X</kbd> excused</span>

@@ -182,7 +182,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.10 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.11 | Phase 8 |
 
 *None of these files says where its work goes, on purpose. **Work lands on `main`** — step 3 above
 is the single answer for every phase, and the `Branch:` line that opened all eight went on
@@ -205,14 +205,14 @@ indexes is a file nobody reads.
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
 | 2 — Attendance | 32 | 30 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 23 | 21 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 10 | 4 | — | 🔨 IN PROGRESS |
+| 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **106** | **76** | **2** | `[███████░░░] 72%` |
+| | **107** | **77** | **2** | `[███████░░░] 72%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are

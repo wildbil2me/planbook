@@ -1847,7 +1847,7 @@ record of what was asked, not a document the change falsified.)*
 
 ## WO-3.24 — no legend row in this app has ever been measured for spill
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
 that is deliberate — nothing spills today, so this is a row to cut if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: on current evidence nothing a teacher sees changes.
 The same call WO-3.12 and WO-3.21 made, and for the same reason.)*
@@ -1891,19 +1891,78 @@ reason; if the two land near each other they should share whatever opens-and-mea
 builds).
 
 **Acceptance**
-- [ ] The ⌨ Keys panel is opened through its own button and every `.scores-key` in it is measured, at
-      390px and 1024px under a coarse pointer.
-- [ ] Lengthening one row until it spills turns a check red **and names that row** — run, not
+- [x] The ⌨ Keys panel is opened through its own button and every `.scores-key` in it is measured, at
+      390px and 1024px under a coarse pointer. *(`aria-expanded` and `#scoresKeys` coming off
+      `.hidden` are read as independent evidence the click landed; `#scoresKeys`'s own
+      `scrollWidth`/`clientWidth` pair is read too and kept as context in every detail string, never
+      asserted on its own.)*
+- [x] Lengthening one row until it spills turns a check red **and names that row** — run, not
       reasoned, with the counts before and during quoted. A mutation that reddens nothing means this
-      work order did not land.
-- [ ] Reverted, and `git diff` carries no trace of the mutation.
-- [ ] `node tools/verify-shell.mjs` passes whole on the delivered tree, with the check count in
-      `tools/README.md` moved in step.
-- [ ] 👤 If the check went red on a row that was already there, the reworded row is read on the
-      installed iPad in both orientations before the box above is ticked.
+      work order did not land. *(The first draft of the check compared each row's `scrollWidth` to
+      its own `clientWidth` — always equal for an unconstrained `inline-flex` chip — and reddened
+      NOTHING against a row stretched to 1678px in a 942px panel: `799 checks · 799 passed · 0 failed
+      · 0 skipped`. Corrected to compare each row against the PANEL's available content width, the
+      same mutated tree reread `799 checks · 797 passed · 2 failed · 0 skipped`, naming the mutated
+      row at both widths. Reverting the mutation and re-running found a SECOND, pre-existing failure
+      the mutation had nothing to do with — see the note below.)*
+- [x] Reverted, and `git diff` carries no trace of the mutation. *(`git checkout -- index.html`,
+      `git diff -- index.html` empty, confirmed before the real `← →` reword — a separate, retained
+      edit — was made.)*
+- [x] `node tools/verify-shell.mjs` passes whole on the delivered tree, with the check count in
+      `tools/README.md` moved in step. *(`799 checks · 799 passed · 0 failed · 0 skipped`, 21,410
+      lines, 26.8 lines per check, 263s, against `795 · 795 · 0 · 0` before. Call-site count moved
+      798 → 802, `wo-sweep.mjs` asserts it.)*
+- [x] 👤 If the check went red on a row that was already there, the reworded row is read on the
+      installed iPad in both orientations before the box above is ticked. **It did** — the corrected
+      check, run on the clean tree with no mutation at all, found WO-3.16's own `← →` row spilling at
+      390px (`470/304`), the row the owner's 2026-08-16 sitting had already looked at and found clean
+      on the installed iPad. No iPad is 390px wide, so the two readings are not in conflict — but the
+      work order's own words put a red on a pre-existing row in scope to reword, and its own words
+      say a check landing red with no remedy in its scope is a harness left failing.
+
+      **The row was reworded twice, and the box was ticked against the second.** The dispatch wrote
+      `across the row — → end, ← start` (261/304 at 390px), keeping `→` with the end and `←` with the
+      start as WO-3.16's comment asks. The verifier passed it but reserved on the prose, and the
+      reservation held up: the row sits one line under `⇥ next assignment, across the row`, so a naked
+      `→ end` reads as a DESTINATION — jump to the last assignment — when the key clamps one step and
+      only once the number is exhausted. Re-cut in the close-out sitting to
+      `across the row when the caret runs out` (301/304 at 390px, 301/918 at 1024px), which departs
+      from WO-3.16's asymmetry rule deliberately; the departure and the test that justifies it are
+      written at the point of departure, `index.html` above the row. **Read and accepted on the
+      installed iPad, both orientations, 2026-08-16.** `sw.js` bumped to `planbook-shell-v72` in the
+      same edit — `./` is entry one in `SHELL`, so without it no device sees any of this.
+      See `.claude/dispatch/WO-3.24-result.md`.
+
+      **The reading cost three attempts, and the first two read the wrong string** — worth writing
+      down, because nothing in this repository predicted it. The installed app served a document from
+      the previous cache while the About modal, reading `caches.keys()` live, correctly reported the
+      new one: v72 on the build line, v71 markup on the glass, for exactly one launch. A force-quit
+      and cold relaunch fixed it. WO-8.10 reasoned that the useful question is how many caches rather
+      than which version, and that is right for the half-landed deploy it was built for — but a
+      single healthy cache can still sit behind a stale rendered page, which neither it nor its Traps
+      section anticipated. Booked as WO-8.11.
 
 **Traps** — **A headless viewport is not an iPad and this check must not be sold as one.** It
 measures a layout at a width; the 2026-08-16 sitting is still the only time this panel has been
 looked at on glass, and a green run here closes no 👤 line. **The panel is `flex-wrap: wrap`**, so
 each row is its own chip and a container that fits proves nothing about the rows inside it — measure
 the children or the check is vacuous.
+
+**Two ways the outcome differed from what this work order predicted, recorded because the prose above
+is deliberately left standing.** *(2026-08-16, at implementation.)*
+
+- **"No defect is known" stayed true; "nothing spills today" did not.** The `← →` row was clean on the
+  installed iPad on 2026-08-16 at whatever widths an iPad's portrait and landscape actually are, and
+  it is clean there still — nothing about this correction touches that reading. It was not clean at
+  390px, a width no iPad reaches but the one this work order's own Deliverable names as one of the two
+  to measure. The two are different claims; this work order's own text put the reword in scope for
+  exactly this case, and it was taken.
+- **The literal reading of the Deliverable's `scrollWidth`-against-`clientWidth` wording, applied to
+  each row against ITSELF, is vacuous — `.scores-key` is an unconstrained `inline-flex` chip that
+  always grows to fit its own content, so the two numbers can never disagree.** The mutation is what
+  caught this, not a re-reading of the markup: a row stretched to 1678px inside a 942px panel measured
+  `1678/1678` and the first draft of the check stayed green. What the panel's own `Why it exists`
+  paragraph says — a row "pushes through its own border", which is the PANEL's border, not one
+  `.scores-key` has — is what the corrected comparison measures instead: each row's `scrollWidth`
+  against the panel's own available content width. Full account, including the pixel figures at each
+  stage, in `tools/README.md`'s check-count history and `.claude/dispatch/WO-3.24-result.md`.

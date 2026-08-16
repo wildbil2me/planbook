@@ -67,3 +67,12 @@ an environment report, not a result, and the teacher re-runs it locally before a
 Never infer a pass from a harness you could not execute.
 
 **Never tick a 👤 line.** Those need a real iPad, a thumb, or the live SIS, and you have none of them.
+
+**When you hand a 👤 iPad line back, say "force-quit from the app switcher first."** A reload will not
+do it. `sw.js` uses `skipWaiting` + `clients.claim`: the new worker takes over and deletes the old
+cache immediately, but the open window keeps rendering the document it already had, so the About modal
+names the new build while the screen shows the old one. On 2026-08-16 (WO-3.24) the owner read the
+wrong string twice before a cold relaunch, and the assistant spent two round trips misreading the
+device from the desk. WO-8.11 is booked to fix the report; the instruction is the workaround.
+**If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
+so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.

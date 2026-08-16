@@ -16628,6 +16628,114 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             && !!pinned && pinnedCoarse.nameW < pinned.nameW,
           JSON.stringify(pinnedCoarse) + ' against a fine-pointer name column of '
             + (pinned ? pinned.nameW : '?') + 'px');
+
+        /*
+          ── WO-3.24: THE ⌨ KEYS PANEL, MEASURED FOR SPILL RATHER THAN ARGUED FROM CHARACTER COUNTS ──
+
+          `.scores-key` is `white-space: nowrap` (src/scores.css:154-157), so a row wider than the
+          panel pushes through its own border instead of wrapping. Nothing in this file had ever
+          opened `#scoresKeys` before this work order — WO-3.22 could defend its own row only by
+          counting characters against the `← →` row, and its own Acceptance said so.
+
+          OPENED THROUGH THE REAL BUTTON, not by clearing `.hidden` by hand — WO-2.21's scar is a
+          sweep that measured a screen that was not the one on screen, and `aria-expanded` on the
+          button is the independent evidence the click actually landed rather than the panel being
+          open for some other reason. The grid is already open and coarse from the block above, so
+          this reuses that state instead of planting a second fixture.
+
+          A ROW'S OWN scrollWidth AGAINST ITS OWN clientWidth IS ALWAYS EQUAL, AND THAT IS NOT A
+          SHORTCUT — IT WAS THE FIRST DRAFT HERE AND THE MUTATION PROVED IT VACUOUS. `.scores-key` is
+          an unconstrained `inline-flex` chip: nothing sets it a width or a max-width, so it always
+          sizes itself to whatever its own content needs, `white-space: nowrap` or not. A row cannot
+          overflow a box that grows to fit it. The first pass at this check compared each row's
+          scrollWidth to its own clientWidth and reddened NOTHING against a row stretched to 1678px
+          in a 942px panel — both numbers came back 1678, because the row simply grew. What actually
+          happens when a row is too long is the WO's own words: it "pushes through its own border",
+          meaning the PANEL'S border, not a border `.scores-key` does not have — the row keeps its
+          natural width and overflows the panel around it. So the real per-row claim compares each
+          row's own width to the panel's available CONTENT width (`clientWidth` less its own
+          padding, since flex children lay out inside the padding edge, not the border edge) — that
+          is the number a row can actually fail to fit inside, and it is what the mutation below is
+          run against.
+
+          `#scoresKeys` ITSELF IS `flex-wrap: wrap` (src/scores.css:148). Its own scrollWidth against
+          its own clientWidth is kept below as CONTEXT — in this one failure mode (a single row wider
+          than the whole panel) it happens to move too, because flex-wrap cannot shrink an item that
+          does not fit even alone on its own line, so the widest row still drives the container's
+          scrollWidth up. It is not asserted as its own check regardless: it cannot NAME the row, and
+          a defect built from several moderately-long rows that only crowd each other on the same
+          line (rather than any one of them individually exceeding the panel) would move the container
+          number without any single row failing the real per-row comparison — the container is
+          corroborating context, never the claim.
+        */
+        await clickSel('#scoresView [data-scores-keys]');
+        await new Promise((r) => setTimeout(r, 200));
+        const KEYS_SPILL = `(function(){
+          var btn = document.querySelector('#scoresView [data-scores-keys]');
+          var panel = document.getElementById('scoresKeys');
+          var rows = panel ? Array.prototype.slice.call(panel.querySelectorAll('.scores-key')) : [];
+          var cs = panel ? getComputedStyle(panel) : null;
+          var innerW = panel
+            ? panel.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0')
+            : 0;
+          return {
+            expanded: btn ? btn.getAttribute('aria-expanded') : null,
+            hidden: panel ? panel.classList.contains('hidden') : null,
+            panelScrollW: panel ? panel.scrollWidth : 0,
+            panelClientW: panel ? panel.clientWidth : 0,
+            panelInnerW: innerW,
+            rowCount: rows.length,
+            rows: rows.map(function(row){
+              var t = (row.textContent || '').replace(/\\s+/g, ' ').trim();
+              return { text: t, scrollW: row.scrollWidth, innerW: innerW,
+                spill: row.scrollWidth > innerW + 1 };
+            })
+          }; })()`;
+
+        const keys1024 = await evalJs(KEYS_SPILL);
+        check('the ⌨ Keys panel opens through its own button rather than by unhiding it — aria-expanded flips true, #scoresKeys comes off .hidden, and a plausible number of rows are there to measure',
+          keys1024.expanded === 'true' && keys1024.hidden === false && keys1024.rowCount >= 7,
+          'aria-expanded = ' + keys1024.expanded + ', hidden = ' + keys1024.hidden
+            + ', rows = ' + keys1024.rowCount);
+
+        const spill1024 = keys1024.rows.filter((row) => row.spill);
+        check('every .scores-key row fits inside the panel at 1024px on a coarse pointer — each row\'s own scrollWidth measured against the panel\'s available content width, not against the row\'s own (always-equal) clientWidth',
+          coarseNow === true && keys1024.rowCount >= 7 && spill1024.length === 0,
+          keys1024.rowCount + ' row(s), panel content width ' + keys1024.panelInnerW
+            + 'px (container scrollWidth/clientWidth ' + keys1024.panelScrollW + '/'
+            + keys1024.panelClientW + 'px, context only) :: '
+            + JSON.stringify(keys1024.rows.map((row) => row.text + ' ' + row.scrollW + '/' + row.innerW))
+            + (spill1024.length
+              ? '; SPILLING: ' + JSON.stringify(spill1024.map((row) => row.text)) : ''));
+
+        /* Resized rather than reloaded, so the panel stays open the way the teacher left it and this
+           is one open through the button rather than two — a reload would drop `keysOpen` back to
+           false (src/scores.js's module variable, not a stored preference) and a second click would
+           be needed anyway, which is no more honest than resizing under the one that already landed. */
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+        await new Promise((r) => setTimeout(r, 400));
+        const coarse390 = await evalJs("matchMedia('(pointer: coarse)').matches");
+        check('the emulated pointer is still coarse at 390px, else the row-width sweep below measures the desktop pass',
+          coarse390 === true, 'matchMedia = ' + coarse390);
+
+        const keys390 = await evalJs(KEYS_SPILL);
+        const spill390 = keys390.rows.filter((row) => row.spill);
+        check('and every .scores-key row still fits inside the panel at 390px, the narrowest width this app supports, with the panel never re-opened for the narrower read',
+          coarse390 === true && keys390.expanded === 'true' && keys390.hidden === false
+            && keys390.rowCount >= 7 && spill390.length === 0,
+          keys390.rowCount + ' row(s), panel content width ' + keys390.panelInnerW
+            + 'px (container scrollWidth/clientWidth ' + keys390.panelScrollW + '/'
+            + keys390.panelClientW + 'px, context only) :: '
+            + JSON.stringify(keys390.rows.map((row) => row.text + ' ' + row.scrollW + '/' + row.innerW))
+            + (spill390.length
+              ? '; SPILLING: ' + JSON.stringify(spill390.map((row) => row.text)) : ''));
+
+        /* Back to 1024x768: tidiness rather than a dependency, since the WO-3.17 section right after
+           this one sets its own device metrics and reloads before its first click. */
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
+        await new Promise((r) => setTimeout(r, 200));
       }
     }
 

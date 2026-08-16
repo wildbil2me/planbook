@@ -5542,6 +5542,110 @@ line was ticked and none was added.*
 
 ---
 
+### WO-3.24 — The ⌨ Keys panel is measured for spill, and one pre-existing row already needed it
+
+**What this changes for a teacher: the `← →` row reads shorter.** It now says *"across the row when
+the caret runs out"* instead of *"across the row, once the caret runs out of number in that
+direction"*. Nothing else on the card changed, no new key was bound, and the panel opens exactly as
+it did.
+
+**The shortening dropped the asymmetry, on purpose, at the second attempt.** WO-3.16's comment asks
+that any rewording keep `→` with the end of the number and `←` with the start, and the first attempt
+here did exactly that — *"across the row — → end, ← start"*. It measured fine and read badly: the row
+sits one line under *"⇥ next assignment, across the row"*, so a bare *"→ end"* reads as a destination,
+*jump to the last assignment*, when the key clamps one step and only once the number is exhausted.
+The wording that shipped names no direction at all, which is silent about the asymmetry rather than
+wrong about it — run it against WO-3.16's own failure case, `←` pressed at the end of `100`, and it
+predicts the caret moving, which is what happens. The departure from WO-3.16 is written into
+`index.html` above the row, with the test a future rewording inherits.
+
+**Why it changed: the measurement this work order was booked to build found it in the middle of
+building it.** `.scores-key` is `white-space: nowrap`, so a row wider than the panel pushes through
+the panel's own border instead of wrapping, and nothing in the harness had ever opened `#scoresKeys`
+to check. It was booked with **no defect known** — the owner had looked at this exact panel on the
+installed iPad on 2026-08-16, portrait and landscape, and nothing spilled. That is still true: no
+iPad is 390px wide, and the harness's own two widths are 390px and 1024px. At 390px, the narrower of
+the two, the pre-existing `← →` row measured `470/304` — 470px of row inside a panel that only had
+304px to give it — a real, run-not-reasoned finding rather than a hunted one.
+
+- [x] **The panel is opened through its own button and every `.scores-key` in it is measured, at
+      390px and 1024px under a coarse pointer.** `aria-expanded` on the button and `#scoresKeys`
+      coming off `.hidden` are read as independent evidence the click landed, not assumed from the
+      panel being visible. `#scoresKeys`'s own `scrollWidth`/`clientWidth` pair is read too and kept
+      in every detail string as context, never as its own assertion — the work order's Traps line
+      says a container that fits proves nothing about the rows inside it, and the per-row comparison
+      is the one that can actually fail.
+- [x] **Lengthening one row until it spills turns a check red and names that row.** The first attempt
+      at the mutation — the `↵` row stretched to 1678px in a 942px panel — reddened nothing under the
+      first draft of the check, because that draft compared each row's `scrollWidth` to its own
+      `clientWidth`, and `.scores-key` is an unconstrained `inline-flex` chip that always grows to fit
+      its own content: the mutated row read `1678/1678` and the run stayed
+      `799 checks · 799 passed · 0 failed · 0 skipped`. Corrected to compare each row's `scrollWidth`
+      against the PANEL's available content width instead — the number a row can actually fail to fit
+      inside — the same mutated tree reread `799 checks · 797 passed · 2 failed · 0 skipped`, naming
+      the mutated `↵` row at both widths and, at 390px only, the pre-existing `← →` row beside it.
+- [x] **Reverted, and `git diff` carries no trace of the mutation.** `git checkout -- index.html`
+      against the mutated tree, then `git diff -- index.html` empty before the real, deliberate `← →`
+      reword was made on top of the clean file. The mutation and the reword are not the same edit —
+      the mutation was one appended, nonsense clause on an otherwise-untouched row and it left no
+      trace; the reword is the actual, retained fix for the row the corrected check found already
+      failing on the delivered tree, `799 checks · 798 passed · 1 failed · 0 skipped`, before it was
+      shortened.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** — `799 checks · 799 passed
+      · 0 failed · 0 skipped`, 21,410 lines, 26.8 lines per check, 263s — with the call-site count in
+      `tools/README.md` moved 798 → 802, which `wo-sweep.mjs` asserts.
+- [x] 👤 **The reworded `← →` row is read on the installed iPad, portrait and landscape.** Done
+      2026-08-16, in the close-out sitting, against the second wording — *"across the row when the
+      caret runs out"* — and accepted. Nothing spilled in either orientation, which the measurement
+      predicts: at iPad widths the row has 918px of panel to sit in and occupies 301.
+      **It took three attempts to read the right string, and the first two were the app's fault, not
+      the reader's.** The installed app served its previously-cached document while the About modal,
+      reading `caches.keys()` live, correctly named the new cache — v72 on the build line and v71
+      markup on the glass, at the same time, for exactly one launch. The first read showed WO-3.16's
+      original wording, the second the first attempt's; a force-quit from the app switcher and a cold
+      relaunch produced the delivered one. If you are re-running this check, **quit the app from the
+      app switcher first** — a pull-to-refresh is not enough, and About will tell you the update
+      landed while the screen you are reading has not. Booked as WO-8.11.
+
+*The desk half is `verify-shell.mjs`, **799 of 799 with zero skips**, 21,410 lines, 26.8 lines per
+check, 263s — four checks added directly after the WO-3.5 fixture's own coarse-pointer block, reusing
+its already-open, already-coarse score grid rather than planting a second fixture. `wo-sweep.mjs` is
+**20 checks, 18 passed, 0 failed, 2 to review**, both REVIEWs the standing pair, naming exactly the
+lines they named before this landed. There is no new CSS and no new control, and the one row that
+changed reuses `.scores-key`, so there is nothing new for the coarse block to hold at 44px — but
+`sw.js`'s `CACHE` **is** moved, `planbook-shell-v71` → `v72`, because `./` is entry one in `SHELL` and
+the row that changed lives in `index.html`. Without that bump no device sees any of this, which is
+not a hypothetical: it is what the first two iPad reads above were looking at.*
+
+*The delivered row has **three pixels of headroom** at 390px, `301/304`, which makes it the tightest
+row in the panel — it displaces the `↑ ↓` row's `297/304`, the one this work order's own report had
+named as next to spill. Accepted rather than trimmed: 390px is a phone width this app does not ship
+to, the row is `301/918` at any width a teacher actually holds, and the check built here now reddens
+on any future edit that pushes it over. The gap in that guard is that `verify-shell.mjs` measures in
+headless Edge, so a font-metric difference in iOS Safari at phone width is the one way this could
+spill without the harness saying so.*
+
+*Four states run, not two, because the first two were spent finding out the check's first draft could
+not fail.*
+
+| Tree | Result |
+|---|---|
+| Delivered, before this work order's checks existed | `795 checks · 795 passed · 0 failed · 0 skipped` (WO-3.23's own figure, unmoved by anything here) |
+| `↵` row mutated to 1678px, **first-draft check** (row vs. its own `clientWidth`) | `799 checks · 799 passed · 0 failed · 0 skipped` — vacuous, nothing reddened, corrected before this line could be reported as evidence |
+| Same mutated tree, **corrected check** (row vs. the panel's content width) | `799 checks · 797 passed · 2 failed · 0 skipped` — the mutated `↵` row named at both widths, and at 390px only, `← →` named beside it |
+| Mutation reverted (`git diff -- index.html` empty), `← →` still in its WO-3.16 wording | `799 checks · 798 passed · 1 failed · 0 skipped` — the one failure is `← → across the row, once the caret runs out of number in that direction`, `470/304` at 390px |
+| `← →` reworded to `across the row — → end, ← start` | `799 checks · 799 passed · 0 failed · 0 skipped` — `261/918` at 1024px, `261/304` at 390px |
+| `← →` re-cut to `across the row when the caret runs out`, the wording that shipped | `799 checks · 799 passed · 0 failed · 0 skipped` — `301/918` at 1024px, `301/304` at 390px |
+
+*What the 2026-08-16 iPad sitting and this measurement are each claims about, and why they do not
+argue with each other. The sitting is real evidence, at whatever widths an actual iPad's portrait and
+landscape happen to be, and no iPad is 390px wide — the narrowest width `verify-shell.mjs` measures
+by the work order's own Acceptance line. A row can fail at a width narrower than any device this app
+ships to and still be worth shortening before the next row makes the panel wider still; a row failing
+here is not a claim that the iPad sitting was wrong.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

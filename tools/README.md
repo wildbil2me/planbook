@@ -814,7 +814,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 798 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 802 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1148,6 +1148,58 @@ signature that check finds by literal string. It still reads `10 key(s) bound by
 [Enter ArrowDown ArrowUp ArrowRight ArrowLeft Backspace Delete L M X]`, character for character what
 it read before, and the mutation was run again on the delivered tree: `if (key === 'ArrowUp')`
 deleted from `handleScoreKey()` with `↑` left on the legend.
+
+**WO-3.24 moved it from 798 to 802**: four literal call sites, none in a loop and none a failure
+arm, added directly after the WO-3.5 fixture's coarse-pointer block (it reuses that block's already-
+open, already-coarse score grid rather than planting a second fixture), so the section contributes
+four executed results and **the run prints 799**, measured on the delivered tree: `799 checks · 799
+passed · 0 failed · 0 skipped`, 21,410 lines, 26.8 lines per check, 263s. **This is the first check
+in this file to open `#scoresKeys` at all** — WO-3.22's own legend check is static text comparison,
+never a browser measurement, and nothing before this had clicked the ⌨ Keys button.
+
+**The first draft of the per-row check was vacuous, and only the mutation proved it — reading the
+markup again would not have.** `.scores-key` is an unconstrained `inline-flex` chip: nothing gives it
+a width or a max-width, so it always grows to fit whatever it holds, `white-space: nowrap` or not. The
+literal reading of the work order's own words — `scrollWidth` against `clientWidth` on each row — was
+the first thing written, and it compares a row to itself, which can never disagree: a row stretched to
+1678px inside a 942px panel measured `1678/1678` and the check stayed green,
+`799 checks · 799 passed · 0 failed · 0 skipped`, no different from the untouched tree. **What a row
+can actually fail to fit inside is the PANEL, not itself** — the work order's own *Why it exists* says
+so in as many words, "pushes through its own border", and that border belongs to `#scoresKeys`, which
+`.scores-key` does not have one of. The corrected comparison reads each row's `scrollWidth` against the
+panel's available content width (`clientWidth` less its own left/right padding, since flex children
+lay out inside the padding edge, not the border edge) — re-run against the same still-mutated tree,
+that version read `799 checks · 797 passed · 2 failed · 0 skipped`, naming the mutated row at both
+widths and, at 390px only, a second row beside it that nobody had touched.
+
+**That second row was real, not an artifact of the first mutation, and finding it is why this file
+took three intermediate runs instead of one.** Reverted to the clean tree (`git checkout --
+index.html`, confirmed against `git diff`) and re-run with no artificial row anywhere: `799 checks ·
+798 passed · 1 failed · 0 skipped`, the one failure naming `← → across the row, once the caret runs
+out of number in that direction` — WO-3.16's row, which WO-3.22 was expressly forbidden to touch —
+measuring `470/304` at 390px, the panel's content width at that size. The 2026-08-16 iPad sitting this
+work order was booked out of found no spill on either orientation of an actual iPad, and no iPad is
+390px wide; the two readings are not in conflict, they are claims about two different widths, and the
+work order's own Acceptance line 1 names 390px as one of the two to measure. **The work order's own
+words put this in scope** — "rewording the row that spills, the `← →` row from WO-3.16 included" —
+and its own words say why it has to be paid rather than left: "a check that lands red with no remedy
+in its own scope is a harness left failing." Reworded to `across the row — → end, ← start`, which
+keeps `→` paired with the end and `←` with the start — the asymmetry WO-3.16's own comment says any
+rewording must keep visible — while measuring 261px against 304 available at 390px and 918 at 1024px.
+Re-run on the reworded tree: `799 checks · 799 passed · 0 failed · 0 skipped`, 21,410 lines, 263s,
+identical to the delivered-tree figure above because it is the same tree. The comment beside the `↑ ↓`
+row, which had named `← →` as "already the longest one here", is corrected rather than left stale:
+`↑ ↓`'s own 297px is now the longest row in the panel, with 7px to spare at 390px.
+
+**The container-level `scrollWidth`/`clientWidth` pair on `#scoresKeys` itself is kept in every detail
+string as context and is never its own assertion**, exactly as the work order's Traps insist. It is not
+inert — `flex-wrap` cannot shrink an item that overflows even alone on its own line, so the widest row
+still drives the container's `scrollWidth` past its `clientWidth` in this one failure mode, which is
+why the mutated run's container figures (`1690/942` at 1024px, `1690/328` at 390px) already hinted at
+trouble before any row was named. What it cannot do is say WHICH row, and a defect built from several
+only-moderately-long rows crowding one flex line rather than any single row individually overflowing
+would move it without a single per-row check failing — which is the concrete shape of "close to
+vacuous" the Traps line means, not "detects nothing ever".
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
