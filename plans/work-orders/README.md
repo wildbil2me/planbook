@@ -266,10 +266,14 @@ it is built to did.)*
 
 ## Ship 2 — first grades
 
-Thirty work orders between 2026-08-09 and ~2026-09-15, ending at
-[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). *(Eighteen when this line was written on 2026-08-09;
-corrected 2026-08-10, having drifted every time a row was added — the same decay WO-2.23 booked the
-"cite a symbol, not a line number" rule against, arriving through a count instead of a pointer.)*
+The rows below, between 2026-08-09 and ~2026-09-15, ending at
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades). *(This sentence opened with a count and no longer
+does. It read "Eighteen" on 2026-08-09, was corrected to "Thirty" on 2026-08-10, and was sitting above
+fifty-four rows on 2026-08-16 — wrong for longer than it was ever right, and its own note had been
+recording the drift without fixing it since the first correction. **The count is struck rather than
+corrected a third time**, which is WO-2.23's "cite a symbol, not a line number" rule applied to a
+number about this file: the table below is the count, it is three lines away, and it cannot go stale.
+The table's last row number moves on its own and is the thing to read if a total is wanted.)*
 Written 2026-08-09, the day after Ship 1 closed,
 because until it existed there was **no running order at all** past Ship 1 — `next` reads the tables
 in this file and had nothing left to read, and the ordering everyone was working from lived in three
@@ -347,15 +351,26 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 47 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
 | 48 | [WO-1.20](phase-1-shell-store-roster.md#wo-120--the-retired-phase-branch-rule-is-still-live-in-roadmapmd-and-testingmd) The retired branch rule is still live in `ROADMAP.md` | S | | Aug 24, a sitting |
 | 49 | [WO-1.21](phase-1-shell-store-roster.md#wo-121--the-tracker-has-no-word-for-work-that-is-not-coming) The tracker has no word for work that is not coming | S | | Aug 24, a sitting |
-| 50 | [WO-3.24](phase-3-gradebook.md#wo-324--no-legend-row-in-this-app-has-ever-been-measured-for-spill) No legend row has been measured for spill | S | | Aug 26, half a day |
-| 51 | [WO-2.34](phase-2-attendance.md#wo-234--nothing-compares-the-marking-key-list-with-the-keys-the-screen-answers-to) The marking key list is unchecked against its keys | S | | Aug 26, half a day |
-| 52 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 53 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 54 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 50 | [WO-2.32](phase-2-attendance.md#wo-232--the-overdue-tone-is-withdrawn-and-the-tint-is-the-alert) The overdue tone withdrawn, the tint is the alert | S | | **Built 2026-08-16; one 👤 line open.** An iPad sitting, nothing to build |
+| 51 | [WO-3.24](phase-3-gradebook.md#wo-324--no-legend-row-in-this-app-has-ever-been-measured-for-spill) No legend row has been measured for spill | S | | Aug 26, half a day |
+| 52 | [WO-2.34](phase-2-attendance.md#wo-234--nothing-compares-the-marking-key-list-with-the-keys-the-screen-answers-to) The marking key list is unchecked against its keys | S | | Aug 26, half a day |
+| 53 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 54 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 55 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
+**It is the fourth work order to land in this directory with no place in the running order**, after
+WO-3.10, WO-3.12 and WO-2.24 — and it is the first of the four that was not booked by a verifier. It
+was owner-directed at the iPad, mid-sitting, which is its own way of skipping the step: the work was
+done before there was anything to schedule, so nobody's hand went to the table. It is not WO-1.14's
+case, which is deliberately rowless and says so — that one closed inside the hour, and this one is
+🔨 IN PROGRESS with a live 👤 line. **The cell says what is actually left**, which is a sitting rather
+than a dispatch: the tint, the silence, and the speaker persisting across a relaunch. Everything below
+it moved down one.*
 
 *WO-3.24 and WO-2.34 were booked on 2026-08-16 out of WO-3.22's implementation and its iPad sitting,
-and given rows #50 and #51 the same day — the rule six paragraphs down being obeyed rather than
-recorded a fourth time. WO-1.16, WO-3.18 and WO-G2 each moved down two; **nothing moved above them**,
+and given rows #51 and #52 the same day — the rule six paragraphs down being obeyed rather than
+recorded a fifth time. WO-1.16, WO-3.18 and WO-G2 each moved down three; **nothing moved above them**,
 which is the placement decision. They go behind WO-1.21 and ahead of WO-1.16 because they are the
 **cut band**: neither is a defect, both guard something that is correct today, and WO-1.16 is the one
 row in Ship 2 with a deadline the world sets. WO-3.18 keeps its place as the last work order before
