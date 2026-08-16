@@ -213,6 +213,93 @@ const storeDetail = (store) => oursIn(store).join(', ')
       + (imports.length ? ', imports: ' + imports.join(' · ') : ', no import statement in it'));
 }
 
+/* ───────── the ⌨ Keys legend enumerates every key the grid binds (WO-3.22) ─────────
+ *
+ * Static, like the two blocks above, and for a reason of its own: THERE IS NO CANDIDATE UNIVERSE TO
+ * PRESS. A driven version of this check would have to type every key a keyboard has at a score cell
+ * and watch which ones were swallowed, and the defect it exists for is a key nobody thought of — the
+ * one that gets bound next and not written down. A list of keys to try is the same list the legend
+ * already is, so pressing them would compare the panel with itself. Reading the two documents is what
+ * can actually go red: `handleScoreKey()` is the authority on what the grid answers to, and the panel
+ * at `#scoresKeys` is what a teacher opens to learn it.
+ *
+ * WO-3.22's defect was `↑ ↓`: bound since WO-3.5, promised by the hint under the grid, and absent
+ * from the legend until this check was written beside the row that fixes it.
+ *
+ * A NAIVE COMPARISON IS WRONG IN BOTH DIRECTIONS, and saying how is most of the work here.
+ *
+ *   "every key in the function is in the panel" — `Backspace` and `Delete` are two bindings and ONE
+ *   row (`⌫`), because a teacher does not have two keys in mind; and the function compares against
+ *   `Enter`, `ArrowUp` and the rest while the panel is written in glyphs. So a MAP from key name to
+ *   the glyph the panel uses stands between them, and a bound key that is not in that map is a FAIL
+ *   rather than a skip — that is the clause which makes the next key noisy instead of silent.
+ *
+ *   "every key in the panel is in the function" — `⇥` is in the legend and is deliberately NOT bound.
+ *   `src/scores.js`'s WHAT IS DELIBERATELY NOT BOUND block says why: Tab already means "the next
+ *   assignment" natively, because the cells are inputs in document order, so the panel documents the
+ *   browser's behaviour rather than this module's. It is excepted BY NAME below, so that the reverse
+ *   direction still catches a row left behind by a binding that was removed. `Esc` and the digits are
+ *   named in that same block and are in neither place, which is the case this check has nothing to
+ *   say about and should not.
+ *
+ * Both sides are guarded against a vacuous pass: a renamed function, a panel that stopped being
+ * literal markup and a regex that quietly stopped matching all produce the empty answer, and empty
+ * agrees with everything.
+ */
+{
+  const html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8');
+  const scoresSrc = await fs.readFile(path.join(ROOT, 'src', 'scores.js'), 'utf8');
+
+  /* The panel, then the rows inside it, then the glyphs inside those. Sliced rather than searched
+     whole, so that a `<kbd>` anywhere else in index.html — the attendance key legend has its own —
+     cannot answer for this one. */
+  const panel = html.slice(html.indexOf('id="scoresKeys"'));
+  const legendHtml = panel.slice(0, panel.indexOf('</div>'));
+  const rows = [...legendHtml.matchAll(/<span class="scores-key">([\s\S]*?)<\/span>/g)].map(m => m[1]);
+  const glyphs = rows.flatMap(r => [...r.matchAll(/<kbd>([^<]*)<\/kbd>/g)].map(k => k[1].trim()));
+
+  /* The function's own body, and only its own: from its `export function` line to the first `}` in
+     the first column after it. Everything below is read out of that slice, so a key bound in a
+     neighbouring function is not this check's business and cannot make it green either. */
+  const at = scoresSrc.indexOf('export function handleScoreKey(');
+  const body = at < 0 ? '' : scoresSrc.slice(at, scoresSrc.indexOf('\n}', at));
+  /* `key === '…'` and `letter === '…'` — the second is how `L`, `M` and `X` are compared, through
+     the uppercased single character above them. A comparison written any other way arrives here as a
+     key this block cannot see, which is the honest limit of a static read and the reason the count
+     below is asserted rather than assumed. */
+  const bound = [...new Set([...body.matchAll(/\b(?:key|letter) === '([^']+)'/g)].map(m => m[1]))];
+
+  /* Two bindings, one row: a teacher has one "clear this" key in mind whichever her keyboard calls
+     it, and src/scores.js treats them as one. */
+  const GLYPH_OF = { Enter: '↵', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
+    Backspace: '⌫', Delete: '⌫', L: 'L', M: 'M', X: 'X' };
+  /* In the legend and not in the function, on purpose. The value is the key it documents. */
+  const LISTED_UNBOUND = { '⇥': 'Tab (the browser\'s own tab order, not this module\'s)' };
+
+  const unmapped = bound.filter(k => !(k in GLYPH_OF));
+  const missing = bound.filter(k => k in GLYPH_OF && !glyphs.includes(GLYPH_OF[k]));
+  /* `bound`, NOT `Object.keys(GLYPH_OF)` — the whole reverse direction turns on which list is asked.
+     GLYPH_OF is maintained here, in this file; asking it whether a legend row is bound compares the
+     panel against the harness's own table and answers yes forever, so a binding deleted from
+     src/scores.js leaves its row on the card and this check green. WO-3.22 shipped it that way and
+     its correction round was the mutation: `ArrowUp` removed from handleScoreKey() with `↑` left on
+     the legend read `stray []`, pass true. Asking `bound` is what makes the row go red with it. */
+  const stray = glyphs.filter(g => !(g in LISTED_UNBOUND) && !bound.some(k => GLYPH_OF[k] === g));
+
+  check('every key the score grid binds is on the ⌨ Keys legend, and every entry on that legend is a '
+    + 'key it binds — `⇥` excepted by name, because Tab is the browser\'s tab order and src/scores.js '
+    + 'says so (WO-3.22: `↑ ↓` were bound, promised by the hint, and not on the card)',
+    bound.length >= 8 && glyphs.length >= 8 && rows.length >= 7
+      && !unmapped.length && !missing.length && !stray.length,
+    bound.length + ' key(s) bound by handleScoreKey() [' + bound.join(' ') + '] against '
+      + rows.length + ' legend row(s) carrying [' + glyphs.join(' ') + ']'
+      + (unmapped.length ? '; BOUND AND UNKNOWN TO THIS CHECK: ' + unmapped.join(', ')
+        + ' — add it to GLYPH_OF here and to the legend in index.html, in that order' : '')
+      + (missing.length ? '; BOUND AND NOT ON THE LEGEND: '
+        + missing.map(k => k + ' (' + GLYPH_OF[k] + ')').join(', ') : '')
+      + (stray.length ? '; ON THE LEGEND AND NOT BOUND: ' + stray.join(', ') : ''));
+}
+
 /* ────────────────────────────── static server ────────────────────────────── */
 
 const server = http.createServer(async (req, res) => {

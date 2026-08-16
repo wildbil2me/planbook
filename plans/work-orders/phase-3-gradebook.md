@@ -1656,7 +1656,7 @@ green with the dedupe deleted — which is this work order failing while appeari
 
 ## WO-3.22 — the key legend omits a pair the hint beside it promises
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. The roadmap's Phase 3 list names the score grid and the `late`/`missing`
 rule; which keys the legend documents is inside what WO-3.5 already closed.)*
 
@@ -1693,11 +1693,21 @@ legend row is a visible change; it says so itself.
 which is not bound and is deliberately not being booked (see WO-3.23's note).
 
 **Acceptance**
-- [ ] The legend lists `↑ ↓` with the movement keys, and the flag rows are still last.
-- [ ] The legend and the hint at `index.html:1083` describe the vertical pair the same way.
-- [ ] A check fails when a key the grid binds is missing from the legend — proved by removing an
-      entry and watching it go red, not by reasoning about it.
-- [ ] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+- [x] The legend lists `↑ ↓` with the movement keys, and the flag rows are still last. *(Third row of
+      eight, between `⇥` and the `← →` row it belongs beside: the harness reads the panel in document
+      order and prints `[↵ ⇥ ↑ ↓ ← → L M X ⌫]`.)*
+- [x] The legend and the hint at `index.html:1083` describe the vertical pair the same way. *(Both say
+      **within the column**; the hint is untouched, and the legend adds "up as well as down" — the one
+      thing `↵` "next student, down the column" does not cover.)*
+- [x] A check fails when a key the grid binds is missing from the legend — proved by removing an
+      entry and watching it go red, not by reasoning about it. *(The `↑ ↓` row deleted, which is the
+      pre-WO-3.22 build exactly: `790 checks · 789 passed · 1 failed · 0 skipped`, 259s, against
+      `790 · 790 · 0 · 0` — the failing line reads "BOUND AND NOT ON THE LEGEND: ArrowDown (↓),
+      ArrowUp (↑)". Reverted; `git diff` carries no trace of it.)*
+- [x] `node tools/verify-shell.mjs` passes whole, with the count in `tools/README.md` moved in step.
+      *(`790 checks · 790 passed · 0 failed · 0 skipped`, 21,115 lines, 26.7 lines per check, 259s;
+      the call-site count moved 792 → 793 and `wo-sweep.mjs` asserts it — 20 checks, 18 passed, 0
+      failed, 2 standing REVIEWs.)*
 
 **Traps** — **The panel is `nowrap` and its rows are measured.** `.scores-key` does not wrap and the
 `← →` row added at WO-3.16 is already the longest in the panel; a verbose `↑ ↓` entry can spill
@@ -1766,3 +1776,68 @@ comes back the first time somebody presses the key and finds nothing there.)*
 only the name crosses the seam: a harness that calls `handleScoreKey('ArrowRight', cell)` cannot tell
 a fixed build from a broken one. The keystroke has to be dispatched with the modifier actually held,
 the way WO-3.16's caret checks dispatch real ones.
+
+---
+
+## WO-3.24 — no legend row in this app has ever been measured for spill
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
+that is deliberate — nothing spills today, so this is a row to cut if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: on current evidence nothing a teacher sees changes.
+The same call WO-3.12 and WO-3.21 made, and for the same reason.)*
+
+**Not a go-live blocker, and no defect is known.** Booked 2026-08-16 out of WO-3.22's implementation
+and its iPad sitting. The owner opened the ⌨ Keys panel on the installed iPad that day, portrait and
+landscape, and **no row spilled** — the text stops short of its own border on all eight, the
+pre-existing `← →` row included. **Do not go hunting for a spill on the assumption there is one.**
+
+**Why it exists.** `.scores-key` is `white-space: nowrap`, so a row wider than the panel pushes
+through its own border instead of wrapping, and it does that while passing every 44px check — the
+"Days off" failure from the first iPad sitting, in a place no instrument is pointed. **Nothing in the
+harness has ever opened `#scoresKeys` at all.** WO-3.22 added a ninth string to that panel and could
+defend it only by counting characters: 37 against the `← →` row's 67, same class, same font. That is
+an argument from the strings, and its own Acceptance said so. The eyes that then confirmed it are one
+sitting at one pair of widths on one device — real evidence, and not a thing that re-runs itself when
+the next row lands.
+
+**The order of the two facts matters.** A measurement booked while a spill is live is a bug fix; this
+one is booked while the panel is clean, which is the cheap moment to write it and the reason it can
+be cut without anything breaking.
+
+**Deliverables**
+- **The panel opened through its real button and measured**, `scrollWidth` against `clientWidth` on
+  `#scoresKeys` and on each `.scores-key`, under a coarse pointer at 390px and at 1024px. Opening it
+  through the button rather than by unhiding it is the point: WO-2.21's scar is a sweep that measured
+  a screen that was not the one on screen.
+- **A red that names the row.** A panel-level pass with a spilling child inside it is the failure this
+  is written to catch, so the per-row measurement is the claim and the container is context.
+- **Proof by mutation, run rather than reasoned** — lengthen one row's text until it spills, watch the
+  check go red naming that row, revert, and record the counts in `tools/README.md` the way WO-3.21's
+  and WO-2.24's are.
+
+**In scope if the measurement goes red: rewording the row that spills**, the `← →` row from WO-3.16
+included. WO-3.22 was forbidden to touch it and so could not have paid this debt; this work order can,
+and a check that lands red with no remedy in its own scope is a harness left failing.
+
+**Out of scope** — restyling the panel, `white-space` itself, and the attendance key list, which is a
+modal `<dl>` whose prose wraps and is a different shape (see WO-2.34, which opens it for a different
+reason; if the two land near each other they should share whatever opens-and-measures helper this one
+builds).
+
+**Acceptance**
+- [ ] The ⌨ Keys panel is opened through its own button and every `.scores-key` in it is measured, at
+      390px and 1024px under a coarse pointer.
+- [ ] Lengthening one row until it spills turns a check red **and names that row** — run, not
+      reasoned, with the counts before and during quoted. A mutation that reddens nothing means this
+      work order did not land.
+- [ ] Reverted, and `git diff` carries no trace of the mutation.
+- [ ] `node tools/verify-shell.mjs` passes whole on the delivered tree, with the check count in
+      `tools/README.md` moved in step.
+- [ ] 👤 If the check went red on a row that was already there, the reworded row is read on the
+      installed iPad in both orientations before the box above is ticked.
+
+**Traps** — **A headless viewport is not an iPad and this check must not be sold as one.** It
+measures a layout at a width; the 2026-08-16 sitting is still the only time this panel has been
+looked at on glass, and a green run here closes no 👤 line. **The panel is `flex-wrap: wrap`**, so
+each row is its own chip and a container that fits proves nothing about the rows inside it — measure
+the children or the check is vacuous.

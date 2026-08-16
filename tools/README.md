@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 792 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 793 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1042,6 +1042,58 @@ default first, on a browser that has not been touched, and then taps the speaker
 is still shipped, still has to work the moment a teacher turns it on, and is still measured here.
 The assertion has to come before the tap for the obvious reason: afterwards there is nothing in this
 section that could tell a withdrawn default from a restored one.
+
+**WO-3.22 moved it from 792 to 793**: one literal call site, not in a loop and not a failure arm, in
+a new static block beside WO-3.20's near the head of the file, so it contributes one executed result
+and **the run prints 790**, measured on the delivered tree: `790 checks · 790 passed · 0 failed · 0
+skipped`, 21,115 lines, 26.7 lines per check, 259s. **It is the first check in this file that compares
+two documents against each other** — `handleScoreKey()` in `src/scores.js`, which is the authority on
+what the score grid answers to, against the ⌨ Keys panel in `index.html`, which is what a teacher
+opens to learn it. The `↑ ↓` pair had been bound since WO-3.5 and promised by the hint under the grid,
+and the legend did not carry it; nothing compared the two, so nothing could say so. **It is static
+because there is no candidate universe to press.** A driven version would have to type every key a
+keyboard has at a score cell and watch which were swallowed, and the defect is the key nobody thought
+of — so the list of keys to try would be the legend itself, and the check would be comparing the panel
+with itself. **Neither direction of the comparison is naive**, and the block says so at length: two
+bindings (`Backspace` and `Delete`) share one row, because a teacher has one "clear this" key in mind
+whichever her keyboard calls it, so a map from key name to glyph stands between the sides and a bound
+key missing from that map is a FAIL rather than a skip — that is the clause that makes the next key
+noisy. Coming back the other way, `⇥` is on the legend and deliberately not bound (`src/scores.js` §
+WHAT IS DELIBERATELY NOT BOUND: Tab already means "the next assignment" natively), so it is excepted
+**by name** rather than by loosening the direction, which leaves the reverse still able to catch a row
+left behind by a binding that was removed. **The mutation was run rather than reasoned**, and it is
+the pre-WO-3.22 build exactly: delete the `↑ ↓` row from `index.html` and the same tree reads
+`790 checks · 789 passed · 1 failed · 0 skipped`, 259s, with the failing line naming the pair —
+*"10 key(s) bound by handleScoreKey() … against 7 legend row(s) carrying [↵ ⇥ ← → L M X ⌫]; BOUND AND
+NOT ON THE LEGEND: ArrowDown (↓), ArrowUp (↑)"*. Both guards are floors rather than exact counts (at
+least eight bound keys, eight glyphs, seven rows), so the mutation goes red on the comparison and not
+on a guard, which was checked in that same run.
+
+**Its correction round moved no count and repaired the half of that sentence which was not true.** The
+reverse direction shipped computed against `GLYPH_OF` — the map three lines above it, maintained here
+in this file — instead of against the keys read out of `handleScoreKey()`. So *"still able to catch a
+row left behind by a binding that was removed"* was a statement about the harness's own table, which
+never changes when `src/scores.js` does, and the direction could not go red at all. **The verifier
+caught it by running the case the sentence describes**, and the correction round ran it again on the
+whole harness: delete `if (key === 'ArrowUp')` from `handleScoreKey()` and leave the `↑` row on the
+legend, and the shipped check read `stray []` and passed. One identifier is the entire fix —
+`bound.some(k => GLYPH_OF[k] === g)` for `Object.keys(GLYPH_OF).some(...)` — and the same mutation now
+reads `790 checks · 788 passed · 2 failed · 0 skipped`, 252s, the WO-3.22 line among them naming it:
+*"9 key(s) bound by handleScoreKey() … ON THE LEGEND AND NOT BOUND: ↑"*. **The second failure in that
+run is the mutation being a real one**, and it is the difference between the two proofs: deleting a
+legend row changes no behaviour, so the first mutation moved exactly one check, while deleting a
+binding takes `↑` away from the grid and the score-clearing section that presses it goes red too.
+Reverted, and `git diff --stat -- src/` is empty. **The lesson is narrower than "check your
+conditions": both lists were in scope on that line, both were arrays of key names, and the wrong one
+turns a comparison of the app against its own card into a comparison of the harness against itself.**
+The forward direction was never affected — it reads `glyphs`, which is the panel — and the four
+mutations the verifier had already watched go red (the `↑ ↓`, `L` and `⌫` rows deleted, and a `Home`
+binding added) are all still red after the fix, as are both vacuity probes and, staying green,
+`⇥`: on the card, deliberately unbound, and excepted by name in either direction. Those seven were
+re-run the cheap way rather than at 252s each — this block sliced out of this file by its own text
+and executed with `fs.readFile` handed mutated copies in memory, nothing written to the tree — so
+they are the real code answering, on inputs the disk never saw. The `ArrowUp` case is the one that
+was worth the full run, because it is the one that had been green.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

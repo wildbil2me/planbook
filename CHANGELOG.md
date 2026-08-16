@@ -38,6 +38,26 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-3.22 — the ⌨ Keys card on the score grid now lists `↑ ↓`.** The pair has moved up and down a
+  column since the grid shipped, and the hint underneath the grid always said so — but the card a
+  teacher opens *to learn the keys* did not carry them. WO-3.16 then added a `← →` row one line above
+  where the missing one belonged, which turned a quiet omission into a card enumerating three arrow
+  directions out of four. The wording was written to agree with the hint rather than the other way
+  round: the hint was already right and is untouched.
+
+  **The row is not the point of the work; the check is.** Nothing in this project compared that card
+  against the keys the grid actually answers to, so the next key added could go undocumented exactly
+  the same way. The harness now reads both documents and fails in either direction — a bound key with
+  no row, or a row whose key is no longer bound — with `⇥` excepted by name, because Tab is the
+  browser's own tab order and the grid deliberately leaves it alone.
+
+  **It shipped that comparison half-blind and was corrected the same day, which is worth recording.**
+  The reverse direction asked a table *inside the harness* whether a legend row was still bound, and
+  that table does not move when the app moves, so the answer was yes forever: deleting the `ArrowUp`
+  binding while leaving `↑` on the card passed green. Three pieces of prose claimed otherwise, the
+  worst of them in `tools/README.md`. The fix is one identifier, and the mutation that proved the hole
+  now reads red.
+
 - **WO-2.30 — archiving a class handed its open hall passes to a different class's clock.**
   Archiving takes the class off the tab bar, and the app *resolves* which class is open rather than
   trusting a stored id — so from the next tick the elapsed-pass clock walked the first **surviving**

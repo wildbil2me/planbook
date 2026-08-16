@@ -153,8 +153,8 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.19 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.29 | Phase 2 |
-| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.20 | Phase 3 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.34 | Phase 2 |
+| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
@@ -168,15 +168,15 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 21 | 18 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 32 | 29 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 23 | 19 | 🔨 IN PROGRESS |
+| 2 — Attendance | 33 | 29 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 24 | 20 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 10 | 4 | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **106** | **71** | `[██████░░░░] 67%` |
+| | **108** | **72** | `[██████░░░░] 67%` |
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints
@@ -347,9 +347,35 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 47 | [WO-3.23](phase-3-gradebook.md#wo-323--the-score-grid-never-learns-which-modifier-keys-were-held) The grid never learns which modifiers were held | S | | Aug 24, a sitting |
 | 48 | [WO-1.20](phase-1-shell-store-roster.md#wo-120--the-retired-phase-branch-rule-is-still-live-in-roadmapmd-and-testingmd) The retired branch rule is still live in `ROADMAP.md` | S | | Aug 24, a sitting |
 | 49 | [WO-1.21](phase-1-shell-store-roster.md#wo-121--the-tracker-has-no-word-for-work-that-is-not-coming) The tracker has no word for work that is not coming | S | | Aug 24, a sitting |
-| 50 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 51 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 52 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 50 | [WO-3.24](phase-3-gradebook.md#wo-324--no-legend-row-in-this-app-has-ever-been-measured-for-spill) No legend row has been measured for spill | S | | Aug 26, half a day |
+| 51 | [WO-2.34](phase-2-attendance.md#wo-234--nothing-compares-the-marking-key-list-with-the-keys-the-screen-answers-to) The marking key list is unchecked against its keys | S | | Aug 26, half a day |
+| 52 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 53 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 54 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-3.24 and WO-2.34 were booked on 2026-08-16 out of WO-3.22's implementation and its iPad sitting,
+and given rows #50 and #51 the same day — the rule six paragraphs down being obeyed rather than
+recorded a fourth time. WO-1.16, WO-3.18 and WO-G2 each moved down two; **nothing moved above them**,
+which is the placement decision. They go behind WO-1.21 and ahead of WO-1.16 because they are the
+**cut band**: neither is a defect, both guard something that is correct today, and WO-1.16 is the one
+row in Ship 2 with a deadline the world sets. WO-3.18 keeps its place as the last work order before
+the gate.*
+
+***They are two halves of the same finding and were deliberately not made one work order.*** *WO-3.22
+existed because nothing compared the score grid's key card with the keys the grid answers to, and it
+closed that in one direction on one panel. What the sitting then showed is that the panel had never
+been **measured** either — the 2026-08-16 iPad look is the first time any legend row in this app was
+examined for spill, and it was a pair of eyes, not an instrument — and that the **attendance** legend
+has exactly the comparison gap WO-3.22 was written for, on the screen a teacher is on while students
+walk in. One is a layout measurement over `.scores-key`; the other is a document comparison over a
+modal `<dl>` with its own map and its own two exceptions. Folding them would put two unrelated claims
+in one work order, which is the shape WO-3.22 declined twice inside its own dispatch.*
+
+***WO-3.24 is the first of the two to cut and it carries a risk WO-3.22 could not take.*** *If the
+measurement lands red it will be on WO-3.16's `← →` row, which was already the longest in the panel —
+and rewording that row is **in** WO-3.24's scope precisely because it was out of WO-3.22's, which is
+why the follow-up is a row rather than a correction round. The owner's sitting says it will not go
+red; the row exists because "will not" from one pair of widths on one device is not a check.*
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

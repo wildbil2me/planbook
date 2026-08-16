@@ -1045,12 +1045,21 @@
       </div>
 
       <!-- Closed to begin with, opened by the button above. Three kinds of key: `↵` and `⇥` are
-           documented here but belong to src/shell.js and to the browser's tab order; the arrow pair
-           is this module's own and gives the key back to the browser inside a number
-           (caretCanLeave() in src/scores.js); the four below are the same four the bar carries. -->
+           documented here but belong to src/shell.js and to the browser's tab order; the two arrow
+           pairs are this module's own — the vertical one always moves, the horizontal one gives the
+           key back to the browser inside a number (caretCanLeave() in src/scores.js); the four below
+           are the same four the bar carries.
+           WO-3.22 added the vertical pair, which had lived only in the hint under the grid since
+           WO-3.5. This panel is what a teacher opens TO LEARN THE KEYS, so a working key documented
+           everywhere but here is the omission that matters — and the `← →` row above made it read as
+           a legend enumerating three arrow directions out of four. -->
       <div class="scores-keys hidden" id="scoresKeys">
         <span class="scores-key"><kbd>↵</kbd> next student, down the column</span>
         <span class="scores-key"><kbd>⇥</kbd> next assignment, across the row</span>
+        <!-- Kept short on purpose: `.scores-key` is `white-space: nowrap`, so a row longer than the
+             panel is wide spills through its own border rather than wrapping inside it, and the
+             `← →` row below is already the longest one here. -->
+        <span class="scores-key"><kbd>↑</kbd> <kbd>↓</kbd> within the column, up as well as down</span>
         <!-- WO-3.16. The pair is listed with its condition attached, because the condition is the
              whole of the key: inside a number it is still the caret's, and it steps to the next
              assignment only once the caret has run out of number to cross IN THE DIRECTION PRESSED

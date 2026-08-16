@@ -5368,6 +5368,83 @@ both are follow-ups in the result file. `plainDate()`, `spokenDate()`, `dayAbbr(
 
 ---
 
+### WO-3.22 — The key legend lists the pair the hint beside it promises
+
+**What this changes for a teacher: one row on the ⌨ Keys card.** `↑ ↓` have moved within a column
+since WO-3.5 and the hint under the grid has always said so; the panel a teacher opens **to learn the
+keys** did not carry them. WO-3.16 then added a `← →` row one line above where the missing one
+belongs, which turned a quiet omission into a card enumerating three arrow directions out of four.
+The row now reads **`↑` `↓` within the column, up as well as down**, placed with the other movement
+keys and above the four flag rows, which stay last because the flag bar carries the same four.
+
+**The wording was made to agree with the hint rather than the other way round.** The hint at
+`index.html` says *"`↑ ↓` move within the column as well"* and is correct; it is untouched. Both
+surfaces now describe the pair as **within the column**, and the legend adds *up as well as down*,
+which is the one thing `↵` — *next student, down the column* — does not cover.
+
+**The check is the point of the work order, not the row.** Nothing compared the panel with the keys
+`handleScoreKey()` answers to, so a fix without one is the same omission waiting for the next key.
+
+- [x] The legend lists `↑ ↓` **with the movement keys** and the flag rows are still last — the
+      harness enumerates the panel in document order and prints `[↵ ⇥ ↑ ↓ ← → L M X ⌫]`, eight rows
+      with the four flags at the end.
+- [x] The legend and the hint **describe the vertical pair the same way**: *within the column* in
+      both, with the hint unedited. The `← →` row and its WO-3.16 comment are untouched, and no entry
+      that was already right was reworded.
+- [x] **A key the grid binds and the legend omits turns a check red — run, not reasoned.** Deleting
+      the `↑ ↓` row reproduces the pre-WO-3.22 build exactly, and the same tree reads `790 checks ·
+      789 passed · 1 failed · 0 skipped` (259s) against `790 · 790 · 0 · 0`, with the failing line
+      naming the pair: *"BOUND AND NOT ON THE LEGEND: ArrowDown (↓), ArrowUp (↑)"*. Reverted, and
+      `git diff` carries no trace of it.
+- [x] **And a legend row left behind by a binding that was deleted turns it red too — run, not
+      reasoned** *(correction round)*. The direction shipped comparing the card against `GLYPH_OF`,
+      a table inside the harness, so it could never move when `src/scores.js` did: with `ArrowUp`
+      deleted from `handleScoreKey()` and `↑` still on the card, the check passed. It now reads the
+      keys the function actually binds, and the same mutation on the same tree reads `790 checks ·
+      788 passed · 2 failed · 0 skipped` (252s) — *"ON THE LEGEND AND NOT BOUND: ↑"*, and beside it
+      the cell-clearing section, which presses `↑` and so goes red at a mutation that really does
+      take a key off the grid. Reverted; `git diff --stat -- src/` is empty.
+- [x] `verify-shell.mjs` is green whole — **790 of 790, zero skips**, 252s on the correction round's
+      re-run (259s as delivered) — with the call-site count in `tools/README.md` still 792 → 793,
+      which `wo-sweep.mjs` asserts. The fix is one identifier and adds no call site.
+- [x] 👤 **Open ⌨ Keys on the installed iPad, portrait and landscape, and look at the panel's right
+      edge.** `.scores-key` is `white-space: nowrap`, so a row wider than the panel spills through its
+      own border instead of wrapping — the "Days off" failure from the first iPad sitting, and it
+      passes every 44px check while doing it. The new row is deliberately shorter than the `← →` row
+      that was already the longest here, so it should not be the one that spills; **that is an
+      argument from the strings and not a measurement**, and no emulator was pointed at the open panel
+      either. What is being looked for is a key legend whose text stops short of its own border on
+      every row. *(Run by the owner on the installed iPad, 2026-08-16, portrait and landscape: no row
+      spills — the text stops short of the border on all eight, the pre-existing `← →` row included.
+      This is the first time any legend row in this app has been looked at for spill; it is still a
+      pair of eyes and not a measurement, which is why the follow-up below is booked rather than
+      closed by this line.)*
+
+*The desk half is `verify-shell.mjs`, **790 of 790 with zero skips**, 259s — one check added in a new
+static block beside WO-3.20's, reading `index.html` against `src/scores.js` rather than driving a
+page, because there is no candidate universe of keys to press: the defect is the key nobody thought
+of, so any list of keys to try would be the legend itself. `wo-sweep.mjs` is **20 checks, 18 passed, 0
+failed, 2 to review**, and both REVIEWs are the standing pair, naming exactly the lines they named
+before this landed. `sw.js`'s `CACHE` went to `planbook-shell-v70` — `./` is `index.html`, and an
+installed iPad on the old shell would keep the old card. **No new CSS and no new control**: the row
+reuses `.scores-key`, so the coarse block has nothing new to hold at 44px.*
+
+*What the check does and does not claim, because the shape of it is the deliverable. It maps the key
+names `handleScoreKey()` compares against to the glyphs the panel is written in — `Backspace` and
+`Delete` share one `⌫` row on purpose — and a bound key that is not in that map fails rather than
+being skipped, which is what makes the next key noisy instead of silent. Coming the other way, `⇥` is
+on the card and deliberately not bound, so it is excepted **by name** — and that direction asks the
+keys read out of `handleScoreKey()`, not the harness's own name-to-glyph map, which is the whole of
+what the correction round fixed; `Esc` and the digits are named
+in `src/scores.js` as deliberate non-bindings and appear in neither place, which is the case this
+check has nothing to say about. **A key bound in a shape the comparison cannot see is the honest limit
+of it** — it reads `key === '…'` and `letter === '…'` out of that one function's body, so a binding
+written as a `switch`, a lookup table or a call into another module would arrive as a key this check
+never knew about. The guards are what keep that from reading green: fewer than eight bound keys,
+eight glyphs or seven rows is itself a failure.*
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

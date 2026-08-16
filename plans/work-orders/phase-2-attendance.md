@@ -3294,3 +3294,68 @@ erratic spell is less understood and may contain the other. **Do not let a green
 an answer** — it was green through every one of these failures, and the seam said `running` the whole
 time. **And do not restore the default silently**: the withdrawal is the owner's, and reversing it is
 a decision to bring back, not a tidy-up to perform.
+
+---
+
+## WO-2.34 — nothing compares the marking key list with the keys the screen answers to
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
+that is deliberate — the two agree today, so this is a row to cut if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
+WO-3.12, WO-3.21 and WO-3.24 made.)*
+
+**Not a go-live blocker, and nothing here is a defect.** Booked 2026-08-16 out of WO-3.22's
+implementation. Both sides were read that day and **found in agreement**. **Do not go hunting for a
+missing key; there isn't one.** What is missing is the check that would notice if one appeared.
+
+**Why it exists.** WO-3.22 was booked because the score grid's ⌨ Keys panel documented three arrow
+directions out of four, and the reason nobody caught it was that **nothing compared the card with the
+keys the code answers to**. The same gap is open one screen over. `#attendanceKeysModal` in
+`index.html` documents `↓ ↑`, `P`, `T`, `A`, `E`, `D`, `Esc` and `?`; `src/shell.js` holds
+`MARK_KEYS = ['P','T','A','E','D']` and the `ArrowDown`/`ArrowUp`, `Escape` and `?` branches of the
+same `keydown` listener. Nothing in the tree holds the two against each other, so the next key added
+to that listener can go undocumented exactly as `↑ ↓` did — and this is the marking screen, which is
+the one a teacher is on while students walk in.
+
+**It is the same claim and not the same check.** That legend is a `<dl>` of `.attendance-key` chips
+in `.attendance-key-row` divs, not `.scores-key` spans, so it needs its own map. Two asymmetries are
+already visible and both must be decided rather than discovered: `Esc` and `?` are documented and are
+handled in the listener rather than in `MARK_KEYS`, so the bound set is not one array; and the
+listener's own guards — a modifier held, a modal open, focus inside an input, a view that is not
+`class` — are conditions rather than keys and belong nowhere in the comparison.
+
+**Deliverables**
+- **A check comparing the legend with the keys that listener answers to**, in both directions, with
+  every exception taken **by name** the way WO-3.22's `⇥` is. An exception taken by dropping a
+  direction is a check that cannot see a legend row left behind by a deleted binding — which is the
+  defect WO-3.22 shipped and had to correct.
+- **The bound side read from `src/shell.js`, not from a table inside the harness.** That is WO-3.22's
+  scar in one sentence: `stray` asked the harness's own name-to-glyph map whether a row was bound, so
+  the answer was yes forever and the direction could never go red.
+- **Floors against vacuity** — a renamed modal id, a renamed constant or a regex that quietly stops
+  matching must go red rather than green, as WO-3.22's three floors do.
+- **A written judgment on whether one shared check or two separate ones is right**, now that two
+  legends want the same comparison. Do it or write down why not.
+
+**Out of scope** — rewording the legend, adding or removing a binding, and the spill measurement over
+either panel (WO-3.24). If the new check goes red against current code, **that is a defect found and
+it gets its own work order** — do not fix the app from inside this one.
+
+**Acceptance**
+- [ ] A check compares `#attendanceKeysModal` with the keys the `keydown` listener in `src/shell.js`
+      answers to, and passes on the delivered tree.
+- [ ] Removing a letter from `MARK_KEYS` while its row stays on the list turns it red, naming the
+      row — run, not reasoned, with the counts before and during quoted.
+- [ ] Deleting a documented row while its key stays bound turns it red, naming the key — run, not
+      reasoned. **Both directions are proved by mutation or this work order has not landed**, which is
+      the single lesson of WO-3.22's correction round.
+- [ ] Renaming the modal id or the `MARK_KEYS` constant turns it red rather than passing vacuously.
+- [ ] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
+      step, and `git diff --stat -- src/` is empty across the whole work order.
+
+**Traps** — **`Esc` and `?` are not in `MARK_KEYS` and are correctly documented**, so a check that
+reads only that array reports two stray rows on a correct build. **The arrows are two keys and one
+row**, the way `Backspace` and `Delete` share `⌫` on the score grid — the map is what carries that,
+and a key missing from the map must fail rather than skip. **Do not fold a second claim into one
+`check()` call site**: the row order, the prose and the spill are three other questions, and folding
+is the WO-3.15 mistake WO-3.22 declined to repeat.
