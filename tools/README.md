@@ -814,7 +814,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 802 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 803 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1200,6 +1200,42 @@ trouble before any row was named. What it cannot do is say WHICH row, and a defe
 only-moderately-long rows crowding one flex line rather than any single row individually overflowing
 would move it without a single per-row check failing — which is the concrete shape of "close to
 vacuous" the Traps line means, not "detects nothing ever".
+
+**WO-2.34 moved it from 802 to 803**: one literal call site, not in a loop and not a failure arm, in
+a new static block beside WO-3.22's, so it contributes one executed result and **the run prints 800**,
+measured on the delivered tree: `800 checks · 800 passed · 0 failed · 0 skipped`, 21,531 lines, 26.9
+lines per check, 261s. **It is WO-3.22's sibling on the marking screen and not the same check**, booked
+out of that work order's own implementation the same day both sides were read and found in agreement —
+there was no missing key to find, only the absent comparison. Four structural facts kept it from being
+a copy-paste of the block beside it: the legend nests several `<div>` levels deep, so the row slice
+reads a matching `</dl>` rather than the first `</div>`, which is only correct for a flat panel; a
+glyph turns up a second time inside one row's own `<dd>` prose, so glyphs are read out of each row's
+`<dt>` alone; the modal id is spelled twice in the tree (the attribute in `index.html` and `KEYS_MODAL`
+in `src/shell.js`), and this check reads the id's value out of `src/shell.js` rather than typing it a
+second time, so either side renamed alone leaves the other unable to find the legend; and the listener
+delegates the score grid's entire binding set from inside itself, above the guard this check's slice
+starts at, so that set is invisible here on purpose. **Both directions were run rather than reasoned.**
+Removing `'D'` from `MARK_KEYS` while its row stays read `800 checks · 796 passed · 4 failed · 0
+skipped`, 260s, naming the new check first — *"ON THE LEGEND AND NOT BOUND: D"* — and three more red
+downstream, because unlike WO-3.22's `↑` a marking letter is load-bearing: the mutation did not just
+untrain a check, it broke a key a teacher actually presses. Reverted and confirmed with `git diff`.
+Deleting the Tardy row from `index.html` while `T` stayed in `MARK_KEYS` read `800 checks · 798 passed
+· 2 failed · 0 skipped`, 261s, this check naming *"BOUND AND NOT ON THE LEGEND: T (T)"* and a second,
+pre-existing check independently noticing the same row gone from the rendered modal. Reverted and
+confirmed. Renaming the modal's `id` attribute in `index.html` alone — leaving `src/shell.js`'s
+`KEYS_MODAL` unchanged — read `800 checks · 797 passed · 3 failed · 0 skipped`, 262s, this check
+reading *"0 legend row(s) carrying []"* and naming all nine keys `BOUND AND NOT ON THE LEGEND` rather
+than passing on an empty comparison; reverted and confirmed. Renaming the `MARK_KEYS` identifier itself
+was checked against the same slicing and mapping logic run standalone rather than through a fourth full
+harness pass — the routing budget was three mutation runs plus the clean one, already spent above — and
+read the letters `stray` with zero of them `bound`, the shape the floor is built to catch; the reasoning
+is recorded rather than the browser run, and is named as such in `.claude/dispatch/WO-2.34-result.md`.
+**`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — the identical clause and the identical reason
+WO-3.22 carries at `:281-287`, copied to a second legend rather than shared with it, for the reasoning
+written into the block's own comment: the two legends' shapes differ enough (nesting depth, glyph
+source, a second file read for the id, a listener slice bounded by a guard rather than a function's own
+braces) that a helper covering both would trade a saved few lines for parameters neither check needs
+alone, at the cost of WO-3.22's already-corrected block.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

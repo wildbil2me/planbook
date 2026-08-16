@@ -146,6 +146,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Added
 
+- **WO-2.34 — nothing compared the marking screen's ⌨ Keys legend with the keys it answers to, and
+  now something does.** `#attendanceKeysModal` documents `↓ ↑`, `P`, `T`, `A`, `E`, `D`, `Esc` and
+  `?`; the `keydown` listener in `src/shell.js` holds `MARK_KEYS` beside its arrow, `Escape` and `?`
+  branches. The two agreed, and had never been held against each other — **799 → 800** checks, call
+  sites **802 → 803**. This is WO-3.22 one screen over: that work order existed because the score
+  grid's card documented three arrow directions out of four, and the reason nobody caught it was that
+  nothing compared the card with the code. **No defect was found on either side here.** What was
+  missing is the check that would notice the next one, on the screen a teacher is on while students
+  walk in.
+
+  **Both directions are proved by mutation, which is the lesson of WO-3.22's correction round rather
+  than a house style.** Taking `D` out of `MARK_KEYS` with its row left on the card goes red naming
+  the row; deleting the Tardy row with `T` still bound goes red naming the key; renaming the modal id
+  reads the legend as empty and reports nine missing keys instead of passing on two empty lists that
+  agree. And the reverse direction asks `bound` — the keys read out of `src/shell.js` — never the
+  harness's own glyph table, which is the exact defect WO-3.22 shipped and had to correct: a table
+  this repository maintains answers "still bound" forever.
+
+  **Kept as two checks rather than one, and the reasoning is in the harness where the next reader
+  hits it.** The attendance legend is a `<dl>` of rows that each close their own `<div>`, its glyphs
+  live in `<dt>` and repeat inside `<dd>` prose, its modal id lives in two files, and its listener
+  delegates the whole score grid from above the class-view guard. A helper covering both shapes would
+  take a slicing strategy, a glyph source and an id source as parameters — three more decisions than
+  either check makes today — to save a few lines, while putting an already-corrected block at risk.
+
+  **Two limits were found in the checking and booked rather than papered over.** Both blocks learn
+  what the code binds by grepping for a literal `=== '…'`, so a key added through a `switch` or an
+  `includes()` is bound and invisible — and the score-grid comment cites its own asserted count as
+  the reason that is tolerable, which is false, because such a key leaves the count exactly where it
+  was (WO-2.35). And both floor themselves against a vacuous pass with the counts of the day they
+  were written, so retiring a key on both sides at once — an edit leaving the two in perfect
+  agreement — turns them red on a correct tree (WO-2.36).
+
 - **WO-8.10 — the About screen says which copy of Planbook this device is running.** After a deploy,
   the only way to learn whether the installed iPad had actually taken the new shell was Safari Web
   Inspector over USB from a Mac — a procedure nobody runs in September, which is how the question

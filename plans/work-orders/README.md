@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.34 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.37 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 32 | 30 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 35 | 31 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **107** | **77** | **2** | `[███████░░░] 72%` |
+| | **110** | **78** | **2** | `[███████░░░] 71%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -404,9 +404,12 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 50 | [WO-2.32](phase-2-attendance.md#wo-232--the-overdue-tone-is-withdrawn-and-the-tint-is-the-alert) The overdue tone withdrawn, the tint is the alert | S | | **Built 2026-08-16; one 👤 line open.** An iPad sitting, nothing to build |
 | 51 | [WO-3.24](phase-3-gradebook.md#wo-324--no-legend-row-in-this-app-has-ever-been-measured-for-spill) No legend row has been measured for spill | S | | Aug 26, half a day |
 | 52 | [WO-2.34](phase-2-attendance.md#wo-234--nothing-compares-the-marking-key-list-with-the-keys-the-screen-answers-to) The marking key list is unchecked against its keys | S | | Aug 26, half a day |
-| 53 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 54 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 55 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 53 | [WO-2.35](phase-2-attendance.md#wo-235--a-key-bound-any-way-but-a-literal-comparison-is-invisible-to-both-key-checks) A key bound any way but a literal comparison is invisible | S | | Aug 27, half a day |
+| 54 | [WO-2.36](phase-2-attendance.md#wo-236--retiring-a-key-correctly-turns-both-key-checks-red) Retiring a key correctly turns both key checks red | S | | Aug 27, half a day |
+| 55 | [WO-2.37](phase-2-attendance.md#wo-237--the-codex-cap-silently-excludes-any-work-order-with-a-slow-acceptance) The Codex cap silently excludes a slow acceptance | S | | Aug 28, half a day |
+| 56 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 57 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 58 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -441,6 +444,55 @@ measurement lands red it will be on WO-3.16's `← →` row, which was already t
 and rewording that row is **in** WO-3.24's scope precisely because it was out of WO-3.22's, which is
 why the follow-up is a row rather than a correction round. The owner's sitting says it will not go
 red; the row exists because "will not" from one pair of widths on one device is not a check.*
+
+*WO-2.35 and WO-2.36 were booked on 2026-08-16 out of WO-2.34's verification and given rows #53 and
+#54 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two; **nothing moved above them**, and
+they take WO-3.24 and WO-2.34's placement argument unchanged — the **cut band**, behind the work order
+that produced them and ahead of the one row in Ship 2 with a deadline the world sets. Neither is a
+defect: both key checks are green and correct on the tree that booked them.*
+
+***They are the two ways a check can be right today and wrong later, and they were deliberately not
+made one work order.*** *WO-2.35 is a check that will **pass when it should fail** — both blocks learn
+what the code binds by grepping for a literal `=== '…'`, so a key added through a `switch`, an
+`includes()` or `e.code` is bound and invisible, and the legend row it needs goes unwritten exactly as
+`↑ ↓` did. WO-2.36 is the same two blocks **failing when they should pass** — the anti-vacuity floors
+are hardcoded to the counts of the day they were written, so retiring a key on both sides at once, an
+edit that leaves the two in perfect agreement, turns them red. One is a hole and the other is a false
+alarm; they touch the same four lines and want opposite things from them, which is the argument for
+reading them together and against folding them.*
+
+***WO-2.35 is the first of the two to cut, and the reason is a sentence rather than a severity.***
+*The score-grid block's comment already names its static-read limit and cites the asserted count as
+the reason it is tolerable — and that citation is **false**: a key added through a `switch` leaves
+`bound.length` exactly where it was, so the floor it points at never moves. A wrong comment at the
+one place a reader goes looking is this project's fifth work order whose deliverable is a true
+sentence, after WO-1.18, WO-3.19, WO-3.20 and WO-2.27. WO-2.36's floors, by contrast, are correct
+until somebody retires a key, and nobody is retiring one this term.*
+
+***Both carry a routing fact in their Traps, and it is new.*** *WO-2.34 was rubricked to Codex and
+re-routed to Claude on arithmetic — `verify-shell.mjs` runs ~262s, and `codex-invoke.mjs`'s hard
+20-minute cap cannot hold four of them plus the reading and the writing. These two inherit that shape:
+mutation-proved acceptance over a slow harness is now a routing constraint, not a preference. It is
+written into each work order rather than only into a dispatch result because that is the whole lesson
+of WO-3.19 and WO-3.20 — **a follow-up that lives only in a dispatch result file is a follow-up
+nothing reads.** The cap itself is WO-2.37, booked the same day and rowed behind them.*
+
+*WO-2.37 was booked on 2026-08-16 out of the same dispatch and given row #55, behind the two work
+orders that hit the cap rather than ahead of them. WO-1.16, WO-3.18 and WO-G2 each moved down one
+more. **It is the third row out of one dispatch and the only one of the three that is not about the
+app's own harness** — it is about the pipeline that dispatches work orders, which is why its `**Ship**`
+field reads `—` on WO-2.20's precedent: tooling sits outside the delivery plan. **It still gets a row,
+and that is deliberate rather than a contradiction.** A work order in neither table is one `next` can
+never reach — the mistake named at WO-1.17 and WO-1.18 — and a known hole with no row is a hole nobody
+schedules.*
+
+***The argument for pulling it forward is real and was not taken.** Fixing the cap first would let
+WO-2.35 and WO-2.36 route on their merits instead of on arithmetic, and the orchestrator has now done
+that multiplication by hand once and will do it twice more. Against: neither of those two is blocked
+by it — a forced route to Claude is a working route — and the two harness rows are the ones with a
+false comment and a false alarm in them, which are defects in what the tree says about itself. **If the
+orchestrator has to do the arithmetic by hand a third time, that is the signal to pull this row
+forward**, not a reason to have placed it first.*
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

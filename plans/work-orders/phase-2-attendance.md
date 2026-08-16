@@ -3326,7 +3326,7 @@ a decision to bring back, not a tidy-up to perform.
 
 ## WO-2.34 — nothing compares the marking key list with the keys the screen answers to
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-3.22 · **Blocks** nothing, and
 that is deliberate — the two agree today, so this is a row to cut if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
 WO-3.12, WO-3.21 and WO-3.24 made.)*
@@ -3369,15 +3369,15 @@ either panel (WO-3.24). If the new check goes red against current code, **that i
 it gets its own work order** — do not fix the app from inside this one.
 
 **Acceptance**
-- [ ] A check compares `#attendanceKeysModal` with the keys the `keydown` listener in `src/shell.js`
+- [x] A check compares `#attendanceKeysModal` with the keys the `keydown` listener in `src/shell.js`
       answers to, and passes on the delivered tree.
-- [ ] Removing a letter from `MARK_KEYS` while its row stays on the list turns it red, naming the
+- [x] Removing a letter from `MARK_KEYS` while its row stays on the list turns it red, naming the
       row — run, not reasoned, with the counts before and during quoted.
-- [ ] Deleting a documented row while its key stays bound turns it red, naming the key — run, not
+- [x] Deleting a documented row while its key stays bound turns it red, naming the key — run, not
       reasoned. **Both directions are proved by mutation or this work order has not landed**, which is
       the single lesson of WO-3.22's correction round.
-- [ ] Renaming the modal id or the `MARK_KEYS` constant turns it red rather than passing vacuously.
-- [ ] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
+- [x] Renaming the modal id or the `MARK_KEYS` constant turns it red rather than passing vacuously.
+- [x] `node tools/verify-shell.mjs` passes whole, with the check count in `tools/README.md` moved in
       step, and `git diff --stat -- src/` is empty across the whole work order.
 
 **Traps** — **`Esc` and `?` are not in `MARK_KEYS` and are correctly documented**, so a check that
@@ -3386,3 +3386,239 @@ row**, the way `Backspace` and `Delete` share `⌫` on the score grid — the ma
 and a key missing from the map must fail rather than skip. **Do not fold a second claim into one
 `check()` call site**: the row order, the prose and the spill are three other questions, and folding
 is the WO-3.15 mistake WO-3.22 declined to repeat.
+
+---
+
+## WO-2.35 — a key bound any way but a literal comparison is invisible to both key checks
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
+that is deliberate — both checks are correct on today's tree, so this is a row to cut if the fortnight
+tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
+WO-3.12, WO-3.21, WO-3.24 and WO-2.34 made.)*
+
+**Not a go-live blocker, and nothing here is a defect.** Booked 2026-08-16 out of WO-2.34's
+verification. Every key either check reads is written as a literal comparison today, so both are
+telling the truth about the tree they are on. **Do not go hunting for an undocumented key; there
+isn't one.** What is missing is the check noticing when a key stops being written that way.
+
+**Why it exists.** Both key-legend checks in `tools/verify-shell.mjs` learn what the code binds by
+grepping for a literal equality: the score-grid block matches `key === '…'` and `letter === '…'`
+inside `handleScoreKey()`, and WO-2.34's marking-screen block matches `e.key === '…'` below the
+class-view guard, plus the quoted letters of `MARK_KEYS`. **A binding written any other way is bound
+and invisible** — a `switch (e.key)` with `case` labels, an `includes()` or `indexOf()` over an array
+that is not `MARK_KEYS`, a `startsWith`, a comparison against `e.code` rather than `e.key`, or a
+lookup object keyed by the key name. The check reads the same number of bound keys it read yesterday,
+finds every one of them on the legend, and passes — while the legend is missing the row for the key
+that was just added. That is precisely the failure WO-3.22 was written to stop, arriving through a
+door WO-3.22 left open.
+
+**The limit is known and written down, which is what makes this a row rather than a defect.** The
+score-grid block's own comment names it — *"A comparison written any other way arrives here as a key
+this block cannot see, which is the honest limit of a static read and the reason the count below is
+asserted rather than assumed."* WO-2.34 inherited the shape deliberately. **But the second half of
+that sentence does not hold, and that is the finding.** The asserted count is a floor —
+`bound.length >= 8` on the score grid, `>= 9` on the marking screen — and a key added through a
+`switch` does not lower it. `bound.length` stays exactly where it was, the floor passes, and nothing
+goes red. The floors catch a regex that stops matching *everything*; they cannot catch a regex that
+matches everything it used to and misses only the new thing. **A mitigation that does not cover the
+case it is cited for is worse than none**, because the comment stops the next reader looking.
+
+**Deliverables**
+- **A decision on how wide the binding read should be**, written into the harness comment where the
+  next reader hits it: widen the pattern to the forms a hand actually reaches for here, or assert the
+  *absence* of the forms it cannot read, or both. Either is acceptable; leaving it unsaid is not.
+- **Whichever is built, it covers both blocks** — the score grid's and the marking screen's. The two
+  were deliberately kept separate by WO-2.34 and that decision stands; covering both does not mean
+  merging them.
+- **A floor that a new invisible binding actually trips**, if the chosen answer is the assert-the-
+  absence one. A grep that finds `switch (e.key)` in the listener and fails, naming it, is a check;
+  a comment saying not to write one is not.
+- **The `e.code` case decided by name.** It is the one form on the list that is not a stylistic
+  variant — it reads a different property with different values, and a check widened to spell it
+  wrong would be worse than one that admits it cannot see it.
+
+**Out of scope** — merging the two blocks into a shared helper (WO-2.34 decided that and gave its
+reasoning), rewording either legend, and adding or removing any binding. If widening the read turns
+either check red against current code, **that is a defect found and it gets its own work order.**
+
+**Acceptance**
+- [ ] Both key checks are covered — score grid and marking screen — and both still pass on the
+      delivered tree.
+- [ ] Adding a binding in a form the pre-work-order check could not see, with no legend row added,
+      turns a check red and names it — run, not reasoned, with the counts before and during quoted.
+      **This is the whole work order**; a green run proving nothing changed is not evidence.
+- [ ] The existing mutations still work: removing a bound key while its row stays, and deleting a row
+      while its key stays bound, both still go red on both blocks. Run at least one of the four.
+- [ ] The decision is written in the harness comment, and the score-grid comment's claim about the
+      asserted count is corrected or removed — it is currently false.
+- [ ] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
+      if a call site was added, and `git diff --stat -- src/` is empty across the whole work order.
+
+**Traps** — **The floors are not the mitigation and the comment says they are.** Read WO-2.34's
+result and this work order's third paragraph before trusting either block's comment on this point.
+**Do not widen the pattern by guessing**: a regex that matches a form nobody writes here costs a
+reader's time forever and catches nothing. **`e.code` is a different property, not a different
+spelling** — `e.code === 'KeyP'` where `e.key === 'P'`, and a map that conflates them documents a
+key the app does not bind. **Acceptance needs at least two full harness runs at ~4.5 minutes each**,
+which is a routing fact before it is an implementation one.
+
+---
+
+## WO-2.36 — retiring a key correctly turns both key checks red
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
+that is deliberate — no key is being retired today, so this is a row to cut if the fortnight tightens
+**Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
+WO-3.12, WO-3.21, WO-3.24 and WO-2.34 made.)*
+
+**Not a go-live blocker, and nothing here is a defect.** Booked 2026-08-16 out of WO-2.34's
+verification. Both checks are green and correct on today's tree. This is about what they do on a
+*future* correct tree.
+
+**Why it exists.** Both key checks floor themselves against a vacuous pass with hardcoded counts
+taken from the tree the day they were written — `bound.length >= 8 && glyphs.length >= 8 &&
+rows.length >= 7` on the score grid, `>= 9 && >= 9 && >= 8` on the marking screen. The floors exist
+for a real reason and it is the right reason: **empty agrees with everything**, so a renamed modal
+id, a renamed constant or a regex that quietly stops matching all produce two empty lists that
+compare equal, and the check passes while measuring nothing. WO-3.22 and WO-2.34 both had to prove
+that floor by mutation.
+
+**But the floor also fires on the one edit that is entirely correct.** Retire a key — take `D` out of
+`MARK_KEYS` *and* delete its row from the legend, leaving the two sides in perfect agreement — and
+`bound.length` is 8, `rows.length` is 7, and the check goes **red on a correct tree**. The two
+directions it exists to police are both satisfied; only the floor objects. The same is true of the
+score grid.
+
+**What that costs is the floor itself, not a morning.** The person who retires that key sees red,
+reads the failure, finds the tree is right, and edits the number down. **A floor that is edited every
+time it fires is a floor nobody defends** — the next reader has already been taught it is a
+formality, and the pass it is guarding against is exactly the one that arrives looking like a
+formality. This is the same erosion WO-3.22's `stray` line suffered in a different form: a guard that
+answers the wrong question is not a guard, and a guard the procedure says to edit is on the way to
+being one.
+
+**The tension is the work, and it does not have a free answer.** A floor derived from the thing it is
+guarding is vacuous again — count the legend rows and assert the bound keys match that count, and a
+lost modal id empties both sides and passes. So the fix is not "make it dynamic." It is a decision
+about **where an independent expected count can honestly come from**, or an admission that it cannot
+and the number stays hand-maintained with the failure made legible enough that moving it is a
+considered edit rather than a reflex.
+
+**Deliverables**
+- **A decision, written into the harness comment**, on whether each floor becomes an independently
+  sourced count, stays a hand-maintained constant, or is replaced by a different anti-vacuity guard
+  entirely — the id being *found*, the slice being non-empty, the regex having matched at all. Note
+  that the third option may make the counts unnecessary rather than accurate, which would be the
+  cleanest answer if it holds.
+- **Whatever replaces them keeps the vacuity mutations red.** The three WO-3.22 proved and the three
+  WO-2.34 proved are the regression set; a floor that is easier to move must not be easier to walk
+  past.
+- **A failure message that tells the reader which case they are in** — the tree drifted, or a key was
+  retired and the expected count is owed a move. Today both read as the same red.
+- **Both blocks**, score grid and marking screen. Not merged; WO-2.34 decided that.
+
+**Out of scope** — merging the two blocks, retiring any actual key, rewording either legend, and
+WO-2.35's separate question of *which* bindings the read can see at all. The two rows touch the same
+lines and should be read together, but a floor that counts the wrong keys correctly is a different
+fault from a count that is right and inconvenient.
+
+**Acceptance**
+- [ ] Retiring a key on both sides at once — removed from the binding **and** its legend row deleted,
+      leaving them in agreement — leaves the check **green** on at least one of the two blocks.
+      Run, not reasoned. This is the case that fails today.
+- [ ] A renamed modal id, a renamed `MARK_KEYS`, and a regex that matches nothing each still turn the
+      relevant check red rather than passing vacuously — run at least two of the three, on the block
+      that was changed, with counts quoted.
+- [ ] Both blocks carry the decision in their comment, in the words the next reader needs rather than
+      a reference to this work order.
+- [ ] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
+      if a call site was added, and `git diff --stat -- src/` is empty across the whole work order.
+
+**Traps** — **Do not derive the floor from the list it guards.** That is the vacuity the floor exists
+for, arriving through the fix. **The retire-a-key mutation must touch both sides**, or it is
+WO-2.34's Acceptance line 2 again rather than this work order's line 1 — the point is a tree where
+the two sides *agree* and the check still objects. **Revert every mutation before the next and
+confirm it with `git diff`**, not by remembering. **Acceptance needs three or more full harness runs
+at ~4.5 minutes each**, which is a routing fact before it is an implementation one.
+
+---
+
+## WO-2.37 — the Codex cap silently excludes any work order with a slow acceptance
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `codex-invoke.mjs` and
+`ROUTING.md` both exist today · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19 and
+WO-2.20 made.)*
+
+**Not a go-live blocker, and the runner is not broken.** Booked 2026-08-16 out of WO-2.34's dispatch.
+`codex-invoke.mjs` works; its probe passed that day (`SMOKE OK`, exit 0). **Do not go looking for a
+fault in the runner; there isn't one.** What is missing is anybody being told about a limit that
+decides routes.
+
+**Why it exists.** WO-2.34 was rubricked to **Codex** on the merits — spec complete inside the work
+order, a byte-level precedent ninety lines up the same file, acceptance proved by mutation rather
+than by eye, `src/` out of scope entirely. It was re-routed to Claude on **arithmetic**:
+`verify-shell.mjs` was measured at 264s on that tree, its Acceptance needed one clean run plus three
+mutation runs, and ~17.6 minutes of that leaves nothing inside `INVOKE_TIMEOUT_MS` — `20 * 60 * 1000`
+at `tools/codex-invoke.mjs`, a hard cap — for reading the precedent or writing the check. The route
+was decided correctly. **The problem is that it was decided by hand, once, by an orchestrator that
+happened to do the multiplication.**
+
+**`ROUTING.md`'s rubric has no input for it.** Every question the rubric asks is about the *work* —
+is the spec complete, is there a precedent, is the acceptance mechanical, does it touch design. None
+of them asks how long proving it takes. So the cap does not appear in the routing decision at all; it
+appears, or fails to appear, depending on whether the person routing thinks of it unprompted. **Two
+more work orders that hit this cap were booked the same day** — WO-2.35 and WO-2.36 both need two to
+three full harness runs, and both carry the arithmetic in their Traps because there was nowhere else
+to put it. Writing the same fact into every future work order by hand is the state this row exists to
+end.
+
+**The failure it produces is not a slow run, and this is the sharp end.** `runCodex()` passes
+`timeout` to `spawnSync`, which **SIGTERMs the child** when it expires. Anything the run has already
+written to the tree stays written. And the work orders this cap excludes are precisely the ones whose
+method is *mutate · run · revert* — so the run most likely to be killed is the one holding a
+deliberate mutation in `index.html` or `src/` at the moment it dies. **That is not a failed check; it
+is a broken app with nobody watching**, discovered whenever somebody next reads a diff. WO-2.34's
+brief named this risk in as many words and routed around it. Nothing in the tree names it.
+
+**Deliverables**
+- **The constraint written into `ROUTING.md`'s rubric as an input**, in the form the rubric already
+  uses — harness runtime × runs the Acceptance demands, against the cap — so it is asked rather than
+  remembered.
+- **A decision on `INVOKE_TIMEOUT_MS` itself, with its reasoning**: raised, made per-invocation so a
+  caller can buy what a work order needs, or deliberately left at twenty minutes with the route
+  forced. Any of the three is acceptable. Leaving the number unexamined now that it is known to
+  decide routes is not.
+- **Something that states the exclusion rather than leaving it to be rediscovered.** A refusal before
+  the run starts is worth more than a SIGTERM seventeen minutes in; if that is judged not worth
+  building, write why where the orchestrator reads it.
+- **The mid-run kill's effect on the tree, stated at `INVOKE_TIMEOUT_MS`.** The constant currently
+  reads as a patience setting. It is also the thing that decides whether a half-applied mutation gets
+  left behind, and the comment above it should say so.
+
+**Out of scope** — re-routing any work order already dispatched, changing what `verify-shell.mjs`
+measures or how long it takes, and the two key-check rows this was booked beside (WO-2.35, WO-2.36).
+If the honest answer is that the cap stays and some work orders simply route to Claude forever, that
+is a finding to write down, not a failure to fix.
+
+**Acceptance**
+- [ ] `ROUTING.md`'s rubric asks about the cost of proving the work, not only about the work, and a
+      reader routing a mutation-proved work order is led to the multiplication rather than expected
+      to invent it.
+- [ ] The `INVOKE_TIMEOUT_MS` decision is written down with its reasoning, whichever way it went.
+- [ ] The comment at `INVOKE_TIMEOUT_MS` says what expiry does to the working tree — SIGTERM, and
+      whatever the run had already written stays written.
+- [ ] If a pre-flight refusal was built, it refuses a dispatch whose stated run budget exceeds the
+      cap and says so in one line — demonstrated, not described. If it was not built, the reasoning
+      is written where the orchestrator reads it.
+- [ ] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty — this work order
+      touches tooling and prose only.
+
+**Traps** — **The runner is not the subject.** The probe passed; a work order that ends up
+"investigating Codex" has gone somewhere else. **Do not raise the cap to a number that makes the
+symptom go away** — four harness runs fit in forty minutes and five do not, and the next slow
+acceptance is a bigger number again; the deliverable is that the constraint is *visible*, whatever it
+is set to. **A dispatch that times out is not a route that failed**, and the report should not read
+like one. **This is the third row booked out of one dispatch** — read WO-2.35 and WO-2.36 first, and
+note that both of them are among the work orders this cap would exclude.

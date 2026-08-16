@@ -3694,6 +3694,77 @@ against an absence.
 
 ---
 
+### WO-2.34 — nothing compares the marking key list with the keys the screen answers to
+
+**What this changes for a teacher: nothing.** Harness-only, WO-3.22's sibling one screen over —
+booked out of that work order's own implementation, both sides read the same day and **found in
+agreement**. `#attendanceKeysModal` in `index.html` documents `↓ ↑`, `P`, `T`, `A`, `E`, `D`, `Esc`
+and `?`; the keydown listener in `src/shell.js` holds `MARK_KEYS` beside the ArrowDown/ArrowUp,
+Escape and `?` branches of the same function. There was no missing key — only the absent comparison
+that would have caught one.
+
+**It is the same claim and not the same check.** Four structural facts kept this from being a
+copy of the block beside it: the legend nests several `<div>` levels deep, so the row slice reads a
+matching `</dl>` rather than the first `</div>`, which would truncate at the end of the first row; a
+glyph turns up a second time inside one row's own `<dd>` prose (`↓`, in *"the first ↓ picks up the
+top name"*), so glyphs are read out of each row's `<dt>` alone; the modal id is spelled twice in the
+tree (the attribute in `index.html`, `KEYS_MODAL` in `src/shell.js`), and this check reads the id's
+value out of `src/shell.js` rather than typing it a second time, so a rename on either side alone
+leaves the other unable to find the legend; and the listener delegates the score grid's entire
+binding set from inside itself, above the guard this check's slice starts at, so that set is
+invisible here on purpose.
+
+- [x] **A check compares the legend with the keys the listener answers to, and passes on the
+      delivered tree.** `800 checks · 800 passed · 0 failed · 0 skipped`, 21,531 lines, 26.9 lines
+      per check, 261s (re-run: 262s) — the new line reads *"9 key(s) answered below the class-view
+      guard [ArrowDown ArrowUp Escape ? P T A E D] against 8 legend row(s) carrying [↓ ↑ P T A E D
+      Esc ?]"*.
+- [x] **Removing a letter from `MARK_KEYS` while its row stays turns it red, naming the row — run,
+      not reasoned.** `'D'` dropped from `MARK_KEYS`, Dismissed row untouched: `800 checks · 796
+      passed · 4 failed · 0 skipped`, 260s, this check first — *"ON THE LEGEND AND NOT BOUND: D"* —
+      and three more red downstream, because unlike WO-3.22's `↑` a marking letter is load-bearing:
+      the mutation did not just untrain a check, it took a key a teacher actually presses off the
+      grid. Reverted; `git diff -- src/shell.js` empty.
+- [x] **Deleting a documented row while its key stays bound turns it red, naming the key — run, not
+      reasoned.** The Tardy row deleted from `index.html`, `T` left in `MARK_KEYS`: `800 checks ·
+      798 passed · 2 failed · 0 skipped`, 261s, this check reading *"BOUND AND NOT ON THE LEGEND: T
+      (T)"* and a second, pre-existing check (the `?`-opens-the-list reading) independently noticing
+      the same row gone from the rendered modal. Reverted; `git diff -- index.html` empty.
+- [x] **Renaming the modal id or the `MARK_KEYS` constant turns it red rather than passing
+      vacuously.** The `id` attribute on `#attendanceKeysModal` renamed in `index.html` alone,
+      `KEYS_MODAL` in `src/shell.js` left unchanged — run through the full harness: `800 checks ·
+      797 passed · 3 failed · 0 skipped`, 262s, this check reading *"0 legend row(s) carrying []"*
+      and naming all nine keys `BOUND AND NOT ON THE LEGEND` rather than passing on an empty
+      comparison. Reverted; `git diff -- index.html` empty. Renaming the `MARK_KEYS` identifier
+      itself was checked against the extracted slicing-and-mapping logic run standalone in Node
+      rather than through a fourth full harness pass — the routing budget was three mutation runs
+      plus the clean one, already spent above — and read the letters `stray` with none of them
+      `bound`, the exact shape the floor exists to catch. That reasoning is recorded rather than a
+      browser run; see `.claude/dispatch/WO-2.34-result.md`.
+- [x] **`node tools/verify-shell.mjs` passes whole**, with the call-site count in `tools/README.md`
+      moved 802 → 803 (`wo-sweep.mjs` asserts it), and `git diff --stat -- src/` empty across the
+      whole work order — confirmed after every mutation above, not just at the end.
+
+**One shared check or two, decided rather than left silent: kept as two.** The four facts above are
+not cosmetic — a different slice strategy, a different glyph source, a second file read for the id,
+and a listener body bounded by a guard's literal text rather than a function's own braces. A helper
+general enough for both shapes would take a slicing strategy, a glyph source and an id source as
+parameters, three more decisions than either check makes today, to save a few lines of structural
+duplication — at the cost of putting WO-3.22's already-corrected block at risk. The reasoning is
+written into the harness comment beside the new block, not just here.
+
+**`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — WO-3.22's corrected clause at
+`tools/verify-shell.mjs:281-287`, copied to this second legend rather than shared with it, for the
+reason just above. Asking the map instead of the listener is the defect WO-3.22 shipped and had to
+correct; asking `bound` is what lets a row go stray when the key that justified it is gone.
+
+*Desk pass, delivered tree:* `verify-shell.mjs` **800 of 800, 0 failed, 0 skipped**, 21,531 lines,
+26.9 lines per check, 261s (measured twice, 262s the second time). `wo-sweep.mjs` **20 checks · 18
+passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing pair, naming exactly the lines
+they named before this landed.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*
