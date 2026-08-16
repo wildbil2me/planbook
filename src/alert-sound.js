@@ -80,13 +80,28 @@ const ICON_OFF = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>'
 
    It differs per device on purpose, like `presentationMode`: the iPad in the teacher's hand is the
    one that has to make a noise, and the laptop wired to the projector may well be the one that must
-   not. */
+   not.
+
+   IT IS OPT-IN SINCE 2026-08-16, AND THE KEY WAS RENAMED TO MAKE THAT STICK. The owner withdrew the
+   tone on every device after four 👤 sittings failed to make it sound reliably on the teaching iPad
+   — see TESTING.md § WO-2.31. The read below is `=== true` rather than `!== false`, so a browser
+   that has never touched the switch is SILENT; and the key moved from `soundsOn` to `alertSoundOn`
+   because the old one is PERSISTED, and a device holding a stored `true` would have gone on chiming
+   through a default flip alone. A stale `planbook_soundsOn` is left behind rather than deleted:
+   src/prefs.js owns the prefix, the value is a boolean about a speaker, and a removePref() written
+   for one orphan is more surface than the orphan costs.
+
+   NOTHING ELSE ABOUT THE ALERT MOVED. The tint, the announcement and the level written on the pass
+   are all upstream of this and are exactly what they were with the sound on — the check at
+   tools/verify-shell.mjs's "with the sound off the tone is not played" is the one that says so. The
+   speaker in the header still turns it on for a device, which is what keeps this a withdrawal rather
+   than a deletion: WO-2.29's and WO-2.31's machinery is all still here and still under test. */
 export function soundsOn() {
-  return getPref('soundsOn') !== false;
+  return getPref('alertSoundOn') === true;
 }
 
 export function setSoundsOn(on) {
-  setPref('soundsOn', !!on);
+  setPref('alertSoundOn', !!on);
   return soundsOn();
 }
 
@@ -120,7 +135,8 @@ export function setSoundsOn(on) {
    WO-2.11 scar — and playToneSequence()'s scheduling loop below is still line for line. It is only
    the unlock that changes.
 
-   WHAT REPLACES IT. Four rules, each load-bearing:
+   WHAT REPLACES IT. Five rules, each load-bearing — four from the correction, and the fifth from
+   WO-2.31, which is the door the correction left open rather than a fault in it:
 
      ONE CONTEXT, BORN IN A GESTURE. The first touch, click or keypress constructs it, and
      unlockAudio() is the only place in this file that constructs one at all.
@@ -138,6 +154,12 @@ export function setSoundsOn(on) {
      output on WebKit, which is this whole file's scar: a context reading `running` after an
      interruption is exactly the thing that cannot be trusted, and the cheapest correction available
      is the teacher's next touch resuming it from inside a gesture.
+     AND A WAY BACK FROM THE INTERRUPTIONS `visibilitychange` NEVER SEES (WO-2.31). That event is
+     the right hook for a suspend and the only one the correction had; an iOS interruption that
+     leaves the app FOREGROUNDED fires it not at all. So the context's own `statechange` re-arms
+     and resumes as well, and any tone asked for on a context that is not `running` re-arms before
+     it schedules. contextStateChanged() below argues both, and neither of them makes the re-arm
+     above conditional — that rule is untouched.
 
    THE EVENTS: `touchstart` (the iPad, and Roll Call!'s own), `pointerdown` (the laptop, where there
    is no touchstart), and `keydown` (a teacher driving the app from the keyboard would otherwise
@@ -153,6 +175,25 @@ let contextsMade = 0;
 let contextOrigin = 'none';
 let armed = false;
 
+/* WO-2.31's three counters, and they are COUNTS RATHER THAN FLAGS because what a check has to be
+   able to say is that a state change HAPPENED, not that one is in progress: an interruption this
+   module recovers from in twenty milliseconds leaves nothing behind in `state`, and a fixture that
+   could only read `state` would be asserting against a window it has to win a race to see.
+
+     `interruptions` — times the held context has been seen leaving `running`.
+     `recoveries`    — times it has come back to `running` after one of those. It does NOT say who
+                       resumed it: this module's own try, the teacher's next touch and the wake-up
+                       below all land here, and `wakeResumes` and `armed` are how they are told
+                       apart.
+     `wakeResumes`   — resumes attempted from `visibilitychange`, which is the one path this work
+                       order is about NOT needing. A check that wants to prove a recovery happened
+                       without the app being backgrounded and returned proves it by watching this
+                       number stand still. */
+let interruptions = 0;
+let recoveries = 0;
+let wakeResumes = 0;
+let interruptedSince = false;
+
 /* THE ONLY CONSTRUCTOR CALL IN THIS FILE, and it runs from a user-input listener or not at all.
    Idempotent on purpose: one touch fires pointerdown and touchstart both, and a page that has
    already unlocked should get a resume out of this rather than a second context. */
@@ -162,6 +203,9 @@ function unlockAudio() {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       contextsMade += 1;
       contextOrigin = 'gesture';
+      /* WO-2.31, and it is registered HERE because this is the only place a context comes into
+         existence — one context, one listener, and no way for a second registration to arrive. */
+      if (audioCtx.addEventListener) audioCtx.addEventListener('statechange', contextStateChanged);
     }
     if (audioCtx.state === 'running') { disarm(); return; }
     /* Not awaited, and it does not need to be: the tones are scheduled on the context's own clock,
@@ -193,6 +237,56 @@ function disarm() {
   });
 }
 
+/* ── THE INTERRUPTION `visibilitychange` CANNOT SEE (WO-2.31) ──
+
+   THE DOOR THE CORRECTION ABOVE LEFT OPEN, and it is the failure WO-2.29 was written to fix
+   arriving by another route. `visibilitychange → visible` is the right hook for a SUSPEND: the app
+   went away and came back. AN iOS AUDIO INTERRUPTION THAT LEAVES THE APP FOREGROUNDED FIRES NO
+   `visibilitychange` AT ALL — an incoming call, a FaceTime request, an alarm. The session is taken
+   away, the held context is left interrupted, and with the page never hidden nothing re-arms and
+   nothing resumes. The next overdue alert schedules its oscillators onto a dead context and the
+   room hears nothing. It does not self-heal either: the audio stays dead until the app is
+   backgrounded and returned, or reloaded.
+
+   WHY THE CONTEXT'S OWN `statechange`, WHICH IS A CHOICE THE WORK ORDER LEFT OPEN. It named three
+   candidates — this, `focus`/`blur` on the window, and re-arming at alert time — and the third is
+   below in playToneSequence() because the work order requires it to exist whatever else does. This
+   is the first because it is the event the platform emits FOR this: WebKit moves the context to
+   `interrupted` and fires it on the object that changed, so the signal is exactly as wide as the
+   thing being watched. `focus`/`blur` fires for a dozen things that are not audio — a tap in the
+   address bar, a share sheet, a passcode screen — and is not guaranteed for an interruption banner
+   that never takes focus away, so it would be both noisier and less accurate.
+
+   AND IT NEEDS NO ORDERING GUARANTEE, which the two `visibilitychange` listeners below and in
+   src/attendance.js do. This one is registered on the CONTEXT and shares its target with nothing
+   in the app, so there is no registration order to get right and no import order that can silently
+   reverse it.
+
+   IT ARMS FIRST AND RESUMES SECOND, and that order is the load-bearing part. The re-arm is the
+   half that is certain to work — the teacher's next touch anywhere resumes the context from inside
+   a gesture, which is the only kind of resume this device has been seen to settle (probe 1 against
+   probe 3) — and the resume() is the cheap optimistic try that costs a promise nobody is holding
+   if it hangs the way probe 3's did.
+
+   AND IT STAYS ARMED AFTERWARDS, EVEN WHEN THE RESUME SAYS IT WORKED. That reads like a missing
+   disarm() and it is the fourth rule of the unlock block applied here: `running` is not evidence
+   of output on WebKit, and a context reading `running` after an interruption is precisely the
+   thing this file has learned not to trust. The arm costs three passive listeners and the next
+   touch clears it through unlockAudio(); trusting the state costs the room an alert. */
+function contextStateChanged() {
+  if (!audioCtx) return;
+  if (audioCtx.state !== 'running') {
+    interruptions += 1;
+    interruptedSince = true;
+    arm();
+    if (audioCtx.resume) {
+      try { audioCtx.resume().then(() => {}, () => {}); } catch (e) {}
+    }
+    return;
+  }
+  if (interruptedSince) { interruptedSince = false; recoveries += 1; }
+}
+
 arm();
 
 /* THE WAY BACK FROM A SUSPEND. It resumes the one context and re-arms; it constructs nothing, which
@@ -208,6 +302,9 @@ arm();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   if (audioCtx && audioCtx.state !== 'running' && audioCtx.resume) {
+    /* WO-2.31: counted, and counted HERE rather than at the resume, so that a check can prove a
+       recovery happened WITHOUT this path by watching the number stand still. */
+    wakeResumes += 1;
     try { audioCtx.resume().then(() => {}, () => {}); } catch (e) {}
   }
   arm();
@@ -235,6 +332,13 @@ document.addEventListener('visibilitychange', () => {
    `ctx` up by one each time; a held one reads its whole age in seconds and never moves the count.
    That is the fingerprint of the falsified build, and it is what alertAudioState() is read against.
 
+   AND SINCE WO-2.31 EACH ENTRY CARRIES `rearmed`, which is the one thing that separates two silences
+   that look identical from outside: a tone scheduled onto a context that is not `running` with the
+   gesture listener re-armed is WAITING FOR A TOUCH, and the same tone with nothing re-armed is DEAD.
+   alertAudioState() carries the other half — `interruptions`, `recoveries` and `wakeResumes`, so
+   that a recovery which happened without the app being backgrounded and returned can be told from
+   one that only happened because it was.
+
    Capped, and read-only from outside. Nothing in the app reads it — src/shell.js's window.planbook
    entry says why a seam is allowed to exist here at all. */
 const LOG_CAP = 12;
@@ -254,6 +358,12 @@ export function alertAudioState() {
     state: audioCtx ? audioCtx.state : 'none',
     currentTime: audioCtx ? Math.round(audioCtx.currentTime * 1000) / 1000 : 0,
     armed: armed,
+    /* WO-2.31. Three counts of things that have already happened, kept because a state that was
+       restored twenty milliseconds ago reads identically to one that was never disturbed — see
+       where they are declared for what each one does and does not claim. */
+    interruptions: interruptions,
+    recoveries: recoveries,
+    wakeResumes: wakeResumes,
   };
 }
 
@@ -281,12 +391,32 @@ function record(entry) {
 */
 function playToneSequence(notes) {
   let made = 0;
+  let rearmed = false;
   const ctx = audioCtx;
-  if (!ctx) return { oscillators: 0, state: 'locked', ctx: contextsMade, ctxTime: 0, error: '' };
+  if (!ctx) {
+    return { oscillators: 0, state: 'locked', ctx: contextsMade, ctxTime: 0, rearmed: false, error: '' };
+  }
   try {
-    /* Cheap, unawaited, and on a context that was born in a gesture — which is the one kind whose
-       resume() the device has been seen to settle (probe 1 against probe 3). */
-    if (ctx.state !== 'running' && ctx.resume) { try { ctx.resume().then(() => {}, () => {}); } catch (e) {} }
+    /* THE CHEAP FALLBACK, AND IT IS THE ONE WO-2.31 REQUIRES TO EXIST WHATEVER ELSE DOES. Whatever
+       left the context in this state — an interruption whose `statechange` never arrived, a
+       resume() that hung the way probe 3's did, a platform with neither — a tone asked for on a
+       context that is not `running` RE-ARMS THE GESTURE LISTENER, so the teacher's next touch
+       anywhere resumes it from inside a gesture. THE COST OF THAT IS ONE MISSED ALERT RATHER THAN
+       A DEAD FEATURE: this tone may well go onto no output, and the next one will not.
+
+       AND THE RE-ARM IS RECORDED RATHER THAN ONLY DONE. A silent alert has two causes a room
+       cannot tell apart and a log must — `rearmed: true` beside a state that is not `running` says
+       "waiting for a touch", and its absence says "dead". That is the distinction this entry
+       already draws between `silenced` and `locked`, asked of a third case.
+
+       The resume() below is unchanged and still cheap and unawaited, on a context that was born in
+       a gesture — the one kind whose resume() the device has been seen to settle (probe 1 against
+       probe 3). It is the optimistic half; the arm is the half that cannot fail. */
+    if (ctx.state !== 'running') {
+      arm();
+      rearmed = true;
+      if (ctx.resume) { try { ctx.resume().then(() => {}, () => {}); } catch (e) {} }
+    }
     const t0 = ctx.currentTime;
     notes.forEach((n) => {
       const start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
@@ -300,10 +430,13 @@ function playToneSequence(notes) {
       made += 1;
     });
     return { oscillators: made, state: ctx.state, ctx: contextsMade,
-      ctxTime: Math.round(t0 * 1000) / 1000, error: '' };
+      ctxTime: Math.round(t0 * 1000) / 1000, rearmed: rearmed, error: '' };
   } catch (e) {
+    /* `rearmed` rides the error arm too: a context that threw on createOscillator() is the deadest
+       shape there is, and whether the next touch has been given a way to fix it is exactly what a
+       reader of this entry needs to know. */
     return { oscillators: made, state: 'unavailable', ctx: contextsMade, ctxTime: 0,
-      error: (e && e.name) || 'Error' };
+      rearmed: rearmed, error: (e && e.name) || 'Error' };
   }
 }
 
@@ -354,13 +487,17 @@ export function playOverdueAlert(level) {
      check can assert it without ears: how many notes, what the first one is, and how loud. */
   const shape = { level: want, notes: notes.length, first: notes[0].f, peak: notes[0].gain || 0.32 };
   if (!soundsOn()) {
+    /* `rearmed: false` and not the live `armed`, which are two different facts: this says THIS
+       ALERT did not have to reach for the listener, and a muted one never does — it never asks the
+       context for anything. alertAudioState() is where the live arm is read. */
     record(Object.assign(shape, { played: false, oscillators: 0, state: 'silenced',
-      ctx: contextsMade, ctxTime: 0, error: '' }));
+      ctx: contextsMade, ctxTime: 0, rearmed: false, error: '' }));
     return false;
   }
   const ran = playToneSequence(notes);
   record(Object.assign(shape, { played: true, oscillators: ran.oscillators,
-    state: ran.state, ctx: ran.ctx, ctxTime: ran.ctxTime, error: ran.error }));
+    state: ran.state, ctx: ran.ctx, ctxTime: ran.ctxTime, rearmed: ran.rearmed,
+    error: ran.error }));
   return !ran.error && ran.oscillators > 0;
 }
 

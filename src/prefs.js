@@ -148,8 +148,16 @@ export const PREF_DEFAULTS = {
      stays silent after the test is over, which is the failure mode; forgetting it would mean the
      sound coming back on its own mid-period, which is the other one. The muted speaker in the
      header is what pays for the choice — the state is on the glass rather than in a settings screen
-     nobody opens. src/alert-sound.js is the only reader and owns the control that writes it. */
-  soundsOn: true,
+     nobody opens. src/alert-sound.js is the only reader and owns the control that writes it.
+
+     WITHDRAWN 2026-08-16, AND THAT IS WHY THE KEY IS `alertSoundOn` AND THE DEFAULT IS `false`.
+     Four 👤 sittings could not make the tone sound reliably on the teaching iPad (TESTING.md
+     § WO-2.31), so the owner took it off every device until the diagnosis is finished. The rename is
+     load-bearing rather than cosmetic: the paragraph above is right that this is persisted, which
+     means a device holding a stored `true` under the old `soundsOn` key would have kept chiming
+     through a default flip. It falls back to this default instead. The header speaker still turns it
+     on per device, so this is a withdrawal and not a deletion. */
+  alertSoundOn: false,
 
   /* Which assignments this browser has answered "Not now" to on the past-due prompt (WO-3.6):
      { "a_3f9a1b2c4d": true }. An empty object means it has never been dismissed for anything.

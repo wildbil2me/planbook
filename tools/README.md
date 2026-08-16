@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 788 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 792 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1001,6 +1001,47 @@ rather than described. **The other three stay green on the unfixed build and are
 fixture is the same either way, and the two after it drive a class that the defensive restore arm has
 just put back — check 4 reads `archived = true` on both builds, for opposite reasons. A block where
 all five went red would be a block asserting one thing five times.
+
+**WO-2.31 moved it from 788 to 791**: three literal call sites inside that same WO-2.9 hall-pass
+block, none in a loop and none a failure arm, so the block contributes three executed results and
+**the run prints 788**, measured on the delivered tree: `788 checks · 788 passed · 0 failed · 0
+skipped`, 21,003 lines, 26.7 lines per check, 258s. **They are the first checks in this file that
+drive an alert with neither a `visibilitychange` nor a click in front of it**, and that refusal is
+the block rather than a detail of it: every other wind in the section arrives through `wakeUp()`,
+which is the path WO-2.29's correction already covered, and a click is a gesture that would recover
+the context through the unlock. What is left to drive the tick is `src/attendance.js`'s own
+one-second pass clock, polled for. **The interruption is real and it is delivered from outside the
+app.** `src/alert-sound.js` describes its context rather than handing it over — deliberately, so
+that a harness cannot resume or close the thing it is measuring — so the object is caught where it
+is made instead, by a `Proxy` on `window.AudioContext` installed with
+`Page.addScriptToEvaluateOnNewDocument` before the first navigation. The module reads the same
+global, calls the same constructor and gets back a context it made itself; nothing in `src/` knows
+the proxy exists, and the checks assert the two halves hold the SAME object rather than assuming it
+— the module's own `interruptions` count has to move when the harness suspends it. **The second leg
+reproduces the device's own worst case rather than a convenient one**: on the iPad, `resume()` on an
+interrupted context neither resolved nor rejected (`TESTING.md` § WO-2.29, probe 3), so the leg
+replaces the instance's `resume()` with a promise that never settles and the context stays down
+deterministically instead of for the twenty milliseconds a laptop takes to recover. That is what
+makes *"the tone was scheduled onto a context that is not running, and the listener was re-armed"* a
+reading rather than a race. **The fixture costs the section nothing**: the student is cancelled back
+in rather than returned, so `passes` is byte-identical across the block and the history checks below
+read the log they always read — asserted, not assumed.
+
+**WO-2.32 moved it from 791 to 792**: one literal call site, not in a loop and not a failure arm,
+added inside that same WO-2.9 hall-pass block, so it contributes one executed result and **the run
+prints 789**, measured on the delivered tree: `789 checks · 789 passed · 0 failed · 0 skipped`,
+21,033 lines, 26.7 lines per check, 258s. **The one check is a default, and the tap beside it is
+why the other nine did not quietly stop measuring.** The owner withdrew the overdue tone on every
+device on 2026-08-16 (`TESTING.md` § WO-2.31), so `src/prefs.js` defaults `alertSoundOn` to false
+and `src/alert-sound.js` reads it as `=== true`. Left alone, that default would have taken the
+seven checks in this block that assert `played: true` and a count of oscillators and turned every
+one of them green against `"state":"silenced"` — an absence passing, which is the failure this
+whole file is written against. **It was watched happening**: the run before the fixture tap read
+`789 checks · 781 passed · 7 failed`, and all seven reported `silenced`. So the fixture asserts the
+default first, on a browser that has not been touched, and then taps the speaker on — the machinery
+is still shipped, still has to work the moment a teacher turns it on, and is still measured here.
+The assertion has to come before the tap for the obvious reason: afterwards there is nothing in this
+section that could tell a withdrawn default from a restored one.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

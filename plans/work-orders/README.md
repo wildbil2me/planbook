@@ -168,7 +168,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | Phase | Work orders | Done | Status |
 |---|---|---|---|
 | 1 — Shell, store, roster | 21 | 18 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 30 | 28 | 🔨 IN PROGRESS |
+| 2 — Attendance | 31 | 28 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 19 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |

@@ -3506,6 +3506,188 @@ as a proposed follow-up in `.claude/dispatch/WO-2.30-result.md`.
 
 ---
 
+### WO-2.31 — The held audio context has two ways to die that nothing watches
+
+**What this changes.** Two things in `src/alert-sound.js` and one clause in `tools/verify-shell.mjs`.
+The held `AudioContext` now carries a `statechange` listener, registered where it is constructed and
+nowhere else: any state that is not `running` re-arms the gesture listener **first** and then makes
+the cheap unawaited `resume()` try. And `playToneSequence()` re-arms before it schedules, whenever
+the context it is handed is not `running` — the fallback the work order requires to exist whatever
+else does — and records that it did, as `rearmed: true` on the log entry. WO-2.29's four rules are
+untouched: one context, born in a gesture, held for the life of the page, and the `visibilitychange`
+re-arm still **unconditional**.
+
+**The bug it closes, in one sentence:** an iOS audio interruption that leaves the app *foregrounded*
+— a call, a FaceTime request, an alarm — fires no `visibilitychange` at all, so nothing re-armed and
+nothing resumed, and the next overdue alert put its oscillators onto a dead context while the seam
+went on reading `running`. That is the failure WO-2.29 was written to fix, arriving through a door
+the fix did not close, and it did not self-heal: the audio stayed dead until the app was backgrounded
+and returned, or reloaded.
+
+**Why `statechange` and not `focus`/`blur`.** The work order left the choice open and named three
+candidates. `statechange` is the event the platform emits *for* this — WebKit moves the context to
+`interrupted` and fires it on the object that changed — so the signal is exactly as wide as the thing
+being watched; `focus`/`blur` fires for a dozen things that are not audio and is not guaranteed for
+an interruption banner that never takes focus. It also needs **no ordering guarantee**, where the two
+`visibilitychange` listeners do: it is registered on the *context*, and shares its target with
+nothing in the app. The third candidate is not an alternative — it is the mandated fallback, and it
+is in `playToneSequence()`.
+
+**What a teacher gets.** After an interruption she never saw, the next threshold still sounds. If the
+device refuses to resume outside a gesture, her next touch anywhere restores it and she loses **one**
+alert rather than the feature — which is the trade, written at the point it is made.
+
+**The harness half: the clause that guarded the fix could be walked past.** WO-2.29's source clause
+matched the literal string `new (window.AudioContext`, so a *second* construction site spelled the
+way anybody would spell it fresh — `new AudioContext()` — satisfied the engine and was invisible
+here. The count is now taken with a spelling-agnostic matcher (`AUDIO_CTOR`), and the webkit fallback
+is asserted separately as a trip-wire: dropping it is a decision about which devices can make a sound
+and belongs in a work order, not in a tidy-up.
+
+*Desk pass 2026-08-15: `verify-shell.mjs` **788 of 788, 0 failed, 0 skipped**, 258s, exit 0 — three
+new call sites inside the existing WO-2.9 hall-pass block, none in a loop and none a failure arm.
+`wo-sweep.mjs` **20 checks · 18 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the
+standing pair, and `src/alert-sound.js` is still on the sensitive-name list for the same two lines of
+prose it has been on since WO-2.29 (a cross-reference to `src/supports.js`, and the sentence saying
+this module is never handed a student). `sw.js` reads `planbook-shell-v68` — bumped from v67, without
+which an installed iPad would keep serving the build that has this hole in it.*
+
+**The three new checks, and what makes them driven rather than asserted.** Nothing in them calls
+`wakeUp()` and nothing clicks between the interruption and the tone: a `visibilitychange` would
+recover the context through the path that already worked, and a click is a gesture that would recover
+it through the unlock — either one would leave the block green against the build this work order was
+written against. The tick that fires the alert is `src/attendance.js`'s own one-second pass clock,
+polled for. The interruption is a real `suspend()` on the real held context, reached through a
+`Proxy` on `window.AudioContext` that `verify-shell.mjs` installs before the first navigation;
+nothing in `src/` knows it exists, and that the two halves hold the *same* object is asserted rather
+than assumed — the module's own `interruptions` count has to move.
+
+> *an interruption that never hides the app is recovered by the module itself…* :: before the
+> interruption `{"contexts":1,"origin":"gesture","state":"running","currentTime":17.051,"armed":false,`
+> `"interruptions":0,"recoveries":0,"wakeResumes":0}`, after it `{…,"armed":true,"interruptions":1,`
+> `"recoveries":1,"wakeResumes":0}`; the tone that followed was `{"level":1,"notes":10,"first":660,`
+> `"played":true,"oscillators":10,"state":"running","ctx":1,"ctxTime":17.312,"rearmed":false}`
+>
+> *and a tone asked for on a context that will not come back re-arms the gesture listener and says so
+> in the log…* :: with resume() hanging the module reads `{…,"state":"suspended","armed":true,`
+> `"interruptions":2,"recoveries":1,"wakeResumes":0}` and the tone it then asked for was
+> `{"level":2,"notes":12,"first":700,"played":true,"oscillators":12,"state":"suspended","ctx":1,`
+> `"rearmed":true}`
+>
+> *and the teacher's next touch anywhere is what restores it…* :: after the tap the module reads
+> `{"contexts":1,"origin":"gesture","state":"running","armed":false,"interruptions":2,`
+> `"recoveries":2,"wakeResumes":0}`; the log is byte-identical at 5 entr(ies)
+
+`wakeResumes: 0` across all three is the claim: the app was never hidden and never returned. The
+second leg reproduces the device's own worst case rather than a convenient one — on the iPad,
+`resume()` on an interrupted context neither resolved nor rejected (§ WO-2.29, probe 3) — by
+replacing the instance's `resume()` with a promise that never settles, so the context stays down
+deterministically instead of for the twenty milliseconds a laptop takes to recover.
+
+**The mutations.** Both are `src/alert-sound.js`, and the first is the one Acceptance line 3 asks to
+be watched failing:
+
+| mutation | result | what went red |
+|---|---|---|
+| the one site rewritten as a bare `new AudioContext()` | `788 · 787 passed · 1 failed`, exit 1 | only the WO-2.29 mechanism check: *"constructs a context at line(s) [188], in "function unlockAudio() {", and **NOT** through the window.AudioContext \|\| window.webkitAudioContext pair"* |
+| a **second** site, spelled bare, minting and closing a context on `visibilitychange` — the shipped build's shape, in the spelling the old clause could not see | `788 · 787 passed · 1 failed`, exit 1 | the same check, now on the count: *"line(s) [188,293]"*, *"(2 constructor call sites)"* |
+
+**One red each time, and the second mutation is the whole reason the clause was widened.** Every
+dynamic reading under it was identical to the green run — `contexts: 1`, `wakeResumes: 0`, both tones
+on one clock — because nothing in the page can observe a construction the module was not told about.
+That is WO-2.29's own mutation-2 finding reproduced in the spelling that used to slip past.
+`src/alert-sound.js` was restored byte-identically after both (md5
+`ffc9a600f5c63b252f77fc1c23546c25`, which is the delivered file).
+
+*The fixture assumption that would hide a bug here, named as the verifier's standing question asks:
+the block assumes the pass clock is still running when it stops calling `wakeUp()`. It is — a pass is
+open and the banner is drawn — and if it ever stopped, the tone poll times out after six seconds and
+the check goes red rather than green. It also assumes the browser under CDP treats
+`Input.dispatchMouseEvent` as a real gesture, which is WO-2.29's assumption unchanged and fails
+loudly rather than quietly. What none of it can reach is whether a sound left the speaker.*
+
+**The 👤 line, and exactly what closes it.** On the teaching iPad, from the **installed PWA** (not
+Safari), with the header speaker un-slashed and Silent Mode off. **First confirm the device has this
+build** — the About line must read `planbook-shell-v68`; an iPad on v67 or older is running the build
+with the hole in it.
+
+- [ ] 👤 **The interruption that does not background the app.** Open a class, send a student out on a
+      pass (that tap *is* the unlock), and stay in the app. Now take an interruption that leaves
+      Planbook on screen — the easiest reliable one is an **incoming call or FaceTime request
+      answered and ended from the banner**, or a **timer/alarm from the Clock app** firing over the
+      top; do not switch apps and do not lock the screen, because either of those is a
+      `visibilitychange` and tests the path that already worked. Then let the five-minute threshold
+      pass without touching the screen. **Pass** = the five two-note beeps arrive on time. **Fail** =
+      silence. 👤
+
+**If it fails, the next two taps say which half failed**, and that finding is worth as much as a
+pass. Touch the screen once anywhere and stay past the **ten**-minute threshold: if the second tone
+sounds, the recovery-without-a-gesture half did not take on this device but the re-armed listener
+did, and what is owed is deferring an alert to the next gesture rather than playing it into a context
+that will not come back. If nothing sounds even after that tap, it is not the unlock at all —
+`tools/audio-probe.html`'s probe 1 answers in one tap whether raw Web Audio can sound on that device
+today, and it must be **served from a second port**, because `sw.js` answers every navigation with
+the cached shell and the app will open instead of the probe with nothing looking wrong.
+
+**What no green run here proves.** That a room heard anything. Every claim this work order adds is
+about the *mechanism* — that an interruption is noticed, that the listener is re-armed, that the next
+tone goes onto a context whose clock never restarted — and the mechanism being right is a necessary
+condition for the sound, not a sufficient one. The seam still says `running` in exactly the voice it
+used all through the 2026-08-14 failure.
+
+**👤 RUN 2026-08-15 / 08-16 — ACCEPTANCE 6 FAILED, and the tone was withdrawn on every device
+(WO-2.32).** Two sittings on the teaching iPad, the second on a confirmed `planbook-shell-v68-TEST1`
+build with `ALERT_ONE_MIN` / `ALERT_TWO_MIN` temporarily at 25s / 50s so a run cost a minute rather
+than twenty. Both temporary values were reverted before the harness run below.
+
+*The acceptance line itself:* with a pass running and an interruption that left Planbook on screen,
+**both alerts were silent and the card tinted at both thresholds**. The tint is what makes this a
+finding rather than a repeat of 2026-08-14 — it is pure DOM, it proves the alert fired and reached
+`playToneSequence()`, and it puts the failure squarely in the audio half. That is Acceptance 6's
+*"Fail = silence"*, and it is not softened by the fact that the module behaved as designed: WO-2.31's
+guaranteed half re-arms and waits for a touch, and the test forbids touching.
+
+*What the probe page settled, and it is the good news.* `tools/audio-probe.html` gained **probe 5**
+(a context born in a tap, HELD, tone scheduled on that same context 8s later, untouched) and **probe
+6** (an `<audio>` element primed in a tap, played 8s later). **Both are audible.** Probes 1–4
+reproduced the 2026-08-14 table exactly — 1 and 4 audible, 2 and 3 silent. Probe 5 is the one that
+matters: it is WO-2.29's shipped design, and no probe had ever tested it. **WO-2.29's premise is
+therefore sound and was never the bug.** Probe 6 says an `<audio>` element is a live fallback if one
+is ever wanted.
+
+*And the app can sound on that device.* Switching **into** the app with a pass already overdue chimed
+— the `visibilitychange` wake path, in the installed PWA, on hardware. So the audio chain works end
+to end and the platform is not gating it.
+
+*Two things found on the way that are not defects.* A cold launch nobody has touched is **silent with
+the tint still firing**, which is correct by construction: `unlockAudio()` is the only place a
+context is made and it needs a gesture, so the tone records itself `locked`. The first touch anywhere
+restores it. And an earlier run that reported nothing at all in the foreground **did not reproduce**;
+the likeliest explanation is `paintPassElapsed()`'s early return for a screen with no class open, but
+it was never pinned down and is recorded here unresolved rather than tidied away.
+
+*One observation this section cannot explain.* Late in the second sitting the behaviour went
+**erratic** — the tone firing on the return button, firing when a new pass was issued, and then not
+firing at all. No reading was taken while it was happening and it is not accounted for by anything
+above. It is written down because the next person to work this area should know the failure is not
+only "silent after an interruption", and because a neat story that omits it would be a worse record
+than an untidy one that does not.
+
+*The decision.* After four 👤 sittings the owner withdrew the overdue tone on every device rather
+than spend a fifth. The tint stays at 5 and 10 minutes, the announcement and the level on the record
+are untouched, and the header speaker still turns the sound on per device — so this is a withdrawal
+and not a deletion, and WO-2.29's and WO-2.31's machinery is all still in the tree and still under
+test by the harness. The mechanics are WO-2.32.
+
+*Desk pass 2026-08-16, on the delivered tree, after the withdrawal:* `verify-shell.mjs`
+**789 of 789, 0 failed, 0 skipped**, 21,033 lines, 258s, exit 0. `wo-sweep.mjs` **20 checks · 18
+passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing pair. The run immediately before
+the fixture was corrected read **781 passed · 7 failed**, every one of them reporting
+`"state":"silenced"` — which is the withdrawal being watched as it tried to turn seven checks green
+against an absence.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

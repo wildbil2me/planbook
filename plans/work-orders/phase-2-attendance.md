@@ -3080,7 +3080,7 @@ button and nothing to act on. **This is not a WO-2.28 regression** and its fix d
 
 ## WO-2.31 — the held audio context has two ways to die that nothing watches
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.29
+**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.29
 
 **Booked 2026-08-14 out of WO-2.29's correction round, and both halves are doors left open by the
 fix rather than faults in it.** WO-2.29 shipped a fresh `AudioContext` per alert; the iPad proved on
@@ -3131,21 +3131,27 @@ green harness, which is the failure mode this work order series has already been
 
 **Acceptance**
 
-- [ ] An interrupted context is recovered without the app being backgrounded and returned: the seam
+- [x] An interrupted context is recovered without the app being backgrounded and returned: the seam
       shows the alert's tone scheduled on a `running` context after a simulated interruption, and the
       recovery path is driven rather than asserted from source.
-- [ ] If the context cannot be recovered without a gesture, the gesture listener is re-armed and the
+- [x] If the context cannot be recovered without a gesture, the gesture listener is re-armed and the
       seam records that it was — so "waiting for a touch" and "dead" are not the same absence, which
       is the distinction `alertSoundLog()` already draws for the muted case.
-- [ ] Rewriting `new (window.AudioContext || window.webkitAudioContext)()` as a bare
+- [x] Rewriting `new (window.AudioContext || window.webkitAudioContext)()` as a bare
       `new AudioContext()` leaves the harness **red**, not green. Watched failing.
-- [ ] Still exactly one context over the life of the page, still born in a gesture — WO-2.29's
+- [x] Still exactly one context over the life of the page, still born in a gesture — WO-2.29's
       guarantees are unchanged and its checks still pass.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
-- [ ] 👤 On the teaching iPad: with a pass running, take an interruption that does not background the
-      app, then let a threshold pass. The finding goes in `TESTING.md` § WO-2.31 whichever way it
-      falls. 👤
+- [ ] 👤 **RUN 2026-08-16 — FAILED, and left unticked deliberately.** On the teaching iPad, with a
+      pass running and an interruption that did not background the app, **both alerts were silent
+      and the card tinted at both thresholds**. The tint puts the failure in the audio half rather
+      than the alert logic. The finding is in `TESTING.md` § WO-2.31, along with what the two new
+      probes settled — WO-2.29's held-context design is **audible** on that device and was never the
+      bug — and an erratic spell late in the sitting that is recorded unexplained. The tone was
+      withdrawn on every device rather than re-cut a fifth attempt: **WO-2.32**. This line stays open
+      because it was tested and it failed, which is not the same as untested and not the same as
+      done. 👤
 
 **Traps** — **Do not go back to a context per alert.** That is the shape the iPad falsified on
 2026-08-14 and the evidence is in `TESTING.md` § WO-2.29; a context built outside a gesture reports
@@ -3155,3 +3161,64 @@ they are Roll Call!'s, tuned by a year of classroom use, and re-deriving them is
 what it said all through the failure WO-2.29 shipped with; what has to be shown is a tone scheduled
 on a context that was interrupted first. **And no machine can hear anything** — the audible half
 stays 👤 and goes to the iPad, as it did twice for WO-2.29.
+
+---
+
+## WO-2.32 — the overdue tone is withdrawn, and the tint is the alert
+
+**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.31
+
+**Booked and built 2026-08-16, owner-directed rather than dispatched** — the decision was taken at
+the iPad, mid-sitting, and the work is one preference and its fixture. Recorded here because the
+tracker is where a behaviour change lives, and because folding it into WO-2.31 would file a decision
+to stop as though it were a fix that worked.
+
+**Why.** Four 👤 sittings across 2026-08-14 to 08-16 could not make the overdue tone sound reliably
+on the teaching iPad. WO-2.29 rebuilt the unlock around one held context; WO-2.31 added interruption
+recovery on top of it; the acceptance line still failed, and late in the last sitting the behaviour
+went erratic in a way nothing has explained. `TESTING.md` § WO-2.31 has the whole run. **The
+diagnosis is not finished and this work order does not finish it** — it takes the unreliable channel
+out of a teacher's way until someone can.
+
+**What it is not.** A deletion. Every line of WO-2.29's and WO-2.31's machinery is still in the tree,
+still exercised by the harness, and still one tap from being switched back on. The probe page keeps
+probes 5 and 6, which are the evidence that the held-context design is **audible** on that device and
+was never the thing that was broken.
+
+**Deliverables**
+
+- `src/prefs.js` — the default becomes `alertSoundOn: false`. **The key is renamed and that is
+  load-bearing**: the preference is persisted per device on purpose, so a browser holding a stored
+  `true` under the old `soundsOn` would have gone on chiming through a default flip alone.
+- `src/alert-sound.js` — `soundsOn()` reads `getPref('alertSoundOn') === true` rather than
+  `getPref('soundsOn') !== false`; opt-in rather than opt-out. The header speaker still writes it.
+- `tools/verify-shell.mjs` — assert the withdrawn default on an untouched browser, then **tap the
+  speaker on** so the tone checks keep measuring. Without the tap the new default turns seven
+  existing checks green against `"state":"silenced"`.
+- `tools/audio-probe.html` — probes 5 and 6, kept.
+- `sw.js` — `planbook-shell-v69`.
+
+**Acceptance**
+
+- [x] A browser that has never touched the speaker is silent: `soundsOn()` is `false` and
+      `planbook_alertSoundOn` is unset, asserted **before** any tap in that section.
+- [x] A device holding a stored `true` under the retired `soundsOn` key is silent too — which is what
+      the rename buys and what a default flip alone would not have.
+- [x] The tint at 5 and 10 minutes, the spoken announcement and the `alerted` level on the pass are
+      **exactly** what they were with the sound on.
+- [x] One tap on the header speaker still turns the sound on for that device, and the next threshold
+      sounds — the withdrawal is a default, not a removal.
+- [x] `node tools/verify-shell.mjs` **789 · 789 passed · 0 failed · 0 skipped**, and
+      `node tools/wo-sweep.mjs` **20 · 18 passed · 0 failed · 2 to review**.
+- [ ] 👤 On the teaching iPad, on `planbook-shell-v69`: a pass crossing both thresholds tints at 5
+      and 10 minutes and **makes no sound**, and one tap on the header speaker brings the sound back
+      for that device. 👤
+
+**Traps** — **Do not delete `src/alert-sound.js` or its harness block.** The channel is withdrawn,
+not abandoned, and a deletion would cost the evidence that the design works. **Do not let the new
+default carry into the harness fixture** — that is the seven-checks-green-against-an-absence failure,
+watched happening on 2026-08-16 and the reason the fixture taps the speaker on explicitly. **Do not
+"clean up" the retired `planbook_soundsOn` key** with a `removePref()` written for one orphan; it is
+a boolean about a speaker and `src/prefs.js` owns the prefix. **And do not read this as the
+diagnosis being over** — WO-2.31's Acceptance 6 is a live failure and the erratic spell is
+unexplained.

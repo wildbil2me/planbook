@@ -42,12 +42,15 @@
 </style>
 
 <h1>Planbook audio probe</h1>
-<p class="sub">WO-2.29. Tap 1 first, then 2. Read the log at the bottom.</p>
+<p class="sub">WO-2.29. Tap 1 first, then 2. <b>5 and 6 are the ones that matter now</b> — tap each and
+  do not touch the screen for 8 seconds after. Read the log at the bottom.</p>
 
 <button id="b1">1 — Beep NOW (inside the tap)</button>
 <button id="b2" class="alt">2 — Beep in 8 seconds (no touch, like a real alert)</button>
 <button id="b3" class="ghost">3 — Prime, then beep in 8 seconds</button>
 <button id="b4" class="ghost">4 — Beep NOW via &lt;audio&gt; element</button>
+<button id="b5">5 — HELD context: born in this tap, beeps in 8 seconds</button>
+<button id="b6" class="alt">6 — HELD &lt;audio&gt;: primed in this tap, plays in 8 seconds</button>
 
 <div id="log">ready…</div>
 
@@ -137,10 +140,11 @@ document.getElementById('b3').addEventListener('click', function () {
   setTimeout(function () { play(fiveNotes(), '[3]'); }, 8000);
 });
 
-/* An <audio> element uses a different audio session path than raw Web Audio on iOS.
-   If this one is audible while 1 is not, the ambient/playback category is the whole story. */
-document.getElementById('b4').addEventListener('click', function () {
-  log('--- 4: <audio> element ---');
+/* The two-note pattern as a WAV data blob. Extracted from probe 4 so probe 6 can use the same
+   bytes; probe 4's behaviour is unchanged, which matters because its result is recorded evidence
+   in TESTING.md's 2026-08-14 table. Generated at runtime rather than fetched — an oscillator and
+   a DataView are both browser APIs, so this stays inside the no-assets, no-dependencies rule. */
+function wavUrl() {
   var sr = 44100, secs = 1.2, n = Math.floor(sr * secs);
   var buf = new ArrayBuffer(44 + n * 2), view = new DataView(buf);
   function str(o, s) { for (var i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); }
@@ -154,9 +158,107 @@ document.getElementById('b4').addEventListener('click', function () {
     var v = on ? Math.sin(2 * Math.PI * 660 * i / sr) * 0.35 : 0;
     view.setInt16(44 + i * 2, v * 32767, true);
   }
-  var blob = new Blob([buf], { type: 'audio/wav' });
-  var a = new Audio(URL.createObjectURL(blob));
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
+/* An <audio> element uses a different audio session path than raw Web Audio on iOS.
+   If this one is audible while 1 is not, the ambient/playback category is the whole story. */
+document.getElementById('b4').addEventListener('click', function () {
+  log('--- 4: <audio> element ---');
+  var a = new Audio(wavUrl());
   a.play().then(function () { log('[4] <audio> play() resolved'); },
                 function (e) { log('[4] <audio> play() REJECTED: ' + (e && e.name)); });
+});
+
+/*
+  PROBE 5 — THE ONE THAT TESTS WHAT WO-2.29 ACTUALLY BUILT, and which none of 1–4 covers.
+
+  Probe 1 is born in a gesture and plays inside that same gesture. Probe 3 is a primer in the
+  gesture and a NEW context afterwards. The shipped design is neither: ONE context constructed
+  inside the first tap, resumed there, HELD — never closed — with every later tone scheduled on
+  that same object minutes afterwards with no touch in between. That is src/alert-sound.js's
+  whole premise and it has never been put on this device.
+
+  AUDIBLE = the design is sound and the silence is a bug in the app.
+  SILENT  = WebKit gates on how recently a gesture happened AT PLAY TIME, not on where the
+            context was born, and holding it buys nothing. That falsifies WO-2.29 the same way
+            2026-08-14 falsified its predecessor, and the fix is a shape change, not a tuning.
+*/
+var heldCtx = null;
+document.getElementById('b5').addEventListener('click', function () {
+  log('--- 5: held context, born HERE, tone in 8s ---');
+  try {
+    if (!heldCtx) {
+      heldCtx = new (window.AudioContext || window.webkitAudioContext)();
+      log('[5] ctx CREATED in gesture, state=' + heldCtx.state);
+    } else {
+      log('[5] reusing held ctx, state=' + heldCtx.state);
+    }
+    /* Resumed inside the gesture, exactly as the unlock does. Unawaited there; logged here. */
+    if (heldCtx.resume) {
+      heldCtx.resume().then(function () {
+        log('[5] resume() RESOLVED in gesture, state=' + heldCtx.state);
+      }, function (e) { log('[5] resume() REJECTED: ' + (e && e.name)); });
+    }
+  } catch (e) {
+    log('[5] ctx THREW: ' + ((e && e.name) || 'Error')); return;
+  }
+  setTimeout(function () {
+    var ctx = heldCtx, made = 0;
+    log('[5] +8s state=' + ctx.state + ', currentTime=' + ctx.currentTime.toFixed(2));
+    try {
+      var t0 = ctx.currentTime;
+      fiveNotes().forEach(function (n) {
+        var start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
+        var osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.frequency.value = n.f; osc.type = 'square';
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, end);
+        osc.start(start); osc.stop(end + 0.02);
+        made += 1;
+      });
+      /* NOT closed, and deliberately not resumed again — a resume here would be the thing under
+         test doing the recovering, and the question is whether the HELD context still sounds. */
+      log('[5] scheduled ' + made + ' oscillators on the HELD ctx (not closed)');
+    } catch (e) { log('[5] THREW: ' + ((e && e.name) || 'Error')); }
+    setTimeout(function () {
+      log('[5] state after = ' + ctx.state + ', currentTime=' + ctx.currentTime.toFixed(2));
+    }, 1000);
+  }, 8000);
+});
+
+/*
+  PROBE 6 — THE ESCAPE HATCH, IF 5 IS SILENT.
+
+  Probe 4 proved an <audio> element sounds INSIDE a tap. This asks the only question that makes
+  it a candidate for the alert: does one primed in a gesture still play 8 seconds later with no
+  touch? The prime is the standard iOS unlock — play() then pause() inside the tap — after which
+  the element is considered user-activated and later play() calls are supposed to be allowed.
+
+  AUDIBLE = this is the replacement path for src/alert-sound.js, and the no-assets rule survives
+            because the WAV is built at runtime from a DataView and never fetched.
+  SILENT  = both audio paths are gated the same way and the alert cannot be made to sound on this
+            device without a gesture at all — which makes the deferred-to-next-touch fallback the
+            whole feature rather than its consolation prize.
+*/
+var heldAudio = null;
+document.getElementById('b6').addEventListener('click', function () {
+  log('--- 6: held <audio>, primed HERE, plays in 8s ---');
+  if (!heldAudio) heldAudio = new Audio(wavUrl());
+  heldAudio.play().then(function () {
+    heldAudio.pause();
+    heldAudio.currentTime = 0;
+    log('[6] primed: play() resolved then paused inside the gesture');
+  }, function (e) {
+    log('[6] prime play() REJECTED: ' + (e && e.name));
+  });
+  setTimeout(function () {
+    log('[6] +8s calling play(), paused=' + heldAudio.paused);
+    heldAudio.currentTime = 0;
+    heldAudio.play().then(function () { log('[6] delayed play() RESOLVED'); },
+                          function (e) { log('[6] delayed play() REJECTED: ' + (e && e.name)); });
+  }, 8000);
 });
 </script>

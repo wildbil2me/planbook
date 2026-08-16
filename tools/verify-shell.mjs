@@ -463,6 +463,45 @@ async function waitForBoot(ms = 8000) {
   return false;
 }
 
+/* ────── keeping a handle on the AudioContext the page holds (WO-2.31) ──────
+ *
+ * WHY THIS IS HERE AND NOT IN src/. The hall-pass section has to interrupt the held context and
+ * watch the app come back from it, and the work order's own note is that no harness in this project
+ * can reach an iOS audio session: CDP has nothing that interrupts one. What it CAN do is call
+ * `suspend()` on the real context, which is a genuine state change arriving from outside on the
+ * object the module is holding — the same shape the device produces, delivered by a different hand.
+ *
+ * BUT ONLY IF IT CAN GET AT THE OBJECT, and src/alert-sound.js deliberately does not hand it over:
+ * `alertAudioState()` DESCRIBES the context precisely so that a harness cannot resume or close the
+ * thing it is measuring. That refusal is right and stays. So the object is caught where it is made
+ * instead — a `Proxy` on `window.AudioContext` that records every construction and forwards
+ * everything else — and the page under test is unchanged: the module reads the same global, calls
+ * the same constructor, and gets back a real AudioContext it made itself.
+ *
+ * A TEST DOUBLE THE PRODUCTION PATH KNOWS ABOUT WOULD BE WORTHLESS, which is why it is done this
+ * way round rather than by exporting a "pretend you were interrupted" function. Nothing in src/
+ * reads `window.__audioContexts`, nothing branches on it, and the module cannot tell this run from
+ * one where the interruption came from a phone call. The checks assert the two halves are holding
+ * the SAME object rather than assuming it: the module's own `interruptions` count has to move when
+ * this file suspends it, or the check is red.
+ *
+ * Installed on new documents rather than after boot, because the context is constructed at the
+ * first gesture of the run — thousands of lines before the section that needs it — and this file
+ * reloads the page a dozen times. */
+const CATCH_AUDIO_CONTEXTS = `(function(){
+  var Real = window.AudioContext;
+  if (!Real || window.__audioContexts) return;
+  window.__audioContexts = [];
+  window.AudioContext = new Proxy(Real, {
+    construct: function(target, args){
+      var made = Reflect.construct(target, args);
+      window.__audioContexts.push(made);
+      return made;
+    }
+  });
+})();`;
+await send('Page.addScriptToEvaluateOnNewDocument', { source: CATCH_AUDIO_CONTEXTS });
+
 async function load() {
   await send('Page.navigate', { url: 'http://127.0.0.1:' + PORT + '/index.html' });
   await new Promise(r => setTimeout(r, 800));
@@ -10588,6 +10627,36 @@ if (!attBooted || !attSeam) {
      the taps this section has been doing all along, not by the alert that is about to fire. */
   const audioBefore = await audioState();
 
+  /*
+    ── THE ALERT SOUND IS OPT-IN SINCE 2026-08-16, AND THIS FIXTURE TURNS IT ON DELIBERATELY ──
+
+    The owner withdrew the tone on every device after four 👤 sittings failed to make it sound
+    reliably on the teaching iPad (TESTING.md § WO-2.31), so src/prefs.js now defaults
+    `alertSoundOn` to false and src/alert-sound.js reads it as `=== true`.
+
+    THE MACHINERY IS STILL SHIPPED AND STILL HAS TO WORK THE MOMENT A TEACHER TAPS THE SPEAKER, so
+    every tone check below stays exactly as it was and the fixture pays for them with one tap here.
+    The alternative — letting the default carry — would have turned nine checks green while they
+    measured nothing, which is the failure mode this whole file is written against: an absence that
+    passes. The two winds below assert `played: true` and a count of oscillators, and they would
+    have read `silenced` forever.
+
+    THE DEFAULT ITSELF IS ASSERTED FIRST, and before any tap, because a withdrawal that does not
+    hold on a fresh browser is the part most likely to come back by accident — a later hand
+    restoring `!== false`, or the key drifting back to `soundsOn`, would be invisible to every other
+    check in this section once the tap below has run.
+  */
+  const soundDefault = await evalJs(`(function(){
+    return { on: window.planbook.alertSound.soundsOn(),
+             stored: localStorage.getItem('planbook_alertSoundOn'),
+             legacy: localStorage.getItem('planbook_soundsOn') }; })()`);
+  check('a browser that has never touched the speaker is SILENT — the overdue tone is opt-in, and the preference it reads is the post-withdrawal key',
+    soundDefault.on === false && soundDefault.stored === null,
+    'soundsOn() = ' + soundDefault.on + ', planbook_alertSoundOn = '
+      + JSON.stringify(soundDefault.stored) + ', the retired planbook_soundsOn = '
+      + JSON.stringify(soundDefault.legacy));
+  await clickSel('#soundsBtn');
+
   await hush();
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
   const woundB1 = await windBack(outB, 5.2);
@@ -10682,22 +10751,51 @@ if (!attBooted || !attSeam) {
     reading above: it is constructed, it is closed, and nothing observable moves. What IS observable
     is that the file contains exactly one constructor call and that it sits in the gesture listener,
     so that is asserted directly. It is the clause a future edit is most likely to break.
+
+    AND THAT PREDICTION CAME TRUE, WHICH IS WO-2.31's HARNESS HALF. The clause matched the literal
+    string `new (window.AudioContext` — so a SECOND construction site spelled the way anybody
+    writing this fresh on a modern browser would spell it, `new AudioContext()`, satisfied the
+    engine and was invisible here: one site found, in unlockAudio, green, over a file that
+    constructs two. The guarantee the whole correction rests on was one refactor away from being
+    unguarded, and the failure mode was a green run. Two things replace it.
+
+    THE COUNT IS TAKEN WITH A SPELLING-AGNOSTIC MATCHER. `AUDIO_CTOR` catches the qualified pair,
+    the bare constructor, and the webkit fallback on its own, so what is asserted is HOW MANY
+    construction sites the file has and WHERE the one is — a claim about the code rather than about
+    how it is typed.
+
+    AND THE SPELLING IS ASSERTED SEPARATELY, ON PURPOSE, as a trip-wire rather than as the count.
+    Dropping `window.webkitAudioContext` is a decision about which devices can make a sound, not a
+    tidy-up, and this is a file whose every departure from Roll Call! is argued at the point of
+    departure. So the one site must still carry the fallback: rewriting it to a bare
+    `new AudioContext()` leaves this check RED with the reason in its own detail line, which is the
+    difference between an edit somebody made deliberately and an edit somebody made on the way past.
   */
   const soundSrc = await fs.readFile(path.join(ROOT, 'src', 'alert-sound.js'), 'utf8');
   const soundLines = soundSrc.split('\n');
+  /* `new AudioContext(`, `new window.AudioContext(`, `new webkitAudioContext(`, and the parenthesised
+     `new (window.AudioContext || window.webkitAudioContext)()` this file uses — one matcher, so that
+     a site cannot hide behind a spelling. */
+  const AUDIO_CTOR = /\bnew\s+\(?\s*(window\.)?(webkit)?AudioContext\b/;
   const ctorAt = soundLines
     .map((line, i) => ({ n: i + 1, text: line.trim() }))
-    .filter((l) => /new\s+\(window\.AudioContext/.test(l.text) && !/^([*]|\/\/|\/\*)/.test(l.text));
+    .filter((l) => AUDIO_CTOR.test(l.text) && !/^([*]|\/\/|\/\*)/.test(l.text));
   /* Whose function it is in: the nearest declaration above it. */
   const ctorHome = ctorAt.length === 1
     ? ((soundLines.slice(0, ctorAt[0].n).reverse().find((l) => /^function\s+\w+/.test(l)) || '').trim())
     : '(' + ctorAt.length + ' constructor call sites)';
+  /* The fallback, on the one site rather than anywhere in the file — a mention of the name in a
+     comment must not be able to satisfy this. */
+  const ctorKeepsWebkit = ctorAt.length === 1
+    && /window\.AudioContext\s*\|\|\s*window\.webkitAudioContext/.test(ctorAt[0].text);
   const audioAfter = await audioState();
   check('both tones were scheduled on the ONE AudioContext the first gesture made — the alerts and the wake-ups mint no others, and nothing closes it',
     audioBefore.contexts === 1 && audioBefore.origin === 'gesture'
       && audioAfter.contexts === 1 && audioAfter.origin === 'gesture'
-      /* One constructor call in the module, and it is the gesture listener's. */
+      /* One constructor call in the module, however it is spelled, and it is the gesture
+         listener's — and it still reaches for the webkit fallback (WO-2.31). */
       && ctorAt.length === 1 && /^function unlockAudio\(/.test(ctorHome)
+      && ctorKeepsWebkit === true
       /* Still open. A build that closed it after the last note — which is what the lift does and
          what spends iOS's cap — reports `closed` here, live off the context. */
       && audioAfter.state !== 'closed' && audioAfter.state !== 'none'
@@ -10713,7 +10811,15 @@ if (!attBooted || !attSeam) {
       + '; the five-minute tone was scheduled on context ' + five.ctx + ' at its clock '
       + five.ctxTime + 's and the ten-minute tone on context ' + ten.ctx + ' at ' + ten.ctxTime
       + 's; src/alert-sound.js constructs a context at line(s) ' + JSON.stringify(ctorAt.map((l) => l.n))
-      + ', in ' + JSON.stringify(ctorHome));
+      + ', in ' + JSON.stringify(ctorHome)
+      /* Said only when there IS one site to say it about: with two, the count above is the finding
+         and a sentence about the spelling of one of them would read as the reason. */
+      + (ctorAt.length !== 1 ? ''
+        : ctorKeepsWebkit
+          ? ', through the window.AudioContext || window.webkitAudioContext pair'
+          : ', and NOT through the window.AudioContext || window.webkitAudioContext pair — a bare '
+            + 'constructor drops the fallback older WebKit needs, which is a decision rather than a '
+            + 'tidy-up and belongs in a work order'));
 
   /*
     ── AND NOT AGAIN AFTER THE STUDENT RETURNS, which is the clause the state has to reset for ──
@@ -10772,16 +10878,16 @@ if (!attBooted || !attSeam) {
     return { pressed: b.getAttribute('aria-pressed'), lit: b.classList.contains('active'),
              label: b.getAttribute('aria-label') || '',
              slashes: b.querySelectorAll('[data-sound-icon] line').length,
-             stored: localStorage.getItem('planbook_soundsOn'),
-             inDoc: JSON.stringify(window.planbook.store.getDoc()).indexOf('soundsOn') >= 0 }; })()`);
+             stored: localStorage.getItem('planbook_alertSoundOn'),
+             inDoc: JSON.stringify(window.planbook.store.getDoc()).indexOf('alertSoundOn') >= 0 }; })()`);
   check('one tap on the header switch mutes the alert, says so on the button, and writes a `planbook_` preference and nothing in the year document',
     !!muteChrome && muteChrome.pressed === 'true' && muteChrome.lit === true
       && /OFF/.test(muteChrome.label) && muteChrome.slashes === 2
       && muteChrome.stored === 'false' && muteChrome.inDoc === false,
     muteChrome ? 'aria-pressed = ' + muteChrome.pressed + ', lit = ' + muteChrome.lit
       + ', slash strokes on the icon = ' + muteChrome.slashes
-      + ', planbook_soundsOn = ' + JSON.stringify(muteChrome.stored)
-      + ', the string "soundsOn" anywhere in the year document = ' + muteChrome.inDoc
+      + ', planbook_alertSoundOn = ' + JSON.stringify(muteChrome.stored)
+      + ', the string "alertSoundOn" anywhere in the year document = ' + muteChrome.inDoc
       + ', label = ' + JSON.stringify(muteChrome.label)
       : 'there is no #soundsBtn in the header');
 
@@ -10824,7 +10930,7 @@ if (!attBooted || !attSeam) {
     var b = document.getElementById('soundsBtn');
     return { pressed: b ? b.getAttribute('aria-pressed') : '', lit: !!b && b.classList.contains('active'),
              slashes: b ? b.querySelectorAll('[data-sound-icon] line').length : -1,
-             stored: localStorage.getItem('planbook_soundsOn') }; })()`);
+             stored: localStorage.getItem('planbook_alertSoundOn') }; })()`);
   check('and turning it back on is the same one tap: the next threshold sounds again, at the second pattern',
     !!woundBack.now && unmutedTones.length === 1
       && unmutedTones[0].played === true && unmutedTones[0].level === 2
@@ -10835,7 +10941,158 @@ if (!attBooted || !attSeam) {
       && soundBackOn.stored === 'true',
     'what the tick asked for = ' + JSON.stringify(unmutedTones) + ', aria-pressed = '
       + soundBackOn.pressed + ', lit = ' + soundBackOn.lit + ', slash strokes = ' + soundBackOn.slashes
-      + ', planbook_soundsOn = ' + JSON.stringify(soundBackOn.stored));
+      + ', planbook_alertSoundOn = ' + JSON.stringify(soundBackOn.stored));
+
+  /*
+    ══ WO-2.31: AN INTERRUPTION THAT NEVER HIDES THE APP, AND THE WAY BACK FROM IT ══
+
+    THE HOLE THIS BLOCK IS AIMED AT. Every wind above arrives through wakeUp(), which dispatches
+    `visibilitychange` — and that is the one path WO-2.29's correction already covered. The failure
+    this work order is about is the other one: an iOS audio interruption that leaves the app
+    FOREGROUNDED — a call, a FaceTime request, an alarm — fires no `visibilitychange` at all, so
+    nothing re-armed and nothing resumed, and the next alert put its oscillators onto a dead context
+    while the seam went on reading `running`. Nothing in the section above could have caught it.
+
+    SO NOTHING HERE CALLS wakeUp() AND NOTHING HERE CLICKS between the interruption and the tone,
+    and both refusals ARE the check rather than housekeeping. A `visibilitychange` would recover the
+    context through the path that already worked; a click is a GESTURE, and the gesture listener
+    would recover it too. Either one would leave this block green against the build the work order
+    was written against. What drives the alerts instead is src/attendance.js's own one-second pass
+    clock — polled for, never slept on (trap 5) — which is the only driver left once those two are
+    refused.
+
+    THE INTERRUPTION IS REAL AND IT IS DELIVERED FROM OUTSIDE. `suspend()` is called on the context
+    the page actually holds, caught at construction by the Proxy installed at the head of this file;
+    there is no flag this file sets and the app reads, which would be the fixture that cannot fail.
+    That the two halves are holding the SAME object is asserted rather than assumed — the module's
+    own `interruptions` count has to move when this file suspends it, or these checks are red.
+
+    AND THE SECOND LEG REPRODUCES THE DEVICE'S OWN WORST CASE. On the iPad, resume() on a context
+    that had been interrupted neither resolved nor rejected (TESTING.md § WO-2.29, probe 3). That is
+    done here by replacing the instance's own resume() with a promise that never settles: the module
+    calls what it always calls and gets back what the device gave it, so the context stays down for
+    as long as the leg needs it to — deterministically, rather than by winning a race against a
+    recovery that takes twenty milliseconds on a laptop.
+
+    WHAT IT STILL CANNOT SAY is whether any of it made a sound. Nothing here listens, nothing can,
+    and Acceptance line 6 is owed to a human with an iPad exactly as WO-2.29's was.
+
+    THE FIXTURE COSTS THE SECTION NOTHING: one student out and back on a pass that is CANCELLED
+    rather than returned, so `passes` is byte-identical across the whole block and the history
+    checks below read the log this section always handed them.
+  */
+  const log31 = (await read()).passLogJson;
+  /* Out of the room, and this tap is the last GESTURE the block allows itself until the end. */
+  await clickSel('[data-pass-issue="' + outC + '"][data-pass-type="bathroom"]');
+  const audio31Base = await audioState();
+  const soundBase31 = (await soundLog()).length;
+
+  /* One tone, waited for on the pass clock. Six seconds is six ticks — long enough that a red here
+     is a build that did not ask for a tone, and never a machine that was busy. */
+  const nextTone = (had) => evalJs(`(async function(){
+    var s = window.planbook.alertSound;
+    for (var i = 0; i < 120; i++) {
+      var log = s.alertSoundLog();
+      if (log.length > ${had}) return log[log.length - 1];
+      await new Promise(function(r){ setTimeout(r, 50); });
+    }
+    return null; })()`);
+  /* The module's own reading, polled until it says what the leg is waiting for — or until three
+     seconds are up, after which whatever it does say is what the check reports. */
+  const audioUntil = (cond) => evalJs(`(async function(){
+    var s = window.planbook.alertSound, a = s.alertAudioState();
+    for (var i = 0; i < 60 && !(${cond}); i++) {
+      await new Promise(function(r){ setTimeout(r, 50); });
+      a = s.alertAudioState();
+    }
+    return a; })()`);
+
+  const cut31 = await evalJs(`(async function(){
+    var list = window.__audioContexts || [];
+    if (list.length !== 1) return { why: list.length + ' context(s) caught at construction' };
+    var was = list[0].state;
+    try { await list[0].suspend(); } catch (e) { return { why: 'suspend() threw ' + e.name }; }
+    return { why: '', was: was }; })()`);
+  const back31 = await audioUntil(`a.state === 'running' && a.recoveries > ${audio31Base.recoveries}`);
+  const wound31 = await windBack(outC, 5.2);
+  const tone31 = await nextTone(soundBase31);
+  const after31 = await read();
+  const audio31After = await audioState();
+  check('an interruption that never hides the app is recovered by the module itself: the next alert\'s tone is scheduled on a running context, with no visibilitychange and no touch in between',
+    !cut31.why && cut31.was === 'running'
+      /* The module saw it, which is also the proof that the object this file suspended is the
+         object the module is holding. */
+      && back31.interruptions === audio31Base.interruptions + 1
+      && back31.recoveries === audio31Base.recoveries + 1 && back31.state === 'running'
+      /* THE PATH THAT WAS NOT USED, and it is the whole claim: the app was never hidden and never
+         returned, so the resume src/alert-sound.js does on `visibilitychange` never ran. */
+      && back31.wakeResumes === audio31Base.wakeResumes
+      && !!wound31.now && !!tone31
+      && tone31.played === true && tone31.state === 'running' && tone31.oscillators === 10
+      && tone31.first === 660 && tone31.rearmed === false && tone31.error === ''
+      /* Still the ONE context, and still the one that was interrupted: its own clock ran on across
+         the whole thing rather than restarting at the alert, which is the fingerprint WO-2.29's
+         check above is built on. */
+      && tone31.ctx === 1 && audio31After.contexts === 1 && audio31After.origin === 'gesture'
+      && tone31.ctxTime > audio31Base.currentTime
+      && (after31.openPasses.filter((p) => p.studentId === outC)[0] || {}).alerted === 1,
+    (cut31.why ? 'the context could not be interrupted: ' + cut31.why + '; ' : '')
+      + 'before the interruption ' + JSON.stringify(audio31Base) + ', after it '
+      + JSON.stringify(back31) + '; the tone that followed was ' + JSON.stringify(tone31)
+      + ' and the pass records alerted = '
+      + JSON.stringify((after31.openPasses.filter((p) => p.studentId === outC)[0] || {}).alerted));
+
+  /* ── AND THE CASE THE CHEAP FALLBACK IS FOR: A RESUME THAT NEVER SETTLES ── */
+  const stuck31 = await evalJs(`(async function(){
+    var c = (window.__audioContexts || [])[0];
+    if (!c) return { why: 'no context was caught at construction' };
+    c.resume = function(){ return new Promise(function(){}); };
+    try { await c.suspend(); } catch (e) { return { why: 'suspend() threw ' + e.name }; }
+    return { why: '' }; })()`);
+  const waiting31 = await audioUntil("a.state !== 'running' && a.armed === true");
+  const soundBase31b = (await soundLog()).length;
+  const wound31b = await windBack(outC, 5.2);
+  const tone31b = await nextTone(soundBase31b);
+  const after31b = await read();
+  check('and a tone asked for on a context that will not come back re-arms the gesture listener and says so in the log — "waiting for a touch" and "dead" are not the same silence',
+    !stuck31.why
+      && waiting31.interruptions === back31.interruptions + 1
+      && waiting31.state !== 'running' && waiting31.armed === true
+      && !!wound31b.now && !!tone31b
+      /* The alert was not swallowed and no second context was minted to carry it — the shape the
+         2026-08-14 iPad falsified — and the entry says in one field which of the two silences this
+         is: scheduled onto a context that is not running, with the next touch armed to fix it. */
+      && tone31b.played === true && tone31b.rearmed === true
+      && tone31b.state === waiting31.state && tone31b.state !== 'running'
+      && tone31b.oscillators === 12 && tone31b.first === 700 && tone31b.ctx === 1
+      && tone31b.error === ''
+      /* Everything that is not the tone is untouched: the level is on the record either way. */
+      && (after31b.openPasses.filter((p) => p.studentId === outC)[0] || {}).alerted === 2,
+    (stuck31.why ? 'the context could not be held down: ' + stuck31.why + '; ' : '')
+      + 'with resume() hanging the module reads ' + JSON.stringify(waiting31)
+      + ' and the tone it then asked for was ' + JSON.stringify(tone31b));
+
+  /* THE TOUCH THAT RESTORES IT, and it is an ordinary one: the tap that cancels the pass. Nothing
+     in the app knows this tap is special — it is the listener the two legs above re-armed, doing
+     what the work order says the fallback buys. The instance's resume() is put back first, because
+     a resume that hangs is the DEVICE's failure and not something to hold this build to. */
+  await evalJs("(function(){ var c = (window.__audioContexts || [])[0];"
+    + " if (c) delete c.resume; return 1; })()");
+  await clickSel('[data-pass-cancel="' + outC + '"]');
+  const restored31 = await audioUntil("a.state === 'running' && a.armed === false");
+  const tidy31 = await read();
+  check('and the teacher\'s next touch anywhere is what restores it: one tap and the held context is running again with the listener stood down — still one context, and this whole block wrote nothing to the pass log',
+    restored31.state === 'running' && restored31.armed === false
+      && restored31.contexts === 1 && restored31.origin === 'gesture'
+      && restored31.recoveries === waiting31.recoveries + 1
+      && restored31.wakeResumes === audio31Base.wakeResumes
+      /* The fixture leaves no trace: a cancel writes nothing to `passes` (WO-2.11), so the history
+         checks below read the log this section has always handed them. */
+      && !tidy31.openPasses.some((p) => p.studentId === outC)
+      && tidy31.passLogJson === log31,
+    'after the tap the module reads ' + JSON.stringify(restored31) + '; the log is '
+      + (tidy31.passLogJson === log31 ? 'byte-identical' : 'DIFFERENT') + ' at '
+      + tidy31.passLog.length + ' entr(ies) and ' + tidy31.openPasses.length + ' pass(es) open');
 
   /*
     ── ACCEPTANCE LINE 3: THE HISTORY, AGAINST A COUNT THIS FILE MAKES ITSELF ──

@@ -201,6 +201,21 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.32 — the overdue-pass alert no longer makes a sound, on any device. The colour still
+  changes.** Four testing sittings on the teaching iPad across three days could not make the tone
+  sound reliably: it survived being rebuilt around a single held audio context (WO-2.29), it
+  survived a recovery path for interruptions that never background the app (WO-2.31), and it still
+  failed its acceptance line — silent at both thresholds after a phone call, with the card tinting
+  correctly the whole time. Late in the last sitting the behaviour turned erratic in a way nothing
+  has yet explained. So the tone is switched off by default rather than left as a channel a teacher
+  might come to rely on and be let down by. **Nothing else about the alert moved**: the card still
+  tints at five and ten minutes, the screen reader still says how long the student has been gone,
+  and the level is still recorded on the pass. The speaker button in the header still turns the
+  sound on for one device, so this is a withdrawal rather than a removal — the machinery is intact
+  and one tap away, and the diagnosis is still open. What the sittings *did* settle is that the
+  design is not the problem: two new probes proved that a context created inside a tap and held
+  stays audible on that iPad minutes later, which is exactly what the app does.
+
 - **One date formatter instead of five, and no two functions named `shortDate` that answer
   differently.** The duplication was the boring half. The trap was the name: `src/attendance.js`
   **exported** a `shortDate` producing `9/4`, while three other files defined their own producing

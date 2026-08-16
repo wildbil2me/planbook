@@ -2293,7 +2293,11 @@ window.planbook = {
      created outside a gesture reports exactly that and plays to nothing. So alertAudioState()
      reports the MECHANISM the corrected unlock turns on — how many AudioContexts this page has ever
      constructed, whether the one it holds was born in a gesture, and whether it is still open —
-     which is machine-checkable in the way audibility is not. Neither function closes the 👤 line.
+     which is machine-checkable in the way audibility is not. WO-2.31 added the counts beside them
+     (`interruptions`, `recoveries`, `wakeResumes`) for a reason worth knowing: a context that was
+     interrupted and recovered twenty milliseconds ago reads identically to one that was never
+     disturbed, so a harness that could only read `state` would be asserting against a window it has
+     to win a race to see. Neither function closes the 👤 line.
      The switch itself is a button in the header a teacher can touch, and the harness taps it.
      Nothing in the app reads window.planbook — see the block above for why the seam outlived the
      shelf. */
