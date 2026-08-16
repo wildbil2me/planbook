@@ -3391,7 +3391,7 @@ is the WO-3.15 mistake WO-3.22 declined to repeat.
 
 ## WO-2.35 — a key bound any way but a literal comparison is invisible to both key checks
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
 that is deliberate — both checks are correct on today's tree, so this is a row to cut if the fortnight
 tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
@@ -3443,17 +3443,31 @@ reasoning), rewording either legend, and adding or removing any binding. If wide
 either check red against current code, **that is a defect found and it gets its own work order.**
 
 **Acceptance**
-- [ ] Both key checks are covered — score grid and marking screen — and both still pass on the
-      delivered tree.
-- [ ] Adding a binding in a form the pre-work-order check could not see, with no legend row added,
+- [x] Both key checks are covered — score grid and marking screen — and both still pass on the
+      delivered tree. *(`802 checks · 802 passed · 0 failed · 0 skipped`, 258s. Widened read plus one
+      refusal check per block, written twice rather than shared.)*
+- [x] Adding a binding in a form the pre-work-order check could not see, with no legend row added,
       turns a check red and names it — run, not reasoned, with the counts before and during quoted.
       **This is the whole work order**; a green run proving nothing changed is not evidence.
-- [ ] The existing mutations still work: removing a bound key while its row stays, and deleting a row
+      *(One run, one mutation per block: `const WO235_MUTATION_KEYS = ['S']` membership-tested below
+      the class-view guard took the marking check from **9 bound keys to 10** and named `S`; a
+      `switch (key) { case 'F': }` in `handleScoreKey()` left that block's legend check reading its
+      usual **10** and passing, and turned the new refusal check red naming the `switch`. `802 checks
+      · 800 passed · 2 failed · 0 skipped`, 254s. Reverted.)*
+- [x] The existing mutations still work: removing a bound key while its row stays, and deleting a row
       while its key stays bound, both still go red on both blocks. Run at least one of the four.
-- [ ] The decision is written in the harness comment, and the score-grid comment's claim about the
-      asserted count is corrected or removed — it is currently false.
-- [ ] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
+      *(Two of the four, one per block, one per direction, in one run: `'D'` out of `MARK_KEYS` with
+      its row left → "ON THE LEGEND AND NOT BOUND: D"; the `↑ ↓` row deleted from `#scoresKeys` with
+      both keys bound → "BOUND AND NOT ON THE LEGEND: ArrowDown (↓), ArrowUp (↑)". `802 checks · 797
+      passed · 5 failed · 0 skipped`, 254s. Reverted.)*
+- [x] The decision is written in the harness comment, and the score-grid comment's claim about the
+      asserted count is corrected or removed — it is currently false. *(Withdrawn and replaced at
+      `tools/verify-shell.mjs:271-319`; the marking block states the same decision in its own words
+      and points there. `e.code` decided by name: refused, never read.)*
+- [x] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
       if a call site was added, and `git diff --stat -- src/` is empty across the whole work order.
+      *(803 → 805, two call sites; `git diff --stat -- src/` empty, confirmed after each mutation and
+      at the end.)*
 
 **Traps** — **The floors are not the mitigation and the comment says they are.** Read WO-2.34's
 result and this work order's third paragraph before trusting either block's comment on this point.

@@ -814,7 +814,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 803 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 805 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1236,6 +1236,49 @@ written into the block's own comment: the two legends' shapes differ enough (nes
 source, a second file read for the id, a listener slice bounded by a guard rather than a function's own
 braces) that a helper covering both would trade a saved few lines for parameters neither check needs
 alone, at the cost of WO-3.22's already-corrected block.
+
+**WO-2.35 moved it from 803 to 805**: two literal call sites, one at the foot of each of the two key
+blocks above, neither in a loop nor a failure arm, so they contribute two executed results and **the
+run prints 802**, measured on the delivered tree: `802 checks · 802 passed · 0 failed · 0 skipped`,
+21,688 lines, 27.0 lines per check, 258s. **802 is a collision, and it will read as a contradiction
+to whoever hits it next.** It is the executed count here, and it was the *call-site* count three
+entries above — WO-3.24 moved that from 798 to 802 — so this file now names two different quantities
+with one number, two work orders apart. The gap paragraph below is what settles it: 805 − 802 = 3,
+the same 3 it has been since WO-3.8, because the two sites this row adds are literal, outside any
+loop and not failure arms, so both counts moved by two and the gap did not budge. Read a call-site
+count and an executed count as the same number and the harness looks like it lost three checks it
+never had. **It is a row about what the two blocks could not SEE, and
+it exists because a comment claimed a mitigation that was not there.** WO-3.22's block said that a
+comparison written any other way "is the honest limit of a static read and the reason the count below
+is asserted rather than assumed" — and the second half is false. `bound.length >= 8` is a floor; a key
+bound through a `switch` does not lower it, so `bound.length` stays where it was, every key the regex
+can still see is still on the legend, and the check goes green over a card that has just lost a row.
+The floors catch a regex that stopped matching everything and cannot catch one that misses only the
+new thing. That sentence is withdrawn in the file, which is half the row. The other half is a decision
+taken off this tree rather than off a list of what JavaScript can do: the read is **widened** to a key
+list declared `const NAME = ['…']` and membership-tested in the slice — the form `src/shell.js`'s own
+listener already uses for `MARK_KEYS`, now found by shape instead of by that one name, so a SECOND
+such list is visible — and the forms it still cannot read are **asserted absent** by one new check per
+block. `switch`, `startsWith` and `.includes(` appear nowhere in `src/`, which is exactly what makes
+refusing them cheap and reading them a guess. **`e.code` is refused by name and never read**: it is a
+different property with different values (`KeyP` where `e.key` is `P`, `Slash` where `?` is), so a
+read widened to it would demand a legend row for a key nobody presses, and `.code` is this app's
+attendance-mark field besides. **Both new checks were proved by mutation, in one run.** A key list the
+pre-WO-2.35 regexes could not see — `const WO235_MUTATION_KEYS = ['S']`, membership-tested below the
+class-view guard, no legend row added — took the marking check from 9 bound keys to 10 and named it
+(*"BOUND AND UNKNOWN TO THIS CHECK: S"*), while a `switch (key) { case 'F': }` inside
+`handleScoreKey()` left that check reading its usual **10 keys and passing** and turned the new
+refusal check red instead (*"BOUND IN A FORM THIS READ CANNOT NAME: a `switch` on the key"*). That
+pass on line 5 beside the fail on line 6 is the finding itself, on one screen: `802 checks · 800
+passed · 2 failed · 0 skipped`, 254s. Reverted, `git diff --stat -- src/` empty. **The regression set
+still bites**, both blocks, both directions, in a second run: `'D'` dropped from `MARK_KEYS` with its
+row left on the card read *"ON THE LEGEND AND NOT BOUND: D"*, and the `↑ ↓` row deleted from
+`#scoresKeys` with both keys still bound read *"BOUND AND NOT ON THE LEGEND: ArrowDown (↓), ArrowUp
+(↑)"* — `802 checks · 797 passed · 5 failed · 0 skipped`, 254s, the other three red being the
+marking-screen checks that a teacher's `D` really does stop working. Both reverted and confirmed.
+**The floors themselves are untouched and stay WO-2.36's row**; the two new checks guard themselves
+against a vacuous pass with a slice-length test instead, which is one of the alternatives that row
+names.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

@@ -277,6 +277,41 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.35 — a key bound any way but a literal comparison was invisible to both ⌨ Keys checks, and
+  a comment said otherwise.** The two checks that keep each key card honest — the marking screen's
+  and the score grid's — read the listener with a regex over `e.key === '…'` comparisons. A key bound
+  through a `switch`, or through a list, or through anything else was simply not seen, so the card
+  could lose a row or gain a binding and the check would go green over it. Nothing here changes what
+  a teacher sees; the app is untouched.
+
+  **The comment claiming a mitigation is the half worth recording.** WO-3.22's block said a
+  comparison written any other way "is the honest limit of a static read and the reason the count
+  below is asserted rather than assumed" — and the second half of that sentence was false.
+  `bound.length >= 8` is a *floor*. A key bound through a `switch` does not lower it: the count stays
+  where it was, every key the regex can still see is still on the legend, and the check passes over a
+  card that has just lost a row. A floor catches a regex that stopped matching everything and cannot
+  catch one that misses only the new thing. That sentence is withdrawn at the code, quoted so the next
+  reader can see what was claimed, with which half was false written beside it — deleted rather than
+  surrounded, because a false claim left standing next to its correction is still there to be read
+  first.
+
+  **The read is widened once and the rest is asserted absent.** It now also finds a key list declared
+  `const NAME = ['…']` and membership-tested in the slice — the form `src/shell.js`'s listener already
+  uses for `MARK_KEYS`, found by shape now instead of by that one name, so a *second* such list is
+  visible. The forms it still cannot read turn one new check per block red, naming themselves:
+  `switch`, `startsWith` and `.includes(` appear nowhere in `src/`, which is what makes refusing them
+  cheap and reading them a guess. **`e.code` is refused by name and never read** — it is a different
+  property with different values (`KeyP` where `e.key` is `P`, `Slash` where `?` is), so widening to
+  it would demand a legend row for a key nobody presses, and `.code` is this app's attendance-mark
+  field besides.
+
+  **Both new checks were proved by mutation rather than argued for.** A key list the old regexes could
+  not see took the marking check from 9 bound keys to 10 and named it; a `switch` inside
+  `handleScoreKey()` left that same check reading its usual 10 and *passing*, and turned the new
+  refusal check red instead. The pass on one line beside the fail on the next is the finding itself,
+  on one screen. Both mutations reverted, and the existing regression set still bites in both
+  directions on both blocks.
+
 - **WO-3.24 — the ⌨ Keys legend is measured for spill now, and the first run found one.** Every row
   on the score grid's key card is measured at 390px and 1024px under a coarse pointer, with the panel
   opened through its own button rather than unhidden. `.scores-key` is `white-space: nowrap`, so a row

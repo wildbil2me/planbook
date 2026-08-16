@@ -3754,7 +3754,8 @@ duplication — at the cost of putting WO-3.22's already-corrected block at risk
 written into the harness comment beside the new block, not just here.
 
 **`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — WO-3.22's corrected clause at
-`tools/verify-shell.mjs:281-287`, copied to this second legend rather than shared with it, for the
+`tools/verify-shell.mjs:349-355` (`:281-287` when this was written; WO-2.35 grew the block above it),
+copied to this second legend rather than shared with it, for the
 reason just above. Asking the map instead of the listener is the defect WO-3.22 shipped and had to
 correct; asking `bound` is what lets a row go stray when the key that justified it is gone.
 
@@ -3762,6 +3763,71 @@ correct; asking `bound` is what lets a row go stray when the key that justified 
 26.9 lines per check, 261s (measured twice, 262s the second time). `wo-sweep.mjs` **20 checks · 18
 passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing pair, naming exactly the lines
 they named before this landed.
+
+---
+
+### WO-2.35 — a key bound any way but a literal comparison is invisible to both key checks
+
+**What this changes for a teacher: nothing.** Harness-only, and **no key was missing and no binding
+changed** — `src/` is byte-identical across the whole work order. Both key checks were telling the
+truth about the tree they were on. What they could not do was notice a key that stopped being written
+as `key === '…'`.
+
+**The comment was the defect, not the regex.** WO-3.22's block said a comparison written another way
+"is the honest limit of a static read and the reason the count below is asserted rather than
+assumed". The first half is true; the second is not. `bound.length >= 8` is a **floor**: a key bound
+through a `switch` does not lower it, so the count does not move, every key the regex can still see is
+still on the legend, and the check passes over a card that has just lost a row. A mitigation cited for
+a case it does not cover is worse than none, because it stops the next reader looking. That sentence
+is withdrawn.
+
+**The decision, taken off this tree rather than off a list of what JavaScript can do.** The read is
+**widened** to a key list declared `const NAME = ['…']` and membership-tested in the slice — the form
+`src/shell.js`'s own listener already uses for `MARK_KEYS`, found by shape now instead of by that one
+name, so a *second* such list is visible. The forms it still cannot read are **asserted absent** by one
+new check per block: `switch`, `e.code`, a prefix/suffix test, and the key used as a lookup index.
+`switch`, `startsWith` and `.includes(` appear nowhere in `src/` — which is what makes refusing them
+cheap and reading them a guess. **`e.code` is refused by name and never read:** different property,
+different values (`KeyP` where `e.key` is `P`, `Slash` where `?` is), and `.code` is this app's
+attendance-mark field besides, so widening to it would document keys nobody presses.
+
+- [x] **Both key checks are covered, and both still pass on the delivered tree.** `802 checks · 802
+      passed · 0 failed · 0 skipped`, 21,688 lines, 27.0 lines per check, 258s. The marking block's
+      widened read finds `MARK_KEYS` by shape — *"4 literal comparison(s) and 5 key(s) from 1
+      membership-tested list(s)"* — and the score grid's finds no list to read, which is correct for
+      `handleScoreKey()` and is why the refusal check is the half that covers it there.
+- [x] **A binding in a form the pre-work-order check could not see turns a check red and names it —
+      run, not reasoned.** One run, one mutation per block. `const WO235_MUTATION_KEYS = ['S']`
+      membership-tested below the class-view guard, no legend row added: the marking check went from
+      **9 bound keys to 10** and read *"BOUND AND UNKNOWN TO THIS CHECK: S"*. A `switch (key) { case
+      'F': }` inside `handleScoreKey()`: the legend check there **still read its usual 10 keys and
+      still passed** — which is the whole finding, visible on the line above — while the new refusal
+      check went red with *"BOUND IN A FORM THIS READ CANNOT NAME: a `switch` on the key"*. `802
+      checks · 800 passed · 2 failed · 0 skipped`, 254s. Reverted; `git diff --stat -- src/` empty.
+- [x] **The existing mutations still work — both blocks, both directions, one run.** `'D'` dropped
+      from `MARK_KEYS` with its row left on the card: *"8 key(s) answered … ON THE LEGEND AND NOT
+      BOUND: D"*. The `↑ ↓` row deleted from `#scoresKeys` with both keys still bound: *"7 legend
+      row(s) … BOUND AND NOT ON THE LEGEND: ArrowDown (↓), ArrowUp (↑)"*. `802 checks · 797 passed ·
+      5 failed · 0 skipped`, 254s — the other three red are the marking-screen checks that a
+      teacher's `D` really does stop working, the same three WO-2.34 saw. Both reverted and confirmed
+      with `git diff`.
+- [x] **The decision is in the harness comment and the false claim is gone.** `tools/verify-shell.mjs:271-319`
+      carries the reasoning where the withdrawn sentence stood; the marking block carries its own
+      shorter statement and points there, rather than sharing a helper (`Out of scope`, and WO-2.34's
+      call stands).
+- [x] **`verify-shell.mjs` passes whole**, the call-site count in `tools/README.md` moved 803 → 805
+      (`wo-sweep.mjs` asserts it), and `git diff --stat -- src/` is empty across the whole work order
+      — confirmed after each mutation, not only at the end.
+
+**The floors are untouched and stay WO-2.36's row.** Widening the read does not make
+`bound.length >= 8` honest, and this work order deliberately did not rewrite it; the two new checks
+guard themselves against a vacuous pass with a slice-length test instead, which is one of the
+alternatives that row already names.
+
+*Desk pass, delivered tree:* `verify-shell.mjs` **802 of 802, 0 failed, 0 skipped**, 21,688 lines,
+27.0 lines per check, measured twice — 258s before the mutations and 253s after both were reverted.
+`wo-sweep.mjs` **20 checks · 18 passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing
+pair, naming exactly the lines they named before this landed.
 
 ---
 

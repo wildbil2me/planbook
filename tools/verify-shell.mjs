@@ -263,11 +263,79 @@ const storeDetail = (store) => oursIn(store).join(', ')
      neighbouring function is not this check's business and cannot make it green either. */
   const at = scoresSrc.indexOf('export function handleScoreKey(');
   const body = at < 0 ? '' : scoresSrc.slice(at, scoresSrc.indexOf('\n}', at));
+
   /* `key === '…'` and `letter === '…'` — the second is how `L`, `M` and `X` are compared, through
-     the uppercased single character above them. A comparison written any other way arrives here as a
-     key this block cannot see, which is the honest limit of a static read and the reason the count
-     below is asserted rather than assumed. */
-  const bound = [...new Set([...body.matchAll(/\b(?:key|letter) === '([^']+)'/g)].map(m => m[1]))];
+     the uppercased single character above them. */
+  const literalKeys = [...new Set([...body.matchAll(/\b(?:key|letter) === '([^']+)'/g)].map(m => m[1]))];
+
+  /* ── HOW WIDE THIS READ IS, DECIDED AT WO-2.35 RATHER THAN LEFT TO THE FLOOR BELOW ──
+   *
+   * THE SENTENCE THAT USED TO STAND HERE WAS WITHDRAWN, and withdrawing it is half of that work
+   * order. It said that a comparison written any other way "is the honest limit of a static read and
+   * the reason the count below is asserted rather than assumed". The first half is true. THE SECOND
+   * HALF WAS FALSE, and a comment is exactly where that does damage: `bound.length >= 8` is a FLOOR.
+   * An eleventh key bound through a `switch` does not lower it — `bound.length` stays where it was,
+   * the floor passes, every key the regex CAN see is still on the legend, and the check goes green
+   * over a card that is now missing a row. The floor catches a regex that stopped matching
+   * EVERYTHING; it cannot catch one that matches everything it used to and misses only the new
+   * thing. A mitigation cited for a case it does not cover is worse than none, because it stops the
+   * next reader looking — which is how WO-3.22's own failure mode got a second door.
+   *
+   * What stands in its place is a read WIDENED to the forms a hand here actually reaches for, plus an
+   * assertion that the rest are ABSENT (`refused`, below). Both halves were taken off this tree
+   * rather than off a list of what JavaScript can do, because a regex matching a form nobody writes
+   * here costs a reader's time forever and catches nothing.
+   *
+   *   READ — A KEY LIST DECLARED `const NAME = ['…']` AND MEMBERSHIP-TESTED IN THE SLICE. This is not
+   *   a hypothetical spelling: src/shell.js's marking listener binds its five letters exactly that way
+   *   (`MARK_KEYS.indexOf(code) === -1`), and the sibling check below had to hardcode that one array's
+   *   NAME to see them. Finding such a list by its SHAPE instead is what makes a SECOND one visible.
+   *   `.includes(` shares the alternation with `.indexOf(` — same form, same payload, not a second
+   *   guess; src/ writes `indexOf` in thirty-odd places and `includes` in none today, and one word of
+   *   alternation is cheaper than the reader who has to find that out later.
+   *
+   *   REFUSED, BY NAME AND WITH A CHECK BEHIND IT — `switch`, `e.code`, a prefix/suffix test on the
+   *   key, and the key used as a lookup index. Not one of them appears anywhere in src/: there is no
+   *   `switch` statement in the whole tree, no `startsWith`, no `.includes(`. That asymmetry is the
+   *   whole decision. Reading a form nobody writes is a guess that catches nothing; asserting its
+   *   ABSENCE costs one line and goes red the day it arrives, which is a check rather than a comment
+   *   asking politely.
+   *
+   *   `e.code` IS DECIDED SEPARATELY AND ON ITS OWN FACTS, because it is not a spelling of the others.
+   *   It is a DIFFERENT PROPERTY WITH DIFFERENT VALUES — `e.code === 'KeyP'` where `e.key === 'P'`,
+   *   `'Slash'` where `'?'` is — so a read widened to it would put `KeyP` into `bound` and demand a
+   *   legend row for a key no teacher presses and this app does not bind. A map that conflates them
+   *   documents a lie. And `.code` is already a heavily used DOMAIN field here — `mark.code`,
+   *   `row.code`, `cell.code` are attendance marks — so a looser pattern would read marks as keys.
+   *   REFUSED, NEVER READ. If a binding one day genuinely needs `e.code`, this check has to learn the
+   *   code→key mapping first, and that is a work order rather than a regex.
+   *
+   * WHAT IS STILL INVISIBLE, SAID PLAINLY so that nobody has to trust this block twice: a comparison
+   * against a variable rather than a literal (`key === SOME_CONST`), and a key list assembled at run
+   * time rather than written down. The first no static pattern can read. The second is caught rather
+   * than skipped — a CAPS-shaped list membership-tested here that this block cannot resolve to quoted
+   * strings is reported by `unresolvedLists` below, which is the floor a newly invisible key list
+   * actually trips.
+   */
+  const testedLists = [...new Set([...body.matchAll(
+    /\b([A-Za-z_$][\w$]*)\s*\.\s*(?:indexOf|includes)\s*\(/g)].map(m => m[1]))];
+  const listKeys = [];
+  const unresolvedLists = [];
+  for (const name of testedLists) {
+    const decl = scoresSrc.match(new RegExp('const ' + name + ' = \\[([^\\]]*)\\]'));
+    const inner = decl ? decl[1] : '';
+    /* Only a list of quoted strings is a key list. `siblings.indexOf(assignment)` and its kind drop
+       out here on their own shape rather than being excluded by name — and a CAPS-shaped constant
+       that does NOT resolve is kept and reported, because that is the one that looks like a key list
+       and cannot be read as one. */
+    if (decl && /^[\s,]*(?:'[^']*'[\s,]*)+$/.test(inner)) {
+      listKeys.push(...[...inner.matchAll(/'([^']*)'/g)].map(m => m[1]));
+    } else if (/^[A-Z][A-Z0-9_]*$/.test(name)) {
+      unresolvedLists.push(name);
+    }
+  }
+
+  const bound = [...new Set([...literalKeys, ...listKeys])];
 
   /* Two bindings, one row: a teacher has one "clear this" key in mind whichever her keyboard calls
      it, and src/scores.js treats them as one. */
@@ -298,6 +366,33 @@ const storeDetail = (store) => oursIn(store).join(', ')
       + (missing.length ? '; BOUND AND NOT ON THE LEGEND: '
         + missing.map(k => k + ' (' + GLYPH_OF[k] + ')').join(', ') : '')
       + (stray.length ? '; ON THE LEGEND AND NOT BOUND: ' + stray.join(', ') : ''));
+
+  /* The other half of WO-2.35's decision, and the half that is a CHECK rather than a wider regex: the
+     four forms above refused by name, asserted absent in this slice. `body.length` is the guard that
+     keeps it from passing on nothing — a renamed function slices to '' and '' contains no `switch`
+     either. The labels are what a failure prints, so they say what to do about it. */
+  const REFUSED = [
+    ['a `switch` on the key — write the branches as `key === \'…\'`, or teach this block to read '
+      + 'case labels first', /\bswitch\s*\(/],
+    ['a comparison against `e.code` — a different property with different values (`KeyP` where '
+      + '`e.key` is `P`); this check cannot map it and must not guess', /\be\s*\.\s*code\b/],
+    ['a prefix or suffix test on the key — there is no single key name in it to put on the legend',
+      /\.\s*(?:startsWith|endsWith)\s*\(/],
+    ['the key used as a lookup index — a table keyed by key name binds every entry invisibly',
+      /\[\s*(?:e\.key|key|letter|code)\s*\]/],
+  ];
+  const refused = REFUSED.filter(([, re]) => re.test(body)).map(([label]) => label);
+
+  check('nothing in handleScoreKey() binds a key in a form the legend check above cannot read — no '
+    + '`switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the floor '
+    + 'above is a floor, so an invisible binding never lowers it and never goes red on its own)',
+    body.length > 200 && !refused.length && !unresolvedLists.length,
+    body.length + ' byte(s) of handleScoreKey() read; ' + literalKeys.length + ' literal '
+      + 'comparison(s) and ' + listKeys.length + ' key(s) from ' + testedLists.length
+      + ' membership-tested list(s)'
+      + (refused.length ? '; BOUND IN A FORM THIS READ CANNOT NAME: ' + refused.join(' · ') : '')
+      + (unresolvedLists.length ? '; MEMBERSHIP-TESTED AND UNREADABLE: ' + unresolvedLists.join(', ')
+        + ' — declare it as `const NAME = [\'…\']` so its keys can be read off the tree' : ''));
 }
 
 /* ───── the ⌨ Keys legend on the marking screen answers to the same keydown listener (WO-2.34) ─────
@@ -347,10 +442,24 @@ const storeDetail = (store) => oursIn(store).join(', ')
  * braces. A helper general enough to cover both shapes would take a slicing strategy, a glyph source
  * and an id source as parameters — three more decisions than either check makes today — to save a few
  * lines of structural duplication, and it would put WO-3.22's already-corrected block at risk for that
- * saving. WO-3.22's block above is untouched: same call site, same comment, same `GLYPH_OF`, same
- * mutation behaviour.
+ * saving. WO-3.22's block above kept its own call site, its own `GLYPH_OF` and its own mutation
+ * behaviour through that decision, and still does.
  *
- * THE SAME SCAR APPLIES HERE AS THERE (`:281-287` above): `stray` below asks `bound` — the keys read
+ * WO-2.35 WIDENED BOTH READS AND GAVE EACH BLOCK A REFUSAL CHECK OF ITS OWN, and doing it twice is
+ * what the decision above costs — the reasoning is written out once, at the `bound` line of the block
+ * above (`:271-319`), because that is where the sentence it withdraws used to stand. In short: the
+ * `bound.length >= 9` floor below is a FLOOR and nothing more. A tenth key bound through a `switch`
+ * or an `e.code` comparison does not lower it, so the floor passes, every key this block CAN see is
+ * still on the card, and the legend quietly loses a row. So the read now also finds a KEY LIST
+ * DECLARED `const NAME = ['…']` AND MEMBERSHIP-TESTED in the slice — the form this very listener uses
+ * for `MARK_KEYS`, found by shape here rather than by that one name, so that a SECOND such list is
+ * visible — and the forms it still cannot read are asserted ABSENT by the second check() below rather
+ * than left to a floor that cannot move. `e.code` is refused there BY NAME and never read: it is a
+ * different property with different values (`KeyP` where `e.key` is `P`, `Slash` where `?` is), and
+ * `.code` is this app's attendance-mark field besides, so widening to it would document keys nobody
+ * presses. The residue that is still invisible is named at the block above too.
+ *
+ * THE SAME SCAR APPLIES HERE AS THERE (`:349-355` above): `stray` below asks `bound` — the keys read
  * out of src/shell.js — not `Object.keys(GLYPH_OF)`, which is a table this file maintains and would
  * answer "still bound" forever, letter deleted or not. Both sides are guarded against a vacuous pass
  * the same way: a renamed modal id, a renamed `MARK_KEYS` constant, or a regex that quietly stopped
@@ -392,7 +501,27 @@ const storeDetail = (store) => oursIn(store).join(', ')
   const markKeys = markKeysMatch
     ? [...markKeysMatch[1].matchAll(/'([^']+)'/g)].map(m => m[1]) : [];
 
-  const bound = [...new Set([...literalKeys, ...markKeys])];
+  /* ANY key list membership-tested in the slice, found by shape rather than by name — WO-2.35, and
+     the reasoning is at `:271-319`. `MARK_KEYS` comes back through here as well as through the read
+     above, which is why `bound` is a Set; the point is the list that is NOT `MARK_KEYS`. It arrives
+     with its letters unmapped, so the check below names them rather than skipping them — the same
+     "noisy instead of silent" call `unmapped` already makes. A CAPS-shaped list this cannot resolve
+     to quoted strings is reported instead of dropped, which is the floor an unreadable list trips. */
+  const testedLists = [...new Set([...body.matchAll(
+    /\b([A-Za-z_$][\w$]*)\s*\.\s*(?:indexOf|includes)\s*\(/g)].map(m => m[1]))];
+  const listKeys = [];
+  const unresolvedLists = [];
+  for (const name of testedLists) {
+    const decl = shellSrc.match(new RegExp('const ' + name + ' = \\[([^\\]]*)\\]'));
+    const inner = decl ? decl[1] : '';
+    if (decl && /^[\s,]*(?:'[^']*'[\s,]*)+$/.test(inner)) {
+      listKeys.push(...[...inner.matchAll(/'([^']*)'/g)].map(m => m[1]));
+    } else if (/^[A-Z][A-Z0-9_]*$/.test(name)) {
+      unresolvedLists.push(name);
+    }
+  }
+
+  const bound = [...new Set([...literalKeys, ...markKeys, ...listKeys])];
 
   /* The map from key name to the glyph the card uses. Only the arrows and Escape read differently
      from their own name; `?` and every MARK_KEYS letter map to themselves, the letters without being
@@ -402,7 +531,7 @@ const storeDetail = (store) => oursIn(store).join(', ')
 
   const unmapped = bound.filter(k => !(k in GLYPH_OF));
   const missing = bound.filter(k => k in GLYPH_OF && !glyphs.includes(GLYPH_OF[k]));
-  /* `bound`, not `Object.keys(GLYPH_OF)` — see the block comment above and `:281-287` in the check
+  /* `bound`, not `Object.keys(GLYPH_OF)` — see the block comment above and `:349-355` in the check
      this one is the sibling of. Asking the map instead of the listener is the defect WO-3.22 shipped
      and had to correct; asking `bound` is what lets a row go stray when the key that justified it is
      gone. */
@@ -419,6 +548,34 @@ const storeDetail = (store) => oursIn(store).join(', ')
       + (missing.length ? '; BOUND AND NOT ON THE LEGEND: '
         + missing.map(k => k + ' (' + GLYPH_OF[k] + ')').join(', ') : '')
       + (stray.length ? '; ON THE LEGEND AND NOT BOUND: ' + stray.join(', ') : ''));
+
+  /* WO-2.35's refusal check, written out here rather than shared with the block above — the same
+     price the one-check-or-two decision already pays, and the same reason: this slice's key variables
+     are `e.key` and the `code` it is uppercased into, where that one has `key` and `letter`, so even
+     the pattern list is not the same text. `body.length` guards against a vacuous pass: a moved guard
+     slices to '', and '' contains no `switch` either. */
+  const REFUSED = [
+    ['a `switch` on the key — write the branches as `e.key === \'…\'`, or teach this block to read '
+      + 'case labels first', /\bswitch\s*\(/],
+    ['a comparison against `e.code` — a different property with different values (`KeyP` where '
+      + '`e.key` is `P`); this check cannot map it and must not guess', /\be\s*\.\s*code\b/],
+    ['a prefix or suffix test on the key — there is no single key name in it to put on the legend',
+      /\.\s*(?:startsWith|endsWith)\s*\(/],
+    ['the key used as a lookup index — a table keyed by key name binds every entry invisibly',
+      /\[\s*(?:e\.key|key|letter|code)\s*\]/],
+  ];
+  const refused = REFUSED.filter(([, re]) => re.test(body)).map(([label]) => label);
+
+  check('nothing below the class-view guard binds a key in a form the legend check above cannot read '
+    + '— no `switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the floor '
+    + 'above is a floor, so an invisible binding never lowers it and never goes red on its own)',
+    body.length > 200 && !refused.length && !unresolvedLists.length,
+    body.length + ' byte(s) of the listener read below the guard; ' + literalKeys.length + ' literal '
+      + 'comparison(s) and ' + listKeys.length + ' key(s) from ' + testedLists.length
+      + ' membership-tested list(s)'
+      + (refused.length ? '; BOUND IN A FORM THIS READ CANNOT NAME: ' + refused.join(' · ') : '')
+      + (unresolvedLists.length ? '; MEMBERSHIP-TESTED AND UNREADABLE: ' + unresolvedLists.join(', ')
+        + ' — declare it as `const NAME = [\'…\']` so its keys can be read off the tree' : ''));
 }
 
 /* ────────────────────────────── static server ────────────────────────────── */
