@@ -1439,6 +1439,23 @@ come back. Collapsing them into one "not happening" status is simpler and destro
 that WO-2.7's and WO-3.13's own notes were careful to draw — WO-3.13 says so in as many words,
 *"it is struck rather than deferred, and that is a different thing from WO-2.7."*
 
+**Two smaller pieces of the same defect, folded in on 2026-08-16.** Both are the tracker or its
+documentation asserting something about itself that is not true, both are one line, and both were
+found by a dispatch that correctly declined to widen its own scope (WO-1.20). They are booked here
+rather than as work orders of their own because a third process work order for two sentences is the
+overhead that stops people booking anything.
+
+- **`plans/work-orders/README.md` § The files says `phase-1-shell-store-roster.md` holds
+  `WO-1.1 … WO-1.19`.** It holds WO-1.21. The row was last true before 2026-08-15, and the same
+  table has eight more rows that rot the same way every time a phase gains a work order.
+- **`CLAUDE.md` § Commands says `verify-shell.mjs` "cannot run in a sandboxed agent."** On
+  2026-08-16 both the WO-1.20 implementer and its verifier ran it to completion — `795 checks · 795
+  passed · 0 skipped`, exit 0, 255s. `AGENTS.md:64` already says *"usually cannot"*, which is
+  correct, so **the two files have drifted** — the offence `CLAUDE.md` names for itself at the end
+  of § How work is run here. The rule underneath is untouched and stays: a green harness from a
+  dispatch closes no box, and a "could not run" is an environment report. Only the flat *cannot*
+  is wrong, and it is wrong in the direction that teaches a reader to disbelieve a true report.
+
 **Deliverables**
 - **A way to record struck and deferred that `wo-gate.mjs` understands**, keeping them distinct.
   Whether that is two new statuses, or a status plus a field, or an explicitly uncounted section, is
@@ -1452,6 +1469,10 @@ that WO-2.7's and WO-3.13's own notes were careful to draw — WO-3.13 says so i
 - **`--self-check` covers the new status**, since it exists to plant every violation the script is
   supposed to catch and a status it has never seen is a status nothing guards.
 - **WO-3.13 and WO-2.7 are moved onto whatever this creates**, which is the only proof it works.
+- **Every row of `README.md` § The files names the work orders its file actually holds** — fixed as
+  a table, not as one row, since the next phase to gain a work order breaks it again otherwise.
+- **`CLAUDE.md` and `AGENTS.md` agree about the harness in the sandbox**, with `AGENTS.md:64` as the
+  correct copy. Say what changed and why in one clause; the standing rule does not move.
 
 **Out of scope** — reversing either decision, both of which are the owner's and are recorded with
 their reasoning; `next` and the running order, which already handle these two correctly by omission
@@ -1465,6 +1486,10 @@ and need no change; any new tool, per `tools/README.md` — this is an edit to `
 - [ ] `node tools/wo-gate.mjs --audit` passes.
 - [ ] `node tools/wo-gate.mjs --self-check` passes, and plants a violation involving the new status.
 - [ ] `node tools/wo-sweep.mjs` totals are unchanged — this work order ships no app code.
+- [ ] Every row in `README.md` § The files matches the work orders in the file it names, checked
+      against the tracker rather than by eye.
+- [ ] `CLAUDE.md` no longer states that `verify-shell.mjs` cannot run in a sandboxed agent, and says
+      the same thing as `AGENTS.md:64`. A dispatch's green harness still closes no box in either.
 
 **Traps** — **Do not collapse struck and deferred.** The distinction is the point, and both work
 orders argue it explicitly. **Do not make the percentage rise by hiding things.** The goal is a
@@ -1472,4 +1497,6 @@ denominator that means something, not a bigger number; a reader who cannot find 
 work orders went will assume they were lost. **Do not touch `next` or the running order** — both
 already omit these two, which is why the problem is arithmetic and not a stall. **Do not reverse
 either decision**; a dispatch that re-argues whether pasting scores is worth building has failed this
-work order.
+work order. **Do not weaken the harness rule while fixing the sentence that overstates it** — the
+fold-in narrows one word, and a dispatch that returns having decided its own green run may tick a
+box has inverted the thing it was sent to correct.
