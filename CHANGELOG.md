@@ -244,6 +244,44 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-1.21 — the tracker had no word for work that is not coming, so it counted it forever.**
+  `wo-gate.mjs` knew four statuses and none of them meant *this is not happening*. Two work orders
+  were in that state and both sat in `⬜ NOT STARTED`, the one status actively false about them:
+  WO-3.13 (paste a column of scores) was struck on 2026-08-15 because scores arrive on paper, and
+  WO-2.7 (the Roll Call! importer) was deferred on 2026-08-09 because no live data is coming across.
+  Both had been pulled from the running order and from every dependency line, so nothing was blocked
+  — the residue was arithmetic, which is why nobody caught it. Phase 3 could never read 23/23, the
+  roadmap's Phase 2 row could never read 16/16, and the 15/16 sitting in that dashboard was a gap
+  nobody was working on. **A completion percentage with a floor below 100% teaches everyone to stop
+  reading it.**
+
+  **Two statuses rather than one, because the difference is the only thing anybody wants from
+  either later.** `🚫 STRUCK` is a *whether* — do not build it, and the roadmap box it closes stops
+  being a promise. `⏳ DEFERRED` is a *when* — not now, the box stands, and it comes back the first
+  time somebody wants the thing. Collapsing them would have been simpler and would have destroyed a
+  distinction both work orders were careful to draw in their own notes.
+
+  **The count drops and the file says what dropped out.** A box belonging to one of them keeps its
+  place wearing its glyph straight after the checkbox, and both dashboards carry a "Not coming"
+  column naming where each went — a number that rises because something was hidden is worse than
+  the number it replaced. `--audit` now holds every marker against the work order behind it in both
+  directions, so a box cannot quietly leave the count and a status cannot quietly stop matching its
+  box. Neither status can be `--start`-ed, `--tick`-ed or `--release`-d, and neither will ever
+  satisfy a dependency: the gate says so in those words rather than reporting a wait that can never
+  end. Both are hand edits, because both are the owner's decision.
+
+  **Three smaller pieces of the same defect, folded in.** `README.md` § The files claimed
+  `phase-1-shell-store-roster.md` held `WO-1.1 … WO-1.19` when it held WO-1.21 — fixed as a table
+  and now checked by `--audit`, since the next phase to gain a work order breaks it again otherwise.
+  `CLAUDE.md` said `verify-shell.mjs` "cannot run in a sandboxed agent" while `AGENTS.md` said
+  "usually cannot"; both dispatches on 2026-08-16 ran it to completion, so the flat *cannot* was
+  wrong in the direction that teaches a reader to disbelieve a true report. **The rule underneath is
+  untouched: a dispatch's green harness still closes no box.** And WO-2.32's open 👤 line was sending
+  a tester to `planbook-shell-v69`, a build `sw.js` left behind at WO-3.23 — repointed, and worded to
+  name the shell `sw.js` currently names so the next `CACHE` bump dates the note instead of breaking
+  the instruction. A version inside a *ticked* 👤 line is the opposite case and none were touched:
+  there it is a record of what was tested, and rewriting one falsifies a result.
+
 - **WO-1.20 — the retired phase-branch rule was written in six files, not two. It is gone from all
   of them.** WO-1.19 made the call and rewrote the two documents it knew about; the convention
   turned out to be spelled out in `plans/ROADMAP.md` § Cross-cutting rules, in the `TESTING.md`
@@ -289,6 +327,12 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   and one tap away, and the diagnosis is still open. What the sittings *did* settle is that the
   design is not the problem: two new probes proved that a context created inside a tap and held
   stays audible on that iPad minutes later, which is exactly what the app does.
+
+  *(**Confirmed on the teaching iPad 2026-08-16, on `planbook-shell-v71`**, which closes the last
+  line of this work order. A pass crossing both thresholds tinted at five and ten minutes and made
+  no sound; the header speaker read OFF on a device that had never touched it, read ON after one
+  tap, and stayed ON across a relaunch. The check waited a day on a pointer, not on the app — it
+  had been aimed at a shell version nobody could still be running until WO-1.21 repointed it.)*
 
 - **One date formatter instead of five, and no two functions named `shortDate` that answer
   differently.** The duplication was the boring half. The trap was the name: `src/attendance.js`

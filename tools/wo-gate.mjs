@@ -59,7 +59,36 @@ const DISPATCH = path.join(REPO, '.claude', 'dispatch');
 // "✅ DONE — 2026-08-04" doesn't match a bare prefix of something else. `🤖 CLAIMED — <dispatch>`
 // (WO-3.11) has that same compound shape and is read the same way — every status read in this file
 // is a startsWith, so the suffix is carried by the file and ignored by the parse.
-const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🤖 CLAIMED', '🚧 BLOCKED', '🔒 GATED'];
+//
+// WO-1.21 added the last two, and they are the first statuses here that mean **this is not coming**.
+// Everything above them is a position on a road that ends at ✅ DONE; these two say the road stops.
+// Two work orders had been sitting in ⬜ NOT STARTED saying the opposite of what the owner decided —
+// WO-3.13 struck on 2026-08-15, WO-2.7 deferred on 2026-08-09 — and nothing was blocked by it,
+// which is why it went a week unnoticed: the damage was arithmetic. Phase 3 could never read 23/23
+// and ROADMAP.md's Phase 2 row could never read 16/16, and a percentage with a floor under 100%
+// teaches its reader to stop looking at it.
+//
+// **They are two statuses rather than one, and that is the constraint rather than a taste.** 🚫 is a
+// *whether* — do not build this, and its roadmap box stops being a promise. ⏳ is a *when* — not now,
+// the box stands, and it comes back the first time somebody wants the thing. Both work orders argue
+// the distinction in their own words and WO-3.13 names it outright ("it is struck rather than
+// deferred, and that is a different thing from WO-2.7"), so a single NOT-HAPPENING status would have
+// been simpler and would have thrown away the only fact anybody needs from either of them later.
+const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🤖 CLAIMED', '🚧 BLOCKED', '🔒 GATED',
+                  '🚫 STRUCK', '⏳ DEFERRED'];
+
+// The pair, asked as one question, wherever the two behave alike: neither is counted, neither can be
+// started, ticked or released, and neither will ever satisfy a dependency. Everywhere they differ,
+// the two are named separately on purpose — a helper that flattens them is how the distinction dies.
+const STRUCK = '🚫 STRUCK', DEFERRED = '⏳ DEFERRED';
+function notComing(status) { return status.startsWith(STRUCK) || status.startsWith(DEFERRED); }
+
+// The glyph a roadmap box wears when the work order that closes it is not coming (WO-1.21). It sits
+// immediately after the checkbox — `- [ ] ⏳ **DEFERRED …** — the box text` — and the position is the
+// whole guard: a glyph anywhere else on the line is prose about a deferral, not a deferral. The box
+// stays `- [ ]` rather than becoming `- [x]` or being deleted, because both of those lie. Ticking it
+// claims work that never happened; deleting it loses the promise the roadmap made.
+const BOX_MARK = /^-\s*\[([ x])\]\s*(🚫|⏳)/;
 
 // The hard ordering constraint, stated in CLAUDE.md, the phase file, and the orchestrator's gates.
 // No feature that writes student data ships before the path that gets it back out.
@@ -430,7 +459,16 @@ function gate(id, wos) {
       const ok = st.startsWith('✅ DONE');
       const owed = d && d.owesRaw ? `   owes ${d.owesRaw}` : '';
       console.log(`  depends ${dep.padEnd(8)} ${st}${ok ? owed : '   <-- not done'}`);
-      if (!ok) problems.push(`dependency ${dep} is ${st}, not ✅ DONE`);
+      // A dependency that is not coming can never become ✅ DONE, so this gate can never open on its
+      // own — the difference between a wait and a dead end, and the reader has to be told which. Both
+      // of WO-1.21's two were taken off the dependency lines they sat on at the moment they were
+      // decided (WO-3.13 off WO-3.20, WO-2.7 off WO-G2) precisely because of this, and the note under
+      // each says why: a gate that waits on work nobody intends to do is a gate that gets waived.
+      if (!ok && d && notComing(d.status)) {
+        problems.push(`dependency ${dep} is ${d.status} — it will never be ✅ DONE, so this gate cannot open. Take it off the **Depends on** line, or revive ${dep} by hand and say so in its header`);
+      } else if (!ok) {
+        problems.push(`dependency ${dep} is ${st}, not ✅ DONE`);
+      }
     }
     if (hasProse) {
       console.log(`  depends (prose) ${wo.dependsRaw}`);
@@ -499,6 +537,15 @@ function gate(id, wos) {
   if (wo.status.startsWith('🤖 CLAIMED')) notes.push(`${wo.id} is 🤖 CLAIMED — a dispatch has it in flight. Ask before proceeding; if that dispatch is gone, --release ${wo.id} puts it back to ⬜ NOT STARTED`);
   if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is 🔨 IN PROGRESS — part-built, and nobody is claiming to be working on it. This is what --tick writes over an open Acceptance list, so pick it up where it stopped; --release refuses this status by design`);
   if (wo.status.startsWith('🚧 BLOCKED')) problems.push(`${wo.id} is 🚧 BLOCKED`);
+  // WO-1.21's two, and they fail rather than note for the same reason 🔒 GATED does: the gate report
+  // is read by somebody about to start, and both answers are "not this one". The refusals say who
+  // decided and point at the paragraph, because reviving either is a decision and not a command.
+  if (wo.status.startsWith(STRUCK)) {
+    problems.push(`${wo.id} is ${wo.status} — the owner decided it should not be built. Do not start it; reviving it is a hand edit of this status line and a note in the work order saying what changed`);
+  }
+  if (wo.status.startsWith(DEFERRED)) {
+    problems.push(`${wo.id} is ${wo.status} — not now rather than not ever, and nothing is scheduling it. Do not start it without the owner putting it back: a hand edit of this status line to ⬜ NOT STARTED and a row in the running order`);
+  }
 
   // 5. Interrupted-run evidence
   const files = dispatchFiles(wo.id);
@@ -585,27 +632,36 @@ function bar(done, total) {
 // Recompute every Done count from the phase files rather than trusting the number already there.
 // WO-1.1 sat verified with the dashboard reading 0 because five hand edits are easy to postpone;
 // a tracker that lies about what is finished is the failure this exists to prevent.
+//
+// **The denominator stopped being "every work order in the file" at WO-1.21**, and the fourth column
+// is the price of that. A struck or deferred work order leaves the count — otherwise the phase has a
+// ceiling below 100% forever — but a number that rises because something was hidden is worse than the
+// number it replaced, so the thing that left is named in the row it left, by this function, out of the
+// same parse. A hand note would have done the job today and rotted at the next strike; the reader who
+// sees 23 where there are 24 headings gets told which one and why in the cell beside it.
 function recomputeDashboard(text) {
   const edits = [];
   let lines = text.split('\n');
-  let grandTotal = 0, grandDone = 0;
+  let grandTotal = 0, grandDone = 0, grandOut = 0;
 
   for (const [file, rowRe] of PHASE_ROWS) {
     const p = path.join(WO_DIR, file);
     if (!fs.existsSync(p)) continue;
     const wos = parseFile(p);
-    const total = wos.length;
+    const out = wos.filter(w => notComing(w.status));
+    const total = wos.length - out.length;
     const done = wos.filter(w => w.status.startsWith('✅ DONE')).length;
-    grandTotal += total; grandDone += done;
+    grandTotal += total; grandDone += done; grandOut += out.length;
 
     const i = lines.findIndex(l => rowRe.test(l));
     if (i < 0) { edits.push({ line: -1, note: `no dashboard row matched ${file}` }); continue; }
     const cells = lines[i].split('|');
-    // | label | work orders | done | status |
-    if (cells.length < 5) continue;
+    // | label | work orders | done | not coming | status |
+    if (cells.length < 6) continue;
     const before = lines[i];
     cells[2] = ` ${total} `;
     cells[3] = ` ${done} `;
+    cells[4] = ` ${out.length ? out.map(w => `${w.status.startsWith(STRUCK) ? '🚫' : '⏳'} ${w.id}`).join(' · ') : '—'} `;
     const after = cells.join('|');
     if (before !== after) { edits.push({ line: i, before, after }); lines[i] = after; }
   }
@@ -613,10 +669,10 @@ function recomputeDashboard(text) {
   const ti = lines.findIndex(l => /^\|\s*\|\s*\*\*\d+\*\*\s*\|/.test(l));
   if (ti >= 0) {
     const before = lines[ti];
-    const after = `| | **${grandTotal}** | **${grandDone}** | ${bar(grandDone, grandTotal)} |`;
+    const after = `| | **${grandTotal}** | **${grandDone}** | **${grandOut}** | ${bar(grandDone, grandTotal)} |`;
     if (before !== after) { edits.push({ line: ti, before, after }); lines[ti] = after; }
   }
-  return { text: lines.join('\n'), edits, grandTotal, grandDone };
+  return { text: lines.join('\n'), edits, grandTotal, grandDone, grandOut };
 }
 
 // ---------------------------------------------------------------------------- claim, and release
@@ -677,6 +733,13 @@ function applyStart(id, wos, dryRun, label) {
     if (wo.status.startsWith('🔨 IN PROGRESS')) {
       console.error(`     | this one is part-built rather than claimed — nothing is in flight, and --release refuses it (WO-3.11).`);
       console.error(`     | Picking it up is a hand edit of the status line, deliberately: it is a judgement about half-finished work.`);
+    }
+    // The two that are not a position on the road (WO-1.21). Claiming one is a caller with a stale
+    // running order or a stale memory, and the answer is not "try again" — it is a decision the owner
+    // takes, in the work order's own prose, before anything here is run.
+    if (notComing(wo.status)) {
+      console.error(`     | ${wo.status.startsWith(STRUCK) ? 'struck' : 'deferred'}: this work order is not coming, and no flag here reverses that.`);
+      console.error(`     | Reviving it is a hand edit — the status line back to ⬜ NOT STARTED, with a dated paragraph in the work order saying what changed and who decided.`);
     }
     return 1;
   }
@@ -836,21 +899,40 @@ const DASHBOARD_HEADING = /^##\s+Progress dashboard/;
 const ROADMAP_PHASE_HEADING = /^##\s+Phase\s+(\d+)\b/;
 
 // Ticked and total boxes under each `## Phase N` heading, which is what the dashboard row claims.
+//
+// A box carrying 🚫 or ⏳ right after its checkbox is **out of both numbers** (WO-1.21) and counted in
+// `out` instead, so the row it feeds can reach 100% while the promise stays visible in the file. That
+// is the deferral's whole shape: WO-2.7 keeps its box, and the Phase 2 row stops advertising a gap
+// nobody is working on. The marker is checked against the work order that closes the box by --audit,
+// so the two cannot drift apart in silence — which is the only thing that makes an uncounted box
+// honest rather than a way of making a number go up.
 function roadmapBoxCounts(lines) {
   const counts = new Map();
   let phase = null;
   for (const line of lines) {
     const h = ROADMAP_PHASE_HEADING.exec(line);
-    if (h) { phase = h[1]; counts.set(phase, { done: 0, total: 0 }); continue; }
+    if (h) { phase = h[1]; counts.set(phase, { done: 0, total: 0, out: 0 }); continue; }
     if (/^##\s/.test(line)) { phase = null; continue; }
     const b = /^-\s*\[([ x])\]/.exec(line);
     if (b && phase !== null) {
       const c = counts.get(phase);
+      if (BOX_MARK.test(line)) { c.out++; continue; }
       c.total++;
       if (b[1] === 'x') c.done++;
     }
   }
   return counts;
+}
+
+// Every roadmap box wearing a marker, with the line it is on and which marker it wears. Used by
+// --audit to hold it against the work order that closes it, in both directions.
+function markedBoxes(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = BOX_MARK.exec(lines[i]);
+    if (m) out.push({ line: i, mark: m[2], ticked: m[1] === 'x' });
+  }
+  return out;
 }
 
 // The rows of the `## Progress dashboard` table, scoped to that section so no other numbered table
@@ -913,6 +995,94 @@ function roadmapDashboardDrift(roadmapText) {
   return problems;
 }
 
+// ------------------------------------------------- work that is not coming (WO-1.21)
+//
+// A struck or deferred work order leaves both dashboards' denominators, and the box it closes leaves
+// ROADMAP.md's. **That is a number going up because something was taken out of it**, which is the one
+// move this whole file exists to distrust — so the two halves have to agree, in both directions, or
+// the deferral is just a way of hiding a promise. The status is in a phase file, the marker is in
+// ROADMAP.md, and nothing but this reads them together.
+//
+// Both directions, because each is a different lie. A not-coming work order whose box is still counted
+// leaves a phase permanently short of 100% — the defect this was written for. A marked box with no
+// not-coming work order behind it is a promise that stopped being counted because somebody typed a
+// glyph, which is worse: the roadmap quietly shrank and the tracker never said so.
+function notComingProblems(wos, lines) {
+  const problems = [], ok = [];
+  const claimed = new Map();                                   // roadmap line → the work order on it
+
+  for (const wo of wos.values()) {
+    if (!notComing(wo.status)) continue;
+    const want = wo.status.startsWith(STRUCK) ? '🚫' : '⏳';
+    const frags = [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+    if (!frags.length) { ok.push(`${wo.id.padEnd(8)} ${want} closes no roadmap box — nothing to mark`); continue; }
+    for (const frag of frags) {
+      const { tooShort, hits } = roadmapHits(frag, lines);
+      if (tooShort || hits.length !== 1) continue;             // the fragment walk above owns this
+      const i = hits[0];
+      claimed.set(i, wo);
+      const m = BOX_MARK.exec(lines[i]);
+      if (!m) {
+        problems.push(`${wo.id} is ${wo.status} and the box it closes at ROADMAP.md:${i + 1} is still counted — put "${want}" straight after the checkbox, and take the box out of that phase's dashboard row by hand`);
+      } else if (m[2] !== want) {
+        problems.push(`${wo.id} is ${wo.status} and the box it closes at ROADMAP.md:${i + 1} is marked "${m[2]}" — struck and deferred are different facts and the box has the other one`);
+      } else if (m[1] === 'x') {
+        problems.push(`ROADMAP.md:${i + 1} is marked "${want}" and ticked at the same time — a box for work nobody did cannot be [x]`);
+      } else {
+        ok.push(`${wo.id.padEnd(8)} ${want} ROADMAP.md:${String(i + 1).padEnd(4)} marked and uncounted   ${clip(norm(lines[i]).replace(/^[🚫⏳\s]*/, ''), 52)}`);
+      }
+    }
+  }
+
+  for (const b of markedBoxes(lines)) {
+    if (claimed.has(b.line)) continue;
+    problems.push(`ROADMAP.md:${b.line + 1} carries "${b.mark}" and no ${b.mark === '🚫' ? STRUCK : DEFERRED} work order closes it — an uncounted box with nothing behind it. Name the work order in the box and give it the matching status, or take the marker off and put the box back in the count`);
+  }
+  return { problems, ok };
+}
+
+// ------------------------------------------------- § The files, against the files (WO-1.21)
+//
+// `| phase-1-shell-store-roster.md | WO-1.1 … WO-1.19 | Phase 1 |` was true until 2026-08-15 and read
+// as fact for a day after it stopped being. Nine rows rot the same way, every time a phase gains a
+// work order, and the fix that lasts is not nine corrected rows — it is the row being checked against
+// the file it names. The claim each row makes is exactly first-and-last in document order: the `…` is
+// prose shorthand and never a range, which is why WO-2.2 being merged away leaves `WO-2.1 … WO-2.34`
+// correct over thirty-three work orders.
+const FILES_HEADING = /^##\s+The files\s*$/;
+const FILES_ROW = /^\|\s*\[`?([\w.-]+\.md)`?\]\([^)]*\)\s*\|([^|]*)\|/;
+
+function fileRowProblems() {
+  const lines = read(README).split('\n');
+  const from = lines.findIndex(l => FILES_HEADING.test(l));
+  if (from < 0) return { problems: ['plans/work-orders/README.md has no `## The files` section — nothing to check the phase files against'], ok: [] };
+
+  const problems = [], ok = [];
+  const seen = new Set();
+  for (let i = from + 1; i < lines.length && !/^##\s/.test(lines[i]); i++) {
+    const m = FILES_ROW.exec(lines[i]);
+    if (!m) continue;
+    const [, file, claim] = m;
+    seen.add(file);
+    const p = path.join(WO_DIR, file);
+    if (!fs.existsSync(p)) { problems.push(`§ The files names ${file} at README.md:${i + 1} and there is no such file in ${path.relative(REPO, WO_DIR)}`); continue; }
+    const ids = parseFile(p).map(w => w.id);
+    const said = claim.match(/WO-[\dG][\w.]*/g) || [];
+    const want = ids.length ? [...new Set([ids[0], ids[ids.length - 1]])] : [];
+    if (said.join(' … ') !== want.join(' … ')) {
+      problems.push(`§ The files says ${file} holds "${said.join(' … ') || claim.trim()}" (README.md:${i + 1}) and it holds ${want.join(' … ') || 'no work orders'} — ${ids.length} of them`);
+    } else {
+      ok.push(`${file.padEnd(30)} ${want.join(' … ') || '—'}   ${ids.length} work order(s)`);
+    }
+  }
+
+  for (const f of fs.readdirSync(WO_DIR)) {
+    if (!f.endsWith('.md') || f === 'README.md' || seen.has(f)) continue;
+    if (parseFile(path.join(WO_DIR, f)).length) problems.push(`${f} holds work orders and § The files has no row for it — a file nothing indexes is a file nobody reads`);
+  }
+  return { problems, ok };
+}
+
 // One Acceptance line, short enough to read in a list of them. The file:line beside it is how you
 // get to the whole thing, and WO-2.1's second item is 900 characters of blockquote.
 function clip(s, n = 100) {
@@ -928,6 +1098,9 @@ function applyTick(id, wos, dryRun) {
   // WO-3.11 and had to: it is what every dispatch now runs under, and --tick is its last step.
   if (!(wo.status.startsWith('⬜ NOT STARTED') || wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED'))) {
     console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED, 🤖 CLAIMED or 🔨 IN PROGRESS may be ticked`);
+    if (notComing(wo.status)) {
+      console.error(`     | there is nothing here to tick: no status means "finished" for work nobody did, and the roadmap box it names (if any) stays [ ] and marked.`);
+    }
     return 1;
   }
 
@@ -1114,8 +1287,9 @@ function recomputeDashboardPreview(readmeText, wo) {
     const tCells = lines[ti].split('|');
     const total = Number(tCells[2].replace(/\*/g, '').trim());
     const done = Number(tCells[3].replace(/\*/g, '').trim()) + 1;
+    const out = Number(tCells[4].replace(/\*/g, '').trim());          // carried, never moved by a tick
     const tBefore = real.edits.find(e => e.line === ti)?.before ?? lines[ti];
-    lines[ti] = `| | **${total}** | **${done}** | ${bar(done, total)} |`;
+    lines[ti] = `| | **${total}** | **${done}** | **${out}** | ${bar(done, total)} |`;
     const rest = edits.filter(e => e.line !== ti);
     rest.push({ line: ti, before: tBefore, after: lines[ti] });
     return { text: lines.join('\n'), edits: rest };
@@ -1198,6 +1372,23 @@ function audit(wos) {
   console.log('');
   console.log(`  ${withOwes} work order(s) with a **Owes** field or a "→" marker, ${pointers} pointer(s) resolving, ${owesBad} problem(s)`);
 
+  // The two WO-1.21 sections. Both are about the tracker describing itself, which is the same family
+  // as everything above: a claim written by a hand, in a file, that nothing has ever read back.
+  console.log('');
+  console.log('🚫 struck and ⏳ deferred work orders, against the roadmap boxes they name');
+  console.log('');
+  const nc = notComingProblems(wos, lines);
+  for (const l of nc.ok) console.log(`  ok   ${l}`);
+  for (const p of nc.problems) console.log(`  BAD  ${p}`);
+  if (!nc.ok.length && !nc.problems.length) console.log('  —    no work order is struck or deferred, and no roadmap box is marked');
+
+  console.log('');
+  console.log('`README.md` § The files, against the work orders each file actually holds');
+  console.log('');
+  const fr = fileRowProblems();
+  for (const l of fr.ok) console.log(`  ok   ${l}`);
+  for (const p of fr.problems) console.log(`  BAD  ${p}`);
+
   console.log('');
   console.log('ROADMAP.md progress dashboard, against the boxes under each `## Phase N`');
   console.log('');
@@ -1206,7 +1397,7 @@ function audit(wos) {
   for (const [phase, c] of counts) {
     const row = rows.get(phase);
     const ok = row && row.done === c.done && row.total === c.total;
-    console.log(`  ${ok ? 'ok  ' : 'BAD '} Phase ${phase}   row ${row ? `${row.done}/${row.total}` : '(none)'}   boxes ${c.done}/${c.total}`);
+    console.log(`  ${ok ? 'ok  ' : 'BAD '} Phase ${phase}   row ${row ? `${row.done}/${row.total}` : '(none)'}   boxes ${c.done}/${c.total}${c.out ? `   (+${c.out} not coming, uncounted)` : ''}`);
   }
   let sumDone = 0, sumTotal = 0;
   for (const r of rows.values()) { sumDone += r.done; sumTotal += r.total; }
@@ -1215,11 +1406,11 @@ function audit(wos) {
   console.log('');
   for (const d of drift) console.log(`FAIL | ${d}`);
 
-  const problems = bad + drift.length + owesBad;
+  const problems = bad + drift.length + owesBad + nc.problems.length + fr.problems.length;
   console.log('');
   console.log(problems
     ? `FAIL | ${problems} problem(s) across the two trackers. Nothing was written; all of it is a hand edit.`
-    : 'PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, and every dashboard row matches its own boxes.');
+    : 'PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, and every dashboard row matches its own boxes.');
   return problems ? 1 : 0;
 }
 
@@ -1481,6 +1672,21 @@ function runPlants(subject, sandbox) {
     plantWrite(p, lines.join('\n'));
   }
 
+  // 2c. The § The files row for the phase file the fixture is appended to (WO-1.21). Every reset()
+  //     writes WO-9.9 and WO-9.8 into that file, so the index saying which work orders it holds has
+  //     to say WO-9.8 as well or --audit is reporting the fixture as rot. Same rule as step 2 above,
+  //     and the same reason: the only drift in this copy may be drift a plant put there.
+  {
+    const p = path.join('work-orders', 'README.md');
+    const lines = readSb(p).split('\n');
+    const i = lines.findIndex(l => l.includes(`](${FIXTURE_FILE})`));
+    if (i < 0) throw new Error(`--self-check found no § The files row for ${FIXTURE_FILE}`);
+    const cells = lines[i].split('|');
+    cells[2] = ` ${(cells[2].match(/WO-[\dG][\w.]*/) || [`WO-${FIXTURE_PHASE}.1`])[0]} … ${TARGET_ID} `;
+    lines[i] = cells.join('|');
+    plantWrite(p, lines.join('\n'));
+  }
+
   // 3. The pristine state every plant is reset to — the copy WITHOUT the fixture work order, so each
   //    plant writes the whole fixture rather than editing the last one's leavings.
   const snapshot = () => {
@@ -1530,7 +1736,24 @@ function runPlants(subject, sandbox) {
     return line.trim();
   };
 
+  // The fixture's roadmap box, taken out of the count the way a real one is: the marker straight
+  // after the checkbox, and the two rows that were counting it moved down. Both halves in one step,
+  // deliberately — a marked box left in a dashboard row is drift, drift earns a `HELD`, and a plant
+  // that goes red for drift it planted itself is the WO-2.16 morning all over again.
+  const markFixtureBox = mark => {
+    const lines = readSb('ROADMAP.md').split('\n');
+    const i = lines.findIndex(l => l.includes(FIXTURE_BOX) && /^-\s*\[/.test(l));
+    if (i < 0) throw new Error('--self-check could not find the fixture box to mark');
+    lines[i] = lines[i].replace(/^(-\s*\[[ x]\]\s*)/, `$1${mark} `);
+    const { rows, overall } = roadmapDashboardRows(lines);
+    const drop = (at, re) => { lines[at] = lines[at].replace(re, (s, d, t) => s.replace(`${d}/${t}`, `${d}/${+t - 1}`)); };
+    drop(rows.get(FIXTURE_PHASE).line, /(\d+)\s*\/\s*(\d+)/);
+    drop(overall.line, /\*\*(\d+)\s*\/\s*(\d+)/);
+    plantWrite('ROADMAP.md', lines.join('\n'));
+  };
+
   const OK = '⬜ NOT STARTED', RUN = '🔨 IN PROGRESS', CLAIM = '🤖 CLAIMED';
+  const STRUCK_AT = `${STRUCK} — 2026-01-01`, DEFERRED_AT = `${DEFERRED} — 2026-01-01`;
   const plants = [
     {
       name: 'an unticked Acceptance line holds --tick at 🔨 IN PROGRESS instead of ✅ DONE',
@@ -1823,6 +2046,151 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // ------------------------------------------------------------------ WO-1.21's four
+    //
+    // A status the script has never seen is a status nothing guards, and these are the first two that
+    // mean the work is not coming — so they are also the first two that can take a work order out of a
+    // count. Three of the four plant violations; the fourth plants the arithmetic that is supposed to
+    // WORK, on the same reasoning that put a resolving pointer beside WO-3.11's three refusals: a
+    // build that took every work order out of every count would pass all three violation plants.
+    {
+      name: '🚫 STRUCK and ⏳ DEFERRED are refused by --start, --tick and --release, and write nothing',
+      run: () => {
+        const bad = [];
+        for (const status of [STRUCK_AT, DEFERRED_AT]) {
+          for (const flag of ['--start', '--tick', '--release']) {
+            reset({ status, fragment: FIXTURE_BOX, open: false });
+            const before = snapshot();
+            const r = run([flag, FIXTURE_ID]);
+            if (r.code === 0) bad.push(`${flag} on a "${status}" work order exited 0`);
+            const changed = changedSince(before);
+            if (changed.length) bad.push(`${flag} on "${status}" wrote ${changed.join(', ')}`);
+          }
+          // And the gate, which is what somebody reads before picking a work order up. A wait that
+          // can never end has to read differently from a wait.
+          reset({ status, fragment: FIXTURE_BOX, open: false });
+          const g = run([FIXTURE_ID]);
+          if (g.code === 0) bad.push(`the gate report on a "${status}" work order exited 0`);
+          const dep = run([TARGET_ID]);                          // WO-9.8 depends on WO-9.9
+          if (dep.code === 0) bad.push(`${TARGET_ID}'s gate passed with its dependency "${status}"`);
+          if (!/will never be ✅ DONE/.test(dep.out)) bad.push(`${TARGET_ID}'s gate reported a "${status}" dependency as an ordinary wait`);
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'a work order that is not coming leaves the dashboard denominator and is named in the row it left',
+      run: () => {
+        const bad = [];
+        // The dashboard in work-orders/README.md is only ever rewritten by a successful --tick, and
+        // --tick refuses the struck work order itself — so the tick that recomputes it is the target
+        // fixture's, next door in the same phase file. That is the real shape too: a strike is a hand
+        // edit, and the number moves the next time anything in that phase lands.
+        const row = status => {
+          reset({ status, fragment: FIXTURE_BOX, open: false, target: 'ticked' });
+          const r = run(['--tick', TARGET_ID]);
+          if (r.code !== 0) bad.push(`--tick ${TARGET_ID} exited ${r.code} with ${FIXTURE_ID} at "${status}":`, ...verdict(r.out));
+          return readmeRow();
+        };
+        const open = row(OK);
+        if (open.length < 6) { bad.push(`no Phase 3 dashboard row with a "Not coming" column to read: ${open.join('|')}`); return bad; }
+
+        for (const [status, glyph] of [[STRUCK_AT, '🚫'], [DEFERRED_AT, '⏳']]) {
+          const out = row(status);
+          if (Number(out[2]) !== Number(open[2]) - 1) bad.push(`"${status}" left the work-order count at ${out[2].trim()}, expected ${Number(open[2]) - 1} — one fewer than the ${open[2].trim()} counted while it was ⬜`);
+          if (!out[4].includes(FIXTURE_ID)) bad.push(`the count dropped and the "Not coming" cell does not name ${FIXTURE_ID}: "${out[4].trim()}" — a number that goes up because something was hidden`);
+          if (!out[4].includes(glyph)) bad.push(`the "Not coming" cell does not say which of the two "${status}" is: "${out[4].trim()}"`);
+        }
+        return bad;
+      },
+    },
+    {
+      name: '--audit holds the two halves together — an uncounted box, the status behind it, and which of the two it is',
+      run: () => {
+        const bad = [];
+        const audit = what => {
+          const before = snapshot();
+          const r = run(['--audit']);
+          if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')} on ${what} — it may write nothing, ever`);
+          return r;
+        };
+
+        // 1. The defect this was written for: not coming, and its box still counted. The phase can
+        //    never reach 100% and nothing says why.
+        reset({ status: STRUCK_AT, fragment: FIXTURE_BOX, open: false });
+        let r = audit('a struck work order whose box is still counted');
+        if (r.code === 0) bad.push('--audit exited 0 with a struck work order whose roadmap box is still in the count');
+        if (!/still counted/.test(r.out)) bad.push('--audit did not say the box was still being counted');
+
+        // 2. The positive path, which is not optional: marked, uncounted, and agreeing.
+        reset({ status: STRUCK_AT, fragment: FIXTURE_BOX, open: false });
+        markFixtureBox('🚫');
+        r = audit('a struck work order whose box is marked');
+        if (r.code !== 0) bad.push('--audit exited non-zero on a struck work order whose box is marked and uncounted:', ...verdict(r.out));
+        if (!/not coming, uncounted/.test(r.out)) bad.push('--audit did not report the uncounted box beside that phase\'s box count');
+
+        // 3. A marked box with nothing behind it — the roadmap quietly shrinking.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureBox('🚫');
+        r = audit('a marked box with an ⬜ work order behind it');
+        if (r.code === 0) bad.push('--audit exited 0 on a box marked 🚫 with no struck work order closing it');
+        if (!/no 🚫 STRUCK work order closes it/.test(r.out)) bad.push('--audit did not say the marked box has nothing behind it');
+
+        // 4. The distinction itself, which is the trap this work order was written around: a *when*
+        //    wearing a *whether*'s glyph. Nothing else in this file can tell those two apart.
+        reset({ status: DEFERRED_AT, fragment: FIXTURE_BOX, open: false });
+        markFixtureBox('🚫');
+        r = audit('a deferred work order whose box is marked struck');
+        if (r.code === 0) bad.push('--audit exited 0 with a ⏳ DEFERRED work order whose box is marked 🚫');
+        if (!/different facts/.test(r.out)) bad.push('--audit did not say that struck and deferred are different facts');
+        return bad;
+      },
+    },
+    {
+      name: '§ The files is checked against the files it names — a stale range, and a file with no row',
+      run: () => {
+        const bad = [];
+        const p = path.join('work-orders', 'README.md');
+        const lit = FIXTURE_FILE.replace(/\./g, '\\.');
+        const rowRe = new RegExp('^\\|\\s*\\[`?' + lit + '`?\\]');
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const clean = run(['--audit']);
+        if (clean.code !== 0) bad.push('--audit exited non-zero on a § The files table that matches its files:', ...verdict(clean.out));
+
+        // The rot itself: a row that was true until a phase gained a work order. This is the state
+        // the Phase 1 row was actually in on 2026-08-15, reproduced on a fixture that cannot be spent.
+        //
+        // The stale claim is written **by cell**, not by a search-and-replace over the ids already in
+        // the row. The first cut of this plant replaced `WO-3.x … WO-3.y` — which is what the row says
+        // in the repository and not what it says here, because step 2c above has already rewritten it
+        // to end at the fixture, `WO-3.1 … WO-9.8`. The pattern matched nothing, the "stale" row was
+        // still the true one, --audit passed on it, and the plant reported the checker as missing when
+        // the checker was fine. **A plant that quietly plants nothing accuses the wrong file**, so the
+        // write is unconditional and the line is asserted to have moved before the run that reads it.
+        const lines = readSb(p).split('\n');
+        const i = lines.findIndex(l => rowRe.test(l));
+        if (i < 0) { bad.push(`--self-check found no ${FIXTURE_FILE} row in § The files`); return bad; }
+        const stale = lines.slice();
+        const cells = stale[i].split('|');
+        cells[2] = ` WO-${FIXTURE_PHASE}.1 … WO-${FIXTURE_PHASE}.9 `;
+        stale[i] = cells.join('|');
+        if (stale[i] === lines[i]) { bad.push(`the stale-row plant changed nothing — the row already reads "${lines[i].trim()}", so --audit was asked about a row that is correct`); return bad; }
+        plantWrite(p, stale.join('\n'));
+        let r = run(['--audit']);
+        if (r.code === 0) bad.push('--audit exited 0 on a § The files row naming work orders its file does not hold');
+        if (!new RegExp('§ The files says ' + lit + ' holds').test(r.out)) bad.push('--audit did not name the stale row or the file it is wrong about');
+
+        // And the other direction: a file full of work orders that the index does not mention.
+        const gone = lines.slice();
+        gone.splice(i, 1);
+        plantWrite(p, gone.join('\n'));
+        r = run(['--audit']);
+        if (r.code === 0) bad.push('--audit exited 0 with a phase file that § The files has no row for');
+        if (!/no row for it/.test(r.out)) bad.push('--audit did not say the file has no row in § The files');
+        return bad;
+      },
+    },
     {
       name: "a wrong count in ROADMAP.md's dashboard holds the tick, with both numbers shown",
       run: () => {
@@ -1867,11 +2235,13 @@ function runPlants(subject, sandbox) {
 
   console.log('');
   console.log(`  ${plants.length} plants, ${plants.length - failed} caught, ${failed} missed.`);
-  console.log('  Covers what WO-2.14, WO-2.15 and WO-3.11 built: the four refusals, the fences on each');
-  console.log('  of --start, --release and --tick, the dry runs, one tick that works, both kinds of');
-  console.log('  skip, and the four about **Owes** and its pointers. NOT covered: the Acceptance parser');
-  console.log('  against the real work orders, gate()\'s hard-ordering walk, `next` over the real running');
-  console.log('  order, the rest of recomputeDashboard()\'s arithmetic, and --audit against the real');
+  console.log('  Covers what WO-2.14, WO-2.15, WO-3.11 and WO-1.21 built: the four refusals, the fences');
+  console.log('  on each of --start, --release and --tick, the dry runs, one tick that works, both kinds');
+  console.log('  of skip, the four about **Owes** and its pointers, and WO-1.21\'s four — 🚫/⏳ refused,');
+  console.log('  out of the count and named where it left, held against the box they stopped counting,');
+  console.log('  and § The files against the files. NOT covered: the Acceptance parser against the');
+  console.log('  real work orders, gate()\'s hard-ordering walk, `next` over the real running order,');
+  console.log('  the rest of recomputeDashboard()\'s arithmetic, and --audit against the real');
   console.log(`  trackers. A green run here is not coverage — it is ${plants.length} claims about ${plants.length} plants.`);
   console.log('');
   console.log(failed ? `FAIL | ${failed} of ${plants.length} plants were not caught.`
@@ -1898,8 +2268,11 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
   node tools/wo-gate.mjs --audit                        every **Closes roadmap** fragment against
                                                         ROADMAP.md, every **Owes** pointer against
-                                                        the box it names, and the dashboard against
-                                                        its own boxes. Reports; never writes
+                                                        the box it names, every 🚫/⏳ work order
+                                                        against the box it takes out of the count,
+                                                        § The files against the files, and the
+                                                        dashboard against its own boxes.
+                                                        Reports; never writes
   node tools/wo-gate.mjs --self-check [--against <path>] plant every violation this script is
                                                         supposed to catch, in a temp copy of plans/,
                                                         and fail if one stops being caught. Requires
@@ -1919,7 +2292,15 @@ refuses it. ✅ DONE plus a **Owes** field: landed, with Acceptance lines owed t
 will actually close them — those lines stay - [ ] and carry a "→ WO-x.y" marker, and --tick honours
 one only while it can find the matching OPEN box under that target.
 None of them touches a 👤 line in TESTING.md, and none touches CHANGELOG.md, and none of them
-writes ROADMAP.md's progress dashboard — that stays a hand edit (ROADMAP.md, maintenance step 3).`);
+writes ROADMAP.md's progress dashboard — that stays a hand edit (ROADMAP.md, maintenance step 3).
+
+Two statuses this NEVER writes (WO-1.21), because both are the owner's decision and a hand edit:
+🚫 STRUCK — <date, reason> is a *whether*: do not build it, and the roadmap box it closes stops
+being counted, marked "🚫" straight after its checkbox so it is still visible. ⏳ DEFERRED —
+<date, reason> is a *when*: not now, the box stands and stays marked "⏳", and it comes back the
+first time somebody wants the thing. Neither is counted in either dashboard, neither can be
+--start-ed, --tick-ed or --release-d, and neither will ever satisfy a dependency — the gate says so
+in those words rather than reporting a wait that can never end.`);
   process.exit(0);
 }
 

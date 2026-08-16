@@ -164,9 +164,12 @@ run by bare Node. Full notes: [`tools/README.md`](tools/README.md).
 | Test | [`TESTING.md`](TESTING.md) is the gate |
 
 **A green harness closes no 👤 item.** `verify-shell.mjs` drives a page, not an installed app, and has
-never seen a service worker — no emulator has a thumb or a safe-area inset. It also **cannot run in a
-sandboxed agent**: a dispatch reporting "could not run" has reported an environment, not a result, and
-it gets re-run locally before any box is ticked.
+never seen a service worker — no emulator has a thumb or a safe-area inset. It also **usually cannot
+run in a sandboxed agent**: a dispatch reporting "could not run" has reported an environment, not a
+result, and it gets re-run locally before any box is ticked. When it *does* run there — it did, twice,
+on 2026-08-16 — that is a green run and not a tick, and the first sentence still governs. *(Narrowed
+from a flat "cannot" that day, WO-1.21, so this file and `AGENTS.md` say one thing: a rule that calls
+a true report impossible teaches its reader to disbelieve one.)*
 
 ## Conventions
 

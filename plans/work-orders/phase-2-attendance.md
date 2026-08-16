@@ -399,7 +399,7 @@ passing a UTF-8 claim it never tests, and the next export surface inherits that 
 
 ## WO-2.7 — Roll Call! importer
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.7
+**Ship** — · **Status** ⏳ DEFERRED — 2026-08-09 · **Size** M · **Depends on** WO-1.7
 **Closes roadmap** Phase 2 → "Roll Call! importer."
 
 **Deferred out of Ship 2 on 2026-08-09, by the owner: no live data is coming across from Roll Call!**
@@ -409,6 +409,14 @@ dependency — the deferral is about *when*, not about whether — and it comes 
 someone wants a prior year read in. **It was also removed from WO-G2's dependency line the same day**;
 a gate that waits on work nobody intends to do is a gate that gets waived, and a waived gate teaches
 the next one that gates are advisory.
+
+*(**The status line says so as of 2026-08-16**, WO-1.21. It had sat in `⬜ NOT STARTED` for a week,
+and the residue was arithmetic: Phase 2's row in `work-orders/README.md` counted a work order nobody
+was going to write, and `ROADMAP.md`'s Phase 2 row read 15/16 against a box nobody was going to tick.
+`⏳ DEFERRED` is a *when* and not a *whether* — this keeps its work order, its dependency and its
+roadmap box, and the box keeps its place in the file wearing a `⏳` that takes it out of the count.
+Reviving it is a hand edit of the status line back to `⬜ NOT STARTED`, the marker off the box, and a
+row in the running order.)*
 
 *One thing goes with it, so it is not discovered later:* acceptance line 2 — *"imported attendance
 produces the same percentage Roll Call! reports for that class"* — was the only mechanized check that
@@ -3167,7 +3175,7 @@ stays 👤 and goes to the iPad, as it did twice for WO-2.29.
 
 ## WO-2.32 — the overdue tone is withdrawn, and the tint is the alert
 
-**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.31
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.31
 
 **Booked and built 2026-08-16, owner-directed rather than dispatched** — the decision was taken at
 the iPad, mid-sitting, and the work is one preference and its fixture. Recorded here because the
@@ -3211,13 +3219,32 @@ was never the thing that was broken.
       sounds — the withdrawal is a default, not a removal.
 - [x] `node tools/verify-shell.mjs` **789 · 789 passed · 0 failed · 0 skipped**, and
       `node tools/wo-sweep.mjs` **20 · 18 passed · 0 failed · 2 to review**.
-- [ ] 👤 On the teaching iPad, on `planbook-shell-v69`: a pass crossing both thresholds tints at 5
-      and 10 minutes and **makes no sound**, and the header speaker reads OFF on a device that has
-      never touched it. Then tap it: it reads ON and stays ON across a relaunch. **That is the whole
-      of this line.** Whether a tone is then AUDIBLE on that iPad is deliberately not asked here —
-      it is WO-2.31's Acceptance 6, it failed, and it is why this work order exists. A 👤 line that
-      demanded a sound would be demanding the thing four sittings could not get, and would leave
-      WO-2.32 permanently open for a failure that belongs to WO-2.31. 👤
+- [x] 👤 On the teaching iPad, on the shell `sw.js` currently names — `planbook-shell-v71` as this
+      line is written, and a reading to confirm rather than a version to match: a pass crossing both
+      thresholds tints at 5 and 10 minutes and **makes no sound**, and the header speaker reads OFF
+      on a device that has never touched it. Then tap it: it reads ON and stays ON across a
+      relaunch. **That is the whole of this line.** Whether a tone is then AUDIBLE on that iPad is
+      deliberately not asked here — it is WO-2.31's Acceptance 6, it failed, and it is why this work
+      order exists. A 👤 line that demanded a sound would be demanding the thing four sittings could
+      not get, and would leave WO-2.32 permanently open for a failure that belongs to WO-2.31. 👤
+
+*(**Run 2026-08-16 by the owner, on `planbook-shell-v71`** — the About line confirmed first, then all
+four in one sitting: the pass tinted at 5 and 10 minutes and made no sound, the header speaker read
+OFF on a device that had never touched it, one tap read ON, and ON survived a relaunch. That reading
+is now a record of what was tested rather than an instruction, so the version in the line above is
+fixed where it stands.)*
+
+*(**The shell target above was repointed on 2026-08-16, WO-1.21.** It read `planbook-shell-v69`,
+which `sw.js` left behind at WO-3.23, so the one line standing between this work order and `✅ DONE`
+was sending a tester to a build nobody could be running. **Only the target moved** — what the line
+asks is word for word what it was, and it is still unticked, because repointing a check is not
+running it and only the teacher can run it. **The wording is the durable half of the fix**: an
+unticked 👤 line names the shell `sw.js` currently names and carries the version as a reading to
+confirm, so the next `CACHE` bump dates this note instead of breaking the instruction. A version
+inside a **ticked** 👤 line is the opposite — there it is a record of what was tested, and rewriting
+one falsifies a result. On the same rule the `sw.js` — `planbook-shell-v69` line in **Deliverables**
+above stands untouched: it is not an instruction to anybody, it is what WO-2.32 shipped, and what
+WO-2.32 shipped was v69.)*
 
 **Traps** — **Do not delete `src/alert-sound.js` or its harness block.** The channel is withdrawn,
 not abandoned, and a deletion would cost the evidence that the design works. **Do not let the new

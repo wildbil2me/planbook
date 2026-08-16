@@ -1069,7 +1069,7 @@ Add cases; do not complicate the ones that exist.
 
 ## WO-3.13 — paste a column of scores
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
+**Ship** — · **Status** 🚫 STRUCK — 2026-08-15 · **Size** S · **Depends on** WO-3.5 · **Blocks** nothing
 **Closes roadmap** *(no box. The roadmap's Phase 3 list names the score grid and the `late`/`missing`
 rule; pasting is a way into the grid, not a thing the grid must do. It closes what WO-3.5 closes or
 nothing, and it closes nothing.)*
@@ -1079,6 +1079,13 @@ arrive on paper.** They are read off a stack one at a time and keyed in, so ther
 anywhere to copy from and the clipboard has nothing to carry. The work order asked to be answered
 before it was dispatched and said that if the answer was paper the honest move was to strike it
 rather than build it and find out; this is that, taken at its word.
+
+*(**The status line says so as of 2026-08-16**, WO-1.21. For a day this sat in `⬜ NOT STARTED`,
+which was the one status actively false about it, and the cost was arithmetic rather than a stall:
+Phase 3 counted twenty-four work orders it could only ever finish twenty-three of. `🚫 STRUCK` takes
+it out of that denominator, and `wo-gate.mjs WO-3.13` now refuses it outright where it used to clear
+the gate. It was already off `next`, pulled from the running order the day it was struck — the status
+is the half that was missing. It closes no roadmap box, so there is no box to mark.)*
 
 **It is struck rather than deferred, and that is a different thing from WO-2.7.** A deferral is about
 *when* and keeps its place in the queue. This is about *whether*: nothing about the classroom that

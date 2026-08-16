@@ -35,7 +35,21 @@ up, finished, and verified without needing to hold the rest of the project in yo
 **Do not tick a work order that is written but unverified.** Same rule as the roadmap, same reason.
 
 **Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
-`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · 🚩 marks a **go-live blocker**.
+`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · `🚫 STRUCK — <date>` · `⏳ DEFERRED — <date>` ·
+🚩 marks a **go-live blocker**.
+
+**`🚫` and `⏳` are the two that mean this is not coming, and 2026-08-16 (WO-1.21) is when the tracker
+gained a word for it.** `🚫 STRUCK` is a *whether*: the owner decided it should not be built, and the
+roadmap box it closes — if it has one — stops being a promise. `⏳ DEFERRED` is a *when*: not now, the
+box stands, and it comes back the first time somebody wants the thing. **Neither is counted in either
+dashboard**, because a phase with a ceiling under 100% teaches everyone to stop reading the number;
+the dashboard below names what came out in the column beside the count, and a roadmap box belonging to
+one of them keeps its place in `ROADMAP.md` wearing the matching glyph straight after its checkbox.
+**They are two statuses and not one on purpose** — WO-3.13 and WO-2.7 are the two live cases and each
+argues the difference in its own words. Neither can be `--start`ed, `--tick`ed or `--release`d, and
+neither will ever satisfy a dependency: `wo-gate.mjs` says that in those words rather than reporting a
+wait that can never end. **Both are written by hand and reversed by hand** — this is the owner's
+decision, and no flag writes or unwrites it.
 
 **🤖 and 🔨 are two different facts, and 2026-08-09 (WO-3.11) is when they stopped being one.**
 `🤖 CLAIMED — <dispatch>` is written by `--start` and undone by `--release`: a run has this in flight.
@@ -161,35 +175,58 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.19 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.34 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.9 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.10 | Phase 8 |
 
 *None of these files says where its work goes, on purpose. **Work lands on `main`** — step 3 above
 is the single answer for every phase, and the `Branch:` line that opened all eight went on
 2026-08-16 rather than be maintained in eight copies (WO-1.20).*
 
+**The middle column is first-and-last in document order, and `node tools/wo-gate.mjs --audit` reads
+every row of it against the file it names** *(2026-08-16, WO-1.21)*. The `…` is prose shorthand for
+"through", never a range to expand — which is why `WO-2.1 … WO-2.34` is correct over thirty-three
+work orders, WO-2.2 having been merged into WO-2.1 on 2026-08-06. **Nine rows rot the same way, one
+per phase, every time a phase gains a work order**: the Phase 1 row read `WO-1.1 … WO-1.19` from the
+day WO-1.20 was booked, and it was fixed here as a check rather than as a row because the next
+booking breaks it again otherwise. A file with work orders and no row is caught too — a file nothing
+indexes is a file nobody reads.
+
 ---
 
 ## Dashboard
 
-| Phase | Work orders | Done | Status |
-|---|---|---|---|
-| 1 — Shell, store, roster | 21 | 19 | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 33 | 29 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 24 | 21 | 🔨 IN PROGRESS |
-| 4 — Signals | 5 | 0 | ⬜ NOT STARTED |
-| 5 — Outreach | 4 | 0 | ⬜ NOT STARTED |
-| 6 — Calendar & glance | 4 | 0 | ⬜ NOT STARTED |
-| 7 — Drive sync | 3 | 0 | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 10 | 4 | 🔨 IN PROGRESS |
-| Gates | 4 | 1 | ⬜ NOT STARTED |
-| | **108** | **74** | `[██████░░░░] 69%` |
+| Phase | Work orders | Done | Not coming | Status |
+|---|---|---|---|---|
+| 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
+| 2 — Attendance | 32 | 30 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 23 | 21 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
+| 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
+| 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
+| 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
+| 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
+| 8 — 1.0 packaging | 10 | 4 | — | 🔨 IN PROGRESS |
+| Gates | 4 | 1 | — | ⬜ NOT STARTED |
+| | **106** | **76** | **2** | `[███████░░░] 72%` |
+
+***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
+count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
+named in the row they left, by `wo-gate.mjs` and out of the same parse that produces the numbers
+beside them — a hand-written note would have been true today and stale at the next strike. **Where
+they went:*** [*WO-2.7*](phase-2-attendance.md#wo-27--roll-call-importer) *is `⏳ DEFERRED` — the Roll
+Call! importer, deferred by the owner on 2026-08-09, keeping its work order, its dependency and its
+roadmap box, and coming back the first time somebody wants a prior year read in.*
+[*WO-3.13*](phase-3-gradebook.md#wo-313--paste-a-column-of-scores) *is `🚫 STRUCK` — pasting a column
+of scores, struck by the owner on 2026-08-15 because the scores arrive on paper. Both are still in
+their phase files, in full, with the reasoning at the top; neither was deleted and neither is hidden.
+**The denominator went down by two and the percentage went up by one point**, which is the move to
+distrust — the guard against it is that the number and the names come out of one pass, so a work
+order cannot leave the count without appearing in the column beside it.*
 
 *Phase 1 was stamped ✅ DONE on 2026-08-06 and reopened the same day. WO-2.1 needed a screen to live
 in and found that `<main>` has no navigation — the header class row sets a preference and repaints

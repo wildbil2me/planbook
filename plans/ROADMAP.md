@@ -48,7 +48,14 @@ window. The tracked artifacts stayed accurate to the commit; the briefing was si
 **Do not tick a box for work that is written but unverified.** Written-but-unproven is still `- [ ]`.
 
 **Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
-`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED`
+`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · `🚫 STRUCK — <date>` · `⏳ DEFERRED — <date>`
+
+*(The last two were added 2026-08-16, WO-1.21, and they are the only two that mean **this is not
+coming**. `🚫` is a *whether* — it should not be built, and the roadmap box it closes stops being a
+promise. `⏳` is a *when* — not now, and the box stands. Both leave the dashboards' denominators and
+neither leaves the file; a box belonging to one of them keeps its place wearing the matching glyph
+straight after its checkbox. They are two statuses rather than one because the difference is the only
+thing anybody needs from either of them later.)*
 
 *(🤖 added 2026-08-09, WO-3.11. `🔨 IN PROGRESS` was carrying two unrelated meanings — a dispatch is
 building this right now, and this landed with Acceptance lines open on purpose — and no tool could tell
@@ -65,14 +72,27 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 |---|---|---|---|
 | 0 | Architecture & data model | ✅ DONE — 2026-08-03 | 4/4 `[██████████] 100%` |
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
-| 2 | Attendance | 🔨 IN PROGRESS | 15/16 `[█████████░] 94%` |
+| 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **42/82 `[█████░░░░░] 51%`** |
+| | | **Overall** | **42/81 `[█████░░░░░] 52%`** · ⏳ 1 deferred |
+
+***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
+**Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
+row's numerator and denominator both: the work was deferred by the owner on 2026-08-09, so 15/16 was
+a gap nobody was working on and a phase that could never close. **The box is not deleted and not
+ticked** — deleting it would lose a promise this roadmap made, ticking it would claim work nobody
+did. It stays where it is, says why in its own note, and the count stops counting it.* ***A `🚫`
+after a checkbox means the same arithmetic for a different reason***, *a strike rather than a
+deferral: the thing should not be built at all, so the box stops being a promise as well as stopping
+being counted. There is no `🚫` box today — WO-3.13, the one struck work order, closes no box.
+`node tools/wo-gate.mjs --audit` holds every marker against the work order that closes it, in both
+directions, so a box cannot quietly leave the count and a status cannot quietly stop matching its
+box.*
 
 *Corrected 2026-08-08, by hand, after WO-2.5. Phase 1 had read `🔨 IN PROGRESS · 11/12` since it
 closed on 2026-08-06 — there was never a twelfth unticked box. Phase 2 was stale by one before
@@ -312,9 +332,16 @@ meet is a second source of truth that's wrong by first period.)*
       **and** the iPad on 2026-08-08. What is still owed is the doorway itself: marking a live class
       while it walks in, which no desk can answer and which `TESTING.md` § WO-2.5 keeps open.)*
 - [x] Per-student attendance history view.
-- [ ] **Roll Call! importer**: file input taking an exported class spreadsheet (`.csv`/`.xlsx`),
+- [ ] ⏳ **Roll Call! importer**: file input taking an exported class spreadsheet (`.csv`/`.xlsx`),
       zero permissions. Idempotent, and previews before it commits — re-running must not double a
-      roster. *(Cut from Ship 1: August is a fresh year with pasted rosters.)*
+      roster. *(Cut from Ship 1: August is a fresh year with pasted rosters.* **Deferred 2026-08-09
+      by the owner** *— no live data is coming across, the rosters are pasted fresh and the ledger
+      starts empty. It keeps this box and its work order,
+      [WO-2.7](work-orders/phase-2-attendance.md#wo-27--roll-call-importer), which carries
+      `⏳ DEFERRED`; the `⏳` above takes the box out of the Phase 2 count from 2026-08-16, WO-1.21,
+      because a phase that can never read 16/16 is a number people stop reading. It comes back — the
+      marker comes off and the box is counted again — the first time somebody wants a prior year read
+      in.)*
 - [x] Print/CSV output for the attendance record.
 
 ---

@@ -1406,7 +1406,7 @@ and it is the evidence WO-1.19's reasoning rests on. Tense, not deletion.
 
 ## WO-1.21 — the tracker has no word for work that is not coming
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. Process, not app — this is the tracker being wrong about
 itself, which no roadmap promise covers. Booked 2026-08-15.)*
 
@@ -1467,6 +1467,30 @@ is the overhead that stops people booking anything.
   Checked 2026-08-16: `phase-2-attendance.md:3214` is the only unticked 👤 line in the repository
   that pins a shell version, so this is one line, not a sweep.
 
+**What was picked, and the two shapes that were not** *(2026-08-16, the implementer's call under the
+first Deliverable — recorded here because a convention every future tracker row copies should not
+live only in a dispatch report)*. **Two new statuses: `🚫 STRUCK — <date>` and `⏳ DEFERRED — <date>`,
+plus a matching glyph on the roadmap box each one takes out of the count.**
+
+- **A status plus a field** — leave the work order `⬜ NOT STARTED` and hang a `**Not coming**` field
+  off it — was rejected because it leaves the status line saying the one thing that is false. The
+  status column is what a human scans and what every branch in `wo-gate.mjs` reads; a refusal that
+  fires only when a second field is remembered is a refusal that stops firing. The defect here *is*
+  the status line, and a fix that leaves it wrong has fixed the arithmetic and kept the lie.
+- **An explicitly uncounted section** — move both work orders to a "not coming" appendix — was
+  rejected on the work order's own Trap: a reader who cannot find where they went assumes they were
+  lost. It would break every inbound link, and it would carry WO-2.7's and WO-3.13's reasoning out of
+  the phase file where somebody reading Phase 2 or Phase 3 will actually meet it.
+- **Two statuses rather than one `⛔ NOT HAPPENING`** is the constraint the *Why it exists* section
+  states, not a preference: `🚫` is a *whether* and `⏳` is a *when*, and the glyph carries the
+  difference without anybody having to open the work order. Collapsing them is the cheaper build and
+  throws away the only fact either work order will be asked for later.
+- **What it cost, accepted:** two more entries in a vocabulary of six, and two more branches
+  everywhere `wo-gate.mjs` reads a status. It buys the parse for free — `STATUSES` is a `startsWith`
+  list and the compound `— <date>` suffix already existed for `✅ DONE` and `🤖 CLAIMED` — and the
+  branches are held by four new `--self-check` plants, since a status the plants have never seen is a
+  status nothing guards.
+
 **Deliverables**
 - **A way to record struck and deferred that `wo-gate.mjs` understands**, keeping them distinct.
   Whether that is two new statuses, or a status plus a field, or an explicitly uncounted section, is
@@ -1494,21 +1518,24 @@ their reasoning; `next` and the running order, which already handle these two co
 and need no change; any new tool, per `tools/README.md` — this is an edit to `wo-gate.mjs`.
 
 **Acceptance**
-- [ ] `wo-gate.mjs --list` reports WO-3.13 and WO-2.7 as something other than `⬜ NOT STARTED`, and
+- [x] `wo-gate.mjs --list` reports WO-3.13 and WO-2.7 as something other than `⬜ NOT STARTED`, and
       reports them differently from each other.
-- [ ] No dashboard in `plans/work-orders/README.md` or `ROADMAP.md` counts either one as outstanding
+- [x] No dashboard in `plans/work-orders/README.md` or `ROADMAP.md` counts either one as outstanding
       work, and each file shows a reader that they exist and why they are out.
-- [ ] `node tools/wo-gate.mjs --audit` passes.
-- [ ] `node tools/wo-gate.mjs --self-check` passes, and plants a violation involving the new status.
-- [ ] `node tools/wo-sweep.mjs` totals are unchanged — this work order ships no app code.
-- [ ] Every row in `README.md` § The files matches the work orders in the file it names, checked
+- [x] `node tools/wo-gate.mjs --audit` passes.
+- [x] `node tools/wo-gate.mjs --self-check` passes, and plants a violation involving the new status.
+- [x] `node tools/wo-sweep.mjs` totals are unchanged — this work order ships no app code.
+- [x] Every row in `README.md` § The files matches the work orders in the file it names, checked
       against the tracker rather than by eye.
-- [ ] `CLAUDE.md` no longer states that `verify-shell.mjs` cannot run in a sandboxed agent, and says
+- [x] `CLAUDE.md` no longer states that `verify-shell.mjs` cannot run in a sandboxed agent, and says
       the same thing as `AGENTS.md:64`. A dispatch's green harness still closes no box in either.
-- [ ] `phase-2-attendance.md:3214` no longer sends a tester to `planbook-shell-v69`, and what it
+- [x] `phase-2-attendance.md:3214` no longer sends a tester to `planbook-shell-v69`, and what it
       asks of that tester is otherwise **word for word what it was** — the line is still unticked and
       still refuses to ask whether a tone is audible. Every ticked 👤 line in the repository still
       names the shell it was actually run against.
+
+*(The line the last item names has moved to `phase-2-attendance.md:3222` — the number was written
+on 2026-08-15 and the file has gained text above it since. The line is the same line.)*
 
 **Traps** — **Do not collapse struck and deferred.** The distinction is the point, and both work
 orders argue it explicitly. **Do not make the percentage rise by hiding things.** The goal is a

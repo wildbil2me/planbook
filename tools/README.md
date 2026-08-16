@@ -47,15 +47,20 @@ Two flags that write nothing anywhere:
 
 ```
 node tools/wo-gate.mjs --audit         every **Closes roadmap** fragment against ROADMAP.md's boxes,
-                                       every **Owes** pointer against the box it names, and
-                                       ROADMAP.md's dashboard against its own box counts
+                                       every **Owes** pointer against the box it names, every 🚫/⏳
+                                       work order against the box it takes out of the count,
+                                       `README.md` § The files against the work orders each file
+                                       actually holds, and ROADMAP.md's dashboard against its own
+                                       box counts
 node tools/wo-gate.mjs --self-check    plant every violation this script is supposed to catch, in a
                                        temp copy of plans/, and fail if one stops being caught
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes two **synthetic** work orders into the copy,
-plants thirteen violations against them, runs the script over the copy, and deletes the directory on
-both exit paths. Two things about it are load-bearing. **Every plant path goes through a guard that
+plants seventeen violations against them, runs the script over the copy, and deletes the directory on
+both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
+work is not coming and for the § The files index. The counts further down are readings from dated
+runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path goes through a guard that
 refuses anything inside the repository** — WO-2.15 was itself `🔨 IN PROGRESS` while it was being
 written, so a plant that escaped would have corrupted a live work order and looked hand-written
 afterwards. And **the fixture is synthetic on purpose**: WO-2.15's own acceptance list had to be
