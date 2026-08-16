@@ -170,6 +170,10 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
 | [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.9 | Phase 8 |
 
+*None of these files says where its work goes, on purpose. **Work lands on `main`** — step 3 above
+is the single answer for every phase, and the `Branch:` line that opened all eight went on
+2026-08-16 rather than be maintained in eight copies (WO-1.20).*
+
 ---
 
 ## Dashboard
