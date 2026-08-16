@@ -2970,7 +2970,7 @@ a suspend.
 
 ## WO-2.30 — archiving the open class misdirects the pass alert
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.9, WO-2.28
+**Ship** 2 · **Status** ✅ DONE — 2026-08-15 · **Size** S · **Depends on** WO-2.9, WO-2.28
 
 **Booked 2026-08-14 out of WO-2.28's close-out, and it is a separate bug rather than a loose end of
 that work order.** WO-2.28 made the overdue alert independent of the banner. This is independent of
@@ -3007,6 +3007,45 @@ hand, which is the honest limit its own `TESTING.md` entry records. This path ha
 and no check in the suite archives a class with a pass open. That is what makes this worth a work
 order rather than a comment: **it is invisible to every green run the project currently makes.**
 
+**THE DECISION, taken 2026-08-15 and written here before a line of it existed: the SECOND
+candidate — leave the passes, and refuse the act that would leave them behind.** Archiving a class
+while somebody is out of it is refused at the door, in `archiveClass()`, with a sentence in the
+manager's own error line naming the class and how many students are still out. Nothing is written,
+nothing is closed, the class stays on the bar, and the teacher goes back to it and taps Return or
+Cancel — after which the archive is the one tap it always was.
+
+**Why not the first.** *Close the open passes* sounds like tidying up and is the app inventing a
+fact about a child. `src/passes.js` has no verb for "the room went away", and neither of the two it
+has can be borrowed: `closePass()` writes a `back` stamp and a minute count into an append-only log
+for a return nobody saw, and `cancelPass()` says the trip never happened at all. Which of those is
+true is exactly what the teacher knows and the app does not. It is also the sin `reopenPass()`'s
+comment already refuses somewhere else — *"the app would be asserting that a student who is out of
+the room is not"* — and archiving a class is a filing decision, not a sighting of a student in the
+doorway.
+
+**Why not the third.** The cross-class alert is refused on the record three times over and the
+objection has not moved: an announcement about a child in a room the teacher is not in, with no
+card, no Return button and nothing to act on. It is a real feature; it needs a surface of its own.
+
+**Why the refusal is cheap.** It costs nothing in the common case — a class with nobody out archives
+in one tap, exactly as before — and it can only appear in the situation this work order is about. It
+leaves `getSelectedClassId()`'s fallback and `paintPassElapsed()`'s scoping untouched, which is what
+the Traps require: both are right, and what was missing is anything that noticed a pass had been
+left behind by them. And it is refused rather than *disabled*, because a control that has quietly
+stopped working is a question the teacher has no way to ask.
+
+**And deletion, which the bug statement names too: left exactly as it is, deliberately.** Delete is
+offered on an archived row only (`src/classes.js`'s header, decision 3), so after this change no
+sequence of taps reaches it with an open pass — the archive door is the only way a class becomes
+archived and it now refuses one. Refusing the delete as well would be worse than useless: an
+archived class is off the tab bar, so there is no screen left on which to tap Return, and a refusal
+the teacher cannot satisfy is a class she can never delete. What is left over is a document that
+arrives *already* holding an open pass on an archived class — a restore, a hand edit, a sync — and
+that is a hole this work order does not close and does not pretend to. It is written up as a
+*proposed* follow-up in `.claude/dispatch/WO-2.30-result.md` and has no row of its own — proposing
+one is not booking one — because in that document the pass is un-alerted whether or not anybody ever
+deletes the class.
+
 **Deliverables**
 - The behaviour decided and implemented. The three candidates, and the decision belongs in the work
   order before code is written: close the open passes of a class being archived (the pass's room no
@@ -3020,12 +3059,12 @@ order rather than a comment: **it is invisible to every green run the project cu
   ticked — rather than by editing the DOM.
 
 **Acceptance**
-- [ ] Archiving a class with a student out on a pass has a defined, written-down outcome, and the
+- [x] Archiving a class with a student out on a pass has a defined, written-down outcome, and the
       work order says which of the three it is and why.
-- [ ] A student out on a pass in the archived class is not silently left un-alerted while a different
+- [x] A student out on a pass in the archived class is not silently left un-alerted while a different
       class's passes are processed in their place.
-- [ ] The check drives the real path — issue, archive, tick — and fails on today's build.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
+- [x] The check drives the real path — issue, archive, tick — and fails on today's build.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
 
 **Traps** — **Do not "fix" `getSelectedClassId()`'s fallback.** Returning `''` instead of `list[0]`

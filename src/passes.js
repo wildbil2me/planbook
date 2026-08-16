@@ -81,6 +81,25 @@
   It does not touch attendance. A student at the bathroom is PRESENT — issuing and returning a pass
   writes no attendance record, moves no mark, and creates no meeting. The only coupling in either
   direction is the dismissal below, and it runs one way: a mark closes a pass, never the reverse.
+
+  ── AND WHAT ARCHIVING THE CLASS DOES TO AN OPEN PASS, WHICH IS NOTHING (WO-2.30) ──
+
+  A fourth thing this file does not do: there is no verb here for "the room was put away". Archiving
+  a class takes it off the tab bar, and src/classes.js's getSelectedClassId() then resolves the open
+  class to the first one that survives — so the pass clock in src/attendance.js would go on ticking,
+  correctly, over somebody else's room, and the student still out of this one would never be alerted
+  on again. src/classes.js REFUSES THE ARCHIVE while openPassesFor() finds anybody in the class, and
+  that refusal is the whole of the agreement between these two files: the passes are left exactly as
+  they are, and the class stays on the bar until the teacher has said which of Return and Cancel
+  actually happened.
+
+  It reads that way round because neither verb here fits. closePass() writes a `back` stamp and a
+  minute count into an append-only log for a return nobody saw; cancelPass() says the trip never
+  happened at all. One invents a fact about a student and the other deletes one, and which of them
+  is true is exactly what the teacher knows and this module does not. The rule the whole file keeps
+  is that an open pass is the app's record of a child who is not in the room — a screen being tidied
+  up is not evidence that they came back, which is the same thing reopenPass() below refuses to say
+  when it declines to hold the cap at three.
 */
 
 import { newId } from './store.js';

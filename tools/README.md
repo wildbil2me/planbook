@@ -809,7 +809,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 783 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 788 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -978,7 +978,29 @@ different formats, and **no run of this harness could tell**, because every one 
 correct date. So what is asserted is the NAME — one definition, in `src/date-text.js`, and no module
 binding that name to anything else — plus the leaf rule that keeps a shared formatter out of an
 import cycle. The alias case (`import { numericDate as shortDate }`) is caught by the binding rather
-than by the format, since the format is the part a check cannot judge.
+than by the format, since the format is the part a check cannot judge. **WO-2.30 moved it from 783 to
+788**: five literal call sites inside the existing WO-2.9 hall-pass block, none in a loop and none a
+failure arm, so the block contributes five executed results and **the run prints 785**, measured on
+the delivered tree: `785 checks · 785 passed · 0 failed · 0 skipped`, 20,776 lines, 26.5 lines per
+check, 250s. **They are the first checks in this file that archive a class through the manager with a
+pass open**, which is the whole reason that work order exists: the defect was not in the banner and
+not in `paintPassElapsed()`, it was `getSelectedClassId()` resolving the open class to the first
+SURVIVING one — so the clock went on ticking, correctly, over a different room. Nothing was missing
+and nothing returned early, and every check in this file was green over it. Two things about the
+block are worth knowing. **The second active class is a precondition and it is asserted**: with one
+class in the document, archiving it makes `paintPassElapsed()`'s `!cls` guard fire instead, which is
+the rare tail of the case and would have proved the opposite. And **the reading that carries it is
+the alert, not the tab bar** — "the class is still on the bar" is what the refusal looks like, while
+"the student is announced five minutes later" is what it is for. Run against the unfixed
+`archiveClass()` on the same tree, two of the five go red — `785 checks · 783 passed · 2 failed` —
+and the second one's detail line is the bug in its own words: *the open class is
+`c_2b2z71075k`, the pass belongs to `c_b1` and records `alerted = undefined`; the announcement was
+"nothing has been announced since this sentinel was written"*. That id is the one the fixture check
+named as *"the one archiving would fall to"* one check earlier, which is the misdirection measured
+rather than described. **The other three stay green on the unfixed build and are meant to**: the
+fixture is the same either way, and the two after it drive a class that the defensive restore arm has
+just put back — check 4 reads `archived = true` on both builds, for opposite reasons. A block where
+all five went red would be a block asserting one thing five times.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

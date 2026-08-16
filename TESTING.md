@@ -3440,6 +3440,72 @@ both. The variable that changed between them is the one the correction changed �
 
 ---
 
+### WO-2.30 — Archiving a class with somebody still out of the room
+
+**What this changes.** One guard, at one door: `archiveClass()` (`src/classes.js`) refuses while
+`openPassesFor()` finds anybody out of that class, and says so in the manager's own error line. The
+class stays on the bar, the pass stays open, nothing is written. `getSelectedClassId()`'s `list[0]`
+fallback and `paintPassElapsed()`'s scoping are **untouched** — both are right, and the work order's
+Traps say so.
+
+**The bug it closes, in one sentence:** archiving the open class made `getSelectedClassId()` answer
+with the first *surviving* class, so the pass clock went on ticking, correctly, over a different
+room — and the student still out on a pass from the archived one was never alerted on again. A
+feature that stops is visible. A feature aimed at the wrong class is not.
+
+**What a teacher gets.** In the common case, nothing: a class with nobody out archives in one tap,
+exactly as before. In the case this exists for, a sentence naming the class and how many students are
+still out, and a next step she can take — Return, or Cancel if the pass never happened, and then
+archive. The refusal lifts the moment the pass is closed, which is asserted rather than assumed: a
+guard that never lifts is a class she could never put away.
+
+**Deletion is deliberately untouched**, and the reasoning is in the work order and at
+`confirmDelete()`: delete is offered on an archived row only, so after this change no sequence of
+taps reaches it with an open pass, and refusing there as well would trap her — an archived class is
+off the tab bar, so there is no screen left on which to tap Return.
+
+*Desk pass 2026-08-15: `verify-shell.mjs` **785 of 785, 0 failed, 0 skipped**, 250s — five new call
+sites, all inside the existing WO-2.9 hall-pass block, none in a loop and none a failure arm.
+`wo-sweep.mjs` **20 checks · 18 passed · 0 failed · 2 to review**; both REVIEWs are the standing
+pair.*
+
+**Run against the unfixed `archiveClass()` on the same tree — `785 checks · 783 passed · 2 failed`,
+256s.** This is the evidence Acceptance line 3 asks for, and the second failure is the defect quoting
+itself:
+
+> *"archiving a class with a student still out is refused…"* — `archived = true, still on the bar =
+> false, open passes = 1, the manager reads ""`, and the live region heard *"Period 3 — Biology is
+> archived. Everything in it is kept — restore it here any time."*
+>
+> *"and the clock still reaches that student five minutes later…"* — `the open class is
+> "c_2b2z71075k", the pass belongs to "c_b1" and records alerted = undefined; the announcement was
+> "nothing has been announced since this sentinel was written"`.
+
+`c_2b2z71075k` is the id the fixture check named one line earlier as *"the one archiving would fall
+to"*. The clock is not broken there; it is busy in the wrong room. `src/classes.js` was restored
+byte-identically afterwards (md5 `df7b2e98c83d7e00543ce5b0da9b7991`).
+
+**Three of the five stay green on the unfixed build, on purpose.** The fixture check is the same
+either way; the two after it drive a class the block's defensive restore arm has just put back, so
+check 4 reads `archived = true` on both builds for opposite reasons. Five red checks would have been
+one claim asserted five times, and the restore arm is what keeps the other 780 meaningful on a red
+run instead of ending it at a `clickSel` that found nothing (the WO-2.26 scar).
+
+*The fixture assumption that would hide a bug here, named as the verifier's standing question asks:
+the misdirection needs **another active class to fall to**. With one class in the document,
+`paintPassElapsed()`'s `!cls` guard fires instead — the rare tail of the case — and the block would
+have gone green while proving the opposite. So the fixture check reads the active list and asserts
+both that this class is first (the one the fallback resolves *from*) and that another exists (the one
+it resolves *to*), and it asserts the pass carries no `alerted` key before the clock is wound.*
+
+**No 👤 line.** Nothing here is a rendering or a touch target — no control was added, so the coarse
+block is unchanged — and the whole path is drivable at a desk. What is *not* covered by any of it:
+a document that arrives from a restore, a hand edit or a sync **already** holding an open pass on an
+archived class. Nobody is watching that pass, this work order did not close it, and it is written up
+as a proposed follow-up in `.claude/dispatch/WO-2.30-result.md`.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

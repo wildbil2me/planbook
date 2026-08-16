@@ -11716,6 +11716,158 @@ if (!attBooted || !attSeam) {
     leftovers.length + ' planted trip(s) still on the log; the open class is '
       + JSON.stringify(handedBack.openClass) + ' with the registry up = ' + handedBack.viewShown);
 
+  /*
+    ── WO-2.30: THE CLASS IS PUT AWAY AND THE STUDENT IS STILL OUT ──
+
+    THE WHOLE POINT OF THIS BLOCK IS THAT IT GOES THROUGH THE APP. WO-2.28's missing-node check above
+    punches its hole in the DOM by hand — the honest limit its own TESTING.md entry records — and
+    this path cannot be reached that way, because the defect is not in the banner: it is
+    getSelectedClassId() answering with a DIFFERENT class the moment this one leaves the tab bar, so
+    the pass clock walks somebody else's room while a child is out of this one. Nothing returns
+    early, nothing is missing, and every check in this file was green over it. So the walk is a pass
+    issued on a real button, the class archived through the real manager, and the real clock left to
+    tick.
+
+    THE SECOND ACTIVE CLASS IS THE PRECONDITION AND IT IS ASSERTED, not assumed. With only one class
+    in the document, archiving it leaves paintPassElapsed()'s first guard (`!cls`) to fire and the
+    misdirection never happens — that is the rare tail of the case, and a fixture that fell into it
+    would prove the opposite of what this block is for. So the check below reads the active list, and
+    asserts both that this class is the one the fallback resolves FROM (it is first) and that there
+    is another one for it to resolve TO.
+
+    AND THE ALERT IS THE READING, not the tab bar. "The class is still on the bar" is what the
+    refusal looks like; "the student is announced five minutes later" is what it is FOR, and it is
+    the clause that goes red on a build with no refusal in it — the archived class's pass sits in the
+    document, un-alerted, for as long as the app is open.
+  */
+  const before30 = await read();
+  /* Computed the way src/classes.js computes it: the first ACTIVE class in document order is what a
+     stale preference falls back to. */
+  const fallback30 = await evalJs(`(function(){
+    var d = window.planbook.store.getDoc();
+    var active = (d.classes || []).filter(function(c){ return !c.archived; });
+    var mine = active.filter(function(c){ return c.id === ${JSON.stringify(passClass)}; })[0];
+    return { active: active.length, first: active.length ? active[0].id : '',
+             name: mine ? mine.name : '',
+             next: (active.filter(function(c){
+               return c.id !== ${JSON.stringify(passClass)}; })[0] || {}).id || '' }; })()`);
+  const who30 = await evalJs(`(function(){
+    var s = (window.planbook.store.getDoc().students || []).filter(function(x){
+      return x.id === ${JSON.stringify(outA)}; })[0];
+    return s ? { first: s.first || '', last: s.last || '' } : { first: '', last: '' }; })()`);
+  await clickSel('[data-pass-issue="' + outA + '"][data-pass-type="bathroom"]');
+  const issued30 = await read();
+  const open30 = issued30.openPasses[0] || {};
+  check('the archive walk starts from one student out of THIS class, on a fresh pass, with another active class for the open class to fall back to',
+    before30.openPasses.length === 0 && issued30.openPasses.length === 1
+      && open30.studentId === outA && open30.classId === passClass
+      /* No `alerted` on it yet, which is what makes the alert clause below non-vacuous — the same
+         guard the WO-2.28 fixture above carries, and for the same reason. */
+      && open30.keys === 'classId,id,out,studentId,type'
+      && issued30.openClass === passClass
+      && fallback30.active >= 2 && fallback30.first === passClass && !!fallback30.next
+      && !!who30.first && !!who30.last,
+    'open passes ' + before30.openPasses.length + ' -> ' + issued30.openPasses.length
+      + ' carrying keys ' + JSON.stringify(open30.keys) + '; ' + fallback30.active
+      + ' active class(es), this one first = ' + (fallback30.first === passClass)
+      + ', the one archiving would fall to = ' + JSON.stringify(fallback30.next));
+
+  await clickSel('header [data-class-manage]');
+  await hush();
+  await clickSel('#classList [data-class-archive="' + passClass + '"]');
+  const refused30 = await evalJs(`(function(){
+    var id = ${JSON.stringify(passClass)};
+    var d = window.planbook.store.getDoc();
+    var cls = (d.classes || []).filter(function(c){ return c.id === id; })[0] || {};
+    var err = document.getElementById('classError');
+    var bar = document.getElementById('classTabBar');
+    return { archived: !!cls.archived,
+             onBar: !!bar && !!bar.querySelector('[data-class-tab="' + id + '"]'),
+             activeRow: !!document.querySelector('#classList [data-class-archive="' + id + '"]'),
+             /* This class, in the archived list — not the length of that list, which legitimately
+                holds another class this run left there on purpose. */
+             archivedRow: !!document.querySelector('#classArchivedList [data-class-restore="' + id + '"]'),
+             shown: !!err && !err.classList.contains('hidden'),
+             text: err ? (err.textContent || '').replace(/\\s+/g, ' ').trim() : '',
+             open: (d.openPasses || []).length }; })()`);
+  const heard30 = await heard();
+  check('archiving a class with a student still out is refused: the class stays on the bar, the pass stays open, and the manager says who has to come back first',
+    refused30.archived === false && refused30.onBar && refused30.activeRow
+      && refused30.archivedRow === false && refused30.open === 1
+      && refused30.shown && /^1 student is still out on a hall pass from /.test(refused30.text)
+      && refused30.text.indexOf(fallback30.name) >= 0
+      && /Return/.test(refused30.text) && /Cancel/.test(refused30.text)
+      /* Spoken as well as printed: it lands in a corner of a dialog a screen-reader user has no
+         reason to move to, which is what src/classes.js's showClassError() is for. */
+      && heard30.indexOf('still out on a hall pass') >= 0,
+    'archived = ' + refused30.archived + ', still on the bar = ' + refused30.onBar
+      + ', open passes = ' + refused30.open + ', the manager reads '
+      + JSON.stringify(refused30.text) + ', and the live region heard '
+      + JSON.stringify(heard30));
+
+  await clickSel('#classesModal [data-modal-close]');
+  await hush();
+  const wound30 = await windBack(outA, 5.2);
+  const alert30 = await waitForPassAlert(outA);
+  const alerted30 = alert30.state.openPasses.filter((p) => p.studentId === outA)[0] || {};
+  check('and the clock still reaches that student five minutes later, because the class it belongs to is still the one that is open',
+    !!wound30.now && alert30.state.openClass === passClass
+      && alerted30.classId === passClass && alerted30.alerted === 1
+      && /has been out on a bathroom pass for 5 minutes\./.test(alert30.said)
+      && alert30.said.indexOf(who30.first) >= 0 && alert30.said.indexOf(who30.last) >= 0,
+    'the open class is ' + JSON.stringify(alert30.state.openClass) + ', the pass belongs to '
+      + JSON.stringify(alerted30.classId) + ' and records alerted = '
+      + JSON.stringify(alerted30.alerted) + '; the announcement was ' + JSON.stringify(alert30.said));
+
+  /*
+    THE FIXTURE COMES OUT THE WAY THE MESSAGE SAYS TO: bring the student back, then archive. That is
+    the other half of the refusal and it is asserted rather than assumed — a guard that never lifts
+    is a class the teacher can never put away, which would be a worse bug than the one being fixed.
+
+    The restore arm above it exists for the RED run this block was written against: on a build with
+    no refusal in it the class really is archived by now, and everything below would be driving a
+    class that is off the bar. It is defensive plumbing, not a claim — the claims are the checks.
+  */
+  await clickSel('header [data-class-manage]');
+  if (await has('#classArchivedList [data-class-restore="' + passClass + '"]')) {
+    await clickSel('#classArchivedList [data-class-restore="' + passClass + '"]');
+  }
+  await evalJs("window.planbook.closeModal('classesModal');1");
+  const backOn30 = await openCard(passClass);
+  if (await has('[data-pass-cancel="' + outA + '"]')) {
+    await clickSel('[data-pass-cancel="' + outA + '"]');
+  }
+  await clickSel('header [data-class-manage]');
+  await clickSel('#classList [data-class-archive="' + passClass + '"]');
+  const lifted30 = await evalJs(`(function(){
+    var id = ${JSON.stringify(passClass)};
+    var d = window.planbook.store.getDoc();
+    var cls = (d.classes || []).filter(function(c){ return c.id === id; })[0] || {};
+    var err = document.getElementById('classError');
+    return { archived: !!cls.archived, open: (d.openPasses || []).length,
+             restorable: !!document.querySelector('#classArchivedList [data-class-restore="' + id + '"]'),
+             shown: !!err && !err.classList.contains('hidden'),
+             text: err ? (err.textContent || '').trim() : '' }; })()`);
+  check('and the refusal lifts the moment the student is back: the same tap archives the class, with the error line cleared',
+    backOn30.openClass === passClass && lifted30.open === 0
+      && lifted30.archived === true && lifted30.restorable
+      && lifted30.shown === false && lifted30.text === '',
+    'open passes left = ' + lifted30.open + ', archived = ' + lifted30.archived
+      + ', restorable = ' + lifted30.restorable + ', the error line reads '
+      + JSON.stringify(lifted30.text) + ' (shown = ' + lifted30.shown + ')');
+
+  await clickSel('#classArchivedList [data-class-restore="' + passClass + '"]');
+  await evalJs("window.planbook.closeModal('classesModal');1");
+  const handedOn30 = await openCard(passClass);
+  check('and the walk hands the class back on the bar with nothing added to the pass log — a cancel writes no trip, and this section still owns the registry',
+    handedOn30.openPasses.length === 0
+      && handedOn30.passLogJson === issued30.passLogJson
+      && handedOn30.openClass === passClass && handedOn30.viewShown,
+    'open passes = ' + handedOn30.openPasses.length + ', the log is byte-identical to the one this '
+      + 'walk was handed = ' + (handedOn30.passLogJson === issued30.passLogJson)
+      + ', open class = ' + JSON.stringify(handedOn30.openClass)
+      + ' with the registry up = ' + handedOn30.viewShown);
+
   /* Two back out, which is the state the section is required to hand on — see below. */
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="bathroom"]');
   await clickSel('[data-pass-issue="' + outC + '"][data-pass-type="nurse"]');

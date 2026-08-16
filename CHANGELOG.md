@@ -38,6 +38,27 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.30 — archiving a class handed its open hall passes to a different class's clock.**
+  Archiving takes the class off the tab bar, and the app *resolves* which class is open rather than
+  trusting a stored id — so from the next tick the elapsed-pass clock walked the first **surviving**
+  class's passes instead. Nothing stopped and nothing errored: the clock went on working perfectly
+  on somebody else's room while the student still out of this one was never alerted on again. A
+  feature that stops is visible; a feature aimed at the wrong class is not. Archiving is now refused
+  while anybody is out of the room, and the class manager says how many have to come back first.
+
+  **Closing the passes automatically was considered and is worse.** Neither verb in `src/passes.js`
+  means "the room was put away" — returning writes a `back` stamp and a minute count for a return
+  nobody saw, and cancelling says the trip never happened at all. One invents a fact about a student
+  and the other deletes one, and which of them is true is exactly what the teacher knows and the app
+  does not. She is two taps from saying so, and the refusal sends her there.
+
+  **Deleting a class was deliberately left alone**, and `src/classes.js` carries the reasoning:
+  delete is offered on an archived row only, so after this change no sequence of taps in the app
+  reaches it with an open pass to destroy. Refusing there as well would trap the teacher on a class
+  that is off the bar with no Return button left to tap. What stays open — **proposed, not booked** —
+  is a document that *arrives* already holding an open pass on an archived class, from a restore or
+  a hand edit.
+
 - **WO-1.18 — a section header in the verification harness claimed seven checks over eight.** The
   header was right when it was written and stale before its own commit landed; the fix is one word.
   Nothing the harness runs changed, and nothing it runs could have caught this — the sentence lives

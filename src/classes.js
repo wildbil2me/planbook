@@ -58,6 +58,12 @@ import { starterCategories, categoriesOf, weightTotal, isProvisional, formatWeig
    src/views.js imports nothing but src/prefs.js, precisely so that the modules which navigate can
    import it without closing a loop. */
 import { showView, currentView, isClassScreen } from './views.js';
+/* WO-2.30. One reader, and it is the model's own: who is out of this room right now. src/passes.js
+   imports src/store.js and nothing else, so this is a leaf import like src/categories.js above it
+   rather than the fifth loop this file's header records this repo refusing. Reading doc.openPasses
+   here instead would be a second opinion about what "somebody is out" means, held by the module
+   that has no business holding one. */
+import { openPassesFor } from './passes.js';
 
 const CLASS_MODAL_ID = 'classesModal';
 const TERM_MODAL_ID = 'termsModal';
@@ -819,11 +825,55 @@ function moveClass(id, delta) {
 export function moveClassUp(id) { moveClass(id, -1); }
 export function moveClassDown(id) { moveClass(id, 1); }
 
-/* Archive keeps everything and takes the class off the tab bar. Nothing is deleted, nothing is
-   copied, and restoring puts it back exactly where it was in the order. */
+/*
+  Archive keeps everything and takes the class off the tab bar. Nothing is deleted, nothing is
+  copied, and restoring puts it back exactly where it was in the order.
+
+  AND IT IS REFUSED WHILE SOMEBODY IS STILL OUT OF THE ROOM (WO-2.30). Taking the class off the bar
+  is what makes getSelectedClassId() above answer with a different class — it resolves rather than
+  trusts, deliberately — so from the next tick on, src/attendance.js's pass clock walks the first
+  SURVIVING class's open passes. It does not stop, nothing returns early, and no guard fires: it
+  goes on working perfectly on somebody else's room while the student out on a pass from this one is
+  never alerted on again. A feature that stopped is visible; a feature aimed at the wrong class is
+  not.
+
+  SO THE FIX IS AT THIS DOOR AND NOWHERE ELSE. The fallback above is right — a header that goes
+  blank because a stored id went stale reads as the app losing the class — and scoping the clock to
+  the class on screen is right too, and refused on the record three times (src/attendance.js, the
+  SCOPED TO THE CLASS ON SCREEN block). What was missing is anything that noticed a pass had been
+  left behind by them, and the cheapest place to notice is the one act that leaves it.
+
+  CLOSING THE PASSES INSTEAD WAS CONSIDERED AND IS WORSE, and src/passes.js's header carries the
+  argument: neither of its two verbs means "archived", so the app would be either inventing a return
+  that nobody saw or deleting a trip that happened. The teacher knows which it was, and she is two
+  taps from saying so.
+
+  IT COUNTS RATHER THAN NAMES, which is not squeamishness: naming the student here would mean
+  importing src/roster.js, and that module already imports this one. The count and the class name
+  get her to the banner, where the name, the time out and both buttons already are.
+
+  REFUSED, NOT DISABLED. The Archive button stays live and answers with a sentence, the way the
+  registry's pass column answers with a note rather than three dead buttons — a control that has
+  quietly stopped working is a question the teacher has no way to ask.
+*/
 export function archiveClass(id) {
   const cls = findClass(id);
   if (!cls) return;
+
+  const out = openPassesFor(getDoc(), id).length;
+  if (out) {
+    /* TWO NUMBERS AGREE HERE, NOT ONE. plural() carries the verb; the pass noun has to move with
+       it or two students share one hall pass, and the closing clause says "somebody" rather than
+       "a student" for the same reason. The sentence is also SPOKEN in full (showClassError above),
+       so every word costs a screen-reader user time standing at a door that will not open. */
+    showClassError(plural(out, 'student is', 'students are') + ' still out on '
+      + (out === 1 ? 'a hall pass' : 'hall passes') + ' from ' + cls.name
+      + '. Open the class and tap Return — or Cancel, if the trip never happened — and then '
+      + 'archive. Archiving now would put the class away with somebody still out of the room and '
+      + 'nothing watching the clock.');
+    return;
+  }
+
   update(() => { cls.archived = true; });
   renamingId = '';
   showClassError('');
@@ -947,6 +997,17 @@ export function openDeleteConfirm(id, opener) {
       eventually empties one and silently promotes it to the whole school. A dangling id matches
       no class and shows up nowhere, which is the harmless failure. The log is append-only for
       the reason docs/data-model.md gives, and rewriting history to tidy it is the opposite.
+    - HALL PASSES, OPEN OR FINISHED (WO-2.30). The finished trips in `passes` stay for the LOG's
+      reason above: history about a room that is gone is still true. The OPEN ones are not
+      destroyed here either, and that is a decision rather than an omission — delete is offered on
+      an archived row only, archiveClass() above now refuses to archive a class with anybody out of
+      it, and so no sequence of taps in this app can reach this line with an open pass to destroy.
+      A document that arrives already in that state (a restore, a hand edit) leaves one entry
+      naming a class that no longer exists, which is the same harmless dangling id as the event
+      above; what it does NOT leave is the student un-alerted, because that was already true of
+      that document before anybody deleted anything. Refusing the delete instead would trap the
+      teacher: an archived class is off the tab bar, so there is no screen left on which to tap
+      Return, and a refusal she cannot satisfy is a class she can never delete.
 */
 export function confirmDelete() {
   const doc = getDoc();
