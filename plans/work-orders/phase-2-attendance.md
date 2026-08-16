@@ -3211,8 +3211,12 @@ was never the thing that was broken.
 - [x] `node tools/verify-shell.mjs` **789 · 789 passed · 0 failed · 0 skipped**, and
       `node tools/wo-sweep.mjs` **20 · 18 passed · 0 failed · 2 to review**.
 - [ ] 👤 On the teaching iPad, on `planbook-shell-v69`: a pass crossing both thresholds tints at 5
-      and 10 minutes and **makes no sound**, and one tap on the header speaker brings the sound back
-      for that device. 👤
+      and 10 minutes and **makes no sound**, and the header speaker reads OFF on a device that has
+      never touched it. Then tap it: it reads ON and stays ON across a relaunch. **That is the whole
+      of this line.** Whether a tone is then AUDIBLE on that iPad is deliberately not asked here —
+      it is WO-2.31's Acceptance 6, it failed, and it is why this work order exists. A 👤 line that
+      demanded a sound would be demanding the thing four sittings could not get, and would leave
+      WO-2.32 permanently open for a failure that belongs to WO-2.31. 👤
 
 **Traps** — **Do not delete `src/alert-sound.js` or its harness block.** The channel is withdrawn,
 not abandoned, and a deletion would cost the evidence that the design works. **Do not let the new
