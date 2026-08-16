@@ -3080,7 +3080,7 @@ button and nothing to act on. **This is not a WO-2.28 regression** and its fix d
 
 ## WO-2.31 — the held audio context has two ways to die that nothing watches
 
-**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.29
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.29 · **Owes** WO-2.33
 
 **Booked 2026-08-14 out of WO-2.29's correction round, and both halves are doors left open by the
 fix rather than faults in it.** WO-2.29 shipped a fresh `AudioContext` per alert; the iPad proved on
@@ -3152,6 +3152,7 @@ green harness, which is the failure mode this work order series has already been
       withdrawn on every device rather than re-cut a fifth attempt: **WO-2.32**. This line stays open
       because it was tested and it failed, which is not the same as untested and not the same as
       done. 👤
+      → WO-2.33 "an interruption that leaves the app foregrounded no longer costs the alert its sound"
 
 **Traps** — **Do not go back to a context per alert.** That is the shape the iPad falsified on
 2026-08-14 and the evidence is in `TESTING.md` § WO-2.29; a context built outside a gesture reports
@@ -3226,3 +3227,70 @@ watched happening on 2026-08-16 and the reason the fixture taps the speaker on e
 a boolean about a speaker and `src/prefs.js` owns the prefix. **And do not read this as the
 diagnosis being over** — WO-2.31's Acceptance 6 is a live failure and the erratic spell is
 unexplained.
+
+---
+
+## WO-2.33 — the overdue tone is silent on the iPad and nobody knows why
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.32
+
+**Booked 2026-08-16, carrying WO-2.31's Acceptance 6.** That line was not re-homed because someone
+ran out of time: **it was run, and it failed.** On the teaching iPad, an interruption that left
+Planbook on screen silenced both alerts while the card tinted correctly at both thresholds. The line
+below is the same question asked again, and this work order exists because the tone was withdrawn
+(WO-2.32) rather than because the question was answered. Nothing here is a tidy handoff.
+
+**Ship is `—` on purpose.** Ship 2 is grades, the teacher goes live in late August, and the alert now
+has a working visual channel. This is real work and it is not urgent work; giving it a ship would
+crowd a queue that has a term coming. It gets picked up when someone wants the sound back.
+
+**What is known, and it is more than it looks.** Three sittings of evidence are in `TESTING.md`
+§ WO-2.29 and § WO-2.31 and none of it should be re-derived:
+
+- **The design is not the bug.** Probe 5 — a context born in a tap, held, sounded 8s later untouched
+  — is **audible** on that device. That is `src/alert-sound.js`'s exact shape, and no probe had
+  tested it before 2026-08-16.
+- **The audio chain works.** Switching into the app with an overdue pass chimes, in the installed
+  PWA, on hardware.
+- **A cold launch nobody has touched is silent and that is correct** — no gesture, no context, the
+  tone records itself `locked` and the first touch restores it.
+- **`resume()` hangs on an interrupted context** on this device — neither resolving nor rejecting
+  (§ WO-2.29, probe 3). That is almost certainly why WO-2.31's optimistic half cannot work here, and
+  it is the first thing to test rather than the last.
+- **An `<audio>` element primed in a gesture still plays 8s later untouched** (probe 6). A live
+  candidate for a replacement channel, and a runtime-built WAV keeps the no-assets rule.
+
+**The part with no explanation at all, and it may be the whole work order.** Late in the 2026-08-16
+sitting the behaviour went **erratic**: the tone fired on the return button, fired when a new pass
+was issued, then stopped firing entirely. No reading was taken while it was happening. A theory that
+explains the interruption failure but not this one is not finished — and it is possible the erratic
+spell is the real defect and the interruption is a symptom of it.
+
+**Deliverables**
+- **A reading taken while it is wrong**, on the device, not a theory built from a green desk run.
+  `alertAudioState()` and `alertSoundLog()` already carry `interruptions`, `recoveries`,
+  `wakeResumes` and `rearmed`; if getting them off an iPad mid-failure needs a surface, build the
+  surface first — this is the third work order in a row to be argued from prose.
+- **An explanation for the erratic spell, or an honest statement that it did not reproduce.**
+- **A decision on the channel**: restore the tone as it is, replace it with probe 6's `<audio>`
+  path, or leave it withdrawn and say so — all three are legitimate outcomes and the last is not a
+  failure.
+- **`src/prefs.js`'s default revisited** if and only if the answer is that the tone can be trusted.
+
+**Acceptance**
+- [ ] 👤 On the teaching iPad, from the installed PWA: an interruption that leaves the app
+      foregrounded no longer costs the alert its sound, or the reason it does is written down with a
+      reading taken from the device while it was failing.
+- [ ] 👤 The erratic firing of 2026-08-16 is either reproduced and explained, or recorded as not
+      reproducing after a deliberate attempt to make it happen again.
+- [ ] The channel decision is made and written into `plans/work-orders/` and `TESTING.md`, including
+      the case where the answer is that it stays withdrawn.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and any fixture that turns
+      the sound on still does it explicitly rather than relying on a default.
+
+**Traps** — **Do not re-derive the probe table.** Probes 1–6 cost three sittings; `TESTING.md` has
+them and `tools/audio-probe.html` still runs them. **Do not start from the interruption.** The
+erratic spell is less understood and may contain the other. **Do not let a green harness stand in for
+an answer** — it was green through every one of these failures, and the seam said `running` the whole
+time. **And do not restore the default silently**: the withdrawal is the owner's, and reversing it is
+a decision to bring back, not a tidy-up to perform.
