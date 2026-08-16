@@ -1439,11 +1439,11 @@ come back. Collapsing them into one "not happening" status is simpler and destro
 that WO-2.7's and WO-3.13's own notes were careful to draw — WO-3.13 says so in as many words,
 *"it is struck rather than deferred, and that is a different thing from WO-2.7."*
 
-**Two smaller pieces of the same defect, folded in on 2026-08-16.** Both are the tracker or its
-documentation asserting something about itself that is not true, both are one line, and both were
-found by a dispatch that correctly declined to widen its own scope (WO-1.20). They are booked here
-rather than as work orders of their own because a third process work order for two sentences is the
-overhead that stops people booking anything.
+**Three smaller pieces of the same defect, folded in on 2026-08-16.** Each is the tracker or its
+documentation asserting something about itself that is not true, each is one line, and the first two
+were found by a dispatch that correctly declined to widen its own scope (WO-1.20). They are booked
+here rather than as work orders of their own because a third process work order for three sentences
+is the overhead that stops people booking anything.
 
 - **`plans/work-orders/README.md` § The files says `phase-1-shell-store-roster.md` holds
   `WO-1.1 … WO-1.19`.** It holds WO-1.21. The row was last true before 2026-08-15, and the same
@@ -1455,6 +1455,17 @@ overhead that stops people booking anything.
   of § How work is run here. The rule underneath is untouched and stays: a green harness from a
   dispatch closes no box, and a "could not run" is an environment report. Only the flat *cannot*
   is wrong, and it is wrong in the direction that teaches a reader to disbelieve a true report.
+- **WO-2.32's open 👤 line sends a tester to a shell that no longer exists.** It reads *"on the
+  teaching iPad, on `planbook-shell-v69`"*; `sw.js` is at `planbook-shell-v71` and has been since
+  WO-3.23. That work order is otherwise five-of-six ticked and nothing is holding it shut, so the
+  one thing standing between it and `✅ DONE` is a check pointed at a dead target.
+
+  **This is WO-1.20's live-rule-versus-history distinction again, and it decides the whole fix.** A
+  version inside a **ticked** 👤 line is a record of what was tested — `TESTING.md` has a dozen,
+  `:3829` and `:4948` among them — and rewriting one would be falsifying a result. A version inside
+  an **unticked** line is an instruction, and this one instructs a tester to do something impossible.
+  Checked 2026-08-16: `phase-2-attendance.md:3214` is the only unticked 👤 line in the repository
+  that pins a shell version, so this is one line, not a sweep.
 
 **Deliverables**
 - **A way to record struck and deferred that `wo-gate.mjs` understands**, keeping them distinct.
@@ -1473,6 +1484,10 @@ overhead that stops people booking anything.
   a table, not as one row, since the next phase to gain a work order breaks it again otherwise.
 - **`CLAUDE.md` and `AGENTS.md` agree about the harness in the sandbox**, with `AGENTS.md:64` as the
   correct copy. Say what changed and why in one clause; the standing rule does not move.
+- **WO-2.32's 👤 line names a shell a tester can actually be running**, and says how it should be
+  written so it does not rot at the next `CACHE` bump. Pinning `v71` is the smaller half of the job:
+  prefer wording that names the deployed build, with the version as the reading to confirm rather
+  than a target to match.
 
 **Out of scope** — reversing either decision, both of which are the owner's and are recorded with
 their reasoning; `next` and the running order, which already handle these two correctly by omission
@@ -1490,6 +1505,10 @@ and need no change; any new tool, per `tools/README.md` — this is an edit to `
       against the tracker rather than by eye.
 - [ ] `CLAUDE.md` no longer states that `verify-shell.mjs` cannot run in a sandboxed agent, and says
       the same thing as `AGENTS.md:64`. A dispatch's green harness still closes no box in either.
+- [ ] `phase-2-attendance.md:3214` no longer sends a tester to `planbook-shell-v69`, and what it
+      asks of that tester is otherwise **word for word what it was** — the line is still unticked and
+      still refuses to ask whether a tone is audible. Every ticked 👤 line in the repository still
+      names the shell it was actually run against.
 
 **Traps** — **Do not collapse struck and deferred.** The distinction is the point, and both work
 orders argue it explicitly. **Do not make the percentage rise by hiding things.** The goal is a
@@ -1499,4 +1518,7 @@ already omit these two, which is why the problem is arithmetic and not a stall. 
 either decision**; a dispatch that re-argues whether pasting scores is worth building has failed this
 work order. **Do not weaken the harness rule while fixing the sentence that overstates it** — the
 fold-in narrows one word, and a dispatch that returns having decided its own green run may tick a
-box has inverted the thing it was sent to correct.
+box has inverted the thing it was sent to correct. **Do not tick WO-2.32's 👤 line and do not change
+what it asks** — repointing a check at a live shell is not running it, and only the teacher can run
+it. **Do not touch a shell version inside a ticked 👤 line**; there it is a record of what was
+tested, and editing one falsifies a result rather than fixing a pointer.
