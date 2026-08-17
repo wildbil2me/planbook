@@ -310,6 +310,32 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.43 — the last three line-number pointers in `tools/README.md` are anchored to their target's
+  own text.** The grade engine's `classId`/`termId` filters and `scoreCell()`'s `studentId` lookup are
+  now found by a single-hit grep rather than by a number nine and ten lines off, and the file's
+  self-reference to its own `check()`-count sentence is anchored to the pattern `wo-sweep.mjs` § 11
+  already greps for — so that one is maintained by a standing check instead of by whoever notices.
+  Each retired number survives as a dated note; nothing a reader wanted was deleted. The self-reference
+  had drifted from a 47-line miss to 111 **in a single day**, by two unrelated work orders inserting
+  prose above it — the argument for text anchors made by the file itself while the fix sat unstarted.
+  The nine historical numbers beside them are still untouched, and still say in their own paragraph
+  that they measure another tree.
+
+  **The row's own helper note is what sent the dispatch at the wrong sentence.** The brief cited `:847`,
+  taken from the work order's `grep -n "made almost none"` measurement — but that sentence is where the
+  broken pointer *lands*, not what it should name. The implementer caught it, and the verifier settled
+  it from `git show a942526` rather than from either agent's reading: the pointer was born at WO-3.21
+  naming the `check()`-count sentence while it sat at `:783`. The row's table had been right the whole
+  time. A number recorded as a *measurement* and then read as a *pointer* is this row's own thesis
+  arriving one level up, inside the document that was booked to fix it.
+
+  **And the obvious way to write a same-file anchor breaks the sweep.** No earlier row had needed one.
+  Quoting § 11's pattern literally makes the anchor match § 11's own regex, the sweep sees the call-site
+  count stated twice, and its two-hit arm goes red — which would have failed two Acceptance lines
+  together. Measured on a scratchpad copy at verification rather than argued about. The anchor that
+  landed is a transliteration (`[0-9]+` for `(\d+)`, `.` for each backtick), and since that spelling is
+  now the only thing keeping the sweep green, the sentence carries the warning not to tidy it.
+
 - **WO-2.41 — the scar behind the exit-3 rule now lives in the retro instead of in a file that asks to
   be deleted.** `plans/dispatch-retro.md` § Codex carries the 2026-08-14 WO-3.15 kill: a dispatch that
   wrote all seven of its files between 19:18 and 19:23, put its result file down at 19:23:50, then

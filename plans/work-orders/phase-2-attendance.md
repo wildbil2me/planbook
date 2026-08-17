@@ -4232,7 +4232,7 @@ been; that is the correction, and the row is now the thing it claimed.)*
 
 ## WO-2.43 — three more pointers in tools/README.md miss by little enough to be believed
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** XS · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** *(no box. Documentation, not app — the same call WO-2.39 and WO-2.41 made.)*
 
 **Not a go-live blocker.** Booked 2026-08-17 out of WO-2.39's spot-check, which measured the remaining
@@ -4288,11 +4288,11 @@ staying numbers** — re-pointing any of them is undoing WO-2.39, not extending 
 `:NNN` references in `src/` and in `TESTING.md`.
 
 **Acceptance**
-- [ ] All three references name their referent in the target file's own words, each a single-hit grep,
+- [x] All three references name their referent in the target file's own words, each a single-hit grep,
       re-resolved **after** the last edit this row makes.
-- [ ] The old numbers survive as dated notes; no pointer was deleted.
-- [ ] Nothing in the four out-of-scope categories changed — say so, with the diff as the evidence.
-- [ ] `node tools/wo-sweep.mjs` green (§ 11's `tools/README.md:830` assertion included), and
+- [x] The old numbers survive as dated notes; no pointer was deleted.
+- [x] Nothing in the four out-of-scope categories changed — say so, with the diff as the evidence.
+- [x] `node tools/wo-sweep.mjs` green (§ 11's `tools/README.md:830` assertion included), and
       `git diff --stat -- src/` empty.
 
 **Traps** — **Line numbers move while you work**, and this row's own edits to `tools/README.md` move
@@ -4300,6 +4300,21 @@ the self-reference: resolve `:830` last. **Do not "fix" the nine historical numb
 they look — WO-2.39 recorded the temptation and refused it, and the paragraph above them already says
 they measure another tree. **`src/grade-engine.js` is app code and stays untouched**; the fix is in the
 prose that points at it.
+
+*(**Ticked 2026-08-17. Two things came out other than as written, and both are about the third
+reference.** First, **this row's own `+43` note sent the dispatch at the wrong sentence.** The brief
+took `:847` from the row's `grep -n "made almost none"` measurement — but that sentence is where the
+broken pointer **lands**, not what it should name; the target is the `check()`-count sentence, at
+`:894` when the implementer resolved it. The implementer caught the discrepancy and the verifier
+settled it from history rather than from either agent's reading: `git show a942526` shows the pointer
+born at WO-3.21 naming that sentence while it sat at `:783`. **The row's table was right the whole
+time; only the note added to help was wrong** — which is the row's own thesis arriving one level up, a
+measurement recorded as a number and then read as a pointer. Second, **the obvious way to write a
+same-file anchor would have failed two Acceptance lines at once**, and no earlier row had needed one.
+Quoting § 11's pattern literally makes the anchor match § 11's own regex, so the sweep sees the count
+stated twice and goes red — tested on a scratchpad copy at verification rather than argued. The anchor
+that landed is a transliteration, and because that is now the only thing keeping the sweep green, the
+reason was moved out of the dispatch record and into the sentence itself.)*
 
 ---
 

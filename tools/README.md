@@ -1669,10 +1669,16 @@ WO-3.4's correction round fixed. Four mutations, three of them isolating cleanly
 all reverted and tabulated in `TESTING.md` § WO-3.12.
 
 **The `studentId` mutation is the honest exception, in the WO-2.18 shape.** Dropping the `classId`
-and `termId` filters in `assignmentsFor()` (`src/grade-engine.js:35-36`) each turned exactly one
-check red, because the WO-3.5 fixture this harness already drives is one class and one term —
-nothing else in that document could spuriously qualify once either guard came off. Dropping the
-`studentId` lookup in `scoreCell()` (`:41-42`) is different in kind: it corrupts every student's cell
+and `termId` filters in `assignmentsFor()` (grep `src/grade-engine.js` for
+`assignment.classId === classId` — one hit, the first of the two filter lines; cited as
+`src/grade-engine.js:35-36` until WO-2.43, 2026-08-17, by then nine lines above them, on the tail of
+a comment and `numberOrZero()`) each turned exactly one check red, because the WO-3.5 fixture this
+harness already drives is one class and one term — nothing else in that document could spuriously
+qualify once either guard came off. Dropping the `studentId` lookup in `scoreCell()` (grep the same
+file for `hasOwnProperty.call(byAssignment, studentId)` — one hit; cited as `:41-42` until WO-2.43,
+2026-08-17, by then ten lines above it and on `assignmentsFor()`'s own signature, which is the miss
+this row was booked for: a pointer landing the reader on the *other* function this sentence names
+reads as plausible rather than as broken) is different in kind: it corrupts every student's cell
 in ANY multi-student document, and WO-3.5's own 25-student grid is exactly that, so the same mutation
 that proves case 15 also reddens four of WO-3.5's own checks — the ones that already ask
 `weightedClassGrade()` for one named student's grade on a real, rendered screen. That is not case 15
@@ -1828,9 +1834,18 @@ The only change here is to the fixture itself: `wo38-s1` Ashdown (grep the harne
 until WO-2.39, by then thousands of lines short of it) now carries a second `extended-time` row scoped
 `['unit tests']` beside the original scoped `['tests']` —
 both rows real, both matching Tests (`wo38-s3` Corvane already proves `['unit tests']` fires), so
-`isRealRow()` is not why the dedupe was never exercised. `tools/README.md:783`'s 713 call sites and
-the 710 executed results beside it are both unchanged by this work order — nothing here is a new
-`check(`.
+`isRealRow()` is not why the dedupe was never exercised. The 713 call sites in this file's own
+`check()`-count sentence (`grep -nE 'holds [0-9]+ .check\(\). call sites' tools/README.md` — one hit,
+and the pattern is a deliberate **transliteration** of `tools/wo-sweep.mjs` § 11's own `RECORDED`
+regex — `[0-9]+` for its `(\d+)`, `.` for each of its backticks — so the sentence it finds is already
+maintained by a standing check. **Do not tidy the pattern back to § 11's literal spelling.** Written
+that way, this anchor matches `RECORDED` itself, the sweep sees the call-site count stated twice, and
+its two-hit arm goes red naming this line — measured on a scratchpad copy at WO-2.43's verification,
+where the literal form is what a careful implementer reaches for first; cited as
+`tools/README.md:783` until WO-2.43, 2026-08-17, by then 111 lines short of it, having
+been correct as a number the day it was typed — a hardcoded number in prose does not move with the
+text above it, which is this row's whole case) and the 710 executed results beside it are both
+unchanged by this work order — nothing here is a new `check(`.
 
 **Before, unmutated, with the new fixture in place**: `710 checks · 710 passed · 0 failed · 0
 skipped`, 18,135 lines, 25.5 lines per check, 227s. The sentence still reads *"3 students have
