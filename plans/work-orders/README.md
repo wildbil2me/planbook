@@ -417,8 +417,8 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 63 | [WO-2.45](phase-2-attendance.md#wo-245--the-outer-bash-timeout-binds-ten-minutes-before-the-cap-everything-is-calibrated-to) The outer Bash timeout binds before the cap | M | | **A decision before a keystroke.** Aug 31, a day |
 | 64 | [WO-2.46](phase-2-attendance.md#wo-246--three-readings-in-the-pass-block-sit-behind-waits-that-do-not-assert-them) Three readings sit behind waits that do not assert them | S | | Aug 31, half a day |
 | 65 | [WO-2.47](phase-2-attendance.md#wo-247--the-repo-write-guard-is-protected-by-prose-in-both-scripts-that-carry-it) The repo-write guard is protected by prose | S | | Aug 31, half a day |
-| 66 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 1, half a day |
-| 67 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 66 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 67 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 1, half a day |
 | 68 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
 | 69 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
@@ -614,12 +614,31 @@ the consequence gets its own row, which is the same shape WO-2.46 took out of WO
 WO-2.40 and no check in this repository has ever read it, which is why the sweep half of this row is
 worth more than its size suggests.*
 
-*WO-2.48 was booked on 2026-08-17 out of **WO-2.47's verification** and given row #66 in the same
-sitting, the second time running the order was updated at booking rather than afterwards. WO-1.16,
-WO-3.18 and WO-G2 each moved down one; **nothing moved above them** — the cut band's argument for the
-seventh time. **The percentage did move this time**, 76% to 75%, and it is the same rounding rather than
-a step backwards: 91/120 and 91/121, one denominator apart, landing either side of 75.5. The bar is
+*WO-2.48 was booked on 2026-08-17 out of **WO-2.47's verification** and given row #67 the same sitting,
+the second time running the order was updated at booking rather than afterwards. WO-3.18 and WO-G2 each
+moved down one. **The percentage did move this time**, 76% to 75%, and it is the same rounding rather
+than a step backwards: 91/120 and 91/121, one denominator apart, landing either side of 75.5. The bar is
 unchanged at seven tenths, which is what the bar is actually able to say.*
+
+***It is the first row in the cut band placed BELOW WO-1.16, and that ends a six-row habit rather than
+continuing it.*** *WO-2.44 through WO-2.47 all went in above it under one argument — "nothing moved above
+them" — which was sound each time and had stopped being examined by the fourth repetition. The owner
+examined it here: **is this pressing enough to go there, or is it only precedent?** The honest answer was
+precedent, so it moved. **What makes the placement safe rather than merely humble** is that WO-1.16's
+trigger is "when the roster arrives" and not a queue slot, so its row number was always close to
+decorative — while `wo-gate.mjs next` hands out whatever sits highest, which is the one thing about the
+order with teeth. A half-day of toolchain hardening was standing in front of the single Ship 2 row whose
+deadline is set by the world.*
+
+***The question that moved it also corrected it.*** *Asking whether the row was pressing sent somebody
+to look, and the look found `verify-shell.mjs:1073` already building a temp directory from `os.tmpdir()`
+and deleting it recursively with no guard — a third script, live, on a row booked in the belief that the
+third script was hypothetical. **So the row got a better argument and a smaller position on the same
+afternoon**, which is the opposite of what re-litigating a placement is supposed to do and worth leaving
+written down. The correction is on the row itself rather than folded away; its Out of scope now refuses
+guarding the harness by the owner's direct call, and `verify-shell.mjs` is carried as a named exemption
+with the reason attached — `mkdtemp` makes a fresh directory and the `rm` deletes only that directory, so
+the worst case is a stray folder rather than the loss of anything that existed first.*
 
 ***It is WO-2.47's own gap, booked by the row that declined to close it.*** *That dispatch found the
 sweep's `COPIES` list hardcoded at two files with nothing asserting it is complete, said so, and did not
@@ -630,7 +649,9 @@ the checks' own scope written down as a list; this one derives the list. Each ro
 leaves a smaller one, named, one level up. That is not a regress to chase forever — the gap this closes
 is the last one where a **new** file can join the unwatched set, and what remains after it (a guard under
 another name, a sandbox spelled some third way) is out of reach of any textual check and is written down
-as such rather than booked.*
+as such rather than booked. **Each turn was also cheaper than the one before**, which is the argument for
+booking at the point of discovery: WO-2.44 was found by a harness escaping into the repository, WO-2.47 by
+a verifier reading the fix, and this one by a question about a table row.*
 
 ***None of the three has been observed red, and that is deliberate rather than a weakness.*** *WO-2.42
 was booked off a failure somebody watched happen; this one is booked off a mechanism somebody can point

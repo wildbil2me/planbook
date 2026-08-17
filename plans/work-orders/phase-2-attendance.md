@@ -4788,6 +4788,23 @@ It is watched by nothing, and § 15 goes on reporting green about the two files 
 is the silence WO-2.47 closed, one level up:** the check that guards the guard is itself guarded by a
 hardcoded list, and a list is prose with brackets around it.
 
+**The third script is not hypothetical — it is already here, and this row was booked believing otherwise.**
+`verify-shell.mjs:1073` builds a directory out of `os.tmpdir()`, hands it to Edge as `--user-data-dir`,
+redirects browser downloads into it (`:1998`, `:2195`) and ends at `:22277` with
+`fs.rm(udd, { recursive: true, force: true })` — a recursive force-delete of an env-derived path, with no
+guard anywhere near it. Found on 2026-08-17, hours after this row was written, by the owner asking whether
+the row was pressing or merely following precedent. **The first draft of this row asserted the scan would
+find nothing today. It was wrong**, and the correction is left here rather than quietly applied, because
+the row is now the record of how it was found: the placement argument was the weakest part of the booking
+and the question aimed at it turned up the fact the booking was missing.
+
+**Its blast radius is genuinely smaller, and that is why this stays a check and not a fix.** `mkdtemp`
+creates a *fresh unique* directory and the `rm` targets only that directory, so the worst case is a stray
+folder appearing inside the repository and then being deleted again. `wo-gate --self-check` is the
+dangerous one: its `finally` deletes a sandbox holding **copies of the live trackers**, which is a
+different sentence entirely. Same class, different stakes — so `verify-shell.mjs` is carried here as a
+**named, reasoned exemption** rather than as a third file to guard or a fourth thing to ignore.
+
 **Deliverables**
 - **Derive the set and diff it against the declared one**, failing when the two diverge **in either
   direction**. The extra direction is not symmetry for its own sake: the cheapest way to silence a
@@ -4798,7 +4815,14 @@ hardcoded list, and a list is prose with brackets around it.
   top-level `function assertOutsideRepo(` finds a third *copy* of the guard. A temp-dir sandbox —
   `mkdtempSync`, or a `mkdirSync` under `os.tmpdir()` — finds a third script that sandboxes and **forgot**
   the guard, which is the dangerous direction and the one a scan for the guard's own name is blind to by
-  construction. A file matching either signal and absent from the list is a fault.
+  construction. A file matching either signal and classified by **neither** list below is a fault.
+- **Two declared lists, not one, because the sandbox signal has a true positive that is not a defect.**
+  The guarded set — the two copies § 15 already reads — and an **exempt** set, each entry carrying a
+  written reason, holding `tools/verify-shell.mjs` and its argument: `mkdtemp` gives a fresh unique
+  directory and the only `rm` is of that directory, so the failure it can produce is a stray folder rather
+  than a deletion of anything that existed first. An exemption with a sentence attached is a decision; a
+  file silently missing from an array is the thing this row exists to end. **A file in neither list FAILs**,
+  which is what makes adding a fourth script a deliberate act.
 - **What the derived scan still cannot see, written at the code**, with § 15's own discipline about
   deletion versus subtle breakage: a guard under a different name, a sandbox spelled some third way, a
   script that writes into the repository on purpose and correctly. This narrows the unwatched set; it does
@@ -4824,20 +4848,32 @@ check a way to be wrong.
 
 Also out of scope: **rewriting either guard to `path.relative()`**, unchanged from WO-2.47's refusal and
 for its reason — a row about protecting a fix should not also change the fix, and it cannot be done to one
-copy without the other. And: **fixing whatever the new scan finds.** It will find nothing today; the
-measurement above says so. If a later run goes red on a third script, that script gets its own row. This
-row builds the alarm and does not do what the alarm asks — the distinction WO-2.47 kept when it left this
-gap standing rather than growing to meet it.
+copy without the other.
+
+And, the one the owner ruled on directly: **putting a guard on `verify-shell.mjs`.** The scan finds it
+today — that is the corrected premise four paragraphs up — and the temptation is to make the derived set
+and the guarded set agree by guarding it. **Do not.** A row that builds an alarm does not also do what the
+alarm asks, which is the distinction WO-2.47 kept when it left *this* gap standing rather than growing to
+meet it, and which is the only reason there is a row here to dispatch. Guarding the harness is a separate
+row if the bounded-blast-radius argument above ever stops holding — if that `rm` is ever pointed at a path
+it did not itself create, the exemption is void and the reason string is where a reader will look.
 
 **Acceptance**
-- [ ] On the unmutated tree the derived set equals the declared set, and the proof line **names both
-      files** rather than reporting a count — a bare `2 of 2` is the same trust this row exists to remove.
-- [ ] A third `tools/*.mjs` carrying a top-level `function assertOutsideRepo(` turns the sweep **red**,
+- [ ] On the unmutated tree every file the scan finds is classified by one list or the other, and the
+      proof line **names the files** rather than reporting a count — a bare `3 of 3` is the same trust this
+      row exists to remove. `tools/verify-shell.mjs` appears as exempt, with its reason, and the run is
+      green.
+- [ ] Deleting `tools/verify-shell.mjs` from the exempt list turns the sweep **red**, naming it as an
+      unclassified temp-dir user. This is the one check that proves the exemption is a decision the sweep
+      enforces rather than a comment somebody wrote — and it is the same direction as the `COPIES` line
+      below, for the same reason.
+- [ ] A **new** `tools/*.mjs` carrying a top-level `function assertOutsideRepo(` turns the sweep **red**,
       names the file, and says it is unwatched. The scratch file is deleted in a `finally`, `git status
       --short` is byte-identical either side, and the revert is proved rather than reported.
-- [ ] A third `tools/*.mjs` that makes a `mkdtempSync` sandbox and carries **no guard at all** turns the
-      sweep red on the second signal. This is the case the name scan cannot see and the reason there are
-      two; a row that ships one signal has not built this check. Same revert discipline.
+- [ ] A **new** `tools/*.mjs` that makes a `mkdtempSync` sandbox and carries **no guard at all** turns the
+      sweep red on the second signal — unclassified, not exempt. This is the case the name scan cannot see
+      and the reason there are two signals; a row that ships one has not built this check. Same revert
+      discipline.
 - [ ] Deleting `'tools/codex-invoke.mjs'` from the declared list turns the sweep red rather than green.
       Reverted and proved the same way.
 - [ ] The scan matching **zero** files FAILs, shown rather than asserted.
