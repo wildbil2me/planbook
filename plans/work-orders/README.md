@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.41 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.43 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 39 | 36 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 41 | 36 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **114** | **83** | **2** | `[███████░░░] 73%` |
+| | **116** | **83** | **2** | `[███████░░░] 72%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -411,9 +411,11 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 57 | [WO-2.39](phase-2-attendance.md#wo-239--four-line-references-in-toolsreadmemd-have-been-wrong-for-thousands-of-lines) Four line references in tools/README.md are wrong | S | | Aug 29, half a day |
 | 58 | [WO-2.40](phase-2-attendance.md#wo-240--the-codex-invoke-gates-have-never-been-exercised-by-anything-but-a-hand) The codex-invoke gates are exercised by nothing | S | | Aug 29, half a day |
 | 59 | [WO-2.41](phase-2-attendance.md#wo-241--the-wo-315-mislabel-lives-only-in-a-status-file-that-says-to-delete-it) The WO-3.15 mislabel has no home but a status file | XS | | Aug 29, an hour |
-| 60 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 61 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 62 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 60 | [WO-2.42](phase-2-attendance.md#wo-242--waitforpassalert-waits-on-a-flag-its-callers-do-not-assert-so-a-correct-app-can-go-red) waitForPassAlert() waits on a flag its callers do not assert | S | | Aug 30, half a day |
+| 61 | [WO-2.43](phase-2-attendance.md#wo-243--three-more-pointers-in-toolsreadmemd-miss-by-little-enough-to-be-believed) Three more pointers miss by little enough to be believed | XS | | Aug 30, an hour |
+| 62 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 63 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 64 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -535,6 +537,54 @@ assert the named line exists and all five wrong pointers named lines that did �
 `plans/verification-tooling.md`. Booking a row so the judgment happened in the open rather than inside
 someone else's commit is what surfaced both, so the reason it was a row held even though its guess did
 not.]*
+
+*WO-2.42 and WO-2.43 were booked on 2026-08-17 out of **WO-2.39's verification**, and given rows #60
+and #61 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above
+them** — the cut band's argument again, unchanged for the fourth time. **The percentage went down a
+point**, from 73% to 72%, which is the honest direction: two rows were added and none closed, and a
+denominator that only ever grows when something closes is a denominator being managed.*
+
+***WO-2.42 is the only one of WO-2.39's four follow-ups with a claim on anyone's attention, and it is
+the flake that was not one.*** *`verify-shell.mjs` went 824 · 823 · 824 across three runs on an
+unchanged documentation-only tree, and the temptation was to log it as intermittent and move on. The
+verifier read the helper instead and found the seam: the wait exits on a flag, its three callers assert
+the flag **and** the announcement, and the app writes them in that order — so there is a window where
+the wait is satisfied and the assertion is not. **That is why this one is rowed ahead of the pointer
+work rather than behind it**: a check that reddens one run in three trains its readers to re-run
+instead of read, and the next real regression in WO-2.30's block arrives pre-discounted. It is booked
+with the diagnosis attached, which makes it a fix rather than an investigation, and sized S on that
+basis.*
+
+***WO-2.43 is the tail of WO-2.39 and is deliberately not part of it.*** *Three pointers, two of them
+off by nine and ten lines into a 270-line file. WO-2.39 found them in a spot-check it ran to twelve
+references rather than the six its Acceptance asked for, reported all twelve, and re-pointed none of
+them — out of scope, said so, and named the temptation rather than acting on it. **The reason they are
+worth a row at all is that they are the quiet kind:** `:1611` lands on `assignmentsFor()` when the
+sentence is about `scoreCell()`, the other function named in the same paragraph, so the reader absorbs
+it as their own misreading. A three-thousand-line miss reports itself; a ten-line miss into a
+neighbour does not. **Nine other wrong-looking numbers in the same file are out of scope by name**,
+because they are a measurement of the WO-2.19 tree and correct as history — the row says so twice,
+since the obvious way to fail it is to be helpful.*
+
+***The fourth follow-up was not booked, and neither was the audit the same sitting could have started.***
+*WO-2.39 named a sweep clause that would assert every text anchor still occurs in the file it quotes —
+non-vacuous, unlike the `:NNN` resolver it refused, because an empty grep is a red. It waits on a
+convention for which backticked strings in 1,900 lines of prose are anchors, and **a row whose first line
+is "invent a convention nobody asked for" is a row that sits at the back of the order being re-read at
+every triage.** The trigger is the convention, not a queue position; the reasoning lives in
+`plans/verification-tooling.md`, which is where notes about the harness go.*
+
+*And the same sitting measured how far the practice actually reaches, which is further than
+`tools/README.md`: **`src/` carries about seventy `path:NNN` pointers, forty-three of them into Roll
+Call!'s `dashboard.html`** — another repository, under daily classroom change, ungreppable from here. A
+sample of the twenty-four in-repo ones found at least three that miss, one of them in `src/scores.css`
+**corrected on 2026-08-10 and rotted again.* **That is not booked as an audit, deliberately.** *An
+eighty-pointer sweep across `src/` buys a tidier comment layer and no working software, three weeks
+before a real class walks in, and the recurrence proves the audit is the wrong instrument anyway — a
+back-catalogue pass leaves the practice that produced it intact. **The standing rule is fix-on-touch:**
+WO-2.39's § 11 note is written, so a comment edited for any reason gets a text anchor on the way past,
+and the wrong ones die as the files are worked. The two exceptions are rowed as WO-2.43 because a
+ten-line miss will not announce itself to the reader who needs it.*
 
 *WO-2.40 and WO-2.41 were booked on 2026-08-16 out of **WO-2.37's dispatch**, and given rows #58 and
 #59 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above them.**

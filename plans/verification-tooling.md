@@ -356,6 +356,25 @@ inventing that convention across a file with no build step and no parser is the 
 priced and rejected for section-end markers. If the anchors are ever written to a convention, this is
 the check to reach for; it is a proposed follow-up, not an omission nobody noticed.
 
+**And it was deliberately not booked as a work order, 2026-08-17.** The owner asked where it goes when
+WO-2.39's other three follow-ups were rowed. It is not a row because **nothing it waits for is on
+anyone's list**: a row whose first line is "invent a convention nobody has asked for" either sits at the
+back of the order being re-read at every triage, or gets built and delivers a parser for a convention
+that does not exist. **The trigger is the convention, not a queue position** — the day the anchors get
+one, for whatever reason wants them to have one, this paragraph is the thing to come back to. Recorded
+here rather than in the running order because a decision with no date attached is a note, and this file
+is where the notes about the harness live.
+
+*One thing that sitting turned up which this section did not know, and which raises the price of that
+convention rather than lowering it: **`src/` carries about seventy `path:NNN` pointers of its own**, and
+**forty-three of them point into Roll Call!'s `dashboard.html`** — a file in another repository, under
+daily classroom change, that nothing here can grep. A sample of the twenty-four in-repo ones found at
+least three that miss, including one in `src/scores.css` that was corrected on 2026-08-10 and has rotted
+again. So the anchor rule is the right rule beyond `tools/README.md`, the recurrence is real, and a
+convention that only covers the one file covers a quarter of the problem. **Not booked either** — see
+`plans/work-orders/README.md` § the WO-2.42/2.43 booking note for why the standing rule is fix-on-touch
+rather than an audit.*
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

@@ -4042,3 +4042,132 @@ looked like from the inside on the day, which is why the status file's own wordi
 in the repository. **Do not quietly delete the "Verified 2026-08-06" narrative** — it is the record of
 four probes and a fix, and it is still true about what it describes. **The retro is not a changelog:**
 if the entry starts listing what WO-2.37 built, it has gone somewhere else.
+
+---
+
+## WO-2.42 — waitForPassAlert() waits on a flag its callers do not assert, so a correct app can go red
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Closes roadmap** *(no box. Harness, not app.)*
+
+**Not a go-live blocker, and the app is not defective.** Booked 2026-08-17 out of WO-2.39's
+verification, which caught the failure in passing and then diagnosed it from source rather than
+writing it off.
+
+**Why it exists.** `verify-shell.mjs` ran three times on WO-2.39's unchanged tree: 824/824, then
+**823/824**, then 824/824. The red was *"and the clock still reaches that student five minutes later,
+because the class it belongs to is still the one that is open"*. WO-2.39 changed documentation and two
+block comments; `git diff --stat -- src/` was empty. So this is the harness, not a regression — but
+**"probably flaky" is the verdict this project does not accept**, and the cause is now known.
+
+**The seam.** `waitForPassAlert()` polls for up to six seconds and its exit condition reads **one**
+thing: `(…openPasses.filter(…)[0] || {}).alerted !== 1`. Its three callers assert **two** — the flag
+*and* the text of the live region, via `said`. `said` is re-read on every tick, but only ever
+*before* the re-test, so on the iteration where the flag flips to 1 the function returns the
+announcement as it stood at that instant and never looks again. The app writes the flag and the
+announcement in that order, so there is a window in which the helper's exit condition is satisfied and
+the thing the caller checks is not yet true. **Nothing is wrong with the app; the wait is waiting on
+the wrong event.**
+
+**The failure signature says so, which is what makes this diagnosable rather than a guess.**
+`TESTING.md:3486` records what this check prints on the unfixed build it was written for — *"the open
+class is `c_2b2z71075k`, the pass belongs to `c_b1` and records `alerted = undefined`"*: wrong room, no
+alert. The red run printed *"the open class is `c_b1`, the pass belongs to `c_b1` and records
+`alerted = 1`"* — **right room, alert fired, announcement unsampled.** A real defect and this flake
+print differently, and only one of them has ever been seen on a green tree.
+
+**Why it is worth a row.** This is the failure mode that costs the most and shows the least: a check
+that reddens perhaps one run in three teaches its readers to re-run rather than to read, and the next
+genuine regression in that block arrives already discounted. `tools/README.md` trap 5 is this exact
+subject — *"a fixed sleep before a measurement is a race, and it hides defects rather than only
+causing flakes"* — and its own lesson is that the flaky-looking check is worth investigating.
+
+**Deliverables**
+- **`waitForPassAlert()` exits on the condition its callers assert**, which means folding the
+  announcement into the loop's test rather than sampling it after. Three call sites share it
+  (`:11118`, `:11187`, `:12895` on the tree that booked this — grep `waitForPassAlert`, the numbers
+  will have moved), and all three must stay green.
+- **A note at the helper** saying what it waits for and why the flag alone is not it, so the next
+  person to add a fourth caller does not re-open this.
+- **An answer on the sibling helpers**: whether any other wait in the file exits on a proxy for the
+  thing its callers check. Reported either way — a sentence naming that this one is alone is a
+  deliverable, an unasked question is not.
+
+**Out of scope** — anything under `src/`. The app's write order is correct and this row does not
+change it. Also out of scope: the 41-minute clock check at what was `:11269`, and any widening into
+WO-2.30's hall-pass block beyond the three call sites.
+
+**Acceptance**
+- [ ] `waitForPassAlert()`'s exit condition includes the announcement its callers test, and no fixed
+      sleep was added anywhere in the change.
+- [ ] **`node tools/verify-shell.mjs` green on three consecutive runs**, quoted with their summary
+      lines. Three because one green run is what the unfixed helper already produces two times in
+      three; the count is the evidence here.
+- [ ] The check is demonstrated **still able to go red** for the reason it exists — the defect
+      `TESTING.md:3486` records — rather than made green by waiting longer.
+- [ ] The sibling-helper question is answered in writing.
+- [ ] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
+
+**Traps** — **A longer timeout is not the fix and neither is a sleep**; both make the race less likely
+and leave it in, which is trap 5's whole point. **Do not weaken the check to match the helper** — the
+callers assert the announcement because the announcement is what the teacher gets, and dropping it
+would close this row by deleting its subject. **Three runs, not one**, and if one of the three is red
+the row is not done however plausible the excuse.
+
+---
+
+## WO-2.43 — three more pointers in tools/README.md miss by little enough to be believed
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** nothing · **Blocks** nothing
+**Closes roadmap** *(no box. Documentation, not app — the same call WO-2.39 and WO-2.41 made.)*
+
+**Not a go-live blocker.** Booked 2026-08-17 out of WO-2.39's spot-check, which measured the remaining
+debt rather than assuming it. **These three are the part of that measurement worth acting on**; the
+rest is either historical by its own admission or scoped as a record of a reading, and WO-2.39's note
+in § 11 says which is which.
+
+**Why it exists.** WO-2.39's four references missed by thousands of lines, which is at least a *loud*
+kind of wrong — a reader who lands eight hundred lines from anything relevant knows something is
+broken. These three miss by 9, 10 and 47, into short files, and land on real code:
+
+| At | Cites | Lands on | What the sentence is about |
+|---|---|---|---|
+| `tools/README.md:1608` | `src/grade-engine.js:35-36` | the tail of a comment and `numberOrZero()` | the `classId`/`termId` filters, at `:44-45` |
+| `tools/README.md:1611` | `src/grade-engine.js:41-42` | `assignmentsFor()`'s signature | `scoreCell()`'s `studentId` lookup, at `:51-52` |
+| `tools/README.md:1767` | `tools/README.md:783` | *"…made almost none. Three things about it are worth knowing."* | the call-site sentence, at `:830` |
+
+**`:1611` is the one to look at.** `assignmentsFor()` is named in the same paragraph as `scoreCell()`,
+so the pointer lands the reader on the *other* function the sentence mentions — plausible, adjacent,
+and wrong, which is the shape that does not get caught. A three-thousand-line miss is reported by the
+reader; a ten-line miss into a neighbouring function is absorbed as *"I must have misread this."*
+
+**The third is free.** A file citing its own line number is the one case where the text anchor costs
+nothing: the sentence it means is **already quoted verbatim by `wo-sweep.mjs` § 11**, so the anchor is
+a string a standing check is already maintaining.
+
+**Deliverables**
+- **All three re-anchored to the target's own text**, in WO-2.39's idiom: a single-hit grep, plus a
+  dated note of the number it used to be. Not corrected numbers — `src/grade-engine.js` is 270 lines
+  and will move again, and WO-2.39's § 11 paragraph is the standing rule now.
+- **Nothing else in the file re-audited.** WO-2.39 already reported all twelve; this row acts on three
+  and leaves the nine WO-2.19-tree numbers alone, which its own note explains.
+
+**Out of scope** — the nine numbers at `tools/README.md:1454` and `:1461-62`, which are a measurement
+of the WO-2.19 tree and correct as history; the quoted failure text at `:1392`, which is a record of a
+reading; the self-declaring reference at `:1252`. **All four categories are already documented as
+staying numbers** — re-pointing any of them is undoing WO-2.39, not extending it. Also out of scope:
+`:NNN` references in `src/` and in `TESTING.md`.
+
+**Acceptance**
+- [ ] All three references name their referent in the target file's own words, each a single-hit grep,
+      re-resolved **after** the last edit this row makes.
+- [ ] The old numbers survive as dated notes; no pointer was deleted.
+- [ ] Nothing in the four out-of-scope categories changed — say so, with the diff as the evidence.
+- [ ] `node tools/wo-sweep.mjs` green (§ 11's `tools/README.md:830` assertion included), and
+      `git diff --stat -- src/` empty.
+
+**Traps** — **Line numbers move while you work**, and this row's own edits to `tools/README.md` move
+the self-reference: resolve `:830` last. **Do not "fix" the nine historical numbers**, however wrong
+they look — WO-2.39 recorded the temptation and refused it, and the paragraph above them already says
+they measure another tree. **`src/grade-engine.js` is app code and stays untouched**; the fix is in the
+prose that points at it.
