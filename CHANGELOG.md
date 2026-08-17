@@ -368,6 +368,29 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.47 — the repo-write guard is checked now instead of merely commented.** The guard is what keeps
+  `--self-check`'s seventeen deliberately corrupted tracker fixtures out of the repository, and until this
+  row the only thing standing behind it was the paragraph WO-2.44 wrote saying so. `wo-gate.mjs` now
+  asserts its own `assertOutsideRepo()` **before it makes a sandbox** — a path inside the repository is
+  refused, the same path with the drive letter's case flipped is refused, a path genuinely outside is not
+  — and the standing sweep asserts that both copies of that guard, here and in `codex-invoke.mjs`, still
+  fold on win32. The sweep is 21 checks. Neither is a new plant: `--self-check` is still seventeen.
+
+  **The two copies stay two copies.** No script in `tools/` imports another, so the guard is duplicated on
+  purpose and the sweep watches both rather than a shared helper watching neither. What the sweep greps
+  for is the fold, and an empty grep **fails** rather than passing quietly — a missing file and a real file
+  with no guard both go red, because the failure this whole row exists to prevent is a check that finds
+  nothing and calls it fine.
+
+  **WO-2.44's premise was demonstrated rather than argued, by accident.** Implementer and verifier happened
+  to invoke node with opposite drive-letter cases, so the deleted-fold mutation was watched going red under
+  both spellings of the repository root on one machine — which is the "correct by coincidence of
+  invocation" correction, observed instead of reasoned about. One gap is left standing and named: the list
+  of files the sweep checks is hardcoded at two, with nothing asserting it is complete. Exactly two
+  `assertOutsideRepo` definitions exist repo-wide, in exactly the two scripts that call `mkdirSync`, so it
+  cannot bite today — but a third script growing its own guard would go unwatched, and that is the same
+  silence this row just closed.
+
 - **WO-2.43 — the last three line-number pointers in `tools/README.md` are anchored to their target's
   own text.** The grade engine's `classId`/`termId` filters and `scoreCell()`'s `studentId` lookup are
   now found by a single-hit grep rather than by a number nine and ten lines off, and the file's

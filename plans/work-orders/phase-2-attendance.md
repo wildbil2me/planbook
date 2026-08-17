@@ -4653,7 +4653,7 @@ row exists.
 
 ## WO-2.47 — the repo-write guard is protected by prose in both scripts that carry it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.44 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** WO-2.44 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37, WO-2.40 and WO-2.44 made.)*
 
 **Not a go-live blocker, and it has never fired.** Booked 2026-08-17 out of WO-2.44's verification,
@@ -4728,19 +4728,28 @@ cost is a subprocess and an env mutation in a script that has neither. And: `cod
 *change* — this row only reads it.
 
 **Acceptance**
-- [ ] With the fold deleted from `wo-gate.mjs`'s `assertOutsideRepo()`, `--self-check` goes **red at the
+- [x] With the fold deleted from `wo-gate.mjs`'s `assertOutsideRepo()`, `--self-check` goes **red at the
       new precondition**, names the path it should have refused, and plants nothing. Reverted, and the
-      revert proved rather than reported.
-- [ ] With the fold deleted from `codex-invoke.mjs`, `node tools/wo-sweep.mjs` goes **red at the new
-      check** and names that file. Reverted and proved the same way.
-- [ ] **The new sweep check FAILs rather than passing quietly when it matches nothing** — shown, not
+      revert proved rather than reported. *(Exit 1, `0 plants made`, naming `C:\dev\planbook\.probe` —
+      the flipped spelling, which is the fact the fold owns; the un-flipped one passes without it.
+      `git status --short` byte-identical either side of the run and nothing under `plans/` but this
+      row's own claim line. md5 `c2cf86fb…` before, mutated to `dac1636a…`, `c2cf86fb…` again after.)*
+- [x] With the fold deleted from `codex-invoke.mjs`, `node tools/wo-sweep.mjs` goes **red at the new
+      check** and names that file. Reverted and proved the same way. *(`21 checks · 18 passed · 1
+      failed`, exit 1, naming `tools/codex-invoke.mjs:746`. md5 `ad68d45d…` before, `faff4949…`
+      mutated, `ad68d45d…` after — the file is unmodified in `git status`, which this row required.)*
+- [x] **The new sweep check FAILs rather than passing quietly when it matches nothing** — shown, not
       asserted, by pointing it at a path that does not exist. A green run over an empty grep is the
-      shape this whole file exists to catch.
-- [ ] On the unmutated tree: `--self-check` still `PASS | 17 of 17 plants were caught`, `--audit` still
+      shape this whole file exists to catch. *(Both arms shown: a nonexistent path FAILs on the
+      missing-file clause, and a real file carrying no such guard — `tools/wo-brief.mjs` — FAILs on
+      "has stopped matching anything in it". Exit 1 both times; md5 restored to `c7ff9d19…`.)*
+- [x] On the unmutated tree: `--self-check` still `PASS | 17 of 17 plants were caught`, `--audit` still
       PASS, `node tools/wo-sweep.mjs` green with its new count matching whatever `tools/README.md`
-      records.
-- [ ] The `--against` asymmetry is written at the code **and** in `tools/README.md`'s mutation table.
-- [ ] `git diff --stat -- src/` is empty. *(This line carried WO-2.44's premise correction until that
+      records. *(`21 checks · 19 passed · 0 failed · 2 to review`, exit 0, the two standing REVIEWs;
+      the 21 is copied from the run and `tools/README.md` records it in all three places it states a
+      figure. `codex-invoke.mjs --self-check` also re-run after its revert: `26 of 26`.)*
+- [x] The `--against` asymmetry is written at the code **and** in `tools/README.md`'s mutation table.
+- [x] `git diff --stat -- src/` is empty. *(This line carried WO-2.44's premise correction until that
       landed at its tick — see the struck deliverable above.)*
 
 **Traps** — **This is not an eighteenth plant, and it must not be counted as one.** The seventeen are

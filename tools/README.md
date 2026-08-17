@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 20-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers` and the backup nag's collection list against `docs/data-model.md`. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 21-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -90,6 +90,17 @@ same guard (which hit this first, at WO-2.40) rather than shared with it: no scr
 another. `wo-sweep.mjs` derives `REPO` identically and needs nothing — it writes nowhere, and the only
 thing it ever compares against `REPO` is `path.relative()`, which win32 answers case-insensitively.
 
+**Since WO-2.47 that fix is watched from two sides, because until then it was held by a comment.**
+`--self-check` asserts the guard *before it makes a sandbox*: `path.join(REPO, '.probe')` is refused,
+the same path with the drive letter's case **flipped** is refused on win32, and a path that really is
+outside is **not** — three facts, because the first alone passes with the fold deleted and the third is
+what tells "the fold is gone" apart from "it throws at everything." It is a **precondition and not an
+eighteenth plant**: the seventeen are about tracker rot, the count above and in WO-2.44's acceptance
+stays seventeen, and the run says so on its own line. The other side is `wo-sweep.mjs`, which asserts
+that **both** copies still fold — this script's and `codex-invoke.mjs`'s, the second of which no
+behavioural check anywhere reaches — and it is a text search, so it sees a deletion and not a fold
+applied to the wrong side.
+
 **WO-3.11's four plants were proved the same way and then again more narrowly**, because the broad
 run proves less than it looks like it does: against `git show 128d6f4:tools/wo-gate.mjs`, eleven of the
 thirteen go red — but most of them go red because that script has never heard of `🤖 CLAIMED` and
@@ -104,8 +115,19 @@ part is what did **not** go red beside it:
 | `--release` refuses only `⬜ NOT STARTED` | **1 red**: the release plant, on `✅ DONE` and `🔨 IN PROGRESS` |
 | a target box that is already `[x]` resolves anyway | **1 red**: the unresolvable-`**Owes**` plant, on that case alone |
 | `**Owes**` and the `→` markers need not agree | **1 red**: same plant, on the orphaned-field case |
+| the win32 fold deleted from `assertOutsideRepo()` — WO-2.47, **and the mutation is of the real file, not of a copy** | **0 plants run**: the guard precondition refuses before the sandbox exists, naming `C:\dev\planbook\.probe` as the path it should have refused and printing `0 plants made`. Every plant stays green on the fixed tree, because a precondition is not a plant |
 
-Five mutations, all reverted, none of them touching a plant it was not aimed at.
+Five mutations, all reverted, none of them touching a plant it was not aimed at. **The sixth row is a
+different kind of thing and says so in its own cell.** The guard precondition WO-2.47 added runs in the
+**invoking** script rather than in the subject, because the invoking script is the one that makes the
+sandbox and writes the plants — so it is the one whose `assertOutsideRepo()` is actually protecting the
+repository. `--self-check --against <a copy from before WO-2.44>` therefore **passes** that precondition
+while driving the buggy guard, which is correct rather than a hole: the old copy is not holding the pen.
+The consequence is that `--against`, the method every other row in this table uses, cannot prove this
+one — so it was proved by mutating `tools/wo-gate.mjs` itself, with the md5 taken first and the revert
+proved by re-taking it, and the same asymmetry is written at the function in the file. The textual half
+of the claim — that **both** copies still fold, this one and `codex-invoke.mjs`'s — is `wo-sweep.mjs`'s
+new check, because two files duplicated on purpose cannot assert anything about each other.
 
 **It has a precondition, and since WO-2.16 it states it and checks it first: the trackers must already
 be clean.** The copy inherits whatever drift `plans/` is carrying, drift is what `--tick` refuses over,
@@ -1652,7 +1674,14 @@ the section for another reason, and the fix was a word. §11 goes on watching th
 actually rotted three times, which is the file's total and not a section's.
 
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**20 checks** after WO-1.17: the newest reconciles the backup nag's collection list against the
+**21 checks** — the newest, WO-2.47's, asserts that both copies of `assertOutsideRepo()` still
+case-fold on win32, in `wo-gate.mjs` and in `codex-invoke.mjs`. It lives here because the two copies
+are duplicated on purpose and neither can make a claim about the other; it FAILs rather than REVIEWs on
+a missing file, a renamed function or a pattern that has stopped matching; and it is **textual**, so
+what it catches is the fold being deleted and not a fold applied wrongly — which is written out at the
+check itself, because a reader who takes it for behavioural coverage of `codex-invoke.mjs` has taken it
+for the one thing nothing in this repository does. It was **20 checks** after WO-1.17, whose own check
+reconciles the backup nag's collection list against the
 document sketch in `docs/data-model.md` — `hasSomethingToLose()` in `src/backup.js` now carries two
 lists, `CONTENT_COLLECTIONS` (each key paired with the counter its documented shape needs) and
 `NOT_CONTENT` (every other top-level key with the reason it is not something a teacher would miss),
@@ -1683,10 +1712,10 @@ of the form "this is checked over there" is exactly as load-bearing as a check a
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
 
-**The 20 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
+**The 21 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
 the other file and is not worth building for this one.** Nothing greps this sentence the way §11 greps
 the harness's count, and it does not need to: the sweep prints its own true figure on the summary line
-of every run — `20 checks` on this tree — in about a second, in
+of every run — `21 checks` on this tree — in about a second, in
 front of the only reader who would care, who is by definition already running it. `verify-shell.mjs`'s
 count is different in kind, because confirming it costs a three-minute browser run that nobody spends
 to settle a sentence in a README, which is exactly how that line went stale three times (WO-1.5,

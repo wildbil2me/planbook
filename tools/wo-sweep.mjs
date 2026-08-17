@@ -962,6 +962,98 @@ function commentLines(file) {
   }
 }
 
+/* ══════════ 15. both copies of the repo-write guard still fold on win32 ══════════
+   `tools/wo-gate.mjs` and `tools/codex-invoke.mjs` each carry an `assertOutsideRepo()` that refuses
+   any path inside the repository. `wo-gate.mjs --self-check` sends every plant path AND the sandbox
+   holding them through it; the plants are deliberately corrupted tracker files, and the `finally`
+   that deletes the sandbox would be deleting live `plans/` if one ever escaped. `codex-invoke.mjs`
+   sends its own fixture through its copy.
+
+   THE COMPARE IS CASE-FOLDED ON WIN32, AND THAT IS THE PART THAT ROTS. `REPO` comes from
+   `import.meta.url` and the sandbox from `os.tmpdir()`, and on Windows the two disagree about the case
+   of the drive letter — `c:\dev\planbook` against `C:\dev\planbook\…` — so an unfolded `startsWith`
+   answers false for a path plainly inside the repository. WO-2.40's first cut ran all seventeen plants
+   inside `C:\dev\planbook\.guard-probe\…` and printed `PASS | 17 of 17`; WO-2.44 fixed the second copy.
+   The shape of that bug is written out once, in `tools/README.md` § the `--self-check` paragraph.
+
+   WHY THIS IS A SWEEP CHECK AND NOT A BEHAVIOURAL ONE. The two copies are DUPLICATED ON PURPOSE — no
+   script in `tools/` imports another, which is the suite's no-dependencies rule reaching into its own
+   toolchain — so "both copies still fold" is a claim neither file can make about the other, and there
+   is nowhere else for it to live. `wo-gate.mjs` does check its own copy behaviourally, at the
+   precondition in `selfCheck()` (WO-2.47); `codex-invoke.mjs`'s copy is checked by nothing at all
+   except this.
+
+   WHAT THIS CANNOT SEE, said plainly so the next reader does not take it for behavioural coverage of a
+   file nothing behaviourally covers: **a textual check guards against DELETION, not against subtle
+   breakage.** A fold applied to the wrong variable, a `startsWith` that lost its `path.sep`, an
+   `endsWith` typo, a helper that lowercases and then compares against something else — all of them keep
+   every token below and pass here. What it catches is the fold being taken back out, which is the
+   regression that has actually happened, twice, in this repository. The behavioural half of the claim
+   for `wo-gate.mjs` is its own precondition; for `codex-invoke.mjs` there is none, and that is a known
+   gap rather than an oversight (WO-2.47 put an end-to-end subprocess probe out of scope: on regression
+   it performs the escape it is testing for).
+
+   FAIL, NEVER REVIEW, INCLUDING WHEN IT MATCHES NOTHING. A missing file, a missing function, or a
+   pattern that has stopped matching all read green from a distance if they are allowed to pass
+   quietly — the same rule §11 and §12 apply, and the same reason. */
+
+{
+  const NAME = 'both copies of assertOutsideRepo() still case-fold on win32';
+  const COPIES = ['tools/wo-gate.mjs', 'tools/codex-invoke.mjs'];
+  const faults = [];
+  const proof = [];
+
+  for (const relPath of COPIES) {
+    const file = path.join(REPO, ...relPath.split('/'));
+    if (!fs.existsSync(file)) {
+      faults.push(`${relPath} is not where this check expects it — the guard it carries is now watched by nothing. Restore the file or point this check at the new path; a copy this sweep cannot read must not read as a passing fold`);
+      continue;
+    }
+    const text = fs.readFileSync(file, 'utf8');
+
+    // The function, by its own name, down to the first unindented `}`. Both copies are top-level
+    // declarations; a nested or re-spelled one FAILs here rather than going quiet.
+    const lines = text.split('\n');
+    const from = lines.findIndex(l => /^function\s+assertOutsideRepo\s*\(/.test(l));
+    if (from < 0) {
+      faults.push(`${relPath} has no top-level \`function assertOutsideRepo(\` — the guard has been renamed, moved or removed, and this check has stopped matching anything in it`);
+      continue;
+    }
+    let to = lines.findIndex((l, i) => i > from && /^\}/.test(l));
+    if (to < 0) to = lines.length;
+    const body = lines.slice(from, to + 1).join('\n');
+    const param = (/^function\s+assertOutsideRepo\s*\(\s*([A-Za-z_$][\w$]*)\s*\)/.exec(lines[from]) || [])[1];
+
+    // The fold itself: a helper whose body branches on win32 and lowercases. The two copies spell it
+    // differently on purpose (`fold` here, `norm` there — wo-gate.mjs's comment says why), so the
+    // name is captured rather than assumed.
+    const DECL = /const\s+([A-Za-z_$][\w$]*)\s*=\s*\([^)]*\)\s*=>[^;]*'win32'[^;]*\.toLowerCase\(\)/;
+    const decl = DECL.exec(body);
+    if (!decl) {
+      faults.push(`${relPath}:${from + 1} — \`assertOutsideRepo()\` no longer declares a helper that branches on \`'win32'\` and calls \`.toLowerCase()\`. That is the fold, and without it the guard compares \`c:\\dev\\planbook\` against \`C:\\dev\\planbook\\…\` and reports that a path inside the repository is outside it (WO-2.40, WO-2.44)`);
+      continue;
+    }
+    const fold = decl[1];
+    const applied = (body.match(new RegExp(`(^|[^A-Za-z0-9_$.])${fold}\\s*\\(`, 'g')) || []).length;
+    const onRepo = new RegExp(`${fold}\\s*\\(\\s*REPO\\s*\\)`).test(body);
+    const onArg = param && new RegExp(`${fold}\\s*\\(\\s*${param}\\s*\\)`).test(body);
+    if (!onRepo || !onArg) {
+      // Both sides, because folding one of them is the same defect wearing the fix's clothes: the
+      // premise WO-2.44 shipped on held that win32 gives a lowercase drive letter, and it gives
+      // whatever case launched node, so a compare with one side folded is right or wrong by accident
+      // of invocation.
+      faults.push(`${relPath}:${from + 1} — \`${fold}()\` is declared but applied to ${applied} path(s), and the compare must fold BOTH sides: ${onArg ? '' : `\`${fold}(${param})\` is missing; `}${onRepo ? '' : `\`${fold}(REPO)\` is missing`}. \`import.meta.url\` yields whatever case launched node, so folding one side leaves the guard correct only by coincidence of spelling`);
+      continue;
+    }
+    proof.push(`${relPath}:${from + 1} folds with ${fold}() on both sides`);
+  }
+
+  check(NAME, !faults.length,
+    faults.length
+      ? faults.join(' · ')
+      : `${proof.join(', ')} — duplicated on purpose, so this is the only place the claim can be made about both. Textual: it catches the fold being DELETED, not a fold applied wrongly (see the comment at this check)`);
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

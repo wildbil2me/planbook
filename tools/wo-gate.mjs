@@ -1542,6 +1542,81 @@ function assertOutsideRepo(p) {
   return path.resolve(p);
 }
 
+// The precondition over the guard ITSELF, before the sandbox exists (WO-2.47). `assertOutsideRepo()`
+// is silent when it works and silent when it fails, which is WO-2.44's trap, and a regression would be
+// exactly as quiet as the original defect: WO-2.40's first cut ran all seventeen plants inside
+// `C:\dev\planbook\.guard-probe\…` and printed `PASS | 17 of 17`. Nothing in this script, in --audit or
+// in the sweep would have said a word.
+//
+// THIS IS NOT AN EIGHTEENTH PLANT, and it must not be counted as one. The seventeen are about tracker
+// rot; this is about whether the guard that keeps them out of the repository still folds. The count is
+// recorded in tools/README.md, in this run's own output and in WO-2.44's acceptance, so a precondition
+// arriving as a plant would make three records wrong at once. Same reasoning as trackerDrift()'s
+// precondition below (WO-2.16), and it reports the same way: before anything is planted, saying so.
+//
+// THREE FACTS, BECAUSE TWO OF THEM DO NOT SEPARATE THE FAILURE MODES:
+//   1. A path inside the repository, spelled the way REPO is spelled, is refused. This one passes
+//      even with the fold deleted — an unfolded compare of two identically-spelled paths is correct —
+//      so on its own it proves nothing about WO-2.44's defect. It is here because it is the claim the
+//      guard exists to make, and because its failure means something quite different from 2's.
+//   2. The same path with the drive letter's case FLIPPED is refused, on win32 only. This is the one
+//      that catches the fold coming back out. On POSIX that path is genuinely a different, outside
+//      path, and asserting a throw there would be asserting a bug. Note what 2 is really about:
+//      `import.meta.url` yields whatever case launched node — `REPO` was observed answering both
+//      `c:\dev\planbook` and `C:\dev\planbook` on one machine in one sitting — so the pre-WO-2.44
+//      guard was not dependably broken, it was correct BY COINCIDENCE OF INVOCATION, which is worse.
+//      "Either spelling" is the property, and that is why the probe flips rather than lowercases.
+//   3. A path that really is outside is NOT refused. Without this, "the fold was deleted" and "it
+//      throws at everything" are the same red line, and the second would also stop every plant below.
+//
+// AND `--against` CANNOT PROVE ANY OF IT, which makes this unlike every other check in this file. The
+// plants run the SUBJECT — a copy of this script, possibly an old one — in a child process; this
+// assertion runs in the INVOKING script, because the invoking script is the one that makes the sandbox
+// and writes the plants, and therefore the one whose guard is actually protecting the repository.
+// `--self-check --against <a copy from before WO-2.44>` passes this precondition while running the
+// buggy guard, and that is correct behaviour rather than a hole: the buggy copy is not the one holding
+// the pen. What proves this precondition still bites is MUTATION — delete the fold here, watch it go
+// red — which is the pattern `tools/README.md`'s WO-3.11 mutation table already uses, and the row for
+// this one is in that table with the same caveat written beside it.
+function guardFolds() {
+  // Strings only. assertOutsideRepo() resolves and compares; it touches no filesystem, so none of
+  // these three paths is created, and the probe leaves nothing behind to clean up.
+  const inside = path.join(REPO, '.probe');
+  // The repository's parent, and NOT os.tmpdir(): TMP is exactly what a person testing this guard
+  // points into the tree, and a probe built from it would report "a path outside the repository was
+  // refused" about a path that was inside it. The one shape this gets wrong is a checkout at a drive
+  // root, where dirname() answers the root back and fact 3 would go red on a correct guard — left
+  // unhandled rather than branched around, because it fails loud and the message names the path.
+  const outside = path.join(path.dirname(REPO), 'wo-gate-guard-probe-outside');
+  // The first ASCII letter of an absolute path on win32 is its drive letter, which is the pair
+  // WO-2.44 was actually about (`c:` against `C:`). Written as "first letter" rather than as a
+  // /^[A-Za-z]:/ rewrite so that a UNC or extended-length root flips its first letter too rather
+  // than silently skipping the assertion.
+  const at = [...inside].findIndex(ch => /[A-Za-z]/.test(ch));
+  const flipped = at < 0 ? inside
+    : inside.slice(0, at)
+      + (inside[at] === inside[at].toLowerCase() ? inside[at].toUpperCase() : inside[at].toLowerCase())
+      + inside.slice(at + 1);
+
+  const refuses = (p) => { try { assertOutsideRepo(p); return false; } catch { return true; } };
+  const problems = [];
+
+  if (!refuses(inside))
+    problems.push(`assertOutsideRepo() did not refuse ${inside}, which is inside the repository. That is the whole of what this guard is for.`);
+
+  if (process.platform === 'win32') {
+    if (at < 0)
+      problems.push(`assertOutsideRepo() could not be asked about a flipped drive letter: ${inside} contains no ASCII letter to flip. The win32 fact is unasserted, which is not the same as passing.`);
+    else if (!refuses(flipped))
+      problems.push(`assertOutsideRepo() did not refuse ${flipped}, which is ${inside} with the drive letter's case flipped and therefore the same directory on this filesystem. This is WO-2.44's defect exactly: the win32 fold is gone from the compare, so the guard is correct only when REPO happens to be spelled the way node was launched.`);
+  }
+
+  if (refuses(outside))
+    problems.push(`assertOutsideRepo() refused ${outside}, which is outside the repository. A guard that throws at everything refuses the sandbox too — it is not a stricter guard, it is a broken one, and it would stop every plant below for a reason that has nothing to do with them.`);
+
+  return { problems, inside, flipped, outside, flippable: at >= 0 };
+}
+
 // The precondition, over the COPY, before a plant exists: the two things that can earn a `HELD` and
 // therefore turn a healthy plant red. Both readers are --audit's own — roadmapDashboardDrift() and
 // roadmapHits() — pointed at a different directory, which is the whole reason parseFile() takes a
@@ -1599,6 +1674,34 @@ function verdict(out) {
 function selfCheck(subjectPath) {
   const subject = path.resolve(subjectPath);
   if (!fs.existsSync(subject)) { console.error(`FAIL | --self-check --against: no such file "${subject}"`); return 1; }
+
+  // 0. The guard precondition, before the sandbox exists — see guardFolds() above for the three facts,
+  //    for why this is a precondition and not an eighteenth plant, and for why `--against` cannot
+  //    reach it. Stopping here costs no plant: on a tree where the guard folds, every plant is still
+  //    made and still counted.
+  const guard = guardFolds();
+  if (guard.problems.length) {
+    console.log('');
+    console.log('FAIL | --self-check checks its own repo-write guard before it makes a sandbox, and');
+    console.log('     | assertOutsideRepo() is not refusing what it must. Nothing was planted, no');
+    console.log('     | sandbox was made, and plans/ was not copied anywhere.');
+    console.log('');
+    for (const p of guard.problems) console.log(`     | ${p}`);
+    console.log('');
+    console.log('  0 plants made, and this is NOT one of the seventeen — those are about tracker rot,');
+    console.log('  and this is about whether the guard that keeps them out of the repository still');
+    console.log('  folds on win32 (WO-2.44, WO-2.47). The count above is unchanged by this check.');
+    console.log('');
+    console.log('  `--against` cannot see this: the guard protecting the repository during a run is');
+    console.log('  THIS file\'s, whatever subject was named. The fold at assertOutsideRepo() is the');
+    console.log('  thing to read, and `tools/README.md`\'s mutation table records it going red.');
+    console.log('');
+    console.log(`FAIL | ${guard.problems.length} problem(s) in this script's assertOutsideRepo(). Every path a plant writes goes through it, and so does the sandbox that holds them.`);
+    return 1;
+  }
+  console.log('--self-check precondition');
+  console.log(`  guard     assertOutsideRepo() refuses ${guard.inside}${guard.flippable && process.platform === 'win32' ? ` at either drive-letter case (${guard.flipped} too)` : ''} and allows ${guard.outside}`);
+  console.log('            — checked before the sandbox exists, and not one of the 17 plants (WO-2.47)');
 
   const sandbox = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'wo-gate-selfcheck-'));
   try {
