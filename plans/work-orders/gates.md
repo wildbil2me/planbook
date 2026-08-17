@@ -103,6 +103,44 @@ able to contaminate the ledger it is rehearsing.
 
 ### Where Ship 1 actually runs — decided 2026-08-08
 
+> **AMENDED 2026-08-17 — the address changed and the reasoning did not.** WO-8.7 shipped on
+> 2026-08-12 and the app has a real host, so **the device of record is the laptop at
+> `https://planbook.hwgteach.com/`**, not at `https://localhost:8443`. The owner's call, 2026-08-17.
+> "No public host, no domain" below was true when written and is the only line here the deploy
+> falsified.
+>
+> **Everything under *How this decision was reached* and *Why the laptop and not the iPad* survives
+> intact**, because none of it rests on the address. Two devices are still two databases — a shared
+> hostname does not merge two IndexedDB stores, only `docs/sync.md` does. The laptop is still the
+> record, the iPad is still a verification device, and Phase 7 is still what ends the arrangement.
+> The `localhost` argument — loopback, no DHCP reservation, no certificate address to match — is
+> answered strictly *better* by a real host on a real certificate, so that paragraph now under-sells
+> its own conclusion rather than contradicting it.
+>
+> **Three consequences, and the first is the one that will bite.**
+>
+> 1. **Deploying is a teaching prerequisite now, not a packaging step.** The deployed origin lags
+>    `main` by whatever has not been pushed — on 2026-08-16 it served `planbook-shell-v51` while the
+>    LAN server served `v60` (`TESTING.md` § WO-2.29). **A work order that lands without a deploy
+>    does not reach the classroom.** `verify-deploy.mjs` stops being a post-deploy nicety and becomes
+>    the only instrument that reads what will actually be taught on.
+> 2. **The ledger is safer than the shell.** IndexedDB is keyed by origin, not by build, so a bad
+>    push breaks the app and cannot touch a mark. The risk is a broken shell at 8:05 with students
+>    arriving — and `skipWaiting` + `clients.claim` means a bad deploy arrives quickly rather than
+>    waiting to be invited. Roll Call! staying deployed until Planbook survives a full term is the
+>    mitigation, and this is the specific failure it insures against.
+> 3. **Three origins are in play, and that is deliberate rather than sprawl.**
+>    `planbook.hwgteach.com` is the record, `localhost:8443` is development, and
+>    `192.168.50.142:8443` is the iPad's install. The iPad keeps the LAN origin because it has to
+>    test builds that have not shipped; the cost is that **no iPad sitting ever exercises the deployed
+>    artefact** — Pages' headers, the precache, the update path from an older installed shell. That
+>    gap is `verify-deploy.mjs`'s and cannot be closed by glass.
+>
+> **The *Before the sitting* checklist above is not re-ticked here.** Its steps 1 and 2 — start
+> `serve-https.mjs`, confirm the laptop's cache version — were right for the origin they name and
+> remain right for development. What replaces them on a teaching day is `verify-deploy.mjs` against
+> the live origin.
+
 **The laptop is the device of record for the term, at `https://localhost:8443`, served by
 `tools/serve-https.mjs` from a `main` checkout.** No public host, no domain. Phase 8 owns the
 distribution channel and a real URL, and neither is needed to mark attendance in August.

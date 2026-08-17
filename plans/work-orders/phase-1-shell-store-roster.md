@@ -1029,22 +1029,41 @@ devices can hold the same label, which is the one arrangement in which a wrong-d
 silent and total.
 
 **Deliverables** *(an act, not a change — nothing here edits a file in this repository)*
-- **A fresh year for the term**, made the working year, with rosters entered fresh rather than carried
-  across.
-- **The rehearsal data kept, in a year whose label cannot be mistaken for the term.** Labels are
-  strictly `YYYY-YYYY` (`src/store.js:176`) so it cannot be called "TEST"; `gates.md` suggests
-  **2030-2031**, which is unmistakable in the year picker.
-- **The iPad restored from the laptop** so it holds the test year, in the one direction the rule
-  allows.
+- **A fresh year for the term**, created at `https://planbook.hwgteach.com/`, made the working year,
+  with rosters entered fresh rather than carried across.
+- **A year on the iPad whose label is not the term's.** `gates.md` names **2030-2031**, which is
+  unmistakable in the year picker; labels are strictly `YYYY-YYYY` (`src/store.js:176`), so it cannot
+  simply be called "TEST". *(Rewritten 2026-08-17, and what it replaced is named here rather than
+  dropped silently. It was two deliverables — "the rehearsal data kept, in a year whose label cannot
+  be mistaken for the term" and "the iPad restored from the laptop so it holds the test year" —
+  **both made moot by the 2026-08-15 amendment above, which did not edit this list.** There is no
+  rehearsal data to keep and therefore nothing to restore. What survives is the arrangement those two
+  were serving: the devices must not share a year label. On a clean slate that is a year **created**
+  on the iPad, not one sent to it, so the laptop → iPad restore is no longer part of this act at
+  all — the rule it obeyed still governs any future restore.)*
 - **A backup of the term year taken and stored off the device** before the first class.
 - **The date written into this work order and into `CHANGELOG.md`'s open note**, which is what closes
   the rehearsal's loose end rather than leaving it recorded forever.
 
-**Out of scope** — deleting the rehearsal data, which is the evidence behind the attendance-arithmetic
-tick and must survive; any code change, which is WO-1.15's half; the week-one re-check of the
-arithmetic against a live roster, which is `gates.md`'s and cannot happen until a real class exists.
+**Out of scope** — any code change, which is WO-1.15's half; the week-one re-check of the arithmetic
+against a live roster, which is `gates.md`'s and cannot happen until a real class exists; a device
+flag or any other schema-level marker distinguishing a test document from a real one, which was
+weighed on 2026-08-17 and belongs to Phase 7 rather than here — the label divergence guards the term
+with no code at all, and a flag would trade a structural guarantee for a conditional that has to keep
+being right. *(A further clause — "deleting the rehearsal data, which is the evidence behind the
+attendance-arithmetic tick and must survive" — **was dropped 2026-08-17 and is recorded here rather
+than removed silently.** The 2026-08-15 amendment had already found it moot: the deletion it forbade
+happened by other means before this work order was ever worked, and a scope line cannot protect what
+is already gone. That the evidence was lost is the amendment's third consequence, flagged there.)*
 
 **Acceptance**
+- [ ] 👤 **The term year exists at `https://planbook.hwgteach.com/`** — created on that origin rather
+      than at `localhost:8443`, and confirmed by opening the deployed app and reading the year picker
+      there. *(Added 2026-08-17, in the same sitting as the `gates.md` § Where Ship 1 actually runs
+      amendment that moved the device of record onto the deployed origin. **There was no such line
+      while the record lived at `localhost`, because there was only one place a year could be.** It
+      goes first because the three lines below it are all about a year whose location this one
+      decides.)*
 - [ ] 👤 The year the term is taught in contains no meeting the owner did not record — checked in the
       app, not assumed from the act.
 - [ ] 👤 The iPad and the laptop do not hold the same year label, each confirmed on the device itself.
@@ -1060,7 +1079,13 @@ It can never become true: the rehearsal data is gone, so a checkbox asking that 
 this work order open forever. That the evidence was lost is the finding in the amendment above, not a
 line to keep ticking against.)*
 
-**Traps** — **Do not carry the rehearsal's attendance across "to have some history".** That is the
+**Traps** — **Do not create the term year at `localhost:8443`.** It is the origin every previous
+sitting used and the one `gates.md`'s *Before the sitting* checklist still names, so it is what habit
+reaches for. **IndexedDB is keyed by origin**: a roster entered there is not merely awkward to reach
+from the deployed app, it is **not in it**, and the failure is silent — the year picker on
+`planbook.hwgteach.com` simply comes up empty. The only path between two origins is a backup file, so
+the recovery is download-there, restore-here: cheap the moment you notice, and a lost first period if
+you do not. **Do not carry the rehearsal's attendance across "to have some history".** That is the
 defect this work order exists to end, arriving by the door marked convenience. **Do not relabel the
 old year to something outside `YYYY-YYYY`** — the store rejects it, and the year picker is the only
 place the distinction is ever seen.
