@@ -4763,3 +4763,97 @@ reader takes it for behavioural coverage of a file nothing behaviourally covers.
 before the first mutation and prove the revert**, even though these mutations are in `tools/` rather
 than `src/`: WO-2.37's constant edit and WO-2.42's `src/classes.js` md5 that no blob in the file's
 history matches are both this hazard, and neither was in `src/` by intention either.
+
+## WO-2.48 — the sweep's list of guarded scripts is written down rather than derived
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.47 · **Blocks** nothing
+**Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37, WO-2.40, WO-2.44 and WO-2.47 made.)*
+
+**Not a go-live blocker, and it cannot fire today.** Booked 2026-08-17 out of WO-2.47's verification,
+which named it while declining to widen that row to fix it — the same shape WO-2.47 itself took out of
+WO-2.44. It is the one gap that row left standing, written down at the moment it was found rather than
+carried in a verifier's report nobody re-reads.
+
+**Why it exists.** `wo-sweep.mjs` § 15 opens with `const COPIES = ['tools/wo-gate.mjs',
+'tools/codex-invoke.mjs']` and is thorough about exactly those two files. **Nothing asserts the list is
+complete.** It is complete today, by observation and not by construction: `function assertOutsideRepo(`
+is declared exactly twice repo-wide, at `wo-gate.mjs:1534` and `codex-invoke.mjs:746`, in exactly the two
+scripts that build a sandbox out of `os.tmpdir()` — `wo-gate.mjs:1706`, `codex-invoke.mjs:252` and
+`:772`. Two facts that agree, and no check standing behind either.
+
+**The failure has a shape, and the pattern is already two-for-two.** A third script under `tools/` grows
+a sandbox — every script that has needed one has needed the guard — and its author copies the guard,
+correctly, because the copies are copied on purpose. The new copy joins a set the sweep does not read.
+It is watched by nothing, and § 15 goes on reporting green about the two files it was told about. **That
+is the silence WO-2.47 closed, one level up:** the check that guards the guard is itself guarded by a
+hardcoded list, and a list is prose with brackets around it.
+
+**Deliverables**
+- **Derive the set and diff it against the declared one**, failing when the two diverge **in either
+  direction**. The extra direction is not symmetry for its own sake: the cheapest way to silence a
+  failing § 15 is to delete a file from `COPIES`, which turns a red check green while removing the
+  coverage. The model is already in this file — the delegated-hook check diffs a derived census against
+  a declared inventory and says which way it went.
+- **Two signals over `tools/*.mjs`, unioned, because either alone misses the case that matters.** A
+  top-level `function assertOutsideRepo(` finds a third *copy* of the guard. A temp-dir sandbox —
+  `mkdtempSync`, or a `mkdirSync` under `os.tmpdir()` — finds a third script that sandboxes and **forgot**
+  the guard, which is the dangerous direction and the one a scan for the guard's own name is blind to by
+  construction. A file matching either signal and absent from the list is a fault.
+- **What the derived scan still cannot see, written at the code**, with § 15's own discipline about
+  deletion versus subtle breakage: a guard under a different name, a sandbox spelled some third way, a
+  script that writes into the repository on purpose and correctly. This narrows the unwatched set; it does
+  not close it, and a reader who takes it for a proof of completeness has been misled by a check that
+  exists because somebody took a list for one.
+- **FAIL and not REVIEW, and FAIL when the scan matches nothing.** Zero files carrying either signal means
+  the scan broke, not that the repository got safer — `wo-sweep.mjs`'s own rule, stated twice in its
+  header, and the rule WO-2.47's third Acceptance line already had to prove once.
+- **Whatever recorded count this moves**, updated from a run rather than by arithmetic, per the rule at
+  `wo-sweep.mjs:673`. The sweep reported `21 checks · 19 passed · 0 failed · 2 to review` on the tree that
+  booked this row, and `tools/README.md` states that figure in three places.
+
+**A decision the row makes rather than leaves open: this goes inside § 15, not beside it.** The claim is
+about that check's own scope — its list, its files, its blind spot — and a § 16 that exists only to
+police § 15's array separates the assertion from the thing asserted, so a later edit to `COPIES` has no
+reason to look at it. Fold it in as a preamble that runs before the per-file loop and feeds it. **If that
+lands as a second `check()` and moves the count, take the count from the run**; the deliverable above
+governs and this paragraph is not a prediction of the number.
+
+**Out of scope** — **anything outside `tools/*.mjs`.** Nothing in `src/` touches the filesystem; the app
+is a browser PWA and the guard is a property of the toolchain. Scanning wider buys nothing and gives the
+check a way to be wrong.
+
+Also out of scope: **rewriting either guard to `path.relative()`**, unchanged from WO-2.47's refusal and
+for its reason — a row about protecting a fix should not also change the fix, and it cannot be done to one
+copy without the other. And: **fixing whatever the new scan finds.** It will find nothing today; the
+measurement above says so. If a later run goes red on a third script, that script gets its own row. This
+row builds the alarm and does not do what the alarm asks — the distinction WO-2.47 kept when it left this
+gap standing rather than growing to meet it.
+
+**Acceptance**
+- [ ] On the unmutated tree the derived set equals the declared set, and the proof line **names both
+      files** rather than reporting a count — a bare `2 of 2` is the same trust this row exists to remove.
+- [ ] A third `tools/*.mjs` carrying a top-level `function assertOutsideRepo(` turns the sweep **red**,
+      names the file, and says it is unwatched. The scratch file is deleted in a `finally`, `git status
+      --short` is byte-identical either side, and the revert is proved rather than reported.
+- [ ] A third `tools/*.mjs` that makes a `mkdtempSync` sandbox and carries **no guard at all** turns the
+      sweep red on the second signal. This is the case the name scan cannot see and the reason there are
+      two; a row that ships one signal has not built this check. Same revert discipline.
+- [ ] Deleting `'tools/codex-invoke.mjs'` from the declared list turns the sweep red rather than green.
+      Reverted and proved the same way.
+- [ ] The scan matching **zero** files FAILs, shown rather than asserted.
+- [ ] On the unmutated tree: `node tools/wo-sweep.mjs` green with its count matching `tools/README.md`
+      everywhere that file states one, `wo-gate.mjs --self-check` still `PASS | 17 of 17 plants were
+      caught`, `--audit` still PASS.
+- [ ] `git diff --stat -- src/` is empty.
+
+**Traps** — **`wo-sweep.mjs` will match its own scan if the pattern is loose.** This file now carries the
+string `assertOutsideRepo` in its § 15 prose *and* inside the regex that looks for it, so a scan for the
+bare name reports the sweep itself as an unwatched third copy — a red run on the day it lands, from a
+check that is working exactly as written. § 15's existing `/^function\s+assertOutsideRepo\s*\(/` is
+anchored for this reason; stay anchored, and prove it by running the thing rather than by reading it.
+**The mutations for this row write files into `tools/`**, which is the one directory the guard under
+examination exists to keep temporary files out of — so the hash-and-revert discipline applies to the
+**directory listing**, not just to a file's contents, and an interrupted mutation leaves a stray script
+in the toolchain rather than an edit in one file. **Do not extract a shared helper** — WO-2.44's and
+WO-2.47's trap, unchanged. **And this is not an eighteenth plant either**; the seventeen are about
+tracker rot, and WO-2.47's version of this trap holds here word for word.
