@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.39 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.41 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 35 | 32 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 39 | 34 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **110** | **79** | **2** | `[███████░░░] 72%` |
+| | **114** | **81** | **2** | `[███████░░░] 71%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -409,9 +409,11 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 55 | [WO-2.37](phase-2-attendance.md#wo-237--the-codex-cap-silently-excludes-any-work-order-with-a-slow-acceptance) The Codex cap silently excludes a slow acceptance | S | | Aug 28, half a day |
 | 56 | [WO-2.38](phase-2-attendance.md#wo-238--nothing-exercises-the-anti-vacuity-guard-so-it-can-rot-behind-a-green-run) Nothing exercises the anti-vacuity guard | M | | Aug 28, a day |
 | 57 | [WO-2.39](phase-2-attendance.md#wo-239--four-line-references-in-toolsreadmemd-have-been-wrong-for-thousands-of-lines) Four line references in tools/README.md are wrong | S | | Aug 29, half a day |
-| 58 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 59 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 60 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 58 | [WO-2.40](phase-2-attendance.md#wo-240--the-codex-invoke-gates-have-never-been-exercised-by-anything-but-a-hand) The codex-invoke gates are exercised by nothing | S | | Aug 29, half a day |
+| 59 | [WO-2.41](phase-2-attendance.md#wo-241--the-wo-315-mislabel-lives-only-in-a-status-file-that-says-to-delete-it) The WO-3.15 mislabel has no home but a status file | XS | | Aug 29, an hour |
+| 60 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 61 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 62 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -523,6 +525,37 @@ be "this pointed at something that no longer exists" rather than a corrected num
 judgment nobody should make inside somebody else's commit. **It also asks whether this should be
 swept mechanically** — `wo-sweep.mjs` already asserts one cross-file number, so the precedent exists
 to end the class rather than pay it down once.*
+
+*WO-2.40 and WO-2.41 were booked on 2026-08-16 out of **WO-2.37's dispatch**, and given rows #58 and
+#59 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above them.**
+They take the cut band's argument unchanged — behind the dispatch that produced them, ahead of the one
+row in Ship 2 with a deadline the world sets. **Neither is a defect**: WO-2.37 passed on its second
+verifier pass, and both gates WO-2.40 is about were driven by hand and behaved on the day they
+shipped.*
+
+***WO-2.40 is the same shape as WO-2.38 and is deliberately not folded into it.*** *Both are guards
+whose every branch is dead code on a green tree, and both were proved once by a hand mutation that no
+longer exists. But WO-2.38 is about `verify-shell.mjs` reading the app, where the standing "do not
+write a second harness" rule is a live question it has to answer; WO-2.40 is about a dispatch tool
+checking its own refusals, where `wo-gate.mjs --self-check` already settles the shape. One carries a
+design decision and is sized M; the other carries a seam and is sized S. **The reason they are read
+together is the trap they share**: WO-2.37's demonstration had to edit `INVOKE_TIMEOUT_MS` in the real
+file and put it back, which is the exact mutate · run · revert hazard WO-2.37 was booked to name, and
+neither row may commit a check that does it.*
+
+***WO-2.41 is an hour and it is the one with a clock on it.*** *The only account of the 2026-08-14
+kill is a status file whose own third line tells its reader to delete it, and the result file that
+triggers that instruction has existed since that afternoon. Every sitting that passes is a sitting in
+which somebody obeys the file and the scar goes with it. **This is the fourth row in this directory
+whose deliverable is a true sentence in the right place** — after WO-1.18, WO-3.19, WO-3.20 and
+WO-2.27, and it is the first of them where the sentence already exists and is simply in a file
+marked for deletion.*
+
+***And the pull-forward signal WO-2.37's own note named was never pulled.*** *That note said: if the
+orchestrator has to do the cap arithmetic by hand a third time, pull the row forward. It did the
+multiplication by hand again while routing WO-2.37 itself — though the route was decided in the Claude
+column before the budget could matter, so the signal fired without costing anything. **The rubric now
+asks the question, so the count stops here at three.***
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

@@ -134,9 +134,43 @@ is a Codex job.
 - **It touches none of the sensitive surfaces** listed below.
 - **Conventions already exist to follow.** Codex is good at matching an established pattern and
   worse at choosing one.
+- **Proving it fits inside the runner's cap — do the multiplication here, not from memory.** Harness
+  runtime **×** the number of full runs the Acceptance actually demands: one clean run, plus one per
+  mutation, because a mutation reasoned about is not a mutation proved. `node tools/verify-shell.mjs`
+  is **~4.4 minutes** a run on this tree, and `INVOKE_TIMEOUT_MS` in
+  [`../../tools/codex-invoke.mjs`](../../tools/codex-invoke.mjs) is a hard **20 minutes for the whole
+  dispatch** — reading, writing and reverting included. If the product leaves no room for the reading
+  and the writing, this is not a Codex job however Codex-shaped the five bullets above read.
 
 Typical shape: a pure module with a clear input and output. Store layer, grade engine, CSV parser,
 percentage math, signal ranking, service worker cache plumbing.
+
+**Why the last bullet is a hard condition and not a scheduling note.** `runCodex()` hands the cap to
+`spawnSync`, which **SIGTERMs the child** when it expires — and whatever the run had already written
+to the tree stays written. The work orders this excludes are exactly the ones whose method is
+*mutate · run · revert*, so the run most likely to be killed is the one holding a deliberate mutation
+in `index.html` or `src/` at the moment it dies. That is not a dispatch to re-run; it is a broken app
+with nobody watching, found whenever somebody next reads a diff.
+
+**Three worked examples, all 2026-08-16, so the arithmetic is not re-derived every time.** WO-2.34
+needed one clean run plus three mutation runs at a measured 264s — **~17.6 minutes against a
+20-minute cap** — and went to **Claude Sonnet** on that alone, with its Codex reasoning intact.
+WO-2.36 needs three runs — **13.2 minutes**, and `--budget 13.2` refuses it — so it fails the bullet
+the same way. **WO-2.35 is the instructive one, because it does not fail:** its Traps say *at least*
+two runs at ~4.5 minutes, and two fits — `--budget 9` answers *"fits inside the 20 min cap"* — while
+the third run it leaves room for does not. An Acceptance whose run count is open-ended has not
+answered this bullet at all; route on the largest count it could mean, and say in the routing sentence
+which number you used. *(Checked against the script rather than by arithmetic, 2026-08-16, after a
+verifier re-derived it and found this paragraph claiming WO-2.35 failed.)* Both went to **Claude
+Opus** anyway, because each was already in the Claude column on its own merits. **The budget can take
+Codex off the table; it never decides the tier** — read the Claude column first.
+
+**The orchestrator can hand the arithmetic to the script instead of carrying it.**
+`node tools/codex-invoke.mjs --brief … --out … --budget <minutes>` states the same number this bullet
+asks for, and refuses in one line before anything is spawned when it will not fit — nothing
+dispatched and the tree untouched, rather than a SIGTERM seventeen minutes in. Passing it is what
+makes the refusal a command's answer rather than a reader's memory; the flag raises nothing and buys
+nothing, and `INVOKE_TIMEOUT_MS` carries the reasoning for why the cap itself was left where it is.
 
 ## Route to **Claude** when *any* of these is true
 
@@ -177,12 +211,14 @@ So the route is two questions, and the second reads off the answer to the first:
 |---|---|---|
 | routes to **Codex**, probe passes | Codex | unchanged |
 | routes to **Codex**, probe fails | **Claude Sonnet** | the rubric already found no judgment in it; a down runner does not change the work |
+| routes to **Codex** on the work, but the proof budget does not fit | **Claude Sonnet** | same shape as a failed probe: the cap is a fact about the runner, not about the work. Check the Claude column first — a work order that is there on its own merits is Opus whatever the stopwatch says (WO-2.35, WO-2.36) |
 | routes to **Claude** on its own merits | **Claude Opus** | it is there for one of the six reasons above, and every one of them is a judgment call |
 
-The distinction to hold onto: **a fallback is not a re-rubricing.** A work order that reaches Sonnet
-this way still has its Codex reasoning intact in the Because column, exactly as the ⏸ suspension kept
-it. If a Sonnet fallback produces work the verifier fails twice, that is the signal to re-read the
-rubric — not to quietly raise the tier and try again.
+The distinction to hold onto: **a fallback is not a re-rubricing**, and neither is a budget refusal.
+A work order that reaches Sonnet either way still has its Codex reasoning intact in the Because
+column, exactly as the ⏸ suspension kept it — WO-2.34 is the worked case, Codex on the merits and
+Sonnet on the arithmetic. If a Sonnet fallback produces work the verifier fails twice, that is the
+signal to re-read the rubric — not to quietly raise the tier and try again.
 
 **The verifier is always Opus, and this is not a cost decision to revisit.** It is 23% of output and
 looks like box-ticking, which is precisely what makes it the tempting place to save and the wrong

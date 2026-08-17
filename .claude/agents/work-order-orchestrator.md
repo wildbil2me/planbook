@@ -191,7 +191,7 @@ that is the first thing to degrade.
 sync between the probe and the real dispatch:
 
 ```
-node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .claude/dispatch/WO-1.4-result.md
+node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .claude/dispatch/WO-1.4-result.md --budget <minutes>
 ```
 
 - It resolves both paths to absolute internally, hardcodes `--sandbox workspace-write` (reads
@@ -203,8 +203,16 @@ node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .clau
   is the WO-1.7 shape (a runner that failed and said it succeeded), and the script treats it as a
   failure rather than a silent pass. Exit 2 means the dispatch never ran at all (see step 2b); read
   its stderr before treating a non-zero exit as the runner's verdict.
+- **Exit 3 means it ran and was killed at the cap** — no verdict either way, and the opposite of a 2:
+  the tree still holds everything that dispatch wrote, up to and including a half-applied mutation.
+  Run `git status` and read the diff before you re-route, re-dispatch, or write a status line. The
+  work is sometimes finished — WO-3.15 wrote all seven of its files and then failed to exit.
 - Codex runs long. Give the Bash call a 600000 ms timeout — the script's own internal cap is 20
   minutes, but the outer timeout is what actually protects the session.
+- **`--budget <minutes>` is the run arithmetic you already did at step 2** — harness runtime × the
+  full runs the Acceptance demands (`ROUTING.md` § "Route to Codex"). Pass it and a dispatch that
+  cannot fit is refused in one line before anything spawns; omit it and nothing checks. The cap
+  reached mid-run is a SIGTERM with the mutation still in the tree.
 
 **A result file lands on both routes.** The brief is what was asked; the result is what came back.
 A transcript ages out; both halves of the audit trail are files.
@@ -315,8 +323,8 @@ You never inspected the work, so recording someone else's verdict is transcripti
 - **Point both agents at the two verification commands** in the brief — `tools/verify-shell.mjs` and
   `tools/wo-sweep.mjs`. Nobody should write a third harness. If a work order needs a check neither
   can make, that is a proposed follow-up in your report, not a throwaway script.
-- **Keep this file short.** It grew 169 → 274 lines in one day, and WO-2.20's wait rule took it to
-  **322** — every dispatch pays to read all of it. New lessons go to `plans/dispatch-retro.md`; only
-  the imperative belongs here. **If you edit this file, correct that number in the same edit.** It was
-  already stale when WO-2.20 read it, and a length rule that misstates the length is the first rule a
-  reader discounts.
+- **Keep this file short.** It grew 169 → 274 lines in one day, WO-2.20's wait rule took it to 322,
+  and WO-2.37's `--budget` line and exit-3 rule to **330** — every dispatch pays to read all of it. New lessons go
+  to `plans/dispatch-retro.md`; only the imperative belongs here. **If you edit this file, correct
+  that number in the same edit.** It was already stale when WO-2.20 read it, and a length rule that
+  misstates the length is the first rule a reader discounts.

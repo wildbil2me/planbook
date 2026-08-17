@@ -11,7 +11,7 @@
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
-| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path>` |
+| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>]` |
 | `audio-probe.html` | **Not a script** — a page, opened on the device. Tells iOS Silent Mode apart from an AudioContext that will not start outside a gesture, which are the same silence otherwise. See below; it has a way to be served wrong that looks like nothing being wrong. |
 
 The four `wo-*.mjs` scripts and `codex-invoke.mjs` are **dispatch plumbing**, not app tooling — they
@@ -102,6 +102,19 @@ which is how the same morning was spent twice.
 `PATH` fix was re-derived and re-typed at two call sites inside `work-order-orchestrator.md` — one
 file means the fix can only be right or wrong in one place. Full saga in
 [`../plans/dispatch-retro.md`](../plans/dispatch-retro.md) § Codex.
+
+**Its cap decides routes, so since WO-2.37 it can be asked before it fires.** `INVOKE_TIMEOUT_MS` is
+twenty minutes for a whole dispatch and `spawnSync` **SIGTERMs** the child at it, leaving whatever
+the run had already written in the tree — which on a *mutate · run · revert* work order is a
+deliberate mutation in `index.html` or `src/`. That kill reports as **exit 3**, on its own, because
+exit 2 means *codex never started and the tree is untouched* and a killed dispatch wearing that code
+is how a half-applied mutation goes unlooked-for (WO-3.15, 2026-08-14: seven files written, killed at
+the cap, reported as "could not be run"). `--budget <minutes>` states the harness time the
+Acceptance will need (runtime × runs) and refuses in one line, exit **2**, before anything spawns:
+nothing ran, the tree is untouched, and the work order is routed to Claude instead. It buys no time
+and raises no cap — the constant is deliberately left where it is, with the reasoning at its
+declaration, and [`../plans/work-orders/ROUTING.md`](../plans/work-orders/ROUTING.md) § "Route to
+Codex" asks the same multiplication at routing time, which is the half that matters.
 
 The demo build lands in Phase 8 (WO-8.2), modelled on Roll Call!'s `tools/build-demo.mjs`.
 

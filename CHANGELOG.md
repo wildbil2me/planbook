@@ -277,6 +277,61 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.37 — routing now asks what it costs to *prove* a work order, not only what the work is.**
+  A Codex dispatch is capped at twenty minutes end to end, and every question the routing rubric asked
+  was about the work — is the spec complete, is there a precedent, is the acceptance mechanical. None
+  of them asked how long proving it takes, so the cap quietly excluded every work order whose
+  acceptance needs several full harness runs, and it did it invisibly: the constraint appeared, or
+  failed to appear, depending on whether the person routing thought of it unprompted. It had already
+  been done by hand three times in two days. `ROUTING.md` now asks for the multiplication — harness
+  runtime × the runs the acceptance demands, against the cap — as a sixth condition in the Codex
+  column, with the three routes it was invented for worked underneath it. **The budget can take Codex
+  off the table; it never decides which Claude**, so a work order that is Claude's on its own merits
+  stays at the higher tier.
+
+  **The cap itself was examined and deliberately left at twenty minutes**, with the reasoning written
+  where the next reader hits it. Raising it to fit today's slowest acceptance is the wrong shape of
+  fix — four harness runs fit inside forty minutes and five do not, and the next slow acceptance is a
+  bigger number again — and it is not even the binding constraint, since the orchestrator runs the
+  script inside a ten-minute call. `codex-invoke.mjs --budget <minutes>` now refuses a dispatch that
+  cannot fit *before* anything is spawned, prints its arithmetic either way, and says which route to
+  take instead.
+
+  **What the cap does to the working tree is the sharp end, and it now has its own exit code.** The
+  timeout is a SIGTERM: nothing rolls the tree back, and the work orders this cap excludes are exactly
+  the ones whose method is mutate · run · revert — so the run most likely to be killed is the one
+  holding a deliberate mutation in `index.html` or `src/` at the moment it dies. That is not a failed
+  check to re-run; it is a broken app with nobody watching. **The first draft of this work made it
+  worse before it made it better**, and the verifier caught it: the new header claimed exit 2 meant
+  the tree was untouched, while a killed dispatch also exited 2 — telling the one reader who could
+  catch a half-applied mutation that there was nothing to look at. The mislabel had already bitten
+  once, on 2026-08-14, when a dispatch wrote all seven of its files, was killed at the cap, and was
+  reported as never having run over 206 insertions sitting in the tree. A kill is now **exit 3,
+  "started, then killed"**, which says the one true thing: no verdict either way, go and read the diff.
+
+- **WO-2.36 — retiring a keyboard shortcut correctly used to turn both ⌨ Keys checks red.** Each check
+  floored itself against a vacuous pass with counts taken from the tree the day it was written — at
+  least eight bound keys, at least seven legend rows. The floors were there for a real reason, since
+  an empty list agrees with everything and a renamed modal id would otherwise compare two nothings and
+  pass. But they also fired on the one edit that is entirely correct: take a key out of the binding
+  *and* delete its legend row, leaving the two sides in perfect agreement, and the counts drop below
+  the floor and the check objects to a tree that is right.
+
+  **A floor that gets edited every time it fires is a floor nobody defends.** The next reader has
+  already been taught it is a formality — and the vacuous pass it guards against is precisely the one
+  that arrives looking like a formality. So the counts are gone rather than made cleverer: each block
+  now asserts its **anchors** found by name — the modal id, the key constant, the slice, the row regex
+  having matched at all — and a red line says which anchor went missing instead of quoting a number
+  somebody is expected to move. Deriving the floor from the list it guards was the tempting fix and it
+  is the vacuity arriving through the door of the repair.
+
+  **Proved by mutation, both directions, on both blocks.** Retiring `D` on both sides at once now
+  leaves the check green at 8 keys and 7 rows — the exact pair the old floor rejected. A renamed modal
+  id and a requoted row class take both blocks red at zero legend rows, each naming its own anchor;
+  renaming the key constant produces **one** failure in a run of 802 at counts unchanged from green,
+  which is the case the old floor passed and the named anchor catches. Every mutation reverted and
+  confirmed with `git diff` before the next.
+
 - **WO-2.35 — a key bound any way but a literal comparison was invisible to both ⌨ Keys checks, and
   a comment said otherwise.** The two checks that keep each key card honest — the marking screen's
   and the score grid's — read the listener with a regex over `e.key === '…'` comparisons. A key bound

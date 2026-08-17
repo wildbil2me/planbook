@@ -3576,7 +3576,7 @@ at ~4.5 minutes each**, which is a routing fact before it is an implementation o
 
 ## WO-2.37 — the Codex cap silently excludes any work order with a slow acceptance
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing — `codex-invoke.mjs` and
+**Ship** — · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** nothing — `codex-invoke.mjs` and
 `ROUTING.md` both exist today · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-2.14, WO-2.15, WO-2.18, WO-2.19 and
 WO-2.20 made.)*
@@ -3633,17 +3633,33 @@ If the honest answer is that the cap stays and some work orders simply route to 
 is a finding to write down, not a failure to fix.
 
 **Acceptance**
-- [ ] `ROUTING.md`'s rubric asks about the cost of proving the work, not only about the work, and a
+- [x] `ROUTING.md`'s rubric asks about the cost of proving the work, not only about the work, and a
       reader routing a mutation-proved work order is led to the multiplication rather than expected
-      to invent it.
-- [ ] The `INVOKE_TIMEOUT_MS` decision is written down with its reasoning, whichever way it went.
-- [ ] The comment at `INVOKE_TIMEOUT_MS` says what expiry does to the working tree — SIGTERM, and
-      whatever the run had already written stays written.
-- [ ] If a pre-flight refusal was built, it refuses a dispatch whose stated run budget exceeds the
+      to invent it. *(A sixth bullet in the Codex column — "all of these" — carrying runtime × runs
+      against the cap, then the SIGTERM consequence and WO-2.34/2.35/2.36 worked underneath it, and
+      a fourth row in "Which Claude" so a budget refusal lands on Sonnet the way a failed probe
+      does. Applied cold to the three siblings it reproduces the routes they got.)*
+- [x] The `INVOKE_TIMEOUT_MS` decision is written down with its reasoning, whichever way it went.
+      *(Left at twenty minutes, deliberately, in three bullets at the constant: raising it is the
+      named trap, the orchestrator's own 600000 ms Bash timeout binds ten minutes earlier anyway, and
+      a `--timeout` flag was refused because a caller who can raise the cap can buy the mid-mutation
+      SIGTERM. `--budget` spends the same argument the other way.)*
+- [x] The comment at `INVOKE_TIMEOUT_MS` says what expiry does to the working tree — SIGTERM, and
+      whatever the run had already written stays written. *(`tools/codex-invoke.mjs:48-75`, first
+      paragraph, naming the mutate · run · revert case as the one most likely to be killed, and
+      pointing at the exit code that kill now reports — 3, never 2.)*
+- [x] If a pre-flight refusal was built, it refuses a dispatch whose stated run budget exceeds the
       cap and says so in one line — demonstrated, not described. If it was not built, the reasoning
-      is written where the orchestrator reads it.
-- [ ] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty — this work order
-      touches tooling and prose only.
+      is written where the orchestrator reads it. *(Built: `--budget <minutes>`, refusing before the
+      install is inspected and before any spawn. `--budget 17.6` → one `REFUSED before dispatch`
+      line, exit **2**, no output file created; `--budget 10` passes the gate and stops at the next
+      check, which is what keeps the refusal from being unconditional; `--budget 10.1` refuses;
+      `--budget soon` and `--probe --budget 4` both refuse as usage errors. Exit 2, never 1 —
+      nothing ran, so there is no runner verdict to report.)*
+- [x] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty — this work order
+      touches tooling and prose only. *(`20 checks · 18 passed · 0 failed · 2 to review`, exit 0 —
+      both REVIEWs pre-existing and in files this work order never opened. `git diff --stat -- src/`
+      printed nothing; `git status --short` names no file under `src/`.)*
 
 **Traps** — **The runner is not the subject.** The probe passed; a work order that ends up
 "investigating Codex" has gone somewhere else. **Do not raise the cap to a number that makes the
@@ -3790,3 +3806,143 @@ row makes is final, and re-resolve each one immediately before reporting rather 
 number read earlier in the session. **Do not fix these by deleting the pointers**; the pointer is
 carrying real information and a reader wants it. **`:1869` may not have an answer** — an honest "this
 referred to X, which is gone" beats a plausible number nobody verified.
+
+---
+
+## WO-2.40 — the codex-invoke gates have never been exercised by anything but a hand
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.37 · **Blocks** nothing
+**Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20 and WO-2.37 made.)*
+
+**Not a go-live blocker, and nothing here is a defect today.** Booked 2026-08-16 out of WO-2.37's
+dispatch, where the implementer and the verifier proposed it independently and neither built it.
+Both gates below were driven by hand on the day they shipped and both behaved. This row is about the
+day after.
+
+**Why it exists.** WO-2.37 added two caller-side gates to `tools/codex-invoke.mjs`, and **the whole
+value of each one is behaviour nobody sees on a normal run**:
+
+- `refuseIfBudgetDoesNotFit()`, called from `runInvoke()` before anything is spawned. If that call is
+  deleted, or moved below the spawn, or the comparison is inverted, every dispatch in this project
+  still passes and the next work order with a slow Acceptance is SIGTERMed mid-mutation exactly as
+  before.
+- The **started-then-killed** split in `runInvoke()` — `result.error && result.signal` → exit 3. If
+  that regresses, a killed dispatch goes back to reporting exit 2, whose documented invariant is that
+  the working tree is untouched. **That is not hypothetical: it is the WO-3.15 scar**, 2026-08-14,
+  where Codex wrote all seven of its files, was killed at the cap, and the script reported "could not
+  be run" over 206 insertions sitting in the tree.
+
+**The only thing that has ever executed either path is a hand.** WO-2.37's demonstrations ran in a
+scratchpad throwaway repo with `INVOKE_TIMEOUT_MS` and `PROBE_TIMEOUT_MS` **temporarily edited in the
+real file** and restored afterwards — mutate · run · revert, on the one file whose own comment warns
+what an interrupted mutation costs. The evidence was correct and it is gone, and repeating it costs
+the next reader the same afternoon. **This is WO-2.38's argument one file over:** a gate nobody
+exercises agrees with everything.
+
+**The mechanism is already measured and should not be re-derived.** WO-2.37's correction round
+established the discriminator by running it — `TIMEOUT` gives `status null · signal SIGTERM · error
+ETIMEDOUT`, `ENOENT` gives `status null · signal null`, a `maxBuffer` overrun gives `signal SIGTERM ·
+error ENOBUFS` — and established that a sleeping `process.execPath` reproduces the timeout case
+exactly. That is the stand-in child; what is missing is a seam to hand it in.
+
+**Deliverables**
+- **A `--self-check` on `codex-invoke.mjs`**, on `wo-gate.mjs --self-check`'s precedent: a tool that
+  proves its own gates still bite. **This is not the "second harness" question WO-2.38 has to
+  answer** — the checks live in the file they check, which is the shape this suite already blesses.
+- **A seam for the command and the timeouts**, so the paths can be driven without editing the
+  constants. The smallest change that makes them callable, not a rewrite of `runInvoke()`.
+- **Every caller-side gate driven by its exit code**, with no real Codex process spawned: both
+  `--budget` boundaries, the non-numeric budget, `--probe --budget`, the missing `--brief`/`--out`,
+  the missing brief file, the unrecognized flag, and the started-then-killed branch against the
+  stand-in child.
+- **A decision, either way, on the two adjacent findings WO-2.37's verifier named and explicitly did
+  not call defects.** (a) An **externally** killed child — `signal` set, `error` unset — falls past
+  the exit-3 branch and is reported as exit **1**, the runner-verdict code, for a kill that produced
+  no verdict. (b) `mkdirSync(dirname(outPath))` runs ahead of the `codex-resources` check, so a later
+  exit 2 can leave an empty output directory behind after a run that never started. Each is a line of
+  code if it is wrong and a written sentence if it is right.
+- **A decision on who runs this and when** — `wo-sweep.mjs`, the orchestrator's step 2b beside the
+  probe, or by hand at the next change to the file. Any answer, written down.
+
+**Out of scope** — the runner itself (`--probe`'s real spawn is not the subject; WO-2.37's Traps
+already say so), raising `INVOKE_TIMEOUT_MS`, and the orchestrator's outer 600000 ms Bash timeout —
+which is the constraint that actually binds first and is a work order of its own if anyone wants it
+pursued. Re-verifying WO-2.37's five Acceptance lines is not this row either; they passed.
+
+**Acceptance**
+- [ ] Every caller-side refusal in `codex-invoke.mjs` is driven and asserted on **both** its exit code
+      and a distinguishing phrase of its message, in one run, with no Codex process spawned.
+- [ ] The started-then-killed branch reports exit **3** against a stand-in child, and a never-started
+      child still reports exit **2**, in that same run. The two cases are distinguished by `signal`,
+      not by the error code's name.
+- [ ] Nothing the check writes reaches `tools/`, `src/` or `index.html` — no constant is mutated and
+      restored, at any point, by anything committed. **This is the acceptance line with a scar behind
+      it:** the hazard WO-2.37 exists to name is a mutation left in the tree by a run that died.
+- [ ] Deleting any one of those gates, or inverting its condition, turns the check red — shown, not
+      argued. A self-check that passes whether or not the thing it checks exists is this row's own
+      failure repeated inside itself.
+- [ ] The two adjacent findings above are answered in writing, and anything fixed in answering them is
+      covered by the run.
+- [ ] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty.
+
+**Traps** — **Do not spawn Codex to test the plumbing.** Every gate here is reachable without it, and
+a check that needs the runner installed is a check that goes yellow on a machine where the runner is
+the thing being routed around. **Do not test by editing the constants**, which is precisely what the
+hand demonstration had to do and precisely what a committed check must not. **A child that never
+started and a child that was started and killed are the two cases under test** — a fixture that
+cannot tell them apart cannot express the failure, which is this file's oldest lesson (§ Fixture
+assumptions in `plans/dispatch-retro.md`). **The exit codes are read by two agent files and by
+`tools/README.md`**; if a decision here changes one, it changes all of them in the same sitting.
+
+---
+
+## WO-2.41 — the WO-3.15 mislabel lives only in a status file that says to delete it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.37 · **Blocks** nothing
+**Closes roadmap** *(no box. Documentation, not app — the same call WO-2.39 made.)*
+
+**Not a go-live blocker, and the fault it records is already fixed.** Booked 2026-08-16 out of
+WO-2.37's dispatch, which fixed it. This row is about where the account of it lives.
+
+**Why it exists.** `plans/dispatch-retro.md` is where this project keeps the scar that produced a
+rule — `CLAUDE.md` says so in as many words. The 2026-08-14 kill is not in it. The only account is
+`.claude/dispatch/WO-3.15-status.md`, **whose own third line instructs the reader to delete the file
+once the result file exists** — and the result file has existed since that afternoon. So the one
+record of the worst dispatch failure mode this pipeline has is sitting in a file marked for deletion,
+and the entry ends *"Proposed follow-up, not fixed here."*
+
+**And § Codex now says two thirds of a scheme.** Its closing paragraph reads *"exit 1 is a runner
+verdict, exit 2 is a harness bug"* — true when it was written, and WO-2.37 added exit 3 and re-scoped
+exit 2 from *"a harness bug"* to *"never started"*. WO-2.37's implementer left the sentence alone
+deliberately and said so on the record: it sits inside a past-tense narrative that ends *"Verified
+2026-08-06"*, and editing a dated retro entry to describe today is its own kind of wrong. **That call
+is the question this row settles rather than inherits.**
+
+**Deliverables**
+- **A § Codex entry for 2026-08-14** — what the kill actually did (seven files written, the run killed
+  at the cap, exit 2 reported over 206 insertions), what it cost, and what the same event reports now.
+  Written the way this file writes: the scar first, the rule it produced second.
+- **A decision on the stale sentence.** Corrected in place, given a dated parenthetical, or left as
+  history with the current scheme stated in the new entry and a pointer between them. Any of the three
+  is acceptable; two accounts of the exit codes with nothing joining them is not.
+- **The status file's instruction honoured or explicitly overridden**, once its content has a home.
+
+**Out of scope** — any change to `tools/codex-invoke.mjs`, and any re-litigation of the exit-code
+scheme itself. This row moves an account and settles a sentence; it decides nothing about the codes.
+Also out of scope: the other dispatch status files in `.claude/dispatch/`, whatever their own first
+lines say.
+
+**Acceptance**
+- [ ] `plans/dispatch-retro.md` § Codex carries the 2026-08-14 kill, with the numbers, and a reader
+      arriving at it learns what exit 3 is for without opening another file.
+- [ ] No sentence in that file describes the exit codes in a way that is false today, or if one is
+      kept as history it is dated and points at the current account.
+- [ ] `.claude/dispatch/WO-3.15-status.md` is either deleted on its own instruction or carries a line
+      saying why it is being kept.
+- [ ] `node tools/wo-gate.mjs --audit` is `PASS` and `git diff --stat -- src/` is empty.
+
+**Traps** — **Do not rewrite the history to be about the fix.** The entry's value is what the failure
+looked like from the inside on the day, which is why the status file's own wording is the best source
+in the repository. **Do not quietly delete the "Verified 2026-08-06" narrative** — it is the record of
+four probes and a fix, and it is still true about what it describes. **The retro is not a changelog:**
+if the entry starts listing what WO-2.37 built, it has gone somewhere else.
