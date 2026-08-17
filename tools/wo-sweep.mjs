@@ -25,6 +25,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
+// The same derivation `wo-gate.mjs` and `codex-invoke.mjs` use, and it is LEFT AS IT IS deliberately
+// (WO-2.44). The case-blind compare those two had to fix is a `startsWith` against `REPO`; there is no
+// such compare here. Every path below is built from `REPO` by `path.join`, the only thing ever compared
+// against it is `path.relative()` — which win32 answers case-insensitively, measured both drive-letter
+// orderings — and this file writes nothing anywhere, so there is no guard here to be wrong. The shape
+// of that bug is in `tools/README.md`, once, rather than restated in each script that derives a repo
+// root.
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERBOSE = process.argv.includes('--verbose');
 

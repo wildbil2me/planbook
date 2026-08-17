@@ -1513,13 +1513,33 @@ ${targetBoxLine(target)}
 `;
 }
 
-// Nothing inside the repository, ever. Called on every path a plant writes.
+// Nothing inside the repository, ever. Called on every path a plant writes, and on the sandbox that
+// holds them.
+//
+// COMPARED CASE-INSENSITIVELY ON WINDOWS (WO-2.44) — a case-sensitive compare against a
+// case-insensitive filesystem, which is a guard that waves through the exact thing it exists to
+// refuse. `REPO` above and the sandbox below come from two different sources — `import.meta.url` and
+// `os.tmpdir()` — which on win32 disagree about the CASE OF THE DRIVE LETTER: `c:\dev\planbook`
+// against `C:\dev\planbook\…`, one `startsWith` answering false about a path plainly inside the
+// repository. Neither side's spelling is stable enough to rely on; both were observed for `REPO` on
+// one machine, decided by how node was launched. The shape of the bug and its measurement are once, in
+// `tools/README.md` § the `--self-check` paragraph; the two lines below are copied from
+// `assertOutsideRepo()` in `tools/codex-invoke.mjs`, which hit it first, and are deliberately NOT
+// shared with it — no script in `tools/` imports another.
+//
+// `fold` and not the local `norm` the sibling uses: this file already has a module-level `norm()`
+// for markdown fragments, and a shadow of it here is a shadow nobody reading this function expects.
+// Worse, deleting that shadow as redundant would fall through to the markdown `norm()`, which also
+// lowercases — so the guard would go on looking correct. A distinct name makes that edit throw.
 function assertOutsideRepo(p) {
-  const r = path.resolve(p);
-  if (r === REPO || r.startsWith(REPO + path.sep)) {
-    throw new Error(`--self-check refused to write inside the repository: ${r}`);
+  const fold = (s) => (process.platform === 'win32' ? path.resolve(s).toLowerCase() : path.resolve(s));
+  const r = fold(p);
+  const repo = fold(REPO);
+  if (r === repo || r.startsWith(repo + path.sep)) {
+    // The un-folded path, so the reader is shown what they passed and not a lowercased echo of it.
+    throw new Error(`--self-check refused to write inside the repository: ${path.resolve(p)}`);
   }
-  return r;
+  return path.resolve(p);
 }
 
 // The precondition, over the COPY, before a plant exists: the two things that can earn a `HELD` and
@@ -1582,6 +1602,11 @@ function selfCheck(subjectPath) {
 
   const sandbox = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'wo-gate-selfcheck-'));
   try {
+    // The sandbox itself goes through the guard, not only the paths written under it (WO-2.44).
+    // mkdtemp() reads TMP, which is outside this file's control, so this is the one path that can put
+    // the whole copy of plans/ inside the repository without any single write below being wrong — and
+    // refusing here stops the run before that copy is made rather than one write into it.
+    assertOutsideRepo(sandbox);
     return runPlants(subject, sandbox);
   } finally {
     // Both exit paths, including the throwing one: the plants are corrupted tracker files and a

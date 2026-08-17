@@ -60,7 +60,8 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 plants seventeen violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. The counts further down are readings from dated
-runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path goes through a guard that
+runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
+sandbox that holds them — goes through a guard that
 refuses anything inside the repository** — WO-2.15 was itself `🔨 IN PROGRESS` while it was being
 written, so a plant that escaped would have corrupted a live work order and looked hand-written
 afterwards. And **the fixture is synthetic on purpose**: WO-2.15's own acceptance list had to be
@@ -68,6 +69,26 @@ re-cut twice because it named real work orders as fixtures and both were spent w
 `--against <path>` runs the plants over a *different* copy of the script, which is how each plant is
 proved able to fail — `git show 7973a42:tools/wo-gate.mjs` into a temp file and seven of the nine go
 red. **A green run is not coverage**, and the run says so in its own output.
+
+**That guard was case-blind until WO-2.44, and it is the one defect the sentence above could not see —
+a case-sensitive compare against a case-insensitive filesystem.** `REPO` is derived from
+`import.meta.url` and the sandbox from `os.tmpdir()`, and on Windows the two disagree about the *case
+of the drive letter*: `c:\dev\planbook` against `C:\dev\planbook\…`. `startsWith` answers **false** for
+a path plainly inside the repository, so a guard whose only job is refusing those reported that one was
+outside. **Neither side's spelling is stable enough to reason from**: `REPO` was observed answering both
+`c:\dev\planbook` and `C:\dev\planbook` on the same machine within one sitting, decided by how node was
+launched — so before the fix the guard was correct only by coincidence of spelling, which is the same
+thing as not being a guard. **Measured on 2026-08-17 rather than reasoned about, both ways.** With `TMP` and `TEMP`
+at `C:\dev\planbook\.guard-probe`, the unfixed script copied the whole of `plans/` in there, planted its
+corrupted trackers against the copy, printed `PASS | 17 of 17 plants were caught` and exited **0**; a
+`git status --short` polled *while the run was in flight* reads `?? .guard-probe/`, and afterwards reads
+clean, because the `finally` deletes the evidence along with the sandbox. That is why the acceptance for
+it asserts the *absence* of writes and a throw, and not a pass. The fixed script refuses from
+`assertOutsideRepo()` on the sandbox itself — before the copy exists — at either spelling. The fix is
+case-folding both sides on win32 only, and it is **duplicated** from `codex-invoke.mjs`'s copy of the
+same guard (which hit this first, at WO-2.40) rather than shared with it: no script in `tools/` imports
+another. `wo-sweep.mjs` derives `REPO` identically and needs nothing — it writes nowhere, and the only
+thing it ever compares against `REPO` is `path.relative()`, which win32 answers case-insensitively.
 
 **WO-3.11's four plants were proved the same way and then again more narrowly**, because the broad
 run proves less than it looks like it does: against `git show 128d6f4:tools/wo-gate.mjs`, eleven of the

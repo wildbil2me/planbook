@@ -4305,7 +4305,7 @@ prose that points at it.
 
 ## WO-2.44 — wo-gate's repo-write guard is case-blind to the one thing it guards
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.40 · **Blocks** nothing
+**Ship** — · **Status** 🤖 CLAIMED — 2026-08-17 · **Size** XS · **Depends on** WO-2.40 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37 and WO-2.40 made.)*
 
 **Not a go-live blocker, and it has never fired.** Booked 2026-08-17 out of WO-2.40's dispatch, where
@@ -4350,18 +4350,18 @@ not a plant — WO-2.16's precondition reasoning); and the wider question of whe
 should share anything, which the Traps answer no.
 
 **Acceptance**
-- [ ] With `TMP` and `TEMP` pointed at a directory inside the repository, `node tools/wo-gate.mjs
+- [x] With `TMP` and `TEMP` pointed at a directory inside the repository, `node tools/wo-gate.mjs
       --self-check` throws from `assertOutsideRepo()` and **writes nothing** — `git status --short`
       identical before and after, and no plant anywhere under `plans/`.
-- [ ] The same probe against the **unfixed** file is run and reported, so the acceptance is a
+- [x] The same probe against the **unfixed** file is run and reported, so the acceptance is a
       difference rather than an assertion. If it does not reproduce, say so and stop — this row's whole
       premise is a measurement.
-- [ ] With `TMP` at its normal value, `--self-check` is still `PASS | 17 of 17 plants were caught` and
+- [x] With `TMP` at its normal value, `--self-check` is still `PASS | 17 of 17 plants were caught` and
       `--audit` is still PASS.
-- [ ] `tools/wo-sweep.mjs`'s copy is resolved in writing, and `tools/README.md` records the shape of
+- [x] `tools/wo-sweep.mjs`'s copy is resolved in writing, and `tools/README.md` records the shape of
       this bug once — a case-sensitive compare against a case-insensitive filesystem — rather than
       twice in two scripts' comments.
-- [ ] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
+- [x] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
 
 **Traps** — **Run the reproducer on a clean tree, and commit first.** A plant that escapes is only
 visible against a clean `git status`, and this row is the one where the escape is the thing being
