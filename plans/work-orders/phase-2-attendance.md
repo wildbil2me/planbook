@@ -3815,6 +3815,23 @@ neighbourhood instead of on the thing. So these three are resolved **to the name
 grepped, which is this row's own trap applied to the table that exists to hold the right numbers.
 `else check(` is unambiguous — there is exactly one in the file.
 
+**A fifth pointer, in a different file, added to this row 2026-08-17 — the heading still says four
+because four is the count of `tools/README.md` pointers, and this one is in the harness.** WO-2.38's
+implementer found it on the way past and left it alone, which was the right call, since guessing was
+the only alternative. `tools/verify-shell.mjs:595` (block B) says *"`markKeys` is read FILE-WIDE out
+of src/shell.js (`:611`)"*, and nothing at `:611` in either file is that read:
+
+| Reference | Cited | Actually at |
+|---|---|---|
+| block B's `markKeys` read | `src/shell.js:611` | *unresolved — `MARK_KEYS` is at `src/shell.js:1617`, and `src/shell.js:611` is prose inside an unrelated function* |
+
+Read the other way — as the harness's own line — it is no better: that read was at
+`tools/verify-shell.mjs:623` before WO-2.38 and is at `:647` now, so whichever was meant had already
+rotted. **This is the same judgment `:1869` needs, in a second file**, which is why it belongs to this
+row rather than to a quiet fix inside somebody else's commit. It is also the sharper argument for the
+sweep question below: this one sits in a comment whose whole subject is that a mitigation cited for a
+case it does not cover is worse than none.
+
 **Why it is worth a row rather than a quiet fix.** The suite keeps taking the same wound: WO-2.35 had
 to re-point two cross-references after its own insertions moved them, WO-2.36 re-pointed six more,
 and **WO-2.36's entire thesis is that a comment pointing at the wrong line is a defect** — while the
@@ -3839,12 +3856,17 @@ instead" rather than a corrected number.
   `verify-shell.mjs` already do and what makes them survive insertion.
 
 **Out of scope** — the `:NNN` references *inside* `tools/verify-shell.mjs` and inside `TESTING.md`,
-which WO-2.36's verification checked and found landing correctly. Re-auditing them is not this row.
-Also out of scope: renumbering or restructuring `tools/README.md`.
+which WO-2.36's verification checked and found landing correctly — **except block B's `markKeys`
+pointer named above**, carved in by name because that audit missed it, and by name rather than by
+reopening the whole set. Re-auditing the rest is not this row. Also out of scope: renumbering or
+restructuring `tools/README.md`.
 
 **Acceptance**
 - [ ] Each of the four references resolves to what it claims, or says something that cannot go stale,
       with the reasoning recorded for any that could not be resolved.
+- [ ] The fifth reference — block B's `markKeys` pointer in `tools/verify-shell.mjs` — is corrected or
+      replaced with something that cannot rot. An honest "this cannot be established, and here is what
+      the comment should say instead" closes this line; a plausible number nobody resolved does not.
 - [ ] A spot-check of at least six other `:NNN` references in `tools/README.md` is reported —
       whether they land or not — so the size of the remaining debt is known rather than assumed.
 - [ ] The sweep question is answered in writing, and if a check was built it is demonstrated failing
