@@ -38,6 +38,31 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.46 — three more readings in the harness waited on something other than what they checked.**
+  The bathroom-pass block asked three questions of the app — did the alert escalate at 41 minutes, at
+  five, at ten — and each check read two things: the flag on the pass record, and the sentence the
+  screen reader was given. But the waits in front of them only ever watched one. `said41` rode a poll
+  that exits when the elapsed *figure* moves, which is a proxy for the escalation and not the
+  escalation; the other two used a fixed 250 ms sleep. `announce()` defers its write by 30 ms so a
+  repeated message arrives as a change, while the record is marked synchronously — two tasks, and a
+  poll can land between them. A 220 ms margin was the entire defence, and a margin is what the rule
+  these three broke says is not one.
+
+  All three now exit on the flag **and** the sentence, sampled together in one iteration and handed
+  back as the pair the loop exited on. The two sleeps are gone rather than lengthened, and no cap was
+  raised. `waitForPassAlert()` takes the level as an argument with **no default**, because two of the
+  three want 2 and the ten-minute caller's pass is already sitting at 1 — a defaulted 1 would spin the
+  cap and hand back a green off a six-second sleep. A fourth site in the same fixture was looked at and
+  deliberately left: its check reads no announcement at all, and a poll on the figure would have
+  measured *less* than the sleep does.
+
+  **The fix is measured rather than asserted.** With `announce()`'s defer temporarily raised to 3000 ms
+  the three checks go red on the old code and green on the new, and past the cap at 30000 ms the new
+  waits go red again naming the announcement that never arrived — a wait that cannot fail is a sleep
+  that has learned to poll. `src/live-region.js` came back byte-identical to its committed blob, not
+  merely to a hash quoted before the mutation, which is the difference WO-2.42's scar asked for. The
+  harness adds no checks: 812 `check()` call sites before and after, and two clean runs at 824 of 824.
+
 - **WO-2.45 — a Codex dispatch is no longer held inside the call that started it.** The pipeline gave a
   dispatch twenty minutes and then ran it inside a call that could only ever last ten, so a slow work
   order was approved by the very guard meant to refuse it: `--budget 9` plus a ten-minute reserve

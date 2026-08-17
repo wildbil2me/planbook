@@ -4536,7 +4536,7 @@ is the invisible exclusion WO-2.37 exists to have made visible.
 
 ## WO-2.46 — three readings in the pass block sit behind waits that do not assert them
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.42 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** WO-2.42 · **Blocks** nothing
 **Closes roadmap** *(no box. Harness, not app — the same call WO-2.42 made.)*
 
 **Not a go-live blocker, and none of the three has ever been seen red.** Booked 2026-08-17 out of
@@ -4606,20 +4606,36 @@ whose named waits WO-2.42 already audited and cleared, and any new check — thi
 does not add coverage.
 
 **Acceptance**
-- [ ] Each of the three waits exits on the flag **and** the sentence its check tests, from one pair of
+- [x] Each of the three waits exits on the flag **and** the sentence its check tests, from one pair of
       samples, with no fixed sleep anywhere in the change and no cap raised.
-- [ ] **The fix is measured as a difference, not asserted.** With `announce()`'s defer raised from
+- [x] **The fix is measured as a difference, not asserted.** With `announce()`'s defer raised from
       30ms to **3000ms** — well inside the 6s cap — the three checks go **red on the unfixed tree and
       green on the fixed one**. Both runs reported, with the failing sentences quoted from the red one.
-- [ ] **The new condition can still fail.** With the defer raised past the cap (30000ms), the fixed
+- [x] **The new condition can still fail.** With the defer raised past the cap (30000ms), the fixed
       waits go red at these three checks and the failure text names the announcement that never
       arrived — a wait that cannot go red is a sleep that has learned to poll.
-- [ ] `src/live-region.js` is restored byte-identically: md5 taken before the first mutation and again
+- [x] `src/live-region.js` is restored byte-identically: md5 taken before the first mutation and again
       after the last revert, both quoted, and `git diff --stat -- src/` empty at the end.
-- [ ] The `waitForPassAlert()` decision and the fourth-site answer are both in writing, at the code.
-- [ ] `node tools/verify-shell.mjs` green on two consecutive unmutated runs, quoted with their summary
+- [x] The `waitForPassAlert()` decision and the fourth-site answer are both in writing, at the code.
+- [x] `node tools/verify-shell.mjs` green on two consecutive unmutated runs, quoted with their summary
       lines.
-- [ ] `node tools/wo-sweep.mjs` green.
+- [x] `node tools/wo-sweep.mjs` green.
+
+*(Verified 2026-08-17, PASS, all seven re-derived by the verifier from its own runs rather than read off
+the report — two clean greens at `824 checks · 824 passed · 0 failed · 0 skipped`, plus the three-tree
+differential reproducing 11 red unfixed @3000ms, 8 fixed @3000ms, 15 fixed @30000ms. The restore is
+proved against the **committed blob**, not just a pair of quoted hashes: working tree and
+`git show HEAD:src/live-region.js` both md5 `deb65cffbf947bd3c4d5e3e0e41ea8a8`, so WO-2.42's scar — a
+hash no blob in the file's history matched — does not repeat here. `check(` call sites 812 before and
+812 after: this row fixed waits and added no coverage, as its Out of scope line required.*
+
+*One margin narrowed and is worth knowing before it surprises somebody.* `a student who comes back and
+goes out again starts clean` *reddens under the 3000ms mutation on the fixed tree and not on the
+unfixed one, which is the Traps line's "data, not a failure" — it is wall-clock, not logic
+(`loggedB.minutes === 11` where the check wants `10`), because every wait now spends ~3s under that
+defer. But the worst-case slack in the `10:24` → `11:00` budget went from ~34s to ~22s. Green on every
+unmutated run, and typical cost is ~0.1s per wait. If that check ever flickers, this is the first place
+to look.)*
 
 **Traps** — **The 3000ms measurement will redden checks that are not this row's**, anywhere in 22,000
 lines that reads the live region behind its own margin. That is data, not a failure: report the whole

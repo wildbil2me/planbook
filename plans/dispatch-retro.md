@@ -53,6 +53,24 @@ status --short` first on resume, before reading your own status file.
 `PREF_DEFAULTS` — because the enforcement in `prefs.js` is silent by design and a silent refusal is
 invisible to everything except an audit.
 
+**WO-2.46, 2026-08-17 — killed at step 5, which costs less than it looks like it costs.** A session
+limit took the orchestrator moments after it spawned the verifier. Nothing was half-applied: the
+implementer had already returned normally, written its result file and left a tree holding exactly one
+modified source file. What died was the *verdict*, and a verdict is the one artifact in this pipeline
+that has no partial state — it exists or it does not.
+
+So the recovery is not step 2b's audit-the-draft. **Re-spawn the verifier and tell it in as many words
+that it is a first pass**, because the alternative failure is a fresh verifier finding traces of a run
+that returned nothing and trying to reconcile with them. It was handed the implementer's four
+self-claims — seven lines met, six harness runs, an unchanged `src/live-region.js` md5, one self-caused
+failure — restated as claims to check rather than findings to confirm, which is what the verifier's own
+"not evidence" rule already demands and which a resumed run is most likely to soften. It re-derived all
+four independently and returned PASS.
+
+**A claim outliving its orchestrator is not the same as a claim outliving its dispatch.** The row still
+read `🤖 CLAIMED` throughout, correctly — the work was real and finished. `--release` would have been
+wrong here; there was nothing to release and no second implementer was ever needed.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

@@ -11134,9 +11134,36 @@ if (!attBooted || !attSeam) {
     would spend six seconds on one nobody is going to say, and the check it fed would blame the
     app for it.
   */
-  const waitForPassAlert = async (studentId, saidRe) => {
+  /*
+    ── WO-2.46: ONE HELPER FOR ALL SIX CALLERS, AND THE LEVEL IS AN ARGUMENT TOO ──
+
+    THE DECISION IS TO PARAMETERISE RATHER THAN TO WRITE A LEVEL-2 TWIN. Three more sites below want
+    this loop and two of them want `alerted === 2`, so the choice was one helper with the level in
+    its signature or a second local wait beside it. A second wait would be a copy of the exit
+    condition, and a copy of the exit condition is precisely what the constant above exists to
+    prevent one line up — PASS_ALERT_SAID is held once "so that what this helper WAITS for and what
+    those checks TEST are the same object rather than two copies that can drift apart". Of everything
+    in this block, the exit condition is the part least worth having two of: the whole subject of
+    WO-2.42 and of this row is that it is easy to get subtly wrong and impossible to see wrong on a
+    green run.
+
+    AND IT TAKES NO DEFAULT, for a sharper reason than the pattern's. A default of 1 would not be
+    "the common case with the odd exception" — it would be a live wrong answer at a site where 1 is
+    also a value the flag really holds. The ten-minute caller winds a pass that is ALREADY at level 1
+    from the five-minute wind above it, so a wait for 1 can never be satisfied together with the
+    ten-minute sentence: the loop would run all 24 iterations, hand back whatever the last read
+    happened to hold, and its check would go green off a six-second sleep. That is WO-2.42's own
+    failure mode in a new field, so the level gets WO-2.42's own answer — required, stated at every
+    call site, unwritable by omission.
+
+    THE `view` READING AT THE END IS LEFT UNCONDITIONAL. Only the two WO-2.28 walks assert it; the
+    three new callers ignore it and pay one CDP round-trip for the privilege. That is the cheaper
+    half of the trade above, and making it conditional would put a second shape in the one function
+    this comment just argued should have one.
+  */
+  const waitForPassAlert = async (studentId, saidRe, level) => {
     const arrived = (s, heardNow) => !!studentId
-      && (s.openPasses.filter((p) => p.studentId === studentId)[0] || {}).alerted === 1
+      && (s.openPasses.filter((p) => p.studentId === studentId)[0] || {}).alerted === level
       && saidRe.test(heardNow);
     let state = await read();
     let said = await heard();
@@ -11156,7 +11183,7 @@ if (!attBooted || !attSeam) {
   await clickSel('#classView [data-class-screen="scores"]');
   await hush();
   const scoresWound = await windBack(outA, 5.2);
-  const scoresAlert = await waitForPassAlert(outA, PASS_ALERT_SAID);
+  const scoresAlert = await waitForPassAlert(outA, PASS_ALERT_SAID, 1);
   check('with a pass open, crossing a threshold still fires the alert while the teacher is on Scores — on a walk that left the registry',
     !!scoresWound.now && scoresAlert.view.scores && !scoresAlert.view.registry
       && (scoresAlert.state.openPasses.filter((p) => p.studentId === outA)[0] || {}).alerted === 1
@@ -11225,7 +11252,7 @@ if (!attBooted || !attSeam) {
 
   await hush();
   const missingNodeWound = await windBack(outA, 5.2);
-  const missingNodeAlert = await waitForPassAlert(outA, PASS_ALERT_SAID);
+  const missingNodeAlert = await waitForPassAlert(outA, PASS_ALERT_SAID, 1);
   const missingNodeAfter = await evalJs(`(function(){
     var box = document.getElementById('attendancePassBanner');
     var sel = '[data-pass-elapsed="' + ${JSON.stringify(propertyPass.id)} + '"]';
@@ -11303,6 +11330,26 @@ if (!attBooted || !attSeam) {
       + JSON.stringify(((planted.passBanner.cards || [])[0] || {}).sentinel) + ' and reads '
       + JSON.stringify(((planted.passBanner.cards || [])[0] || {}).elapsed));
 
+  /*
+    ── WO-2.46: THIS SLEEP IS DELIBERATELY LEFT, AND THE THREE READINGS BELOW ARE NOT ──
+
+    IT IS THE ONE `setTimeout(250)` IN THIS FIXTURE THAT SURVIVES WO-2.46 — the row's fourth site,
+    and the reason is written here rather than left to be rediscovered as an oversight. The three
+    readings the row put behind real waits all read the live region, which is a write that lands in a
+    LATER TASK than the one setting the flag beside it (src/live-region.js defers 30ms). This check reads
+    no announcement at all — the card's figure, the WO-2.29 sentinel and the note field, all three of
+    them DOM state that visibilitychange's handler has already written by the time wakeUp()'s own
+    evaluation returns, because src/attendance.js calls paintPassElapsed() synchronously from that
+    listener. There is no two-task pair here, so there is nothing for a poll to close.
+
+    AND A POLL HERE WOULD MEASURE LESS, not more, which is the part worth saying out loud. This check
+    is about coming BACK to the screen: the figure is recomputed from the stamp on wake rather than
+    carried by a counter that was not running. But the 1s interval recomputes from the same stamp,
+    so a bounded poll for `/^41:\d{2}$/` would be satisfied by the interval a second later on a build
+    with no visibilitychange handler in it at all — the check would go green having stopped being
+    about the wake. A single read taken as soon as wakeUp() returns is what keeps the claim, and the
+    250ms is slack in front of it rather than the defence trap 5 warns about.
+  */
   const woke = await wakeUp();
   await new Promise(r => setTimeout(r, 250));
   const backAwake = await read();
@@ -11331,11 +11378,13 @@ if (!attBooted || !attSeam) {
      is a foreground one and the tick is the second it asks for. */
   const before1s = cardAwake.elapsed;
   let cardTicked = {};
-  let ticked = null;
   for (let i = 0; i < 24; i++) {
     await new Promise(r => setTimeout(r, 250));
-    ticked = await read();
-    cardTicked = (ticked.passBanner.cards || [])[0] || {};
+    /* WO-2.46: the whole state was kept here as well, as `ticked`, purely so the escalation check
+       below could take its `alerted` flag off THIS loop's exit sample. It reads a sample of its own
+       now and nothing else ever wanted this one — what the interval check needs is the card, and the
+       card is what this keeps. The exit condition, the cap and the sleep are untouched. */
+    cardTicked = (((await read()).passBanner.cards) || [])[0] || {};
     if (cardTicked.elapsed !== before1s) break;
   }
   check('the figure moves on its own, with no repaint and no wake-up — the interval is running',
@@ -11352,17 +11401,49 @@ if (!attBooted || !attSeam) {
     says how long it has actually been rather than which threshold was crossed — "ten minutes" about
     a student who has been gone for forty-one is the elapsed-time trap arriving in the words.
   */
-  const said41 = await heard();
-  const alerted41 = ticked.openPasses.filter((p) => p.studentId === outA)[0] || {};
+  /*
+    ── WO-2.46: A SECOND BOUNDED WAIT, AFTER THE POLL AND NOT INSIDE IT ──
+
+    WHAT THIS CHECK ASSERTED WAS NEVER WHAT THE LOOP ABOVE EXITED ON. The poll exits when the elapsed
+    figure moves; this check asserts an escalation, a card level and a sentence. The figure moving is
+    a proxy for the first, unrelated to the third, and `said41` was a fresh `heard()` taken after a
+    loop that had never once looked at the live region — trap 5 one level in, the exact shape WO-2.42
+    fixed at waitForPassAlert() near the top of this block. Worse than the two fixed sleeps below, in
+    fact, because the two halves of one check came from two different samples and neither of them was
+    the sample the loop exited on.
+
+    NOT FOLDED INTO THAT LOOP, and this is the reason. The interval check above is by its own comment
+    "the only check here that watches the TIMER rather than the arithmetic", and it is what goes red
+    if the interval is never started. It asserted, before this row: that the card's figure differs
+    from `before1s`, that it reads 41 or 42 minutes, and that the sentinel is still on it — off the
+    sample of a loop whose ONLY exit condition is the figure changing with nothing but a wait in
+    between. It asserts precisely that after this row, off the same sample of the same loop: the
+    poll's condition, cap and sleep are unchanged, and the only edit inside it drops a variable this
+    file no longer reads. Had the escalation been folded in, the loop could exit on an alert instead
+    — including one the WAKE painted — and the timer claim would quietly have become an arithmetic
+    one while still reading green. A second wait after it costs a few hundred milliseconds and leaves
+    the older claim exactly where it was.
+
+    ITS CARD COMES FROM ITS OWN SAMPLE NOW. `cardTicked.over` used to supply the card half of this
+    check while the flag came from `ticked` and the sentence from a third read. paintPassElapsed()
+    toggles `over-two` on the card and marks the record inside ONE synchronous pass, so the flag and
+    the card are one fact and belong in one read() — this one. The announcement is the half that
+    lands in a later task, and folding it into the exit condition is the whole of the fix.
+  */
+  const ALERT_41_SAID = /has been out on a bathroom pass for 41 minutes\./;
+  const alert41 = await waitForPassAlert(outA, ALERT_41_SAID, 2);
+  const said41 = alert41.said;
+  const alerted41 = alert41.state.openPasses.filter((p) => p.studentId === outA)[0] || {};
+  const card41 = (alert41.state.passBanner.cards || [])[0] || {};
   check('a trip that crossed BOTH thresholds while nothing was watching escalates once, to the second alert, and says how long it really is',
-    alerted41.alerted === 2 && cardTicked.over === 2
+    alerted41.alerted === 2 && card41.over === 2
       && alerted41.keys === 'alerted,classId,id,note,out,studentId,type'
-      && /has been out on a bathroom pass for 41 minutes\./.test(said41)
+      && ALERT_41_SAID.test(said41)
       && said41.indexOf(SR_WO29) < 0
       /* One sentence, not two: the five-minute alert is not also in there. */
       && said41.indexOf('for 5 minutes') < 0 && said41.indexOf('for 10 minutes') < 0,
     'the pass now carries alerted = ' + JSON.stringify(alerted41.alerted) + ' with keys '
-      + JSON.stringify(alerted41.keys) + ', the card is at level ' + cardTicked.over
+      + JSON.stringify(alerted41.keys) + ', the card is at level ' + card41.over
       + ', and what was announced is ' + JSON.stringify(said41));
 
   /* NOT REPEATEDLY, over the sixty renders a minute this screen makes: the live region is cleared,
@@ -11529,15 +11610,24 @@ if (!attBooted || !attSeam) {
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
   const woundB1 = await windBack(outB, 5.2);
   await wakeUp();
-  await new Promise(r => setTimeout(r, 250));
-  const atFive = await read();
+  /* WO-2.46: THE SLEEP IS REMOVED, NOT LENGTHENED. What stood here was `setTimeout(250)` and three
+     separate reads behind it — a 220ms margin over src/live-region.js's 30ms defer, which is trap 5
+     in tools/README.md wearing its original clothes rather than a defence against it, and a margin
+     is what that trap says is not one. The wait exits on the flag and the sentence together and
+     hands back the pair it exited on, so `atFive` and `saidFive` are one sample; `cardB5` is read
+     out of that same state because the card level and the flag are written in one synchronous pass
+     of paintPassElapsed(). Level 1 is passed explicitly for the reason the helper's own comment
+     gives — the ten-minute caller below is why it may not be a default. */
+  const NURSE_FIVE_SAID = /has been out on a nurse pass for 5 minutes\./;
+  const alertB5 = await waitForPassAlert(outB, NURSE_FIVE_SAID, 1);
+  const atFive = alertB5.state;
   const cardB5 = (atFive.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
-  const saidFive = await heard();
+  const saidFive = alertB5.said;
   check('the first alert fires at five minutes: the card escalates, the pass records the level, and the sentence names the student',
     !!woundB1.now
       && (atFive.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 1
       && cardB5.over === 1 && /^5:\d{2}$/.test(cardB5.elapsed || '')
-      && /has been out on a nurse pass for 5 minutes\./.test(saidFive)
+      && NURSE_FIVE_SAID.test(saidFive)
       /* The other card is untouched by it — one alert is about one student. */
       && (atFive.passBanner.cards || []).filter((c) => c.student === outA)[0].over === 2,
     'the card is at level ' + cardB5.over + ' reading ' + JSON.stringify(cardB5.elapsed)
@@ -11548,15 +11638,20 @@ if (!attBooted || !attSeam) {
   await hush();
   const woundB2 = await windBack(outB, 5.2);
   await wakeUp();
-  await new Promise(r => setTimeout(r, 250));
-  const atTen = await read();
+  /* WO-2.46: the same removal, and this is the caller that makes the level a required argument
+     rather than a defaulted one — the pass is already at `alerted === 1` when this wait starts, so
+     a wait that assumed 1 could never satisfy both halves at once and would spend its whole cap
+     before handing back the last thing it happened to see. */
+  const NURSE_TEN_SAID = /has been out on a nurse pass for 10 minutes\./;
+  const alertB10 = await waitForPassAlert(outB, NURSE_TEN_SAID, 2);
+  const atTen = alertB10.state;
   const cardB10 = (atTen.passBanner.cards || []).filter((c) => c.student === outB)[0] || {};
-  const saidTen = await heard();
+  const saidTen = alertB10.said;
   check('and the second fires at ten, once, taking the card with it',
     !!woundB2.now
       && (atTen.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 2
       && cardB10.over === 2 && /^10:\d{2}$/.test(cardB10.elapsed || '')
-      && /has been out on a nurse pass for 10 minutes\./.test(saidTen),
+      && NURSE_TEN_SAID.test(saidTen),
     'the card is at level ' + cardB10.over + ' reading ' + JSON.stringify(cardB10.elapsed)
       + ', alerted = ' + JSON.stringify((atTen.openPasses
         .filter((p) => p.studentId === outB)[0] || {}).alerted) + ', announced as '
@@ -12933,7 +13028,7 @@ if (!attBooted || !attSeam) {
   await clickSel('#classesModal [data-modal-close]');
   await hush();
   const wound30 = await windBack(outA, 5.2);
-  const alert30 = await waitForPassAlert(outA, PASS_ALERT_SAID);
+  const alert30 = await waitForPassAlert(outA, PASS_ALERT_SAID, 1);
   const alerted30 = alert30.state.openPasses.filter((p) => p.studentId === outA)[0] || {};
   check('and the clock still reaches that student five minutes later, because the class it belongs to is still the one that is open',
     !!wound30.now && alert30.state.openClass === passClass
