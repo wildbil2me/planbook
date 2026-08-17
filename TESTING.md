@@ -3754,7 +3754,7 @@ duplication — at the cost of putting WO-3.22's already-corrected block at risk
 written into the harness comment beside the new block, not just here.
 
 **`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — WO-3.22's corrected clause at
-`tools/verify-shell.mjs:363-369` (`:281-287` when this was written; WO-2.35 and WO-2.36 both grew the
+`tools/verify-shell.mjs:370-376` (`:281-287` when this was written; WO-2.35, WO-2.36 and WO-2.38 all grew the
 block above it),
 copied to this second legend rather than shared with it, for the
 reason just above. Asking the map instead of the listener is the defect WO-3.22 shipped and had to
@@ -3812,7 +3812,7 @@ attendance-mark field besides, so widening to it would document keys nobody pres
       5 failed · 0 skipped`, 254s — the other three red are the marking-screen checks that a
       teacher's `D` really does stop working, the same three WO-2.34 saw. Both reverted and confirmed
       with `git diff`.
-- [x] **The decision is in the harness comment and the false claim is gone.** `tools/verify-shell.mjs:281-333`
+- [x] **The decision is in the harness comment and the false claim is gone.** `tools/verify-shell.mjs:288-340`
       carries the reasoning where the withdrawn sentence stood; the marking block carries its own
       shorter statement and points there, rather than sharing a helper (`Out of scope`, and WO-2.34's
       call stands).
@@ -3908,6 +3908,80 @@ lost its grip on one of the documents, which is drift and never a retirement. **
 left in either block for anybody to move.** The one number that survives is `body.length < 200` on a
 ~1.9 kB slice, which separates "the anchor moved and this is the empty string" from "the function is
 here" and cannot be reached by deleting keys.
+
+---
+
+### WO-2.38 — the anti-vacuity guard is exercised on every run
+
+**What this changes for a teacher: nothing.** Harness and prose only. `src/` and `index.html` are
+byte-identical across the whole work order — `git diff --stat -- src/ index.html` empty, checked after
+every mutation rather than only at the end — and no key was retired: retiring one is a *fixture* here,
+built in memory and never written to disk.
+
+**The guard WO-2.36 built was dead code on a green tree.** Nineteen arms across the two `vacuity`
+arrays, each asserting an anchor found by name, and `vacuity` is empty on a healthy tree — so nothing
+downstream of it is ever evaluated and no check reached a single arm. The only thing that had ever run
+one was a hand mutation applied twice on one afternoon and reverted both times. Rename `panelAt`,
+tighten a regex until an `else if` becomes unreachable, or let an `indexOf` answer `0` where the code
+tests `< 0`, and **nothing goes red**: the run prints its usual total and the reader still believes both
+legends are policed. That is WO-2.36's own argument — empty agrees with everything — arriving one level
+up, and it is why this row exists rather than being a tidy-up.
+
+**Each block's read is now one function taking the documents' text**, not their paths. The ordinary run
+hands it what is on disk; the new section hands it mutated copies in memory. **No predicate was
+copied**: a second hand-written read would agree with the real one on the morning it was written and
+drift afterwards, which is exactly the second hand-maintained copy WO-2.36 refused for counts. Nothing
+here writes to the tree, because a check that edits `index.html` and reverts is one crash from leaving
+the app broken.
+
+**Where these checks live is the decision the row was booked for**, and it is written in the harness at
+the section itself and in `plans/verification-tooling.md` § "The check on `verify-shell.mjs`'s own guard
+rides the ordinary run": **in the file it tests**, never a sibling and never behind an export — that is
+the boundary table's first rule and the same answer `wo-gate.mjs --self-check` got — and **riding the
+ordinary run rather than a flag**, because these are string operations on text already read, costing
+milliseconds and writing nothing. A flag would make them opt-in, and an opt-in guard against rot is the
+fault this row fixes. `wo-gate.mjs` keeps its flag because it plants files in a temp copy of `plans/`:
+a difference in the subject, not in taste.
+
+- [x] **Every one of the nineteen arms fires on an input that trips it, and the failure text names the
+      right anchor — run, not reasoned.** Nineteen cases, one per arm, in the full run: eight on the
+      score-grid block (panel id renamed, index.html truncated inside the panel, a second class on
+      every `scores-key` span, every bare `<kbd>` given an attribute, `handleScoreKey` renamed,
+      src/scores.js truncated inside it, a `}` spliced 50 bytes in, a second space in every
+      `key === '…'`) and eleven on the marking block (`KEYS_MODAL` renamed, the modal id renamed in
+      `index.html` alone, a second class on the `<dl>`, truncated inside it, a second class on every
+      row, a second class on every glyph `<kbd>`, the class-view guard requoted, truncated below the
+      guard, a `});` spliced 50 bytes below it, the binding regexes blinded, `MARK_KEYS` renamed).
+      Each case asserts **exactly one** arm fired and that its text carries the anchor, and prints
+      both: *"expected an arm naming `the handleScoreKey() slice is`, got: the handleScoreKey() slice
+      is 50 byte(s), too short to be that function"*. Several mutations are **valid HTML that renders
+      identically** — a second class on a span, an attribute on a `<kbd>` — which is the realistic
+      shape of this rot: nobody breaks the markup, they tidy it.
+- [x] **A correct retirement trips no arm and leaves the check green, driven through the read rather
+      than by editing the tree.** Both blocks. `X` out of `handleScoreKey()` **and** its legend row
+      deleted: *"9 key(s) bound [Enter ArrowDown ArrowUp ArrowRight ArrowLeft Backspace Delete L M]
+      against 7 legend row(s) carrying [↵ ⇥ ↑ ↓ ← → L M ⌫]"*, no arm, nothing unmapped, missing or
+      stray. `D` out of `MARK_KEYS` **and** the Dismissed row deleted: *"8 key(s) bound … against 7
+      legend row(s)"* — the exact 8-and-7 the retired floor rejected, now asserted every run instead
+      of remembered. Each case also asserts the key **was** bound on the real tree first, so a mutation
+      that removed nothing cannot report a green retirement.
+- [x] **Deleting an arm, or inverting one of its conditions, turns something red.** Proved by doing
+      both, on truncated scratch copies of the harness run outside the harness (deleted afterwards,
+      `git status` clean). **Deleted** — the `!glyphs.length` arm removed from the scores block: two
+      red, the case for that anchor (*"NO ARM FIRED, and the guard therefore passed on emptiness — the
+      arm that should have named `no `<kbd>` inside those rows` has been deleted, inverted, or made
+      unreachable by an arm above it"*) and the arm count beside it (*"18 arm(s) pushed in
+      tools/verify-shell.mjs against 19 case(s) above"*). **Inverted** — `panelAt < 0` to
+      `panelAt >= 0`: **ten** red, led by the real score-grid check on the untouched tree
+      (*"NOTHING TO COMPARE … index.html has no `id="scoresKeys"`"*), with the cases below reading
+      *"A DIFFERENT ARM FIRED"*. The arm count is what catches the other direction — an arm added
+      later with no case for it.
+- [x] **`node tools/verify-shell.mjs` passes whole and the count moved in step.** `824 checks · 824
+      passed · 0 failed · 0 skipped`, 22,141 lines, 26.9 lines per check, 260s, exit 0. `tools/README.md`
+      moved from 805 to **808** call sites, and `node tools/wo-sweep.mjs` is green on it: *"808 call
+      site(s) … none holding a second `check(`"*. Three sites for twenty-two results — two of them
+      loops, over nineteen cases and over two retirements — so the call-site/executed gap is
+      **808 − 824 = −16**, the largest either way in this file's history and named in the ledger.
 
 ---
 

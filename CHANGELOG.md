@@ -277,6 +277,41 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.38 — the anti-vacuity guard on the two ⌨ Keys checks was itself never run.** WO-2.36 took out
+  six hardcoded floors and put nineteen anchors asserted by name in their place — the modal id, the key
+  constant, the slice, the row regex having matched at all — each with a red line saying which anchor
+  went missing. On a healthy tree, not one of those nineteen arms had ever fired. They were the same
+  kind of dead code the floors had been: a guard that agrees with everything because nothing ever
+  exercises it, sitting inside a green run and free to rot there. The fix is not another assertion but
+  a seam. Each block's read is now a function taking the documents **as text** — `readScoresKeys(html,
+  scoresSrc)` and `readMarkingKeys(html, shellSrc)`, text in and facts out, no file access anywhere in
+  them — so the ordinary run can hand each arm a mutated copy in memory and watch it trip. All nineteen
+  do. A correctly retired key, the edit WO-2.36 exists to permit, still trips none of them, checked
+  both ways round at 9-against-7 and 8-against-7. And the arm count is asserted against the case count,
+  so a twentieth arm cannot arrive unexercised the way the first nineteen did. **Nothing is ever written
+  to `index.html` or `src/`** — the mutation lives and dies in a string, which is what lets this ride
+  the everyday run instead of standing behind a flag. **805 → 808** call sites in the ledger, three of
+  them driving twenty-two printed results; 824 checks in the full run, all passing.
+
+  **Where a self-test lives is now a decision on the record rather than a habit**, in
+  `plans/verification-tooling.md`, because the next work order in this thread is booked to copy
+  whichever way this one went. It goes **in the file it tests** — never a sibling file, never behind an
+  export — riding that file's ordinary run when it is cheap and side-effect-free, and standing behind a
+  flag only when it must write, spawn or wait. That is why `wo-gate.mjs` keeps its `--self-check` flag
+  and this does not: the gate plants files in a temp copy of `plans/`, which is a difference in subject,
+  not in taste. The standing "do not write a second harness" rule survives intact — this adds no runner.
+
+  **The proof that the checks go red was rebuilt from scratch during verification, and that is worth
+  recording.** The line that matters here is not "the arms fire" but "deleting an arm or inverting a
+  condition turns something red" — and the implementer had proved it on scratch probes it then deleted,
+  leaving the claim standing on nothing an inspector could re-read. Four independent mutations, two per
+  block, in a scratch copy with the repo tree never written to: deleting an arm gives two red lines
+  including `NO ARM FIRED, and the guard therefore passed on emptiness`, and inverting a single
+  comparison gives ten, led by the real check. The fixtures were then made to prove three doors closed,
+  which nobody had asked for: a mutation needle matching nothing goes red instead of quietly proving
+  nothing, an arm with no case written for it goes red, and a retirement fixture that removes nothing
+  goes red. A test harness that cannot fail is the defect this whole thread is about, one level up.
+
 - **WO-2.37 — routing now asks what it costs to *prove* a work order, not only what the work is.**
   A Codex dispatch is capped at twenty minutes end to end, and every question the routing rubric asked
   was about the work — is the spec complete, is there a precedent, is the acceptance mechanical. None

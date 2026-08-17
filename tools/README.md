@@ -827,7 +827,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 805 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 808 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
@@ -1244,7 +1244,7 @@ harness pass — the routing budget was three mutation runs plus the clean one, 
 read the letters `stray` with zero of them `bound`, the shape the floor is built to catch; the reasoning
 is recorded rather than the browser run, and is named as such in `.claude/dispatch/WO-2.34-result.md`.
 **`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — the identical clause and the identical reason
-WO-3.22 carries at `:363-369` (`:281-287` when this was written — WO-2.35 and WO-2.36 both grew the
+WO-3.22 carries at `:370-376` (`:281-287` when this was written — WO-2.35, WO-2.36 and WO-2.38 all grew the
 block above it), copied to a second legend rather than shared with it, for the reasoning
 written into the block's own comment: the two legends' shapes differ enough (nesting depth, glyph
 source, a second file read for the id, a listener slice bounded by a guard rather than a function's own
@@ -1342,6 +1342,42 @@ string" from "the function is here"; deleting keys cannot come near it, so nobod
 edit it. Both blocks were changed separately, in their own words — merging is `Out of scope` and
 WO-2.34's reasoning stands.
 
+**WO-2.38 moved it from 805 to 808, and the run from 802 to 824** — three call sites for twenty-two
+executed results, which is the largest gap any one row has opened in this file and the reason to read
+this entry before the paragraph below. Two of the three sit inside loops: one over a table of
+**nineteen** mutation cases, one over **two** retirements. The third is the count that keeps the table
+honest. The delivered tree reads `824 checks · 824 passed · 0 failed · 0 skipped`, 22,141 lines, 26.9
+lines per check, 261s, exit 0. **What it added is the thing that executes WO-2.36's guard.** That row
+replaced six floors with two `vacuity` arrays — nineteen arms between them, each asserting an anchor
+found by name — and on a green tree **every one of them is dead code**: `vacuity` is empty, nothing
+downstream of it evaluates, and the only thing that had ever run an arm was a hand mutation applied
+twice on one afternoon and reverted both times. Rename `panelAt`, tighten a regex until an `else if`
+goes unreachable, let an `indexOf` answer `0` where the code tests `< 0`, and nothing goes red while
+the run still prints its usual total. So each block's read is now **one function taking the documents'
+TEXT rather than their paths** — the ordinary run passes what is on disk, the new section passes
+mutated copies in memory — and **no predicate was copied to do it**, because a replica that agrees on
+the morning it is written is the second hand-maintained copy WO-2.36 refused for counts. Nothing
+writes to the tree: `git diff --stat -- src/ index.html` is empty across the whole row, and a check
+that edited `index.html` and reverted would be one crash from leaving the app broken (WO-2.37's
+hazard). **Every mutation is asserted to have applied**, which is this section's own anti-vacuity
+guard: a `replace()` whose needle has moved is a no-op, the read comes back exactly as the green
+tree's, no arm fires, and the case would print `PASS` having proved nothing. **The set is one case per
+arm, and that is a check rather than a habit** — the run counts the arms in this file against the cases
+written for them, so an arm added without a case goes red on the next run. Proved by doing both halves
+of the thing the row is about, on truncated scratch copies of the harness outside the run (deleted
+afterwards; `git status` clean): **deleting** the glyph-regex arm from the scores block turned two
+checks red — the case naming that anchor (*"NO ARM FIRED, and the guard therefore passed on
+emptiness"*) and the arm count (*"18 arm(s) pushed … against 19 case(s)"*) — and **inverting** one
+condition, `panelAt < 0` to `panelAt >= 0`, turned **ten** red at once, the real score-grid check
+first: *"NOTHING TO COMPARE … index.html has no `id="scoresKeys"`"* on the untouched tree, with the
+cases below it reading *"A DIFFERENT ARM FIRED"*. **Where these live is the decision the row was
+booked for, and it is written out at the section and in `plans/verification-tooling.md`** § "The check
+on `verify-shell.mjs`'s own guard rides the ordinary run": in the file it tests, never a sibling and
+never behind an export, riding the ordinary run because it is cheap and writes nothing — a flag would
+have made it opt-in, and an opt-in guard against rot is the fault it was built to fix. `wo-gate.mjs`
+keeps its flag because it plants files in a temp copy of `plans/`; that is a difference in the subject,
+not in taste, and WO-2.40 has the same question to answer about a tool that spawns.
+
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
 only while no line holds two — and a second call appended to a line that already has one is the one
@@ -1359,7 +1395,10 @@ then, and a vanished harness is not a decision anybody is being asked to make; i
 under which every claim that section makes is void.
 
 **Call sites and executed checks are permanently unequal, and the gap is not a list of things somebody
-could go and name.** It is 713 − 710 = **3** on this tree: WO-3.8's eighteen sites include two
+could go and name.** It is 808 − 824 = **−16** on this tree, and WO-2.38 is the whole of that sign:
+three call sites, two of them loops — nineteen mutation cases and two retirements — so twenty-two
+results came out of three lines, which is the second bullet below arriving in bulk. It was
+713 − 710 = **3** when this paragraph was last brought up to date: WO-3.8's eighteen sites include two
 fixture-guard failure arms a green run never reaches, which is the first bullet below and moved the
 gap by two. It was 695 − 694 = 1 after WO-3.6 (nineteen sites, two arms, seventeen results — that
 work order moved the gap by two as well, and this paragraph was not updated for it at the time; the

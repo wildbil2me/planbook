@@ -270,6 +270,54 @@ about the script, this asserts something about the fixture the plants run agains
 together is how the next reader concludes that `plans/` is what `--self-check` checks. Still nine
 plants for nine behaviours; the count is the control, and a precondition is not a behaviour.
 
+## The check on `verify-shell.mjs`'s own guard rides the ordinary run, 2026-08-17 (WO-2.38)
+
+WO-2.36 replaced six hardcoded floor numbers in the two key-legend checks with a `vacuity` array
+apiece: each anchor the read depends on asserted found, one by one, by name. **On a green tree every
+arm of both arrays is dead code** — `vacuity` is empty, so nothing downstream of it is evaluated, and
+the only thing that had ever executed one was a hand mutation applied twice on one afternoon and
+reverted both times. A guard nobody exercises agrees with everything, which is WO-2.36's own argument
+about empty lists arriving one level up. WO-2.38 factored each block's read into a function that takes
+the documents' **text** rather than their paths, and added a section that hands it mutated copies in
+memory: one case per arm, plus the two correct retirements that must trip none, plus a count of the
+arms in the file against the cases written for them.
+
+**It is in `verify-shell.mjs`, and the section above is why.** A sibling script was the obvious shape,
+since none of it needs a browser — and it is the shape the boundary table's first rule forbids. A
+sibling would need the two reads **exported**, which is the shared seam; a sibling with its own copy of
+the reads is the second hand-maintained copy WO-2.36 refused for counts, agreeing on the morning it is
+written and drifting after. "Needs no browser" is answered by the file itself: the precache read and
+both key blocks already run before a browser is launched. That file is the one harness, not the
+browser half of two.
+
+**Where it parts from `wo-gate.mjs --self-check`: it is not behind a flag, and that is a difference in
+the subject rather than in taste.** That flag copies `plans/` to a temp directory and plants
+violations — it writes, it is slow, and it carries a precondition that can stop it for reasons that
+are not about the script. This one is string operations on text the run has already read: milliseconds,
+no writes, no fixture but the tree. **A flag would make it opt-in, and an opt-in guard against rot is
+the exact fault it was built to fix** — nobody passes the flag, and the arms rot behind a green run
+just as before.
+
+**So the rule, for the next tool that wants to test itself:** the self-test lives in the file it
+tests — never in a sibling, never behind an export. It **rides that file's ordinary run when it is
+cheap and side-effect-free**, and stands **behind a flag when it must write, spawn or wait**, because
+a slow or writing check folded into every run is how a script starts wanting a runner. Two shapes, one
+rule, and the flag is the exception that has to earn itself. *(WO-2.40 asks this of
+`codex-invoke.mjs`, which spawns: a flag there, on this reasoning, rather than by copying wo-gate's
+answer.)*
+
+**The mutations are in memory and never on disk**, which is not a detail: a check that edits
+`index.html` or `src/`, reads, and reverts is one crash from leaving the app broken — the hazard
+WO-2.37 is booked over. And **every mutation is asserted to have applied.** A `replace()` whose needle
+has moved is a no-op, the read comes back exactly as the green tree's, no arm fires, and a case
+written to prove an arm fires proves nothing while printing `PASS`. That is this section's own version
+of the fault it is here to catch, so a needle that matches nothing fails the case by name.
+
+**The control to watch is one case per arm, and it is a check rather than a habit.** The run counts
+the arms in the file and compares that with the cases written for them, so an arm added without a case
+goes red on the next run instead of on the day somebody remembers. If the case count ever outruns the
+arm count, a case is testing something that no longer exists.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

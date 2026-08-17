@@ -3673,7 +3673,7 @@ note that both of them are among the work orders this cap would exclude.
 
 ## WO-2.38 — nothing exercises the anti-vacuity guard, so it can rot behind a green run
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.36 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** M · **Depends on** WO-2.36 · **Blocks** nothing
 **Closes roadmap** *(no box. Harness, not app — the same call WO-3.12, WO-3.21, WO-3.24, WO-2.34 and
 WO-2.36 made.)*
 
@@ -3742,16 +3742,38 @@ referent at all, which is the reason WO-2.39 is a row rather than a quiet correc
 leave the pointers.
 
 **Acceptance**
-- [ ] Every arm of both `vacuity` arrays is shown firing on an input that should trip it, and the
-      failure text names the right anchor. Run, not reasoned.
-- [ ] A correct retirement — key out of the binding **and** its legend row deleted — trips no arm and
-      leaves the check green, driven through the new path rather than by editing the tree.
-- [ ] Deleting an arm of either `vacuity` array, or inverting one of its conditions, turns something
+- [x] Every arm of both `vacuity` arrays is shown firing on an input that should trip it, and the
+      failure text names the right anchor. Run, not reasoned. *(All **19** — 8 on the score-grid block,
+      11 on the marking block including the `MARK_KEYS` declaration arm outside the `else if` chain.
+      One case per arm in the full run, each asserting exactly one arm fired and that its text carries
+      the anchor, and printing both: `expected an arm naming `the handleScoreKey() slice is`, got: the
+      handleScoreKey() slice is 50 byte(s), too short to be that function`. Mutations are in-memory
+      copies only.)*
+- [x] A correct retirement — key out of the binding **and** its legend row deleted — trips no arm and
+      leaves the check green, driven through the new path rather than by editing the tree. *(Both
+      blocks. `X` off the score grid: `9 key(s) bound [Enter ArrowDown ArrowUp ArrowRight ArrowLeft
+      Backspace Delete L M] against 7 legend row(s) carrying [↵ ⇥ ↑ ↓ ← → L M ⌫]`, no arm, nothing
+      unmapped/missing/stray. `D` off the marking card: `8 key(s) … against 7 legend row(s)` — the 8
+      and 7 the retired floor rejected. Each case first asserts the key WAS bound on the real tree, so
+      a mutation that removed nothing cannot report a green retirement.)*
+- [x] Deleting an arm of either `vacuity` array, or inverting one of its conditions, turns something
       red. **This is the acceptance line that matters**: a self-test that passes whether or not the
-      thing it tests exists is this work order's own failure repeated inside itself.
-- [ ] `node tools/verify-shell.mjs` passes whole and `git diff --stat -- src/ index.html` is empty
-      across the work order.
-- [ ] The check count in `tools/README.md` moved in step with whatever call sites were added.
+      thing it tests exists is this work order's own failure repeated inside itself. *(Both, done and
+      run on truncated scratch copies outside the repo's run and deleted afterwards. Arm **deleted**
+      (`!glyphs.length`, scores block): 2 red — `NO ARM FIRED, and the guard therefore passed on
+      emptiness …` and `18 arm(s) pushed in tools/verify-shell.mjs against 19 case(s) above`. Condition
+      **inverted** (`panelAt < 0` → `panelAt >= 0`): **10** red, led by the real score-grid check on an
+      untouched tree — `NOTHING TO COMPARE … index.html has no `id="scoresKeys"`` — with the cases
+      below reading `A DIFFERENT ARM FIRED`.)*
+- [x] `node tools/verify-shell.mjs` passes whole and `git diff --stat -- src/ index.html` is empty
+      across the work order. *(`824 checks · 824 passed · 0 failed · 0 skipped`, 22,141 lines, 26.9
+      lines per check, 261s, exit 0, run locally on this tree. `git diff --stat -- src/ index.html`
+      empty, checked after each mutation as well as at the end — no mutation is ever written to disk.)*
+- [x] The check count in `tools/README.md` moved in step with whatever call sites were added. *(805 →
+      **808**; `node tools/wo-sweep.mjs` green on it, `808 call site(s) … none holding a second
+      `check(``. Three sites, twenty-two executed results — two sites are loops, over 19 cases and over
+      2 retirements — so the gap is **808 − 824 = −16**, the largest in the file's history and named in
+      the ledger entry. The four wrong `:NNN` pointers were read past and left alone: WO-2.39's.)*
 
 **Traps** — **Do not test the guard by mutating the tree in a committed check.** A check that writes
 to `index.html` or `src/` and reverts is one crash away from leaving the app broken, which is the
