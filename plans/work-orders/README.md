@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.45 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.46 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 43 | 37 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 44 | 38 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **118** | **84** | **2** | `[███████░░░] 71%` |
+| | **119** | **85** | **2** | `[███████░░░] 71%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -415,9 +415,10 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 61 | [WO-2.44](phase-2-attendance.md#wo-244--wo-gates-repo-write-guard-is-case-blind-to-the-one-thing-it-guards) wo-gate's repo-write guard is case-blind to what it guards | XS | | Aug 30, an hour — **ahead of #62 on purpose** |
 | 62 | [WO-2.43](phase-2-attendance.md#wo-243--three-more-pointers-in-toolsreadmemd-miss-by-little-enough-to-be-believed) Three more pointers miss by little enough to be believed | XS | | Aug 30, an hour |
 | 63 | [WO-2.45](phase-2-attendance.md#wo-245--the-outer-bash-timeout-binds-ten-minutes-before-the-cap-everything-is-calibrated-to) The outer Bash timeout binds before the cap | M | | **A decision before a keystroke.** Aug 31, a day |
-| 64 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 65 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 66 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 64 | [WO-2.46](phase-2-attendance.md#wo-246--three-readings-in-the-pass-block-sit-behind-waits-that-do-not-assert-them) Three readings sit behind waits that do not assert them | S | | Aug 31, half a day |
+| 65 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 66 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 67 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -579,6 +580,28 @@ work rather than behind it**: a check that reddens one run in three trains its r
 instead of read, and the next real regression in WO-2.30's block arrives pre-discounted. It is booked
 with the diagnosis attached, which makes it a fix rather than an investigation, and sized S on that
 basis.*
+
+*WO-2.46 was booked on 2026-08-17 out of **WO-2.42's own sibling audit** and given row #64. WO-1.16,
+WO-3.18 and WO-G2 each moved down one; **nothing moved above them** — the cut band's argument for the
+fifth time. It goes behind WO-2.45 rather than beside WO-2.42 because the band is ordered by when a
+row was booked, not by which row produced it, and this one was booked last.*
+
+***It is the first row here that exists because a deliverable was fulfilled and then read again.***
+*WO-2.42 was told to answer whether any sibling wait exits on a proxy — a deliverable written precisely
+because "an unasked question is not a deliverable" — and its first answer said no other **named helper**
+does, which was true and was not the question anybody needed answered. The correction round found three
+**inline** readings behind waits that do not assert them, one of them (`said41`) the closest structural
+analogue in the file to the bug that row had just fixed. So the audit was run twice inside one dispatch
+and came back different, and* **the row is booked on the second reading, not the first**. *That is the
+argument for the deliverable being a written sentence rather than a checked box: nobody re-reads a tick.*
+
+***None of the three has been observed red, and that is deliberate rather than a weakness.*** *WO-2.42
+was booked off a failure somebody watched happen; this one is booked off a mechanism somebody can point
+at, which is the earlier and cheaper place to catch it. The acceptance is built so the row cannot pass
+by assertion: `announce()`'s 30ms defer is raised to three seconds and the three checks must go red on
+the unfixed tree and green on the fixed one, so the difference is measured rather than argued. **The
+cost is a `src/` mutation on the file whose revert this project has twice had trouble proving**, which
+is why the hash discipline is in the acceptance rather than in the traps.*
 
 ***WO-2.43 is the tail of WO-2.39 and is deliberately not part of it.*** *Three pointers, two of them
 off by nine and ten lines into a 270-line file. WO-2.39 found them in a spot-check it ran to twelve
