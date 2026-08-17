@@ -38,6 +38,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.44 — `wo-gate.mjs --self-check`'s guard against writing inside the repository was case-blind
+  to the one thing it guards.** With `TMP` pointed into the tree, the harness copied the whole of
+  `plans/` in there, planted seventeen deliberately corrupted tracker files against the copy, printed
+  `PASS | 17 of 17 plants were caught` and exited **0**. The guard compared two absolute paths with
+  `startsWith` on a filesystem that does not care about case, and its two sides come from different
+  sources — `import.meta.url` for the repository root, `os.tmpdir()` for the sandbox — which on Windows
+  disagree about the case of the drive letter. So `"C:\dev\planbook\…".startsWith("c:\dev\planbook\")`
+  is `false`, and the one check whose entire job is refusing paths inside the repository reported that a
+  path inside the repository was outside it. Both sides are now folded on win32, and the sandbox itself
+  goes through the guard rather than only the paths written under it, so the refusal lands before the
+  copy is made instead of one write into it.
+
+  **Measured both ways rather than reasoned about**, which is what the row asked for: the unfixed script
+  was run first and its escape reported. A `git status --short` polled *while that run was in flight*
+  reads `?? .guard-probe/` and afterwards reads clean, because the cleanup deletes the evidence along
+  with the sandbox — which is why the acceptance asserts the **absence** of writes rather than the
+  presence of a pass.
+
+  **The work order's own premise was false, and the shape of that error is worth more than the
+  correction.** It said win32 yields a *lowercase* drive letter. It yields whatever case launched node,
+  and the repository root was observed answering both spellings on one machine inside a single sitting.
+  So the guard was not reliably broken here — it was **correct by coincidence of invocation**, which is
+  worse than always-broken: the first run of the unfixed script can refuse correctly and read exactly
+  like a pass. The correction is in `tools/README.md`, where a reader lands.
+
+  Same fix `codex-invoke.mjs` has carried since WO-2.40, **copied rather than shared** — no script in
+  `tools/` imports another, which is the suite's no-dependencies rule reaching into its own toolchain.
+  `wo-sweep.mjs` derives the repository root identically and was deliberately left alone: it writes
+  nowhere, and the only thing it ever compares against that root is `path.relative()`, which win32
+  answers case-insensitively. **Nothing standing protects any of this.** The guard is silent when it
+  works and silent when it fails, so a regression would be as quiet as the original defect — WO-2.47 is
+  booked for exactly that, and until it lands the only guard is prose.
+
 - **WO-3.23 — on the score grid, a held `Shift` belonged to the grid instead of to the number.**
   `Shift`+`←` over a score you have just arrived at now shrinks the selection where it used to jump
   you to the previous assignment, and `Shift`+`↑`/`↓` select to the start and end of the number

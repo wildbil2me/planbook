@@ -4305,7 +4305,7 @@ prose that points at it.
 
 ## WO-2.44 — wo-gate's repo-write guard is case-blind to the one thing it guards
 
-**Ship** — · **Status** 🤖 CLAIMED — 2026-08-17 · **Size** XS · **Depends on** WO-2.40 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** XS · **Depends on** WO-2.40 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37 and WO-2.40 made.)*
 
 **Not a go-live blocker, and it has never fired.** Booked 2026-08-17 out of WO-2.40's dispatch, where
@@ -4321,6 +4321,19 @@ the repository, `"C:\dev\planbook\…".startsWith("c:\dev\planbook\")` is `false
 only job is refusing paths inside the repository reports that a path inside the repository is outside
 it.** WO-2.40 measured this rather than reasoning about it: its first cut ran all seventeen cases
 happily inside `C:\dev\planbook\.guard-probe\…` and exited 0.
+
+*(**Amended at the tick, 2026-08-17 — the sentence above is wrong about which spelling win32 gives you,
+and the correction makes this row's premise stronger rather than weaker.** `import.meta.url` does not
+yield a lowercase drive letter; it yields **whatever case launched node**, and `REPO` was observed
+answering both `c:\dev\planbook` and `C:\dev\planbook` on this machine within one sitting during the
+dispatch. So the pre-fix guard was never dependably broken — it was **correct by coincidence of
+invocation**, which is the worse failure of the two, because it means a run of the unfixed script can
+refuse correctly and be indistinguishable from a fixed one. The verifier's own first unfixed run did
+exactly that: a true negative that reads like a pass. Nothing about the fix or the acceptance changes —
+folding both sides is the right answer to either spelling, and the acceptance already asserted the
+absence of writes rather than the presence of a pass, which is what let this be caught at all. The
+shape of the bug is recorded once in `tools/README.md` § the `--self-check` paragraph, where a reader
+lands; this note is here because the row is what a reader of the tracker finds first.)*
 
 **Why this copy is the worse one.** `codex-invoke.mjs`'s plants are inert fixture files. This script
 copies the real `plans/` tree into its sandbox (`wo-gate.mjs:1606`) and then plants **deliberately
@@ -4602,12 +4615,15 @@ That is a sweep claim, and `wo-sweep.mjs:630-689` is already exactly this shape.
 - **Whatever recorded count the new check moves**, updated from a run rather than by arithmetic, per the
   rule at `wo-sweep.mjs:673`. The sweep reported `20 checks · 18 passed · 0 failed · 2 to review` on the
   tree that booked this row.
-- **A correction to WO-2.44's own premise, in an italic-paren amendment on its row** rather than by
-  rewriting it. `:4318` says win32 *"yields a **lowercase** drive letter."* It yields whatever case
-  launched node — `REPO` was observed answering both spellings on one machine within one sitting — so
-  the pre-fix guard was correct **by coincidence of invocation**, which is worse than always-broken and
-  is why the verifier's own first unfixed run refused correctly. A true negative that reads exactly like
-  a pass. `tools/README.md` already carries the correction; the row does not.
+- ~~**A correction to WO-2.44's own premise, in an italic-paren amendment on its row.**~~ *(**Landed
+  before this row was ever dispatched, at WO-2.44's tick on 2026-08-17**, as maintenance-protocol step 2
+  — "note any divergence in an *(italic paren)*" — rather than as work owed to a successor. It is left
+  here struck instead of deleted because the reasoning is what this row inherited: the premise held that
+  win32 yields a **lowercase** drive letter, it yields whatever case launched node, and the pre-fix guard
+  was therefore correct **by coincidence of invocation** — worse than always-broken, and why the
+  verifier's own first unfixed run refused correctly and read exactly like a pass. **Do not re-do it**;
+  read the amendment on WO-2.44's row and carry the reasoning into the assertion this row asks for,
+  because "either spelling" is the thing the win32 clause has to be right about.)*
 
 **Out of scope** — **rewriting the guard to use `path.relative()`**, which would make this class of bug
 unrepresentable rather than tested. It is a real option and was measured, not dismissed: win32
@@ -4640,7 +4656,8 @@ cost is a subprocess and an env mutation in a script that has neither. And: `cod
       PASS, `node tools/wo-sweep.mjs` green with its new count matching whatever `tools/README.md`
       records.
 - [ ] The `--against` asymmetry is written at the code **and** in `tools/README.md`'s mutation table.
-- [ ] WO-2.44's lowercase premise is corrected on its own row, and `git diff --stat -- src/` is empty.
+- [ ] `git diff --stat -- src/` is empty. *(This line carried WO-2.44's premise correction until that
+      landed at its tick — see the struck deliverable above.)*
 
 **Traps** — **This is not an eighteenth plant, and it must not be counted as one.** The seventeen are
 about tracker rot; the count is recorded in `tools/README.md`, in the run's own output and in WO-2.44's
