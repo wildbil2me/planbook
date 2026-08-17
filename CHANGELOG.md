@@ -277,6 +277,47 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.46 booked — three more readings in the same block sit behind waits that do not assert them.**
+  WO-2.42's audit ran twice inside one dispatch and came back different: the first answer said no other
+  *named helper* waits on a proxy, which was true and was not the question. The correction round found
+  three **inline** readings, one of them the closest structural analogue in the file to the bug that row
+  had just fixed. None has ever been seen red, and the row is booked on the mechanism rather than on a
+  failure — with an acceptance that measures the difference (raise `announce()`'s defer to three seconds;
+  the three checks must go red unfixed and green fixed) rather than asserting it.
+
+- **WO-2.42 — a harness wait that reddened a correct app about one run in three now waits on the thing
+  its checks read.** `verify-shell.mjs` went 824 · **823** · 824 across three runs on a tree whose
+  `git diff --stat -- src/` was empty, and the failing check was the WO-2.30 hall-pass one. Nothing was
+  wrong with the app. `waitForPassAlert()` exited on the `alerted` flag alone while all three of its
+  callers assert the flag **and** the sentence the live region carries — so on the tick where the flag
+  flipped it handed back whatever the announcement happened to be at that instant and never looked again.
+
+  **The mechanism is a 30ms defer, and it is why this is a race rather than an ordering nobody can
+  observe.** `paintPassElapsed()` marks the record synchronously; `announce()` in `src/live-region.js`
+  defers its `textContent` write so that a repeated message reaches assistive tech as a *change*. Two
+  writes, two tasks, and a poll between CDP round-trips can land in the gap — flag 1, live region still
+  holding the sentinel written to prove nothing stale was read. The loop now exits when both are true of
+  the **same pair of samples** and hands that pair to the caller; the pattern is one shared const passed
+  in by each call site and tested by each check, so what the wait waits for and what the check asserts
+  cannot drift apart. **The cap stays at 24 × 250ms and nothing sleeps** — a longer clock makes this
+  rarer and leaves it in, which is `tools/README.md` trap 5, and trap 5 is this row's own subject. Trap 5
+  now carries the second half of its rule: *wait on the condition the check asserts, and return what you
+  tested.*
+
+  **It was proved able to go red for the reason it exists**, by removing `archiveClass()`'s open-pass
+  refusal — the WO-2.30 defect — and the print is the one that distinguishes a real failure from the
+  flake it replaces: wrong room, `alerted = undefined`, sentinel announcement, against the flake's right
+  room, `alerted = 1`. The new condition is strictly stronger than the old, so it can mask nothing the
+  old one caught.
+
+  **And the row turned up an older discrepancy it could not close, which is recorded rather than
+  explained away.** `src/classes.js` was restored byte-identically here, md5 taken on both sides. The
+  hash WO-2.30 recorded for the same file matches **no blob in that file's history** — the file has not
+  moved since WO-2.30's own commit, and line endings do not account for it. The first draft of the
+  close-out wrote that the file had "legitimately moved since"; it had not, and a wrong answer in the
+  place where an open question belongs is worse than the question. **WO-2.30's proof-of-revert is
+  unverifiable**, its entry is left exactly as written, and both documents now say so in as many words.
+
 - **WO-2.40 — the two guards on the Codex dispatch plumbing can now prove they still work.** Both exist
   for things nobody sees on a good day: a work order refused before it starts because its checks cannot
   fit in the time, and a dispatch killed halfway saying so instead of claiming it never ran. Both had

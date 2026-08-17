@@ -11095,11 +11095,52 @@ if (!attBooted || !attSeam) {
     section already documents below. hush() runs before windBack() in both walks because the live
     interval can announce on the first tick after the stamp moves.
   */
-  const waitForPassAlert = async (studentId) => {
+  /* The sentence all three callers below assert, held once so that what this helper WAITS for and
+     what those checks TEST are the same object rather than two copies that can drift apart. */
+  const PASS_ALERT_SAID = /has been out on a bathroom pass for 5 minutes\./;
+
+  /*
+    ── WO-2.42: IT WAITS FOR THE SENTENCE, NOT FOR THE FLAG ──
+
+    THE CALLERS ASSERT TWO THINGS and this loop used to exit on one. `alerted === 1` on the record
+    and the announcement in the live region are both in every check below; the exit condition read
+    the flag alone and sampled `said` beside it, so on the iteration where the flag flipped it
+    returned the live region as it stood at that instant and never looked again.
+
+    AND THE APP WRITES THEM IN DIFFERENT TASKS, which is what turns that into a race rather than a
+    tidiness point: paintPassElapsed() marks the record synchronously, then announce()
+    (src/live-region.js) defers its textContent write by 30ms so that a repeated message reaches
+    assistive tech as a change. Between those two tasks the flag reads 1 and the live region still
+    holds hush()'s sentinel — a window this file can land in, and did. WO-2.39's unchanged tree ran
+    824/824, then 823/824, then 824/824, with `git diff --stat -- src/` empty. Nothing was wrong
+    with the app; the wait was waiting on the wrong event.
+
+    THE FIX IS THE CONDITION AND NOT THE CLOCK. A larger cap or a sleep in front of the read would
+    make the same race rarer and leave it in, which is tools/README.md trap 5 — and this is that
+    trap's own subject, so it is not the place to become another instance of it. The cap stays at
+    24 × 250ms. What changed is that both readings must be true of the SAME pair of samples, and
+    that the pair the loop exited on is the pair the caller is handed; on a timeout it hands back
+    the last pair it saw, so a genuine failure still prints what was actually there.
+
+    IT CANNOT GO GREEN ON NOTHING, which is the standing question in plans/dispatch-retro.md
+    § "Fixture assumptions". The sentence arrives in ONE textContent assignment, so matching its
+    tail is matching the whole of it, name included — a half-written announcement is not an
+    observable state, and that is why the two callers that also look for a first and last name do
+    not need those folded in here. A stale live region cannot satisfy it either, because the flag
+    is still in the conjunction and every pass these walks wind is asserted to arrive carrying no
+    `alerted` key at all (the fixture guards below, and the WO-2.29 note with them). A fourth
+    caller keeps that true by hush()ing before it winds and by naming the pattern IT asserts —
+    which is why the pattern is an argument with no default: a wait that guessed the sentence
+    would spend six seconds on one nobody is going to say, and the check it fed would blame the
+    app for it.
+  */
+  const waitForPassAlert = async (studentId, saidRe) => {
+    const arrived = (s, heardNow) => !!studentId
+      && (s.openPasses.filter((p) => p.studentId === studentId)[0] || {}).alerted === 1
+      && saidRe.test(heardNow);
     let state = await read();
     let said = await heard();
-    for (let i = 0; i < 24 && studentId
-      && (state.openPasses.filter((p) => p.studentId === studentId)[0] || {}).alerted !== 1; i++) {
+    for (let i = 0; i < 24 && !arrived(state, said); i++) {
       await new Promise(r => setTimeout(r, 250));
       state = await read();
       said = await heard();
@@ -11115,11 +11156,11 @@ if (!attBooted || !attSeam) {
   await clickSel('#classView [data-class-screen="scores"]');
   await hush();
   const scoresWound = await windBack(outA, 5.2);
-  const scoresAlert = await waitForPassAlert(outA);
+  const scoresAlert = await waitForPassAlert(outA, PASS_ALERT_SAID);
   check('with a pass open, crossing a threshold still fires the alert while the teacher is on Scores — on a walk that left the registry',
     !!scoresWound.now && scoresAlert.view.scores && !scoresAlert.view.registry
       && (scoresAlert.state.openPasses.filter((p) => p.studentId === outA)[0] || {}).alerted === 1
-      && /has been out on a bathroom pass for 5 minutes\./.test(scoresAlert.said),
+      && PASS_ALERT_SAID.test(scoresAlert.said),
     'Scores shown = ' + scoresAlert.view.scores + ', registry shown = ' + scoresAlert.view.registry
       + ', alerted = ' + JSON.stringify((scoresAlert.state.openPasses
         .filter((p) => p.studentId === outA)[0] || {}).alerted)
@@ -11184,7 +11225,7 @@ if (!attBooted || !attSeam) {
 
   await hush();
   const missingNodeWound = await windBack(outA, 5.2);
-  const missingNodeAlert = await waitForPassAlert(outA);
+  const missingNodeAlert = await waitForPassAlert(outA, PASS_ALERT_SAID);
   const missingNodeAfter = await evalJs(`(function(){
     var box = document.getElementById('attendancePassBanner');
     var sel = '[data-pass-elapsed="' + ${JSON.stringify(propertyPass.id)} + '"]';
@@ -11192,7 +11233,7 @@ if (!attBooted || !attSeam) {
   check('with no banner node for the pass, the document still drives its overdue alert while the registry stays unpainted',
     !!missingNodeWound.now && missingNodeAlert.view.scores && !missingNodeAlert.view.registry
       && (missingNodeAlert.state.openPasses.filter((p) => p.id === propertyPass.id)[0] || {}).alerted === 1
-      && /has been out on a bathroom pass for 5 minutes\./.test(missingNodeAlert.said)
+      && PASS_ALERT_SAID.test(missingNodeAlert.said)
       /* The card renders "Last, First"; the sentence renders the document name as "First Last". */
       && !!propertyStudent.first && missingNodeAlert.said.indexOf(propertyStudent.first) >= 0
       && !!propertyStudent.last && missingNodeAlert.said.indexOf(propertyStudent.last) >= 0
@@ -12892,12 +12933,12 @@ if (!attBooted || !attSeam) {
   await clickSel('#classesModal [data-modal-close]');
   await hush();
   const wound30 = await windBack(outA, 5.2);
-  const alert30 = await waitForPassAlert(outA);
+  const alert30 = await waitForPassAlert(outA, PASS_ALERT_SAID);
   const alerted30 = alert30.state.openPasses.filter((p) => p.studentId === outA)[0] || {};
   check('and the clock still reaches that student five minutes later, because the class it belongs to is still the one that is open',
     !!wound30.now && alert30.state.openClass === passClass
       && alerted30.classId === passClass && alerted30.alerted === 1
-      && /has been out on a bathroom pass for 5 minutes\./.test(alert30.said)
+      && PASS_ALERT_SAID.test(alert30.said)
       && alert30.said.indexOf(who30.first) >= 0 && alert30.said.indexOf(who30.last) >= 0,
     'the open class is ' + JSON.stringify(alert30.state.openClass) + ', the pass belongs to '
       + JSON.stringify(alerted30.classId) + ' and records alerted = '

@@ -1908,6 +1908,19 @@ down here. That is the entire reason this section exists.
    This is the same shape as the four traps above — a check that reports green while measuring
    nothing — except that here the check was *believed* to be the broken part, which bought the
    underlying behavior another round of not being looked at.
+
+   **A poll can be the same mistake one level in, and WO-2.42 is the case.**
+   `waitForPassAlert()` polled rather than slept, exactly as this trap says to, and still reddened a
+   correct app about one run in three — because what it polled for was not what its callers assert.
+   The three checks read the `alerted` flag **and** the live region; the loop exited on the flag
+   alone and handed back whatever the announcement happened to be at that instant.
+   `src/live-region.js` defers its write by 30ms (a repeated message has to arrive as a *change*)
+   while `paintPassElapsed()` marks the record synchronously, so the two land in different tasks and
+   a poll can sit between them. The fix was to fold the caller's own pattern into the exit condition
+   and hand back the pair the loop exited on — **not** a larger cap, which is this trap wearing a
+   poll's clothes. So the rule has a second half: **wait on the condition the check asserts, and
+   return what you tested.** A wait that exits on a proxy for the real thing is a sleep with extra
+   steps.
 6. **`Page.reload` does not wait for a debounced write, and the loss reads as a store defect.**
    Every save in `src/store.js` is debounced, so an edit made a moment before a reload is still
    sitting on a timer when the page goes away — and the document that comes back is the one from

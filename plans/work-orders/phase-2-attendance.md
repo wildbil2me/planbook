@@ -4094,7 +4094,7 @@ if the entry starts listing what WO-2.37 built, it has gone somewhere else.
 
 ## WO-2.42 — waitForPassAlert() waits on a flag its callers do not assert, so a correct app can go red
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** *(no box. Harness, not app.)*
 
 **Not a go-live blocker, and the app is not defective.** Booked 2026-08-17 out of WO-2.39's
@@ -4145,21 +4145,66 @@ change it. Also out of scope: the 41-minute clock check at what was `:11269`, an
 WO-2.30's hall-pass block beyond the three call sites.
 
 **Acceptance**
-- [ ] `waitForPassAlert()`'s exit condition includes the announcement its callers test, and no fixed
+- [x] `waitForPassAlert()`'s exit condition includes the announcement its callers test, and no fixed
       sleep was added anywhere in the change.
-- [ ] **`node tools/verify-shell.mjs` green on three consecutive runs**, quoted with their summary
+- [x] **`node tools/verify-shell.mjs` green on three consecutive runs**, quoted with their summary
       lines. Three because one green run is what the unfixed helper already produces two times in
       three; the count is the evidence here.
-- [ ] The check is demonstrated **still able to go red** for the reason it exists — the defect
+- [x] The check is demonstrated **still able to go red** for the reason it exists — the defect
       `TESTING.md:3486` records — rather than made green by waiting longer.
-- [ ] The sibling-helper question is answered in writing.
-- [ ] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
+- [x] The sibling-helper question is answered in writing.
+- [x] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
 
 **Traps** — **A longer timeout is not the fix and neither is a sleep**; both make the race less likely
 and leave it in, which is trap 5's whole point. **Do not weaken the check to match the helper** — the
 callers assert the announcement because the announcement is what the teacher gets, and dropping it
 would close this row by deleting its subject. **Three runs, not one**, and if one of the three is red
 the row is not done however plausible the excuse.
+
+**How it came out — 2026-08-17.** *The diagnosis above survived contact: the seam is real and it is
+exactly where the work order says. What it did not name is the mechanism, and the mechanism is what
+makes this a race rather than an ordering nobody can observe —* `announce()` *in `src/live-region.js`
+**defers its `textContent` write by 30ms** (`setTimeout`, so that a repeated message reaches assistive
+tech as a change), while `paintPassElapsed()` marks the record synchronously. The two writes are in
+different tasks, which is the only reason a poll between them can see one and not the other. That is
+written at the helper.*
+
+*The fix is a conjunction, not a clock: the loop exits when the flag reads 1* **and** *the caller's own
+pattern matches the live region, on the same pair of samples — and that pair is what the caller is
+handed. The pattern is now one shared `PASS_ALERT_SAID` const, passed in by each of the three call
+sites and tested by each of their three checks, so what the helper waits for and what the checks assert
+cannot drift apart. The cap stays at 24 × 250ms; no sleep was added; no assertion was weakened. Three
+consecutive runs:* **824 · 824 passed · 0 failed · 0 skipped** *at 253s each.*
+
+*The red demonstration used the defect `TESTING.md:3486` records —* `archiveClass()`'s *open-pass
+refusal removed (`const out = 0`) — and printed the WO-2.30 signature rather than the flake's:* **the
+open class is `c_4f2i6a6k5z`, the pass belongs to `c_b1`, `alerted = undefined`, announcement still the
+sentinel** *(`824 · 822 passed · 2 failed`, exit 1). `src/classes.js` was restored byte-identically —
+md5 `8506f8915eb7725b67b2e8593856ef89` before the mutation and again after the revert, which is this
+row's proof and needs nothing else. The* `df7b2e98…` *recorded in `TESTING.md`'s WO-2.30 entry matches
+no blob of that file at any commit in its history: nothing has touched `src/classes.js` since*
+`aa10ec2` *— WO-2.30's own commit — where it already hashed* `8506f891…`*, all eight historical blobs
+hash to something else, and line endings do not account for it (`core.autocrlf=false`; the CRLF variant
+is* `1be194fd…`*).* **WO-2.30's proof-of-revert is therefore unverifiable, and I cannot account for the
+hash it records.** *No second explanation is offered, because none is known; the WO-2.30 entry is left
+as written, its discrepancy being pre-existing and not this row's to rewrite. (Corrected 2026-08-17 in
+this row's correction round — the first version of this sentence said the file had moved on since,
+which is false.)*
+
+*The sibling question is answered in the result file and in `TESTING.md` below:* **no other named
+helper waits on a proxy — but one inline poll does, and the first answer missed it.** *Every other
+named wait in `tools/verify-shell.mjs` either exits on the thing its check reads, or is handed the
+caller's own condition, or waits on a state written in a single synchronous task where no in-between is
+observable. What the audit turned up is three readings taken behind a wait that does not assert them,
+all three inside this row's* **Out of scope** *line and so left alone. The closest analogue to the bug
+just fixed is* `said41`*: the interval-tick poll at `:11335` exits on the elapsed figure changing —
+right for the check directly beneath it at `:11341`, but the check at `:11357` rides the same loop to
+read `said41` and then asserts `alerted === 2` and the 41-minute sentence, which is the same two-task
+pair. The other two are fixed 250ms sleeps between `wakeUp()` and a `heard()` reading in the five- and
+ten-minute threshold checks (`:11532`/`:11535` and `:11551`/`:11554`) — not proxy waits, but trap 5's
+own shape against the same 30ms deferred write.* **All three are booked as WO-2.46**, *written the same
+day this row closed out. (The first version of this sentence said they were booked when nothing had
+been; that is the correction, and the row is now the thing it claimed.)*
 
 ---
 
@@ -4383,3 +4428,104 @@ notices dying, and this pipeline's oldest scar (`plans/dispatch-retro.md` § the
 run whose death was misreported. If it detaches, say what reads the corpse. **Shrinking the cap is not
 the safe default just because it is smaller**: it silently takes work orders off the Codex route, which
 is the invisible exclusion WO-2.37 exists to have made visible.
+
+---
+
+## WO-2.46 — three readings in the pass block sit behind waits that do not assert them
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.42 · **Blocks** nothing
+**Closes roadmap** *(no box. Harness, not app — the same call WO-2.42 made.)*
+
+**Not a go-live blocker, and none of the three has ever been seen red.** Booked 2026-08-17 out of
+WO-2.42's sibling audit, which was a deliverable of that row and turned up three sites its own
+**Out of scope** line forbade it to touch. **The claim here is structural, not observed** — which is
+the honest version of WO-2.42's own history, since that helper was also correct-looking for weeks and
+then reddened a green tree one run in three.
+
+**Why it exists.** WO-2.42 fixed one wait and wrote the rule the fix implies into `tools/README.md`
+trap 5: *"wait on the condition the check asserts, and return what you tested. A wait that exits on a
+proxy for the real thing is a sleep with extra steps."* Three readings in the same block still break
+it. The mechanism is unchanged and is the whole reason any of this is a race rather than an ordering
+nobody can observe: `paintPassElapsed()` marks the record **synchronously**, `announce()` in
+`src/live-region.js` **defers its `textContent` write by 30ms** so a repeated message reaches
+assistive tech as a change, and a CDP round-trip can land between the two tasks.
+
+| The site | What it waits on | What the check asserts |
+|---|---|---|
+| `const said41 = await heard();` | the tick poll above it exits when the **elapsed figure changes** | `alerted === 2`, the card at level 2, **and** the 41-minute sentence |
+| `const saidFive = await heard();` | a fixed `setTimeout(250)` after `wakeUp()` | `alerted === 1`, the card at level 1, **and** the five-minute sentence |
+| `const saidTen = await heard();` | a fixed `setTimeout(250)` after `wakeUp()` | `alerted === 2`, the card at level 2, **and** the ten-minute sentence |
+
+*(All three are in `tools/verify-shell.mjs`. Find them by the text in the first column — one hit each.
+On the tree that booked this they were at `:11355`, `:11535` and `:11554`, with their checks at
+`:11357`, `:11536` and `:11555`; the numbers are recorded because a reader can check them today and
+will not be able to tomorrow.)*
+
+**`said41` is the closest analogue to the bug WO-2.42 fixed, and it is worse in one way.** The poll
+exits on the elapsed figure moving — which is exactly the claim of the check directly beneath it,
+*"the figure moves on its own… the interval is running"*, and that check is **right**. What rides the
+same loop is the next one: the escalation reads `alerted === 2` off `ticked`, the loop's own exit
+sample, while the sentence is a **later, separate** `heard()`. So the two halves of one check come
+from two different samples, and neither of them is the thing the loop exited on. The figure moving is
+a proxy for the escalation, and the escalation and its announcement are the two-task pair again.
+
+**The other two are trap 5 in its original clothes** — a fixed sleep before a measurement — with a
+220ms margin over a 30ms defer. Wide today on this machine. The margin is the whole defence, and a
+margin is what trap 5 says is not one.
+
+**Why it is worth a row rather than a fix-on-touch.** These three are the *last* readings in this
+file that WO-2.42's audit could not reach, they are all in the block that has already produced two
+work orders (WO-2.30, WO-2.42), and the failure they would produce is the one this project has
+decided it will not accept twice: a check that reddens rarely, trains its readers to re-run, and
+discounts the next real regression in the same block before anyone reads it.
+
+**Deliverables**
+- **All three exit on the condition their check asserts**, on the **same pair of samples**, handing
+  that pair back — WO-2.42's shape, applied three more times. The two fixed sleeps are **removed**,
+  not lengthened.
+- **A decision on `waitForPassAlert()`, made and written at the code.** It hardcodes `alerted === 1`
+  and two of these three want 2. Either give it the level as an argument beside the pattern it already
+  takes, or write a second local wait and say why one helper should not serve both. Either is
+  acceptable; an unstated choice is not.
+- **`said41`'s interval check keeps its exact meaning.** It is *"the only check here that watches the
+  TIMER rather than the arithmetic"* by its own comment, and it is the one that goes red if the
+  interval is never started. Say — in the work, not only in the report — what it asserted before and
+  what it asserts after, and if those differ the row has broken the thing it was protecting.
+- **A sentence on the fourth site in the same fixture**: the `setTimeout(250)` after `wakeUp()` that
+  feeds `cardAwake`, whose check reads the card's figure, sentinel and note field and **no
+  announcement at all**. Fixed or deliberately left, said out loud either way — the same deliverable
+  WO-2.42 was given, and the reason this row exists is that WO-2.42's first answer to it undercounted
+  by one.
+
+**Out of scope** — anything under `src/` as a *change*; the app's write order is correct and the two
+mutations below are measurements that get reverted. Also out of scope: the rest of `verify-shell.mjs`,
+whose named waits WO-2.42 already audited and cleared, and any new check — this row fixes waits, it
+does not add coverage.
+
+**Acceptance**
+- [ ] Each of the three waits exits on the flag **and** the sentence its check tests, from one pair of
+      samples, with no fixed sleep anywhere in the change and no cap raised.
+- [ ] **The fix is measured as a difference, not asserted.** With `announce()`'s defer raised from
+      30ms to **3000ms** — well inside the 6s cap — the three checks go **red on the unfixed tree and
+      green on the fixed one**. Both runs reported, with the failing sentences quoted from the red one.
+- [ ] **The new condition can still fail.** With the defer raised past the cap (30000ms), the fixed
+      waits go red at these three checks and the failure text names the announcement that never
+      arrived — a wait that cannot go red is a sleep that has learned to poll.
+- [ ] `src/live-region.js` is restored byte-identically: md5 taken before the first mutation and again
+      after the last revert, both quoted, and `git diff --stat -- src/` empty at the end.
+- [ ] The `waitForPassAlert()` decision and the fourth-site answer are both in writing, at the code.
+- [ ] `node tools/verify-shell.mjs` green on two consecutive unmutated runs, quoted with their summary
+      lines.
+- [ ] `node tools/wo-sweep.mjs` green.
+
+**Traps** — **The 3000ms measurement will redden checks that are not this row's**, anywhere in 22,000
+lines that reads the live region behind its own margin. That is data, not a failure: report the whole
+summary line, name the failures that are these three, and do not chase the others into scope. **Mutate ·
+run · revert on `src/live-region.js` is the hazard this project has a scar for** — WO-2.37's constant
+edit, WO-2.42's `src/classes.js` md5 that no blob in the file's history matches. Take the hash first,
+commit nothing while the tree is dirty, and prove the revert rather than reporting it. **Do not fold
+the interval poll and the escalation wait into one loop** unless you can say why the interval check
+still means what its comment says; the cheaper shape is a second bounded wait after it, which leaves
+the timer claim untouched. **And a longer sleep is not a fix here either**, which should not need
+saying in a row whose entire subject is trap 5 — but WO-2.42's traps said it and WO-2.42 is why this
+row exists.

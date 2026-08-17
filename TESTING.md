@@ -3985,6 +3985,84 @@ a difference in the subject, not in taste.
 
 ---
 
+### WO-2.42 — waitForPassAlert() waits on a flag its callers do not assert
+
+**What this changes for a teacher: nothing.** Harness only. `git diff --stat -- src/` empty, checked
+after the deliberate-red mutation as well as at the end. The app's write order was correct before this
+row and is untouched by it.
+
+**The seam, with the mechanism the booking did not have.** `waitForPassAlert()` polled until
+`alerted === 1` and sampled the live region beside it; its three callers assert **both** the flag and
+the announcement. What makes that a race rather than an ordering nobody can observe is
+`src/live-region.js`: `announce()` **defers its `textContent` write by 30ms** so that a repeated message
+reaches assistive tech as a change, while `paintPassElapsed()` marks the record synchronously. Two
+writes, two tasks, and a poll can land between them — flag 1, live region still holding hush()'s
+sentinel. That is the 823/824 WO-2.39 saw on a tree whose `src/` diff was empty.
+
+**The fix is the condition, not the clock.** The loop now exits when the flag reads 1 **and** the
+caller's own pattern matches, on the same pair of samples — and hands back that pair. The cap stays at
+24 × 250ms; nothing sleeps. The pattern is one shared const passed in by each call site and tested by
+each check, so the wait and the assertion are the same object rather than two copies. No assertion was
+dropped or loosened: all three checks still test the sentence, and the two that also look for a first
+and last name still do.
+
+- [x] **Green on three consecutive runs, which is the evidence this row asks for** — the unfixed helper
+      already produced two greens in three. All three printed `824 checks · 824 passed · 0 failed ·
+      0 skipped`, `22,191 lines · 26.9 lines per check · 253s`, exit 0.
+- [x] **Still able to go red for the reason it exists.** `archiveClass()`'s open-pass refusal removed
+      (`const out = 0` in place of the `openPassesFor()` count) — `824 checks · 822 passed · 2 failed`,
+      259s, exit 1, and the second failure is the WO-2.30 defect quoting itself:
+
+  > *"and the clock still reaches that student five minutes later…"* — `the open class is
+  > "c_4f2i6a6k5z", the pass belongs to "c_b1" and records alerted = undefined; the announcement was
+  > "nothing has been announced since this sentinel was written"`.
+
+  `c_4f2i6a6k5z` is the id the fixture check named one line earlier as *"the one archiving would fall
+  to"*. **Wrong room, no alert** — which is what makes this print different from the flake it replaces:
+  that one read *right* room, `alerted = 1`, sentinel announcement. `src/classes.js` was restored
+  byte-identically afterwards (md5 `8506f8915eb7725b67b2e8593856ef89`, taken before the mutation and
+  again after the revert). **That pair is this row's proof and it stands on its own.** The `df7b2e98…`
+  recorded in the WO-2.30 entry above matches nothing: `src/classes.js` has not been touched since
+  `aa10ec2`, WO-2.30's own commit, and the blob is byte-identical at `aa10ec2`, at HEAD and in the
+  working tree — `8506f891…` all three. Hashing every one of the eight blobs in the file's history
+  returns `df7b2e98…` at none of them, and line endings do not account for it either
+  (`core.autocrlf=false`; the CRLF variant is `1be194fd…`). **So WO-2.30's proof-of-revert is
+  unverifiable, and I cannot account for the hash it records.** No second explanation is offered here
+  because none is known. The WO-2.30 entry above is left exactly as written — the discrepancy is
+  pre-existing and not this row's to rewrite — and this row's revert is proven against the hash taken
+  in this sitting, not against that one. *(Corrected 2026-08-17 in this row's correction round: the
+  first version of this sentence said the file had legitimately moved since, which is false, and it
+  closed an open question with a wrong answer.)*
+- [x] **The sibling-helper question, answered: no other *named helper* waits on a proxy — but one
+      inline poll does, and the first version of this answer missed it.** Every other named wait in
+      `tools/verify-shell.mjs` is one of three safe shapes — it exits on the very reading its check
+      makes (`waitForBoot()`, the two boot-failure polls, `openAboutAndRead()`, which waits on *both*
+      clauses its checks read); it is handed the caller's own condition as an argument (`audioUntil()`,
+      `nextTone()`); or it deliberately over-waits (`newDownloads()`, which keeps watching for half a
+      second past the expected count because "it wrote a file for the year it said it skipped" is one of
+      the failures those checks exist for). The boot-failure polls exit on `#loadingError` being shown
+      while their checks assert its detail text — the near miss — but `showBootFailure()` unhides the
+      box and writes the detail in one synchronous function, so there is no in-between state for a poll
+      to catch.
+
+      **Three further sites take a reading behind a wait that does not assert it, and all three are out
+      of this row's scope.** The closest is `said41`: the interval-tick poll at `:11335` exits when the
+      *elapsed figure changes*, which is exactly the claim of the check directly under it at `:11341` —
+      but the next check, at `:11357`, reads `said41` at `:11355` off the back of that same loop and
+      asserts `alerted === 2` **and** the 41-minute sentence. The figure moving is a proxy for the alert
+      escalating, and the escalation and its announcement are the same two-task pair (`announce()`'s
+      30ms defer) that reddened `:12895`. The other two are the five- and ten-minute threshold checks
+      further down, which use a fixed `setTimeout(250)` after `wakeUp()` and then read `heard()`
+      (`:11532`/`:11535`, `:11551`/`:11554`) — not proxy waits, but trap 5's own shape against the same
+      deferred write, with a 220ms margin. All three sit in the 41-minute clock check and the WO-2.30
+      hall-pass block that this row's **Out of scope** line names, so none was touched. **They are
+      booked as WO-2.46**, written the same day this row closed out — the earlier wording here said
+      "booked" while nothing had been, which is corrected rather than deleted so the gap is visible.
+- [x] `node tools/wo-sweep.mjs` — `20 checks · 18 passed · 0 failed · 2 to review`, both REVIEWs the
+      standing pair. `808 check() call site(s)` unchanged: this row added no check, it fixed one wait.
+
+---
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*
