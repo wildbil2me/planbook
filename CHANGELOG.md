@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Copy a class — 2026-08-17
+
+**Every active row of the class manager gains a `Copy` button, between `Categories` and `Rename` —
+the two things it duplicates.** It makes a new class beside the one it came from, carrying that
+class's term structure and its weighted categories, and it lands with its name already selected for
+overtyping. Five sections that share a school calendar and a grading scheme are now set up once
+instead of five times.
+
+**What does not come across is as much the feature as what does.** Not the roster — a copy is a way
+to start the next section, not a way to move students. Not attendance, assignments, scores or hall
+passes. Not the per-class letter-scale override, which has its own door in the letter-scale panel and
+did not need a second one. Every term and category in the copy gets a **fresh id**, so editing one
+class never reaches into the other, and a category removal in one can never count or delete work in
+another — the same guard WO-3.3 put on duplicate-to-another-class, approached from the other end.
+
+**It was booked an hour after the fresh-year setup it was meant to speed up had already been done.**
+The work order argued in as many words that its value was spent if it landed second, and it landed
+second; the reasoning and the correction are both left standing in `plans/work-orders/README.md`
+§ Ship 2. What was lost is one keying of one year's setup. The case for the button never rested on
+that ordering.
+
 ### The term opened in a fresh year — 2026-08-17
 
 **The rehearsal's one open note is closed, and not the way it was written.** The roster arrived,

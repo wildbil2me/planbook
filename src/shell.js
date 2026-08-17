@@ -49,6 +49,9 @@
                                       SWITCH between them. The two are never on screen together:
                                       the tab row is drawn on the class view only (src/classes.js)
       data-class-create               on a <form>: creates the class typed into it
+      data-class-copy="<classId>"     duplicates that class's terms and categories into a fresh
+                                      class, right beside it — the roster, attendance, assignments,
+                                      scores and passes stay behind. Active rows only (WO-1.22)
       data-class-rename="<classId>"   turns that row into a rename field
       data-class-rename-save="<id>"   on a <form>: saves the name typed into that row
       data-class-rename-cancel        abandons the rename
@@ -963,6 +966,12 @@ document.addEventListener('click', (e) => {
   */
   const classScreen = e.target.closest('[data-class-screen]');
   if (classScreen) { showClassScreen(classScreen.getAttribute('data-class-screen')); return; }
+
+  /* WO-1.22. A copy is a fresh class on the bar and on the home grid, so it redraws the second view
+     exactly as the five below do — but it is its own mutator rather than one of the five sharing
+     that comment, because it does not move or remove anything already on the bar. */
+  const copyBtn = e.target.closest('[data-class-copy]');
+  if (copyBtn) { classes.copyClass(copyBtn.getAttribute('data-class-copy')); afterClassChange(); return; }
 
   const rename = e.target.closest('[data-class-rename]');
   if (rename) { classes.startRename(rename.getAttribute('data-class-rename')); return; }

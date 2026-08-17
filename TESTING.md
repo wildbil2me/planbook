@@ -874,6 +874,53 @@ what the predicate counts.
 
 ---
 
+### WO-1.22 — copy a class, carrying its terms and its categories
+
+**What this changes, in one sentence:** a `Copy` button on every active row of the class manager
+duplicates that class's terms and categories, each with fresh ids, into a new row right beside it —
+name, roster, letter scale and everything else about a class are its own, and nothing else in the
+document (attendance, assignments, scores, hall passes) comes across.
+
+*Evidence for the Acceptance list in
+[`plans/work-orders/phase-1-shell-store-roster.md`](plans/work-orders/phase-1-shell-store-roster.md)
+§ WO-1.22 lives there, beside each line. What is here is the desk pass.*
+
+**Desk pass, 2026-08-17.** `node tools/verify-shell.mjs` at **840 checks · 840 passed · 0 failed · 0
+skipped**, 22,698 lines, 27.0 lines per check, 269s, exit 0 — up from 824 of 824, seventeen call sites
+added in a new section at the foot of the file (one is a fixture-guard failure arm that never fires on
+a green run, so the section contributes sixteen executed results). `node tools/wo-sweep.mjs` at **21
+checks · 19 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the standing ones (the
+sensitive-field-name sweep and the due-date/`late`-`missing` list), and neither names a file this work
+order touched. `sw.js`'s `CACHE` is bumped to **`planbook-shell-v73`**, because `src/classes.js`,
+`src/categories.js` and `src/shell.js` are all in `SHELL`.
+
+- [x] The class manager shows a `Copy` control on every active class row and on no archived row.
+- [x] Copying a class with four terms and four categories produces exactly one new class, named
+      `… (copy)`, sitting directly after its source in the document and on the tab bar, whose term
+      labels and dates and whose category names and weights match the source's, in order.
+- [x] Every id in the copy is new: its class id, every term id and every category id are absent from
+      the source and from every other class in the document.
+- [x] Editing a term label and a category weight **in the copy** leaves the source's unchanged, and
+      editing them in the source leaves the copy's unchanged.
+- [x] The copy's roster is empty, and no attendance record, assignment, score or hall pass in the
+      document refers to it — asserted against a source class that has all four.
+- [x] Copying the same class twice produces two classes with different names, and neither name
+      collides with a class already in the document.
+- [x] The copy is on the class tab bar and in the home grid without a reload, and the open class is
+      the one that was open before the copy.
+- [x] The copy's weights note reads what the source's reads: a source at 95% copies to a row saying
+      `weights 95%`, and a source that totals 100 copies to a row with no note.
+- [x] `node tools/verify-shell.mjs` is green, the classes-manager 44px sweep included.
+- [x] 👤 On the teaching iPad, in the installed app, on the deployed build: a class row with seven
+      actions wraps onto a second line rather than spilling out of the panel, `Copy` is hittable with a
+      thumb, and the rename field it opens takes the software keyboard. *(Run by the owner on
+      2026-08-17, all three good — on the **LAN origin** over `serve-https.mjs` at `planbook-shell-v73`
+      in Safari, not on the deployed origin and not in the installed app. Recorded as what it was
+      rather than as what the line asks for; the panel width the wrap depends on is the same in both,
+      and standalone mode changes vertical chrome.)*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

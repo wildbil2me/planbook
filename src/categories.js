@@ -101,6 +101,20 @@ function newCategory(name, weight) {
   return { id: newId('k'), name: name, weight: weight };
 }
 
+/* WO-1.22 — the category half of copyClass(), called from src/classes.js the one direction this
+   file's header says the import runs: classes.js reaches in here, this file reaches back into
+   classes.js for nothing. Fresh objects with fresh ids, name and weight only, for the same reason
+   starterCategories() above never hands out STARTER_CATEGORIES by reference: two classes sharing
+   one category object is two classes whose weights move together. Sharing the ID is the sharper
+   version of that failure and the one this work order's Traps line names outright — removalCounts()
+   and applyRemoval() below were made safe filtering on categoryId ALONE only after WO-3.3 added the
+   classId guard, exactly because a category id appearing in two classes at once is what lets a
+   removal in one class count and destroy work filed in the other. A copy that carried the source's
+   id would reopen that door from the other side. */
+export function copyCategories(cls) {
+  return categoriesOf(cls).map((c) => newCategory(c.name, c.weight));
+}
+
 /* ────────────────────────────── reading, and the arithmetic ────────────────────────────── */
 
 /*

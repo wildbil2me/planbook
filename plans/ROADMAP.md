@@ -207,7 +207,12 @@ the Phase 1 export file is the iPad story: crude, manual, and real.
       arrows are measurable by the 44px pass. Archive and delete are separate operations: archive
       keeps everything and only leaves the tab bar, and delete is offered only on an archived row.
       Term dates are labels on a range — never sorted, never validated, and an empty one is valid,
-      which is `plans/rotating-schedule.md` staying deleted.)*
+      which is `plans/rotating-schedule.md` staying deleted. **Copy joined create, rename and reorder
+      on 2026-08-17** (WO-1.22): a class duplicates into the row beside it carrying its term structure
+      and its weighted categories, each with fresh ids, and carrying nothing else — not the roster, not
+      the letter-scale override, and nothing keyed by `classId`. Five sections that share a calendar and
+      a weighting are set up once rather than five times; a copy is a starting point a teacher then
+      edits, which is why this is a copy and not a structure several classes point at.)*
 - [x] 🚩 Roster: paste `Last, First`; guardian, counselor, and email fields editable.
 - [x] 🚩 **Accommodations on the roster** — IEP/504 plan, accommodation list, medical, behavior
       plan, case manager, review date. Per [`../docs/data-model.md`](../docs/data-model.md).

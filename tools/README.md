@@ -974,7 +974,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 808 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 825 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1529,6 +1529,13 @@ never behind an export, riding the ordinary run because it is cheap and writes n
 have made it opt-in, and an opt-in guard against rot is the fault it was built to fix. `wo-gate.mjs`
 keeps its flag because it plants files in a temp copy of `plans/`; that is a difference in the subject,
 not in taste, and WO-2.40 has the same question to answer about a tool that spawns.
+
+**WO-1.22 moved it from 808 to 825**: seventeen literal call sites in one new section at the foot of
+the file — copying a class's terms and categories while its roster, attendance, assignments, scores
+and hall passes stay behind — none of them inside a loop, of which **one is a fixture-guard failure
+arm** that never fires on a green run, for a build with no `window.planbook.classes` seam to plant the
+fixture behind. So the section contributes sixteen executed results and the delivered tree reads
+`840 checks · 840 passed · 0 failed · 0 skipped`, 22,698 lines, 27.0 lines per check, 269s, exit 0.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

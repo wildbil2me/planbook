@@ -50,8 +50,9 @@ import { getPref, setPref } from './prefs.js';
 /* WO-3.1. Two things, both of them one-directional: the categories a new class is seeded with, and
    the arithmetic the row note below reports. src/categories.js imports nothing from this file — the
    resolution of "which class is open" stays here and shell.js hands that module an id — so this is
-   a leaf import rather than the fifth loop this repo has refused. */
-import { starterCategories, categoriesOf, weightTotal, isProvisional, formatWeight }
+   a leaf import rather than the fifth loop this repo has refused. WO-1.22 adds a third: the category
+   half of copyClass() below, called the same one-way direction starterCategories() already runs in. */
+import { starterCategories, copyCategories, categoriesOf, weightTotal, isProvisional, formatWeight }
   from './categories.js';
 /* WO-1.13. Selecting a class has to put that class's working surface in <main>, which is the half
    this module has been missing since WO-1.6 — see selectClass() at the bottom of this section.
@@ -236,6 +237,15 @@ function presetTerms(presetKey) {
    term she creates wrong. */
 function newTerm(label) {
   return { id: newId('tm'), label: label, start: '', end: '' };
+}
+
+/* WO-1.22. A term carried into a copy: the source's label and dates, a fresh id. NEVER the
+   source's own object — that is the whole of the work order's Traps line, and it matters for the
+   reason WO-3.3's classId guard exists on the category side of this same feature (see
+   src/categories.js's copyCategories()): an id is opaque only for as long as it cannot appear
+   attached to two classes at once. */
+function copyTerm(t) {
+  return { id: newId('tm'), label: t.label, start: t.start, end: t.end };
 }
 
 /* ────────────────────────────── the header ────────────────────────────── */
@@ -650,6 +660,11 @@ function classRow(cls, index, siblings) {
       const catsBtn = actionButton('Categories', 'data-category-manage', cls.id);
       catsBtn.setAttribute('aria-haspopup', 'dialog');
       actions.append(catsBtn);
+      /* WO-1.22, directly after Categories and before Rename on purpose: those two are the
+         things this one duplicates, and a reader should not have to be told what it copies. No
+         `aria-haspopup` — copyClass() writes and lands the row with its rename field already
+         open, the same as a freshly created class, rather than opening a dialog first. */
+      actions.append(actionButton('Copy', 'data-class-copy', cls.id));
       actions.append(actionButton('Rename', 'data-class-rename', cls.id));
       actions.append(actionButton('Archive', 'data-class-archive', cls.id, 'archive'));
     }
@@ -758,6 +773,93 @@ export function createClassFromForm() {
   refreshClassBar();
   announce('Added ' + cls.name + ' with ' + plural(termsOf(cls).length, 'term', 'terms') + '.');
   input.focus();
+}
+
+/*
+  WO-1.22 — a class, copied. Terms and categories come across because they are what makes setting
+  up five sections ninety percent of a re-typing chore (see the work order's Why-it-exists);
+  nothing else does, because a copy that carried its roster would be the one shape of this feature
+  that touches student data at all.
+
+  WHAT THE COPY HOLDS, key by key, stated here so a key added to newClass() later is a decision
+  made at this door too rather than one that quietly reaches — or quietly does not reach — the
+  copy:
+    - id           fresh, newId('c')
+    - name         the source's, suffixed — see uniqueCopyName() below
+    - archived     false — a copy is never made OF an archived row (the guard below, and the
+                   button is absent from that row in classRow()) and never starts archived either
+    - terms        every term's label, start and end, in order, each carrying a fresh tm_ id —
+                   copyTerm() above, never the source's own term objects
+    - categories   every category's name and weight, in order, each carrying a fresh k_ id —
+                   src/categories.js's copyCategories(), the one-way direction starterCategories()
+                   already runs in
+    - letterScale  null — the every-class bands, which is what a fresh class gets too. The work
+                   order's own accepted cost: a class with its OWN bands copies onto the every-
+                   class bands rather than its source's, and that is the owner's call, not a defect
+    - roster       [] — always, and never anything carried "just as ids". A class roster is a list
+                   of students and Copy is not a way to move them
+
+  BUILT KEY BY KEY, NOT BY SPREADING `cls`. A `{ ...cls }` or Object.assign shares `terms` and
+  `categories` — the two arrays this whole work order exists to duplicate — so editing a term
+  label in the copy would edit it in the source, and it would carry any future key onto the copy
+  silently, which is the exact failure docs/data-model.md opens by naming (WO-2.8's `openPasses`
+  and `passes` reaching the document and never reaching the backup nag).
+*/
+export function copyClass(id) {
+  const doc = getDoc();
+  const cls = findClass(id);
+  /* Refused, not merely unoffered: the button is absent from an archived row, but a stale hook
+     value reaching here anyway must not act on it. Archive is a class the teacher has put away,
+     and every other action left on that row is about ending that state, not extending it. */
+  if (!doc || !cls || isArchived(cls)) return;
+
+  const name = uniqueCopyName(cls.name, doc);
+  const terms = termsOf(cls).map(copyTerm);
+  const categories = copyCategories(cls);
+  const copy = {
+    id: newId('c'),
+    name: name,
+    archived: false,
+    terms: terms,
+    categories: categories,
+    letterScale: null,
+    roster: [],
+  };
+
+  update((d) => {
+    const all = classesIn(d);
+    /* Directly after its source — moveClass()'s comment states the array IS the tab order, so
+       this is the whole of what "beside Period 1" means. `cls` is the same object every other
+       read in this module holds, so indexOf against it finds the source inside the very array
+       being spliced. */
+    all.splice(all.indexOf(cls) + 1, 0, copy);
+  });
+
+  /* The rename field, open and selected, on the new row — the existing startRename() path and no
+     new affordance: "(copy)" is a placeholder for the name the teacher is about to type, and
+     leaving her to find Rename on a row she cannot yet tell from its neighbour is four fifths of
+     the job. startRename() also clears any error banner and redraws the list; openClassId is
+     untouched, the rule createClassFromForm() above follows for every class after the first. */
+  startRename(copy.id);
+  refreshClassBar();
+  announce('Copied ' + cls.name + ' to ' + name + ' with ' + plural(terms.length, 'term', 'terms')
+    + ' and ' + plural(categories.length, 'category', 'categories')
+    + '. The roster did not come across.');
+}
+
+/* "<name> (copy)", then "(copy 2)", "(copy 3)"… counted against every class in the document,
+   ARCHIVED INCLUDED, because an archived class can come back. Duplicate class names are not
+   refused anywhere in this app and this does not start refusing them; it only avoids PRODUCING
+   two rows a teacher cannot tell apart the moment the copy lands. */
+function uniqueCopyName(name, doc) {
+  const used = classesIn(doc).map((c) => c.name);
+  let n = 1;
+  let candidate = name + ' (copy)';
+  while (used.indexOf(candidate) !== -1) {
+    n += 1;
+    candidate = name + ' (copy ' + n + ')';
+  }
+  return candidate;
 }
 
 export function startRename(id) {

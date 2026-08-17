@@ -1591,3 +1591,151 @@ box has inverted the thing it was sent to correct. **Do not tick WO-2.32's 👤 
 what it asks** — repointing a check at a live shell is not running it, and only the teacher can run
 it. **Do not touch a shell version inside a ticked 👤 line**; there it is a record of what was
 tested, and editing one falsifies a result rather than fixing a pointer.
+
+---
+
+## WO-1.22 — copy a class, carrying its terms and its categories
+
+**Ship** 2 · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** WO-1.6, WO-3.1
+**Closes roadmap** Phase 1 → *(no box. The class-management box WO-1.6 closed is amended rather than
+replaced — see the field below. Booked 2026-08-17, owner-directed.)*
+**Amends roadmap** Phase 1 → the class-management box WO-1.6 closed, which promised create, rename
+and reorder, and now also promises copy
+
+**Why it exists.** Setting a year up means creating five classes and then keying the same term
+structure and the same weighted categories into each of them, five times, by hand. The teacher who
+does that is the owner, the deadline is the first class of the term, and the two things she is
+re-keying are exactly the two things that are identical across her sections — the school's quarters
+are the school's quarters, and Honors Bio and CP Bio are graded on the same weights.
+
+**The value of this work order is spent if it lands after WO-1.16.** That work order is the fresh-year
+cutover, and the setup it performs is the one occasion this button exists for. Built afterwards it is
+a feature for next August. That is the whole argument for its place in the running order, and it is
+an argument about *when the work is worth doing*, not about how badly the app needs it — see the
+placement paragraph in [`README.md`](README.md) § Ship 2, which also names the case for the other
+order.
+
+**The shape was chosen by the owner and the alternative should not be re-derived.** The other way to
+say the same wish is a *"use these terms in every class"* control, on the model of the letter-scale
+panel's **Every class** subject — one structure held at the document level, classes pointing at it.
+That is a bigger idea, it fights `plans/rotating-schedule.md`'s deleted schedule model on the term
+half, and it is wrong for the category half, where five classes start alike and then diverge the
+first time one of them turns out to need a Labs weight. **A copy is a starting point a teacher then
+edits; a shared structure is a thing she has to break out of.** The owner asked for the copy.
+
+**What comes across, and what does not, is the entire specification.** Terms and categories. Not the
+roster, not attendance, not assignments, not scores, not hall passes, not days off — a copy is a new
+class in every other respect, and a class carrying another class's students would be the one shape of
+this feature that touches student data at all.
+
+**The letter scale is deliberately not copied, and this is the owner's call rather than an omission.**
+`cls.letterScale = null` means *the bands every class uses* (`src/letter-scale.js`'s `scaleForClass()`),
+which is what a fresh class gets and what a copy gets. The per-class override has its own door in the
+letter-scale panel's subject row, so nothing here needs to grow one. **The accepted cost, written down
+so a verifier does not report it as a defect:** copying a class that *has* its own bands produces a
+class on the every-class bands, and `data-scale-override-on` re-copies **the every-class bands** rather
+than the source's — so those bands would be re-keyed by hand. That case is one class in the owner's
+five, at most, today it is zero, and the fix for it belongs in the letter-scale panel if it is ever
+wanted.
+
+**Deliverables**
+- **A `Copy` action on every active class row in the class manager**, hook `data-class-copy="<classId>"`,
+  dispatched in `src/shell.js` beside the other class mutators and followed by `afterClassChange()` —
+  the copy changes which classes are on the bar, so the home cards and the strip both redraw. Document
+  the hook in that file's hook block, where the other class hooks are listed.
+- **Sited directly after `Categories` and before `Rename`**, because those two buttons are the two
+  things this one duplicates and a reader should not have to be told what it copies. **Not on an
+  archived row** — archived is a class the teacher has put away, and every other action on those rows
+  (Restore, Delete) is about ending that state.
+- **What the copy holds**, stated as a list in a comment at the copier so that a per-class key added
+  later is a decision somebody makes rather than a key that quietly does not come across:
+  - `id` — fresh, `newId('c')`.
+  - `name` — the source's, with a suffix; see below.
+  - `archived` — `false`.
+  - `terms` — every term's `label`, `start` and `end`, in order, **each with a fresh `tm_` id**.
+  - `categories` — every category's `name` and `weight`, in order, **each with a fresh `k_` id**.
+  - `letterScale` — `null`. See above.
+  - `roster` — `[]`.
+- **A deep copy, built key by key rather than by spreading the source.** A `{ ...cls }` shares the
+  `terms` and `categories` arrays and their member objects, so editing a term label in the copy edits
+  it in the source — and it also carries any future key silently, which is the failure
+  [`../../docs/data-model.md`](../../docs/data-model.md) opens by describing (WO-2.8's `openPasses` and
+  `passes` reached the document and never reached the backup nag).
+- **The category half lives in `src/categories.js`** and is called from `src/classes.js`, the direction
+  `starterCategories()` already runs in — that file's header states the one-way rule and names the four
+  import loops this repo has refused. The term half lives in `src/classes.js` beside `newTerm()`.
+- **Naming.** `<name> (copy)`, and where a class of that name already exists, `<name> (copy 2)`,
+  `(copy 3)`, and so on — counting against every class in the document, archived included, since an
+  archived class comes back. Duplicate class names are not otherwise refused anywhere in this app and
+  this work order does not start refusing them; what it avoids is *producing* two rows a teacher cannot
+  tell apart.
+- **The new row lands in the manager with its rename field open and its text selected** — the existing
+  `startRename()` path, no new affordance. `(copy)` is a placeholder for the name the teacher is about
+  to type, and a copy button that leaves her to find the Rename button on a row she cannot yet tell from
+  its neighbour has done four fifths of the job.
+- **Placed directly after its source in `doc.classes`**, which is the tab order — the array *is* the
+  order (`moveClass()`'s comment). A copy of Period 1 belongs beside Period 1, and the arrows are there
+  if it does not.
+- **An `announce()` that says what came across and what did not**, in one sentence naming both counts.
+  A screen-reader user cannot see the row appear; and the sentence is also where a sighted teacher
+  learns the roster did not come with it.
+- **The open class does not change.** A copy is not an invitation to leave the class you are in — the
+  rule `createClassFromForm()` follows for every class after the first.
+- **One line in [`../../docs/data-model.md`](../../docs/data-model.md)** beside the class sketch saying
+  what a copy carries, because "does this new per-class field come across?" is a question about the
+  document shape and the sketch is where that shape is settled.
+
+**Out of scope** — copying the roster, attendance, assignments, scores, passes or days off, all of
+which are refused above and none of which is a cheap extension of this; copying the letter-scale
+override; a document-level *"use these terms everywhere"* control (the shape the owner did not pick);
+copying a class between year documents; any change to archive, delete, or the rules about duplicate
+class names; a confirm dialog — a copy is cheap, visible, and undone by Archive then Delete, which is
+the path an unwanted class already has.
+
+**Acceptance**
+- [x] The class manager shows a `Copy` control on every active class row and on no archived row.
+- [x] Copying a class with four terms and four categories produces exactly one new class, named
+      `… (copy)`, sitting directly after its source in the document and on the tab bar, whose term
+      labels and dates and whose category names and weights match the source's, in order.
+- [x] Every id in the copy is new: its class id, every term id and every category id are absent from
+      the source and from every other class in the document.
+- [x] Editing a term label and a category weight **in the copy** leaves the source's unchanged, and
+      editing them in the source leaves the copy's unchanged. *(The check that catches a shared array;
+      a spread copy passes every line above this one.)*
+- [x] The copy's roster is empty, and no attendance record, assignment, score or hall pass in the
+      document refers to it — asserted against a source class that has all four.
+- [x] Copying the same class twice produces two classes with different names, and neither name
+      collides with a class already in the document.
+- [x] The copy is on the class tab bar and in the home grid without a reload, and the open class is
+      the one that was open before the copy.
+- [x] The copy's weights note reads what the source's reads: a source at 95% copies to a row saying
+      `weights 95%`, and a source that totals 100 copies to a row with no note.
+- [x] `node tools/verify-shell.mjs` is green, the classes-manager 44px sweep included — it measures
+      every control in that panel, so the new button is inside it already.
+- [x] 👤 On the teaching iPad, in the installed app, on the deployed build: a class row with seven
+      actions wraps onto a second line rather than spilling out of the panel, `Copy` is hittable with a
+      thumb, and the rename field it opens takes the software keyboard.
+      *(Read by the owner on 2026-08-17 and all three good — **but on the LAN origin over
+      `serve-https.mjs` at `planbook-shell-v73`, in Safari, not in the installed app on the deployed
+      build.** The line is left word for word and the reading is recorded as what it was, per WO-1.21:
+      a ticked 👤 line is a record of what was tested. What that origin cannot answer is anything
+      standalone mode changes, which for these three is vertical chrome and not the panel width the
+      wrap depends on.)*
+
+**Traps** — **Build the copy key by key.** A spread or an `Object.assign` shares the two arrays this
+work order exists to duplicate and passes most of the list above. **Never carry a `tm_` or `k_` id
+across.** WO-3.3's Traps line is the reason: `src/categories.js`'s `removalCounts()` and
+`applyRemoval()` were safe filtering on `categoryId` alone only while ids were opaque, and a copy
+sharing them would let a category removal in one class count and delete work in another — the exact
+bug WO-3.3's `classId` guard closed, reintroduced from the other end. **Do not copy the roster** in any
+form, including "just the ids" — a class roster is a list of students and this button is not a way to
+move them. **Do not offer Copy on an archived row.** **Do not touch `openClassId`.** **Do not add a
+confirm.** **Bump `CACHE` in `sw.js`** — `src/` files are in `SHELL`, and without the bump no device
+sees this at all. **The sweep's `cm.length < 12` floor is a minimum and the extra control keeps it
+green**; do not "fix" it into an equality, and do not re-aim it at a count that this work order's own
+change would then be the only thing asserting.
+
+**Routing note** — app code plus `verify-shell.mjs` checks, one full harness run (~262s), and a 👤
+line that only the teacher can close. Nothing here needs mutation proof over the harness, so the
+`codex-invoke.mjs` cap arithmetic that forced WO-2.34 to Claude does not apply; the rubric decides it
+on its merits.

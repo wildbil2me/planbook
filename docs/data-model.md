@@ -68,6 +68,9 @@ nag, and nothing noticed until a verifier read the line for another reason.
     "categories": [{ "id": "k_…", "name": "Tests", "weight": 40 }],
     "letterScale": null,      // null = use the document default below
     "roster": ["s_…"]
+    // Copy (WO-1.22, src/classes.js's copyClass()): terms and categories come across, each with a
+    // fresh id; name gets a "(copy)" suffix; archived, letterScale and roster do not come across —
+    // a copy is a new class in every other respect, roster: [] always.
   }],
 
   "letterScale": [            // document-wide default, editable in Settings
