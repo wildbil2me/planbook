@@ -4041,7 +4041,7 @@ it, and the next row to change an exit code should re-run that grep rather than 
 
 ## WO-2.41 — the WO-3.15 mislabel lives only in a status file that says to delete it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.37 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** XS · **Depends on** WO-2.37 · **Blocks** nothing
 **Closes roadmap** *(no box. Documentation, not app — the same call WO-2.39 made.)*
 
 **Not a go-live blocker, and the fault it records is already fixed.** Booked 2026-08-16 out of
@@ -4076,13 +4076,35 @@ Also out of scope: the other dispatch status files in `.claude/dispatch/`, whate
 lines say.
 
 **Acceptance**
-- [ ] `plans/dispatch-retro.md` § Codex carries the 2026-08-14 kill, with the numbers, and a reader
-      arriving at it learns what exit 3 is for without opening another file.
-- [ ] No sentence in that file describes the exit codes in a way that is false today, or if one is
-      kept as history it is dated and points at the current account.
-- [ ] `.claude/dispatch/WO-3.15-status.md` is either deleted on its own instruction or carries a line
-      saying why it is being kept.
-- [ ] `node tools/wo-gate.mjs --audit` is `PASS` and `git diff --stat -- src/` is empty.
+- [x] `plans/dispatch-retro.md` § Codex carries the 2026-08-14 kill, with the numbers, and a reader
+      arriving at it learns what exit 3 is for without opening another file. *(New `###` subsection at
+      `plans/dispatch-retro.md:245`, after the WO-2.4 one and last in § Codex, in date order. Carries
+      the seven files written 19:18–19:23, the result file at 19:23:50, the SIGTERM at the
+      twenty-minute cap at 19:33, `spawnSync codex ETIMEDOUT` reported as "could not be run", exit 2
+      over 206 insertions, and the day's cost — 757/757 locally at 251s, two FAILs, stopped and the
+      user brought in. Its fourth paragraph states exit 3 in full, plus exit 2's re-scope and that 0
+      and 1 did not move, so nothing has to be opened to read it.)*
+- [x] No sentence in that file describes the exit codes in a way that is false today, or if one is
+      kept as history it is dated and points at the current account. *(One sentence was stale — `:175`,
+      "exit 1 is a runner verdict, exit 2 is a harness bug". **Kept as history**, the third of the
+      three treatments: a dated parenthetical now follows it saying it is the scheme as it stood
+      2026-08-06, naming the re-scope and exit 3, and pointing at § WO-3.15 below. Corrected in place
+      was refused because the paragraph is an account of what shipped that week and it sits above
+      "Verified 2026-08-06". `grep -n exit plans/dispatch-retro.md` finds no other exit-code claim
+      that has gone false: `:185-187`'s three exit-2 paths — missing argument, missing brief file,
+      unrecognized flag — are all still `fail(2)` at `codex-invoke.mjs:272,280,198`.)*
+- [x] `.claude/dispatch/WO-3.15-status.md` is either deleted on its own instruction or carries a line
+      saying why it is being kept. *(Deleted, `git rm`, once its content had a home — the instruction
+      is its own third line and the result file has existed since 19:23:50 on 2026-08-14. Keeping it
+      would also have left a line reading "WO-3.15 stays 🤖 CLAIMED … working tree uncommitted" in the
+      tree, false since that row went ✅ DONE. The retro entry names the file, says it was deleted,
+      and gives `git show c279498:.claude/dispatch/WO-3.15-status.md` — the only commit it appeared
+      in — so WO-2.37's `:20-25` pointers still resolve.)*
+- [x] `node tools/wo-gate.mjs --audit` is `PASS` and `git diff --stat -- src/` is empty. *(`PASS |
+      every fragment matches exactly one roadmap box …`, exit 0, every phase file `ok`. `git diff
+      --stat -- src/` printed nothing. `node tools/wo-sweep.mjs`: `20 checks · 18 passed · 0 failed ·
+      2 to review`, exit 0 — both REVIEWs pre-existing, in files this row never opened.
+      `verify-shell.mjs` not run: prose only, and the empty `src/` diffstat is the evidence.)*
 
 **Traps** — **Do not rewrite the history to be about the fix.** The entry's value is what the failure
 looked like from the inside on the day, which is why the status file's own wording is the best source

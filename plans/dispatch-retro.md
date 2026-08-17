@@ -173,7 +173,15 @@ It now lives in `tools/codex-invoke.mjs` (`--probe`, or `--brief`/`--out` for a 
 sets the prepend on the child's environment for both paths from one function. The script also makes
 mechanical a distinction this section had been asking the orchestrator to draw by reading prose:
 **exit 1 is a runner verdict, exit 2 is a harness bug**, and a zero exit with no output file is
-exit 1 rather than a pass — the WO-1.7 failure mode, encoded rather than remembered.
+exit 1 rather than a pass — the WO-1.7 failure mode, encoded rather than remembered. *(**That
+two-code split is the scheme as it stood on 2026-08-06** and is kept here as history rather than
+corrected in place: this paragraph is an account of what shipped that week, not a statement of the
+current contract, and a dated narrative silently edited to describe today stops being either. It is
+two thirds of the scheme
+running today: exit 2 was re-scoped from "a harness bug" to **never started**, and **exit 3** was
+added for a dispatch that started and was then killed. § WO-3.15, 2026-08-14 below is the event that
+forced both, and states the current codes in full. Exit 1 and the zero-exit-with-no-output-file rule
+are unchanged.)*
 
 Verified 2026-08-06. The inline shape went **2 for 2 `SMOKE OK`** immediately after the 0 for 4
 above; the script was then re-proven on its own terms — `SMOKE OK` at exit 0, plus all three exit-2
@@ -233,6 +241,58 @@ onto the fixture class — broke two unrelated checks, because that class is *de
 shared fixture carries invariants that are somebody else's acceptance criteria.** The block now lends
 itself a term and removes it in its own restore, and the seeding site carries a comment saying why
 not to try it again.
+
+### WO-3.15, 2026-08-14 — the dispatch that finished, was killed, and reported that it never ran
+
+**Codex wrote all seven of its files and the script said it had never been asked.** The run wrote
+between 19:18 and 19:23, put `.claude/dispatch/WO-3.15-result.md` down at 19:23:50 as its last
+filesystem action, and then failed to exit. `codex-invoke.mjs` SIGTERMed it at its own twenty-minute
+cap at 19:33, reported `spawnSync codex ETIMEDOUT` and *"codex exec could not be run"* — and exited
+**2, over 206 insertions across seven files sitting in the working tree.** Exit 2 was documented that
+day as *the dispatch never ran at all*, a code whose entire value is the invariant it carries:
+nothing was dispatched, so there is nothing to go and look at. Both halves of that were false here.
+The work was complete; only the process overran.
+
+**Nothing bad happened, and that is the part worth being uneasy about.** WO-3.15 was a button — its
+seven files were a finished implementation, the dispatch went on to verification on the strength of
+them, and the mislabel cost nothing on the day. The work orders this cap actually excludes are the
+*mutate · run · revert* ones, and there the identical message means a deliberate mutation is sitting
+in `index.html` or `src/` while the only reader has been told the tree is untouched. **A reader who
+trusts an invariant does not go and check it.** That is the whole cost of a code that reports a state
+the run is not in, and it is not paid on the day it is earned.
+
+The rest of that dispatch is the honest measure of what one work order can spend, though none of it
+followed from the mislabel: Codex reported `verify-shell.mjs` unrunnable in its sandbox — an
+environment, not a result — and the orchestrator re-ran it locally at **757 checks, 757 passed**,
+exit 0, 251s. Then two verifier rounds came back **FAIL**, both on harness residue rather than on the
+app: an undisclosed deletion of a WO-3.14 check, its thirteen-line comment left orphaned and no
+`tools/README.md` ledger entry, hidden behind a net-zero call-site count of 760 → 760; and after the
+correction round, one more stale harness comment that WO-3.15's own button had falsified. Two
+failures, so the pipeline's own rule stopped and brought the user in.
+
+**The rule it produced, applied 2026-08-16: a kill gets a code of its own.** A dispatch that started
+and was then SIGTERMed — at `INVOKE_TIMEOUT_MS`, or on a `maxBuffer` overrun — now reports **exit
+3**, never 2. Exit 3 means *codex ran, nothing rolled the tree back, and whatever it wrote is still in
+there, up to and including a mutation it was holding mid-check; read `git status` and the diff before
+re-dispatching or re-routing.* It is a verdict on neither the runner nor the work: WO-3.15's own kill
+would report a 3 today over seven complete files. Exit 2 was re-scoped in the same pass to **never
+started** — nothing was dispatched and the tree is untouched — which is what a harness bug and a
+caller-side refusal actually have in common. Exit 0 and exit 1 did not move.
+
+**The fix was a new code, not a softened invariant**, and the direction matters more than the number:
+widening exit 2 to *"never started, or possibly started and killed"* would have made the message true
+and the code worthless, because exit 2 is read precisely to decide **not** to go looking.
+
+**Where this account lived until 2026-08-17 is a second, smaller scar.** For three days the only
+record of it was `.claude/dispatch/WO-3.15-status.md`, whose third line instructs the reader to
+delete the file once the result file exists — and the result file had existed since 19:23:50 that
+afternoon. The entry ended *"Proposed follow-up, not fixed here."* The follow-up was fixed two days
+later; the account of what caused it was one tidy-up away from going in the bin with the status
+trail. **A scar belongs in this file on the day it is earned**, not in the dispatch folder, which is
+designed to be cleaned up and says so in its own files. The status file was deleted on 2026-08-17,
+on its own instruction, once this entry existed — `git show
+c279498:.claude/dispatch/WO-3.15-status.md` is the whole of it, and the only commit it ever appeared
+in, which is where the `:20-25` line pointers in WO-2.37's own records still resolve.
 
 ## Ticking — why the orchestrator holds the pen
 

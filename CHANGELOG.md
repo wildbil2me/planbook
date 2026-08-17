@@ -277,6 +277,31 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.41 — the scar behind the exit-3 rule now lives in the retro instead of in a file that asks to
+  be deleted.** `plans/dispatch-retro.md` § Codex carries the 2026-08-14 WO-3.15 kill: a dispatch that
+  wrote all seven of its files between 19:18 and 19:23, put its result file down at 19:23:50, then
+  failed to exit, was SIGTERMed at the twenty-minute cap at 19:33, and reported `spawnSync codex
+  ETIMEDOUT` — *"codex exec could not be run"* — and **exit 2, over 206 insertions still sitting in the
+  working tree.** The mislabel cost nothing that day because WO-3.15 was a button and its seven files
+  were finished work; the rows this cap actually excludes are the *mutate · run · revert* ones, where
+  the same message means a deliberate mutation is in `src/` and the only reader has been told the tree
+  is untouched. The entry states the codes as they stand — exit 3 for started-then-killed, exit 2
+  re-scoped to never-started, 0 and 1 unmoved — so exit 3 is legible without opening another file.
+
+  **The stale sentence was kept as history rather than corrected in place.** The 2026-08-06 paragraph
+  saying *"exit 1 is a runner verdict, exit 2 is a harness bug"* sits above its own "Verified
+  2026-08-06" line and is an account of what shipped that week; a dated narrative silently edited to
+  describe today stops being either history or contract. It now carries a dated parenthetical naming
+  the re-scope and pointing at the new entry, and the new entry points back.
+
+  **And where the account lived for three days is the smaller second scar.** `.claude/dispatch/WO-3.15-status.md`
+  was the only record of it, while its own third line instructed the reader to delete it once the result
+  file existed — which it had, since 19:23:50 that afternoon. The dispatch folder is designed to be
+  cleaned up and says so in its own files, so the account was one tidy-up away from the bin. The file is
+  deleted, on that instruction, now that the entry exists; `git show c279498:.claude/dispatch/WO-3.15-status.md`
+  is the whole of it and the only commit it ever appeared in, which is where WO-2.37's `:20-25` pointers
+  still resolve.
+
 - **WO-2.46 booked — three more readings in the same block sit behind waits that do not assert them.**
   WO-2.42's audit ran twice inside one dispatch and came back different: the first answer said no other
   *named helper* waits on a proxy, which was true and was not the question. The correction round found
