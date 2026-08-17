@@ -3714,14 +3714,32 @@ session scratchpad), so the work is to build that properly and commit it, not to
   browser, which argues for a sibling. Against that: **"Do not write a second harness" is a standing
   rule**, and a second file that drives the same predicates is exactly what it forbids. Resolve it
   explicitly and write the reasoning where the next reader meets it. `wo-gate.mjs --self-check` is
-  the in-suite precedent for a tool testing itself.
+  the in-suite precedent for a tool testing itself. *(WO-2.40 proposes a `--self-check` on
+  `codex-invoke.mjs` on that same precedent. Two locally-sensible answers that disagree with each
+  other are worth less than one answer given twice, so whichever way this goes, say enough about why
+  for the other row to follow it.)*
+- **Make that decision before writing a check, because it sets what proving this costs.** Acceptance
+  line 1 wants every arm of both arrays shown firing. If an arm can only be reached by a full
+  `verify-shell.mjs` run, that is fourteen-odd runs at ~4.4 minutes each; if the arms are drivable in
+  process, it is seconds plus the one whole-harness run line 4 asks for. **The design and the run
+  budget are one decision**, and the routing arithmetic WO-2.37 put into `ROUTING.md` — harness
+  runtime × runs demanded, against the Codex cap — reads whichever answer this bullet gives.
 - **The call-site count in `tools/README.md` moved in step**, which this row almost certainly does
-  change — unlike WO-2.36, which added none.
+  change — unlike WO-2.36, which added none. **The baseline as WO-2.36 left it, 2026-08-16: 802 checks
+  passing, 805 `check()` call sites.** `wo-sweep.mjs` asserts that number against the harness (WO-2.19),
+  so a count that moves without the ledger moving turns the sweep red.
 
 **Out of scope** — the residue WO-2.36's verification named (a `MARK_KEYS` left declared while the
 listener stops testing it reads green, because `markKeys` is read file-wide); that is WO-2.35's
 question of which bindings the read can see at all, and it is not made better or worse here. Also out
 of scope: merging the two blocks, and any change to what either check concludes on the real tree.
+
+**And out of scope, specifically: the four wrong `:NNN` pointers in `tools/README.md`, which WO-2.39
+owns.** This row edits that file for the count and will be reading them on the way past — they miss by
+roughly 3,200–3,500 lines and they were already wrong at HEAD before WO-2.36. Fixing them here means
+taking a judgment call inside somebody else's commit, and one of the four (`:1869`) has no known
+referent at all, which is the reason WO-2.39 is a row rather than a quiet correction. Move the count;
+leave the pointers.
 
 **Acceptance**
 - [ ] Every arm of both `vacuity` arrays is shown firing on an input that should trip it, and the
