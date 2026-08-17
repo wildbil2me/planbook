@@ -4218,3 +4218,153 @@ the self-reference: resolve `:830` last. **Do not "fix" the nine historical numb
 they look — WO-2.39 recorded the temptation and refused it, and the paragraph above them already says
 they measure another tree. **`src/grade-engine.js` is app code and stays untouched**; the fix is in the
 prose that points at it.
+
+---
+
+## WO-2.44 — wo-gate's repo-write guard is case-blind to the one thing it guards
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.40 · **Blocks** nothing
+**Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37 and WO-2.40 made.)*
+
+**Not a go-live blocker, and it has never fired.** Booked 2026-08-17 out of WO-2.40's dispatch, where
+the implementer hit the identical bug in the guard it was writing, fixed it there, and both agents
+flagged this copy independently rather than reaching into another file. **The fix is already written**;
+this row is the carry.
+
+**Why it exists.** `tools/wo-gate.mjs:1517-1523` and the pre-WO-2.40 `codex-invoke.mjs` had the same
+three lines, because both derive `REPO` the same way — `path.resolve(dirname(fileURLToPath(
+import.meta.url)), '..')` at `wo-gate.mjs:52`, which on win32 yields a **lowercase** drive letter,
+`c:\dev\planbook`. `os.tmpdir()` through `realpathSync` yields `C:\`. So when the sandbox lands inside
+the repository, `"C:\dev\planbook\…".startsWith("c:\dev\planbook\")` is `false`, and **a guard whose
+only job is refusing paths inside the repository reports that a path inside the repository is outside
+it.** WO-2.40 measured this rather than reasoning about it: its first cut ran all seventeen cases
+happily inside `C:\dev\planbook\.guard-probe\…` and exited 0.
+
+**Why this copy is the worse one.** `codex-invoke.mjs`'s plants are inert fixture files. This script
+copies the real `plans/` tree into its sandbox (`wo-gate.mjs:1606`) and then plants **deliberately
+corrupted tracker files** — a `**Closes roadmap**` fragment that closes no box, dashboard drift — so it
+can prove `--audit` catches them. Land those in the real `plans/` and the corruption is
+indistinguishable from tracker rot; worse, the `finally` cleanup then `rmSync`s a sandbox that overlaps
+the live trackers. WO-2.15's own comment at that function calls a plant escaping into the real `plans/`
+*"the worst bug this file could carry."* It is right, and the guard it wrote to prevent it does not
+hold on this filesystem.
+
+**It is latent, not live.** `TMP`/`TEMP` must point inside the repository for the sandbox to land
+there, which is not the normal state on this machine — it is one scratchpad convention away from being
+the normal state, and it is precisely what somebody does while testing a guard.
+
+**Deliverables**
+- **The `norm()` two-liner from `codex-invoke.mjs`'s `assertOutsideRepo()`**, applied here. Case-folded
+  on win32 only, comparing both sides, still throwing the un-folded path in the message so the reader
+  sees what they actually passed. **Copied, not extracted** — see Traps.
+- **The guard shown firing**, the way WO-2.40 showed it: `TMP` and `TEMP` at a directory inside the
+  tree, the throw quoted, and the tree proved unchanged afterwards.
+- **A sentence on `tools/wo-sweep.mjs`**, which derives `REPO` identically at `:28` but only ever
+  reads. Fixed or deliberately left, said out loud either way, in the same sitting.
+
+**Out of scope** — `codex-invoke.mjs`, which already has the fix; any new `--self-check` case in
+`wo-gate.mjs` (its seventeen plants are about tracker rot, and the guard is a property of the harness,
+not a plant — WO-2.16's precondition reasoning); and the wider question of whether these two scripts
+should share anything, which the Traps answer no.
+
+**Acceptance**
+- [ ] With `TMP` and `TEMP` pointed at a directory inside the repository, `node tools/wo-gate.mjs
+      --self-check` throws from `assertOutsideRepo()` and **writes nothing** — `git status --short`
+      identical before and after, and no plant anywhere under `plans/`.
+- [ ] The same probe against the **unfixed** file is run and reported, so the acceptance is a
+      difference rather than an assertion. If it does not reproduce, say so and stop — this row's whole
+      premise is a measurement.
+- [ ] With `TMP` at its normal value, `--self-check` is still `PASS | 17 of 17 plants were caught` and
+      `--audit` is still PASS.
+- [ ] `tools/wo-sweep.mjs`'s copy is resolved in writing, and `tools/README.md` records the shape of
+      this bug once — a case-sensitive compare against a case-insensitive filesystem — rather than
+      twice in two scripts' comments.
+- [ ] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
+
+**Traps** — **Run the reproducer on a clean tree, and commit first.** A plant that escapes is only
+visible against a clean `git status`, and this row is the one where the escape is the thing being
+tested. **Do not extract a shared helper.** No script in `tools/` imports another — checked, zero
+cross-imports across twelve files — and that is the suite's no-dependencies rule reaching into its own
+toolchain; three duplicated lines is the price. **The guard is silent when it works and silent when it
+fails**, which is why the acceptance asserts the *absence* of writes and not the presence of a pass:
+WO-2.40's first cut passed everything.
+
+---
+
+## WO-2.45 — the outer Bash timeout binds ten minutes before the cap everything is calibrated to
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.40 · **Blocks** nothing
+**Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37 and WO-2.40 made.)*
+
+**Not a go-live blocker, and it has been declined by name three times** — WO-2.37 put it out of scope,
+WO-2.40 put it out of scope again, and both dispatches proposed it as somebody else's row. Booked
+2026-08-17 so that the third refusal is the last one. **This is the row that is not XS**, and it is the
+one the other two were protecting.
+
+**Why it exists.** `.claude/agents/work-order-orchestrator.md:220-221` instructs the orchestrator to
+give the Codex Bash call a **600000 ms** timeout, and adds that the script's internal cap is 20 minutes
+*"but the outer timeout is what actually protects the session."* Ten minutes against twenty. Everything
+downstream is calibrated to the twenty:
+
+- `INVOKE_TIMEOUT_MS = 20 * 60 * 1000` (`codex-invoke.mjs:83`)
+- `WORK_RESERVE_MS = 10 * 60 * 1000` (`:92`)
+- the `--budget` refusal at `:264`, which **approves** up to ten minutes of stated harness runs on the
+  arithmetic *"10 + 10 fits inside 20"* — and prints that arithmetic to the router as a promise
+
+**So the gate WO-2.37 built approves dispatches the outer call cannot possibly hold**, and it tells the
+router so in a printed sentence. That is worse than an unguarded cap: it is a guard that clears the
+exact dispatch it exists to refuse.
+
+**The sharper consequence is what it does to exit 3.** The started-then-killed report — *"no verdict
+either way, go and read the diff"* — is printed by `codex-invoke.mjs` when **it** SIGTERMs its child at
+its own cap. If the outer Bash timeout fires first, the script itself is the thing killed; it never
+reaches that branch, never prints the diagnosis, and the orchestrator sees a bare Bash timeout over a
+tree that may be holding a half-applied mutation. **That is the 2026-08-14 shape exactly** — the scar
+WO-2.37 fixed and WO-2.40 made permanent — reachable around the side of both. The two rows that just
+hardened this path hardened the ten minutes nobody gets to.
+
+**And 600000 is a ceiling, not a preference.** The Bash tool caps `timeout` at 600000 ms, so *"raise
+the outer number to match the inner one"* is not available. That is what makes this a design question
+rather than a constant edit, and it is why the two rows that met it declined it.
+
+**Deliverables**
+- **A decision between the two shapes that are actually available**, with the reasoning written where
+  the next router meets it:
+  - **Shrink the cap to fit.** `INVOKE_TIMEOUT_MS` below ten minutes, and `WORK_RESERVE_MS` and the
+    `--budget` arithmetic re-derived against the smaller number. Honest, small, and it narrows the
+    Codex route further — which WO-2.37 already called the wrong shape of fix in the other direction.
+  - **Detach and poll.** The dispatch outlives the Bash call; the orchestrator starts it, returns, and
+    reads a status file. This restores exit 3 by construction, since the script is no longer inside
+    the thing that gets killed — and it is a change to how a dispatch is supervised, not to a number.
+- **Whichever lands, the printed arithmetic must stop over-promising.** If a router is told a budget
+  fits, it must fit the constraint that actually binds.
+- **The three files that read these numbers move together** — `codex-invoke.mjs`,
+  `work-order-orchestrator.md`, `tools/README.md` — and the reader count is now one agent file plus
+  `tools/README.md`, re-checked by grep rather than inherited (WO-2.40's note on this row's ancestor).
+
+**Out of scope** — the runner itself; `codex-invoke.mjs --self-check`, which asserts the boundary at 10
+and 10.1 **deliberately** and will go red when a constant moves (WO-2.40 wrote that down as intended,
+not brittle — so **updating those two cases is part of this row, and their going red is the check
+working**); and anything about which work orders route to Codex, which is `ROUTING.md`'s subject.
+
+**Acceptance**
+- [ ] The mismatch is demonstrated before it is fixed: a dispatch shape that `--budget` clears and the
+      outer call cannot hold, named with its arithmetic. A row that begins *"obviously"* has skipped
+      the only step that proves the premise.
+- [ ] One of the two shapes is chosen, built, and the **rejected** one is written down with why —
+      `plans/verification-tooling.md`, the file that already holds this thread's decisions.
+- [ ] After the change, no printed sentence tells a router that a budget fits unless it fits the
+      binding constraint. Shown on both sides of the boundary.
+- [ ] `codex-invoke.mjs --self-check` passes again, with its boundary cases moved to the new numbers
+      and the move explained at the cases.
+- [ ] If exit 3 survives a kill at the binding constraint, that is **driven**, not asserted — the whole
+      point of WO-2.40 is that this branch is exercised rather than reasoned about.
+- [ ] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
+
+**Traps** — **Do not spawn Codex to measure this**, WO-2.40's Traps line unchanged: every number here
+is reachable with a stand-in child through the seam WO-2.40 built. **Detach-and-poll is the tempting
+answer and it is the one with the hidden cost** — a dispatch nobody is holding is a dispatch nobody
+notices dying, and this pipeline's oldest scar (`plans/dispatch-retro.md` § the 2026-08-14 kill) is a
+run whose death was misreported. If it detaches, say what reads the corpse. **Shrinking the cap is not
+the safe default just because it is smaller**: it silently takes work orders off the Codex route, which
+is the invisible exclusion WO-2.37 exists to have made visible.
