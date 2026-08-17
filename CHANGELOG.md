@@ -13,6 +13,34 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The term opened in a fresh year — 2026-08-17
+
+**The rehearsal's one open note is closed, and not the way it was written.** The roster arrived,
+and the term year was created at `https://planbook.hwgteach.com/` — made the working year, rosters
+entered fresh rather than carried across, then read back in the year picker on that origin and
+checked in the app to hold no meeting the owner did not record. A backup went off-device before the
+first class.
+
+**Half of what the note asked for could not be done, because the thing it wanted quarantined was
+already gone.** The plan was a fresh year "with the test data left in one labelled unmistakably."
+By 2026-08-15 there was no test data on any device — a clean slate, deleted by other means and
+found when this work order's premise was re-checked. So there was nothing to label. The iPad still
+got a year called `2030-2031`, created on the device itself, and it holds nothing: the label is the
+deliverable, not what is in it. `gates.md`'s rule is why — restore is keyed by the year label, and
+two devices sharing one is the single arrangement in which a wrong-direction restore is silent and
+total.
+
+**The devices now differ by origin as well as by label**, which was not true when the note was
+written. The deployed origin became the device of record on 2026-08-17; the iPad keeps its LAN
+origin because it has to test builds that have not shipped. A backup file crosses origins freely,
+so the label is still what does the guarding.
+
+**One thing this does not close, and it is worth naming rather than letting it pass with the
+note.** The attendance-arithmetic check was run and observed on 2026-08-08, but against the
+backfilled data — which is now gone. The tick stands on what was seen that day and can no longer be
+re-derived from stored data. `gates.md`'s week-one re-check against a live roster is now the only
+path to confirming that arithmetic.
+
 ### Ship 1 rehearsed — 2026-08-08
 
 **The go-live rehearsal ran clean, two weeks early.** A full simulated school day in a throwaway

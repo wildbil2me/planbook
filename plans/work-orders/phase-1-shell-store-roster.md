@@ -969,7 +969,7 @@ warning on the safe case trains the teacher to click through the unsafe one.
 
 ## WO-1.16 — the term opens in a fresh year
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** nothing
 **Closes roadmap** Phase 1 → *(no box. Operational, not code — this work order is a cutover the owner
 performs, booked because the alternative is remembering it. Booked 2026-08-12 out of the Ship 1
 rehearsal's unclosed note.)*
@@ -1002,6 +1002,23 @@ rehearsal's unclosed note.)*
 > from real ones, and with no fabricated marks it no longer binds. **`CHANGELOG.md`'s open note is
 > deliberately left as written**; it records what was true and planned on 2026-08-08, and the entry
 > that closes it will say what actually happened instead of pretending the plan was followed.
+
+> **PERFORMED 2026-08-17 — the roster arrived and the cutover was done in one sitting.** The term
+> year was created at `https://planbook.hwgteach.com/`, made the working year, and the rosters
+> entered fresh; the year picker on that origin was read back to confirm it, and the year was checked
+> in the app to hold no meeting the owner did not record. A year labelled `2030-2031` was created on
+> the iPad at its own origin, `https://192.168.50.142:8443/`, so the two devices do not share a
+> label. A backup of the term year was taken and stored off-device before the first class.
+>
+> **Two things about how it was done, recorded because neither is obvious from the list above.**
+>
+> 1. **The devices now differ by origin as well as by label**, which the 2026-08-15 amendment did not
+>    anticipate — it predates the `gates.md` amendment that moved the device of record to the deployed
+>    origin. That does not weaken the rule: a backup file travels between origins freely and restore
+>    is keyed by the year label, so the label divergence is still the thing doing the work.
+> 2. **The iPad's year was created on the device, not restored to it.** The laptop → iPad restore that
+>    the original deliverables described is not part of this act at all, per the rewritten deliverable
+>    above. On a clean slate there was nothing to send.
 
 **Why it exists.** The Ship 1 rehearsal recorded one thing it could not close, and `CHANGELOG.md`
 still carries it: **the backfilled test data is in the live year.** The rehearsal was designed so it
@@ -1057,21 +1074,21 @@ happened by other means before this work order was ever worked, and a scope line
 is already gone. That the evidence was lost is the amendment's third consequence, flagged there.)*
 
 **Acceptance**
-- [ ] 👤 **The term year exists at `https://planbook.hwgteach.com/`** — created on that origin rather
+- [x] 👤 **The term year exists at `https://planbook.hwgteach.com/`** — created on that origin rather
       than at `localhost:8443`, and confirmed by opening the deployed app and reading the year picker
       there. *(Added 2026-08-17, in the same sitting as the `gates.md` § Where Ship 1 actually runs
       amendment that moved the device of record onto the deployed origin. **There was no such line
       while the record lived at `localhost`, because there was only one place a year could be.** It
       goes first because the three lines below it are all about a year whose location this one
       decides.)*
-- [ ] 👤 The year the term is taught in contains no meeting the owner did not record — checked in the
+- [x] 👤 The year the term is taught in contains no meeting the owner did not record — checked in the
       app, not assumed from the act.
-- [ ] 👤 The iPad and the laptop do not hold the same year label, each confirmed on the device itself.
+- [x] 👤 The iPad and the laptop do not hold the same year label, each confirmed on the device itself.
       *(Amended 2026-08-15. Was "the iPad shows the test year and the laptop shows the term year" —
       there is no test year now, but the rule it served is `gates.md`'s and survives: two devices
       sharing a label is the one arrangement in which a wrong-direction restore is silent and total.)*
-- [ ] 👤 A backup of the term year exists off-device, taken **before** the first class.
-- [ ] The date is recorded here and the `CHANGELOG.md` note is closed.
+- [x] 👤 A backup of the term year exists off-device, taken **before** the first class.
+- [x] The date is recorded here and the `CHANGELOG.md` note is closed.
 
 *(A fifth Acceptance line — "the rehearsal data is still openable, in a year whose label cannot be
 read as the term" — **was removed on 2026-08-15 and is recorded here rather than deleted silently.**
