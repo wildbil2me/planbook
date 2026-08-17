@@ -277,6 +277,47 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.40 — the two guards on the Codex dispatch plumbing can now prove they still work.** Both exist
+  for things nobody sees on a good day: a work order refused before it starts because its checks cannot
+  fit in the time, and a dispatch killed halfway saying so instead of claiming it never ran. Both had
+  been proved exactly once, by hand, in a throwaway repo, **with the real file's timeout constants
+  temporarily rewritten** — mutate · run · revert, on the one file whose own comment warns what an
+  interrupted mutation costs — and the proof was thrown away with the scratch directory.
+  `codex-invoke.mjs --self-check` makes it permanent: **17 cases in 2.3 seconds, no Codex process
+  spawned, no constant edited, and nothing written anywhere near the app.** Every caller-side refusal is
+  asserted on its exit code *and* on a phrase of its message, most of them also on a phrase that must be
+  **absent**; a four-variable seam replaces the command and the cap, so the run returns before it ever
+  looks up `codex` on `PATH`. The started-then-killed exit 3 is driven twice — a sleeping child killed at
+  a seamed cap, and a 25 MB writer overrunning the 16 MB buffer — because one kill case cannot express
+  the claim: a copy keyed on the error's *name* rather than on `signal` passes the timeout perfectly and
+  still reports the overrun as never-started. That is the WO-3.15 scar's exact shape, and it is now a red
+  line rather than an afternoon.
+
+  **The check found a bug in itself, which is the only reason anyone knows about it.** Every write goes
+  through one guard that refuses any path inside the repository — including the sandbox directory, since
+  `mkdtemp` reads an environment variable this file does not control. The first cut of that guard
+  compared paths case-sensitively: `import.meta.url` gives `c:\dev\planbook`, `mkdtempSync` answers
+  `C:\dev\planbook\…`, one drive letter differs in case, and a guard whose entire job is refusing paths
+  inside the repository waved a whole fixture into it. **It is silent when it works and silent when it
+  does not** — no green run would ever have shown it. Found by pointing `TMP` into the tree and watching,
+  fixed, and the guard is now shown firing rather than assumed. Fourteen mutants of the file — ten the
+  implementer wrote, four more the verifier added — each go red on the case aimed at them and on nothing
+  else, and the mutations live in a scratchpad copy so none ever entered `tools/`.
+
+  **Two questions the row left open were answered in writing rather than in code, so no exit code moved.**
+  An **externally** killed child is still reported as exit 1, because the state it would be recognised by
+  is not producible here: measured twice, `taskkill /F` and a self-sent `SIGTERM` both give
+  `status 1 · signal null · error undefined` on win32, byte-identical to codex exiting 1 and not separable
+  by anything `spawnSync` reports. The residue is named at the branch, with instructions for whoever
+  runs this on POSIX one day. And **the second finding turned out to be factually backwards** — the
+  directory-creating call it worried about already ran below both refusals, so the work order's own
+  Deliverable was wrong and now carries a note saying so; a finding inherited from another row's verifier
+  had been booked without the file being re-read. **Who runs the check is on the record with its cost
+  admitted:** the orchestrator at step 2b, before the probe — not the sweep, which promises text searches
+  only, and not "by hand at the next change," which is the opt-in guard against rot that this whole
+  thread exists to argue against. Two seconds against a twenty-minute dispatch, check the instrument then
+  take the reading. The honest gap: if the Codex route is never taken, the check never runs.
+
 - **WO-2.39 — five pointers into the verification harness are now anchored to the code's own words
   instead of to a line number.** Four sat in `tools/README.md`, off by up to 3,807 lines and inherited
   across three work orders; the fifth, in `verify-shell.mjs`'s own block comment, had never been right.

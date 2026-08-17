@@ -11,7 +11,7 @@
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
-| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>]` |
+| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies — and, since WO-2.40, a `--self-check` that drives its own refusals against a stand-in child. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>]` / `--self-check` |
 | `audio-probe.html` | **Not a script** — a page, opened on the device. Tells iOS Silent Mode apart from an AudioContext that will not start outside a gesture, which are the same silence otherwise. See below; it has a way to be served wrong that looks like nothing being wrong. |
 
 The four `wo-*.mjs` scripts and `codex-invoke.mjs` are **dispatch plumbing**, not app tooling — they
@@ -98,7 +98,7 @@ subject's own `HELD` and its reason are printed under it rather than clipped off
 which is how the same morning was spent twice.
 
 `codex-invoke.mjs` writes outside the repo (a temp dir for
-`--probe`, the dispatch result file for `--brief`/`--out`) and exists because the `codex-resources\`
+`--probe`, another for `--self-check`, the dispatch result file for `--brief`/`--out`) and exists because the `codex-resources\`
 `PATH` fix was re-derived and re-typed at two call sites inside `work-order-orchestrator.md` — one
 file means the fix can only be right or wrong in one place. Full saga in
 [`../plans/dispatch-retro.md`](../plans/dispatch-retro.md) § Codex.
@@ -115,6 +115,49 @@ nothing ran, the tree is untouched, and the work order is routed to Claude inste
 and raises no cap — the constant is deliberately left where it is, with the reasoning at its
 declaration, and [`../plans/work-orders/ROUTING.md`](../plans/work-orders/ROUTING.md) § "Route to
 Codex" asks the same multiplication at routing time, which is the half that matters.
+
+**And since WO-2.40 it can prove those two gates still bite.** `--self-check` copies this script to a
+temp directory and drives seventeen cases against **stand-in children** — a sleeping
+`process.execPath` for the kill at the cap, a 25 MB writer for the `maxBuffer` overrun, a path that
+does not exist for the never-started case — asserting each one on **both** its exit code and a phrase
+of its message. Two seconds, nothing written anywhere near `tools/`, and **no Codex process at all**:
+a seam of four `CODEX_INVOKE_SELFCHECK_*` environment variables stands in for the command, the cap
+and `codex-resources\`, so the run reads the same on a machine with no runner installed — which is
+the machine where the runner is the thing being routed around. The `--budget` gate is deliberately
+**outside** that seam, so the boundary it asserts (10 minutes fits, 10.1 does not) is the one this
+file ships. And the seam is what makes the check safe rather than merely convenient: a subject that
+does not read it would resolve the never-started case's nonexistent command to the real `codex.exe`
+and dispatch a brief to it, so the run **refuses to drive a single case** against one rather than
+planting. A copy from before WO-2.40 lands exactly there.
+
+**Both gates are behaviour nobody sees on a normal run**, which is why they needed this. Delete the
+`refuseIfBudgetDoesNotFit()` call and every dispatch in this project still passes; regress the
+started-then-killed split and a killed dispatch goes back to reporting exit 2 over work still sitting
+in the tree, which *is* the WO-3.15 mislabel. WO-2.37 drove both by hand, once, in a scratchpad, with
+`INVOKE_TIMEOUT_MS` **edited in the real file and restored** — on the one file whose own header
+explains what an interrupted mutation costs. `--against <path>` is what replaces that method: ten
+mutants written into a scratchpad copy, never into `tools/`, each one red on the case aimed at it and
+on nothing else.
+
+| Mutation of the copy | Result |
+|---|---|
+| the `refuseIfBudgetDoesNotFit()` call deleted | **4 red** — both boundaries, the non-numeric budget and the zero |
+| that call moved below the spawn | **2 red**, and *why* is the interesting part: the boundary that must not fit still exits 2 with the right words, and goes red because the refusal **created the output directory**. The exit code alone cannot see that move |
+| the budget comparison inverted (`<` for `>`) | **1 red** — the boundary that must not fit |
+| the started-then-killed branch removed | **2 red** — both kill cases |
+| that branch keyed on `error.code === 'ETIMEDOUT'` rather than on `signal` | **1 red** — the `maxBuffer` overrun alone, which is the whole reason there are two kill cases and not one |
+| the never-started check moved above it — the WO-3.15 regression itself | **2 red**, reading *"exited 2, expected 3"* and *"the run said 'could not be run', which belongs to a different exit code"* |
+| the unrecognized-flag refusal dropped · the `--probe --budget` guard dropped · a zero exit with no output taken as a pass · the brief-not-found check dropped | **1 red each** |
+
+**Who runs it and when: the orchestrator, at step 2b, before the probe.** Decided at WO-2.40 out of
+the three candidates that row named. Not `wo-sweep.mjs`, whose own header promises that every check in
+it is a text search, and which every dispatch pays for including the ones that never go near Codex.
+Not "by hand at the next change to the file", which is
+[`../plans/verification-tooling.md`](../plans/verification-tooling.md)'s own argument against an
+opt-in guard against rot — nobody passes the flag, and the gates rot behind a green run exactly as
+before. Step 2b is the moment the gates are about to be relied on, and the Codex route is the only
+one that ever runs this script, so **that single call site covers every occasion the gates matter**:
+two seconds against a twenty-minute dispatch. Check the instrument, then take the reading.
 
 The demo build lands in Phase 8 (WO-8.2), modelled on Roll Call!'s `tools/build-demo.mjs`.
 

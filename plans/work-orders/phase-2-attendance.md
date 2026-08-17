@@ -3907,7 +3907,7 @@ rather than six.*
 
 ## WO-2.40 — the codex-invoke gates have never been exercised by anything but a hand
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.37 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** WO-2.37 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20 and WO-2.37 made.)*
 
 **Not a go-live blocker, and nothing here is a defect today.** Booked 2026-08-16 out of WO-2.37's
@@ -3957,6 +3957,13 @@ exactly. That is the stand-in child; what is missing is a seam to hand it in.
   no verdict. (b) `mkdirSync(dirname(outPath))` runs ahead of the `codex-resources` check, so a later
   exit 2 can leave an empty output directory behind after a run that never started. Each is a line of
   code if it is wrong and a written sentence if it is right.
+  *(2026-08-17, on landing: **(b) as written here has the order backwards** and the sentence above is
+  left standing only so this note has something to correct. At `HEAD` that `mkdirSync` was already
+  below both the brief check and the `codex-resources` check, confirmed against the pre-dispatch file
+  by the implementer and again by the verifier — so neither refusal it worried about can leave a
+  directory behind. What survives is narrower: `runCodexWithFallback()` can still return `{ infra }`
+  after that line. A finding inherited from another row's verifier was booked here without the file
+  being re-read, which is the cheap step that would have caught it.)*
 - **A decision on who runs this and when** — `wo-sweep.mjs`, the orchestrator's step 2b beside the
   probe, or by hand at the next change to the file. Any answer, written down.
 
@@ -3966,20 +3973,54 @@ which is the constraint that actually binds first and is a work order of its own
 pursued. Re-verifying WO-2.37's five Acceptance lines is not this row either; they passed.
 
 **Acceptance**
-- [ ] Every caller-side refusal in `codex-invoke.mjs` is driven and asserted on **both** its exit code
+- [x] Every caller-side refusal in `codex-invoke.mjs` is driven and asserted on **both** its exit code
       and a distinguishing phrase of its message, in one run, with no Codex process spawned.
-- [ ] The started-then-killed branch reports exit **3** against a stand-in child, and a never-started
+      *(`--self-check`, the `runCases()` table under `// ---- self-check` in `tools/codex-invoke.mjs`
+      — anchored by its own words rather than by a line number, WO-2.39's call. 17 cases, 2.3s,
+      `PASS | 17 of 17`. The eleven
+      caller-side ones: no args, `--brief` alone, `--out` alone, an unrecognized flag, `--probe
+      --budget`, a non-numeric budget, a zero budget, both boundaries, and `codex-resources` missing in
+      both modes. No spawn is possible: a four-variable seam replaces the command, so
+      `runCodexWithFallback()` never looks up `codex` or `CODEX_FALLBACK`, and a subject that does not
+      read that seam is refused rather than driven.)*
+- [x] The started-then-killed branch reports exit **3** against a stand-in child, and a never-started
       child still reports exit **2**, in that same run. The two cases are distinguished by `signal`,
       not by the error code's name.
-- [ ] Nothing the check writes reaches `tools/`, `src/` or `index.html` — no constant is mutated and
+      *(Three cases in the same run: a sleeping `process.execPath` killed at a seamed cap → 3, a 25 MB
+      writer overrunning the 16 MB `maxBuffer` → 3, and a command that does not exist → 2. The second
+      is what makes the `signal` claim non-vacuous — a copy keyed on `error.code === 'ETIMEDOUT'`
+      passes the first and reports the overrun as 2, shown as mutant M5.)*
+- [x] Nothing the check writes reaches `tools/`, `src/` or `index.html` — no constant is mutated and
       restored, at any point, by anything committed. **This is the acceptance line with a scar behind
       it:** the hazard WO-2.37 exists to name is a mutation left in the tree by a run that died.
-- [ ] Deleting any one of those gates, or inverting its condition, turns the check red — shown, not
+      *(Every path goes through `assertOutsideRepo()`, including the sandbox itself; no `--dry-run`
+      escape. Shown firing, not assumed — `TMP` pointed at a directory in the tree throws and writes
+      nothing, and the first cut of that guard did NOT fire, because it compared paths case-sensitively
+      against a `c:` / `C:` drive letter. `git status --short` after ~30 runs of the check and 11
+      `--against` runs names only the four files edited by hand.)*
+- [x] Deleting any one of those gates, or inverting its condition, turns the check red — shown, not
       argued. A self-check that passes whether or not the thing it checks exists is this row's own
       failure repeated inside itself.
-- [ ] The two adjacent findings above are answered in writing, and anything fixed in answering them is
+      *(`--against <path>`, wo-gate.mjs's mechanism, so no mutation ever entered `tools/`: ten mutants
+      in a scratchpad copy, each red on the case aimed at it and nothing else, plus the pre-WO-2.37
+      file (`5839bc3`) stopping at the precondition. Tabulated in `tools/README.md`.)*
+- [x] The two adjacent findings above are answered in writing, and anything fixed in answering them is
       covered by the run.
-- [ ] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty.
+      *(Both answered as written sentences at the point of the decision, neither as a line of code, so
+      no exit code moved. (a) at the `if (result.error && result.signal)` branch — `signal` set with
+      `error` unset is not producible on win32: measured, `taskkill /F` and a self-sent SIGTERM both
+      give `status 1 · signal null · error undefined`, so widening the branch buys nothing drivable and
+      the real Windows shape is not separable from codex exiting 1. (b) at the
+      `mkdirSync(dirname(outPath), { recursive: true })` call — the finding has the order backwards,
+      that call already runs below the `codex-resources` check; what survives is the `{ infra }`
+      refusal, left alone because `recursive: true` writes nothing over an existing directory, git does
+      not track an empty one, and moving it means restructuring `runCodexWithFallback()`. The
+      surviving ordering claim IS covered: the boundary-that-does-not-fit case asserts the output
+      directory was never created, which is what turns mutant M2 red.)*
+- [x] `node tools/wo-sweep.mjs` is green and `git diff --stat -- src/` is empty.
+      *(`20 checks · 18 passed · 0 failed · 2 to review`, exit 0 — the two REVIEWs are the standing
+      pair, in files this row never opened. `git diff --stat -- src/` printed nothing; no app file was
+      touched, so `verify-shell.mjs` was not run.)*
 
 **Traps** — **Do not spawn Codex to test the plumbing.** Every gate here is reachable without it, and
 a check that needs the runner installed is a check that goes yellow on a machine where the runner is
@@ -3989,6 +4030,12 @@ started and a child that was started and killed are the two cases under test** �
 cannot tell them apart cannot express the failure, which is this file's oldest lesson (§ Fixture
 assumptions in `plans/dispatch-retro.md`). **The exit codes are read by two agent files and by
 `tools/README.md`**; if a decision here changes one, it changes all of them in the same sitting.
+*(2026-08-17, on landing: **there is one agent file, not two.** `grep -rln codex-invoke .claude/agents/`
+finds only `work-order-orchestrator.md`, and `AGENTS.md` names neither this script nor any of its exit
+codes — so the readers are that file and `tools/README.md`. The brief widened this to three readers and
+both agents refuted it independently. The rule is unharmed: no exit code moved, so nothing had to
+propagate anywhere. But a propagation rule that overstates its own reach teaches its reader to spot-check
+it, and the next row to change an exit code should re-run that grep rather than trust this count.)*
 
 ---
 

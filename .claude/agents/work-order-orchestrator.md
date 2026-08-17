@@ -62,9 +62,19 @@ downgrade nobody can audit.
 
 Ties go to Claude. So do 🚩 go-live blockers, unless they sit squarely in the Codex column.
 
-### 2b. On the Codex route only: prove the runner can actually write
+### 2b. On the Codex route only: check the instrument, then prove the runner can actually write
 
-**Before the brief.** `codex doctor` reports *installation* health. A dispatch depends on
+**First, two seconds on the script itself** — it spawns no Codex process and needs none:
+
+```
+node tools/codex-invoke.mjs --self-check
+```
+
+Exit 1 means a gate in the file you are about to trust has stopped biting — the `--budget` refusal or
+the started-then-killed split — and both are invisible on a passing dispatch. Fix that before you read
+anything the probe says. (WO-2.40; `tools/README.md` has the table of what each mutation turns red.)
+
+**Then the probe.** `codex doctor` reports *installation* health. A dispatch depends on
 *exec-time helper* health, and those are different things — at WO-1.6 doctor said
 `16 ok · 0 fail · sandbox ✓` six minutes before `codex exec` exited zero having written nothing.
 
@@ -324,7 +334,8 @@ You never inspected the work, so recording someone else's verdict is transcripti
   `tools/wo-sweep.mjs`. Nobody should write a third harness. If a work order needs a check neither
   can make, that is a proposed follow-up in your report, not a throwaway script.
 - **Keep this file short.** It grew 169 → 274 lines in one day, WO-2.20's wait rule took it to 322,
-  and WO-2.37's `--budget` line and exit-3 rule to **330** — every dispatch pays to read all of it. New lessons go
+  WO-2.37's `--budget` line and exit-3 rule to 330, and WO-2.40's `--self-check` at step 2b to
+  **341** — every dispatch pays to read all of it. New lessons go
   to `plans/dispatch-retro.md`; only the imperative belongs here. **If you edit this file, correct
   that number in the same edit.** It was already stale when WO-2.20 read it, and a length rule that
   misstates the length is the first rule a reader discounts.
