@@ -4183,6 +4183,21 @@ broken. These three miss by 9, 10 and 47, into short files, and land on real cod
 | `tools/README.md:1611` | `src/grade-engine.js:41-42` | `assignmentsFor()`'s signature | `scoreCell()`'s `studentId` lookup, at `:51-52` |
 | `tools/README.md:1767` | `tools/README.md:783` | *"…made almost none. Three things about it are worth knowing."* | the call-site sentence, at `:830` |
 
+*(2026-08-17, hours after booking: **every number in the table above is now wrong by exactly +43, and
+this row's own subject is why.** WO-2.40 landed 45 insertions and 2 deletions at `tools/README.md:116`
+the same afternoon, so the three references are at `:1651`, `:1654` and `:1810`, and the Traps' `:830`
+target is at `:873`. The table is left as measured against `adb4fe6~1` rather than corrected, because
+correcting it would make this note the third wrong number in a row about wrong numbers — **find all
+three by text, not by line**: `grep -n "grade-engine.js:35-36" tools/README.md` for the first, the
+`scoreCell()` sentence four lines below it for the second, `grep -n 'README.md:783' tools/README.md`
+for the third, and `grep -n "made almost none" tools/README.md` for the target it should have named.
+**Re-measure before dispatching, and expect WO-2.44 to shift them again** — its prose lands near
+`tools/README.md:64`, above all three, which is why it goes first. One thing this shift makes sharper
+than the row could: the `:783` self-reference was **correct as a number** the day it was typed, and a
+hardcoded number in prose does not move with the text, so it now misses by 43 the sentence it was only
+ever landing on by accident. A pointer that is right today and silently wrong tomorrow is the whole
+case for the text anchor, made by this row's own file while the row sat unstarted.)*
+
 **`:1611` is the one to look at.** `assignmentsFor()` is named in the same paragraph as `scoreCell()`,
 so the pointer lands the reader on the *other* function the sentence mentions — plausible, adjacent,
 and wrong, which is the shape that does not get caught. A three-thousand-line miss is reported by the
