@@ -277,6 +277,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.39 — five pointers into the verification harness are now anchored to the code's own words
+  instead of to a line number.** Four sat in `tools/README.md`, off by up to 3,807 lines and inherited
+  across three work orders; the fifth, in `verify-shell.mjs`'s own block comment, had never been right.
+  A pointer that misses by three thousand lines does not read as stale, it reads as a pointer — the
+  reader follows it into unrelated code and concludes they have misread the document. Each one now
+  carries a single-hit grep (`else check(` is one hit in 22,000 lines) plus a dated note of the number
+  it used to be, so nothing a reader wanted was deleted; what changed is the currency. The insertions
+  this row made moved three of its own references by nine lines within the hour, which is the argument
+  making itself.
+
+  **The two unresolved ones came out opposite to the way the row predicted, and that is the useful
+  half.** `:1869` was expected to point at something gone. It did not: it named the WO-1.15 block's
+  banner, was correct the day it was typed, and had simply fallen 920 lines behind — confirmed against
+  the dispatch record that wrote it. The genuinely unrecoverable one was the harness comment's
+  `markKeys` read, and worse than the row knew: `:611` was wrong on the day it was typed under every
+  reading, proved from the commit that wrote the sentence, and under the harness-relative reading it
+  landed on `guardAnchor` — **the listener-slice read the sentence exists to contrast itself against**,
+  inside a paragraph whose subject is that a mitigation cited for a case it does not cover is worse
+  than none. The comment now names both things it contrasts and cites no number at all.
+
+  **Whether to police this mechanically was asked and answered no**, with the reasoning written into
+  `plans/verification-tooling.md` rather than left as a habit. A resolver can only assert that the
+  named line exists, and every one of the five wrong pointers named a line that did — a green-looking
+  wrong answer, which is `wo-sweep.mjs`'s own oldest failure shape. That is also what separates this
+  from the cross-file count the sweep already asserts: a count cannot be satisfied by a plausible
+  value, a line number can be satisfied by nothing else. And the non-vacuous version defeats itself —
+  to check that a pointer lands, the document must state the text it expects there, at which point the
+  number is redundant. A spot-check sized the rest of the debt honestly rather than by assumption:
+  twelve further references, of which four land, six do not, and two say in their own sentence that
+  they are historical. Two of the six are booked; the nine that are a record of what one tree measured
+  are now marked as such, because a number that records a reading is not a pointer and should not be
+  "fixed."
+
 - **WO-2.38 — the anti-vacuity guard on the two ⌨ Keys checks was itself never run.** WO-2.36 took out
   six hardcoded floors and put nineteen anchors asserted by name in their place — the modal id, the key
   constant, the slice, the row regex having matched at all — each with a red line saying which anchor

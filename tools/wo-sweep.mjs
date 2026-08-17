@@ -592,8 +592,13 @@ function commentLines(file) {
    ALLOWLIST, so the next reader does not re-derive it:
    - `tools/verify-shell.mjs:68` is `function check(name, ok, detail)` — the definition, excluded by
      name. It is the only occurrence of `check(` in that file that is not a call.
-   - `:10773` is an `else check(`, the one call site not first on its line. The pattern is therefore
-     NOT line-anchored; it matches `check(` anywhere a call could be written.
+   - The one `else check(` in the harness — `grep -n 'else check(' tools/verify-shell.mjs`, exactly one
+     hit — is the one call site not first on its line. The pattern is therefore NOT line-anchored; it
+     matches `check(` anywhere a call could be written. (Cited by line here until WO-2.39 — `:10570`,
+     then `:10773` — while the call site went on to `:10838`, `:10941`, and thousands of lines past
+     that. The number was illustration rather than something either tool resolves, and it lived in two
+     files that had to be corrected in step or read as disagreeing, so neither ever was. Both are
+     anchored by the text now.)
    - `.check(` and `recheck(` are excluded by construction — the character before `check` may not be
      a word character or a dot. Neither shape exists in the harness today; the guard is so that one
      arriving does not silently inflate the count.

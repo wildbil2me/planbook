@@ -318,6 +318,44 @@ the arms in the file and compares that with the cases written for them, so an ar
 goes red on the next run instead of on the day somebody remembers. If the case count ever outruns the
 arm count, a case is testing something that no longer exists.
 
+## The `:NNN` pointers into the harness are anchored by text, not swept, 2026-08-17 (WO-2.39)
+
+`tools/README.md` carries about twenty `path:NNN` pointers, most of them into `verify-shell.mjs`. Three
+of them were wrong by 3,522, 3,781 and 3,807 lines and a fourth by 920, inherited across at least three
+work orders, and the reader who follows one lands in unrelated code and concludes they have misread the
+document —
+which is worse than no pointer. WO-2.35 re-pointed two, WO-2.36 re-pointed six, WO-2.39 re-pointed
+four more. **The obvious answer is a sweep clause beside §11's call-site count, and it was refused.**
+
+**What kills it is that the claim a `:NNN` pointer makes is not the claim a check can read.** The
+pointer asserts *"the thing I just described in prose is on that line."* A clause can assert that the
+file exists and has that many lines, and nothing else — and `verify-shell.mjs` is 22,000 lines, so
+**every one of the five references this row fixed points at a line that exists.** `:10773`, `:12532`,
+`:17574`, `:1869` and `src/shell.js:611` would all have passed such a check, on the day they were
+wrong, which is this file's own oldest failure shape: a green-looking wrong answer. §11's existing
+cross-file assertion is not that shape and that is why it earns its keep — it compares a *count*
+against a grep, and a count cannot be satisfied by a wrong-but-plausible value.
+
+**Making it non-vacuous requires the README to state the text it expects at that line — and once the
+reference carries the text, the number is redundant.** The check's own precondition is the fix that
+makes the check unnecessary. So the answer is the anchor, not the sweep: **name the thing in the
+target file's own words** — a unique identifier, a check's quoted name, a literal line of code — and
+the reference survives every insertion above it without anybody maintaining it. That is what several
+comments inside `verify-shell.mjs` already do (`guardAnchor` is a *string* holding the line it looks
+for, not a line number), and it is why those comments have never rotted while the numbers around them
+did. `tools/README.md` § 11 carries the same note beside the WO-1.18 discussion, for the reader who is
+in that file rather than this one.
+
+**What is left uncovered, said out loud:** a text anchor can still go stale, if the code it quotes is
+reworded. It fails differently, and that is the whole gain — a grep for a quoted anchor comes back
+*empty*, which reads as "this is gone, go and look", where a wrong number reads as a right number.
+**A clause asserting that every anchor `tools/README.md` quotes still occurs in the file it names is a
+real check and is not vacuous** — an empty grep is a red. It is not built here because it needs a
+machine-readable convention for which backticked strings in 1,900 lines of prose are anchors, and
+inventing that convention across a file with no build step and no parser is the same retrofit §11
+priced and rejected for section-end markers. If the anchors are ever written to a convention, this is
+the check to reach for; it is a proposed follow-up, not an omission nobody noticed.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

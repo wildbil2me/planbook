@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 39 | 35 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 39 | 36 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **114** | **82** | **2** | `[███████░░░] 72%` |
+| | **114** | **83** | **2** | `[███████░░░] 73%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -525,6 +525,16 @@ be "this pointed at something that no longer exists" rather than a corrected num
 judgment nobody should make inside somebody else's commit. **It also asks whether this should be
 swept mechanically** — `wo-sweep.mjs` already asserts one cross-file number, so the precedent exists
 to end the class rather than pay it down once.*
+
+*[**Closed 2026-08-17, and the prediction above came out backwards.** `:1869` **was** resolvable — the
+WO-1.15 banner, correct when written and 920 lines behind by the time anyone followed it. The pointer
+with no recoverable answer was the fifth one carved in later, block B's `markKeys` read, which was
+wrong the day it was typed under every reading and landed a reader on the exact thing its own sentence
+exists to contrast itself against. **The sweep was refused**, on the ground that a resolver can only
+assert the named line exists and all five wrong pointers named lines that did — the full argument is in
+`plans/verification-tooling.md`. Booking a row so the judgment happened in the open rather than inside
+someone else's commit is what surfaced both, so the reason it was a row held even though its guess did
+not.]*
 
 *WO-2.40 and WO-2.41 were booked on 2026-08-16 out of **WO-2.37's dispatch**, and given rows #58 and
 #59 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above them.**

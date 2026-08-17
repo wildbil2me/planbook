@@ -3788,7 +3788,7 @@ this row is about.
 
 ## WO-2.39 — four line references in tools/README.md have been wrong for thousands of lines
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** S · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** *(no box. Documentation, not app.)*
 
 **Not a go-live blocker.** Booked 2026-08-16 out of WO-2.36's verification, which audited the
@@ -3803,7 +3803,7 @@ each, so this is inherited debt rather than any one row's doing:
 | `else check(` | `:10773` | `:14286` |
 | the WO-3.5 fixture guard | `:12532` | `:16304` |
 | the `wo38-s1` Ashdown fixture | `:17574` | `:21372` |
-| `:1869` | `:1869` | *unresolved — find what it meant* |
+| `:1869` | `:1869` | *was unresolved at booking; resolved on dispatch — see "How it came out" below* |
 
 **The right-hand column was re-resolved 2026-08-17, and two of the three had been wrong in a second
 way.** WO-2.38 inserted ~297 lines above all three, so every number in it was stale again within a
@@ -3823,7 +3823,7 @@ of src/shell.js (`:611`)"*, and nothing at `:611` in either file is that read:
 
 | Reference | Cited | Actually at |
 |---|---|---|
-| block B's `markKeys` read | `src/shell.js:611` | *unresolved — `MARK_KEYS` is at `src/shell.js:1617`, and `src/shell.js:611` is prose inside an unrelated function* |
+| block B's `markKeys` read | `src/shell.js:611` | *unresolved — `MARK_KEYS` is at `src/shell.js:1617`, and `src/shell.js:611` is prose inside an unrelated function. **Stayed unresolved, and was worse than this — see "How it came out" below.*** |
 
 Read the other way — as the harness's own line — it is no better: that read was at
 `tools/verify-shell.mjs:623` before WO-2.38 and is at `:647` now, so whichever was meant had already
@@ -3841,7 +3841,8 @@ unrelated code and concludes they have misunderstood the document. That is worse
 
 **The fourth one is the interesting one.** `:1869` has no obvious referent, which means the honest
 deliverable may be "this pointed at something that no longer exists, and here is what it should say
-instead" rather than a corrected number.
+instead" rather than a corrected number. *(That prediction was wrong, and the row was right to be
+interested in the wrong pointer for the wrong reason — see "How it came out".)*
 
 **Deliverables**
 - **The four references corrected**, or replaced with something that does not rot where no correct
@@ -3862,22 +3863,45 @@ reopening the whole set. Re-auditing the rest is not this row. Also out of scope
 restructuring `tools/README.md`.
 
 **Acceptance**
-- [ ] Each of the four references resolves to what it claims, or says something that cannot go stale,
+- [x] Each of the four references resolves to what it claims, or says something that cannot go stale,
       with the reasoning recorded for any that could not be resolved.
-- [ ] The fifth reference — block B's `markKeys` pointer in `tools/verify-shell.mjs` — is corrected or
+- [x] The fifth reference — block B's `markKeys` pointer in `tools/verify-shell.mjs` — is corrected or
       replaced with something that cannot rot. An honest "this cannot be established, and here is what
       the comment should say instead" closes this line; a plausible number nobody resolved does not.
-- [ ] A spot-check of at least six other `:NNN` references in `tools/README.md` is reported —
+- [x] A spot-check of at least six other `:NNN` references in `tools/README.md` is reported —
       whether they land or not — so the size of the remaining debt is known rather than assumed.
-- [ ] The sweep question is answered in writing, and if a check was built it is demonstrated failing
+- [x] The sweep question is answered in writing, and if a check was built it is demonstrated failing
       on a deliberately wrong reference before it is demonstrated passing.
-- [ ] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
+- [x] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
 
 **Traps** — **Line numbers move while you work.** Fix the references last, after every insertion this
 row makes is final, and re-resolve each one immediately before reporting rather than trusting a
 number read earlier in the session. **Do not fix these by deleting the pointers**; the pointer is
 carrying real information and a reader wants it. **`:1869` may not have an answer** — an honest "this
 referred to X, which is gone" beats a plausible number nobody verified.
+
+**How it came out — 2026-08-17, written after the dispatch closed.** *Everything above is the record of
+what was believed at booking and is left standing. Two of its claims did not survive the work, in
+opposite directions.*
+
+*`:1869` **was** resolvable. It named the WO-1.15 block's banner —* `Eight checks, and the fixture is
+the whole argument` *— confirmed three ways, including `.claude/dispatch/WO-1.18-result.md`, which
+records both the one-word edit the README sentence describes and the fact that the banner sat at
+`:1869` when that was written. So it was correct at birth and had fallen 920 lines behind, not 3,200,
+and it died the ordinary way rather than pointing at something gone.*
+
+*Block B's `markKeys` pointer was the unrecoverable one, and worse than the table above knew: it was
+wrong **on the day it was typed**, under every reading, proved from `392a80d`, the commit that wrote
+the sentence — `MARK_KEYS` has never moved from `src/shell.js:1617`, and `tools/verify-shell.mjs:611`
+at that commit was* `guardAnchor`*, **the listener-slice read the sentence exists to contrast itself
+against.** That closed its Acceptance line by the honest route the line allows: no number was adopted.*
+
+*All five references were answered with text anchors rather than corrected numbers, including the three
+that had a clean numeric answer — the reasoning is in `plans/verification-tooling.md` § "The `:NNN`
+pointers into the harness are anchored by text, not swept" and in `tools/README.md` § 11. **The sweep
+was refused** in writing; no check was built, so the demonstrate-failing-first clause did not apply,
+and the result file says so rather than leaving it implied. The spot-check ran to twelve references
+rather than six.*
 
 ---
 

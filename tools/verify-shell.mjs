@@ -591,11 +591,20 @@ function readScoresKeys(html, scoresSrc) {
  * comes back as `stray`, and a row that goes while its letter is bound comes back as `missing`.
  * Every partial loss THAT REACHES `bound` OR THE CARD is caught by name in one direction or the
  * other. Scoped deliberately, because the unscoped sentence is false here and was corrected at the
- * verification of WO-2.36 rather than shipped: `markKeys` is read FILE-WIDE out of src/shell.js
- * (`:611`), not out of the listener slice, so a `MARK_KEYS` that is still DECLARED while the listener
+ * verification of WO-2.36 rather than shipped: `markKeys` is read FILE-WIDE out of src/shell.js —
+ * readMarkingKeys() below matches `const MARK_KEYS = [` against `shellSrc`, the whole file, and not
+ * against `body` — so a `MARK_KEYS` that is still DECLARED while the listener
  * has stopped testing it leaves all five letters in `bound`, the card untouched, `missing` and
  * `stray` both empty and every anchor present — 9 against 8, green, with keyboard marking dead for
- * the teacher. THAT IS THE SAME RESIDUE THE SECOND check() BELOW EXISTS FOR, not a hole this guard
+ * the teacher.
+ * (That read was cited as `:611` from WO-2.36 until WO-2.39, and the number was wrong the day it was
+ * typed, whichever file it meant: `src/shell.js:611` is prose in the comment over
+ * afterAssignmentChange() and has been since before that commit — `MARK_KEYS` is at `:1617` there and
+ * has not moved — and `:611` in THIS file was `guardAnchor`, the listener-slice read this sentence
+ * exists to distinguish itself FROM. So it is anchored by the code's own text instead. A paragraph
+ * whose whole subject is that a mitigation cited for a case it does not cover is worse than none
+ * cannot carry a pointer that lands its reader on the other read.)
+ * THAT IS THE SAME RESIDUE THE SECOND check() BELOW EXISTS FOR, not a hole this guard
  * opened: the retired floor was equally green on that tree, which is the point WO-2.35 made in
  * different words. The block above says it at `:298-299` and it governs here too — a mitigation
  * cited for a case it does not cover is worse than none, because it stops the next reader looking.

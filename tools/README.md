@@ -830,9 +830,10 @@ print surface Phase 4 and Phase 6 want is the one this is really for.
 **`verify-shell.mjs` holds 808 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
-definition at `tools/verify-shell.mjs:68` is not a call, the `else check(` at `:10773` is why the
-pattern is not line-anchored, and comment lines are excluded because the harness quotes call names in
-its prose constantly. WO-3.12 moved it from 592 to 596, four literal call sites (case 8's third
+definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
+there is exactly one — is why the pattern is not line-anchored, and comment lines are excluded because
+the harness quotes call names in its prose constantly. WO-3.12 moved it from 592 to 596, four literal
+call sites (case 8's third
 direction and cases 13-15) added to the grade-engine block, none inside a loop; WO-2.24 moved it from
 596 to 599, three literal call sites in three different sections, likewise none inside a loop; WO-3.7
 moved it from 599 to 627, twenty-eight in one new section at the foot of the file, of which one is a
@@ -983,10 +984,14 @@ reading of that line report a broken app. And one clause is STATIC, in Node: no 
 loads may contain a versioned cache name, `sw.js` excepted. That is WO-8.10's Traps line as a grep,
 and it sits here rather than in `wo-sweep.mjs` because it is half of one claim — nothing types the
 name, and the thing that reads it moves when Cache Storage moves. *(The
-`else check(` has drifted from `:10773` — it was at `:10838` before WO-2.24 and is at `:10941` after.
-The line number is illustration rather than something either tool resolves, and correcting it in one
-of the two files that carry it would leave them disagreeing; it is noted here so the next reader who
-follows it does not think the allowlist has stopped applying.)* **WO-3.20 moved it from 781 to 783**:
+`else check(` the allowlist names is no longer cited by line in either file. The citation went `:10570`,
+then `:10773`, and then stopped moving while the call site kept going — `:10838` before WO-2.24,
+`:10941` after, and thousands of lines past that by the time WO-2.39 looked. The number was
+illustration rather than something either tool resolves, and it
+sat in two files that had to be corrected in step or read as disagreeing — so both name the text now,
+and there is exactly one `else check(` in the harness for a grep to find. Noted here so the next reader
+who misses the number does not think the allowlist has stopped applying.)* **WO-3.20 moved it from 781
+to 783**:
 two literal call sites in a new static block beside the precache one near the head of the file,
 neither inside a loop and neither a failure arm, so the block contributes two executed results and
 **the run prints 780**, measured on the delivered tree: `780 checks · 780 passed · 0 failed · 0
@@ -1443,8 +1448,12 @@ distinct call sites**, of which **10 fire more than once** (22 extra results, on
 **28 never fire at all**. 532 + 22 = 554. The two corrections cancel to 6 by accident.
 
 - **The 28 that never fire are all one shape: the failure arm of a fixture guard.** `if (!plant.ok)
-  check('the WO-3.5 fixture is real…', false, plant.why)` — `tools/verify-shell.mjs:12532`, and
-  `:4814`, `:6708`, `:10143`, `:12632` and the twenty-three like them. They exist so that a fixture
+  check('the WO-3.5 fixture is real…', false, plant.why)` — grep the harness for `if (!plant.ok)`, or
+  for that check's own name, `the WO-3.5 fixture is real: a class of 25 with case 1's three weighted
+  categories` (cited as `tools/verify-shell.mjs:12532` until WO-2.39, by then thousands of lines
+  short of it) — and `:4814`, `:6708`, `:10143`, `:12632` and the twenty-three like them, which are
+  line numbers on the WO-2.19 tree this instrumentation was run against rather than on this one, per
+  the paragraph above, and are not re-resolved here. They exist so that a fixture
   that did not arrive is announced as a red check rather than as a section that quietly did not run,
   which is this file's oldest rule. **A run in which one of them fires is a run in which something is
   wrong**, so "call sites a green run does not reach" is a description of the harness working.
@@ -1473,11 +1482,15 @@ is somebody editing the executed count wrongly while touching no check at all, w
 failure that happened three times.
 
 **Nor does the sweep check a SECTION header's count against the checks underneath it, and that is
-WO-1.18's answer rather than its omission.** That work order fixed one — `tools/verify-shell.mjs:1869`
-opened *"Seven checks, and the fixture is the whole argument"* over eight, correct when it was written
-and stale before its own commit landed — and then asked whether the drift is mechanically catchable,
-since §11 already counts `check()` call sites per line. It is, in the sense that a grep can produce a
-number; it is not, in the sense that the number would be right.
+WO-1.18's answer rather than its omission.** That work order fixed one — the **WO-1.15** block's own
+header in `verify-shell.mjs`, which opened *"Seven checks, and the fixture is the whole argument"* over
+eight, correct when it was written and stale before its own commit landed. (It reads *"Eight checks…"*
+now, and grepping that phrase is how to find it. This sentence cited `tools/verify-shell.mjs:1869`
+until WO-2.39 — the line WO-1.18 changed the one word on, right when it was written, and some nine
+hundred lines above the header today: the reference outlived what it pointed at by four work orders,
+which is the ordinary way one of these dies.) WO-1.18 then asked whether the drift is mechanically
+catchable, since §11 already counts `check()` call sites per line. It is, in the sense that a grep can
+produce a number; it is not, in the sense that the number would be right.
 
 **Finding the two sentences is the easy half, and an early draft of this note spent its best argument
 there.** The worry was decoys: 43 lines in the file mention a number of checks, and only two of them
@@ -1556,6 +1569,31 @@ WO-2.18, WO-3.5). A stale figure here is corrected for free by the next person t
 stale one there survives until somebody instruments a copy of the harness. So when you add a check to
 the sweep, **do not increment this number by arithmetic** — run it and copy the summary line, which is
 the same instruction §11's own failure text gives about the two numbers it watches.
+
+**Point into the harness by its own words, not by a line number — WO-2.39, and it is the third work
+order in a row to pay for this.** Three of this file's `:NNN` pointers into `verify-shell.mjs` were
+wrong by 3,522, 3,781 and 3,807 lines as WO-2.39 measured the tree it delivered, and a fourth by 920 —
+all four having survived WO-2.35 re-pointing two and WO-2.36 re-pointing six. **A pointer that is off by
+three thousand lines does not read as stale; it
+reads as a pointer**, and the reader who follows it lands in unrelated code and concludes they have
+misread this document. Worse, two of the three re-resolutions done by hand on the way in were *close
+enough to look right* — eleven lines above the `check()` a reference named, and the `categories:` line
+of a fixture rather than the student the reference was about — so even a careful correction lands the
+reader in the neighbourhood instead of on the thing. So: **name the referent in the target file's own
+text** — a unique identifier, a check's quoted name, a literal line of code — and let the reader
+grep. `else check(` occurs once in 22,000 lines; `doc.students.push(person('wo38-s1', 'Ashdown'`
+occurs once.
+Those cost a keystroke to follow and cannot rot with an insertion, and they fail *loudly* when the code
+they quote is reworded: an empty grep says "this is gone, go and look", where a wrong number says
+nothing at all. It is what several comments inside `verify-shell.mjs` already do — the marking-keys
+read holds `guardAnchor`, a **string** carrying the line it looks for, and that comment has outlived
+every number written near it. **A sweep clause was considered and refused**, because a check can only
+assert that the named line exists, and all five references WO-2.39 fixed pointed at lines that do:
+the reasoning, and the version of the check that would not be vacuous, are in
+[`../plans/verification-tooling.md`](../plans/verification-tooling.md) § "The `:NNN` pointers into the
+harness are anchored by text". Where a number is genuinely the subject — a quoted failure message from
+a mutation run, a measurement of the tree as it was that day — it stays a number, because it is a
+record of a reading and not an instruction to go and look.
 
 **595 at WO-3.12**, measured the same way: `595 checks · 595 passed · 0 failed · 0 skipped`, 14,295
 lines, 24.0 lines per check, 194s. Four checks land inside the grade engine block (WO-3.4)'s own
@@ -1721,8 +1759,10 @@ case, so the third deliverable's "add one only if it does not" resolved to addin
 `groupsFor()` counts students, not rows (`src/accommodation-prompt.js:186`'s `seen` Set), and the
 WO-3.8 fixture never gave one student two rows of the same kind to prove that dedupe does anything —
 measured at that work order's own verification: delete the `seen` Set and all 710 checks stay green.
-The only change here is to the fixture itself: `wo38-s1` Ashdown (`tools/verify-shell.mjs:17574`) now
-carries a second `extended-time` row scoped `['unit tests']` beside the original scoped `['tests']` —
+The only change here is to the fixture itself: `wo38-s1` Ashdown (grep the harness for
+`doc.students.push(person('wo38-s1', 'Ashdown'` — one hit; cited as `tools/verify-shell.mjs:17574`
+until WO-2.39, by then thousands of lines short of it) now carries a second `extended-time` row scoped
+`['unit tests']` beside the original scoped `['tests']` —
 both rows real, both matching Tests (`wo38-s3` Corvane already proves `['unit tests']` fires), so
 `isRealRow()` is not why the dedupe was never exercised. `tools/README.md:783`'s 713 call sites and
 the 710 executed results beside it are both unchanged by this work order — nothing here is a new
