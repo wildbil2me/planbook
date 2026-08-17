@@ -792,16 +792,45 @@ app was broken in production while the owner watched. A row would schedule work 
 The rule below is about work orders that arrive **open** — the failure it names is a finding that
 lands in the directory and never in the order, and a `✅ DONE` work order cannot fail that way.*
 
-*WO-2.7 has no row and that is deliberate too, and it is the **only open work order in the directory
-without one** — which is why it is said here rather than left to a count. It was deferred out of Ship 2
-on 2026-08-09 by the owner, and the reasoning is in its own header: no live data is coming across from
-Roll Call!, the 2026-27 rosters are pasted fresh, and the ledger starts empty, so there is nothing
-historical that anyone wants imported. **The deferral is about *when*, not about whether** — it keeps
+*WO-2.7 has no row and that is deliberate too, and it is **one of the two open work orders in the
+directory without one** — which is why it is said here rather than left to a count. (**It read "the
+only" until 2026-08-17**, and had been wrong since the afternoon WO-2.33 was booked: a hand-written
+count, in the one file where nothing counts, inside the section whose whole subject is a work order
+nobody notices. WO-2.33's paragraph follows this one.) It was deferred out of Ship 2 on 2026-08-09 by
+the owner, and the reasoning is in its own header: no live data is coming across from Roll Call!, the
+2026-27 rosters are pasted fresh, and the ledger starts empty, so there is nothing historical that
+anyone wants imported. **The deferral is about *when*, not about whether** — it keeps
 its work order, its roadmap box and its dependency, and it comes back the first time someone wants a
 prior year read in. It also came off WO-G2's `Depends on` line the same day, for the reason recorded
 there: a gate that waits on work nobody intends to do is a gate that gets waived. The rule below is
 satisfied by that paragraph; this line exists because the paragraph lives in
 `phase-2-attendance.md` and the question "why is this not in the running order" gets asked here.*
+
+*[WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why)
+is the second, booked 2026-08-16, and it is **unscheduled rather than deferred** — which is a different
+thing and is the reason it gets its own paragraph instead of a line in WO-2.7's. Its header carries
+`**Ship** —` and says why in its own words: Ship 2 is grades, the teacher goes live in late August, and
+the overdue alert has a **working visual channel** since WO-2.32 withdrew the tone. So the sound is
+real work that is not urgent work, and it gets picked up when somebody wants it back. **Nobody has
+decided it is not happening**, which is what keeps it `⬜ NOT STARTED` and out of ⏳ DEFERRED: a
+deferral is the owner's *when*, written by hand and reversed by hand, and no such call has been made
+here. If the tone matters again, this takes a row — not a status change.*
+
+***It is also the target of a live `**Owes**` pointer, and that is the sharper reason to say this out
+loud.*** *WO-2.31 is ✅ DONE carrying `**Owes** WO-2.33`, because its sixth Acceptance line was **run
+on the iPad and failed** — an interruption that left Planbook on screen silenced both alerts while the
+card tinted correctly — so the line stays `- [ ]` under a marker pointing here. That is a debt this
+directory is tracking, on a work order the running order cannot offer: `--audit` resolves the pointer
+every run and will keep saying `ok`, because the pointer is honest. **What nothing checks is whether
+the target is reachable.** Being un-rowed is the right answer today; being un-rowed and unremarked is
+the WO-1.17 and WO-1.18 failure, and the difference between the two is this paragraph.*
+
+***And a dispatch could not close it anyway.*** *Two of its four Acceptance lines are 👤 and both need
+the installed PWA on the teaching iPad **while the fault is happening** — a reading taken mid-failure,
+and an erratic spell from the 2026-08-16 sitting either reproduced or recorded as not reproducing. That
+is WO-1.16's shape rather than WO-2.38's: hardware, a quiet room, and the owner's own hands. A row in
+the running order would schedule a sitting, not a dispatch, which is worth knowing before anybody gives
+it one.*
 
 *WO-2.24 was given row #20 on 2026-08-10, the day it was booked out of WO-2.23's verification — **the
 third time this file has had to record the same failure**, after WO-3.12 and WO-3.10 below. A work
