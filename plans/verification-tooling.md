@@ -365,15 +365,22 @@ one, for whatever reason wants them to have one, this paragraph is the thing to 
 here rather than in the running order because a decision with no date attached is a note, and this file
 is where the notes about the harness live.
 
-*One thing that sitting turned up which this section did not know, and which raises the price of that
-convention rather than lowering it: **`src/` carries about seventy `path:NNN` pointers of its own**, and
-**forty-three of them point into Roll Call!'s `dashboard.html`** — a file in another repository, under
-daily classroom change, that nothing here can grep. A sample of the twenty-four in-repo ones found at
-least three that miss, including one in `src/scores.css` that was corrected on 2026-08-10 and has rotted
-again. So the anchor rule is the right rule beyond `tools/README.md`, the recurrence is real, and a
-convention that only covers the one file covers a quarter of the problem. **Not booked either** — see
-`plans/work-orders/README.md` § the WO-2.42/2.43 booking note for why the standing rule is fix-on-touch
-rather than an audit.*
+*One thing that sitting turned up which this section did not know: **`src/` carries about seventy
+`path:NNN` pointers of its own**, and **forty-three of them point into Roll Call!'s `dashboard.html`** —
+a file in another repository, which nothing here can grep. **Those forty-three are the safest pointers
+in the project, not the most dangerous**, and the first draft of this paragraph had it backwards. Roll
+Call! development is **paused in favour of Planbook** (owner, 2026-08-17) and no change to it is expected
+in the foreseeable future, so its line numbers are frozen: a pointer into a file nobody is editing does
+not rot. It stays deployed and in daily classroom use — being **used** is not being **changed**, and only
+the second one moves a line. If Roll Call! is ever picked back up, this is the paragraph that says
+forty-three pointers here go stale in one sitting and nothing in this repository can detect it.*
+
+*The pointers that actually rot are the in-repo ones, because this is the tree under daily change. A
+sample of the twenty-four found at least three that miss, including one in `src/scores.css` corrected on
+2026-08-10 and rotted again. So the anchor rule is the right rule beyond `tools/README.md`, the
+recurrence is real, and a convention covering only the one file covers a quarter of the problem. **Not
+booked either** — see `plans/work-orders/README.md` § the WO-2.42/2.43 booking note for why the standing
+rule is fix-on-touch rather than an audit.*
 
 ## What it cannot do, and must never claim to
 

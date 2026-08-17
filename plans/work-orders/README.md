@@ -576,9 +576,12 @@ every triage.** The trigger is the convention, not a queue position; the reasoni
 
 *And the same sitting measured how far the practice actually reaches, which is further than
 `tools/README.md`: **`src/` carries about seventy `path:NNN` pointers, forty-three of them into Roll
-Call!'s `dashboard.html`** — another repository, under daily classroom change, ungreppable from here. A
-sample of the twenty-four in-repo ones found at least three that miss, one of them in `src/scores.css`
-**corrected on 2026-08-10 and rotted again.* **That is not booked as an audit, deliberately.** *An
+Call!'s `dashboard.html`.** Those forty-three are ungreppable from here and were briefly written up as
+the dangerous ones; **they are the opposite.** Roll Call! development is paused in favour of this project
+(owner, 2026-08-17), so its line numbers are frozen — it stays deployed and in daily use, and use does
+not move a line. The rot is all in this tree, which is the one under daily change: a sample of the
+twenty-four in-repo pointers found at least three that miss, one in `src/scores.css`* **corrected on
+2026-08-10 and rotted again.** *That is not booked as an audit, deliberately. An*
 eighty-pointer sweep across `src/` buys a tidier comment layer and no working software, three weeks
 before a real class walks in, and the recurrence proves the audit is the wrong instrument anyway — a
 back-catalogue pass leaves the practice that produced it intact. **The standing rule is fix-on-touch:**
