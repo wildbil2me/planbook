@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.46 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.47 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -204,7 +204,7 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 21 | 20 | — | 🔨 IN PROGRESS (reopened three times; last on 2026-08-12) |
-| 2 — Attendance | 44 | 39 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 45 | 39 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **119** | **86** | **2** | `[███████░░░] 72%` |
+| | **120** | **86** | **2** | `[███████░░░] 72%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -416,9 +416,10 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 62 | [WO-2.43](phase-2-attendance.md#wo-243--three-more-pointers-in-toolsreadmemd-miss-by-little-enough-to-be-believed) Three more pointers miss by little enough to be believed | XS | | Aug 30, an hour |
 | 63 | [WO-2.45](phase-2-attendance.md#wo-245--the-outer-bash-timeout-binds-ten-minutes-before-the-cap-everything-is-calibrated-to) The outer Bash timeout binds before the cap | M | | **A decision before a keystroke.** Aug 31, a day |
 | 64 | [WO-2.46](phase-2-attendance.md#wo-246--three-readings-in-the-pass-block-sit-behind-waits-that-do-not-assert-them) Three readings sit behind waits that do not assert them | S | | Aug 31, half a day |
-| 65 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 66 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 67 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 65 | [WO-2.47](phase-2-attendance.md#wo-247--the-repo-write-guard-is-protected-by-prose-in-both-scripts-that-carry-it) The repo-write guard is protected by prose | S | | Aug 31, half a day |
+| 66 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 67 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 68 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -594,6 +595,23 @@ does, which was true and was not the question anybody needed answered. The corre
 analogue in the file to the bug that row had just fixed. So the audit was run twice inside one dispatch
 and came back different, and* **the row is booked on the second reading, not the first**. *That is the
 argument for the deliverable being a written sentence rather than a checked box: nobody re-reads a tick.*
+
+*WO-2.47 was booked on 2026-08-17 out of **WO-2.44's verification** and given row #65 **in the same
+sitting as the row itself**, which is the first time in seven that the running order was updated at
+booking rather than afterwards — the failure four paragraphs up, not repeated. WO-1.16, WO-3.18 and
+WO-G2 each moved down one; **nothing moved above them** — the cut band's argument for the sixth time.
+**The percentage did not move**, and that is rounding rather than management: 86/119 and 86/120 both
+round to 72%, and the denominator is stated beside it so nobody has to take the bar's word for it.*
+
+***It is deliberately not a reopening of WO-2.44.*** *That row's **Out of scope** refused a new
+`--self-check` case in as many words, on the ground that the guard is a property of the harness rather
+than a plant — a judgment made in the open, by a row whose whole subject was a measurement, and the
+right one for it. Folding this guard back into it would delete the record of that call and leave a
+spent work order carrying deliverables nobody dispatched. So the refusal stands where it was written and
+the consequence gets its own row, which is the same shape WO-2.46 took out of WO-2.42's deliberate
+**Out of scope**. **The half nobody has looked at is `codex-invoke.mjs`** — it has carried this fix since
+WO-2.40 and no check in this repository has ever read it, which is why the sweep half of this row is
+worth more than its size suggests.*
 
 ***None of the three has been observed red, and that is deliberate rather than a weakness.*** *WO-2.42
 was booked off a failure somebody watched happen; this one is booked off a mechanism somebody can point

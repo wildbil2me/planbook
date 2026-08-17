@@ -4551,3 +4551,105 @@ still means what its comment says; the cheaper shape is a second bounded wait af
 the timer claim untouched. **And a longer sleep is not a fix here either**, which should not need
 saying in a row whose entire subject is trap 5 — but WO-2.42's traps said it and WO-2.42 is why this
 row exists.
+
+---
+
+## WO-2.47 — the repo-write guard is protected by prose in both scripts that carry it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.44 · **Blocks** nothing
+**Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37, WO-2.40 and WO-2.44 made.)*
+
+**Not a go-live blocker, and it has never fired.** Booked 2026-08-17 out of WO-2.44's verification,
+where both agents independently reported that nothing standing protects the fix that row had just
+landed. **WO-2.44's Out of scope refused this on purpose** — *"the guard is a property of the harness,
+not a plant"* — and that was the right call for a row whose whole subject was a measurement. It leaves
+the fix guarded by a comment.
+
+**Why it exists.** `assertOutsideRepo()` is **silent when it works and silent when it fails**, which is
+WO-2.44's own trap. A regression would be exactly as quiet as the original defect: WO-2.40's first cut
+ran all seventeen plants inside `C:\dev\planbook\.guard-probe\…` and printed `PASS | 17 of 17`. Nothing
+in either script, in `--self-check`, in `--audit` or in the sweep would notice the fold coming back out.
+
+**The compare is the load-bearing half, and the call site is worth one empty directory.** Measured on
+the fixed tree rather than assumed, because it decides what is worth guarding: the copy targets at
+`wo-gate.mjs:1630-1631` are *already* wrapped in the guard, so deleting the `assertOutsideRepo(sandbox)`
+line WO-2.44 added at `:1609` moves the refusal later by one `fs.mkdirSync(sandbox/tools)` — an empty
+directory inside the repository, then a throw. Deleting the **fold** at `:1535` restores the whole
+silent escape. So a guard over the compare gets nearly all of the coverage, and the ordering line is
+prose worth keeping rather than a second thing to test.
+
+**And `codex-invoke.mjs`'s copy is tested by nothing at all today** — it has carried this fix since
+WO-2.40 and it is the script that spawns Codex. Since the two copies are **duplicated on purpose**
+rather than shared, "both copies still fold" is a claim no behavioural check in either file can make.
+That is a sweep claim, and `wo-sweep.mjs:630-689` is already exactly this shape.
+
+**Deliverables**
+- **A precondition assertion over `assertOutsideRepo()` itself**, in `selfCheck()`, before the sandbox
+  exists — beside `trackerDrift()`'s precondition (`:1638`) and reported the way that one is. Three
+  facts, because two of them do not separate the failure modes: `path.join(REPO, '.probe')` throws; the
+  same path with the drive letter's case **flipped** throws, on win32 only *(on POSIX that path is
+  genuinely outside, and asserting a throw there would be asserting a bug)*; and a path that really is
+  outside does **not** throw, which is what distinguishes "the fold was deleted" from "it throws at
+  everything."
+- **The `--against` asymmetry written at the code**, because this assertion is unlike every other check
+  in the file: it runs in the **invoking** script, not the subject, so `--self-check --against <old
+  copy>` would pass it while running the buggy guard. It is provable by **mutation** instead — delete
+  the fold, watch it go red — which is the pattern `tools/README.md`'s WO-3.11 table already uses. The
+  new mutation goes in that table.
+- **A sweep check that both copies still fold**, over `tools/wo-gate.mjs` and `tools/codex-invoke.mjs`.
+  **FAIL and not REVIEW** when either pattern stops matching, and FAIL on an empty grep — this file's
+  own rule, stated twice in its header and applied at `:660-665`.
+- **Whatever recorded count the new check moves**, updated from a run rather than by arithmetic, per the
+  rule at `wo-sweep.mjs:673`. The sweep reported `20 checks · 18 passed · 0 failed · 2 to review` on the
+  tree that booked this row.
+- **A correction to WO-2.44's own premise, in an italic-paren amendment on its row** rather than by
+  rewriting it. `:4318` says win32 *"yields a **lowercase** drive letter."* It yields whatever case
+  launched node — `REPO` was observed answering both spellings on one machine within one sitting — so
+  the pre-fix guard was correct **by coincidence of invocation**, which is worse than always-broken and
+  is why the verifier's own first unfixed run refused correctly. A true negative that reads exactly like
+  a pass. `tools/README.md` already carries the correction; the row does not.
+
+**Out of scope** — **rewriting the guard to use `path.relative()`**, which would make this class of bug
+unrepresentable rather than tested. It is a real option and was measured, not dismissed: win32
+`path.relative` is case-blind about the drive letter (`c:\dev\planbook` → `C:\dev\planbook\plans\x`
+gives `plans\x`), returns `""` for the same directory, `..\` for a sibling whose name shares a prefix,
+and an **absolute** path across drives — that last being the clause that must be handled or the guard
+permits everything. `tools/README.md:90-91` already leans on this property to argue `wo-sweep.mjs` needs
+no fix. It is out of scope here for two reasons: a row about protecting a fix should not also change the
+fix, and it would break the "same two lines, copied from the sibling" relationship unless
+`codex-invoke.mjs` changes in the same sitting. Book it separately if the shape is wanted.
+
+Also out of scope: **a standing end-to-end probe** — a subprocess with `TMP` inside the tree, asserting
+exit 1 and zero writes, which is what WO-2.44's verifier ran by hand. It proves the whole path and it is
+the one check that, on regression, **performs the escape it is testing for**. Contained, at least: every
+write in `runPlants()` goes under `sandbox`, so a regression writes into the probe directory and never on
+top of the live `plans/`. The coverage delta over the first deliverable is one empty `mkdirSync`, and the
+cost is a subprocess and an env mutation in a script that has neither. And: `codex-invoke.mjs` as a
+*change* — this row only reads it.
+
+**Acceptance**
+- [ ] With the fold deleted from `wo-gate.mjs`'s `assertOutsideRepo()`, `--self-check` goes **red at the
+      new precondition**, names the path it should have refused, and plants nothing. Reverted, and the
+      revert proved rather than reported.
+- [ ] With the fold deleted from `codex-invoke.mjs`, `node tools/wo-sweep.mjs` goes **red at the new
+      check** and names that file. Reverted and proved the same way.
+- [ ] **The new sweep check FAILs rather than passing quietly when it matches nothing** — shown, not
+      asserted, by pointing it at a path that does not exist. A green run over an empty grep is the
+      shape this whole file exists to catch.
+- [ ] On the unmutated tree: `--self-check` still `PASS | 17 of 17 plants were caught`, `--audit` still
+      PASS, `node tools/wo-sweep.mjs` green with its new count matching whatever `tools/README.md`
+      records.
+- [ ] The `--against` asymmetry is written at the code **and** in `tools/README.md`'s mutation table.
+- [ ] WO-2.44's lowercase premise is corrected on its own row, and `git diff --stat -- src/` is empty.
+
+**Traps** — **This is not an eighteenth plant, and it must not be counted as one.** The seventeen are
+about tracker rot; the count is recorded in `tools/README.md`, in the run's own output and in WO-2.44's
+acceptance, and a precondition that arrives as a plant makes three records wrong at once. WO-2.16's
+precondition reasoning is the model: it reports before any plant is made and says so in its own output.
+**Do not extract a shared helper** — WO-2.44's trap, unchanged; no script in `tools/` imports another,
+and that is the suite's no-dependencies rule reaching into its own toolchain. **A textual sweep check
+guards against deletion, not against subtle breakage** — say that where it is written, or the next
+reader takes it for behavioural coverage of a file nothing behaviourally covers. **And take the md5
+before the first mutation and prove the revert**, even though these mutations are in `tools/` rather
+than `src/`: WO-2.37's constant edit and WO-2.42's `src/classes.js` md5 that no blob in the file's
+history matches are both this hazard, and neither was in `src/` by intention either.
