@@ -4,8 +4,18 @@
 //
 // Usage:
 //   node tools/codex-invoke.mjs --probe
+//   node tools/codex-invoke.mjs --brief <path> --out <path> [--cwd <path>] [--budget <minutes>] --detach
+//   node tools/codex-invoke.mjs --status <path> [--wait <seconds>]
 //   node tools/codex-invoke.mjs --brief <path> --out <path> [--cwd <path>] [--budget <minutes>]
 //   node tools/codex-invoke.mjs --self-check [--against <path>]
+//
+// --detach is the dispatch shape the orchestrator uses, and the plain --brief/--out form above it is
+// the same dispatch held in the caller's own process. WO-2.45 is why they are two: the caller is a
+// Bash tool call whose timeout the tool itself caps at 600000 ms, ten minutes, which fires before
+// INVOKE_TIMEOUT_MS ever does — so a foreground dispatch is killed by its caller, the exit-3 report
+// below is never printed, and the reader who has to go and look at a half-applied mutation is told
+// nothing at all. --detach hands the run to a supervisor process that outlives the call; --status
+// reads the record it leaves behind. See OUTER_CALL_CEILING_MS.
 //
 // --budget states, in minutes, what this work order's Acceptance will spend on harness runs:
 // verify-shell.mjs runtime x the number of full runs it demands. It buys nothing and raises
@@ -36,13 +46,22 @@
 //      why the code exists: codex wrote all seven of its files, failed to exit, was killed at the
 //      cap, and this script reported "could not be run" and exit 2 over 206 insertions sitting in
 //      the tree. A reader who trusts exit 2's invariant does not go looking.
+//      --status answers 3 for the same shape one level up: a detached supervisor that is GONE and
+//      left no verdict (ABANDONED). Same sentence, same instruction — a dispatch ended before it
+//      could say what it did, with its writes still in the tree.
+//   4  no verdict YET, and nothing has been judged. --detach exits 4 the moment it has handed the
+//      dispatch to a supervisor, and --status exits 4 while that supervisor is still working. It is
+//      deliberately not 0: WO-2.20's scar is a spawn reported as a run, and the one defence that
+//      cannot be talked around is that the code meaning "started" is not the code meaning
+//      "succeeded". Exit 0 from this file still means exactly one thing — codex exited 0 and the
+//      output file exists.
 //
 // Every one of those codes is driven, against a stand-in child and with no codex process anywhere
 // near it, by `--self-check` at the foot of this file: 0 if every gate still bites, 1 if one has
 // stopped. Both gates in here are behaviour nobody sees on a normal run, which is the whole reason
 // that flag exists (WO-2.40); its section comment is the account.
 
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join, resolve, dirname, delimiter, sep } from 'node:path';
@@ -70,17 +89,38 @@ const PROBE_TIMEOUT_MS = 120_000;
 //     ~4.4 min a run on this tree, so four runs fit inside forty minutes and five do not, and the
 //     next slow Acceptance is a bigger number again. A cap picked to make one symptom disappear
 //     hides the same exclusion one work order further out, and teaches its next reader nothing.
-//   - It is not the constraint that binds first anyway. The orchestrator runs this script from a
-//     Bash call it is told to give 600000 ms — ten minutes, which
-//     .claude/agents/work-order-orchestrator.md step 4 calls "what actually protects the session"
-//     and which is the largest timeout that call takes. That fires first, it is outside this file,
-//     and raising the number here moves it not at all.
+//   - It was not the constraint that bound first, and WO-2.45 is that sentence being acted on
+//     rather than only recorded. WO-2.37 wrote here that the outer Bash call's 600000 ms fires
+//     before this number and that raising this number moves it not at all — true, and it meant the
+//     twenty minutes was a promise nothing could keep. The fix was to move the dispatch OUT of the
+//     call rather than to shrink the promise to fit it, so twenty minutes is now the real cap on a
+//     --detach dispatch. See OUTER_CALL_CEILING_MS below for the constraint that still binds a
+//     foreground one, and plans/verification-tooling.md § "Detaching the Codex dispatch" for the
+//     shape that was rejected.
 //   - A --timeout flag was considered and refused. A caller who can raise the cap can buy exactly
 //     the mid-mutation SIGTERM described above. --budget spends the same argument the other way:
 //     the caller states what the Acceptance needs and is refused before anything is dispatched.
 // The answer to a work order that does not fit is its ROUTE, not this number — see
 // plans/work-orders/ROUTING.md § "Route to Codex", which asks the multiplication at routing time.
 const INVOKE_TIMEOUT_MS = 20 * 60 * 1000;
+
+// The OTHER cap, the one this file does not own and cannot raise: the orchestrator runs this script
+// from a Bash tool call, and that tool caps its own `timeout` argument at 600000 ms. Ten minutes,
+// against the twenty above, and it is a CEILING rather than a preference — "give the outer call
+// more" is not an available move, which is what made WO-2.45 a design question and not a constant
+// edit.
+//
+// WHAT IT COSTS WHEN IT FIRES FIRST, because this is the thing the twenty-minute comment above could
+// not see. It is the SCRIPT that gets killed, not the child. runInvoke() never reaches its
+// started-then-killed branch, never prints the exit-3 diagnosis, and the caller is left holding a
+// bare timeout over a tree that may be carrying a half-applied mutation — which is WO-3.15's shape
+// (2026-08-14) reached around the side of the code written to prevent it.
+//
+// So it is read here rather than left in prose, and it is read in exactly one place: bindingCap(),
+// which answers what actually constrains THIS invocation. A foreground dispatch is constrained by
+// this number; a --detach dispatch is not constrained by it at all, because the supervisor is no
+// longer inside the call that gets killed.
+const OUTER_CALL_CEILING_MS = 600 * 1000;
 
 // Held back from the cap for the half of a dispatch that is not a harness run — the reading, the
 // writing, the revert, the result file. It is a judgment, not a measurement: nothing in this repo
@@ -195,6 +235,10 @@ function parseArgs(argv) {
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--cwd') args.cwd = argv[++i];
     else if (a === '--budget') args.budget = argv[++i];
+    else if (a === '--detach') args.detach = true;
+    else if (a === '--status') args.status = argv[++i];
+    else if (a === '--wait') args.wait = argv[++i];
+    else if (a === '--supervise') args.supervise = argv[++i];
     else fail(2, `codex-invoke: unrecognized argument '${a}'`);
   }
   return args;
@@ -248,30 +292,61 @@ function runProbe() {
 
 const minutes = (ms) => (ms / 60000).toFixed(1).replace(/\.0$/, '');
 
+// WHAT ACTUALLY CONSTRAINS THIS INVOCATION — the whole of WO-2.45 in one function, and the reason
+// the answer is computed rather than written down. Before this row the budget gate compared against
+// INVOKE_TIMEOUT_MS unconditionally and printed the comparison to the router as a promise, while the
+// thing that really ended the dispatch was a number in another file that this one never read. A gate
+// that clears a dispatch against a cap nobody is enforcing is worse than no gate: it is a refusal
+// that says yes to exactly what it exists to refuse.
+//
+// So the smaller of the two applies, and the message names which one it was. A foreground dispatch
+// dies with the call that made it — 600000 ms. A --detach dispatch is handed to a supervisor that
+// outlives the call, so nothing shortens it below its own cap.
+function bindingCap(detached) {
+  return detached || INVOKE_TIMEOUT_MS <= OUTER_CALL_CEILING_MS
+    ? { ms: INVOKE_TIMEOUT_MS, name: 'INVOKE_TIMEOUT_MS', held: 'a detached dispatch runs to its own cap' }
+    : { ms: OUTER_CALL_CEILING_MS, name: 'OUTER_CALL_CEILING_MS', held: 'a foreground dispatch dies with the call that made it' };
+}
+
 // The pre-flight refusal. It runs BEFORE the install is inspected and before anything is spawned,
 // which is the point: whether a work order's Acceptance fits inside the cap is a fact about the
 // work order, so the answer has to read the same on a machine with no Codex on it at all. A caller
 // that states no budget is not refused — the rubric is where the multiplication is required, this
 // is where it can be enforced — and a budget that fits prints so, because a gate that is silent
 // when it passes is indistinguishable from a gate nobody wired up.
-function refuseIfBudgetDoesNotFit(budgetArg) {
+//
+// Since WO-2.45 it fits against bindingCap() rather than against INVOKE_TIMEOUT_MS. The consequence
+// worth stating plainly: with a ten-minute ceiling and a ten-minute reserve, NO positive budget fits
+// in the foreground, so the answer to a stated budget there is always the refusal below. That is not
+// a bug in the arithmetic — it is the arithmetic finally being done against the number that was
+// killing the dispatches, and the way out of it is --detach, which the message names.
+function refuseIfBudgetDoesNotFit(budgetArg, { detached }) {
   if (budgetArg === undefined) return;
   const stated = Number(budgetArg);
   if (!Number.isFinite(stated) || stated <= 0) {
     fail(2, `codex-invoke: --budget takes the harness minutes this work order's Acceptance needs, as a positive number (got '${budgetArg}').`);
   }
+  const cap = bindingCap(detached);
   const budgetMs = stated * 60 * 1000;
-  if (budgetMs + WORK_RESERVE_MS > INVOKE_TIMEOUT_MS) {
-    fail(2, `codex-invoke: REFUSED before dispatch — ${minutes(budgetMs)} min of stated harness runs plus the ${minutes(WORK_RESERVE_MS)} min reserve for reading, writing and reverting does not fit inside the ${minutes(INVOKE_TIMEOUT_MS)} min INVOKE_TIMEOUT_MS, and a dispatch killed at that cap is SIGTERMed with its mutations still in the tree; nothing ran, nothing was written, the runner was never asked — route this one to Claude Sonnet (plans/work-orders/ROUTING.md § "Which Claude").`);
+  if (budgetMs + WORK_RESERVE_MS > cap.ms) {
+    const wayOut = detached
+      ? 'route this one to Claude Sonnet (plans/work-orders/ROUTING.md § "Which Claude").'
+      : 'pass --detach, which hands the dispatch to a supervisor that outlives this call and restores the 20 min INVOKE_TIMEOUT_MS — or route this one to Claude Sonnet (plans/work-orders/ROUTING.md § "Which Claude").';
+    fail(2, `codex-invoke: REFUSED before dispatch — ${minutes(budgetMs)} min of stated harness runs plus the ${minutes(WORK_RESERVE_MS)} min reserve for reading, writing and reverting does not fit inside the ${minutes(cap.ms)} min ${cap.name} (${cap.held}), and a dispatch killed at that cap is SIGTERMed with its mutations still in the tree; nothing ran, nothing was written, the runner was never asked — ${wayOut}`);
   }
-  console.log(`codex-invoke: stated run budget ${minutes(budgetMs)} min + ${minutes(WORK_RESERVE_MS)} min reserve fits inside the ${minutes(INVOKE_TIMEOUT_MS)} min cap.`);
+  console.log(`codex-invoke: stated run budget ${minutes(budgetMs)} min + ${minutes(WORK_RESERVE_MS)} min reserve fits inside the ${minutes(cap.ms)} min ${cap.name}, which is what binds this dispatch.`);
 }
 
-function runInvoke(args) {
+// Every caller-side refusal, in the order they have always fired, kept in ONE place because
+// --detach has to make all of them in the caller's own process. That is the half of the foreground
+// path worth keeping: exit 2's invariant — nothing was dispatched, the tree is untouched — is only
+// useful to a reader who is still there to read it, and a refusal handed to a background process
+// would be a refusal nobody sees until they poll for it.
+function preflight(args, { detached }) {
   if (!args.brief || !args.out) {
     fail(2, 'codex-invoke: --brief <path> and --out <path> are both required.');
   }
-  refuseIfBudgetDoesNotFit(args.budget);
+  refuseIfBudgetDoesNotFit(args.budget, { detached });
   const briefPath = resolve(args.brief);
   const outPath = resolve(args.out);
   const cwd = args.cwd ? resolve(args.cwd) : process.cwd();
@@ -282,7 +357,16 @@ function runInvoke(args) {
   if (!existsSync(codexResourcesDir())) {
     fail(2, `codex-invoke: codex-resources not found at ${codexResourcesDir()} — the Codex standalone install looks missing or moved.`);
   }
+  return { briefPath, outPath, cwd };
+}
 
+// The dispatch itself. It RETURNS its verdict rather than exiting on it — { code, out, err } — and
+// that is the one structural change WO-2.45 made to this path. A supervisor has no stdout anybody is
+// reading, so the report has to become a value before it can be written into a status file; the
+// alternative was a second copy of these six outcomes, which is how the exit-3 wording and the
+// header block would start disagreeing. The streams are preserved rather than merged: `out` is what
+// went to stdout before, `err` is what went to stderr, and the messages are unchanged to the byte.
+function dispatchOnce({ briefPath, outPath, cwd }) {
   // WO-2.40's second adjacent finding, ANSWERED IN WRITING RATHER THAN MOVED, and the finding as
   // booked has its order wrong: this already runs BELOW the codex-resources check, not above it, so
   // the two refusals it was worried about both fire before the directory exists. What survives is
@@ -303,7 +387,7 @@ function runInvoke(args) {
     ['exec', '--cd', cwd, '--sandbox', 'workspace-write', '-o', outPath, '-'],
     { input: brief, cwd, timeout: invokeTimeout() },
   );
-  if (infra) fail(2, `codex-invoke: ${infra}`);
+  if (infra) return { code: 2, err: `codex-invoke: ${infra}` };
 
   // Started, then killed — see the probe's copy of this split for the `signal` discriminator. It
   // matters more here than there: a dispatch reaching this line has been running for up to twenty
@@ -331,27 +415,248 @@ function runInvoke(args) {
     const why = result.error.code === 'ETIMEDOUT'
       ? `it hit the ${minutes(invokeTimeout())} min INVOKE_TIMEOUT_MS`
       : `${result.error.code}: ${result.error.message}`;
-    fail(3, `codex-invoke: KILLED, not refused — codex started, ran, and was ended by ${result.signal} before it could exit: ${why}. Nothing rolled the tree back: whatever this dispatch wrote is still in it, INCLUDING any deliberate mutation it was holding mid-check. Read 'git status' and the diff before re-dispatching or re-routing — the work may be partial, half-applied, or complete (WO-3.15 finished its work and was killed anyway). This is not a verdict on the runner and not exit 2's "nothing was dispatched".`);
+    return { code: 3, err: `codex-invoke: KILLED, not refused — codex started, ran, and was ended by ${result.signal} before it could exit: ${why}. Nothing rolled the tree back: whatever this dispatch wrote is still in it, INCLUDING any deliberate mutation it was holding mid-check. Read 'git status' and the diff before re-dispatching or re-routing — the work may be partial, half-applied, or complete (WO-3.15 finished its work and was killed anyway). This is not a verdict on the runner and not exit 2's "nothing was dispatched".` };
   }
 
   if (result.error) {
-    fail(2, `codex-invoke: codex exec could not be run: ${result.error.message}`);
+    return { code: 2, err: `codex-invoke: codex exec could not be run: ${result.error.message}` };
   }
 
   const wrote = existsSync(outPath);
-  console.log(`codex exec exited ${result.status}${result.signal ? ` (signal ${result.signal})` : ''}; output ${wrote ? 'written to' : 'MISSING at'} ${outPath}`);
+  const out = `codex exec exited ${result.status}${result.signal ? ` (signal ${result.signal})` : ''}; output ${wrote ? 'written to' : 'MISSING at'} ${outPath}`;
 
   if (result.status !== 0) {
-    if (result.stderr) console.error(result.stderr.trim());
-    process.exit(1);
+    return { code: 1, out, err: (result.stderr || '').trim() };
   }
   if (!wrote) {
     // A zero exit with nothing written is a runner that failed and said it succeeded — treat it
     // as a failed dispatch, not a pass with no output.
-    console.error('codex exec exited 0 but wrote no output file. Treat as a failed dispatch.');
-    process.exit(1);
+    return { code: 1, out, err: 'codex exec exited 0 but wrote no output file. Treat as a failed dispatch.' };
   }
-  process.exit(0);
+  return { code: 0, out };
+}
+
+function report({ out, err }) {
+  if (out) console.log(out);
+  if (err) console.error(err);
+}
+
+// The foreground dispatch, unchanged in what it does and now honest about what it is. It is kept
+// because --self-check drives every spawn outcome through it and because a human at a terminal has
+// no outer timeout to lose to — but it is no longer the shape the orchestrator is told to use, so it
+// says so once, before it spends twenty minutes it may not have.
+function runInvoke(args) {
+  const paths = preflight(args, { detached: false });
+  console.error('codex-invoke: foreground dispatch — it dies with the call that started it, and the started-then-killed report dies with it. --detach outlives the caller (WO-2.45).');
+  const r = dispatchOnce(paths);
+  report(r);
+  process.exit(r.code);
+}
+
+// ----- --detach, --supervise, --status: the dispatch outlives the call that started it
+//
+// WO-2.45. The three of them are one mechanism and are best read together.
+//
+// --detach     makes every caller-side refusal in the caller's own process (so exit 2 still reaches
+//              a reader), writes the dispatch record, hands the run to a detached supervisor, and
+//              exits 4 — "started, nothing judged". It never exits 0.
+// --supervise  is that supervisor, and is not a documented invocation: it is this same file, run
+//              again, holding the spawnSync the caller used to hold. It writes its verdict into the
+//              record on the way out, on every path.
+// --status     is what reads the corpse, and the Traps line on this row is that a dispatch nobody is
+//              holding is a dispatch nobody notices dying. Three answers: the verdict (0/1/3) once
+//              the record is terminal, 4 while it is still running, and 3 — ABANDONED — for a
+//              supervisor that is gone and left none. That last one is the corpse, and it is 3
+//              rather than a code of its own because it is the same fact exit 3 already carries:
+//              something ran, nobody knows how far it got, go and read the tree.
+//
+// WHAT THIS DOES NOT DO, said plainly because it is the cost the work order named. Detaching the
+// DISPATCH does not detach the ORCHESTRATOR: step 4b's rule — the spawn is not the work — survives
+// only because --status --wait blocks, so the caller still sits on the run, in slices that fit
+// inside a Bash call instead of in one slice that does not. If a future caller polls once, sees 4
+// and writes a report, that is WO-2.20's failure with a new mechanism under it, and no code here can
+// stop it; the exit code being 4 rather than 0 is the most this file can do.
+const STATUS_VERSION = 1;
+
+// How long past its own cap a supervisor may go before a reader is entitled to call it dead. It
+// covers node's startup, the spawn, and the seconds between the SIGTERM and the record being
+// written — all small, and generous on purpose: declaring a live dispatch abandoned is the one
+// mistake here that sends somebody to read a diff that is still being written.
+const ABANDON_GRACE_MS = 2 * 60 * 1000;
+
+// Beside the result file, named after it, so the three files of one dispatch sort together in
+// .claude/dispatch/ — the brief that asked, the record of the run, and the result that came back.
+function statusPathFor(outPath) {
+  return `${outPath.replace(/\.[^.\\/]*$/, '')}.dispatch.json`;
+}
+
+function writeStatus(p, record) {
+  writeFileSync(p, `${JSON.stringify(record, null, 2)}\n`);
+}
+
+// The version is READ and not merely written. A constant stamped into a file and never checked is a
+// constant that drifts, and the failure it would drift into is the worst one available here: a
+// reader that misinterprets an older record's fields and answers 0 or 4 over a dispatch it has not
+// understood. Refusing is the conservative direction — exit 2, nothing judged.
+function readStatus(p) {
+  let record;
+  try {
+    record = JSON.parse(readFileSync(p, 'utf8'));
+  } catch (e) {
+    fail(2, `codex-invoke: the dispatch record at ${p} could not be read as JSON (${e.message}). It is written by --detach and rewritten once by the supervisor; a record that is neither is a file somebody else owns.`);
+  }
+  if (record.version !== STATUS_VERSION) {
+    fail(2, `codex-invoke: the dispatch record at ${p} says version ${record.version}, and this script writes and reads version ${STATUS_VERSION}. Refusing to guess what its fields mean — read the file, or re-dispatch.`);
+  }
+  return record;
+}
+
+// A synchronous sleep, because everything else on this path is synchronous and an async --status
+// would mean two ways of reading one file. Atomics.wait on a buffer nothing else can see is the
+// stdlib's own answer; it blocks the thread and takes no dependency.
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+// Alive rather than exited. `process.kill(pid, 0)` signals nothing and throws ESRCH when there is no
+// such process; EPERM means it exists and is not ours, which is still alive. THE RESIDUE, named
+// rather than papered over: a pid can be recycled, and a recycled pid reads as alive forever. That
+// is why elapsed time is the second arm below and not a nicety — it answers without trusting the pid
+// at all, and the two arms only ever disagree in the direction of waiting longer.
+function pidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === 'EPERM';
+  }
+}
+
+function abandonedReason(record) {
+  const elapsed = Date.now() - Date.parse(record.startedAt);
+  if (record.pid == null) {
+    return elapsed > 60_000
+      ? `the supervisor never recorded a pid, ${Math.round(elapsed / 1000)}s after --detach wrote this record — it did not come up`
+      : null;
+  }
+  if (!pidAlive(record.pid)) return `the supervisor (pid ${record.pid}) is gone and wrote no verdict`;
+  const cap = record.capMs || INVOKE_TIMEOUT_MS;
+  if (elapsed > cap + ABANDON_GRACE_MS) {
+    return `pid ${record.pid} has been running ${minutes(elapsed)} min, past its own ${minutes(cap)} min cap plus ${minutes(ABANDON_GRACE_MS)} min of grace, and has written no verdict`;
+  }
+  return null;
+}
+
+function runDetach(args) {
+  const paths = preflight(args, { detached: true });
+  const statusPath = statusPathFor(paths.outPath);
+  mkdirSync(dirname(statusPath), { recursive: true });
+
+  // Written BEFORE the spawn, and the pid is filled in by the supervisor itself rather than by this
+  // process. Writing it here would mean two writers on one file with no ordering between them: the
+  // supervisor can reach its verdict — a refusal from inside dispatchOnce, say — before this process
+  // gets its second write in, and the launcher would then clobber a finished record with a running
+  // one. One writer per phase, and the pid the file carries is the pid that wrote it.
+  const record = {
+    version: STATUS_VERSION,
+    state: 'running',
+    pid: null,
+    brief: paths.briefPath,
+    out: paths.outPath,
+    cwd: paths.cwd,
+    budgetMinutes: args.budget === undefined ? null : Number(args.budget),
+    capMs: invokeTimeout(),
+    startedAt: new Date().toISOString(),
+  };
+  writeStatus(statusPath, record);
+
+  // The supervisor's own cwd is deliberately NOT the dispatch cwd — it holds every path it needs as
+  // an absolute, and on Windows a live process sitting in a directory is a directory nothing can
+  // delete. --self-check removes its sandbox on the way out, and a supervisor parked in it would
+  // turn that into an EBUSY on a green run.
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--supervise', statusPath], {
+    cwd: tmpdir(),
+    env: process.env,
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  child.unref();
+
+  console.log(`codex-invoke: DISPATCHED and detached — supervisor pid ${child.pid}, cap ${minutes(record.capMs)} min. NOTHING HAS BEEN JUDGED YET.`);
+  console.log(`  record  ${statusPath}`);
+  console.log(`  read it node tools/codex-invoke.mjs --status ${statusPath} --wait 540`);
+  process.exit(4);
+}
+
+function runSupervise(statusPath) {
+  const p = resolve(statusPath);
+  if (!existsSync(p)) fail(2, `codex-invoke --supervise: no dispatch record at ${p}`);
+  const record = readStatus(p);
+  record.pid = process.pid;
+  record.supervisorAt = new Date().toISOString();
+  writeStatus(p, record);
+
+  // Every exit from here writes a verdict, including the one nobody planned. A supervisor that dies
+  // without writing is the ABANDONED case above, which is a real answer but a worse one — it can
+  // only ever say "something happened", where a thrown error can say what.
+  let r;
+  try {
+    r = dispatchOnce({ briefPath: record.brief, outPath: record.out, cwd: record.cwd });
+  } catch (e) {
+    r = { code: 2, err: `codex-invoke: the supervisor threw before it could reach a verdict: ${e && e.message}` };
+  }
+  // `stdout`/`stderr` rather than `out`/`err`: `out` is already this record's field for the OUTPUT
+  // PATH, and the verdict overwriting the path it was dispatched to is a one-word bug that a reader
+  // of the JSON would diagnose as a corrupt record.
+  record.state = 'done';
+  record.finishedAt = new Date().toISOString();
+  record.code = r.code;
+  record.stdout = r.out || '';
+  record.stderr = r.err || '';
+  writeStatus(p, record);
+  process.exit(r.code);
+}
+
+// --wait blocks, and is capped below the ceiling that started all this: a poll asked to wait longer
+// than the call holding it is the same defect one level up. 540 s leaves a minute of margin inside a
+// 600000 ms Bash call, and a caller who needs longer makes a second call — which is the point of the
+// verdict living in a file rather than in a process.
+const MAX_WAIT_S = 540;
+
+function runStatus(statusPath, waitArg) {
+  const p = resolve(statusPath);
+  if (!existsSync(p)) {
+    fail(2, `codex-invoke --status: no dispatch record at ${p} — --detach writes one beside the result file it was given. Nothing was read and nothing is running that this can see.`);
+  }
+  let waitS = 0;
+  if (waitArg !== undefined) {
+    waitS = Number(waitArg);
+    if (!Number.isFinite(waitS) || waitS < 0) {
+      fail(2, `codex-invoke: --wait takes seconds, as a number that is not negative (got '${waitArg}').`);
+    }
+    if (waitS > MAX_WAIT_S) {
+      fail(2, `codex-invoke: --wait is capped at ${MAX_WAIT_S} s (got ${waitS}), so that one poll fits inside the 600000 ms the caller's own call is capped at. Poll again rather than waiting longer in one call.`);
+    }
+  }
+  const deadline = Date.now() + waitS * 1000;
+  for (;;) {
+    const record = readStatus(p);
+    if (record.state === 'done') {
+      report({ out: record.stdout, err: record.stderr });
+      process.exit(record.code);
+    }
+    const gone = abandonedReason(record);
+    if (gone) {
+      fail(3, `codex-invoke --status: ABANDONED — ${gone}. This dispatch started and nothing knows how far it got, which is exit 3's whole meaning: nothing rolled the tree back, so whatever it wrote is still in it, INCLUDING any deliberate mutation it was holding mid-check. Read 'git status' and the diff before re-dispatching or re-routing. Record: ${p}`);
+    }
+    if (Date.now() >= deadline) {
+      const elapsed = Date.now() - Date.parse(record.startedAt);
+      console.log(`codex-invoke --status: RUNNING — pid ${record.pid ?? 'not yet recorded'}, ${minutes(elapsed)} min in, cap ${minutes(record.capMs || INVOKE_TIMEOUT_MS)} min. NOTHING HAS BEEN JUDGED YET; poll again.`);
+      process.exit(4);
+    }
+    sleepSync(2000);
+  }
 }
 
 // ---------------------------------------------------------------------------- self-check
@@ -413,6 +718,16 @@ function runInvoke(args) {
 // script's own fit line. If either constant moves, these two cases go red, and that is intended
 // rather than brittle: three files carry that number, and a cap that changes without them changing is
 // the drift this suite keeps paying for.
+//
+// AND THE BOUNDARY MOVED AT WO-2.45, WHICH IS THAT PARAGRAPH BEING PAID OUT RATHER THAN CONTRADICTED.
+// Neither constant changed value. What changed is which constant the gate compares against: 20 min
+// belongs to a --detach dispatch, and a FOREGROUND one is held inside a Bash call the tool caps at
+// 600000 ms, so the ten-minute reserve alone fills it and no positive budget fits there at all. So
+// the pair below is now a pair of pairs — 10 fits and 10.1 does not, both under --detach; 10 and 0.1
+// are both refused in the foreground, and the first of those is the exact sentence that read "fits
+// inside the 20 min cap" before this row while the call holding it died at ten. The two foreground
+// cases are the regression guard for WO-2.45 itself: a subject that goes back to comparing against
+// INVOKE_TIMEOUT_MS unconditionally passes both --detach cases and fails both of these.
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SEAM_KEYS = ['CODEX_INVOKE_SELFCHECK_CMD', 'CODEX_INVOKE_SELFCHECK_CMD_ARG',
@@ -531,14 +846,42 @@ function runCases(subject, sandbox) {
     + `try { stdin = readFileSync(0, 'utf8'); } catch { stdin = '(stdin unreadable)'; }\n`
     + `writeFileSync(out, stdin);\n`);
 
+  // Dispatch records planted by hand (WO-2.45). --status answers three ways, and two of them are
+  // states no fixture should have to produce by waiting: a supervisor that died, and one still
+  // inside a twenty-minute cap. The record is the whole interface between the supervisor and the
+  // reader, so planting one is driving the reader — the same shape as wo-gate.mjs planting a tracker
+  // rather than running a dispatch to get one.
+  const plantRecord = (name, fields) => write(sb(`${name}.dispatch.json`), `${JSON.stringify({
+    version: 1,
+    state: 'running',
+    pid: null,
+    brief,
+    out: sb(`${name}-result.md`),
+    cwd: sandbox,
+    budgetMinutes: null,
+    capMs: INVOKE_TIMEOUT_MS,
+    startedAt: new Date().toISOString(),
+    ...fields,
+  }, null, 2)}\n`);
+
+  // A pid this run has WATCHED exit, rather than a large number chosen for looking unlikely. The
+  // residue: Windows can recycle a pid, and a recycled one would read as alive and turn the case
+  // that uses it red on a correct subject. Seconds-scale reuse is remote enough to accept and is
+  // recorded here rather than left for somebody to rediscover from one confusing red run.
+  const deadPid = spawnSync(process.execPath, ['-e', '0']).pid;
+
   // Every seam variable is cleared before a case sets its own, so a shell that happens to be
   // carrying one cannot quietly change what is being asserted.
+  // `ms` is here for one case and is worth the two lines: --detach's whole claim is that the caller
+  // gets its process back BEFORE the dispatch ends, and a subject that quietly ran in the foreground
+  // would print the same DISPATCHED line, exit the same 4, and differ only in how long it took.
   const runSubject = (args, seam) => {
     const env = { ...process.env };
     for (const k of SEAM_KEYS) delete env[k];
     Object.assign(env, seam);
+    const t0 = Date.now();
     const r = spawnSync(process.execPath, [script, ...args], { cwd: sandbox, env, encoding: 'utf8', timeout: 120_000 });
-    return { status: r.status, signal: r.signal, out: `${r.stdout || ''}${r.stderr || ''}` };
+    return { status: r.status, signal: r.signal, ms: Date.now() - t0, out: `${r.stdout || ''}${r.stderr || ''}` };
   };
 
   const BASE = {
@@ -592,24 +935,49 @@ function runCases(subject, sandbox) {
       hasnt: ['fits inside'],
     },
     {
-      name: 'the --budget boundary that FITS says so, and the run goes on to the next gate',
+      name: 'DETACHED: the --budget boundary that FITS says so, and the run goes on to the next gate',
       // Two gates in one case, and the brief is the missing one on purpose: the budget passing has to
       // be visible as the run continuing past it, not just as an absent refusal.
-      args: ['--brief', noBrief, '--out', sb('unreached.md'), '--budget', '10'], code: 2,
-      has: ['stated run budget 10 min + 10 min reserve fits inside the 20 min cap', 'brief not found at'],
+      args: ['--brief', noBrief, '--out', sb('unreached.md'), '--budget', '10', '--detach'], code: 2,
+      has: ['stated run budget 10 min + 10 min reserve fits inside the 20 min INVOKE_TIMEOUT_MS', 'brief not found at'],
       hasnt: ['REFUSED'],
     },
     {
-      name: 'the --budget boundary that does NOT fit is refused before anything is created',
-      args: dispatch(sb('never-created', 'result.md'), ['--budget', '10.1']), code: 2,
-      has: ['REFUSED before dispatch', '10.1 min of stated harness runs', 'does not fit inside the 20 min'],
+      name: 'DETACHED: the --budget boundary that does NOT fit is refused before anything is created',
+      args: dispatch(sb('never-created', 'result.md'), ['--budget', '10.1', '--detach']), code: 2,
+      has: ['REFUSED before dispatch', '10.1 min of stated harness runs', 'does not fit inside the 20 min INVOKE_TIMEOUT_MS'],
       hasnt: ['fits inside', 'KILLED', 'codex exec exited'],
       // The structural half of the same claim: refuseIfBudgetDoesNotFit() is called BEFORE the
       // mkdirSync and before the spawn. A call moved below either of them still refuses, still exits
       // 2, and leaves this directory behind — which is the mutation the exit code alone cannot see.
+      // Under --detach it also has to fire before the RECORD is written, which is the same claim
+      // one file further out: a refused dispatch that leaves a record behind is a dispatch --status
+      // will report as running forever.
       then: (bad) => {
         if (existsSync(sb('never-created'))) bad.push('the refusal created the output directory, so it ran after mkdirSync rather than before the dispatch');
       },
+    },
+    {
+      // WO-2.45's regression guard, and the case this row exists for. Ten minutes of stated harness
+      // runs is what ROUTING.md's own worked examples ask for, and before this row the answer was
+      // "fits inside the 20 min cap" — printed to a router, from inside a call that dies at ten.
+      name: 'FOREGROUND: the same budget that fits a detached dispatch is refused, against the outer ceiling',
+      args: dispatch(sb('never-created-fg', 'result.md'), ['--budget', '10']), code: 2,
+      has: ['REFUSED before dispatch', '10 min of stated harness runs', 'does not fit inside the 10 min OUTER_CALL_CEILING_MS', 'a foreground dispatch dies with the call that made it', 'pass --detach'],
+      hasnt: ['fits inside', 'KILLED', 'codex exec exited'],
+      then: (bad) => {
+        if (existsSync(sb('never-created-fg'))) bad.push('the refusal created the output directory, so it ran after mkdirSync rather than before the dispatch');
+      },
+    },
+    {
+      // The other side of the foreground boundary, which is that there is no other side: the reserve
+      // alone is the whole ceiling, so the smallest statable budget is refused too. Written as its own
+      // case because "no budget fits in the foreground" is a claim about the arithmetic and not about
+      // the number 10, and a subject that special-cased one value would pass the case above it.
+      name: 'FOREGROUND: even a tenth of a minute is refused — the 10 min reserve already fills the ceiling',
+      args: dispatch(sb('never-created-fg2', 'result.md'), ['--budget', '0.1']), code: 2,
+      has: ['REFUSED before dispatch', '0.1 min of stated harness runs', 'does not fit inside the 10 min OUTER_CALL_CEILING_MS'],
+      hasnt: ['fits inside', 'codex exec exited'],
     },
     {
       name: 'codex-resources missing, dispatch mode',
@@ -677,10 +1045,87 @@ function runCases(subject, sandbox) {
         else if (!readFileSync(out, 'utf8').includes(BRIEF_MARK)) bad.push('the output file does not carry the brief, so the child was launched without being given one');
       },
     },
+
+    // ----- --detach and --status (WO-2.45): the dispatch outlives the call, and something reads the corpse
+    {
+      // The row's central claim, driven rather than argued: exit 3 survives when the caller does not.
+      // The launcher returns in well under the dispatch's own cap — that is the detaching — and the
+      // started-then-killed report is still there afterwards, in a file, with its exit code intact.
+      // A subject that ran the dispatch in the foreground fails on `ms`; one whose supervisor never
+      // writes a verdict fails on the record; one that regressed the kill split fails on the code.
+      name: 'DETACHED, then killed at the cap — the launcher returns 4 in a moment, the verdict is still 3',
+      args: dispatch(sb('detached', 'result.md'), ['--detach']), code: 4,
+      seam: { CODEX_INVOKE_SELFCHECK_CMD_ARG: sleeps, CODEX_INVOKE_SELFCHECK_TIMEOUT_MS: '4000' },
+      has: ['DISPATCHED and detached', 'NOTHING HAS BEEN JUDGED YET'],
+      hasnt: ['KILLED', 'could not be run', 'codex exec exited'],
+      then: (bad, r) => {
+        if (r.ms >= 4000) bad.push(`the launcher took ${r.ms} ms, which is its own dispatch's whole cap — this did not detach, it waited`);
+        const rec = sb('detached', 'result.dispatch.json');
+        if (!existsSync(rec)) {
+          bad.push('--detach wrote no dispatch record, so nothing exists that could read the corpse');
+          return;
+        }
+        const s = runSubject(['--status', rec, '--wait', '60'], BASE);
+        if (s.status !== 3) bad.push(`--status answered ${s.status} for a dispatch killed at its cap, expected 3`);
+        for (const phrase of ['KILLED, not refused', 'ended by SIGTERM', 'INVOKE_TIMEOUT_MS', 'Read \'git status\' and the diff']) {
+          if (!s.out.includes(phrase)) bad.push(`--status never said "${phrase}", so the diagnosis did not survive the detach`);
+        }
+        if (s.out.includes('could not be run')) bad.push('--status said "could not be run", which belongs to a different exit code');
+      },
+    },
+    {
+      name: '--status on a record that does not exist — a caller-side refusal, and nothing is running',
+      args: ['--status', sb('no-such-dispatch.json')], code: 2,
+      has: ['no dispatch record at', 'Nothing was read'],
+      hasnt: ['ABANDONED', 'RUNNING'],
+    },
+    {
+      // The corpse itself, on the arm that will actually happen: the machine went away, or somebody
+      // killed the tree, and a record says `running` over a pid that is gone. Driven with a pid this
+      // check has watched exit, and with the elapsed arm deliberately NOT in play — capMs is 20 min
+      // and the record is seconds old, so only the liveness read can produce this answer.
+      name: 'ABANDONED: a record left running by a supervisor that is gone reads as exit 3, not as running',
+      args: ['--status', plantRecord('corpse-dead-pid', { pid: deadPid, capMs: 20 * 60 * 1000, startedAt: new Date().toISOString() })], code: 3,
+      has: ['ABANDONED', `pid ${deadPid}`, 'is gone and wrote no verdict', 'Read \'git status\' and the diff'],
+      hasnt: ['RUNNING', 'NOTHING HAS BEEN JUDGED YET'],
+    },
+    {
+      // The second arm, which is the one that does not trust the pid at all — pid reuse would make a
+      // dead supervisor read as alive forever, so elapsed time answers on its own. Driven with THIS
+      // process's pid, which is certainly alive, against a cap it is certainly past.
+      name: 'ABANDONED: a live pid past its cap and its grace is still a corpse',
+      args: ['--status', plantRecord('corpse-overrun', { pid: process.pid, capMs: 1000, startedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() })], code: 3,
+      has: ['ABANDONED', 'past its own', 'min of grace', 'has written no verdict'],
+      hasnt: ['is gone and wrote no verdict', 'RUNNING'],
+    },
+    {
+      // The control the three above need: a record that is genuinely still running must NOT be called
+      // a corpse. Without it, a subject whose abandonedReason() returned a string unconditionally
+      // would pass every case in this block.
+      name: 'control: a record still inside its cap, with a live pid, is RUNNING and exits 4',
+      args: ['--status', plantRecord('still-running', { pid: process.pid, capMs: 20 * 60 * 1000, startedAt: new Date().toISOString() })], code: 4,
+      has: ['RUNNING', 'NOTHING HAS BEEN JUDGED YET'],
+      hasnt: ['ABANDONED', 'KILLED'],
+    },
+    {
+      // The version stamp being read rather than only written. Without this case the check is a
+      // constant nothing tests, which is this file's own subject one level down.
+      name: 'a dispatch record from a version this script does not read is refused, not guessed at',
+      args: ['--status', plantRecord('from-the-future', { version: 99 })], code: 2,
+      has: ['says version 99', 'Refusing to guess what its fields mean'],
+      hasnt: ['RUNNING', 'ABANDONED', 'KILLED'],
+    },
+    {
+      name: '--wait past the cap that keeps one poll inside the caller\'s own call',
+      args: ['--status', plantRecord('unreached-wait', { pid: process.pid, capMs: 20 * 60 * 1000, startedAt: new Date().toISOString() }), '--wait', '541'], code: 2,
+      has: ['--wait is capped at 540 s', 'Poll again rather than waiting longer'],
+      hasnt: ['RUNNING', 'ABANDONED'],
+    },
   ];
 
-  console.log(`  fixture   ${cases.length} cases over 5 stand-in children — no codex process, and no case names a command`);
-  console.log(`            other than this Node binary and one path that does not exist`);
+  console.log(`  fixture   ${cases.length} cases over 5 stand-in children and 5 planted dispatch records — no codex`);
+  console.log(`            process, and no case names a command other than this Node binary and one path`);
+  console.log(`            that does not exist`);
   console.log('');
 
   let failed = 0;
@@ -706,16 +1151,23 @@ function runCases(subject, sandbox) {
   console.log('');
   console.log(`  ${cases.length} cases, ${cases.length - failed} caught, ${failed} missed.`);
   console.log('  Covers what WO-2.37 built and drove by hand: every caller-side refusal by exit code AND by');
-  console.log('  a phrase of its message, both --budget boundaries at the shipped constants, the');
-  console.log('  started-then-killed split both ways round (timeout and maxBuffer), the never-started half');
-  console.log('  beside it, and the three exit codes next door that must not absorb any of them.');
+  console.log('  a phrase of its message, both --budget boundaries at the shipped constants IN BOTH MODES —');
+  console.log('  detached against the 20 min cap, foreground against the 10 min ceiling that binds it —');
+  console.log('  the started-then-killed split both ways round (timeout and maxBuffer), the never-started');
+  console.log('  half beside it, and the three exit codes next door that must not absorb any of them. Since');
+  console.log('  WO-2.45 it also drives the detached path end to end: the launcher returning before its own');
+  console.log('  dispatch ends, the exit-3 diagnosis surviving in the record, and both arms of the corpse');
+  console.log('  read — a supervisor that is gone, and one alive past its cap — with a running control');
+  console.log('  beside them so that "everything is abandoned" cannot pass.');
   console.log('  NOT covered, because a green run trusted for what it never touched is worse than no check:');
   console.log('  the runner itself — no codex process is started here, by design and by WO-2.40\'s Traps —');
   console.log('  so SMOKE OK and SMOKE FAILED, the probe\'s git init refusal, withCodexPath()\'s PATH');
   console.log('  prepend (the reason this file exists at all), and the { infra } refusal for a codex that');
   console.log('  resolves at neither location, which the seam short-circuits by design. Nor the externally');
   console.log('  killed child: `signal` set with `error` unset is not producible on win32, which is why the');
-  console.log('  branch it would exercise says what it says. And nothing here proves a real dispatch works.');
+  console.log('  branch it would exercise says what it says. Nor a caller that polls --status once, reads 4');
+  console.log('  and writes a report anyway, which is a rule in the orchestrator and not a gate in here.');
+  console.log('  And nothing here proves a real dispatch works.');
   console.log('');
   console.log(failed ? `FAIL | ${failed} of ${cases.length} gates have stopped biting.`
                      : `PASS | ${cases.length} of ${cases.length} cases behaved. A green run is not coverage — read the paragraph above it.`);
@@ -739,5 +1191,17 @@ const parsed = parseArgs(argv);
 if (parsed.probe && parsed.budget !== undefined) {
   fail(2, 'codex-invoke: --budget applies to a dispatch, not to --probe (the probe caps itself at two minutes).');
 }
+// --status and --supervise read a dispatch record; --detach writes one. Refusing the combinations
+// rather than picking a winner, on the --probe --budget precedent above: a flag accepted and
+// silently ignored reads to its caller as a flag that was honoured.
+if (parsed.status !== undefined && (parsed.detach || parsed.brief || parsed.out || parsed.probe)) {
+  fail(2, 'codex-invoke: --status reads a dispatch record and starts nothing, so it takes no --brief, --out, --detach or --probe.');
+}
+if (parsed.wait !== undefined && parsed.status === undefined) {
+  fail(2, 'codex-invoke: --wait applies to --status, which is the only thing here that waits.');
+}
 if (parsed.probe) runProbe();
+else if (parsed.supervise !== undefined) runSupervise(parsed.supervise);
+else if (parsed.status !== undefined) runStatus(parsed.status, parsed.wait);
+else if (parsed.detach) runDetach(parsed);
 else runInvoke(parsed);

@@ -382,6 +382,87 @@ recurrence is real, and a convention covering only the one file covers a quarter
 booked either** — see `plans/work-orders/README.md` § the WO-2.42/2.43 booking note for why the standing
 rule is fix-on-touch rather than an audit.*
 
+## The Codex dispatch is detached and polled, not shrunk to fit, 2026-08-17 (WO-2.45)
+
+`.claude/agents/work-order-orchestrator.md` told the orchestrator to give the Codex Bash call a
+**600000 ms** timeout while `tools/codex-invoke.mjs` capped itself at **twenty minutes** — and
+everything downstream was calibrated to the twenty. `WORK_RESERVE_MS` is ten minutes, so the
+`--budget` gate WO-2.37 built **approved** up to ten minutes of stated harness runs, and printed the
+arithmetic to the router as a promise. Ten of those nineteen minutes did not exist.
+
+**Measured before it was changed, because a row that begins "obviously" has skipped the only step
+that proves the premise.** `--budget 9` — the number `ROUTING.md`'s own worked example uses for
+WO-2.35, two `verify-shell.mjs` runs at ~4.4 minutes — printed `stated run budget 9 min + 10 min
+reserve fits inside the 20 min cap`, inside a call that dies at ten. And a `codex-invoke.mjs` run
+given an outer deadline shorter than its own cap printed **nothing at all**, exiting on `SIGTERM`
+with no exit code, where the identical run left alone printed the whole started-then-killed
+diagnosis and exited 3. So the gate cleared the exact dispatch it exists to refuse, and the exit-3
+report WO-2.37 built and WO-2.40 made permanent was unreachable around the side of both — WO-3.15's
+2026-08-14 shape, reached past the code written to prevent it.
+
+**600000 is a ceiling, not a preference:** the Bash tool caps its own `timeout` argument there, so
+*"give the outer call more"* was never available. That is what made this a design question. Two
+shapes were.
+
+### Rejected: shrink `INVOKE_TIMEOUT_MS` under ten minutes
+
+Smaller, honest, and one constant — and the arithmetic is what kills it. For the script's own
+SIGTERM to fire first the cap has to sit **meaningfully** below 600000 ms; call it eight minutes,
+leaving two for node's startup, the report, and the tool's own accounting. `WORK_RESERVE_MS` is then
+subtracted from eight, and **the reserve is not compressible** — it stands for reading the work order
+and the precedent, writing the code, reverting the mutations and writing the result file. Left at
+ten, nothing fits at all: every positive budget is refused, and the Codex route closes silently.
+Halved to five, the budget ceiling is **three minutes** against a `verify-shell.mjs` run of ~4.4, so
+**no work order whose Acceptance needs one full harness run could ever route to Codex** — and
+mutation-proved acceptance is this project's house style, not an outlier.
+
+That is not "narrowing the Codex route further". It is closing it for everything actually booked
+here, while recording in the file that the cap *was examined and left small* — **the invisible
+exclusion WO-2.37 exists to have made visible, arriving through the door WO-2.37 held shut.** It
+would also have staled every "20 minutes" sentence in `ROUTING.md` and `plans/work-orders/README.md`
+in the same sitting, which is the drift these three files keep paying for.
+
+### Chosen: the dispatch outlives the call that started it
+
+`--detach` makes every caller-side refusal in the caller's own process — so exit 2's *"nothing was
+dispatched, the tree is untouched"* still reaches a reader — then hands the run to a detached
+supervisor and exits **4**, *started, nothing judged*. `--status [--wait]` reads the record it
+leaves. **Exit 3 is restored by construction**, because the script is no longer inside the thing that
+gets killed; twenty minutes becomes the cap that really binds, so every downstream sentence about it
+becomes true rather than needing rewriting; and the budget gate now compares against whichever
+constraint binds *this* invocation, naming it — 20 min detached, 10 min in the foreground, where the
+reserve alone fills the ceiling and no stated budget fits.
+
+**What reads the corpse**, which is the cost the work order named — *a dispatch nobody is holding is
+a dispatch nobody notices dying*:
+
+- **`--status --wait` blocks.** Detaching the dispatch does **not** detach the orchestrator: it is
+  still sitting on the run, in slices that fit inside a Bash call instead of one slice that does not.
+  Step 4b — *the spawn is not the work* — is unchanged, and `--wait` is capped at 540 s so a poll
+  cannot outlive the call holding it, which is the original defect one level up.
+- **A supervisor that is gone is told from one still working**, on two arms: pid liveness, and
+  elapsed time against the record's own cap plus two minutes of grace. Two, because a recycled pid
+  reads as alive forever and the elapsed arm answers without trusting the pid at all. It reports
+  `ABANDONED` and exits **3** rather than inventing a code — it is the fact exit 3 already carries:
+  something ran, nobody knows how far it got, go and read the tree.
+- **The record is a file**, `.claude/dispatch/<WO-ID>-result.dispatch.json`, beside the brief and the
+  result, so a *resumed* orchestrator reads it too. Step 1's "an interrupted **you**" rule now names
+  it.
+
+**Three costs, taken rather than hidden.** Exit **4** is a fifth code — accepted because the
+alternative is a launcher that exits 0, and *"started" wearing "succeeded"'s code* is WO-2.20's scar
+with a new mechanism under it. `tools/wo-gate.mjs`'s dispatch-file listing hardcodes
+`${id}-${name}.md`, so the record does **not** appear in `next`'s "which dispatch files exist" line;
+left alone, because that file is another work order's subject. And nothing in the script can stop a
+caller polling once, reading 4 and writing a report anyway — the defence is the agent file's rule
+plus an exit code that cannot be mistaken for success, and `--self-check` says so in its own
+uncovered list.
+
+**It is not a second harness and not a new tool.** `--detach`, `--supervise` and `--status` are flags
+in the file they belong to, on the same reasoning as *"The check on `wo-gate.mjs` is a flag inside
+`wo-gate.mjs`"* above; `--self-check` grew from 17 cases to 26 rather than acquiring a sibling, and
+every one of the nine new ones was watched going red against a mutant aimed at it.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

@@ -38,6 +38,39 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.45 — a Codex dispatch is no longer held inside the call that started it.** The pipeline gave a
+  dispatch twenty minutes and then ran it inside a call that could only ever last ten, so a slow work
+  order was approved by the very guard meant to refuse it: `--budget 9` plus a ten-minute reserve
+  compared 19 minutes against `INVOKE_TIMEOUT_MS` and passed, inside a ceiling half that size. And when
+  the time ran out it was the **reporter** that got killed, not the child — leaving a bare timeout where
+  the explanation should have been: no verdict, no diagnosis, and a half-finished change possibly still
+  sitting in the project. The exit-3 branch that exists to say *this was interrupted, go and read what
+  it left behind* printed nothing at all whenever the outer call was the binding constraint.
+
+  `codex-invoke.mjs` now dispatches with `--detach` and is checked on with `--status [--wait]` rather
+  than held. The launcher exits **4** — started, nothing judged — which can never be misread as success,
+  and a poll that answers 4 is not a result. `bindingCap()` makes `--budget` compare against whichever
+  constraint actually binds and name it, so every refusal has an honest number behind it. **No constant
+  changed value**; what changed is which one the arithmetic consults.
+
+  **The alternative was worked out on paper and rejected in writing** (`plans/verification-tooling.md`).
+  Shrinking the twenty minutes to fit the ten needs the cap near eight minutes; the reserve left at ten
+  then admits nothing at all, and halved to five it leaves a three-minute budget ceiling against a
+  harness run that takes four and a half — quietly closing the Codex route to every work order that has
+  to prove itself by running the checks. That is exactly the invisible exclusion WO-2.37 exists to have
+  made visible.
+
+  **Detach-and-poll is the shape the work order's own Traps line warned about** — a dispatch nobody
+  holds is a dispatch nobody notices dying — so what reads the corpse is written down and driven, not
+  assumed: `--status` distinguishes a supervisor that is gone from one alive past its cap from one still
+  running, with a control beside each so "everything is a corpse" cannot pass. Exit 3 was reproduced by
+  hand **across two separate shell calls**, the launcher returning in 173 ms and the full diagnosis
+  arriving ten seconds after the call that made it had exited. `--self-check` is 26 of 26 and
+  non-vacuous: restoring the old arithmetic turns exactly the two foreground cases red, and the
+  pre-WO-2.45 file fails 11 of 26. Two residues are named rather than papered over — `--self-check`
+  cannot tell a supervisor that outlives its parent process from one that outlives the whole shell call,
+  and a recycled pid reads as alive (the elapsed arm covers it).
+
 - **WO-2.44 — `wo-gate.mjs --self-check`'s guard against writing inside the repository was case-blind
   to the one thing it guards.** With `TMP` pointed into the tree, the harness copied the whole of
   `plans/` in there, planted seventeen deliberately corrupted tracker files against the copy, printed

@@ -157,7 +157,8 @@ needed one clean run plus three mutation runs at a measured 264s — **~17.6 min
 20-minute cap** — and went to **Claude Sonnet** on that alone, with its Codex reasoning intact.
 WO-2.36 needs three runs — **13.2 minutes**, and `--budget 13.2` refuses it — so it fails the bullet
 the same way. **WO-2.35 is the instructive one, because it does not fail:** its Traps say *at least*
-two runs at ~4.5 minutes, and two fits — `--budget 9` answers *"fits inside the 20 min cap"* — while
+two runs at ~4.5 minutes, and two fits — `--budget 9 --detach` answers *"fits inside the 20 min
+INVOKE_TIMEOUT_MS"* — while
 the third run it leaves room for does not. An Acceptance whose run count is open-ended has not
 answered this bullet at all; route on the largest count it could mean, and say in the routing sentence
 which number you used. *(Checked against the script rather than by arithmetic, 2026-08-16, after a
@@ -166,11 +167,16 @@ Opus** anyway, because each was already in the Claude column on its own merits. 
 Codex off the table; it never decides the tier** — read the Claude column first.
 
 **The orchestrator can hand the arithmetic to the script instead of carrying it.**
-`node tools/codex-invoke.mjs --brief … --out … --budget <minutes>` states the same number this bullet
-asks for, and refuses in one line before anything is spawned when it will not fit — nothing
-dispatched and the tree untouched, rather than a SIGTERM seventeen minutes in. Passing it is what
-makes the refusal a command's answer rather than a reader's memory; the flag raises nothing and buys
-nothing, and `INVOKE_TIMEOUT_MS` carries the reasoning for why the cap itself was left where it is.
+`node tools/codex-invoke.mjs --brief … --out … --budget <minutes> --detach` states the same number
+this bullet asks for, and refuses in one line before anything is spawned when it will not fit —
+nothing dispatched and the tree untouched, rather than a SIGTERM seventeen minutes in. Passing it is
+what makes the refusal a command's answer rather than a reader's memory; the flag raises nothing and
+buys nothing, and `INVOKE_TIMEOUT_MS` carries the reasoning for why the cap itself was left where it
+is. **`--detach` is not decoration on that command line** (WO-2.45): without it the dispatch is held
+inside a Bash call the tool caps at 600000 ms, ten minutes rather than twenty, and the twenty in the
+bullet above is not a number anything can deliver. The script says so — a stated budget in the
+foreground is refused against the ten-minute ceiling by name. The orchestrator's step 4 has the
+polling half.
 
 ## Route to **Claude** when *any* of these is true
 

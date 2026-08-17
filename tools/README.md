@@ -11,7 +11,7 @@
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
-| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies — and, since WO-2.40, a `--self-check` that drives its own refusals against a stand-in child. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>]` / `--self-check` |
+| `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies — and, since WO-2.40, a `--self-check` that drives its own refusals against a stand-in child. Since WO-2.45 the dispatch is **detached and polled**, because the caller's own timeout used to kill it first. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>] --detach` / `--status <path> [--wait <seconds>]` / `--self-check` |
 | `audio-probe.html` | **Not a script** — a page, opened on the device. Tells iOS Silent Mode apart from an AudioContext that will not start outside a gesture, which are the same silence otherwise. See below; it has a way to be served wrong that looks like nothing being wrong. |
 
 The four `wo-*.mjs` scripts and `codex-invoke.mjs` are **dispatch plumbing**, not app tooling — they
@@ -137,16 +137,55 @@ and raises no cap — the constant is deliberately left where it is, with the re
 declaration, and [`../plans/work-orders/ROUTING.md`](../plans/work-orders/ROUTING.md) § "Route to
 Codex" asks the same multiplication at routing time, which is the half that matters.
 
+**And until WO-2.45 that cap was a promise nothing could keep.** The orchestrator ran this script
+from a Bash call it was told to give **600000 ms** — ten minutes against the twenty, and a *ceiling*
+rather than a preference, since the tool caps its own `timeout` argument there. So the `--budget`
+gate approved up to ten minutes of harness runs on the arithmetic *"10 + 10 fits inside 20"* and
+printed it to the router, while the call holding the dispatch died at ten. **Worse than an unguarded
+cap: a guard that clears the exact dispatch it exists to refuse.** And when the outer deadline fired
+it killed *the script*, not the child — so `runInvoke()` never reached its started-then-killed
+branch, the exit-3 diagnosis was never printed, and the caller was left with a bare timeout over a
+tree that might be holding a half-applied mutation. Measured both ways before it was changed: with
+an outer deadline shorter than the inner cap the run printed **nothing** and ended on `SIGTERM`; left
+alone, the same run printed the whole diagnosis and exited 3.
+
+**The fix moves the dispatch out of the call rather than shrinking it to fit** — the two shapes, and
+why the shrink was rejected on its arithmetic, are in
+[`../plans/verification-tooling.md`](../plans/verification-tooling.md) § "The Codex dispatch is
+detached and polled". `--detach` makes every caller-side refusal in the caller's own process, hands
+the run to a supervisor that outlives it, and exits **4** — *started, nothing judged, and never 0,
+because a launcher exiting 0 is WO-2.20's spawn-reported-as-a-run with a new mechanism under it*.
+`--status <record> [--wait <seconds>]` answers the dispatch's own code once it is terminal, **4**
+while it is still working, and **3 — `ABANDONED`** for a supervisor that is gone leaving no verdict:
+the same fact exit 3 already carries, so it is not a code of its own. Two arms decide that last one —
+pid liveness, and elapsed against the record's own cap plus two minutes of grace, because a recycled
+pid reads as alive forever. `--wait` is capped at 540 s so one poll fits inside the 600000 ms call
+holding it, which is the original defect one level up. The record is
+`.claude/dispatch/<WO-ID>-result.dispatch.json`, beside the brief and the result — though **not** in
+`wo-gate.mjs`'s "which dispatch files exist" line, which hardcodes `${id}-${name}.md`.
+
+Since the same row, `--budget` compares against **whichever constraint binds this invocation** and
+names it: 20 min `INVOKE_TIMEOUT_MS` under `--detach`, 10 min `OUTER_CALL_CEILING_MS` in the
+foreground — where the ten-minute reserve alone fills the ceiling, so **no stated budget fits there
+at all** and the refusal says to pass `--detach`. That is the arithmetic being done against the
+number that was actually killing dispatches, not a new restriction.
+
 **And since WO-2.40 it can prove those two gates still bite.** `--self-check` copies this script to a
-temp directory and drives seventeen cases against **stand-in children** — a sleeping
+temp directory and drives twenty-six cases against **stand-in children** — a sleeping
 `process.execPath` for the kill at the cap, a 25 MB writer for the `maxBuffer` overrun, a path that
-does not exist for the never-started case — asserting each one on **both** its exit code and a phrase
-of its message. Two seconds, nothing written anywhere near `tools/`, and **no Codex process at all**:
+does not exist for the never-started case — and, since WO-2.45, five **planted dispatch records**,
+asserting each one on **both** its exit code and a phrase of its message. *(Seventeen until WO-2.45,
+which added nine for the detached path and moved the two `--budget` boundary cases onto the
+constraint that binds them; the run takes ~7 s rather than ~2 s now, and most of the difference is
+one detached dispatch being watched die at its own cap.)*
+Nothing written anywhere near `tools/`, and **no Codex process at all**:
 a seam of four `CODEX_INVOKE_SELFCHECK_*` environment variables stands in for the command, the cap
 and `codex-resources\`, so the run reads the same on a machine with no runner installed — which is
 the machine where the runner is the thing being routed around. The `--budget` gate is deliberately
-**outside** that seam, so the boundary it asserts (10 minutes fits, 10.1 does not) is the one this
-file ships. And the seam is what makes the check safe rather than merely convenient: a subject that
+**outside** that seam, so the boundary it asserts is the one this file ships — since WO-2.45 that is
+two boundaries rather than one, 10 fits and 10.1 does not **under `--detach`**, and 10 *and* 0.1 both
+refused in the foreground, which is the pair that would have read "fits inside the 20 min cap" before
+that row. And the seam is what makes the check safe rather than merely convenient: a subject that
 does not read it would resolve the never-started case's nonexistent command to the real `codex.exe`
 and dispatch a brief to it, so the run **refuses to drive a single case** against one rather than
 planting. A copy from before WO-2.40 lands exactly there.
@@ -170,6 +209,26 @@ on nothing else.
 | the never-started check moved above it — the WO-3.15 regression itself | **2 red**, reading *"exited 2, expected 3"* and *"the run said 'could not be run', which belongs to a different exit code"* |
 | the unrecognized-flag refusal dropped · the `--probe --budget` guard dropped · a zero exit with no output taken as a pass · the brief-not-found check dropped | **1 red each** |
 
+**WO-2.45's nine new cases were proved the same way**, nine more mutants into the scratchpad, and
+the first row is the one that matters — it is this row's own regression, and it goes red on exactly
+the two cases written for it while every detached case stays green:
+
+| Mutation of the copy | Result |
+|---|---|
+| `bindingCap()` answers `INVOKE_TIMEOUT_MS` unconditionally — the pre-WO-2.45 arithmetic | **2 red** — both foreground boundaries, and neither `--detach` one |
+| `--detach` quietly runs in the foreground | **3 red** — both detached boundaries and the detached kill, that last one on *"the launcher took 4062 ms, which is its own dispatch's whole cap — this did not detach, it waited"*. That clause is why the case times the launcher: the mutant prints a correct exit-3 report, and only the clock can tell it apart from a dispatch that was handed on |
+| the supervisor never writes its verdict back into the record | **1 red** — the detached kill, because `--status` answers 4 forever over a dispatch that finished |
+| `abandonedReason()` never finds a corpse | **2 red** — both `ABANDONED` arms, and the RUNNING control stays green, which is the point |
+| `abandonedReason()` calls everything a corpse | **3 red** — the RUNNING control, the elapsed arm reporting the wrong reason, and the detached kill |
+| `--status` prints the record's verdict and exits 0 anyway | **1 red** — the detached kill |
+| `--wait` accepts any length | **1 red** — the cap that keeps one poll inside the caller's own call |
+| the detached refusal moved below the record write | **2 red** — both detached boundaries |
+| the record's `version` stamp written but not read | **1 red** — the record from a version this script does not know |
+
+And the committed **pre-WO-2.45** file, `--against` it: **11 of 26 red**, which is every new and
+moved case and nothing else. It does not stop at the precondition — it reads all four seam variables,
+so the fixture can drive it — it simply has no `--detach` and no `--status` to drive.
+
 **Who runs it and when: the orchestrator, at step 2b, before the probe.** Decided at WO-2.40 out of
 the three candidates that row named. Not `wo-sweep.mjs`, whose own header promises that every check in
 it is a text search, and which every dispatch pays for including the ones that never go near Codex.
@@ -178,7 +237,9 @@ Not "by hand at the next change to the file", which is
 opt-in guard against rot — nobody passes the flag, and the gates rot behind a green run exactly as
 before. Step 2b is the moment the gates are about to be relied on, and the Codex route is the only
 one that ever runs this script, so **that single call site covers every occasion the gates matter**:
-two seconds against a twenty-minute dispatch. Check the instrument, then take the reading.
+six seconds against a twenty-minute dispatch — and since WO-2.45 that twenty minutes is a cap the
+dispatch actually gets, rather than the ten its caller used to allow. Check the instrument, then take
+the reading.
 
 The demo build lands in Phase 8 (WO-8.2), modelled on Roll Call!'s `tools/build-demo.mjs`.
 

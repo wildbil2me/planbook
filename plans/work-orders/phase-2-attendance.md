@@ -4403,7 +4403,7 @@ WO-2.40's first cut passed everything.
 
 ## WO-2.45 — the outer Bash timeout binds ten minutes before the cap everything is calibrated to
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.40 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-17 · **Size** M · **Depends on** WO-2.40 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37 and WO-2.40 made.)*
 
 **Not a go-live blocker, and it has been declined by name three times** — WO-2.37 put it out of scope,
@@ -4457,19 +4457,72 @@ and 10.1 **deliberately** and will go red when a constant moves (WO-2.40 wrote t
 not brittle — so **updating those two cases is part of this row, and their going red is the check
 working**); and anything about which work orders route to Codex, which is `ROUTING.md`'s subject.
 
+*(The two cases became two moved and **nine new** ones, 26 in total. This row expected a constant to
+move and the boundary cases to follow it; what landed instead was a new dispatch shape, and Acceptance
+line 5 demands exit 3 be **driven** rather than asserted — which under detach-and-poll is only provable
+by a standing case that launches, loses its parent, and then reads the corpse. The verifier judged the
+nine in scope for that reason. The out-of-scope line was right about the mechanism and short by seven
+because it was written against the smaller of the two shapes.)*
+
 **Acceptance**
-- [ ] The mismatch is demonstrated before it is fixed: a dispatch shape that `--budget` clears and the
+- [x] The mismatch is demonstrated before it is fixed: a dispatch shape that `--budget` clears and the
       outer call cannot hold, named with its arithmetic. A row that begins *"obviously"* has skipped
       the only step that proves the premise.
-- [ ] One of the two shapes is chosen, built, and the **rejected** one is written down with why —
+      *(**WO-2.35's own shape**, the worked example in `ROUTING.md` § "Route to Codex": Traps say at
+      least two `verify-shell.mjs` runs at ~4.4 min → `--budget 9`. Run against the **shipped** file
+      before a byte was changed, it printed `stated run budget 9 min + 10 min reserve fits inside the
+      20 min cap.` — 19 minutes approved inside a call that dies at 10, and the harness runs alone
+      (8.8) leave 1.2 minutes for reading, writing, reverting and the result file, against the only
+      reading time this repo records: 21 minutes, WO-3.5. The second half was driven, not argued: the
+      same script with an outer deadline **shorter** than its own cap printed **nothing at all** and
+      ended on `SIGTERM` with no exit code, where the identical run left alone printed the whole
+      exit-3 diagnosis. The gate clears the dispatch it exists to refuse, and the report WO-2.37 built
+      is unreachable around the side of it.)*
+- [x] One of the two shapes is chosen, built, and the **rejected** one is written down with why —
       `plans/verification-tooling.md`, the file that already holds this thread's decisions.
-- [ ] After the change, no printed sentence tells a router that a budget fits unless it fits the
+      *(**Detach and poll**, in `plans/verification-tooling.md` § "The Codex dispatch is detached and
+      polled, not shrunk to fit". The rejected shrink is written there with the arithmetic that kills
+      it: the cap must sit meaningfully under 600000 ms, the reserve is not compressible, so at eight
+      minutes and a halved five-minute reserve the budget ceiling is **three minutes** against a 4.4
+      minute harness run — no work order needing one full run could route to Codex, which is
+      WO-2.37's invisible exclusion arriving through the door WO-2.37 held shut.)*
+- [x] After the change, no printed sentence tells a router that a budget fits unless it fits the
       binding constraint. Shown on both sides of the boundary.
-- [ ] `codex-invoke.mjs --self-check` passes again, with its boundary cases moved to the new numbers
+      *(`bindingCap()` answers what constrains **this** invocation and the message names it. Five runs:
+      `--budget 9 --detach` and `--budget 10 --detach` print `fits inside the 20 min
+      INVOKE_TIMEOUT_MS`; `--budget 10.1 --detach` is `REFUSED`; and in the foreground `--budget 9`
+      and `--budget 0.1` are **both** refused against `the 10 min OUTER_CALL_CEILING_MS (a foreground
+      dispatch dies with the call that made it)`, telling the caller to pass `--detach`. The
+      foreground has no fitting side — the ten-minute reserve alone fills the ceiling — which is the
+      arithmetic finally being done against the number that was killing dispatches.)*
+- [x] `codex-invoke.mjs --self-check` passes again, with its boundary cases moved to the new numbers
       and the move explained at the cases.
-- [ ] If exit 3 survives a kill at the binding constraint, that is **driven**, not asserted — the whole
+      *(`PASS | 26 of 26 cases behaved`, exit 0, ~7 s. The two boundary cases now carry `--detach` and
+      assert the constraint by name, and two FOREGROUND cases sit beside them asserting the refusal
+      that used to read "fits" — the move is explained in the `--self-check` section comment under
+      "AND THE BOUNDARY MOVED AT WO-2.45" and at the cases themselves. Non-vacuous: nine mutants
+      driven with `--against` into a scratchpad copy, never into `tools/`, each red only on the cases
+      aimed at it — the first, `bindingCap()` answering `INVOKE_TIMEOUT_MS` unconditionally, is this
+      row's own regression and turns exactly the two foreground cases red. The committed
+      pre-WO-2.45 file goes **11 of 26 red**, which is every new and moved case and nothing else.)*
+- [x] If exit 3 survives a kill at the binding constraint, that is **driven**, not asserted — the whole
       point of WO-2.40 is that this branch is exercised rather than reasoned about.
-- [ ] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
+      *(Driven twice. In `--self-check`: a `--detach` launcher exits **4** in a fraction of its own
+      4 s cap — the case times it, because a subject that silently ran in the foreground prints the
+      same words — and `--status --wait` then answers **3** carrying `KILLED, not refused`,
+      `ended by SIGTERM`, `INVOKE_TIMEOUT_MS` and `Read 'git status' and the diff`. And by hand across
+      two **separate** shell calls: the launcher returned in 105 ms, the call that made it exited, and
+      a later call read exit 3 with the full diagnosis 22 s afterwards. Both `ABANDONED` arms are
+      driven too — a supervisor that is gone, and one alive past its cap — with a RUNNING control
+      beside them so "everything is a corpse" cannot pass.)*
+- [x] `node tools/wo-sweep.mjs` green and `git diff --stat -- src/` empty.
+      *(`20 checks · 18 passed · 0 failed · 2 to review`, exit 0 — the two `REVIEW`s are the standing
+      pair, in files this row never opened. `git diff --stat -- src/` printed nothing; `git diff
+      --check` clean; whole-tree diffstat 730 insertions / 61 deletions across 6 files as it stood
+      at the tick — *(the figure first written here, 660 / 54, was stale from before this row's last
+      edits and was corrected 2026-08-17)* — and `file`
+      reports plain UTF-8 with no CRLF on every one. `node tools/verify-shell.mjs` was also run —
+      `824 checks · 824 passed · 0 failed · 0 skipped`, 256 s, exit 0.)*
 
 **Traps** — **Do not spawn Codex to measure this**, WO-2.40's Traps line unchanged: every number here
 is reachable with a stand-in child through the seam WO-2.40 built. **Detach-and-poll is the tempting

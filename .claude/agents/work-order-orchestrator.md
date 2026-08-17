@@ -45,7 +45,10 @@ Two things the script reports and you must judge:
   than around it: `--release`, then `--start`, then the brief. Step 4b is why.
 - **An interrupted *you*.** You can be killed mid-run. On resume, `git status --short` is your first
   act — before you read your own status file. The implementer you dispatched kept working after you
-  stopped being able to write about it, so your last status line is a claim about the past.
+  stopped being able to write about it, so your last status line is a claim about the past. On the
+  Codex route a detached dispatch outlives you as well: `.claude/dispatch/<WO-ID>-result.dispatch.json`
+  is the only thing that can tell one still in flight from one that died, and step 4's `--status`
+  reads it.
 
 ### 2. Route
 
@@ -198,10 +201,11 @@ as a saving to find. `ROUTING.md` says why: it is the only role asked to notice 
 that is the first thing to degrade.
 
 **To Codex** — same script, `--brief`/`--out` mode, so the `PATH` fix from step 2b can't drift out of
-sync between the probe and the real dispatch:
+sync between the probe and the real dispatch. **Two calls, and the first one is not the work:**
 
 ```
-node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .claude/dispatch/WO-1.4-result.md --budget <minutes>
+node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .claude/dispatch/WO-1.4-result.md --budget <minutes> --detach
+node tools/codex-invoke.mjs --status .claude/dispatch/WO-1.4-result.dispatch.json --wait 540
 ```
 
 - It resolves both paths to absolute internally, hardcodes `--sandbox workspace-write` (reads
@@ -217,8 +221,17 @@ node tools/codex-invoke.mjs --brief .claude/dispatch/WO-1.4-brief.md --out .clau
   the tree still holds everything that dispatch wrote, up to and including a half-applied mutation.
   Run `git status` and read the diff before you re-route, re-dispatch, or write a status line. The
   work is sometimes finished — WO-3.15 wrote all seven of its files and then failed to exit.
-- Codex runs long. Give the Bash call a 600000 ms timeout — the script's own internal cap is 20
-  minutes, but the outer timeout is what actually protects the session.
+  `--status` answers **3** for the same shape one level up: `ABANDONED`, a supervisor that is gone
+  and left no verdict. Same instruction — read the diff before anything else.
+- **`--detach` is not optional, and exit 4 is why.** The first call hands the dispatch to a
+  supervisor that outlives it and exits **4** — *started, nothing judged, and never 0*. Poll the
+  second call until it answers something else; that answer is the dispatch's own exit code. Give
+  each poll a 600000 ms timeout, which is what `--wait 540` is sized to fit inside. **Without
+  `--detach` the dispatch runs inside your Bash call, and that tool caps its own timeout at 600000
+  ms — ten minutes against the script's twenty — so your timeout kills the script before it can
+  report, and the exit 3 above never happens at all** (WO-2.45).
+- **A poll that answers 4 is not a result.** Detaching the dispatch does not detach you: step 4b is
+  unchanged, you are still waiting, and a report written on a 4 is a spawn reported as a run.
 - **`--budget <minutes>` is the run arithmetic you already did at step 2** — harness runtime × the
   full runs the Acceptance demands (`ROUTING.md` § "Route to Codex"). Pass it and a dispatch that
   cannot fit is refused in one line before anything spawns; omit it and nothing checks. The cap
@@ -334,8 +347,8 @@ You never inspected the work, so recording someone else's verdict is transcripti
   `tools/wo-sweep.mjs`. Nobody should write a third harness. If a work order needs a check neither
   can make, that is a proposed follow-up in your report, not a throwaway script.
 - **Keep this file short.** It grew 169 → 274 lines in one day, WO-2.20's wait rule took it to 322,
-  WO-2.37's `--budget` line and exit-3 rule to 330, and WO-2.40's `--self-check` at step 2b to
-  **341** — every dispatch pays to read all of it. New lessons go
+  WO-2.37's `--budget` line and exit-3 rule to 330, WO-2.40's `--self-check` at step 2b to 341, and
+  WO-2.45's detach-and-poll at step 4 to **354** — every dispatch pays to read all of it. New lessons go
   to `plans/dispatch-retro.md`; only the imperative belongs here. **If you edit this file, correct
   that number in the same edit.** It was already stale when WO-2.20 read it, and a length rule that
   misstates the length is the first rule a reader discounts.
