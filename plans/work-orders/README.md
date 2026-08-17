@@ -412,10 +412,12 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 58 | [WO-2.40](phase-2-attendance.md#wo-240--the-codex-invoke-gates-have-never-been-exercised-by-anything-but-a-hand) The codex-invoke gates are exercised by nothing | S | | Aug 29, half a day |
 | 59 | [WO-2.41](phase-2-attendance.md#wo-241--the-wo-315-mislabel-lives-only-in-a-status-file-that-says-to-delete-it) The WO-3.15 mislabel has no home but a status file | XS | | Aug 29, an hour |
 | 60 | [WO-2.42](phase-2-attendance.md#wo-242--waitforpassalert-waits-on-a-flag-its-callers-do-not-assert-so-a-correct-app-can-go-red) waitForPassAlert() waits on a flag its callers do not assert | S | | Aug 30, half a day |
-| 61 | [WO-2.43](phase-2-attendance.md#wo-243--three-more-pointers-in-toolsreadmemd-miss-by-little-enough-to-be-believed) Three more pointers miss by little enough to be believed | XS | | Aug 30, an hour |
-| 62 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 63 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 64 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 61 | [WO-2.44](phase-2-attendance.md#wo-244--wo-gates-repo-write-guard-is-case-blind-to-the-one-thing-it-guards) wo-gate's repo-write guard is case-blind to what it guards | XS | | Aug 30, an hour — **ahead of #62 on purpose** |
+| 62 | [WO-2.43](phase-2-attendance.md#wo-243--three-more-pointers-in-toolsreadmemd-miss-by-little-enough-to-be-believed) Three more pointers miss by little enough to be believed | XS | | Aug 30, an hour |
+| 63 | [WO-2.45](phase-2-attendance.md#wo-245--the-outer-bash-timeout-binds-ten-minutes-before-the-cap-everything-is-calibrated-to) The outer Bash timeout binds before the cap | M | | **A decision before a keystroke.** Aug 31, a day |
+| 64 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 65 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 66 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -538,8 +540,31 @@ assert the named line exists and all five wrong pointers named lines that did �
 someone else's commit is what surfaced both, so the reason it was a row held even though its guess did
 not.]*
 
+*WO-2.44 and WO-2.45 were booked on 2026-08-17 out of **WO-2.40's dispatch**, and given rows #61 and
+#63 **later the same day rather than at booking — which makes them the fifth and sixth work orders to
+land in this directory with no place in the running order**, after WO-3.10, WO-3.12, WO-2.24 and
+WO-2.32. **This one has less excuse than any of the four.** WO-2.32's was an owner-directed fix at the
+iPad, where the work was done before there was anything to schedule; these two were written as rows, by
+one hand, in the sitting that also moved the dashboard from 116 to 118 and re-pointed § The files. Two
+of the three artifacts were updated and the third was not. **The tell is that `--audit` passed anyway**
+— it checks `**Closes roadmap**` fragments, `**Owes**` pointers, § The files and the dashboard against
+its own boxes, and **nothing anywhere checks whether a work order has a row**. So the one artifact
+`next` actually reads is the one artifact no gate defends, which is why the failure has now happened six
+times and been caught six times by a person. Worth a row of its own; deliberately not written as one
+from inside the same sitting that needed it.*
+
+***The placement is an ordering fact rather than a priority.*** *WO-2.44 goes **ahead of** WO-2.43 at
+#61 because its deliverable puts prose into `tools/README.md` near `:64`, above all three of the
+references WO-2.43 exists to re-anchor — and WO-2.40's 45 insertions at `:116` had already moved those
+three by +43 within hours of WO-2.43 being booked, which is recorded in an amendment on the row itself.
+Doing WO-2.44 second would shift them a third time. WO-2.43 re-anchors to text and is immune to
+everything after it, so it is cheapest last. **WO-2.45 sits behind both at #63** as the only M in the
+band and the only one carrying a decision rather than an edit — its cell says so, because a row whose
+first act is a design call should not be picked up by somebody with an hour.*
+
 *WO-2.42 and WO-2.43 were booked on 2026-08-17 out of **WO-2.39's verification**, and given rows #60
-and #61 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above
+and #61 the same day. *(WO-2.43 became **#62** later that day when WO-2.44 was inserted ahead of it —
+see two paragraphs up for why. The number here is left as it was written; this is the amendment.)* WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above
 them** — the cut band's argument again, unchanged for the fourth time. **The percentage went down a
 point**, from 73% to 72%, which is the honest direction: two rows were added and none closed, and a
 denominator that only ever grows when something closes is a denominator being managed.*
