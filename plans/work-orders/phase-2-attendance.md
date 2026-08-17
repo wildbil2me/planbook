@@ -3800,10 +3800,20 @@ each, so this is inherited debt rather than any one row's doing:
 
 | Reference | Cited | Actually at |
 |---|---|---|
-| `else check(` | `:10773` | `:13978` |
-| the WO-3.5 fixture guard | `:12532` | `:15996` |
-| the `wo38-s1` Ashdown fixture | `:17574` | `:21064` |
+| `else check(` | `:10773` | `:14286` |
+| the WO-3.5 fixture guard | `:12532` | `:16304` |
+| the `wo38-s1` Ashdown fixture | `:17574` | `:21372` |
 | `:1869` | `:1869` | *unresolved — find what it meant* |
+
+**The right-hand column was re-resolved 2026-08-17, and two of the three had been wrong in a second
+way.** WO-2.38 inserted ~297 lines above all three, so every number in it was stale again within a
+day of being written — but shifting them by 297 would have preserved an error rather than fixed one.
+`:15996` was inside the WO-3.5 fixture's plant block, eleven lines above the `check('the WO-3.5
+fixture is real…')` the reference actually names, and `:21064` was the `categories:` line of the
+fixture rather than `wo38-s1` Ashdown. Both were close enough to look right and land a reader in the
+neighbourhood instead of on the thing. So these three are resolved **to the named referent**, freshly
+grepped, which is this row's own trap applied to the table that exists to hold the right numbers.
+`else check(` is unambiguous — there is exactly one in the file.
 
 **Why it is worth a row rather than a quiet fix.** The suite keeps taking the same wound: WO-2.35 had
 to re-point two cross-references after its own insertions moved them, WO-2.36 re-pointed six more,
