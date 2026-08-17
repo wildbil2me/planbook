@@ -3754,7 +3754,8 @@ duplication — at the cost of putting WO-3.22's already-corrected block at risk
 written into the harness comment beside the new block, not just here.
 
 **`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — WO-3.22's corrected clause at
-`tools/verify-shell.mjs:349-355` (`:281-287` when this was written; WO-2.35 grew the block above it),
+`tools/verify-shell.mjs:363-369` (`:281-287` when this was written; WO-2.35 and WO-2.36 both grew the
+block above it),
 copied to this second legend rather than shared with it, for the
 reason just above. Asking the map instead of the listener is the defect WO-3.22 shipped and had to
 correct; asking `bound` is what lets a row go stray when the key that justified it is gone.
@@ -3811,7 +3812,7 @@ attendance-mark field besides, so widening to it would document keys nobody pres
       5 failed · 0 skipped`, 254s — the other three red are the marking-screen checks that a
       teacher's `D` really does stop working, the same three WO-2.34 saw. Both reverted and confirmed
       with `git diff`.
-- [x] **The decision is in the harness comment and the false claim is gone.** `tools/verify-shell.mjs:271-319`
+- [x] **The decision is in the harness comment and the false claim is gone.** `tools/verify-shell.mjs:281-333`
       carries the reasoning where the withdrawn sentence stood; the marking block carries its own
       shorter statement and points there, rather than sharing a helper (`Out of scope`, and WO-2.34's
       call stands).
@@ -3828,6 +3829,85 @@ alternatives that row already names.
 27.0 lines per check, measured twice — 258s before the mutations and 253s after both were reverted.
 `wo-sweep.mjs` **20 checks · 18 passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing
 pair, naming exactly the lines they named before this landed.
+
+---
+
+### WO-2.36 — retiring a key correctly turns both key checks red
+
+**What this changes for a teacher: nothing.** Harness-only, `src/` and `index.html` byte-identical
+across the whole work order, and **no key was retired** — retiring one was the mutation that proved
+the fix and it was reverted. Both key checks were green and correct before this, and are green and
+correct after.
+
+**The floors fired on the one edit that was entirely right.** Each check carried three numbers copied
+off the tree the day it was written — `bound.length >= 8 && glyphs.length >= 8 && rows.length >= 7` on
+the score grid, `>= 9 && >= 9 && >= 8` on the marking screen. Retire a key properly — take the letter
+out of `MARK_KEYS` **and** delete its row from the card, leaving both sides in exact agreement — and
+the counts fall to 8 and 7 and the check goes red on a correct tree. The person who did it would read
+the red, check the tree, find it right, and edit the number down; **a number edited every time it
+fires has taught its next reader to step over it**, and stepping over it is how the silent pass it
+guards against gets waved through.
+
+**The decision: the anchors are asserted found, and there are no counts at all.** No expected count
+could be sourced honestly — the card's own row count is the thing under test, `GLYPH_OF` is a table
+the harness maintains, and a number parked in a doc is a second hand-maintained copy in a file
+nothing executes. And the count was never what caught anything: a key that drops out of `bound` while
+its row stands comes back as `stray`, a row that goes while its key is bound comes back as `missing`,
+so **the two-way comparison already catches every partial loss that reaches `bound` or the card, by
+name, in both directions.** That scope is deliberate and was tightened at verification: on the marking
+side `MARK_KEYS` is read file-wide rather than out of the listener slice, so leaving it *declared*
+while the listener stops testing it reads 9 against 8 and stays green with keyboard marking dead —
+a residue that belongs to the refusal check and to WO-2.35, and one **the retired floor was equally
+green on**, so no coverage was lost here. The one case it cannot catch is both sides reading nothing
+— and that is never a matter of degree, it is
+an anchor gone from the tree. So each anchor is now asserted directly: the panel id, the `<dl>`, the
+modal id read out of `KEYS_MODAL`, the class-view guard, `MARK_KEYS`, and each regex having matched
+at all. A retirement moves no anchor and stays green; a rename moves exactly one and the failure says
+which, under `NOTHING TO COMPARE`.
+
+- [x] **Retiring a key on both sides at once leaves the check green — run, not reasoned.** `'D'` out
+      of `MARK_KEYS` **and** the Dismissed row deleted from the card, the two sides in agreement:
+      *"PASS | every key the attendance-marking listener answers to is on the ⌨ Keys legend … ::
+      **8 key(s)** answered below the class-view guard [ArrowDown ArrowUp Escape ? P T A E] against
+      **7 legend row(s)** carrying [↓ ↑ P T A E Esc ?]"* — the exact 8-and-7 the old floor rejected.
+      `802 checks · 798 passed · 4 failed · 0 skipped`, 263s. The four red are what a teacher loses
+      when `D` stops marking Dismissed: the three keyboard-marking readings and the `?` list that
+      names five letters. **Neither key check is among them.** Reverted; `git diff` clean.
+- [x] **A renamed modal id and a regex that matches nothing still turn the checks red rather than
+      passing vacuously — one per block, one run.** The score legend's eight `<span class="scores-key">`
+      rewritten with single quotes — valid HTML, identical rendering, and the harness's row regex now
+      matches nothing: *"10 key(s) bound … against **0 legend row(s)** carrying []; NOTHING TO
+      COMPARE … no `<span class="scores-key">` inside the panel — the row regex here has stopped
+      reading the markup it was written for"*. The marking modal's `id` renamed in `index.html` alone:
+      *"9 key(s) answered … against **0 legend row(s)**; NOTHING TO COMPARE … index.html has no
+      `id="attendanceKeysModal"` — src/shell.js opens a modal the markup does not carry, or one of the
+      two spellings was renamed alone"*. `802 checks · 798 passed · 4 failed · 0 skipped`, 266s, the
+      other two red being the driven readings that cannot open a modal whose id moved. Reverted;
+      `git diff` clean.
+- [x] **A renamed `MARK_KEYS` still turns the marking check red, and now blames the right file.**
+      Both use sites renamed to `MARKING_LETTERS`, an edit that leaves the app working: *"9 key(s)
+      answered … against 8 legend row(s) …; NOTHING TO COMPARE … src/shell.js has no `const MARK_KEYS
+      = ['…']` — the letters below are only whatever the by-shape list read found, and the glyph map
+      was built from nothing; BOUND AND UNKNOWN TO THIS CHECK: P, T, A, E, D …"*. **The counts here are
+      9 and 8, unchanged from the green tree** — the old floor passed on this mutation and always
+      had; what went red was `unmapped`, whose message told the reader to go and edit `GLYPH_OF`,
+      which is the wrong file. The named anchor is what makes the cause readable. Reverted; `git diff`
+      clean.
+- [x] **`verify-shell.mjs` passes whole on the delivered tree**, `802 checks · 802 passed · 0 failed ·
+      0 skipped`, 21,833 lines, 27.2 lines per check, 263s, exit 0 — with the same key-check counts as
+      the pre-work-order baseline (score grid 10 bound / 8 rows, marking 9 bound / 8 rows). **No call
+      site was added**, so `tools/README.md`'s asserted count stays 805; `wo-sweep.mjs` green.
+      `git diff --stat -- src/` empty, confirmed after each of the three mutations rather than only at
+      the end.
+
+**Two blocks, not one, and the failure message has no third case.** The counts were retired
+separately in each block, in each block's own words — `Out of scope` forbids merging and WO-2.34's
+reasoning stands. A red line from either check now means one of exactly two things: the message names
+keys and the two documents genuinely disagree, or it says `NOTHING TO COMPARE` and this block has
+lost its grip on one of the documents, which is drift and never a retirement. **There is no number
+left in either block for anybody to move.** The one number that survives is `body.length < 200` on a
+~1.9 kB slice, which separates "the anchor moved and this is the empty string" from "the function is
+here" and cannot be reached by deleting keys.
 
 ---
 

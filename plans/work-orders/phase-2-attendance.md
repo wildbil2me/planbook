@@ -3481,7 +3481,7 @@ which is a routing fact before it is an implementation one.
 
 ## WO-2.36 — retiring a key correctly turns both key checks red
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.34 · **Blocks** nothing, and
 that is deliberate — no key is being retired today, so this is a row to cut if the fortnight tightens
 **Closes roadmap** *(no box. Harness, not app: nothing here changes what a teacher sees. The same call
 WO-3.12, WO-3.21, WO-3.24 and WO-2.34 made.)*
@@ -3538,16 +3538,32 @@ lines and should be read together, but a floor that counts the wrong keys correc
 fault from a count that is right and inconvenient.
 
 **Acceptance**
-- [ ] Retiring a key on both sides at once — removed from the binding **and** its legend row deleted,
+- [x] Retiring a key on both sides at once — removed from the binding **and** its legend row deleted,
       leaving them in agreement — leaves the check **green** on at least one of the two blocks.
-      Run, not reasoned. This is the case that fails today.
-- [ ] A renamed modal id, a renamed `MARK_KEYS`, and a regex that matches nothing each still turn the
+      Run, not reasoned. This is the case that fails today. *(`'D'` out of `MARK_KEYS` and the
+      Dismissed row deleted: `PASS … 8 key(s) answered below the class-view guard [ArrowDown ArrowUp
+      Escape ? P T A E] against 7 legend row(s) carrying [↓ ↑ P T A E Esc ?]` — the exact 8-and-7 the
+      old floor rejected. `802 checks · 798 passed · 4 failed · 0 skipped`, 263s; the four red are the
+      marking readings a teacher loses with `D` gone, and neither key check is among them. Reverted.)*
+- [x] A renamed modal id, a renamed `MARK_KEYS`, and a regex that matches nothing each still turn the
       relevant check red rather than passing vacuously — run at least two of the three, on the block
-      that was changed, with counts quoted.
-- [ ] Both blocks carry the decision in their comment, in the words the next reader needs rather than
-      a reference to this work order.
-- [ ] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
+      that was changed, with counts quoted. *(All three, two runs. Modal `id` renamed in `index.html`
+      alone and the eight `<span class="scores-key">` requoted so the row regex matches nothing —
+      both blocks red at **0 legend rows**, each naming its own anchor under `NOTHING TO COMPARE`;
+      `802 · 798 · 4`, 266s. `MARK_KEYS` → `MARKING_LETTERS` at both use sites — **one failure in the
+      whole run**, `802 · 801 · 1`, 265s, at counts **9 and 8 unchanged from the green tree**, which
+      is why the named anchor matters: the old floor passed and `unmapped` blamed `GLYPH_OF`. Each
+      reverted and confirmed with `git diff` before the next.)*
+- [x] Both blocks carry the decision in their comment, in the words the next reader needs rather than
+      a reference to this work order. *(`tools/verify-shell.mjs:371-422` is the long form where the
+      score grid's counts stood; the marking block states the same decision in its own words in the
+      last paragraph of its header, naming its own anchors. Both say what a red line means and that
+      there is no number left to move.)*
+- [x] `node tools/verify-shell.mjs` passes whole, the check count in `tools/README.md` moved in step
       if a call site was added, and `git diff --stat -- src/` is empty across the whole work order.
+      *(`802 checks · 802 passed · 0 failed · 0 skipped`, 21,833 lines, 27.2 lines per check, 263s,
+      exit 0. **No call site added** — 805 stands. `git diff --stat -- src/` empty, confirmed after
+      each of the three mutations rather than only at the end.)*
 
 **Traps** — **Do not derive the floor from the list it guards.** That is the vacuity the floor exists
 for, arriving through the fix. **The retire-a-key mutation must touch both sides**, or it is
@@ -3636,3 +3652,141 @@ acceptance is a bigger number again; the deliverable is that the constraint is *
 is set to. **A dispatch that times out is not a route that failed**, and the report should not read
 like one. **This is the third row booked out of one dispatch** — read WO-2.35 and WO-2.36 first, and
 note that both of them are among the work orders this cap would exclude.
+
+---
+
+## WO-2.38 — nothing exercises the anti-vacuity guard, so it can rot behind a green run
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.36 · **Blocks** nothing
+**Closes roadmap** *(no box. Harness, not app — the same call WO-3.12, WO-3.21, WO-3.24, WO-2.34 and
+WO-2.36 made.)*
+
+**Not a go-live blocker, and nothing here is a defect today.** Booked 2026-08-16 out of WO-2.36's
+verification, which established by construction that the guard works *now*. This row is about the
+day after.
+
+**Why it exists.** WO-2.36 replaced six hardcoded floors with a `vacuity` array in each key block:
+the anchors asserted found, one by one, by name. It is the right shape and it was proved by mutation.
+But **on a green tree every branch of it is dead code.** `vacuity` is empty, so nothing downstream of
+`if (!vacuity.length)` is ever evaluated, and no check in `verify-shell.mjs` or `wo-sweep.mjs`
+reaches any of the fourteen-odd push sites. The only thing that has ever executed them is a hand
+mutation, applied twice by hand on one afternoon and reverted both times.
+
+**That is a guard whose failure mode is silence.** A refactor that renames `panelAt`, an `indexOf`
+that starts returning `0` where the code tests `< 0`, a regex tightened in a way that makes one of
+the `else if` arms unreachable — none of it turns anything red. The run still prints `802 · 802 · 0`
+and the reader still believes both legends are policed. **This is the same class of fault the guard
+was built to prevent, one level up:** WO-2.36's whole argument is that empty agrees with everything,
+and a guard nobody exercises is a guard that agrees with everything too. The floors it replaced had
+the identical weakness and that was not the reason they went.
+
+**The method already exists and should not be re-derived.** WO-2.36's verification did exactly this,
+in a scratchpad, and it is the shape to lift: replicate the two `check()` predicates against
+**in-memory mutations of the real `index.html` and `src/shell.js`**, never against the tree itself.
+It drove eight mutations that way — retire-both-sides, `MARK_KEYS` renamed, modal id renamed,
+`scores-key` spans requoted, `handleScoreKey` renamed, one legend row deleted, one key removed from
+the binding only, the glyph regex broken on seven of eight rows — and got the right verdict from
+every one, plus a duplicated `id="scoresKeys"` and a truncated slice. **Those files are gone** (a
+session scratchpad), so the work is to build that properly and commit it, not to recover them.
+
+**Deliverables**
+- **The two key blocks' reads factored so they can be driven with supplied text** rather than only
+  with what is on disk — the smallest change that makes the predicates callable, not a rewrite.
+- **Checks that assert each `vacuity` arm fires on the input that should trip it**, and that a
+  correct retirement trips none. The mutations are named above; the set is the regression set.
+- **A decision on where these live.** `verify-shell.mjs` is a browser harness and these need no
+  browser, which argues for a sibling. Against that: **"Do not write a second harness" is a standing
+  rule**, and a second file that drives the same predicates is exactly what it forbids. Resolve it
+  explicitly and write the reasoning where the next reader meets it. `wo-gate.mjs --self-check` is
+  the in-suite precedent for a tool testing itself.
+- **The call-site count in `tools/README.md` moved in step**, which this row almost certainly does
+  change — unlike WO-2.36, which added none.
+
+**Out of scope** — the residue WO-2.36's verification named (a `MARK_KEYS` left declared while the
+listener stops testing it reads green, because `markKeys` is read file-wide); that is WO-2.35's
+question of which bindings the read can see at all, and it is not made better or worse here. Also out
+of scope: merging the two blocks, and any change to what either check concludes on the real tree.
+
+**Acceptance**
+- [ ] Every arm of both `vacuity` arrays is shown firing on an input that should trip it, and the
+      failure text names the right anchor. Run, not reasoned.
+- [ ] A correct retirement — key out of the binding **and** its legend row deleted — trips no arm and
+      leaves the check green, driven through the new path rather than by editing the tree.
+- [ ] Deleting an arm of either `vacuity` array, or inverting one of its conditions, turns something
+      red. **This is the acceptance line that matters**: a self-test that passes whether or not the
+      thing it tests exists is this work order's own failure repeated inside itself.
+- [ ] `node tools/verify-shell.mjs` passes whole and `git diff --stat -- src/ index.html` is empty
+      across the work order.
+- [ ] The check count in `tools/README.md` moved in step with whatever call sites were added.
+
+**Traps** — **Do not test the guard by mutating the tree in a committed check.** A check that writes
+to `index.html` or `src/` and reverts is one crash away from leaving the app broken, which is the
+exact hazard WO-2.37 is booked over; drive supplied text instead. **Do not let the replica drift from
+the predicate** — two copies of the same read is the second hand-maintained copy WO-2.36 refused for
+counts, and it arrives here as a real temptation. Factoring the predicate so both callers use *one*
+copy is the deliverable; a parallel reimplementation that agrees today is not. **The green tree is
+not the fixture.** On it the guard is inert, so a run that only reads the real files proves nothing
+this row is about.
+
+---
+
+## WO-2.39 — four line references in tools/README.md have been wrong for thousands of lines
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Closes roadmap** *(no box. Documentation, not app.)*
+
+**Not a go-live blocker.** Booked 2026-08-16 out of WO-2.36's verification, which audited the
+reference drift in the direction nobody had checked.
+
+**Why it exists.** `tools/README.md` carries `:NNN` pointers into `tools/verify-shell.mjs`, and four
+of them do not land. They were **already wrong at HEAD before WO-2.36**, by roughly 3,200–3,500 lines
+each, so this is inherited debt rather than any one row's doing:
+
+| Reference | Cited | Actually at |
+|---|---|---|
+| `else check(` | `:10773` | `:13978` |
+| the WO-3.5 fixture guard | `:12532` | `:15996` |
+| the `wo38-s1` Ashdown fixture | `:17574` | `:21064` |
+| `:1869` | `:1869` | *unresolved — find what it meant* |
+
+**Why it is worth a row rather than a quiet fix.** The suite keeps taking the same wound: WO-2.35 had
+to re-point two cross-references after its own insertions moved them, WO-2.36 re-pointed six more,
+and **WO-2.36's entire thesis is that a comment pointing at the wrong line is a defect** — while the
+row itself added 145 lines to this file's drift without touching it. A pointer that is off by three
+thousand lines does not read as stale; it reads as a pointer, and the reader who follows it lands in
+unrelated code and concludes they have misunderstood the document. That is worse than no pointer.
+
+**The fourth one is the interesting one.** `:1869` has no obvious referent, which means the honest
+deliverable may be "this pointed at something that no longer exists, and here is what it should say
+instead" rather than a corrected number.
+
+**Deliverables**
+- **The four references corrected**, or replaced with something that does not rot where no correct
+  number exists.
+- **A decision on whether this should be swept mechanically.** `wo-sweep.mjs` already asserts one
+  cross-file number (the `check()` call-site count against `tools/README.md`), so the precedent for
+  a standing check exists. A sweep that resolves `tools/README.md`'s `:NNN` claims against the file
+  they point into would end this class of drift rather than paying it down once. **Either answer is
+  acceptable** — build it, or write down why the hand-maintained version is the right cost — but the
+  question gets answered rather than left.
+- **A note on anchoring by text instead of by line**, which is what several comments in
+  `verify-shell.mjs` already do and what makes them survive insertion.
+
+**Out of scope** — the `:NNN` references *inside* `tools/verify-shell.mjs` and inside `TESTING.md`,
+which WO-2.36's verification checked and found landing correctly. Re-auditing them is not this row.
+Also out of scope: renumbering or restructuring `tools/README.md`.
+
+**Acceptance**
+- [ ] Each of the four references resolves to what it claims, or says something that cannot go stale,
+      with the reasoning recorded for any that could not be resolved.
+- [ ] A spot-check of at least six other `:NNN` references in `tools/README.md` is reported —
+      whether they land or not — so the size of the remaining debt is known rather than assumed.
+- [ ] The sweep question is answered in writing, and if a check was built it is demonstrated failing
+      on a deliberately wrong reference before it is demonstrated passing.
+- [ ] `node tools/wo-sweep.mjs` green, `git diff --stat -- src/` empty.
+
+**Traps** — **Line numbers move while you work.** Fix the references last, after every insertion this
+row makes is final, and re-resolve each one immediately before reporting rather than trusting a
+number read earlier in the session. **Do not fix these by deleting the pointers**; the pointer is
+carrying real information and a reader wants it. **`:1869` may not have an answer** — an honest "this
+referred to X, which is gone" beats a plausible number nobody verified.

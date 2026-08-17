@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.21 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.37 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.39 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -407,9 +407,11 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 53 | [WO-2.35](phase-2-attendance.md#wo-235--a-key-bound-any-way-but-a-literal-comparison-is-invisible-to-both-key-checks) A key bound any way but a literal comparison is invisible | S | | Aug 27, half a day |
 | 54 | [WO-2.36](phase-2-attendance.md#wo-236--retiring-a-key-correctly-turns-both-key-checks-red) Retiring a key correctly turns both key checks red | S | | Aug 27, half a day |
 | 55 | [WO-2.37](phase-2-attendance.md#wo-237--the-codex-cap-silently-excludes-any-work-order-with-a-slow-acceptance) The Codex cap silently excludes a slow acceptance | S | | Aug 28, half a day |
-| 56 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
-| 57 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 58 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 56 | [WO-2.38](phase-2-attendance.md#wo-238--nothing-exercises-the-anti-vacuity-guard-so-it-can-rot-behind-a-green-run) Nothing exercises the anti-vacuity guard | M | | Aug 28, a day |
+| 57 | [WO-2.39](phase-2-attendance.md#wo-239--four-line-references-in-toolsreadmemd-have-been-wrong-for-thousands-of-lines) Four line references in tools/README.md are wrong | S | | Aug 29, half a day |
+| 58 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
+| 59 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 60 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after
@@ -493,6 +495,34 @@ by it — a forced route to Claude is a working route — and the two harness ro
 false comment and a false alarm in them, which are defects in what the tree says about itself. **If the
 orchestrator has to do the arithmetic by hand a third time, that is the signal to pull this row
 forward**, not a reason to have placed it first.*
+
+*WO-2.38 and WO-2.39 were booked on 2026-08-16 out of **WO-2.36's verification**, and given rows #56
+and #57 the same day. WO-1.16, WO-3.18 and WO-G2 each moved down two more; **nothing moved above
+them.** They take the placement argument WO-2.35 and WO-2.36 established unchanged — the cut band,
+behind the dispatch that produced them. **Neither is a defect on today's tree**, and WO-2.36 itself
+passed: its four Acceptance lines were re-derived independently against mutated copies of the real
+files, and the one prose defect the verifier found was corrected before commit rather than booked.*
+
+***WO-2.38 is the guard-that-guards-nothing row, and it is the more interesting of the two.***
+*WO-2.36 replaced six hardcoded floors with anchors asserted found by name, which is the right shape
+and was proved by mutation on the day. But **on a green tree every branch of that guard is dead
+code** — `vacuity` is empty, nothing downstream of it evaluates, and no check in either tool reaches
+a single push site. The only thing that has ever executed them is a hand mutation applied twice on
+one afternoon and reverted both times. **That is WO-2.36's own argument one level up:** empty agrees
+with everything, and a guard nobody exercises agrees with everything too. It is sized M rather than S
+because it carries a real design question — a self-test that drives the same predicates brushes
+against **"do not write a second harness"**, and the row makes that decision explicitly rather than
+assuming a sibling file is allowed.*
+
+***WO-2.39 is the smaller and the more embarrassing.*** *Four `:NNN` pointers in `tools/README.md`
+miss by roughly 3,200–3,500 lines each, and they were **already wrong at HEAD before WO-2.36 ran** —
+inherited debt, not that row's doing, though it added 145 lines to the file while its entire thesis
+was that a comment pointing at the wrong line is a defect. The reason it is a row rather than a quiet
+fix is the fourth reference, `:1869`, which has no obvious referent: the honest deliverable there may
+be "this pointed at something that no longer exists" rather than a corrected number, and that is a
+judgment nobody should make inside somebody else's commit. **It also asks whether this should be
+swept mechanically** — `wo-sweep.mjs` already asserts one cross-file number, so the precedent exists
+to end the class rather than pay it down once.*
 
 *WO-2.31 was booked on 2026-08-14 out of WO-2.29's correction round and placed at the back of Ship 2,
 directly behind WO-2.30 and ahead of the gate only. **Both halves of it are doors WO-2.29's fix left

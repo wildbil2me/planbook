@@ -244,7 +244,9 @@ const storeDetail = (store) => oursIn(store).join(', ')
  *
  * Both sides are guarded against a vacuous pass: a renamed function, a panel that stopped being
  * literal markup and a regex that quietly stopped matching all produce the empty answer, and empty
- * agrees with everything.
+ * agrees with everything. HOW they are guarded was re-decided at WO-2.36 and is written out where
+ * `vacuity` is built below — each ANCHOR is asserted found, rather than each list asserted long
+ * enough — so that retiring a key from the function and the panel together leaves this check green.
  */
 {
   const html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8');
@@ -252,17 +254,25 @@ const storeDetail = (store) => oursIn(store).join(', ')
 
   /* The panel, then the rows inside it, then the glyphs inside those. Sliced rather than searched
      whole, so that a `<kbd>` anywhere else in index.html — the attendance key legend has its own —
-     cannot answer for this one. */
-  const panel = html.slice(html.indexOf('id="scoresKeys"'));
-  const legendHtml = panel.slice(0, panel.indexOf('</div>'));
+     cannot answer for this one. Each step KEEPS THE INDEX IT FOUND rather than only the slice, so the
+     guard further down can say which one came back empty. It also stops a real trap: `html.slice(-1)`
+     on a missing id is a one-character panel with no `</div>` in it, which reaches the right answer
+     (an empty legend) by an accident nobody would want to rely on twice. */
+  const panelAt = html.indexOf('id="scoresKeys"');
+  const panel = panelAt < 0 ? '' : html.slice(panelAt);
+  const panelEnd = panel.indexOf('</div>');
+  const legendHtml = panelEnd < 0 ? '' : panel.slice(0, panelEnd);
   const rows = [...legendHtml.matchAll(/<span class="scores-key">([\s\S]*?)<\/span>/g)].map(m => m[1]);
   const glyphs = rows.flatMap(r => [...r.matchAll(/<kbd>([^<]*)<\/kbd>/g)].map(k => k[1].trim()));
 
   /* The function's own body, and only its own: from its `export function` line to the first `}` in
      the first column after it. Everything below is read out of that slice, so a key bound in a
-     neighbouring function is not this check's business and cannot make it green either. */
+     neighbouring function is not this check's business and cannot make it green either. Both ends are
+     kept and both are checked: a missing closing brace used to give `slice(at, -1)`, which is not an
+     empty body but the WHOLE REST OF THE FILE read as if it were this function. */
   const at = scoresSrc.indexOf('export function handleScoreKey(');
-  const body = at < 0 ? '' : scoresSrc.slice(at, scoresSrc.indexOf('\n}', at));
+  const bodyEnd = at < 0 ? -1 : scoresSrc.indexOf('\n}', at);
+  const body = at < 0 || bodyEnd < 0 ? '' : scoresSrc.slice(at, bodyEnd);
 
   /* `key === '…'` and `letter === '…'` — the second is how `L`, `M` and `X` are compared, through
      the uppercased single character above them. */
@@ -280,6 +290,11 @@ const storeDetail = (store) => oursIn(store).join(', ')
    * EVERYTHING; it cannot catch one that matches everything it used to and misses only the new
    * thing. A mitigation cited for a case it does not cover is worse than none, because it stops the
    * next reader looking — which is how WO-3.22's own failure mode got a second door.
+   * (`bound.length >= 8` IS NO LONGER A GUARD ANYWHERE IN THIS FILE — it survives only as the quoted
+   * text above and below. The counts were retired where `vacuity` is built
+   * below, and the reasoning for that is written out there. This paragraph is unchanged by it: an
+   * invisible binding does not trip the anchor guard that replaced them either, which is exactly why
+   * the second check at the foot of this block is still the thing that catches one.)
    *
    * What stands in its place is a read WIDENED to the forms a hand here actually reaches for, plus an
    * assertion that the rest are ABSENT (`refused`, below). Both halves were taken off this tree
@@ -354,13 +369,84 @@ const storeDetail = (store) => oursIn(store).join(', ')
      the legend read `stray []`, pass true. Asking `bound` is what makes the row go red with it. */
   const stray = glyphs.filter(g => !(g in LISTED_UNBOUND) && !bound.some(k => GLYPH_OF[k] === g));
 
+  /* ── WHY THERE ARE NO EXPECTED COUNTS IN THIS CHECK, DECIDED AT WO-2.36 ──
+   *
+   * A floor used to stand here: `bound.length >= 8 && glyphs.length >= 8 && rows.length >= 7`, three
+   * numbers copied off the tree the morning the check was written. IT WAS RIGHT ABOUT THE DANGER AND
+   * WRONG ABOUT THE MEASURE, and both halves are worth having in front of you before you put a number
+   * back.
+   *
+   * The danger is real and has not gone anywhere: EMPTY AGREES WITH EVERYTHING. Lose the panel id,
+   * lose the function name, or let one of the regexes above quietly stop matching, and `bound`,
+   * `glyphs` and `rows` all come back empty together — so `unmapped`, `missing` and `stray` are empty
+   * too, and this check reports a legend and a keyboard in perfect agreement having read neither.
+   *
+   * The measure was wrong because A HARDCODED COUNT ALSO FIRES ON THE ONE EDIT THAT IS ENTIRELY
+   * CORRECT. Retire a key — delete the comparison from handleScoreKey() AND delete its row from the
+   * panel, leaving the two documents in exact agreement — and the counts drop, the floor objects, and
+   * a correct tree goes red. Whoever hits that reads the failure, checks the tree, finds it right,
+   * and edits the number down. A FLOOR THAT IS EDITED EVERY TIME IT FIRES IS A FLOOR NOBODY DEFENDS:
+   * by the second time, the reader has been taught it is a formality to step over, and a formality is
+   * exactly the shape the vacuous pass arrives in.
+   *
+   * THERE IS NO HONEST PLACE TO SOURCE AN EXPECTED COUNT FROM — that was looked for, not assumed.
+   * The legend's own row count is the thing being guarded, so asserting `bound` against it is the
+   * vacuity walking back in through the fix: a lost id empties both sides and they agree at zero.
+   * `Object.keys(GLYPH_OF).length` is a table maintained in THIS file, which is precisely the mistake
+   * the `stray` line above had to be corrected for — ask the harness's own table and it answers yes
+   * forever. A number parked in TESTING.md or a design doc is a second hand-maintained copy in a file
+   * nothing executes, and it drifts in silence with the failure pointing at the wrong document. Every
+   * candidate is either the guarded list wearing a hat, or the same constant with a longer walk to it.
+   *
+   * SO THE COUNTS ARE GONE RATHER THAN CORRECTED, because the count was never the thing that caught
+   * anything. Follow a PARTIAL loss through: a key that drops out of `bound` while its row stands
+   * turns that row `stray`; a row that drops out while its key is still bound turns that key
+   * `missing`. The two-way comparison already catches every partial failure, in both directions, and
+   * prints the key's name while it does it. The only failure it cannot catch is the one where BOTH
+   * sides read nothing — and that is not a matter of degree, it is AN ANCHOR THAT IS NO LONGER IN THE
+   * TREE. So the anchors are asserted directly, one by one, by name, in `vacuity` below: the id
+   * found, the slice closed, each regex having matched at all. A retirement moves no anchor and never
+   * trips it; a rename moves exactly one, and the failure says which.
+   *
+   * WHAT THAT LEAVES A READER STARING AT A RED LINE. If the message names keys, the function and the
+   * panel genuinely disagree and the named key is the work. If the message says NOTHING TO COMPARE,
+   * this block has lost its grip on one of the two documents and the named anchor is where to look —
+   * it is drift, never a retirement. THERE IS NO THIRD CASE AND NO NUMBER IN HERE TO MOVE: retiring a
+   * key means deleting the binding and deleting its row, and then this check is green, which is the
+   * whole reason it is shaped this way.
+   *
+   * `body.length < 200` is the one number left and it is not a census. The slice is about 1.9 kB; the
+   * test only separates "the anchor moved and this is the empty string" from "the function is here".
+   * Retiring a key moves it by tens of bytes and cannot come near it, so it is not a number anybody
+   * is ever asked to edit. The refusal check below guards itself with the same threshold, and that is
+   * where this shape was first used here rather than a fourth hardcoded count.
+   */
+  const vacuity = [];
+  /* At most one reason per side, most upstream first: a lost id makes the rows empty too, and three
+     lines of consequence would bury the one line of cause. */
+  if (panelAt < 0) vacuity.push('index.html has no `id="scoresKeys"` — the legend side was never found');
+  else if (panelEnd < 0) vacuity.push('the #scoresKeys panel never closes — no `</div>` after it');
+  else if (!rows.length) vacuity.push('no `<span class="scores-key">` inside the panel — the row regex '
+    + 'here has stopped reading the markup it was written for');
+  else if (!glyphs.length) vacuity.push('no `<kbd>` inside those rows — the glyph regex here has '
+    + 'stopped reading the markup it was written for');
+  if (at < 0) vacuity.push('src/scores.js has no `export function handleScoreKey(` — the binding side '
+    + 'was never found');
+  else if (bodyEnd < 0) vacuity.push('handleScoreKey() has no `}` in the first column after it — the '
+    + 'slice would have run to the end of the file');
+  else if (body.length < 200) vacuity.push('the handleScoreKey() slice is ' + body.length
+    + ' byte(s), too short to be that function');
+  else if (!bound.length) vacuity.push('no `key === \'…\'`, no `letter === \'…\'` and no key list '
+    + 'inside handleScoreKey() — the binding regexes here have stopped reading the code');
+
   check('every key the score grid binds is on the ⌨ Keys legend, and every entry on that legend is a '
     + 'key it binds — `⇥` excepted by name, because Tab is the browser\'s tab order and src/scores.js '
     + 'says so (WO-3.22: `↑ ↓` were bound, promised by the hint, and not on the card)',
-    bound.length >= 8 && glyphs.length >= 8 && rows.length >= 7
-      && !unmapped.length && !missing.length && !stray.length,
+    !vacuity.length && !unmapped.length && !missing.length && !stray.length,
     bound.length + ' key(s) bound by handleScoreKey() [' + bound.join(' ') + '] against '
       + rows.length + ' legend row(s) carrying [' + glyphs.join(' ') + ']'
+      + (vacuity.length ? '; NOTHING TO COMPARE, so this would have passed on emptiness — a read here '
+        + 'lost its anchor, which no retired key can cause: ' + vacuity.join(' · ') : '')
       + (unmapped.length ? '; BOUND AND UNKNOWN TO THIS CHECK: ' + unmapped.join(', ')
         + ' — add it to GLYPH_OF here and to the legend in index.html, in that order' : '')
       + (missing.length ? '; BOUND AND NOT ON THE LEGEND: '
@@ -384,8 +470,9 @@ const storeDetail = (store) => oursIn(store).join(', ')
   const refused = REFUSED.filter(([, re]) => re.test(body)).map(([label]) => label);
 
   check('nothing in handleScoreKey() binds a key in a form the legend check above cannot read — no '
-    + '`switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the floor '
-    + 'above is a floor, so an invisible binding never lowers it and never goes red on its own)',
+    + '`switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the check '
+    + 'above asks whether two documents agree, so a binding it cannot see is not a disagreement and '
+    + 'never goes red there on its own)',
     body.length > 200 && !refused.length && !unresolvedLists.length,
     body.length + ' byte(s) of handleScoreKey() read; ' + literalKeys.length + ' literal '
       + 'comparison(s) and ' + listKeys.length + ' key(s) from ' + testedLists.length
@@ -424,8 +511,8 @@ const storeDetail = (store) => oursIn(store).join(', ')
  *      STRING VALUE out of src/shell.js and searches index.html for that literal id, rather than
  *      typing `attendanceKeysModal` a second time in this file. Renaming the value in shell.js without
  *      updating the markup — or the reverse — both leave the id unfound, the legend slice empty, and
- *      the floor below red. That is Deliverable #2's "trust src/shell.js" rule extended to the id it
- *      opens, not just the keys.
+ *      the check below red, by name, at the id itself since WO-2.36. That is Deliverable #2's "trust
+ *      src/shell.js" rule extended to the id it opens, not just the keys.
  *
  *   4. The listener delegates the score grid's ENTIRE binding set from inside itself, ABOVE the
  *      `currentView() !== 'class'` guard (a `keydown` on `[data-score-cell]` routes to
@@ -447,10 +534,12 @@ const storeDetail = (store) => oursIn(store).join(', ')
  *
  * WO-2.35 WIDENED BOTH READS AND GAVE EACH BLOCK A REFUSAL CHECK OF ITS OWN, and doing it twice is
  * what the decision above costs — the reasoning is written out once, at the `bound` line of the block
- * above (`:271-319`), because that is where the sentence it withdraws used to stand. In short: the
- * `bound.length >= 9` floor below is a FLOOR and nothing more. A tenth key bound through a `switch`
- * or an `e.code` comparison does not lower it, so the floor passes, every key this block CAN see is
- * still on the card, and the legend quietly loses a row. So the read now also finds a KEY LIST
+ * above (`:281-333`), because that is where the sentence it withdraws used to stand. In short: the
+ * count that used to floor this check was a FLOOR and nothing more. A tenth key bound through a
+ * `switch` or an `e.code` comparison did not lower it, so the floor passed, every key this block CAN
+ * see was still on the card, and the legend quietly lost a row. (That count is gone as of WO-2.36 —
+ * see the paragraph below — and the sentence survives the change intact, because an invisible binding
+ * does not trip the anchor guard that replaced it either.) So the read now also finds a KEY LIST
  * DECLARED `const NAME = ['…']` AND MEMBERSHIP-TESTED in the slice — the form this very listener uses
  * for `MARK_KEYS`, found by shape here rather than by that one name, so that a SECOND such list is
  * visible — and the forms it still cannot read are asserted ABSENT by the second check() below rather
@@ -459,11 +548,44 @@ const storeDetail = (store) => oursIn(store).join(', ')
  * `.code` is this app's attendance-mark field besides, so widening to it would document keys nobody
  * presses. The residue that is still invisible is named at the block above too.
  *
- * THE SAME SCAR APPLIES HERE AS THERE (`:349-355` above): `stray` below asks `bound` — the keys read
+ * THE SAME SCAR APPLIES HERE AS THERE (`:363-369` above): `stray` below asks `bound` — the keys read
  * out of src/shell.js — not `Object.keys(GLYPH_OF)`, which is a table this file maintains and would
  * answer "still bound" forever, letter deleted or not. Both sides are guarded against a vacuous pass
  * the same way: a renamed modal id, a renamed `MARK_KEYS` constant, or a regex that quietly stopped
  * matching all produce the same empty answer, and empty agrees with everything.
+ *
+ * WHAT GUARDS THAT, SINCE WO-2.36: THE ANCHORS, ASSERTED FOUND — NOT THE LENGTHS, ASSERTED LONG.
+ * This check used to require `bound.length >= 9 && glyphs.length >= 9 && rows.length >= 8`, three
+ * numbers read off the tree the day it was written, and the trouble with them was not that they were
+ * wrong. It was that RETIRING A KEY CORRECTLY BROKE THEM. Take a letter out of `MARK_KEYS` and delete
+ * its row from the card — both sides, in perfect agreement, the two directions this check polices
+ * both satisfied — and the counts fall to 8 and 7 and only the numbers object. The person who did it
+ * would read the red, check the tree, find it right, and edit the numbers down; and a number that is
+ * edited every time it fires has taught its next reader to step over it, which is the one habit a
+ * guard against a silent pass cannot survive. Nor is there anywhere honest to source a count FROM:
+ * the card's own row count is the thing under test, and `GLYPH_OF` is a table this file maintains,
+ * so either one agrees with itself at zero the moment the modal id goes missing.
+ * SO THE COUNTS ARE GONE, AND NOTHING REPLACED THEM, because the two-way comparison was already
+ * doing the work they were credited with: a letter that drops out of `bound` while its row stands
+ * comes back as `stray`, and a row that goes while its letter is bound comes back as `missing`.
+ * Every partial loss THAT REACHES `bound` OR THE CARD is caught by name in one direction or the
+ * other. Scoped deliberately, because the unscoped sentence is false here and was corrected at the
+ * verification of WO-2.36 rather than shipped: `markKeys` is read FILE-WIDE out of src/shell.js
+ * (`:611`), not out of the listener slice, so a `MARK_KEYS` that is still DECLARED while the listener
+ * has stopped testing it leaves all five letters in `bound`, the card untouched, `missing` and
+ * `stray` both empty and every anchor present — 9 against 8, green, with keyboard marking dead for
+ * the teacher. THAT IS THE SAME RESIDUE THE SECOND check() BELOW EXISTS FOR, not a hole this guard
+ * opened: the retired floor was equally green on that tree, which is the point WO-2.35 made in
+ * different words. The block above says it at `:291-292` and it governs here too — a mitigation
+ * cited for a case it does not cover is worse than none, because it stops the next reader looking.
+ * What the comparison cannot catch is the case where both sides read NOTHING — and that case is
+ * never a matter of degree, it is
+ * an anchor gone from the tree: `KEYS_MODAL`, the id in index.html, the `<dl>`, the class-view guard,
+ * `MARK_KEYS`, or one of the regexes above. So `vacuity` below names each of them and fails on the
+ * one that is missing. RETIRING A KEY MOVES NO ANCHOR, so it stays green; a rename moves exactly one,
+ * so the failure says which — and there is no number in this block for anybody to move afterwards.
+ * The long form of the same decision, and the candidates it rules out, are at the sibling block above
+ * where its own counts were retired in the same pass (`:371-422`).
  */
 {
   const html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8');
@@ -502,7 +624,7 @@ const storeDetail = (store) => oursIn(store).join(', ')
     ? [...markKeysMatch[1].matchAll(/'([^']+)'/g)].map(m => m[1]) : [];
 
   /* ANY key list membership-tested in the slice, found by shape rather than by name — WO-2.35, and
-     the reasoning is at `:271-319`. `MARK_KEYS` comes back through here as well as through the read
+     the reasoning is at `:281-333`. `MARK_KEYS` comes back through here as well as through the read
      above, which is why `bound` is a Set; the point is the list that is NOT `MARK_KEYS`. It arrives
      with its letters unmapped, so the check below names them rather than skipping them — the same
      "noisy instead of silent" call `unmapped` already makes. A CAPS-shaped list this cannot resolve
@@ -531,18 +653,51 @@ const storeDetail = (store) => oursIn(store).join(', ')
 
   const unmapped = bound.filter(k => !(k in GLYPH_OF));
   const missing = bound.filter(k => k in GLYPH_OF && !glyphs.includes(GLYPH_OF[k]));
-  /* `bound`, not `Object.keys(GLYPH_OF)` — see the block comment above and `:349-355` in the check
+  /* `bound`, not `Object.keys(GLYPH_OF)` — see the block comment above and `:363-369` in the check
      this one is the sibling of. Asking the map instead of the listener is the defect WO-3.22 shipped
      and had to correct; asking `bound` is what lets a row go stray when the key that justified it is
      gone. */
   const stray = glyphs.filter(g => !bound.some(k => GLYPH_OF[k] === g));
 
+  /* THE ANCHORS, ASSERTED FOUND — this is what stands where `bound.length >= 9 && glyphs.length >= 9
+     && rows.length >= 8` used to, and the reasoning is in the last paragraph of the block comment
+     above. In one line: those three numbers went red on a CORRECT retirement, there was nowhere
+     honest to source them from, and the two-way comparison below already catches every partial loss
+     by name — so the only thing left for a guard to do is refuse to compare two documents it never
+     found. One reason per side, most upstream first, because a lost id empties the rows as well and
+     the cause is worth more than three lines of consequence. */
+  const vacuity = [];
+  if (!modalIdMatch) vacuity.push('src/shell.js has no `const KEYS_MODAL = \'…\'` — this block reads '
+    + 'the id from there rather than typing it here, so there was nothing to look for in index.html');
+  else if (modalAt < 0) vacuity.push('index.html has no `id="' + modalId + '"` — src/shell.js opens a '
+    + 'modal the markup does not carry, or one of the two spellings was renamed alone');
+  else if (dlAt < 0) vacuity.push('no `<dl class="attendance-keys">` inside that modal');
+  else if (dlEnd < 0) vacuity.push('that `<dl>` never closes');
+  else if (!rows.length) vacuity.push('no `.attendance-key-row` inside it — the row regex here has '
+    + 'stopped reading the markup it was written for');
+  else if (!glyphs.length) vacuity.push('no `<kbd class="attendance-key">` in those rows\' `<dt>`s — '
+    + 'the glyph regex here has stopped reading the markup it was written for');
+  if (listenerAt < 0) vacuity.push('src/shell.js no longer contains the class-view guard this slice '
+    + 'starts at — `' + guardAnchor + '`');
+  else if (listenerEnd < 0) vacuity.push('the listener below that guard has no closing `});`');
+  else if (body.length < 200) vacuity.push('the slice below the guard is ' + body.length
+    + ' byte(s), too short to be that listener');
+  else if (!bound.length) vacuity.push('no `e.key === \'…\'` and no key list below the guard — the '
+    + 'binding regexes here have stopped reading the code');
+  /* Named on its own rather than left to `unmapped`, which is what caught this before and blamed the
+     wrong file: with the constant renamed, WO-2.35's by-shape read still finds the letters, so they
+     arrive in `bound` while GLYPH_OF — built from `markKeys` — is empty, and the message told the
+     reader to go and edit GLYPH_OF. The cause is the rename, and now it says so. */
+  if (!markKeysMatch) vacuity.push('src/shell.js has no `const MARK_KEYS = [\'…\']` — the letters '
+    + 'below are only whatever the by-shape list read found, and the glyph map was built from nothing');
+
   check('every key the attendance-marking listener answers to is on the ⌨ Keys legend, and every '
     + 'entry on that legend is a key it answers to (WO-2.34, WO-3.22\'s sibling on the marking screen)',
-    bound.length >= 9 && glyphs.length >= 9 && rows.length >= 8
-      && !unmapped.length && !missing.length && !stray.length,
+    !vacuity.length && !unmapped.length && !missing.length && !stray.length,
     bound.length + ' key(s) answered below the class-view guard [' + bound.join(' ') + '] against '
       + rows.length + ' legend row(s) carrying [' + glyphs.join(' ') + ']'
+      + (vacuity.length ? '; NOTHING TO COMPARE, so this would have passed on emptiness — a read here '
+        + 'lost its anchor, which no retired key can cause: ' + vacuity.join(' · ') : '')
       + (unmapped.length ? '; BOUND AND UNKNOWN TO THIS CHECK: ' + unmapped.join(', ')
         + ' — add it to GLYPH_OF here and to the legend in index.html, in that order' : '')
       + (missing.length ? '; BOUND AND NOT ON THE LEGEND: '
@@ -567,8 +722,9 @@ const storeDetail = (store) => oursIn(store).join(', ')
   const refused = REFUSED.filter(([, re]) => re.test(body)).map(([label]) => label);
 
   check('nothing below the class-view guard binds a key in a form the legend check above cannot read '
-    + '— no `switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the floor '
-    + 'above is a floor, so an invisible binding never lowers it and never goes red on its own)',
+    + '— no `switch`, no `e.code`, no prefix test, no lookup keyed by the key name (WO-2.35: the check '
+    + 'above asks whether two documents agree, so a binding it cannot see is not a disagreement and '
+    + 'never goes red there on its own)',
     body.length > 200 && !refused.length && !unresolvedLists.length,
     body.length + ' byte(s) of the listener read below the guard; ' + literalKeys.length + ' literal '
       + 'comparison(s) and ' + listKeys.length + ' key(s) from ' + testedLists.length

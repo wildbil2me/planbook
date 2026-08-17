@@ -1231,7 +1231,8 @@ harness pass — the routing budget was three mutation runs plus the clean one, 
 read the letters `stray` with zero of them `bound`, the shape the floor is built to catch; the reasoning
 is recorded rather than the browser run, and is named as such in `.claude/dispatch/WO-2.34-result.md`.
 **`stray` asks `bound`, not `Object.keys(GLYPH_OF)`** — the identical clause and the identical reason
-WO-3.22 carries at `:281-287`, copied to a second legend rather than shared with it, for the reasoning
+WO-3.22 carries at `:363-369` (`:281-287` when this was written — WO-2.35 and WO-2.36 both grew the
+block above it), copied to a second legend rather than shared with it, for the reasoning
 written into the block's own comment: the two legends' shapes differ enough (nesting depth, glyph
 source, a second file read for the id, a listener slice bounded by a guard rather than a function's own
 braces) that a helper covering both would trade a saved few lines for parameters neither check needs
@@ -1279,6 +1280,54 @@ marking-screen checks that a teacher's `D` really does stop working. Both revert
 **The floors themselves are untouched and stay WO-2.36's row**; the two new checks guard themselves
 against a vacuous pass with a slice-length test instead, which is one of the alternatives that row
 names.
+
+**WO-2.36 moved it by nothing — 805 call sites before and after, and the run still prints 802.** It
+is the rare row that deletes a guard and adds no check: the six hardcoded floor numbers are gone from
+both key blocks and **nothing replaced them with another number.** The delivered tree reads `802
+checks · 802 passed · 0 failed · 0 skipped`, 21,833 lines, 27.2 lines per check, 263s, with both key
+checks reporting the same counts as the pre-work-order baseline measured the same morning (score grid
+10 bound against 8 rows, marking screen 9 against 8; that baseline run was `802 · 802 · 0 · 0`, 262s).
+**The floors were right about the danger and wrong about the measure.** Empty agrees with everything —
+that has not changed — but a hardcoded count also fires on the one edit that is entirely correct.
+Retire a key properly, letter out of `MARK_KEYS` and its row off the card, and `bound.length >= 9 &&
+glyphs.length >= 9 && rows.length >= 8` objects at 8 and 7 while the two directions it exists to
+police are both satisfied. The fix for that red is to edit the number down, and **a number edited
+every time it fires has taught its next reader that it is a formality to step over** — which is the
+shape the silent pass arrives in. **There was nowhere honest to source a count from, and that was
+looked for rather than assumed:** the card's own row count is the thing under test and agrees with
+itself at zero the moment the modal id goes missing; `Object.keys(GLYPH_OF)` is a table this harness
+maintains, which is the exact mistake `stray` had to be corrected for at WO-3.22; a number parked in
+`TESTING.md` is a second hand-maintained copy in a file nothing executes. **So the counts went and
+nothing took their place, because the comparison was already doing the work they were credited
+with.** A key that drops out of `bound` while its row stands comes back `stray`; a row that goes while
+its key is bound comes back `missing`. Every *partial* loss **that reaches `bound` or the card** is
+caught by name in one direction or the other — scoped that way because the flat claim is false on the
+marking side, which WO-2.36's verification caught before commit: `markKeys` is read file-wide out of
+`src/shell.js`, not out of the listener slice, so a `MARK_KEYS` left *declared* while the listener
+stops testing it keeps all five letters in `bound` and reads 9 against 8, green, with keyboard marking
+dead. That residue belongs to the refusal `check()` beside it and to WO-2.35's question of which
+bindings the read can see at all — **the retired floor was equally green on that tree**, so it is a
+known limit rather than anything these counts used to cover. The only case left is both sides reading
+nothing — which is never a matter of degree, it is
+an anchor gone: the panel id, the `</div>`, `KEYS_MODAL`, the id it names in `index.html`, the `<dl>`,
+the class-view guard, `MARK_KEYS`, or a regex having matched at all. Each is asserted directly and
+prints under `NOTHING TO COMPARE`, one reason per side, most upstream first. **Three mutations, three
+full runs, each reverted and confirmed with `git diff` before the next.** `'D'` out of `MARK_KEYS`
+*and* its row deleted — the case that was red before this row — read **`PASS … 8 key(s) … against 7
+legend row(s)`**, `802 checks · 798 passed · 4 failed · 0 skipped`, 263s, the four red being the
+keyboard-marking readings that a teacher's `D` really does stop working and the `?` list that names
+five letters. The eight `<span class="scores-key">` rewritten with single quotes — valid HTML,
+identical rendering, and the row regex matches nothing — plus the marking modal's `id` renamed in
+`index.html` alone: both blocks red at **0 legend rows**, each naming its own anchor, `802 · 798 · 4`,
+266s. `MARK_KEYS` renamed at both use sites to `MARKING_LETTERS`, an edit that leaves the app working:
+**one failure in the whole run**, `802 · 801 · 1`, 265s — and its counts are 9 and 8, *unchanged from
+the green tree*, which is the proof that the old floor never caught this mutation either. What went
+red was `unmapped`, whose message told the reader to go and edit `GLYPH_OF` — the wrong file. The
+renamed constant is now named on its own line for that reason. **`body.length < 200` is the one number
+left in either block**, on a ~1.9 kB slice, and it separates "the anchor moved and this is the empty
+string" from "the function is here"; deleting keys cannot come near it, so nobody is ever asked to
+edit it. Both blocks were changed separately, in their own words — merging is `Out of scope` and
+WO-2.34's reasoning stands.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
