@@ -32,6 +32,12 @@ browser doesn't fetch.
   the same commit that adds the control. Not in a later touch-up pass; there isn't one.
 - **`localStorage` is `planbook_`-prefixed and holds UI preferences only.** Student data lives
   in IndexedDB, one JSON document per year — `docs/data-model.md`.
+- **Where two modules own one feature, the import runs one way and the file says so in its
+  header.** `src/roster-import.js` (the SIS contact CSV) imports `parseRosterLine()`, `nameKey()`,
+  `fullName()`, `renderRoster()`, `newStudent()` and `newGuardian()` from `src/roster.js`;
+  `src/roster.js` imports it for nothing at all, and `src/shell.js` dispatches the open. Same shape
+  and same reason as `src/categories.js` → `src/classes.js`. A module that reaches back is a loop
+  every later reader has to hold in their head, and this repo has refused five of them.
 
 **Why not one big file like Roll Call!'s `src/dashboard.html`.** That app is a single file
 because it opens from `file://`, where module imports are blocked and a service worker cannot

@@ -17,6 +17,15 @@
   file remembering to be careful. Anything that copies a student into a class instead of
   referencing one breaks both at once, and does it silently.
 
+  THE SECOND DOOR IS NOT IN THIS FILE, AND THE IMPORT RUNS ONE WAY. WO-1.23's contact import — the
+  SIS's per-class CSV, with emails, phones, the advisor and the guardians in it — is
+  src/roster-import.js. It imports parseRosterLine(), nameKey(), fullName(), renderRoster(),
+  newStudent() and newGuardian() from HERE; this file imports it for nothing at all, and must not.
+  src/shell.js dispatches the open, exactly as it already dispatches data-roster-paste. The paste
+  box below is untouched by it and stays that way: one dialog cannot ask "which half is the
+  surname" and "here are eight columns and a continuation row" without becoming two dialogs sharing
+  a modal, and the paste box is the fallback if the import refuses a file at 7am.
+
   FOUR THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS:
 
   1. THE PASTE PREVIEW SHOWS THE SPLIT, not a count. `Last, First` and `First Last` both come out
@@ -315,8 +324,14 @@ export function parseRosterLine(line) {
 /* The key two rows are "the same person" by. Case and spacing only — nothing cleverer, because
    the answer is shown to the teacher as a warning she can override rather than acted on behind
    her back, and a fuzzy match that quietly refused to add a real second J. Smith would be worse
-   than one that adds him. */
-function nameKey(first, last) {
+   than one that adds him.
+
+   Exported since WO-1.23, for the reason parseRosterLine() is: src/roster-import.js decides the
+   same question about a row of a contact CSV — is this student already in the school year — and a
+   second copy of these two lines over there could disagree about a trailing space on a day the
+   answer decides whether a student gets a duplicate record. `Smith` and `Smitha` are two people
+   and stay two people, in one place. */
+export function nameKey(first, last) {
   return (tidy(last) + '|' + tidy(first)).toLowerCase();
 }
 
@@ -332,8 +347,22 @@ function nameKey(first, last) {
   rather than no block, so nothing anywhere has to ask whether the key exists before reading it —
   and src/supports.js's supportsOf() repairs the one case that still arrives without it, a record
   restored from a backup written before this work order.
+
+  `phone` and `phone2` arrived at WO-1.23, on the student as well as on the guardian, because it is
+  ONE export writing both columns: the SIS's student cell holds one number today and its guardian
+  cell holds two, and a student cell that arrives with two next August must not behave differently
+  from a guardian cell that does. One splitting rule, both places, so there is no second behaviour
+  to discover. A record restored from a backup written before that work order simply has neither
+  key — every reader here treats a missing string as an empty one, and the editor writes it the
+  first time it is typed into.
+
+  EXPORTED SINCE WO-1.23, along with newGuardian() below, and for one reason: src/roster-import.js
+  creates students and guardians out of a contact file, and the shape of a student record has to
+  have exactly one writer. A second object literal over there would be the one that forgets
+  `supports` — which is not a field that may be absent (src/store.js:102-104), and is the one this
+  app can least afford to be sloppy about. Nothing else in the app calls either of these.
 */
-function newStudent(first, last) {
+export function newStudent(first, last) {
   return {
     id: newId('s'),
     first: first,
@@ -341,6 +370,8 @@ function newStudent(first, last) {
     nickname: '',
     gradYear: '',
     email: '',
+    phone: '',
+    phone2: '',
     guardians: [],
     counselor: { name: '', email: '' },
     notes: '',
@@ -351,8 +382,9 @@ function newStudent(first, last) {
 /* `preferred` is what Phase 5's audience picker reads to decide who a message goes to first, so
    the first guardian added is it — a student with one guardian and no preferred flag is a
    student that picker has no answer for. */
-function newGuardian(preferred) {
-  return { name: '', relation: '', email: '', phone: '', language: 'en', preferred: !!preferred };
+export function newGuardian(preferred) {
+  return { name: '', relation: '', email: '', phone: '', phone2: '', language: 'en',
+    preferred: !!preferred };
 }
 
 /* ────────────────────────────── the roster panel ────────────────────────────── */
@@ -603,8 +635,9 @@ export function addToOpenClass(studentId) {
    pass-through because the hook carries a path out of the markup: a value this list does not
    name writes nothing at all, which is what keeps a field added to the document later from
    becoming writable here by an attribute somebody copied. */
-const STUDENT_FIELDS = ['first', 'last', 'nickname', 'gradYear', 'email', 'notes'];
-const GUARDIAN_FIELDS = ['name', 'relation', 'email', 'phone', 'language'];
+const STUDENT_FIELDS = ['first', 'last', 'nickname', 'gradYear', 'email', 'phone', 'phone2',
+  'notes'];
+const GUARDIAN_FIELDS = ['name', 'relation', 'email', 'phone', 'phone2', 'language'];
 const COUNSELOR_FIELDS = ['name', 'email'];
 /* The support block's own three allowlists, and they are separate from the ones above rather than
    folded into them for a reason worth the extra line: an attribute copied off a support field onto
@@ -667,6 +700,11 @@ function guardianCard(guardian, index, student) {
     guardianField('Relation', 'relation', index, guardian.relation, 'text'),
     guardianField('Email', 'email', index, guardian.email, 'email'),
     guardianField('Phone', 'phone', index, guardian.phone, 'tel'),
+    /* Directly under the first, and labelled so the pair reads as one person's two numbers rather
+       than as a second guardian's. The contact import fills both from one cell — a cell holding
+       "(508) 234-5678 (M), (508) 345-6789 (H)" is two numbers for one parent — and a field the
+       importer can write and this editor cannot show is a field the teacher cannot correct. */
+    guardianField('Second phone', 'phone2', index, guardian.phone2, 'tel'),
     guardianField('Language', 'language', index, guardian.language, 'text')
   );
   card.append(grid);
@@ -1086,6 +1124,8 @@ function renderStudentEditor() {
   fieldValue('studentNickname', student.nickname);
   fieldValue('studentGradYear', student.gradYear);
   fieldValue('studentEmail', student.email);
+  fieldValue('studentPhone', student.phone);
+  fieldValue('studentPhone2', student.phone2);
   fieldValue('studentNotes', student.notes);
   const counselor = counselorOf(student);
   fieldValue('studentCounselorName', counselor.name);

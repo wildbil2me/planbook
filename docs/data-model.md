@@ -81,8 +81,13 @@ nag, and nothing noticed until a verifier read the line for another reason.
 
   "students": [{
     "id": "s_…", "first": "", "last": "", "nickname": "", "gradYear": "",
-    "email": "",
-    "guardians": [{ "name": "", "relation": "", "email": "", "phone": "",
+    // Two numbers, on the student and on the guardian both (WO-1.23). One export writes both
+    // columns, so one splitting rule reads them: a cell holding "(508) 234-5678 (M), (508)
+    // 345-6789 (H)" is one person's two numbers, and a third in the same cell is appended to
+    // `phone2` rather than dropped. The (M)/(H) markers are stored verbatim — nothing in this app
+    // branches on a phone number, and they are what the teacher reads at a glance.
+    "email": "", "phone": "", "phone2": "",
+    "guardians": [{ "name": "", "relation": "", "email": "", "phone": "", "phone2": "",
                     "language": "en", "preferred": true }],
     "counselor": { "name": "", "email": "" },
     "notes": "",
@@ -539,3 +544,39 @@ term tabs (students from row 6, dates from row 5, marks from column L). See Roll
 `CLAUDE.md` for the exact layout.
 
 This is an import, not an integration — nothing stays coupled afterward.
+
+## Importing the SIS contact list
+
+**How this differs from the one above:** that one is a **one-time migration** off the predecessor
+app, still `⏳ DEFERRED` (WO-2.7), and it carries a whole year — roster *and* attendance marks. This
+one is **live and per class**, run whenever the section's contacts change, and it carries contacts
+only. Two importers, two files, two shapes; they share nothing but a file input.
+
+The school system exports one `.csv` per section, eight comma-delimited columns with RFC-4180
+quoting and no reliable header row: **Student Name · Student Email · Student Phone · Advisor ·
+Advisor Email · Parents · Parent Phone · Parent Email**. A student's second guardian is on a
+*continuation row* underneath them with the first five columns empty, so **column 1 is the grouping
+key** — a row with a name starts a student, a row without one adds a guardian to the student above,
+and the all-empty spacer row means nothing. `src/roster-import.js` reads it; the preview shows every
+student before anything is written.
+
+The mapping, which is the owner's and not the importer's to revisit:
+
+| Column | Lands on | Note |
+|---|---|---|
+| Student Name | `first`, `last`, `nickname`, `gradYear` | `Last, First (Nickname) 'YY`; `'28` stores as `"2028"`, a string |
+| Student Email / Phone | `email`, `phone`, `phone2` | a cell with two numbers splits |
+| Advisor / Advisor Email | `counselor.name`, `counselor.email` | the SIS's word for the same person; `Smith, Mike` is stored **flipped**, as `Mike Smith`, because that string renders into an outreach sentence |
+| Parents / Parent Phone / Parent Email | one `guardians[]` entry | `relation` is left **empty** — `Mr.`/`Mrs.` is a title, not a relationship, and `{{guardian.relation}}` reaches an email |
+
+Two writing rules make a re-import safe: **a non-empty imported value wins**, because the SIS is the
+official record; **an empty cell never clears anything**, so a column the export omitted cannot
+delete a number the teacher typed. A student already in the year is *linked* into the class rather
+than copied, a guardian is matched on email and then on name rather than stacked, and **nobody is
+ever removed** by an import.
+
+**Nothing under `supports` is reachable from this file.** Accommodations, plans, medical needs and
+case managers are not in the export and never will be — they arrive per student through a different
+channel — so a contacts CSV in iCloud Drive is not a disclosure, which is the position § Accommodations
+takes about what may leave the app. A future column called `Notes` or `Alerts` does not change that:
+mapping one there is a new work order and an owner decision.

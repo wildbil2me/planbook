@@ -13,6 +13,35 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The contact list imports itself — 2026-08-18
+
+**A second door beside the paste box.** Roster & contacts now offers *Import contacts from a file*
+next to *Paste a list of names*: choose the `.csv` your school system exports for a section and
+Planbook reads the whole of it — the student's name, email and phone, the advisor, and one or two
+parents with two phone numbers and an email each. That is roughly nine fields a student, twenty-five
+students a section, five sections, all of it already sitting in a file. This is the afternoon it
+replaces.
+
+**It shows you the whole import before it writes a word.** Every student it found, with the name
+split into two fields you can correct, the contacts it read beside them, and a line per row saying
+exactly what importing that row would change. Toggle a row off and it writes nothing at all.
+
+**Importing the same file twice is not importing twice.** A student already in the school year is
+recognised and linked into this class rather than duplicated, and a guardian already on file is
+updated in place rather than added a second time — matched on name, or on email when the name is
+what changed. So a corrected export a week later fixes what changed and leaves the rest alone. An
+empty cell never clears a field you typed by hand: the file being silent about a number is not the
+file asking you to delete it.
+
+**Nothing in the file reaches accommodations, plans or medical needs.** They are not in the export,
+and the importer has no path to them — every field it writes comes from a fixed list of names, so no
+column the school system adds later can address that block by name. A student who already carries an
+IEP, a behaviour plan or medical text comes through an import with that block identical, field for
+field.
+
+**Students and guardians can now hold two phone numbers**, which is what the export carries and what
+the student editor and the guardian card now show.
+
 ### A score cell takes a score — 2026-08-18
 
 **Nothing changes until you type something a score is not.** The cell still takes `87`, `87.25`,

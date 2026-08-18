@@ -1041,6 +1041,28 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .paste-row-note { flex-basis: 100%; font-size: 11px; line-height: 1.45; color: #8a6d1a; }
 .modal-body .paste-count { font-size: 12px; font-weight: 700; color: #6b7a8d; margin: 10px 0 6px; }
 
+/* The contact import (WO-1.23). Its preview row IS the paste preview's row and wears those exact
+   classes — the same two editable name fields, the same toggle, the same amber — so the two dialogs
+   measure and read identically and a change to one reaches the other. What is below is only what
+   the import row has and the paste row does not: the file input, and three lines of prose per row.
+   None of the three is a touch target; they are here for the one thing an 11px line gets wrong at
+   arm's length on a tablet, which is being read. */
+.import-file { display: block; width: 100%; margin-top: 4px; font-size: 12px; color: #6b7a8d; }
+.import-file::file-selector-button {
+  margin-right: 10px; padding: 6px 12px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d;
+  font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.import-file::file-selector-button:hover { border-color: #5b6fcc; color: #5b6fcc; }
+/* The nickname and grad year, beside the split rather than under it: they came out of the same
+   cell as the name, so a teacher checking the split has to see where the rest of it went. */
+.import-meta { font-size: 11px; color: #6b7a8d; white-space: nowrap; }
+.import-contacts { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; }
+.import-contact-line { font-size: 11px; line-height: 1.45; color: #6b7a8d; }
+/* What importing this row would write, which is the sentence the whole dialog is for. Indigo
+   rather than grey: it is the one line in the row that is about the future. */
+.import-summary { flex-basis: 100%; font-size: 11px; font-weight: 700; color: #5b6fcc; }
+
 /* The student editor. Two columns of labelled fields that become one below ~420px, which is what
    `flex: 1 1 180px` buys — a first-name field two words wide is worse than a stacked form. */
 .student-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1457,6 +1479,17 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .paste-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
   .paste-row-note { font-size: 12px; }
   .modal-body .paste-count { font-size: 13px; }
+  /* The contact import. Both halves of the file input, for the reason `.backup-file` gives further
+     down: the input carries the height so the whole row is a target, and the native button inside
+     it carries its own — a 44px input around a 20px button is the WO-1.2 `.search-box` defect
+     wearing a different control. The three prose lines are not controls and are here only to be
+     legible at arm's length. */
+  .import-file { min-height: 44px; font-size: 13px; }
+  .import-file::file-selector-button { min-height: 44px; padding: 8px 14px; font-size: 12px; }
+  .import-meta { font-size: 12px; }
+  .import-contacts { gap: 4px; }
+  .import-contact-line { font-size: 12px; }
+  .import-summary { font-size: 12px; }
   .student-label { font-size: 11px; }
   .student-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
   .student-notes { min-height: 88px; font-size: 14px; }

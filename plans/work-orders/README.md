@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.23 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.49 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.51 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.25 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -203,8 +203,8 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 23 | 22 | — | 🔨 IN PROGRESS (reopened four times; last on 2026-08-17) |
-| 2 — Attendance | 47 | 44 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 1 — Shell, store, roster | 23 | 23 | — | 🔨 IN PROGRESS (reopened four times; last on 2026-08-17) |
+| 2 — Attendance | 49 | 44 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 24 | 23 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **125** | **94** | **2** | `[███████░░░] 75%` |
+| | **127** | **95** | **2** | `[███████░░░] 75%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -421,10 +421,28 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 67 | [WO-1.22](phase-1-shell-store-roster.md#wo-122--copy-a-class-carrying-its-terms-and-its-categories) Copy a class, with its terms and categories | S | | Booked and built 2026-08-17, **an hour after the row above it closed** — see the correction below |
 | 68 | [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-takes-any-string-number-can-read-not-any-number-a-teacher-can-mean) A score cell takes any string `Number()` can read | M | | Sep 1, a day — **ahead of WO-2.48 on purpose** |
 | 69 | [WO-1.23](phase-1-shell-store-roster.md#wo-123--import-a-classs-students-and-contacts-from-the-sis-csv) **Import students and contacts from the SIS CSV** | M | | **When the roster arrives — before the first class.** Sep 1–2, a day |
-| 70 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 2, half a day |
-| 71 | [WO-2.49](phase-2-attendance.md#wo-249--the-ticks-acceptance-check-cannot-read-a-work-order-with-crlf-line-endings) The tick cannot read a CRLF work order | S | | Sep 2, half a day — **booked out of WO-3.25s tick** |
-| 72 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 73 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 70 | [WO-2.50](phase-2-attendance.md#wo-250--a-date-outside-every-term-is-not-a-date-to-mark) **A date outside every term is not a date to mark** | M | | **Before Aug 28 — the window this lives in is open now.** Aug 19, a day |
+| 71 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 2, half a day |
+| 72 | [WO-2.49](phase-2-attendance.md#wo-249--the-ticks-acceptance-check-cannot-read-a-work-order-with-crlf-line-endings) The tick cannot read a CRLF work order | S | | Sep 2, half a day — **booked out of WO-3.25s tick** |
+| 73 | [WO-2.51](phase-2-attendance.md#wo-251--the-term-ended-and-the-screen-never-said-so) The term ended and the screen never said so | S | | Sep 3, half a day — **the first rollover is late October** |
+| 74 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 75 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+*WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
+app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is
+rowed ahead of WO-2.48 and WO-2.49**, which had been `next` and `next` after it — the same move rows #61
+and #68 made, and the same one-line reversal if the owner wants the housekeeping first. The argument is
+the calendar rather than the size: both of those are half-days of harness housekeeping with no deadline,
+and **the window WO-2.50's defect lives in is open right now.** Aug 18 → Aug 28 is the setup fortnight,
+every tap in it is a test tap, and in this data model a test tap is a recorded meeting in the live
+ledger — sitting in the year total and in no term's percentage, where nothing on any screen can find it.
+Ten days of that is what the row buys back.*
+
+***WO-2.51 is rowed behind both of them instead***, *at #73 and not beside its sibling, because its
+deadline is genuinely different: the first term rollover is late October, and a reminder to move to
+Quarter 2 has nothing to remind anybody of before then. It also depends on WO-2.50's predicate, so it
+could not lead. **They were cut as two rather than one** for that reason and only that one — the lock
+must land before the term and the nudge must not hold it up.*
 
 *WO-1.22 was booked on 2026-08-17, owner-directed rather than out of a dispatch, rowed in the same
 sitting, dispatched within the hour and closed the same evening — booked, built and ticked between two

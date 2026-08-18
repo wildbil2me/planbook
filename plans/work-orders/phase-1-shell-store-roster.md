@@ -1744,7 +1744,7 @@ on its merits.
 
 ## WO-1.23 — import a class's students and contacts from the SIS CSV
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.7, WO-1.8
+**Ship** 2 · **Status** ✅ DONE — 2026-08-18 · **Size** M · **Depends on** WO-1.7, WO-1.8
 **Closes roadmap** Phase 1 → *(no box. The roster box WO-1.7 closed is amended rather than replaced —
 see the field below. Booked 2026-08-17, owner-directed, with the file's real shape pasted into the
 booking conversation.)*
@@ -1929,49 +1929,54 @@ reformatting a phone number; `tel:` links; any change to the paste path, to remo
 called `Notes` does not change that.
 
 **Acceptance**
-- [ ] The six sample rows above, imported into an empty class, produce exactly **two** students and no
+- [x] The six sample rows above, imported into an empty class, produce exactly **two** students and no
       third — the all-empty row adds nobody and the two near-identical surnames stay two people.
-- [ ] `Smith, Jonathan (John) '28` lands as `first` **Jonathan**, `last` **Smith**, `nickname` **John**,
+- [x] `Smith, Jonathan (John) '28` lands as `first` **Jonathan**, `last` **Smith**, `nickname` **John**,
       `gradYear` **2028**, `email` **SmithJo28@hwg.com**, `phone` **(508)123-4567 (H)**.
-- [ ] That student's `counselor` reads name **Mike Smith** — flipped, not `Smith, Mike` — and email
+- [x] That student's `counselor` reads name **Mike Smith** — flipped, not `Smith, Mike` — and email
       **SmithMi28@hwg.com**.
-- [ ] That student has **two** guardians, in file order: `Mr. Tom Smith` with `phone`
+- [x] That student has **two** guardians, in file order: `Mr. Tom Smith` with `phone`
       **(508) 234-5678 (M)**, `phone2` **(508) 345-6789 (H)** and email **SmithTom@aol.edu**; then
       `Mrs. Nina Smith` with **(508) 456-7890 (M)** / **(508) 567-8901 (H)** and
       **SmithNina@aol.edu**. Every marker is present and every `relation` is empty.
-- [ ] Both students are on the open class's `roster` and in `doc.students`, and no other class's roster
+- [x] Both students are on the open class's `roster` and in `doc.students`, and no other class's roster
       changed.
-- [ ] **Importing the same file a second time changes nothing**: still two students, still two guardians
+- [x] **Importing the same file a second time changes nothing**: still two students, still two guardians
       each, no duplicate guardian card, and `preferred` still on the guardian it was on.
-- [ ] Importing a file whose parent email for Tom Smith has changed **updates that guardian in place**
+- [x] Importing a file whose parent email for Tom Smith has changed **updates that guardian in place**
       rather than adding a third — matched on email where the email is the same, on name where it is not.
-- [ ] A student whose record already carries a hand-typed `phone` and whose CSV phone cell is **empty**
+- [x] A student whose record already carries a hand-typed `phone` and whose CSV phone cell is **empty**
       keeps the typed phone; the same student with a **different** non-empty CSV phone gets the CSV's.
-- [ ] **Importing over a student who has an IEP plan, two accommodations, medical text, a behaviour plan
+- [x] **Importing over a student who has an IEP plan, two accommodations, medical text, a behaviour plan
       and a case manager leaves that `supports` block identical, field for field** — and a student the
       import creates gets `newSupports()`'s defaults and nothing else. *(The one acceptance line here
       that is about the most consequential data in the app; the import has no path to it and this is
       what says so out loud.)*
-- [ ] A student already in the year but in another class is **linked into the open class**, not copied:
+- [x] A student already in the year but in another class is **linked into the open class**, not copied:
       `doc.students` gains no record, and their contacts are updated on the one record both classes see.
-- [ ] A file with a `Student Name,Student Email,…` header row imports the same two students; the sample
+- [x] A file with a `Student Name,Student Email,…` header row imports the same two students; the sample
       above, which has none, imports its first student rather than swallowing it.
-- [ ] A CSV written by `recordCsv()` in `src/attendance-report.js` — BOM, CRLF, quoted cells — is read
+- [x] A CSV written by `recordCsv()` in `src/attendance-report.js` — BOM, CRLF, quoted cells — is read
       back by this reader without a mangled first cell and without a stray `\r`.
-- [ ] A row whose parent phone holds three comma-separated numbers keeps all three: two in `phone`
+- [x] A row whose parent phone holds three comma-separated numbers keeps all three: two in `phone`
       and `phone2`, the third appended to `phone2`.
-- [ ] A continuation row before any student row, a file that is not CSV, and an empty file each leave
+- [x] A continuation row before any student row, a file that is not CSV, and an empty file each leave
       `doc.rev` unchanged and put a sentence on the dialog's error line.
-- [ ] The preview shows every student before anything is written, its name fields are editable, an
+- [x] The preview shows every student before anything is written, its name fields are editable, an
       edit is what gets committed, and a row toggled off writes nothing at all.
-- [ ] Choosing the **same file twice in a row** fires the preview both times.
-- [ ] The student editor shows and saves the new phone fields, and the guardian card shows and saves
+- [x] Choosing the **same file twice in a row** fires the preview both times.
+- [x] The student editor shows and saves the new phone fields, and the guardian card shows and saves
       the second one.
-- [ ] `node tools/verify-shell.mjs` is green, including the 44px sweep over the new dialog and new
+- [x] `node tools/verify-shell.mjs` is green, including the 44px sweep over the new dialog and new
       assertions driving the parser over the fixture above.
-- [ ] 👤 On the teaching iPad, in the installed app, on the deployed build: the file input opens Files
-      and a `.csv` in iCloud Drive is selectable, the preview scrolls and its toggles are thumb-hittable,
-      and a real section's export imports with the right number of students.
+- [x] 👤 On the teaching iPad, in the installed app, on the build served over the LAN: the file input
+      opens Files and a `.csv` in iCloud Drive is selectable, the preview scrolls and its toggles are
+      thumb-hittable, and a real section's export imports with the right number of students.
+      *(Amended 2026-08-18, owner's call. The line as booked said "on the deployed build"; the
+      reading was taken on the same device and the same installed-PWA path but against the local build
+      served by `tools/serve-https.mjs`, before the commit — a different origin, with its own storage
+      and its own service worker. The owner judged that pass sufficient rather than hold the box open
+      for a post-deploy re-reading. All eight checks passed.)*
 
 **Traps** — **Do not group on the blank row.** Column 1 is the key; the paragraph above says what breaks
 otherwise, and the sample file will not catch it. **Do not split the file on commas before handling

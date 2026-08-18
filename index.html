@@ -1798,11 +1798,16 @@
         <button class="class-action-btn" type="button" data-roster-paste aria-haspopup="dialog">
           Paste a list of names
         </button>
+        <button class="class-action-btn" type="button" data-roster-import aria-haspopup="dialog">
+          Import contacts from a file
+        </button>
       </div>
       <p class="roster-hint">
         Type a name either way round — “Van Dyke, Mary” or “Mary Van Dyke” — and Planbook will
         show you which half it read as the surname. For a whole class, paste the list instead:
-        it shows you every split before it adds anybody.
+        it shows you every split before it adds anybody. The file your school system exports for
+        a section — student name, email and phone, advisor, and one or two parents with their
+        phones and emails — fills all of that in one go.
       </p>
       <p class="roster-error hidden" id="rosterError"></p>
 
@@ -1881,6 +1886,61 @@
   </div>
 </div>
 
+<!-- The contact import and its preview, opened over the roster panel the same way the paste box is
+     — src/modal.js keeps a stack, so Escape closes this and leaves that open.
+
+     A SECOND DOOR BESIDE THE PASTE BOX RATHER THAN AN EXTENSION OF IT. The paste box takes one name
+     per line and asks one question: which half is the surname. This takes eight quoted columns with
+     a student's guardians on continuation rows underneath them, which is a second question, and one
+     dialog asking both would be two dialogs sharing a modal. The paste box is also the fallback if
+     this refuses a file at 7am, so nothing about it moved.
+
+     The preview is where a wrong split gets caught, not a confirmation step: the name is Planbook's
+     guess and arrives in two editable fields, and the contacts beside it are the file, shown and not
+     editable. A row you do not want is skipped, and that student's editor is one tap away
+     afterwards. Nothing in the file reaches support details — accommodations, plans and medical
+     needs are not in this export and this importer has no path to them (src/roster-import.js). -->
+<div class="modal-overlay hidden" id="rosterImportModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterImportTitle">
+    <div class="modal-header">
+      <h2 id="rosterImportTitle">Import contacts from a file</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        The contact list your school system exports for <strong id="rosterImportClassName"></strong>,
+        as a “.csv” file: student name, email and phone, the advisor, and one or two parents
+        with their phone numbers and email addresses. Planbook shows you every student it read
+        before it writes anything.
+      </p>
+      <input class="import-file" type="file" id="rosterImportFile" accept=".csv,text/csv"
+             data-roster-import-file aria-label="Choose a contact list to import">
+      <p class="roster-hint">
+        A name already in this school year is recognised rather than duplicated, and a guardian
+        already on a student is updated rather than added a second time. Anything you have typed in
+        by hand is kept where the file has nothing to say — an empty cell never clears a field.
+      </p>
+      <p class="roster-error hidden" id="rosterImportError"></p>
+
+      <div class="hidden" id="rosterImportReview">
+        <p class="paste-count" id="rosterImportCount"></p>
+        <div class="paste-list" id="rosterImportList"></div>
+        <div class="roster-actions">
+          <button class="class-action-btn primary" type="button" id="rosterImportCommitBtn"
+                  data-roster-import-commit>Import these students</button>
+          <button class="class-action-btn" type="button" data-modal-close>Cancel</button>
+        </div>
+        <p class="roster-hint">
+          Each row shows the surname on the left and the first name on the right — fix either
+          before importing. The contacts underneath are what the file says, and the last line is
+          what importing that row would write. Rows marked in amber are the ones Planbook was least
+          sure about.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- One student: names, contacts, which classes they are in, and — behind a deliberate tap at the
      bottom — the support details. src/roster.js fills every field when the dialog opens and writes
      each one as it is typed, the same way the term editor does.
@@ -1922,9 +1982,29 @@
         </label>
       </div>
 
-      <div class="modal-section-label">Student email</div>
-      <input class="student-input" id="studentEmail" type="email" autocomplete="off"
-             spellcheck="false" data-student-field="email" aria-label="Student email address">
+      <!-- Email and both phone numbers together, because they are one person's ways of being
+           reached and because the contact import fills all three out of one row of a file. Two
+           numbers rather than one for the reason src/roster.js's newStudent() gives: it is one
+           export writing the student's column and the guardian's, and a student cell that arrives
+           with two numbers must not behave differently from a guardian cell that does. -->
+      <div class="modal-section-label">Student email &amp; phone</div>
+      <div class="student-grid">
+        <label class="student-field">
+          <span class="student-label">Email</span>
+          <input class="student-input" id="studentEmail" type="email" autocomplete="off"
+                 spellcheck="false" data-student-field="email" aria-label="Student email address">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Phone</span>
+          <input class="student-input" id="studentPhone" type="tel" autocomplete="off"
+                 data-student-field="phone" aria-label="Student phone number">
+        </label>
+        <label class="student-field">
+          <span class="student-label">Second phone</span>
+          <input class="student-input" id="studentPhone2" type="tel" autocomplete="off"
+                 data-student-field="phone2" aria-label="Second student phone number">
+        </label>
+      </div>
 
       <div class="modal-section-label">Guardians</div>
       <div class="guardian-list" id="guardianList"></div>

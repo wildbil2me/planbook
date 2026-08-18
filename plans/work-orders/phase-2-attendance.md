@@ -5007,3 +5007,242 @@ affected because it is nearby, and do not assume it is safe because the file par
 is invisible to a reader**: the CRLF file renders identically in every editor and every diff view that
 hides whitespace, so the only signal at the desk was the diffstat — 4,086 lines for a 130-line edit.
 That is `plans/dispatch-retro.md`'s check, doing the job this parser could not.
+
+## WO-2.50 — a date outside every term is not a date to mark
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing · **Blocks** WO-2.51
+**Closes roadmap** Phase 2 → *(no box. The three-states box is amended rather than replaced — see the
+field below. Booked 2026-08-18, owner-directed, out of her own report from the deployed app.)*
+**Amends roadmap** Phase 2 → the three-states box WO-2.1 closed, which promised taken · dropped · not
+taken yet as the answers a class-day can have, and now also promises that a day outside every term the
+class has is none of them and cannot be marked
+
+**Owner-reported 2026-08-18, from `https://planbook.hwgteach.com/`.** Her first term begins **Aug 28**.
+On **Aug 18** the attendance grid drew today's column live — a tappable cell for every student on the
+roster and the 🚫 drop control in the head — ten days before the class exists. In her words: *we need to
+remove the ability to accidentally enter attendance on days that are outside a term.*
+
+**Why it exists.** `writableDate()` is the one gate every writer on this screen passes through, and it
+answers exactly one question: **is this date today or earlier**. That is the whole rule, and every day
+before the term is in the past-or-today set. Meanwhile `doc.classes[].terms[]` has carried `start` and
+`end` since WO-1.6 (`docs/data-model.md`), and **five surfaces already read them** — `termTotals()`,
+`termHistory()`, `passesForStudentInTerm()`, the grades report's own dated check, the pass history's.
+Every one of them reads term dates as **arithmetic**. **Nothing reads them as a bound on writing.** The
+register is the single place in this app where a term's dates mean nothing at all.
+
+What that costs, and none of it is cosmetic:
+
+- **A meeting recorded outside a term is invisible to the arithmetic that would reveal it.** Every count
+  this screen and both reports print is scoped `term.start … term.end` through `meetingRecords()`. A
+  record dated Aug 18 is in the document, in the backup, and in the year total; it is in **no** term
+  percentage. So the number a teacher can find is wrong in a place she cannot see, which is
+  `plans/ROADMAP.md`'s stated fear about grade math, applied to the ledger.
+- **The grid does not ask, because nothing on it has an opinion.** There is no schedule model by design
+  (`plans/rotating-schedule.md`), and that decision is why a class met if and only if a record says so.
+  The term dates are the **only** thing in this document that knows the year has not started. Not
+  reading them is not neutrality — it is the app declining to use the one fact it has.
+- **The window it is loudest in is open right now.** Aug 18 → Aug 28 is the setup fortnight: the roster
+  arriving (WO-1.23), classes copied (WO-1.22), term dates typed, everything tapped once to see that it
+  works. Every one of those taps is a test tap and every one lands in the **live** ledger as a real
+  meeting. `gates.md`'s rehearsal rule — *in this data model a simulated day **is** a real day* — is the
+  same hazard seen from the other side, and it guards a rehearsal that nobody is running today.
+
+**The rule, decided with the owner on 2026-08-18. Four answers, all hers, and the first is the one a
+later reader will want to re-argue.**
+
+1. **ANY term of the class bounds it — never the selected one.** A date is markable if it falls inside
+   any term that class has. The term tab decides what is **counted**; it has never decided what is
+   **writable**, and this work order does not make it start. The case that settles it is a term boundary
+   mid-week: Q1 ends Friday, Q2 starts Monday, and the six-day window spans both. Under a
+   selected-term rule half that grid locks according to which tab is up, and the teacher who has not
+   switched tabs yet cannot mark today at all — a screen held at the classroom door refusing the day it
+   is being held up for. The cost of this answer is real and is accepted: **a gap left between two terms
+   locks the days in it.** That is the honest reading of the dates she typed, it is visible on the
+   screen, and it is fixable in one place.
+2. **The record wins.** A day that already carries attendance stays fully editable. This is
+   `coveredDay()`'s rule verbatim — *what it refuses is CREATING a meeting* — never editing marks that
+   exist, and it is what keeps the owner's own stray Aug-18 taps reachable from the screen that made
+   them. A lock that strands a record leaves a wrong number in the year total with no way to reach it
+   from inside the app.
+3. **A class with no dated terms is unbounded**, exactly as today. A teacher part-way through typing her
+   terms must not find the year sealed shut behind her.
+4. **The home screen is in scope.** Otherwise the amber alarm simply relocates: five cards reading
+   *Not taken yet* on a day school is not in session for her, which is the same false job the grid was
+   inventing, moved one screen back.
+
+**IT IS A MODIFIER, NOT A FIFTH STATE, and `paintActions()` already wrote the test:** *if `stateOf()`
+would still answer the same word, it is a modifier.* It would. The class genuinely has no record and no
+covering event, so the state is `NOT_TAKEN` and stays `NOT_TAKEN`. Out-of-term is carried **alongside**
+the state the way `future` is — one extra argument, one extra column class, one different chip word —
+and `stateOf()` learns nothing about terms. That is not tidiness: `stateOf()`'s four-line precedence is
+the structural protection for history (a record is answered before the calendar is consulted), and a
+fifth branch inside it is a fifth way for a term-date edit to change what a recorded day means.
+
+**Deliverables**
+
+- **One predicate, in the module that owns terms.** `src/classes.js` holds `terms[]` and
+  `getSelectedTerm()`; the answer to *which of this class's terms contains this date* belongs there and
+  is exported from there. **Do not add a date predicate to `src/attendance.js`** — it already has a
+  private `termHasDates()`, and `src/date-text.js`'s header is a thousand words about what five copies
+  of one date function cost this project. Decide deliberately whether that private one composes with
+  the new export or stays as it is, and write which in a comment at the point of departure.
+  - **`start` and `end` are inclusive at both ends**, and the comparison is a string compare on
+    `YYYY-MM-DD`, which is what `meetingRecords()` and every other range read here already does. **No
+    `new Date()` anywhere near it** — `parseISO()` and `src/date-text.js` both carry the long version of
+    that scar, and a bound that is a day out is a bound that locks the first day of the term.
+  - **A term carrying only one of the two dates is not a bound.** Half-typed dates are a state a teacher
+    passes through, and a term with a `start` and no `end` must not seal the rest of the year.
+- **The third gate, beside the two that exist.** `writableDate()` answers the clock and `coveredDay()`
+  answers the calendar; this one answers the terms, and it is written the way `coveredDay()` is written
+  — `!recordFor(...) && !inAnyTerm(...)` — because it is the same rule protecting the same history.
+  Every writer that takes a date passes it. **Enumerate them out of the file rather than trusting a list
+  written here**; at booking they are the six guarding on `writableDate(on)`, plus `editPastDay()`.
+- **The column says it is out of term, and says which way it is out.** Carried alongside the state, not
+  instead of it, so a day off in July is still `covered` and still reads as one — the same precedence
+  `future` has, for the identical reason stated at `stateChip()`: *what the calendar says about a day
+  is more useful than the fact that the day is ahead.* The chip word is **`Off term`**, inside the two
+  or three syllables 72px holds. The **reason** goes where a covered day's reason goes — the head's
+  `title` and accessible name, and the state line above the grid — and it names the side: before the
+  first term, after the last, or between two terms that it names.
+- **No control in an out-of-term column head.** The 🚫 creates a record and the ✏ opens a day whose every
+  write the new gate would refuse. `dayHead()`'s own argument about a future column is the argument here
+  word for word — *a control that looks live, takes a tap, and does nothing* — so the head returns with
+  no button, and `COVERED` stays exempt exactly as it is for `future`.
+- **The cells go inert and quiet.** A `<span>`, the `·` glyph, and the neutral future tone rather than
+  the untaken amber: `?` means *you have a hole to fill*, and last June is not a hole. The accessible
+  name says out of term in words, because a screen-reader user gets none of the wash.
+- **`paintActions()` answers it in the shape it already answers `DID_NOT_MEET` and `COVERED`** — state
+  line, a note saying **why** and **where the fix lives**, and one door. The door is the **term editor**
+  (`data-term-manage`), which is `daysOffDoor()`'s pattern aimed at the screen that owns the dates.
+  *An app that greys a screen out without saying what would un-grey it is an app she has to guess at
+  with a class walking in* — dayHead()'s complaint, and it binds harder here, because the teacher most
+  likely to meet this screen is the one who has not typed her term dates yet.
+- **The home card.** `stateSummary()` decides the words for the card and the grid both, and that is the
+  one place this answer is written. Its own quiet palette in `src/home.css`, never the untaken amber.
+- **A stylesheet class of its own**, its values **copied** from the future column's rather than shared —
+  same neutral to the eye, its own name, so the two can diverge later without a hunt. Colours inline,
+  per `CLAUDE.md` § Conventions.
+- **Bump `CACHE` in `sw.js`.** Every file this touches is in `SHELL`; without the bump no device sees any
+  of it.
+- **`TESTING.md` lines and the `CHANGELOG.md` entry**, per the maintenance protocol.
+
+**Acceptance**
+- [ ] With terms typed as Aug 28 – Oct 31, the Aug 18 column draws **no tappable cell and no button**,
+      reads `Off term`, and the state line above the grid names the term it is before and offers the
+      term editor. Driven, not reasoned about.
+- [ ] **Aug 28 and Oct 31 are themselves markable** — the bound is inclusive at both ends, proved at
+      both ends rather than at one.
+- [ ] **Nov 1**, between a term ending Oct 31 and one starting Nov 3, is locked and its reason names
+      **both** terms.
+- [ ] A date carrying marks **written before this landed** stays fully editable on an out-of-term day:
+      a mark can be changed and a drop can be undone. This is decision 2, and it is the line most likely
+      to be lost in implementation.
+- [ ] Every writer **refuses** an out-of-term date handed to it directly — not merely lacks a button for
+      it. Driven through WO-2.5's keyboard path and through a hook fired at a stale DOM, which is the
+      pair `writableDate()`'s own comment says these gates exist for.
+- [ ] A class with **no** term dates, and a class with a `start` and no `end`, both behave exactly as
+      they do today — nothing locks. **Both cases**, because they fail differently.
+- [ ] A `no-school` event on a day that is also outside every term still reads as **covered**, with its
+      own title — the calendar outranks this the way it outranks `Ahead`.
+- [ ] The home card for an out-of-term day says so and is **not** amber; `stateSummary()` is the only
+      place those words are decided, shown by the card and the grid agreeing.
+- [ ] `node tools/verify-shell.mjs` green, its count recorded, with **at least one mutation proof**:
+      deleting the new gate turns it red and names it.
+- [ ] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): portrait on a day before
+      the term shows one column, greyed, with nothing to tap and the reason readable without hunting.
+
+**Traps** — **the selected term is not the bound**, and a reader who reaches for `getSelectedTerm()`
+here has quietly rebuilt the thing decision 1 refused; that tab decides what is counted. **Do not put
+this in `stateOf()`** — the modifier test is quoted above, and the four-line precedence it would join is
+the structural protection for history. **Inclusive at both ends, string compare only.** **A term with
+one date typed is not a bound**, and the teacher is mid-keystroke when it happens. **The record-wins
+half is the half that gets dropped under time pressure**; drop it and the owner's own Aug-18 taps become
+unreachable from the app while still sitting in every year total. **Do not limit paging back to the
+first term's start** — the window is what is DRAWN and the gate is what is WRITTEN, kept apart since
+WO-2.1 precisely so a change to one could not become a change to the other; a locked column you can
+*see* is the feature. **And check the diffstat before committing** (`plans/dispatch-retro.md`,
+WO-2.49): a phase file silently rewritten to CRLF blinds `--tick` to every box above.
+
+**Out of scope.** The end-of-term switch prompt — that is **WO-2.51**, and it depends on this one's
+predicate. Assignment and due dates outside a term, which is a gradebook question with its own answer.
+Any limit on how far the pager walks. And **nothing migrates**: records already sitting outside a term
+stay exactly where they are, editable, uncounted by any term, and that is decision 2 working rather
+than a gap.
+
+## WO-2.51 — the term ended and the screen never said so
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.50 · **Blocks** nothing
+**Closes roadmap** Phase 2 → *(no box. Booked 2026-08-18 in the same sitting as WO-2.50 and out of the
+same owner report — the second half of what she asked for.)*
+
+**Owner-asked, 2026-08-18, in one sentence:** *at the end of the term, a reminder to move to the next
+term should pop up.*
+
+**Why it exists.** Nothing in this app ever moves a teacher from one term to the next.
+`getSelectedTermId()` resolves a stored `planbook_` preference and, when it names nothing that exists,
+falls back to **the first term in the list** — never to the term that contains today. So the tab stays
+where she left it in August until she notices something and taps. What she notices is a **number**: the
+counts, the percentage and the meeting total on the attendance screen and in both reports are all scoped
+to the selected term, so a week into Q2 the screen is quietly reporting Q1 while she marks Q2.
+
+**WO-2.50 makes this louder rather than quieter, and that is deliberate.** Its decision 1 says the
+selected tab must never bound what is writable — so on the first Monday of Q2 with the Q1 tab still up,
+every mark lands correctly in the ledger and every number above it describes a term that ended. Nothing
+breaks, nothing warns, and the failure is pure arithmetic. That is the gap this row closes: **WO-2.50
+refuses days that belong to no term; this one speaks up about days that belong to a term she is not
+looking at.**
+
+**The form, decided with the owner: a banner, not a modal.** `paintBanner()` already owns the band above
+the grid that says *you are not on today* — full width, coloured edge, one button on it, and it comes
+back every paint until the condition is gone. That is what a rollover needs. A modal costs a tap at the
+classroom door on a morning she is busy, needs a *don't ask again* to be bearable, and a dismissed modal
+is a reminder that has been dismissed. A banner that will not go away until she switches — or until the
+condition stops being true — is the reminder she asked for without the interruption.
+
+**Deliverables**
+
+- **The condition, off WO-2.50's predicate and nothing new.** Today falls inside a term of the open
+  class that is **not** the selected one. If today falls in **no** term, this says nothing at all —
+  WO-2.50's screen is already saying it, and two bands disagreeing about the same day is worse than
+  either.
+- **One band, and the off-today message wins it.** A teacher paging back into October must not be told
+  to move to Q2 while she is looking at Q1's own days; the existing banner describes the day on screen,
+  which is the more immediate fact, and this one reappears the moment she is back on today. Write that
+  precedence down where `paintBanner()` decides it.
+- **The sentence names both terms and the button names the destination** — `Switch to Quarter 2`, taken
+  from `term.label`, which is the only place in this app a quarter is ever named (`docs/data-model.md`:
+  term ids are opaque and nothing switches on one). A class on trimesters must read correctly with no
+  code change, and that is the test of whether the label was used or a word was invented.
+- **Nothing switches by itself.** The selected term is the teacher's, held per class in a `planbook_`
+  preference, and an app that moves it for her is an app that moved it while she was part-way through
+  entering the last week of Q1. The switch goes through the same route the term nav uses, so the repaint
+  chain WO-2.17 and WO-2.18 built runs — a second way to change the selected term is a second thing for
+  those checks to miss.
+- **`TESTING.md` lines and the `CHANGELOG.md` entry.** `sw.js` `CACHE` bump if anything in `SHELL` moves.
+
+**Acceptance**
+- [ ] With terms Q1 ending Oct 31 and Q2 starting Nov 3, a document whose today is Nov 4 and whose
+      selected tab is Q1 shows the band, naming both terms, with a button reading `Switch to Quarter 2`.
+- [ ] Tapping it selects Q2, the band goes, and **the counts, the state line and the totals repaint** —
+      the surfaces WO-2.18 enumerates, checked the way that work order checks them.
+- [ ] With Q2 already selected on Nov 4, there is **no band**. With today inside no term at all, there
+      is **no band** — WO-2.50's screen owns that day.
+- [ ] Paged back to an October column, the **off-today** band is the one shown; returning to today brings
+      this one back. One band at a time, proved in both directions.
+- [ ] Terms labelled `Trimester 1` and `Trimester 2` produce the same behaviour with those labels in the
+      sentence and on the button — no quarter vocabulary anywhere in the output.
+- [ ] Nothing changes the selected term without a tap: driven by loading a document whose today is in
+      Q2 with Q1 selected, and reading the preference back **unchanged** until the button is pressed.
+- [ ] `node tools/verify-shell.mjs` green with its count recorded, and one mutation proof.
+- [ ] 👤 On the iPad, force-quit first: the band is readable at a glance in both orientations and its
+      button clears 44px under `@media (pointer: coarse)`.
+
+**Traps** — **do not switch the term for her**, however obvious the right answer looks; the preference
+is per class and per device on purpose. **Do not fire on a day that is in no term** — that is WO-2.50's
+sentence and this one would talk over it. **`term.label` or nothing**: a hardcoded `Q1`/`Q2` anywhere is
+the one thing `docs/data-model.md` says a sweep looks for, and it makes the app unsellable to a teacher
+on semesters. **And check the diffstat before committing** (WO-2.49).
+
+**Out of scope.** A warning *before* a term ends (*Quarter 1 ends Friday*) — that is a calendar
+lead-time question, and Phase 6 owns the event kind that carries it. Grades-due reminders. Anything that
+creates, edits or reorders terms.

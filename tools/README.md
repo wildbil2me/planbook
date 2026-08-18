@@ -974,7 +974,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 835 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 869 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1580,6 +1580,23 @@ clicking `#classView [data-class-screen="assignments"]`. Every class screen carr
 nothing: the check read an empty field over a stored 12.3456789 and reported the app as broken. The
 selectors are now the strips inside `#scoresView` and `#assignmentsView`, and **the leave and the
 return are asserted** rather than assumed, so the same silent no-op cannot pass as a fixture again.
+
+**WO-1.23 moved it from 835 to 869**: thirty-four call sites in two places — thirty-one in a new
+section at the foot of the file (the SIS contact import: the six sample rows, the mapping, the
+re-import, the guardian match, the two writing rules, the support block left untouched, the four
+refusals and the preview) and three in the coarse-pointer sweep beside the paste preview's, where the
+new dialog's file input and the native `::file-selector-button` inside it are measured separately.
+**Two of the thirty-four are fixture-guard failure arms** that never fire on a green run — one for a
+build with no `window.planbook.rosterImport` seam, one for a dialog that opened without a preview row
+to measure — so the two blocks contribute thirty-two executed results and **the run prints 893**,
+measured on the delivered tree: `893 checks · 893 passed · 0 failed · 0 skipped`, 23,732 lines, 26.6
+lines per check, 289s, exit 0. **The mechanism worth knowing is the file input**, and it is
+`src/backup.js`'s from WO-1.15 pointed at a second control: a page cannot be handed a `File` by a
+script, but `input.files = dt.files` from a `DataTransfer` is what the picker delivers, so everything
+from the dispatched `change` inward is the real path — the read, the refusals and the value clear. Two
+bounds on that, both written into the section: it cannot prove the BROWSER re-fires `change` for a
+file chosen twice (only that the value is cleared, which is what makes it), and it cannot open the
+iPad's Files sheet at all. Both stay on the 👤 line.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

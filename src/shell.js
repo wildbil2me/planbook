@@ -271,6 +271,12 @@
                                       changes nothing behind it
       data-roster-manage              fills the roster panel for the open class, then opens it
       data-roster-create              on a <form>: adds the student typed into it
+      data-roster-import              opens the contact import over the roster panel (WO-1.23)
+      data-roster-import-file         on an <input type=file>: reads the chosen SIS contact CSV and
+                                      fills the preview. Read on `change`, like data-backup-file
+      data-import-include="<index>"   imports or skips that preview row
+      data-import-field="first|last" + data-import-index: an input; edits that preview row's name
+      data-roster-import-commit       writes the students and contacts the preview lists
       data-roster-paste               opens the paste box over the roster panel
       data-roster-preview             reads the paste box into the preview list
       data-roster-paste-back          back from the preview to the paste box
@@ -360,6 +366,11 @@ import * as passHistory from './pass-history.js';
 import * as calendar from './calendar.js';
 import * as daysOff from './days-off.js';
 import * as roster from './roster.js';
+/* WO-1.23's contact import, and the two modules run ONE WAY: this one imports src/roster.js for the
+   name parser, the match key and the record constructors, and src/roster.js imports it for nothing
+   at all. The open is dispatched from here, exactly as data-roster-paste is — which is how this app
+   answers every other order-of-operations question, and what keeps the loop from closing. */
+import * as rosterImport from './roster-import.js';
 import * as supports from './supports.js';
 import * as presentation from './presentation.js';
 /* WO-2.29's overdue-pass tone, its iOS unlock and the header switch that silences it. Imported here
@@ -1477,6 +1488,16 @@ document.addEventListener('click', (e) => {
 
   const paste = e.target.closest('[data-roster-paste]');
   if (paste) { roster.openPaste(paste); return; }
+  /* The second door on the roster panel, and the one place this file routes to src/roster-import.js
+     — the module never reaches back into src/roster.js's dialogs and nothing reaches into its. */
+  const contactImport = e.target.closest('[data-roster-import]');
+  if (contactImport) { rosterImport.openImport(contactImport); return; }
+  if (e.target.closest('[data-roster-import-commit]')) { rosterImport.commitImport(); return; }
+  const importInclude = e.target.closest('[data-import-include]');
+  if (importInclude) {
+    rosterImport.toggleImportRow(importInclude.getAttribute('data-import-include'));
+    return;
+  }
   if (e.target.closest('[data-roster-preview]')) { roster.previewPaste(); return; }
   if (e.target.closest('[data-roster-paste-back]')) { roster.backToPasteEdit(); return; }
   if (e.target.closest('[data-roster-commit]')) { roster.commitPaste(); return; }
@@ -1855,6 +1876,12 @@ document.addEventListener('input', (e) => {
   const pasteField = e.target.closest('[data-paste-field]');
   if (pasteField) { roster.editPasteField(pasteField); return; }
 
+  /* The contact import's preview row, which is the same kind of thing one dialog further over: a
+     model rather than a document, corrected before anything is written. Its own hook rather than
+     the paste box's, so neither module can be handed the other's row. */
+  const importField = e.target.closest('[data-import-field]');
+  if (importField) { rosterImport.editImportField(importField); return; }
+
   const teacherField = e.target.closest('[data-teacher-field]');
   if (teacherField) teacher.editTeacherField(teacherField);
 });
@@ -1865,6 +1892,11 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   const chooser = e.target.closest('[data-backup-file]');
   if (chooser) backup.handleChosenFile(chooser);
+  /* The contact list, on the same event and for the same reason — and like the backup input, the
+     module clears the value after every read, which is what makes choosing the SAME file twice
+     fire `change` a second time. */
+  const contactFile = e.target.closest('[data-roster-import-file]');
+  if (contactFile) rosterImport.handleChosenFile(contactFile);
   /* A committed term date, which matters only when it was committed EMPTY — see
      classes.termDateCommitted(). This is the same element the `input` listener above already saved;
      the second hook exists because a cleared date on iPadOS needs its field rebuilt, and `input`
@@ -2301,6 +2333,16 @@ window.planbook = {
      with the app. parseRosterLine() is exported for that reason and for no other: nothing in the
      app calls it from outside src/roster.js. */
   roster,
+  /* `rosterImport` joined at WO-1.23, and for ONE reason rather than `roster`'s two: every control
+     it owns is on the page and tools/verify-shell.mjs drives all of them, file input included — a
+     page cannot be handed a File by a script, but it can be handed a DataTransfer holding one,
+     which is what the picker delivers. What no control can answer is the acceptance line about
+     reading back what src/attendance-report.js WRITES: that file is eight columns of attendance,
+     not eight columns of contacts, so the import would rightly refuse it, and a second CSV reader
+     living in the harness could agree with itself while this one mangled every file. So exactly one
+     function is here, readCsvRows(), and it reads. Nothing in the app reads window.planbook — see
+     the block above for why the seam outlived the shelf. */
+  rosterImport,
   /* `attendance` joined at WO-2.1, and like `classes` it is NOT here because the feature is
      unreachable — every control it owns is on the page and a teacher can touch all of them. It is
      here so tools/verify-shell.mjs can READ the answers: what the document holds after a class has

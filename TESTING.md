@@ -921,6 +921,100 @@ order touched. `sw.js`'s `CACHE` is bumped to **`planbook-shell-v73`**, because 
 
 ---
 
+### WO-1.23 — import a class's students and contacts from the SIS CSV
+
+**What this changes, in one sentence:** a second button on the Roster & contacts panel — *Import
+contacts from a file* — reads the eight-column contact list the school system exports for a section,
+shows every student it found with the name split into two editable fields and the contacts beside
+them, and on commit fills in emails, phones, the advisor and one or two guardians per student without
+ever creating a duplicate, clearing a field the file is silent about, or touching a support detail.
+
+*Evidence for the Acceptance list in
+[`plans/work-orders/phase-1-shell-store-roster.md`](plans/work-orders/phase-1-shell-store-roster.md)
+§ WO-1.23 lives there, beside each line. What is here is the desk pass.*
+
+**The two rules that decide what an import writes**, because they are the ones a later work order
+will be tempted to soften: **a non-empty imported value wins** (the SIS is the official record) and
+**an empty cell never clears anything** (a column the export omitted must not delete a number the
+teacher typed). Both are the owner's, taken at booking. `src/roster-import.js`'s `writesFor()` is the
+one place either is decided, and it is the same list of operations the preview's summary line counts
+and the commit carries out — so *"changes 1"* and what lands cannot disagree.
+
+**Desk pass, 2026-08-18.** `node tools/verify-shell.mjs` at **893 checks · 893 passed · 0 failed · 0
+skipped**, 23,732 lines, 26.6 lines per check, 289s, exit 0 — up from 861 of 861 at WO-3.25.
+Thirty-four call sites added: thirty-one in a new section at the foot of the file (one of them a
+fixture-guard failure arm that never fires on a green run) and three in the coarse-pointer sweep, of
+which one is likewise a guard arm — so the two blocks contribute thirty-two executed results. The
+whole import is driven through the real file input: a page cannot be handed a `File` by a script, but
+it can be handed a `DataTransfer` holding one, which is what the Files picker delivers, so everything
+from the `change` event inward is the real path including the read, the refusals and the clear.
+`node tools/wo-sweep.mjs` at **21 checks · 19 passed · 0 failed · 2 to review**, exit 0; both REVIEWs are the
+standing ones (the sensitive-field-name sweep, which now names `src/roster-import.js` because that
+file's header spends four paragraphs saying it never writes one, and the due-date/`late`-`missing`
+list, which names nothing this work order touched). `sw.js`'s `CACHE` is bumped to
+**`planbook-shell-v75`** and `./src/roster-import.js` added to `SHELL`.
+
+- [x] The six sample rows, imported into an empty class, produce exactly **two** students and no
+      third — the all-empty row adds nobody and the two near-identical surnames stay two people.
+- [x] `Smith, Jonathan (John) '28` lands as `first` Jonathan, `last` Smith, `nickname` John,
+      `gradYear` `"2028"` (a string), `email` SmithJo28@hwg.com, `phone` `(508)123-4567 (H)`.
+- [x] That student's `counselor` reads name **Mike Smith** — flipped, not `Smith, Mike` — and email
+      SmithMi28@hwg.com.
+- [x] Two guardians, in file order, with the second number in `phone2`, every `(M)`/`(H)` marker
+      verbatim and every `relation` empty.
+- [x] Both students are on the open class's `roster` and in `doc.students`, and no other class's
+      roster changed.
+- [x] Importing the same file a second time changes nothing — and `rev` does not move, because a
+      write that is a copy of what is already stored is not an operation.
+- [x] A changed parent email updates that guardian in place (matched on name); a changed parent
+      name updates the same card in place (matched on email). Never a third card.
+- [x] An empty CSV phone cell keeps the hand-typed phone; a different non-empty one replaces it.
+- [x] Importing over a student with an IEP, two accommodations, medical text, a behaviour plan and
+      a case manager leaves that `supports` block identical field for field — asserted across two
+      imports that both wrote to her record — and a student the import creates gets `newSupports()`'s
+      defaults and nothing else.
+- [x] A student already in the year but in another class is linked into the open class rather than
+      copied: `doc.students` gains no record and the contacts land on the one record both see.
+- [x] A file with a `Student Name,Student Email,…` header row imports the same two students; the
+      sample, which has none, imports its first student rather than swallowing it.
+- [x] A CSV written by `recordCsv()` — BOM, CRLF, a quoted cell holding a comma, a doubled quote —
+      reads back with an unmangled first cell and no stray `\r`.
+- [x] A parent phone cell holding three numbers keeps all three: two in `phone` and `phone2`, the
+      third appended to `phone2`.
+- [x] A continuation row before any student row, a file that is not a contact CSV, an empty file and
+      a row with fewer columns than the export has each leave `doc.rev` unchanged and put a sentence
+      on the dialog's own error line. There is no partial import.
+- [x] The preview shows every student before anything is written, its name fields are editable, the
+      edit is what gets committed, and a row toggled off writes nothing at all.
+- [x] The file input's value is cleared after every read, refusals included — which is the mechanism
+      that makes choosing the same file twice fire `change` a second time.
+- [x] The student editor shows and saves the two new phone fields, and the guardian card shows and
+      saves its second one.
+- [x] `node tools/verify-shell.mjs` is green, the 44px sweep over the new dialog included — its file
+      input and the native `::file-selector-button` inside it are measured separately, which is the
+      WO-1.2 `.search-box` lesson wearing the control `.backup-file` already had to be told about.
+- [x] 👤 On the teaching iPad, in the installed app, on the build served over the LAN: the file
+      input opens Files and a `.csv` in iCloud Drive is selectable, the preview scrolls and its
+      toggles are thumb-hittable, and a real section's export imports with the right number of
+      students.
+      *(Amended 2026-08-18, owner's call. The line as booked said "on the deployed build"; the
+      reading was taken on the same device and the same installed-PWA path but against the local build
+      served by `tools/serve-https.mjs`, before the commit — a different origin, with its own storage
+      and its own service worker. The owner judged that pass sufficient rather than hold the box open
+      for a post-deploy re-reading. All eight checks passed.)*
+
+**Why that last line cannot be closed from the desk, in more than the usual sense.** The harness
+hands the input a `File` it built in the page and dispatches `change` itself, so what it proves about
+choosing the same file twice is the *mechanism* — the value is cleared after every read — and not the
+browser's own decision to fire the event a second time. Whether iPadOS opens the Files sheet, whether
+a `.csv` in iCloud Drive is selectable at all through an `accept=".csv,text/csv"` input, and whether a
+real section's export has the eight columns this reader expects are three questions only the device
+and the owner's own file can answer. **All three were answered on 2026-08-18** — Files opens, the
+`.csv` is selectable, and a real section imports with the right count — against the LAN build rather
+than the deployed one, which is the amendment recorded on that line.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*
