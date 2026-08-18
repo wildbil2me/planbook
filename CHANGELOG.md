@@ -13,6 +13,41 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A score cell takes a score — 2026-08-18
+
+**Nothing changes until you type something a score is not.** The cell still takes `87`, `87.25`,
+`-5`, and `300` on an assignment worth 10. What it no longer takes is `1e3`, `0x1f`, `0b101`, `0o17`
+and `+7` — which are numbers to JavaScript and were being stored as **1000**, **31**, **5**, **15**
+and **7** — or a third digit after the decimal point. Two decimal places, because the SIS carries
+two and every one of these numbers is re-keyed into it by hand.
+
+**A refusal is about notation and never about a value.** Nothing clamps and nothing rounds. A score
+above the points possible is extra credit and is stored exactly as typed; a negative is a penalty
+you meant. Scores already in a document are **not** migrated — a `12.3456789` entered before this
+still renders as typed and can be edited down, just not extended. Retro-rounding a number a teacher
+already typed would be the same failure this fixes, wearing a fix's clothes.
+
+**The half that mattered most was invisible.** Typing `8a` used to leave `8a` sitting in the cell
+while the document quietly kept the previous number — no blur handler, no change handler, nothing
+anywhere to reconcile the screen with the store until something forced a redraw. The grade was
+computed off a number that was not the one on screen. That gap is closed from both ends: the
+keystroke is refused before it lands, and if a keyboard ever slips one past — some soft keyboards
+report an edit that cannot be cancelled — the field is put back to what the document holds.
+
+**Read on the iPad on 2026-08-18, where it turned up something the work order had ruled out.** The
+plan said this was a laptop-only problem because the decimal keypad has no letter on it. True of the
+keypad, and false the moment an external keyboard is attached — so letters were typed at the guard
+on the iPad itself and refused. Entering, correcting and clearing scores down a column is no slower,
+nothing the keypad offers is rejected, and Enter-down-the-column and arrows-across-the-row still
+work.
+
+**One note for anyone reading the trackers rather than the app.** Ticking this work order turned up
+a fault in the tool that does the ticking: a work order file saved with Windows line endings parsed
+as having *no* acceptance criteria at all, and the gate reported that nothing was holding it open.
+It would have marked the work done over a list with an open item on it. The file was repaired, the
+tool was not — that is booked as its own work order, because a gate that silently repairs what it
+reads stops being able to report on it.
+
 ### Copy a class — 2026-08-17
 
 **Every active row of the class manager gains a `Copy` button, between `Categories` and `Rename` —
