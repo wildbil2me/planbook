@@ -4766,7 +4766,7 @@ history matches are both this hazard, and neither was in `src/` by intention eit
 
 ## WO-2.48 — the sweep's list of guarded scripts is written down rather than derived
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.47 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-18 · **Size** S · **Depends on** WO-2.47 · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37, WO-2.40, WO-2.44 and WO-2.47 made.)*
 
 **Not a go-live blocker, and it cannot fire today.** Booked 2026-08-17 out of WO-2.47's verification,
@@ -4859,28 +4859,54 @@ row if the bounded-blast-radius argument above ever stops holding — if that `r
 it did not itself create, the exemption is void and the reason string is where a reader will look.
 
 **Acceptance**
-- [ ] On the unmutated tree every file the scan finds is classified by one list or the other, and the
+- [x] On the unmutated tree every file the scan finds is classified by one list or the other, and the
       proof line **names the files** rather than reporting a count — a bare `3 of 3` is the same trust this
       row exists to remove. `tools/verify-shell.mjs` appears as exempt, with its reason, and the run is
-      green.
-- [ ] Deleting `tools/verify-shell.mjs` from the exempt list turns the sweep **red**, naming it as an
+      green. *(`22 checks · 20 passed · 0 failed · 2 to review`, exit 0. The proof line reads
+      `tools/codex-invoke.mjs (guard at :746, temp-dir sandbox at :252), tools/wo-gate.mjs (guard at
+      :1534, temp-dir sandbox at :1706) — declared in COPIES and checked below. tools/verify-shell.mjs
+      is EXEMPT: …`, with the whole bounded-blast-radius sentence, then `10 tools/*.mjs scanned; no
+      other file carries either signal`. The self-match trap did not fire, proved by the run and not
+      by reading the pattern.)*
+- [x] Deleting `tools/verify-shell.mjs` from the exempt list turns the sweep **red**, naming it as an
       unclassified temp-dir user. This is the one check that proves the exemption is a decision the sweep
       enforces rather than a comment somebody wrote — and it is the same direction as the `COPIES` line
-      below, for the same reason.
-- [ ] A **new** `tools/*.mjs` carrying a top-level `function assertOutsideRepo(` turns the sweep **red**,
+      below, for the same reason. *(Exit 1, naming `tools/verify-shell.mjs (temp-dir sandbox at :1073) —
+      found by this scan and named by neither COPIES nor EXEMPT`. md5 `2941d0ad…` before, restored to
+      `2941d0ad…` after; `git status --short` unchanged.)*
+- [x] A **new** `tools/*.mjs` carrying a top-level `function assertOutsideRepo(` turns the sweep **red**,
       names the file, and says it is unwatched. The scratch file is deleted in a `finally`, `git status
       --short` is byte-identical either side, and the revert is proved rather than reported.
-- [ ] A **new** `tools/*.mjs` that makes a `mkdtempSync` sandbox and carries **no guard at all** turns the
+      *(`22 checks · 19 passed · 1 failed`, exit 1, naming `tools/wo-2-48-probe-guard.mjs (guard at :5)`
+      as read by nothing below and checked by nothing anywhere. Deleted by a shell `trap … EXIT`;
+      `ls -la tools/` compared name-and-size either side — identical — and `git status --short`
+      byte-identical.)*
+- [x] A **new** `tools/*.mjs` that makes a `mkdtempSync` sandbox and carries **no guard at all** turns the
       sweep red on the second signal — unclassified, not exempt. This is the case the name scan cannot see
       and the reason there are two signals; a row that ships one has not built this check. Same revert
-      discipline.
-- [ ] Deleting `'tools/codex-invoke.mjs'` from the declared list turns the sweep red rather than green.
-      Reverted and proved the same way.
-- [ ] The scan matching **zero** files FAILs, shown rather than asserted.
-- [ ] On the unmutated tree: `node tools/wo-sweep.mjs` green with its count matching `tools/README.md`
+      discipline. *(`22 checks · 19 passed · 1 failed`, exit 1, naming `tools/wo-2-48-probe-sandbox.mjs
+      (temp-dir sandbox at :6)` — no guard in that file at all, so the first signal never saw it. Same
+      `trap`, same identical listing and `git status`.)*
+- [x] Deleting `'tools/codex-invoke.mjs'` from the declared list turns the sweep red rather than green.
+      Reverted and proved the same way. *(`22 checks · 19 passed · 1 failed`, exit 1, naming
+      `tools/codex-invoke.mjs (guard at :746, temp-dir sandbox at :252)`. md5 `2941d0ad…` before and
+      after. The other direction was shown too, on a sixth run: `COPIES` pointed at
+      `tools/wo-gate-renamed.mjs` FAILs on both clauses at once and says which way each went.)*
+- [x] The scan matching **zero** files FAILs, shown rather than asserted. *(Shown by running a copy of
+      the sweep with the three census patterns replaced by `/^NEVER_MATCHES_ANYTHING/`: exit 1,
+      `neither signal matched anything in 11 tools/*.mjs … zero hits means the patterns have stopped
+      matching, not that the toolchain stopped writing outside the repository`. The copy lived in
+      `tools/` and was deleted by the same `trap`; listing identical either side.)*
+- [x] On the unmutated tree: `node tools/wo-sweep.mjs` green with its count matching `tools/README.md`
       everywhere that file states one, `wo-gate.mjs --self-check` still `PASS | 17 of 17 plants were
-      caught`, `--audit` still PASS.
-- [ ] `git diff --stat -- src/` is empty.
+      caught`, `--audit` still PASS. *(`22 checks · 20 passed · 0 failed · 2 to review`, exit 0, the two
+      standing REVIEWs naming exactly what they named before. The 22 is copied from the run, not
+      arithmetic, into the **four** places `tools/README.md` states the figure — the table row, the
+      cross-reference paragraph, "The 22 above", and the summary-line sentence; WO-2.47's tick says
+      three, and there were four then too. `--self-check` `PASS | 17 of 17 plants were caught` and
+      `--audit` PASS, both exit 0 — and this row added no plant.)*
+- [x] `git diff --stat -- src/` is empty. *(Empty output; the scan is bounded to `tools/*.mjs` by
+      construction.)*
 
 **Traps** — **`wo-sweep.mjs` will match its own scan if the pattern is loose.** This file now carries the
 string `assertOutsideRepo` in its § 15 prose *and* inside the regex that looks for it, so a scan for the

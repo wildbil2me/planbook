@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 21-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 22-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -100,6 +100,19 @@ stays seventeen, and the run says so on its own line. The other side is `wo-swee
 that **both** copies still fold — this script's and `codex-invoke.mjs`'s, the second of which no
 behavioural check anywhere reaches — and it is a text search, so it sees a deletion and not a fold
 applied to the wrong side.
+
+**And since WO-2.48 that list of two is itself derived rather than trusted.** "Both copies" was true
+by observation and not by construction: the guard was declared exactly twice, in exactly the two
+scripts that build a sandbox out of `os.tmpdir()`, with nothing standing behind either fact. So § 15
+now scans every `tools/*.mjs` for a top-level `function assertOutsideRepo(` **or** a temp-dir sandbox
+and FAILs on any file its two declared lists do not name — in either direction, and on a scan that
+matches nothing. The second signal is the one that matters: a scan for the guard's own name cannot
+see a script that sandboxes and **forgot** it. That is not hypothetical — `verify-shell.mjs` is such
+a script, found on 2026-08-17, and it is carried as a written **exemption** rather than guarded,
+because its `mkdtemp()` directory is fresh and unique and the only removal targets that same
+directory. The reason is in `EXEMPT` beside the file name, and it is void the moment that removal is
+pointed at a path the harness did not itself create. It is **not an eighteenth plant** either — the
+seventeen are about tracker rot, and this is a grep in the other file.
 
 **WO-3.11's four plants were proved the same way and then again more narrowly**, because the broad
 run proves less than it looks like it does: against `git show 128d6f4:tools/wo-gate.mjs`, eleven of the
@@ -1778,7 +1791,22 @@ the section for another reason, and the fix was a word. §11 goes on watching th
 actually rotted three times, which is the file's total and not a section's.
 
 **A cross-reference between the two harnesses is a claim, and it can be false.** `wo-sweep.mjs` is
-**21 checks** — the newest, WO-2.47's, asserts that both copies of `assertOutsideRepo()` still
+**22 checks** — the newest, WO-2.48's, sits in the same section as the one before it and asks the
+question that section could not ask about itself: **who ought to be on the list.** It derives the set
+of `tools/*.mjs` carrying either a top-level `function assertOutsideRepo(` or a temp-dir sandbox
+(`mkdtemp`, or `mkdirSync` in a file that also reaches for `tmpdir()`), diffs it against the two
+declared arrays, and FAILs in **both** directions and on a scan that matches nothing — because the
+cheapest way to silence the check below is to delete a file from `COPIES`, which goes green while
+removing the coverage. Two lists rather than one: the guarded set, and an `EXEMPT` set whose single
+entry is `verify-shell.mjs` with the written reason it does not need a guard (`mkdtemp()` gives a
+fresh unique directory and the only removal is of that same directory, so the worst case is a stray
+folder rather than the deletion of something that existed first). **A file in neither list FAILs**,
+which is what makes adding a fourth script a deliberate act — and the harness is exempt rather than
+guarded because a check that raises an alarm should not also perform what the alarm asks; if that
+removal is ever pointed at a path the harness did not create, the reason string is where a reader
+will look. It narrows the unwatched set and does not close it, which is written out at the check:
+a guard under another name, or a sandbox spelled some third way, is invisible to it. WO-2.47's check,
+the one it feeds, asserts that both copies of `assertOutsideRepo()` still
 case-fold on win32, in `wo-gate.mjs` and in `codex-invoke.mjs`. It lives here because the two copies
 are duplicated on purpose and neither can make a claim about the other; it FAILs rather than REVIEWs on
 a missing file, a renamed function or a pattern that has stopped matching; and it is **textual**, so
@@ -1816,10 +1844,10 @@ of the form "this is checked over there" is exactly as load-bearing as a check a
 unverified as a comment — write it only after running the thing it names. This is the WO-1.10 CACHE
 miss in a new register: not a rule nobody enforced, but a rule the record said was enforced.
 
-**The 21 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
+**The 22 above is deliberately unguarded, and the asymmetry is the reason §11 was worth building for
 the other file and is not worth building for this one.** Nothing greps this sentence the way §11 greps
 the harness's count, and it does not need to: the sweep prints its own true figure on the summary line
-of every run — `21 checks` on this tree — in about a second, in
+of every run — `22 checks` on this tree — in about a second, in
 front of the only reader who would care, who is by definition already running it. `verify-shell.mjs`'s
 count is different in kind, because confirming it costs a three-minute browser run that nobody spends
 to settle a sentence in a README, which is exactly how that line went stale three times (WO-1.5,

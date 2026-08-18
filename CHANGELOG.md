@@ -500,6 +500,32 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Changed
 
+- **WO-2.48 — the sweep's list of guarded scripts is derived now instead of trusted.** WO-2.47 checked
+  that both copies of the repo-write guard still fold; nothing checked that *two* was still the right
+  number. It was true by observation and not by construction — the guard declared exactly twice, in
+  exactly the two scripts that build a sandbox out of `os.tmpdir()`, two facts agreeing with nothing
+  standing behind either. § 15 now derives the set itself, from two signals over every `tools/*.mjs`: a
+  top-level `function assertOutsideRepo(` finds a third **copy** of the guard, and a temp-dir sandbox
+  finds a third script that sandboxed and **forgot** one — which is the dangerous direction, and the one
+  a scan for the guard's own name is blind to by construction. It diffs that against two written lists
+  and fails in **both** directions, because the cheapest way to silence a red check is to delete a file
+  from the array. The sweep is 22 checks. Not a new plant: `--self-check` is still seventeen.
+
+  **The third script was already here.** `verify-shell.mjs` builds a browser profile directory out of
+  `os.tmpdir()` and recursively force-deletes it at the end of the run, with no guard anywhere near it —
+  found the day after this row was booked, by asking whether the row was pressing or merely following
+  precedent, and the row's first draft had asserted the scan would find nothing. It is carried as a
+  written **exemption** rather than guarded, with its reason beside its name in the file: `mkdtemp()`
+  gives a fresh unique directory and the only removal targets that same directory, so the worst it can do
+  is leave a stray folder behind. A row that builds an alarm does not also do what the alarm asks. The
+  reason is void the moment that removal is pointed at a path the harness did not itself create, and the
+  reason string is where a reader will look.
+
+  **It narrows the unwatched set; it does not close it**, and that is written at the check rather than
+  left to be inferred — a guard under another name, a sandbox spelled some third way, anything below the
+  top level of `tools/`. An entry parked in the exempt list with a plausible sentence beside it passes.
+  What the check forces is that the decision be made and written down, not that it be right.
+
 - **WO-2.47 — the repo-write guard is checked now instead of merely commented.** The guard is what keeps
   `--self-check`'s seventeen deliberately corrupted tracker fixtures out of the repository, and until this
   row the only thing standing behind it was the paragraph WO-2.44 wrote saying so. `wo-gate.mjs` now

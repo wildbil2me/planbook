@@ -962,12 +962,76 @@ function commentLines(file) {
   }
 }
 
-/* ══════════ 15. both copies of the repo-write guard still fold on win32 ══════════
+/* ══════ 15. the repo-write guard: who is on the list, and does the fold still hold ══════
    `tools/wo-gate.mjs` and `tools/codex-invoke.mjs` each carry an `assertOutsideRepo()` that refuses
    any path inside the repository. `wo-gate.mjs --self-check` sends every plant path AND the sandbox
    holding them through it; the plants are deliberately corrupted tracker files, and the `finally`
    that deletes the sandbox would be deleting live `plans/` if one ever escaped. `codex-invoke.mjs`
    sends its own fixture through its copy.
+
+   TWO CLAIMS, IN ONE SECTION AND IN THIS ORDER. The census below asks who belongs in `COPIES` at
+   all; the per-file loop under it asks whether each declared copy still folds. The census runs
+   first and hands the loop the files it has already read, because the loop's thoroughness is worth
+   exactly as much as the list is complete. It lives HERE rather than in a section of its own so
+   that an edit to `COPIES` has a reason to read the thing policing `COPIES` — a § 16 that existed
+   only to watch this array would separate the assertion from the thing asserted (WO-2.48).
+
+   NOTHING ASSERTED THE LIST WAS COMPLETE UNTIL WO-2.48. It was complete by observation and not by
+   construction: the guard was declared exactly twice repo-wide, in exactly the two scripts that
+   build a sandbox out of `os.tmpdir()`. Two facts that agreed, with no check standing behind
+   either. The failure has a shape, and the pattern is two-for-two: a third script under `tools/`
+   grows a sandbox — every script that has needed one has needed the guard — and its author copies
+   the guard, correctly, because these copies are copied on purpose. The new copy joins a set this
+   section does not read. It is watched by nothing while the loop below goes on reporting green
+   about the two files it was told about, which is the silence WO-2.47 closed one level down. A
+   list is prose with brackets around it.
+
+   THE DIFF RUNS BOTH WAYS, as § 14's does and for § 14's reason: both sides are closed sets of the
+   same thing. Derived-and-undeclared is the third copy nobody watched. Declared-and-underived is
+   not symmetry for its own sake — the cheapest way to silence a red run here is to delete a file
+   from `COPIES`, which turns the check green while removing the coverage, and a declared entry the
+   scan can no longer find is also what a rename looks like. Each direction says which way it went.
+
+   TWO SIGNALS, UNIONED, BECAUSE EITHER ALONE MISSES THE CASE THAT MATTERS. A top-level
+   `function assertOutsideRepo(` finds a third COPY of the guard. A temp-dir sandbox — `mkdtemp` in
+   either flavour, or a `mkdirSync` in a file that also reaches for `tmpdir()` — finds a third
+   script that sandboxes and FORGOT the guard, which is the dangerous direction and the one a scan
+   for the guard's own name is blind to by construction. A file matching either signal and named by
+   neither list below is a fault.
+
+   TWO LISTS, BECAUSE THE SANDBOX SIGNAL HAS A TRUE POSITIVE THAT IS NOT A DEFECT. `COPIES` is the
+   guarded set, and `EXEMPT` is the set this section deliberately does not watch, each entry
+   carrying its reason in the file rather than in a work order nobody re-reads. An exemption with a
+   sentence attached is a decision; a file silently missing from an array is the thing this census
+   exists to end. So a file in NEITHER list FAILs, which is what makes adding a fourth script a
+   deliberate act.
+
+   AND `verify-shell.mjs` IS EXEMPT RATHER THAN GUARDED, WHICH WAS RULED ON DIRECTLY (WO-2.48). It
+   is a real hit on the second signal: it builds a browser profile directory out of `os.tmpdir()`
+   and recursively force-deletes it at the bottom of the run, with no guard anywhere near it. The
+   blast radius is genuinely smaller and that is the whole of the argument — `mkdtemp()` creates a
+   FRESH UNIQUE directory and the only removal in the script targets that same directory, so the
+   worst case is a stray folder appearing and then being deleted again, where `wo-gate --self-check`
+   would be deleting a sandbox holding copies of the live trackers. The temptation on the day this
+   landed was to make the derived set and the guarded set agree by guarding the harness; a row that
+   builds an alarm does not also do what the alarm asks. If that removal is ever pointed at a path
+   the harness did not itself create, the exemption is void — and the reason string is where a
+   reader will look.
+
+   WHAT THE DERIVED SCAN STILL CANNOT SEE, said plainly, because a reader who takes it for a proof
+   of completeness has been misled by a check that exists because somebody took a list for one. It
+   narrows the unwatched set; it does not close it. A guard under a different name is invisible to
+   the first signal. A sandbox spelled some third way is invisible to the second — a `mkdir()` under
+   a path read out of `process.env.TMP`, a shell-out to `mktemp`, a directory named from a constant.
+   Comment lines are dropped before either pattern runs, for § 11's reason (this section names both
+   patterns in its own prose, and a scan that read prose would report this very file as the third
+   copy on the day it landed), so a sandbox inside a commented-out block is not seen either. Nothing
+   outside the top level of `tools/` is scanned at all: `src/` touches no filesystem, and widening
+   buys nothing while giving the check a way to be wrong. And a script that writes into the
+   repository ON PURPOSE and correctly — `make-cert.mjs` into `certs/`, `make-icons.mjs` into
+   `icons/` — is not the subject here and never appears. As in § 14, what this forces is that the
+   decision be made and written down, not that it be right: an entry parked in `EXEMPT` with a
+   plausible sentence beside it passes.
 
    THE COMPARE IS CASE-FOLDED ON WIN32, AND THAT IS THE PART THAT ROTS. `REPO` comes from
    `import.meta.url` and the sandbox from `os.tmpdir()`, and on Windows the two disagree about the case
@@ -993,27 +1057,91 @@ function commentLines(file) {
    gap rather than an oversight (WO-2.47 put an end-to-end subprocess probe out of scope: on regression
    it performs the escape it is testing for).
 
-   FAIL, NEVER REVIEW, INCLUDING WHEN IT MATCHES NOTHING. A missing file, a missing function, or a
-   pattern that has stopped matching all read green from a distance if they are allowed to pass
-   quietly — the same rule §11 and §12 apply, and the same reason. */
+   FAIL, NEVER REVIEW, INCLUDING WHEN EITHER SCAN MATCHES NOTHING. A missing file, a missing function,
+   or a pattern that has stopped matching all read green from a distance if they are allowed to pass
+   quietly — the same rule §11 and §12 apply, and the same reason. Zero files carrying either signal
+   means the census broke, not that the repository got safer. */
 
 {
+  const CENSUS = 'every tools/*.mjs carrying the guard or a temp-dir sandbox is on a written list';
   const NAME = 'both copies of assertOutsideRepo() still case-fold on win32';
   const COPIES = ['tools/wo-gate.mjs', 'tools/codex-invoke.mjs'];
+  // The exemptions. The reason IS the decision — a reader weighs it, and calls it void when it stops
+  // being true — so it is written here rather than left to be re-derived from the file it describes.
+  // Pointed at by its own words and not by a line number, per tools/README.md § pointers.
+  const EXEMPT = [
+    { file: 'tools/verify-shell.mjs',
+      why: 'its sandbox is the browser profile directory `udd`, made by one `mkdtemp()` above the launch — a fresh unique path — and the only removal in the script is the `fs.rm(udd, { recursive: true, force: true })` on its last line, of that same directory. The worst it can do is leave a stray folder behind; it can never delete something that existed first, which is why WO-2.48 named it here instead of guarding it. Void the moment that removal is pointed at a path the harness did not itself create' },
+  ];
   const faults = [];
   const proof = [];
 
+  /* The census: every tools/*.mjs, and which of the two signals it carries. Comment lines go first —
+     see the note above about this file reporting itself — and the guard pattern stays ANCHORED at
+     column zero, which is the other half of the same protection: the regex literal below is itself a
+     line of this file carrying the guard's name. Prove that by running the sweep, not by reading it. */
+  const scanned = new Map();
+  for (const name of fs.readdirSync(path.join(REPO, 'tools')).sort()) {
+    if (!/\.mjs$/i.test(name)) continue;
+    const file = path.join(REPO, 'tools', name);
+    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    const prose = commentLines(file);
+    const firstCodeLine = (re) => {
+      for (let i = 0; i < lines.length; i++) {
+        if (prose.has(i + 1)) continue;
+        re.lastIndex = 0;
+        if (re.test(lines[i])) return i + 1;
+      }
+      return 0;
+    };
+    const guard = firstCodeLine(/^function\s+assertOutsideRepo\s*\(/);
+    // `mkdtemp` in either flavour is a sandbox on its own. A bare `mkdirSync` is not — every script
+    // that writes an output file makes a directory — so it counts only in a file that also reaches
+    // for `tmpdir()`, which is the conjunction that makes the second signal worth having.
+    const mkdtempAt = firstCodeLine(/\bmkdtemp(Sync)?\s*\(/);
+    const mkdirAt = firstCodeLine(/\bmkdirSync\s*\(/);
+    const sandbox = mkdtempAt || (mkdirAt && firstCodeLine(/\btmpdir\s*\(/) ? mkdirAt : 0);
+    scanned.set('tools/' + name, { lines, guard, sandbox });
+  }
+
+  const declared = new Map([...COPIES.map(f => [f, 'declared in COPIES']),
+    ...EXEMPT.map(e => [e.file, 'declared in EXEMPT'])]);
+  const signalled = [...scanned].filter(([, s]) => s.guard || s.sandbox);
+  const where = ([f, s]) => `${f} (${[s.guard ? `guard at :${s.guard}` : null, s.sandbox ? `temp-dir sandbox at :${s.sandbox}` : null].filter(Boolean).join(', ')})`;
+  const censusFaults = [];
+
+  if (!signalled.length) {
+    censusFaults.push(`neither signal matched anything in ${scanned.size} tools/*.mjs — no top-level \`function assertOutsideRepo(\` and no temp-dir sandbox anywhere. The guard is declared twice and the sandboxes exist, so zero hits means the patterns in tools/wo-sweep.mjs § 15 have stopped matching, not that the toolchain stopped writing outside the repository. That reads green from a distance and is not`);
+  } else {
+    const unclassified = signalled.filter(([f]) => !declared.has(f));
+    const unfound = [...declared.keys()].filter(f => !(scanned.get(f) && (scanned.get(f).guard || scanned.get(f).sandbox)));
+    if (unclassified.length) {
+      censusFaults.push(`${unclassified.map(where).join(', ')} — found by this scan and named by neither COPIES nor EXEMPT in tools/wo-sweep.mjs § 15, so nothing below reads it and nothing anywhere checks it. Add it to COPIES if it carries the guard and the loop below will assert the fold; add it to EXEMPT, with the reason its blast radius is bounded, if it does not need one. An exemption with a sentence attached is a decision — an omission is the silence this census exists to end`);
+    }
+    if (unfound.length) {
+      censusFaults.push(`${unfound.map(f => `${f} (${declared.get(f)})`).join(', ')} — ${unfound.length === 1 ? 'carries' : 'carry'} neither signal now: no top-level \`function assertOutsideRepo(\` and no temp-dir sandbox. Either the file moved or was renamed, or the guard and the sandbox it was listed for are gone. Deleting the entry is the cheap way to make this green and it removes the coverage; re-point it, or say in the same edit what became of the thing it was watching`);
+    }
+  }
+
+  check(CENSUS, !censusFaults.length,
+    censusFaults.length
+      ? censusFaults.join(' · ')
+      : `${signalled.filter(([f]) => COPIES.includes(f)).map(where).join(', ')} — declared in COPIES and checked below. `
+        + (EXEMPT.length ? EXEMPT.map(e => `${e.file} is EXEMPT: ${e.why}`).join(' · ') : 'Nothing is exempt')
+        + `. ${scanned.size} tools/*.mjs scanned; no other file carries either signal. This narrows the unwatched set rather than closing it — a guard under another name, or a sandbox spelled some third way, is invisible here (see the comment at this check)`);
+
   for (const relPath of COPIES) {
+    const seen = scanned.get(relPath);
     const file = path.join(REPO, ...relPath.split('/'));
-    if (!fs.existsSync(file)) {
+    if (!seen && !fs.existsSync(file)) {
       faults.push(`${relPath} is not where this check expects it — the guard it carries is now watched by nothing. Restore the file or point this check at the new path; a copy this sweep cannot read must not read as a passing fold`);
       continue;
     }
-    const text = fs.readFileSync(file, 'utf8');
 
     // The function, by its own name, down to the first unindented `}`. Both copies are top-level
-    // declarations; a nested or re-spelled one FAILs here rather than going quiet.
-    const lines = text.split('\n');
+    // declarations; a nested or re-spelled one FAILs here rather than going quiet. The lines come
+    // from the census above wherever it has them, so the two claims in this section read one file.
+    const lines = seen ? seen.lines : fs.readFileSync(file, 'utf8').split('\n');
     const from = lines.findIndex(l => /^function\s+assertOutsideRepo\s*\(/.test(l));
     if (from < 0) {
       faults.push(`${relPath} has no top-level \`function assertOutsideRepo(\` — the guard has been renamed, moved or removed, and this check has stopped matching anything in it`);
