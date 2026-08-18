@@ -17359,6 +17359,417 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             + (afterMods.all === beforeMods.all));
 
         /*
+          ── WO-3.25: WHAT A SCORE CELL WILL TAKE, AND WHAT IT WILL NOT ──
+
+          The grid's cells are the app's one `type="text"` numeric field, and until this work order
+          they took every string Number() can read: `1e3` stored 1000, `0x1f` stored 31, `0b101`
+          stored 5, `0o17` stored 15 and `+7` stored 7 — measured with bare Node on 2026-08-17, not
+          read off a spec. `inputmode="decimal"` is a keyboard hint and has never rejected a
+          character, which is why this hole survived four work orders on this screen.
+
+          EVERY REFUSAL BELOW IS READ TWICE, AND THAT IS THE POINT OF THE SECTION. The second half of
+          the defect was worse than the table: `8a` was refused by editScore()'s bare `return`, so the
+          FIELD went on showing `8a` while the STORE kept the previous number, with no `blur` and no
+          `change` handler anywhere to reconcile them. So every read here takes the cell's value and
+          the document's cell IN ONE EVALUATION — after a flush, trap 6 — and the comparison between
+          them is made here in Node, out of the two numbers. Asking the page whether it agrees with
+          itself is WO-3.24's vacuous first draft, one section up, and it is the shape this check
+          could most easily have taken.
+
+          THE PASTE IS A REAL PASTE. `Browser.grantPermissions` plus `navigator.clipboard.writeText`
+          plus a dispatched Ctrl+V, which produces `beforeinput` with `inputType:
+          "insertFromPaste"` — asserted per case out of a capture-phase trace, so a run where the
+          clipboard silently did nothing goes red instead of green. A paste the grammar ALLOWS is
+          driven as well, for the same reason: five refusals over a paste path that never worked in
+          this browser would pass every line of this block.
+
+          THE BACKSTOP IS DRIVEN THROUGH THE ONE PATH THAT REALLY CANNOT BE CANCELLED. Composition
+          text — `Input.imeSetComposition` — arrives as `beforeinput` with `cancelable: false`, so
+          the guard's preventDefault is ignored by the browser and `8a` genuinely reaches the field.
+          That is not a simulation of the uncancelable case; it is the uncancelable case, and it is
+          what the trace records alongside the value.
+
+          THE TRACE IS TWO CAPTURE-PHASE LISTENERS, and the phase is load-bearing: src/shell.js's own
+          listeners are on `document` in the bubble phase, so a bubble-phase probe would read the
+          field AFTER the backstop had already put it back and could never see the `8a` it exists to
+          catch. Neither listener cancels anything, and both come off at the foot of the block.
+
+          COLUMNS p4, p5 AND p6 ARE USED because nothing else in this file reads them — the case-1
+          arithmetic is on a1/a2/a3 and the flag and cleared-key checks are on a1 and p1. Scores
+          typed here move the class average and nothing below asserts on it.
+        */
+        const P4 = 'wo35-p4', P5 = 'wo35-p5', P6 = 'wo35-p6';
+        /* Written out here rather than imported from src/scores.js, for the reason SCHEMA_NOW is at
+           the top of this file: a claim about the grammar has to be a claim about a PATTERN, and an
+           import would be the app compared with the copy of itself it handed over. */
+        const SCORE_GRAMMAR_HERE = /^-?\d*(?:\.\d{0,2})?$/;
+
+        /* One cell, as the teacher sees it and as the document holds it, read in one evaluation so
+           the two cannot be a moment apart. The flush is trap 6: every save is debounced. */
+        const cellRead = (a, s) => evalJs(`(async function(){
+          await window.planbook.store.flush();
+          var el = document.querySelector('#scoresBody [data-score-cell="` + a
+            + `"][data-score-student="` + s + `"]');
+          var d = window.planbook.store.getDoc();
+          var col = (d.scores || {})['` + a + `'] || {};
+          var cell = col['` + s + `'];
+          return { on: !!el, field: el ? String(el.value) : '(not on screen)',
+                   caret: el && typeof el.selectionStart === 'number' ? el.selectionStart : -1,
+                   has: Object.prototype.hasOwnProperty.call(col, '` + s + `'),
+                   v: cell && cell.v !== undefined && cell.v !== null ? cell.v : null,
+                   flag: cell && cell.flag ? cell.flag : '' }; })()`);
+
+        /* THE COMPARISON, MADE IN NODE OUT OF TWO READ VALUES. An empty field means the cell holds
+           no value; anything else has to be the same number the document holds. */
+        const agrees = (r) => (String(r.field).trim() === ''
+          ? r.v === null
+          : Number(String(r.field).trim()) === r.v);
+
+        /* Centred horizontally before the click, which the WO-3.24 block learned the hard way: by
+           this point the walk has scrolled the grid sideways, and a click at a cell that is under
+           the frozen name column lands on the student's own name — a link that navigates the whole
+           run off the fixture. */
+        const focusScoreCell = async (a, s) => {
+          const scrolled = await evalJs('(function(){ var e = document.querySelector('
+            + JSON.stringify(cellSel(a, s)) + '); if (!e) return 0;'
+            + ' e.scrollIntoView({ block: "center", inline: "center" }); return 1; })()');
+          /* A cell that is not there is a failed check below and never a crash — clickSel() throws
+             on a selector that matches nothing, and the roster block's rule about fixtures applies
+             here too. cellRead() answers `on: false` and every check naming it goes red. */
+          if (!scrolled) return false;
+          await clickSel(cellSel(a, s));
+          return true;
+        };
+
+        /* One printable character, at the page. `text` is what makes e.key the character itself
+           rather than the raw code — the same rule skDigits() above is built on. */
+        const CODE_OF = { '.': ['Period', 190], '-': ['Minus', 189], '+': ['Equal', 187] };
+        const skChar = async (ch) => {
+          const named = CODE_OF[ch];
+          const code = named ? named[0]
+            : /[0-9]/.test(ch) ? 'Digit' + ch : 'Key' + ch.toUpperCase();
+          const vk = named ? named[1] : ch.toUpperCase().charCodeAt(0);
+          await sk(ch, code, vk, ch);
+        };
+        const typeChars = async (text) => {
+          for (const ch of String(text).split('')) await skChar(ch);
+        };
+
+        /* Back to blank through the real keys: select the value, ⌫ takes it, and a second ⌫ on the
+           now-empty field takes the cell itself — which is how a flag left over from a previous case
+           goes as well. */
+        const clearScoreCell = async (a, s) => {
+          await focusScoreCell(a, s);
+          await evalJs('(function(){ var e = document.querySelector('
+            + JSON.stringify(cellSel(a, s)) + '); if (!e) return 0;'
+            + ' e.setSelectionRange(0, String(e.value).length); return 1; })()');
+          await skBack();
+          await skBack();
+          await new Promise((r) => setTimeout(r, 80));
+        };
+
+        const TRACE_ON = `(function(){
+          window.__wo325 = [];
+          window.__wo325b = function(e){
+            var cell = e.target && e.target.closest ? e.target.closest('[data-score-cell]') : null;
+            if (!cell) return;
+            window.__wo325.push({ ev:'beforeinput', type:e.inputType, data:e.data,
+              cancelable:e.cancelable, value:String(cell.value) }); };
+          window.__wo325i = function(e){
+            var cell = e.target && e.target.closest ? e.target.closest('[data-score-cell]') : null;
+            if (!cell) return;
+            window.__wo325.push({ ev:'input', type:e.inputType, value:String(cell.value) }); };
+          document.addEventListener('beforeinput', window.__wo325b, true);
+          document.addEventListener('input', window.__wo325i, true);
+          return 1; })()`;
+        await evalJs(TRACE_ON);
+        const traceClear = () => evalJs('window.__wo325 = []; 1');
+        const traceRead = () => evalJs('window.__wo325');
+
+        /* The clipboard is a browser-level permission, so this one goes without the page session —
+           and the origin is the harness's own server, which is a secure context because it is
+           127.0.0.1. Without it navigator.clipboard is present and writeText rejects. */
+        let clipboardOk = 'not asked';
+        try {
+          await send('Browser.grantPermissions',
+            { origin: 'http://127.0.0.1:' + PORT,
+              permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] }, false);
+          clipboardOk = 'granted';
+        } catch (e) { clipboardOk = 'refused: ' + e.message; }
+
+        const pasteOver = async (a, s, text) => {
+          await focusScoreCell(a, s);
+          const wrote = await evalJs('navigator.clipboard.writeText(' + JSON.stringify(text)
+            + ').then(function(){ return "ok"; }).catch(function(err){ return "ERR " + err.name; })');
+          await evalJs('(function(){ var e = document.querySelector('
+            + JSON.stringify(cellSel(a, s)) + '); if (!e) return 0;'
+            + ' e.setSelectionRange(0, String(e.value).length); return 1; })()');
+          await sk('v', 'KeyV', 86, '', CTRL);
+          await new Promise((r) => setTimeout(r, 120));
+          return wrote;
+        };
+
+        const gridReady = await evalJs('(function(){ var need = '
+          + JSON.stringify(['wo35-p4', 'wo35-p5', 'wo35-p6'])
+          + '; var out = { columns: [], rows: 0 };'
+          + ' need.forEach(function(a){ if (document.querySelector('
+          + '"#scoresBody [data-score-cell=\\"" + a + "\\"]")) out.columns.push(a); });'
+          + ' out.rows = document.querySelectorAll("#scoresBody tr[data-score-row]").length;'
+          + ' return out; })()');
+        check('the three columns this block types into are drawn, on the 25 rows the fixture planted — nothing below can pass by being measured against a grid that is not there',
+          gridReady.columns.length === 3 && gridReady.rows === 25,
+          JSON.stringify(gridReady));
+
+        /*
+          ACCEPTANCE LINE 1, TYPED. Each string goes in one character at a time and the cell is read
+          after EVERY one of them, because "cannot be produced" is a claim about every state the
+          field passes through and not only about where it stops.
+
+          `x` NEVER REACHES THE GUARD AT ALL, and the walk shows it: src/shell.js's keydown swallows
+          `L`, `M` and `X` for the flag bar first, so typing `0x1f` marks the cell excused half way
+          through and the digit after it takes the flag off again. That is the Trap in the work order
+          — no second refusal for those three letters — and the invariants asserted here are true
+          through it: the character never lands in the field, and the poison number never lands in
+          the store.
+        */
+        const TYPED = [
+          { text: '1e3', poison: 1000, illegal: ['e'] },
+          { text: '0x1f', poison: 31, illegal: ['x', 'f'] },
+          { text: '0b101', poison: 5, illegal: ['b'] },
+          { text: '0o17', poison: 15, illegal: ['o'] },
+          { text: '+7', poison: null, illegal: ['+'] },
+          { text: '8a', poison: null, illegal: ['a'] },
+        ];
+        for (const one of TYPED) {
+          await clearScoreCell(P4, 'wo35-s02');
+          await traceClear();
+          const steps = [];
+          for (const ch of one.text.split('')) {
+            await skChar(ch);
+            const r = await cellRead(P4, 'wo35-s02');
+            steps.push({ typed: ch, field: r.field, v: r.v, flag: r.flag, agrees: agrees(r) });
+          }
+          const trace = await traceRead();
+          const showed = steps.filter((st) => one.illegal.some((c) => st.field.indexOf(c) >= 0));
+          const stored = one.poison === null ? [] : steps.filter((st) => st.v === one.poison);
+          const strayed = steps.filter((st) => !SCORE_GRAMMAR_HERE.test(st.field));
+          const disagreed = steps.filter((st) => !st.agrees);
+          /* THE CLAUSE THAT SEPARATES THE GUARD FROM THE BACKSTOP, and without it this check passes
+             on a build with no guard at all: the backstop rewrites the field on the very next
+             `input`, so a read taken after the keystroke sees the same reconciled value either way.
+             An `input` event carrying the character is what the guard prevents from ever happening —
+             delete the preventDefault in src/shell.js and `{ev:"input", value:"1e"}` turns up here. */
+          const reached = trace.filter((t) => t.ev === 'input'
+            && one.illegal.some((c) => String(t.value).indexOf(c) >= 0));
+          check('typing `' + one.text + '` into a score cell: the field never holds '
+            + one.illegal.map((c) => '`' + c + '`').join(' or ')
+            + ' — not even for the instant before an `input` fires — the store never holds '
+            + (one.poison === null ? 'anything the notation meant' : one.poison)
+            + ', and the two agree after every keystroke',
+            !showed.length && !stored.length && !strayed.length && !disagreed.length
+              && !reached.length,
+            'keystroke by keystroke ' + JSON.stringify(steps) + ' :: events ' + JSON.stringify(trace)
+              + (showed.length ? ' :: THE FIELD SHOWED IT: ' + JSON.stringify(showed) : '')
+              + (stored.length ? ' :: THE STORE TOOK IT: ' + JSON.stringify(stored) : '')
+              + (strayed.length ? ' :: OUT OF GRAMMAR: ' + JSON.stringify(strayed) : '')
+              + (disagreed.length ? ' :: FIELD AND STORE DISAGREED: ' + JSON.stringify(disagreed) : '')
+              + (reached.length ? ' :: IT REACHED THE FIELD: ' + JSON.stringify(reached) : ''));
+        }
+
+        /*
+          ACCEPTANCE LINE 1, PASTED — the same five, arriving whole over a selected value rather than
+          a character at a time. This is what makes the guard's shape matter: it tests the
+          PROSPECTIVE field contents rather than the inserted text, so one test covers a paste, a
+          drag-and-drop and an autofill. The cell holds 87 first, so a refusal has something to
+          protect and "the field is unchanged" is a claim about a number rather than about emptiness.
+        */
+        for (const text of ['1e3', '0x1f', '0b101', '0o17', '+7']) {
+          await clearScoreCell(P5, 'wo35-s04');
+          await typeChars('87');
+          const before = await cellRead(P5, 'wo35-s04');
+          await traceClear();
+          const wrote = await pasteOver(P5, 'wo35-s04', text);
+          const after = await cellRead(P5, 'wo35-s04');
+          const trace = await traceRead();
+          const sawPaste = trace.some((t) => t.ev === 'beforeinput' && t.type === 'insertFromPaste');
+          /* CANCELLED OUTRIGHT, which is the same clause the typed walk carries and for the same
+             reason: with no guard the paste would land and the backstop would put 87 back on the
+             next `input`, leaving every other assertion here true. No `input` event at all is what
+             says the text never entered the field. */
+          const landed = trace.filter((t) => t.ev === 'input');
+          check('pasting `' + text + '` over a score cell holding 87 is refused whole — the paste '
+            + 'really did reach the page, no `input` ever fired from it, and the field and the '
+            + 'stored cell are both still 87',
+            sawPaste && !landed.length && before.v === 87 && after.field === '87' && after.v === 87
+              && agrees(after),
+            'clipboard ' + clipboardOk + '/' + wrote + ', events seen = ' + JSON.stringify(trace)
+              + ', before = ' + JSON.stringify(before) + ', after = ' + JSON.stringify(after));
+        }
+
+        await clearScoreCell(P5, 'wo35-s05');
+        await typeChars('87');
+        await traceClear();
+        const legalPasteWrote = await pasteOver(P5, 'wo35-s05', '12.75');
+        const legalPaste = await cellRead(P5, 'wo35-s05');
+        const legalPasteTrace = await traceRead();
+        check('and a paste the grammar allows lands — 12.75 over a cell holding 87 stores 12.75, so the five refusals above are a guard rather than a paste path that never worked in this browser',
+          legalPaste.field === '12.75' && legalPaste.v === 12.75 && agrees(legalPaste)
+            && legalPasteTrace.some((t) => t.ev === 'beforeinput' && t.type === 'insertFromPaste'),
+          'clipboard ' + clipboardOk + '/' + legalPasteWrote + ' :: ' + JSON.stringify(legalPaste)
+            + ' :: ' + JSON.stringify(legalPasteTrace));
+
+        /*
+          ACCEPTANCE LINE 2. Two decimals are the owner's call of 2026-08-17 — the SIS carries two
+          and this number is re-keyed into it by hand — so the third digit is where the grammar
+          stops, and the two before it must be untouched.
+        */
+        await clearScoreCell(P4, 'wo35-s06');
+        await typeChars('87.256');
+        const thirdDigit = await cellRead(P4, 'wo35-s06');
+        check('a third digit after the decimal point is refused and the two before it are not: 87.25 is typed, stored as 87.25, and the 6 that follows never reaches the field',
+          thirdDigit.field === '87.25' && thirdDigit.v === 87.25 && agrees(thirdDigit),
+          JSON.stringify(thirdDigit));
+
+        /*
+          ACCEPTANCE LINE 3, AND IT IS THE ONE A ZEALOUS FIX FAILS. Refusing a notation is not
+          clamping a value: a negative is a penalty the teacher typed and meant, and a score above
+          the assignment's points is extra credit she is allowed to award (docs/data-model.md §
+          Extra credit). wo35-p4 is worth 10 points, so 300 is thirty times the maximum and it is
+          stored unchanged.
+        */
+        await clearScoreCell(P4, 'wo35-s07');
+        await typeChars('-5');
+        const negative = await cellRead(P4, 'wo35-s07');
+        await clearScoreCell(P4, 'wo35-s08');
+        await typeChars('300');
+        const extraCredit = await cellRead(P4, 'wo35-s08');
+        check('-5 is accepted and stored as -5, and 300 on a 10-point assignment is still stored as 300 — this work order refuses a NOTATION and never clamps a VALUE',
+          negative.field === '-5' && negative.v === -5 && agrees(negative)
+            && extraCredit.field === '300' && extraCredit.v === 300 && agrees(extraCredit),
+          'negative = ' + JSON.stringify(negative) + ', above the points possible = '
+            + JSON.stringify(extraCredit));
+
+        /*
+          ACCEPTANCE LINE 4 — the distinction the whole work order turns on. `-`, `.` and `12.` are
+          what a field looks like part-way through a number: they are legal PREFIXES and not illegal
+          values, so they must be typable, they must write nothing, and nothing may reformat the
+          field under the caret while she is still typing.
+
+          "WRITES NOTHING" IS THE WHOLE SCORES MAP, BYTE FOR BYTE, across the keystroke that
+          completes the prefix — a comparison of one cell would be satisfied by a build that wrote
+          somewhere else. And the caret is read because "does not rewrite the field" is a claim about
+          where the caret ends up as much as about what the field holds: a field re-rendered under
+          the caret puts it back at 0.
+        */
+        for (const prefix of ['-', '.', '12.']) {
+          await clearScoreCell(P6, 'wo35-s09');
+          const lead = prefix.slice(0, -1);
+          if (lead) await typeChars(lead);
+          const beforeDot = await readDoc();
+          await skChar(prefix.slice(-1));
+          const afterDot = await readDoc();
+          const shown = await cellRead(P6, 'wo35-s09');
+          check('typing `' + prefix + '` leaves the field showing exactly that with the caret at the '
+            + 'end of it, and writes nothing: the whole scores map is byte-identical across the '
+            + 'keystroke that completed the prefix',
+            shown.field === prefix && shown.caret === prefix.length
+              && afterDot.all === beforeDot.all,
+            'field = ' + JSON.stringify(shown.field) + ', caret = ' + shown.caret + ' of '
+              + prefix.length + ', scores byte-identical = ' + (afterDot.all === beforeDot.all)
+              + ', cell = ' + JSON.stringify(shown));
+        }
+
+        /*
+          ACCEPTANCE LINE 5, AND THE `8a` CASE ITSELF. Everything above is the guard; this is what
+          happens when the guard cannot fire. Composition text is `beforeinput` with `cancelable:
+          false` — the browser ignores preventDefault on it, which is measured here rather than
+          assumed — so `8a` genuinely lands in the field, editScore() reads it, and the backstop puts
+          the field back to what the document holds. The capture-phase trace is what proves the field
+          really did hold `8a` for an instant: src/shell.js's own listener is on the bubble phase, so
+          a bubble-phase read would see only the value the backstop had already written back.
+        */
+        await clearScoreCell(P6, 'wo35-s10');
+        await typeChars('8');
+        const beforeIme = await cellRead(P6, 'wo35-s10');
+        await traceClear();
+        await send('Input.imeSetComposition', { text: 'a', selectionStart: 1, selectionEnd: 1 });
+        await new Promise((r) => setTimeout(r, 200));
+        const afterIme = await cellRead(P6, 'wo35-s10');
+        const imeTrace = await traceRead();
+        const uncancelable = imeTrace.filter((t) => t.ev === 'beforeinput' && t.cancelable === false);
+        const fieldHeld8a = imeTrace.some((t) => t.ev === 'input' && t.value === '8a');
+        check('the field and the store cannot disagree even where the guard cannot fire: an uncancelable composition puts `8a` in the cell, and the backstop puts the field back to the 8 the document holds rather than leaving the two saying different things',
+          beforeIme.v === 8 && uncancelable.length > 0 && fieldHeld8a
+            && afterIme.field === '8' && afterIme.v === 8 && agrees(afterIme),
+          'before = ' + JSON.stringify(beforeIme) + ', after = ' + JSON.stringify(afterIme)
+            + ', the field held `8a` at `input` = ' + fieldHeld8a
+            + ', uncancelable beforeinput = ' + JSON.stringify(uncancelable));
+
+        /*
+          ACCEPTANCE LINE 6. A score of 12.3456789 typed before this work order landed is NOT
+          migrated: rounding a number a teacher already typed is the silent-wrong-number failure this
+          work order exists to close, wearing a fix's clothes. It is planted through the store
+          because no control can produce it any more, and the grid is then left and re-entered
+          through the real segments — which is both the render and the "opened and left" of the
+          acceptance line.
+        */
+        await evalJs(`(async function(){
+          var s = window.planbook.store;
+          s.update(function(doc){
+            doc.scores = doc.scores || {};
+            doc.scores['wo35-p6'] = doc.scores['wo35-p6'] || {};
+            doc.scores['wo35-p6']['wo35-s11'] = { v: 12.3456789 };
+          });
+          await s.flush();
+          return 1; })()`);
+        /* EACH STRIP BELONGS TO THE SCREEN IT IS ON, and the segment for the screen you are already
+           on carries no hook at all (src/screen-nav.js). So the way OUT of the grid is the strip
+           inside #scoresView and the way back in is the one inside #assignmentsView — `#classView`'s
+           own strip is `display: none` while a class screen is up, and clicking it puts a click at
+           0,0 and re-renders nothing. That is not hypothetical: it is what the first run of this
+           block did, and the check below read an empty field over a stored 12.3456789 — which is why
+           the leave and the return are now ASSERTED rather than assumed. */
+        await clickSel('#scoresView [data-class-screen="assignments"]');
+        await new Promise((r) => setTimeout(r, 250));
+        const leftTheGrid = await evalJs("document.getElementById('scoresView')"
+          + ".classList.contains('hidden')");
+        await clickSel('#assignmentsView [data-class-screen="scores"]');
+        await new Promise((r) => setTimeout(r, 300));
+        const backOnTheGrid = await evalJs("!document.getElementById('scoresView')"
+          + ".classList.contains('hidden')");
+        const oldPrecision = await cellRead(P6, 'wo35-s11');
+        check('a score of 12.3456789 written before this grammar existed survives it: the cell renders as typed and the stored value is unchanged after the grid has been left and re-opened without touching it',
+          leftTheGrid && backOnTheGrid
+            && oldPrecision.field === '12.3456789' && oldPrecision.v === 12.3456789
+            && agrees(oldPrecision),
+          'the grid was left = ' + leftTheGrid + ' and re-opened = ' + backOnTheGrid + ' :: '
+            + JSON.stringify(oldPrecision));
+
+        /* And it can be edited DOWN and not extended, which is the other half of not migrating it:
+           every deletion passes the guard and lands in the store, so the field and the store stay
+           together while she shortens it — and the digit that would put it back out of grammar is
+           refused. */
+        await focusScoreCell(P6, 'wo35-s11');
+        await evalJs('(function(){ var e = document.querySelector('
+          + JSON.stringify(cellSel(P6, 'wo35-s11')) + '); if (!e) return 0;'
+          + ' var n = String(e.value).length; e.setSelectionRange(n, n); return 1; })()');
+        await skBack();
+        await new Promise((r) => setTimeout(r, 120));
+        const shortened = await cellRead(P6, 'wo35-s11');
+        await skChar('9');
+        const reExtended = await cellRead(P6, 'wo35-s11');
+        check('and it can be edited down but not extended: one ⌫ takes 12.3456789 to 12.345678 in the field AND in the store, and the digit that would put it back is refused',
+          shortened.field === '12.345678' && shortened.v === 12.345678 && agrees(shortened)
+            && reExtended.field === '12.345678' && reExtended.v === 12.345678 && agrees(reExtended),
+          'after ⌫ ' + JSON.stringify(shortened) + ', after typing 9 ' + JSON.stringify(reExtended));
+
+        await evalJs(`(function(){
+          document.removeEventListener('beforeinput', window.__wo325b, true);
+          document.removeEventListener('input', window.__wo325i, true);
+          delete window.__wo325; delete window.__wo325b; delete window.__wo325i;
+          return 1; })()`);
+
+        /*
           THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE. The grade column's
           `left` is a pixel offset, so it can only be right if the name column's width is known — the
           hand-computed layout src/attendance.css warns against, accepted for two columns because sticky

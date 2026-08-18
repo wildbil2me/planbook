@@ -177,7 +177,18 @@ Seven shape decisions that matter:
 - **`scores` is keyed by assignment, then student**, so adding an assignment touches one key and
   entering a column of grades is one object.
 - **A score cell is always an object**, never a bare number. Polymorphic cells (`87` here,
-  `{v:87}` there) are where grade bugs live.
+  `{v:87}` there) are where grade bugs live. **`v` carries at most two decimal places**, and the
+  score cell takes nothing else — an optional leading `-`, digits, at most one `.`, at most two
+  digits after it. *(Added 2026-08-17, WO-3.25.)* Two decimals because **the SIS carries two and
+  this number is re-keyed into it by hand**, and because `toFixed(2)` is already how every
+  percentage in this app is printed. **It is a rule about NOTATION and never about a value**: a
+  score above the assignment's points is extra credit and is stored unchanged, `-5` is a penalty the
+  teacher meant and is stored as `-5`, and nothing here clamps or rounds. What it refuses is the set
+  of strings `Number()` reads and a gradebook does not — until that work order `1e3` stored `1000`,
+  `0x1f` stored `31` and `+7` stored `7`, all measured rather than supposed. **Cells written before
+  it are not migrated**: a `12.3456789` already in a document stays, renders as typed, and can be
+  edited down but not extended, because retro-rounding a number a teacher already typed is the
+  silent wrong number this rule exists to prevent, wearing a fix's clothes.
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
   absences is two entries, not 25 — which is also why marking attendance is fast.
 - **`U` means unconfirmed, and it is temporary.** Writing the first mark in a class also writes `U`

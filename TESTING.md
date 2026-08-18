@@ -6060,6 +6060,112 @@ by the work order's own Acceptance line. A row can fail at a width narrower than
 ships to and still be worth shortening before the next row makes the panel wider still; a row failing
 here is not a claim that the iPad sitting was wrong.*
 
+
+### WO-3.25 — A score cell takes a score, and not every string `Number()` can read
+
+**What this changes for a teacher: nothing she can see, until she types something a score is not.**
+The cell still takes `87`, `87.25`, `-5` and `300` out of 100. What it no longer takes is `1e3`
+(which stored **1000**), `0x1f` (**31**), `0b101` (**5**), `0o17` (**15**), `+7` (**7**) and a third
+digit after the decimal point. All six were measured on 2026-08-17, not read off a spec, and all six
+are laptop-only: the iPad's decimal keypad has no letter on it.
+
+**A refusal is about NOTATION and never about a value.** A score above the assignment's points is
+still extra credit and still stored unchanged; `-5` is still a penalty the teacher meant. Nothing
+clamps and nothing rounds — including scores already in the document: **a `12.3456789` typed before
+this work order is not migrated**, renders as typed, and can be edited down but not extended.
+
+**The `8a` case is the reason it exists.** Before this, typing `8a` left the field showing `8a` while
+the store kept the previous number, with no `blur` and no `change` handler anywhere to reconcile
+them. A score that silently is not what you typed is the worst thing a gradebook can do, and the
+refusal path was producing one.
+
+- [x] **`1e3`, `0x1f`, `0b101`, `0o17` and `+7` cannot be produced in a score cell — typed or
+      pasted — and the STORE is read to prove it.** Typed a character at a time with the cell read
+      after every keystroke, and pasted whole over a selected `87` through the real clipboard
+      (`Browser.grantPermissions` + `navigator.clipboard.writeText` + a dispatched `Ctrl`+`V`, which
+      arrives as `beforeinput` / `insertFromPaste`). Typing `0x1f` marks the cell excused half way
+      through, because `src/shell.js`'s keydown swallows `L`, `M` and `X` for the flag bar before the
+      guard ever sees them — that is by design and the digit after it takes the flag off again.
+- [x] **A third digit after the decimal point is refused; `87.25` is accepted and stored as
+      `87.25`.** `87.256` typed key by key leaves `87.25` in the field and `87.25` in the store.
+- [x] **`-5` stores `-5`, and 300 on a 10-point assignment still stores 300.** Both driven in the
+      same check, because a run that closed the line above by breaking either of these would have
+      failed the work order.
+- [x] **`-`, `.` and `12.` are typable, write nothing, and are not reformatted under the caret.**
+      The field reads exactly the prefix, the caret is at the end of it, and the whole scores map is
+      byte-identical across the keystroke that completed the prefix — a one-cell comparison would
+      have been satisfied by a build that wrote somewhere else.
+- [x] **The field and the store cannot disagree, including where the guard cannot fire.** Driven
+      through `Input.imeSetComposition`, which really is `cancelable: false` — the browser ignores
+      the guard's `preventDefault` — so `8a` genuinely lands in the field, and the backstop in
+      `editScore()` puts the field back to the 8 the document holds. A capture-phase trace is what
+      proves the field held `8a` for an instant; the app's own listeners are on the bubble phase, so
+      a bubble-phase read would only ever see the value the backstop had already written back.
+- [x] **A pre-existing `12.3456789` survives.** Planted through the store (no control can produce one
+      any more), the grid left and re-opened through the real segments, and the cell renders as typed
+      with the stored value unchanged. One `⌫` takes it to `12.345678` in the field AND in the store;
+      the `9` that would put it back is refused.
+- [x] **`docs/data-model.md` states the two-decimal rule for scores and why** — beside the score-cell
+      shape, with the SIS reason, and with the non-migration written down.
+- [x] **`src/scores.js`'s `editScore()` header distinguishes refusing a notation from clamping a
+      value**, at the sentence that stopped being true.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** — `861 checks · 861 passed
+      · 0 failed · 0 skipped`, 23,109 lines, 26.8 lines per check, 281s — with the call-site count in
+      `tools/README.md` moved 825 → 835, which `wo-sweep.mjs` asserts.
+- [x] 👤 **On the installed iPad, force-quit first: a score is entered, corrected and cleared on the
+      decimal keypad with no character refused that the keypad offers.** The keypad has no letter on
+      it, so this reading is that the guard did not cost anything — **not** that it caught anything.
+      `sw.js`'s `CACHE` is `planbook-shell-v73` → `v74`, so a cold relaunch is what puts this build on
+      the glass; About will name the new build while the old screen is still up for exactly one
+      launch (WO-8.11).
+      *(Owner, 2026-08-18, on the LAN origin at `192.168.50.142:8443`. All good: the decimal keypad
+      is offered — which also answers WO-3.5's long-open keypad question — `87` round-tripped, `87.25`
+      took both decimals, a third digit did nothing and the field neither jumped nor reformatted under
+      the finger, delete-to-blank recomputed the grade, a minute down a column refused nothing the
+      keypad offers and felt no slower, and the external keyboard's Enter-down-the-column and
+      arrow-across-the-row still work beside the new `beforeinput`.)*
+
+      **The line's own premise is wrong with a hardware keyboard attached, and the sitting caught
+      more than it asked for.** "The keypad has no letter on it" is true of the soft keypad and says
+      nothing about an external one, which the iPad in this rotation has. Letters were driven at the
+      guard on **real WebKit** and refused — the half of acceptance line 1 the harness could only
+      ever prove in Blink. Anyone re-cutting this line should drop the no-letter argument rather than
+      repeat it.
+
+      **It cost a round trip first, and the cause was the shell and not the code.** The first reading
+      had letters landing *and persisting* — the pre-WO-3.25 `8a` signature exactly. The app had been
+      launched while `serve-https.mjs` was still down, so the service worker had no network, served
+      the cached v73 shell offline, and never fetched the new `sw.js`. Two force-quits after the
+      server came up cleared it: the first launch lets the new worker install and claim, the second
+      renders it. **The tell that it was the build:** the symptom needs *both* defences to be absent,
+      and the backstop in `editScore()` is plain JavaScript that does not depend on the browser or on
+      an event being cancelable — if v74 had been running, the letter would have vanished on the next
+      keystroke whatever WebKit did with the guard. Start the server *before* the first launch.
+
+*The desk half is `verify-shell.mjs`, **861 of 861 with zero skips**, 23,109 lines, 26.8 lines per
+check, 281s — twenty-two executed results from ten call sites in one new block inside the WO-3.5
+section, three of them loops. `wo-sweep.mjs` is **21 checks, 19 passed, 0 failed, 2 to review**, both
+REVIEWs the standing pair, naming exactly the lines they named before this landed.*
+
+*Five runs, and the two in the middle are the ones worth reading.*
+
+| Tree | Result |
+|---|---|
+| Before this work order's checks existed | `840 checks · 840 passed · 0 failed · 0 skipped`, 22,698 lines, 269s (WO-1.22's own figure, re-measured here) |
+| First draft of the block | `861 checks · 859 passed · 2 failed · 0 skipped`, 284s — both reds the harness's own: the grid was "left and re-opened" by clicking `#classView`'s strip, which is `display: none` while a class screen is up, so the click landed at 0,0 and re-rendered nothing |
+| Selectors fixed, **before the anti-vacuity clause was added** | `861 checks · 861 passed · 0 failed · 0 skipped`, 281s — green, and eleven of its checks would have stayed green with the guard deleted |
+| **Guard mutated**: `e.preventDefault()` removed from the `beforeinput` listener, everything else untouched | `861 checks · 849 passed · 12 failed · 0 skipped`, 281s — the six typed cases, the five pasted ones, and *"edited down but not extended"*, where the refused `9` landed and stored `12.3456789` again |
+| Delivered (mutation reverted, `git diff -- src/shell.js` clean) | `861 checks · 861 passed · 0 failed · 0 skipped`, 23,109 lines, 26.8 lines per check, 281s, exit 0 |
+
+*What the mutation actually caught is worth keeping, because the first draft of those eleven checks
+would have gone GREEN on it. Every clause they carried — the field never holds `e`, the store never
+holds 1000, the two agree after every keystroke — is true on a build with no guard at all, because
+the backstop rewrites the field on the very next `input` and a read taken after the keystroke sees
+the same reconciled value either way. The clause that separates the guard from the backstop is the
+ABSENCE of an `input` event carrying the refused text, and it was added before the mutation was run,
+not after it passed.*
+
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

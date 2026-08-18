@@ -175,9 +175,9 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.22 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.48 | Phase 2 |
-| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.24 | Phase 3 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.23 | Phase 1 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.49 | Phase 2 |
+| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.25 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
@@ -203,16 +203,16 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 22 | 22 | — | 🔨 IN PROGRESS (reopened four times; last on 2026-08-17) |
-| 2 — Attendance | 46 | 44 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 23 | 22 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
+| 1 — Shell, store, roster | 23 | 22 | — | 🔨 IN PROGRESS (reopened four times; last on 2026-08-17) |
+| 2 — Attendance | 47 | 44 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 24 | 23 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **122** | **93** | **2** | `[███████░░░] 76%` |
+| | **125** | **94** | **2** | `[███████░░░] 75%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -419,13 +419,22 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 65 | [WO-2.47](phase-2-attendance.md#wo-247--the-repo-write-guard-is-protected-by-prose-in-both-scripts-that-carry-it) The repo-write guard is protected by prose | S | | Aug 31, half a day |
 | 66 | [WO-1.16](phase-1-shell-store-roster.md#wo-116--the-term-opens-in-a-fresh-year) **The term opens in a fresh year** | S | | **When the roster arrives — hard stop before the first class.** Re-queued 2026-08-15: premise expired, clean slate, see its amendment |
 | 67 | [WO-1.22](phase-1-shell-store-roster.md#wo-122--copy-a-class-carrying-its-terms-and-its-categories) Copy a class, with its terms and categories | S | | Booked and built 2026-08-17, **an hour after the row above it closed** — see the correction below |
-| 68 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 1, half a day |
-| 69 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
-| 70 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 68 | [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-takes-any-string-number-can-read-not-any-number-a-teacher-can-mean) A score cell takes any string `Number()` can read | M | | Sep 1, a day — **ahead of WO-2.48 on purpose** |
+| 69 | [WO-1.23](phase-1-shell-store-roster.md#wo-123--import-a-classs-students-and-contacts-from-the-sis-csv) **Import students and contacts from the SIS CSV** | M | | **When the roster arrives — before the first class.** Sep 1–2, a day |
+| 70 | [WO-2.48](phase-2-attendance.md#wo-248--the-sweeps-list-of-guarded-scripts-is-written-down-rather-than-derived) The sweep's list of guarded scripts is not derived | S | | Sep 2, half a day |
+| 71 | [WO-2.49](phase-2-attendance.md#wo-249--the-ticks-acceptance-check-cannot-read-a-work-order-with-crlf-line-endings) The tick cannot read a CRLF work order | S | | Sep 2, half a day — **booked out of WO-3.25s tick** |
+| 72 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **Submit by ~Sep 15**, then a queue |
+| 73 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-1.22 was booked on 2026-08-17, owner-directed rather than out of a dispatch, rowed in the same
 sitting, dispatched within the hour and closed the same evening — booked, built and ticked between two
 readings of this table.*
+
+*WO-3.25 was booked on 2026-08-17, owner-directed, out of the owner's own report that a score cell
+takes values it should not. It is rowed **ahead of WO-2.48**, which had been `next`: WO-2.48 is a
+half-day of harness housekeeping and WO-3.25 is a wrong-number path in the screen that is the whole
+point of Ship 2. The same move row #61 made over #62, and the same one-line reversal if the owner
+wants the housekeeping first.*
 
 ***It was first seated at #66, ABOVE WO-1.16, on an argument whose premise was already false when it
 was written, and it now sits at #67, below it.*** *The argument was: WO-1.16 is the fresh-year cutover,
@@ -450,6 +459,35 @@ sections that share a calendar and a weighting are set up once rather than five 
 the term opens, true next August, and true for any teacher who is not the owner. What was actually lost
 by landing an hour late is one keying of one year's setup, which is a smaller thing than the paragraph
 that argued for it.*
+
+*WO-1.23 was booked on 2026-08-17, owner-directed, and given row #69 **in the same sitting** — the
+running order updated at booking rather than afterwards, which is now the second time in a row rather
+than the seventh failure. It is a per-class importer for the SIS's contacts export: eight columns, two
+rows per student where there are two guardians, and roughly nine fields × twenty-five students × five
+sections that are otherwise typed by hand before the first class. **The file's real shape was pasted
+into the booking conversation and is quoted verbatim in the work order**, which is why this one is
+sized M with a written fixture rather than sized L with an investigation in front of it.*
+
+***It sits behind WO-3.25 and ahead of WO-2.48, and only one half of that is a judgment.*** *The half
+that is not: WO-3.25 is `🤖 CLAIMED` with a dispatch in flight, and a row seated above work that is
+already being done is the mistake three paragraphs up — a claim about the future written after the
+future had started. The half that is: WO-2.48 is half a day of harness housekeeping and this is the
+screen that has to be full of real students before ~Aug 24, when the owner starts teaching and capacity
+halves. **It inherits the seat WO-1.16 vacated** — the cut band's argument stops applying now that
+Ship 2's one deadline-the-world-sets row has closed, and this is the row that replaces it. One line
+reverses the order if the housekeeping is wanted first.*
+
+***It is deliberately not 🚩.*** *The paste box plus hand-keyed contacts is a working fallback — slow,
+not blocked — and a go-live blocker is a thing without which the term cannot open. What is at stake
+here is an evening of typing, five times over, which is worth an M and is not worth a flag.*
+
+***Row #68's cell was reworded in the same edit and that is not tidying.*** *It read* **ahead of #69
+on purpose** *and #69 is now this row rather than WO-2.48, so a true sentence became a false one by
+somebody else's insertion. It names the work order now.* **A running-order cell that argues against a
+row number argues against whatever lands there next** *— WO-2.23's "cite a symbol, not a line number"
+rule, in the one file where the numbers are guaranteed to move. Row #61's cell has the same shape and
+is left alone: it is correct today, and rewriting a neighbour's reasoning inside this edit is the thing
+the correction three paragraphs up says not to do.*
 
 *WO-2.32 was given row #50 on 2026-08-16, having had none since it was booked and built on 2026-08-14.
 **It is the fourth work order to land in this directory with no place in the running order**, after

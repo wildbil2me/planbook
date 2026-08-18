@@ -129,13 +129,16 @@
                                       the counts are about. Refused while presentation mode is on,
                                       by the module rather than here — this file states no part of
                                       that rule (src/supports.js owns all of it)
-      data-score-cell="<assignmentId>" + data-score-student="<id>": ONE SCORE. It is four hooks in one
-                                      element, which nothing else in this file is: an input that saves
-                                      as it is typed, a keydown target (Enter down the column, L M X
-                                      for the flags, ⌫ on an empty cell to clear it), and a focusin
-                                      target so the flag bar knows which cell it is pointed at. An
-                                      empty field with no flag DELETES the key rather than storing a
-                                      null — blank means ungraded (docs/data-model.md)
+      data-score-cell="<assignmentId>" + data-score-student="<id>": ONE SCORE. It is FIVE hooks in
+                                      one element since WO-3.25, which nothing else in this file is:
+                                      a beforeinput target that refuses any character a score cannot
+                                      contain (`1e3` and `0x1f` are numbers to Number() and not to a
+                                      gradebook), an input that saves as it is typed, a keydown
+                                      target (Enter down the column, L M X for the flags, ⌫ on an
+                                      empty cell to clear it), and a focusin target so the flag bar
+                                      knows which cell it is pointed at. An empty field with no flag
+                                      DELETES the key rather than storing a null — blank means
+                                      ungraded (docs/data-model.md)
       data-score-flag="late|missing|excused|clear"  the flag bar; marks the cell the teacher is in and
                                       hands focus back to it. It exists because a decimal keypad has
                                       no letters on it, so the keyboard path above is unreachable on
@@ -1711,6 +1714,48 @@ document.addEventListener('keydown', (e) => {
   /* The same chain a tap on a cell makes: the card behind this view carries today's state, and a
      letter changes it exactly as a finger does. */
   afterAttendanceChange();
+});
+
+/*
+  A CHARACTER ON ITS WAY INTO A SCORE CELL, AND THE ONES THIS APP WILL NOT TAKE (WO-3.25).
+
+  THE FIRST `beforeinput` IN THE CODEBASE. It is delegated, beside the `input` and `focusin`
+  listeners below and on the same hook, for the reason every listener in this file is: a full grid
+  draws ~250 score cells and rebuilds them on every render, so a listener per cell is 250
+  attachments to redo each time.
+
+  WHY THE SCORE CELL AND NOTHING ELSE. It is the app's one `type="text"` numeric field — see
+  src/scores.js's scoreCell(), which says why it is not `type="number"` — and `inputmode="decimal"`
+  is a keyboard HINT that has never rejected a character. An assignment's Points and a category's
+  Weight are `type="number"` and the browser filters their keystrokes for free; WO-3.25 names them
+  Out of scope, and converting them to text to bring them under this rule was considered and refused
+  on 2026-08-17.
+
+  src/scores.js DECIDES AND THIS FILE CANCELS, which is the contract the keydown listener above
+  already has: a module answers a boolean and this listener is the only place `preventDefault` is
+  called. It is handed the field and the text and never the event — WO-3.23's reasoning, one
+  listener up, and the same reason modifiersOf() exists.
+
+  `L`, `M` AND `X` NEVER REACH HERE. The keydown listener above swallows them for the flag bar
+  before the browser gets as far as an insertion, so there is no second refusal for them here and
+  there must not be: a branch no keystroke can drive is worth less than this sentence (WO-3.23's
+  own scar, at handleScoreKey()).
+*/
+/* THE TEXT AN EDIT WOULD INSERT, from both of the places a `beforeinput` can carry it, and handed
+   over as a plain string — the shape modifiersOf() sets above. Blink puts a pasted string in `data`
+   (measured 2026-08-17: a real Ctrl+V of `1e3` into a text input arrives as `data: "1e3"` with
+   `dataTransfer` null), while the spec puts it in `dataTransfer` for `insertFromPaste` and
+   `insertFromDrop` — WebKit on the iPad is why the second read is here rather than deleted as
+   unreachable. A browser answering neither leaves the prospective value short by the insertion and
+   the guard may allow it; src/scores.js's backstop is what keeps the field and the store agreeing in
+   that case, and it is the same belt-and-braces the uncancelable IME path relies on. */
+const insertedText = (e) => (e.data != null ? String(e.data)
+  : (e.dataTransfer ? String(e.dataTransfer.getData('text/plain') || '') : ''));
+
+document.addEventListener('beforeinput', (e) => {
+  const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
+  if (!scoreCell) return;
+  if (!scores.allowScoreInput(scoreCell, insertedText(e), e.inputType)) e.preventDefault();
 });
 
 /* Term labels and dates, saved as they are typed. `input` rather than `change`: `change` on a text

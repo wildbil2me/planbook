@@ -974,7 +974,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 825 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 835 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1536,6 +1536,50 @@ and hall passes stay behind — none of them inside a loop, of which **one is a 
 arm** that never fires on a green run, for a build with no `window.planbook.classes` seam to plant the
 fixture behind. So the section contributes sixteen executed results and the delivered tree reads
 `840 checks · 840 passed · 0 failed · 0 skipped`, 22,698 lines, 27.0 lines per check, 269s, exit 0.
+
+**WO-3.25 moved it from 825 to 835**: ten call sites in one new block inside the WO-3.5 section — what
+a score cell will and will not take — of which **three sit inside loops**, over six typed notations,
+five pasted ones and three legal prefixes. So the block contributes twenty-two executed results and
+**the run prints 861**, measured on the delivered tree: `861 checks · 861 passed · 0 failed · 0
+skipped`, 23,109 lines, 26.8 lines per check, 281s, exit 0. It reuses the 25-row fixture already
+planted above it and types into three filler columns nothing else in the file reads.
+
+**Two mechanisms arrive in this file with it, and both are worth knowing before the next work order
+re-derives them.** A REAL PASTE: `Browser.grantPermissions` for `clipboardReadWrite` on the harness's
+own origin — sent without the page session, because it is a browser-level permission — then
+`navigator.clipboard.writeText` in the page and a dispatched `Ctrl`+`V`. That produces `beforeinput`
+with `inputType: "insertFromPaste"` carrying the text in **`data`** and a null `dataTransfer`, which
+is Blink's shape and not the spec's; it was measured rather than read, and `src/shell.js` reads both
+places for the iPad's sake. AN UNCANCELABLE EDIT: `Input.imeSetComposition`, which arrives as
+`beforeinput` with **`cancelable: false`** — the browser ignores `preventDefault` on it — so the
+backstop in `editScore()` can be driven through the real path it exists for rather than through a
+scripted event. Both are asserted from a two-listener trace installed in the **capture** phase, which
+is load-bearing: `src/shell.js`'s own listeners are on `document` in the bubble phase, so a
+bubble-phase probe reads the field only after the backstop has already put it back.
+
+**The first draft of the typed and pasted checks would have passed with the guard deleted, and the
+mutation is what said so.** Every clause they carried — the field never holds `e`, the store never
+holds 1000, the two agree after every keystroke — is satisfied on a build with **no** `beforeinput`
+guard at all, because `editScore()`'s backstop rewrites the field on the very next `input` and a read
+taken after the keystroke sees the same reconciled value either way. That is WO-3.24's vacuity
+lesson arriving in a second shape: not a row measured against itself, but two mechanisms where only
+one is under test. The clause that separates them is the **absence of an `input` event** carrying the
+refused text, read off the trace. With `e.preventDefault()` removed from the guard in `src/shell.js`
+and everything else untouched, the run read `861 checks · 849 passed · 12 failed · 0 skipped`, 281s:
+the six typed cases (each naming `{"ev":"input","value":"1e"}` and its siblings), the five pasted ones
+(`{"ev":"input","type":"insertFromPaste","value":"1e3"}`, with the field back at 87 and the store
+never wrong), and — the one nobody wrote a clause for — *"and it can be edited down but not
+extended"*, where the `9` that the guard refuses landed and stored `12.3456789` again. Reverted, and
+`git diff -- src/shell.js` carries no trace of it.
+
+**One earlier red was the harness's own and is worth the sentence.** The block leaves the grid and
+re-opens it to prove a pre-existing `12.3456789` renders after a render — and it first did that by
+clicking `#classView [data-class-screen="assignments"]`. Every class screen carries its own
+`<nav data-screen-nav>` (`index.html`), so while the grid is up **`#classView`'s** strip is
+`display: none`, `getBoundingClientRect()` is all zeros, and `clickSel()` clicked 0,0 and re-rendered
+nothing: the check read an empty field over a stored 12.3456789 and reported the app as broken. The
+selectors are now the strips inside `#scoresView` and `#assignmentsView`, and **the leave and the
+return are asserted** rather than assumed, so the same silent no-op cannot pass as a fixture again.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

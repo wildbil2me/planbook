@@ -848,14 +848,96 @@ function paintCell(input, at, cell) {
 }
 
 /*
+  THE GRAMMAR OF A SCORE, WRITTEN DOWN ONCE (WO-3.25) — one decimal number: an optional leading `-`,
+  digits, at most one `.`, and AT MOST TWO DIGITS AFTER IT. Two is the owner's call of 2026-08-17 and
+  it has a reason: the SIS carries two decimals, this number is re-keyed into it by hand, and
+  formatPercent() above is already how every percentage in this app is printed.
+
+  WHAT IT REFUSES IS A NOTATION AND NEVER A VALUE. `1e3`, `0x1f`, `0b101`, `0o17` and `+7` are
+  JavaScript's number grammar rather than a gradebook's, and they were not hypothetical: measured
+  with bare Node on 2026-08-17, each of them went into a cell through this field and came back out of
+  the store as 1000, 31, 5, 15 and 7. A NEGATIVE STAYS LEGAL — `-5` is a penalty the teacher typed
+  and meant, which is docs/data-model.md § Extra credit's reasoning about the points she awards above
+  the maximum, pointed the other way.
+
+  IT IS DELIBERATELY SATISFIED BY A HALF-TYPED NUMBER. `-`, `.`, `12.` and `-.` all match, because
+  that is what a field looks like part-way through a number and a grammar that refused them would
+  refuse the keystroke that starts one. THE DISTINCTION THE WHOLE OF WO-3.25 TURNS ON: an incomplete
+  legal PREFIX is not an illegal VALUE, and the two get different answers below. The prefix is
+  typable, writes nothing, and is left alone under the caret; the illegal value never reaches the
+  field at all.
+
+  THE SECOND PATTERN IS THE SAME SHAPE WITH THE TWO-DECIMAL CAP LIFTED, and it is not a second
+  grammar — it is what may still be STORED, for data this app has already written. A score of
+  12.3456789 entered before WO-3.25 stays 12.3456789: nothing migrates it and nothing rounds it,
+  because retro-rounding a number a teacher already typed is exactly the silent-wrong-number failure
+  this work order exists to close, wearing a fix's clothes. It renders as typed and it can be edited
+  DOWN — every deletion lands in the store, which is what keeps the field and the store agreeing
+  while she shortens it — but never extended, because the guard refuses any insertion that would
+  leave the field out of grammar. THE NEXT READER WILL WANT TO ADD A MIGRATION HERE, and this
+  paragraph is the refusal.
+*/
+const SCORE_GRAMMAR = /^-?\d*(?:\.\d{0,2})?$/;
+const SCORE_STORABLE = /^-?\d*(?:\.\d*)?$/;
+
+/*
+  WHETHER AN EDIT ABOUT TO LAND IN A SCORE CELL MAY LAND (WO-3.25). Called from src/shell.js's
+  `beforeinput` listener, which cancels the event when this answers false — the same contract
+  handleScoreKey() has below: this module decides what an edit means, and that file is the only
+  place in the app that touches an event.
+
+  IT TESTS THE PROSPECTIVE FIELD CONTENTS, NEVER THE INSERTED TEXT ALONE. The text is spliced into
+  the value across the current selection and the RESULT is tested, which is what makes a paste, a
+  drag-and-drop and an autofill fall out of the same three lines: each arrives as one insertion of
+  several characters, and "would the field still be a score afterwards" is the same question for all
+  of them. Written against the inserted text alone, none of them would be covered — and a `.` typed
+  into `12.` would pass.
+
+  DELETIONS ALWAYS PASS. They can only shorten the field, and a value that cannot be got back out of
+  a cell is a cell that cannot be corrected — including the pre-WO-3.25 12.3456789 above, which is
+  edited down one deletion at a time and would be frozen on screen by any test applied here.
+
+  IT READS THE FIELD AND NOTHING ELSE. The grid draws 25 rows by however many assignments, and this
+  runs per keystroke on the second-most-frequent action in the app, so it is a string test that never
+  opens the document.
+
+  NOT EVERY beforeinput IS CANCELABLE AND THIS IS NOT THE ONLY DEFENCE. An IME composition reports
+  `cancelable: false` — measured in headless Edge on 2026-08-17 through Input.imeSetComposition,
+  where the preventDefault this answer produces is simply ignored and the text lands anyway. What
+  that path leaves in the field is caught by editScore()'s backstop instead.
+*/
+export function allowScoreInput(input, data, inputType) {
+  /* Every deletion inputType begins with the word: deleteContentBackward, deleteWordForward,
+     deleteByCut, deleteContentForward and the rest of the family. */
+  if (String(inputType || '').indexOf('delete') === 0) return true;
+  const raw = String(input.value);
+  /* A `type="text"` field answers both of these with numbers — the same read caretCanLeave() makes
+     below, and the same reason it is safe here. A reading that is not a number is treated as a caret
+     at the end, which tests the strictest prospective value the field could have. */
+  const from = typeof input.selectionStart === 'number' ? input.selectionStart : raw.length;
+  const to = typeof input.selectionEnd === 'number' ? input.selectionEnd : raw.length;
+  return SCORE_GRAMMAR.test(raw.slice(0, from) + String(data == null ? '' : data) + raw.slice(to));
+}
+
+/*
   A SCORE BEING TYPED. Called from src/shell.js's `input` listener, so it fires per keystroke and the
   store's debounce is what turns a column of them into a handful of saves (src/store.js).
 
-  THREE THINGS IT DOES NOT DO. It does not re-render the field (decision 3). It does not clamp,
-  round or refuse a number — a score above the points possible is extra credit on that assignment
-  and a teacher is allowed to award it (docs/data-model.md § Extra credit), and a value that
-  silently is not what she typed is the worst thing a gradebook can do. And it does not touch the
-  flag, with one exception below.
+  THREE THINGS IT DOES NOT DO. It does not re-render the field (decision 3). It does not clamp or
+  round a VALUE — a score above the points possible is extra credit on that assignment and a teacher
+  is allowed to award it (docs/data-model.md § Extra credit), a negative is a penalty she typed and
+  meant, and a value that silently is not what she typed is the worst thing a gradebook can do. And
+  it does not touch the flag, with one exception below.
+
+  WHAT IT DOES REFUSE, SINCE WO-3.25, IS A NOTATION — AND A NOTATION IS NOT A VALUE. The paragraph
+  above read "it does not clamp, round or refuse a number" until 2026-08-17, and the third verb
+  stopped being true the day `1e3` stopped storing 1000. Nothing here moves a number the teacher
+  meant: 87.25 stores 87.25, -5 stores -5, and 300 out of 100 stores 300. What is refused is a
+  string Number() can read and a gradebook cannot — `1e3`, `0x1f`, `0b101`, `0o17`, `+7`, and a
+  third digit after the decimal point — and it is refused at src/shell.js's `beforeinput` guard,
+  before the character reaches the field at all. This sentence is here because a reader who finds a
+  refusal under a comment promising none will resolve the contradiction in one of two directions,
+  and one of them undoes the work order.
 
   THE EXCEPTION: TYPING A NUMBER INTO A `missing` OR `excused` CELL TAKES THAT FLAG OFF. The engine
   ignores `v` on both of them, so a cell showing 8 and counting 0 would be the silent-wrong-number
@@ -877,10 +959,42 @@ export function editScore(input) {
        that any VALUE is gone, and cellFor() turns "no value, no flag" into a deleted key. */
     writeCell(at.assignment.id, at.student.id, cellFor(null, flag));
   } else {
+    const stored = valueOf(before);
+    /* THE ONE VALUE OUT OF GRAMMAR THAT IS STILL WRITTEN, and the reason the test below is not
+       simply SCORE_GRAMMAR: this cell ALREADY holds a number the grammar refuses and what is in the
+       field is still a plain decimal. That is the pre-WO-3.25 12.3456789 being edited down a
+       deletion at a time — the guard lets every deletion through, so refusing the write here would
+       snap the field back on each one and freeze a number nobody could correct. */
+    const shorteningOldPrecision = stored !== null && SCORE_STORABLE.test(raw)
+      && !SCORE_GRAMMAR.test(String(stored));
+
+    if (!SCORE_GRAMMAR.test(raw) && !shorteningOldPrecision) {
+      /*
+        THE BACKSTOP (WO-3.25), which replaced a bare `return` that was the defect rather than the
+        guard against it. Type `8a` on the build before this one: Number() refused it, this function
+        returned without writing, the field went on showing `8a`, the store kept the previous number
+        — and NOTHING RECONCILED THEM. There is no `blur` and no `change` handler on a score cell
+        anywhere in this app (src/shell.js wires `beforeinput`, `input`, `keydown` and `focusin` and
+        nothing else), so the screen and the store disagreed until something else forced a re-render.
+        A score that silently is not what you typed is the worst thing a gradebook can do, and the
+        refusal path was producing one.
+
+        Anything that reaches here now has come through a path the `beforeinput` guard could not
+        cancel — an IME composition on a soft keyboard reports `cancelable: false` — so the answer is
+        to put the field back to what the document holds. THE FIELD IS WRITTEN AND THE STORE IS NOT:
+        no grade moves, and decision 3's rule about never replacing the input under the caret is not
+        in play here, because what is under the caret is not a number the teacher can have meant.
+      */
+      input.value = stored === null ? '' : String(stored);
+      return;
+    }
+
     const n = Number(raw);
-    /* A field mid-way through a number reports things Number() cannot read — `-`, `1e`, `.` — and
-       the answer to those is to write nothing at all rather than to store 0 or NaN. src/classes.js
-       and src/categories.js both refuse the same way, one field over. */
+    /* A field mid-way through a number reports things Number() cannot read — `-`, `.`, `12.`, `-.`
+       — and the answer to those is to write nothing at all rather than to store 0 or NaN, and to
+       leave the field exactly as it stands under the caret: an incomplete legal prefix is not an
+       illegal value. src/classes.js and src/categories.js both refuse the same way, one field
+       over. */
     if (!Number.isFinite(n)) return;
     if (flag === 'missing' || flag === 'excused') flag = '';
     writeCell(at.assignment.id, at.student.id, cellFor(n, flag));
