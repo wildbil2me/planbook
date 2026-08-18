@@ -2079,6 +2079,59 @@ function showBootFailure(e) {
   announce('Planbook could not open its storage on this device and has not started.');
 }
 
+/*
+  IS THIS SCREEN STILL THE ONE THE WORKER SERVES (WO-8.11), and the two readings below sit ABOVE the
+  registration for the reason the first of them states: `controller` has to be read BEFORE
+  `register()` is ever called.
+
+  THE CASE, found on 2026-08-16. sw.js uses skipWaiting + clients.claim, so a new worker takes over
+  the moment it activates and deletes every cache but its own — and it does not re-render an open
+  window. The document on screen was fetched before the swap. For exactly one launch the build line
+  below therefore names the NEW cache while every pixel came from the OLD one, and both statements
+  are true of different things: Cache Storage answers what the device has STORED, never what this
+  window was BUILT FROM. It cost WO-3.24 three readings of one legend row on the installed iPad, two
+  of them spent diagnosing the device from the desk against a build line that was reporting
+  honestly. A support surface that can be confidently wrong during an update is worse than one that
+  admits it cannot tell, and the About modal invites the teacher to forward that screen.
+
+  THE ROUTE, because WO-8.11 left the choice open and this is where it is taken. This is the
+  page-side one: skipWaiting stays, sw.js is untouched apart from the CACHE bump every src/ change
+  owes it, and nothing here asks the worker anything — `controllerchange` is a window event and the
+  page can answer the whole question on its own, the same way the build line reads Cache Storage
+  rather than postMessaging the worker. The other route on the table was to drop skipWaiting and
+  tell the teacher an update is ready, which is what the standing comment at the foot of sw.js
+  suggests, and it was NOT taken for three reasons. It changes WHEN a device gets a fix, in the one
+  file WO-8.7's white-screen scar lives in, to report a fact the page can already observe. It
+  reaches for an update POLICY — auto-reload, prompt, defer — that this work order puts out of
+  scope, and a report is not a policy. And that comment is conditional on something that has not
+  happened yet: it says to drop skipWaiting when the first dynamic import() or lazily-fetched
+  template arrives, because only then can an immediate takeover mix two versions inside one running
+  app. Every shell module is still a static import resolved at boot, so the boot-time guarantee
+  holds and the honest change is to say what the window IS, not to change what the worker DOES.
+
+  THE TRAP, and it is the whole reason HAD_CONTROLLER_AT_BOOT exists. `controllerchange` fires when
+  a worker claims a page that never had a controller — a FIRST INSTALL — exactly as it fires when a
+  new worker replaces an old one. Keying off the event alone would put a warning about staleness in
+  front of every teacher on the day she installs Planbook, when the document she is looking at came
+  fresh off the network and is the newest thing there is. A page that booted UNCONTROLLED cannot be
+  stale; only one that booted controlled and then had its controller swapped is.
+*/
+const HAD_CONTROLLER_AT_BOOT = 'serviceWorker' in navigator
+  && !!navigator.serviceWorker.controller;
+/* Read by paintBuildLine() below. It is a fact about THIS DOCUMENT and not a second claim about the
+   build: the version on that line is still Cache Storage's answer and nothing else's. */
+let renderedFromAnOlderBuild = false;
+if ('serviceWorker' in navigator) {
+  let controlled = HAD_CONTROLLER_AT_BOOT;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    /* The first claim of a page that booted uncontrolled is the install. Every claim after that one
+       is a replacement, and a replacement means the markup on screen predates the worker now
+       serving it — which is the one thing this flag says. */
+    if (controlled) renderedFromAnOlderBuild = true;
+    controlled = !!navigator.serviceWorker.controller;
+  });
+}
+
 /* The service worker, which is what makes an installed Planbook open with the network off.
    Three things about the few lines below:
 
@@ -2157,10 +2210,23 @@ function buildLine(el, warn, parts) {
   the caller opens the panel either way.
 
   A BLANK LINE WOULD READ AS "NO CACHES", which is a different fact and a wrong one, so each of the
-  five states says which one it is. Two of them are failures to answer rather than answers:
+  six states says which one it is. Two of them are failures to answer rather than answers:
   `window.caches` is undefined on a non-secure origin, and the read can reject in a private window.
-  Neither takes the amber (src/shell.css says why) — the caution palette has to mean exactly one
-  thing, and that thing is more than one stored copy.
+  Neither takes the amber (src/shell.css says why) — the caution palette still has to mean exactly
+  one thing, and WO-8.11 is what makes that one thing a sentence rather than a count: YOU MAY BE
+  LOOKING AT AN OLD PLANBOOK, AND QUITTING IT FROM THE APP SWITCHER IS THE FIX. More than one stored
+  copy is one way to arrive there — the update did not finish — and a screen older than the worker
+  serving it is the other, the update having finished after this window was drawn. The teacher's
+  next move is the same in both, which is what keeps it one meaning. The three that stay grey ask
+  nothing of her: two cannot answer at all, and the third settles itself.
+
+  THE SIXTH STATE IS THE ONLY ONE THAT IS NOT A READING OF CACHE STORAGE (WO-8.11). It comes off
+  renderedFromAnOlderBuild above, and it is asked ONLY inside the one-cache branch. Not in the
+  more-than-one branch, because that line already prescribes the same action and names the worse
+  fault, and a caveat bolted onto it would make the amber say two things at once while making the
+  longest line here longer. And not in the three above it, because the action this state names is
+  "quit Planbook from the app switcher", which presupposes an installed app on a device holding its
+  shell — precisely what those three say is not the case.
 */
 async function paintBuildLine() {
   const el = document.getElementById(BUILD_LINE_ID);
@@ -2192,6 +2258,21 @@ async function paintBuildLine() {
   }
 
   if (names.length === 1) {
+    /* One stored copy, and a document this worker did not serve (WO-8.11). It names ONE version —
+       the stored one — and says the screen is older than it, rather than putting two version
+       strings side by side that a teacher has no way to rank. THE REFRESH CLAUSE IS NOT PADDING:
+       pulling the page down is what was tried on the iPad on 2026-08-16 and it did not clear this,
+       because the document comes back THROUGH the same controller. Only a relaunch drops it. */
+    if (renderedFromAnOlderBuild) {
+      buildLine(el, true, ['⚠ This screen is older than the copy of Planbook stored on this device. '
+        + 'The update finished while the app was open: what is stored now is ', { name: names[0] },
+        ', and what you are looking at was built from the copy before it. Quit Planbook from the '
+        + 'app switcher and open it again — pulling down to refresh does not clear this.']);
+      return;
+    }
+    /* The healthy line, and WO-8.11 added NOTHING to it on purpose: it is read in one glance, and a
+       caveat attached to the case that happens every time is a caveat nobody reads in the case that
+       happens once. */
     buildLine(el, false, ['Running from ', { name: names[0] },
       ' — one stored copy on this device, which is what it should be.']);
     return;

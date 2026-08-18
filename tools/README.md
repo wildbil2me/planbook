@@ -987,7 +987,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 892 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 904 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1646,6 +1646,33 @@ premise the way the 1280px viewport above it is: everything in that section mark
 today, and the classes it inherits carry the "messy dates" fixture — term 1 starting 2026-08-26,
 term 2 overlapping it, term 3 blank, term 4 backwards — which are exactly the dates an acceptance line
 asks NOT to be repaired and which lock today for the eight days before term 1 begins.)*
+
+**WO-8.11 moved it from 892 to 904**: twelve call sites in a new section immediately under the
+WO-8.10 one, none of them inside a loop and none a fixture-guard failure arm, so the section
+contributes twelve executed results and **the run prints 926**, measured on the delivered tree:
+`926 checks · 926 passed · 0 failed · 0 skipped`, 24,754 lines, 26.7 lines per check, 295s, exit 0.
+**It is the first section in this file that makes one service worker replace another**, and the
+sentence at the head of this section reads exactly as it did for WO-8.10: nothing installs an APP,
+inspects a registration for its own sake, or asserts anything about `fetch` interception. What it
+does is register a second script at the same scope — `./sw.js?wo811=1`, which is the same bytes,
+since this file's server strips the query — and a different script URL at an existing scope is a
+real Update job, so `sw.js`'s own `skipWaiting` + `clients.claim` land a genuine
+`controllerchange` on a page that is already up. **A `dispatchEvent` at `navigator.serviceWorker`
+would have been one line and would have proved the wrong thing**: that the app's listener runs when
+this file calls it, rather than that the browser ever calls it. The first-ever-load reading is
+driven the same way round — every registration unregistered, then a reload, so the page genuinely
+boots with no controller and the claim that follows is genuinely the first one.
+
+**The boot reading goes in through `Page.addScriptToEvaluateOnNewDocument`**, not through an
+`evalJs` after the reload, and that is a race rather than a preference: the claim can land within a
+beat of `load`, so anything injected after a reload can arrive on the far side of the event it is
+there to count. **The one red on the way in was trap 5's**, and it is worth the sentence because the
+app was behaving perfectly: the first-load precondition also asserted that no `controllerchange` had
+fired YET on the fresh document, and one had — `controller at document start = null,
+controllerchange events since = 1`. The clause came out. What cannot race is what
+`navigator.serviceWorker.controller` said at document start, which is the same reading
+`src/shell.js` takes before it registers, and the count that matters is asserted by the check below
+it instead.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

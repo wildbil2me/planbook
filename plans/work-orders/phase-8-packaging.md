@@ -705,7 +705,7 @@ both the fact and the report of it can agree with itself while being wrong.
 
 ## WO-8.11 — the build line can name a version the screen is not running
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.10
+**Ship** 3 · **Status** ✅ DONE — 2026-08-18 · **Size** S · **Depends on** WO-8.10
 **Closes roadmap** *(no box. Instrument, not feature — the same call WO-8.7 through WO-8.10 made.
 Booked 2026-08-16, out of WO-3.24's close-out sitting.)*
 
@@ -753,17 +753,25 @@ an update prompt was in its Out of scope as *"a real decision ... not this work 
 surface outside the About modal; anything about deploys on the host side, which is WO-8.8's.
 
 **Acceptance**
-- [ ] With a document loaded from cache A and a worker that has since activated cache B, the build
+- [x] With a document loaded from cache A and a worker that has since activated cache B, the build
       line says the screen is stale and names the action that fixes it. Driven, not reasoned.
-- [ ] In the healthy case — one cache, document served from it — the line is exactly what WO-8.10
+- [x] In the healthy case — one cache, document served from it — the line is exactly what WO-8.10
       ships today, with nothing added.
-- [ ] The **first-ever load**, where a worker claims a page that had no controller at all, is read as
+- [x] The **first-ever load**, where a worker claims a page that had no controller at all, is read as
       healthy and not as staleness. *(This is the trap below, written as a check: `controllerchange`
       fires for both, and conflating them puts a scary sentence in front of every new install.)*
-- [ ] `verify-shell.mjs` covers both states and hands Cache Storage back as it found it, the way
+- [x] `verify-shell.mjs` covers both states and hands Cache Storage back as it found it, the way
       WO-8.10's own section does.
-- [ ] 👤 On the **installed** iPad: deploy, launch once without force-quitting, and confirm the app
+- [x] 👤 On the **installed** iPad: deploy, launch once without force-quitting, and confirm the app
       says the screen is stale — the exact sequence that misled the reader on 2026-08-16.
+
+*(Run 2026-08-18 and passed, with one divergence from the wording above: the deploy was local —
+`CACHE` bumped `v77` → `v78` on disk behind `tools/serve-https.mjs`, the way every 👤 line since
+WO-1.3 has been run — because what starts an Update job is a byte-different `sw.js`, and re-pushing
+the same tree would have started nothing at all. The sitting also found what the sequence above does
+not say: **iOS resumes a backgrounded app without loading a document**, so `register()` never runs,
+no update is looked for, and the app comes back as the build you left with no amber line — a reader
+waiting for one has found the resume, not a defect. Full reading in `TESTING.md` § WO-8.11.)*
 
 **Traps** — **`controllerchange` fires on first control as well as on replacement.** A page that has
 never had a controller gets one when the worker claims it, and that is not staleness; keying off the

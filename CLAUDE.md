@@ -174,14 +174,21 @@ a true report impossible teaches its reader to disbelieve one.)*
 **Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
 neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over
 and deletes the old cache the moment it activates — but it does not re-render the open window, whose
-document was fetched before the swap. **The About modal will name the new build while the screen you
-are reading is the old one**, both true, for exactly one launch. On 2026-08-16 (WO-3.24) that cost
+document was fetched before the swap. **The About modal named the new build while the screen you
+were reading was the old one**, both true, for exactly one launch. On 2026-08-16 (WO-3.24) that cost
 three readings of one legend row: the first showed the pre-dispatch wording, the second a superseded
 attempt, and only a cold relaunch showed what was actually on disk — with the build line reading v72
 throughout. Two of those round trips were spent diagnosing the device from the desk against a build
-line that was reporting honestly. Fixing the report is WO-8.11; until it lands, the force-quit is the
-procedure. **And bump `CACHE` in `sw.js` for any change to a file in `SHELL`** — `./` is entry one,
-so an `index.html` edit counts, and without the bump no device sees the change at all.
+line that was reporting honestly. **WO-8.11 closed that gap on 2026-08-18: About now says the screen
+is older than the copy stored on the device and names the app switcher as the fix**, so the build
+line can no longer be confidently wrong — but it *reports* the swap rather than undoing it, and the
+force-quit is still the procedure. The same sitting found the other half on hardware: **iOS resumes
+a backgrounded app without loading a document at all**, so nothing re-registers the worker, no
+update is even looked for, and the app comes back as the build you left — honestly, silently, with
+no amber line to say so. Waiting for that line without a force-quit or a deliberate pull-to-refresh
+is waiting for an update check that never started. **And bump `CACHE` in `sw.js` for any change to a
+file in `SHELL`** — `./` is entry one, so an `index.html` edit counts, and without the bump no
+device sees the change at all.
 
 ## Conventions
 

@@ -70,9 +70,15 @@ Never infer a pass from a harness you could not execute.
 
 **When you hand a 👤 iPad line back, say "force-quit from the app switcher first."** A reload will not
 do it. `sw.js` uses `skipWaiting` + `clients.claim`: the new worker takes over and deletes the old
-cache immediately, but the open window keeps rendering the document it already had, so the About modal
-names the new build while the screen shows the old one. On 2026-08-16 (WO-3.24) the owner read the
-wrong string twice before a cold relaunch, and the assistant spent two round trips misreading the
-device from the desk. WO-8.11 is booked to fix the report; the instruction is the workaround.
+cache immediately, but the open window keeps rendering the document it already had. That used to
+leave the About modal naming the new build while the screen showed the old one. On 2026-08-16
+(WO-3.24) the owner read the wrong string twice before a cold relaunch, and the assistant spent two
+round trips misreading the device from the desk. **WO-8.11 fixed the report on 2026-08-18** —
+About now says the screen is older than the stored copy and names the app switcher as the fix — but
+it reports the swap rather than undoing it, so the instruction is unchanged. Two things follow for a
+line you hand back. If it expects to *see* that stale message, say to pull down to refresh once
+first: **iOS resumes a backgrounded app without loading a document**, so nothing re-registers the
+worker and no update check ever starts. And an app that comes back showing an old build with **no**
+warning has been resumed, not broken.
 **If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
 so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.

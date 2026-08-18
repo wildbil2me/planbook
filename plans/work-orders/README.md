@@ -210,9 +210,9 @@ indexes is a file nobody reads.
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 11 | 4 | — | 🔨 IN PROGRESS |
+| 8 — 1.0 packaging | 11 | 5 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **127** | **97** | **2** | `[███████░░░] 76%` |
+| | **127** | **98** | **2** | `[███████░░░] 77%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are

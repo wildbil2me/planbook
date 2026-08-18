@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The About screen admits when you are looking at an old Planbook — 2026-08-18
+
+After an update lands while the app is open, the screen in front of you was drawn from the copy that
+came before it — every pixel of it — even though the new copy is already stored on the device. The
+build line used to report the stored copy and be perfectly, uselessly right.
+
+It now says the screen is out of date and tells you the one thing that clears it: quit Planbook from
+the app switcher and open it again. Pulling down to refresh does not do it, and the line says so.
+
+Every other launch, which is almost all of them, reads exactly as it did before — including the
+first one after you install, which is not an update and does not get warned about.
+
 ### Attendance can only be marked on days inside a term — 2026-08-18
 
 The register used to offer every past day and today, whether or not the class existed yet. Ten days

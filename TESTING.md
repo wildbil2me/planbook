@@ -6572,6 +6572,119 @@ pair and are unchanged.*
 
 ---
 
+### WO-8.11 — the build line can name a version the screen is not running
+
+**What a teacher sees.** A sixth state on the same line, and the only one of the six that is not a
+reading of Cache Storage. It answers the other half of the question: Cache Storage says what the
+device has **stored**, and nothing there says what this window was **built from**.
+
+| One shell cache, and… | The line |
+|---|---|
+| …the document on screen came from the worker now serving it — every launch but one | **unchanged, to the character:** *"Running from **planbook-shell-v77** — one stored copy on this device, which is what it should be."* |
+| …a worker took over after this window was drawn | *"⚠ This screen is older than the copy of Planbook stored on this device. The update finished while the app was open: what is stored now is **planbook-shell-v77**, and what you are looking at was built from the copy before it. Quit Planbook from the app switcher and open it again — pulling down to refresh does not clear this."* |
+
+**The route, of the two the work order left open: page-side only, `skipWaiting` kept.**
+`navigator.serviceWorker`'s `controllerchange` is a window event, so the page can answer the whole
+question without asking the worker anything — the same shape as the build line reading
+`caches.keys()` rather than postMessaging. `sw.js` is untouched but for the `CACHE` bump that
+**every** `SHELL` change owes it (`v76` → `v77`; WO-8.10 left its own bump to the landing commit
+and `wo-sweep.mjs` §9 counts it either way). The other route — drop `skipWaiting` and tell the
+teacher an update is ready — was refused for three reasons written at the code: it changes *when* a
+device gets a fix in order to *report* something the page can already observe, it reaches for the
+update policy this work order puts out of scope, and the comment at the foot of `sw.js` that
+suggests it is conditional on a first dynamic `import()` that does not exist yet.
+
+**The amber now means one sentence rather than one count.** WO-8.10 said the caution palette must
+mean exactly one thing, *"more than one stored copy"*. It still means exactly one thing, and this
+work order is what makes that thing sayable: **you may be looking at an old Planbook, and quitting
+it from the app switcher is the fix.** Two states arrive there — an update that did not finish, and
+one that finished after the window was drawn — and the teacher's next move is identical in both.
+The three grey states are the ones that ask nothing of her.
+
+**Why the stale sentence is not appended to the more-than-one line, or to the three grey ones.** The
+more-than-one line already prescribes the same action and names the worse fault; a caveat bolted
+onto it would make the amber say two things at once. And *"quit Planbook from the app switcher"*
+presupposes an installed app on a device holding its shell, which is precisely what the three grey
+states say is not the case.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.11.*
+
+- [x] **Acceptance 1 — a document from cache A behind a worker that has activated cache B.**
+      Driven with a **real** worker, not a synthesised event: the harness registers a second script
+      at the same scope (`./sw.js?wo811=1` — the same bytes, since the harness's server strips the
+      query), which is a real Update job, so `skipWaiting` + `clients.claim` deliver a
+      `controllerchange` from the browser to a page that is already up. Read after that:
+      *"⚠ This screen is older than the copy of Planbook stored on this device…"*, with **"older
+      than" at 17 and the cache name at 138** — the claim before the version, the same
+      position comparison WO-8.10's block had to adopt — one `<strong>`, and
+      `rgb(255, 248, 230)` on `rgb(138, 109, 26)` measured as a colour rather than read off a class
+      name.
+- [x] **Acceptance 2 — the healthy line is byte-for-byte WO-8.10's.** Compared against the sentence
+      **typed out in `verify-shell.mjs`** rather than read back out of `src/shell.js`: a claim of
+      unchangedness cannot be checked against the code it is a claim about. Read three times in the
+      section — before the takeover, on the first-ever load, and on the launch after the update —
+      and equal to `'Running from planbook-shell-v77 — one stored copy on this device, which is what
+      it should be.'` every time, with no `warn` class.
+- [x] **Acceptance 3 — the first-ever load is read as healthy.** Driven end to end rather than
+      reasoned: every registration unregistered, the page reloaded, and the probe (installed through
+      `Page.addScriptToEvaluateOnNewDocument`, so it runs before any page script) reading
+      **`controller at document start = null`** — a page that never had a controller. `src/shell.js`
+      then re-registers `./sw.js`, that worker claims the page, and **the `controllerchange` is
+      asserted to have fired** before the line is read, because a quiet line on a page where the
+      event never arrived would prove nothing. The line is WO-8.10's sentence, no amber.
+- [x] **Acceptance 4 — `verify-shell.mjs` covers both states and hands the device back.** Twelve
+      checks in a new section directly under WO-8.10's; the boot probe is removed from the browser
+      and any `?wo811` registration unregistered in a `finally`, and a twelfth reading asserts
+      Cache Storage is the same one-entry list the section found **and** that the page is controlled
+      by `./sw.js` again — this section borrows the worker as well as the storage.
+      **926 of 926, 0 failed, 0 skipped, 295s, exit 0.**
+- [x] 👤 **Acceptance 5 — on the installed iPad, launched once without a force-quit.** **Run
+      2026-08-18, iPadOS 26.5.2 on an iPad (A16), installed to the home screen and served over
+      HTTPS from `tools/serve-https.mjs` at `https://192.168.50.142:8443`** — the way every 👤 line
+      in this file since WO-1.3 has been run. The deploy was `CACHE` bumped `v77` → `v78` on disk
+      behind the running server, which is a deploy in the only sense the browser cares about: it
+      byte-compares `sw.js`, so a **different** `sw.js` is what starts an Update job and a re-push
+      of the same tree would have started nothing at all. Read in order: force-quit, launch, About —
+      grey, `planbook-shell-v77`. Bump. Launch from the home screen without force-quitting, About —
+      **amber**, the screen named as older than what is stored. Pull down to refresh deliberately —
+      **still amber**, which is the clause that sentence exists for. Force-quit, relaunch, About —
+      grey again, nothing added, which confirms Acceptance 2 on hardware as well as at the desk.
+
+      ***iOS resumes a backgrounded app without loading a document, and the first reading was
+      `v77` because of it.*** *Opening from the home screen while Planbook was still in the app
+      switcher brought the existing window forward. No navigation, so `src/shell.js` never ran
+      again, so `register()` was never called and no Update job ever started — About said `v77`,
+      one cache, healthy, and it was **right**: nothing had been replaced yet. A pull-to-refresh
+      forced the document load; that load came back through the **old** controller from the old
+      cache, the update landed underneath it, and the amber line appeared. The refresh therefore
+      has two roles here and they do not contradict each other: it can **trigger** the swap, and it
+      cannot **clear** it, because the document always returns through whichever controller is
+      serving at the time. **A run that opens the app and waits for an amber line that never comes
+      has found iOS's resume, not this work order's defect** — pull to refresh once, then read.*
+
+      *What this sitting still did not pay off: **the two builds differed only in the `CACHE`
+      string**, so a cold relaunch produced the same markup under a new name. What is proven is
+      that the replacement is detected and reported on real hardware. That the pixels themselves
+      would differ across two genuinely different trees is inherited from WO-3.24's scar, where
+      they did, and is the thing this line exists to make legible next time.*
+
+*Two mutations, both reverted, and both on the same tree the green run was measured on:*
+
+| Mutation | Result |
+|---|---|
+| the flag is set on **every** `controllerchange`, ignoring what the controller was at boot — the exact Traps mistake | **1 red** of 926: the first-ever-load reading, and its detail line is the defect in the teacher's own words — *"⚠ This screen is older than the copy of Planbook stored on this device…"* on a page whose `controller at document start` was `null`. Every stale reading stays green, which is what makes this the mutation worth having: the feature works perfectly and shouts at every new install |
+| the flag is never set — i.e. the build WO-8.11 replaces, WO-8.10 exactly as shipped | **4 red** of 926: all four stale readings, at *"older than" at -1*, the app-switcher clause missing, *the sentence carrying "refresh" = ""*, and `background = rgba(0, 0, 0, 0)`. A check that would have passed against the build this work order replaces is not evidence |
+
+*What the desk cannot pay off here, beyond the 👤 line. **The takeover is real but the two builds
+are the same bytes.** `./sw.js?wo811=1` is `./sw.js`, so what is proved is that a replacement is
+detected and reported, not that the markup on screen actually differs from the markup the new worker
+would serve — proving that needs two deploys of two different trees onto one device, which is the
+👤 line. And `verify-shell.mjs` reloads where a teacher force-quits: a reload is a new document
+from the current controller, which is the same thing the app cares about, but it is not iOS
+discarding a suspended app.*
+
+---
+
 This phase's first roadmap item is *this file, complete and fully passing* — which is the
 argument for filling it in as the work lands rather than at the end. It also carries the
 accessibility pass: screen reader, keyboard-only, contrast. Run it, don't assert it. Roll Call!'s
