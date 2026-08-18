@@ -182,6 +182,26 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-2.49 — a work order whose lines ended in `\r\n` read as having no Acceptance boxes at all.**
+  `parseFile()` split on `"\n"` alone, so every line of a CRLF tracker kept a trailing carriage return,
+  and JavaScript's `.` does not match one: `(.+)$` could not reach the end of a line that ended in it.
+  `--tick WO-3.25` reported *"all 0 Acceptance lines are ticked"* over ten open boxes, and *"no
+  **Closes roadmap** line"* over a work order that has one — one keystroke from writing ✅ DONE across an
+  open list. The only thing that stopped it was a human reading the diffstat.
+
+  Fixed at the one place that decides what a line is: the split is now `/\r?\n/`, so every parse
+  downstream is fixed at once rather than regex by regex. It was never one regex — the two failures had
+  two different causes, the second being `fieldRe()`'s `(.*?)` run over a header paragraph joined with a
+  space. The writers still join on `'\n'`, so a file keeps the terminators it arrived with. Nothing here
+  converts anything.
+
+  An `**Acceptance**` heading whose list parses **empty** is now a refusal that names the file and
+  writes nothing, because "all 0 lines are ticked" is true in exactly the way that makes it dangerous.
+  The eighteenth `--self-check` plant writes `\r\n` in its own bytes and asserts them — a plant that
+  wrote LF could never fail this. The run's closing note narrows rather than closes: the Acceptance
+  parser is covered for **one fault**, not generally, because one terminator is one way a reader can go
+  blind and not the class of them.
+
 - **WO-2.46 — three more readings in the harness waited on something other than what they checked.**
   The bathroom-pass block asked three questions of the app — did the alert escalate at 41 minutes, at
   five, at ten — and each check read two things: the flag on the pass record, and the sentence the

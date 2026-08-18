@@ -4922,7 +4922,7 @@ tracker rot, and WO-2.47's version of this trap holds here word for word.
 
 ## WO-2.49 — the tick's Acceptance check cannot read a work order with CRLF line endings
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-18 · **Size** S · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** *(no box. Dispatch tooling, not app — the same call WO-2.20, WO-2.37, WO-2.40, WO-2.44, WO-2.47 and WO-2.48 made.)*
 
 **Booked 2026-08-18, out of WO-3.25's tick, which was one keystroke from landing on nobody's
@@ -5007,21 +5007,58 @@ measured for this. If either shares the fault it is a finding for its own row ra
 widening of this one — WO-2.47's and WO-2.48's rule, unchanged.
 
 **Acceptance**
-- [ ] A phase file converted to CRLF and otherwise byte-identical parses to the **same** Acceptance
+- [x] A phase file converted to CRLF and otherwise byte-identical parses to the **same** Acceptance
       lists as its LF original — proved by naming the counts for a work order that has boxes, not by a
       green run. `WO-3.25` and its ten lines is the case that produced this row and is the one to use.
-- [ ] `--tick` on a CRLF file with an **open** box writes 🔨 IN PROGRESS and names the open line,
+      *(Two copies of `plans/` plus this script in `TMP`, outside the repository; only
+      `phase-3-gradebook.md` differs, and only in its terminators — `0/2118` CRLF and 157,008 bytes
+      against `2118/2118` and 159,126, identical once normalised. `--tick WO-3.25 --dry-run` in each
+      printed **byte-identical output**, `NOTE | all 10 Acceptance lines are ticked` in both. The
+      pre-WO-2.49 script on that same CRLF copy printed `all 0 Acceptance lines are ticked` and exit
+      0 — the row's own measurement, reproduced. WO-3.25 is ✅ DONE, so its status was hand-edited to
+      🤖 CLAIMED in **both** copies to get past the status fence; the two stayed identical.)*
+- [x] `--tick` on a CRLF file with an **open** box writes 🔨 IN PROGRESS and names the open line,
       exactly as it does on LF. This is the check the defect actually defeated; a row that only proves
-      the count is right has not proved the decision is.
-- [ ] The `**Closes roadmap**` stray-collector reads a CRLF file too — shown, because it is the second
-      parse that went blind and the evidence the fault was never one regex.
-- [ ] An Acceptance heading whose list parses empty makes `--tick` **refuse and write nothing**, naming
-      the file. Driven, and `git status --short` proved byte-identical either side.
-- [ ] The new plant is CRLF **in its own bytes** — asserted by reading them, not by writing the file
+      the count is right has not proved the decision is. *(The same box unticked in both copies
+      (`:2075`), then a live `--tick WO-3.25` in each — outside the repository, never against this
+      tree. Both: `HELD | 1 of 10 Acceptance lines are still [ ] — WO-3.25 is not done`, the same
+      line named at `phase-3-gradebook.md:2075`, `🔨 IN PROGRESS` written to the status line. The
+      CRLF copy is still `2118/2118` CRLF after that write, and both files lost the same 11 bytes:
+      the writers still split and join on `'\n'`, so nothing here converted anything.)*
+- [x] The `**Closes roadmap**` stray-collector reads a CRLF file too — shown, because it is the second
+      parse that went blind and the evidence the fault was never one regex. *(A stray
+      `**Closes roadmap**` planted below WO-3.25's header paragraph in both copies: `--audit` reports
+      `…phase-3-gradebook.md:1979 is below the header paragraph` in both, same words, same line. **And
+      a correction, measured rather than assumed**: the strays loop carries no `$` and was never
+      blind — the pre-WO-2.49 script finds that same stray in the CRLF copy. The parse that produced
+      the false second NOTE is `fieldRe()`'s `(.*?)`, which cannot cross the `\r`s left inside a
+      header paragraph joined across three lines. Pre-fix, CRLF: `no **Closes roadmap** line`.
+      Post-fix, CRLF: `quotes no box` — the LF answer.)*
+- [x] An Acceptance heading whose list parses empty makes `--tick` **refuse and write nothing**, naming
+      the file. Driven, and `git status --short` proved byte-identical either side. *(Twice. In the
+      plant, against a CRLF fixture whose heading carries no boxes: non-zero, `HELD`, the file named,
+      no `Acceptance lines are ticked` sentence, and `changedSince()` empty — not one file in the
+      copy of `plans/` moved. And by hand on the real CRLF copy through the pre-fix reader, where
+      every box is invisible: `HELD | WO-3.25 has an **Acceptance** heading and no boxes under it —
+      plans\work-orders\phase-3-gradebook.md:1972`, exit 1, nothing written. `git status --short` on
+      this tree lists only the three files this work order edits; every probe ran in `TMP`.)*
+- [x] The new plant is CRLF **in its own bytes** — asserted by reading them, not by writing the file
       and trusting the platform — and removing the `:189` fix turns `--self-check` red and names it.
-- [ ] On the unmutated tree: `--self-check` green with its count matching `tools/README.md` wherever
+      *(The plant writes `split(/\r?\n/).join('\r\n')` and then re-reads the file as `latin1` and
+      counts: it fails itself unless every `\n` in it is preceded by `\r`, and it re-counts after the
+      tick to catch a writer that normalised. `--self-check --against` a copy with the split reverted
+      to `'\n'`: `18 plants, 17 caught, 1 missed`, `FAIL | 1 of 18 plants were not caught`, naming
+      this plant and three reasons. Deleting the empty-list refusal instead reddens the same plant on
+      its other half. No other plant moved under either mutation, and neither mutation was of the
+      file in this tree — both were copies in `TMP`.)*
+- [x] On the unmutated tree: `--self-check` green with its count matching `tools/README.md` wherever
       that file states one, `--audit` still PASS, and `node tools/wo-sweep.mjs` unchanged.
-- [ ] `git diff --stat -- src/` is empty.
+      *(`PASS | 18 of 18 plants were caught`, exit 0; `--audit` PASS, exit 0; `wo-sweep.mjs`
+      `22 checks · 20 passed · 0 failed · 2 to review`, exit 0, the two standing REVIEWs naming what
+      they named before. The 18 is copied out of that run, not added up, into the one place
+      `tools/README.md` states the current figure — the readings further down that file are dated
+      runs against older copies and stay at the number that was true then, as it says itself.)*
+- [x] `git diff --stat -- src/` is empty. *(Empty output. Nothing here reads or writes `src/`.)*
 
 **Traps** — **a plant that writes LF cannot fail this**, and the platform will hand you LF or CRLF
 depending on how the file is opened; write the bytes and assert them. **Do not "fix" the trackers by

@@ -184,9 +184,30 @@ function fieldRe(name, present = []) {
   return new RegExp(`\\*\\*${name}\\*\\*\\s*(.*?)(?=\\s*·?\\s*\\*\\*(?:${others})\\b|$)`);
 }
 
+// **Split on either terminator, and this is the only place the file decides what a line is
+// (WO-2.49).** A phase file written by a dispatch that flipped the line endings arrives CRLF, and a
+// split on '\n' alone leaves a bare `\r` on the end of every line. That is invisible to a reader and
+// fatal to the parses below: JavaScript's `.` does not match `\r` — it is a line terminator, like
+// `\n`, `U+2028` and `U+2029` — so `(.+)$` cannot reach the end of a line that ends in one, and
+// **every checkbox in the file goes missing**. Measured on 2026-08-18: `- [x] hello` matches
+// checkboxesOf()'s regex and `- [x] hello\r` does not.
+//
+// It is fixed here rather than at the regexes because it was never one regex. On the CRLF copy of
+// phase-3-gradebook.md that produced this row, `--tick WO-3.25 --dry-run` reported *"all 0
+// Acceptance lines are ticked"* over ten open boxes AND *"no **Closes roadmap** line"* over a work
+// order that has one — two parses blind at once, and the next one added would have been the third.
+// `\s` DOES match `\r`, which is why `/^##\s+(WO-…)/`, `/^\*\*Acceptance\*\*/`, `/^---\s*$/` and
+// `/^\*\*[A-Z]/` went on working and why the failure was silent: the script found the work order,
+// found its Acceptance heading, and read an empty list as a satisfied one.
+//
+// **This does not convert anything.** The writers (--start, --release, --tick) split the file's own
+// text on '\n' and join on '\n', so each line keeps whatever terminator it arrived with and a CRLF
+// file is written back CRLF. A reader that repaired its input would stop reporting on it; whether a
+// dispatch should be able to flip a tracker's line endings at all is a separate question and a
+// separate row.
 function parseFile(file) {
   const text = read(file);
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const out = [];
   for (let i = 0; i < lines.length; i++) {
     const m = /^##\s+(WO-[\dG][\w.]*)\s+—\s+(.+?)\s*$/.exec(lines[i]);
@@ -1156,6 +1177,26 @@ function applyTick(id, wos, dryRun) {
   if (statusUnchanged) console.log(`NOTE | the status line already reads "${wo.status}" — left exactly as it is`);
   if (wo.acceptance === null) console.log(`NOTE | ${id} has no **Acceptance** list — nothing here could hold it open, so this status is written on the caller's word alone`);
 
+  // The refusal WO-2.49 added, and it comes before every other one because it is about whether this
+  // script can read the work order at all. An **Acceptance** heading with no boxes under it is the
+  // tracker being wrong about itself — the same class as the two refusals below and not the same as
+  // `wo.acceptance === null`, which is a work order that keeps its list somewhere else (gates.md) and
+  // has its own NOTE above. So: refuse, name the file, and write nothing.
+  //
+  // `all 0 Acceptance lines are ticked — nothing holds this open` is true in exactly the way that
+  // makes it dangerous, and it is what this run printed on a CRLF copy of a work order with ten open
+  // boxes on 2026-08-18. The split above is the fix for that file; this is the fence for the next
+  // way a list goes empty, because the tick is the one moment anything here is trusted to decide
+  // that a work order is finished, and an empty list can only ever say "I found nothing to read".
+  if (wo.acceptance && !wo.acceptance.length) {
+    console.log('');
+    console.log(`HELD | ${id} has an **Acceptance** heading and no boxes under it — ${path.relative(REPO, wo.file)}:${wo.headingLine}`);
+    console.log('');
+    console.log('NOTE | nothing was written — not the status line above, not a roadmap box, not either dashboard.');
+    console.log('NOTE | a list that parses empty is not a list that is satisfied. Either the boxes are written where this parser does not look, or the file cannot be read the way it is written — check the work order\'s own list and its line endings before running this again.');
+    return 1;
+  }
+
   // The first refusal, and since WO-3.11 it comes before the one about open lines, because it is
   // about the tracker rather than about the work: every `→ WO-x.y` marker must land somewhere, and
   // the **Owes** field must name what the markers point at. It names the line, and it writes nothing.
@@ -1219,6 +1260,8 @@ function applyTick(id, wos, dryRun) {
 
   // Say how many lines were read, not just that none of them was open: "all 0 lines are ticked" is
   // what a parser that found nothing would print, and it should be visible rather than inferred.
+  // Since WO-2.49 the 0 cannot reach this line — the refusal above takes it — and the count is still
+  // printed here, because "visible rather than inferred" is the reason it was ever printed at all.
   if (wo.acceptance) {
     console.log(`NOTE | all ${wo.acceptance.length} Acceptance lines are ticked — nothing holds ${id} open`
       .replace('are ticked', rehome.holds.length ? `are ticked or re-homed (${rehome.holds.length} re-homed, each resolving to an open box)` : 'are ticked'));
@@ -1437,7 +1480,8 @@ function audit(wos) {
 // function writes into the copy itself cannot be spent, and does not go stale when the trackers move.
 //
 // WHAT IT DOES NOT COVER, printed by the run because a green check trusted for what it never touched
-// is worse than no check: the Acceptance parser against the real work orders, gate()'s dependency
+// is worse than no check: the Acceptance parser otherwise — WO-2.49 plants ONE fault in it, a CRLF
+// fixture, and nothing else of it is exercised and none of it against a real list — gate()'s dependency
 // and ordering walk, `next`'s ordering, recomputeDashboard()'s arithmetic beyond one row and one
 // total, --audit against the real trackers, and every word of every real work order. It checks the
 // handful of behaviours WO-2.14 and WO-2.15 built, against one work order it made up.
@@ -1480,7 +1524,18 @@ function targetBoxLine(target) {
   return `- [ ] ${TARGET_BOX}`;
 }
 
-function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open' }) {
+// `boxes: false` writes the **Acceptance** heading with nothing under it (WO-2.49). That is a state a
+// work order can be in for two quite different reasons — its list is written somewhere this parser
+// does not look, or the file cannot be read the way it is written — and it is the state EVERY work
+// order in a CRLF file was in until parseFile() started splitting on either terminator. It is a
+// separate option rather than `open: 'none'` because "no boxes at all" is not a third tick state.
+function acceptanceSection({ open, rehome, boxes }) {
+  if (!boxes) return 'This heading carries no boxes, deliberately: a list that parses empty is not a list that is satisfied.';
+  return `- [x] the first line, ticked
+- [${open ? ' ' : 'x'}] the second line, which one plant unticks${rehome ? `\n- [ ] ${rehome}` : ''}`;
+}
+
+function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true }) {
   return `
 ---
 
@@ -1496,8 +1551,7 @@ cleanup ran** — delete this block, the ${TARGET_ID} block under it, and the ma
 ${FIXTURE_ID} or ${TARGET_ID}.
 
 **Acceptance**
-- [x] the first line, ticked
-- [${open ? ' ' : 'x'}] the second line, which one plant unticks${rehome ? `\n- [ ] ${rehome}` : ''}
+${acceptanceSection({ open, rehome, boxes })}
 
 ---
 
@@ -1548,8 +1602,10 @@ function assertOutsideRepo(p) {
 // `C:\dev\planbook\.guard-probe\…` and printed `PASS | 17 of 17`. Nothing in this script, in --audit or
 // in the sweep would have said a word.
 //
-// THIS IS NOT AN EIGHTEENTH PLANT, and it must not be counted as one. The seventeen are about tracker
-// rot; this is about whether the guard that keeps them out of the repository still folds. The count is
+// THIS IS NOT A PLANT AT ALL, and it must not be counted as one. (It said "not an eighteenth" until
+// WO-2.49 wrote an eighteenth — the ordinal was never the claim, and it rots the first time the array
+// grows.) The plants are about tracker rot, and since WO-2.49 about one fault in the reader that reads
+// them; this is about whether the guard that keeps them out of the repository still folds. The count is
 // recorded in tools/README.md, in this run's own output and in WO-2.44's acceptance, so a precondition
 // arriving as a plant would make three records wrong at once. Same reasoning as trackerDrift()'s
 // precondition below (WO-2.16), and it reports the same way: before anything is planted, saying so.
@@ -1676,7 +1732,7 @@ function selfCheck(subjectPath) {
   if (!fs.existsSync(subject)) { console.error(`FAIL | --self-check --against: no such file "${subject}"`); return 1; }
 
   // 0. The guard precondition, before the sandbox exists — see guardFolds() above for the three facts,
-  //    for why this is a precondition and not an eighteenth plant, and for why `--against` cannot
+  //    for why this is a precondition and not a plant at all, and for why `--against` cannot
   //    reach it. Stopping here costs no plant: on a tree where the guard folds, every plant is still
   //    made and still counted.
   const guard = guardFolds();
@@ -1688,7 +1744,7 @@ function selfCheck(subjectPath) {
     console.log('');
     for (const p of guard.problems) console.log(`     | ${p}`);
     console.log('');
-    console.log('  0 plants made, and this is NOT one of the seventeen — those are about tracker rot,');
+    console.log('  0 plants made, and this is NOT one of the plants — those are about tracker rot,');
     console.log('  and this is about whether the guard that keeps them out of the repository still');
     console.log('  folds on win32 (WO-2.44, WO-2.47). The count above is unchanged by this check.');
     console.log('');
@@ -1701,7 +1757,7 @@ function selfCheck(subjectPath) {
   }
   console.log('--self-check precondition');
   console.log(`  guard     assertOutsideRepo() refuses ${guard.inside}${guard.flippable && process.platform === 'win32' ? ` at either drive-letter case (${guard.flipped} too)` : ''} and allows ${guard.outside}`);
-  console.log('            — checked before the sandbox exists, and not one of the 17 plants (WO-2.47)');
+  console.log('            — checked before the sandbox exists, and not one of the plants (WO-2.47)');
 
   const sandbox = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'wo-gate-selfcheck-'));
   try {
@@ -2341,6 +2397,75 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // ------------------------------------------------------------------ WO-2.49's one
+    //
+    // The first plant about the READER rather than about a refusal, and it had to be: on a CRLF work
+    // order every checkbox goes missing, and `--tick WO-3.25 --dry-run` printed *"all 0 Acceptance
+    // lines are ticked — nothing holds WO-3.25 open"* over ten open boxes, one of them a 👤 line. It
+    // was one keystroke from ✅ DONE and the only thing that stopped it was a human reading a
+    // diffstat. Nothing in the seventeen above could have seen it: the plants are written into the
+    // copy by this script, in LF, so they can never carry the defect. **A plant that writes LF cannot
+    // fail this** — which is why the bytes below are written `\r\n` explicitly and then read back and
+    // counted rather than trusted to the platform.
+    //
+    // Both halves are here and neither is redundant. The empty-list half stays GREEN with the split
+    // in parseFile() reverted — the CRLF file parses empty, so the refusal fires, for the wrong
+    // reason — so the CRLF file WITH a list is the half that reddens when that fix goes. The refusal
+    // half is what reddens if applyTick()'s fence goes instead. Neither asserts a count: an assertion
+    // about a count is satisfied by any number, and a count is what reassured somebody here.
+    {
+      name: 'a CRLF work order is read line for line, and an **Acceptance** heading with no boxes under it refuses the tick',
+      run: () => {
+        const bad = [];
+        const p = path.join('work-orders', FIXTURE_FILE);
+
+        // Rewrite the fixture's phase file with `\r\n` on every line, then read the bytes back and
+        // count them. Asserted rather than assumed, both ways round: a machine that already writes
+        // CRLF would make the write meaningless, and one that translates on the way out would make
+        // it a lie. `latin1` because these are bytes, not text.
+        const toCrlf = what => {
+          plantWrite(p, readSb(p).split(/\r?\n/).join('\r\n'));
+          const raw = fs.readFileSync(rel(p), 'latin1');
+          const nl = (raw.match(/\n/g) || []).length, crlf = (raw.match(/\r\n/g) || []).length;
+          if (!crlf || nl !== crlf) bad.push(`the ${what} fixture is not CRLF in its own bytes — ${crlf} of ${nl} newlines carry a \\r, so this plant proves nothing`);
+        };
+        const stillCrlf = what => {
+          const raw = fs.readFileSync(rel(p), 'latin1');
+          const nl = (raw.match(/\n/g) || []).length, crlf = (raw.match(/\r\n/g) || []).length;
+          if (nl !== crlf) bad.push(`the ${what} rewrote ${FIXTURE_FILE} with LF endings (${crlf} of ${nl} newlines carry a \\r) — this reads either terminator, it does not convert one into the other`);
+        };
+
+        // 1. A CRLF work order with an open line. The decision, not the count: HELD, at
+        //    🔨 IN PROGRESS, naming the line that held it — exactly what the LF fixture gets from the
+        //    first plant in this array. Read on a split of '\n' alone, this list is empty and the run
+        //    refuses in the other direction instead, which is what makes this half fail loudly.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: true });
+        toCrlf('open-line');
+        const held = run(['--tick', FIXTURE_ID]);
+        if (held.code === 0) bad.push('--tick exited 0 over an open Acceptance line in a CRLF file');
+        if (/no boxes under it/.test(held.out)) bad.push('--tick read a CRLF work order\'s Acceptance list as empty — the boxes are there and every one of them ends in \\r');
+        if (!/HELD/.test(held.out)) bad.push('the run never said HELD on a CRLF file with an open line');
+        if (!/the second line/.test(held.out)) bad.push('the run did not name the open line of a CRLF file');
+        if (!fixtureStatus().startsWith(RUN)) bad.push(`a held tick on a CRLF file left the status at "${fixtureStatus()}", not 🔨 IN PROGRESS`);
+        if (/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('it ticked the roadmap box of a CRLF work order with a line still open');
+        stillCrlf('held tick');
+
+        // 2. The heading with nothing under it. It writes nothing at all — the tracker being wrong
+        //    about itself, and no status makes that true — and it names the file, because the reader
+        //    of this output has to be able to go and look at the list that would not parse.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, boxes: false });
+        toCrlf('empty-list');
+        const before = snapshot();
+        const empty = run(['--tick', FIXTURE_ID]);
+        if (empty.code === 0) bad.push('--tick exited 0 on an **Acceptance** heading with no boxes under it');
+        if (!/HELD/.test(empty.out)) bad.push('the run never said HELD over an empty Acceptance list');
+        if (/Acceptance lines are ticked/.test(empty.out)) bad.push('an Acceptance list that parses empty printed as a satisfied one — "all 0 lines are ticked" is the sentence this refusal exists to stop');
+        if (!new RegExp(FIXTURE_FILE.replace(/\./g, '\\.')).test(empty.out)) bad.push(`the refusal did not name the file it could not read a list in (${FIXTURE_FILE})`);
+        const changed = changedSince(before);
+        if (changed.length) bad.push(`the refused --tick wrote ${changed.join(', ')} — it may write nothing at all`);
+        return bad;
+      },
+    },
   ];
 
   // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
@@ -2363,14 +2488,19 @@ function runPlants(subject, sandbox) {
 
   console.log('');
   console.log(`  ${plants.length} plants, ${plants.length - failed} caught, ${failed} missed.`);
-  console.log('  Covers what WO-2.14, WO-2.15, WO-3.11 and WO-1.21 built: the four refusals, the fences');
-  console.log('  on each of --start, --release and --tick, the dry runs, one tick that works, both kinds');
-  console.log('  of skip, the four about **Owes** and its pointers, and WO-1.21\'s four — 🚫/⏳ refused,');
-  console.log('  out of the count and named where it left, held against the box they stopped counting,');
-  console.log('  and § The files against the files. NOT covered: the Acceptance parser against the');
-  console.log('  real work orders, gate()\'s hard-ordering walk, `next` over the real running order,');
-  console.log('  the rest of recomputeDashboard()\'s arithmetic, and --audit against the real');
-  console.log(`  trackers. A green run here is not coverage — it is ${plants.length} claims about ${plants.length} plants.`);
+  console.log('  Covers what WO-2.14, WO-2.15, WO-3.11, WO-1.21 and WO-2.49 built: the four refusals,');
+  console.log('  the fences on each of --start, --release and --tick, the dry runs, one tick that works,');
+  console.log('  both kinds of skip, the four about **Owes** and its pointers, WO-1.21\'s four — 🚫/⏳');
+  console.log('  refused, out of the count and named where it left, held against the box they stopped');
+  console.log('  counting, and § The files against the files — and ONE FAULT in the Acceptance parser:');
+  console.log('  a fixture written CRLF in its own bytes, whose boxes a reader splitting on "\\n" alone');
+  console.log('  cannot see, plus the heading with no boxes under it that must refuse rather than read');
+  console.log('  as satisfied. NOT covered: the Acceptance parser otherwise. It is still never run');
+  console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
+  console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
+  console.log('  hard-ordering walk, `next` over the real running order, the rest of');
+  console.log('  recomputeDashboard()\'s arithmetic, or --audit against the real trackers.');
+  console.log(`  A green run here is not coverage — it is ${plants.length} claims about ${plants.length} plants.`);
   console.log('');
   console.log(failed ? `FAIL | ${failed} of ${plants.length} plants were not caught.`
                      : `PASS | ${plants.length} of ${plants.length} plants were caught.`);

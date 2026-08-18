@@ -43,6 +43,19 @@ and there is no status that makes that true. **`--tick` still never writes `ROAD
 dashboard** — that is the roadmap's own maintenance step 3 and stays a hand edit; the run prints the
 row it just made stale so the edit is a copy out of the output.
 
+**Since WO-2.49 there is a third, and it was found the expensive way**: an `**Acceptance**` heading
+whose list parses **empty**. `all 0 Acceptance lines are ticked — nothing holds this open` is true in
+exactly the way that makes it dangerous, and it is what this tool printed over WO-3.25's ten boxes
+after a dispatch rewrote `phase-3-gradebook.md` from LF to **CRLF** — a checkbox on a line ending in
+`\r` is invisible to `(.+)$`, because JavaScript's `.` may not match a line terminator, and the same
+file printed *"no **Closes roadmap** line"* over a work order that has one. The reader is fixed at the
+one place that decides what a line is: `parseFile()` splits on `/\r?\n/`, and the writers still split
+and join on `'\n'`, so a file keeps whatever terminators it arrived with — **nothing here converts
+anything**, and a gate that silently repaired its inputs would stop reporting on them. The refusal is
+the fence for the next way a list comes back empty: it names the file and writes nothing at all. A
+work order with no heading at all is a different fact — `gates.md` keeps its boxes elsewhere — and
+keeps the NOTE it always had.
+
 Two flags that write nothing anywhere:
 
 ```
@@ -57,9 +70,13 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes two **synthetic** work orders into the copy,
-plants seventeen violations against them, runs the script over the copy, and deletes the directory on
+plants eighteen violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
-work is not coming and for the § The files index. The counts further down are readings from dated
+work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
+is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
+own bytes, because the other seventeen are written into the copy by this script in LF and so can
+never carry the defect. `18 plants, 18 caught, 0 missed` / `PASS | 18 of 18 plants were caught`, read
+off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
 refuses anything inside the repository** — WO-2.15 was itself `🔨 IN PROGRESS` while it was being
@@ -94,9 +111,11 @@ thing it ever compares against `REPO` is `path.relative()`, which win32 answers 
 `--self-check` asserts the guard *before it makes a sandbox*: `path.join(REPO, '.probe')` is refused,
 the same path with the drive letter's case **flipped** is refused on win32, and a path that really is
 outside is **not** — three facts, because the first alone passes with the fold deleted and the third is
-what tells "the fold is gone" apart from "it throws at everything." It is a **precondition and not an
-eighteenth plant**: the seventeen are about tracker rot, the count above and in WO-2.44's acceptance
-stays seventeen, and the run says so on its own line. The other side is `wo-sweep.mjs`, which asserts
+what tells "the fold is gone" apart from "it throws at everything." It is a **precondition and not a
+plant**: the plants are about tracker rot, the count above did not move for it — it read seventeen
+then, and WO-2.44's acceptance says seventeen because that was the figure on the day — and the run
+says so on its own line. *(It read "not an eighteenth plant" until WO-2.49 wrote an eighteenth; the
+ordinal was never the claim, and it rots the first time the array grows.)* The other side is `wo-sweep.mjs`, which asserts
 that **both** copies still fold — this script's and `codex-invoke.mjs`'s, the second of which no
 behavioural check anywhere reaches — and it is a text search, so it sees a deletion and not a fold
 applied to the wrong side.
@@ -111,8 +130,8 @@ see a script that sandboxes and **forgot** it. That is not hypothetical — `ver
 a script, found on 2026-08-17, and it is carried as a written **exemption** rather than guarded,
 because its `mkdtemp()` directory is fresh and unique and the only removal targets that same
 directory. The reason is in `EXEMPT` beside the file name, and it is void the moment that removal is
-pointed at a path the harness did not itself create. It is **not an eighteenth plant** either — the
-seventeen are about tracker rot, and this is a grep in the other file.
+pointed at a path the harness did not itself create. It is **not a plant** either — the plants are
+about tracker rot, and this is a grep in the other file.
 
 **WO-3.11's four plants were proved the same way and then again more narrowly**, because the broad
 run proves less than it looks like it does: against `git show 128d6f4:tools/wo-gate.mjs`, eleven of the
@@ -129,8 +148,10 @@ part is what did **not** go red beside it:
 | a target box that is already `[x]` resolves anyway | **1 red**: the unresolvable-`**Owes**` plant, on that case alone |
 | `**Owes**` and the `→` markers need not agree | **1 red**: same plant, on the orphaned-field case |
 | the win32 fold deleted from `assertOutsideRepo()` — WO-2.47, **and the mutation is of the real file, not of a copy** | **0 plants run**: the guard precondition refuses before the sandbox exists, naming `C:\dev\planbook\.probe` as the path it should have refused and printing `0 plants made`. Every plant stays green on the fixed tree, because a precondition is not a plant |
+| the split at `parseFile()` back to `'\n'` — WO-2.49, driven with `--against` over a copy in `TMP`, so the file in the tree was never edited | **1 red**: the CRLF plant, on its open-line half — *"--tick read a CRLF work order's Acceptance list as empty"*, *"the run did not name the open line of a CRLF file"*, *"left the status at 🤖 CLAIMED — 2026-01-01, not 🔨 IN PROGRESS"*. Its empty-list half stays **green**, and that is exactly why both halves are there: a CRLF file parses empty either way, so the refusal fires for the wrong reason, and only the CRLF file with a real list can tell the two apart |
+| the empty-**Acceptance** refusal deleted from `applyTick()` — WO-2.49, same method | **1 red**: the same plant, on its other half — `--tick` exits 0, says *"all 0 Acceptance lines are ticked"*, and writes `ROADMAP.md`, the phase file and the dashboard over a list it could not read. Nothing else moves |
 
-Five mutations, all reverted, none of them touching a plant it was not aimed at. **The sixth row is a
+Seven mutations, all reverted or driven over a copy, none of them touching a plant it was not aimed at. **The sixth row is a
 different kind of thing and says so in its own cell.** The guard precondition WO-2.47 added runs in the
 **invoking** script rather than in the subject, because the invoking script is the one that makes the
 sandbox and writes the plants — so it is the one whose `assertOutsideRepo()` is actually protecting the
