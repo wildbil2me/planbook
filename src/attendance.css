@@ -644,6 +644,17 @@
    "you have a hole to fill", said in the one colour on this screen that is an alarm. Next Tuesday
    is not a hole, and a week read ahead of time would otherwise be five columns of them. */
 .attendance-cell-future { background: #fff; border-color: #eef0f4; color: #c0cad5; }
+/* A day outside every term this class has (WO-2.50). THE SAME THREE VALUES AS THE FUTURE CELL
+   ABOVE, COPIED RATHER THAN SHARED, and that is a decision and not an oversight: the two mean
+   different things — one is a day that has not happened, the other a day this class does not exist
+   on — and they will not necessarily want the same tuning forever. Sharing the selector would make
+   re-tuning one of them a hunt through src/attendance.js for which columns wear it; a class of its
+   own is the same neutral to the eye today and one line to change tomorrow.
+
+   IT IS NOT THE UNTAKEN AMBER, for the reason the future cell gives verbatim: `?` in amber means
+   "you have a hole to fill", and last June is not a hole. The glyph is the same middot, because the
+   cell is there, it is legible, and it asks for nothing. */
+.attendance-cell-off-term { background: #fff; border-color: #eef0f4; color: #c0cad5; }
 
 /* ── THE COLUMN, AS A COLUMN ── */
 /* Worn by the <th> and by every <td> under it, from one function in src/attendance.js, which is
@@ -668,15 +679,29 @@
    stateChip() are the other two halves — the wash, the word and the glyph move together or the
    column says two different things about itself. */
 .attendance-col-not-taken.attendance-col-future { background: #fff; }
+/* AND THE TERM DATES' VERSION OF THE SAME MODIFIER (WO-2.50), worn alongside the state class and
+   never instead of it, so a day off in July is still `covered` and still reads as the grey band a
+   covered day reads as — the calendar's answer about a day is worth more than the term dates'
+   answer about it, which is the same precedence the line above states about the future. Qualified
+   with `.attendance-col-not-taken` for that reason, so it can only ever reach the one state whose
+   colour is an alarm, and declared after the four states so it wins on source order. Its values are
+   COPIED from the future column's rather than shared with them; see `.attendance-cell-off-term`
+   above for why, and src/attendance.js's columnClasses(), stateChip() and cellFor() for the other
+   three halves — the wash, the word and the glyph move together or the column says two different
+   things about itself. */
+.attendance-col-not-taken.attendance-col-off-term { background: #fff; }
 .attendance-day.attendance-col-taken { border-bottom-color: #a3e4bc; }
 .attendance-day.attendance-col-not-taken { border-bottom-color: #f0dfa8; }
 .attendance-day.attendance-col-not-taken.attendance-col-future { border-bottom-color: #e0e4ea; }
+.attendance-day.attendance-col-not-taken.attendance-col-off-term { border-bottom-color: #e0e4ea; }
 .attendance-day.attendance-col-dropped { border-bottom-style: dashed; border-bottom-color: #d0d8e4; }
 .attendance-day.attendance-col-covered { border-bottom-color: #a0aab8; }
 .attendance-col-taken .attendance-day-state { color: #27ae60; }
 .attendance-col-not-taken .attendance-day-state { color: #8a6d1a; }
 /* "Ahead" in the neutral, for the reason the wash above it goes white. */
 .attendance-col-not-taken.attendance-col-future .attendance-day-state { color: #a0aab8; }
+/* And "Off term" in the same neutral, for the same reason. */
+.attendance-col-not-taken.attendance-col-off-term .attendance-day-state { color: #a0aab8; }
 .attendance-col-dropped .attendance-day-state { color: #a0aab8; font-style: italic; }
 /* The fourth word, and it is NOT italic where the dropped one is. Roll Call! italicises its
    no-school head (dashboard.html:574) and this is the point of departure: over there italic-grey is
@@ -1192,7 +1217,8 @@
   .attendance-cell-P, .attendance-cell-T, .attendance-cell-A,
   .attendance-cell-E, .attendance-cell-D,
   .attendance-cell-untaken, .attendance-cell-none,
-  .attendance-cell-covered, .attendance-cell-future { border-width: 2px; }
+  .attendance-cell-covered, .attendance-cell-future,
+  .attendance-cell-off-term { border-width: 2px; }
   /* And the same for the column, which is the half of the four-state distinction that is read
      without looking at any single cell. The covered column takes the biggest step of the four,
      because it and the dropped column are the pair a teacher has to tell apart across a room and
@@ -1207,6 +1233,11 @@
      a day that has not happened must not step up with it. Declared after the four so it wins on
      source order inside this block too. */
   .attendance-col-not-taken.attendance-col-future { background: #fff; }
+  /* And WO-2.50's, for the same reason and in the same place — a day outside every term must not
+     step up with the amber either. Copied rather than folded in beside the future on one selector,
+     which is the same call `.attendance-cell-off-term` makes at the top of this sheet: the two are
+     the same neutral today and must be re-tunable apart. */
+  .attendance-col-not-taken.attendance-col-off-term { background: #fff; }
   .attendance-col-today { box-shadow: inset 2px 0 0 #d0d8e4, inset -2px 0 0 #d0d8e4; }
   .attendance-col-editing { box-shadow: inset 3px 0 0 #5b6fcc, inset -3px 0 0 #5b6fcc; }
   /* And the keyboard's row one step louder with them (WO-2.5): the rail 3px → 4px, the wash 7% →

@@ -216,8 +216,17 @@ function stateLine(cls) {
      rather than three: WO-2.3 added `covered`, for a day a calendar event closes, and that one IS a
      state because the class did not meet. This sentence used to read "still has exactly three
      answers" and was left true by every work order until the one that made it false. */
+  /* AND WO-2.50's IS A MODIFIER BY THE SAME TEST — a day outside every term the class has, where
+     stateOf() answers `not-taken` and goes on answering it, so the state class is unchanged and this
+     rides on top of it exactly as `unconfirmed` does. It is the OPPOSITE tuning, though, and that is
+     the whole reason decision 4 put the home screen in scope: `unconfirmed` turns the line amber
+     because there is something to act on, and this one turns it quiet because there is not. Five
+     cards reading "Not taken yet" in the amber alarm on a day school is not in session for her is
+     the same false job the grid was inventing, moved one screen back. The words are
+     src/attendance.js's stateSummary(), here as everywhere. */
   line.className = 'class-card-state ' + summary.state
-    + (summary.unconfirmed ? ' unconfirmed' : '');
+    + (summary.unconfirmed ? ' unconfirmed' : '')
+    + (summary.offTerm ? ' off-term' : '');
   line.textContent = summary.text;
   return line;
 }

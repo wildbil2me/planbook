@@ -4204,6 +4204,101 @@ and last name still do.
 
 ---
 
+### WO-2.50 — A date outside every term is not a date to mark
+
+**What this changes for a teacher: the register stops offering days her class does not exist on.**
+Reported by the owner off the deployed app on 2026-08-18, ten days before her first term begins: the
+grid drew today's column live, a tappable cell for every student and the 🚫 in the head. A meeting
+recorded there is in the document, in the backup and in the year total, and in **no** term
+percentage — a number wrong in a place she cannot see, because everything this screen and both
+reports print is scoped `term.start … term.end`.
+
+**Any term of the class bounds it, never the selected one.** The term tab decides what is *counted*
+and has never decided what is *writable*. The case that settles it is a term boundary mid-week: bound
+the writes by the selected term and half the grid locks according to which tab is up, and a teacher
+who has not switched tabs yet cannot mark today at all. **The accepted cost: a gap left between two
+terms locks the days in it**, which is the honest reading of the dates she typed and is fixed in one
+place — the door on the screen that refuses them.
+
+**The record wins, and that is the half most likely to be lost.** A day that already carries
+attendance stays fully editable, drops included. Nothing migrates: the stray taps already sitting
+outside a term stay exactly where they are, editable and uncounted. The gate is written
+`!recordFor(...) && !!outOfTermGap(...)` for that reason, which is `coveredDay()`'s own shape.
+
+**It is a modifier, not a fifth state.** `stateOf()` learns nothing about terms and still answers
+`not-taken`; out-of-term rides alongside the state the way `future` does. And **the term editor's own
+copy changed with it** — "the dates are for your own reference and Planbook does not check them" was
+true until this landed and is not now.
+
+- [x] **A column before the first term draws no tappable cell and no button, reads `Off term`, and
+      the state line names the term it is before and offers the term editor.** Driven: the six cells
+      are `<span>`s carrying `·` on `.attendance-cell-off-term`, the head has no button at all, the
+      state line reads `Off term · before WO-2.50 autumn`, and the one control in the action row is
+      `data-term-manage=""` — clicked, and the terms editor really opens on the open class.
+- [x] **Aug 28 and Oct 31 are themselves markable — both ends, proved by writing to them.** Derived
+      from today rather than typed: a term ending on the fourth column back and one starting on the
+      second. The early term's **end** and the late term's **start** are each unlocked with the real ✏
+      and tapped twice on the real cell (twice, because present is stored as nothing at all), and the
+      mark is read back off the document.
+- [x] **The day between them is locked and its reason names BOTH terms.** `Off term · between WO-2.50
+      early and WO-2.50 late`, on the head's tooltip, on `stateSummary()`, and in every cell's
+      accessible name.
+- [x] **A date carrying marks written before this landed stays fully editable.** A mark planted
+      straight into the document on an out-of-term day is changed by unlocking that column with its
+      own ✏ and tapping the cell; a drop planted on another is undone with the real *"The class met
+      after all"* button — and the day goes straight back to locked the moment its record is gone.
+      Beside them, the four writers that need a record (`unconfirmAll`, `setNote`, `untakeClass`,
+      `undropClass`) are shown ALIVE on those days, which is the half a gate written on the term
+      dates alone would have killed.
+- [x] **Every writer refuses an out-of-term date handed to it directly.** All nine — the seven
+      guarding on `writableDate(on)`, plus `editPastDay()` and `cycleMark()` — called one at a time
+      with the ledger put back between them, on today and on a past weekday, and not one moves
+      anything. Paired with the same probe on an in-term date, where they land. Driven through
+      **WO-2.5's keyboard path** (`markSelected()` returns false and writes nothing) and through **a
+      hook fired at a stale DOM**: the control the pre-WO-2.50 build drew is rebuilt by hand on the
+      locked column and really clicked.
+- [x] **A class with no term dates, and a class with a `start` and no `end`, both behave exactly as
+      they do today.** Both cases, each with a real tap on today's cell that lands.
+- [x] **A `no-school` event on a day outside every term still reads as covered**, with its own word,
+      its own title on the head and its own 📅 door — the calendar outranks this the way it outranks
+      `Ahead`.
+- [x] **The home card says so and is not amber.** Same string as the grid's state line, out of the one
+      `stateSummary()` that decides both, wearing `not-taken off-term` and never `unconfirmed`.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** — `914 checks · 914 passed
+      · 0 failed · 0 skipped`, 24,466 lines, 26.8 lines per check, 291s, exit 0 — with the call-site
+      count in `tools/README.md` moved 869 → 892, which `wo-sweep.mjs` asserts.
+- [x] 👤 **On the installed iPad, force-quit from the app switcher first: portrait on a day before the
+      term shows one column, greyed, with nothing to tap and the reason readable without hunting.**
+      `sw.js`'s `CACHE` is `planbook-shell-v75` → `v76`, so a cold relaunch is what puts this build on
+      the glass; About will name the new build while the old screen is still up for exactly one launch
+      (WO-8.11). Start `serve-https.mjs` **before** the first launch — WO-3.25's entry records what a
+      launch against a dead server costs. **Done 2026-08-18: one greyed column, nothing
+      tappable, no 🚫 and no ✏ in the head, the chip reading `Off term` and the reason readable without
+      tapping or scrolling; 📅 Terms opened the term editor on that class.**
+
+*The desk half is `verify-shell.mjs`, **914 of 914 with zero skips**, twenty-one executed results
+from twenty-three call sites in one new section between the attendance block and the keyboard one,
+none in a loop and two of them fixture-guard failure arms. `wo-sweep.mjs` is **21 checks, 19 passed,
+0 failed, 2 to review**, both REVIEWs the standing pair.*
+
+*Five runs, and the two mutations are the ones worth reading.*
+
+| Tree | Result |
+|---|---|
+| Before this work order's checks existed | `893 checks · 893 passed · 0 failed · 0 skipped`, 23,732 lines, 289s (WO-1.23's own figure) |
+| First run with the section in | died at the WO-2.17 term-nav fixture — `Error: nothing to click for [data-attendance-detail="wo217-student"]`, on a correct app. That fixture's two terms sit in February and March, so today was outside every term of its class and the ⋯ is not drawn on a locked column |
+| Second run | died in the attendance section on `[data-attendance-take]`, same cause one section later: the "messy dates" fixture leaves term 1 starting 2026-08-26, and the action row on a locked day draws the term door and nothing else |
+| Both fixtures' premises restated | `914 checks · 904 passed · 9 failed`, every red in the new section and every one of them the section's own bug — a date-keyed reader picking up a neighbour class's record, a stale forged cell poisoning the keyboard probe, and the self-cancelling writer sequence below |
+| **Mutation 1**: `offTermDay()` → `return false`, the gate deleted, nothing else touched | `914 checks · 903 passed · 11 failed · 0 skipped`, exit 1 — the column live again with two tappable cells and a 🚫, the state line back to "Not taken yet", no term door to click, the home card amber, all nine writers landing, the stale hook writing, the keyboard path writing, and the gap day open |
+| **Mutation 2**: `!recordFor(...) &&` dropped from the same line — decision 2 deleted, the bound left intact | `914 checks · 910 passed · 4 failed · 0 skipped`, exit 1 — and it is exactly the four record-wins checks: the marked day reading `Off term` over its own marks, the mark that can no longer be changed, the four record-needing writers gone dead, and the drop that can no longer be undone |
+| Delivered (both mutations reverted, `git diff -- src/attendance.js` holds only the work order) | `914 checks · 914 passed · 0 failed · 0 skipped`, 24,466 lines, 26.8 lines per check, 291s, exit 0 |
+
+*Mutation 2 is the one this section was written for. Mutation 1 reddens eleven checks and would be
+caught by almost any check of the feature; mutation 2 leaves the whole visible feature working —
+today is still locked, the chip still says `Off term`, the writers still refuse — and breaks only the
+promise that the owner's own stray taps stay reachable. Four checks see it, and all four drive real
+controls rather than asking the gate what it answers.*
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

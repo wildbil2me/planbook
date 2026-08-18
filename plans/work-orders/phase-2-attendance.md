@@ -5010,7 +5010,7 @@ That is `plans/dispatch-retro.md`'s check, doing the job this parser could not.
 
 ## WO-2.50 — a date outside every term is not a date to mark
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing · **Blocks** WO-2.51
+**Ship** 2 · **Status** ✅ DONE — 2026-08-18 · **Size** M · **Depends on** nothing · **Blocks** WO-2.51
 **Closes roadmap** Phase 2 → *(no box. The three-states box is amended rather than replaced — see the
 field below. Booked 2026-08-18, owner-directed, out of her own report from the deployed app.)*
 **Amends roadmap** Phase 2 → the three-states box WO-2.1 closed, which promised taken · dropped · not
@@ -5127,28 +5127,28 @@ fifth branch inside it is a fifth way for a term-date edit to change what a reco
 - **`TESTING.md` lines and the `CHANGELOG.md` entry**, per the maintenance protocol.
 
 **Acceptance**
-- [ ] With terms typed as Aug 28 – Oct 31, the Aug 18 column draws **no tappable cell and no button**,
+- [x] With terms typed as Aug 28 – Oct 31, the Aug 18 column draws **no tappable cell and no button**,
       reads `Off term`, and the state line above the grid names the term it is before and offers the
       term editor. Driven, not reasoned about.
-- [ ] **Aug 28 and Oct 31 are themselves markable** — the bound is inclusive at both ends, proved at
+- [x] **Aug 28 and Oct 31 are themselves markable** — the bound is inclusive at both ends, proved at
       both ends rather than at one.
-- [ ] **Nov 1**, between a term ending Oct 31 and one starting Nov 3, is locked and its reason names
+- [x] **Nov 1**, between a term ending Oct 31 and one starting Nov 3, is locked and its reason names
       **both** terms.
-- [ ] A date carrying marks **written before this landed** stays fully editable on an out-of-term day:
+- [x] A date carrying marks **written before this landed** stays fully editable on an out-of-term day:
       a mark can be changed and a drop can be undone. This is decision 2, and it is the line most likely
       to be lost in implementation.
-- [ ] Every writer **refuses** an out-of-term date handed to it directly — not merely lacks a button for
+- [x] Every writer **refuses** an out-of-term date handed to it directly — not merely lacks a button for
       it. Driven through WO-2.5's keyboard path and through a hook fired at a stale DOM, which is the
       pair `writableDate()`'s own comment says these gates exist for.
-- [ ] A class with **no** term dates, and a class with a `start` and no `end`, both behave exactly as
+- [x] A class with **no** term dates, and a class with a `start` and no `end`, both behave exactly as
       they do today — nothing locks. **Both cases**, because they fail differently.
-- [ ] A `no-school` event on a day that is also outside every term still reads as **covered**, with its
+- [x] A `no-school` event on a day that is also outside every term still reads as **covered**, with its
       own title — the calendar outranks this the way it outranks `Ahead`.
-- [ ] The home card for an out-of-term day says so and is **not** amber; `stateSummary()` is the only
+- [x] The home card for an out-of-term day says so and is **not** amber; `stateSummary()` is the only
       place those words are decided, shown by the card and the grid agreeing.
-- [ ] `node tools/verify-shell.mjs` green, its count recorded, with **at least one mutation proof**:
+- [x] `node tools/verify-shell.mjs` green, its count recorded, with **at least one mutation proof**:
       deleting the new gate turns it red and names it.
-- [ ] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): portrait on a day before
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): portrait on a day before
       the term shows one column, greyed, with nothing to tap and the reason readable without hunting.
 
 **Traps** — **the selected term is not the bound**, and a reader who reaches for `getSelectedTerm()`

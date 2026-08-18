@@ -198,6 +198,116 @@ export function getSelectedTerm() {
   return termsOf(cls).filter((t) => t.id === id)[0] || null;
 }
 
+/* ────────────────────────────── which term a DATE is in (WO-2.50) ──────────────────────────────
+
+   THE READ POINT ABOVE ANSWERS "WHICH TERM IS THE TEACHER LOOKING AT". THIS ANSWERS "WHICH TERM IS
+   THIS DAY IN", AND THE TWO MUST NEVER BE CONFUSED FOR EACH OTHER. getSelectedTerm() is a
+   preference — a fact about this browser — and it decides what gets COUNTED: the totals line, the
+   percentage, both reports. Nothing below reads it, and nothing that bounds WRITING ever may. The
+   case that settles it is a term boundary mid-week: Q1 ends Friday, Q2 starts Monday, and the
+   registry's six-day window spans both. Bound the writes by the selected term and half that grid
+   locks according to which tab is up, and a teacher who has not switched tabs yet cannot mark today
+   at all — a screen held up at the classroom door refusing the day it is being held up for. So a
+   date is in term if ANY term of the class contains it. (Owner's call, 2026-08-18.)
+
+   THE ACCEPTED COST OF THAT ANSWER: a gap left between two terms locks the days in it. That is the
+   honest reading of the dates she typed, it is visible on the screen that refuses them, and it is
+   fixed in one place — the editor below, which is where the registry's own door points.
+
+   IT LIVES HERE BECAUSE THIS FILE OWNS `terms[]`. src/attendance.js is forbidden from growing a
+   date predicate of its own (WO-2.50 Deliverables) for the reason src/date-text.js's header spends
+   a thousand words on: five copies of one date function is a formatter waiting to disagree with
+   itself, and a bound that disagrees with itself locks a day the teacher can mark on the screen
+   next to it.
+
+   NO `new Date()`, ANYWHERE NEAR THIS. Both comparisons are string compares on `YYYY-MM-DD`, which
+   is what meetingRecords() and every other range read in this app already does, and what
+   src/attendance.js's parseISO() carries the scar for: a bare date string parses as UTC midnight,
+   which is one timezone away from being the day before, and a bound that is a day out is a bound
+   that locks the first day of the term. */
+
+/* The one shape this file will compare. Anything else is not a date and cannot bound anything. */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/*
+  BOTH DATES TYPED, OR THE TERM BOUNDS NOTHING — and this is the half a teacher meets by accident.
+  Half-typed dates are a state she passes through: she has the calendar for Q1 and not for Q2, and a
+  term with a `start` and no `end` that sealed the rest of the year would be this app punishing her
+  for being mid-keystroke. The header's rule 2 still holds — term dates are not a schedule, are never
+  sorted and are never repaired — this only decides whether there is a range here to read at all.
+
+  IT IS EXPORTED, AND src/attendance.js's PRIVATE `termHasDates()` IS GONE INTO IT (WO-2.50). That
+  copy said `Boolean(term && term.start && term.end)` and decided whether classRecord() scopes the
+  printed report to the term's range or falls back to its first and last meeting — the same rule
+  about the same field, in a second home, which is what src/date-text.js's header is about. The one
+  behavioural difference is deliberate and is an improvement: the shape is checked, so a term
+  carrying `start: "sometime"` is no longer "dated". Under the old test that term scoped a report to
+  a range nothing could match and printed an empty page; under this one it bounds nothing and the
+  report falls back, which is also what keeps such a term from locking a whole year of the register.
+*/
+export function termIsDated(term) {
+  return !!term && ISO_DATE.test(String(term.start)) && ISO_DATE.test(String(term.end));
+}
+
+function datedTerms(classId) { return getTerms(classId).filter(termIsDated); }
+
+/* INCLUSIVE AT BOTH ENDS. The first day of a term and its last day are days the class meets, and an
+   exclusive end would lock the last day of the year with nothing on screen to explain it. */
+function containing(terms, on) {
+  return terms.filter((t) => t.start <= on && on <= t.end)[0] || null;
+}
+
+/*
+  WHICH TERM OF THIS CLASS CONTAINS THIS DATE, or null. The predicate itself, and the thing WO-2.51
+  will ask about today: null here does NOT mean "outside the terms" — a class with no dated terms
+  answers null for every date and is unbounded — so a caller that wants the bound wants the function
+  below, not this one.
+*/
+export function termContaining(classId, date) {
+  const on = String(date);
+  if (!ISO_DATE.test(on)) return null;
+  return containing(datedTerms(classId), on);
+}
+
+/*
+  THE SAME QUESTION FROM THE OTHER SIDE, WITH THE REASON ATTACHED — null when this date is in a term,
+  and null when the class has no dated terms at all, so the ONE test a caller needs is the truthiness
+  of this. `{ before, after }` names the two terms the date sits between, either of which is null at
+  the ends of the year: before the first term, after the last, or between two it names. That is what
+  the register turns into a sentence, because "you cannot mark this" without "and here is which side
+  of what" is a greyed-out screen a teacher has to guess at with a class walking in.
+
+  A CLASS WITH NO DATED TERMS IS UNBOUNDED, EXACTLY AS IT WAS BEFORE THIS EXISTED (owner's decision 3,
+  2026-08-18). A teacher part-way through typing her terms must not find the year sealed shut behind
+  her, and that is the same tolerance the header's rule 2 already states about dates in general.
+
+  The two ends are found by walking rather than by sorting, because the header's rule 2 says these
+  are never sorted: `before` is the dated term with the LATEST end still earlier than this date, and
+  `after` is the one with the EARLIEST start still later. Terms may overlap and may be written out of
+  order — both are stated on the editor's own screen — and neither can mislead this walk.
+*/
+export function outOfTermGap(classId, date) {
+  const on = String(date);
+  if (!ISO_DATE.test(on)) return null;
+  const terms = datedTerms(classId);
+  if (!terms.length || containing(terms, on)) return null;
+  let before = null;
+  let after = null;
+  terms.forEach((term) => {
+    if (term.end < on && (!before || term.end > before.end)) before = term;
+    if (term.start > on && (!after || term.start < after.start)) after = term;
+  });
+  return { before: before, after: after };
+}
+
+/* A term's name for a sentence a teacher reads. The label is hers and may be anything, including
+   nothing at all — newTerm() seeds one but removeTerm/editTermField let her empty it — and "before "
+   with nothing after it is worse than a placeholder. */
+export function termName(term) {
+  const label = term && typeof term.label === 'string' ? term.label.trim() : '';
+  return label || 'an unnamed term';
+}
+
 /* ────────────────────────────── writing ────────────────────────────── */
 
 /*

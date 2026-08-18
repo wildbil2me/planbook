@@ -259,7 +259,11 @@ meet is a second source of truth that's wrong by first period.)*
       marked dropped and are done. No setup, nothing to maintain when the rotation shifts.
 - [x] 🚩 **Three distinct states per class per day: taken · dropped · not taken yet.** The third is
       not the second. "Did the class not meet, or did I forget?" is the question the home screen
-      exists to answer.
+      exists to answer. *(Amended 2026-08-18 by WO-2.50: a day outside **every** term the class
+      has is none of the three — it draws locked, with nothing to tap and a line naming the term it
+      falls outside. The owner found today's column live and tappable ten days before her first term
+      began. A day that already carries a record stays fully editable, and a class whose terms carry
+      no dates is unaffected.)*
 - [x] 🚩 Mark a **past** date — a forgotten day is more common than a dropped one. *(Amended
       2026-08-07 by WO-2.12: a past day needs a day column, and **portrait now draws only today's**,
       so correcting last Tuesday means turning the iPad to landscape. The unlock itself is unchanged

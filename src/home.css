@@ -140,6 +140,23 @@
    times out of ten the first place a teacher meets one. It is declared after `.unconfirmed` and
    cannot collide with it: a covered day has no record, so there is no `U` on it to be counted. */
 .class-card-state.covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+/* OUTSIDE EVERY TERM THE CLASS HAS (WO-2.50), and it is the quietest line this card can draw. Its
+   own three values rather than a share of `.covered` above it or of `.dropped`. The ground and the
+   edge are src/attendance.css's `.attendance-cell-future` exactly — plain white, the neutral
+   hairline — so the card and the column it opens read as the same quiet. The TEXT is this sheet's
+   own secondary rather than that cell's `#c0cad5`, and that is the one deliberate departure: a
+   34px glyph can afford a near-invisible grey and a 12px sentence on a 200px card cannot, which is
+   the same call `.dropped` above makes against the column it matches. Repeated rather than shared
+   for the reason every colour in this repo is repeated: there are no custom properties here,
+   deliberately (CLAUDE.md).
+
+   NEVER THE UNTAKEN AMBER, which is the entire point of the rule. `.not-taken` above is a cream wash
+   meaning "go and fill this in", said in the one colour on this screen that is an alarm; a day the
+   class does not exist on has nothing to fill in. Declared after `.not-taken` and after
+   `.unconfirmed` so it wins on source order, and it cannot collide with `.unconfirmed` for the
+   reason `.covered` cannot: this line is only ever drawn where there is no record, so there is no
+   `U` on the day to be counted. */
+.class-card-state.off-term { background: #fff; border-color: #eef0f4; color: #8a9bb0; }
 
 /*
   THE SLOT THAT IS STILL RESERVED, and `min-height` is the entire point of the rule.

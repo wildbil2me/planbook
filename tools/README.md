@@ -974,7 +974,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 869 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 892 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1597,6 +1597,42 @@ from the dispatched `change` inward is the real path — the read, the refusals 
 bounds on that, both written into the section: it cannot prove the BROWSER re-fires `change` for a
 file chosen twice (only that the value is cleared, which is what makes it), and it cannot open the
 iPad's Files sheet at all. Both stay on the 👤 line.
+
+**WO-2.50 moved it from 869 to 892**: twenty-three call sites in one new section between the
+attendance block and the keyboard one, none of them inside a loop, of which **two are fixture-guard
+failure arms** that never fire on a green run — one for a document with no class open to plant a
+term on, one for a grid with no cell to hang the stale control on — so the section contributes
+twenty-one executed results and **the run prints 914**, measured on the delivered tree:
+`914 checks · 914 passed · 0 failed · 0 skipped`, 24,466 lines, 26.8 lines per check, 291s, exit 0.
+**Every date in the section is derived from today rather than typed**, for the reason `nodeColumns()`
+above it is: the fixture is two terms built AROUND the six columns on screen, one ending on the fourth
+column back and one starting on the second, which puts an inclusive `end`, an inclusive `start` and a
+gap between two named terms inside one window — and a fixture pinned to a literal August would stop
+testing the bound the moment the calendar passed it.
+
+**Two things in that section are worth reading before writing another like it.** The first draft made
+all nine writer calls in a row and compared `doc.attendance` either side, which is a check that goes
+green on the build with the gate and on the build without it: the nine calls UNDO EACH OTHER — setMark
+takes the class, unconfirmAll empties it to `U`s, untakeClass then removes a record with nothing real
+on it, dropClass writes an exception and undropClass takes it away. Net zero on any date, bound or
+not. It was caught by its own control — the same nine calls on an in-term date, which are supposed to
+LAND and did not — and the fix is a probe that calls one writer at a time and puts the ledger back
+between them. And every control the section reaches for goes through a `clickIf()` rather than
+`clickSel()`, because a build with the gate broken does not DRAW the ✏, the term door or the undo:
+`clickSel` throws on a missing control, so the first mutation run reported three reds and a stack
+trace where the point was to see which of twenty-one claims the mutation breaks. With the tolerant
+click it reports eleven.
+
+*(WO-2.50 also changed two things outside its own section, both of them a fixture whose premise the
+work order broke rather than a check that was wrong. The WO-2.17 term-nav block planted two terms in
+February and March, which left TODAY outside every term of that class — so the registry drew today's
+column locked, offered no ⋯, and the block crashed clicking one on a correct app; its late term's end
+is derived from the clock now and has to contain today, with a clause in its fixture check saying so.
+And the attendance section clears the term dates off every class as its first act, stated there as a
+premise the way the 1280px viewport above it is: everything in that section marks, takes and drops on
+today, and the classes it inherits carry the "messy dates" fixture — term 1 starting 2026-08-26,
+term 2 overlapping it, term 3 blank, term 4 backwards — which are exactly the dates an acceptance line
+asks NOT to be repaired and which lock today for the eight days before term 1 begins.)*
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

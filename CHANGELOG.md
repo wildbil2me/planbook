@@ -13,6 +13,25 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Attendance can only be marked on days inside a term — 2026-08-18
+
+The register used to offer every past day and today, whether or not the class existed yet. Ten days
+before the first term of the year, tapping a cell recorded a real meeting — one that sits in the
+year total and in the backup, and in no term's percentage.
+
+A day outside **every** term a class has now draws greyed, with nothing to tap, no drop control, and
+a line saying which side of which term it falls on and a button straight to that class's term dates.
+The home card says the same thing in the same words, quietly, instead of the amber "Not taken yet".
+
+Any term of the class opens a day, never just the one whose tab is up — so a week that spans the end
+of Q1 and the start of Q2 can be marked without switching tabs. Term start and end dates are both
+inclusive. A class whose terms carry no dates, or a term with only one date typed, behaves exactly
+as before: nothing locks.
+
+**A day that already has attendance on it stays fully editable** — marks can be changed and a drop
+can be undone — including days recorded outside a term before this change. Nothing was moved or
+deleted.
+
 ### The contact list imports itself — 2026-08-18
 
 **A second door beside the paste box.** Roster & contacts now offers *Import contacts from a file*
