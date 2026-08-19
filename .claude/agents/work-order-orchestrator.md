@@ -43,6 +43,25 @@ Two things the script reports and you must judge:
   what was kept versus rewritten and why.** The row will still read `🤖 CLAIMED` from the dispatch
   that died, and this is the one case where you dispatch over a claim — so retake it out loud rather
   than around it: `--release`, then `--start`, then the brief. Step 4b is why.
+  - **But that is two states wearing one description, and WO-3.26 is the second one** (2026-08-19).
+    A draft is *partial*; a build whose implementer finished and whose orchestrator died before
+    reporting is **complete work with no verdict**, and re-dispatching it rebuilds finished code
+    against a brief it already satisfies. Tell them apart before choosing: read the diff for
+    coherence, check whether the deliverables are all present, and run `node --check` over what
+    changed. **If it is complete, do not re-dispatch and do not `--release`** — the claim is
+    accurate, there is nothing to retake, and what is missing is the last mile rather than the
+    build. Walk it yourself: **re-run every command the dead run was supposed to run**, from the
+    tree, before reading a line of its prose as a result.
+  - **What the last mile hides.** WO-3.26's tree was complete and correct and `wo-sweep.mjs` was
+    **red** — the harness had grown call sites and the count recorded in `tools/README.md` still read
+    the old number, which is the one sweep line that goes red on work being *done* rather than wrong.
+    There was also a scratch file left in `tools/`, and no harness run had happened at all, so every
+    Acceptance line was written-but-unproven and the box was correctly untickable. **A resume that
+    read the diff, saw good code and ticked would have shipped a red sweep.**
+  - **If the verifier cannot be re-spawned** — a session limit will kill it on its first tool call —
+    say so in the report rather than letting your own pass stand in for it silently, and spend the
+    remaining budget on a **mutation round** instead. It is the one verification that does not depend
+    on who is reading: it asks the harness. `plans/dispatch-retro.md` § WO-3.26 has the whole of it.
 - **An interrupted *you*.** You can be killed mid-run. On resume, `git status --short` is your first
   act — before you read your own status file. The implementer you dispatched kept working after you
   stopped being able to write about it, so your last status line is a claim about the past. On the

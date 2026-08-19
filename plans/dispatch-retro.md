@@ -71,6 +71,40 @@ four independently and returned PASS.
 read `🤖 CLAIMED` throughout, correctly — the work was real and finished. `--release` would have been
 wrong here; there was nothing to release and no second implementer was ever needed.
 
+**WO-3.26, 2026-08-19 — killed between the writes and the verdict, which costs more than WO-2.46 did.**
+A session limit took the orchestrator after the implementer had finished writing and before it had
+reported anything: no result file, no tool run, no in-band return. The tree held six modified files
+that were complete and correct, and **that is the trap.** WO-2.46's recovery worked because the
+implementer had *returned* — its self-claims existed and could be re-checked. Here there were no
+claims at all, only artifacts, and artifacts read as finished work.
+
+**Three things were owed and none of them was visible in the diff.** `node tools/wo-sweep.mjs` was
+**red**: the harness had grown eleven `check()` call sites and the count recorded in `tools/README.md`
+still read the old number, which is the one sweep line that goes red on work being *done* rather than
+on work being wrong. A scratch file — `tools/.vs.new`, a duplicate of the block the implementer had
+inserted — was still sitting in `tools/`. And no harness run had happened at all, so every acceptance
+line was written-but-unproven and the box was correctly untickable under the maintenance protocol's own
+rule. A resume that read the diff, saw good code, and ticked would have shipped a red sweep.
+
+**So the recovery is neither WO-1.4's audit-the-draft nor WO-2.46's re-spawn-the-verifier.** It is:
+`git status --short` and file mtimes first; then **re-run every command the dead run was supposed to
+run**, from the tree, before reading a single line of its prose as a result. The status file's last
+line said *"implementer spawned, awaiting return"* and was the most trustworthy thing in the directory
+precisely because it claimed nothing about the tree.
+
+**The verifier could not be re-spawned, and that is worth writing down separately.** The same session
+limit killed it on its first tool call, so the cold-eyes pass was done by the resuming session — the
+one that had also written the result file and the `tools/README.md` entry. **That is a weaker verdict
+and it was reported as one.** What partly covers the gap is that the resuming session ran the mutation
+round the dead dispatch never got to: three one-line mutations of `src/home.js`, five reds, four reds,
+five reds, each attributable. **A mutation round is the one form of verification that does not depend
+on who is reading** — it asks the harness rather than the reader — which makes it the right thing to
+spend a recovery's remaining budget on when a fresh verifier cannot be had.
+
+*(One of those mutations reddened a check from WO-1.10, three weeks older than the work: the assertion
+that the signals slot holds its height while empty turned out to double as the guard against a chip
+appearing on a card with nothing to say. A harness section does not only defend its own work order.)*
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,
