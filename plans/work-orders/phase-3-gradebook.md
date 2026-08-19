@@ -2126,3 +2126,83 @@ and would otherwise be found again.
 - **The grid renders 25 rows × N columns of these inputs.** The guard runs per keystroke on the
   app's second-most-frequent action; keep it a string test, and do not reach for the store from
   inside it.
+
+---
+
+## WO-3.26 — the ungraded count on the home screen
+
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.4, WO-1.10 · **Blocks** WO-6.4
+**Closes roadmap** *(no box. ROADMAP § Phase 3 is 10 of 10 and every box on it is claimed by the work
+order that built it. This fills a slot `src/home.js` reserved and named in 2026-08-04, which no
+roadmap line ever described — the same shape as WO-3.18, and written without quotation marks anywhere
+on this line for the same reason: anything in double quotes here is read as a roadmap fragment.)*
+
+**Booked 2026-08-19, owner-directed, by** [WO-1.25](phase-1-shell-store-roster.md#wo-125--phase-6-is-cut-against-a-model-that-is-not-there)
+**out of a read-only audit of Phase 6.**
+
+**Why it exists.** *The home screen accretes* is a standing obligation — every phase adds its line to
+WO-1.10's screen rather than deferring it to Phase 6 — and Phase 3 is the phase that owes this one.
+`src/home.js` appends `.class-card-signals` empty and names its owner in the file itself,
+`WO-3.x — ungraded work`; `src/home.css` holds 24px of reserved height for it so that the first real
+datum reflows nothing. **The work order that string points at has never been written.** The phrase
+`home screen` appears in no Phase 3 work order at all, and Phase 3 is otherwise finished but for the
+OAuth paperwork, so it would have closed with the slot empty and WO-6.4 quietly carrying the debt —
+where it would be discovered as a Phase 6 surprise rather than as Phase 3's own line.
+
+**It is worth real value before Ship 2 and it is buildable today.** WO-3.4's engine and WO-1.10's
+screen are both ✅ DONE, so nothing here is waiting on anything. What a teacher gets is the answer to
+*what have I not graded yet* from the page she opens the app on, on the five cards she is already
+looking at.
+
+**It is a Phase 3 work order sitting in § Ship 2 and that does not gate the gate.** WO-G2's
+`**Depends on**` is a curated explicit list rather than every row in the ship — [WO-3.25](#wo-325--a-score-cell-takes-any-string-number-can-read-not-any-number-a-teacher-can-mean)
+is the precedent, already in that table and named by no gate.
+
+**Deliverables**
+- **An ungraded count per class in `.class-card-signals`**, on the home screen's existing card. A
+  `.pill`-shaped count inside the 24px the slot already reserves, so no card on the page changes
+  height when the first one appears.
+- **The count comes from `openWork()` in `src/grade-engine.js` and from nowhere else.** That function
+  already owns the three-state answer this needs — `missing` is graded, `open` is ungraded work worth
+  points, `bonus` is ungraded work worth zero, and `excused` is in none of them — and a second scan of
+  `scores` on this screen is exactly the second answer that comes to disagree with the grade printed
+  an inch away. `src/home.js` is a renderer and stays one.
+- **What the number counts: assignments, not cells.** An assignment in the open term with at least one
+  `open` cell across the class roster. The alternative — blank cells — was considered and not taken:
+  the card's tap lands on the class, the grid is organised in columns, and *three assignments waiting*
+  is a sentence a teacher can act on where *forty-one blanks* is a number she has to divide first.
+  Bonus work is not counted, because zero-point work waiting is not work owed.
+- **A class with nothing ungraded shows nothing**, not `0 ungraded`. The slot keeps its height either
+  way, so the page does not move; a zero pill is a datum a teacher has to read to learn there is
+  nothing to read. *(This is the same call `src/home.js` already makes about the empty slot, and the
+  opposite of the honest-empty-state rule only in appearance: an empty state is what a **page** says
+  when it has nothing, and this is one chip on a card that has plenty.)*
+- **No new control, and that is why there is no new 44px rule.** The count is text inside the card's
+  one button, the way `.class-card-state` is since WO-1.13 — `src/home.css` says in as many words why
+  that line takes no floor of its own. If this ever becomes tappable it becomes a control and the
+  coarse-pointer block gains it in the same pass.
+- **Nothing under `supports` reaches this card.** `src/home.js` is deliberately absent from
+  `flipPresentationMode()`'s redraw list because a class name and a colour are not a student's file,
+  and an ungraded **count** does not change that — it names no student. WO-1.9's acceptance says to
+  re-verify that inheritance at every later phase; this is that phase, and the answer is that the
+  module stays off the list.
+
+**Acceptance**
+- [ ] A class with three assignments holding blank scores shows a count of three; entering the last
+      blank score on one of them takes the count to two, with no reload.
+- [ ] The count counts what `openWork()` calls `open` and nothing else: a cell marked `excused`, a
+      `late` carrying a score, a `0` typed by the teacher, and an assignment marked `missing` are none
+      of them ungraded, and a zero-point bonus assignment is not counted either.
+- [ ] A class with nothing ungraded shows no chip, and a screenshot of the card in that state is the
+      same height as the card beside it carrying a count.
+- [ ] The number matches the score grid: open the class and count the columns holding a blank, and
+      the two agree.
+- [ ] `src/home.js` performs no grade arithmetic of its own — the count is `openWork()`'s rows,
+      filtered and grouped, and `wo-sweep.mjs`'s screens-that-ask census still does not list this
+      module as one that reads `supports`.
+- [ ] Nothing on the card names a student, in presentation mode or out of it.
+
+**Traps** — **Do not infer ungraded from a due date.** Blank means ungraded and affects nothing;
+`late` and `missing` are teacher-marked, and `src/past-due.js` is the one place in the app allowed to
+read a clock against a blank — it *asks*, and writes only what the teacher accepts. A count that goes
+up at midnight is the rule this project has broken and repaired once already.

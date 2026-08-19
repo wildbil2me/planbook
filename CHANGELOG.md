@@ -278,6 +278,26 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
+- **WO-1.25 — Phase 6 was cut against a model this app decided against on day one.** Nothing here is
+  visible to a teacher and no app code moved. A read-only audit read the four calendar-and-glance work
+  orders against the tree they will actually land in and sent back eleven findings. Two mattered.
+  **WO-6.1's month grid quietly invited the schedule model** — a rotation, a meeting pattern, a
+  prediction of which classes meet — that `plans/rotating-schedule.md` records being designed and
+  removed the same day, 2026-08-03, because the owner's rotation changes at random and a model that
+  guesses is a second source of truth wrong by first period. The phase now carries a third governing
+  rule, and WO-6.2 a `**Traps**` block naming that decision record twice. **And WO-6.2's acceptance
+  could not be checked until the work order after it existed** — it computes an IEP/504 review date
+  that WO-6.3 draws — so the debt is written down in both directions: `**Owes** WO-6.3`, with a
+  pointer landing on exactly one still-open box, which `--audit` resolves on every run. Four smaller
+  things came with it: the review date moved to the work order that computes it, the glance page will
+  say *1 review coming up* and keep the student's name one tap away rather than printing it on a
+  screen that gets projected at a wall, the calendar got its own print gate (`data-calendar-print`)
+  rather than sharing the month control's, and five Acceptance lines that need a real iPad now say so
+  with 👤. **WO-3.26 — the ungraded count on the home screen — was booked out of the same audit and
+  rowed into Ship 2 ahead of WO-3.18 and the gate**, because the home screen accretes: `src/home.js`
+  has appended an empty `.class-card-signals` since 2026-08-04 with `WO-3.x — ungraded work` written
+  in the file as its owner, and the string `home screen` appeared in no Phase 3 work order at all.
+  Phase 3 would have closed with the slot unfilled and WO-6.4 carrying the debt unmarked.
 - **WO-1.24 — the ships past 2 had no running order, and one work order was in the wrong one.**
   Nothing here is visible to a teacher. Ship 2's build queue emptied on 2026-08-19: every row in
   `plans/work-orders/README.md` § Ship 2 was `✅ DONE` except WO-3.18 and the gate, and **WO-G2 is

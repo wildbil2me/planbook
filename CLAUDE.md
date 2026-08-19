@@ -15,7 +15,7 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
+**Status: Ship 1 delivered; Ship 2 — first grades — one row left to build, gate waiting on the term;**
 **Ship 3 building, its first row landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
@@ -23,11 +23,17 @@ accommodations, attendance marking, days off, home screen. The app is deployed a
 `https://planbook.hwgteach.com/`.
 
 *(The status line above changed on 2026-08-19. Every work order in `plans/work-orders/README.md`
-§ Ship 2 is ✅ except WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
+§ Ship 2 is ✅ except WO-3.26, WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
 construction** *— four of its nine boxes want a real class's real grades, which do not exist until
-Sep 2. **Do not read that as a stall and do not go looking for Ship 2 work:*** **§ Ship 3 is the
-running order now**, *written the same day by WO-1.24, for the same reason § Ship 2 was written the day
-after Ship 1 closed —* `next` *was one work order from having no rows left to read.)*
+Sep 2. **Do not read that as a stall:*** **§ Ship 3 is the running order now**, *written the same day
+by WO-1.24, for the same reason § Ship 2 was written the day after Ship 1 closed —* `next` *was one work
+order from having no rows left to read.)*
+
+*(**Ship 2 got a row back later that same day**, which is why the warning this block used to carry —
+"do not go looking for Ship 2 work" — is gone. WO-1.25's audit of Phase 6 found the home screen's
+ungraded slot belonged to Phase 3 and booked* [WO-3.26](plans/work-orders/phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen)
+*ahead of WO-3.18 and WO-G2. It is what* `next` *returns, both its dependencies are closed, and it gates
+nothing — so it is one row to build, not a reopening of the ship.)*
 
 *(**Ship 3 opened for real on 2026-08-19**, the same day it was written:* [WO-4.1](plans/work-orders/phase-4-signals.md#wo-41--signal-engine--thresholds)
 *— the signal engine — is ✅, which is row 1 of six and the one the table says never to cut. The

@@ -175,9 +175,9 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.24 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.25 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.52 | Phase 2 |
-| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.25 | Phase 3 |
+| [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.4 | Phase 6 |
@@ -203,16 +203,16 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 24 | 24 | — | 🔨 IN PROGRESS (reopened five times; last on 2026-08-19) |
+| 1 — Shell, store, roster | 25 | 25 | — | 🔨 IN PROGRESS (reopened six times; last on 2026-08-19) |
 | 2 — Attendance | 50 | 49 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
-| 3 — Gradebook | 24 | 23 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
+| 3 — Gradebook | 25 | 23 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 1 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 5 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **129** | **103** | **2** | `[████████░░] 80%` |
+| | **131** | **104** | **2** | `[███████░░░] 79%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -426,8 +426,9 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 72 | [WO-2.49](phase-2-attendance.md#wo-249--the-ticks-acceptance-check-cannot-read-a-work-order-with-crlf-line-endings) The tick cannot read a CRLF work order | S | | Sep 2, half a day — **booked out of WO-3.25s tick** |
 | 73 | [WO-2.51](phase-2-attendance.md#wo-251--the-term-ended-and-the-screen-never-said-so) The term ended and the screen never said so | S | | Sep 3, half a day — **the first rollover is late October** |
 | 74 | [WO-2.52](phase-2-attendance.md#wo-252--the-register-opens-on-the-term-not-on-the-clock) **The register opens on the term, not on the clock** | L | | **Before Sep 2 — the window this lives in is open now.** Aug 20, a day |
-| 75 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
-| 76 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 75 | [WO-3.26](phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen) The ungraded count on the home screen | S | | Aug 21, half a day |
+| 76 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
+| 77 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
 app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is
@@ -446,6 +447,19 @@ WO-2.51** and ahead of the Ship 2 gate for the same reason WO-2.50 was rowed ahe
 the setup fortnight is the window this lives in, and it is open right now. It is an **L** rather than
 the S its sibling rows were, because it moves the write gate and not only the drawing — see its own
 four decisions, two of which reverse something already in writing here.*
+
+*WO-3.26 was booked on 2026-08-19, owner-directed, by* [*WO-1.25*](phase-1-shell-store-roster.md#wo-125--phase-6-is-cut-against-a-model-that-is-not-there)
+*out of a read-only audit of Phase 6, and it is a **Phase 3** row in this table on the strength of one
+standing obligation:* **the home screen accretes** *— every phase adds its line to WO-1.10's screen
+rather than deferring it to Phase 6.* `src/home.js` *has appended* `.class-card-signals` *empty since
+2026-08-04 with* `WO-3.x — ungraded work` *written in the file as its owner, and the string* `home
+screen` *appears in no Phase 3 work order at all, so Phase 3 would have closed with the slot unfilled
+and WO-6.4 carrying the debt unmarked. Both its dependencies are* `✅ DONE` *— WO-3.4's engine and
+WO-1.10's screen — so it is buildable today rather than late in the phase it belongs to.* **It gates
+nothing:** *WO-G2's* `**Depends on**` *is a curated explicit list and not every row in this ship,
+which is why* [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-takes-any-string-number-can-read-not-any-number-a-teacher-can-mean)
+*has sat in this table since 2026-08-17 without gating the gate.* **WO-3.18 and WO-G2 each moved down
+one; nothing moved above them.**
 
 ***WO-8.4 was rowed into this table on 2026-08-19 and taken back out the same day***, *owner-directed
 both times, by* [*WO-1.24*](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order)
