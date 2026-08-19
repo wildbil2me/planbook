@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 943 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 955 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1764,6 +1764,50 @@ ordering mistake that deliverable names: `963 checks · 945 passed · 18 failed`
 WO-2.51's section. It is broader than it looks on paper because the off-anchor band does not merely
 talk OVER the new message — on any screen anchored away from today it wins the strip outright, so the
 rollover band and its button disappear with it.
+
+**WO-4.1's harness round moved it from 943 to 955**: twelve literal call sites in one new section at
+the foot of the file, none inside a loop and **none a fixture-guard failure arm** — the fixture guard
+here is an ordinary check that fires green every run — so the section contributes twelve executed
+results and **the run prints 975**, measured on the delivered tree: `975 checks · 975 passed ·
+0 failed · 0 skipped`, 26,354 lines, 27.0 lines per check, 311s, exit 0. **The entry worth reading is
+why the section exists at all.** WO-4.1 shipped `src/signals.js` and `src/signal-settings.js` and
+this file did not change by one byte: 963 checks passed over a codebase in which nothing called
+`evaluate()` even once, and `src/shell.js`'s comment over the `signals` / `signalSettings` seam
+already argued at length that reading the module through that seam was the only way to tell one build
+from another. The comment asserted a purpose the repository did not fulfil, which is the same shape
+as the grade-engine block above and the same correction.
+
+**Four mutations, run in full, and each was chosen so that its reds could be attributed.** They are
+listed because two of the twelve checks cannot be reddened by any edit to the app that a screen would
+show. *(1)* `gradeBelow.direction` flipped to `'praise'` and `resetThresholds()` rewritten to write
+`defaultThreshold(key)` in place of `delete` — `975 checks · 973 passed · 2 failed`, exactly the
+both-directions check and the delete-vs-write check. **Everything else about the reset stayed green
+through that second half**, which is the entire argument for the check: all twenty-two still resolved
+to their shipped numbers, `changedThresholds()` was still empty, the standing line still read *All 22
+thresholds are at the values Planbook ships with*, and every field on screen still showed the shipped
+figure. A build that writes the defaults in is indistinguishable from this one until the day a default
+is re-tuned, and only `getDoc().signals` can see the difference. *(2)* `sayPercent()` forced to return
+`formatPercent()` with no escalation — `973 passed · 2 failed`, and the detail lines print the defect
+in full: *"is 65.00%, below 65%"* and *"is 85.71%, at or above 85.71%"*, two sentences a reader can
+see are false about hits that are perfectly correct. Neither fires on a round fixture grade, which is
+why 64.9985% has to be planted. *(3)* the praise sentence made to say `numbers.asked` instead of
+`numbers.meetings`, and the no-window arm made to answer `percent: 100` instead of `null` —
+`971 passed · 4 failed`: the partial-window check, the no-meetings check, the at-or-above sentence
+(its fixture window is partial too, so a padding bug reaches it), and the sweep over every hit, whose
+`allHits.length === 6` guard caught the seventh hit the second mutation invented. *(4)* `cooldownDays`
+seeded at 15 and `editThreshold()` made to write a second key beside the one typed — `973 passed ·
+2 failed`, the shipped-defaults check naming `cooldownDays=15 want 14` and the typing check printing
+the extra key. The two modules were restored from a byte-for-byte copy afterwards and re-hashed
+against it; nothing under `src/` is changed by this round.
+
+**What the section could not be made to reach, and it is one thing.** The at-or-above arm of
+`sayPercent()`'s escalation needs a threshold with more than two decimals on it, and the panel's own
+field prints through `formatWeight()` — two decimals — so 85.714 is not a number a teacher can type.
+It is planted directly in the document instead, which is a shape `thresholdOf()` is written for (a
+restored or hand-edited file), and the sentence it produces reads *"85.714%, at or above 85.71%"*:
+the measured figure keeps its third decimal, the line is written the way a teacher would have typed
+it. That is not a rounded lie — the comparison in the sentence is true as printed, and it agrees with
+what the panel shows — but it is the reason that one check's expected string looks lopsided.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
