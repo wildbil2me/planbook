@@ -1,0 +1,12 @@
+# WO-2.52 dispatch status
+
+- 2026-08-19 — gates checked, PASS. Depends WO-2.50 ✅, WO-2.51 ✅. No prior dispatch files; the dirty tree is this work order's own text plus two unrelated owner edits (sw.js v79, index.html placeholder).
+- 2026-08-19 — routed **Claude Opus**, on the work order's own merits: Size L, four decisions that each reverse something already in writing, teacher-facing banner prose. Runner-up set aside: unusually precise Deliverables read Codex-shaped, but 2+ verify-shell runs at ~4.4 min plus a mutation proof does not fit a 20-min cap, and reversals need a reader who honours reasoning. No Codex probe run — the route never reached it.
+- 2026-08-19 — claimed via --start. Row reads 🤖 CLAIMED — 2026-08-19.
+- 2026-08-19 — brief written to .claude/dispatch/WO-2.52-brief.md, both ORCHESTRATOR markers filled and deleted.
+- 2026-08-19 — implementer spawned at Opus, awaiting return. Expect 20-40 min; a flat status file and an unchanged git status for the first ~20 min is a reading implementer, not a dead one.
+- 2026-08-19 — the orchestrator was killed by an API session-limit error while blocking on the implementer's return; the implementer died with it at ~05:56, mid-harness, and wrote no result. Reconstructed from the tree at 06:10: the app code and the repaired WO-2.50/2.51 harness sections are green together (941 checks, 0 failed, 308s), the rename grep is clean and the diffstat is proportionate. Owed: the WO-2.52 harness section (Acceptance 1-8 undriven), the mutation proof, tools/README.md's check count (the one wo-sweep failure), TESTING.md lines, all 13 ticks, the roadmap row and the result file.
+- 2026-08-19 — continuation brief written to .claude/dispatch/WO-2.52-continuation-brief.md; implementer re-spawned at Opus against it.
+- 2026-08-19 — continuation implementer returned. verify-shell 963/963 green (306s), wo-sweep 22 checks 20 passed 0 failed 2 review, two hand mutations proved red (5 and 18) and reverted. 11 of 13 Acceptance ticked; the two 👤 lines stay open, so --tick left the row 🔨 IN PROGRESS. Result at .claude/dispatch/WO-2.52-result.md.
+- 2026-08-19 — verifier spawned.
+- 2026-08-19 — verifier returned PASS WITH MANUAL CHECKS. Its own runs: verify-shell 963/963/0 skipped/303s, wo-sweep 20 passed 0 failed 2 review, wo-gate --audit passes. No failed Acceptance line; 11 verified, 2 need a human. Could not reproduce the mutation runs (no write tools) and says so. Three non-blocking stale-prose defects found: src/attendance.js:782-785, src/shell.js:244-246, src/attendance.js:2561-2563.

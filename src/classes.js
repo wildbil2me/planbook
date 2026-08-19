@@ -615,6 +615,46 @@ export function selectTerm(termId) {
   announce((term.label || 'Untitled term') + ' is open in ' + cls.name + '.');
 }
 
+/*
+  THE ONE THING THAT MOVES THE SELECTED TERM WITHOUT A TAP (WO-2.52), and it is narrow on purpose.
+
+  WO-2.51 ruled that nothing switches by itself, and this overturns that ruling ON ARRIVAL AND
+  NOWHERE ELSE. Read what that ruling was protecting before widening this: the sentence it was
+  argued with is *an app that moves it for her is an app that moved it while she was part way
+  through entering the last week of Quarter 1* — and arrival is the one moment that cannot be true
+  of, because nothing is part way through anything on a screen that is being opened. So the caller
+  is src/attendance.js's resetRegistry(), which is THE arrival function on this screen and already
+  resets five other things for the same reason. NOTHING MOVES WHILE THE SCREEN IS OPEN.
+
+  IT WRITES ONLY. No refreshClassBar(), no announcement, no render: this file's other writer of
+  this preference — selectTerm() — is a control the teacher pressed and says so out loud, and this
+  is a fact about the calendar that she has not asked about. The caller decides what to repaint,
+  which is also where the knowledge of what is on screen lives.
+
+  TODAY COMES IN AS AN ARGUMENT, and that is not squeamishness about `new Date()`. Nothing in this
+  file has ever asked what day it is; the one answer to that question in this app is
+  src/attendance.js's todayISO(), and importing it here would close the loop that module's own
+  header records this repo refusing four times. A second answer to "what day is it" is the defect
+  this project spends src/date-text.js's whole header warning about.
+
+  Answers true when it MOVED the preference, so a caller can repaint the strip that reads it and
+  leave every ordinary arrival — which is all of them but a handful of mornings a year — costing
+  nothing at all.
+*/
+export function openTermForToday(today) {
+  const cls = getSelectedClass();
+  if (!cls) return false;
+  /* WO-2.50's predicate and nothing new: which term of this class holds today. It answers null for
+     a class with no dated terms and for a day in the gap between two, and in both cases there is
+     nothing to move to — the screen has its own things to say about those days. */
+  const holds = termContaining(cls.id, today);
+  if (!holds || holds.id === getSelectedTermId()) return false;
+  const map = Object.assign({}, getPref('openTermIds') || {});
+  map[cls.id] = holds.id;
+  setPref('openTermIds', map);
+  return true;
+}
+
 /* ────────────────────────────── the manager ────────────────────────────── */
 
 function showClassError(message) {

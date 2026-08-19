@@ -126,6 +126,24 @@
   border-color: #f0dfa8; border-left-color: #c9a83f;
   background: #fff8e6; color: #8a6d1a;
 }
+/* THE THIRD MESSAGE THE SAME STRIP CARRIES (WO-2.52): today is in no term of this class, the strip
+   is standing on the selected term's own edge instead, and this is the sentence that explains the
+   date above the grid — "Quarter 1 opens in 14 days", or "Quarter 1 ended on October 31, 2026".
+
+   THE QUIET NEUTRAL AND NOT THE CAUTION AMBER ABOVE IT, and the choice is the same one
+   `.attendance-cell-off-term` and `.attendance-col-covered` make in this sheet: amber means
+   something needs doing, and a term that has not started yet is nothing anybody has to fix. It is
+   also the one message here with NO BUTTON on it, so a tone that reads as a call to action would be
+   a call to an action the band does not offer. Same three values as the covered column's grey, so
+   "off term" reads the same above the grid as it does inside it.
+
+   Only the colours change: the layout, the coloured edge and the flex row are the band's own and
+   are deliberately not restated, which is what keeps three messages one component. Values inline,
+   never variables, per CLAUDE.md § Conventions. */
+.attendance-body .attendance-banner.off-term {
+  border-color: #d0d8e4; border-left-color: #6b7a8d;
+  background: #f5f7fa; color: #55636f;
+}
 
 /* ── THE STATE LINE ── */
 /* Qualified by the container rather than left bare, which is the posture `.roster-hint` and
@@ -738,6 +756,19 @@
 /* An unlocked past column: a solid indigo rail down both sides, so the column the taps are landing
    in is obvious without reading the banner — which is there too, saying the date in words. */
 .attendance-col-editing { box-shadow: inset 2px 0 0 #5b6fcc, inset -2px 0 0 #5b6fcc; }
+/* AND THE OPEN COLUMN BEATS THE FUTURE'S WASH (WO-2.52). A day ahead of today inside a term of this
+   class is writable now, so the strip can OPEN on one — September 2 is the whole column a teacher
+   sees on the fortnight before her term — and the rule above puts a white wash on it because it is
+   still a day that has not happened. White with indigo rails and live buttons in it reads as
+   greyed-out-with-buttons, which is the one thing a column being tapped must not read as. So the
+   day's own not-taken cream comes back the moment it is the day being edited, and the rails on top
+   of it say which column the taps are landing in.
+
+   THE CELLS STAY QUIET AND THAT IS DELIBERATE — `.attendance-cell-future` is untouched, the glyph
+   is still the middot, and the chip still says "Ahead". The day still has not happened; what has
+   changed is that it can be marked early, and the column is what says so. Three classes deep so it
+   beats the two-class future rule below whichever order they end up in. */
+.attendance-col-not-taken.attendance-col-future.attendance-col-editing { background: #fffdf5; }
 
 /* ── THE KEYBOARD (WO-2.5) ── */
 

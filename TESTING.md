@@ -1549,7 +1549,7 @@ for pixels at all.
 **The cost, stated rather than discovered:** backfilling a past day needs a day column, so in
 portrait correcting last Tuesday means turning the iPad. Paging still works there — "Earlier" walks
 back one weekday per tap instead of six — but the rotation is the route. It is written down beside
-WO-2.1's unlock deliverable and again at `editPastDay()` in `src/attendance.js`.
+WO-2.1's unlock deliverable and again at `editDay()` in `src/attendance.js`.
 
 - [x] Portrait draws exactly **one** day column, it is **today's**, and the Passes column is still
       there — measured on the owner's own 834×1112 with a coarse pointer.
@@ -1680,14 +1680,14 @@ remembering a paged position across an orientation that is not allowed to have o
 
 *Both were reverted and the run is green at 366.*
 
-*The one thing this work order fixed that nothing asked for.* `editingPast` is module state and
+*The one thing this work order fixed that nothing asked for.* `editingDay` is module state and
 survives a repaint, so unlocking Tuesday in landscape and turning the iPad upright left `editDate()`
 answering Tuesday with **no Tuesday on screen**: every cell in today's column came back read-only
 and the banner above them named a day that was not there. A teacher at the door could not mark
 anybody, and nothing about it would have looked like a rotation bug. `pageDays()` already carries the
 rule — *the strip that says which day you are editing is only honest while that day is on screen* —
 and a turn is simply the second way that day can leave, so it takes the same exit through
-`lockPastDay()`.
+`lockDay()`.
 
 *The rotation is **not simulated**. Nothing in that section calls `renderAttendance()` between the
 two orientations: the device metrics change, `(orientation: portrait)` flips, and the grid either
@@ -1902,7 +1902,7 @@ sweep.*
 | Mutation | Result |
 |---|---|
 | `.panel-title-row > .class-action-btn` goes back to `flex: 0 1 auto` — the shrink the coarse `min-width` had quietly allowed | **1 red**, and it reproduces the classroom report exactly: `"📅 Days off" 71x44, content over its box by 12px`. Every 44px check stays green through it, which is the whole reason this one measures `scrollWidth` instead |
-| `futureLimit()` always returns 0 — the horizon pinned back to today | **3 red**: the day off cannot be paged to, there is no plain future column to read "Ahead" off, and the forward stop reports the old "tomorrow is not something to record" sentence. The *"wrote nothing"* check stays green under it, correctly — it is asserting an absence, and a build that never pages forward also never writes anything |
+| `forwardLimit()` always returns 0 — the horizon pinned back to today | **3 red**: the day off cannot be paged to, there is no plain future column to read "Ahead" off, and the forward stop reports the old "tomorrow is not something to record" sentence. The *"wrote nothing"* check stays green under it, correctly — it is asserting an absence, and a build that never pages forward also never writes anything |
 | the portrait guard dropped from `Later` — the regression as shipped | **1 red**, reading `{"disabled":false,"title":"The weekday after this"}` on a one-column portrait screen. Exactly one, and that is the point: the WO-2.12 portrait check stays green through it, because it runs after every event has been removed and the old test and the new one agree there |
 
 ---
@@ -4251,7 +4251,7 @@ true until this landed and is not now.
       `undropClass`) are shown ALIVE on those days, which is the half a gate written on the term
       dates alone would have killed.
 - [x] **Every writer refuses an out-of-term date handed to it directly.** All nine — the seven
-      guarding on `writableDate(on)`, plus `editPastDay()` and `cycleMark()` — called one at a time
+      guarding on `writableDate(on)`, plus `editDay()` and `cycleMark()` — called one at a time
       with the ledger put back between them, on today and on a past weekday, and not one moves
       anything. Paired with the same probe on an in-term date, where they land. Driven through
       **WO-2.5's keyboard path** (`markSelected()` returns false and writes nothing) and through **a
@@ -4366,7 +4366,7 @@ invented.
       ◀ Earlier takes today off the screen and the band becomes `… Today is not on screen.` carrying
       `data-attendance-page=today`; the pager's own way back brings the rollover straight back. And
       the other arm: the real ✏ unlocks a past column while today is still on screen, the band
-      describes the day being edited, and `lockPastDay()` gives this one back.
+      describes the day being edited, and `lockDay()` gives this one back.
 - [x] **Terms labelled `Trimester 1` and `Trimester 2` produce the same band with those labels in
       it, and the string `quarter` appears nowhere in the band or in the totals line under it** — in
       any case. Nothing else about the fixture changed, and the button under those labels does what
@@ -4430,6 +4430,124 @@ term draws no band* — and a build that never noticed the rollover satisfies bo
 written beside a presence: the preference is read again after the button is clicked, where it must
 have moved, and the no-term check asserts WO-2.50's own state line is up on that day, so the silence
 is one screen yielding to another rather than two screens with nothing to say.
+
+### WO-2.52 — The register opens on the term, not on the clock
+
+**What this changes for a teacher: the fortnight before a term stops being a dead screen.** The third
+edit to this grid in three days and the one the other two left behind. WO-2.50 gave it a term bound
+and WO-2.51 gave it a voice about the term that holds today; the strip itself was still anchored on
+the **clock**, so on 2026-08-19 — a fortnight before the owner's first term — the register drew six
+columns that were every one of them outside every term. Greyed end to end, no tappable cell, no
+control but the door to the term editor. WO-2.50 working exactly as specified, and a screen with
+nothing on it.
+
+**The window follows the TERM and the gate follows the CLOCK, except where the term says otherwise.**
+WO-2.1's separation — the window is what is DRAWN, the gate is what is WRITTEN — is what makes three
+of the four decisions cheap. The fourth moves the gate deliberately and is narrowed so that it can:
+**a future day inside a term of this class is writable, and a future day outside every term is
+refused by the same sentence as before.** The feature is paid for by typing the term dates, which is
+also what makes it safe — the days it opens are days the teacher has already said are school days.
+
+**The cost is on the record rather than discovered later.** A pre-marked day is a **RECORD**, so
+September 2 marked on August 19 is a recorded meeting from that moment — in the term percentage, in
+the year total and in both reports, for a class that has not met. That is what marking a day MEANS in
+this data model rather than a defect of the change, and it is why decision 1 is narrowed to dated
+terms.
+
+- [x] **The strip opens on the term.** Today 2026-08-19, one class, one term running 2026-09-02 –
+      2026-10-14: the newest column is **9/2**, today is nowhere on screen, and the band reads
+      *WO-2.52 first opens in 14 days.* — the count in calendar days, compared against the same walk
+      made in Node rather than against a string this file typed. The heading over the grid reads
+      *Wednesday, September 2, 2026* rather than naming a day the grid is not showing. Every date in
+      the fixture is derived from today, so the section goes on testing this in October.
+- [x] **"No August column is on screen" is asserted in portrait, and it is red on a correct app
+      anywhere else.** A six-column landscape window that ENDS on the term's first day necessarily
+      draws the last week of August behind it — greyed `Off term`, nothing tappable, no button — and
+      that is decision 3's soft wall rather than a leak. Held upright at 834×1112 the grid draws one
+      column and it is 9/2, which is the device the acceptance line was written about. *(The rotation
+      itself is not this check's claim; WO-2.12's section owns that and drives it with no render in
+      between.)*
+- [x] **9/2 is live with nothing pressed and 9/3 is not.** The anchor column's cells are real
+      buttons, its head carries **no ✏** — there is nothing there to open and nothing to lock — and a
+      real tap lands a record on `2026-09-02`, leaving the column reading *1 to go*. Paged one window
+      on, 9/3 carries `data-attendance-edit` titled *Mark this day early*, offers no tappable cell,
+      and takes the mark only after that ✏ is pressed.
+- [x] **`◀ Earlier` still walks out of the term**, two taps from 9/2 landing on August 10–17 with
+      every column greyed `Off term`, nothing tappable and no button in any of them. The soft wall,
+      proved from the inside out.
+- [x] **`Later ▶` reaches the term's last day and is disabled there saying why** — *WO-2.52 first
+      ends on October 14, 2026 — there is nothing further in this term to look at* — **on a document
+      whose calendar is empty**, so the stop being proved is the term's end and not a day off. The
+      section empties the calendar as a premise and puts it back with the document.
+- [x] **A class with no dated terms behaves exactly as it did.** It opens on today with no band at
+      all, no future column carries a ✏ or a tappable cell, and all five writers refuse tomorrow.
+      *(One day off is planted for that phase, because with no dated term and an empty calendar there
+      is no future column on screen to assert the absence of a ✏ on.)*
+- [x] **The selected term never bounds a write.** With the tab on a term that ended on 8/14 and today
+      inside the other one, every writer still lands on today — WO-2.50's decision 1, re-proved
+      against the one change most likely to have broken it. **Driven through the writers rather than
+      through a cell, and that is a finding rather than a shortcut:** with an ended term selected
+      `editDate()` answers nothing at all, so today — reachable only by paging — carries the 🚫 and
+      no ✏, and no control on the screen marks it. The way a teacher marks today from there is the
+      rollover band's own *Switch to …* button.
+- [x] **Arriving at the screen selects the term today is in**, driven by a real click on the class
+      tab — the control `src/shell.js` runs the whole arrival chain from — rather than by calling
+      `resetRegistry()`. The preference moves, the nav highlight moves with it, and the strip opens
+      on today. Choosing the ended term back by hand anchors the strip on **8/14, locked**: no
+      tappable cell until its own ✏ is pressed, with WO-2.51's rollover band up over it.
+- [x] **Nothing moves the term while the screen is open.** The `openTermIds` preference is
+      byte-identical across three repaints with the band naming the other term the whole time — and
+      the next **arrival** moves it, which is what makes that silence a rule rather than a build that
+      never noticed the rollover at all.
+- [x] **Terms labelled `Trimester 1` and `Trimester 2` produce the same sentences with those
+      labels** — *Trimester 1 opens in 14 days.* — and the string `quarter` appears nowhere in the
+      band, the state line or the pager's tooltips, in any case. **And the band speaks in both
+      directions**: a term that has ended reads *Trimester 1 ended on August 14, 2026.*, with the year
+      on it, because that sentence is read months later.
+- [x] **The rename swept rather than shadowed.** A `grep -rnE` for the four retired names — the two
+      unlock functions, the module variable behind them and the old forward-limit — returns nothing
+      across `src/`, `tools/` and this file. **The pattern itself is spelled out in the work order
+      and deliberately not here**, because a line in `TESTING.md` holding those four strings is a
+      line that makes the grep match itself; the first draft of this entry did exactly that, and the
+      check it was recording went red on a clean tree.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** —
+      `963 checks · 963 passed · 0 failed · 0 skipped`, 25,927 lines, 26.9 lines per check, 306s,
+      exit 0 — with the call-site count in `tools/README.md` moved 918 → 943, which `wo-sweep.mjs`
+      asserts. `wo-sweep.mjs` is **22 checks · 20 passed · 0 failed · 2 to review**, both REVIEWs the
+      standing pair.
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): on 2026-08-19 portrait
+      draws **one column and it is 9/2**, the bar is readable at a glance without hunting, and the ✏
+      and the bar's button both clear 44px under `@media (pointer: coarse)`. `sw.js`'s `CACHE` is
+      `planbook-shell-v79` → `v80`, so a cold relaunch is what puts this build on the glass — and iOS
+      resumes a backgrounded app without loading a document at all, so waiting for WO-8.11's amber
+      line without a force-quit is waiting for an update check that never started.
+- [x] 👤 Pre-mark 9/2 on the iPad, then read the term percentage: the day counts as a meeting from
+      that moment. The cost named in **Why it exists**, seen rather than assumed.
+
+*Sat on the iPad 2026-08-19, force-quit from the app switcher first. **Both 👤 lines pass**,
+and so does the landscape reading the verifier flagged as a design question rather than a defect: the
+owner was asked whether Aug 26 – Sep 1 greyed behind 9/2 reads right against their own words
+(*only show dates in the selected term*), and said it does. The anchor stays the NEWEST column and
+the window goes on walking backwards from it — decision 3's soft wall, confirmed on the glass
+rather than argued from the Deliverables.*
+
+*Three runs. The first mutation is the one the work order asked for; the second is the sharper
+reading.*
+
+| Tree | Result |
+|---|---|
+| Delivered | `963 checks · 963 passed · 0 failed · 0 skipped`, 25,927 lines, 26.9 lines per check, 306s, exit 0 |
+| **Mutation 1**: `writableDate()`'s new arm forced to `return false` — the future-in-term branch deleted and the old "today or earlier" gate back | `963 checks · 958 passed · 5 failed · 0 skipped` — **exactly the five claims about WRITING to a day ahead of today**: the anchor column live with nothing pressed, the upright reading beside it, 9/3 behind its own ✏, the five-writer probe, and the WO-2.50 pair's new third member. Every claim about what is DRAWN stays green — the anchor, the band, the soft wall, the forward stop, the arrival jump — which is the separation the section exists to measure |
+| **Mutation 2**: `paintBanner()`'s `anchorShown` reverted to a test on today — the one ordering mistake the Deliverables name | `963 checks · 945 passed · 18 failed · 0 skipped` — broader than it reads on paper. The off-anchor band does not merely talk OVER the new message: on any screen anchored away from today it wins the strip outright, so WO-2.51's rollover band and its button go with it, and **twelve of the eighteen are in that section** |
+
+**The one app change made in this half of the work order was found by the harness rather than by
+review.** `dayHead()`'s guard was `state !== COVERED && !writable`, which is the Deliverables' own
+collapse of two tests into one — and with the anchor standing ahead of today it drew an **unpressed ✏
+on September 2 itself**. `editDay()` returns on its own first line for that date
+(`date === editDate()`), so the pencil looked live, took a tap and did nothing: the exact control this
+file refuses three times in writing, arrived at from a direction the collapse did not cover. The guard
+now also refuses the day the strip is already open on, and the deliberate unlock keeps its pressed ✏
+because there is something there to close.
 
 ## Phase 3 — Gradebook
 

@@ -238,11 +238,14 @@
                                       the iPadOS picker quirk `data-term-field` answers above
       data-attendance-drop="<iso>"    one tap: the class did not meet that day
       data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
-      data-attendance-edit="<iso>"    the deliberate unlock on a past column, one column at a time
-      data-attendance-lock            closes it again and puts the screen back on today
+      data-attendance-edit="<iso>"    the deliberate unlock on a column, one column at a time — a
+                                      past day, or since WO-2.52 a day ahead inside a term
+      data-attendance-lock            closes it again and puts the screen back on its anchor
       data-attendance-page="earlier|later|today"  moves the six-weekday window; `later` is disabled
-                                      at the window that ends today, because there is no tomorrow
-                                      column and there is not going to be one
+                                      at the furthest of the last calendar day off and the selected
+                                      term's end (WO-2.52), and says which of the two stopped it.
+                                      `today` returns to the day the strip opened on, which is the
+                                      term's first day when today is before the term
       data-attendance-filter="all|P|T|A|E|D"      shows only students with that mark on the day
                                       being edited. There is no pill for `U` — it is not a code a
                                       teacher marks, and the count is on the column head instead
@@ -1428,9 +1431,9 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-attendance-record-csv]')) {
     attendanceReport.downloadRecordCsv(); return;
   }
-  const editPast = e.target.closest('[data-attendance-edit]');
-  if (editPast) { attendance.editPastDay(editPast.getAttribute('data-attendance-edit')); return; }
-  if (e.target.closest('[data-attendance-lock]')) { attendance.lockPastDay(); return; }
+  const editDay = e.target.closest('[data-attendance-edit]');
+  if (editDay) { attendance.editDay(editDay.getAttribute('data-attendance-edit')); return; }
+  if (e.target.closest('[data-attendance-lock]')) { attendance.lockDay(); return; }
   const page = e.target.closest('[data-attendance-page]');
   if (page) { attendance.pageDays(page.getAttribute('data-attendance-page')); return; }
   const attFilter = e.target.closest('[data-attendance-filter]');

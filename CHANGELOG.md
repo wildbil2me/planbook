@@ -13,6 +13,37 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The register opens on the term you are in, not on today — 2026-08-19
+
+A fortnight before your first term started, the attendance screen drew six days that were every one
+of them outside it — greyed end to end, nothing to tap, no way in but the door to the term editor.
+Every part of that was working as designed and the result was a screen with nothing on it.
+
+The grid now opens on the term rather than on the clock. Before a term starts it stands on the
+term's own first day, with a line above it reading *Quarter 1 opens in 14 days*; a term you browse
+back to in February stands on its last day and the line reads *Quarter 1 ended on October 31, 2026*.
+Terms are named from your own labels throughout, so trimesters and semesters read correctly with
+nothing to configure.
+
+**A day inside one of your terms can now be marked before it happens.** A day outside every term
+still cannot, which is every future day of a class whose term dates you have not typed — the feature
+is paid for by typing the dates, and a class without them behaves exactly as it did. The day the
+screen opens on is live straight away; any other day ahead of today carries a ✏ and takes marks only
+once you press it. **Marking a day early records it**, so it counts as a meeting from that moment —
+in the term percentage, in the year total and in both reports — for a class that has not met yet.
+That is what marking a day means here, and it is the reason the early marking is limited to days you
+have said are school days.
+
+The term is a soft wall rather than a hard one. *◀ Earlier* still walks out of the term into the
+greyed days behind it, exactly as before. *Later ▶* now runs to the end of the term as well as to the
+last day off on your calendar, and says which of the two stopped it.
+
+**Nothing switches by itself while you are working** — the rule the band above added on 2026-08-18,
+narrowed here at the one moment it protects nothing. When today has moved into a new term, *opening
+the class* moves the tab with it. Not while the screen is open, not part-way through entering the
+last week of a quarter, and choosing a term by hand still sticks for the rest of that session.
+
+
 ### The registry says so when today is in a term you do not have open — 2026-08-18
 
 Planbook never moved you from one quarter to the next. The term tab stayed where you left it in

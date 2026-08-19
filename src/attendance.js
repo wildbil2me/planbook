@@ -209,7 +209,7 @@
   The window used to END at today and there was no index that could name tomorrow. Since 2026-08-08
   it runs forward as far as the last day off on the calendar, because WO-2.3 made the future worth
   looking at and the owner found the gap in the first sitting: a break you can set and cannot then
-  go and look at is a break you cannot check. See dayColumns() and futureLimit().
+  go and look at is a break you cannot check. See dayColumns() and forwardLimit().
 
   WHAT DID NOT MOVE IS THE WRITE. Every writer still refuses a date after today outright, so the
   block is a fact about the storage layer rather than a fact about which buttons got rendered —
@@ -327,7 +327,7 @@
   surname fits without an ellipsis on the one screen where names are read at a glance.
 
   The cost, and it is real: BACKFILLING A PAST DAY NEEDS A DAY COLUMN, so correcting Tuesday means
-  turning the iPad. The unlock is unchanged — see editPastDay() — and it is landscape that shows a
+  turning the iPad. The unlock is unchanged — see editDay() — and it is landscape that shows a
   Tuesday to unlock. Accepted with the trade on 2026-08-07.
 
   dayColumnCount() holds the rule and the argument; the listener under it is what makes a turn
@@ -380,7 +380,12 @@ import { getSelectedClass, getSelectedTerm, initials, avatarClass } from './clas
 /* WO-2.51 adds `termContaining` to that list, and it is the READ half of the same predicate: which
    term of this class holds TODAY. It bounds nothing and writes nothing — it is compared against
    getSelectedTerm() in one place, termRollover(), and the whole of what comes out is a sentence. */
-import { outOfTermGap, termIsDated, termName, termContaining } from './classes.js';
+/* WO-2.52 adds two more, and they are the two halves of the jump: `openTermForToday` writes the
+   preference on arrival when today has moved into another term, and `refreshClassBar` is how the
+   term nav finds out. Both are one-directional, like everything else on this line — src/classes.js
+   imports nothing from this file. */
+import { outOfTermGap, termIsDated, termName, termContaining, openTermForToday, refreshClassBar }
+  from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
    student is one record referenced from many places; how that record READS — "Van Dyke, Mary" in a
    list, "Mary Van Dyke" in a sentence — is the same question here as it is there, off the same
@@ -654,6 +659,29 @@ export function todayISO(now = new Date()) {
   return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
 }
 
+/*
+  HOW MANY CALENDAR DAYS FROM ONE ISO DATE TO ANOTHER (WO-2.52), for the one sentence on this screen
+  that counts them: "Quarter 1 opens in 14 days". CALENDAR days and not weekdays, because that is
+  what a teacher counting down to the start of a term means by "in 14 days" — she is reading a wall
+  calendar, not a timetable.
+
+  ROUNDED, AND THE ROUNDING IS THE POINT rather than sloppiness. Both ends are parsed to LOCAL
+  midnight by parseISO(), so the subtraction is a whole number of days except across a daylight
+  saving boundary, where the interval holds a 23-hour or a 25-hour day and the quotient comes out at
+  13.958 or 14.042. Math.round() answers 14 to both, which is the number a teacher would count on
+  her fingers. Math.floor() would answer 13 for one of them, twice a year, on the one sentence whose
+  whole job is to be a number she can trust.
+
+  Negative when `to` is behind `from`, and no caller relies on that: the band that reads this asks
+  only about a term that has not started, and the finished side of it prints a date instead.
+*/
+function daysUntil(from, to) {
+  const a = parseISO(from);
+  const b = parseISO(to);
+  if (!a || !b) return 0;
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+
 /* `2026-09-08` → a Date at LOCAL midnight. Parsed field by field rather than handed to
    `new Date('2026-09-08')`, which the spec reads as UTC midnight — the same off-by-one-day trap as
    above, arriving from the other direction and showing the wrong weekday. Every date arithmetic in
@@ -746,15 +774,21 @@ export function dayAbbr(iso) {
   future dates, but I can't scroll to them." A closure you cannot look at is a closure you cannot
   check, and the screen that shows what a class is doing was the one screen that refused to show it.
 
-  So the index space is signed. Zero is today, positive counts weekdays back, negative counts them
-  forward, and the window is `count` consecutive indices starting at `daysBack`. Nothing about the
-  reading changes — a change in column count still moves how many days are shown rather than which
-  day the teacher stands on, in both directions now.
+  So the index space is signed. Zero is the ORIGIN this function is handed, positive counts weekdays
+  back from it, negative counts them forward, and the window is `count` consecutive indices starting
+  at `daysBack`. That origin was today for as long as this comment said "today"; since WO-2.52 it is
+  anchorDate(), which is today only when the selected term holds today. Nothing about the reading
+  changes — a change in column count still moves how many days are shown rather than which day the
+  teacher stands on, in both directions now.
 
-  WHAT DID NOT CHANGE IS THE WRITE. writableDate() still refuses every date after today and is the
-  only reason that holds; this function decides what is DRAWN, and the two have been separate since
-  WO-2.1 precisely so that a change here could not become a change there. A future column renders
-  locked cells and no unlock, the same as a past column nobody has opened — see dayHead().
+  THE WRITE IS STILL A SEPARATE QUESTION, AND WO-2.52 NARROWED IT RATHER THAN OPENING IT. This
+  function decides what is DRAWN; writableDate() decides what is WRITTEN, and the two have been
+  separate since WO-2.1 precisely so that a change here could not become a change there. What
+  writableDate() now accepts is a day on or before today OR a day inside a term OF THIS CLASS — so
+  a future column inside a typed term renders live cells, a future column in no term still renders
+  locked cells and no unlock, and a class whose term dates are not typed behaves exactly as it did
+  before this paragraph was rewritten. The feature is paid for by typing the dates. See dayHead(),
+  which draws the ✏ off the same predicate the writer uses rather than off the term.
 */
 
 /*
@@ -790,31 +824,57 @@ function dayColumns(count, daysBack, today) {
 /*
   HOW FAR FORWARD PAGING GOES, AND WHY IT IS NOT INFINITE.
 
-  The future has nothing in it but the calendar. There is no attendance to read, nothing to mark,
-  and no control to tap — so a screen that pages forever is a screen where every tap past the last
-  holiday shows the same six empty columns and the teacher cannot tell whether she has reached the
-  end or the app has stopped responding. The limit is therefore the last thing there is to SEE: the
-  furthest date any day off or planned drop reaches. With an empty calendar it is today, and this
-  screen behaves exactly as it did before WO-2.3 — Later disabled at the window that ends today.
+  The future has nothing in it but the calendar and the term. There is no attendance to read yet,
+  and past the horizon nothing to mark — so a screen that pages forever is a screen where every tap
+  shows the same six empty columns and the teacher cannot tell whether she has reached the end or
+  the app has stopped responding. The limit is therefore the last thing there is to SEE.
+
+  IT WAS A LIMIT ON THE FUTURE, MEASURED FROM TODAY, UNTIL WO-2.52, AND BOTH HALVES OF THAT ARE THE
+  CHANGE. Measuring from today was right while the window was built from today; the window is built from
+  anchorDate() now, so a limit measured from today is a limit in the wrong index space — the strip
+  opens on September 2 and `Later ▶` is dead on arrival, because 0 weekdays back from the anchor is
+  already past a horizon measured from an August that is off screen. It is a forward limit on the
+  window rather than a limit on the future, hence the name.
+
+  THE HORIZON IS THE FURTHEST OF TWO THINGS. The last day any day off or planned drop reaches, which
+  is WO-2.3's answer and the reason the columns were opened up at all; and the SELECTED term's own
+  `end`, which is new here — a teacher who opens her register on the term needs to be able to walk it
+  to the end of that term, and with an empty calendar the first half alone would stop her on the day
+  she arrived. It is the selected term for the same reason the anchor is: this bounds what is DRAWN.
 
   Returned as a `daysBack` index (0 or negative) rather than as a date, because that is what
   pageDays() clamps and what the pager compares against. The horizon sits in the NEWEST column of
   the furthest window, which is the one place it can be while the days around it are still visible.
 */
-function futureLimit() {
+/* THE HORIZON ITSELF, AND WHICH OF THE TWO THINGS SET IT. Split out of forwardLimit() below rather
+   than inlined twice, because the pager owes a different SENTENCE for each — "this term ends on
+   October 31" is a fact a teacher can act on and "there is nothing further scheduled" is not — and
+   two copies of this comparison would be two opinions about where the strip stops. `term` is the
+   selected term when the term is what put the horizon where it is, and null when the calendar did
+   or when there is nothing past the anchor at all. */
+function forwardHorizon() {
   const doc = getDoc();
-  const today = todayISO();
+  const anchor = anchorDate();
   const events = doc ? calendar.exceptionsIn(doc) : [];
-  let last = today;
+  let last = anchor;
   events.forEach((e) => {
     const end = e && typeof e.endDate === 'string' && e.endDate > e.date ? e.endDate : (e && e.date);
     if (typeof end === 'string' && end > last) last = end;
   });
-  if (last <= today) return 0;
+  const term = getSelectedTerm();
+  if (termIsDated(term) && term.end > last) return { last: term.end, anchor: anchor, term: term };
+  return { last: last, anchor: anchor, term: null };
+}
+
+function forwardLimit() {
+  const horizon = forwardHorizon();
+  const anchor = horizon.anchor;
+  const last = horizon.last;
+  if (last <= anchor) return 0;
   /* Walked ONCE rather than by asking weekdayAt() for each index in turn, which would restart the
-     walk from today every time and make a June holiday quadratic in a function every paint calls.
-     The two are the same arithmetic; this is the one that stays cheap in May. */
-  const d = parseISO(today);
+     walk from the anchor every time and make a June holiday quadratic in a function every paint
+     calls. The two are the same arithmetic; this is the one that stays cheap in May. */
+  const d = parseISO(anchor);
   if (!d) return 0;
   let i = 0;
   let guard = 0;
@@ -952,6 +1012,11 @@ function dayColumnCount(width, height) {
 function visibleColumns() {
   const count = dayColumnCount();
   if (isPortrait()) pageDaysBack = 0;
+  /* THE ORIGIN IS THE ANCHOR AND NO LONGER TODAY (WO-2.52). Everything about the walk is unchanged
+     — weekdayAt() and dayColumns() take an origin and have simply always been handed today — and
+     what moved is which day is handed to them. On a day inside the selected term the anchor IS
+     today and every column below is the column that was drawn before this line existed. */
+  const anchor = anchorDate();
   /* AND THE FORWARD END IS PULLED BACK THE SAME WAY, AT THE PAINT, for the same reason and against
      the same kind of route. The horizon moves when the CALENDAR changes, not when the teacher taps
      anything: page forward to Thanksgiving, remove Thanksgiving, and the position that was legal a
@@ -959,9 +1024,9 @@ function visibleColumns() {
      pageDays() would only catch the taps; clamping here catches the deletion, the restore of a
      backup with fewer events in it, and a year switched underneath the screen. Idempotent, so a
      repaint cannot loop — exactly as the portrait line above it is. */
-  const ahead = futureLimit();
+  const ahead = forwardLimit();
   if (pageDaysBack < ahead) pageDaysBack = ahead;
-  return dayColumns(count, pageDaysBack, todayISO());
+  return dayColumns(count, pageDaysBack, anchor);
 }
 
 /*
@@ -1006,12 +1071,12 @@ function visibleColumns() {
 
   THE ONE THING IT DOES HAVE TO RECONCILE IS AN UNLOCKED PAST COLUMN, and leaving it out ships a
   broken screen rather than an untidy one. Unlock Tuesday in landscape, turn the iPad upright, and
-  Tuesday is not a column any more — but `editingPast` still names it, so `editDate()` still answers
+  Tuesday is not a column any more — but `editingDay` still names it, so `editDate()` still answers
   Tuesday, every cell in today's column comes back NOT EDITABLE, and the banner above them says you
   are editing a day that is nowhere on screen. A teacher at the door with a class walking in cannot
   mark anybody. pageDays() already has this rule and states it: the strip that says WHICH day you
   are editing is only honest while that day is on screen. A turn is the second way that day can
-  leave, so it takes the same exit — lockPastDay(), which clears it, repaints and says so out loud.
+  leave, so it takes the same exit — lockDay(), which clears it, repaints and says so out loud.
 
   Registered here rather than in src/shell.js, which owns every other listener in this app: those are
   delegated DOM listeners on `document`, and this is not a DOM event at all — it is this module's own
@@ -1025,6 +1090,12 @@ function visibleColumns() {
    from any other cause (a class change, a page tap) keeps it honest for free, and there is no second
    piece of state that can drift out of step with the grid. */
 let paintedDayCols = 0;
+/* AND WHICH DAY THE COLUMNS ON SCREEN WERE BUILT FROM (WO-2.52), recorded the same way and read by
+   the same kind of guard. The anchor is derived from the SELECTED TERM, so the term nav — which
+   repaints figures and deliberately not the grid — can now change which days the strip should be
+   showing. Comparing against what was actually painted is how that repaint happens exactly when it
+   is owed and not once otherwise; see paintRenderedTotals(). */
+let paintedAnchor = '';
 
 /* Long enough for an iPad's rotation animation to finish and the viewport metrics to be the new
    ones. Only ever costs a comparison if the earlier two attempts already got it right. */
@@ -1039,10 +1110,10 @@ function syncDayColumns() {
   if (count === paintedDayCols) return;
   /* Asked with the NEW count, and through visibleColumns() so that a turn INTO portrait pins to
      today before this decides anything: is the day being edited one of the columns about to be
-     drawn? lockPastDay() repaints and announces, so it is the whole of this branch rather than a
+     drawn? lockDay() repaints and announces, so it is the whole of this branch rather than a
      step before renderAttendance(). */
   const shown = visibleColumns();
-  if (editingPast && shown.indexOf(editingPast) < 0) lockPastDay();
+  if (editingDay && shown.indexOf(editingDay) < 0) lockDay();
   else renderAttendance();
 }
 
@@ -1586,8 +1657,8 @@ function stateChip(state, unconfirmed, cover, future, offTerm) {
 
    Today is asked for FRESHLY AT EVERY RENDER rather than captured at open, so an app left open
    across midnight does not go on writing yesterday. The six-day window has exactly the same hazard
-   and gets exactly the same treatment: dayColumns() is called during the render, off today, never
-   stored. */
+   and gets exactly the same treatment: dayColumns() is called during the render, off an origin
+   derived in that same render — anchorDate() since WO-2.52, today before it — and never stored. */
 function openClass() { return getSelectedClass(); }
 
 /* ── THE VIEW STATE ──
@@ -1596,8 +1667,14 @@ function openClass() { return getSelectedClass(); }
    it still unlocked when she opens the screen with a class walking in.
    (The count said five until WO-2.5 and had said five since WO-2.10 added `detailFor` — it is a
    number in a comment, which is the kind that goes stale silently. Counted, not guessed.) */
-let editingPast = null;    /* an ISO date, or null for "today" */
-let pageDaysBack = 0;      /* WEEKDAYS back from today to the leftmost column; 0 is today's window.
+let editingDay = null;     /* an ISO date the teacher has deliberately unlocked, or null.
+                              IT WAS NAMED FOR THE PAST UNTIL WO-2.52, and the rename is that work
+                              order's own: a day INSIDE a term of the class is unlockable ahead of
+                              today now, so a name promising the past would describe only one of
+                              the two kinds of day this can hold. */
+let pageDaysBack = 0;      /* WEEKDAYS back from the ANCHOR to the leftmost column; 0 is the window
+                              the anchor ends. From WO-2.52 that origin is anchorDate() rather than
+                              today — on a day inside the selected term the two are the same day.
                               In weekdays and not in windows since 2026-08-07 — a window changes
                               width when the iPad turns, and multiplying a teacher's position by a
                               number that moves under her is how three taps back became four weeks.
@@ -1610,28 +1687,152 @@ let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, 
                               below for why it is a row rather than a cell */
 
 /*
-  THE DATE THAT ACCEPTS EDITS. Today unless a past column has been deliberately unlocked.
+  ────────────────────── THE THREE DERIVED DATES (WO-2.52) ──────────────────────
 
-  The `>= today` branch is the midnight case: an app left open overnight with Tuesday unlocked
-  wakes up on a Wednesday where Tuesday is still legitimately past, but an app left open with
-  TODAY somehow recorded here would be holding a date that is no longer today. Re-derived rather
-  than trusted.
+  There was one of these and it was editDate(). There are three now, because this screen asks three
+  different questions about "which day" and answering all of them with one date is what left the
+  register drawing six dead columns on the fortnight before a term begins:
+
+    anchorDate()  the day the strip is BUILT FROM   — what is DRAWN
+    focusDate()   the day the screen is ABOUT       — what the heading and the state line describe
+    editDate()    the day that ACCEPTS WRITES       — what the writers default to
+
+  NONE OF THEM IS STORED. They are re-derived on every paint, exactly as forwardLimit() already is,
+  so nothing here can go stale across a midnight, a year switch, a restore, or a term-date edit made
+  in the dialog on top of this screen. The only state under them is `editingDay`, which is the one
+  ISO date the teacher unlocked with a ✏️ and nothing else.
+
+  ON AN ORDINARY DAY ALL THREE ARE TODAY, which is the reading to keep in mind: a class whose term
+  dates are typed and whose selected term contains today behaves exactly as it did before this work
+  order, to the keystroke, and so does a class with no dated terms at all.
+*/
+
+/*
+  THE DAY THE STRIP IS BUILT FROM.
+
+  Today when the selected term contains today, when that term is undated, or when there is no class
+  at all. `term.start` when today is before the term, and `term.end` when today is after it.
+
+  IT READS getSelectedTerm(), AND THAT IS ALLOWED HERE AND ONLY HERE. WO-2.50's decision 1 — the
+  selected tab must never bound what is WRITTEN — is untouched by this, and it is the thing most
+  likely to be broken by a reader tidying up: the tab decides what is COUNTED and now also what is
+  DRAWN, and writableDate() below asks about ANY term of the class and never about this one. Two
+  different questions, asked four lines apart, on purpose.
+
+  WHY IT MOVES AT ALL. The strip used to walk weekdays back from today whatever the terms said, so a
+  teacher opening her register a fortnight before her first term saw six columns that were every one
+  of them outside every term — greyed end to end, no tappable cell, and no control but the door to
+  the term editor. WO-2.50 was working exactly as specified and the result was a screen with nothing
+  on it. The window follows the TERM now; the gate still follows the CLOCK, except where the term
+  says otherwise.
+
+  THE TERM IS A SOFT WALL. This decides where the strip OPENS and nothing else — `◀ Earlier` still
+  walks straight out of the term, and the days out there stay greyed `Off term` exactly as WO-2.50
+  draws them. A hard wall would be the window enforcing a rule instead of the gate, which is the one
+  thing WO-2.50's own Traps line forbids: a locked column you can see is the feature.
+*/
+function anchorDate() {
+  const today = todayISO();
+  const cls = openClass();
+  if (!cls) return today;
+  const term = getSelectedTerm();
+  /* An undated term bounds nothing, here as everywhere else in this app — a teacher part way
+     through typing her dates must not find the screen jumping somewhere on half of them. */
+  if (!termIsDated(term)) return today;
+  if (today < term.start) return term.start;
+  if (today > term.end) return term.end;
+  return today;
+}
+
+/*
+  THE DAY THE SCREEN IS ABOUT — the unlocked day if there is one, else the anchor.
+
+  It exists because the date heading and the state line are the two things that say IN WORDS which
+  day the grid under them is showing, and without it they would read "Wednesday, August 19" over a
+  grid whose only column is September 2. That is not a small mismatch on this screen: on a day when
+  today is off term the anchor day is live by default, so "Everyone's here" is one tap from taking a
+  class that has not happened, and the heading is half of what makes the day it would land on
+  unmissable. A heading naming a different day from the grid reads as a bug and teaches a teacher to
+  stop reading it.
+
+  IT IS NOT THE SAME QUESTION AS editDate(), AND FEBRUARY IS WHERE THEY PART: browse back to
+  Quarter 1 in February and the anchor is October 31, so the screen is ABOUT October 31 and accepts
+  writes on nothing at all until that day's ✏️ is pressed.
+*/
+function focusDate() {
+  return editingDay || anchorDate();
+}
+
+/*
+  THE DATE THAT ACCEPTS EDITS. The unlocked day if there is one; else the anchor when the anchor is
+  today or later; else nothing at all.
+
+  THE LAST CLAUSE IS WHAT KEEPS FEBRUARY HONEST. Selecting a term that has ended puts the anchor on
+  its last day — a past day — and a past day is READ-ONLY until its ✏️ is pressed, which has been
+  this screen's rule since WO-2.1 and is not given up for the convenience of the anchor. So this
+  answers `''`, a string that matches no column, and every `date === editDate()` comparison in this
+  file goes on working unchanged: nothing is the edit date, nothing is editable, and every writer
+  that defaults to this refuses on the shape test in writableDate().
+
+  THE MIDNIGHT GUARD IS REWRITTEN, AND THAT REWRITE IS LOAD-BEARING (WO-2.52). It used to clear the
+  unlocked day whenever it was `>= today`, which was the honest guard while only a PAST day could be
+  unlocked: an app left open overnight with Tuesday unlocked woke on a Wednesday where Tuesday was
+  still legitimately past, and an app holding TODAY there was holding a date that was no longer
+  today. A future day inside a term is unlockable now, so that test would throw away every future
+  unlock the instant it was made. What replaces it says the same thing about the day the screen is
+  already on: there is nothing to unlock on the day the anchor already opens, so an `editingDay`
+  equal to it is cleared. Re-derived rather than trusted, exactly as before.
 */
 function editDate() {
-  const t = todayISO();
-  if (!editingPast || editingPast >= t) { editingPast = null; return t; }
-  return editingPast;
+  const anchor = anchorDate();
+  /* The day the anchor opens on its own — nothing when the anchor is behind today, because a past
+     day stays locked until it is unlocked whether or not the strip is standing on it. */
+  const open = anchor >= todayISO() ? anchor : '';
+  if (editingDay && editingDay === open) editingDay = null;
+  return editingDay || open;
 }
 
 /*
   THE ONE GATE EVERY WRITER PASSES THROUGH, and the reason "future dates are blocked" is a fact
-  about the storage layer rather than about which buttons happened to get rendered. The grid never
-  offers tomorrow — the window ends at today and "Later" is disabled there — but a hook fired from
-  a stale DOM, a keyboard path added in WO-2.5, or a restored document with a bad date would all
-  arrive here, and marking Friday's attendance on Wednesday is a mistake rather than a feature.
+  about the storage layer rather than about which buttons happened to get rendered. A hook fired
+  from a stale DOM, a keyboard path added in WO-2.5, or a restored document with a bad date all
+  arrive here.
+
+  IT USED TO SAY "ISO-SHAPED, AND TODAY OR EARLIER", FULL STOP, and the sentence under it was that
+  marking Friday's attendance on Wednesday is a mistake rather than a feature. WO-2.52 overturns
+  that at the owner's decision of 2026-08-19, and it is NARROWED rather than deleted, which is the
+  whole of it:
+
+    a future day INSIDE A TERM OF THIS CLASS is writable;
+    a future day outside every term is refused by the same sentence as before.
+
+  WHAT PAYS FOR IT IS THE TERM DATES. A class whose terms are not dated has no future day in any
+  term, so every future date is refused and that class behaves exactly as it did before this line
+  changed — to the keystroke. The feature is bought by typing the dates, which is also what makes it
+  safe: the days it opens are days the teacher has already said are school days, and marking one
+  early is the thing she asked for. It is not free. A pre-marked day is a RECORD, so September 2
+  marked on August 19 is a recorded meeting from that moment — in the term percentage, in the year
+  total and in both reports, for a class that has not met. That is what marking a day MEANS in this
+  data model rather than a defect of the change, and it is why this is narrowed to dated terms.
+
+  ANY TERM OF THE CLASS, NEVER THE SELECTED ONE. This is WO-2.50's decision 1 surviving the change
+  most likely to break it: the term tab decides what is COUNTED, and from WO-2.52 also what is DRAWN
+  (anchorDate() reads it and says why it may), and it has never decided what is WRITABLE. The case
+  that settles it is a term boundary mid-week — Q1 ends Friday, Q2 starts Monday — where a
+  selected-term gate would refuse the very day the screen is being held up for. A reader who reaches
+  for getSelectedTerm() here has rebuilt the defect that work order refused.
+
+  IT TAKES THE CLASS, WHICH IS THE OTHER HALF OF THE CHANGE. The signature deliberately had no
+  "which class" in it while the answer was pure arithmetic on the clock; the answer reads terms now,
+  so it needs one. Every writer already has the class in hand — they all open with
+  `const cls = openClass()` — and the alternative, a fourth gate spread across nine call sites,
+  would be nine chances to forget one.
 */
-function writableDate(date) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(date)) && String(date) <= todayISO();
+function writableDate(date, cls) {
+  const on = String(date);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(on)) return false;
+  if (on <= todayISO()) return true;
+  return !!(cls && termContaining(cls.id, on));
 }
 
 /*
@@ -1746,7 +1947,7 @@ function offTermSaid(gap) {
    EVERY ONE OF THEM PASSES ALL THREE GATES SINCE WO-2.50, and the asymmetry a reader will notice is
    worth having explained. coveredDay() sits on three of them — the three that can CREATE a record —
    because it is the only three it could ever bite on. offTermDay() sits on all seven and on
-   editPastDay(), which is not the same claim flattened: it is the deliverable's own words, "every
+   editDay(), which is not the same claim flattened: it is the deliverable's own words, "every
    writer that takes a date passes it", and it costs nothing to be literal about it, because that
    gate answers false the moment a record exists. On the four writers that require a record before
    they do anything — the un-take, the un-drop, the un-confirm and the note — it is therefore
@@ -1829,7 +2030,7 @@ export function setMark(studentId, code, date) {
   const on = date || editDate();
   if (!cls || !studentId || !getDoc()) return;
   if (!MARKS.some((m) => m.code === code) && code !== UNCONFIRMED) return;
-  if (!writableDate(on)) return;
+  if (!writableDate(on, cls)) return;
   /* The calendar says nobody meets and nothing here has been recorded yet, so a mark would be this
      screen inventing a meeting under a holiday. See coveredDay(). */
   if (coveredDay(cls.id, on)) return;
@@ -1990,7 +2191,7 @@ export function cycleMark(studentId, date) {
 export function takeClass(date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !getDoc() || !writableDate(on)) return;
+  if (!cls || !getDoc() || !writableDate(on, cls)) return;
   if (coveredDay(cls.id, on)) return;
   if (offTermDay(cls.id, on)) return;
   const existing = recordFor(cls.id, on);
@@ -2031,7 +2232,7 @@ export function takeClass(date) {
 export function unconfirmAll(date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !getDoc() || !writableDate(on)) return;
+  if (!cls || !getDoc() || !writableDate(on, cls)) return;
   if (offTermDay(cls.id, on)) return;
   const record = recordFor(cls.id, on);
   if (!record || record.exception) return;
@@ -2083,7 +2284,7 @@ export function unconfirmStudent(studentId, date) {
 export function setNote(studentId, text, date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !studentId || !getDoc() || !writableDate(on)) return;
+  if (!cls || !studentId || !getDoc() || !writableDate(on, cls)) return;
   if (offTermDay(cls.id, on)) return;
   const record = recordFor(cls.id, on);
   if (!record || record.exception || !marksOf(record)[studentId]) return;
@@ -2110,7 +2311,7 @@ export function setNote(studentId, text, date) {
 export function untakeClass(date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !getDoc() || !writableDate(on)) return;
+  if (!cls || !getDoc() || !writableDate(on, cls)) return;
   if (offTermDay(cls.id, on)) return;
   const record = recordFor(cls.id, on);
   if (!record || record.exception) return;
@@ -2136,7 +2337,7 @@ export function untakeClass(date) {
 export function dropClass(date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !getDoc() || !writableDate(on)) return;
+  if (!cls || !getDoc() || !writableDate(on, cls)) return;
   if (offTermDay(cls.id, on)) return;
   if (stateOf(cls.id, on) === DID_NOT_MEET) return;
   /* A day the calendar has already closed does not need a record saying so, and writing one would
@@ -2170,7 +2371,7 @@ export function dropClass(date) {
 export function undropClass(date) {
   const cls = openClass();
   const on = date || editDate();
-  if (!cls || !getDoc() || !writableDate(on)) return;
+  if (!cls || !getDoc() || !writableDate(on, cls)) return;
   if (offTermDay(cls.id, on)) return;
   if (stateOf(cls.id, on) !== DID_NOT_MEET) return;
 
@@ -2305,50 +2506,71 @@ export function setPassNote(studentId, text) {
    every one of them ends in a render rather than in a patch, because what they change is which
    rows and which columns exist. */
 
-/* The deliberate unlock. One past column at a time — a screen where every past day is live is a
-   screen where a mis-tap two columns left is a mark on a day the teacher was not thinking about.
+/* The deliberate unlock. One column at a time — a screen where every day is live is a screen where
+   a mis-tap two columns left is a mark on a day the teacher was not thinking about.
 
-   BACKFILLING A PAST DAY NEEDS A DAY COLUMN, and in portrait there is only today's (WO-2.12). The
+   IT WAS NAMED FOR A PAST DAY UNTIL WO-2.52, and the rename is that work order's own: a day INSIDE
+   a term of this class is writable ahead of today now, so a function whose name promised the past
+   and opened September 2 is the kind of name WO-3.20 spent a whole work order removing. THE DOM HOOKS DID NOT
+   MOVE — `data-attendance-edit` and `data-attendance-lock` are the contract src/shell.js's census
+   documents, and renaming a function is not a reason to break it.
+
+   WHAT IT REFUSES IS THE DAY THE SCREEN IS ALREADY ON, which used to be spelled "today" because the
+   edit date was always today. It is editDate() now: on a strip anchored ahead of today that day is
+   the anchor, and on a strip anchored behind today there is no such day at all — which is exactly
+   the February case where the anchor itself has to be openable with its own ✏.
+
+   BACKFILLING A PAST DAY NEEDS A DAY COLUMN, and in portrait there is only one (WO-2.12). The
    unlock itself is unchanged and so is paging — "Earlier" walks back one weekday per tap there
    instead of six — but the way this is actually done at the door is to TURN THE IPAD, which brings
-   the week back and the ✏ with it. That is the accepted cost of portrait showing today, booked with
-   the trade on 2026-08-07 rather than discovered later. Written here because this is where someone
-   looking for last Tuesday's ✏ will arrive. */
-export function editPastDay(date) {
+   the week back and the ✏ with it. That is the accepted cost of portrait showing one column, booked
+   with the trade on 2026-08-07 rather than discovered later. Written here because this is where
+   someone looking for last Tuesday's ✏ will arrive. */
+export function editDay(date) {
   const cls = openClass();
-  if (!writableDate(date) || date === todayISO()) return;
+  if (!writableDate(date, cls) || date === editDate()) return;
   /* WO-2.50. Unlocking a day whose every write the third gate would refuse is the same control that
      looks live, takes a tap and does nothing that dayHead() refuses to draw — so the ✏ is not there
      to press, and this is that fact stated where a stale hook or the keyboard path arrives. A past
      day OUTSIDE the terms that carries a record is a different day and opens normally: offTermDay()
      answers false there, which is decision 2 and is the only way back to the marks on it. */
   if (cls && offTermDay(cls.id, date)) return;
-  editingPast = date;
+  editingDay = date;
   /* The open detail panel describes ONE student on ONE date, and that date is the one accepting
      edits. Moving the edit date with a panel open would leave a time and a note on screen that
      belong to a day the teacher just left, so it closes — here and everywhere else the edit date
      moves. */
   detailFor = '';
   renderAttendance();
+  /* "Not today" whichever side of today it falls on, which is the fact a teacher needs said out
+     loud: a mark about to land on a day that is not the one she is standing in. */
   announce('Editing ' + spokenDate(date) + '. This is not today.');
 }
 
-export function lockPastDay() {
-  if (!editingPast) return;
-  const was = editingPast;
-  editingPast = null;
+export function lockDay() {
+  if (!editingDay) return;
+  const was = editingDay;
+  editingDay = null;
   detailFor = '';
   renderAttendance();
-  announce('Finished editing ' + spokenDate(was) + '. Back on today.');
+  /* Where "back" lands is the anchor, which is today on every ordinary day and the day the strip is
+     standing on when it is not — so the sentence names it rather than claiming today. */
+  const back = anchorDate();
+  announce('Finished editing ' + spokenDate(was) + '. Back on '
+    + (back === todayISO() ? 'today' : spokenDate(back)) + '.');
 }
 
 /*
   Paging a whole window at a time, over a position counted in weekdays. "Earlier" goes back six
   weekdays on a full landscape grid, which puts a date two weeks behind two taps away — the
-  acceptance line this control exists for. "Later" runs forward to the last day off on the calendar
-  and is disabled there, saying why; on a year with nothing scheduled that is the window ending
-  today, which is where it always stopped. What it no longer says is that the future is blocked,
-  because since 2026-08-08 only WRITING to it is — see dayColumns().
+  acceptance line this control exists for. "Later" runs forward to the FURTHEST of the last day off
+  on the calendar and the selected term's end (WO-2.52 — forwardLimit(), which walks from the anchor
+  rather than from today), and is disabled there, saying why; the sentence it is disabled with names
+  which of the two stopped it, because "this term ends on October 31" is a different fact from
+  "there is nothing further to look at". On a year with nothing scheduled and no term dates typed
+  that is still the window ending today, which is where it always stopped. What it does not say is
+  that the future is blocked, because since 2026-08-08 only WRITING to it is — and since WO-2.52 not
+  even all of that. See dayColumns().
 
   THE STEP IS THE WINDOW; THE POSITION IS IN DAYS. Adding `count` here rather than 1 is what keeps
   "two taps is two weeks" true while leaving `pageDaysBack` in a unit that does not change when the
@@ -2371,12 +2593,13 @@ export function pageDays(direction) {
   const before = pageDaysBack;
   if (direction === 'today') pageDaysBack = 0;
   else if (direction === 'earlier') pageDaysBack += count;
-  /* Clamped at the furthest thing on the calendar rather than at today — futureLimit() carries the
-     reasoning, and returns 0 on a year with no days off in it, which is the old clamp exactly. */
-  else if (direction === 'later') pageDaysBack = Math.max(futureLimit(), pageDaysBack - count);
+  /* Clamped at the furthest thing there is to see rather than at the anchor — forwardLimit()
+     carries the reasoning, and returns 0 when there is nothing past the anchor at all, which is the
+     old clamp exactly. */
+  else if (direction === 'later') pageDaysBack = Math.max(forwardLimit(), pageDaysBack - count);
   else return;
   if (pageDaysBack === before && direction !== 'today') return;
-  editingPast = null;
+  editingDay = null;
   detailFor = '';
   renderAttendance();
   const shown = visibleColumns();
@@ -2384,7 +2607,11 @@ export function pageDays(direction) {
      which is the kind of sentence that makes a screen reader user go looking for the broken part.
      One column is one date, and it is said as one. */
   const one = shown.length === 1;
-  if (pageDaysBack === 0) announce(one ? 'Back to today.' : 'Back to this week, ending today.');
+  const anchor = anchorDate();
+  const home = anchor === todayISO() ? 'today' : spokenDate(anchor);
+  if (pageDaysBack === 0) {
+    announce(one ? 'Back to ' + home + '.' : 'Back to this week, ending ' + home + '.');
+  }
   else if (one) announce('Showing ' + spokenDate(shown[0]) + '.');
   else {
     announce('Showing ' + spokenDate(shown[shown.length - 1]) + ' to ' + spokenDate(shown[0]) + '.');
@@ -2763,7 +2990,16 @@ function cellFor(student, date, state, cell, editable, cover, future, offTerm) {
      CARRIES THE WHOLE REASON, side and term, because a screen-reader user gets none of the wash and
      none of the column head's tooltip. */
   else if (state === NOT_TAKEN && offTerm) { glyph = '·'; tone = 'off-term'; said = offTermSaid(offTerm); }
-  else if (state === NOT_TAKEN && future) { glyph = '·'; tone = 'future'; said = 'not yet — this day is ahead'; }
+  /* AND IT KEEPS THE MIDDOT AND THE NEUTRAL WHEN THE COLUMN IS LIVE (WO-2.52). A future day inside
+     a term of this class is writable now, so this cell can be a <button> — and what changes is the
+     accessible name and the tooltip and nothing else. Amber `?` is the "you have a hole here"
+     colour and next Tuesday is still not a hole, whether or not it can be marked early; a cell that
+     started shouting the moment the term dates were typed would be five invented jobs a week. */
+  else if (state === NOT_TAKEN && future) {
+    glyph = '·'; tone = 'future';
+    said = editable ? 'ahead — this day has not happened, and can be marked early'
+      : 'not yet — this day is ahead';
+  }
   else if (state === NOT_TAKEN) { glyph = '?'; tone = 'untaken'; said = 'not taken yet'; }
   else if (code === UNCONFIRMED) {
     /* The same glyph and the same amber as a day nobody has taken, because it means the same thing
@@ -3329,7 +3565,7 @@ function paintPassNote() {
   looking at Period 3. So the glyph OPENS the screen that owns it, where the range and the classes
   it covers are on screen beside the Remove. One tap to get there, one deliberate tap there.
 */
-function dayHead(date, state, today, editing, unconfirmed, cover, offTerm) {
+function dayHead(date, state, today, editing, unconfirmed, cover, offTerm, writable) {
   const th = el('th', 'attendance-day ' + columnClasses(date, state, today, editing, offTerm));
   th.setAttribute('scope', 'col');
   th.setAttribute('data-attendance-col', date);
@@ -3355,32 +3591,46 @@ function dayHead(date, state, today, editing, unconfirmed, cover, offTerm) {
   th.append(chip);
 
   /*
-    A COLUMN AHEAD OF TODAY GETS NO BUTTON AT ALL (2026-08-08), and the check is here — before one
-    is built — rather than as a branch below, so that the future case cannot leave an orphan element
-    behind. There is nothing to offer: the ✏ unlock further down opens a day for editing and
-    writableDate() would refuse every write it led to, so drawing it would be a control that looks
-    live, takes a tap, and does nothing — the exact thing this file refuses to do with a cell.
+    A COLUMN NOTHING CAN BE WRITTEN ON GETS NO BUTTON AT ALL, and the check is here — before one is
+    built — rather than as a branch below, so that no case can leave an orphan element behind.
+    There is nothing to offer: the 🚫 CREATES a record and the ✏ opens a day for editing, and every
+    write either one led to would be refused by the same gate the writers pass through. Drawing one
+    would be a control that looks live, takes a tap, and does nothing — the exact thing this file
+    refuses to do with a cell.
 
     Nothing takes its place, and that is deliberate rather than unfinished. The column already says
     what it is twice over, in the chip and in the wash the whole column wears; a third element
     saying "not yet" would be fine print under two things that are not fine print.
 
-    A COVERED DAY IS EXEMPT, WHICHEVER SIDE OF TODAY IT FALLS. That is the one future column with
-    somewhere to go from — the 📅 below — and it is the whole reason the columns were opened up.
-  */
-  /*
-    AND SO DOES A COLUMN OUTSIDE EVERY TERM OF THIS CLASS (WO-2.50), for the argument above word for
-    word. The 🚫 CREATES a record and the ✏ opens a day whose every write offTermDay() would refuse,
-    so either one drawn here would be a control that looks live, takes a tap, and does nothing. The
-    column already says what it is twice over, in the chip and in the wash it wears end to end, and
-    the state line above the grid holds the one control this day has — the door to the term dates,
-    which is the only thing that would un-grey it.
+    THIS WAS TWO TESTS AND IS ONE (WO-2.52). It read `date > today || offTerm`: every day after
+    today, plus every day outside every term. Neither is the rule any more — a future day INSIDE a
+    term of this class is writable, and the answer to which days those are is `writable`, computed
+    by the caller out of THE SAME PREDICATE THE WRITER USES. That is the point of collapsing them:
+    the head and the gate cannot come to different answers about one column, which is what this file
+    says three times over in three other places.
 
-    A COVERED DAY IS EXEMPT HERE TOO, on the same clause and for the same reason it is exempt from
-    the future check: the 📅 is somewhere to go from, the calendar outranks the term dates, and a
-    holiday in July has to keep the door to the screen that owns it.
+    AND THE SHORTCUT IT CLOSES IS THE OBVIOUS ONE. `!offTerm` alone would have drawn a live-looking
+    ✏ on next Tuesday for a class with NO dated terms, because offTermOf() answers null there — the
+    unbounded case (WO-2.50 decision 3) — and the gate would then have refused every write it led
+    to. The class that pays nothing for this feature must also be offered nothing by it.
+
+    A COVERED DAY IS EXEMPT, WHICHEVER SIDE OF TODAY IT FALLS AND WHATEVER THE TERMS SAY. That is
+    the one column with somewhere to go from — the 📅 below — it is the whole reason the columns
+    were opened up in the first place, and the calendar outranks the term dates everywhere else on
+    this screen too.
+
+    AND ONE MORE TEST JOINED IT, WHICH IS NOT THAT COLLAPSE COMING UNDONE: the day the strip is
+    ALREADY OPEN ON gets no ✏ either, because the deliverable is a pencil on any writable column
+    that is NOT the edit date. Until this work order no column could reach the ✏ while being the day
+    that already accepts writes — the edit date was today, and today's own branch below answers it
+    with the 🚫. The anchor stands ahead of today now: September 2 read on August 19 is writable, is
+    not today, and IS the edit date, so the pencil fell through to it and editDay() returns on its
+    own first line for exactly that date. A control that looks live, takes a tap and does nothing,
+    which is the thing this file refuses three times in writing. `editing` is the argument that says
+    "this column is the edit date and it is not today"; `editingDay` is the DELIBERATE unlock, which
+    keeps its pressed ✏ below because there is something there to close.
   */
-  if (state !== COVERED && (date > today || offTerm)) return th;
+  if (state !== COVERED && (!writable || (editing && date !== editingDay))) return th;
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -3393,6 +3643,12 @@ function dayHead(date, state, today, editing, unconfirmed, cover, offTerm) {
     btn.setAttribute('aria-label', coverSaid(cover) + ' on ' + spokenDate(date)
       + '. Open days off and planned drops.');
   } else if (date === today) {
+    /* THE 🚫 STAYS ON TODAY'S COLUMN AND NOWHERE ELSE (WO-2.52), even though the cells beside it in
+       a future in-term column now take marks. A class that will not meet next Thursday is a
+       CALENDAR EVENT and WO-2.3 already owns that; dropClass() writes a RECORD, and a record is not
+       how the future says a class did not meet. The control is still offered on the day the screen
+       is standing on, through the action row above the grid, because that row acts on the day that
+       accepts edits and has always said so. */
     if (state === DID_NOT_MEET) {
       btn.setAttribute('data-attendance-undrop', date);
       btn.textContent = '↩';
@@ -3404,8 +3660,14 @@ function dayHead(date, state, today, editing, unconfirmed, cover, offTerm) {
       btn.title = 'This class did not meet today';
       btn.setAttribute('aria-label', 'Record that this class did not meet on ' + spokenDate(date));
     }
-  } else if (editing) {
-    /* The same pencil, pressed. Roll Call! swaps it for a button labelled "Done" (dashboard.html
+  } else if (date === editingDay) {
+    /* THE PRESSED PENCIL BELONGS TO A DELIBERATE UNLOCK AND NOT TO THE ANCHOR (WO-2.52), which is
+       why this reads `editingDay` where the wash above it reads the `editing` argument. The two
+       parted when the anchor learned to stand ahead of today: September 2 opened by the anchor is
+       the edit date and wears the editing rails, but there is nothing to LOCK there — lockDay()
+       would return on its own first line — and a pencil that looks pressed and does nothing is the
+       control this file refuses three times in writing.
+       The same pencil, pressed. Roll Call! swaps it for a button labelled "Done" (dashboard.html
        :3998); this one does not, because "Done" on a screen with no submit step is a word that
        reads as a commit — and this app's own harness greps for exactly that word for exactly that
        reason. A toggle with `aria-pressed` says the same thing without borrowing the vocabulary of
@@ -3417,11 +3679,15 @@ function dayHead(date, state, today, editing, unconfirmed, cover, offTerm) {
     btn.title = 'Stop editing this past day';
     btn.setAttribute('aria-label', 'Stop editing ' + spokenDate(date) + ' and go back to today');
   } else {
+    /* ANY WRITABLE COLUMN THAT IS NOT THE EDIT DATE, which since WO-2.52 includes a day ahead of
+       today inside a term of this class. The wording follows: "this past day" would be a lie on
+       September 2 and the day's own date says the rest. */
     btn.setAttribute('data-attendance-edit', date);
     btn.setAttribute('aria-pressed', 'false');
     btn.textContent = '✏️';
-    btn.title = 'Edit this past day';
-    btn.setAttribute('aria-label', 'Edit attendance for ' + spokenDate(date));
+    btn.title = date > today ? 'Mark this day early' : 'Edit this past day';
+    btn.setAttribute('aria-label', (date > today ? 'Mark attendance early for ' : 'Edit attendance for ')
+      + spokenDate(date));
   }
   th.append(btn);
   return th;
@@ -3451,12 +3717,19 @@ function paintColumn(date) {
      a fact about the column, and asking it per cell would walk this class's terms twenty-six times
      to arrive at one of them. */
   const offTerm = offTermOf(cls.id, date);
-  const editable = date === editDate() && state !== DID_NOT_MEET && state !== COVERED
-    && writableDate(date) && !offTerm;
+  /* WO-2.52. THE SAME PREDICATE THE WRITER USES, hoisted here beside `cover` and `offTerm` and for
+     the same reason — it is a fact about the column, and asking it per cell would walk this class's
+     terms twenty-six times to arrive at one answer. The head takes it and the cells are derived
+     from it, so "what can be written" is decided once per column. */
+  const writable = writableDate(date, cls) && !offTerm;
+  /* And a cell is a button when the column accepts writes AND is the day the screen is editing —
+     minus the two states that have no marks to edit however open the day is. */
+  const editable = writable && date === editDate()
+    && state !== DID_NOT_MEET && state !== COVERED;
   const unconfirmed = countsFor(cls.id, date)[UNCONFIRMED];
 
   const th = head.querySelector('th[data-attendance-col="' + date + '"]');
-  if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed, cover, offTerm));
+  if (th) th.replaceWith(dayHead(date, state, today, editing, unconfirmed, cover, offTerm, writable));
 
   /* WHO HAD THE RING BEFORE THIS COLUMN WAS REBUILT (WO-2.5). Every cell below is REPLACED, so a
      keyboard user who pressed Enter on one — or typed a letter at it, which is the whole of the
@@ -3516,6 +3789,48 @@ function termRollover() {
 }
 
 /*
+  THE OTHER THING THE TERM DATES HAVE TO SAY (WO-2.52): today is in NO term of this class, and the
+  selected term is dated — so the strip is standing somewhere that is not today and the teacher is
+  owed the reason in one sentence. `{ text }`, or null.
+
+  IT SPEAKS IN BOTH DIRECTIONS, before a term and after one, because a finished term browsed back to
+  in February has exactly the same question to answer as one that has not started and "this term
+  ended on October 31" is the same sentence pointing the other way.
+
+  WO-2.51 DECLINED TO SPEAK ON A DAY THAT IS IN NO TERM, and this is not a reversal of that. Its
+  reason was that WO-2.50's grid was already saying it four ways — the column, the chip, the state
+  line and the home card — and two bands disagreeing about one day is worse than either. The anchor
+  has now moved the grid INTO the term, so none of those four is saying it any more: the columns on
+  screen are term days, and nothing else on the screen explains why the date above them is not
+  today. This band is what explains it.
+
+  THE COUNT IS IN CALENDAR DAYS, off daysUntil() — see that function for why it rounds. `1` reads
+  "opens tomorrow", because "opens in 1 days" is the kind of sentence that makes an app look
+  unfinished. The finished side prints plainDate(), which carries the year, because this band is
+  read months after the term it names.
+
+  THE TERM IS NAMED THROUGH termName() AND NEVER THROUGH A WORD INVENTED HERE. Term ids are opaque
+  (docs/data-model.md, and src/classes.js's rule 1), the label is the only place a quarter is ever
+  named, and a class on trimesters or semesters has to read correctly with no code change.
+*/
+function termGapBand() {
+  const cls = openClass();
+  if (!cls) return null;
+  const term = getSelectedTerm();
+  if (!termIsDated(term)) return null;
+  const today = todayISO();
+  /* ANY term of the class, which is the same predicate WO-2.51's band asks: a day inside a term she
+     is not looking at is that band's sentence, not this one, and the two are mutually exclusive by
+     construction because of this line. */
+  if (termContaining(cls.id, today)) return null;
+  if (today < term.start) {
+    const n = daysUntil(today, term.start);
+    return { text: termName(term) + (n === 1 ? ' opens tomorrow.' : ' opens in ' + n + ' days.') };
+  }
+  return { text: termName(term) + ' ended on ' + plainDate(term.end) + '.' };
+}
+
+/*
   THE STRIP THAT SAYS YOU ARE NOT ON TODAY, and the acceptance line it answers is "visible in a
   glance, on an iPad, in a classroom". So it is a full-width band above the grid with a coloured
   edge and a way back on it, not a tint on a column — a tint is what the column already has, and a
@@ -3546,8 +3861,17 @@ function paintBanner(columns) {
   const banner = document.getElementById(BANNER_ID);
   if (!banner) return;
   const today = todayISO();
+  /* Called for its answer AND for its normalising of `editingDay`, which is why it comes before the
+     test below reads that variable. */
   const on = editDate();
-  const todayShown = columns.indexOf(today) >= 0;
+  const anchor = anchorDate();
+  /* THE ANCHOR RATHER THAN TODAY (WO-2.52), and this substitution is the one ordering mistake this
+     band exists to prevent. On the fortnight before a term the anchor is the term's first day and
+     today is nowhere near the window — so a test on `todayShown` would fire the off-today band on
+     an UNPAGED arrival and talk straight over the message that explains the date on screen. What
+     this band is for is "you have paged away from where the strip stands", and where the strip
+     stands is the anchor. */
+  const anchorShown = columns.indexOf(anchor) >= 0;
 
   banner.textContent = '';
   /* Written from the base class every paint rather than toggled, because this strip now has two
@@ -3555,23 +3879,48 @@ function paintBanner(columns) {
      the wrong one, which is a defect that only appears on the second visit to a screen. */
   banner.className = 'attendance-banner';
 
-  if (on !== today || !todayShown) {
+  /* BAND 1 — a day is deliberately unlocked. The condition is the unlocked day ITSELF since
+     WO-2.52, rather than a comparison of the edit date with today: the edit date is the anchor on
+     an unpaged September 2 and that is not a day anybody unlocked, so `on !== today` would have
+     announced an edit the teacher never asked for. */
+  if (editingDay || !anchorShown) {
     /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
        pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
     const range = columns.length === 1 ? spokenDate(columns[0])
       : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
-    const text = on !== today
+    /* BAND 2 — the anchor is not among the columns. The way back is the anchor and the button says
+       so: "Back to today" over a strip that goes back to September 2 would be the band lying about
+       the one thing it exists to do. */
+    const home = anchor === today ? 'today' : plainDate(anchor);
+    const text = editingDay
       ? 'You are editing ' + spokenDate(on) + ' — not today.'
-      : 'Showing ' + range + '. Today is not on screen.';
+      : 'Showing ' + range + '. ' + (anchor === today ? 'Today' : plainDate(anchor))
+        + ' is not on screen.';
     banner.append(el('span', 'attendance-banner-text', text));
-    const back = actionButton('Back to today', 'data-attendance-page', 'today');
+    const back = actionButton('Back to ' + home, 'data-attendance-page', 'today');
     back.classList.add('attendance-banner-btn');
     banner.append(back);
     return;
   }
 
+  /* BAND 3 — today is inside a term that is not the selected one (WO-2.51), untouched. It carries
+     an ACTION, so it beats the bare statement below it about the same fact. */
   const roll = termRollover();
-  if (!roll) { banner.classList.add('hidden'); return; }
+  if (!roll) {
+    /* BAND 4 — today is inside NO term of this class and the selected term is dated (WO-2.52).
+       Written adjacent to band 3 so a reader can see that the two are mutually exclusive by
+       construction: termGapBand() returns null on exactly the days termRollover() answers on. */
+    const gap = termGapBand();
+    if (!gap) { banner.classList.add('hidden'); return; }
+    banner.classList.add('off-term');
+    /* NO BUTTON, AND THAT IS THE DIFFERENCE BETWEEN THIS BAND AND THE THREE ABOVE IT. There is
+       nothing to tap: the strip is already standing on the term's own days, and the one thing that
+       would change this sentence is the term dates, whose door the state line already holds on the
+       days that are outside them. A second door here would be the fourth control on a screen whose
+       whole design is a three-control limit. */
+    banner.append(el('span', 'attendance-banner-text', gap.text));
+    return;
+  }
 
   banner.classList.add('rollover');
   /* BOTH TERMS ARE NAMED, out of term.label through termName() and never out of a word invented
@@ -3593,13 +3942,26 @@ function paintBanner(columns) {
 
 /*
   The state line, the class-level controls and the note — everything above the grid that describes
-  ONE DAY. That day is the one accepting edits, which is today unless a past column is unlocked.
+  ONE DAY.
+
+  THAT DAY IS focusDate() AND NO LONGER editDate() (WO-2.52), and the two are the same day on every
+  day of the year but one kind: a strip anchored on a term that has ENDED stands on a past day, which
+  is read-only until its ✏️ is pressed. The heading and the state line have to describe the day on
+  screen — a heading reading "Wednesday, August 19" over a grid whose only column is September 2 is
+  the mismatch this function exists to prevent — so they read the focus, and the CONTROLS THAT WRITE
+  are drawn only when that day is also the one accepting edits.
 
   Repainted on its own after a write, because the grid below it must not be rebuilt.
 */
 function paintActions() {
   const cls = openClass();
-  const on = editDate();
+  const on = focusDate();
+  /* Whether the day being described is also the day that accepts writes. It is not, on exactly one
+     kind of day: the anchor of a term that has ended. Every control below that writes is behind
+     this, because a live "Everyone's here" over a locked column would take a class the grid under
+     it refuses to mark — a control that looks live, takes a tap and does something the teacher did
+     not ask for, which is worse than the one this file already refuses to draw. */
+  const open = on === editDate();
   const dateEl = document.getElementById(DATE_ID);
   const stateEl = document.getElementById(STATE_ID);
   const actions = document.getElementById(ACTIONS_ID);
@@ -3680,6 +4042,21 @@ function paintActions() {
     is true instead: a day with attendance already on it is not this day, because a record wins and
     this branch is not reached at all.
   */
+  /*
+    THE DAY THE STRIP IS STANDING ON IS PAST AND NOBODY HAS UNLOCKED IT (WO-2.52) — the February
+    case, and the only one where the screen describes a day it will not write to. It is the same
+    answer a past column has always given, said above the grid instead of only in the column: the
+    state line has already said what the day is, so all this owes is why nothing can be tapped and
+    where the way in is. The ✏️ named here is the one on that day's own column head.
+  */
+  if (!open) {
+    actions.append(daysOffDoor());
+    note.textContent = spokenDate(on) + ' has already been and gone, so this day is locked. Tap '
+      + 'the ✏️ on its column to change what is recorded on it.';
+    note.classList.remove('hidden');
+    return;
+  }
+
   if (summary.offTerm) {
     actions.append(termDatesDoor());
     note.textContent = offTermText(summary.offTerm) + ' — this day is outside every term '
@@ -3875,17 +4252,28 @@ function paintPager(columns) {
      even on a screen that cannot page — so the existing rule is left to decide it, and in portrait
      `pageDaysBack` is pinned at 0 anyway. */
   const today = actionButton('Today', 'data-attendance-page', 'today');
-  today.disabled = pageDaysBack === 0 && !editingPast;
-  today.title = today.disabled ? 'You are on today'
-    : many ? 'Back to the week ending today' : 'Back to today';
+  today.disabled = pageDaysBack === 0 && !editingDay;
+  /* WHERE "BACK" GOES IS THE ANCHOR (WO-2.52), which is today on every ordinary day and the term's
+     own edge when today is outside the selected term. The label stays `Today` — it is the control a
+     thumb has learned to find, and on the one screen measured in seconds a button that renames
+     itself is a button that has to be read — and the sentence under it tells the truth. */
+  const anchor = anchorDate();
+  const home = anchor === todayISO() ? 'today' : plainDate(anchor);
+  today.title = today.disabled ? 'You are on ' + home
+    : many ? 'Back to the week ending ' + home : 'Back to ' + home;
   pager.append(today);
 
-  /* The forward stop is the last day off on the calendar, not today — futureLimit() says why, and
-     says why an empty calendar puts it back on today. The two disabled sentences are different
-     because the two states are: one is "there is nothing further ahead to look at", the other is
-     the old "tomorrow is not something to record yet", which is still true and still the reason a
-     year with nothing scheduled stops here. */
-  const ahead = futureLimit();
+  /* The forward stop is the furthest of the last day off on the calendar and the selected term's
+     own end — forwardLimit() says why, and says why an empty calendar and an undated term put it
+     back on the anchor. The disabled sentences are different because the states are: there is
+     nothing further ahead to look at, the term ends here, or the old "tomorrow is not something to
+     record yet", which is still true and still the reason a year with nothing scheduled stops. */
+  const ahead = forwardLimit();
+  /* Which of the two horizons the stop is standing on, asked only to write the sentence. The term's
+     end wins the wording when it is the further of the two, because "this term ends on October 31"
+     is a different fact from "there is nothing further to look at" and the teacher can act on one
+     of them. */
+  const termStop = ahead < 0 ? forwardHorizon().term : null;
   const later = actionButton('Later ▶', 'data-attendance-page', 'later');
   /* `pinned` FIRST, and it is a fix rather than a tidy-up (2026-08-08, reported the same hour the
      forward columns shipped). Portrait pins `pageDaysBack` to 0, and 0 is no longer the forward end
@@ -3900,9 +4288,14 @@ function paintPager(columns) {
   later.title = later.disabled
     ? (pinned
       ? 'Portrait shows today. Turn the iPad to read the week or to correct a past day.'
-      : ahead < 0
-        ? 'That is as far ahead as the calendar goes — nothing is scheduled past this window'
-        : 'Today is the last column there is — tomorrow’s attendance is not something to record yet')
+      : termStop
+        ? termName(termStop) + ' ends on ' + plainDate(termStop.end)
+          + ' — there is nothing further in this term to look at'
+        : ahead < 0
+          ? 'That is as far ahead as the calendar goes — nothing is scheduled past this window'
+          : anchorDate() === todayISO()
+            ? 'Today is the last column there is — tomorrow’s attendance is not something to record yet'
+            : 'That is as far ahead as this term goes')
     : many ? 'The ' + columns.length + ' weekdays after these' : 'The weekday after this';
   pager.append(later);
 }
@@ -3996,8 +4389,13 @@ function renderRows(sharedTotals) {
          would walk `events` twenty-six times to arrive at one answer. */
       cover: state === COVERED ? coverOf(cls.id, date) : null,
       editing: date === on && date !== today,
-      editable: date === on && state !== DID_NOT_MEET && state !== COVERED && writableDate(date)
-        && !offTerm,
+      /* WO-2.52's flag, hoisted with the rest and for the same reason `offTerm` is: it walks this
+         class's terms, so per cell it would be a hundred and fifty-six walks for six answers. It is
+         the writers' own predicate, which is what keeps the head, the cells and the gate from
+         holding three opinions about one column. */
+      writable: writableDate(date, cls) && !offTerm,
+      editable: date === on && state !== DID_NOT_MEET && state !== COVERED
+        && writableDate(date, cls) && !offTerm,
       /* Hoisted with the rest rather than compared per cell, for the same reason: one string
          comparison a hundred and fifty-six times is one string comparison six times. */
       future: date > today,
@@ -4150,6 +4548,23 @@ function detailButton(student) {
 export function paintRenderedTotals() {
   const cls = openClass();
   if (!cls) { paintClassTotals(null); return; }
+  /*
+    THE STRIP RE-ANCHORS WHEN THE TERM MOVES IT (WO-2.52), and this is the one place that can
+    notice. This function's other caller is src/shell.js's afterTermChange(), whose whole design is
+    that a term change owes the teacher the FIGURES and not the grid under them (WO-2.17, WO-2.18) —
+    right while the columns were built from today and the term decided only what was counted. The
+    anchor reads the selected term now, so selecting a term that has ended has to move the strip to
+    that term's last day, and leaving the grid alone would leave the columns of one term under the
+    heading, the totals and the banner of another.
+
+    IT IS A GUARD AND NOT A SECOND PAINT PATH. The comparison is against the day the columns on
+    screen were actually built from, exactly as the rotation guard compares against the column count
+    actually drawn — so every other caller (every write on this screen) sees an anchor that has not
+    moved and pays one string comparison. WO-2.18's claim that the rows a teacher was looking at
+    survive a term tap is untouched on every term change that does not move the strip, which is
+    every term change between two terms that both hold today.
+  */
+  if (anchorDate() !== paintedAnchor) { renderAttendance(); return; }
   /* A write can change active-filter membership without rebuilding tbody. Fold the whole roster so
      every row that was present before the write, and its still-open detail panel, has a value in
      this render's maps even when that student is no longer visibleStudents(). */
@@ -4201,7 +4616,7 @@ function paintDetail(sharedTotals) {
   /* WO-2.50 sits beside them on the same line and for the same reason: a day outside every term of
      this class has no record, so it has no mark for this panel to edit — and every write the panel
      offers would be refused by the gate anyway. */
-  if (state === DID_NOT_MEET || state === COVERED || !writableDate(on)
+  if (state === DID_NOT_MEET || state === COVERED || !writableDate(on, cls)
     || offTermDay(cls.id, on)) { detailFor = ''; return; }
   const entry = marksOf(record)[detailFor];
   const code = readingOf(record, detailFor);
@@ -4271,6 +4686,8 @@ export function renderAttendance() {
      leaves that guard describing what is actually on screen. */
   const count = dayColumnCount();
   paintedDayCols = count;
+  /* Recorded for the same reason and read by the same kind of guard — see paintRenderedTotals(). */
+  paintedAnchor = anchorDate();
   const columns = visibleColumns();
   const nameEl = document.getElementById(CLASS_NAME_ID);
   const head = document.getElementById(HEAD_ID);
@@ -4310,10 +4727,14 @@ export function renderAttendance() {
       const on = editDate();
       columns.forEach((date) => {
         const state = stateOf(cls.id, date);
+        const offTerm = offTermOf(cls.id, date);
         row.append(dayHead(date, state, today, date === on && date !== today,
           countsFor(cls.id, date)[UNCONFIRMED],
           state === COVERED ? coverOf(cls.id, date) : null,
-          offTermOf(cls.id, date)));
+          offTerm,
+          /* WO-2.52, computed here for the same reason paintColumn() and renderRows() compute it:
+             these are the three places this screen already hoists a fact about a column. */
+          writableDate(date, cls) && !offTerm));
       });
       head.append(row);
     }
@@ -4338,7 +4759,28 @@ export function renderAttendance() {
   not put the screen back to the top of it.
 */
 export function resetRegistry() {
-  editingPast = null;
+  /*
+    AND THE TERM ROLLS OVER HERE, ON ARRIVAL AND NOWHERE ELSE (WO-2.52). WO-2.51 ruled that nothing
+    switches by itself and this narrows that ruling rather than deleting it: what it was protecting
+    is a teacher part way through entering the last week of Quarter 1, and arrival is the one moment
+    nobody is part way through anything. It goes here, beside the six other things every arrival
+    already resets, because this is THE arrival function and it has two callers — one place to add
+    it is one place to forget it, and two is two.
+
+    FIRST, BEFORE THE SIX BELOW, because everything under it and every paint that follows reads the
+    selected term: the anchor is derived from it, the totals are scoped to it, and the strip is
+    drawn from the anchor.
+
+    THE REPAINT OF THE HEADER IS HERE RATHER THAN INSIDE THE WRITER, and it is here rather than
+    nowhere because both of this function's callers refresh the class bar BEFORE they call it —
+    src/shell.js's class tab, through selectClass(), and boot. A term moved after that paint would
+    leave the nav's active mark on the term the teacher has just been moved off, with the counts
+    under it describing the other one. It costs a paint of six elements on the handful of mornings a
+    year the answer changes and nothing at all on every other arrival, which is what the boolean is
+    for.
+  */
+  if (openTermForToday(todayISO())) refreshClassBar();
+  editingDay = null;
   pageDaysBack = 0;
   searchText = '';
   filterCode = 'all';

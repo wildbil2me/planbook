@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 918 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 943 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1725,6 +1725,45 @@ read `Taken · all present`, because WO-2.50's decision 2 says a day that alread
 is never out of term. The record wins, so the fixture that wants an out-of-term today has to be a
 today with nothing on it — and the check now asserts the record count as well, so the premise cannot
 go quiet.
+
+**WO-2.52 moved it from 918 to 943**, and that is one work order in two halves. **Two** of the
+twenty-five are inside the WO-2.50 and WO-2.51 sections above, where that work order broke their
+premise and they were repaired against the new anchor rather than pinned to the old one — the strip
+is built from `anchorDate()` now, so a fixture that puts today outside its own dated terms no longer
+draws today, and seven `check()` lines in those two sections were rewritten to read the column the
+strip is actually standing on. **Twenty-three** are this work order's own: twenty-two in a new
+section directly under the WO-2.51 one, of which **one is a fixture-guard failure arm** that never
+fires on a green run, and one inside the WO-2.50 section — the third member of its
+`acceptedToday`/`acceptedPast` pair, asking the same nine writers about a date AHEAD of today and
+inside a term, which is the side of today that gate had never had. So the tree contributes
+twenty-two executed results and **the run prints 963**, measured on the delivered tree:
+`963 checks · 963 passed · 0 failed · 0 skipped`, 25,927 lines, 26.9 lines per check, 306s, exit 0.
+
+**One check in that section is worth reading before writing another like it, because it was red on a
+correct app twice for two different reasons.** *The strip opens on the term* was first written as
+"all six columns are inside the term", off the acceptance line's own words — *no August column is on
+screen* — and a six-column window that ENDS on the term's first day cannot satisfy that: it walks
+weekdays BACK from the day it is built from, so the last week of August sits behind September 2,
+greyed and dead, which is decision 3's soft wall rather than a leak. The sentence is true on the
+device it was written about, and it is asserted there instead — the section takes one portrait
+reading at 834×1112, where the grid draws one column and it is the day the term opens. Then the same
+check's second half asked for the tapped student's own key in the record and read back a record
+holding only the OTHER student: a taken class stores what is not present, and the tapped student's
+`P` is the default `cellFor()` fills in. What the check asserts now is the record landing on that
+date and the column reading taken, which is what the acceptance line is about anyway.
+
+**Two mutations, and the first is the one the work order asked for.** `writableDate()`'s new arm
+forced to `return false` — the future-in-term branch deleted, the old "today or earlier" gate back —
+reads `963 checks · 958 passed · 5 failed`, and the five are exactly the five claims about WRITING to
+a day ahead of today: the anchor column live with nothing pressed, the upright reading beside it, the
+in-term day behind its own ✏, the five-writer probe, and the WO-2.50 pair's new third member. Every
+claim about what is DRAWN stays green through it — the anchor, the band, the soft wall, the forward
+stop and the arrival jump — which is the separation this section exists to measure, seen from the
+inside. The second reverts `paintBanner()`'s `anchorShown` to a test on today, which is the one
+ordering mistake that deliverable names: `963 checks · 945 passed · 18 failed`, twelve of them in
+WO-2.51's section. It is broader than it looks on paper because the off-anchor band does not merely
+talk OVER the new message — on any screen anchored away from today it wins the strip outright, so the
+rollover band and its button disappear with it.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
