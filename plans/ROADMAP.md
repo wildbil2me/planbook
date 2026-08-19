@@ -112,16 +112,18 @@ drawn here rather than discovered at 11pm on August 23rd.
 | Gate | By | What must work |
 |---|---|---|
 | **Ship 1 — Day one** 🚩 | ~Aug 24 | Install + backup/restore · classes & terms · roster incl. accommodations · attendance marking with one-tap drop · days off · today's state on the home screen |
-| **Ship 2 — First grades** | ~Sep 15 | Categories & weights · assignments · score entry with late/missing · weighted grade · letter scale · print stylesheets |
+| **Ship 2 — First grades** | ~Sep 15 | Categories & weights · assignments · score entry with late/missing · weighted grade · letter scale |
 | **Ship 3 — Signals** | October | Concern and praise lists, once there are 4–6 weeks of real data to run them against |
 | Then | Nov → | Outreach, calendar & glance page, sync, packaging |
 
-*(**Print stylesheets joined the Ship 2 row on 2026-08-19**, WO-1.24 — the one addition to a shipped
-scope line in this table, and it is a Phase 8 work order. WO-8.4 and Ship 2's gate test the same
-thing: the gradebook printout ordered to match the SIS entry screen. **The SIS has no usable export**,
-so that check is the owner re-keying five real classes by hand, and running it against a page WO-8.4
-then restyles buys a second re-key rather than a late feature. The Ship 1 cut below — "nothing needs
-printing in week one" — is what this closes out. **The running order is in**
+*(**Ship 2's scope line gained "print stylesheets" on 2026-08-19 and lost it again the same day** —
+WO-1.24 and its § Correction. The argument was that WO-8.4 and Ship 2's gate test the same thing, the
+gradebook printout ordered to match the SIS entry screen, so a late WO-8.4 would cost a second hand
+re-key of five classes. **That check had been closed since 2026-08-13**: `WO-3.9` is where the ordering
+was decided and the owner confirmed the printed sheet against the live SIS. Print stylesheets are Phase
+8 work and one of their four surfaces is a calendar month nothing has built. **Ship 2's scope is what it
+was**, and the Ship 1 cut below — "nothing needs printing in week one" — was closed out by WO-3.9 rather
+than by anything still owed. **The running order is in**
 [`work-orders/README.md`](work-orders/README.md) § Ship 2 and § Ship 3; § Ship 3 was written the same
 day, because Ship 2's build queue is empty and its gate waits on a term of real data rather than on
 work.)*

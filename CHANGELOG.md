@@ -246,10 +246,16 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   the day after Ship 1 closed to avoid. **§ Ship 3 — signals** now exists: six rows, WO-4.1 through
   WO-G3, dated against a term that begins Sep 2 rather than the ~Aug 24 § Ship 2 was planned around.
   Three things it turned up that a table alone would not have:
-  - **WO-8.4 moved from `**Ship** —` to Ship 2.** Its fourth Acceptance box and WO-G2's fifth are the
-    same check — the gradebook printout ordered to match the SIS entry screen. The SIS has no usable
-    export, so that check is the owner re-keying five real classes by hand, and landing `@media print`
-    afterwards would have bought a **second re-key** rather than a late feature.
+  - **WO-8.4 moved from `**Ship** —` to Ship 2, and moved back an hour later.** The argument was that
+    its fourth Acceptance box and WO-G2's fifth are the same check — the gradebook printout ordered to
+    match the SIS entry screen — and that the SIS having no export makes that check a hand re-key of
+    five classes, so a late WO-8.4 would cost a second one. **The check was already closed.** WO-3.9 is
+    where the ordering was decided: the owner answered it on 2026-08-12 and confirmed the printed sheet
+    against the live SIS on 2026-08-13. WO-8.4 reorders nothing. It also cannot close yet — one of its
+    four surfaces is a calendar month WO-6.3 has not built — so the move would have put a work order
+    that cannot finish into a ship, to protect a box already ticked. **Both places keep the record
+    rather than erasing the row**, and the withdrawn argument sits under a correction heading in
+    WO-1.24, § Ship 2 and `ROADMAP.md`. `**Ship** 2` stood for one commit, `d4eeafb`.
   - **WO-G3 reported `PASS` with all five work orders it waits on unwritten.** Its `Depends on` read
     `Phase 4` — prose, not a token — so `depsOf()` found nothing and `next` would have routed a
     dispatch straight at a gate that cannot run until October. **This is WO-G2's own 2026-08-09 bug,

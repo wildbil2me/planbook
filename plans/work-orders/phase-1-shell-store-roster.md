@@ -2000,7 +2000,7 @@ scope rather than a judgment call.
 
 ---
 
-## WO-1.24 — the ships past 2 have no running order, and WO-8.4 is in the wrong one
+## WO-1.24 — the ships past 2 have no running order
 
 **Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** —
 **Closes roadmap** Phase 1 → *(no box. Process, not app — a running order is not a promise the
@@ -2018,14 +2018,13 @@ order earlier, with the fix already written down.
 
 **Two things get settled, and one of them was going to cost a real re-key.**
 
-**WO-8.4 moves to Ship 2.** Its fourth Acceptance box is *"The gradebook printout is ordered to match
-the SIS entry screen (WO-3.9)"* and WO-G2's fifth is *"The printout order matches the SIS entry
-screen, confirmed against a real re-key"* — **the same check, in two ships.** The SIS has no usable
-export, so that re-key is the owner's own hand-keying of five classes, and it is the most expensive
-verification anywhere in these files. Land WO-8.4 after it and the re-key confirmed an ordering that
-`@media print` then changes underneath it, so the box has to be re-run — meaning the cost of leaving
-WO-8.4 at `**Ship** —` is not a late feature, it is a second re-key. Its dependencies (WO-2.6, WO-3.9)
-have both been done since Phase 3, so nothing was holding it but the absence of a row.
+***WO-8.4 moved to Ship 2, and moved back the same day. The argument below is withdrawn and is kept
+because it was checkable.*** *It was: WO-8.4's fourth Acceptance box is* "The gradebook printout is
+ordered to match the SIS entry screen (WO-3.9)" *and WO-G2's fifth is* "The printout order matches the
+SIS entry screen, confirmed against a real re-key" *— the same check in two ships; the SIS has no usable
+export, so that re-key is the owner's own hand-keying of five classes; land WO-8.4 after it and the box
+has to be re-run. **Everything in that paragraph is true except the thing it concludes.** See
+§ Correction below — the sentence it needed was three paragraphs from where it was written.*
 
 **Ship 3 gets its table**, in dependency order rather than phase order, and the ordering is not
 obvious from the `Depends on` lines alone — **two Acceptance lines carry dependencies the headers do
@@ -2052,9 +2051,36 @@ nothing is half a table. It reads `Phase 4` — prose, not a token — so `depsO
 failure WO-G2's line had until 2026-08-09 (`Phase 3, WO-2.5 … WO-2.7`, where "Phase 3" was invisible
 and the ellipsis was read as two tokens), and it gets the same repair: the five IDs written out.
 
+**§ Correction — 2026-08-19, the same day, one commit later.** *The owner asked whether WO-8.4 really
+made sense now. It did not, and the check that settles it was in the tree the whole time.*
+**WO-G2's fifth box was already closed in substance.**
+[WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) says in its own *Why it exists* that ordering the
+printout to match the SIS entry screen *"is most of this work order's value"*; the owner answered the
+order on 2026-08-12, it is recorded there so a verifier need not trust the builder's memory, and on
+2026-08-13 the owner printed the sheet and confirmed it against the live SIS. **WO-8.4 reorders
+nothing** — chrome, `#printHeader`, a modal gate, a presentation-mode rule. *There was no second re-key
+to buy back, so the move bought nothing and cost the pre-term fortnight's* `next`.
+
+**Two more findings, and both of them make the move worse rather than merely pointless.**
+- **WO-8.4 cannot close.** One of its four surfaces is the calendar month, and
+  [WO-6.3](phase-6-calendar-glance.md) has not built one — `src/calendar.js` is the event model, no DOM.
+  **So it would have landed owing a line, which is the exact ground this work order refused WO-4.4 on.**
+  Applying a rule to one work order and not the next one down the page is how these files rot.
+- **Its urgent-looking slice was never urgent.** *"No printout contains accommodation, medical, or plan
+  data"* reads like a live-term FERPA exposure and is instead closed **by construction**: the three
+  print gates hide everything but their own surface with `body > * { display: none }`,
+  `src/assignments.css` carries one more rule hiding the accommodation block whatever the gate says, and
+  every `supports` string goes through `setSensitiveText()` so a caller cannot route one elsewhere.
+
+*What the sitting got right is unaffected and stays: § Ship 3, WO-G3's dependency line, WO-3.18's ship
+field, and* `CLAUDE.md`*'s go-live date. **None of those rested on the WO-8.4 argument** — which is the
+one reason this is a correction commit and not a revert.*
+
 **Deliverables**
-- WO-8.4: `**Ship** —` → `**Ship** 2`, with the reasoning at the point of change, and a row in the
-  Ship 2 table ahead of WO-3.18 and WO-G2.
+- ~~WO-8.4: `**Ship** —` → `**Ship** 2`, and a row in the Ship 2 table ahead of WO-3.18 and WO-G2.~~
+  **Withdrawn the same day, § Correction above.** WO-8.4 is back at `**Ship** —`, its row is out of the
+  table, and both places keep the record rather than erasing it. `**Ship** 2` stood for one commit,
+  `d4eeafb`.
 - A `## Ship 3 — signals` section in [`README.md`](README.md), matching § Ship 2's table shape, with
   the two Acceptance-line dependencies above stated rather than left to be rediscovered.
 - WO-G3's `**Depends on**` rewritten as WO-4.1 … WO-4.5 written out, with the prose target kept.
@@ -2077,8 +2103,8 @@ ninth box; and* **deliberately unshipped** *— WO-2.33 alone, the owner's call 
 - **Phases 5–8 and WO-G4 stay at `**Ship** —`.** [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s
   ninth box owns that decision and says to take it *at* the gate, when what follows Ship 3 is no
   longer hypothetical. Naming Ship 4 now would discharge a gate box early from an August desk, which
-  is the one move these trackers exist to prevent. **WO-8.4 leaving `—` is a partial discharge of
-  that box and it is named here so the gate reads it** rather than finding the field already moved.
+  is the one move these trackers exist to prevent. **Nothing was discharged early in the end** — WO-8.4
+  left `—` for one commit and was put back, so WO-G2 runs that box whole.
 - **WO-8.1 and WO-G4 keep their prose `Depends on` lines** — *"every phase"* and *"every work order"*.
   Both report a vacuous `PASS` for the same reason WO-G3 did, and both are genuinely about everything,
   so writing out 128 tokens would rot at the next booking. **Naming them is the whole fix available
@@ -2089,10 +2115,15 @@ ninth box; and* **deliberately unshipped** *— WO-2.33 alone, the owner's call 
   N on `signals`, which are WO-4.4's three decisions to shape.
 
 **Acceptance**
-- [x] WO-8.4's `**Ship**` field reads `2`, and it has a row in § Ship 2 dated before the first real
-      SIS re-key. *(Row **75**, "Before the first real SIS re-key. Aug 22, half a day" — inserted
-      ahead of WO-3.18 and WO-G2, which renumbered 75→76 and 76→77. No prose in the directory cites a
-      row number, checked before the renumber rather than after.)*
+- [x] **WO-8.4 stays at `**Ship** —`, and § Ship 2 records that it was rowed and unrowed rather than
+      erasing it.** *(**This box read the opposite when it was first ticked** — "WO-8.4's `**Ship**`
+      field reads `2`, and it has a row in § Ship 2 dated before the first real SIS re-key" — and it
+      was true of the tree at `d4eeafb`. It is rewritten rather than unticked because the work it
+      names was done twice, in both directions, and the second pass is the one that holds: field back
+      to `—`, row 75 removed, 76 and 77 renumbered back to 75 and 76, and the withdrawn argument left
+      in place under a correction heading in three files. Verified after the renumber as well as
+      before it —* `grep -rn "row 7[0-9]" plans/` *still returns nothing, so no prose cites a row
+      number either way.)*
 - [x] `## Ship 3 — signals` exists in `README.md` and rows all five Phase 4 work orders plus WO-G3,
       in an order no Acceptance line contradicts. *(`README.md:1320`, six rows. The order is
       `WO-4.1 → WO-4.2 → WO-4.4 → WO-4.3 → WO-4.5 → WO-G3`, backticked because a bare arrow beside an

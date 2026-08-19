@@ -426,9 +426,8 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 72 | [WO-2.49](phase-2-attendance.md#wo-249--the-ticks-acceptance-check-cannot-read-a-work-order-with-crlf-line-endings) The tick cannot read a CRLF work order | S | | Sep 2, half a day — **booked out of WO-3.25s tick** |
 | 73 | [WO-2.51](phase-2-attendance.md#wo-251--the-term-ended-and-the-screen-never-said-so) The term ended and the screen never said so | S | | Sep 3, half a day — **the first rollover is late October** |
 | 74 | [WO-2.52](phase-2-attendance.md#wo-252--the-register-opens-on-the-term-not-on-the-clock) **The register opens on the term, not on the clock** | L | | **Before Sep 2 — the window this lives in is open now.** Aug 20, a day |
-| 75 | [WO-8.4](phase-8-packaging.md#wo-84--print-stylesheets) **Print stylesheets** | S | ✔ | **Before the first real SIS re-key.** Aug 22, half a day |
-| 76 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
-| 77 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 75 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
+| 76 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
 app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is
@@ -448,16 +447,22 @@ the setup fortnight is the window this lives in, and it is open right now. It is
 the S its sibling rows were, because it moves the write gate and not only the drawing — see its own
 four decisions, two of which reverse something already in writing here.*
 
-*WO-8.4 was booked into this table on 2026-08-19, owner-directed, by
-[WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order-and-wo-84-is-in-the-wrong-one).
-It is a **Phase 8** work order and it is here for one reason, which is the argument the "Never cut"
-paragraph below already makes about WO-3.9: its fourth Acceptance box and* **WO-G2's fifth are the
-same check** *— the gradebook printout ordered to match the SIS entry screen. That confirmation is a
-real re-key of five classes by hand, so the cost of leaving WO-8.4 out of Ship 2 is not a late
-feature, it is a **second re-key**:* `@media print` *changes the page the first one was read against.
-It is rowed at Aug 22 rather than beside WO-G2 for that reason — **before the first grades are
-printed, not before the gate.** Its dependencies (WO-2.6, WO-3.9) have been done since Phase 3;
-nothing held it but the absence of a row.*
+***WO-8.4 was rowed into this table on 2026-08-19 and taken back out the same day***, *owner-directed
+both times, by* [*WO-1.24*](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order)
+*and its § Correction. **The row is recorded rather than erased**, because the argument that put it here
+was checkable and nobody checked it. It was: WO-8.4's fourth Acceptance box and* **WO-G2's fifth are the
+same check** *— the gradebook printout ordered to match the SIS entry screen — so landing it after a
+hand re-key of five classes would cost a second one.*
+
+***The check was already closed, by the work order two rows of prose below this one.***
+[*WO-3.9*](phase-3-gradebook.md#wo-39--grades-print--csv) *is where the SIS ordering was decided: the
+owner answered it on 2026-08-12, it is recorded there so a verifier need not trust the builder's memory,
+and on 2026-08-13 the owner printed the sheet and confirmed it against the live SIS. **WO-8.4 reorders
+nothing** — its deliverables are chrome, a header, a modal gate and a presentation-mode rule. And it
+cannot close at all yet: one of its four surfaces is the calendar month, which* [*WO-6.3*](phase-6-calendar-glance.md)
+*has not built. **So the move would have put a work order that cannot finish into a ship, to protect a
+box that was already ticked** — and the "Never cut" paragraph below was making the WO-3.9 argument
+correctly the whole time, three paragraphs from where the mistake was written.*
 
 ***WO-3.18's cell says what it is waiting on, and it is not a dependency.*** *Owner-reported
 2026-08-19: the OAuth submission is a form that wants one uninterrupted sitting, and the days before
@@ -1321,8 +1326,8 @@ its seat on WO-G2's dependency line.
 
 The rows below, between 2026-08-20 and **~2026-10-16**, ending at
 [WO-G3](gates.md#wo-g3--ship-3-gate-signals). Written 2026-08-19 by
-[WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order-and-wo-84-is-in-the-wrong-one),
-the day Ship 2's build queue emptied — every row in § Ship 2 is `✅ DONE` except WO-3.18, WO-8.4 and
+[WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order),
+the day Ship 2's build queue emptied — every row in § Ship 2 is `✅ DONE` except WO-3.18 and
 the gate itself, and **WO-G2 is calendar-bound by construction**: four of its nine boxes want a real
 class's real grades. So this table is written now for the same reason § Ship 2's was written the day
 after Ship 1 closed, and one work order earlier: `next` is about to run out of rows again.
@@ -1370,9 +1375,9 @@ and 6 are the ones worked in and out of a teaching week, which is why row 5 sits
 
 **What Ship 3 does not carry.** Phases 5–8 and WO-G4 keep `**Ship** —`:
 [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s ninth box owns that call and says to take it *at*
-the gate, when what follows Ship 3 has stopped being hypothetical. WO-8.4 leaving `—` for § Ship 2 is
-a partial discharge of that box and is named in WO-1.24 so the gate reads it rather than finding the
-field already moved. [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why)
+the gate, when what follows Ship 3 has stopped being hypothetical. **Nothing has been discharged early
+after all** — WO-8.4 was moved out of `—` on 2026-08-19 and moved back the same day, so the box the gate
+runs is the whole one. [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why)
 also stays at `—`, the owner's call on 2026-08-19, on the argument its own header makes: the overdue
 alert has a working visual channel on hardware, so the tone is real work and not urgent work.
 

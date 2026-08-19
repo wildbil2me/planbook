@@ -86,17 +86,31 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.4 — Print stylesheets
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
 **Closes roadmap** Phase 8 → "Print stylesheets for every printable surface."
 
-*(**`**Ship** —` until 2026-08-19, WO-1.24.** This is a Phase 8 work order and it is in Ship 2 for one
-reason: its fourth Acceptance box and
-[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)’s fifth are the same check written twice — the
-gradebook printout ordered to match the SIS entry screen. **The SIS has no usable export**, so that
-confirmation is the owner hand-keying five real classes, and it is the most expensive verification in
-these files. Landing this afterwards does not ship a feature late, it buys a **second re-key**: the
-`@media print` rules here change the page the first one was read against. Its dependencies have been
-done since Phase 3 — nothing held it but the absence of a row.)*
+*(**This read `**Ship** 2` for one commit on 2026-08-19 and was corrected the same day** — WO-1.24,
+`d4eeafb`, and its own § Correction. The argument for moving it was that its fourth Acceptance box and
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s fifth are the same check, so landing this after the
+first hand re-key of five classes would cost a second one. **The check was already closed.**
+[WO-3.9](phase-3-gradebook.md#wo-39--grades-print--csv) is where the SIS ordering was decided — the
+owner answered it on 2026-08-12, it is recorded in that work order so a verifier need not trust the
+builder's memory, and on 2026-08-13 the owner printed the sheet and confirmed it against the live SIS.
+**Nothing here reorders anything**; the deliverables below are chrome, a header, a modal gate and a
+presentation-mode rule. There was no second re-key to buy back.)*
+
+*(**And it cannot close yet, which the move would have made a landed debt.** The first deliverable
+names four print surfaces and* **calendar month is not built** *—* [WO-6.3](phase-6-calendar-glance.md)
+*is `⬜ NOT STARTED` and `src/calendar.js` is the event model only, no DOM.* **This is not written
+as a dependency and should not become one** *— WO-6.3 gates one surface of four, and a `Depends on`
+token would hold the whole work order behind Phase 6. A `**Waits on**` field was tried here and taken
+back out: `wo-gate.mjs` reported it as a header field nothing reads, and teaching the tracker a fourth
+kind of wait is its own work order rather than a line in a correction.*
+**Three of the four already have `@media print` blocks** — `src/attendance.css`, `src/detail.css`,
+`src/scores.css`, plus one in `src/assignments.css` — because print accreted per work order and
+[WO-2.25](phase-2-attendance.md#wo-225--the-print-gate-is-answered-when-it-is-read-on-every-surface)
+centralised the mechanism in `src/print-gate.js`. What is genuinely undone is `#printHeader`, which
+`grep` finds nowhere outside comments, the calendar surface, and the sweep itself.)*
 
 **Deliverables**
 - `@media print` on every printable surface: gradebook, attendance record, student detail,

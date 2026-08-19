@@ -22,7 +22,7 @@ accommodations, attendance marking, days off, home screen. The app is deployed a
 `https://planbook.hwgteach.com/`.
 
 *(The status line above changed on 2026-08-19. Every work order in `plans/work-orders/README.md`
-§ Ship 2 is ✅ except WO-8.4, WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
+§ Ship 2 is ✅ except WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
 construction** *— four of its nine boxes want a real class's real grades, which do not exist until
 Sep 2. **Do not read that as a stall and do not go looking for Ship 2 work:*** **§ Ship 3 is the
 running order now**, *written the same day by WO-1.24, for the same reason § Ship 2 was written the day
