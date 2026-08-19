@@ -505,10 +505,28 @@
              them. The second door onto the same route is the 📅 in a covered column's head on the
              registry, which is where a teacher meets the consequence and asks where it came
              from — two doors, one route, exactly as `data-class-manage` has three. -->
-        <button class="class-action-btn" type="button" data-dayoff-panel
-                aria-haspopup="dialog" title="Holidays, breaks and planned drops">
-          <span aria-hidden="true">📅</span> Days off
-        </button>
+        <!-- TWO BUTTONS IN A WRAPPER RATHER THAN TWO BUTTONS IN THE ROW (WO-6.1). The comment
+             above measures this row at 390px and records that a fifth control in either header
+             strip overflows; this row is not one of those two, but a second non-shrinking button
+             beside a title block is the same arithmetic. `.panel-title-actions` wraps, so at phone
+             width the pair stacks instead of pushing the row into horizontal overflow — which
+             tools/verify-shell.mjs measures at 390x844 on every run.
+
+             The second door is the general event panel: conferences, grades-due dates, meetings,
+             trips and reminders. It is a SEPARATE panel from Days off on purpose — the two kinds
+             next door close a class, everything here does not, and `commit()` in src/days-off.js
+             stays the one place a day off is written (WO-6.1's second deliverable). -->
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" data-dayoff-panel
+                  aria-haspopup="dialog" title="Holidays, breaks and planned drops">
+            <span aria-hidden="true">📅</span> Days off
+          </button>
+          <button class="class-action-btn" type="button" data-events-panel
+                  aria-haspopup="dialog"
+                  title="Grades due, conferences, meetings, trips and reminders">
+            <span aria-hidden="true">📌</span> Events
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2556,6 +2574,146 @@
         </button>
         <button class="class-action-btn" data-dayoff-cancel>Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  CALENDAR EVENTS (WO-6.1) — the second door onto `doc.events`, and the one that authors the six
+  kinds attendance does NOT read: an early release, a grades-due date, a conference, a meeting, a
+  trip, a reminder. src/events.js owns the behaviour and argues it; the copy a teacher reads is
+  here, for the same reason the days-off panel's is.
+
+  IT IS A SEPARATE PANEL FROM DAYS OFF, and that is the work order's own call rather than an
+  accident of building. The two kinds next door CLOSE A CLASS — they are read by the marking screen
+  and change what a whole week of columns says — and none of these six touches attendance at all.
+  So a Remove on this list can never take a day off with it, and `commit()` in src/days-off.js
+  stays the one place a day off is written. The rules that refuse a bad event are neither panel's
+  any more: they moved down into src/calendar.js so that both forms ask the same question.
+
+  #eventClassPicker, #eventStudent and #eventList are EMPTY IN THE MARKUP, like #classTabBar and
+  #daysOffList, and for the same reason: all three are drawn from the open document, and a
+  hand-written specimen row here would be a second truth to keep in step with the real one.
+
+  THE REPEAT IS A DATE AND NOT A RULE. "Repeat weekly until" writes one whole entry per week and
+  stores nothing about the repeat, which is why moving one of them moves only that one — see
+  docs/data-model.md § Events. It skips nothing, deliberately: a repeat that stepped over the days
+  a class does not meet would need a schedule model, and plans/rotating-schedule.md removed that on
+  the day it was designed.
+-->
+<div class="modal-overlay hidden" id="eventsModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="eventsModalTitle">
+    <div class="modal-header">
+      <h2 id="eventsModalTitle">Events</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        The dates you already know about and would rather not carry in your head: when grades have
+        to be in, the conferences, the meetings, the trips. <strong>None of these closes a
+        class</strong> &mdash; holidays and planned drops are next door under <em>Days off</em>,
+        because those change what your attendance says.
+      </p>
+
+      <div class="modal-section-label">What is it</div>
+      <div class="event-kinds" id="eventKinds" role="group" aria-label="Kind of event">
+        <button type="button" class="pill" data-event-kind="early-release" aria-pressed="false">
+          Early release
+        </button>
+        <button type="button" class="pill active" data-event-kind="grades-due" aria-pressed="true">
+          Grades due
+        </button>
+        <button type="button" class="pill" data-event-kind="conference" aria-pressed="false">
+          Conference
+        </button>
+        <button type="button" class="pill" data-event-kind="meeting" aria-pressed="false">
+          Meeting
+        </button>
+        <button type="button" class="pill" data-event-kind="trip" aria-pressed="false">
+          Trip
+        </button>
+        <button type="button" class="pill" data-event-kind="reminder" aria-pressed="false">
+          Reminder
+        </button>
+      </div>
+
+      <form class="event-form" data-event-create>
+        <input class="class-input" id="eventTitle" type="text"
+               placeholder="Quarter 1 grades into the SIS" aria-label="What to call this event"
+               autocomplete="off">
+        <div class="event-dates">
+          <label class="term-date-field">
+            <span class="term-date-label">From</span>
+            <input class="term-date" id="eventFrom" type="date"
+                   data-event-date="from"
+                   aria-label="First day this covers">
+          </label>
+          <label class="term-date-field">
+            <span class="term-date-label">To</span>
+            <input class="term-date" id="eventTo" type="date"
+                   data-event-date="to"
+                   aria-label="Last day this covers - leave empty for a single day">
+          </label>
+        </div>
+
+        <!-- Hidden while an existing entry is open for editing: a repeat materializes into whole
+             entries at the moment it is added, so there is no rule to re-run on an edit, and a
+             field that looked like it would do something is worse than one that is not there. -->
+        <div class="event-dates" id="eventRepeatRow">
+          <label class="term-date-field">
+            <span class="term-date-label">Repeat weekly until</span>
+            <input class="term-date" id="eventUntil" type="date"
+                   data-event-date="until"
+                   aria-label="Repeat this every week until - leave empty for a single entry">
+          </label>
+        </div>
+
+        <input class="class-input" id="eventNotes" type="text"
+               placeholder="Anything you want to see beside it (optional)"
+               aria-label="A note on this event" autocomplete="off">
+
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="submit" id="eventSubmit">
+            Add to the calendar
+          </button>
+          <button class="class-action-btn hidden" type="button" id="eventCancelEdit"
+                  data-event-cancel-edit>Cancel</button>
+        </div>
+      </form>
+
+      <!-- Shown for grades-due only. It is a setting about the YEAR rather than about the entry
+           being typed - one lead time for every grades-due date - and it is stored in the document
+           beside the signal thresholds rather than under `planbook_`, for the reason
+           docs/data-model.md gives about a teacher's settings surviving a device change.
+           WHERE IT WARNS IS THE GLANCE PAGE (WO-6.4), not this panel: one fact, one warning
+           surface. -->
+      <div id="eventLeadRow">
+        <div class="modal-section-label">How much warning</div>
+        <label class="event-lead">
+          <span>Start showing a grades-due date</span>
+          <input class="event-num" id="eventLead" type="number" min="0" step="1"
+                 inputmode="numeric" autocomplete="off" data-event-lead
+                 aria-label="How many days ahead of a grades-due date to start showing it">
+          <span>days ahead, on every grades-due date you add.</span>
+        </label>
+      </div>
+
+      <div class="modal-section-label">Which classes it is about</div>
+      <div class="event-classes" id="eventClassPicker" role="group"
+           aria-label="Classes this event is about"></div>
+      <p class="class-hint">
+        Leave every one of them off and it is about the whole year, which is what most of these
+        are.
+      </p>
+
+      <div class="modal-section-label">Which student it is about</div>
+      <select class="event-select" id="eventStudent"
+              aria-label="The student this event is about"></select>
+
+      <p class="class-error hidden" id="eventError"></p>
+
+      <div class="modal-section-label">On the calendar</div>
+      <div class="roster-list" id="eventList"></div>
     </div>
   </div>
 </div>

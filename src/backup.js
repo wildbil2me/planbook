@@ -1125,6 +1125,11 @@ const NOT_CONTENT = [
     + 'construction — it stays out because a threshold is a preference rather than a record, and '
     + 'because an untouched year still holds no keys here at all. Re-open it if the nag ever has to '
     + 'mean "you would lose how you set this app up" as well as "you would lose what you typed"' },
+  { key: 'calendar', why: 'the calendar\'s own settings — one number, the grades-due lead time, '
+    + 'which defaults when the key is absent (WO-6.1, src/calendar.js\'s leadDaysOf()). It sits '
+    + 'here for `signals`\' reason exactly: a setting is a preference rather than a record, and an '
+    + 'untouched year holds no keys in it at all. What a teacher would MISS off this block is the '
+    + 'events themselves, and those are `events`, counted as content above' },
 ];
 
 /* Anything that would be lost. A brand-new document is not empty of meaning — it has a year and

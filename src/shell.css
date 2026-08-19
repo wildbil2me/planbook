@@ -426,6 +426,13 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    to shrink that `min-width: auto` had been providing for free. Any nowrap control that takes a
    `min-width` in the coarse block needs this alongside it. */
 .panel-title-row > .class-action-btn { flex: 0 0 auto; }
+/* AND THE PAIR OF THEM WRAPS (WO-6.1). The rule above stops one button shrinking into its own
+   label; a second button beside it needs the other half — somewhere to go when both of them plus
+   the title no longer fit. This wrapper does not shrink either, and its children stack when the
+   row runs out of width, which at 390px is the difference between two 44px targets on two lines
+   and a page in horizontal overflow. tools/verify-shell.mjs measures that width on every run. */
+.panel-title-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.panel-title-row > .panel-title-actions { flex: 0 0 auto; }
 .panel-title h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .panel-title p  { font-size: 11px; color: #8a9bb0; margin-top: 2px; }
 .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; }
@@ -1020,6 +1027,56 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .dayoff-keeps-line { font-size: 12px; line-height: 1.5; color: #27ae60; }
 
+/* ── CALENDAR EVENTS (WO-6.1) ── */
+/* The contents of #eventsModal — the other authoring surface, which writes the six kinds
+   attendance never reads. Same grammar as the block above and mostly the same components, for that
+   block's own reason: a sixth dialog that invented a sixth grammar would be a sixth thing to keep
+   in step.
+
+   WHY THESE ARE `.event-` RULES AND NOT THE `.dayoff-` ONES REUSED. The shapes are nearly
+   identical and sharing them would save eight lines. What it would cost is honesty in the one file
+   that has to stay readable at a glance: `.dayoff-kinds` on the row of pills that says
+   "Conference" reads as a mistake to everybody who meets it afterwards, and the day one of the two
+   panels needs a different gap, whoever changes it has to work out which screens they are about to
+   move. Two names, two screens, and a change to one cannot reach the other. Same call, and the
+   same reasoning, as the two caution strips further up this sheet. */
+.event-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+/* A COLUMN rather than the days-off form's wrapping row. That form has four controls; this one has
+   eight, and eight controls flowing in a wrapped row put the title beside a date and the note
+   under a button at whatever width the panel happens to be. A column reads top to bottom at every
+   width, which is what a form with this many fields needs. */
+.event-form { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.event-dates { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.event-classes { display: flex; flex-wrap: wrap; gap: 6px; }
+/* One neutral wash for all six, which is deliberately NOT `.dayoff-kind`'s two. Over there the
+   second colour marks the kind that names classes, because that is the distinction a teacher scans
+   that list for. Here every kind can name classes and none of them closes one, so a palette would
+   be six colours encoding nothing — and a legend to go with it. */
+.event-kind {
+  flex: 0 0 auto; padding: 3px 9px; border-radius: 20px;
+  border: 1.5px solid #d0d8e4; background: #f5f7fa; color: #6b7a8d;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; white-space: nowrap;
+}
+/* The row currently loaded into the form above, so that "Save changes" has something on screen
+   telling the teacher which of eleven rows it is about. The interactive indigo, the same wash the
+   app uses everywhere for the thing that is selected. */
+.roster-row.editing { border-color: #b0bcf0; background: #f7f9ff; }
+/* The student picker. A <select> where the classes get a `.toggle-btn` row, and the departure is
+   measured rather than stylistic: five classes make five buttons and a hundred and forty students
+   make a wall. Sized like `.class-input` so the two read as one form. */
+.event-select {
+  width: 100%; padding: 8px 11px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #2c3e50; font-size: 13px;
+}
+/* The lead time: a sentence with a number in the middle of it, because "3" beside a label saying
+   "lead time" is a number a teacher has to translate. Wrapping is allowed — at 390px the sentence
+   takes two lines and the field stays with the words on either side of it. */
+.event-lead { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #6b7a8d; }
+.event-num {
+  width: 62px; padding: 6px 8px; border-radius: 8px; text-align: center;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #2c3e50; font-size: 13px; font-weight: 600;
+}
+
 /* Both of these are <p> inside `.modal-body`, whose own rule is more specific than a bare class —
    so they are qualified rather than left to lose the cascade, exactly as `.year-hint` and
    `.year-error` are above. */
@@ -1549,6 +1606,30 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .dayoff-kind { font-size: 11px; }
   .dayoff-keeps { padding: 12px; }
   .dayoff-keeps-line { font-size: 13px; }
+  /* Calendar events (WO-6.1), the same four containers and the same reasoning: the pills, the
+     dates and the class buttons carry their own floors from `.pill`, `.term-date` and
+     `.toggle-btn`, so what this block owns is the spacing between them. `.event-form` is a column
+     rather than a wrapped row, so its gap is the vertical distance between eight stacked
+     controls. */
+  .event-kinds { gap: 8px; }
+  .event-form { gap: 10px; }
+  .event-dates { gap: 10px; }
+  .event-classes { gap: 8px; }
+  /* The two CONTROLS this panel adds that no other rule covers, and both carry the floor
+     themselves. The select is a real target — it opens iPadOS's own wheel — so it gets the height
+     with its vertical padding zeroed, which is the `.search-box` rule this sheet learned at WO-1.2:
+     the height belongs to the control, never to a wrapper around it. The number field gets it for
+     the same reason, and stays narrow because it holds one digit. */
+  .event-select { min-height: 44px; padding-top: 0; padding-bottom: 0; font-size: 14px; }
+  .event-num { min-height: 44px; min-width: 56px; padding-top: 0; padding-bottom: 0; font-size: 14px; }
+  /* Text rather than targets — a badge and the sentence the number sits inside — named here for
+     the size bump only, exactly as `.dayoff-kind` above is. */
+  .event-kind { font-size: 11px; }
+  .event-lead { font-size: 13px; gap: 8px; }
+  /* The two panel doors on the home screen, which are 44px targets shoulder to shoulder whenever
+     the row is wide enough to keep them on one line. Same 8px→10px the rows above take, and for
+     the same reason. */
+  .panel-title-actions { gap: 10px; }
   .modal-body .class-hint { font-size: 12px; }
   .modal-body .class-error { font-size: 13px; }
   /* Roster & contacts. Every field here carries the 44px itself with its vertical padding zeroed,

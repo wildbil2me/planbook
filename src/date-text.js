@@ -26,15 +26,22 @@
     |----------------------|-------------------|----------------|-------------------------------------|
     | shortDate()          | here              | `Sep 8`        | assignment list, score grid,        |
     |                      |                   |                | past-due prompt and review          |
-    | weekdayShortDate()   | src/days-off.js   | `Tue, Sep 8`   | the days-off list, where the        |
-    |                      |                   |                | weekday IS the fact being checked   |
+    | weekdayShortDate()   | here              | `Tue, Sep 8`   | the days-off list and the events    |
+    |                      |                   |                | list, where the weekday IS the fact |
+    |                      |                   |                | being checked                       |
     | numericDate()        | src/attendance.js | `9/8`          | attendance column heads, the pager  |
     |                      |                   |                | range, both printed reports         |
 
-  src/days-off.js composes its month and day from this file, so the two cannot come to disagree about
-  what `Sep 8` looks like. src/attendance.js's cannot compose — `9/8` shares no substring with
-  `Sep 8` — so it is a rename and nothing else, and its own comment holds the reasoning for the
-  format.
+  THE SECOND ROW SAID `src/days-off.js` UNTIL WO-6.1, and it moved here for this file's own reason
+  rather than for tidiness. It was one screen's format while there was one screen listing dated
+  rows; WO-6.1 adds a second list (src/events.js) one modal away from the first, and the two must
+  not spell `Thu, Nov 26` two ways. The alternative was a second copy of a composition whose whole
+  point is that there is one of it — which is the five-copies state this file was created to end,
+  arriving again at copy two. The function is unchanged byte for byte, so nothing on the days-off
+  list renders differently.
+
+  src/attendance.js's cannot compose — `9/8` shares no substring with `Sep 8` — so it is a rename
+  and nothing else, and its own comment holds the reasoning for the format.
 
   ── WHAT AN UNREADABLE DATE PRODUCES, DECIDED ONCE (WO-3.20 deliverable 3) ──
 
@@ -87,4 +94,31 @@ export function shortDate(iso) {
   const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   if (isNaN(d.getTime())) return '';
   return MON[d.getMonth()] + ' ' + d.getDate();
+}
+
+/*
+  `2026-11-26` → `Thu, Nov 26`. The weekday in front of the format above, for the two lists that are
+  read against a school WEEK — the days-off panel and the events panel — where the weekday is the
+  fact being checked rather than decoration.
+
+  NOT CALLED shortDate(), AND THAT IS THE POINT OF WO-3.20: it produces a different string from the
+  function above, and two functions with one name and two answers is how a later screen renders one
+  format beside another in good faith. The name says what comes out. The MONTH AND DAY come from
+  that function rather than from a second copy of the same lookup.
+
+  AN UNREADABLE DATE IS ECHOED BACK rather than dropped, which is this function's own answer and
+  differs from shortDate()'s '' one row above. Kept as it was when it moved here from
+  src/days-off.js at WO-6.1, because that move was behaviour-neutral by construction; the ruling on
+  the difference is written out in this file's header.
+
+  The guard is shortDate()'s: it returns a non-empty string only for three numeric fields that make
+  a real day, so the parse below cannot be reached with anything `new Date()` would call invalid.
+*/
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export function weekdayShortDate(iso) {
+  const said = shortDate(iso);
+  if (!said) return String(iso || '');
+  const parts = String(iso).split('-');
+  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  return DOW[d.getDay()] + ', ' + said;
 }

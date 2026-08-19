@@ -6774,12 +6774,124 @@ medical, or plan data, and an unresolved field never renders blank.
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*
 
-Nothing here yet — WO-6.1 through WO-6.4 append their acceptance lines as they land.
+WO-6.2 through WO-6.4 append their acceptance lines here as they land.
 
 Derived events are computed at render, never stored: move an assignment's due date and the
-calendar has to follow by itself.
+calendar has to follow by itself. And **nothing in this phase may learn which classes are expected
+to meet on a date** — the rule at the head of `plans/work-orders/phase-6-calendar-glance.md`, against
+`plans/rotating-schedule.md`. It binds the month grid hardest and it binds the recurrence first.
 
 ---
+
+### WO-6.1 — Event model & authoring
+
+**What this adds.** A second door onto `doc.events` — **Events** on the class-grid header, beside
+**Days off** — and the six kinds a teacher types in for her own sake: an early release, a grades-due
+date, a conference, a meeting, a trip, a reminder. With them: the three rules that refuse a bad
+event, moved down out of a screen module and into the model; a weekly repeat that materializes; a
+`seriesId` so the repeat can be deleted in one action; and the grades-due lead time, stored in the
+year document.
+
+**The record was already there.** WO-2.3 shipped the eight-field `newEvent()` and every screen that
+reads one. What WO-6.1 changed about it is one field, `seriesId`, and the two authoring surfaces
+still write the same nine — which is why the no-regression evidence is WO-2.3's own key-list
+assertion, updated from eight names to nine and asserted from the **days-off** panel rather than
+from the new one.
+
+**Both panels stay, and neither can write the other's kinds.** `commit()` in `src/days-off.js` is
+still the one place a day off is written; `src/events.js` cannot author `no-school` or `dropped`, and
+`src/days-off.js`'s kind guard now asks `isAttendanceKind()` rather than "is this a kind at all",
+which stopped meaning the same thing the moment the table grew to eight rows. The two lists are
+complementary by construction — `exceptionsIn()` and `generalEventsIn()` — so a Remove on one panel
+can never take a row the other owns.
+
+**A repeat materializes and skips nothing.** Five whole entries with five ids, no recurrence rule
+anywhere in the document, and no knowledge of which classes meet on a date — the "skip the weeks that
+class doesn't meet" kindness is `plans/rotating-schedule.md`'s cycle model arriving from the
+convenience side. The holiday in the middle of the run gets its instance and the teacher deletes that
+one row.
+
+**Where the lead time warns is WO-6.4, not here.** It is typed and stored on this panel and shown on
+the glance page. One fact, one warning surface.
+
+- [x] Every one of the six kinds this panel authors can be created, with a range and without: twelve
+      entries, twelve rows, `endDate` written on all of them and equal to `date` on the single-day
+      half. *(Create, edit and delete are all three proven for these six. The two attendance kinds
+      have create and delete only, as WO-2.3 shipped them — see the note under this list.)*
+- [x] An event can be edited in place: the row keeps its id, the repeat field goes off screen while
+      an edit is open, and not one other event in the document moves.
+- [x] Every one of them can be deleted from the same panel.
+- [x] A weekly repeat produces five independent entries — five ids, five dates seven days apart, one
+      series label, and every instance holding the same nine fields and no tenth.
+- [x] Moving one instance moves only that one: the other four are byte-identical afterwards and the
+      moved row keeps its series label.
+- [x] The whole materialized series goes in one action, and the control says how many it is about to
+      take before it is pressed.
+- [x] The three rules refuse from the model rather than from a form — a `dropped` event naming no
+      class, an end date before its start, and an unreadable date each build **nothing** through
+      `src/calendar.js`, and `addEvent()` will not store one either. Asked with a bare object as the
+      document, so no screen module is in the call stack.
+- [x] `newEvent()` writes the nine fields `docs/data-model.md` § Events tabulates, in that order and
+      no others — asserted twice, once against the running app and once as a grep reconciling the
+      table with the object literal (`wo-sweep.mjs` § 16).
+- [x] The grades-due lead time is typed once, stored in the **year document**, and survives a reload;
+      an absent or unreadable key reads as the shipped default rather than as zero; nothing about it
+      is in `localStorage`.
+- [x] `studentId` gets its first writer anywhere in this app, and it carries a pointer: the row shows
+      a name and the document holds an id, and no `supports` value of any kind reaches either.
+- [x] With twelve of this work order's events in the document, the days-off panel lists none of them.
+- [x] Every control in the new panel measures ≥44px under an emulated coarse pointer — the student
+      `<select>`, the three date fields and the lead-time number included — and neither button in the
+      home header row is narrower than its own label.
+- [ ] A grades-due event warns at its configured lead time.
+      → WO-6.4 *"A grades-due event appears under Deadlines closing in on every day inside its lead
+      time, and taps through to the event"*. The lead time is stored and validated here; the surface
+      that reads it does not exist yet, and no evidence on this tree can close that line.
+
+**What is create-and-delete rather than create-edit-delete.** `no-school` and `dropped` have no edit
+path — they did not have one when WO-2.3 shipped and this work order did not add one, because the
+same work order asks that those two behave exactly as WO-2.3 established and their authoring screen
+is protected by name. Editing a day off also has to route back through the recorded-meetings warning,
+which is a second dialog on a surface this work order was told to leave alone. It is written up as a
+proposed follow-up in `.claude/dispatch/WO-6.1-result.md`.
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **998 of 998, 0 failed, 0 skipped**, 326s, exit 0 — up
+from 984 on the tree this work order arrived on. Fourteen new executed checks (fifteen call sites,
+one of them a fixture guard) across one new section at the foot of the file and two inside the
+existing coarse-pointer block.* `wo-sweep.mjs` *is 23 checks, 21 passed, 0 failed, 2 to review —
+both pre-existing shapes, and `src/events.js` joins the first of them with three comment lines
+stating the prohibition it obeys.*
+
+*The first run of that harness was **8 red on a tree whose fourteen new checks were all green**, and
+both causes are worth keeping. Seven were the backup block: `newYearDocument()` had been given a
+`calendar: {}` settings block, and `parseBackup()` validates a restored file against the shape that
+function returns — so every backup written by every earlier build was refused by name. The block is
+no longer seeded; its one key defaults when absent, which is the rule it was designed under. A
+`SCHEMA_VERSION` bump whose entire content is an empty object was the other answer and was refused.
+The eighth was WO-2.3's key-list assertion reading eight names against a nine-field record, which is
+the no-regression line doing its job.*
+
+- [x] 👤 The **Events** button and **Days off** sit together in the home header on a real iPad in
+      portrait at 390px without pushing the row into horizontal overflow — they wrap onto two lines
+      rather than spilling, which is what `.panel-title-actions` is for, and whether two stacked
+      buttons read as one control or as clutter is the owner's call and not a measurement. 👤
+- [x] 👤 The eight-field form is workable with a thumb on the device: the six kind pills, the three
+      date pickers and the student `<select>` in one modal is more controls than any other panel in
+      this app carries, and whether it needs splitting is a judgement a headless browser cannot
+      make however green it measures (the WO-2.3 precedent). 👤
+- [x] 👤 Picking a start date and then a repeat-until date through iPadOS's own picker writes the
+      dates the teacher chose — the picker's retained selection is the quirk `src/classes.js` paid
+      for at WO-1.6, and this form is the fifth surface to answer it and the first with three date
+      fields on it. Add a repeat, then add a second one starting on the same day. 👤
+- [x] 👤 The student picker with a real roster of ~140 names: a `<select>` is iPadOS's own wheel, and
+      whether finding one student in that wheel is faster than the `.toggle-btn` row the classes get
+      is a thing to feel rather than to measure. 👤
+- [x] 👤 After a cold launch on v85 (a `SHELL` change — force-quit from the app switcher, a reload is
+      not enough), an event added on the iPad is on the list after the relaunch, and the lead time
+      typed on one device is the lead time the other reads. 👤
+
+---
+
 
 ## Phase 7 — Drive sync (opt-in) 🔒
 

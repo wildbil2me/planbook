@@ -244,6 +244,31 @@
       data-dayoff-date="from|to"      a date field in that form; on `change` it carries the end date
                                       along with the start, and rebuilds a field cleared by hand —
                                       the iPadOS picker quirk `data-term-field` answers above
+      data-events-panel               fills the calendar-events panel, then opens it — the second
+                                      door onto `doc.events`, beside the days-off one on the home
+                                      screen. It authors the six kinds attendance does NOT read, and
+                                      cannot write a day off (WO-6.1)
+      data-event-kind="early-release|grades-due|conference|meeting|trip|reminder"  which kind that
+                                      form is about; the lead-time field appears for the second and
+                                      for none of the others
+      data-event-class="<classId>"    adds or removes that class from the event being authored
+      data-event-create               on a <form>: adds the event typed into it, saves the one being
+                                      edited, or materializes a weekly repeat into N whole entries
+      data-event-edit="<eventId>"     loads that row back into the form above it
+      data-event-cancel-edit          leaves that row exactly as it was
+      data-event-remove="<eventId>"   takes it off the calendar. No confirm: an event is a line the
+                                      teacher typed and it destroys nothing on the way out
+      data-event-remove-series="<seriesId>"  takes every instance of one materialized repeat off at
+                                      once, by the label rather than by matching title and kind —
+                                      which would also take the one she typed by hand. Drawn only on
+                                      a row that has siblings
+      data-event-date="from|to|until"  a date field in that form; same `change` hook and same iPadOS
+                                      rebuild as `data-dayoff-date`, over three fields rather than
+                                      two. `until` is the repeat and carries nothing along with it
+      data-event-lead                 on an <input>: how many days ahead a grades-due date starts
+                                      showing, written as it is typed. It is a setting about the
+                                      YEAR rather than about the entry being typed, and WHERE it
+                                      warns is WO-6.4's glance page and not this panel
       data-attendance-drop="<iso>"    one tap: the class did not meet that day
       data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
       data-attendance-edit="<iso>"    the deliberate unlock on a column, one column at a time — a
@@ -383,6 +408,11 @@ import * as passHistory from './pass-history.js';
    second, which is what keeps "is this class meeting" a question with one answer. */
 import * as calendar from './calendar.js';
 import * as daysOff from './days-off.js';
+/* WO-6.1's second authoring surface over the SAME model. It writes the six kinds attendance never
+   reads, src/days-off.js still writes the two it does, and neither can write the other's — the
+   rules that refuse a bad event are src/calendar.js's now, asked for by both. Two doors onto one
+   array, one place each rule lives. */
+import * as events from './events.js';
 import * as roster from './roster.js';
 /* WO-1.23's contact import, and the two modules run ONE WAY: this one imports src/roster.js for the
    name parser, the match key and the record constructors, and src/roster.js imports it for nothing
@@ -1361,6 +1391,30 @@ document.addEventListener('click', (e) => {
     afterCalendarChange(); return;
   }
 
+  /* ── calendar events (WO-6.1) ──
+     Directly under the days-off block because they are two doors onto one array and a reader
+     looking for one will be looking for the other. NONE OF THESE CHAINS afterCalendarChange(),
+     and the absence is deliberate rather than forgotten: that chain redraws the home cards and the
+     registry, both of which read `no-school` and `dropped` and nothing else (src/calendar.js's
+     coveringEvent()). A conference changes nothing on either screen, so a repaint here would be
+     two paints buying nothing — and the day WO-6.3's grid or WO-6.4's glance page reads these
+     kinds, its repaint joins the chain and these lines gain it. */
+  const eventsPanel = e.target.closest('[data-events-panel]');
+  if (eventsPanel) { events.openEvents(eventsPanel); return; }
+  const eventKind = e.target.closest('[data-event-kind]');
+  if (eventKind) { events.setKind(eventKind.getAttribute('data-event-kind')); return; }
+  const eventClass = e.target.closest('[data-event-class]');
+  if (eventClass) { events.toggleClass(eventClass.getAttribute('data-event-class')); return; }
+  const eventEdit = e.target.closest('[data-event-edit]');
+  if (eventEdit) { events.editEvent(eventEdit.getAttribute('data-event-edit')); return; }
+  if (e.target.closest('[data-event-cancel-edit]')) { events.cancelEdit(); return; }
+  const eventRemoveSeries = e.target.closest('[data-event-remove-series]');
+  if (eventRemoveSeries) {
+    events.removeSeries(eventRemoveSeries.getAttribute('data-event-remove-series')); return;
+  }
+  const eventRemove = e.target.closest('[data-event-remove]');
+  if (eventRemove) { events.removeEvent(eventRemove.getAttribute('data-event-remove')); return; }
+
   /* ── attendance ──
      High in this listener, above the roster and the teacher's details: these are the taps a
      teacher makes with a class walking through the door, and the five below her are taps she makes
@@ -1633,6 +1687,10 @@ document.addEventListener('submit', (e) => {
   if (form.hasAttribute('data-dayoff-create')) {
     daysOff.createFromForm(); afterCalendarChange(); return;
   }
+  /* A calendar event, an edit to one, or a weekly repeat — one button, because the teacher made
+     one decision and the form already says which of the three it is about. No repaint chained, for
+     the reason the click block above gives: nothing behind this dialog reads these six kinds yet. */
+  if (form.hasAttribute('data-event-create')) { events.createFromForm(); return; }
   if (form.hasAttribute('data-class-rename-save')) {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
     afterClassChange();
@@ -1838,6 +1896,13 @@ document.addEventListener('input', (e) => {
   const signalField = e.target.closest('[data-signal-threshold]');
   if (signalField) { signalSettings.editThreshold(signalField); return; }
 
+  /* The grades-due lead time, saved as it is typed and by the same debounce. No chain and no
+     re-render, for the two reasons directly above: nothing behind that panel reads it yet — the
+     surface that will is WO-6.4's glance page — and replacing the input under the caret is the
+     failure that rule exists for. */
+  const eventLead = e.target.closest('[data-event-lead]');
+  if (eventLead) { events.editLeadDays(eventLead); return; }
+
   /* An assignment's name, its points or one of its dates, saved as it is typed and by the same
      debounce. The list behind the dialog is redrawn per keystroke and the FIELD is not — see
      src/assignments.js, where replacing the input under the caret is the failure that rule exists
@@ -1948,6 +2013,11 @@ document.addEventListener('change', (e) => {
      in a form, not what is in the year. */
   const dayOffDate = e.target.closest('[data-dayoff-date]');
   if (dayOffDate) daysOff.dateCommitted(dayOffDate);
+  /* The events form's three. Fifth instance of the same iPadOS quirk, and the only difference from
+     the row above is that there is a third field — the repeat's `until`, which is rebuilt when it
+     is cleared like the other two and carries nothing along with it when it is set. */
+  const eventDate = e.target.closest('[data-event-date]');
+  if (eventDate) events.dateCommitted(eventDate);
   /* The accommodation kind picker, which is read HERE and not in the `input` listener above: a
      <select> commits on `change`, and hooking both would write the same value twice and move `rev`
      twice for one tap. It carries `data-support-kind` rather than `data-student-field` so that the
@@ -2516,6 +2586,15 @@ window.planbook = {
      disagree with the app. Nothing in the app reads window.planbook — see the block above for why
      the seam outlived the shelf. */
   calendar,
+  /* `events` joined at WO-6.1, and for the READING reason `calendar` gives rather than a driving
+     one: every control this panel has is a pill, a field or a button and tools/verify-shell.mjs
+     taps all of them. What no click can show is the claim the acceptance lines actually make about
+     a recurrence — that the twelve rows on screen are twelve INDEPENDENT entries rather than one
+     rule drawn twelve times. Those two builds look identical on the list and differ only in what is
+     in `doc.events`, so the harness reads the array through `store` and asks this module nothing
+     that a teacher could not also ask by tapping. Nothing in the app reads window.planbook — see
+     the block above for why the seam outlived the shelf. */
+  events,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

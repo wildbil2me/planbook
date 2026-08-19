@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 966 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 981 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1844,6 +1844,31 @@ assert an empty slot holds its height, and it turns out to double as the guard a
 appearing on a card that has nothing to say — which is why the count check that stayed green through
 this mutation is not the whole of acceptance line 3. `src/home.js` was restored from a byte-for-byte
 copy after each round and compared against it; nothing under `src/` is changed by this round.
+
+**WO-6.1 moved it from 966 to 981**: fifteen call sites, **thirteen of them a new section** at the
+foot of the file — the six event kinds authored through the real panel, the three model refusals, the
+record's own nine fields, an edit, a deletion, a materialized weekly series and the move of one
+instance inside it — of which **one is a fixture-guard failure arm** that never fires on a green run,
+plus a `skip()` for a page with no `window.planbook` on it (a `skip` is not a `check(` and is not in
+this count). The other two are inside the existing coarse-pointer block: one measuring every control
+in the new panel and one guarding that the panel opened at all. So the section contributes fourteen
+executed results and **the run prints 998**, measured on the delivered tree:
+`998 checks · 998 passed · 0 failed · 0 skipped`, 27,204 lines, 27.3 lines per check, 326s, exit 0.
+
+**The entry worth reading is what the first run reddened, because none of it was in the new section.**
+Eight checks failed on a tree whose fourteen new ones were all green — seven in the backup block and
+one in WO-2.3's. The backup seven were one line: `newYearDocument()` had been given a `calendar: {}`
+settings block, and `parseBackup()` checks a restored file against the shape that function returns, so
+every backup written by every earlier build was refused by name — *"is missing calendar, so Planbook
+cannot treat it as a whole school year"*. The fix was to stop seeding it: the block's one key defaults
+when absent, which is the rule it was designed under, so there was nothing for the document to hold
+until a teacher tunes it. **A migration would have been the other answer and was refused** — a
+`SCHEMA_VERSION` bump whose entire content is an empty object, in exchange for making this build's
+documents unreadable to the previous one. The eighth is not a defect at all and is the reason WO-2.3's
+block asserts a key list rather than a field count: `madeEvent.keys` read the eight-field record and
+the record is nine fields now. Updating that string is the no-regression line being *checked* rather
+than assumed, and it is asserted from the days-off panel on purpose, because the claim is that both
+authoring surfaces write the same record.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

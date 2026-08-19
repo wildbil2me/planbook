@@ -158,6 +158,28 @@ export function newYearDocument(year) {
        threshold was added is missing it — so naming them here would only make this file look
        like the source of truth for arithmetic it does not implement. */
     signals: {},
+    /*
+      AND `calendar` IS NOT HERE, WHICH IS THE ONE DEPARTURE FROM THE RULE ABOVE (WO-6.1).
+
+      Every other collection is present and empty so that no reader has to check first. WO-6.1's
+      calendar settings block — one key, the grades-due lead time — is deliberately absent until a
+      teacher types into the field, and src/calendar.js's leadDaysOf() reads a missing block as the
+      shipped default, which is the same rule src/signals.js applies to a threshold.
+
+      IT WAS SEEDED HERE FIRST, AND THE HARNESS CAUGHT WHAT THAT COSTS. parseBackup() checks a
+      restored file against the shape THIS FUNCTION returns, so one more key here means every
+      backup written by every earlier build is refused by name — "is missing calendar, so Planbook
+      cannot treat it as a whole school year" — which is seven red checks and a teacher who cannot
+      restore last week's file. The mechanism for a document that legitimately lacks a key is
+      MIGRATIONS below, and a migration whose entire content is `doc.calendar = {}` would bump
+      SCHEMA_VERSION and make this build's documents unreadable to the previous one, in exchange
+      for an empty object.
+
+      So the block arrives when there is something to put in it. src/calendar.js's setLeadDays()
+      creates it, docs/data-model.md § Events documents it, and src/backup.js's NOT_CONTENT
+      classifies it — a key can be documented, classified and absent all at once, and this one is
+      absent in every document nobody has tuned.
+    */
   };
 }
 

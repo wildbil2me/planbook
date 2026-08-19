@@ -25,7 +25,7 @@ Three rules govern the phase:
 
 ## WO-6.1 — Event model & authoring
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.3 · **Owes** WO-6.4
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3 · **Owes** WO-6.4
 **Closes roadmap** Phase 6 → "Event model: date or range, title, kind, optional class and student.",
 "Grades-due deadlines", "Recurring events by materializing instances."
 *(the first fragment stopped at the two words `Event model` until 2026-08-08, WO-2.15 — under twelve
@@ -91,18 +91,50 @@ recurrence, and the validation lift. Read the size against that list.
   reasoning about exceptions. *RRULE is V2, if ever.*
 
 **Acceptance**
-- [ ] Every event kind can be created, edited, and deleted, with and without a range.
-- [ ] A weekly recurrence produces N independent entries; moving one moves only that one.
-- [ ] Deleting a materialized series is possible without deleting each instance by hand.
-- [ ] The four rules refuse from the model rather than from a form: a `dropped` event naming no class,
+- [x] Every kind this panel authors — the six general kinds `early-release | grades-due |
+      conference | meeting | trip | reminder` — can be created, edited, and deleted, with and without
+      a range.
+      *(**Re-cut from "every event kind" on 2026-08-19, the owner's call**, after the verifier failed
+      this work order on the line as written. The line was internally inconsistent with its own work
+      order: it demanded an edit path the Deliverables forbid building. `no-school` and `dropped` are
+      authored on the days-off screen, which the Deliverables protect by name, and `commit()` in
+      `src/days-off.js` stays the one writer of a day off — so an edit for those two would have to
+      route back through `openConfirm()`, a second dialog flow on a surface this work order was told
+      to leave alone. **They keep create and delete, exactly as WO-2.3 shipped them, and no follow-up
+      work order is booked for the missing edit: that is the design, not a gap**, and the last
+      acceptance line below is where it is stated. What this line measures is unchanged — twelve
+      entries across the six kinds in `verify-shell.mjs`'s WO-6.1 block, one edited in place and all
+      twelve deleted; only the claim was narrowed to what the work order actually asked to be built.
+      The narrowing is recorded rather than silent because a line rewritten to match what shipped is
+      the one edit that can turn a verifier into a rubber stamp.)*
+- [x] A weekly recurrence produces N independent entries; moving one moves only that one.
+- [x] Deleting a materialized series is possible without deleting each instance by hand.
+- [x] The four rules refuse from the model rather than from a form: a `dropped` event naming no class,
       an end date before its start, and an unparseable date are each refused when built through
       `src/calendar.js` directly, with no screen module in the call stack.
-- [ ] `docs/data-model.md` § Events names the lead-time field and the series identifier, and the
+      *(The fourth — a range covering recorded meetings — is `clashingMeetings()` in `src/calendar.js`,
+      which is the rule; the ledger read stays with the caller, because `src/attendance.js` imports
+      the model and a model importing it back closes the loop this repo has refused six times.)*
+- [x] `docs/data-model.md` § Events names the lead-time field and the series identifier, and the
       record it documents is field-for-field the record `newEvent()` writes.
+      *(Asserted twice: `verify-shell.mjs` reads the object the running app builds, and
+      `wo-sweep.mjs` § 16 reconciles the § Events table against the object literal in
+      `src/calendar.js`. Neither alone catches a field renamed in both the code and the harness.)*
 - [ ] A grades-due event warns at its configured lead time.
       → WO-6.4 "A grades-due event appears under Deadlines closing in on every day inside its lead
       time, and taps through to the event"
-- [ ] `no-school` and `dropped` behave exactly as WO-2.3 established — no regression.
+- [x] `no-school` and `dropped` behave exactly as WO-2.3 established — no regression: they are
+      created and deleted on the days-off screen, through `commit()` in `src/days-off.js`, and there
+      is no edit path for them anywhere in the app. **That is the establishment, and this is the line
+      that states it** — the general events panel refuses both kinds by construction, so a day off
+      has exactly one door and the first acceptance line above is scoped to the other six kinds
+      rather than reaching through this one.
+      *(The whole WO-2.3 block in `verify-shell.mjs` is green on the delivered tree. One EXPECTED
+      value in it changed and nothing about the behaviour did: `madeEvent.keys` read the eight-field
+      record and the record is nine fields now, because this work order added `seriesId` to it — a
+      day off written on the days-off panel carries the empty label it will never use, exactly as it
+      has always carried `studentId` and `notes`. That assertion is made from the days-off panel on
+      purpose, so a build where only the new surface wrote the full record would go red.)*
 
 ---
 

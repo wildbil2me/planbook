@@ -1182,6 +1182,101 @@ function commentLines(file) {
       : `${proof.join(', ')} — duplicated on purpose, so this is the only place the claim can be made about both. Textual: it catches the fold being DELETED, not a fold applied wrongly (see the comment at this check)`);
 }
 
+/* ══════ 16. the documented event record IS the record newEvent() writes ══════
+   WO-6.1's fifth acceptance line: `docs/data-model.md` § Events names the lead-time field and the
+   series identifier, "and the record it documents is field-for-field the record `newEvent()`
+   writes." That is a reconciliation between a table and an object literal, which is § 14's shape
+   one level down — and it gets a check for § 14's reason. The pair was in step on the day it was
+   written, by hand, with nothing standing behind it; a tenth field added to `newEvent()` and not to
+   the table is invisible to every other check in this repo and to `verify-shell.mjs`, which reads
+   the app against itself.
+
+   THE FAILURE IT IS FOR IS NOT A TYPO. It is a later work order adding a field — WO-6.2's derived
+   events, WO-6.3's grid, anything that wants one more thing on an entry — and documenting it in
+   prose beside the table rather than in it, or in the table and not in the code. Either way the two
+   halves of the schema disagree and the one somebody reads is the wrong one, which is the same
+   sentence this repository writes about a second source of truth everywhere else.
+
+   THE HARNESS MAKES THE OTHER HALF OF THE SAME CLAIM and the two are not redundant.
+   `verify-shell.mjs` asks the running app what `newEvent()` returned and compares it against nine
+   names typed into the harness; this compares those nine names against the DOCUMENT. Neither one
+   alone catches a field renamed in both the code and the harness, and together they do.
+
+   Both anchors FAIL loudly when they move rather than going quiet, for the reason § 11's count
+   does: the table is found by the heading `### The record, field for field` and the literal by
+   `export function newEvent(`. A rewording is a red run and a sentence saying which anchor moved. */
+
+{
+  const NAME = 'docs/data-model.md § Events documents the record newEvent() actually writes';
+  const modelPath = path.join(REPO, 'docs', 'data-model.md');
+  const calPath = path.join(REPO, 'src', 'calendar.js');
+  if (!fs.existsSync(modelPath) || !fs.existsSync(calPath)) {
+    check(NAME, false,
+      `${!fs.existsSync(modelPath) ? 'docs/data-model.md' : 'src/calendar.js'} is not where this check expects it — the event record is now reconciled against nothing. Restore the file or point this check at the new path.`);
+  } else {
+    // The table: every row under `### The record, field for field`, up to the next `###`. A row is
+    // `| \`field\` | … |`, so the field name is the first backticked token on the line.
+    const modelLines = fs.readFileSync(modelPath, 'utf8').split('\n');
+    const from = modelLines.findIndex(l => /^###\s+The record, field for field\s*$/.test(l));
+    const to = from < 0 ? -1 : modelLines.findIndex((l, i) => i > from && /^###\s/.test(l));
+    const documented = [];
+    if (from >= 0) {
+      for (let i = from + 1; i < (to < 0 ? modelLines.length : to); i++) {
+        const m = /^\|\s*`([A-Za-z][A-Za-z0-9_]*)`\s*\|/.exec(modelLines[i]);
+        if (m) documented.push(m[1]);
+      }
+    }
+
+    // The literal: the keys assigned inside `newEvent()`'s returned object, in source order, down
+    // to the first unindented `}`. Keys at exactly four spaces of indent are the record's own —
+    // anything deeper belongs to a nested value, and there is none today.
+    const calLines = fs.readFileSync(calPath, 'utf8').split('\n');
+    const fnAt = calLines.findIndex(l => /^export function newEvent\s*\(/.test(l));
+    let fnEnd = fnAt < 0 ? -1 : calLines.findIndex((l, i) => i > fnAt && /^\}/.test(l));
+    if (fnEnd < 0) fnEnd = calLines.length;
+    const written = [];
+    if (fnAt >= 0) {
+      for (let i = fnAt; i < fnEnd; i++) {
+        const m = /^ {4}([A-Za-z][A-Za-z0-9_]*):/.exec(calLines[i]);
+        if (m) written.push(m[1]);
+      }
+    }
+
+    // And the two fields the acceptance line names by name. `seriesId` has to be in the record
+    // above; the lead time is deliberately NOT — it is a document-level setting — so it is asserted
+    // as being NAMED in the section rather than as being a row of the table.
+    const section = (() => {
+      const at = modelLines.findIndex(l => /^##\s+Events: only what can't be derived\s*$/.test(l));
+      if (at < 0) return '';
+      const end = modelLines.findIndex((l, i) => i > at && /^##\s/.test(l));
+      return modelLines.slice(at, end < 0 ? modelLines.length : end).join('\n');
+    })();
+
+    const faults = [];
+    if (from < 0) faults.push('docs/data-model.md has no `### The record, field for field` heading — the table this check reads is gone or renamed, and a section it cannot parse must not read as a passing diff');
+    if (fnAt < 0) faults.push('src/calendar.js has no top-level `export function newEvent(` — the builder moved or was renamed, and this check is now watching nothing');
+    if (from >= 0 && !documented.length) faults.push('the record table under `### The record, field for field` parsed to zero rows — a row is `| `field` | … |`, and a table this check cannot read is the same green-from-a-distance failure § 11 guards against');
+    if (fnAt >= 0 && !written.length) faults.push('`newEvent()` parsed to zero written fields — the returned object literal is not in the shape this check reads (keys at four spaces of indent)');
+    if (documented.length && written.length && documented.join(',') !== written.join(',')) {
+      const missing = written.filter(k => documented.indexOf(k) < 0);
+      const extra = documented.filter(k => written.indexOf(k) < 0);
+      faults.push(`the table says [${documented.join(', ')}] and newEvent() writes [${written.join(', ')}]`
+        + (missing.length ? ` — ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} written and not documented` : '')
+        + (extra.length ? ` — ${extra.join(', ')} ${extra.length === 1 ? 'is' : 'are'} documented and not written` : '')
+        + (!missing.length && !extra.length ? ' — the same nine in a different ORDER, which is still a table a reader compares against the code line by line' : ''));
+    }
+    if (!section) faults.push('docs/data-model.md has no `## Events: only what can\'t be derived` section — the two fields WO-6.1 added are now named nowhere this check can see');
+    else {
+      if (section.indexOf('gradesDueLeadDays') < 0) faults.push('§ Events does not name `gradesDueLeadDays` — the grades-due lead time is a stored setting and the acceptance line asks for it by name');
+      if (section.indexOf('seriesId') < 0) faults.push('§ Events does not name `seriesId` — the series identifier is what makes deleting a materialized repeat possible, and it is undocumented');
+    }
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `${documented.length} documented field(s) — ${documented.join(', ')} — matching newEvent() at src/calendar.js:${fnAt + 1} name for name and in order, with gradesDueLeadDays and seriesId both named in § Events`);
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

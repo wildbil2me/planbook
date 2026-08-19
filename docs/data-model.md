@@ -156,12 +156,18 @@ nag, and nothing noticed until a verifier read the line for another reason.
                "kind": "no-school|dropped|early-release|grades-due|conference|meeting|trip|reminder",
                "title": "Thanksgiving break",
                "classIds": [],        // empty = school-wide; named = just those classes
-               "studentId": "", "notes": "" }],
+               "studentId": "", "notes": "",
+               "seriesId": "" }],     // "" unless this was materialized by a repeat — see Events
 
   "templates": [{ "id": "t_…", "name": "", "audience": "guardian",
                   "tone": "concern|praise", "subject": "", "body": "" }],
 
-  "signals": { /* thresholds, both directions — see below */ }
+  "signals": { /* thresholds, both directions — see below */ },
+
+  /* The calendar's own settings. The BLOCK and the key are both absent until a teacher tunes the
+     lead time — absent IS the default, the same rule `signals` follows above, and `newYearDocument()`
+     deliberately does not seed this one. See § Events. */
+  "calendar": { "gradesDueLeadDays": 3 }
 }
 ```
 
@@ -515,8 +521,52 @@ events and **read** by the attendance layer, never copied into attendance record
 holiday and every class follows. Precedence and the one rule protecting recorded history are in
 [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
 
-Two details settled when those two kinds shipped *(WO-2.3, 2026-08-07 — `src/calendar.js` owns the
-model and `src/days-off.js` is the only writer)*:
+### The record, field for field
+
+Nine fields, and **`newEvent()` in `src/calendar.js` writes every one of them on every event** —
+including the ones the surface that authored it had nothing to put in. One shape means the calendar
+never has to ask which build, or which of the two authoring screens, wrote a row.
+
+| Field | | |
+|---|---|---|
+| `id` | `e_…` | opaque, like every id here |
+| `date` | `2026-11-26` | ISO, and compared as a string everywhere |
+| `endDate` | `2026-11-28` | always written; equals `date` on a one-day event |
+| `kind` | one of the eight above | |
+| `title` | `Thanksgiving break` | may be empty — see below |
+| `classIds` | `[]` | empty = school-wide; named = just those classes |
+| `studentId` | `""` | optional; the student a conference or a reminder is about |
+| `notes` | `""` | optional; the teacher's own line |
+| `seriesId` | `""` | `es_…` on every instance of one materialized repeat, `""` otherwise |
+
+**The `seriesId` is a label, not a rule.** It stores nothing about the recurrence — not the
+interval, not the end date, not which instance this is — and nothing is ever recomputed from it.
+It exists so that *delete the whole series* can find the rows, and the alternative it replaces is
+matching on title and kind, which also deletes the second *Faculty meeting* the teacher typed by
+hand. See the materialization rule at the foot of this section.
+
+### The grades-due lead time
+
+`calendar.gradesDueLeadDays` — a whole-document setting, **not** a field on an event. How many days
+before a `grades-due` date the deadline starts appearing on the glance page's *Deadlines closing
+in* (WO-6.4). Default **3**, which is the shortest warning that always covers a weekend.
+
+It lives in the document rather than under `planbook_` for the reason § Signal thresholds gives:
+it is the teacher's setting, not this browser's, so it has to survive a device change and travel
+with the year. And **an absent key IS the default** — the same rule as a signal threshold, and for
+the same reason. Every document written before WO-6.1 is missing it, a reader has to answer for
+that anyway, and a stored copy of today's number would pin a teacher who never opened the field to
+a default that can never be re-tuned. Read it through `leadDaysOf()`, never off `doc.calendar`.
+
+One warning surface, not two: the lead time is *stored and validated* by the event model and
+*shown* by the glance page. A banner of the authoring screen's own would be a second answer to one
+question.
+
+### The two details settled when the first two kinds shipped
+
+*(WO-2.3, 2026-08-07 — `src/calendar.js` owns the model and `src/days-off.js` is the only writer of
+the two kinds attendance reads; since WO-6.1 `src/events.js` writes the other six, and the rules
+protecting the array are the model's rather than either screen's.)*
 
 - **`endDate` is always written, and equals `date` on a one-day event.** A break is one entry with a
   range, never one entry per day — but the covering test is then `date <= on && on <= endDate` for
@@ -533,7 +583,20 @@ the one that's wrong.
 
 Recurring events **materialize** into individual entries ("repeat weekly until 2026-12-19")
 rather than storing a recurrence rule. Flat, hand-editable, and a single instance can be moved
-without reasoning about exceptions to a rule.
+without reasoning about exceptions to a rule. *RRULE is V2, if ever.*
+
+Three things follow, all of them settled by WO-6.1 in `src/calendar.js`'s `newSeries()`:
+
+- **The instances are independent from the moment they are written.** Each carries its own `id`,
+  its own dates and its own everything else. Moving the third one moves the third one; there is no
+  rule for it to become an exception to.
+- **They share a `seriesId`, and that is the whole of what "the series" means afterwards.** Delete
+  it and every instance goes; nothing recomputes, because nothing was stored to recompute from.
+- **A repeat skips nothing** — not weekends, not holidays, and above all not "the days that class
+  doesn't meet". The last of those would need to know which classes are expected to meet on a date,
+  which is the cycle model [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md) removed
+  on the day it was designed. Every seventh day gets an entry and the teacher deletes the one she
+  doesn't want. There is a ceiling of 60 instances so that a mistyped year cannot fill a document.
 
 ## Importing from Roll Call!
 

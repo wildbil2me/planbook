@@ -13,6 +13,35 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The dates you would rather not carry in your head — 2026-08-19
+
+**Events** joins **Days off** on the home screen: when grades have to be in, the conferences, the
+meetings, the trips, the early releases, and anything else worth seeing coming. One day or a range,
+about the whole year or about named classes, and about a student if it is about a student.
+
+**A repeat writes real entries, not a rule.** *Repeat weekly until December 19* puts a separate line
+on each of those weeks. Move one and only that one moves; delete one and the rest stay. When you want
+the lot gone, one button takes them all and says how many it is about to take before you press it.
+The holiday in the middle of the run gets a line like every other week, and you delete that one row —
+Planbook does not try to guess which weeks your classes meet, because that guess is wrong by first
+period.
+
+**Days off and drops keep their own screen, and nothing here can close a class.** The two are
+deliberately apart: a holiday changes what your attendance says and a faculty meeting does not.
+Neither screen can write the other'''s dates.
+
+Grades-due dates carry a lead time — how many days ahead you want to start seeing them. It is stored
+with the year rather than with the browser, so it follows you to the iPad. Where it shows up is the
+glance page, which is still being built.
+
+**One thing it does not do yet.** A day off or a dropped class can be added and removed but not
+edited; a mistyped snow day is deleted and re-added. Everything on the new Events screen edits in
+place.
+
+Under the surface: the rules that refuse an impossible event — a drop naming no class, an end date
+before its start, a date that does not read as a date — moved out of the days-off screen and into the
+calendar itself, so both screens refuse the same things in the same words.
+
 ### The home screen says how much is left to grade — 2026-08-19
 
 Every class card on the home screen now carries the work still waiting on it — **3 to grade** — for

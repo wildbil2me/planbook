@@ -143,7 +143,7 @@ and the teacher taps *dropped* on the ones that didn't. A cycle model was design
 same day; the decision record is [`plans/rotating-schedule.md`](plans/rotating-schedule.md), and it
 exists because the next session will want to build one.
 
-Five things that will bite:
+Six things that will bite:
 
 - **iOS evicts IndexedDB after ~7 days of non-use for non-installed sites.** Installed PWAs are
   exempt. A teacher who bookmarks instead of installing can lose a term of grades over a holiday.
@@ -166,6 +166,14 @@ Five things that will bite:
   own measured numbers and nothing else — not the document, not the clock, not the threshold it just
   crossed — which is what stops an explanation drifting from the arithmetic behind it and what keeps
   accommodation data out of a sentence Phase 5 mails home.
+- **A settings block is created by its first write, never seeded** (WO-6.1). `newYearDocument()`
+  returns no `calendar` block at all; `leadDaysOf()` defaults when the key is absent, exactly as
+  `thresholdsOf()` does — the rule above is general, and this is its second block rather than a
+  second rule. Seeding it as an empty object cost a whole verify run: `parseBackup()` validates a
+  restored file against the shape `newYearDocument()` returns, so a block added there refuses
+  **every backup written by every earlier build**, by name. A `SCHEMA_VERSION` bump whose entire
+  content is an empty object was the other answer and was refused — it buys nothing and makes this
+  build's documents unreadable to the previous one.
 
 ## Accommodations are the most sensitive data here
 

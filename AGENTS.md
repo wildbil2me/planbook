@@ -34,6 +34,11 @@ dependencies.
   changed, and *Put every threshold back* **deletes** the keys rather than writing today's numbers
   into the year — otherwise a default re-tuned in a later build never reaches anyone who once
   pressed reset. Read a threshold through `thresholdsOf()`, never off `doc.signals` directly.
+- **A settings block is created by its first write, never seeded** (WO-6.1). The rule above is
+  general: `newYearDocument()` returns no `calendar` block, and `leadDaysOf()` defaults when the
+  key is absent. Seeding one as an empty object makes `parseBackup()` refuse **every backup written
+  by every earlier build** — it validates against the shape `newYearDocument()` returns. Do not
+  answer that with a `SCHEMA_VERSION` bump.
 - **A signal rule is handed its own measured numbers and nothing else** — not the document, not the
   clock, not the threshold it just crossed. That is what makes an explanation unable to drift from
   the arithmetic behind it, and what keeps accommodation, medical and plan data out of a sentence

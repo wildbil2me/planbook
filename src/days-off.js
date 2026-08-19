@@ -27,6 +27,12 @@
   registry ASKS the calendar at render. Delete the holiday here and every class follows on the next
   paint, because there was never a copy to go and find.
 
+  AND IT IS NO LONGER THE ONLY DOOR ONTO `doc.events` — src/events.js authors the other six kinds
+  since WO-6.1 — but `commit()` below is still the only place a day off is WRITTEN, and the rules
+  that used to live in createFromForm() are now src/calendar.js's, asked for by both surfaces. Two
+  doors onto one array is the arrangement the SIS importer and the roster editor have had since
+  WO-1.23; two copies of one rule is the thing that lift prevents.
+
   ── THE WARNING, AND WHY IT IS A WARNING AND NOT A REFUSAL ──
 
   A snow day is usually added the morning after — retroactively, over dates that may already have
@@ -100,10 +106,12 @@ import * as calendar from './calendar.js';
 /* Read-only, and one function of it: what counts as a recorded meeting is src/attendance.js's
    answer and must not get a second copy here — see meetingsBetween() there. */
 import { meetingsBetween, spokenDate } from './attendance.js';
-/* The month and day of a date, in the words every other screen uses for them (WO-3.20). This list
-   puts a weekday in front of it and nothing else — see weekdayShortDate() below, which is composed
-   rather than copied so that `Nov 26` is one string in this app rather than four. */
-import { shortDate } from './date-text.js';
+/* A date in the words every other screen uses for one (WO-3.20). This list wants the weekday in
+   front — a day off is checked against a school week and the weekday IS the fact being read — and
+   that formatter lived HERE until WO-6.1, when src/events.js became the second list of dated rows
+   and it moved down beside shortDate(), which it composes. Unchanged byte for byte in the move;
+   that file's header carries the reasoning and the ruling about what an unreadable date produces. */
+import { weekdayShortDate } from './date-text.js';
 
 const MODAL_ID = 'daysOffModal';
 const CONFIRM_ID = 'daysOffConfirmModal';
@@ -146,33 +154,9 @@ function classNameOf(id) {
   return cls ? cls.name : '';
 }
 
-/* `2026-11-26` → `Thu, Nov 26`.
-
-   NOT CALLED shortDate(), AND THAT IS THE POINT OF WO-3.20: it produces a different string from the
-   src/date-text.js function of that name, and two functions with one name and two answers is how a
-   later screen renders one format beside another in good faith. The name says what comes out. The
-   MONTH AND DAY come from that file rather than from a second copy of the same lookup, so this list
-   and the assignment list cannot drift apart about what `Nov 26` looks like; the weekday in front is
-   this screen's own, because a day off is checked against a school week and the weekday IS the fact
-   being read.
-
-   Shorter than src/attendance.js's spokenDate(), which is the full sentence a screen reader gets: a
-   list of ten rows wants the short one and the accessible name wants the long one, so both appear
-   below and neither is re-derived here.
-
-   AN UNREADABLE DATE IS ECHOED BACK rather than dropped — this row's own answer, kept as it was
-   because WO-3.20 changed no screen. The shared formatter answers '' instead and its definition
-   carries the ruling for both. The guard is shortDate()'s: it returns a non-empty string only for
-   three numeric fields that make a real day, so the parse below cannot be reached with anything
-   `new Date()` would call invalid. */
-const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-function weekdayShortDate(iso) {
-  const said = shortDate(iso);
-  if (!said) return String(iso || '');
-  const parts = String(iso).split('-');
-  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  return DOW[d.getDay()] + ', ' + said;
-}
+/* A LIST OF TEN ROWS WANTS THE SHORT DATE and an accessible name wants the long one, so both
+   appear below: src/date-text.js's weekdayShortDate() and src/attendance.js's spokenDate(),
+   imported rather than re-derived. */
 
 /* The range in words, and a one-day event says one date rather than the same date twice. */
 function rangeText(event) {
@@ -208,7 +192,12 @@ function scopeSaid(event) {
   the whole screen (src/classes.js makes the same call for term presets).
 */
 export function setKind(kind) {
-  if (!calendar.kindInfo(kind)) return;
+  /* THE TWO THIS SCREEN AUTHORS, not the eight the table now holds. This read `kindInfo(kind)`
+     until WO-6.1 added six more rows to it, at which point a stray `data-dayoff-kind="trip"` would
+     have put this panel into a state with no pill lit and a class picker it cannot explain. The
+     guard was always meant to say "a kind this form knows"; until there were others, the two
+     sentences were the same one. */
+  if (!calendar.isAttendanceKind(kind)) return;
   chosenKind = kind;
   showError('');
   paintKind();
@@ -328,10 +317,12 @@ export function dateCommitted(input) {
   it. Built with createElement rather than as markup for the reason src/year-picker.js gives and
   this file makes real twice over: the title is teacher-typed and the class names are SIS-pasted.
 
-  It lists the two kinds this build authors and nothing else. WO-6.1's conferences and grades-due
-  entries live in the same array and are deliberately not shown here — this panel is "days off and
-  drops", and a Remove beside a meeting reminder on a screen called that is a mis-tap waiting to be
-  reported as data loss.
+  It lists the two kinds THIS screen authors and nothing else. WO-6.1's conferences, grades-due
+  dates, trips and reminders live in the same array and are deliberately not shown here — this
+  panel is "days off and drops", and a Remove beside a meeting reminder on a screen called that is
+  a mis-tap waiting to be reported as data loss. They have their own panel now (src/events.js), and
+  the two lists are complementary by construction: exceptionsIn() and generalEventsIn() in
+  src/calendar.js, each one exactly what its own screen can remove.
 */
 function paintList() {
   const list = document.getElementById(LIST_ID);
@@ -426,33 +417,36 @@ export function createFromForm() {
 
   const from = fromEl.value;
   const to = toEl.value;
-  if (!calendar.isDate(from)) {
-    showError('Pick the date it starts. A single day just needs that one — the second date is for '
-      + 'a break that runs over several.');
-    fromEl.focus();
-    return;
-  }
-  if (to && !calendar.isDate(to)) { showError('That end date did not read as a date.'); return; }
-  if (to && to < from) {
-    showError('The break ends before it starts. Swap the two dates, or clear the second one if it '
-      + 'is a single day.');
-    toEl.focus();
-    return;
-  }
-  if (chosenKind === calendar.DROPPED && !chosenClassIds.length) {
-    showError('Choose which classes are not meeting. A drop that names nobody would close the '
-      + 'whole school, which is what the other kind is for.');
+  const classIds = chosenKind === calendar.DROPPED ? chosenClassIds : [];
+
+  /*
+    THE RULES ARE ASKED FOR, NOT RESTATED (WO-6.1). Until that work order all four lived here, in a
+    screen module, and src/calendar.js enforced none of them — so they moved DOWN into the model
+    before src/events.js became the second door onto `doc.events`. What is left here is what a form
+    owns: showing the sentence, and putting the caret back where the mistake is.
+
+    The words are the model's too. Two surfaces refusing the same thing in two wordings is the same
+    drift as two surfaces refusing on two rules, one step later.
+  */
+  const fault = calendar.eventFault(chosenKind, from, to, classIds);
+  if (fault) {
+    showError(fault.message);
+    if (fault.field === 'from') fromEl.focus();
+    if (fault.field === 'to') toEl.focus();
     return;
   }
 
-  const event = calendar.newEvent(chosenKind, from, to,
-    titleEl ? titleEl.value : '',
-    chosenKind === calendar.DROPPED ? chosenClassIds : []);
+  const event = calendar.newEvent(chosenKind, from, to, titleEl ? titleEl.value : '', classIds);
+  /* Never null after a clean eventFault() — the two calls ask exactly the same question. Read as
+     the guard it is rather than as doubt about the line above: if this file and the model ever
+     stop agreeing, the honest failure is nothing being written. */
+  if (!event) return;
 
   /* Every meeting already recorded under this range, for the classes this event would cover. The
-     range is the event's own, so a one-day snow day asks about one day. */
-  const clashes = meetingsBetween(event.date, event.endDate)
-    .filter((m) => calendar.coversClass(event, m.classId));
+     LEDGER read is this file's — src/attendance.js owns what counts as a recorded meeting — and
+     which of those the event covers is the model's, for the reason clashingMeetings() gives at the
+     point it answers. The range is the event's own, so a one-day snow day asks about one day. */
+  const clashes = calendar.clashingMeetings(event, meetingsBetween(event.date, event.endDate));
   if (clashes.length) { openConfirm(event, clashes); return; }
 
   commit(event);

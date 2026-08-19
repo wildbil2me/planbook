@@ -76,10 +76,10 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
-| 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
+| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **45/81 `[█████░░░░░] 56%`** · ⏳ 1 deferred |
+| | | **Overall** | **48/81 `[█████░░░░░] 59%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -323,7 +323,11 @@ meet is a second source of truth that's wrong by first period.)*
       *(WO-2.3, 2026-08-07. All five acceptance lines close at the desk — `verify-shell.mjs` 379 of
       379, with six mutation proofs; the largest of them is the Traps line itself, which turns ten
       checks red. Two modules: `src/calendar.js` is the model and `src/days-off.js` is the only
-      writer of `doc.events` in the app. Attendance grew a **fourth** state — `covered` — in the one
+      writer of `doc.events` in the app. *(Three modules and two writers since WO-6.1, 2026-08-19:
+      `src/events.js` authors the other six kinds. What survives whole is the narrower claim —*
+      **`commit()` in `src/days-off.js` is still the one place a day off is written**, *and the rules
+      protecting the array moved down into the model before the second door opened.)* Attendance grew
+      a **fourth** state — `covered` — in the one
       function that decides whether a class met, which is where WO-2.1 reserved a slot for it. One
       consequence recorded rather than hidden: a covered day is read-only, so a class that did meet
       on a school-wide day off has to be corrected on the calendar rather than in the register.
@@ -485,17 +489,17 @@ looking at is the wrong one.
 **The glance page is a launcher, not a report.** Every item taps through to the thing that resolves
 it. If it can't be acted on, it doesn't earn a place.
 
-- [ ] Event model: date or range, title, kind, optional class and student.
+- [x] Event model: date or range, title, kind, optional class and student.
 - [ ] Derived events computed at render from assignments, terms, and the schedule — not stored.
 - [ ] Month and week views, filterable by class.
 - [ ] **The glance page**, in the order a teacher needs it: **every class with today's state —
       taken · dropped · not yet** — each with a one-tap fix · today's and this week's events ·
       what's waiting to be graded · who needs attention · deadlines closing in.
 - [ ] Honest empty states. A quiet day says "nothing needs you today", not five empty panels.
-- [ ] **Grades-due deadlines** as a first-class event kind with a lead-time warning. Re-keying into
+- [x] **Grades-due deadlines** as a first-class event kind with a lead-time warning. Re-keying into
       the SIS is a scheduled job, not something you remember.
 - [ ] **IEP/504 review dates** surfaced ahead of time, in presentation-mode-safe form.
-- [ ] Recurring events by **materializing** instances rather than storing a recurrence rule. Flat,
+- [x] Recurring events by **materializing** instances rather than storing a recurrence rule. Flat,
       editable, and one instance can move without reasoning about exceptions. *RRULE is V2, if ever.*
 
 ---
