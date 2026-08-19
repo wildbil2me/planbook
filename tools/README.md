@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 981 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 991 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1869,6 +1869,36 @@ block asserts a key list rather than a field count: `madeEvent.keys` read the ei
 the record is nine fields now. Updating that string is the no-regression line being *checked* rather
 than assumed, and it is asserted from the days-off panel on purpose, because the claim is that both
 authoring surfaces write the same record.
+
+**WO-6.2 moved it from 981 to 991**: ten call sites, all of them a new section at the foot of the
+file, none inside a loop and one of them a fixture guard that never fires on a green run — the four
+rows of the derived table answered by one call, the review record's six field names and a search of
+the whole month for the five things that share a student record with it, the same month with
+presentation mode on, a bare weekday and a school-wide closure that each produce nothing, a re-read
+of `doc.events` after paging a month each way and reloading, the derived tokens against the authored
+ones, an archived class, and the teardown. So the section contributes ten executed results and
+**the run prints 1008**, measured on the delivered tree: `1008 checks · 1008 passed · 0 failed ·
+0 skipped`, 27,618 lines, 27.4 lines per check, 319s, exit 0. **Green on the first run**, which is
+worth one sentence rather than a paragraph: the module it drives has no DOM, no clock and no store
+in it, so there was nothing for the four CDP traps to catch.
+
+**What that section did have to route around is trap 8's shape, one level in.** Every exact count in
+it is taken over ITS OWN fixture — the items whose `classId` or `studentId` is this block's — and the
+unfiltered total is printed beside it. That is not caution: the run above reports *9 item(s) in the
+month altogether* against the six the fixture seeded, because earlier sections leave dated terms
+behind in 2027 and a month grid reads every class's terms. An exact-equality check over the whole
+month would have gone red about the harness's own history on a correct build, which is the reading
+that gets a sensitive assertion deleted next time. **The absence claims are deliberately NOT
+filtered** — *no meeting state on the bare Wednesday, for any class* and *the string `not-taken`
+nowhere in a year* are made over everything, because an absence cannot be manufactured by somebody
+else's leftovers and a foreign row on that Wednesday is a thing this check should say out loud.
+
+The other half of WO-6.2's evidence is not here at all: `tools/wo-sweep.mjs` § 17 asserts
+structurally that `src/calendar-derived.js` contains no store call, no document mutation and none of
+eleven writer names, and reconciles the review record's object literal against the six names the
+acceptance line allows. The harness proves what today's code paths wrote on today's fixture; the
+grep proves there is nothing in the file that could write on any input, which is the difference that
+matters for a cache somebody adds later "just for the month being drawn".
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

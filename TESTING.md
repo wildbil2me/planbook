@@ -6890,6 +6890,92 @@ the no-regression line doing its job.*
       not enough), an event added on the iPad is on the list after the relaunch, and the lead time
       typed on one device is the lead time the other reads. 👤
 
+### WO-6.2 — Derived events
+
+**What this adds, and it is nothing you can see yet.** One module, `src/calendar-derived.js`, that
+answers the four questions the calendar asks about things the teacher never typed into it: what is
+due, when a term starts and ends, which classes met and which were dropped, and whose IEP/504 review
+is coming up. **Nothing draws any of it** — the month grid is WO-6.3's — so the only thing on screen
+that has changed is nothing at all. That is the point: the read side lands and is measured before the
+surface that will make its mistakes visible.
+
+**Nothing is copied into the events list.** The four answers are computed on every read, out of
+`assignments[]`, `classes[].terms[]`, `attendance[]` and `students[].supports.reviewDate`. Move an
+assignment's due date and the calendar has nothing to go and fix, because it never held a copy —
+which is why the acceptance line for this is a re-read of `doc.events` rather than a look at a grid.
+
+**A day nobody wrote anything down about stays blank.** A month grid is the surface that makes a
+schedule model look necessary, and `plans/rotating-schedule.md` settled that there isn't one. So the
+meeting answers come only from the ledger and from the classes an authored drop names: no record and
+no authored exception means no chip, rather than a wall of amber saying *not taken yet* about twenty
+weekdays across five classes.
+
+**A review date is a date and a name, and in presentation mode it is nothing.** Not a blanked chip
+and not an unlabelled dot — the row does not exist, because a marker on the cell still says *this
+student has something on file* to a projected room. The record carries no plan type, no
+accommodation, no medical text, no behavior-plan text and no case manager, and it is built field by
+field so none of them can arrive by accident.
+
+- [x] One call over a seeded month answers all four rows of the table — a due date out of
+      `assignments[]`, both term edges out of `classes[].terms[]`, a recorded meeting and a planned
+      drop out of `attendance[]` and the authored event, and a review date out of the roster — in
+      date order, every item flagged derived.
+- [x] Reading that month and paging one month forward and one back writes **nothing**: `doc.events`
+      holds the same entries, by `id` and in the same order, that were authored before the first
+      read — asserted again after a reload, and the assignment, the ledger and the student's own
+      record are untouched.
+- [x] Structurally as well as on the fixture: `src/calendar-derived.js` contains no store call, no
+      document mutation and none of the eleven writer names, over five read-only imports
+      (`wo-sweep.mjs` § 17). The harness proves what today's paths wrote; the grep proves there is
+      nothing in the file that could write on any input.
+- [x] A weekday with no attendance record and no authored exception over it produces **no per-class
+      meeting state at all**, for any class — and the string `not-taken` appears nowhere in a window
+      a year wide. The only two dates that answer are the recorded meeting and the planned drop.
+- [x] A school-wide `no-school` names no class and so produces no per-class row either, while
+      `src/attendance.js` still answers `covered` for that class on that date — a decision about what
+      the calendar draws, not a hole in the model.
+- [x] A review date reaches the calendar as six fields by name — `derived, kind, classId, date,
+      studentId, name` — and a search of the whole serialised month finds no plan type, no
+      accommodation, no medical text, no behavior-plan text and no case manager, though all five are
+      on that student's record. Asserted twice: against the running app, and as a grep reconciling
+      the object literal in the file (`wo-sweep.mjs` § 17).
+- [x] In presentation mode the review row is **gone**: no row anywhere, the token `review-date`
+      nowhere in the month, and neither the student's surname nor the date itself anywhere in what
+      the month serialises to — while the other five items are untouched.
+- [x] The five derived kinds share no token with the eight authored ones, so a merged list splits on
+      `kind` alone; `meeting-state` and the authored `meeting` cannot collide.
+- [x] Archiving a class takes its due date, its term edges and its meeting states off the calendar
+      and leaves the review date, which belongs to a student rather than to a class.
+- [x] 👤 After a cold launch on **v86** (a `SHELL` change — force-quit from the app switcher, a
+      reload is not enough), the app still starts **offline** on the iPad. This work order adds a
+      file to the precache list and nothing on screen depends on it yet, which is exactly the shape
+      of change whose only failure mode is invisible until the network is gone: a module in `SHELL`
+      that 404s takes the whole shell down on the next offline launch, and no desk run can see it.
+      Turn the Wi-Fi off, force-quit, relaunch. 👤
+
+*Ticked 2026-08-19 by the owner, on the iPad installed to the home screen and served over HTTPS from
+`tools/serve-https.mjs` — the LAN origin, not the deployed one, because v86 exists only in the
+working tree. The certificate had 381 days left and the server reported no address mismatch, so the
+CA did not need re-minting. **The Environment table above is assumed unchanged; correct this line if
+the hardware or the iPadOS version moved.** The desk half is `verify-shell.mjs`, **1008 of 1008**
+with zero skips, and `wo-sweep.mjs` at 22 passed · 0 failed · 2 standing review lines, both read.*
+
+**Three of this work order's five acceptance lines are WO-6.3's**, under its `**Owes** WO-6.3` —
+a due date moving with its assignment, a tap-through, and a review chip that shows a name and no
+plan type all need a grid to be looked at. They stay `- [ ]` in
+`plans/work-orders/phase-6-calendar-glance.md` and close there. The model half of the review-date
+line is proven above; what is owed is the cell.
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **1008 of 1008, 0 failed, 0 skipped**, 319s, exit 0 — up
+from 998 on the tree this work order arrived on. Ten new executed checks in one new section at the
+foot of the file, none inside a loop, one of them a fixture guard. **Green on the first run**, which
+the module's shape explains rather than luck: no DOM, no clock and no store in it, so none of the
+four CDP traps had anything to catch.* `wo-sweep.mjs` *is 24 checks, 22 passed, 0 failed, 2 to
+review — both pre-existing shapes, and `src/calendar-derived.js` joins the first of them with seven
+lines: six comments stating the prohibition it obeys and one import of the two sanctioned readers in
+`src/supports.js`. Its § 17 was planted against on the delivered tree — a `d.events = out` and a
+`plan:` on the review record — and reddened on all three of its arms before the file was put back.*
+
 ---
 
 

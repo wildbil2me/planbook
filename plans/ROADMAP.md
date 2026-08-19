@@ -47,6 +47,15 @@ window. The tracked artifacts stayed accurate to the commit; the briefing was si
 
 **Do not tick a box for work that is written but unverified.** Written-but-unproven is still `- [ ]`.
 
+**A box that describes a surface is ticked where the surface is drawn.** *(2026-08-19, the owner's
+call on WO-6.2.)* Read the box's own verb: *computed*, *stored*, *materialized* are claims about the
+MECHANISM and close with the model; *surfaced*, *shown*, *filterable* are claims about what a teacher
+SEES and close with the screen. WO-6.2 built and measured the read side behind "IEP/504 review dates
+**surfaced** ahead of time" while nothing drew it, so the fragment moved off its `Closes roadmap`
+line and onto WO-6.3's, which draws the cell. Ticking it in place would have had the dashboard carry
+the claim for however long the next work order took — and `wo-gate.mjs --tick` ticks whatever the
+header declares, so the fix is the header, not the tick.
+
 **Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
 `✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · `🚫 STRUCK — <date>` · `⏳ DEFERRED — <date>`
 
@@ -76,10 +85,10 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
-| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
+| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 4/8 `[█████░░░░░] 50%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **48/81 `[█████░░░░░] 59%`** · ⏳ 1 deferred |
+| | | **Overall** | **49/81 `[██████░░░░] 60%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -490,7 +499,7 @@ looking at is the wrong one.
 it. If it can't be acted on, it doesn't earn a place.
 
 - [x] Event model: date or range, title, kind, optional class and student.
-- [ ] Derived events computed at render from assignments, terms, and the schedule — not stored.
+- [x] Derived events computed at render from assignments, terms, and the schedule — not stored.
 - [ ] Month and week views, filterable by class.
 - [ ] **The glance page**, in the order a teacher needs it: **every class with today's state —
       taken · dropped · not yet** — each with a one-tap fix · today's and this week's events ·

@@ -521,6 +521,26 @@ events and **read** by the attendance layer, never copied into attendance record
 holiday and every class follows. Precedence and the one rule protecting recorded history are in
 [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
 
+**`src/calendar-derived.js` is the one reader of that table** *(WO-6.2)*, and it has no writer in
+it: one exported function per row, plus `derivedItemsIn()` which returns all four in date order.
+It is a third module rather than more of `src/calendar.js` for a mechanical reason — it reads the
+attendance ledger through `src/attendance.js`, which imports `src/calendar.js`, so the derived half
+living in the model would close an import loop. Three of its rulings are decisions rather than
+plumbing and are stated here because a later reader will otherwise re-derive them:
+
+- **A weekday with no attendance record and no authored exception over it yields nothing at all** —
+  not `NOT_TAKEN`, which is `stateOf()`'s *did-I-forget* answer and is a fact about the ledger
+  rather than about the class. Nothing in that module enumerates weekdays or asks which classes were
+  expected to meet; `plans/rotating-schedule.md` is why.
+- **A school-wide `no-school` produces no per-class row either.** It names no class, and expanding it
+  into one row per class would be the calendar deciding what a shut school implies about five of
+  them. The event is authored, so the calendar already draws it in its own right.
+- **A review date reaches the calendar as `{ date, studentId, name }` and nothing else**, and as
+  nothing at all while presentation mode is on — suppressed rather than redacted, because an
+  unlabelled marker still says *this student has something on file* to a projected room. That is
+  rule 1 of § Accommodations, asked through `supportsVisible()` at the point the datum is produced
+  rather than at the point it is drawn.
+
 ### The record, field for field
 
 Nine fields, and **`newEvent()` in `src/calendar.js` writes every one of them on every event** —

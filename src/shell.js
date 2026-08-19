@@ -413,6 +413,11 @@ import * as daysOff from './days-off.js';
    rules that refuse a bad event are src/calendar.js's now, asked for by both. Two doors onto one
    array, one place each rule lives. */
 import * as events from './events.js';
+/* WO-6.2's READ side of the same calendar, and it is a third module rather than more of
+   src/calendar.js for a mechanical reason as well as a tidy one: it reads the attendance ledger
+   through src/attendance.js, which imports src/calendar.js, so the derived half living in the model
+   would close the import loop this repo has refused six times. It has no writer in it at all. */
+import * as calendarDerived from './calendar-derived.js';
 import * as roster from './roster.js';
 /* WO-1.23's contact import, and the two modules run ONE WAY: this one imports src/roster.js for the
    name parser, the match key and the record constructors, and src/roster.js imports it for nothing
@@ -2595,6 +2600,18 @@ window.planbook = {
      that a teacher could not also ask by tapping. Nothing in the app reads window.planbook — see
      the block above for why the seam outlived the shelf. */
   events,
+  /* `calendarDerived` joined at WO-6.2, and its reason is `signals`' rather than the reading reason
+     `calendar` gives: this module has NO SCREEN AT ALL in this work order — the month grid is
+     WO-6.3's and `src/calendar.js has no DOM` is said in that work order in as many words — so
+     there is no control anywhere a harness could tap to make it answer. What has to be asked, and
+     what no click could show even after WO-6.3 ships, is the pair of claims the acceptance list
+     makes about ABSENCE: that a weekday with no record and no authored exception yields no
+     per-class row at all, and that a review date comes back as a date and a student and nothing
+     else and comes back as nothing whatsoever in presentation mode. A build that drew those
+     correctly today and a build that carried the plan type in the record it draws FROM look
+     identical on screen. Nothing in the app reads window.planbook — see the block above for why
+     the seam outlived the shelf. */
+  calendarDerived,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

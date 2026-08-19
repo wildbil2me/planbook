@@ -140,13 +140,16 @@ recurrence, and the validation lift. Read the size against that list.
 
 ## WO-6.2 — Derived events
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.1, WO-3.3 · **Owes** WO-6.3
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-6.1, WO-3.3 · **Owes** WO-6.3
 **Closes roadmap** Phase 6 → "Derived events computed at render from assignments, terms, and the
-schedule — not stored.", "IEP/504 review dates" *(the first fragment elided the middle of the box
-until 2026-08-08, WO-2.15. An ellipsis inside a fragment matches nothing: `norm()` strips it rather
-than wildcarding it, so a fragment may stop early but may never skip a middle. The second arrived
-from WO-6.1 on 2026-08-19, WO-1.25 — a `reviewDate` is read at render out of a student record and is
-never an `events[]` entry, which makes it a row in the table below rather than a kind above.)*
+schedule — not stored." *(the fragment elided the middle of the box until 2026-08-08, WO-2.15. An
+ellipsis inside a fragment matches nothing: `norm()` strips it rather than wildcarding it, so a
+fragment may stop early but may never skip a middle. A second fragment — the `IEP/504 review dates`
+box — arrived here from WO-6.1 on 2026-08-19, WO-1.25, and went on to WO-6.3 the same day, the
+owner's call: a `reviewDate` is read at render out of a student record and is never an `events[]`
+entry, which is why the DELIVERABLE is a row in the table below rather than a kind above — but the
+box says **surfaced**, and what a teacher sees is drawn by WO-6.3. The model is built and measured
+here; the box is ticked where the screen appears.)*
 
 **Why it exists.** Everything on this calendar that the teacher did not type is already in the
 document, and copying any of it into `events[]` would create the second truth the phase header
@@ -186,19 +189,40 @@ this work order is the whole argument.
 - [ ] Changing an assignment's due date moves it on the calendar with no other action.
       → WO-6.3 "A derived due date moves with its assignment: change the date on the assignment and
       the month grid shows it on the new day, with no other action"
-- [ ] `events[]` contains no derived entry, checked deterministically rather than by feel: seed a
+- [x] `events[]` contains no derived entry, checked deterministically rather than by feel: seed a
       month holding an assignment due date, a term boundary, a recorded meeting, a planned drop and a
       review date; render it, page one month forward and one back, and re-read `doc.events` — it holds
       the same entries, by `id`, that were authored before the render.
+      *(**One substitution, stated rather than smoothed over:** there is no month grid on this tree
+      to render — it is WO-6.3's — so what is paged in `verify-shell.mjs`'s WO-6.2 block is the
+      MODEL: `derivedItemsIn()` for the month, the month after, the month before, and the month
+      again, which is the sequence a Next/Back pair puts through it. The seed is the five the line
+      names, `doc.events` is re-read by `id` and in order, and the re-read is repeated **across a
+      reload**, so a copy that never left memory is caught too. `wo-sweep.mjs` § 17 makes the other
+      half of the claim structurally — no store call and no document mutation anywhere in
+      `src/calendar-derived.js` — because the harness proves what today's paths wrote on today's
+      fixture and the grep proves there is nothing in the file that could write on any input.)*
 - [ ] Tapping a derived due date opens the assignment, not an event editor.
       → WO-6.3 "Every item taps through to its source"
 - [ ] A review date reaches the calendar as a date and a student and nothing else — no plan type, no
       accommodation, no medical or behavior-plan text — and is gone entirely in presentation mode.
       → WO-6.3 "A review date on a month cell shows a date and a name and no plan type"
-- [ ] A future weekday shows **no per-class meeting state at all**: the derived answers are read from
+- [x] A future weekday shows **no per-class meeting state at all**: the derived answers are read from
       `attendance[]` and from authored `no-school` / `dropped` events, so a weekday with neither is
       blank rather than *not taken yet*, and nothing in this work order stores, derives, caches or
       infers which classes were expected to meet.
+      *(Kept out **structurally** rather than by a filter: `meetingStatesIn()` asks about a
+      `{ classId, date }` pair only where an attendance record exists for it or an authored
+      exception NAMES that class on that date, so there is no loop in the module that a schedule
+      could be the missing input to. `NOT_TAKEN` is discarded on the way out as well, belt and
+      braces, and the guard never fires. Measured in `verify-shell.mjs`: the bare Wednesday between
+      the two written-down dates yields nothing for any class, the only two dates that answer are
+      the recorded meeting and the planned drop, and the string `not-taken` appears nowhere in a
+      window a year wide. **One ruling this line did not settle and the implementation had to:** a
+      school-wide `no-school` names no class, so it produces no per-class row either — the event is
+      authored and the calendar draws it in its own right, and expanding it would be this module
+      deciding what a shut school implies about five classes. `stateOf()` is untouched and still
+      answers `covered` there, which is asserted beside it.)*
 
 **Traps** — **Do not build the schedule model this grid will make look necessary.**
 [`../rotating-schedule.md`](../rotating-schedule.md) — `plans/rotating-schedule.md` — is a settled
@@ -214,12 +238,34 @@ the other one:** draw nothing where nothing was recorded, and if a distinction i
 school is not in session, take WO-2.50's precedent — a quiet `off-term` modifier read off the term
 bounds, not a schedule.
 
+**Where it landed, and the two roadmap boxes that stay open** *(2026-08-19, on delivery)*. The read
+side is `src/calendar-derived.js` — a third calendar module rather than more of `src/calendar.js`,
+because it reads the ledger through `src/attendance.js`, which imports `src/calendar.js`, and the
+derived half living in the model would close the import loop this repo has refused six times. It
+exports one function per row of the table above plus `derivedItemsIn()`, and no writer.
+
+**The implementer left both `Closes roadmap` boxes `- [ ]`; the owner split them on 2026-08-19.**
+The departure from WO-6.1's precedent is written down rather than left to look like an omission.
+*Derived events computed at render — not stored* is a claim about the MECHANISM, and the mechanism is
+what landed here, so this work order ticks it. *IEP/504 review dates **surfaced** ahead of time* is a
+claim about what a teacher SEES, and on this tree nothing draws it: the acceptance lines that would
+show it — 1, 3 and 4 — are the three re-homed to WO-6.3 under this work order's `**Owes**`. So the
+fragment moved with them, off this work order's `Closes roadmap` line and onto WO-6.3's. **The scar:**
+a box that describes a surface is ticked where the surface is drawn, or the dashboard carries the
+claim for however long the next work order takes. The model behind it is delivered and measured
+here.
+
 ---
 
 ## WO-6.3 — Month & week views
 
 **Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.2
-**Closes roadmap** Phase 6 → "Month and week views, filterable by class."
+**Closes roadmap** Phase 6 → "Month and week views, filterable by class.", "IEP/504 review dates"
+*(the second fragment came from WO-6.2 on 2026-08-19, the owner's call — its box says review dates
+are **surfaced** ahead of time, and this is the work order that draws them. WO-6.2 built and measured
+the read side and holds the presentation-mode rule; ticking the box there would have had the roadmap
+claim a surface no screen provided. The acceptance line that ticks it is the review-date row carried
+here under WO-6.2's `**Owes**`.)*
 
 **Why it exists.** This is the first surface in the phase with a DOM in it — `src/calendar.js` is the
 model and has none — so three of WO-6.2's acceptance lines are carried here, under an

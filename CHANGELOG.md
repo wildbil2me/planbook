@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The calendar starts reading what is already there — 2026-08-19
+
+Nothing on screen changes yet. Under it, the calendar learned to answer four questions out of things
+you have already typed somewhere else: what is due, when a term starts and ends, which classes met
+and which were dropped, and whose IEP or 504 review is coming up.
+
+**None of it is copied.** Change an assignment's due date and the calendar has nothing to go and fix,
+because it never kept a second copy to get out of step. That is the whole reason this landed as its
+own step rather than inside the month view.
+
+**A day you did not write anything down about stays empty.** Not amber, not *not taken yet* — blank.
+Planbook still has no idea which classes are *supposed* to meet on a Tuesday, and it is not going to
+learn: the schedule rotates and then changes on the morning announcements, and a second opinion about
+it would only ever be wrong in a way you had to go and correct.
+
+**A review date is a date and a name.** No plan type, no accommodation, nothing medical, nothing from
+a behavior plan — and with presentation mode on it is not there at all, rather than blanked out or
+shown as a nameless dot. A dot on a Tuesday still tells a room that somebody has something on file.
+
+The month view that draws all of this is next.
+
 ### The dates you would rather not carry in your head — 2026-08-19
 
 **Events** joins **Days off** on the home screen: when grades have to be in, the conferences, the

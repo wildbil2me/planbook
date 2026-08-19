@@ -143,14 +143,19 @@ and the teacher taps *dropped* on the ones that didn't. A cycle model was design
 same day; the decision record is [`plans/rotating-schedule.md`](plans/rotating-schedule.md), and it
 exists because the next session will want to build one.
 
-Six things that will bite:
+Seven things that will bite:
 
 - **iOS evicts IndexedDB after ~7 days of non-use for non-installed sites.** Installed PWAs are
   exempt. A teacher who bookmarks instead of installing can lose a term of grades over a holiday.
   The install prompt is data safety, and the downloadable JSON backup is mandatory.
 - **Taken · dropped · not-taken-yet are three states, not two.** "Did the class not meet, or did I
   forget?" is the question the home screen exists to answer. Everything counts *recorded meetings*,
-  never calendar days.
+  never calendar days. **The fourth state is right on the home screen and wrong on a month grid**
+  (WO-6.2): `NOT_TAKEN` is the *did-I-forget* answer, which is exactly what a screen asking about
+  **today** wants and is a wall of amber on a grid asking about twenty weekdays across five classes.
+  The obvious way to quiet that wall is to know which classes were meant to meet — the cycle model
+  `plans/rotating-schedule.md` rejects, reached from the rendering side rather than the modelling
+  side, which is why it will look new. Draw nothing where nothing was recorded.
 - **`late` and `missing` are marked by the teacher, never inferred from a due date.** Blank means
   ungraded and affects nothing. The grade must never change because a date rolled over. The date may
   still **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only
@@ -174,6 +179,16 @@ Six things that will bite:
   **every backup written by every earlier build**, by name. A `SCHEMA_VERSION` bump whose entire
   content is an empty object was the other answer and was refused — it buys nothing and makes this
   build's documents unreadable to the previous one.
+- **Everything the teacher did not type is computed at render, never stored** (WO-6.2). Due dates,
+  term edges, which classes met, and IEP/504 review dates are read out of `assignments[]`,
+  `classes[].terms[]`, `attendance[]` and `students[].supports.reviewDate` every time the calendar
+  is drawn — copying any of them into `events[]` creates the second truth that then has to be kept
+  in step by hand. `src/calendar-derived.js` is the read side and holds **no writer**, which
+  `wo-sweep.mjs` § 17 asserts structurally rather than by fixture: the harness proves what today's
+  paths wrote, the grep proves there is nothing in the file that could write on any input. It is a
+  third calendar module because it reads the ledger through `src/attendance.js`, which imports
+  `src/calendar.js` — the derived half living in the model would close an import loop this repo has
+  refused six times.
 
 ## Accommodations are the most sensitive data here
 

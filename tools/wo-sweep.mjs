@@ -1277,6 +1277,108 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 17. the derived half of the calendar has no writer, and no neighbour in the record ══════
+   WO-6.2's whole premise: "Everything on this calendar that the teacher did not type is already in
+   the document, and copying any of it into `events[]` would create the second truth the phase
+   header forbids. This work order is the read side: one answer per row of the table below, and no
+   writer."
+
+   `verify-shell.mjs` makes the RUNTIME half of that claim — it seeds a month, pages a month each
+   way and re-reads `doc.events` by id. This makes the STRUCTURAL half, and the two are not
+   redundant: the harness proves that today's code paths wrote nothing on today's fixture, and this
+   proves there is nothing in the file that COULD write, on any input, including the ones nobody
+   thought to seed. A cache added later "just for the month being drawn" is exactly the change that
+   passes a fixture and fails the premise.
+
+   THE SECOND CLAIM IS THE ONE THAT MATTERS MOST. `reviewDate` shares a student record with
+   `medical`, `behaviorPlan`, `plan`, `caseManager` and the accommodations list (src/roster.js's
+   SUPPORT_FIELDS), and the acceptance line is that a review reaches the calendar "as a date and a
+   student and nothing else". So the record `reviewDatesIn()` builds is read out of the file and its
+   field names are compared against the six, and the body of that function is searched for the names
+   of the neighbours. The harness asserts the same six against six names typed into the harness;
+   neither one alone catches a field renamed in both the code and the harness, and together they do
+   — § 16's argument, applied to the record in this phase with the most to lose.
+
+   Both anchors FAIL loudly when they move rather than going quiet, for the reason § 11's count
+   does: the file is found by path and the record by `export function reviewDatesIn(`. */
+
+{
+  const NAME = 'src/calendar-derived.js reads and never writes, and a review carries no neighbour';
+  const derivedPath = path.join(REPO, 'src', 'calendar-derived.js');
+  if (!fs.existsSync(derivedPath)) {
+    check(NAME, false,
+      'src/calendar-derived.js is not where this check expects it — WO-6.2\'s read side is now watched by nothing, and neither is the shape of the review record. Restore the file or point this check at the new path.');
+  } else {
+    const lines = fs.readFileSync(derivedPath, 'utf8').split('\n');
+    const comments = commentLines(derivedPath);
+    const code = lines.map((l, i) => (comments.has(i + 1) ? '' : l));
+
+    // Every way this module could reach a write. The store's own door, the four functions in
+    // src/calendar.js that change `doc.events`, the two builders that would only exist here in
+    // order to store what they built, the two preference writers, and supportsOf() — which repairs
+    // a student's support block IN PLACE and so is a write wearing a read's name.
+    const WRITERS = /\b(update|addEvent|updateEvent|removeEvent|removeSeries|newEvent|newSeries|setLeadDays|setMark|setPref|setPresentationMode|supportsOf)\s*\(/;
+    // And the shapes a direct mutation of the document takes, on either of the two names this
+    // repository gives it.
+    const MUTATES = /\b(doc|d)\.[A-Za-z_$][\w$]*\s*(=[^=]|\.(push|pop|shift|unshift|splice|sort|reverse|fill)\s*\()/;
+    const writes = [];
+    code.forEach((line, i) => {
+      if (WRITERS.test(line) || MUTATES.test(line)) {
+        writes.push({ file: 'src/calendar-derived.js', line: i + 1, text: line.trim() });
+      }
+    });
+
+    // The guard against a vacuous pass: an emptied file has no writers in it either. The module has
+    // to still be the module — importing the readers it declares, and exporting the five answers.
+    const text = code.join('\n');
+    const READS = ['./calendar.js', './attendance.js', './classes.js', './roster.js',
+      './supports.js'];
+    const ANSWERS = ['assignmentDuesIn', 'termEdgesIn', 'meetingStatesIn', 'reviewDatesIn',
+      'derivedItemsIn'];
+    const missingReads = READS.filter(m => text.indexOf(`from '${m}'`) < 0);
+    const missingAnswers = ANSWERS.filter(f => text.indexOf(`export function ${f}(`) < 0);
+
+    // The review record, field for field, read out of the object literal reviewDatesIn() pushes.
+    // Keys at six spaces of indent are the record's own; there is nothing nested in it, which is
+    // the point of the record.
+    const RECORD = ['derived', 'kind', 'classId', 'date', 'studentId', 'name'];
+    const fnAt = lines.findIndex(l => /^export function reviewDatesIn\s*\(/.test(l));
+    let fnEnd = fnAt < 0 ? -1 : lines.findIndex((l, i) => i > fnAt && /^\}/.test(l));
+    if (fnEnd < 0) fnEnd = lines.length;
+    const built = [];
+    for (let i = fnAt; i >= 0 && i < fnEnd; i++) {
+      if (comments.has(i + 1)) continue;
+      const m = /^ {6}([A-Za-z][A-Za-z0-9_]*):/.exec(lines[i]);
+      if (m) built.push(m[1]);
+    }
+    // And the neighbours, searched for in that function's own code. `readSupports` survives it on
+    // purpose — the capital S is not the field name, and it is the sanctioned reader.
+    const NEIGHBOURS = /\b(plan|medical|behaviou?rPlan|accommodations?|caseManager|supports)\b/;
+    const near = [];
+    for (let i = fnAt; i >= 0 && i < fnEnd; i++) {
+      if (comments.has(i + 1)) continue;
+      if (NEIGHBOURS.test(lines[i])) near.push({ file: 'src/calendar-derived.js', line: i + 1 });
+    }
+
+    const faults = [];
+    if (writes.length) faults.push(`${report(writes)} can write — the read side of the calendar reaches a document mutation or a store call, which is the second truth this work order exists not to create`);
+    if (missingReads.length) faults.push(`src/calendar-derived.js no longer imports ${missingReads.join(', ')} — the module this check is about has changed shape, and a file that reads nothing has no writers in it either, which reads green from a distance`);
+    if (missingAnswers.length) faults.push(`src/calendar-derived.js exports no ${missingAnswers.join(', no ')} — the four rows of the Deliverables table and the call that returns them are what this file is, and their absence must not read as a passing no-writer check`);
+    if (fnAt < 0) faults.push('src/calendar-derived.js has no top-level `export function reviewDatesIn(` — the record this check reconciles is gone or renamed, and the six-field claim is now asserted only by the harness against six names typed into the harness');
+    else if (!built.length) faults.push('`reviewDatesIn()` builds no record this check can read — the returned object literal is not in the shape this check parses (keys at six spaces of indent), and a function it cannot read must not read as a passing diff');
+    else if (built.join(',') !== RECORD.join(',')) {
+      const extra = built.filter(k => RECORD.indexOf(k) < 0);
+      faults.push(`the review record is [${built.join(', ')}] and a date and a student is [${RECORD.join(', ')}]`
+        + (extra.length ? ` — ${extra.join(', ')} ${extra.length === 1 ? 'is' : 'are'} on a record that is allowed a date and a student and nothing else` : ' — the same six in a different ORDER, which is still a record a reader compares against the acceptance line field by field'));
+    }
+    if (near.length) faults.push(`${report(near)} names a support field other than reviewDate inside reviewDatesIn() — plan, medical, behavior-plan, accommodation and case-manager data may not be within reach of the record that goes on the calendar`);
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `no store call, no doc mutation and none of ${'update/addEvent/updateEvent/removeEvent/removeSeries/newEvent/newSeries/setLeadDays/setMark/setPref/setPresentationMode/supportsOf'} in ${code.filter(Boolean).length} line(s) of code; the five answers are exported over five read-only imports, and reviewDatesIn() at src/calendar-derived.js:${fnAt + 1} builds exactly [${built.join(', ')}] with no other support field inside it`);
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

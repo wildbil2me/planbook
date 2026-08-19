@@ -45,7 +45,15 @@ dependencies.
   that Phase 5 mails home. A new rule must not need a new explanation mechanism.
 - **Taken · dropped · not-taken-yet are three states, not two.** Everything counts *recorded
   meetings*, never calendar days. There is deliberately no schedule model — see
-  [`plans/rotating-schedule.md`](plans/rotating-schedule.md).
+  [`plans/rotating-schedule.md`](plans/rotating-schedule.md). The fourth state, `NOT_TAKEN`, is the
+  *did-I-forget* answer: right on a home screen asking about **today**, wrong on a month grid, where
+  it is a wall of amber that the cycle model is the obvious way to quiet (WO-6.2). Draw nothing where
+  nothing was recorded. The trap arrives from the rendering side, so it will look new.
+- **Everything the teacher did not type is computed at render, never stored** (WO-6.2). Due dates,
+  term edges, meeting states and IEP/504 review dates are read out of the document on every draw;
+  copying any of them into `events[]` is the second truth the phase forbids. `src/calendar-derived.js`
+  holds no writer at all — `wo-sweep.mjs` § 17 asserts that structurally, and a new derived answer
+  goes in that file rather than in `src/calendar.js`, which it must not import backwards into.
 
 Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
