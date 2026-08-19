@@ -377,7 +377,10 @@ import { getSelectedClass, getSelectedTerm, initials, avatarClass } from './clas
    sentence. getSelectedTerm() above is imported for the ARITHMETIC and must not be reached for by
    any of that — the term tab decides what is COUNTED and has never decided what is WRITABLE, which
    is the whole of WO-2.50's decision 1. */
-import { outOfTermGap, termIsDated, termName } from './classes.js';
+/* WO-2.51 adds `termContaining` to that list, and it is the READ half of the same predicate: which
+   term of this class holds TODAY. It bounds nothing and writes nothing — it is compared against
+   getSelectedTerm() in one place, termRollover(), and the whole of what comes out is a sentence. */
+import { outOfTermGap, termIsDated, termName, termContaining } from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
    student is one record referenced from many places; how that record READS — "Van Dyke, Mary" in a
    list, "Mary Van Dyke" in a sentence — is the same question here as it is there, off the same
@@ -3481,6 +3484,38 @@ function paintColumn(date) {
 }
 
 /*
+  THE ROLLOVER (WO-2.51): today belongs to a term of this class, and it is not the term the teacher
+  has open. `{ holds, open }` — the term today is in and the term she is looking at — or null.
+
+  OFF WO-2.50's PREDICATE AND NOTHING NEW. termContaining() answers which of this class's terms holds
+  a date; getSelectedTerm() answers which one the teacher chose. This is the one place in the app the
+  two are put side by side, and putting them side by side is ALL it does: nothing here writes. The
+  selected term is hers, held per class in a `planbook_` preference, and an app that moved it for her
+  is an app that moved it while she was part way through entering the last week of Quarter 1.
+
+  NULL WHEN TODAY IS IN NO TERM AT ALL, and that silence is the deliverable rather than an omission.
+  termContaining() answers null for a class with no dated terms and for a day in the gap between two
+  — and WO-2.50's own screen is already saying the second one, four times over: the column, the chip,
+  the state line and the home card. Two bands disagreeing about one day is worse than either.
+
+  OVERLAPPING TERMS ARE READ FIRST-MATCH, which is termContaining()'s own rule and is the one edge
+  left open here. A document where today sits inside BOTH the selected term and an earlier-listed one
+  is nudged towards the earlier-listed one. Terms may overlap and may be written out of order — the
+  editor says so on its own screen, and the header of src/classes.js says they are never sorted and
+  never repaired — so the honest cost is a nudge that was not needed, offering a term today really is
+  in. Closing it would mean a second date comparison living in this file, which is the thing
+  src/date-text.js's header and WO-2.50's Deliverables both refuse.
+*/
+function termRollover() {
+  const cls = openClass();
+  if (!cls) return null;
+  const holds = termContaining(cls.id, todayISO());
+  const open = getSelectedTerm();
+  if (!holds || !open || holds.id === open.id) return null;
+  return { holds: holds, open: open };
+}
+
+/*
   THE STRIP THAT SAYS YOU ARE NOT ON TODAY, and the acceptance line it answers is "visible in a
   glance, on an iPad, in a classroom". So it is a full-width band above the grid with a coloured
   edge and a way back on it, not a tint on a column — a tint is what the column already has, and a
@@ -3488,6 +3523,24 @@ function paintColumn(date) {
 
   Two ways to be off today, and both get the same strip: a past column is unlocked, or the window
   has been paged back so today is not on screen at all.
+
+  AND SINCE WO-2.51 THE SAME STRIP CARRIES A SECOND MESSAGE: today is inside a term of this class
+  that is not the one the term nav has open. Nothing in this app has ever moved a teacher from one
+  term to the next — getSelectedTermId() falls back to the FIRST term, never to the term containing
+  today — so the tab stays where she left it in August, and what she notices is a number: every count
+  on this screen and in both reports is scoped to the selected term, so a week into Quarter 2 the
+  screen is quietly reporting Quarter 1 while she marks Quarter 2. It is this band and not a modal
+  because a modal costs a tap at the classroom door, needs a "don't ask again" to be bearable, and a
+  dismissed reminder is a reminder that has been dismissed. This one has no dismissal at all: it goes
+  when she switches, or when the condition stops being true, and not before.
+
+  THE PRECEDENCE, WRITTEN DOWN HERE BECAUSE THIS IS WHERE IT IS DECIDED. ONE BAND AT A TIME, AND THE
+  OFF-TODAY MESSAGE WINS IT. A teacher paging back into October must not be told to move to Quarter 2
+  while she is reading Quarter 1's own days: this strip describes the day on screen, which is the more
+  immediate fact and the one she just acted to produce, and "move to the next term" said over a
+  October column would be an instruction about a screen she is not on. The rollover loses nothing by
+  losing — it holds no state and remembers no dismissal, so it is back on the same paint that brings
+  her back to today.
 */
 function paintBanner(columns) {
   const banner = document.getElementById(BANNER_ID);
@@ -3497,20 +3550,45 @@ function paintBanner(columns) {
   const todayShown = columns.indexOf(today) >= 0;
 
   banner.textContent = '';
-  if (on === today && todayShown) { banner.classList.add('hidden'); return; }
+  /* Written from the base class every paint rather than toggled, because this strip now has two
+     messages and a tone for each: a modifier left behind by the previous paint is a band wearing
+     the wrong one, which is a defect that only appears on the second visit to a screen. */
+  banner.className = 'attendance-banner';
 
-  banner.classList.remove('hidden');
-  /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
-     pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
-  const range = columns.length === 1 ? spokenDate(columns[0])
-    : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
-  const text = on !== today
-    ? 'You are editing ' + spokenDate(on) + ' — not today.'
-    : 'Showing ' + range + '. Today is not on screen.';
-  banner.append(el('span', 'attendance-banner-text', text));
-  const back = actionButton('Back to today', 'data-attendance-page', 'today');
-  back.classList.add('attendance-banner-btn');
-  banner.append(back);
+  if (on !== today || !todayShown) {
+    /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
+       pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
+    const range = columns.length === 1 ? spokenDate(columns[0])
+      : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
+    const text = on !== today
+      ? 'You are editing ' + spokenDate(on) + ' — not today.'
+      : 'Showing ' + range + '. Today is not on screen.';
+    banner.append(el('span', 'attendance-banner-text', text));
+    const back = actionButton('Back to today', 'data-attendance-page', 'today');
+    back.classList.add('attendance-banner-btn');
+    banner.append(back);
+    return;
+  }
+
+  const roll = termRollover();
+  if (!roll) { banner.classList.add('hidden'); return; }
+
+  banner.classList.add('rollover');
+  /* BOTH TERMS ARE NAMED, out of term.label through termName() and never out of a word invented
+     here: term ids are opaque (docs/data-model.md, and src/classes.js's own rule 1), the label is
+     the only place a quarter is ever named, and a class on trimesters or semesters has to read
+     correctly with no code change. termName() is what makes an emptied label still read as a term
+     rather than as a hole in the sentence. */
+  banner.append(el('span', 'attendance-banner-text',
+    'Today is in ' + termName(roll.holds) + ' — you are still on ' + termName(roll.open) + '.'));
+  /* THROUGH THE TERM NAV'S OWN ROUTE, AND DELIBERATELY NOT A SECOND ONE. `data-term-select` is the
+     hook the tabs in the header fire, and src/shell.js chains afterTermChange() off it — so this
+     button inherits WO-2.17's repaint of the three totals surfaces and WO-2.18's checks over them
+     without either having to be told it exists. A hook of its own here would be a second way to
+     change the selected term and a second thing for those checks to miss. */
+  const go = actionButton('Switch to ' + termName(roll.holds), 'data-term-select', roll.holds.id);
+  go.classList.add('attendance-banner-btn');
+  banner.append(go);
 }
 
 /*
@@ -4057,6 +4135,17 @@ function detailButton(student) {
   would be the same three lines plus a grid of students × days rebuilt for nothing. Called from
   src/shell.js's afterTermChange(), which is where the order of operations lives; this module still
   does not know that a term nav exists.
+
+  A FOURTH SURFACE SINCE WO-2.51, and it is the one that is not a figure: the band above the grid
+  says whether today belongs to a term other than the open one, so it is true or false BECAUSE of
+  which term is open, and the tap that switches term is the tap that has to take it away. It is
+  painted here rather than through a second call from afterTermChange() for the reason that chain's
+  own comment gives — each branch asks its own module for the narrowest repaint that makes its
+  screen true, and that repaint is now these four things rather than three. The name of this
+  function is one word narrower than what it does; the alternative was two entry points into this
+  module for one event, which is how a screen ends up half-repainted by whichever caller forgot.
+  It costs two elements on the write path, where the answer cannot have changed — cheap enough not
+  to be worth a second function that could disagree with this one about the band.
 */
 export function paintRenderedTotals() {
   const cls = openClass();
@@ -4073,6 +4162,7 @@ export function paintRenderedTotals() {
     if (line) line.textContent = studentTotalsText(totals, student.id);
   });
   paintDetail(totals);
+  paintBanner(visibleColumns());
 }
 
 /*

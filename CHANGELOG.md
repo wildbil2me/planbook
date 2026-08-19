@@ -13,6 +13,31 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The registry says so when today is in a term you do not have open — 2026-08-18
+
+Planbook never moved you from one quarter to the next. The term tab stayed where you left it in
+August, and every figure on the attendance screen and in both reports — the counts, the percentage,
+the meeting totals — is scoped to that tab. A week into Quarter 2 with the Quarter 1 tab still up,
+every mark landed correctly and every number above it described a term that had ended. Nothing broke
+and nothing said anything.
+
+On a day that belongs to a term other than the one you have open, the register now carries a band
+above the grid: *Today is in Quarter 2 — you are still on Quarter 1*, with one button on it reading
+**Switch to Quarter 2**. There is nothing to dismiss. It goes when you switch, or when it stops
+being true, and not before.
+
+Nothing switches by itself. The open term is yours, held per class and per device, and the band
+waits for the tap rather than moving you part-way through entering the last week of a quarter.
+
+It reads your own terms back to you. A class on trimesters is told about Trimester 2 and a class on
+semesters about its semester — the words come from the labels you typed, and there is no quarter
+vocabulary anywhere in the app's output.
+
+One band at a time. Paged back to an earlier day, the strip still says *you are not on today*, which
+is the more immediate fact, and this one is back the moment you return to today. On a day outside
+every term the screen says that instead — the message that landed the same day, one work order
+earlier.
+
 ### The About screen admits when you are looking at an old Planbook — 2026-08-18
 
 After an update lands while the app is open, the screen in front of you was drawn from the copy that

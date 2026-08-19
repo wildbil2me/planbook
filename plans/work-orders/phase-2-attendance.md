@@ -5234,7 +5234,7 @@ than a gap.
 
 ## WO-2.51 — the term ended and the screen never said so
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.50 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-18 · **Size** S · **Depends on** WO-2.50 · **Blocks** nothing
 **Closes roadmap** Phase 2 → *(no box. Booked 2026-08-18 in the same sitting as WO-2.50 and out of the
 same owner report — the second half of what she asked for.)*
 
@@ -5284,20 +5284,20 @@ condition stops being true — is the reminder she asked for without the interru
 - **`TESTING.md` lines and the `CHANGELOG.md` entry.** `sw.js` `CACHE` bump if anything in `SHELL` moves.
 
 **Acceptance**
-- [ ] With terms Q1 ending Oct 31 and Q2 starting Nov 3, a document whose today is Nov 4 and whose
+- [x] With terms Q1 ending Oct 31 and Q2 starting Nov 3, a document whose today is Nov 4 and whose
       selected tab is Q1 shows the band, naming both terms, with a button reading `Switch to Quarter 2`.
-- [ ] Tapping it selects Q2, the band goes, and **the counts, the state line and the totals repaint** —
+- [x] Tapping it selects Q2, the band goes, and **the counts, the state line and the totals repaint** —
       the surfaces WO-2.18 enumerates, checked the way that work order checks them.
-- [ ] With Q2 already selected on Nov 4, there is **no band**. With today inside no term at all, there
+- [x] With Q2 already selected on Nov 4, there is **no band**. With today inside no term at all, there
       is **no band** — WO-2.50's screen owns that day.
-- [ ] Paged back to an October column, the **off-today** band is the one shown; returning to today brings
+- [x] Paged back to an October column, the **off-today** band is the one shown; returning to today brings
       this one back. One band at a time, proved in both directions.
-- [ ] Terms labelled `Trimester 1` and `Trimester 2` produce the same behaviour with those labels in the
+- [x] Terms labelled `Trimester 1` and `Trimester 2` produce the same behaviour with those labels in the
       sentence and on the button — no quarter vocabulary anywhere in the output.
-- [ ] Nothing changes the selected term without a tap: driven by loading a document whose today is in
+- [x] Nothing changes the selected term without a tap: driven by loading a document whose today is in
       Q2 with Q1 selected, and reading the preference back **unchanged** until the button is pressed.
-- [ ] `node tools/verify-shell.mjs` green with its count recorded, and one mutation proof.
-- [ ] 👤 On the iPad, force-quit first: the band is readable at a glance in both orientations and its
+- [x] `node tools/verify-shell.mjs` green with its count recorded, and one mutation proof.
+- [x] 👤 On the iPad, force-quit first: the band is readable at a glance in both orientations and its
       button clears 44px under `@media (pointer: coarse)`.
 
 **Traps** — **do not switch the term for her**, however obvious the right answer looks; the preference

@@ -4299,6 +4299,128 @@ today is still locked, the chip still says `Off term`, the writers still refuse 
 promise that the owner's own stray taps stay reachable. Four checks see it, and all four drive real
 controls rather than asking the gate what it answers.*
 
+---
+
+### WO-2.51 — The term ended and the screen never said so
+
+**What this changes for a teacher: the register stops reporting a term she stopped being in.** The
+second half of the owner's 2026-08-18 report, and the sibling of the row above. Nothing in this app
+ever moved her from one term to the next — `getSelectedTermId()` resolves a stored `planbook_`
+preference and falls back to **the first term in the list** when it names nothing that exists, never
+to the term containing today — so the tab sits where she left it in August. What she would notice is
+a **number**: the counts, the percentage and the meeting total on this screen and in both reports are
+all scoped to the selected term.
+
+**WO-2.50 is what makes that failure silent, and deliberately so.** Its decision 1 says the selected
+tab never bounds what is writable, so on the first Monday of Quarter 2 with the Quarter 1 tab still
+up every mark lands correctly and every figure above it describes a term that ended. Nothing breaks.
+The arithmetic is just wrong. **WO-2.50 refuses days that belong to no term; this row speaks up about
+days that belong to a term she is not looking at.**
+
+**A banner and not a modal**, decided with the owner. A modal costs a tap at the classroom door on a
+morning she is busy, needs a *don't ask again* to be bearable, and a dismissed reminder is a reminder
+that has been dismissed. This one has no dismissal at all: it goes when she switches, or when the
+condition stops being true.
+
+**One band at a time, and the off-today message wins the strip.** A teacher paging back into October
+must not be told to move to Quarter 2 while she is reading Quarter 1's own days — the existing band
+describes the day on screen, which is the more immediate fact and the one she just acted to produce.
+The rollover loses nothing by losing: it holds no state and remembers no dismissal, so it is back on
+the same paint that brings her back to today. The precedence is argued at `paintBanner()`, which is
+where it is decided.
+
+**`term.label` or nothing.** Term ids are opaque and nothing in the app switches on one, so both
+terms are named through `termName()` off the teacher's own labels. A class on trimesters reads
+correctly with no code change, and that is the test of whether the label was used or a word was
+invented.
+
+- [x] **With today inside a term the teacher does not have open, the band is up, names BOTH terms,
+      and its one button names the destination.** Driven off two terms derived from today — one
+      ending on the fourth column back, one starting on the second and running past today, so they
+      are contiguous and there is no WO-2.50 gap to trip. The band reads `Today is in WO-2.51 late —
+      you are still on WO-2.51 early.` wearing `.rollover`, over one button reading `Switch to
+      WO-2.51 late`.
+- [x] **That button goes through the term nav's own route and there is no second one.** The only
+      `data-` attribute on it is `data-term-select=tm_wo251b` — the hook `src/classes.js` puts on the
+      header tabs and `src/shell.js` chains `afterTermChange()` off, so it inherits WO-2.17's repaint
+      and WO-2.18's checks over it without either being told this button exists.
+- [x] **Tapping it selects the term today is in, and the counts, the row lines and the open detail
+      panel all repaint in that same tap** — the three surfaces WO-2.18 enumerates, read out of the
+      DOM rather than off the module that drew them. `WO-2.51 early: 2 recorded meetings · Year: 5`
+      → `WO-2.51 late: 3 recorded meetings · Year: 5`, the row line and the open panel moving with
+      it, the nav highlight moving, and the band gone.
+- [x] **Nothing changes the selected term without a tap.** The `openTermIds` preference is
+      serialised **byte for byte** across a second whole arrival — the class re-selected, the
+      registry re-rendered, the totals repainted — with the band naming the other term on screen the
+      entire time. It is paired with the same string read again after the button is clicked, where it
+      must have moved: an unchanged preference on its own is satisfied by a build that never noticed
+      the rollover at all.
+- [x] **With the term today is in already open, a full repaint draws no band.** The reminder is a
+      condition being true, not a thing that was dismissed.
+- [x] **With today inside NO term there is no band** — WO-2.50's screen owns that day, asserted by
+      reading its state line (`Off term · between WO-2.51 early and WO-2.51 after`) on the same
+      paint. Today's own record comes off first, and that is WO-2.50's decision 2 rather than
+      tidiness: a day that already carries attendance is never out of term. **Found by running it** —
+      the first draft of the check read back `Taken · all present`.
+- [x] **The precedence proved in both directions, through the real controls.** The pager's own
+      ◀ Earlier takes today off the screen and the band becomes `… Today is not on screen.` carrying
+      `data-attendance-page=today`; the pager's own way back brings the rollover straight back. And
+      the other arm: the real ✏ unlocks a past column while today is still on screen, the band
+      describes the day being edited, and `lockPastDay()` gives this one back.
+- [x] **Terms labelled `Trimester 1` and `Trimester 2` produce the same band with those labels in
+      it, and the string `quarter` appears nowhere in the band or in the totals line under it** — in
+      any case. Nothing else about the fixture changed, and the button under those labels does what
+      the quarter one did.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** — `939 checks · 939 passed
+      · 0 failed · 0 skipped`, 25,141 lines, 26.8 lines per check, 305s, exit 0 — with the call-site
+      count in `tools/README.md` moved 904 → 918, which `wo-sweep.mjs` asserts. `wo-sweep.mjs` is
+      **22 checks · 20 passed · 0 failed · 2 to review**, both REVIEWs the standing pair.
+- [x] 👤 **On the installed iPad, force-quit from the app switcher first: the band is readable at a
+      glance in both orientations and its button clears 44px under `@media (pointer: coarse)`.**
+      `sw.js`'s `CACHE` is `planbook-shell-v77` → `v78`, so a cold relaunch is what puts this build on
+      the glass; About will name the new build while the old screen is still up for exactly one
+      launch, and since WO-8.11 it says so. Start `serve-https.mjs` **before** the first launch.
+      Reaching the band needs a term whose dates do not contain today with another that does — the
+      term editor on any class will arrange it in a minute. **Done 2026-08-18: readable in both
+      orientations, the button takes a thumb, and the band and the state line under it read as two
+      messages rather than one amber block — the risk this design took knowingly by putting the
+      caution wash directly above `.attendance-state.not-taken`.**
+
+      **And the reading cost a detour worth writing down: the installed app showed nothing.** It is
+      installed from `planbook.hwgteach.com`, so it was running the deployed build — `v77`, with no
+      `termRollover` in its `attendance.js` at all — and reported that honestly. No amount of
+      force-quitting reaches code that was never pushed. The same build over the LAN dev server was
+      correct on the laptop and in iPad Safari throughout. The reading above was taken on a **second
+      copy installed from `192.168.50.142:8080`**, which is pinned to the dev server and should be
+      deleted now that this has shipped. **The check that settles this in seconds is `verify-deploy.mjs`,
+      or a `curl` of the deployed `sw.js` for its `CACHE` string** — an installed PWA that "does not
+      have the feature" is a deploy question before it is a cache question.
+
+*The desk half is `verify-shell.mjs`, **939 of 939 with zero skips**, thirteen executed results from
+fourteen call sites in one new section directly under the WO-2.50 one, none of them in a loop and one
+of them a fixture-guard failure arm.*
+
+*Three runs, and the second mutation is the one this section was written for.*
+
+| Tree | Result |
+|---|---|
+| Delivered | `939 checks · 939 passed · 0 failed · 0 skipped`, 25,141 lines, 26.8 lines per check, 305s, exit 0 |
+| **Mutation 1**: `termRollover()` forced to `return null` — the whole feature deleted, nothing else touched | `939 checks · 929 passed · 10 failed · 0 skipped` — the band never drawn, no button on it, no hook, the tap changing nothing, the three totals surfaces frozen on the early term, both precedence checks red, and the trimester pair printing nothing |
+| **Mutation 2**: the precedence reversed — `paintBanner()`'s off-today arm qualified `&& !termRollover()`, so the rollover wins the strip | `939 checks · 937 passed · 2 failed · 0 skipped` — **exactly the two precedence checks and nothing else**: paged back to August 3–10 the band still read *Today is in WO-2.51 late*, and it read the same thing over an unlocked August 17 column |
+
+*Mutation 2 is the sharper of the two. Mutation 1 reddens ten checks and would be caught by almost
+any check of the feature. Mutation 2 leaves every visible promise working — the band appears on the
+right day, names both terms, switches the term, disappears when it should — and breaks only the rule
+that a teacher reading October is told about October. Two checks see it, and both drive the real
+pager and the real ✏ rather than asking `paintBanner()` what it would answer.*
+
+**Two of the section's thirteen executed checks stay green under mutation 1, and that is the design
+rather than a gap.** Both are absence claims — *nothing moved the selected term* and *today in no
+term draws no band* — and a build that never noticed the rollover satisfies both. Each is therefore
+written beside a presence: the preference is read again after the button is clicked, where it must
+have moved, and the no-term check asserts WO-2.50's own state line is up on that day, so the silence
+is one screen yielding to another rather than two screens with nothing to say.
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

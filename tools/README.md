@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 904 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 918 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1694,6 +1694,37 @@ controllerchange events since = 1`. The clause came out. What cannot race is wha
 `navigator.serviceWorker.controller` said at document start, which is the same reading
 `src/shell.js` takes before it registers, and the count that matters is asserted by the check below
 it instead.
+
+**WO-2.51 moved it from 904 to 918**: fourteen call sites in a new section directly under the
+WO-2.50 one, none of them inside a loop, of which **one is a fixture-guard failure arm** for a
+document with no class open to arrange a term on — so the section contributes thirteen executed
+results and **the run prints 939**, measured on the delivered tree: `939 checks · 939 passed ·
+0 failed · 0 skipped`, 25,141 lines, 26.8 lines per check, 307s, exit 0. It is the sibling of the
+section above it and it inherits both of that one's habits: every date is derived from today (two
+terms built around the six drawn columns, contiguous rather than gapped, so that today sits three
+columns inside the late one) and every control it reaches for goes through a tolerant `clickIf()`
+rather than `clickSel()`.
+
+**The tolerant click is what makes the broad mutation reportable rather than fatal**, and this
+section needed it in a place WO-2.50's did not: the control being clicked is *the band's own
+button*, so a build where the band never appears has nothing to click, and `clickSel` would abort
+the block at its sixth check with a stack trace instead of reporting which of thirteen claims broke.
+The first draft used `clickSel` there and the point only shows up under mutation.
+
+**Two of this section's thirteen stay green under a mutation that deletes the whole feature, and
+that is the design rather than a gap.** Both are absence claims — *nothing moved the selected term*
+and *today in no term draws no band* — and a build that never noticed the rollover at all satisfies
+both. That is exactly why each is written beside a presence: the preference check is paired with the
+same string read again after the button is clicked, where it must have moved, and the no-term check
+asserts WO-2.50's own state line is up on that day, so the silence is one screen yielding to another
+rather than two screens with nothing to say.
+
+**And the no-term fixture had to take today's record off, which was found by running it.** The first
+draft left the planted record on today and asserted the state line read `Off term · between …`; it
+read `Taken · all present`, because WO-2.50's decision 2 says a day that already carries attendance
+is never out of term. The record wins, so the fixture that wants an out-of-term today has to be a
+today with nothing on it — and the check now asserts the record count as well, so the premise cannot
+go quiet.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

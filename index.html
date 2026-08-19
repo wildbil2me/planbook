@@ -628,7 +628,9 @@
     </div>
 
     <div class="attendance-body">
-      <!-- "You are not on today", shown only when that is true. src/attendance.js fills it. -->
+      <!-- "You are not on today", or — since WO-2.51 — "today is in a term you do not have open",
+           shown only when one of those is true. One band at a time and the first wins it; the
+           precedence is argued at paintBanner(). src/attendance.js fills it. -->
       <p class="attendance-banner hidden" id="attendanceBanner"></p>
 
       <p class="attendance-state" id="attendanceState"></p>

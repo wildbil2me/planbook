@@ -107,6 +107,25 @@
 }
 .attendance-banner-text { flex: 1 1 220px; }
 .attendance-banner-btn { flex: 0 0 auto; }
+/* THE SECOND MESSAGE THE SAME STRIP CARRIES (WO-2.51): today belongs to a term the teacher does not
+   have open, so every figure under it describes a term that ended. Only the colour changes — the
+   layout, the coloured edge and the button are the band's own and are deliberately not restated, so
+   the two messages are one component wearing two tones rather than two bands to keep in step.
+
+   The caution wash rather than the info one above it: `design/style-guide.md` § Palette, "Caution
+   banner (offline/stale)", which is the same three values `.attendance-state.not-taken` wears an
+   inch below this. The two messages are different KINDS of thing — "you are looking at an old day"
+   is a fact about the screen, "the term rolled over" is something to fix — and one tone for both
+   would make the second one read as the first at a glance from the classroom door. Values inline,
+   never variables, per CLAUDE.md § Conventions.
+
+   `border-color` before `border-left-color`, in that order and not the other way round: the base
+   rule sets the left edge with the `border-left` shorthand, so the shorthand's colour has to be
+   overwritten after the other three, not before. */
+.attendance-body .attendance-banner.rollover {
+  border-color: #f0dfa8; border-left-color: #c9a83f;
+  background: #fff8e6; color: #8a6d1a;
+}
 
 /* ── THE STATE LINE ── */
 /* Qualified by the container rather than left bare, which is the posture `.roster-hint` and
@@ -1008,7 +1027,10 @@
   .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
   .attendance-banner-text { flex-basis: 200px; }
   /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
-     named here so the control appears in this block rather than being covered somewhere else. */
+     named here so the control appears in this block rather than being covered somewhere else. It
+     covers BOTH of the strip's buttons since WO-2.51 — "Back to today" and "Switch to <term>" are
+     the same component with the same class, which is why the rollover added no control class of its
+     own and owes this block no second line. */
   .attendance-banner-btn { min-height: 44px; min-width: 44px; }
   .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
