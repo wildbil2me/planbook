@@ -1,0 +1,512 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — Phase 6, the calendar and the glance page.
+
+   The Phase 3 half of this room is `proposed.css`. This is the Phase 6 half, kept in
+   its own file for the reason those two are separate from `mockup.css`: one of these
+   sheets is meant to be split up and carried into `src/`, and the other never is.
+   Mixing a phase that has shipped with a phase that has not would make "what is left
+   to lift" a question you have to read comments to answer.
+
+   THE RULE THIS FILE OBEYS, from design/mockups/README.md: it defines no rule that
+   targets a class any `src/*.css` styles. Checked by stripping comments and diffing
+   selectors, not by reading. Every class below is prefixed `cal-` or `gl-`; neither
+   prefix appears anywhere in src/. Where a drawing needs something the app already
+   ships — `.panel`, `.pill`, `.avatar`, `.class-card`, `.modal-*`, `.class-input`,
+   `.term-date-field` — it wears it as shipped rather than restating it here.
+
+   The two exceptions are deliberate and both are the shape `.detail-avatar` uses:
+   `.cal-dot` and `.cal-rail-dot` are worn ALONGSIDE `.av0`–`.av9` from src/shell.css,
+   which set nothing but `background`. A class keeps one of ten colours everywhere in
+   the app without this file knowing what any of them are.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § CALENDAR       →  src/calendar-view.css   (WO-6.3)
+     § EVENT EDITOR   →  src/events.css          (WO-6.1)
+     § GLANCE         →  src/glance.css          (WO-6.4)
+     § SHARED         →  whichever lands first
+
+   `src/calendar.js` already exists and is the event MODEL (WO-2.3). The view is not it,
+   which is why the sheet above is `calendar-view.css` — one file per screen is the
+   convention src/home.css set, and a model with no DOM in it should not acquire a
+   stylesheet named after it.
+
+   It follows the app's own stylesheet rules so that "lift" means lift: colours inline
+   and never as custom properties, no dark mode, one grouped touch-action selector at
+   the top, and a `@media (pointer: coarse)` block at the end naming every control this
+   file adds. Values come from design/style-guide.md; nothing here is a new hex.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6. */
+.cal-nav-btn, .cal-step, .cal-chip, .cal-more, .cal-cell-add, .cal-num,
+.gl-row, .gl-more {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SHARED — the chip, and the class dot
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  ONE CHIP SHAPE FOR EVERY EVENT, on the month grid, in the week columns and in the
+  glance page's "today and this week" list. A calendar that draws a due date one way
+  in the month and another way in the week is a calendar a teacher has to learn twice.
+
+  COLOUR IS URGENCY. ICON IS KIND. There are eight authored kinds and four derived
+  ones, and twelve palettes would either run out or become a thing to memorise — which
+  is the reason src/assignments.css gives for `.cat-chip` carrying no colour per
+  category. So the wash says how much the day is asking of you and the glyph says what
+  it is:
+
+    grey / dashed   the class is not meeting (no-school, dropped, trip)
+    indigo          something is in your diary (conference, meeting)
+    amber           something is due FROM you (early release, grades due)
+    danger          a grades-due deadline inside its lead time
+    plain           a reminder you typed, and everything derived
+
+  A drawing can be argued with about which kind sits in which band. It cannot be argued
+  with about twelve colours, because nobody can hold twelve colours.
+*/
+.cal-chip {
+  display: flex; align-items: center; gap: 5px;
+  width: 100%; min-width: 0;
+  padding: 3px 6px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 700; line-height: 1.4;
+  color: #6b7a8d; text-align: left; cursor: pointer;
+  transition: all 0.15s;
+}
+.cal-chip:hover { border-color: #5b6fcc; }
+.cal-chip-icon { flex: 0 0 auto; }
+.cal-chip-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The class this item belongs to, where an item belongs to one. Worn with `.av0`–`.av9`. */
+.cal-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── AUTHORED: the wash grammar from design/style-guide.md §1 ── */
+/* The two WO-2.3 already ships, and their values are src/attendance.css's own for the same
+   two states — the column head and the calendar cell are one answer about one day. */
+.cal-chip.k-no-school { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+.cal-chip.k-dropped   { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
+.cal-chip.k-trip      { background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d; }
+.cal-chip.k-conference,
+.cal-chip.k-meeting   { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+.cal-chip.k-early     { background: #fff3cd; border-color: #f0dfa8; color: #c0700a; }
+.cal-chip.k-grades-due{ background: #fef5ea; border-color: #f5c98a; color: #e67e22; }
+/* Inside its lead time. The one escalation on the calendar, and it is the one deadline in
+   this app that is genuinely someone else's: re-keying into the SIS has a date the school set. */
+.cal-chip.k-grades-due.due-now { background: #fdeaea; border-color: #f0b0b0; color: #c0392b; }
+.cal-chip.k-reminder  { background: #fff; border-color: #e0e4ea; color: #6b7a8d; }
+
+/* ── DERIVED: never in `events[]`, and it has to LOOK like it isn't ── */
+/*
+  WO-6.2's "visual distinction between authored and derived items". A derived chip is
+  plain — no wash — and carries the ↗ that says it is edited somewhere else. Tapping it
+  opens the assignment, the term or the student, never an event editor.
+
+  NOT dashed, and that is the whole reason this rule needs a comment. Dashed already
+  means "the class did not meet" in three places in this app (src/attendance.css's
+  `.attendance-state.dropped`, src/home.css's `.class-card-state.dropped`, and
+  `.cal-chip.k-dropped` above). A second meaning for one border style is how a grammar
+  stops being one.
+*/
+.cal-chip.derived { background: #fff; border-color: #eef0f4; color: #6b7a8d; font-weight: 600; }
+.cal-chip.derived .cal-chip-text { font-weight: 600; }
+.cal-chip-out { flex: 0 0 auto; color: #c0cad5; font-size: 10px; font-weight: 700; }
+.cal-chip.derived:hover .cal-chip-out { color: #5b6fcc; }
+/* Term start and end read as a boundary rather than as an item — the only derived thing on
+   this calendar that is a fact about the page rather than a thing to open. */
+.cal-chip.derived.k-term {
+  border-color: #a3e4bc; background: #eafaf1; color: #1a6b3a;
+  font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § CALENDAR — src/calendar-view.css (WO-6.3)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The bar under the panel title: month name, the two steppers, today, and the view switch. */
+.cal-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding: 0 20px 12px;
+}
+.cal-month { font-size: 15px; font-weight: 700; color: #1a1a2e; min-width: 150px; }
+.cal-steps { display: flex; align-items: center; gap: 4px; }
+.cal-step {
+  width: 28px; height: 28px; border-radius: 7px;
+  border: 1.5px solid #e0e4ea; background: #fff; color: #6b7a8d;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.cal-step:hover { border-color: #5b6fcc; color: #5b6fcc; }
+
+/*
+  MONTH · WEEK. The same segmented shape src/assignments.css draws for the class screen
+  switcher, and it is a SECOND control rather than that one — see the drawing's note. The
+  values are copied deliberately: two segmented controls in one app that differ by 2px is
+  a thing a teacher notices without being able to say what she noticed.
+*/
+.cal-nav {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: #f0f2f5; border-radius: 9px;
+  margin-left: auto;
+}
+.cal-nav-btn {
+  padding: 6px 14px; border-radius: 7px; border: none; background: transparent;
+  font-family: inherit; font-size: 12px; font-weight: 700; color: #6b7a8d;
+  cursor: pointer; white-space: nowrap; transition: all 0.15s;
+}
+.cal-nav-btn:hover:not(.on) { background: rgba(255,255,255,0.7); color: #1a1a2e; }
+.cal-nav-btn.on { background: #fff; color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.10); }
+
+/* The class filter. Holds shipped `.pill`s; this is the row, not the control. */
+.cal-filter {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  padding: 0 20px 12px;
+}
+.cal-filter-label {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-right: 2px;
+}
+
+/* ── THE MONTH GRID ── */
+/* 1px of `#eef0f4` showing between white cells, which is the app's own panel hairline
+   drawn as a grid rather than as a border per cell — borders per cell double up and
+   read as 2px on every internal edge. */
+.cal-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px; background: #eef0f4;
+  border-top: 1px solid #eef0f4;
+}
+.cal-head {
+  background: #fff; padding: 8px 6px; text-align: center;
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.cal-cell {
+  background: #fff; min-height: 116px; padding: 6px;
+  display: flex; flex-direction: column; gap: 3px; min-width: 0;
+}
+.cal-date {
+  font-size: 12px; font-weight: 800; color: #1a1a2e;
+  font-variant-numeric: tabular-nums; margin-bottom: 1px;
+}
+/* A day in the month either side of this one. Present, because a week that stops mid-row
+   is a week a teacher has to reconstruct, and quiet, because it is not this month's news. */
+.cal-cell.other { background: #fcfcfd; }
+.cal-cell.other .cal-date { color: #c0cad5; }
+/* Today. The indigo src/attendance.css gives its own today column, drawn as a ring rather
+   than as two inset edges because a grid cell has four sides where a table column has two. */
+.cal-cell.today { box-shadow: inset 0 0 0 2px #5b6fcc; }
+.cal-cell.today .cal-date { color: #5b6fcc; }
+/* The whole school is out. The cell takes the wash rather than the chip carrying it alone —
+   a holiday is a fact about the DAY, and five class chips inside a white cell make a teacher
+   read five things to learn one. src/attendance.css's `.attendance-col-covered` exactly. */
+.cal-cell.covered { background: #f5f7fa; }
+/* Outside every term. The quietest a cell gets, and never the untaken amber — WO-2.50's rule,
+   which this grid inherits rather than re-decides: a day the class does not exist on has
+   nothing to fill in. */
+.cal-cell.off-term .cal-date { color: #a0aab8; }
+
+/* "+2 more" — the honest overflow. A cell that silently drops its fourth item is a cell that
+   lies at exactly the moment the month is busiest. */
+.cal-more {
+  align-self: flex-start; padding: 1px 4px; border: none; background: none;
+  font-family: inherit; font-size: 10px; font-weight: 700; color: #5b6fcc;
+  cursor: pointer; border-radius: 4px;
+}
+.cal-more:hover { background: #eef2ff; }
+/* The way to author an event on a day: revealed on hover on a fine pointer, always present
+   on a coarse one (the coarse block below), which is design/style-guide.md §6's rule for
+   every hover-only affordance in the suite. */
+.cal-cell-add {
+  align-self: flex-start; margin-top: auto;
+  padding: 1px 5px; border: 1.5px dashed #e0e4ea; border-radius: 6px;
+  background: none; font-family: inherit; font-size: 10px; font-weight: 700;
+  color: #a0aab8; cursor: pointer; opacity: 0; transition: all 0.15s;
+}
+.cal-cell:hover .cal-cell-add { opacity: 1; }
+.cal-cell-add:hover { border-color: #5b6fcc; color: #5b6fcc; border-style: solid; }
+
+/* ── THE WEEK VIEW ── */
+/* What the week has that the month does not is ROOM: every title in full rather than
+   ellipsised, and the five classes' state for that day on a rail at the top of each column.
+   That rail is the bridge between this screen and the registry — it is the same three
+   answers src/home.js's state line gives, for a day that is not today. */
+.cal-week {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px; padding: 0 20px 20px;
+}
+.cal-week-day {
+  border: 1.5px solid #eef0f4; border-radius: 10px; background: #f8f9fb;
+  padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.cal-week-day.today { border-color: #b0bcf0; background: #eef2ff; }
+.cal-week-day.covered { background: #f5f7fa; border-color: #d0d8e4; }
+.cal-week-head { display: flex; align-items: baseline; gap: 6px; }
+.cal-week-dow {
+  font-size: 10px; font-weight: 700; color: #8a9bb0;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.cal-week-num { font-size: 16px; font-weight: 800; color: #1a1a2e; font-variant-numeric: tabular-nums; }
+.cal-week-day.today .cal-week-num { color: #5b6fcc; }
+.cal-week-items { display: flex; flex-direction: column; gap: 4px; }
+/* In the week there is room to wrap, so a title is never cut. The month cannot afford this. */
+.cal-week-items .cal-chip-text { overflow: visible; text-overflow: clip; white-space: normal; }
+
+/* The class rail: one dot per class, colour for WHICH and ring for WHETHER. */
+.cal-rail { display: flex; align-items: center; gap: 5px; }
+.cal-rail-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  box-shadow: 0 0 0 1.5px #e0e4ea;
+}
+.cal-rail-dot.taken     { box-shadow: 0 0 0 1.5px #27ae60; }
+.cal-rail-dot.not-taken { box-shadow: 0 0 0 1.5px #e67e22; }
+.cal-rail-dot.dropped   { box-shadow: 0 0 0 1.5px #d0d8e4; opacity: 0.3; }
+.cal-rail-dot.covered   { box-shadow: 0 0 0 1.5px #d0d8e4; opacity: 0.3; }
+.cal-rail-note { font-size: 10px; font-weight: 700; color: #8a9bb0; margin-left: 2px; }
+
+/* ── THE LEGEND ── */
+/* On the panel foot rather than in a modal. Twelve kinds in four bands is a grammar, and a
+   grammar nobody is shown is a grammar nobody has. */
+.cal-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  padding: 10px 20px; border-top: 1px solid #eef0f4; background: #f8f9fb;
+}
+.cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7a8d; }
+.cal-legend-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid #e0e4ea; background: #fff; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § EVENT EDITOR — src/events.css (WO-6.1)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The kind picker. Holds shipped `.pill`s, exactly as `.dayoff-kinds` does — eight of them
+   rather than two, which is the one thing that changes. */
+.cal-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.cal-num {
+  width: 58px; padding: 7px 9px; border: 1.5px solid #e0e4ea; border-radius: 8px;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: #1a1a2e;
+  font-variant-numeric: tabular-nums;
+}
+.cal-inline-label { font-size: 12px; font-weight: 700; color: #6b7a8d; }
+
+/*
+  THE MATERIALIZE NOTE, and it is the most important thing in this dialog.
+
+  Recurring events materialize (docs/data-model.md, and the roadmap says *RRULE is V2, if
+  ever*). A teacher who types "repeat weekly until December 19" and gets fourteen rows she
+  did not expect has been surprised by her own calendar. So the count is LIVE, it is stated
+  before the button rather than after it, and it uses the word "separate" — because separate
+  is the whole property that makes materializing worth doing, and it is also the property
+  that will confuse her the first time she moves one.
+*/
+.cal-repeat-note {
+  margin-top: 10px; padding: 10px 12px;
+  border: 1.5px solid #b0bcf0; border-radius: 8px; background: #eef2ff;
+  font-size: 12px; line-height: 1.55; color: #5b6fcc;
+}
+.cal-repeat-note b { color: #1a1a2e; }
+/* The other half: a series can be deleted whole. WO-6.1's third acceptance line, and without
+   it "materialize" costs the teacher fourteen taps to undo one decision. */
+.cal-series {
+  margin-top: 10px; padding: 10px 12px;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; background: #f8f9fb;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.cal-series-text { flex: 1 1 180px; font-size: 12px; line-height: 1.5; color: #6b7a8d; }
+.cal-series-text b { color: #1a1a2e; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § GLANCE — src/glance.css (WO-6.4)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Five panels stacked in `.main`, in the order a teacher needs them at 7:40am. Panels
+   rather than sections of one panel: each is a different KIND of thing with a different
+   destination, and `.panel`'s own header is what gives each one a title and a control. */
+.gl-stack { display: flex; flex-direction: column; gap: 14px; }
+
+/*
+  THE CHIP IN `.class-card-signals` — the slot src/home.css has been holding open with
+  `min-height: 24px` since WO-1.10, spent at last.
+
+  IT REPORTS. IT DOES NOT ACT. src/home.js's classCard() is a single <button> since
+  WO-1.13, and a control cannot nest inside a control — so these are <span>s, like the
+  state line above them, and the card's one tap opens the class. The "every item taps
+  through" half of WO-6.4 is paid by the panels BELOW, where the same counts are named
+  students and named assignments with somewhere to go. The card says how many; the list
+  says who. See the drawing's amber note, which is where the argument lives.
+*/
+.gl-sig {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 10px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
+}
+.gl-sig.grade   { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+.gl-sig.concern { background: #fdeaea; border-color: #f0b0b0; color: #c0392b; }
+.gl-sig.praise  { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
+
+/* ── THE LAUNCHER ROW ── */
+/* Every row on this page is a button, because WO-6.4 says the page is a launcher and not a
+   report: an item that cannot be acted on does not earn a place. The `›` is drawn on every
+   one of them for the same reason — a row that goes somewhere and a row that does not must
+   not look alike, and the way to guarantee that is for there to be no second kind. */
+.gl-list { display: flex; flex-direction: column; }
+.gl-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 20px;
+  border: none; border-top: 1px solid #f3f4f6; background: none;
+  font-family: inherit; text-align: left; cursor: pointer; transition: background 0.15s;
+}
+.gl-row:hover { background: #f8f9fb; }
+.gl-row-main { flex: 1 1 auto; min-width: 0; }
+.gl-row-title { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+/* WHY THIS ROW IS HERE, in the rule's own words. WO-4.1 requires the explanation to be
+   produced by the rule from the numbers that fired it, never written per screen — so this
+   line is a slot for a sentence this file does not compose and must not truncate. */
+.gl-row-why { font-size: 11px; line-height: 1.5; color: #8a9bb0; margin-top: 2px; }
+.gl-row-meta { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums; }
+.gl-row-go { flex: 0 0 auto; font-size: 14px; font-weight: 700; color: #c0cad5; }
+.gl-row:hover .gl-row-go { color: #5b6fcc; }
+/* A deadline inside its lead time. The one amber row on the page, and it means what amber
+   means everywhere else in this app: act on this. */
+.gl-row.warn { background: #fff8e6; }
+.gl-row.warn:hover { background: #fef5ea; }
+.gl-row.warn .gl-row-meta { color: #8a6d1a; }
+
+/* ── CONCERN AND PRAISE, SIDE BY SIDE ── */
+/*
+  TWO COLUMNS OF EQUAL WIDTH, and this is the single most load-bearing rule in the file.
+
+  plans/ROADMAP.md Phase 4: "the praise half is not decoration — it is what makes this a
+  teacher's assistant rather than a gradebook with alarms." WO-6.4's acceptance says the
+  praise list must not be buried behind the concern list. A stacked layout buries it by
+  construction on any screen shorter than both lists, and every iPad is.
+
+  So: a grid, not a stack, and 1fr 1fr rather than a ratio — the moment concern gets 60%
+  of the width it has been given 60% of the argument. It drops to one column only at the
+  phone breakpoint, where two columns of names are two columns of ellipsis, and there
+  PRAISE IS DRAWN FIRST for the same reason it is drawn equal here.
+*/
+.gl-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #eef0f4; }
+.gl-col { background: #fff; min-width: 0; display: flex; flex-direction: column; }
+.gl-col-head {
+  padding: 10px 20px 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+}
+.gl-col-head.concern { color: #c0392b; }
+.gl-col-head.praise  { color: #27ae60; }
+/* Suppressed by cooldown — WO-4.5's "hidden, not deleted", said out loud. A count with no
+   way to open it is a count a teacher cannot trust. */
+.gl-more {
+  margin-top: auto; padding: 9px 20px; border: none; border-top: 1px solid #f3f4f6;
+  background: none; font-family: inherit; text-align: left;
+  font-size: 11px; font-weight: 700; color: #8a9bb0; cursor: pointer; transition: all 0.15s;
+}
+.gl-more:hover { background: #f8f9fb; color: #5b6fcc; }
+
+/* ── THE HONEST EMPTY STATE ── */
+/*
+  "A quiet day says 'nothing needs you today', not five empty panels."
+
+  Which means this is not a panel's empty state — it is the PAGE's, and the four panels
+  below the class grid are not drawn at all. That is why it lives here and not as a variant
+  of `.empty-state`'s children: the decision is about how many panels exist, and no rule
+  inside a panel can make that decision.
+
+  The class grid stays. Whether today's attendance is done is not "something pending" —
+  it is the question the home screen exists to answer, and it has an answer on a quiet day
+  too.
+*/
+.gl-quiet { padding: 40px 20px; text-align: center; }
+.gl-quiet-mark { font-size: 30px; line-height: 1; }
+.gl-quiet-lead { margin-top: 10px; font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.gl-quiet-text {
+  max-width: 460px; margin: 8px auto 0;
+  font-size: 13px; line-height: 1.6; color: #8a9bb0;
+}
+/* What it checked, so that "nothing needs you" is a claim with a warrant rather than a
+   shrug. A teacher who cannot see what was looked at will go and look herself, and then
+   the page has cost her time instead of saving it. */
+.gl-quiet-checked {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  margin-top: 14px;
+}
+.gl-quiet-chip {
+  padding: 3px 9px; border-radius: 20px; border: 1.5px solid #eef0f4; background: #f8f9fb;
+  font-size: 11px; font-weight: 700; color: #a0aab8;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § RESPONSIVE — the order design/style-guide.md §6 names
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TOUCH PASS. Every control this file adds is named here, including the ones a bare
+   `button` rule in src/shell.css already floors — a control that is only covered by
+   another selector's rule is a control the next reader has to go and prove is covered. */
+@media (pointer: coarse) {
+  .cal-bar { gap: 12px; }
+  .cal-step { width: 44px; height: 44px; font-size: 16px; }
+  .cal-nav-btn { min-height: 44px; padding: 6px 16px; }
+  .cal-filter { gap: 8px; }
+  .cal-filter-label { font-size: 11px; }
+
+  /* The cell grows before the chip does. A 44px chip in a 5-column month is four items a
+     cell and a month that needs two screens; the chips stay near their size and the CELL
+     is the target that opens the day. That is a departure from the 44px floor and it is
+     deliberate — the same call src/home.css's coarse block makes for `.class-card-state`,
+     where a line inside a bigger target keeps its own size. It needs a device before
+     WO-6.3 commits; see the drawing's amber note. */
+  .cal-cell { min-height: 132px; padding: 8px; }
+  .cal-date { font-size: 13px; }
+  .cal-chip { padding: 5px 7px; font-size: 12px; }
+  .cal-more { min-height: 28px; font-size: 11px; }
+  /* Hover is not a thing a thumb has: the add affordance is always visible here. */
+  .cal-cell-add { opacity: 1; min-height: 28px; font-size: 11px; }
+
+  .cal-week-day { padding: 12px; }
+  .cal-week-num { font-size: 18px; }
+  .cal-rail-dot { width: 14px; height: 14px; }
+  .cal-rail { gap: 7px; }
+  .cal-legend-item { font-size: 12px; }
+
+  .cal-kinds { gap: 8px; }
+  .cal-row { gap: 10px; }
+  .cal-num { min-height: 44px; width: 68px; font-size: 14px; }
+  .cal-inline-label { font-size: 13px; }
+  .cal-repeat-note { font-size: 13px; }
+  .cal-series-text { font-size: 13px; }
+
+  .gl-sig { font-size: 11px; padding: 3px 9px; }
+  .gl-row { min-height: 44px; padding: 12px 20px; }
+  .gl-row-title { font-size: 14px; }
+  .gl-row-why { font-size: 12px; }
+  .gl-row-meta { font-size: 12px; }
+  .gl-more { min-height: 44px; font-size: 12px; }
+  .gl-col-head { font-size: 11px; }
+  .gl-quiet-lead { font-size: 16px; }
+  .gl-quiet-text { font-size: 14px; }
+  .gl-quiet-chip { font-size: 12px; }
+}
+
+/* Tablet. The month keeps five columns — dropping one would put Wednesday under Monday,
+   which is not a calendar. What gives instead is the week view, which becomes two columns. */
+@media (max-width: 1024px) {
+  .cal-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .cal-bar, .cal-filter { padding-left: 12px; padding-right: 12px; }
+  .cal-nav { margin-left: 0; }
+  .cal-cell { min-height: 96px; padding: 4px; }
+  .cal-week { grid-template-columns: minmax(0, 1fr); padding: 0 12px 12px; }
+  .cal-legend { padding: 10px 12px; }
+  .gl-row { padding: 10px 12px; }
+  .gl-col-head, .gl-more { padding-left: 12px; padding-right: 12px; }
+  /* One column, and PRAISE FIRST. See `.gl-two` above — the whole reason that rule is
+     1fr 1fr is that praise must not be buried, and a stack buries whichever is second. */
+  .gl-two { grid-template-columns: minmax(0, 1fr); }
+  .gl-col.praise { order: -1; }
+}

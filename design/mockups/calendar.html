@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Calendar, month &amp; week (WO-6.1 · 6.2 · 6.3)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase6.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. No store, no clock, no arithmetic — every date below is typed in by hand.</span>
+  <span>Calendar · <a href="../../plans/work-orders/phase-6-calendar-glance.md">WO-6.1 · 6.2 · 6.3</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="calendar.html" class="here">Calendar</a>
+  <a href="glance.html">Glance page</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!--
+  THE ICON SPRITE — a convenience of the DRAWING and not a proposal.
+
+  design/style-guide.md §7 says icons are inline Feather-style SVGs, and the app writes each
+  one out where it is used (every `hdr-icon-btn` in index.html does). A month grid draws sixty
+  of them, so this page keeps the geometry once and points at it. THE LIFT WRITES THEM INLINE,
+  the way src/*.js builds every other icon in the app — the sprite is not part of what carries
+  across.
+-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="ic-slash" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></symbol>
+  <symbol id="ic-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></symbol>
+  <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="ic-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="ic-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+</defs></svg>
+
+<!-- The app frame, copied from index.html rather than approximated.
+
+     THE CLASS TAB STRIP IS NOT DRAWN, and that is src/classes.js's rule rather than a
+     simplification: the tabs appear on a CLASS view, and on any other view the strip carries a
+     caption in the `.hdr-empty` idiom naming the screen that is up ("Your classes" on the home
+     view). The calendar is an app-level screen with a class FILTER, not a screen of one class,
+     so it gets a caption too — and the filter lives on the panel, where it can be multi-select. -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p>Ms Toomey · St John's High School</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <span class="hdr-empty">Calendar</span>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mk-section">Month view — WO-6.3, over WO-6.1's authored events and WO-6.2's derived ones</div>
+
+<main class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Calendar</h2>
+          <p>
+            What you put in, and what Planbook already knows. Anything with a
+            <span aria-hidden="true">↗</span> is kept somewhere else — tap it and you land on the
+            thing that owns it.
+          </p>
+        </div>
+        <button class="class-action-btn primary" type="button">+ New event</button>
+      </div>
+    </div>
+
+    <div class="cal-bar">
+      <div class="cal-steps">
+        <button class="cal-step" type="button" aria-label="Previous month">‹</button>
+        <button class="cal-step" type="button" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-month">September 2026</div>
+      <button class="class-action-btn" type="button">Today</button>
+      <div class="cal-nav" role="group" aria-label="Calendar view">
+        <button class="cal-nav-btn on" type="button" aria-current="true">Month</button>
+        <button class="cal-nav-btn" type="button">Week</button>
+      </div>
+    </div>
+
+    <!-- Multi-select, unlike the days-off dialog's kind picker, which wears the same `.pill`
+         and is one-of-two. Five classes and a teacher rarely wants all of them at once
+         (WO-6.3), so "All" is a shortcut rather than a sixth mutually-exclusive option. -->
+    <div class="cal-filter" role="group" aria-label="Filter by class">
+      <span class="cal-filter-label">Show</span>
+      <button class="pill active" type="button" aria-pressed="true">All classes</button>
+      <button class="pill" type="button" aria-pressed="false"><span class="cal-dot av0" aria-hidden="true" style="display:inline-block;margin-right:5px;vertical-align:0"></span>Biology I</button>
+      <button class="pill" type="button" aria-pressed="false"><span class="cal-dot av1" aria-hidden="true" style="display:inline-block;margin-right:5px;vertical-align:0"></span>Biology I · P4</button>
+      <button class="pill" type="button" aria-pressed="false"><span class="cal-dot av2" aria-hidden="true" style="display:inline-block;margin-right:5px;vertical-align:0"></span>Anatomy</button>
+      <button class="pill" type="button" aria-pressed="false"><span class="cal-dot av3" aria-hidden="true" style="display:inline-block;margin-right:5px;vertical-align:0"></span>Env Science</button>
+      <button class="pill" type="button" aria-pressed="false"><span class="cal-dot av4" aria-hidden="true" style="display:inline-block;margin-right:5px;vertical-align:0"></span>Research</button>
+    </div>
+
+    <div class="cal-grid">
+      <div class="cal-head">Mon</div>
+      <div class="cal-head">Tue</div>
+      <div class="cal-head">Wed</div>
+      <div class="cal-head">Thu</div>
+      <div class="cal-head">Fri</div>
+
+      <!-- ── week of Aug 31 — before the term, which is what "off-term" looks like ── -->
+      <div class="cal-cell other off-term"><span class="cal-date">31</span></div>
+      <div class="cal-cell off-term"><span class="cal-date">1</span>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">2</span>
+        <button class="cal-chip derived k-term" type="button">
+          <span class="cal-chip-text">Quarter 1 begins</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">3</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av0" aria-hidden="true"></span>
+          <span class="cal-chip-text">Lab safety quiz</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">4</span>
+        <button class="cal-chip k-meeting" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+          <span class="cal-chip-text">Back-to-school night</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+
+      <!-- ── week of Sep 7 ── -->
+      <div class="cal-cell covered">
+        <span class="cal-date">7</span>
+        <button class="cal-chip k-no-school" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-slash"/></svg>
+          <span class="cal-chip-text">Labor Day</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">8</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av0" aria-hidden="true"></span>
+          <span class="cal-chip-text">Microscope Lab</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">9</span>
+        <button class="cal-chip k-early" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-clock"/></svg>
+          <span class="cal-chip-text">Early release · 11:20</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">10</span>
+        <!-- ONE EVENT NAMING TWO CLASSES, not two events. `classIds` is a list
+             (docs/data-model.md), and a drop that becomes two rows is two things to delete. -->
+        <button class="cal-chip k-dropped" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-minus"/></svg>
+          <span class="cal-dot av2" aria-hidden="true"></span><span class="cal-dot av3" aria-hidden="true"></span>
+          <span class="cal-chip-text">Class photos</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">11</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av1" aria-hidden="true"></span>
+          <span class="cal-chip-text">Osmosis Quiz</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+
+      <!-- ── week of Sep 14 — today is Tuesday the 15th ── -->
+      <div class="cal-cell">
+        <span class="cal-date">14</span>
+        <!-- IEP/504 REVIEW DATE. A date and a student and NOTHING ELSE — no plan type, no
+             initials of one. It is derived from `students[].supports.reviewDate`, so it is
+             never in `events[]`, and it is the one chip on this grid that disappears in
+             presentation mode (drawn below). -->
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-user"/></svg>
+          <span class="cal-chip-text">Review coming up · D. Cho</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-chip k-reminder" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-bell"/></svg>
+          <span class="cal-chip-text">Order dissection kits</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell today">
+        <span class="cal-date">15</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av0" aria-hidden="true"></span>
+          <span class="cal-chip-text">Cell Structure Test</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-chip k-conference" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
+          <span class="cal-chip-text">Guardian call · 3:15</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">16</span>
+        <button class="cal-chip k-meeting" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+          <span class="cal-chip-text">Dept meeting · 2:45</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">17</span>
+        <!-- INSIDE ITS LEAD TIME. The escalation is the whole point of grades-due being a kind
+             of its own: three days out, on the 15th, this chip and the glance page's deadline
+             row both went red together. -->
+        <button class="cal-chip k-grades-due due-now" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+          <span class="cal-chip-text">Progress grades due</span>
+        </button>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av2" aria-hidden="true"></span>
+          <span class="cal-chip-text">Skeletal system quiz</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">18</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av1" aria-hidden="true"></span>
+          <span class="cal-chip-text">Cell Structure Test</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+
+      <!-- ── week of Sep 21 ── -->
+      <div class="cal-cell">
+        <span class="cal-date">21</span>
+        <button class="cal-chip k-trip" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-pin"/></svg>
+          <span class="cal-dot av3" aria-hidden="true"></span>
+          <span class="cal-chip-text">Nature Center trip</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">22</span>
+        <button class="cal-chip k-meeting" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+          <span class="cal-chip-text">Faculty meeting</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">23</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av4" aria-hidden="true"></span>
+          <span class="cal-chip-text">Proposal draft</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <!-- THE BUSY DAY, drawn on purpose. A month grid that never overflows has not been
+           tested against a real September. -->
+      <div class="cal-cell">
+        <span class="cal-date">24</span>
+        <button class="cal-chip k-early" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-clock"/></svg>
+          <span class="cal-chip-text">Early release · 11:20</span>
+        </button>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av0" aria-hidden="true"></span>
+          <span class="cal-chip-text">Osmosis lab writeup</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-more" type="button">+2 more</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">25</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av2" aria-hidden="true"></span>
+          <span class="cal-chip-text">Muscle diagram</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+
+      <!-- ── week of Sep 28 ── -->
+      <div class="cal-cell">
+        <span class="cal-date">28</span>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">29</span>
+        <button class="cal-chip k-conference" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
+          <span class="cal-chip-text">Parent conference · 3:30</span>
+        </button>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">30</span>
+        <button class="cal-cell-add" type="button">+ Add</button>
+      </div>
+      <div class="cal-cell other"><span class="cal-date">1</span>
+        <button class="cal-chip k-grades-due" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+          <span class="cal-chip-text">Quarter 1 grades due</span>
+        </button>
+      </div>
+      <div class="cal-cell other"><span class="cal-date">2</span></div>
+    </div>
+
+    <div class="cal-legend">
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#f5f7fa;border-color:#d0d8e4"></span> Nobody meets</span>
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="border-style:dashed;border-color:#d0d8e4"></span> A class isn't meeting</span>
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#eef2ff;border-color:#b0bcf0"></span> In your diary</span>
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#fef5ea;border-color:#f5c98a"></span> Due from you</span>
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#fdeaea;border-color:#f0b0b0"></span> Due within the lead time</span>
+      <span class="cal-legend-item"><span class="cal-legend-swatch" style="border-color:#eef0f4"></span> <span aria-hidden="true">↗</span> Kept somewhere else</span>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Nothing on this grid is stored twice.</strong> Seven of the eighteen items are
+    <em>derived</em> — six assignment due dates and one term boundary — and none of them is in
+    <code>events[]</code>. Move <em>Cell Structure Test</em> in the assignment editor and it moves
+    here with no other action, which is WO-6.2's first acceptance line. The
+    <span aria-hidden="true">↗</span> is what makes that visible rather than merely true: it says
+    "this is edited elsewhere", and tapping it goes there.
+  </div>
+  <div class="mk-caption">
+    <strong>Colour is urgency; the glyph is the kind.</strong> Twelve kinds and twelve colours
+    would be a thing to memorise, which is the reason <code>src/assignments.css</code> gives for
+    <code>.cat-chip</code> carrying no colour per category. So four bands do the work — not
+    meeting · in your diary · due from you · overdue-ish — and the icon says which of the twelve
+    it is. The legend is on the panel foot rather than behind a button, because a grammar nobody
+    is shown is a grammar nobody has.
+  </div>
+  <div class="mk-caption">
+    <strong>Sep 7 tints the whole cell; Sep 10 only tints a chip.</strong> A holiday is a fact
+    about the <em>day</em>, so the cell takes <code>src/attendance.css</code>'s own covered wash
+    and the teacher learns it once. A planned drop is a fact about two <em>classes</em>, so it
+    stays a chip with two class dots on it — one event naming two classes, never two events.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Mon–Fri, or the full seven?</strong> Five columns give each day 20% of the width
+    instead of 14%, which on an iPad is the difference between a title and an ellipsis — and the
+    weekend holds nothing this app models. But a Saturday field trip or an away meet has nowhere
+    to go, and a teacher who types one and cannot find it will not trust the calendar again.
+    Drawn at five so the cost of seven is visible. <strong>The owner's call.</strong>
+  </div>
+  <div class="mk-caption ask">
+    <strong>The chips are not 44px, and every other control in this app is.</strong> Four items
+    in a September cell at a 44px floor is a month that needs two screens. The proposal is that
+    the <em>cell</em> is the target — tap anywhere and the day opens — and the chips stay at 12px
+    inside it, which is the same call <code>src/home.css</code>'s coarse block makes for
+    <code>.class-card-state</code>. <strong>This needs a thumb on the real tablet before WO-6.3
+    commits</strong>, exactly as the score cell's input type did before WO-3.5.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Month · Week is a second segmented control.</strong> <code>src/assignments.css</code>
+    already ships <code>.screen-nav</code>, whose <code>aria-label</code> is "Screens for this
+    class" and whose module (<code>src/screen-nav.js</code>) resolves through
+    <code>src/views.js</code>'s class screens. This one switches a <em>date range</em> on an
+    app-level screen. Same shape, different meaning — so either the component gets generalised
+    (and its ARIA and its module with it) or the app carries two segmented controls that are
+    identical to look at. Drawn as the second one, values copied literally so the two cannot
+    drift by 2px. <strong>Cheaper to settle before WO-6.3 than after.</strong>
+  </div>
+  <div class="mk-caption ask">
+    <strong>What happens to “Days off”?</strong> WO-2.3 shipped a dialog that authors
+    <code>no-school</code> and <code>dropped</code>, reached from a button on the home panel and
+    from the 📅 in a covered column head. WO-6.1's editor authors all eight kinds including those
+    two. Two authoring surfaces for the same two kinds is the "two controls meaning one thing"
+    defect that reopened Phase 1 (WO-1.13). Either the days-off dialog becomes a filtered view of
+    the event editor, or it goes and its two doors re-point here. Drawn as though it has gone —
+    note that the home panel's <code>📅 Days off</code> button is <code>📅 Calendar</code> on the
+    <a href="glance.html">glance page</a>.
+  </div>
+
+  <div class="mk-section">The same month, projected — presentation mode on</div>
+
+  <!-- Lifted from index.html as shipped. -->
+  <aside class="presentation-strip">
+    <p class="presentation-strip-text">
+      <strong><span aria-hidden="true">🖥</span> Presentation mode is on.</strong>
+      Support details are hidden everywhere — nothing has been deleted. Grades and names are not affected.
+    </p>
+    <button class="presentation-strip-btn" type="button">Turn it off</button>
+  </aside>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Calendar</h2>
+          <p>The week of the 14th, with the projector on. One chip is missing and nothing says so.</p>
+        </div>
+      </div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-head">Mon</div>
+      <div class="cal-head">Tue</div>
+      <div class="cal-head">Wed</div>
+      <div class="cal-head">Thu</div>
+      <div class="cal-head">Fri</div>
+      <div class="cal-cell">
+        <span class="cal-date">14</span>
+        <!-- The review chip is GONE. Not greyed, not "1 hidden", not a placeholder holding its
+             height — absent, because a gap where a student's row would be is itself a
+             disclosure to a room of thirty. -->
+        <button class="cal-chip k-reminder" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-bell"/></svg>
+          <span class="cal-chip-text">Order dissection kits</span>
+        </button>
+      </div>
+      <div class="cal-cell today">
+        <span class="cal-date">15</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av0" aria-hidden="true"></span>
+          <span class="cal-chip-text">Cell Structure Test</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+        <button class="cal-chip k-conference" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
+          <span class="cal-chip-text">Guardian call · 3:15</span>
+        </button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">16</span>
+        <button class="cal-chip k-meeting" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+          <span class="cal-chip-text">Dept meeting · 2:45</span>
+        </button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">17</span>
+        <button class="cal-chip k-grades-due due-now" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+          <span class="cal-chip-text">Progress grades due</span>
+        </button>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av2" aria-hidden="true"></span>
+          <span class="cal-chip-text">Skeletal system quiz</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+      </div>
+      <div class="cal-cell">
+        <span class="cal-date">18</span>
+        <button class="cal-chip derived" type="button">
+          <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+          <span class="cal-dot av1" aria-hidden="true"></span>
+          <span class="cal-chip-text">Cell Structure Test</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>“Review coming up · D. Cho” is gone, and its space is gone with it.</strong> Compare
+    the 14th above. A greyed chip, a "1 hidden" count, or a placeholder holding its own height
+    would each tell a projected room that <em>this named student has something</em> — which is
+    the disclosure, whatever the label says. Even out of presentation mode the chip never names
+    the plan type: it is a date and a student, per WO-6.1.
+  </div>
+  <div class="mk-caption">
+    <strong>The <code>+ Add</code> affordance is gone too</strong>, and that is not a
+    presentation-mode rule — it is <code>:hover</code>, and the screenshot has no pointer in it.
+    On a coarse pointer it is always visible (<code>proposed-phase6.css</code>'s touch pass), which
+    is design/style-guide.md §6's rule for every hover-only affordance in the suite.
+  </div>
+
+  <div class="mk-section">Week view — the same week, with room</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Calendar</h2>
+          <p>
+            Every title in full, and the five classes' state for each day on the rail — the same
+            three answers the home screen gives about today, for a day that isn't.
+          </p>
+        </div>
+        <button class="class-action-btn primary" type="button">+ New event</button>
+      </div>
+    </div>
+
+    <div class="cal-bar">
+      <div class="cal-steps">
+        <button class="cal-step" type="button" aria-label="Previous week">‹</button>
+        <button class="cal-step" type="button" aria-label="Next week">›</button>
+      </div>
+      <div class="cal-month">Sep 14 – 18, 2026</div>
+      <button class="class-action-btn" type="button">Today</button>
+      <div class="cal-nav" role="group" aria-label="Calendar view">
+        <button class="cal-nav-btn" type="button">Month</button>
+        <button class="cal-nav-btn on" type="button" aria-current="true">Week</button>
+      </div>
+    </div>
+
+    <div class="cal-week">
+      <div class="cal-week-day">
+        <div class="cal-week-head"><span class="cal-week-dow">Mon</span><span class="cal-week-num">14</span></div>
+        <div class="cal-rail" role="group" aria-label="Classes on Monday the 14th">
+          <span class="cal-rail-dot av0 taken" title="Biology I — taken"></span>
+          <span class="cal-rail-dot av1 taken" title="Biology I · P4 — taken"></span>
+          <span class="cal-rail-dot av2 taken" title="Anatomy — taken"></span>
+          <span class="cal-rail-dot av3 taken" title="Env Science — taken"></span>
+          <span class="cal-rail-dot av4 taken" title="Research — taken"></span>
+          <span class="cal-rail-note">all taken</span>
+        </div>
+        <div class="cal-week-items">
+          <button class="cal-chip derived" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-user"/></svg>
+            <span class="cal-chip-text">Review coming up · D. Cho</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+          </button>
+          <button class="cal-chip k-reminder" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-bell"/></svg>
+            <span class="cal-chip-text">Order dissection kits before the unit starts</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cal-week-day today">
+        <div class="cal-week-head"><span class="cal-week-dow">Tue · today</span><span class="cal-week-num">15</span></div>
+        <div class="cal-rail" role="group" aria-label="Classes today">
+          <span class="cal-rail-dot av0 taken" title="Biology I — taken"></span>
+          <span class="cal-rail-dot av1 taken" title="Biology I · P4 — taken"></span>
+          <span class="cal-rail-dot av2 not-taken" title="Anatomy — not taken yet"></span>
+          <span class="cal-rail-dot av3 not-taken" title="Env Science — not taken yet"></span>
+          <span class="cal-rail-dot av4 taken" title="Research — taken"></span>
+          <span class="cal-rail-note">2 not taken</span>
+        </div>
+        <div class="cal-week-items">
+          <button class="cal-chip derived" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+            <span class="cal-dot av0" aria-hidden="true"></span>
+            <span class="cal-chip-text">Cell Structure Test · Biology I</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+          </button>
+          <button class="cal-chip k-conference" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
+            <span class="cal-chip-text">Guardian call — Owen Bennett, 3:15</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cal-week-day">
+        <div class="cal-week-head"><span class="cal-week-dow">Wed</span><span class="cal-week-num">16</span></div>
+        <div class="cal-rail" role="group" aria-label="Classes on Wednesday the 16th">
+          <span class="cal-rail-dot av0" title="Biology I — not yet"></span>
+          <span class="cal-rail-dot av1" title="Biology I · P4 — not yet"></span>
+          <span class="cal-rail-dot av2" title="Anatomy — not yet"></span>
+          <span class="cal-rail-dot av3" title="Env Science — not yet"></span>
+          <span class="cal-rail-dot av4" title="Research — not yet"></span>
+          <span class="cal-rail-note">still to come</span>
+        </div>
+        <div class="cal-week-items">
+          <button class="cal-chip k-meeting" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+            <span class="cal-chip-text">Department meeting · 2:45, room 214</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cal-week-day">
+        <div class="cal-week-head"><span class="cal-week-dow">Thu</span><span class="cal-week-num">17</span></div>
+        <div class="cal-rail" role="group" aria-label="Classes on Thursday the 17th">
+          <span class="cal-rail-dot av0" title="Biology I — not yet"></span>
+          <span class="cal-rail-dot av1" title="Biology I · P4 — not yet"></span>
+          <span class="cal-rail-dot av2" title="Anatomy — not yet"></span>
+          <span class="cal-rail-dot av3 dropped" title="Env Science — planned drop"></span>
+          <span class="cal-rail-dot av4" title="Research — not yet"></span>
+          <span class="cal-rail-note">1 dropped</span>
+        </div>
+        <div class="cal-week-items">
+          <button class="cal-chip k-grades-due due-now" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+            <span class="cal-chip-text">Progress grades due in the SIS — 2 days from now</span>
+          </button>
+          <button class="cal-chip derived" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+            <span class="cal-dot av2" aria-hidden="true"></span>
+            <span class="cal-chip-text">Skeletal system quiz · Anatomy</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cal-week-day">
+        <div class="cal-week-head"><span class="cal-week-dow">Fri</span><span class="cal-week-num">18</span></div>
+        <div class="cal-rail" role="group" aria-label="Classes on Friday the 18th">
+          <span class="cal-rail-dot av0" title="Biology I — not yet"></span>
+          <span class="cal-rail-dot av1" title="Biology I · P4 — not yet"></span>
+          <span class="cal-rail-dot av2" title="Anatomy — not yet"></span>
+          <span class="cal-rail-dot av3" title="Env Science — not yet"></span>
+          <span class="cal-rail-dot av4" title="Research — not yet"></span>
+          <span class="cal-rail-note">still to come</span>
+        </div>
+        <div class="cal-week-items">
+          <button class="cal-chip derived" type="button">
+            <svg class="cal-chip-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+            <span class="cal-dot av1" aria-hidden="true"></span>
+            <span class="cal-chip-text">Cell Structure Test · Biology I · P4</span><span class="cal-chip-out" aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>The rail is the bridge to the registry.</strong> Colour says <em>which</em> class,
+    the ring says <em>whether</em> — green taken, amber not taken, hollow-grey dropped or
+    covered. It is the only thing on the calendar that reports attendance, and it reports it for
+    a day that isn't today, which the home screen's state line cannot do. Every dot is a way into
+    that class's column on that date.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Five dots with no labels is a legend problem.</strong> The colours come from
+    <code>avatarClass(id)</code>, so they are stable and they are the same ten a teacher already
+    reads on the class cards and in the roster — but a dot has no initials on it and there is no
+    key on this panel. Either the rail gets initials inside the dots (11px is very small), or the
+    week view carries its own five-class key, or the dots stay a hover/tap affordance and the
+    <code>title</code> is the whole answer. <strong>Drawn as the third, which is the one that
+    fails silently on a tablet.</strong>
+  </div>
+  <div class="mk-caption">
+    <strong>At 1024px the week becomes two columns, not five.</strong> Five 20%-wide columns of
+    wrapped titles is five columns of two words each. The month keeps its five at every width,
+    because dropping one would put Wednesday underneath Monday, which is not a calendar.
+  </div>
+
+  <div class="mk-section">The event editor — WO-6.1, all eight kinds</div>
+
+  <!-- Drawn inline rather than in a `.modal-overlay`, so it and the calendar above can both be
+       seen at once. In the app this is a real dialog over the grid. -->
+  <div style="max-width:560px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>New event</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Anything you know in advance. Two of these kinds change what the registry says —
+          <strong>no school</strong> and <strong>a planned drop</strong> — and
+          <strong>nothing here is written into your attendance</strong>, so removing one puts
+          those days straight back to where they were.
+        </p>
+
+        <div class="modal-section-label">What is it</div>
+        <!-- The `.dayoff-kinds` row from index.html, grown from two to eight. Shipped `.pill`s;
+             the row is the only new class. -->
+        <div class="cal-kinds" role="group" aria-label="Kind of event">
+          <button type="button" class="pill" aria-pressed="false">No school</button>
+          <button type="button" class="pill" aria-pressed="false">Planned drop</button>
+          <button type="button" class="pill" aria-pressed="false">Early release</button>
+          <button type="button" class="pill active" aria-pressed="true">Grades due</button>
+          <button type="button" class="pill" aria-pressed="false">Conference</button>
+          <button type="button" class="pill" aria-pressed="false">Meeting</button>
+          <button type="button" class="pill" aria-pressed="false">Trip</button>
+          <button type="button" class="pill" aria-pressed="false">Reminder</button>
+        </div>
+
+        <div class="cal-row">
+          <input class="class-input" type="text" value="Progress grades due" style="flex:1 1 180px" aria-label="What to call this event">
+        </div>
+        <div class="cal-row">
+          <label class="term-date-field">
+            <span class="term-date-label">From</span>
+            <input class="term-date" type="date" value="2026-09-17" aria-label="First day this covers">
+          </label>
+          <label class="term-date-field">
+            <span class="term-date-label">To</span>
+            <input class="term-date" type="date" value="2026-09-17" aria-label="Last day this covers">
+          </label>
+        </div>
+
+        <!-- GRADES-DUE ONLY. The lead time is why this kind is first-class rather than a
+             reminder with a different word on it: re-keying five classes into a system with no
+             import is a scheduled job, and the warning has to arrive while there is still time
+             to do it. -->
+        <div class="modal-section-label">Warn me before it</div>
+        <div class="cal-row">
+          <input class="cal-num" type="number" value="3" aria-label="Days of warning">
+          <span class="cal-inline-label">days ahead — so this one starts warning on <strong>Sep 14</strong>.</span>
+        </div>
+
+        <div class="modal-section-label">Repeat</div>
+        <div class="cal-row">
+          <button type="button" class="pill" aria-pressed="false">Never</button>
+          <button type="button" class="pill active" aria-pressed="true">Weekly</button>
+          <button type="button" class="pill" aria-pressed="false">Every 2 weeks</button>
+          <button type="button" class="pill" aria-pressed="false">Monthly</button>
+          <label class="term-date-field" style="margin-left:2px">
+            <span class="term-date-label">Until</span>
+            <input class="term-date" type="date" value="2026-12-19" aria-label="Repeat until">
+          </label>
+        </div>
+
+        <!-- THE HONESTY. docs/data-model.md: recurring events materialize into individual
+             entries rather than storing a rule. Said BEFORE the button, with a live count and
+             the word "separate", because separate is both the property that makes this worth
+             doing and the property that will surprise her the first time she moves one. -->
+        <div class="cal-repeat-note">
+          This creates <b>14 separate entries</b>, one per week to Dec 19. Move or delete any one
+          of them and the other thirteen stay where they are — there is no rule behind them to
+          argue with.
+        </div>
+
+        <p class="class-hint">
+          A range is one entry, not one per day: set the second date and Thanksgiving is one line
+          in your calendar and one thing to delete.
+        </p>
+
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="button">Add to the calendar</button>
+          <button class="class-action-btn" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-section">…and the same editor opened on one instance of that series</div>
+
+  <div style="max-width:560px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Edit event</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="cal-row" style="margin-top:0">
+          <input class="class-input" type="text" value="IEP check-in" style="flex:1 1 180px" aria-label="What to call this event">
+        </div>
+        <div class="cal-row">
+          <label class="term-date-field">
+            <span class="term-date-label">From</span>
+            <input class="term-date" type="date" value="2026-09-23" aria-label="First day this covers">
+          </label>
+          <label class="term-date-field">
+            <span class="term-date-label">To</span>
+            <input class="term-date" type="date" value="2026-09-23" aria-label="Last day this covers">
+          </label>
+        </div>
+
+        <!-- WO-6.1 acceptance 3: "Deleting a materialized series is possible without deleting
+             each instance by hand." Without this, materializing costs fourteen taps to undo one
+             decision — and a teacher who discovers that will never use Repeat again. -->
+        <div class="cal-series">
+          <span class="cal-series-text">
+            One of <b>14</b> weekly entries, Sep 23 → Dec 19. Editing here changes
+            <b>this one only</b>.
+          </span>
+          <button class="class-action-btn delete" type="button">Delete all 14</button>
+        </div>
+
+        <div class="modal-actions">
+          <button class="class-action-btn primary" type="button">Save</button>
+          <button class="class-action-btn delete" type="button">Delete this one</button>
+          <button class="class-action-btn" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Two delete buttons is the price of materializing, and it is worth paying.</strong>
+    The alternative is an RRULE and a table of exceptions — the roadmap's <em>RRULE is V2, if
+    ever</em>. A flat list a teacher can hand-edit in a restored backup is the whole reason the
+    data model chose this; the cost is that "delete" is now a question with two answers, and the
+    dialog has to ask it out loud rather than guess.
+  </div>
+  <div class="mk-caption ask">
+    <strong>Which kinds take a class list, and which are school-wide?</strong>
+    <code>no-school</code> is school-wide by definition and <code>dropped</code> refuses an empty
+    list (<code>src/calendar.js</code>'s rule, already shipped). The other six are undecided: a
+    trip belongs to a class, a conference belongs to a <em>student</em>, and
+    <code>grades-due</code> is arguably per-class since terms differ. <code>studentId</code> is in
+    the schema and nothing has ever written it. <strong>Drawn with the class picker omitted
+    entirely, which is the version that ducks the question.</strong>
+  </div>
+  <div class="mk-caption ask">
+    <strong>Eight pills is a lot of dialog.</strong> The days-off picker has two and fits on one
+    line at 390px; eight wraps to three. A <code>&lt;select&gt;</code> would fix that and is what
+    <code>src/shell.css</code>'s comment on <code>.dayoff-kinds</code> explicitly rejected for the
+    iPad. Third option: the kind is chosen by <em>where you started</em> — the <code>+ Add</code>
+    on a cell offers the four common kinds and "more…" opens the rest.
+  </div>
+</main>
+
+</body>
+</html>

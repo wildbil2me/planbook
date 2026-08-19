@@ -1,8 +1,13 @@
-# Gradebook mockups
+# Mockups
 
-**Drawn 2026-08-09**, before any Phase 3 screen was built. Open
+Two rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
+**the Phase 6 drawings** were made 2026-08-19, before any of Phase 6 existed at all. Open
 [`index.html`](index.html) — or, with `node tools/serve-https.mjs` running,
 `https://<your-lan-ip>:8443/design/mockups/`.
+
+Everything below the next divider is about the gradebook drawings, which came first. The Phase 6
+pair has its own section at the bottom of this file; the rules — no JavaScript, the black band,
+`src/shell.css` linked rather than copied, never in `sw.js`'s precache — are the same for both.
 
 These are **drawings**. There is no JavaScript in any of them, nothing reads or writes a document,
 and no number recomputes. Every page says so in a black band across the top, and `mockup.css` exists
@@ -138,3 +143,138 @@ with, and arguing with it changed two things:
 [`../../plans/gradebook-surfaces.md`](../../plans/gradebook-surfaces.md) § "How the class view
 navigates between its screens", and WO-3.3 now carries it as a deliverable with two acceptance lines
 rather than as a question.
+
+---
+
+# Phase 6 — the calendar and the glance page
+
+**Drawn 2026-08-19**, and a long way ahead of the work: Ship 2 is still waiting on the term, and
+Phase 6 is the last phase before packaging. They exist anyway for the reason
+`plans/ROADMAP.md` gives for putting the glance page late — *"build it before signals and outreach
+exist and you build it twice"* — which cuts the other way too. **The home screen has been
+accreting toward this page since WO-1.10, and every phase between here and there adds a line to
+it.** A drawing of the destination is what stops each of those lines being designed on its own.
+
+| File | What |
+|---|---|
+| `glance.html` | The glance page — WO-6.4. Drawn twice: a Tuesday with things on it, and a quiet day |
+| `calendar.html` | Month view, week view, the same month projected, and the event editor — WO-6.1 · 6.2 · 6.3 |
+| `proposed-phase6.css` | **The half that lifts**, split three ways at its section banners |
+
+`proposed-phase6.css` is a second file rather than more of `proposed.css`, because one of those
+sheets describes a phase that has shipped and the other describes a phase that has not. It obeys
+the same rule — **no selector targets a class any `src/*.css` styles** — and it obeys it more
+strictly than its predecessor had to: every rule's key compound is anchored on a `cal-` or `gl-`
+class this sheet owns, checked mechanically against the 536 class names the app's five stylesheets
+define. Neither prefix appears anywhere in `src/`. It splits:
+
+```
+§ SHARED          →  whichever lands first
+§ CALENDAR        →  src/calendar-view.css   (WO-6.3)
+§ EVENT EDITOR    →  src/events.css          (WO-6.1)
+§ GLANCE          →  src/glance.css          (WO-6.4)
+```
+
+`src/calendar.js` already exists and is the event **model** (WO-2.3). The view is not it — hence
+`calendar-view.css`, since a module with no DOM in it should not acquire a stylesheet named after
+it.
+
+`glance.html` links `src/home.css` as well as `src/shell.css`, because the first thing on that page
+*is* the home grid: `.class-card`, `.class-card-state` and `.class-card-signals` are worn exactly as
+shipped, and the only new class on that panel is the chip that goes in the slot. If WO-6.4 ever
+needs to restyle one of them, that drawing breaks loudly, which is the point.
+
+## What the drawings propose
+
+Six things that are decisions rather than renderings, each argued at the point it appears:
+
+1. **Colour is urgency; the glyph is the kind.** Twelve event kinds in four washes — not meeting ·
+   in your diary · due from you · inside its lead time — rather than twelve palettes. The reason is
+   `src/assignments.css`'s own, about `.cat-chip` carrying no colour per category: a palette that
+   has to be memorised is not a palette.
+2. **A derived item is plain and carries `↗`.** Never dashed — dashed already means "the class did
+   not meet" in three places, and a second meaning for one border style is how a grammar stops
+   being one.
+3. **A holiday tints the cell; a planned drop tints only a chip.** One is a fact about the day,
+   the other about two classes. One event naming two classes, never two events.
+4. **`Repeat weekly` says out loud that it is making fourteen separate rows**, before the button
+   rather than after it, and the edit dialog carries a *Delete all 14* beside *Delete this one*.
+   That second button is the price of materializing instead of storing an RRULE, and it is worth
+   paying.
+5. **Concern and praise are `1fr 1fr`, side by side.** A stack buries whichever is second on any
+   screen shorter than both lists, and every iPad is. At the phone breakpoint they stack and
+   **praise is drawn first**, for the same reason they are equal above it.
+6. **A quiet day is one panel, and it shows its warrant.** The other four do not exist — the
+   decision is about how many panels there *are*, which is why it cannot live inside any of them
+   as an empty state. The four chips say what was checked, because a bare "nothing needs you" on a
+   teacher's busiest morning is one she will go behind and verify.
+
+## The open questions, collected
+
+Nine, in the order a reader meets them. Each is drawn in place with an amber note. **None is
+settled**, and three of them are cheaper to answer now than after a work order is cut.
+
+*On the calendar —*
+
+1. **Mon–Fri, or the full seven?** Five columns buy each day 20% of the width instead of 14%, which
+   on an iPad is a title rather than an ellipsis. But a Saturday trip has nowhere to go, and a
+   teacher who types one and cannot find it will not trust the calendar again. Drawn at five.
+2. **The chips are not 44px**, and every other control in the app is. Four items in a September
+   cell at a 44px floor is a month that needs two screens. The proposal makes the *cell* the
+   target — the same call `src/home.css` makes for `.class-card-state` — and **it needs a thumb on
+   the real tablet before WO-6.3 commits**, exactly as the score cell's input type did before
+   WO-3.5.
+3. **Month · Week is a second segmented control.** `.screen-nav` ships already, but its ARIA says
+   "Screens for this class" and its module resolves through `src/views.js`'s class screens. Same
+   shape, different meaning: generalise the component or carry two that look identical. *Cheaper
+   before WO-6.3 than after.*
+4. **What happens to “Days off”?** WO-2.3's dialog authors `no-school` and `dropped`; WO-6.1's
+   editor authors all eight kinds including those two. Two authoring surfaces for the same two
+   kinds is the "two controls meaning one thing" defect that reopened Phase 1. Drawn as though the
+   dialog has gone — the home panel's `📅 Days off` button is `📅 Calendar` on the glance page.
+5. **Which kinds take a class list?** `no-school` is school-wide and `dropped` refuses an empty
+   one — both already shipped in `src/calendar.js`. The other six are undecided, and `studentId`
+   has been in the schema since day one with nothing ever writing it. Drawn with the class picker
+   omitted, which is the version that ducks the question.
+6. **Eight kind pills is three wrapped lines at 390px.** A `<select>` is what `src/shell.css`
+   explicitly rejected for the iPad on `.dayoff-kinds`. Third option: the `+ Add` on a cell offers
+   the four common kinds and "more…" opens the rest.
+7. **Five rail dots with no labels.** The colours are `avatarClass(id)`'s and are the same ten the
+   teacher already reads on the class cards — but a dot has no initials on it and the week panel
+   has no key. Drawn with the answer in a `title`, which is the option that fails silently on a
+   tablet.
+
+*On the glance page —*
+
+8. **The chips on a card report; they do not tap through.** WO-6.4 says every item taps through,
+   and "3 to grade" landing on the attendance grid is a half-answer — but the card has been a
+   single `<button>` since WO-1.13 and a control cannot nest inside a control. The proposal is
+   that **the card says how many and the panels below say who**. That is a defensible reading of
+   the work order and it is not the only one. **The owner's call.**
+9. **Five panels is two scrolls on an iPad**, which puts "who needs you" — the reason the app
+   exists — below the fold at 7:40am. Reorder is ruled out by the work order; collapsing panels
+   3–5 to their counts, or a two-column page above 1024px, are not. **Worth reading on the real
+   iPad against this drawing.**
+
+## The one that is not a preference
+
+**There is no IEP/504 review date anywhere on the glance page, and that is two work orders in the
+same phase disagreeing.** WO-6.1 asks for review dates "surfaced ahead of time, in
+presentation-mode-safe form"; WO-6.2 puts them on the calendar and requires them to vanish when
+projected; and WO-6.4's acceptance says *"Nothing on the page displays `supports` data, in
+presentation mode or out of it"* — where a review date is `students[].supports.reviewDate`.
+
+Read literally, **the one deadline a teacher is legally obliged not to miss is the one deadline
+*Closing in* may not show her.** It is drawn literally so the gap is visible. The safe resolution
+is probably that a date and a name is not "displaying supports data" — but that sentence has to be
+written into the work order before an implementer decides it alone, in a file nobody reviews for
+disclosure. `CLAUDE.md` § Accommodations is the standard it has to meet.
+
+## And one thing the drawings assume without asking
+
+**Signals need 4–6 weeks of real data before they fire at all** (Phase 4's own note), and Phase 6
+sits behind Phase 4. From Sep 2 until mid-October, every day is a quiet day for panels 4 and 5 —
+so `glance.html`'s second drawing is what the glance page looks like for the first six weeks of
+the term it ships into. Either that is fine, because the class grid and the grading queue are real
+from day one, or the empty state needs a second voice for **"not yet" rather than "nothing"**.
+It is the state the owner will see most.

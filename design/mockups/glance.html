@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The glance page (WO-6.4)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/home.css">
+<link rel="stylesheet" href="proposed-phase6.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Every count below is typed in — nothing here evaluates a rule or reads a document.</span>
+  <span>The glance page · <a href="../../plans/work-orders/phase-6-calendar-glance.md">WO-6.4</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="calendar.html">Calendar</a>
+  <a href="glance.html" class="here">Glance page</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="ic-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="ic-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+</defs></svg>
+
+<!-- The app frame, copied from index.html.
+
+     THE CAPTION IN THE LEFT STRIP READS "Today", NOT "Your classes". src/classes.js's rule is
+     that on a non-class view the strip names the screen that is up, in the panel's own words —
+     and the screen that is up is no longer one panel. "Your classes" is the first of five things
+     on it, and a header naming only the first would be a header describing the fold. -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p>Ms Toomey · St John's High School</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <span class="hdr-empty">Today</span>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mk-section">A Tuesday with things on it — the five sections, in WO-6.4's order</div>
+
+<main class="main">
+ <div class="gl-stack">
+
+  <!-- ══ 1. EVERY CLASS WITH TODAY'S STATE ══════════════════════════════════════════════
+       WO-1.10's home grid, unchanged, with the slot it has been holding open since August
+       finally filled. `.class-card`, `.class-card-state` and `.class-card-signals` are
+       src/home.css's own and are worn exactly as shipped — the only new class on this panel
+       is `.gl-sig`, the chip that goes IN the slot.
+
+       THE SUBTITLE HAS LOST ITS SECOND SENTENCE. index.html's copy today reads "Each card will
+       also grow to carry the work waiting to be graded and the students who need attention, as
+       those parts of Planbook arrive — the space on it is already theirs", and that file's own
+       comment says the sentence "is the one thing on this screen written to be deleted: it
+       describes what has not arrived yet, so it goes when the last slot is filled." This is the
+       work order that fills it. -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Your classes</h2>
+          <p>Tap a class to open it — its line says whether today's attendance is done.</p>
+        </div>
+        <button class="class-action-btn" type="button" aria-haspopup="dialog">
+          <span aria-hidden="true">📅</span> Calendar
+        </button>
+      </div>
+    </div>
+
+    <div class="home-grid">
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Biology I">
+          <span class="class-card-head">
+            <span class="avatar av0" aria-hidden="true">BI</span>
+            <span class="class-card-name">Biology I</span>
+          </span>
+          <span class="class-card-state taken">Taken · 2 absent</span>
+          <span class="class-card-signals">
+            <span class="gl-sig grade">3 to grade</span>
+            <span class="gl-sig concern">2 need you</span>
+            <span class="gl-sig praise">1 to praise</span>
+          </span>
+        </button>
+      </span>
+
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Biology I · P4">
+          <span class="class-card-head">
+            <span class="avatar av1" aria-hidden="true">BI</span>
+            <span class="class-card-name">Biology I · P4</span>
+          </span>
+          <span class="class-card-state taken">Taken · all present</span>
+          <span class="class-card-signals">
+            <span class="gl-sig grade">1 to grade</span>
+            <span class="gl-sig praise">1 to praise</span>
+          </span>
+        </button>
+      </span>
+
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Anatomy">
+          <span class="class-card-head">
+            <span class="avatar av2" aria-hidden="true">AN</span>
+            <span class="class-card-name">Anatomy</span>
+          </span>
+          <span class="class-card-state not-taken">Not taken yet</span>
+          <span class="class-card-signals">
+            <span class="gl-sig grade">2 to grade</span>
+            <span class="gl-sig concern">1 needs you</span>
+            <span class="gl-sig praise">1 to praise</span>
+          </span>
+        </button>
+      </span>
+
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Env Science">
+          <span class="class-card-head">
+            <span class="avatar av3" aria-hidden="true">ES</span>
+            <span class="class-card-name">Env Science</span>
+          </span>
+          <span class="class-card-state dropped">Didn’t meet</span>
+          <span class="class-card-signals">
+            <span class="gl-sig grade">1 to grade</span>
+            <span class="gl-sig praise">1 to praise</span>
+          </span>
+        </button>
+      </span>
+
+      <!-- WO-2.10's half-taken class, and it keeps its amber on this page for the same reason it
+           has it on the card today: a green "Taken" over three students nobody reached is the
+           silent failure the whole state line exists to prevent. -->
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Research">
+          <span class="class-card-head">
+            <span class="avatar av4" aria-hidden="true">RE</span>
+            <span class="class-card-name">Research</span>
+          </span>
+          <span class="class-card-state unconfirmed">3 unconfirmed · 1 absent</span>
+          <span class="class-card-signals">
+            <span class="gl-sig concern">1 needs you</span>
+          </span>
+        </button>
+      </span>
+    </div>
+  </div>
+
+  <!-- ══ 2. TODAY'S AND THIS WEEK'S EVENTS ══════════════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Today and this week</h2>
+          <p>What the calendar already knows, from here to Friday.</p>
+        </div>
+        <button class="class-action-btn" type="button">Open the calendar</button>
+      </div>
+    </div>
+    <div class="gl-list">
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b6fcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Guardian call — Owen Bennett</span>
+          <span class="gl-row-why">Conference you booked on the 9th.</span>
+        </span>
+        <span class="gl-row-meta">Today · 3:15</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Cell Structure Test due · Biology I</span>
+          <span class="gl-row-why">From the assignment, not the calendar — opens the assignment.</span>
+        </span>
+        <span class="gl-row-meta">Today</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b6fcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Department meeting</span>
+          <span class="gl-row-why">Room 214.</span>
+        </span>
+        <span class="gl-row-meta">Wed · 2:45</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row warn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a6d1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Progress grades due in the SIS</span>
+          <span class="gl-row-why">Five classes to re-key by hand. Also in <em>Closing in</em>, below.</span>
+        </span>
+        <span class="gl-row-meta">Thu · in 2 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Skeletal system quiz due · Anatomy</span>
+        </span>
+        <span class="gl-row-meta">Thu</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Cell Structure Test due · Biology I · P4</span>
+        </span>
+        <span class="gl-row-meta">Fri</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ 3. WHAT'S WAITING TO BE GRADED ═════════════════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Waiting to be graded</h2>
+          <p>Assignments with blanks in them. Each one opens on its own column in the score grid.</p>
+        </div>
+      </div>
+    </div>
+    <div class="gl-list">
+      <button class="gl-row" type="button">
+        <span class="avatar av0" aria-hidden="true" style="width:26px;height:26px;font-size:10px">BI</span>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Cell Structure Test</span>
+          <span class="gl-row-why">Biology I · Tests, 40% of the grade · due today</span>
+        </span>
+        <span class="gl-row-meta">0 of 24</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <span class="avatar av1" aria-hidden="true" style="width:26px;height:26px;font-size:10px">BI</span>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Osmosis Quiz</span>
+          <span class="gl-row-why">Biology I · P4 · Quizzes, 25% of the grade</span>
+        </span>
+        <span class="gl-row-meta">18 of 26</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <span class="avatar av2" aria-hidden="true" style="width:26px;height:26px;font-size:10px">AN</span>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Muscle diagram</span>
+          <span class="gl-row-why">Anatomy · Classwork, 20% of the grade</span>
+        </span>
+        <span class="gl-row-meta">9 of 22</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <span class="avatar av3" aria-hidden="true" style="width:26px;height:26px;font-size:10px">ES</span>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Watershed map</span>
+          <span class="gl-row-why">Env Science · Labs, 30% of the grade</span>
+        </span>
+        <span class="gl-row-meta">21 of 23</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ 4. WHO NEEDS ATTENTION — BOTH DIRECTIONS, EQUAL WIDTH ══════════════════════════
+       The load-bearing panel. plans/ROADMAP.md Phase 4: the praise half is what makes this a
+       teacher's assistant rather than a gradebook with alarms, and WO-6.4's acceptance says the
+       praise list must not be buried behind the concern list. A stack buries it on any screen
+       shorter than both lists. So: 1fr 1fr, side by side, and no ratio.
+
+       Every "why" line is the RULE's own sentence built from the numbers that fired it (WO-4.1),
+       not a phrase this screen composes — which is what stops "why is this student here?" from
+       ever drifting from the arithmetic behind it. -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Who needs you</h2>
+          <p>Both directions, ranked by how much changed rather than by how high or low it is.</p>
+        </div>
+        <button class="class-action-btn" type="button">The quiet middle · 9</button>
+      </div>
+    </div>
+    <div class="gl-two">
+      <div class="gl-col concern">
+        <div class="gl-col-head concern">Concern · 3</div>
+        <div class="gl-list">
+          <button class="gl-row" type="button">
+            <span class="avatar av5" aria-hidden="true" style="width:28px;height:28px;font-size:10px">OB</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Owen Bennett <span style="color:#8a9bb0;font-weight:600">· Biology I</span></span>
+              <span class="gl-row-why">Grade fell 12 points across the last 4 assignments — 81% to 69%.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+          <button class="gl-row" type="button">
+            <span class="avatar av6" aria-hidden="true" style="width:28px;height:28px;font-size:10px">RE</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Ruth Egan <span style="color:#8a9bb0;font-weight:600">· Anatomy</span></span>
+              <span class="gl-row-why">3 missing assignments, and 5 absences in the last 20 meetings.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+          <button class="gl-row" type="button">
+            <span class="avatar av7" aria-hidden="true" style="width:28px;height:28px;font-size:10px">SH</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Sami Haddad <span style="color:#8a9bb0;font-weight:600">· Research</span></span>
+              <span class="gl-row-why">3 scores in a row under 60% — 55%, 48%, 52%.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+        </div>
+        <button class="gl-more" type="button">2 hidden — you wrote home about them in the last 14 days. Show →</button>
+      </div>
+
+      <div class="gl-col praise">
+        <div class="gl-col-head praise">Praise · 3</div>
+        <div class="gl-list">
+          <button class="gl-row" type="button">
+            <span class="avatar av4" aria-hidden="true" style="width:28px;height:28px;font-size:10px">CD</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Claire Dumont <span style="color:#8a9bb0;font-weight:600">· Anatomy</span></span>
+              <span class="gl-row-why">Rose 14 points across the last 4 assignments — the biggest climb in the class.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+          <button class="gl-row" type="button">
+            <span class="avatar av2" aria-hidden="true" style="width:28px;height:28px;font-size:10px">DC</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Daniel Cho <span style="color:#8a9bb0;font-weight:600">· Biology I</span></span>
+              <span class="gl-row-why">Came off the concern list 9 days ago and has stayed off it.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+          <button class="gl-row" type="button">
+            <span class="avatar av8" aria-hidden="true" style="width:28px;height:28px;font-size:10px">NG</span>
+            <span class="gl-row-main">
+              <span class="gl-row-title">Nora Gallagher <span style="color:#8a9bb0;font-weight:600">· Env Science</span></span>
+              <span class="gl-row-why">No missing work across the last 8 assignments.</span>
+            </span>
+            <span class="gl-row-go" aria-hidden="true">›</span>
+          </button>
+        </div>
+        <button class="gl-more" type="button">1 hidden — you wrote home about her on the 4th. Show →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 5. DEADLINES CLOSING IN ════════════════════════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Closing in</h2>
+          <p>Dates with a consequence, and how long is left.</p>
+        </div>
+      </div>
+    </div>
+    <div class="gl-list">
+      <button class="gl-row warn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a6d1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Progress grades due in the SIS</span>
+          <span class="gl-row-why">Thursday the 17th. You asked to be warned 3 days ahead — that was yesterday.</span>
+        </span>
+        <span class="gl-row-meta">2 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Quarter 1 grades due in the SIS</span>
+          <span class="gl-row-why">Thursday Oct 1. Warning starts Sep 28.</span>
+        </span>
+        <span class="gl-row-meta">16 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Quarter 1 ends</span>
+          <span class="gl-row-why">Friday Nov 6 — every class.</span>
+        </span>
+        <span class="gl-row-meta">52 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
+ </div>
+</main>
+
+<div class="mk-caption">
+  <strong>The reserved slot is spent.</strong> <code>src/home.css</code> has held
+  <code>.class-card-signals</code> open at <code>min-height: 24px</code> since WO-1.10 so that the
+  first real datum would drop into space that was already there rather than reflowing the grid.
+  This is that datum. Nothing about the card changes — <code>.class-card</code>,
+  <code>.class-card-state</code> and the slot itself are worn exactly as shipped, and the only new
+  class on that panel is <code>.gl-sig</code>.
+</div>
+<div class="mk-caption">
+  <strong>And the subtitle has lost its second sentence.</strong> index.html's copy today ends
+  "…as those parts of Planbook arrive — the space on it is already theirs", and that file's own
+  comment calls it "the one thing on this screen written to be deleted". WO-6.4 is what deletes
+  it. A drawing that quietly kept it would be describing a promise the page had just kept.
+</div>
+<div class="mk-caption">
+  <strong>Drawn mid-morning, not at 7:40.</strong> The phase goal is the 7:40 reading, but at 7:40
+  all five cards say "Not taken yet" and the panel proves nothing. WO-6.4's acceptance asks for
+  the row to be correct "against a day with a mix of taken, dropped, and untaken classes", so the
+  mix is what is drawn: two taken, one untaken, one that didn't meet, and one half-taken carrying
+  WO-2.10's amber.
+</div>
+<div class="mk-caption ask">
+  <strong>The chips on a card report; they do not tap through.</strong> WO-6.4 says every item
+  taps through, and "3 to grade" landing on the attendance grid is a half-answer. But
+  <code>src/home.js</code>'s card has been a single <code>&lt;button&gt;</code> since WO-1.13 and a
+  control cannot nest inside a control — making the chips real would put them <em>beside</em> that
+  button, which means <code>.class-card</code> becomes a column, which is <code>src/home.css</code>'s
+  change to make and not a mockup's. The proposal is that the <strong>card says how many and the
+  panels below say who</strong>, each of those being a real launcher. It is a defensible reading
+  of the work order and it is not the only one. <strong>The owner's call.</strong>
+</div>
+<div class="mk-caption ask">
+  <strong>“Progress grades due” is on the page twice</strong> — once under <em>Today and this
+  week</em> and once under <em>Closing in</em> — and WO-6.4 asks for both sections by name. Either
+  the deadline section owns <code>grades-due</code> outright and the week list skips it, or the
+  duplication is accepted as the price of two honest questions ("what is scheduled?" and "what is
+  running out?"). Drawn duplicated, with the second row saying so, so the cost is visible rather
+  than argued.
+</div>
+<div class="mk-caption ask">
+  <strong>There is no IEP/504 review date on this page, and that is two work orders disagreeing.</strong>
+  WO-6.1 asks for review dates "surfaced ahead of time, in presentation-mode-safe form" and WO-6.2
+  puts them on the calendar. WO-6.4's acceptance says <em>"Nothing on the page displays
+  <code>supports</code> data, in presentation mode or out of it"</em> — and a review date is
+  <code>students[].supports.reviewDate</code>. Read literally, the one deadline a teacher is
+  legally obliged not to miss is the one deadline <em>Closing in</em> may not show her. Drawn
+  literally, so the gap is visible. <strong>Settle it before WO-6.4 is cut — the safe resolution
+  is probably that a date-and-a-name is not "displaying supports data", but that sentence has to
+  be written down somewhere before an implementer decides it alone.</strong>
+</div>
+<div class="mk-caption ask">
+  <strong>Five panels is a long page on a tablet.</strong> At 1024×704 the class grid and about
+  one and a half panels are above the fold, which means "who needs you" — the reason the app
+  exists — is two scrolls down at 7:40am. Three ways out, none drawn: reorder (but WO-6.4 fixes
+  the order), collapse panels 3–5 to their counts with a tap to open, or put the whole page in
+  two columns above 1024px. <strong>Worth reading on the real iPad against this drawing before
+  WO-6.4 is cut.</strong>
+</div>
+
+<div class="mk-section">The same page on a quiet day — WO-6.4's honest empty state</div>
+
+<main class="main">
+ <div class="gl-stack">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Your classes</h2>
+          <p>Tap a class to open it — its line says whether today's attendance is done.</p>
+        </div>
+        <button class="class-action-btn" type="button" aria-haspopup="dialog">
+          <span aria-hidden="true">📅</span> Calendar
+        </button>
+      </div>
+    </div>
+    <div class="home-grid">
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Biology I">
+          <span class="class-card-head">
+            <span class="avatar av0" aria-hidden="true">BI</span>
+            <span class="class-card-name">Biology I</span>
+          </span>
+          <span class="class-card-state taken">Taken · all present</span>
+          <span class="class-card-signals"></span>
+        </button>
+      </span>
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Biology I · P4">
+          <span class="class-card-head">
+            <span class="avatar av1" aria-hidden="true">BI</span>
+            <span class="class-card-name">Biology I · P4</span>
+          </span>
+          <span class="class-card-state taken">Taken · 1 tardy</span>
+          <span class="class-card-signals"></span>
+        </button>
+      </span>
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Anatomy">
+          <span class="class-card-head">
+            <span class="avatar av2" aria-hidden="true">AN</span>
+            <span class="class-card-name">Anatomy</span>
+          </span>
+          <span class="class-card-state taken">Taken · all present</span>
+          <span class="class-card-signals"></span>
+        </button>
+      </span>
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Env Science">
+          <span class="class-card-head">
+            <span class="avatar av3" aria-hidden="true">ES</span>
+            <span class="class-card-name">Env Science</span>
+          </span>
+          <span class="class-card-state taken">Taken · all present</span>
+          <span class="class-card-signals"></span>
+        </button>
+      </span>
+      <span class="class-card">
+        <button class="class-card-open" type="button" title="Research">
+          <span class="class-card-head">
+            <span class="avatar av4" aria-hidden="true">RE</span>
+            <span class="class-card-name">Research</span>
+          </span>
+          <span class="class-card-state taken">Taken · all present</span>
+          <span class="class-card-signals"></span>
+        </button>
+      </span>
+    </div>
+  </div>
+
+  <!-- ONE panel, not four empty ones. This is the whole of "a quiet day says 'nothing needs you
+       today', not five empty panels" — the decision is about how many panels EXIST, which is why
+       it cannot live inside any of them as an empty state.
+
+       The chips say what was looked at. "Nothing needs you" with no warrant behind it sends a
+       teacher off to check for herself, and then the page has cost her time instead of saving it. -->
+  <div class="panel">
+    <div class="gl-quiet">
+      <div class="gl-quiet-mark" aria-hidden="true">✓</div>
+      <p class="gl-quiet-lead">Nothing needs you today.</p>
+      <p class="gl-quiet-text">
+        Every class is marked, nothing is waiting to be graded, and no deadline is inside its
+        warning. Tuesday the 22nd is the next thing on your calendar.
+      </p>
+      <div class="gl-quiet-checked" role="group" aria-label="What was checked">
+        <span class="gl-quiet-chip">5 classes marked</span>
+        <span class="gl-quiet-chip">0 assignments part-entered</span>
+        <span class="gl-quiet-chip">118 students evaluated</span>
+        <span class="gl-quiet-chip">Next deadline in 16 days</span>
+      </div>
+    </div>
+  </div>
+
+ </div>
+</main>
+
+<div class="mk-caption">
+  <strong>The class grid survives a quiet day; the other four panels do not exist.</strong>
+  Whether today's attendance is done is not "something pending" — it is the question the home
+  screen was built to answer, and it has an answer on a quiet day too. The other four have
+  nothing to say, and four panels each saying nothing is exactly the failure the acceptance line
+  names.
+</div>
+<div class="mk-caption">
+  <strong>"Nothing needs you" is a claim, so it carries its warrant.</strong> The four chips are
+  what was checked, in the order the missing panels would have appeared. A bare reassurance on a
+  teacher's busiest morning is a reassurance she will go behind and verify — at which point the
+  page has cost her the time it was built to save.
+</div>
+<div class="mk-caption ask">
+  <strong>Does the quiet day exist in the first six weeks?</strong> Signals need 4–6 weeks of real
+  data before they fire at all (Phase 4's own note), so from Sep 2 until mid-October
+  <em>every</em> day is a quiet day for panels 4 and 5, and this drawing is what the glance page
+  looks like for the first six weeks of the term it ships into. Either that is fine — the class
+  grid and the grading queue are real from day one — or the empty state needs a second voice for
+  "not yet, rather than nothing". <strong>Worth deciding, because it is the state the owner will
+  see most.</strong>
+</div>
+
+</body>
+</html>
