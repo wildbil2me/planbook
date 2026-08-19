@@ -1392,6 +1392,24 @@
         Planbook never rounds a percentage on its way to a letter.
       </p>
 
+      <!-- WO-4.1's one door, and it is here for the two reasons the letter scale's is, directly
+           above: plans/gradebook-surfaces.md refuses to re-cut the class row, and this file measures
+           the header strip at 390px and records that a fourth control there overflows. These are
+           year-wide settings that travel with the document, so the panel that holds the year's setup
+           is where they belong — and src/teacher.js is not the host for the reason it is not the
+           letter scale's either, since this is a setting about the gradebook rather than about the
+           teacher. The reasoning a teacher needs is above #signalsModal, where teacher-facing
+           decisions live. -->
+      <div class="modal-section-label">Signals</div>
+      <div class="signal-actions">
+        <button class="class-action-btn" type="button" data-signal-panel aria-haspopup="dialog">Signal thresholds</button>
+      </div>
+      <p class="class-hint">
+        When Planbook should tell you about a student — in both directions. Every number is yours to
+        set, they are stored with this year rather than on this device, and nothing is decided by a
+        threshold you cannot see.
+      </p>
+
       <div class="hidden" id="classArchivedSection">
         <div class="modal-section-label">Archived</div>
         <div class="class-list" id="classArchivedList"></div>
@@ -1627,6 +1645,76 @@
         changing those changes every class at once. Putting a class back on the year’s bands discards
         the ones you typed for it — nothing else in that class is touched, because a letter scale
         holds no grades.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNAL THRESHOLDS (WO-4.1), opened over the class manager exactly as the term editor, the
+     categories panel and the letter scale are — src/modal.js keeps a stack, so Escape closes this
+     and leaves that open. #signalList and #signalNote are rendered by src/signal-settings.js from
+     the table in src/signals.js; a specimen row here would be a second truth to keep in step with
+     the real one, and it would also be this file quoting a threshold, which is the one thing that
+     must never appear outside the module that owns the defaults.
+
+     Four things in the copy below are load-bearing rather than decorative.
+
+     "Both directions" is the feature and it is said first. A student can be on both lists at once
+     and that is information rather than a bug — a student whose grade is climbing while their
+     attendance falls is exactly who a teacher wants to see twice — and a panel that presented the
+     praise half as an afterthought would be the first step towards a gradebook with alarms.
+
+     The line about windows counting recorded meetings is the rotating-schedule rule said to the
+     person it protects: these classes meet on a rotation that also changes at random, so "the last
+     20 meetings" is a real window and "the last 20 days" would be nonsense. The three settings
+     measured in days say "days" on their own rows, and they are the three that measure time since
+     something was written down rather than a stretch of class history.
+
+     The line about where these are stored is the answer to a question a teacher WILL ask when she
+     picks up the iPad: the numbers are in the year document, so they follow the gradebook to another
+     device and into a backup, rather than living on whichever browser she last typed them in.
+
+     And it says the lists are not built yet, in as many words, because a panel full of live
+     settings with nothing visibly reading them is otherwise a screen that looks broken. WO-4.2 and
+     WO-4.3 delete that sentence when the lists arrive. -->
+<div class="modal-overlay hidden" id="signalsModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="signalsModalTitle">
+    <div class="modal-header">
+      <h2 id="signalsModalTitle">Signal thresholds</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        When Planbook should tell you about a student, <strong>in both directions</strong>. Concern is
+        half of it: the other half is the student who has turned something around, and a student can
+        be on both lists at once — a grade climbing while attendance slips is exactly who you want to
+        see twice.
+      </p>
+
+      <div class="signal-list" id="signalList"></div>
+      <!-- The standing line. A plain line rather than an aria-live region: this app has exactly one
+           of those (src/live-region.js), and a second one updating per keystroke would read a
+           half-typed number aloud. -->
+      <p class="signal-note" id="signalNote"></p>
+      <div class="signal-reset-row">
+        <button class="class-action-btn" type="button" data-signal-reset>Put every threshold back</button>
+      </div>
+
+      <p class="class-hint">
+        <strong>Windows count recorded meetings, not days.</strong> A class can go a week without
+        meeting, so “the last 20 meetings” is a real stretch of this class’s history and “the last 20
+        days” would not be. The three settings measured in days say so on their own rows: each of
+        those is time since something was written down — an email, a behavior note — rather than a run
+        of lessons.
+      </p>
+      <p class="class-hint">
+        These numbers are stored with this school year, not on this device, so they follow your
+        gradebook to your other devices and into every backup. Nothing is blocked while you tune
+        them, and no student is flagged by a number you cannot see on this screen.
+      </p>
+      <p class="class-hint">
+        The concern and praise lists themselves are not built yet — these are the numbers they will
+        read. Setting them now costs nothing and changes nothing on any screen.
       </p>
     </div>
   </div>

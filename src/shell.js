@@ -93,6 +93,14 @@
       data-band-remove="<index>"      removes it, on the tap — nothing is filed under a band
       data-band-field="letter|min" + data-band-index: an input; edits that band as it is typed, and
                                       redraws the derived range beside every row below it
+      data-signal-panel               fills the signal-threshold panel, then opens it. One door, and
+                                      it is document-level for the reason data-letter-scale is: these
+                                      are year-wide settings and the class-manager row is full
+      data-signal-threshold="<key>"   an input; edits that threshold as it is typed, and redraws the
+                                      line counting how many differ from their defaults
+      data-signal-reset               puts every threshold this build names back to its default,
+                                      which DELETES the keys rather than writing the numbers in —
+                                      src/signal-settings.js argues why at the function
       data-class-screen="<view>"      moves between the open class's screens — Attendance ·
                                       Assignments · Scores. Drawn by src/screen-nav.js on every one
                                       of them, and it never changes WHICH class is open, only which
@@ -348,6 +356,13 @@ import * as gradeEngine from './grade-engine.js';
    gradebook rather than about the teacher — and a leaf like categories.js: it imports the store, the
    modal system and the live region, and nothing imports it back. */
 import * as letterScale from './letter-scale.js';
+/* WO-4.1, and it is TWO modules rather than one for the reason src/attendance.js and
+   src/attendance-report.js are two: `signals` is the engine — the thresholds, the rule registry and
+   the one evaluator — which WO-4.2's and WO-4.3's rules and WO-5.1's `{{signals.list}}` resolver all
+   import, and none of them wants a modal. `signalSettings` is the surface over it, and the import
+   runs one way: it reads the table out of `signals` and `signals` imports nothing back. */
+import * as signals from './signals.js';
+import * as signalSettings from './signal-settings.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
@@ -1147,6 +1162,16 @@ document.addEventListener('click', (e) => {
     afterLetterScaleChange(); return;
   }
 
+  /* ── signal thresholds (WO-4.1) ──
+     Directly under the letter scale, because these are the same act as the two panels above it:
+     setting the year up. NEITHER HOOK CHAINS ANYTHING, and that is the state the letter-scale block
+     above was in until WO-3.5 — nothing behind this panel reads a threshold yet, because the concern
+     and praise lists are WO-4.2's and WO-4.3's. The day a screen draws a signal it adds its line to a
+     chain here, exactly as the categories and the bands did. */
+  const signalDoor = e.target.closest('[data-signal-panel]');
+  if (signalDoor) { signalSettings.openSignalSettings(signalDoor); return; }
+  if (e.target.closest('[data-signal-reset]')) { signalSettings.resetThresholds(); return; }
+
   /* ── assignments (WO-3.3, and the chain since WO-3.5) ──
      Under the two setup panels because that is the order a class is built in: what it is graded
      on, what the letters mean, then the work itself. None of the eleven below chains
@@ -1806,6 +1831,13 @@ document.addEventListener('input', (e) => {
   const bandField = e.target.closest('[data-band-field]');
   if (bandField) { letterScale.editBandField(bandField); return; }
 
+  /* A signal threshold, saved as it is typed and by the same debounce. No chain, for the reason the
+     two click hooks above have none: nothing behind that panel reads a threshold yet. The row is not
+     re-rendered — src/signal-settings.js redraws only the line that counts the changed ones, because
+     replacing the input under the caret is the failure that rule exists for. */
+  const signalField = e.target.closest('[data-signal-threshold]');
+  if (signalField) { signalSettings.editThreshold(signalField); return; }
+
   /* An assignment's name, its points or one of its dates, saved as it is typed and by the same
      debounce. The list behind the dialog is redrawn per keystroke and the FIELD is not — see
      src/assignments.js, where replacing the input under the caret is the failure that rule exists
@@ -2370,6 +2402,18 @@ window.planbook = {
      the export WO-3.4 will import says something else. Nothing in the app reads window.planbook —
      see the block above for why the seam outlived the shelf. */
   letterScale,
+  /* `signals` joined at WO-4.1, and its reason is `gradeEngine`'s rather than the reading reason
+     `classes` gives: the evaluator is a pure function over a document with NO SCREEN AT ALL in this
+     work order — the concern and praise lists are WO-4.2's and WO-4.3's, and "the UI lists" is named
+     in that work order's Out of scope in as many words. So the only way to ask whether one pass
+     returns both directions, or whether one student can be on both lists with different sentences, is
+     to ask the module. A harness that built its own hits would be checking its own arithmetic.
+     `signalSettings` is here for the reading reason instead: every control that panel has is a field
+     or a button a teacher can touch, and tools/verify-shell.mjs touches them — what no click can show
+     is that the RESET deleted the keys rather than writing twenty-two numbers into the document, and
+     those two builds look identical on screen and evaluate identically today. Nothing in the app
+     reads window.planbook — see the block above for why the seam outlived the shelf. */
+  signals, signalSettings,
   /* `assignments` and `screenNav` joined at WO-3.3, and for the reading reason `classes` gives
      rather than a driving one: every control either feature has is a button, a field or a segment
      on a real screen, and a teacher can touch all of them. Two things no click can show. The first

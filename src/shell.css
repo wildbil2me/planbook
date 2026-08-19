@@ -910,6 +910,78 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .modal-body .scale-note.warn { border-color: #e67e22; background: #fef5ea; color: #7a4f10; }
 
+/* ── SIGNAL THRESHOLDS (WO-4.1) ── */
+/* The contents of #signalsModal, plus the one door to it in the class manager. Almost everything in
+   that panel is a component this sheet already owns — `.class-action-btn` for both buttons,
+   `.class-hint` for the three notes and `.modal-section-label` for the three group headings — which
+   is the point: an eighth dialog inventing an eighth grammar would be an eighth thing to keep in
+   step. What is written out here is the seven things with no counterpart.
+
+   The row is Roll Call!'s `.config-row` (its src/dashboard.html:705-710) rather than
+   `.category-row`, and that is the deliberate choice between two shapes this sheet already carries.
+   A category row is a row of CONTROLS — a name to type, a weight, three buttons — so it is a bordered
+   card. A threshold row is a SENTENCE with one or two numbers in it, which is exactly what that panel
+   over there is: a label on the left, the number and its unit on the right, and a hairline between
+   rows instead of a border around each one. Twenty-two bordered cards in one dialog would read as
+   twenty-two things to do rather than one table to scan. */
+.signal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* NO `gap`, AND THEREFORE NO RULE IN THE COARSE BLOCK — which `tools/wo-sweep.mjs` § 6 will hand a
+   verifier as a selector to confirm, so the answer is written here. The rows are separated by
+   `.signal-row`'s own hairline rather than by space between them (Roll Call!'s `.config-row`), so
+   this element has nothing a coarse pointer changes: it is not a target, it holds no text, and the
+   only measurement it would carry is a gap it does not have. `.signal-row`'s padding is what grows
+   over there, which is where the 44px field lives. */
+.signal-list { display: flex; flex-direction: column; }
+/* `justify-content: space-between` with `flex-wrap` is what puts the numbers hard right on a laptop
+   and drops them under the label on a phone, with no breakpoint to maintain: the row wraps when the
+   label and the fields no longer fit, which is a measurement the browser makes and this file would
+   only be guessing at. */
+.signal-row {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  padding: 9px 2px; border-bottom: 1px solid #f0f2f5;
+}
+.signal-row:last-of-type { border-bottom: none; }
+/* Roll Call!'s `.config-row > label` at its own 13px and `#3a4050`. Not a `<label>` element: a row
+   with two fields in it has no single control to be the label FOR, and a `<label>` bound to the
+   first of two would say that the second is unlabelled. Each field carries its own full accessible
+   name instead (src/signals.js's `aria` strings). */
+.signal-rule { flex: 1 1 190px; min-width: 0; font-size: 13px; color: #3a4050; line-height: 1.4; }
+.signal-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+/* Roll Call!'s `.config-num-wrap` + `.config-num` pair (dashboard.html ~711-716), lifted with its
+   measurements the way `.category-weight-field` and `.band-min-field` were: the number and its unit
+   as one flex item, so the unit can never wrap away from the field it belongs to. Written out rather
+   than shared with either of those, for the reason `.band-min-field` gives — three components that
+   happen to look alike, until the day one of them changes. */
+.signal-field { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.signal-num {
+  width: 58px; text-align: center; padding: 4px 6px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
+/* The unit is a WORD here — "recorded meetings", "assignments" — where `.category-weight-unit` is a
+   single "%" glyph, so it is not bold: seven bold words beside a number would be the loudest thing
+   in a row whose subject is the label on the left. Same `#6b7a8d` secondary grey. */
+.signal-unit { font-size: 13px; color: #6b7a8d; }
+/* The connective between two numbers in one row — "across the last", "within". Quieter than the
+   unit, in `.class-row-note`'s grey, because it is grammar rather than information. */
+.signal-before { font-size: 11px; color: #8a9bb0; }
+.signal-reset-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* THE STANDING LINE, and it takes the QUIET panel rather than either of the washes
+   `.category-total` and `.scale-note` carry. Those two report a state that can be wrong — weights
+   that do not total 100, a band nothing can reach — so one is green and the other amber. A threshold
+   has no wrong state: a teacher who wants to hear about a grade below 70 has not made a mistake, and
+   a green line congratulating her for leaving all twenty-two alone would be praising her for not
+   using the feature. `.supports-panel`'s wash, which is this sheet's existing answer for a panel
+   that is simply information.
+   Qualified with `.modal-body` because it is a <p> in there, and `.modal-body p` is more specific
+   than a bare class — the same reason `.year-hint` and `.scale-note` are qualified. */
+.modal-body .signal-note {
+  margin-top: 10px; padding: 10px 14px; border-radius: 8px;
+  border: 1.5px solid #e0e4f0; background: #f8f9fc; color: #6b7a8d;
+  font-size: 12px; line-height: 1.5;
+}
+
 /* ── DAYS OFF & PLANNED DROPS (WO-2.3) ── */
 /* The contents of #daysOffModal and #daysOffConfirmModal. Almost everything in that panel is a
    component this sheet already owns — `.pill`, `.class-input`, `.term-date`, `.toggle-btn`,
@@ -1433,6 +1505,33 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .band-range.warn { font-size: 11px; }
   .scale-override-note { font-size: 12px; }
   .modal-body .scale-note { font-size: 13px; padding: 12px 14px; }
+  /* Signal thresholds (WO-4.1), in the same pass that adds them — there is no later one. Both
+     buttons in that panel are `.class-action-btn`, whose floor is above; what is named here is the
+     one field, the four containers and the four pieces of text.
+     The field carries the 44px itself with its vertical padding zeroed, which is the WO-1.2
+     `.search-box` lesson: a 44px row around a 19px input looks tappable above and below the text,
+     does nothing there, and the teacher taps twice. It keeps its 58px width — wider than the 44px
+     floor, because three digits and a spinner have to fit — and is named with a `min-width` anyway
+     so the next reader does not have to go and prove it is covered.
+     THE ROW GETS TALLER RATHER THAN THE FIELD GETTING SHORTER. `.signal-row`'s 9px of padding is
+     Roll Call!'s hairline spacing, which was drawn around a 26px field; a 44px one inside it leaves
+     the two rows' numbers 62px apart, and two adjacent 44px targets want the gap. The padding goes
+     to 6px so the row grows by 12px rather than by 30px — this dialog is twenty-two rows deep, and
+     on a 1112px-tall iPad every pixel per row is a row that fits or does not. */
+  .signal-actions { gap: 10px; }
+  .signal-row { gap: 10px; padding: 6px 2px; }
+  .signal-fields { gap: 10px; }
+  .signal-field { gap: 6px; }
+  .signal-num { min-height: 44px; min-width: 58px; font-size: 14px; padding: 0 6px; }
+  .signal-reset-row { gap: 10px; }
+  /* Text, not targets — a rule's own sentence, a unit, a connective and a standing line. Named here
+     for the size bump only, exactly as `.class-row-note` and `.band-range` are: 11-13px is
+     unreadable at arm's length on a tablet, and a 44px floor on a label is 44px of a dialog spent on
+     something nobody taps. */
+  .signal-rule { font-size: 14px; }
+  .signal-unit { font-size: 14px; }
+  .signal-before { font-size: 12px; }
+  .modal-body .signal-note { font-size: 13px; padding: 12px 14px; }
   /* Days off & planned drops (WO-2.3), in the same pass that adds them — there is no later one.
      The four controls in that panel that are not already covered by a rule in this block: the two
      kind pills wear `.pill`'s own coarse floor, the title field wears `.class-input`'s, the two
