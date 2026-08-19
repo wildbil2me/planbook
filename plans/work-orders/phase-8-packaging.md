@@ -86,8 +86,17 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.4 — Print stylesheets
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
 **Closes roadmap** Phase 8 → "Print stylesheets for every printable surface."
+
+*(**`**Ship** —` until 2026-08-19, WO-1.24.** This is a Phase 8 work order and it is in Ship 2 for one
+reason: its fourth Acceptance box and
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)’s fifth are the same check written twice — the
+gradebook printout ordered to match the SIS entry screen. **The SIS has no usable export**, so that
+confirmation is the owner hand-keying five real classes, and it is the most expensive verification in
+these files. Landing this afterwards does not ship a feature late, it buys a **second re-key**: the
+`@media print` rules here change the page the first one was read against. Its dependencies have been
+done since Phase 3 — nothing held it but the absence of a row.)*
 
 **Deliverables**
 - `@media print` on every printable surface: gradebook, attendance record, student detail,

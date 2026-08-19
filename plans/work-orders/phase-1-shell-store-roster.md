@@ -1997,3 +1997,123 @@ mutation proof over the harness, so the `codex-invoke.mjs` cap arithmetic that f
 does not apply. **The one thing a dispatch must not do is decide the mapping** — the four decisions and
 the two writing rules above are the owner's, taken at booking, and re-deriving any of them is out of
 scope rather than a judgment call.
+
+---
+
+## WO-1.24 — the ships past 2 have no running order, and WO-8.4 is in the wrong one
+
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** —
+**Closes roadmap** Phase 1 → *(no box. Process, not app — a running order is not a promise the
+roadmap makes. Booked 2026-08-19, owner-directed.)*
+
+**Why it exists.** Ship 2's build queue is empty. Every work order in its table is `✅ DONE` except
+[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) and
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) itself, and **WO-G2 is calendar-bound by
+construction** — four of its nine boxes want a real class's real grades, which do not exist until the
+term starts. That is not a slip, it is what the gate is for. But it means the next thing in front of
+anybody is Ship 3, and **Ship 3 has no table.** Ship 2's own table exists because the same cliff was
+hit on 2026-08-09, when `next` ran out of rows to read past Ship 1 and the ordering everybody was
+working from lived in three documents that disagreed. This is that moment arriving again, one work
+order earlier, with the fix already written down.
+
+**Two things get settled, and one of them was going to cost a real re-key.**
+
+**WO-8.4 moves to Ship 2.** Its fourth Acceptance box is *"The gradebook printout is ordered to match
+the SIS entry screen (WO-3.9)"* and WO-G2's fifth is *"The printout order matches the SIS entry
+screen, confirmed against a real re-key"* — **the same check, in two ships.** The SIS has no usable
+export, so that re-key is the owner's own hand-keying of five classes, and it is the most expensive
+verification anywhere in these files. Land WO-8.4 after it and the re-key confirmed an ordering that
+`@media print` then changes underneath it, so the box has to be re-run — meaning the cost of leaving
+WO-8.4 at `**Ship** —` is not a late feature, it is a second re-key. Its dependencies (WO-2.6, WO-3.9)
+have both been done since Phase 3, so nothing was holding it but the absence of a row.
+
+**Ship 3 gets its table**, in dependency order rather than phase order, and the ordering is not
+obvious from the `Depends on` lines alone — **two Acceptance lines carry dependencies the headers do
+not.** WO-4.4's header depends on WO-1.7 and reads as free to go first; its third box is *"Behavior
+entries feed WO-4.2's behavior rule and the count matches"*, so it cannot close before WO-4.2, whose
+own sixth box says *"The behavior rule is inert until WO-4.4 exists"* — the two are deliberately cut
+to land in that order and the table follows it. And WO-4.3 and WO-4.5 each carry a box requiring
+**two consecutive runs on real data**, which is a fortnight of term and not a fortnight of calendar.
+They are rowed to be *built* before the term and to *close* after it, which is the only shape that
+fits; a table that rowed them by their build date alone would have promised two ticks in August that
+no amount of work could earn.
+
+**The capacity assumption changed twice while this was being written and the table uses the current
+one.** § Ship 2's preamble says *"from ~Aug 24 the owner is teaching"*; WO-2.50 moved that to Aug 28
+on 2026-08-18 and WO-2.52 moved it to **Sep 2** on 2026-08-19. So the setup fortnight is longer than
+Ship 2's front-loading argument assumed, and Phase 4's three data-independent work orders fit inside
+it at full capacity. **That preamble sentence is now stale and is left alone on purpose** — it is an
+argument about how Ship 2's table was built, which is history, and rewriting the premise under a
+table already built to it would make the table unreadable. The live date is here and in WO-2.52.
+
+**WO-G3's dependency line is fixed in the same sitting**, because a running order whose gate enforces
+nothing is half a table. It reads `Phase 4` — prose, not a token — so `depsOf()` finds nothing and
+`wo-gate.mjs WO-G3` reports **`PASS`** today, with five work orders unwritten. That is precisely the
+failure WO-G2's line had until 2026-08-09 (`Phase 3, WO-2.5 … WO-2.7`, where "Phase 3" was invisible
+and the ellipsis was read as two tokens), and it gets the same repair: the five IDs written out.
+
+**Deliverables**
+- WO-8.4: `**Ship** —` → `**Ship** 2`, with the reasoning at the point of change, and a row in the
+  Ship 2 table ahead of WO-3.18 and WO-G2.
+- A `## Ship 3 — signals` section in [`README.md`](README.md), matching § Ship 2's table shape, with
+  the two Acceptance-line dependencies above stated rather than left to be rediscovered.
+- WO-G3's `**Depends on**` rewritten as WO-4.1 … WO-4.5 written out, with the prose target kept.
+- **WO-3.18: `**Ship** —` → `**Ship** 2`.** Found while verifying the box below. It has had a § Ship 2
+  row since 2026-08-11 and WO-G2's eighth box waits on it, so the field disagreed with both the table
+  carrying it and the gate testing it — **the 2026-08-09 rot surviving inside the sitting that fixed
+  it.** Its `—` was never the WO-3.10 argument, which is about where a *dependency* may sit.
+- The dashboard's Phase 1 row and § The files' Phase 1 row updated for this work order's existence.
+
+**Every `**Ship** —` that remains, and why each one keeps it.** *This is the list the last Acceptance
+box checks, and it is four kinds of `—` rather than one:* **not-coming** *— WO-2.7 ⏳ and WO-3.13 🚫,
+which is the documented meaning of the field for both;* **process** *— this work order, as WO-1.19,
+WO-1.20 and WO-1.21 all were;* **no ship exists yet** *— Phases 5, 6, 7, 8 and WO-G4, held for WO-G2's
+ninth box; and* **deliberately unshipped** *— WO-2.33 alone, the owner's call below.*
+
+**Not in scope, and each is a decision rather than an omission.**
+- **WO-2.33 stays at `**Ship** —`** — the owner's call, 2026-08-19, on the argument its own header
+  already makes: the overdue alert has a working visual channel on hardware, so the tone is real work
+  and not urgent work, and a ship would crowd a queue with a term coming.
+- **Phases 5–8 and WO-G4 stay at `**Ship** —`.** [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s
+  ninth box owns that decision and says to take it *at* the gate, when what follows Ship 3 is no
+  longer hypothetical. Naming Ship 4 now would discharge a gate box early from an August desk, which
+  is the one move these trackers exist to prevent. **WO-8.4 leaving `—` is a partial discharge of
+  that box and it is named here so the gate reads it** rather than finding the field already moved.
+- **WO-8.1 and WO-G4 keep their prose `Depends on` lines** — *"every phase"* and *"every work order"*.
+  Both report a vacuous `PASS` for the same reason WO-G3 did, and both are genuinely about everything,
+  so writing out 128 tokens would rot at the next booking. **Naming them is the whole fix available
+  here**: `next` can route you at either one, and neither is startable.
+- **WO-3.8's owed line stays owed.** It is a Ship 2 work order — the roadmap promises *"the
+  contextual prompts are Ship 2"* — whose open box points at WO-4.4, now rowed in Ship 3 for October.
+  Real, and not fixable by a table: what is missing is an attendance-clause field on `supports` and an
+  N on `signals`, which are WO-4.4's three decisions to shape.
+
+**Acceptance**
+- [x] WO-8.4's `**Ship**` field reads `2`, and it has a row in § Ship 2 dated before the first real
+      SIS re-key. *(Row **75**, "Before the first real SIS re-key. Aug 22, half a day" — inserted
+      ahead of WO-3.18 and WO-G2, which renumbered 75→76 and 76→77. No prose in the directory cites a
+      row number, checked before the renumber rather than after.)*
+- [x] `## Ship 3 — signals` exists in `README.md` and rows all five Phase 4 work orders plus WO-G3,
+      in an order no Acceptance line contradicts. *(`README.md:1320`, six rows. The order is
+      `WO-4.1 → WO-4.2 → WO-4.4 → WO-4.3 → WO-4.5 → WO-G3`, backticked because a bare arrow beside an
+      id is a re-home marker and `--tick` held this work order open on all five of them, which is
+      **not** the phase order: WO-4.4 sits behind
+      WO-4.2 because its own third box reads on WO-4.2's behavior rule while WO-4.2's sixth box says
+      that rule is inert until WO-4.4 exists. Both are quoted in the table's notes so the next reader
+      does not have to find them twice.)*
+- [x] `node tools/wo-gate.mjs WO-G3` reports five `WO-` dependencies rather than a prose clause, and
+      exits non-zero while WO-4.1 is `⬜ NOT STARTED`. *(Five `depends WO-4.x ⬜ NOT STARTED <-- not
+      done` lines and **exit 1**. Before the edit: one `depends (prose) Phase 4` line and **exit 0** —
+      a gate reporting clear with every work order it waits on unwritten.)*
+- [x] The § Dashboard Phase 1 row and the § The files Phase 1 row both account for this work order.
+      *(Phase 1 row 24 / 23 done, overall **129** and 78%; § The files reads `WO-1.1 … WO-1.24`, and
+      `--audit`'s own independent count of that file agrees at 24. The Phase 1 status note goes from
+      "reopened four times; last on 2026-08-17" to five and 2026-08-19.)*
+- [x] `node tools/wo-gate.mjs --audit` passes and `--self-check` passes. *(Both exit 0; self-check 18
+      of 18 plants caught. **Both failed first**, and on this work order's own edit: the WO-3.18 note
+      below had been spliced between that work order's header lines and its `**Closes roadmap**`,
+      which put the field outside the header paragraph and invisible to the parser. Caught by
+      `--audit`, not by reading — the rendered markdown looked correct.)*
+- [x] Every work order still carrying `**Ship** —` is one this work order names above. *(21 remain;
+      a scripted re-inventory against the four named categories returns **none unaccounted**. It
+      returned one on the first pass — **WO-3.18**, which is how that correction was found.)*

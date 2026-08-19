@@ -15,18 +15,33 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — in flight.** The day-one gate (WO-G1) closed
-2026-08-08, ahead of its ~2026-08-24 target: install, backup/restore, classes and terms, roster with
+**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term.**
+The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
+backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
-`https://planbook.hwgteach.com/`. The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
+`https://planbook.hwgteach.com/`.
+
+*(The status line above changed on 2026-08-19. Every work order in `plans/work-orders/README.md`
+§ Ship 2 is ✅ except WO-8.4, WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
+construction** *— four of its nine boxes want a real class's real grades, which do not exist until
+Sep 2. **Do not read that as a stall and do not go looking for Ship 2 work:*** **§ Ship 3 is the
+running order now**, *written the same day by WO-1.24, for the same reason § Ship 2 was written the day
+after Ship 1 closed —* `next` *was one work order from having no rows left to read.)*
+
+The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
 from its dashboard, never from this file**; a count written here is a count nothing maintains. The
 roadmap is cut into work orders in
 [`plans/work-orders/`](plans/work-orders/README.md); **that is where to start when building
 something.** Each carries its own dependencies and testable acceptance criteria.
 
-**This app goes live in a real classroom in late August 2026** (decided 2026-08-03, risk stated and
-accepted). Roll Call! is the fallback and **stays deployed until Planbook survives a full term**.
+**This app goes live in a real classroom on 2026-09-02** (decided 2026-08-03, risk stated and
+accepted). *That date read "late August 2026" here until 2026-08-19: the owner's own term dates moved
+it to Aug 28 on 2026-08-18 (WO-2.50) and to* **Sep 2** *on 2026-08-19 (WO-2.52), and the capacity
+argument under `plans/work-orders/README.md` § Ship 3 is built on the current one. **The setup
+fortnight is longer than Ship 2's front-loading assumed** — that is the only thing the slip bought,
+and it is already spent in § Ship 3's first four rows.* Roll Call! is the fallback and **stays
+deployed until Planbook survives a full term**.
 The governing rule for the sprint: *no feature that writes student data lands before the backup and
 restore path that gets it back out.*
 

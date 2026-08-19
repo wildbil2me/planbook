@@ -269,8 +269,18 @@ the owner's real classes, before the numbers matter.
 
 ## WO-G3 — Ship 3 gate: signals
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** Phase 4
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
 **Target** October 2026, once 4–6 weeks of real data exist
+
+*(That line read `Phase 4` until 2026-08-19, WO-1.24, and **"Phase 4" is not a token** — `depsOf()`
+reads `WO-` ids, found none, and so this gate reported **`PASS`** with all five of the work orders it
+waits on unwritten. `next` would have routed a dispatch straight at it. **This is WO-G2's own bug,
+unfixed one gate later:** its line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09, where the phase
+name was invisible for the same reason and the ellipsis was read as two tokens rather than a range,
+leaving ten real dependencies unenforced. Same repair, applied before it costs anything: the five ids
+written out, the prose kept after the dash for a human to read. **WO-8.1 and WO-G4 still carry it** —
+`every phase` and `every work order` — and both are named in WO-1.24 rather than fixed, because both
+are genuinely about everything and a written-out list would rot at the next booking.)*
 
 **Why it exists.** Signals tuned against thin data produce lists nobody trusts, and a teacher who
 stops reading the list has lost the feature permanently — quietly, without anyone deciding to kill it.

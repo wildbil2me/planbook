@@ -238,7 +238,42 @@ open in a fresh year, with the test data left in one labelled unmistakably.
 
 ### Fixed
 
-- **WO-2.49 — a work order whose lines ended in `\r\n` read as having no Acceptance boxes at all.**
+- **WO-1.24 — the ships past 2 had no running order, and one work order was in the wrong one.**
+  Nothing here is visible to a teacher. Ship 2's build queue emptied on 2026-08-19: every row in
+  `plans/work-orders/README.md` § Ship 2 was `✅ DONE` except WO-3.18 and the gate, and **WO-G2 is
+  calendar-bound by construction** — four of its nine boxes want a real class's real grades. So `next`
+  was one work order from having no rows left to read, which is the exact cliff § Ship 2 was written
+  the day after Ship 1 closed to avoid. **§ Ship 3 — signals** now exists: six rows, WO-4.1 through
+  WO-G3, dated against a term that begins Sep 2 rather than the ~Aug 24 § Ship 2 was planned around.
+  Three things it turned up that a table alone would not have:
+  - **WO-8.4 moved from `**Ship** —` to Ship 2.** Its fourth Acceptance box and WO-G2's fifth are the
+    same check — the gradebook printout ordered to match the SIS entry screen. The SIS has no usable
+    export, so that check is the owner re-keying five real classes by hand, and landing `@media print`
+    afterwards would have bought a **second re-key** rather than a late feature.
+  - **WO-G3 reported `PASS` with all five work orders it waits on unwritten.** Its `Depends on` read
+    `Phase 4` — prose, not a token — so `depsOf()` found nothing and `next` would have routed a
+    dispatch straight at a gate that cannot run until October. **This is WO-G2's own 2026-08-09 bug,
+    unfixed one gate later**, and it got the same repair: the five ids written out. WO-8.1 and WO-G4
+    still report the same vacuous pass on *"every phase"* and *"every work order"*; both are named in
+    WO-1.24 rather than fixed, because both are genuinely about everything.
+  - **WO-3.18 carried `**Ship** —` while sitting at row 76 of the Ship 2 table**, with WO-G2's eighth
+    box unable to tick until it is submitted. The field disagreed with both the table carrying it and
+    the gate testing it — the 2026-08-09 header rot surviving *inside* the sitting that fixed it,
+    found by the scripted inventory the last Acceptance box demanded rather than by reading.
+
+  **Two Acceptance lines carried dependencies their headers did not**, which is why § Ship 3's order is
+  not the phase order: WO-4.4 reads on WO-4.2's behavior rule and WO-4.2 says that rule is inert until
+  WO-4.4 exists, so the two are cut to land in that order. And WO-4.3 and WO-4.5 each want two
+  consecutive runs on **real data** — a fortnight of term, not of calendar — so they are rowed to be
+  built before Sep 2 and to close after it. A table built from `Depends on` alone would have promised
+  two ticks in August that no amount of work could earn.
+
+  `CLAUDE.md`'s go-live date was corrected in the same sitting, per step 5 of the maintenance
+  protocol: it read *"late August 2026"* while the term had moved to Aug 28 (WO-2.50) and then **Sep 2**
+  (WO-2.52). `AGENTS.md` carries no date line, so there was nothing to mirror.
+
+- **WO-2.49 — a work order whose lines ended in
+ `\r\n` read as having no Acceptance boxes at all.**
   `parseFile()` split on `"\n"` alone, so every line of a CRLF tracker kept a trailing carriage return,
   and JavaScript's `.` does not match one: `(.+)$` could not reach the end of a line that ended in it.
   `--tick WO-3.25` reported *"all 0 Acceptance lines are ticked"* over ten open boxes, and *"no

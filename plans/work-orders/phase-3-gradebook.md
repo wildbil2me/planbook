@@ -1391,10 +1391,20 @@ the thing the no-timetable rule actually forbids.
 
 ## WO-3.18 — verification submitted 🔒
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7 — the client to
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7 — the client to
 verify and the domain to verify it at · **Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
+
+*(**`**Ship** —` until 2026-08-19, WO-1.24.** It has had a row in
+[`README.md`](README.md) § Ship 2 since 2026-08-11 and
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s eighth box cannot be ticked until it is submitted
+— so the field disagreed with both the table carrying it and the gate testing it. **That is the same
+rot § Ship 2 names from 2026-08-09**, when thirty-three work orders read `—` for "nobody has said"
+rather than "in no ship," and it survived in the one work order the correcting sitting created. Being
+on a gate's checklist is being in that ship. **The `—` here was never the WO-3.10 argument**: that one
+came off WO-G2's `Depends on` because a queue nobody controls must not block a grade-arithmetic gate,
+which is about where a **dependency** may sit, not about which ship the paperwork belongs to.)*
 
 **Split out of WO-3.10 on 2026-08-10**, which is where the full reasoning sits. This is the half that
 **cannot start until there is a domain**, and it is booked separately so that the half which can start
