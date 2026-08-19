@@ -181,14 +181,34 @@ export function getSelectedClass() {
   return id ? findClass(id) : null;
 }
 
-export function getSelectedTermId() {
-  const cls = getSelectedClass();
+/*
+  WHICH TERM IS OPEN FOR ONE NAMED CLASS, resolved the same way and out of the same preference.
+
+  It is exported and takes an id (WO-3.26) because `openTermIds` has always been a map — one
+  remembered term PER CLASS — while the only reader of it was the one below, which asks about the
+  class the teacher is standing in. The home screen asks about five classes at once and none of
+  them is necessarily the selected one, so it needs the map read for a class it names. The
+  alternative was for that screen to read the preference itself, which would be a second opinion
+  about which term a class is open on: the count on a card and the grid it opens would then differ
+  the first time a stale id resolves one way here and another way there.
+
+  Resolved and never trusted, exactly as below: a stored id naming a term that has been removed
+  answers with the class's first term rather than with nothing.
+*/
+export function getOpenTermId(classId) {
+  const cls = findClass(classId);
   if (!cls) return '';
   const terms = termsOf(cls);
   if (!terms.length) return '';
   const map = getPref('openTermIds') || {};
   const want = map[cls.id];
   return terms.some((t) => t.id === want) ? want : terms[0].id;
+}
+
+/* The selected class's own answer, and nothing more: one resolution of "which term", asked about
+   the class the read point above has just resolved. */
+export function getSelectedTermId() {
+  return getOpenTermId(getSelectedClassId());
 }
 
 export function getSelectedTerm() {

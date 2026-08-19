@@ -6607,6 +6607,80 @@ not after it passed.*
 
 ---
 
+### WO-3.26 — The ungraded count on the home screen
+
+**What this adds.** A count of the work still waiting, on each class card on the home screen — `3 to
+grade` — for the term that class is open on. It is the first occupant of `.class-card-signals`, the
+slot `src/home.js` has appended empty since 2026-08-04; WO-4.x's attention line goes in beside it,
+which is why the container survived rather than being replaced by the chip.
+
+**It counts assignments, not cells.** An assignment in the open term with at least one `open` cell
+across the roster counts once, however many blanks are in its column. *Three assignments waiting* is a
+sentence a teacher can act on; *forty-one blanks* is a number she has to divide first, and the score
+grid counts both because that is where the dividing gets done.
+
+**The three states are `openWork()`'s, and `src/home.js` decides nothing else.** `missing` is graded
+— a zero the teacher put there. `bonus` is ungraded work worth zero points, and zero-point work
+waiting is not work owed. `excused` is in none of the rows. That leaves `open`, and the filter on it
+is the whole of what the new function decides: no cell is read on this screen, so the card and the
+grid it opens cannot disagree.
+
+**Nothing here reads a clock**, and that is a rule rather than an omission. A count that climbed at
+midnight would break the teacher-marked rule on the first screen the app opens to. The chip moves when
+a score is entered or an assignment is added, and at no other time.
+
+- [x] A class with three pieces of ungraded work worth points says `3 to grade`; entering the last
+      blank score on one of them takes it to `2 to grade`, with no reload.
+- [x] An excused column, a `late` carrying a score, a teacher-typed `0`, a column marked `missing`,
+      zero-point bonus work and another term's untouched work are none of them in the number.
+- [x] A class with nothing ungraded wears no chip at all — not a zero, not a dash.
+- [x] The chip fits inside the height the slot has reserved since WO-1.10: taking it out of the tree
+      moves the grid by nothing, and the card carrying a count is the same height as the card beside
+      it that has nothing to say.
+- [x] The number equals the columns on the score grid holding a blank worth points.
+- [x] `src/home.js` performs no grade arithmetic and names no student, in presentation mode or out of
+      it — and it stays absent from `flipPresentationMode()`'s redraw list, which is WO-1.9's
+      inheritance re-verified at this phase.
+- [x] A roster id naming nobody is dropped rather than asked about. Without that, `openWork()` would
+      answer "every assignment in the term is open" and the chip would report the whole term.
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **984 of 984, 0 skipped**, 315s — up from 975 on the tree
+this work order arrived on. Nine new executed checks (eleven call sites, two of them fixture guards)
+in one section at the foot of the file.* `wo-sweep.mjs` *is 22 checks, 20 passed, 0 failed, 2 to
+review — both pre-existing.* `wo-gate --audit` *and* `--self-check` *both pass.*
+
+*Each new check was proved able to fail: three one-line mutations of* `src/home.js`, *reverted, giving
+five reds, five reds and four reds. **The one worth keeping** is that removing the no-chip guard also
+reddened WO-1.10's own check, three weeks older than this work — its six-class fixture has no ungraded
+work, so every card grew a `0 to grade` chip. The assertion that an empty slot holds its height turns
+out to double as the guard against a chip on a card with nothing to say.*
+
+*This work order's dispatch died between the implementer's writes and any verification. Everything
+above was measured on the recovered tree; the cold-eyes verifier pass was lost to a session limit and
+is not in these numbers. See* `plans/dispatch-retro.md` § WO-3.26.
+
+#### The 👤 sitting this work order owed — run 2026-08-19, all six green
+
+Run on the iPad after a force-quit from the app switcher (v84 is a `SHELL` change, so a reload would
+have left the old document on screen against a build line reporting honestly — see `CLAUDE.md`).
+
+- [x] 👤 The chip is legible at a glance on a real card, portrait and landscape — 12px/700 under the
+      coarse bump — on **both** grounds a card can have: the subdued `#f8f9fb` and the open card's
+      `#eef2ff`. 👤
+- [x] 👤 **It does not compete with the not-taken amber wash.** That cream is the card's one alarm and
+      means *fill this in before the period starts*; work waiting to be graded is a fortnight's job.
+      On a grid where one class is untaken and another has a count, the alarm still reads as the alarm. 👤
+- [x] 👤 With five real classes, no card changes height as counts appear and go away across a grading
+      session — measured on the device, not under emulation. 👤
+- [x] 👤 The chip swallows no taps: tapping the chip itself opens the class, exactly as tapping
+      anywhere else on the card does. There is nothing here to tap that is not already the whole card. 👤
+- [x] 👤 After a cold launch on v84, the count on a real class equals the blanks worth points in that
+      class's grid. 👤
+- [x] 👤 Presentation mode on, projected on the classroom wall: the count still reads and no student is
+      named anywhere on the card. 👤
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

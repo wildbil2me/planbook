@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 955 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 966 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1808,6 +1808,42 @@ restored or hand-edited file), and the sentence it produces reads *"85.714%, at 
 the measured figure keeps its third decimal, the line is written the way a teacher would have typed
 it. That is not a rounded lie — the comparison in the sentence is true as printed, and it agrees with
 what the panel shows — but it is the reason that one check's expected string looks lopsided.
+
+**WO-3.26 moved it from 955 to 966**: eleven literal call sites in one new section at the foot of the
+file, none inside a loop, of which **two are fixture-guard failure arms** that never fire on a green
+run — one for a plant that did not take, one for an emulated pointer that did not come back coarse —
+so the section contributes nine executed results and **the run prints 984**, measured on the
+delivered tree: `984 checks · 984 passed · 0 failed · 0 skipped`, 26,741 lines, 27.2 lines per check,
+315s, exit 0. **The entry worth reading is the height check, which had to be written backwards.** The
+acceptance line is *"the card with no chip is the same height as the card beside it carrying one"*,
+and the obvious reading — measure two cards, compare — asserts nothing at all: the home grid stretches
+its cards to a common height, so that comparison passes whatever the chip's height happens to be, on
+this build and on one whose chip is 80px tall. What settles it is taking the chip out of the tree and
+watching the grid not move, which is what the section does: `grid 562px with the chip, 562px without
+it; slot 24px either way; chip 21.19px inside a slot of 24px`. The same reading is taken a second time
+under an emulated coarse pointer, where the slot reserves 26px and the chip measures 24.39px — the
+coarse block gives it the font bump and not a 44px floor, because it is a line of text inside the
+card's one button rather than a control.
+
+**Three mutations, run in full on the picked-up tree, and each was chosen so that its reds could be
+attributed.** *(1)* the `row.state === 'open'` filter in `ungradedCount()` deleted, so every row
+`openWork()` returns is counted — `984 checks · 979 passed · 5 failed`, the card reading `5 to grade`
+where it should read 3 and `4 to grade` where it should read 2. **Five of the nine redden on that one
+line**, which is the section's core claim: the three states are the whole of what that function
+decides. *(2)* `waiting.add(row.id)` changed to `waiting.add(row.id + '|' + studentId)` — a cell
+counted per student instead of one assignment counted once — `979 passed · 5 failed`, the same five.
+The two mutations are indistinguishable in *which* checks they redden and not in what those checks
+print, which is the argument for the fixture carrying three students rather than one: a roster of one
+makes a per-cell count and a per-assignment count the same number. *(3)* the `if (!n) return null`
+guard removed, so a class with nothing waiting wears `0 to grade` — `980 passed · 4 failed`, and this
+is **the entry worth reading.** Three of the four are the ones a reader would predict. The fourth is
+**WO-1.10's own check, from a section written three weeks earlier**: *"every card carries today's
+attendance state … and still reserves Phase 3 and 4's space"* went red because its six-class fixture
+has no ungraded work, so every one of those cards grew a chip saying zero. That check was written to
+assert an empty slot holds its height, and it turns out to double as the guard against a chip
+appearing on a card that has nothing to say — which is why the count check that stayed green through
+this mutation is not the whole of acceptance line 3. `src/home.js` was restored from a byte-for-byte
+copy after each round and compared against it; nothing under `src/` is changed by this round.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

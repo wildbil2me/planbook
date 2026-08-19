@@ -11,12 +11,18 @@
   SO THE CARD IS A SLOT. classCard() below renders a class's identity and then two containers:
 
     .class-card-state    WO-2.1 — whether today's attendance is taken, dropped, or not taken yet
-    .class-card-signals  WO-3.x — ungraded work · WO-4.x — the students who need attention
+    .class-card-signals  WO-3.26 — ungraded work · WO-4.x — the students who need attention
 
-  The second is still empty, and empty rather than stubbed: a dash, a zero, or a shimmer where a
-  real number goes is a card that looks finished and is lying. What an empty slot carries is its
-  HEIGHT (src/home.css), so that the line a later phase adds drops into reserved space instead of
-  reflowing every card on the page.
+  THE SECOND SLOT HAS ITS FIRST OCCUPANT (WO-3.26) and still holds space for the other one. A card
+  with ungraded work in the open term wears one chip in it, and a card with none wears nothing —
+  not `0 ungraded`, because a zero is a datum a teacher has to read to learn there is nothing to
+  read. That is the same call this file already made about the slot when it was empty, and it is
+  the opposite of the honest-empty-state rule only in appearance: an empty state is what a PAGE
+  says when it has nothing, and this is one chip on a card that has plenty.
+
+  Which is why the slot's HEIGHT (src/home.css) is still the point rather than a leftover. The chip
+  fits inside the 24px that was already reserved, so the first count to appear on a page of five
+  cards reflows nothing, and a class that finishes its grading does not shrink its own card.
 
   THE FIRST SLOT WAS FILLED BY WO-2.1, and it cost this card its shape — which was foreseen here
   and paid for twice, so the whole of it is worth reading before the next slot is filled. The state
@@ -53,6 +59,17 @@
   list. WO-1.9's own acceptance says to re-verify that inheritance at every later phase; this
   paragraph is where the next reader starts.
 
+  RE-VERIFIED AT WO-3.26, AND THE ANSWER IS STILL "STAYS OFF THE LIST". The ungraded chip is built
+  from openWork()'s rows, which are assignment ids, category ids, points and a state — the whole of
+  what src/grade-engine.js will hand out, and none of it a student. It is asked once per student on
+  the roster and the answers are UNIONED, so what survives onto the card is a count of assignments:
+  no name, no id, no ordering that could be read back to a person, and nothing that differs by
+  whether a student has a plan. Thirty students with nothing graded and one student with nothing
+  graded produce the same chip if the same assignments are involved. So there is nothing here for
+  the flip to suppress, and a card that redrew on the flip would redraw identically. THE TEST THAT
+  WOULD CHANGE THE ANSWER is unchanged: the first datum on this card that varies with WHO a student
+  is puts this module on that list, in the same pass that adds it.
+
   (The function is not named here on purpose. tools/wo-sweep.mjs greps for calls to it to report
   which screens ask, and a mention in a comment saying this one does NOT would show up in that list
   as one that does.)
@@ -62,10 +79,31 @@
   disagree with the header or with the marking screen. src/shell.js chains refreshHome() wherever a
   class, the selection, or today's attendance can change, the way it chains the class bar onto a
   year switch — see afterClassChange() and afterAttendanceChange() there.
+
+  AND THAT SURVIVED THE COUNT (WO-3.26), which is the one thing about it worth stating twice. The
+  chip is src/grade-engine.js's openWork() asked per student and its rows filtered and grouped;
+  there is no second walk of `scores` in this file, no cell is read here, and nothing here decides
+  what "not graded yet" means. A screen that re-derived that test would be the second answer that
+  comes to disagree with the grade printed an inch away — this file's own header has said so about
+  the attendance state since WO-2.1, and the grading half is the same rule with a different owner.
+
+  NOTHING HERE READS A CLOCK EITHER, and that is a rule rather than an omission. `late` and
+  `missing` are teacher-marked (CLAUDE.md; docs/data-model.md § "Missing is marked, never
+  inferred"), and src/past-due.js is the one place in the app allowed to read a due date against a
+  blank — where it ASKS and writes only what the teacher accepts. A count on this card that went up
+  at midnight would be that rule broken on the screen the teacher opens the app to. So the chip
+  moves when a score is entered or an assignment is added, and at no other time. Note the contrast
+  with the state line above it, which reads todayISO() because what it reports IS today.
 */
 
 import { getDoc } from './store.js';
-import { getActiveClasses, getSelectedClassId, initials, avatarClass } from './classes.js';
+import { getActiveClasses, getSelectedClassId, getOpenTermId, initials, avatarClass }
+  from './classes.js';
+/* The signals slot's first content, from the module that owns what "not graded yet" IS. Nothing
+   here looks at a cell: src/grade-engine.js's openWork() answers that question once, for this card
+   and for the grade detail both, which is what stops a card and the screen it opens disagreeing
+   about the same class's unfinished work. */
+import { openWork } from './grade-engine.js';
 /* The state slot's whole content, from the module that owns what a state IS. Nothing here decides
    whether a class was taken, dropped or forgotten; src/attendance.js's stateSummary() decides it
    once, for this card and for the marking screen both, which is what stops the two disagreeing
@@ -168,12 +206,16 @@ function classCard(cls, isOpen) {
 
   open.append(stateLine(cls));
 
-  /* ── the slot that is still reserved ──
-     Appended empty, and it stays empty until the work order that owns it fills it. Its space is
-     held by min-height in src/home.css; see this file's header comment for why a placeholder here
-     would be worse than nothing. */
+  /* ── the slot, half filled ──
+     WO-3.26's ungraded count goes in it and WO-4.x's attention line will go in beside it — which is
+     why this is still a container with a gap on it rather than the chip itself. It is appended
+     whether or not there is a chip to put in it, because its space is held by min-height in
+     src/home.css and a slot that is only in the tree when it has something to say is a slot that
+     reflows the page the moment it does. */
   const signals = document.createElement('span');
   signals.className = 'class-card-signals';
+  const count = ungradedChip(cls);
+  if (count) signals.append(count);
   open.append(signals);
 
   card.append(open);
@@ -229,6 +271,88 @@ function stateLine(cls) {
     + (summary.offTerm ? ' off-term' : '');
   line.textContent = summary.text;
   return line;
+}
+
+/* A roster id that names nobody is dropped rather than asked about — the same harmless failure
+   src/scores.js's rosterOf() and src/past-due.js's describe, out of a restored or hand-edited
+   document. It matters more here than it reads: a student who does not exist has no cell anywhere,
+   so asking openWork() about them would answer "every assignment in the term is open" and the chip
+   would report the whole term as ungraded. Ids only — a name is nothing this card ever needs. */
+function rosterIdsOf(cls, doc) {
+  const people = doc && Array.isArray(doc.students) ? doc.students : [];
+  const ids = cls && Array.isArray(cls.roster) ? cls.roster : [];
+  return ids.filter((id) => people.some((s) => s && s.id === id));
+}
+
+/*
+  HOW MUCH OF THIS CLASS IS STILL TO GRADE (WO-3.26), and every part of that sentence is a decision.
+
+  WHAT IT COUNTS IS ASSIGNMENTS, NOT CELLS. An assignment in the open term with at least one `open`
+  cell across the roster counts once, however many blanks are in its column. The alternative was
+  considered and not taken: the card's tap lands on the class, the grid is organised in columns, and
+  "three assignments waiting" is a sentence a teacher can act on where "forty-one blanks" is a
+  number she has to divide first. The score grid's own summary counts BOTH — blanks across
+  assignments — because that screen is where the dividing gets done.
+
+  WHICH TERM: the one the teacher has this class open on, resolved by src/classes.js for the class
+  NAMED rather than for the class selected, because five cards are five classes and at most one of
+  them is the one she is standing in.
+
+  THE THREE STATES ARE openWork()'s AND THE FILTER IS THE WHOLE OF WHAT THIS FUNCTION DECIDES.
+  `missing` is graded — a zero out of full points, already in the grade, and only there because the
+  teacher put it there. `bonus` is ungraded work worth ZERO points, and zero-point work waiting is
+  not work owed, so it is not counted. `excused` is in none of the rows at all. That leaves `open`,
+  which is ungraded work worth points, and it is what the chip says. A cell marked `excused`, a
+  `late` carrying a score, and a `0` the teacher typed are none of them open — and not one of those
+  three tests is written here, which is the point: they are written once, in src/grade-engine.js,
+  where the grade printed on the detail screen is decided by the same branch.
+
+  A UNION, ASKED PER STUDENT. openWork() answers about one student because that is the question the
+  detail screen asks it, and the answer this card needs is the union of those answers over the
+  roster: a Set of assignment ids, so an assignment ten students have not been graded on is one
+  piece of work waiting rather than ten. A new engine function for the class-wide question was the
+  other route and was not taken — the union needs nothing openWork() does not already return, and a
+  second entry point into the same walk is a second place for the three states to drift apart.
+*/
+function ungradedCount(cls) {
+  const doc = getDoc();
+  if (!doc || !cls) return 0;
+  const termId = getOpenTermId(cls.id);
+  if (!termId) return 0;
+  const waiting = new Set();
+  rosterIdsOf(cls, doc).forEach((studentId) => {
+    openWork(doc, cls, termId, studentId).forEach((row) => {
+      if (row.state === 'open') waiting.add(row.id);
+    });
+  });
+  return waiting.size;
+}
+
+/*
+  THE CHIP, OR NOTHING AT ALL. A class with nothing waiting gets no element — see the header — and
+  the slot keeps its height either way, so a class that finishes its grading does not shrink its
+  own card.
+
+  IT IS NOT A CONTROL, and that is why it takes no 44px floor of its own: it is text inside the one
+  button that opens the class, exactly as .class-card-state has been since WO-1.13, and the tap
+  that acts on what it says is the card's own — which lands on the grid holding the blanks. The day
+  it becomes tappable it becomes a control, it moves out of this button and in beside it
+  (classCard() above says why the container survived), and the coarse-pointer block gains it in the
+  same pass.
+
+  THE WORDS ARE THE CARD'S, not the engine's. src/grade-engine.js has no strings in it that a
+  teacher typed and none that a teacher reads; what it hands back is rows, and turning a number of
+  rows into "3 to grade" is this renderer's whole job. No accessible name of its own, for the reason
+  the state line has none: it is inside the button, so the control reads as "Period 3 — Biology,
+  Taken · 2 absent, 3 to grade" rather than as a chip a screen-reader user meets on its own.
+*/
+function ungradedChip(cls) {
+  const n = ungradedCount(cls);
+  if (!n) return null;
+  const chip = document.createElement('span');
+  chip.className = 'class-card-count';
+  chip.textContent = n + ' to grade';
+  return chip;
 }
 
 /*

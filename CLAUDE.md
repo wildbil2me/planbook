@@ -23,17 +23,29 @@ accommodations, attendance marking, days off, home screen. The app is deployed a
 `https://planbook.hwgteach.com/`.
 
 *(The status line above changed on 2026-08-19. Every work order in `plans/work-orders/README.md`
-§ Ship 2 is ✅ except WO-3.26, WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
+§ Ship 2 is ✅ except WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
 construction** *— four of its nine boxes want a real class's real grades, which do not exist until
 Sep 2. **Do not read that as a stall:*** **§ Ship 3 is the running order now**, *written the same day
 by WO-1.24, for the same reason § Ship 2 was written the day after Ship 1 closed —* `next` *was one work
 order from having no rows left to read.)*
 
-*(**Ship 2 got a row back later that same day**, which is why the warning this block used to carry —
-"do not go looking for Ship 2 work" — is gone. WO-1.25's audit of Phase 6 found the home screen's
-ungraded slot belonged to Phase 3 and booked* [WO-3.26](plans/work-orders/phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen)
-*ahead of WO-3.18 and WO-G2. It is what* `next` *returns, both its dependencies are closed, and it gates
-nothing — so it is one row to build, not a reopening of the ship.)*
+*(**Ship 2 got a row back later that same day, and gave it up again the same evening.** WO-1.25's
+audit of Phase 6 found the home screen's ungraded slot belonged to Phase 3 and booked*
+[WO-3.26](plans/work-orders/phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen)
+*ahead of WO-3.18 and WO-G2 — one row to build, not a reopening of the ship. It is* **✅ as of
+2026-08-19**: *every class card now carries the work waiting on it, and* `next` *returns WO-3.18
+again. The warning this block used to carry — "do not go looking for Ship 2 work" — stays gone, and
+the reason is unchanged:* **§ Ship 3 is the running order.** *What is left in § Ship 2 is one
+submission and a calendar-bound gate.)*
+
+*(**WO-3.26 is also the first work order here to be finished by a different session than started it.**
+Its dispatch died after the implementer's writes had landed and before anything was verified or
+reported — no result file, a stale* `check()` *count in* `tools/README.md` *that turned the sweep red,
+and a scratch file left in* `tools/`. *Everything was recovered from the working tree. The scar worth
+keeping is that* **a dead dispatch's writes are usually all there and none of its claims are** *— the
+tree was green on both tools once the last mile was walked, but nothing had run it, so no box it
+would have ticked was tickable. Re-derive from the tree and re-run every command; never read landed
+files as a landed work order. See* `plans/dispatch-retro.md`.)*
 
 *(**Ship 3 opened for real on 2026-08-19**, the same day it was written:* [WO-4.1](plans/work-orders/phase-4-signals.md#wo-41--signal-engine--thresholds)
 *— the signal engine — is ✅, which is row 1 of six and the one the table says never to cut. The

@@ -13,6 +13,30 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The home screen says how much is left to grade — 2026-08-19
+
+Every class card on the home screen now carries the work still waiting on it — **3 to grade** — for
+the term that class is open on. The card's own tap lands on the grid holding those blanks.
+
+**It counts work, not blanks.** An assignment nobody has been graded on yet is one piece of work
+waiting, not thirty. *Three assignments waiting* is a sentence you can act on where *forty-one empty
+cells* is a number you have to divide first — and the score grid still counts both, because that is
+the screen where the dividing gets done.
+
+**A class with nothing waiting says nothing at all.** Not a zero and not a dash: a zero is a datum
+you have to read in order to learn there is nothing to read. The card does not change height when a
+count appears or goes away either, so a page of five classes does not reshuffle underneath you as you
+grade.
+
+**It never moves because a date rolled over.** Blank means ungraded and affects nothing; `late` and
+`missing` are yours to mark, and the one place in Planbook allowed to read a due date against an empty
+cell is the past-due prompt, which *asks* and writes only what you accept. A count that climbed at
+midnight would be that rule broken on the first screen you open.
+
+**What it leaves out.** An excused column, a late that carries a score, a zero you typed, and an
+assignment you marked missing are none of them ungraded. Zero-point bonus work is ungraded and is not
+work *owed*, so it is not in the number either.
+
 ### Planbook can tell you who needs you, in both directions — 2026-08-19
 
 The engine underneath the concern and praise lists. It reads a class and a term and hands back

@@ -2131,7 +2131,7 @@ and would otherwise be found again.
 
 ## WO-3.26 — the ungraded count on the home screen
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.4, WO-1.10 · **Blocks** WO-6.4
+**Ship** 2 · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-3.4, WO-1.10 · **Blocks** WO-6.4
 **Closes roadmap** *(no box. ROADMAP § Phase 3 is 10 of 10 and every box on it is claimed by the work
 order that built it. This fills a slot `src/home.js` reserved and named in 2026-08-04, which no
 roadmap line ever described — the same shape as WO-3.18, and written without quotation marks anywhere
@@ -2188,19 +2188,19 @@ is the precedent, already in that table and named by no gate.
   module stays off the list.
 
 **Acceptance**
-- [ ] A class with three assignments holding blank scores shows a count of three; entering the last
+- [x] A class with three assignments holding blank scores shows a count of three; entering the last
       blank score on one of them takes the count to two, with no reload.
-- [ ] The count counts what `openWork()` calls `open` and nothing else: a cell marked `excused`, a
+- [x] The count counts what `openWork()` calls `open` and nothing else: a cell marked `excused`, a
       `late` carrying a score, a `0` typed by the teacher, and an assignment marked `missing` are none
       of them ungraded, and a zero-point bonus assignment is not counted either.
-- [ ] A class with nothing ungraded shows no chip, and a screenshot of the card in that state is the
+- [x] A class with nothing ungraded shows no chip, and a screenshot of the card in that state is the
       same height as the card beside it carrying a count.
-- [ ] The number matches the score grid: open the class and count the columns holding a blank, and
+- [x] The number matches the score grid: open the class and count the columns holding a blank, and
       the two agree.
-- [ ] `src/home.js` performs no grade arithmetic of its own — the count is `openWork()`'s rows,
+- [x] `src/home.js` performs no grade arithmetic of its own — the count is `openWork()`'s rows,
       filtered and grouped, and `wo-sweep.mjs`'s screens-that-ask census still does not list this
       module as one that reads `supports`.
-- [ ] Nothing on the card names a student, in presentation mode or out of it.
+- [x] Nothing on the card names a student, in presentation mode or out of it.
 
 **Traps** — **Do not infer ungraded from a due date.** Blank means ungraded and affects nothing;
 `late` and `missing` are teacher-marked, and `src/past-due.js` is the one place in the app allowed to

@@ -159,18 +159,56 @@
 .class-card-state.off-term { background: #fff; border-color: #eef0f4; color: #8a9bb0; }
 
 /*
-  THE SLOT THAT IS STILL RESERVED, and `min-height` is the entire point of the rule.
+  THE SLOT, AND `min-height` IS STILL THE ENTIRE POINT OF THE RULE.
 
-  It is empty today — src/home.js explains why a placeholder would be worse than nothing — and
-  it holds its own height so that the day WO-3.x or WO-4.x writes into it, every card on the
-  page is already the size it will be. Without the reserved height the first real datum reflows
-  the whole grid, which is how "six classes fit on an iPad in portrait" stops being true in a
-  work order that never touched this file.
+  It was empty until WO-3.26 — src/home.js explains why a placeholder would have been worse than
+  nothing — and it held its own height so that the day WO-3.x or WO-4.x wrote into it, every card
+  on the page was already the size it would be. Without the reserved height the first real datum
+  reflows the whole grid, which is how "six classes fit on an iPad in portrait" stops being true in
+  a work order that never touched this file.
 
-  The height is one row of chips: a `.pill`-shaped count is 24. Not a guess about what the
-  content will SAY, only about how tall one line of it is.
+  The height is one row of chips: a `.pill`-shaped count is 24. That was a prediction about how tall
+  one line of content would be and never about what it would SAY, and WO-3.26 is where it gets
+  collected on — the ungraded chip below is built to fit inside this number rather than to set it.
+  The rule is therefore unchanged, and the half of it still owed is WO-4.x's: whatever goes in
+  beside the count wears the same ceiling.
 */
 .class-card-signals { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+
+/*
+  HOW MUCH IS LEFT TO GRADE (WO-3.26) — the slot's first occupant.
+
+  A `.pill`-shaped chip, and shaped rather than BORROWED: `.pill` belongs to src/shell.css, and this
+  sheet's header rule is that two stylesheets must never style the same class. So the shape is
+  lifted from it by value — 20px radius (design/style-guide.md §3's pill filters), 11px/700 (§2's
+  chips and labels), a 1.5px edge (§3) — and written out here, where a per-file touch pass can see
+  it. `.pill` is also a CONTROL, and this is a line of text inside one: wearing its class would put
+  `cursor: pointer` and shell.css's focus-ring family on something that can never be focused or
+  tapped.
+
+  IT FITS THE 24px ABOVE RATHER THAN GROWING IT, which is the whole reason the slot has held that
+  height since WO-1.10: 11px of text at 1.2, 3px of padding either side and two 1.5px edges is
+  22.2px, so a card carrying a count is exactly as tall as the card beside it that has nothing to
+  say. Any change to those three numbers is a change to the height of every card on the screen, so
+  it is checked against the min-height above and not only against how it looks.
+
+  QUIET, AND NEVER THE UNTAKEN AMBER — the same call `.class-card-state.off-term` makes above, for a
+  related reason. This card has exactly one alarm on it, the cream `.not-taken` wash, and it means
+  "go and fill this in before the period starts". Work waiting to be graded is news rather than an
+  alarm — a fortnight's job, not this morning's — and a second amber object on the same card would
+  make the two compete for the one thing the wash is for. So it takes white on the stronger hairline
+  `#d0d8e4` with §1's secondary text, which stands off BOTH grounds this card can have: the subdued
+  `#f8f9fb` and the open card's `#eef2ff`, where an indigo wash would have vanished into the second.
+  Repeated rather than shared for the reason every colour in this repo is repeated: there are no
+  custom properties here, deliberately (CLAUDE.md).
+*/
+.class-card-count {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 20px;
+  border: 1.5px solid #d0d8e4; background: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1.2; color: #6b7a8d;
+  white-space: nowrap;
+}
 
 /* ── THE EMPTY STATE ── */
 /* Inside shell.css's `.empty-state`, which supplies the centred 48px-padded zero-data block;
@@ -210,6 +248,14 @@
      nothing. The target it used to be is the whole card, above. */
   .class-card-state { font-size: 13px; padding: 8px 12px; }
   .class-card-signals { min-height: 26px; }
+  /* NOT a 44px floor either, and for exactly the reason given at `.class-card-state` above: the
+     count is a line of text inside the card's one button, not a control, so there is nothing here
+     to tap that is not already the whole card. It is named in this block rather than left out of it
+     because a class that appears in no coarse rule is a class the next reader has to go and prove
+     is not a target — the same argument `.class-card-open` makes for being written out. What it
+     takes here is the bump, not a floor: 12px at 1.2 with 4px of padding and two 1.5px edges is
+     25.4px, which still fits inside the 26px the slot reserves one line up. (WO-3.26) */
+  .class-card-count { font-size: 12px; padding: 4px 11px; }
   .home-empty-lead { font-size: 15px; }
   .home-empty-text { font-size: 14px; }
   .home-empty-actions { gap: 10px; }
