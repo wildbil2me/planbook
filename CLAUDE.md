@@ -15,7 +15,8 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term.**
+**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
+**Ship 3 building, its first row landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
@@ -27,6 +28,12 @@ construction** *— four of its nine boxes want a real class's real grades, whic
 Sep 2. **Do not read that as a stall and do not go looking for Ship 2 work:*** **§ Ship 3 is the
 running order now**, *written the same day by WO-1.24, for the same reason § Ship 2 was written the day
 after Ship 1 closed —* `next` *was one work order from having no rows left to read.)*
+
+*(**Ship 3 opened for real on 2026-08-19**, the same day it was written:* [WO-4.1](plans/work-orders/phase-4-signals.md#wo-41--signal-engine--thresholds)
+*— the signal engine — is ✅, which is row 1 of six and the one the table says never to cut. The
+other five rows are still ⬜, and two of them cannot close before late September no matter how fast
+the building goes: they want a fortnight of a real term's data. Read the running order, not this
+line, for what is next.)*
 
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
@@ -118,7 +125,7 @@ and the teacher taps *dropped* on the ones that didn't. A cycle model was design
 same day; the decision record is [`plans/rotating-schedule.md`](plans/rotating-schedule.md), and it
 exists because the next session will want to build one.
 
-Four things that will bite:
+Five things that will bite:
 
 - **iOS evicts IndexedDB after ~7 days of non-use for non-installed sites.** Installed PWAs are
   exempt. A teacher who bookmarks instead of installing can lose a term of grades over a holiday.
@@ -133,6 +140,14 @@ Four things that will bite:
   set is narrower than "empty" — `excused` and a scoreless `late` are decisions and are never swept.
 - **Empty categories redistribute their weight.** Otherwise every grade is wrong until each
   category has an assignment.
+- **An absent threshold key IS its default** (WO-4.1). The `signals` block holds only what the
+  teacher has changed, and *Put every threshold back* **deletes** those keys rather than writing
+  today's numbers into the year — otherwise a default re-tuned in a later build never reaches a
+  teacher who once pressed reset, and the two builds are indistinguishable on screen. Read a
+  threshold through `thresholdsOf()`, never off `doc.signals`. A signal rule is likewise handed its
+  own measured numbers and nothing else — not the document, not the clock, not the threshold it just
+  crossed — which is what stops an explanation drifting from the arithmetic behind it and what keeps
+  accommodation data out of a sentence Phase 5 mails home.
 
 ## Accommodations are the most sensitive data here
 

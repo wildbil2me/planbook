@@ -15,7 +15,7 @@ Thresholds and defaults are specified in [`../../docs/data-model.md`](../../docs
 
 ## WO-4.1 — Signal engine & thresholds
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.4, WO-3.4
+**Ship** 3 · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.4, WO-3.4
 **Closes roadmap** Phase 4 → "Threshold engine reading every rule from the document, editable in
 Settings", "One evaluator produces both lists", "Why is this student here?"
 
@@ -38,11 +38,11 @@ falls is exactly who a teacher wants to see twice.
 **Out of scope** — the individual rules (WO-4.2, WO-4.3) and the UI lists.
 
 **Acceptance**
-- [ ] Every threshold is editable and persists through save, reload, and a backup round-trip.
-- [ ] The evaluator returns both directions from a single pass.
-- [ ] A student appearing on both lists renders on both, with different explanations.
-- [ ] Every hit carries real numbers; no explanation contains a placeholder or a rounded lie.
-- [ ] All windows are expressed in meetings. Grep for any day-based window and remove it.
+- [x] Every threshold is editable and persists through save, reload, and a backup round-trip.
+- [x] The evaluator returns both directions from a single pass.
+- [x] A student appearing on both lists renders on both, with different explanations.
+- [x] Every hit carries real numbers; no explanation contains a placeholder or a rounded lie.
+- [x] All windows are expressed in meetings. Grep for any day-based window and remove it.
 
 ---
 

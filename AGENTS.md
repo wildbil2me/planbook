@@ -30,6 +30,14 @@ dependencies.
   teacher accepts. It is the one place the clock may be read, and `excused` and a scoreless `late`
   are never in the set. Do not widen it, and do not add a second reader of the date.
 - **Empty categories redistribute their weight.**
+- **An absent threshold key IS its default** (WO-4.1). `signals` holds only what the teacher has
+  changed, and *Put every threshold back* **deletes** the keys rather than writing today's numbers
+  into the year — otherwise a default re-tuned in a later build never reaches anyone who once
+  pressed reset. Read a threshold through `thresholdsOf()`, never off `doc.signals` directly.
+- **A signal rule is handed its own measured numbers and nothing else** — not the document, not the
+  clock, not the threshold it just crossed. That is what makes an explanation unable to drift from
+  the arithmetic behind it, and what keeps accommodation, medical and plan data out of a sentence
+  that Phase 5 mails home. A new rule must not need a new explanation mechanism.
 - **Taken · dropped · not-taken-yet are three states, not two.** Everything counts *recorded
   meetings*, never calendar days. There is deliberately no schedule model — see
   [`plans/rotating-schedule.md`](plans/rotating-schedule.md).

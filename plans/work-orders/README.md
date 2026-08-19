@@ -206,13 +206,13 @@ indexes is a file nobody reads.
 | 1 — Shell, store, roster | 24 | 24 | — | 🔨 IN PROGRESS (reopened five times; last on 2026-08-19) |
 | 2 — Attendance | 50 | 49 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 24 | 23 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
-| 4 — Signals | 5 | 0 | — | ⬜ NOT STARTED |
+| 4 — Signals | 5 | 1 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 4 | 0 | — | ⬜ NOT STARTED |
 | 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
 | 8 — 1.0 packaging | 11 | 5 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **129** | **102** | **2** | `[███████░░░] 79%` |
+| | **129** | **103** | **2** | `[████████░░] 80%` |
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are

@@ -74,12 +74,12 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
-| 4 | Signals — concern **and** praise | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
+| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | ⬜ NOT STARTED | 0/8 `[░░░░░░░░░░] 0%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **42/81 `[█████░░░░░] 52%`** · ⏳ 1 deferred |
+| | | **Overall** | **45/81 `[█████░░░░░] 56%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -418,21 +418,29 @@ The praise half has a design trap: **rank by delta, not by level.** "Top of the 
 same four students every week and is worthless. "Came up 14 points since October" surfaces a
 different student every time, and it's the message that actually lands at home.
 
-- [ ] Threshold engine reading every rule from the document, editable in Settings.
+- [x] Threshold engine reading every rule from the document, editable in Settings.
 - [ ] **Concern signals:** grade below threshold · falling N points over N assignments · N
       consecutive low scores · N missing assignments · attendance below N% · N absences in a
       window of meetings · N consecutive absences · N tardies · N behavior entries in N days.
 - [ ] **Praise signals:** rose N points over N assignments · N consecutive strong scores · came off
       the concern list (a turnaround is the highest-value message home) · a clean stretch with no
       missing work · perfect attendance over a window.
-- [ ] One evaluator produces both lists. A student can appear on both, and that's information.
+- [x] One evaluator produces both lists. A student can appear on both, and that's information.
 - [ ] **Contact cooldown.** Read the outreach log; suppress anyone contacted about the same signal
       within N days. Without this the list is identical every week and the teacher stops reading
       it — which is how these features die.
 - [ ] **The quiet middle.** Students neither flagged nor praised nor contacted all term. The ones a
       busy teacher genuinely loses track of.
-- [ ] "Why is this student here?" — every flag explains itself in a sentence with the real numbers.
+- [x] "Why is this student here?" — every flag explains itself in a sentence with the real numbers.
 - [ ] Behavior/note logging fast enough to do mid-class, feeding the behavior signals.
+
+*(**"Why is this student here?" was closed by the mechanism, not by the rules** — 2026-08-19,
+WO-4.1. Two rules are registered today,* `grade-below` *and* `attendance-window`*, which is the
+minimum that proves the contract. The box is ticked because an explanation cannot drift from the
+arithmetic that produced it:* `say()` *is handed the measured numbers and two strings, and can reach
+neither the document nor the clock nor the threshold, so a rule cannot print a figure its hit does
+not carry. The remaining twelve rules inherit that by construction the moment WO-4.2 and WO-4.3
+register them — what is owed here is rules, not explanations.)*
 
 ---
 

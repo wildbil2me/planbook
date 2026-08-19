@@ -1121,8 +1121,10 @@ const NOT_CONTENT = [
     + 'memory in a minute. The nag is about the record that cannot be reconstructed' },
   { key: 'letterScale', why: 'seeded by newYearDocument(); the day-one rule below names it out loud' },
   { key: 'signals', why: 'thresholds that default when absent (docs/data-model.md § Signal '
-    + 'thresholds). Empty in every document this build writes, and a tuned threshold is a preference '
-    + 'rather than a record. Worth re-opening when Phase 4 lets a teacher tune them' },
+    + 'thresholds). A teacher can tune these as of WO-4.1, so this is no longer empty by '
+    + 'construction — it stays out because a threshold is a preference rather than a record, and '
+    + 'because an untouched year still holds no keys here at all. Re-open it if the nag ever has to '
+    + 'mean "you would lose how you set this app up" as well as "you would lose what you typed"' },
 ];
 
 /* Anything that would be lost. A brand-new document is not empty of meaning — it has a year and

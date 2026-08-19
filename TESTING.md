@@ -6611,11 +6611,77 @@ not after it passed.*
 
 *Phase goal: open the app and see who needs you today, in both directions.*
 
-Nothing here yet — WO-4.1 through WO-4.5 append their acceptance lines as they land.
+WO-4.2 through WO-4.5 append their acceptance lines as they land.
 
 Every flag has to be reproducible by hand from the numbers it shows, and praise has to rank by
 delta rather than by level — a praise list that surfaces the same four high achievers every week
 is a failed feature that still passes a smoke test.
+
+---
+
+### WO-4.1 — Signal engine & thresholds
+
+**What this adds.** A `signals` block in the year document holding all twenty-two thresholds, a
+panel in the class manager that edits every one of them with the documented defaults pre-filled and
+a reset, and one evaluator that takes a class and a term and returns hits — each carrying its
+direction, its rule id, the student, **the numbers that produced it**, and a sentence built from
+those numbers.
+
+**Two rules are registered, not fourteen, and that is the work order.** `grade-below` (concern) and
+`attendance-window` (praise) are the minimum that can prove the contract: one per direction, and one
+of the pair carrying a window, or the meetings-not-days line cannot be tested at all. The other
+twelve thresholds are present, named and editable with no rule behind them — WO-4.2 and WO-4.3 own
+the rules. **A rule added later must not need a new explanation mechanism**; if one does, the
+contract this work order set has been broken rather than extended.
+
+**The reset is a delete, and that is deliberate.** *Put every threshold back* removes the twenty-two
+keys from the document rather than writing twenty-two copies of today's numbers into it — an absent
+key **is** its default, so a default re-tuned in a later build reaches a teacher who once pressed
+reset. The two builds are indistinguishable on screen, in the standing line, and in every
+evaluation run today. Only `getDoc().signals` can tell them apart, which is why the harness reads it
+there and why no click can close that line.
+
+- [x] All twenty-two thresholds editable, persisting through save, reload and a backup round-trip.
+- [x] One `evaluate()` pass returns both directions; a student failing with perfect attendance
+      comes back as two hits with two different sentences.
+- [x] Every hit carries a non-empty bag of finite numbers; no sentence holds a placeholder, an
+      `undefined` or a `NaN`.
+- [x] A grade of 64.9985% against the 65% line prints **64.999%**, not the "65.00%, below 65%" that
+      two decimals round it into — and the hit still carries the unrounded number.
+- [x] Windows count recorded meetings. A class six meetings into the term says **six** and is never
+      padded up to the twenty it asked for; a class with no recorded meetings fires nothing at all,
+      rather than a rate of 0% or 100%.
+- [x] The reset deletes the twenty-two keys rather than writing them, and a key this build does not
+      name survives it untouched.
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **975 of 975, 0 skipped**, 312s — up from 963 on the tree
+this work order arrived on. The twelve new checks are one section at the foot of the file, and each
+was proved able to fail before it was trusted: four mutation runs, reverted, reddening eleven of the
+twelve (the twelfth is a reachability guard whose failure takes the other eleven with it).*
+`wo-sweep.mjs` *is 22 checks, 19 passed, 0 failed, 3 to review — all three pre-existing, none from
+this work order.*
+
+*Worth keeping from the mutation runs: under a reset rewritten to* **write** *the defaults instead of
+deleting them, every other check stayed green — all twenty-two still resolved to their shipped
+numbers,* `changedThresholds()` *was still empty, the standing line still read* All 22 thresholds are
+at the values Planbook ships with, *and every field on screen still showed the shipped figure. That
+is the entire argument for reading the document directly.*
+
+#### The 👤 sitting this work order owed — run 2026-08-19, all six green
+
+Run on the iPad after a force-quit from the app switcher (v82 is a `SHELL` change, so a reload would
+have shown the old document against a build line reporting honestly — see `CLAUDE.md`).
+
+- [x] Class manager → **Signal thresholds** opens over the class manager; Escape closes it and
+      leaves the class manager open behind it. 👤
+- [x] All twenty-two rows scroll in portrait and landscape: no row wraps into unreadability, no unit
+      separates from its number, the reset button stays reachable at the foot. 👤
+- [x] Tapping a field raises the **numeric keypad**, not the full keyboard. 👤
+- [x] Typing does not jump the caret, and the standing line under the list updates as you type. 👤
+- [x] Close, reopen: the typed value is still there. **Put every threshold back** returns the line
+      to *All 22 thresholds are at the values Planbook ships with*. 👤
+- [x] Two adjacent fields are both comfortably tappable without catching the neighbour — the row
+      padding drops 9px → 6px under a coarse pointer to absorb the taller field. 👤
 
 ---
 

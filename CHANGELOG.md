@@ -13,6 +13,46 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Planbook can tell you who needs you, in both directions — 2026-08-19
+
+The engine underneath the concern and praise lists. It reads a class and a term and hands back
+*hits* — each one a student, a direction, the numbers that produced it, and a sentence built from
+those numbers. **One pass returns both directions**, so a student who is failing while attending
+every class comes back twice, with two different sentences, and neither hit knows it has a twin.
+That is information rather than a bug: it is exactly the student a teacher wants to see on both
+lists.
+
+**Every threshold is yours to set.** Twenty-two of them — nine concern, five praise, the windows
+they count over, and the contact cooldown — live in *Class manager → Signal thresholds*, each
+pre-filled with the value Planbook ships with. They are stored in the year document rather than on
+the device, so they survive a device change, travel through a backup, and come back with a restore.
+**Put every threshold back** returns the lot to the shipped values in one press.
+
+**Windows count meetings, never days.** A class that goes a week without meeting has not had a bad
+week — "4 absences in the last 20 days" is nonsense on a rotating schedule, so every window is
+expressed in recorded meetings and a class six meetings into the term says *six* rather than being
+padded up to the twenty it asked for.
+
+**No explanation can drift from the arithmetic behind it**, because a rule is handed its own
+measured numbers and nothing else — not the document, not the clock, not even the threshold it
+just crossed. It cannot print a figure the hit does not carry. It also cannot reach accommodation,
+medical or plan data by construction, which matters because these sentences are what Phase 5 puts
+into a message home. And a grade of 64.9985% against a 65% line prints **64.999%**, not the
+"65.00%, below 65%" that two decimals would round it into and that a parent would be right to
+query.
+
+The lists themselves, and twelve of the fourteen rules, are still to come.
+
+### Verification — the signal engine is now falsifiable
+
+Twelve new checks in the browser harness, covering the four things neither a click nor a tidy
+fixture can reach: a student who is failing while attending every class, a grade sitting inside a
+hundredth of a percent of the line it crossed, a class six meetings into the term and a class that
+has never been marked, and what *Put every threshold back* actually writes into the year — a
+deletion, not twenty-two copies of today's numbers, which is what lets a re-tuned default reach a
+teacher who once pressed it. Each check was proved able to fail before it was trusted.
+
+
 ### The register opens on the term you are in, not on today — 2026-08-19
 
 A fortnight before your first term started, the attendance screen drew six days that were every one
