@@ -4386,19 +4386,29 @@ invented.
       messages rather than one amber block — the risk this design took knowingly by putting the
       caution wash directly above `.attendance-state.not-taken`.**
 
-      **And the reading cost a detour worth writing down: the installed app showed nothing.** It is
-      installed from `planbook.hwgteach.com`, so it was running the deployed build — `v77`, with no
-      `termRollover` in its `attendance.js` at all — and reported that honestly. No amount of
-      force-quitting reaches code that was never pushed. The same build over the LAN dev server was
-      correct on the laptop and in iPad Safari throughout. The reading above was taken on a **second
-      copy installed from `192.168.50.142:8080`**, which is pinned to the dev server and should be
-      deleted now that this has shipped. **The check that settles this in seconds is `verify-deploy.mjs`,
-      or a `curl` of the deployed `sw.js` for its `CACHE` string** — an installed PWA that "does not
-      have the feature" is a deploy question before it is a cache question.
+      **And the reading cost a detour worth writing down: the installed app showed nothing while
+      iPad Safari on the same LAN address showed the band correctly.** The first diagnosis written
+      here was wrong and is replaced rather than deleted, because the wrong one is plausible enough
+      to be reached for again: it said the installed copy was the `planbook.hwgteach.com` one and so
+      was faithfully running the deployed v77. That was an inference nobody checked. **The copy that
+      showed nothing was the LAN-installed one** — the standing testing rig on this iPad — served by
+      the same dev server that was answering Safari correctly a moment earlier.
 
-*The desk half is `verify-shell.mjs`, **939 of 939 with zero skips**, thirteen executed results from
-fourteen call sites in one new section directly under the WO-2.50 one, none of them in a loop and one
-of them a fixture-guard failure arm.*
+      **The real cause is the scar `CLAUDE.md` already carries, arrived at from the other end.** iOS
+      resumes a backgrounded app **without loading a document at all**, so nothing re-registers the
+      worker, no update is even looked for, and the app comes back as the build you left. And a
+      genuine cold launch is not always enough either: the document is served out of the old cache
+      while the new worker activates behind it, so the build line can name v78 over a v77 screen for
+      exactly one launch (WO-8.11 makes it say so). **Two cold launches, or one fresh install** —
+      the fresh install is what settled it here.
+
+      **What the detour is worth remembering for is the order of the two questions.** "The installed
+      app does not have the feature" is a deploy question *and* a cache question, and they are told
+      apart in seconds: `verify-deploy.mjs`, or a `curl` of the deployed `sw.js` for its `CACHE`
+      string, settles what is on the origin — and against a LAN install the origin is the dev server
+      on this laptop, which is a different origin from the deployed one and updates the moment a file
+      is saved. Production really was v77 without `termRollover` while this was being read; that was
+      true and it was not the cause.
 
 *Three runs, and the second mutation is the one this section was written for.*
 
