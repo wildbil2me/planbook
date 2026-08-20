@@ -176,7 +176,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
 | [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.25 | Phase 1 |
-| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.52 | Phase 2 |
+| [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.53 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
@@ -427,8 +427,9 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 73 | [WO-2.51](phase-2-attendance.md#wo-251--the-term-ended-and-the-screen-never-said-so) The term ended and the screen never said so | S | | Sep 3, half a day — **the first rollover is late October** |
 | 74 | [WO-2.52](phase-2-attendance.md#wo-252--the-register-opens-on-the-term-not-on-the-clock) **The register opens on the term, not on the clock** | L | | **Before Sep 2 — the window this lives in is open now.** Aug 20, a day |
 | 75 | [WO-3.26](phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen) The ungraded count on the home screen | S | | Aug 21, half a day |
-| 76 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
-| 77 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 76 | [WO-2.53](phase-2-attendance.md#wo-253--the-rows-detail-panel-says-what-the-row-already-says) **The row's detail panel says what the row already says** | L | | **Before Sep 2 — while there is no habit to unlearn.** Aug 21, a day |
+| 77 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
+| 78 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
 
 *WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
 app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is
@@ -460,6 +461,18 @@ nothing:** *WO-G2's* `**Depends on**` *is a curated explicit list and not every 
 which is why* [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-takes-any-string-number-can-read-not-any-number-a-teacher-can-mean)
 *has sat in this table since 2026-08-17 without gating the gate.* **WO-3.18 and WO-G2 each moved down
 one; nothing moved above them.**
+
+*WO-2.53 was booked on 2026-08-20, owner-directed, out of her own reading of the deployed registry: the
+⋯ on a row opens a panel that repeats the row. **It is rowed at #76, so it is `next` and WO-3.18 is not**
+— and WO-3.18 and WO-G2 have now each moved down one a second time, for the second time without anything
+moving above them, which is the shape to expect from this table rather than a sign of churn. The
+ordering argument is the owner's and it reversed the first answer given: the instinct was
+`⏳ DEFERRED`, on the grounds that rewiring the critical-path marking screen thirteen days before
+teaching with it is a risk taken for a cosmetic gain. **Her reversal is that the risk runs the other
+way** — after Sep 2 there is a term of muscle memory invested in a control that is being removed, so
+the change is cheapest now and gets dearer every week. It is an* **L** *and not the S it looks like,
+because the note and the un-confirm have to land somewhere before the panel can go, and where they land
+is a file whose header promises it holds no writers.*
 
 ***WO-8.4 was rowed into this table on 2026-08-19 and taken back out the same day***, *owner-directed
 both times, by* [*WO-1.24*](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order)
