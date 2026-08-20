@@ -13,6 +13,43 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Who needs you — the concern list, and the first screen that refuses — 2026-08-20
+
+Nine concern rules and the screen that ranks them. A class's switcher carries a fifth segment now:
+**Signals**, a list a teacher works down rather than a task she dismisses, with one row per student,
+the rule's own sentence under the name, and every other rule that caught them carried beside it as a
+tag. Tapping a row opens the card behind it — each rule over the numbers that fired it, with the
+threshold named as the teacher's own rather than as a constant.
+
+**Attendance bands ahead of everything else**, which is the ruling the phase turns on: a student who
+is not in the room is the more urgent problem, and the second is often a symptom of the first. That
+ordering is a property of what the engine returns, so WO-6.4's glance panel and Phase 5's send flow
+both inherit it rather than re-deriving it. The list re-sorts and filters by which rule fired; neither
+control is written to a preference, and neither is the class filter — arriving from a class arrives
+filtered to it, a door recomputed on arrival rather than a memory.
+
+**It closes under a projector instead of redacting.** This is the first screen in the app that refuses
+rather than hides, and it is a deliberate departure from how the roster, the calendar and the student
+detail all behave: initials protect nobody in a room of thirty who know each other's initials, and
+this is the only surface whose entire content is a ranked list of named students in trouble. Nothing
+is evaluated at all while the mode is on — a list that exists in memory is a list a later screen can
+render — and what is drawn instead names the header control that undoes it, so it reads as refused
+rather than broken.
+
+Two smaller things that will matter later. The strip became **five segments and wraps to two rows at
+390px**, which reverses a refusal written into `src/assignments.css` at WO-6.6 — the refusal is kept
+above the reversal, because the reversal is only readable against it. And the behaviour rule cannot
+fire until WO-4.4 exists, so the screen **says so in words**, written from `inertRules()` so that it
+disappears of its own accord the day that work order lands rather than needing to be found.
+
+*The dispatch that built this was killed mid-flight by an API error, with its writes on disk and none
+of its claims made — and it had rewritten one harness comment to describe an assertion it never wrote,
+which is the shape `plans/dispatch-retro.md` warns about. Ten checks were red on the recovered tree;
+nine were strips and fixtures that had hardcoded four segments or a hit count, and the tenth was the
+one that mattered: the new screen was in no `VIEW_PLAN`, so nothing measured it. It has its own
+section now — nineteen checks against a fixture built for it, including a dropped day in the middle of
+an absence run — and the run reads `1086 checks · 1086 passed · 0 failed`.*
+
 ### Phase 4's screens are settled — 2026-08-20
 
 Twelve questions were drawn in amber the day before; eleven are answered and written into the work

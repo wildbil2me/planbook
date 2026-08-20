@@ -471,6 +471,40 @@ in the file they belong to, on the same reasoning as *"The check on `wo-gate.mjs
 `wo-gate.mjs`"* above; `--self-check` grew from 17 cases to 26 rather than acquiring a sibling, and
 every one of the nine new ones was watched going red against a mutant aimed at it.
 
+## A stable sort is where a vacuous ORDER check hides, 2026-08-20 (WO-4.2)
+
+WO-4.2's banding check — *attendance bands ahead of the grade*, the ruling its whole phase turns on —
+**passed its mutation.** `severityOrder()`'s rank comparison was cut to a constant zero, so nothing
+banded at all, and the harness came back **1086 of 1086**.
+
+Two ordinary facts made it vacuous. `evaluate()` walks the roster **outer**, so the order hits come
+back in — and therefore the order rows are built in — is roster order. And `Array.prototype.sort` is
+**stable**, so a comparator reduced to a no-op does not shuffle anything; it leaves the input exactly
+as it was. The fixture had been seeded `[Abe, Lena]`, which is already the answer the check asserts.
+It could not tell *the ranking works* from *the ranking does nothing and the roster agreed with it*.
+
+**The general rule: any assertion about ORDER whose fixture is already in the asserted order is
+testing nothing**, and no amount of reading reveals it — that check is well commented, argues its
+case, and names the owner's ruling and its date. The mutation that finds this class of defect is
+always the same one: **reduce the comparator to a constant** and see whether anything goes red. The
+fix is equally mechanical: seed the fixture in the order the *unsorted* path would produce, so the
+sort is the only thing that can reach the asserted answer. Reversed to `[Lena, Abe]`, the same
+mutation reddens three checks and the baseline is unchanged.
+
+This is also the argument for mutation over review, in one case: a verifier reading that check would
+have found nothing wrong with it, because there was nothing wrong with it *to read*.
+
+### And an on-disk mutation must never run under a wall-clock cap
+
+The re-proof was first run inside a tool call with a ten-minute limit, against a baseline-plus-mutation
+pair needing about twelve and a half. The cap fired, `SIGTERM` killed node **before the `finally` that
+restores the file could run**, and `src/signals.js` was left mutated on disk — a working tree quietly
+holding a deliberate defect, at the exact moment the next step was a commit.
+
+**A signal is not an exception, and `finally` does not catch one.** Either mutate in memory the way
+`wo-gate.mjs --self-check` does, or run detached where nothing kills the process — and either way,
+grep the shipped line back before trusting the tree. That grep is what caught this one.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

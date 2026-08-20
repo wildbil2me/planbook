@@ -215,13 +215,13 @@ indexes is a file nobody reads.
 | 1 — Shell, store, roster | 25 | 25 | — | 🔨 IN PROGRESS (reopened six times; last on 2026-08-19) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
-| 4 — Signals | 5 | 1 | — | 🔨 IN PROGRESS |
+| 4 — Signals | 5 | 2 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 12 | 5 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **136** | **111** | **2** | `[████████░░] 82%` |
+| | **136** | **112** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -477,7 +477,9 @@ the vocabulary already had, and the gate report's own sentence for it is* **"do 
 is the truth about a checklist waiting on Sep 2.* `next` *now returns* **WO-4.2**, *the head of*
 [§ Ship 3](#ship-3--signals) *— so the tool and the running order agree again, and* `CLAUDE.md`*'s
 "§ Ship 3 is the running order" is now something* `next` *says rather than something a human has to
-know.* **Put WO-G2 back to `⬜` when the grades exist** *— `--tick` refuses the status, so the gate
+know.* *(**It answers* **WO-4.4** *from later the same day**: WO-4.2 was built, verified and ✅ that
+evening — four days ahead of the table — so row 3 of six is the head of the running order now. The
+point above is unchanged and so is the gate's status.)* **Put WO-G2 back to `⬜` when the grades exist** *— `--tick` refuses the status, so the gate
 cannot be closed while wearing it, which is the safety this leans on. **Teaching `next` to skip a gate
 by reading its `**Target**` was the alternative and was refused:** it would have taught the tool to
 walk past WO-G1, which was the one row nobody was allowed to walk past.*
@@ -1435,7 +1437,7 @@ that need a term of data close on their own schedule.**
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
 | 1 | [WO-4.1](phase-4-signals.md#wo-41--signal-engine--thresholds) **Signal engine & thresholds** | M | ✔ | **Aug 20–21, before the term.** Unblocks five work orders — nothing else in Phase 4 or 5 can start |
-| 2 | [WO-4.2](phase-4-signals.md#wo-42--concern-signals) Concern signals | M | ✔ | Aug 24–26 — **ahead of WO-4.4 by both of their Acceptance lines** |
+| 2 | [WO-4.2](phase-4-signals.md#wo-42--concern-signals) Concern signals | M | ✔ | ✅ **2026-08-20, four days early** — all six boxes and thirteen 👤 readings, the nine-rule read done by hand on a test install |
 | 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | Aug 27, half a day. Carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line |
 | 4 | [WO-4.3](phase-4-signals.md#wo-43--praise-signals) Praise signals | M | ✔ | Built Aug 31–Sep 1; **its real-data box cannot close before ~Sep 16** |
 | 5 | [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) Cooldown & the quiet middle | M | ✔ | Built Sep 12–13, a weekend; **its real-data box cannot close before ~Sep 23** |

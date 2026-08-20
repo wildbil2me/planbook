@@ -6946,7 +6946,7 @@ have left the old document on screen against a build line reporting honestly —
 
 *Phase goal: open the app and see who needs you today, in both directions.*
 
-WO-4.2 through WO-4.5 append their acceptance lines as they land.
+WO-4.3 through WO-4.5 append their acceptance lines as they land.
 
 Every flag has to be reproducible by hand from the numbers it shows, and praise has to rank by
 delta rather than by level — a praise list that surfaces the same four high achievers every week
@@ -7017,6 +7017,145 @@ have shown the old document against a build line reporting honestly — see `CLA
       to *All 22 thresholds are at the values Planbook ships with*. 👤
 - [x] Two adjacent fields are both comfortably tappable without catching the neighbour — the row
       padding drops 9px → 6px under a coarse pointer to absorb the taller field. 👤
+
+---
+
+### WO-4.2 — Concern signals
+
+**What this adds.** The other nine rules — the ones WO-4.1 left named and editable with nothing
+behind them — and the screen that ranks what they catch. **Signals** is the fifth segment on every
+class's switcher: one row per student, the rule's own sentence under the name, every other rule that
+caught them carried beside it as a tag, and the card behind a row holding each rule over the numbers
+that fired it with its threshold named as the teacher's own.
+
+**Attendance bands ahead of everything else**, and that is a property of what the evaluator returns
+rather than of this screen — WO-6.4's glance panel and Phase 5's send flow both inherit it. The sort
+and both filter strips recompute on arrival and are written to no preference: arriving from a class
+arrives filtered to it, a door rather than a memory.
+
+**It closes under a projector instead of redacting, and that is the first time this app refuses.**
+Every other screen — the roster, the calendar, the student detail — suppresses the sensitive field
+and stays usable. This one draws an `.empty-state` naming the control that undoes it, because
+initials protect nobody in a room of thirty who know each other's initials and this is the only
+surface whose entire content is a ranked list of named students in trouble. Nothing is evaluated at
+all while the mode is on: a list that exists in memory is a list a later screen can render.
+
+- [x] Every flag is reproducible by hand from the numbers it shows. **Verify all nine.**
+      *(Closed 2026-08-20 on a test install with test grades and attendance. Four fire on the
+      harness fixture and are reproducible from what they print — the absence run, the absence
+      window, attendance-below and grade-below — and the behavior rule is inert by construction.
+      **The other four had no fixture that reaches them and were worked by hand:** the grade fall,
+      the low-score run, missing work, and tardies. **This was arithmetic, not a look** — the test
+      is whether the number printed matches what produced it, which a rule can fail while firing
+      perfectly correctly.)*
+- [x] "Fell N points" measures the weighted grade before and after the window, not raw scores.
+      *(By construction: `grade-fell` measures `ctx.gradeWithout()` against `ctx.grade()`, both
+      weighted-grade readings, and touches no raw score. The numbers themselves belong to the line
+      above.)*
+- [x] Consecutive-absence counting skips dropped days and untaken days rather than breaking on them.
+      *(Measured. The fixture seeds ten calendar days, drops the 8th, records nine meetings — and
+      the run reads **4 in a row across 9 recorded meetings**, spanning five calendar days. A build
+      that broke on either would report 2 and fire nothing at a threshold of 3.)*
+- [x] A student with no graded work does not appear on the grade-below rule.
+      *(Measured as an absence from the rendered list rather than a null in a model: the fixture's
+      third student would be top of it if no-graded-work were read as a zero.)*
+- [x] Editing a threshold changes the list immediately.
+      *(Measured on the rendered rows, and thumbed through the Thresholds door on the device.)*
+- [x] The behavior rule is inert until WO-4.4 exists, and says so rather than erroring.
+      *(Measured. Written from `inertRules()`, so it disappears of its own accord the day WO-4.4
+      lands rather than needing to be found and deleted.)*
+
+#### The 👤 sitting this work order owed — run 2026-08-20, all thirteen green
+
+Run on a **test install carrying test grades and test attendance**, after a force-quit from the app
+switcher: v91 is a `SHELL` change, so a reload would have drawn the old document under a build line
+reporting honestly (`CLAUDE.md`).
+
+The six that are this screen's own:
+
+- [x] Five segments on the switcher — one row at iPad portrait, wrapped to two at phone width. The
+      owner's ruling of 2026-08-20 read back under a thumb: two rows of segments a thumb can reach
+      beats one row whose fifth sits off the end of a box nothing says scrolls. 👤
+- [x] The strip on **Assignments, Scores and Calendar** — the three shipped views that inherited the
+      `.screen-nav` edit, checked at phone width in the same pass. 👤
+- [x] The sort control raises iOS's own picker, and its label stays readable at 11px. 👤
+- [x] **Presentation mode flipped while this screen is up** — the list clears rather than restyling.
+      This is the standing check's own pre-registered trigger (see § Standing checks, 2026-08-05:
+      *re-check this line the moment Phase 4 puts a signal card on screen*), and the path it names
+      is `flipPresentationMode()`'s hand-maintained call list, which carries `signals` now. 👤
+- [x] The signal card modal — three rules with their evidence, scrolling on a phone with the close
+      button reachable. 👤
+- [x] A row tapped with a real thumb: the untruncated sentence wraps without making a row too tall
+      to scan five of. 👤
+
+And the seven that are the rest of the pass:
+
+- [x] Both chip strips — *Rules* and the class filter — tapped, filtering, and returning to the
+      whole list through *All rules* / *All classes*. **Thumbed rather than asserted**: they wear
+      `.pill` and `.class-action-btn` as shipped, so their 44px comes from a rule in
+      `src/shell.css` rather than from a measurement in `src/signals-view.css`, which is the exact
+      reasoning § Standing checks says to distrust. 👤
+- [x] The sort actually re-orders the rows, and leaving the screen and coming back returns it to
+      *attendance first, then the biggest change*. What protects the phase's argument is which
+      option the list opens on, not which options are absent. 👤
+- [x] The Thresholds door opens from this screen's own panel header, and a threshold moved there
+      changes the list behind it immediately — Acceptance line 5, read through the panel rather
+      than through the render call the harness makes. 👤
+- [x] *Nobody is flagged right now* is visibly distinct from the projector refusal, and both from a
+      screen that failed to draw. An absence and a bug look identical. 👤
+- [x] Landscape. Nothing on this screen is landscape-aware by design, which is why it was read. 👤
+- [x] The real class list on a test install with test grades and attendance — the list is about
+      students who exist, and no ungraded student appears on a grade rule. 👤
+- [x] Every control this screen adds clears 44px under a thumb. The harness measures 33 of them at
+      390px with none under 44; no emulator has a thumb, so this is the reading that counts. 👤
+
+*Desk pass 2026-08-20: `verify-shell.mjs` **1086 of 1086, 0 failed, 0 skipped**, 373s, exit 0 — up
+from 1067 on the tree this work order arrived on. Nineteen new call sites in one new section at the
+foot of the file, none inside a loop and none a failure arm.* `wo-sweep.mjs` *is 33 checks, 29
+passed, 0 failed, 4 to review — all four pre-existing or answered at the check.* `wo-gate --audit`
+*passes.*
+
+*Mutation pass 2026-08-20, five cuts against the new section — **four reddened, and the fifth is the
+one worth the pass.*** *Presentation mode building the list and only hiding it reddens the refusal
+check alone (1 of 1086); a `null` grade read as a zero reddens eight, Acceptance line 4 among them by
+name; `meetingDates()` keeping non-`TAKEN` days reddens twenty-two, which is healthy rather than
+alarming — it breaks a primitive WO-2.6 also measures, and this section's absence-run check is in the
+list; and `.screen-nav` losing its `flex-wrap` reddens exactly the two-row count and nothing else.*
+
+***The banding check SURVIVED its mutation, and it was guarding the one ruling this phase turns on.***
+*`severityOrder()`'s rank comparison was cut to a constant zero — attendance no longer bands ahead of
+anything — and the run came back **1086 of 1086**. The cause is two facts meeting:* `evaluate()`
+*walks the roster OUTER, so hit order and therefore row order is roster order, and*
+`Array.prototype.sort` *is **stable**, so a ranking reduced to a no-op leaves rows exactly as the
+roster listed them. The fixture had been seeded `[Abe, Lena]` — already the answer the check wanted.
+**It could not tell "attendance bands ahead of the grade" from "the ranking does nothing and the
+roster happened to agree with it."** The roster is reversed to `[Lena, Abe]` now, so the unbanded
+order puts the failing-but-present student on top and only the ranking can lift the passing absentee
+above her; the same mutation reddens three checks including this one, and the baseline is unchanged at
+1086 of 1086.*
+
+**Two things to carry forward.** *A check whose fixture agrees with the shipped answer by accident
+passes for a reason nobody wrote down, and reading it will not reveal that — this one is well
+commented, well argued and was vacuous. **A stable sort is where this hides**: any assertion about
+ORDER whose fixture is already in that order is testing nothing, and the mutation that finds it is
+"reduce the comparator to a constant." And **an on-disk mutation must not be run under a wall-clock
+cap** — the first attempt at this re-proof was SIGTERMed at a ten-minute tool limit partway through,
+which killed the process before its `finally` restored the file and left `src/signals.js` mutated on
+disk. A signal is not an exception. It was caught by grepping the shipped line, restored, and re-run
+in the background where nothing kills it.*
+
+***It was not green on the first run, and the reason is the whole of what this work order is worth
+reading for.*** *The dispatch that built it was killed mid-flight by an API error, leaving its writes
+on disk and none of its claims made. The harness was the half it had not finished — and it had
+finished the dangerous half: the comment above the class-switcher measurement had been rewritten to
+describe a row-counting assertion, correctly and in detail, while the assertion underneath still read*
+`segs.length === 4` *and still compared* `scrollWidth` *to* `clientWidth`*. **Prose claiming what the
+code never did, sitting directly on top of the code that did not do it.** Ten checks were red; nine
+were strips and fixtures hardcoding four segments or a hit count, and none was closed by loosening
+one. The tenth was the one that mattered:* `signalsView` *was in no* `VIEW_PLAN`*, because the harness
+diff for the entire work order was comment-only — not one check had been written for the new screen.
+It was left red until the coverage existed. See* `plans/dispatch-retro.md` *§ "The comment that ran
+ahead of its code" and* `.claude/dispatch/WO-4.2-status.md`*.*
 
 ---
 

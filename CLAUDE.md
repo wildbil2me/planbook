@@ -16,7 +16,7 @@ Built first for its author's own five classes, but intended to be marketable to 
 That second goal is what drives the architecture below.
 
 **Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
-**Ship 3 building, its first row landed.**
+**Ship 3 building, its first two rows landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
@@ -75,6 +75,19 @@ files as a landed work order. See* `plans/dispatch-retro.md`.)*
 other five rows are still ⬜, and two of them cannot close before late September no matter how fast
 the building goes: they want a fortnight of a real term's data. Read the running order, not this
 line, for what is next.)*
+
+*(**Row 2 was built on 2026-08-20, four days ahead of the table** —* [WO-4.2](plans/work-orders/phase-4-signals.md#wo-42--concern-signals)
+*, the concern list, and with it the app's* **first screen that refuses rather than hides**: *under a
+projector it closes and names the control that undoes it, which is a deliberate departure from the
+roster, the calendar and the student detail, argued at its own point of departure. It is* **✅ the
+same day** *— all six Acceptance boxes, including the one that wanted all nine rules read by hand,
+and thirteen 👤 readings taken on a test install carrying test grades and test attendance rather than
+deferred to the term (`TESTING.md` § WO-4.2). **The dispatch that built it was killed mid-flight**,
+which is the second one in this file's history and the first whose prose had run ahead of its code:
+a harness comment describing a row-counting assertion nobody had written, sitting directly on top of
+the four-segment assertion it claimed to replace. The scar is in* `plans/dispatch-retro.md`
+*§ "The comment that ran ahead of its code" and the recovery in*
+`.claude/dispatch/WO-4.2-status.md`*.)*
 
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
@@ -338,6 +351,15 @@ device sees the change at all.
   worked; it does not settle branching.** When Ship 3 opens, be deliberate about development happening
   on branches rather than straight on `main` — what shape that takes is a decision for then, not one
   written down here in advance.)*
+  *(**Asked and answered on 2026-08-20, the owner's call: still `main`, still directly.** Ship 3 had
+  opened the day before, which is the moment the paragraph above reserved the question for, and
+  WO-4.2 was the first work order to reach a commit inside it. Nothing about a branch would have
+  helped this one — it was built, recovered from a dead dispatch, verified and mutation-proved in a
+  single sitting, and the only reader of the intermediate states was the sitting itself. **So the
+  deferral above is closed rather than still pending**: the next session should not re-open it
+  looking for a decision that was never made. Reverse it when work starts arriving that a second
+  person has to review before it lands, which is the condition that would actually make a branch
+  earn its keep here.)*
 
 ## Working agreements with the teacher
 

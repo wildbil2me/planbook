@@ -105,6 +105,46 @@ spend a recovery's remaining budget on when a fresh verifier cannot be had.
 that the signals slot holds its height while empty turned out to double as the guard against a chip
 appearing on a card with nothing to say. A harness section does not only defend its own work order.)*
 
+## The comment that ran ahead of its code — WO-4.2, 2026-08-20
+
+**A session limit killed the chain between the implementer's last write and anybody's first
+reading.** The recovery went the way § "Interrupted runs" says it should — `git status --short`
+first, re-derive from the tree, re-run every command — and the tree was in good order: no CRLF
+rewrite, a proportionate diffstat, every changed file parsing, `wo-sweep.mjs` green at 29 of 29, all
+nine concern rules present, the stylesheet and the service worker wired. The kind of dead dispatch
+this file already knows about.
+
+**The new scar is where the writes stopped.** `tools/verify-shell.mjs` had its COMMENT rewritten and
+its CODE left alone. The block above the class-switcher measurement described, in detail and
+correctly, a row-counting assertion that had replaced `scrollWidth <= clientWidth` — explaining that
+a wrapped flex container has nothing to overflow horizontally and that the old assertion had gone
+vacuous against it. Directly underneath, the assertion still read `segs.length === 4` and still
+compared `scrollWidth` to `clientWidth`. **Both halves were written by the same run, minutes apart,
+and only one of them landed.**
+
+That is worse than a half-finished edit, because it is a half-finished edit that reads as a finished
+one. Every existing rule in this file points at the artefacts a dead run leaves — files, status
+lines, result files — and prose is the artefact nobody re-runs. **A comment is a claim, and a dead
+dispatch's claims are exactly what § "Interrupted runs" says not to trust; the rule had simply never
+been pointed at prose sitting inside a file the harness executes.**
+
+Ten checks were red. Nine were mechanical — strips hardcoding four labels or four hooks, a breadcrumb
+at index 4, and three of WO-4.1's own fixtures whose hit counts moved when this work order's
+attendance rules reached them. **The tenth was the one that mattered, and it was the one no amount of
+reading the diff would have surfaced**: the new screen was in no `VIEW_PLAN`, because the harness diff
+for the whole work order was comment-only — not one check had been written for it. The check that
+caught it exists for exactly that, and the cheap way past it was a `byHand` entry, which means
+*measured in full somewhere else* and would have pointed at nothing. **It was left red until the
+coverage existed.** A red run naming missing coverage is worth more than a green one that stopped
+asking.
+
+**What to add to the resume walk:** when a dead dispatch touched a file that both executes and
+explains itself, diff the prose against the code it sits on. A comment describing an assertion is not
+evidence the assertion was written — read the lines under it. And when the run is finished by a
+different session than started it, re-run the harness before believing any count in `tools/README.md`:
+that number moved twice here, once for the recovery and once for the coverage, and both times the
+sweep named the exact line to change.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

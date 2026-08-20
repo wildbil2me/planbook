@@ -83,12 +83,12 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
-| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 3/8 `[███░░░░░░░] 38%` |
+| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 4/8 `[█████░░░░░] 50%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **51/81 `[██████░░░░] 63%`** · ⏳ 1 deferred |
+| | | **Overall** | **52/81 `[██████░░░░] 64%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -440,7 +440,7 @@ same four students every week and is worthless. "Came up 14 points since October
 different student every time, and it's the message that actually lands at home.
 
 - [x] Threshold engine reading every rule from the document, editable in Settings.
-- [ ] **Concern signals:** grade below threshold · falling N points over N assignments · N
+- [x] **Concern signals:** grade below threshold · falling N points over N assignments · N
       consecutive low scores · N missing assignments · attendance below N% · N absences in a
       window of meetings · N consecutive absences · N tardies · N behavior entries in N days.
 - [ ] **Praise signals:** rose N points over N assignments · N consecutive strong scores · came off

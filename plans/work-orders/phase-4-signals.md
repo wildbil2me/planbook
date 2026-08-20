@@ -76,7 +76,7 @@ falls is exactly who a teacher wants to see twice.
 
 ## WO-4.2 — Concern signals
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
+**Ship** 3 · **Status** ✅ DONE — 2026-08-20 · **Size** M · **Depends on** WO-4.1
 **Closes roadmap** Phase 4 → "Concern signals."
 
 **Deliverables** — each rule, each with its documented default, each editable:
@@ -137,12 +137,46 @@ through to the student.
   **opens on**, not which options are absent.
 
 **Acceptance**
-- [ ] Every flag is reproducible by hand from the numbers it shows. Verify all nine.
-- [ ] "Fell N points" measures the weighted grade before and after the window, not raw scores.
-- [ ] Consecutive-absence counting skips dropped days and untaken days rather than breaking on them.
-- [ ] A student with no graded work does not appear on the grade-below rule.
-- [ ] Editing a threshold changes the list immediately.
-- [ ] The behavior rule is inert until WO-4.4 exists, and says so rather than erroring.
+- [x] Every flag is reproducible by hand from the numbers it shows. Verify all nine.
+      *(**Closed 2026-08-20, by the owner, against a test install carrying test grades and test
+      attendance.** Four fire on the harness fixture and are reproducible from what they print — the
+      absence run, the absence window, attendance-below and grade-below — and the behavior rule is
+      inert by construction and asserted as inert. The other four had no fixture that fires them and
+      were worked by hand on the device: the grade fall (the **before** figure being the weighted
+      grade excluding the window rather than an average of raw scores), the low-score run, missing
+      work, and tardies over **recorded meetings** rather than calendar days. That last column was
+      the test — a rule can fire correctly and still print a number that does not match what
+      produced it.)*
+- [x] "Fell N points" measures the weighted grade before and after the window, not raw scores.
+      *(Verified by construction rather than by fixture: `src/signals.js`'s `grade-fell` measures
+      `ctx.gradeWithout()` against `ctx.grade()` — both weighted-grade readings — and touches no raw
+      score. The rule does not fire on the harness fixture, so the numbers themselves are part of
+      the line above.)*
+- [x] Consecutive-absence counting skips dropped days and untaken days rather than breaking on them.
+      *(Measured. The fixture seeds ten calendar days, drops the 8th and records nine meetings; the
+      run reads **4 in a row across 9 recorded meetings**, spanning five calendar days. A build that
+      broke on either would report 2 and fire nothing at a threshold of 3.)*
+- [x] A student with no graded work does not appear on the grade-below rule.
+      *(Measured, as an absence from the rendered list rather than a null in a model — the fixture's
+      third student would be top of it if no-graded-work were read as a zero.)*
+- [x] Editing a threshold changes the list immediately.
+      *(Measured on the rendered rows and not only the model: the grade line moved 65 → 40, the 50%
+      student left the list, and putting it back brought her back. The threshold was restored by
+      **deleting the key**, which is asserted separately — an absent key IS its default.)*
+- [x] The behavior rule is inert until WO-4.4 exists, and says so rather than erroring.
+      *(Measured. The screen draws the notice from `inertRules()`, so it disappears of its own
+      accord the day WO-4.4 lands rather than needing to be found and deleted.)*
+
+**Where this stands.** The build is complete and both tools are green — `verify-shell.mjs` at
+`1086 checks · 1086 passed · 0 failed · 0 skipped`, `wo-sweep.mjs` at `29 passed · 0 failed`. The
+screen is measured in § *"who needs you, drawn (WO-4.2)"* at the foot of the harness, nineteen checks
+against a fixture built for it, and `signalsView` is in `VIEW_PLAN` pointing at that section.
+**All six Acceptance lines are closed and the 👤 sitting is green — thirteen readings on 2026-08-20,
+written up in `TESTING.md` § WO-4.2.** The four rules no fixture reaches were worked by hand on a test
+install rather than left to the term. *(The dispatch that built this was killed by an API error
+mid-flight; `.claude/dispatch/WO-4.2-status.md` records what was recovered from the tree and what had
+to be re-derived, and `plans/dispatch-retro.md` § "The comment that ran ahead of its code" carries the
+scar worth keeping.)*
 
 **Traps** — "N consecutive absences" over a rotating schedule means consecutive *meetings of that
 class*. Three absences across three weeks of a twice-weekly section is still three consecutive.
