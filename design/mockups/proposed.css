@@ -8,7 +8,7 @@
      § SCORE GRID       →  src/scores.css        (WO-3.5)
      § ASSIGNMENT LIST  →  src/assignments.css   (WO-3.3)
      § STUDENT DETAIL   →  src/detail.css        (WO-3.7)
-     § SHARED           →  whichever work order lands first; see the note there
+     § SHARED           →  src/assignments.css   (WO-3.3, which landed first)
 
    It is one file here only so four drawings can share it. The app's own rule is
    one stylesheet per screen, loaded after src/shell.css, styling only its own
@@ -48,7 +48,19 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SHARED — the screen switcher and the category chip
+   § SHARED — the screen switcher and the category chip  →  src/assignments.css (WO-3.3)
+
+   THE TARGET WAS WRITTEN IN ON 2026-08-20, and it was "whichever work order lands
+   first" for eleven days after one had. WO-3.3 carried `.screen-nav*` into
+   src/assignments.css as its own § SHARED on 2026-08-09 — plans/gradebook-surfaces.md
+   records it — and this banner went on saying the question was open. PROTOCOL.md rule 4
+   is that amendment made a rule: a banner is read by tools/wo-sweep.mjs § 19 to decide
+   whether a section is still pending, and a landed section that says it is pending is a
+   section whose names the sweep will insist are unclaimed while they sit in the app.
+   Two of these classes went to src/scores.css instead (`.grade-none`, `.grade-none-text`,
+   the no-grade-until-100 text, which belongs to the grid that shows it) — § 19 reports
+   that as a REVIEW rather than a fault, because a shared section splitting is allowed
+   and going quiet about where it split is not.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE SWITCHER BETWEEN ONE CLASS'S SCREENS. Attendance, Assignments and Scores are

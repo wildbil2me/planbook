@@ -297,6 +297,11 @@ device sees the change at all.
   and reasoned for the rest. **A new control does not get 28px by pointing at this one** — it gets 44,
   or it gets its own reading and its own note at its own point of departure.)*
 - **Components:** lift from Roll Call!'s `design/portable-components.md` rather than hand-designing.
+- **Mockups:** a screen drawn before it is built follows
+  [`design/mockups/PROTOCOL.md`](design/mockups/PROTOCOL.md) — two stylesheets, `src/shell.css` linked
+  and never copied, no JavaScript, the black band, and a pending section that styles nothing `src/`
+  already styles. `wo-sweep.mjs` § 19 is the half of it a grep settles. **A drawing is not a work
+  order** (WO-1.25): the questions it raises are answered in the phase file or they are not answered.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
 - **Git:** one branch — `main`. Work lands on it directly, in short imperative commit summaries, and a
   work order is a commit or a short stack of them. *(**Phase branches were retired on 2026-08-15**, the

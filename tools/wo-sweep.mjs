@@ -120,6 +120,42 @@ function report(hits) {
   return hits.length > shown.length ? `${s}, +${hits.length - shown.length} more (--verbose)` : s;
 }
 
+// Which classes a stylesheet DECLARES, as against merely mentions. Written for § 19, and the
+// distinction is the whole of it: a class counts as declared only where it is the sole class of a
+// compound in a selector, so `.gl-row.warn` declares `gl-row` and not `warn`, and `.scores-grid td`
+// declares `scores-grid`. That is what lets a drawing wear a shipped state word — `.attendance-state
+// .taken` is the app's own posture with the same shape — without the sweep reading it as a second
+// stylesheet claiming `.taken`.
+//
+// It is a lexer over `selector {`, not a CSS parser, and it does not need to be: every sheet in this
+// repo is hand-written in one style, `@media` prelude lines are skipped by the leading-@ exclusion,
+// and a declaration block's contents cannot match because the pattern anchors on the `{` that follows
+// a selector. Comments come off FIRST — a commented-out rule is prose, and § 11's own allowlist says
+// why that matters — which is the one thing this cannot do for its caller, since a partial strip
+// leaves a half-open block that swallows the rest of the file.
+function stripCssComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+function selectorParts(strippedCss) {
+  const out = [];
+  const RULE = /(^|[};])\s*([^{}@][^{}]*)\{/g;
+  let m;
+  while ((m = RULE.exec(strippedCss))) for (const part of m[2].split(',')) out.push(part.trim());
+  return out;
+}
+
+function declaredClasses(strippedCss) {
+  const out = new Set();
+  for (const part of selectorParts(strippedCss)) {
+    for (const compound of part.split(/[\s>+~]+/)) {
+      const classes = [...compound.matchAll(/\.([A-Za-z][A-Za-z0-9_-]*)/g)].map(x => x[1]);
+      if (classes.length === 1) out.add(classes[0]);
+    }
+  }
+  return out;
+}
+
 // Which lines in a file are comment rather than code. Block state has to be carried line to line,
 // so this cannot be a grepLines predicate — that only ever sees one line. Both comment syntaxes
 // that appear in this repo's code are handled: JS block and line comments, and markup comments.
@@ -1495,6 +1531,343 @@ function commentLines(file) {
         : `${gates.length} gate(s) registered — ${gates.map(g => `${g.attr} at ${g.file}:${g.line}`).join(', ')} — none of them among the ${delegated.size} delegated attribute(s) in src/shell.js, each with an @media print block selected under it (${attrs.map(a => styled.get(a)).join(', ')}), and no print block gated on a string nothing registers`);
   }
 }
+
+/* ══════ 19. the drawings in design/mockups/, and the boundary they must not cross ══════
+   `design/mockups/PROTOCOL.md` is the procedure; this is the half of it a grep settles. Written
+   2026-08-20, and every rule below was a sentence in `design/mockups/README.md` first — stated as a
+   fact about the drawings that existed rather than as a check on the next ones. The load-bearing one
+   (the collision rule, last in this section) was described there as *"checked by stripping its
+   comments and diffing its selectors against src/*.css, not by reading it"*, and that diff was run
+   BY HAND, ONCE, PER ROUND. Two rounds have been drawn eleven days apart and the practice was
+   reconstructed identically the second time; a third, by a session that had not read the first, would
+   have skipped the check without knowing it existed. `plans/verification-tooling.md` sends it here:
+   "Anything a grep settles correctly should be settled by grep, in the verifier's standing sweep."
+
+   WHY THIS DIRECTORY IS SWEPT AT ALL, given the drawings are not the app. Because they are written to
+   be LIFTED — `proposed*.css` is carried into `src/` almost as-is, and a rule that arrives with it
+   arrives in the app. §§ 2, 3 and 6 already read this directory for dark mode, custom properties and
+   the 44px floor (`STYLE` includes `design/`); what those three cannot see is the boundary between a
+   drawing and the app, which is the whole subject here.
+
+   THE COLLISION RULE IS SCOPED TO PENDING SECTIONS, AND THAT SCOPE IS THE POINT. A section banner
+   names the stylesheet it becomes — `§ SCORE GRID → src/scores.css (WO-3.5)`. While that file does not
+   exist the section is PENDING and every class it declares must be unclaimed in `src/`, because two
+   stylesheets must never style the same class and the drawing is about to become one of them. Once the
+   file exists the section has LANDED and its names ARE in `src/` — that is what a lift looks like — so
+   asserting their absence there would be asserting that the lift never happened. On the day this was
+   written 85 of `proposed.css`'s 98 classes were in `src/`, all of them lifted on purpose. A flat
+   whole-file version of this check would have been red on arrival and deleted within a week.
+
+   FOUR THINGS ARE OUTSIDE THE COLLISION RULE, and each is a decision rather than an oversight:
+   - A shell component WORN as shipped (`.panel`, `.pill`, `.avatar`, `.modal-*`) defines no rule in a
+     drawing, so it never reaches this check. That is the drawings' own posture, not an exemption.
+   - A state word COMPOUND-QUALIFIED by the sheet's own class — `.gl-row.warn`, `.screen-nav-btn.active`
+     — is the posture `src/attendance.css` takes with `.attendance-state.taken`. A class counts as
+     declared only where it is the SOLE class of a compound, so a bare `.warn { }` in a drawing is a
+     violation and `.gl-row.warn` is not.
+   - THE CROSS-CUTTING BLOCKS, allowlisted BY NAME below: the grouped `touch-action` selector above the
+     first banner, and `§ TOUCH` / `§ RESPONSIVE` at the foot of a sheet. Their job is to re-mention
+     every control declared above them at the 44px floor, so they own no name of their own and cannot
+     be judged for one. A round that invents a third such block goes RED here and the fix is to name it
+     in `CROSS_CUTTING` — an omission would silently exempt a whole section. The exemption has a fence
+     on it; see the clause about orphans below, which is the hole this used to be.
+   - A class also declared by a LANDED section of the same sheet. `§ TOUCH` is not the only place a
+     name gets re-mentioned, and a re-mention is not a declaration.
+
+   THE REVIEW AT THE END IS THE ONE THAT FOUND SOMETHING. `proposed-phase6.css` § CALENDAR declares
+   twenty-eight `.cal-*` classes and names `src/calendar-view.css` as its target; WO-6.3 shipped that
+   file with twenty classes of its own under `.calendar-*`, and NOT ONE of the drawn names reached it.
+   The section was re-derived rather than lifted — `CLAUDE.md`'s copy-don't-re-derive rule at stylesheet
+   scale — and the drawing still reads as though it were the source. That is a REVIEW and not a FAIL
+   because a rename can be right; what it cannot be is unrecorded. The same line reports a class that
+   landed in a stylesheet OTHER than the one its banner named (`.grade-none` went to `src/scores.css`
+   from a § SHARED pointed at `src/assignments.css`, which is correct — the grid is what shows it).
+   What it deliberately does NOT report is a drawn class that reached no stylesheet at all: eleven of
+   those exist across § SCORE GRID and § STUDENT DETAIL and every one is the half of a drawing its work
+   order chose not to ship. Counting them as faults would make the check red for the drawings doing
+   their job. */
+
+{
+  const MOCK = path.join(REPO, 'design', 'mockups');
+  const NAMES = {
+    linked: 'every drawing is linked from the mockups contents page',
+    js: 'no JavaScript, and no stylesheet, inside a drawing',
+    band: 'every drawing wears src/shell.css and the DRAWINGS band',
+    chrome: 'the mockup chrome stays behind the mk- prefix',
+    precache: 'no drawing is in sw.js\'s precache',
+    collide: 'a pending mockup section styles no class src/ already styles',
+  };
+
+  if (!fs.existsSync(MOCK)) {
+    // A missing directory FAILs rather than passing six checks over nothing, for § 11's reason: a run
+    // that exits 0 over a directory that is not there reads green from a distance and is not.
+    for (const n of Object.values(NAMES)) {
+      check(n, false, 'design/mockups/ is not where this section expects it — six checks are now watching nothing. Restore the directory or re-point tools/wo-sweep.mjs § 19');
+    }
+  } else {
+    const mockFiles = fs.readdirSync(MOCK);
+    const pages = mockFiles.filter(f => /\.html$/i.test(f)).sort();
+    const sheets = mockFiles.filter(f => /^proposed.*\.css$/i.test(f)).sort();
+    const at = f => 'design/mockups/' + f;
+    const readMock = f => fs.readFileSync(path.join(MOCK, f), 'utf8');
+
+    /* ── 19a · every drawing is reachable from the contents page ──
+       PROTOCOL.md's own addition to the rules: index.html is the door, and a drawing nobody can reach
+       from it is a drawing nobody opens on the tablet, which is where the questions get answered. */
+    {
+      const CONTENTS = 'index.html';
+      if (!pages.includes(CONTENTS)) {
+        check(NAMES.linked, false, `${at(CONTENTS)} does not exist — there is no contents page, so nothing says which drawings are current`);
+      } else {
+        const contents = readMock(CONTENTS);
+        const unlinked = pages.filter(f => f !== CONTENTS && !contents.includes(`href="${f}"`));
+        check(NAMES.linked, !unlinked.length,
+          unlinked.length
+            ? `${unlinked.map(at).join(', ')} — not linked from ${at(CONTENTS)}. Add the row, or delete the drawing; an unreachable drawing is one nobody reads on the device and one nobody knows is stale`
+            : `${pages.length - 1} drawing(s) — ${pages.filter(f => f !== CONTENTS).join(', ')} — all linked from ${at(CONTENTS)}`);
+      }
+    }
+
+    /* ── 19b · a drawing has no JavaScript and no stylesheet of its own ──
+       No script, no inline handler, no javascript: href — nothing reads or writes a document and no
+       number recomputes, which is what makes a drawing arguable rather than checkable. And no <style>
+       block: the styles live in the two sheets, because a rule written into a page is a rule that
+       cannot be lifted and cannot be diffed against src/. Inline `style="…"` attributes are NOT
+       policed — a drawing lays one box out by hand and that is the drawing doing its job. */
+    {
+      const faults = [];
+      for (const f of pages) {
+        readMock(f).split('\n').forEach((line, i) => {
+          if (/<script[\s>]/i.test(line)) faults.push(`${at(f)}:${i + 1} <script`);
+          if (/<style[\s>]/i.test(line)) faults.push(`${at(f)}:${i + 1} <style`);
+          if (/\son[a-z]+\s*=\s*["']/i.test(line)) faults.push(`${at(f)}:${i + 1} inline handler`);
+          if (/href\s*=\s*["']javascript:/i.test(line)) faults.push(`${at(f)}:${i + 1} javascript: href`);
+        });
+      }
+      check(NAMES.js, !faults.length,
+        faults.length
+          ? `${faults.slice(0, 6).join(', ')}${faults.length > 6 ? `, +${faults.length - 6} more` : ''} — a drawing that runs, or that carries its own stylesheet, has stopped being a drawing`
+          : `${pages.length} page(s) with no <script>, no <style>, no inline handler and no javascript: href`);
+    }
+
+    /* ── 19c · the shell is linked, not copied, and the band is on ──
+       Rule 2 and rule 7 in one check, because they are the same claim from two sides: the page IS the
+       app's own frame (so it cannot quietly disagree with it) and the page SAYS it is not the app. */
+    {
+      const faults = [];
+      for (const f of pages) {
+        const text = readMock(f);
+        if (!/href\s*=\s*["']\.\.\/\.\.\/src\/shell\.css["']/.test(text)) faults.push(`${at(f)} does not link ../../src/shell.css`);
+        if (!/mk-notice/.test(text)) faults.push(`${at(f)} carries no .mk-notice band`);
+        // Singular on a page that IS one drawing, plural on the contents page that lists them all —
+        // the pages have said it both ways since the first round and both are the band doing its job.
+        if (!/DRAWINGS?, NOT THE APP/.test(text)) faults.push(`${at(f)} does not say DRAWING(S), NOT THE APP`);
+      }
+      check(NAMES.band, !faults.length,
+        faults.length
+          ? `${faults.join(' · ')} — design/mockups/mockup.css's header: "if a screenshot of one of these pages ever gets mistaken for the running app, this file failed and should get louder"`
+          : `${pages.length} page(s), each linking ../../src/shell.css and each carrying the band`);
+    }
+
+    /* ── 19d · the chrome stays behind the prefix ──
+       mockup.css is the half that does NOT lift, and the prefix is what makes that structural rather
+       than a matter of care. Both directions: nothing in that sheet may style a class outside `mk-`,
+       and no `mk-` class may appear in the app. */
+    {
+      const CHROME = 'mockup.css';
+      if (!mockFiles.includes(CHROME)) {
+        check(NAMES.chrome, false, `${at(CHROME)} does not exist — the sheet that keeps a drawing distinguishable from the app is gone, and nothing else in this section notices`);
+      } else {
+        const chromeText = stripCssComments(readMock(CHROME));
+        // Read per SELECTOR, not per sheet. `.mk-nav a.here` is the chrome styling a state of its own
+        // component: it is reachable only under an mk- ancestor and so cannot touch the app, which is
+        // what the prefix buys. A bare `.here { }` could, and is what this catches. Scoping it tighter
+        // than "no mk- class anywhere in the selector" would fail the sheet as it has stood since
+        // 2026-08-10 and teach the next reader to disbelieve the check.
+        const unprefixed = [...new Set(
+          selectorParts(chromeText)
+            .filter(part => !/\.mk-[A-Za-z0-9_-]+/.test(part))
+            .flatMap(part => [...declaredClasses(part + '{}')])
+        )].filter(c => !/^mk-/.test(c)).sort();
+        const leaked = grepLines(CODE, /\bmk-[a-z]/);
+        const faults = [];
+        if (unprefixed.length) faults.push(`${at(CHROME)} styles ${unprefixed.map(c => '.' + c).join(', ')} outside the mk- prefix and outside any mk- ancestor, so the chrome can now reach the app's own components`);
+        if (leaked.length) faults.push(`${report(leaked)} — an mk- class in app code. That prefix is the mockups' chrome; the app must never wear it`);
+        check(NAMES.chrome, !faults.length,
+          faults.length ? faults.join(' · ')
+            : `every class in ${at(CHROME)} is mk- prefixed or sits under an mk- ancestor, and no mk- class appears in index.html, sw.js or src/`);
+      }
+    }
+
+    /* ── 19e · a drawing is never installed on a teacher's iPad ──
+       sw.js's SHELL is what gets precached and served offline. A drawing in there is a drawing on the
+       device, cached, surviving the next deploy, and reachable by a URL nobody meant to hand out. */
+    {
+      const swPath = path.join(REPO, 'sw.js');
+      if (!fs.existsSync(swPath)) {
+        check(NAMES.precache, false, 'sw.js is not where this check expects it');
+      } else {
+        const hits = [];
+        fs.readFileSync(swPath, 'utf8').split('\n').forEach((line, i) => {
+          if (/design\/|mockup/i.test(line)) hits.push(`sw.js:${i + 1}`);
+        });
+        check(NAMES.precache, !hits.length,
+          hits.length
+            ? `${hits.join(', ')} names design/ or a mockup — these files are not part of the app and must never be precached`
+            : 'no design/ path and no mockup reference anywhere in sw.js');
+      }
+    }
+
+    /* ── 19f · THE COLLISION RULE, and the review beside it ──
+       See the section header for the scoping argument and the four exemptions. */
+    {
+      // Named by hand, per the header: a cross-cutting block re-mentions controls declared above it
+      // and owns no name of its own. A section not on this list and carrying no target is PENDING,
+      // which is the right answer for a § SHARED nobody has lifted yet.
+      const CROSS_CUTTING = new Set(['TOUCH', 'RESPONSIVE']);
+
+      const srcSheets = fs.existsSync(path.join(REPO, 'src'))
+        ? fs.readdirSync(path.join(REPO, 'src')).filter(f => /\.css$/.test(f)).map(f => 'src/' + f)
+        : [];
+      // THE TWO SIDES OF THE COMPARISON ARE DELIBERATELY ASYMMETRIC, and it took a mutation to see it.
+      // On the DRAWING side a class counts as declared only where it is the sole class of a compound,
+      // so a drawing may wear a shipped state word as `.gl-row.warn`. On the SRC side ANY appearance counts:
+      // `.warn` is styled in src/shell.css only as `.paste-row.warn` and `.band-range.warn`, never alone,
+      // so a sole-class reading of src/ would find nothing claiming it — and a bare `.warn { }` lifted out
+      // of a drawing would then restyle every warn in the app. That mutation passed here until it was
+      // run. What the app MENTIONS is claimed; what a drawing may wear is narrower.
+      const mentionedClasses = strippedCss => {
+        const out = new Set();
+        for (const part of selectorParts(strippedCss)) {
+          for (const m of part.matchAll(/\.([A-Za-z][A-Za-z0-9_-]*)/g)) out.add(m[1]);
+        }
+        return out;
+      };
+      // class -> the src stylesheets whose selectors name it, alone or qualified
+      const srcOwners = new Map();
+      for (const f of srcSheets) {
+        for (const c of mentionedClasses(stripCssComments(fs.readFileSync(path.join(REPO, f), 'utf8')))) {
+          if (!srcOwners.has(c)) srcOwners.set(c, []);
+          srcOwners.get(c).push(f);
+        }
+      }
+
+      // The § line sits INSIDE a banner comment whose opener is the line above it, so a slice that
+      // starts at the § begins mid-comment: stripCssComments() finds no /* to match, leaves the banner
+      // prose in place, and the prose then parses as a selector — "design/style-guide.md §6 names"
+      // arrives as a class called `md`. Cut to the end of the banner first. Found by mutation on
+      // 2026-08-20, which is also how the orphan clause below was found; a check over six static files
+      // is cheap enough to mutate that there is no excuse for not having.
+      const sectionBody = slice => {
+        const text = slice.join('\n');
+        const close = text.indexOf('*/');
+        return stripCssComments(close < 0 ? text : text.slice(close + 2));
+      };
+
+      const sections = [];
+      // Everything above a sheet's FIRST body banner: the file header and the grouped touch-action
+      // selector, which is where five of § TOUCH's controls are declared and nowhere else. Kept per
+      // sheet because the orphan clause below has to be able to say "declared elsewhere in ITS OWN
+      // sheet" — splitting on the first § instead lands in the header index and cuts the grouped
+      // selector out, which is how this arrived red the first time it ran.
+      const preambles = new Map();
+      for (const sheet of sheets) {
+        const lines = readMock(sheet).split('\n');
+        const marks = [];
+        lines.forEach((line, i) => {
+          // A BODY banner, not the index at the top of the file: the § line of a banner box, which is
+          // the line under a rule of ═. The index lists the same section names in running prose and is
+          // not preceded by one, which is what keeps the two apart without a line number in here.
+          const m = line.match(/^\s*§\s+([A-Z][A-Z ]*[A-Z])\b/);
+          if (!m || i === 0 || !/═{10}/.test(lines[i - 1])) return;
+          const t = line.match(/src\/([a-z0-9-]+\.css)/);
+          // A BANNER MAY SAY IT HAS NOT LANDED, AND THAT OVERRIDES THE FILE TEST. File existence is
+          // a proxy for "this section has been lifted"; the banner is the record. They part company
+          // the moment a drawing extends a screen that already ships — Phase 4's log sheet targets
+          // src/shell.css and its record card targets src/detail.css, both of which have existed for
+          // a fortnight, and reading those as landed would exempt from the collision rule exactly the
+          // names that most need it: new ones going into an old sheet. Added 2026-08-20, drawing the
+          // third round; the first two happened to propose only new stylesheets, so nothing had ever
+          // tested this half of the rule. design/mockups/PROTOCOL.md rule 4 carries the token.
+          marks.push({
+            name: m[1].trim(), line: i + 1, i,
+            target: t ? 'src/' + t[1] : null,
+            saysPending: /not yet lifted/i.test(line),
+          });
+        });
+        preambles.set(sheet, declaredClasses(stripCssComments(lines.slice(0, marks.length ? marks[0].i : lines.length).join('\n'))));
+        marks.forEach((mk, k) => {
+          const end = k + 1 < marks.length ? marks[k + 1].i : lines.length;
+          sections.push({
+            sheet, name: mk.name, line: mk.line, target: mk.target,
+            landed: !!mk.target && !mk.saysPending && fs.existsSync(path.join(REPO, mk.target)),
+            saysPending: mk.saysPending,
+            crossCutting: CROSS_CUTTING.has(mk.name),
+            classes: declaredClasses(sectionBody(lines.slice(mk.i, end))),
+          });
+        });
+      }
+
+      if (!sheets.length || !sections.length) {
+        // The empty-grep guard this file insists on everywhere else. No sections parsed means the
+        // banner shape has changed, not that a drawing has stopped inventing class names.
+        check(NAMES.collide, false,
+          !sheets.length
+            ? 'no proposed*.css in design/mockups/ at all — the half of the mockups that lifts is gone, or has been renamed out of this check\'s reach'
+            : `${sheets.map(at).join(', ')} parsed to zero § sections — the banner shape this check reads (a § line directly under a rule of ═, naming src/<file>.css) has changed. A drawing whose sections cannot be read is one whose collisions cannot be either, which reads green from a distance and is not`);
+      } else {
+        const landedClasses = new Set(sections.filter(s => s.landed).flatMap(s => [...s.classes]));
+        const collisions = [];
+        for (const s of sections) {
+          if (s.landed || s.crossCutting) continue;
+          for (const c of s.classes) {
+            if (landedClasses.has(c) || !srcOwners.has(c)) continue;
+            collisions.push(`.${c} (${at(s.sheet)}:${s.line} § ${s.name} → ${srcOwners.get(c).join(', ')})`);
+          }
+        }
+
+        // THE FENCE ON THE EXEMPTION. A cross-cutting block is exempt because its job is to re-mention
+        // controls declared above it — so it must declare nothing that is not declared elsewhere in the
+        // same sheet. Without this clause the exemption is a hole with a name on it: § RESPONSIVE is the
+        // LAST block in a sheet, so a rule appended to the foot of the file lands inside it and is never
+        // compared against src/ at all. That is exactly what the first mutation test of this section did
+        // by accident — it appended a rule for a shipped class to the end of proposed-phase6.css and the
+        // check stayed green. The sheets' own headers state the rule this asserts: every tappable class
+        // is named in the grouped selector at the top AND in the coarse-pointer block at the bottom.
+        const orphans = [];
+        for (const s of sections.filter(x => x.crossCutting)) {
+          const elsewhere = sections.filter(x => x.sheet === s.sheet && x !== s).flatMap(x => [...x.classes]);
+          const known = new Set([...elsewhere, ...(preambles.get(s.sheet) || [])]);
+          for (const c of s.classes) if (!known.has(c)) orphans.push(`.${c} (${at(s.sheet)}:${s.line} § ${s.name})`);
+        }
+
+        const pending = sections.filter(s => !s.landed && !s.crossCutting);
+        const faults = [];
+        if (collisions.length) faults.push(`${collisions.join(' · ')} — a pending section styles a class src/ already styles. Two stylesheets must never style the same class, and this one is about to become the second. Rename it in the drawing (design/mockups/PROTOCOL.md rule 5), or wear the shipped class as-is and delete the rule`);
+        if (orphans.length) faults.push(`${orphans.join(' · ')} — declared in a cross-cutting block and nowhere else in its own sheet. Those blocks are exempt from the collision check because they only re-mention controls declared above them; a class that appears ONLY there is unchecked against src/ entirely. Declare it in the section it belongs to`);
+        check(NAMES.collide, !faults.length,
+          faults.length ? faults.join(' · ')
+            : `${pending.length} pending section(s) — ${pending.map(s => s.name + ' → ' + (s.target || 'unnamed target') + (s.saysPending ? ' (says not yet lifted)' : '')).join(', ')} — declaring ${pending.reduce((n, s) => n + s.classes.size, 0)} class(es), none of them styled in any of the ${srcSheets.length} src/*.css. ${sections.filter(s => s.landed).length} landed section(s) exempt by construction; ${sections.filter(s => s.crossCutting).length} cross-cutting, none of which declares a class its own sheet does not declare elsewhere`);
+
+        // The review: a banner and a build that disagree about where a section went. Never a fault —
+        // see the section header for why a rename can be right, and for why a drawn class that reached
+        // no stylesheet at all is not counted here.
+        const notes = [];
+        for (const s of sections.filter(x => x.landed)) {
+          const arrived = [...s.classes].filter(c => srcOwners.has(c));
+          if (!arrived.length && s.classes.size) {
+            notes.push(`${at(s.sheet)}:${s.line} § ${s.name} names ${s.target} and NONE of its ${s.classes.size} class(es) are styled there — the section was re-derived rather than lifted`);
+            continue;
+          }
+          const elsewhere = arrived.filter(c => !srcOwners.get(c).includes(s.target));
+          if (elsewhere.length) notes.push(`${at(s.sheet)}:${s.line} § ${s.name} names ${s.target}, but ${elsewhere.map(c => '.' + c + ' → ' + srcOwners.get(c).join(',')).join(', ')}`);
+        }
+        if (notes.length) review('a mockup banner and the build disagree about where a section went', `${notes.join(' · ')} — amend the banner, or say in the drawing that the build renamed it (design/mockups/PROTOCOL.md § When the drawing lands)`);
+      }
+    }
+  }
+}
+
 
 /* ────────────────────────────── summary ────────────────────────────── */
 

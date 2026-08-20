@@ -25,6 +25,12 @@ dependencies.
 - **`drive.file` is the only OAuth scope.** Not `spreadsheets`, not a mail scope. Outreach goes out
   via `mailto:`.
 - **No backend, no Apps Script.** Both were considered and rejected; `CLAUDE.md` has the reasoning.
+- **A mockup follows [`design/mockups/PROTOCOL.md`](design/mockups/PROTOCOL.md).** Two stylesheets —
+  `proposed*.css` lifts, `mockup.css` stays behind the `mk-` prefix — `src/shell.css` linked and never
+  copied, no JavaScript, the black band on every page, never in `sw.js`'s precache, and a section whose
+  target stylesheet does not exist yet may style no class `src/` already styles. `wo-sweep.mjs` § 19
+  asserts all of that. **A drawing is not a work order:** what it raises is answered in the phase file
+  or it is not answered, and an amber note on a picture is not a tracker.
 
 ## Data invariants
 

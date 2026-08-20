@@ -153,6 +153,14 @@ is how its allowlists came to be re-derived each time. WO-1.2's verifier had to 
 `prefers-color-scheme` hit in the repo was documentation *stating the prohibition*. That reasoning is
 now a comment in the file.
 
+**And it is what sent the mockup checks there on 2026-08-20.** `design/mockups/PROTOCOL.md`'s
+load-bearing rule — a drawing may not style a class the app already styles — had been run by hand,
+once per round of drawings, in a directory nothing swept. It is `wo-sweep.mjs` § 19 now, by the
+sentence quoted above and for its reason: the alternative was a seventh script in `tools/` that
+nobody would remember to run, which is the same failure one step further along. The sweep's reach is
+therefore wider than "greps `src/`" as this document says lower down — it greps what is written to be
+LIFTED into `src/`, too.
+
 It obeys the same boundary as its sibling: one file, no config, no dependencies, gates nothing, never
 required to run or ship the app, and **closes no 👤 item**. It adds a third state, `REVIEW`, for
 evidence that needs a human decision — sensitive field names outside `src/backup.js`, a due date on
