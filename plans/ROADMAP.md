@@ -275,6 +275,14 @@ meet is a second source of truth that's wrong by first period.)*
       `T` and `D` record the moment they settled. *(Added 2026-08-06, folded into WO-2.10. Planbook
       recorded that a student was tardy and never when — Roll Call! has captured it all along.
       Twenty minutes late and two minutes late are different conversations with a guardian.)*
+      *(**Amended 2026-08-20 by WO-2.53: where the note is typed moved**, and neither the note nor
+      the timestamp changed. The ⋯ that opened a panel under the row is now a door to that student's
+      grades, and the note and the un-confirm are in the block at the top of their attendance
+      history. The panel was hollow on the state every row is in at the start of a period — both of
+      its controls were gated on a confirmed mark — so twenty-six taps before the first student was
+      marked bought the name, the date and the counts the screen already showed. The writers, the
+      hooks and the one day a note may be typed on are all unchanged; a note on a past mark still
+      wants that column's ✏ first.)*
 - [x] 🚩 Marks `P / T / A / E / D`, matching Roll Call!'s vocabulary so the owner's habits carry over.
 - [x] 🚩 **One-tap drop.** The day loads showing all five classes; the ones that didn't meet get
       marked dropped and are done. No setup, nothing to maintain when the rotation shifts.

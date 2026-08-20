@@ -780,8 +780,10 @@
         <em>is</em> present, and it is drawn as a P so it can’t be confused with a day nobody took.
         A whole column of amber question marks is a day you haven’t taken yet; a few of them inside
         a taken column are the students you haven’t reached, and the header counts them. A tardy or
-        a dismissal keeps the time it was marked, under the letter. Tap the <strong>⋯</strong> by a
-        name for that time, a note, or to put one student back to <strong>?</strong>. Past days need
+        a dismissal keeps the time it was marked, under the letter. Tap a student’s <strong>name</strong>
+        for their history, where the same time is written out and where a note goes — and where one
+        student goes back to <strong>?</strong>. The <strong>›</strong> at the end of the name goes
+        to their grades instead. Past days need
         their ✏ before they accept a tap; today’s column is always live, and its 🚫 says the class
         didn’t meet. Every tap saves as you make it; there is nothing to submit.
       </p>
@@ -2977,8 +2979,8 @@
       </p>
       <p>
         The keys go quiet wherever a tap would be refused: while you are typing in the search box,
-        while a panel is open, on a past day that has not had its ✏ pressed, and on a day the class
-        didn’t meet. And they only ever write on the day the screen says it is editing, which is
+        while a dialog is open over the grid, on a past day that has not had its ✏ pressed, and on a
+        day the class didn’t meet. And they only ever write on the day the screen says it is editing, which is
         today unless you have unlocked something else.
       </p>
     </div>
@@ -2994,9 +2996,13 @@
   other list in this file makes, and for the same reason: a specimen row written here would be a
   second truth to keep in step with the real one.
 
-  THERE IS NOTHING TO EDIT IN IT. Every mark on this screen is set on the registry, on the day it
-  belongs to, where the ⋯ panel holds the time and the note. A second place to change a mark is a
-  second writer, and src/attendance.js's header spends a paragraph on why there is one.
+  THERE IS ONE THING TO EDIT IN IT, AND ONLY ONE (WO-2.53). High in the body, over the term table,
+  is a block about the single day the registry accepts writes on: that day's mark in words, a note
+  field, and the un-confirm that puts one student back to a question mark. It is the row detail panel
+  WO-2.10 built, moved here, and it is not a second writer — the two controls carry the same hooks
+  they carried on the row, src/shell.js routes them to the same two functions in src/attendance.js,
+  and every OTHER mark in this dialog is read-only. A note on a past mark still wants that column's ✏
+  on the registry first, exactly as before.
 -->
 <div class="modal-overlay hidden" id="attendanceHistoryModal">
   <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"

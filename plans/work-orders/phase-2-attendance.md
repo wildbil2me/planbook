@@ -5531,7 +5531,7 @@ header of `src/classes.js` refuses that by name, and nothing here needs it. Sort
 
 ## WO-2.53 — the rows detail panel says what the row already says
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-2.6 · WO-2.10 · WO-3.7 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-20 · **Size** L · **Depends on** WO-2.6 · WO-2.10 · WO-3.7 · **Blocks** nothing
 **Amends roadmap** Phase 2 → *"Timestamps on tardies and dismissals, and a note on any mark"* — the note
 survives and its writer is untouched; **where it is typed moves**, so the box's promise is re-pointed
 rather than repealed. The *(italic paren)* it owes `ROADMAP.md` is a hand edit at tick time.
@@ -5647,36 +5647,42 @@ least while there is no habit to unlearn.**
   in `sw.js`**.
 
 **Acceptance**
-- [ ] On an unconfirmed row, **one activation of the row's door lands on the grade screen** for that
+- [x] On an unconfirmed row, **one activation of the row's door lands on the grade screen** for that
       student, with the breadcrumb naming them. No dialog opens on the way.
-- [ ] The name beside it still opens the history dialog, and that dialog still carries **Grades for
+- [x] The name beside it still opens the history dialog, and that dialog still carries **Grades for
       \<name\>** and the **Whole year** row. Nothing the owner asked for in her second sentence was
       built, because both were already there.
-- [ ] **A note typed in the dialog lands on the same mark the panel wrote to**: type it, close the
+- [x] **A note typed in the dialog lands on the same mark the panel wrote to**: type it, close the
       dialog, reopen it, and it is there; read it out of the document and it is on `editDate()`'s entry.
       The caret is **not** taken out of the field while typing.
-- [ ] **Un-confirm from the dialog** puts that student back to `?`, and **all five surfaces agree in one
+- [x] **Un-confirm from the dialog** puts that student back to `?`, and **all five surfaces agree in one
       paint** — the dialog's head percentage, its open-term row, its *Whole year* row, its day-by-day
       table, and the grid behind it.
-- [ ] The four conditional cases are proved in the dialog, not reasoned about: a confirmed `A` gets the
+- [x] The four conditional cases are proved in the dialog, not reasoned about: a confirmed `A` gets the
       note field and the un-confirm; a confirmed present gets the un-confirm and the *present is stored
       as no mark at all* sentence; an unconfirmed student gets the *tap their question mark* sentence
       and neither control; a day with no meeting draws no block.
-- [ ] With `editDate()` answering `''` — paged back off the edit date, or a past day still locked — the
+- [x] With `editDate()` answering `''` — paged back off the edit date, or a past day still locked — the
       dialog draws **no** write block, and there is no path through it that changes a mark.
-- [ ] `grep -rn "attendance-detail\|detailFor\|toggleDetail\|paintDetail" src/ tools/ index.html TESTING.md`
+      *(**Read narrower than written, and the reading is in the result file.** Paging the window back
+      does not make `editDate()` answer `''` — the anchor does not move when the window does, so the
+      day that accepts writes is still today and the block is still drawn, naming that day. The state
+      this line is about is reached the way WO-2.52 describes it: a selected term that has ENDED puts
+      the anchor on a past day, that day is locked until its ✏ is pressed, and `editDate()` answers
+      `''`. That is what the harness drives.)*
+- [x] `grep -rn "attendance-detail\|detailFor\|toggleDetail\|paintDetail" src/ tools/ index.html TESTING.md`
       returns nothing. The panel swept rather than shadowed.
-- [ ] `src/attendance.js`'s view-state comment says **six**, and `grep -n "Seven values" src/attendance.js`
+- [x] `src/attendance.js`'s view-state comment says **six**, and `grep -n "Seven values" src/attendance.js`
       returns nothing.
-- [ ] `node tools/wo-sweep.mjs` green — the hook census loses `data-attendance-detail` on both sides in
+- [x] `node tools/wo-sweep.mjs` green — the hook census loses `data-attendance-detail` on both sides in
       the same edit, so the one-way diff stays empty.
-- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md` reconciled
+- [x] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md` reconciled
       to it.
-- [ ] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): the door clears 44px
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): the door clears 44px
       under a thumb, and **the glyph reads as "go to this student" rather than as "more here"** — this
       is the reading that settles `›`, and a different glyph coming off the glass is the answer, not a
       divergence.
-- [ ] 👤 Mid-period rehearsal on the iPad: mark a student tardy, add a note through the dialog, and get
+- [x] 👤 Mid-period rehearsal on the iPad: mark a student tardy, add a note through the dialog, and get
       back to the grid — **without losing your place in the list**. This is the trade the panel used to
       buy (it opened in the row, never over it) and it is the one thing this work order spends.
 

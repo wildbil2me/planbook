@@ -2177,9 +2177,11 @@ guard rather than by driving it.
       had recorded — WO-3.4's thirteen never reached that line, and it is corrected there.
 - [x] **With a detail panel open, the term switch moves the panel's own figures** in the same tap as
       the class line and the row line. The panel is opened through the real ⋯ before anything is read,
-      and its figures are read out of `.attendance-detail-totals` in the DOM rather than out of the
+      and its figures are read out of the panel's own totals line in the DOM rather than out of the
       totals map — the text the teacher reads, for the same reason WO-2.17's row sentinel is an
-      attribute on a surviving element.
+      attribute on a surviving element. *(**Both halves of this line are past tense from WO-2.53**,
+      which deleted the row's detail panel: the check went with it, and the third surface it was
+      guarding no longer exists. Kept as the record of what was verified on the tree WO-2.18 left.)*
 - [x] **`selectTerm()` driven with a term id belonging to another class writes nothing** — preference
       serialised byte for byte, the nav's active mark, and the live region pre-filled with a sentence
       of the harness's own so that silence is text still sitting there. Asserted from the harness, not
@@ -2189,7 +2191,7 @@ guard rather than by driving it.
 
       | Mutation | Result |
       |---|---|
-      | `paintDetail(totals)` deleted from the foot of `paintRenderedTotals()` (`src/attendance.js:3306`) | **2 red**: the new panel check, and WO-2.13's "a filtered-out row and its open detail repaint exact term/year totals after a mark". **All seven of WO-2.17's stay green**, which is the claim this work order was written on. The second red is the correction to it: the harness was watching that line from the MARK path already and was blind to it only on the TERM-SWITCH path — the one WO-2.17 shipped, and the one where no other repaint would have brought the figures back |
+      | The detail panel's repaint call deleted from the foot of `paintRenderedTotals()` (`src/attendance.js:3306`; the call and the panel were both deleted by WO-2.53, so the mutation is no longer reachable) | **2 red**: the new panel check, and WO-2.13's filtered-out-row check, which read the same panel line. **All seven of WO-2.17's stay green**, which is the claim this work order was written on. The second red is the correction to it: the harness was watching that line from the MARK path already and was blind to it only on the TERM-SWITCH path — the one WO-2.17 shipped, and the one where no other repaint would have brought the figures back |
       | `selectTerm()`'s foreign-term guard cut to `if (!cls) return;` (`src/classes.js:479`) | **1 red**, and nothing else in 537 — which is the whole reason the check exists. It fails in four ways at once, all of them printed: the preference is written with the foreign id, the resolver then answers with a term the teacher did not tap, the nav's highlight moves to it, and `term.label` throws on the way to the announcement. The throw is why the check catches rather than lets fly — uncaught it takes the run down, and a build that dies before writing satisfies all three "nothing was written" claims |
 
 *No 👤 line, for the reason WO-2.17 gives above and one more: nothing here changes a pixel, so there
@@ -4286,7 +4288,7 @@ none in a loop and two of them fixture-guard failure arms. `wo-sweep.mjs` is **2
 | Tree | Result |
 |---|---|
 | Before this work order's checks existed | `893 checks · 893 passed · 0 failed · 0 skipped`, 23,732 lines, 289s (WO-1.23's own figure) |
-| First run with the section in | died at the WO-2.17 term-nav fixture — `Error: nothing to click for [data-attendance-detail="wo217-student"]`, on a correct app. That fixture's two terms sit in February and March, so today was outside every term of its class and the ⋯ is not drawn on a locked column |
+| First run with the section in | died at the WO-2.17 term-nav fixture — `Error: nothing to click for` the row panel's own hook on `wo217-student` (the attribute is not spelled out here because WO-2.53 deleted it, and a dead hook written out in full is a hook the next reader greps for), on a correct app. That fixture's two terms sit in February and March, so today was outside every term of its class and the ⋯ is not drawn on a locked column |
 | Second run | died in the attendance section on `[data-attendance-take]`, same cause one section later: the "messy dates" fixture leaves term 1 starting 2026-08-26, and the action row on a locked day draws the term door and nothing else |
 | Both fixtures' premises restated | `914 checks · 904 passed · 9 failed`, every red in the new section and every one of them the section's own bug — a date-keyed reader picking up a neighbour class's record, a stale forged cell poisoning the keyboard probe, and the self-cancelling writer sequence below |
 | **Mutation 1**: `offTermDay()` → `return false`, the gate deleted, nothing else touched | `914 checks · 903 passed · 11 failed · 0 skipped`, exit 1 — the column live again with two tappable cells and a 🚫, the state line back to "Not taken yet", no term door to click, the home card amber, all nine writers landing, the stale hook writing, the keyboard path writing, and the gap day open |
@@ -4548,6 +4550,137 @@ on September 2 itself**. `editDay()` returns on its own first line for that date
 file refuses three times in writing, arrived at from a direction the collapse did not cover. The guard
 now also refuses the day the strip is already open on, and the deliberate unlock keeps its pressed ✏
 because there is something there to close.
+
+### WO-2.53 — The row's detail panel says what the row already says
+
+**What this changes for a teacher: the ⋯ at the end of a name is a door to that student's grades, and
+the note and the un-confirm are one tap further in.** Owner-asked 2026-08-20, reading the deployed
+registry: the panel that button opened held nothing the screen was not already showing. The painter
+gated the note field on there being a confirmed mark and the un-confirm on there being a record, so on
+the state **every** row is in at the start of every period the panel was the name (on the row), the
+date (the column head), the term counts (under the name), *Not confirmed* (the `?` in the cell), a hint
+and the year counts — one new number and a sentence, twenty-six times, before the first student is
+marked.
+
+**What did NOT change, and this is the half worth reading.** The two writers — `setNote()` and
+`unconfirmStudent()` — are untouched, and so is their routing: the elements carry
+`data-attendance-note` + `data-attendance-note-date` and `data-attendance-unconfirm`, and
+`src/shell.js`'s one delegated listener answers them exactly as it did while they were on the row. The
+one day a note may be typed on is still `editDate()`'s, so **a note on a past mark still wants that
+column's ✏ first**. `src/shell.js` gained **no routing line at all**: the row's door carries
+`data-student-detail`, which the score grid's names and the history dialog's own door already carry.
+And the owner's second sentence — *I would add the year at a glance to the attendance history modal* —
+needed nothing built: `attendance-report.js` has painted a **Whole year** row under every term row
+since WO-2.6.
+
+**Three prose invariants were falsified by this work order and rewritten rather than left standing**,
+none of which any harness asserts: `src/attendance-report.js`'s header promise that there is *"no
+writer in src/attendance.js that this file imports, and no path through here that changes a mark"*;
+`index.html`'s *"THERE IS NOTHING TO EDIT IN IT"* over the history modal; and the registry's own
+view-state count, which said **Seven values** and is **six**.
+
+- [x] On an unconfirmed row — the state every row is in at the start of a period — **one activation of
+      the row's door lands on the grade screen** for that student: `#detailView` up, `#classView` down,
+      the heading reading their name, the switcher's fifth segment reading their name, and **no dialog
+      open at any point on the way**.
+- [x] The door is **one per row on every row**, reads `›`, is labelled *Grade detail for \<name\>*, and
+      carries **neither `aria-pressed` nor `aria-haspopup`** — both read `null` off the element. The
+      identity button an inch to its left still opens the history dialog and still carries
+      `aria-haspopup="dialog"`, which is why the pair is not lying in two directions.
+- [x] It is drawn on **every** row of every render, which is one condition fewer than the ⋯ had: that
+      button opened a panel about the day being edited, so it vanished on a window paged two weeks back.
+      This one goes to a screen that has nothing to do with which day the strip is standing on.
+- [x] The name beside it still opens the history dialog, which still carries **Grades for \<name\>** and
+      the **Whole year** row.
+- [x] **A note typed in the dialog lands on `editDate()`'s entry**: read out of the document it is
+      `{ code: "D", at: …, note: "walked in with a late pass" }`; close the dialog, reopen it, and the
+      field comes back filled; and it survives a full reload out of IndexedDB on the same student, date
+      and class, with the cell's accessible name carrying it on the grid behind.
+- [x] **The caret is not taken out of the field while typing.** The element is marked by hand before the
+      keystroke and is the same element afterwards, still `document.activeElement` — which is the claim
+      `setNote()`'s no-repaint rule exists for, asserted as element identity rather than as the value
+      coming back.
+- [x] **Un-confirm from inside the dialog moves all five surfaces in one paint**: the head badge
+      `100% → 50%`, the open term's row and the *Whole year* row from `P 1 · A 0 · D 1 · 100%` to
+      `P 1 · A 1 · D 0 · 50%` cell by cell, today's row in the day-by-day table from *Dismissed · 2 of 2
+      · 100%* to *Absent · 1 of 2 · 50%*, and the cell in the grid behind the overlay to `?` — with the
+      entry in the document `{ code: "U" }`, the note and the time gone with the mark.
+- [x] **The four conditional cases are driven, not reasoned about.** A confirmed mark: the note field on
+      today's date plus the un-confirm, one block, headed *Today · Thursday, August 20, 2026* over
+      *Dismissed at 8:14 AM*. A confirmed present student: the un-confirm and the *Present is stored as
+      no mark at all* sentence, no field. A student nobody has confirmed: the *Tap their question mark
+      once for present* sentence and **neither** control. A day the class did not meet: **no block at
+      all**, with the rest of the dialog still drawn.
+- [x] **With `editDate()` answering `''` the dialog draws no write block** and there is no path through
+      it that changes a mark. *Read narrower than the work order wrote it, and the reading is the
+      deliverable: **paging the window back does not produce that state.** The anchor does not move when
+      the window does, so the day that accepts writes is still today and the block is still drawn —
+      naming the day it writes on, which is what makes that honest. The state the line is about is
+      WO-2.52's February case: a selected term that has ENDED anchors the strip on a past day, that day
+      is locked until its ✏ is pressed, and `editDate()` answers `''`. That is what is driven.*
+- [x] **The panel swept rather than shadowed.** The work order's own `grep -rn` over `src/`, `tools/`,
+      `index.html` and this file — its four retired names: the CSS family, the view-state value, the
+      toggle and the painter — returns nothing. That took three files of prose with it:
+      `tools/README.md`'s WO-2.18 paragraph, `tools/wo-sweep.mjs`'s allowlist example, and three
+      entries in this file, all rewritten to describe the panel rather than to name its dead
+      identifiers. **The pattern is in the work order and deliberately not here**, for the reason
+      WO-2.52's rename entry gives: a line in this file holding those four strings is a line that makes
+      the grep match itself — and the first draft of this entry did exactly that, in the same sentence
+      that warns about it.
+- [x] `src/attendance.js`'s view-state comment says **six**, counted off the declarations under it, and
+      `grep -n "Seven values" src/attendance.js` returns nothing.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** —
+      `1051 checks · 1051 passed · 0 failed · 0 skipped`, 29,300 lines, 27.9 lines per check, 349s,
+      exit 0 — with the call-site count in `tools/README.md` moved 1022 → 1034, which `wo-sweep.mjs`
+      asserts. `wo-sweep.mjs` is **25 checks · 23 passed · 0 failed · 2 to review**, both REVIEWs the
+      standing pair and the same line the tree printed before this work order.
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): the door clears 44px
+      under a thumb, and **the glyph reads as "go to this student" rather than as "more here"** — this
+      is the reading that settles `›`, and a different glyph coming off the glass is the answer rather
+      than a divergence. `sw.js`'s `CACHE` is `planbook-shell-v88` → `v89`, so a cold relaunch is what
+      puts this build on the glass.
+- [x] 👤 Mid-period rehearsal on the iPad: mark a student tardy, add a note through the dialog, and get
+      back to the grid **without losing your place in the list**. This is the trade the panel used to
+      buy — it opened in the row, never over it — and it is the one thing this work order spends.
+
+**👤 run, 2026-08-20 — both green**, on the teaching iPad against `tools/serve-https.mjs`. **The glyph
+reading settled `›`**: it read as *go to this student* rather than as *more here*, which is the answer
+this line existed to collect rather than a box merely ticked. The mid-period rehearsal got back to the
+grid without losing its place, so the trade this work order spends is one the owner has now made in a
+real period rather than one reasoned from the desk.
+
+
+*Five runs. The first two are the block's own mistakes and are recorded because both are shapes this
+repository warns about; the third and fifth are the delivered tree — the fifth because two comment
+reflows landed after the third and a run over a tree that is not the one being delivered is a run about
+another tree; the fourth is the mutation.*
+
+| Tree | Result |
+|---|---|
+| First run of the new section | `1051 checks · 1050 passed · 1 failed`, then **died** at the drop case — `TypeError: Cannot read properties of undefined (reading 'wo253-dismissed')`, on a correct app. A dropped record is class, date and exception and carries **no `marks` key at all**, so the read that proves the entry threw. The one FAIL beside it was the fixture check comparing the open term's row to the year's row **including the label cell**, which of course differ |
+| Second run | `1051 checks · 1050 passed · 1 failed` — the last of them mine: the teardown check asked whether the write block was still in the DOM after the dialog was shut. `src/modal.js` hides the overlay and leaves the last paint inside it, so what the check can honestly ask is whether the dialog is **up** |
+| **Delivered** | `1051 checks · 1051 passed · 0 failed · 0 skipped`, 29,300 lines, 27.9 lines per check, 349s, exit 0 — and again after the two comment reflows: `1051 checks · 1051 passed · 0 failed · 0 skipped`, 29,300 lines, 352s, exit 0 |
+| **Mutation**: the `paintHistory()` call deleted from the window listener — the repaint the Traps line calls the forgotten half of un-confirm | `1051 checks · 1049 passed · 2 failed · 0 skipped`, exit 1 — **exactly two, and both of them in the new section**: the five-surface check, whose printed detail is the whole defect (`rate "100%" -> "100%"`, both rows and today's day-by-day row unmoved, while the cell behind the overlay reads `?` and the document holds `{ code: "U" }`), and the one beside it, which finds the note field and the un-confirm still offered on a mark that is gone. Nothing else in 1051 moves |
+
+*The mutation is the one worth the run.* Deleting that call leaves the write itself, the grid's own
+repaint and the home screen's redraw all working — the screen visibly changes under the overlay — and
+leaves four figures in the open dialog describing the mark that is no longer there. That is exactly the
+half the work order predicted a dispatch would forget, and it is now the half that turns a run red.
+
+**Two things in this work order that a reader will want the reason for.** The repaint listens on
+`window` rather than on `document`, and that is not a stylistic choice: the write is routed by
+`src/shell.js`'s document-level listener, and a `document` listener registered from
+`src/attendance-report.js` would run **before** it — module-scope listeners register in import order
+and `src/shell.js` imports that module — so it would redraw the dialog from the document as it was
+before the write. `window` is the last object in a bubbling event's propagation path, after every
+`document` listener whatever order they were added in. And the gate stays in `src/attendance.js`:
+`editableMark()` is one new exported reader that answers what the two writers would accept for one
+student — the date, the reading, the time, the note and the two booleans the deleted panel computed
+inline — so the dialog words and lays out an answer it does not decide. A dialog asking
+`writableDate()` for itself would be a second opinion about what is writable, held by a file that
+cannot see the ledger.
+
+---
 
 ## Phase 3 — Gradebook
 

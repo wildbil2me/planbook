@@ -53,7 +53,7 @@
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
 .attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on,
-.attendance-detail-btn, .attendance-pass-btn, .attendance-pass-card-btn, .attendance-keys-btn {
+.attendance-student-door, .attendance-pass-btn, .attendance-pass-card-btn, .attendance-keys-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -277,7 +277,6 @@
 .attendance-student-totals {
   color: #8a9bb0; font-size: 10px; font-weight: 600; line-height: 1.35; white-space: normal;
 }
-.attendance-detail-totals { color: #6b7a8d; font-size: 12px; font-weight: 700; line-height: 1.45; }
 /* Roll Call!'s `.sort-btn`, under a name of this app's own because shell.css never lifted that
    one — the first screen with something to sort is what instances it, and this is it. */
 .attendance-sort-btn {
@@ -545,48 +544,23 @@
 .attendance-pass-card-note::placeholder { color: rgba(255,255,255,0.35); }
 .attendance-pass-card-note:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
 
-/* ── THE ⋯ AT THE END OF A NAME, AND THE PANEL IT OPENS (WO-2.10) ── */
-/* The way into one student's mark on the day being edited: the time it settled, a note, and the
-   un-confirm. `margin-left: auto` pushes it to the far edge of the name cell, so it is nowhere near
-   the first day column and a thumb aiming at today's cell cannot catch it. Quiet until it is
-   hovered or open, because on a full grid there are twenty-six of them and none of them is the
-   thing the teacher came to this screen to tap. */
-.attendance-detail-btn {
+/* ── THE › AT THE END OF A NAME (WO-2.10 as the ⋯, re-pointed by WO-2.53) ── */
+/* The way to this student's grade detail. `margin-left: auto` pushes it to the far edge of the name
+   cell, so it is nowhere near the first day column and a thumb aiming at today's cell cannot catch
+   it. Quiet until it is hovered, because on a full grid there are twenty-six of them and none of
+   them is the thing the teacher came to this screen to tap.
+
+   THIS IS THE SAME RULE THE ⋯ HAD, LESS ITS `.active` STATE: that button was a toggle over a panel
+   drawn under the row, and there is no panel and no pressed state now — the rule for it went with
+   the panel's own rules, which used to sit directly below this one. The chevron is a hair larger
+   than the ⋯ was at the same font size, so nothing here changed but the name and the state. */
+.attendance-student-door {
   flex: 0 0 auto; margin-left: auto;
   padding: 2px 6px; border-radius: 6px; line-height: 1;
   border: 1.5px solid transparent; background: transparent; color: #a0aab8;
-  font-size: 13px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all 0.15s;
+  font-size: 15px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all 0.15s;
 }
-.attendance-detail-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
-.attendance-detail-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
-
-/* The panel, as a row of the table spanning every column: at 390px the cell it describes is 44px
-   wide and a note is a sentence, so the width has to come from the table rather than from the
-   column. Indigo, like the "not on today" band and for the same reason — this is a state the
-   teacher CHOSE, not one that needs acting on. */
-.attendance-detail-row > td { padding: 0 0 10px; }
-.attendance-detail {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-  padding: 10px 12px; border-radius: 8px;
-  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; background: #eef2ff;
-}
-.attendance-detail-who { font-size: 12px; font-weight: 700; color: #3a4a8a; }
-/* The mark itself, in words, wearing the cell's own palette — the same fill and edge the circle in
-   the grid has, so the panel and the cell read as one thing. The classes come from the same
-   `.attendance-cell-*` family and are worn as-is. */
-.attendance-detail-mark {
-  padding: 3px 9px; border-radius: 999px;
-  border: 1.5px solid #e0e4ea; background: #fff;
-  font-size: 11px; font-weight: 800; white-space: nowrap;
-}
-.attendance-detail-note {
-  flex: 1 1 220px; min-width: 0;
-  padding: 7px 10px; border-radius: 6px;
-  border: 1.5px solid #b0bcf0; background: #fff;
-  font-size: 12px; font-family: inherit; color: #1a1a2e;
-}
-.attendance-detail-note:focus { border-color: #5b6fcc; }
-.attendance-detail-hint { flex: 1 1 220px; font-size: 11px; line-height: 1.5; color: #5a6a9a; }
+.attendance-student-door:hover { border-color: #5b6fcc; color: #5b6fcc; }
 
 /* ── ONE COLUMN HEAD ── */
 /* Roll Call!'s `thead th.day-th`: `text-align: center; min-width: 72px`. A MINIMUM, not a width —
@@ -629,10 +603,6 @@
    #f3f4f6 line per row instead of one per cell, which is why its rows read as rows. */
 .attendance-grid tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
 .attendance-grid tbody tr:hover { background: #fafbfc; }
-/* The detail row belongs to the row above it, so it takes neither the rule nor the hover — two
-   lines under one student would read as two students. */
-.attendance-grid tbody tr.attendance-detail-row { border-bottom: 0; }
-.attendance-grid tbody tr.attendance-detail-row:hover { background: transparent; }
 /* `position: relative` is here for the time caption below, which is positioned OUT OF FLOW on
    purpose: a table row is as tall as its tallest cell, so a caption in normal flow would add ~12px
    to every one of twenty-six rows the moment a single student is marked tardy. */
@@ -889,6 +859,43 @@
 .attendance-report-passes { margin: 12px 0 4px; }
 .attendance-report-passes .attendance-report-sub { margin: 0; }
 
+/* ── THE WRITE BLOCK (WO-2.53) ──
+   The one thing in this dialog that changes a mark: the day being edited, that day's mark in words,
+   the note field and the un-confirm. It is the row detail panel this work order deleted, wearing the
+   same clothes — indigo, a 5px left rail, a flex row that wraps — because it is the same block about
+   the same mark, and a teacher who used the panel should recognise it one tap further in. Indigo for
+   the reason the "not on today" band is indigo: this is a state the teacher CHOSE, not one that
+   needs acting on.
+
+   IT IS NOT INSIDE A TABLE ANY MORE, which is the one thing that changed: the panel had to span
+   every column of the grid to give a sentence room at 390px, and this sits in the body of a dialog
+   that is 900px at its widest and the width of the screen below that. So the width comes from the
+   modal and there is nothing here holding it out to one. */
+.attendance-report-write {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin: 14px 0 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; background: #eef2ff;
+}
+/* Which day everything in the block is about. Full width of the block, because it is a heading for
+   the row under it rather than another thing on that row. */
+.attendance-report-write-day {
+  flex: 1 0 100%; font-size: 12px; font-weight: 700; color: #3a4a8a;
+}
+/* The mark chip is `.attendance-report-mark`'s shape, one size up: in the day-by-day table it sits
+   in a 13px row, and here it is one of three things on a line of its own. */
+.attendance-report-write-mark { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+/* NOT `.attendance-report-note`, WHICH IS ALREADY TAKEN by the grey footnote paragraph at the
+   bottom of both dialogs — and by a rule in the @media print block at the foot of this sheet. A
+   field wearing that name would have come out 11px grey with a print rule on it. */
+.attendance-report-write-note {
+  flex: 1 1 220px; min-width: 0;
+  padding: 7px 10px; border-radius: 6px;
+  border: 1.5px solid #b0bcf0; background: #fff;
+  font-size: 12px; font-family: inherit; color: #1a1a2e;
+}
+.attendance-report-write-note:focus { border-color: #5b6fcc; }
+.attendance-report-write-hint { flex: 1 1 220px; font-size: 11px; line-height: 1.5; color: #5a6a9a; }
+
 .attendance-report-who { flex: 1 1 200px; min-width: 0; }
 .attendance-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 .attendance-report-sub {
@@ -937,8 +944,10 @@
   font-size: 10px; font-weight: 700; color: #a0aab8; letter-spacing: 0.5px;
 }
 .attendance-report-date { font-weight: 600; color: #4a5a6a; }
-/* A mark, wearing the cell palette from the top of this sheet. `.attendance-detail-mark`'s shape,
-   at the size a table row can hold. */
+/* A mark, wearing the cell palette from the top of this sheet — the shape the row panel's own chip
+   had, at the size a table row can hold. It is worn by every mark in this dialog: the day-by-day
+   table's rows and, since WO-2.53, the chip in the write block above them. One shape for a mark on
+   one surface. */
 .attendance-report-mark {
   display: inline-block; min-width: 22px; padding: 2px 8px;
   border: 1.5px solid transparent; border-radius: 6px;
@@ -1046,11 +1055,13 @@
      reads this block — and every touch device kept the dialog width. The screen it was overruled
      FOR is the only screen that never got it.
 
-     The visible cost was the WO-2.10 detail panel: at 720px the grid's own columns want 711px
-     inside 680px of body, the wrap's `overflow-x` safety valve engages, and the note field sits
-     16px past the right edge in both orientations — identically, because a fixed panel width makes
-     the geometry the same whichever way the iPad is held. Rotating to landscape left 288px of
-     screen unused and changed nothing, which is what the report described.
+     The visible cost was the WO-2.10 detail panel, which WO-2.53 has since deleted — the note it
+     held is typed in the history dialog now, and that dialog takes its width from the modal rather
+     than from this grid. The reading is kept because the rules are: at 720px the grid's own columns
+     want 711px inside 680px of body, the wrap's `overflow-x` safety valve engages, and the note
+     field sat 16px past the right edge in both orientations — identically, because a fixed panel
+     width makes the geometry the same whichever way the iPad is held. Rotating to landscape left
+     288px of screen unused and changed nothing, which is what the report described.
 
      Two rules matter here and they are not interchangeable: this one gives landscape the room
      outright, and `.attendance-name`'s cap below is what clears portrait, where even the full
@@ -1058,7 +1069,7 @@
 
      WO-2.12 took portrait down to one day column, so portrait now has 200px of slack rather than
      8px. That is why the cap below could go back up to 256 — and not a reason to drop either rule:
-     the panel still needs the whole width in landscape, and the cap is still what stops a long
+     the grid still wants the whole width in landscape, and the cap is still what stops a long
      surname widening the table past its wrap on any screen. */
   .attendance-panel { width: 100%; }
   .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
@@ -1078,23 +1089,12 @@
      not shrink, which is the shell.css defect the owner found on 2026-08-08 — this button is two
      words and a glyph in a flex row, which is exactly the shape that spills over its own border. */
   .attendance-actions-door { min-height: 44px; min-width: 44px; flex-shrink: 0; }
-  /* The row's ⋯ and everything inside the panel it opens (WO-2.10). Three of the five are touch
-     targets and take the floor; the two that are text — the name line and the mark chip — are named
-     here anyway so that a reader of this block can see that they were considered rather than
-     missed, which is the call `.attendance-student-cell` makes twenty lines above for the same
-     reason. The "Un-confirm" button inside the panel is a `.class-action-btn` and takes its 44px
-     from shell.css's own coarse rule for that component. */
-  .attendance-detail-btn { min-height: 44px; min-width: 44px; font-size: 15px; padding: 2px 8px; }
-  /* The panel's row is a table row and not a target — what takes a thumb is the field and the
-     button inside it, both named below. It is in this block for its spacing: the gap that separates
-     the panel from the next student grows with everything else here, and a rule missing from the
-     coarse block is a rule the next reader has to go and prove was considered. */
-  .attendance-detail-row > td { padding-bottom: 12px; }
-  .attendance-detail { gap: 10px; padding: 12px 14px; }
-  .attendance-detail-who { font-size: 13px; }
-  .attendance-detail-mark { font-size: 12px; padding: 4px 10px; }
-  .attendance-detail-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
-  .attendance-detail-hint { font-size: 12px; }
+  /* The row's › (WO-2.53, and the ⋯ before it). It is the row's only other touch target beside the
+     name and the cells, and it takes the same 44px the ⋯ took — a control that changed where it
+     goes did not change what a thumb needs. The five rules that stood under this one were the panel
+     it used to open, and they went with the panel; the note field and the "Un-confirm" it held are
+     in the history dialog's coarse block further down this file. */
+  .attendance-student-door { min-height: 44px; min-width: 44px; font-size: 17px; padding: 2px 8px; }
   .attendance-body .attendance-note { font-size: 13px; }
   .attendance-body .attendance-pass-note { font-size: 13px; padding: 10px 14px; }
   .attendance-body .attendance-hint { font-size: 12px; }
@@ -1138,8 +1138,10 @@
      it was green either way, which is exactly why the reading is the half that finds this.
 
      NONE OF THE SIX IS A TOUCH TARGET, and that is the finding rather than an excuse: five are
-     text, and the sixth is the flex row that holds the avatar, the name and the ⋯ — where the ⋯
-     is the only tappable thing and takes its 44px from `.attendance-detail-btn` below. So what
+     text, and the sixth is the flex row that holds the avatar, the name and the › — where that
+     button and the identity block beside it are the tappable things, and the button takes its 44px
+     from `.attendance-student-door` above. (It was the ⋯ and a class named for the panel it opened
+     until WO-2.53; both halves of the sentence stay true of the door that replaced it.) So what
      they get is their base values RESTATED rather than new ones, the arrangement
      `.attendance-pass-card-main`'s `nowrap` makes further down: the name column is the tightest
      thing on this screen (see the cap below, and PASS_COL_PX in src/attendance.js), and a coarse
@@ -1148,7 +1150,6 @@
   .attendance-student-identity { min-width: 0; }
   .attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
   .attendance-student-totals { font-size: 10px; line-height: 1.35; }
-  .attendance-detail-totals { font-size: 12px; }
   .attendance-body .attendance-totals { font-size: 12px; }
   /* THE NAME COLUMN MAY NOT DEMAND MORE THAN THE SIX COLUMNS LEAVE. This cell is `nowrap`, so its
      min-content is the whole name laid out flat — 279px for "Delacroix-Nguyen, Xiomara" — and a
@@ -1344,6 +1345,19 @@
   .attendance-report-sub { font-size: 13px; }
   .attendance-report-rate { font-size: 19px; padding: 7px 16px; }
   .attendance-report-label { font-size: 11px; margin-top: 20px; }
+  /* ── THE WRITE BLOCK (WO-2.53) ──
+     The field is the one touch target the block adds and it takes the floor. The other three are the
+     block itself, its day line and its mark chip, none of them a control, named here for the reason
+     `.attendance-student-cell` is named above: a rule missing from this block is a rule the next
+     reader has to go and prove was considered. The "Un-confirm" beside the field is a
+     `.class-action-btn` and takes its 44px from src/shell.css's own coarse rule for that component,
+     the same arrangement the "Grades for …" door below makes — and the same one the button had
+     inside the row panel this block replaces. */
+  .attendance-report-write { gap: 10px; padding: 12px 14px; }
+  .attendance-report-write-day { font-size: 13px; }
+  .attendance-report-write-mark { font-size: 13px; padding: 4px 11px; }
+  .attendance-report-write-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  .attendance-report-write-hint { font-size: 12px; }
   .attendance-report-table { font-size: 13px; }
   .attendance-report-table th, .attendance-report-table td { padding: 8px 9px; }
   .attendance-report-num { white-space: nowrap; }

@@ -784,17 +784,20 @@ and the reason it is worth thirty seconds is that the arithmetic 522 + 2 would h
 run of 524 for as long as anyone believed this line. **Both of the two hang off WO-2.17's fixture
 rather than standing up a second one**, which is what the work order asks for and also what makes the
 first of them cheap: the two dated terms, the planted student and the three-meetings-against-five are
-already there, and all the check adds is the ⋯ tapped before the term is. **The first is the third
-surface `paintRenderedTotals()` paints.** Its header comment names three — the class line, one line
-per row, and the open detail panel — and WO-2.17's seven asserted the first two, so a check that
-asserts two of three painted surfaces licenses the third to be deleted. It is read out of the DOM,
-from the text in `.attendance-detail-totals`, and never from the totals map: a figure recomputed
+already there, and all the check adds is the ⋯ tapped before the term is. **The first was the third
+surface `paintRenderedTotals()` paints.** Its header comment named three — the class line, one line
+per row, and the open row detail panel — and WO-2.17's seven asserted the first two, so a check that
+asserts two of three painted surfaces licenses the third to be deleted. It was read out of the DOM,
+from the text in the panel's own totals line, and never from the totals map: a figure recomputed
 correctly and never painted is the whole bug, and re-reading the map is how a check goes green
 against exactly that. *One correction to that reasoning, found by running the mutation rather than
-arguing it: deleting the call turns **two** red, not one — WO-2.13's "a filtered-out row and its open
-detail repaint exact term/year totals after a mark" was already watching that same line from the MARK
-path. So the harness was not blind to the deletion; it was blind to it on the term-switch path, which
-is the one WO-2.17 shipped and the one where nothing else would have moved the figures back.* **The
+arguing it: deleting the call turned **two** red, not one — WO-2.13's filtered-out-row check was
+already watching that same line from the MARK path. So the harness was not blind to the deletion; it
+was blind to it on the term-switch path, which is the one WO-2.17 shipped and the one where nothing
+else would have moved the figures back.* **Both of those checks are past tense from WO-2.53**, which
+deleted the panel and the third surface with it: what that function paints is the class line, the row
+lines and WO-2.51's band, all three asserted. The rule outlived the checks and is why this paragraph
+stays — a painted surface nobody asserts is one a later work order deletes for free. **The
 second drives `selectTerm()` with a term id borrowed from another class
 in the same document**, which no control can do — the nav only ever draws the open class's terms —
 and asserts the absence of all three of its writes: the preference serialised byte for byte, the
@@ -1008,7 +1011,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1022 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1034 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1944,6 +1947,27 @@ measured at 390px and at 834px. **The run prints 1040**, measured on the deliver
 `1040 checks · 1040 passed · 0 failed · 0 skipped`, 28,885 lines, 27.8 lines per check, 349s, exit 0.
 The gap of 18 between sites and results is unchanged — this work order added nothing inside a loop and
 removed nothing.
+
+**WO-2.53 moved it from 1022 to 1034**: thirteen call sites in one new section — the history dialog's
+write block and the row's door to the grade screen — of which **one is a fixture-guard failure arm**
+that never fires on a green run, so the section contributes twelve executed results; and **two
+deletions with one replacement**, all three outside any loop. The deletions are the two checks that
+asserted the row detail panel's own figures across a term change (WO-2.18's third surface, and
+WO-2.51's harder version of it across an anchor move): that panel is what this work order removed, so
+the surface they guarded does not exist. The replacement is WO-2.51's, re-pointed at the class line and
+the row line, which is what the tap it drives still owes. **The run prints 1051**, measured on the
+delivered tree: `1051 checks · 1051 passed · 0 failed · 0 skipped`, 29,300 lines, 27.9 lines per check,
+349s, exit 0. **The gap between sites and results narrows 18 → 17**, and the one is the new failure
+arm — the only edit in this work order that adds a site nothing executes.
+
+*Two of the thirteen were written wrong and the harness said so rather than the app being wrong, which
+is worth the line because both mistakes are shapes this file warns about elsewhere. The first compared
+a table row's `textContent` — which concatenates its cells with no separator, so five counts arrive as
+one unreadable number — where the panel it replaced had laid the same figures out in one string with
+its own separators. The rows are read as a LIST of cells now. The second read `record.marks` on a day
+the class did not meet: a dropped record is class, date and exception and carries **no marks key at
+all** (docs/data-model.md), so the read threw and took the run down at the drop case, on an app
+behaving exactly as specified.*
 
 **The preference is asserted TWICE and the pair is the point.** One check reads `planbook_openView`
 while the calendar is on screen, which is the half a read-side fix cannot fake — `showView()` collapses

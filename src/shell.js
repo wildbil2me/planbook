@@ -189,11 +189,13 @@
       data-grades-record-csv          downloads the same sheet as a CSV
       data-student-detail="<id>"      opens that student's grade detail — the category breakdown,
                                       what is missing, and what it would take to move. Carried by
-                                      the student's own NAME in the score grid and by the door in
-                                      their attendance history, because that screen owns no
-                                      navigation target of its own: you arrive there from a name and
-                                      never from the switcher, which is why there is no
-                                      `data-class-screen="detail"` anywhere in this app
+                                      the student's own NAME in the score grid, by the door in their
+                                      attendance history, and since WO-2.53 by the › at the end of
+                                      their name on the attendance registry — three elements, one
+                                      hook, one route, because that screen owns no navigation target
+                                      of its own: you arrive there from a name and never from the
+                                      switcher, which is why there is no `data-class-screen="detail"`
+                                      anywhere in this app
       data-detail-sheet-print         prints the detail screen. It ASKS to print and nothing more:
                                       src/print-gate.js answers `data-detail-print` on <body> — the
                                       attribute src/detail.css's @media print block is selected
@@ -216,10 +218,12 @@
                                       the one control allowed to change every row at once
       data-attendance-untake="<iso>"  takes that back — offered only while nothing is marked
       data-attendance-unconfirm-all="<iso>"  the class reset: every student back to a question mark
-      data-attendance-unconfirm="<id>"       one student back to a question mark, from their row
-      data-attendance-detail="<id>"   opens that row's own panel — the time, the note, the un-confirm
+      data-attendance-unconfirm="<id>"       one student back to a question mark, from the block at
+                                      the top of their attendance history (their own row until
+                                      WO-2.53, which deleted the panel it sat in)
       data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
-                                      that student's mark as it is typed
+                                      that student's mark as it is typed. In that same block, on the
+                                      one day the registry accepts writes on
       data-attendance-history="<id>"  opens that student's own attendance report — every mark they
                                       have in the open term, and since WO-2.26 their hall-pass count
                                       for it. Carried by the name in the registry row
@@ -1830,25 +1834,23 @@ document.addEventListener('click', (e) => {
     afterAttendanceChange(); return;
   }
 
-  /* And ten taps that move the view without writing anything, so none of them touches the home
-     screen: opening a row's detail panel, unlocking a past column, closing it again, paging the
-     window, filtering, sorting, and WO-2.6's four — a student's name, the 🖨 Record door, and the
-     print and CSV controls inside the dialog it opens. Those last four reach a different module
-     for a reason src/attendance-report.js states at length: they are read-only surfaces built out
-     of the same ledger, and the only thing in this app that hands a file to the browser is
-     src/backup.js's helper, which that module borrows rather than copies. */
-  /* `attDetail` rather than `detail`, and the rename is load-bearing rather than a matter of taste.
-     `detail` is the module binding this file imports src/detail.js under (WO-3.7), and a `const` of
-     that name ANYWHERE in this listener puts the whole arrow body inside its temporal dead zone —
-     so the two hooks 100 lines above, which run long before control reaches this line, threw
-     `Cannot access 'detail' before initialization` and the Print button silently did nothing. The
-     local is what moved because the module owns the name across ten uses in this file and this is
-     its only other one; `attFilter` and `attSort` below are the same shortening for the same
-     reason. Every other closest() local in this listener was checked against the import list. */
-  const attDetail = e.target.closest('[data-attendance-detail]');
-  if (attDetail) {
-    attendance.toggleDetail(attDetail.getAttribute('data-attendance-detail')); return;
-  }
+  /* And nine taps that move the view without writing anything, so none of them touches the home
+     screen: unlocking a past column, closing it again, paging the window, filtering, sorting, and
+     WO-2.6's four — a student's name, the 🖨 Record door, and the print and CSV controls inside the
+     dialog it opens. (Ten until WO-2.53: the first of them opened the row's own detail panel, and
+     that panel is gone. The row's › carries `data-student-detail`, which is routed a hundred lines
+     above with the score grid's names — one hook, one route, and no line was added here for it.)
+     Those last four reach a different module for a reason src/attendance-report.js states at
+     length: the history dialog is the one surface of that module that writes, and it does it
+     through the two hooks above rather than through anything of its own. */
+  /* NO `const detail` IN THIS LISTENER, EVER, AND THE SCAR IS WORTH THE FIVE LINES. `detail` is the
+     module binding this file imports src/detail.js under (WO-3.7), and a `const` of that name
+     ANYWHERE in this arrow body puts the whole body inside its temporal dead zone — so the two hooks
+     100 lines above, which run long before control reaches here, threw `Cannot access 'detail'
+     before initialization` and the Print button silently did nothing. The local that had to be
+     renamed for it was `attDetail`, on the hook that opened the row's detail panel; WO-2.53 deleted
+     that branch, and `attFilter` and `attSort` below are the same shortening kept for the same
+     reason. Every closest() local in this listener was checked against the import list. */
   const history = e.target.closest('[data-attendance-history]');
   if (history) {
     attendanceReport.openHistory(history.getAttribute('data-attendance-history'), history);

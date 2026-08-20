@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The ⋯ on a registry row goes to the student now — 2026-08-20
+
+**The ⋯ at the end of a name is a `›`, and it goes straight to that student's grade detail.** One tap
+from the attendance registry to everything you have on them. It used to be two, back through the home
+screen — and the thing the ⋯ *did* open was a panel that told you what the row already said.
+
+**That panel is gone, and it was hollow exactly when you had it open.** Both of its controls — the note
+field and the un-confirm — only appeared on a mark you had already confirmed. On the state every row is
+in at the start of a period, before you have marked anybody, what was left was the student's name, the
+date, and counts that were already on the screen. Five classes of that is twenty-six taps to be told
+nothing.
+
+**The note on a mark and the un-confirm moved into that student's attendance history**, into one block
+at the top of it, about the one day the registry is accepting writes on — and the block names that day,
+so you always know what you are writing on. Tap the name to get there, the way you always have.
+
+**Nothing about what they write changed.** Same note, on the same mark, reached through the same
+writers. A note on a past mark still wants that column's ✏ first, and `late` and `missing` are still
+only ever what you marked them. Typing in the note field no longer risks the caret: the dialog
+deliberately does not redraw itself while you are in that field.
+
+**The trade, stated plainly.** The old panel opened *in* the row and never over it, so it never cost
+you your place in a long roster. The history dialog opens over the grid. That was the one thing worth
+weighing here, and it was rehearsed mid-period on the iPad before this landed rather than reasoned
+about from a desk.
+
 ### The calendar is a place you can get to, and get out of — 2026-08-20
 
 **The calendar is now a tab on every class screen.** Attendance · Assignments · Scores · **Calendar**

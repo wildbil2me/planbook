@@ -8228,18 +8228,17 @@ if (!classesBooted || !classSeam || !assignSeam) {
  * repainted" is asserted as text still sitting there afterwards rather than inferred from which
  * branch src/shell.js took.
  *
- * TWO MORE CHECKS HANG OFF THIS FIXTURE (WO-2.18), and neither is a defect in what WO-2.17 shipped —
- * both are the check that would notice if it stopped being right.
+ * ONE MORE CHECK HANGS OFF THIS FIXTURE (WO-2.18), and it is not a defect in what WO-2.17 shipped —
+ * it is the check that would notice if it stopped being right.
  *
- *   THE OPEN DETAIL PANEL IS THE THIRD SURFACE paintRenderedTotals() PAINTS, and the seven checks
- *   above assert the first two. So the block opens the ⋯ panel through the real button before the
- *   term tap: deleting `paintDetail(totals)` at the foot of that function used to leave all seven
- *   green while a panel a teacher opened BECAUSE she wanted the detail kept the term she had just
- *   left on screen. A check that asserts two of three painted surfaces licenses the third to be
- *   deleted. The panel's figures are read out of the DOM — the text in `.attendance-detail-totals`,
- *   which is the sentence the teacher reads — and never out of the totals map, for the same reason
- *   the row sentinel is an attribute on a surviving element rather than a count: a figure recomputed
- *   correctly and never painted is the whole bug.
+ *   THERE WERE TWO UNTIL WO-2.53. The other one opened the row's ⋯ panel through the real button
+ *   before the term tap and asserted its figures, because that panel was the third surface
+ *   paintRenderedTotals() painted and the seven checks above assert the first two — and a check that
+ *   asserts two of three painted surfaces licenses the third to be deleted. WO-2.53 deleted the panel
+ *   itself, and with it the surface: what that function paints now is the class line, the row lines
+ *   and WO-2.51's band, all three of them asserted. The reasoning is kept because it is the rule, not
+ *   the check: a painted surface nobody asserts is a painted surface a later work order can delete
+ *   for free.
  *
  *   AND selectTerm() IS DRIVEN WITH ANOTHER CLASS'S TERM ID, at the foot of the block. WO-2.17's
  *   fourth acceptance line asks that it return without writing in that case; nothing here ever asked
@@ -8310,11 +8309,6 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
   const LINE_B = LABEL_B + ': 5 recorded meetings · Year: 8 recorded meetings';
   const ROW_A = LABEL_A + ' · P 3 · T 0 · A 0 · E 0 · D 0 · 100%';
   const ROW_B = LABEL_B + ' · P 5 · T 0 · A 0 · E 0 · D 0 · 100%';
-  /* The panel says the term half and the year half in one line, and only the term half is allowed
-     to move: the year is the same eight meetings under either term, which is what makes this pair
-     of strings a claim about the TERM rather than about the panel having been redrawn at all. */
-  const PANEL_A = LABEL_A + ': P 3 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 8 · T 0 · A 0 · E 0 · D 0 · 100%';
-  const PANEL_B = LABEL_B + ': P 5 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 8 · T 0 · A 0 · E 0 · D 0 · 100%';
   const SENTINEL = 'WO-2.17 sentinel — this screen was not repainted';
   const SR_SENTINEL = 'WO-2.18 sentinel — nothing was announced';
 
@@ -8364,9 +8358,6 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     var btns = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
     var row = document.querySelector('[data-attendance-row="wo217-student"]');
     var line = row ? row.querySelector('.attendance-student-totals') : null;
-    /* WO-2.18. Out of the panel the teacher is looking at, not out of the map that fed it. */
-    var panel = document.querySelector('tr[data-attendance-detail-row="wo217-student"]');
-    var panelLine = panel ? panel.querySelector('.attendance-detail-totals') : null;
     var up = function(id){ var el = document.getElementById(id);
       return !!(el && !el.classList.contains('hidden')); };
     return {
@@ -8374,8 +8365,6 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
         label: b.textContent, active: b.classList.contains('active') }; }),
       classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
       rowText: line ? line.textContent : '',
-      panelUp: !!panel,
-      panelText: panelLine ? panelLine.textContent : '',
       sentinel: !!(row && row.getAttribute('data-wo217-sentinel')),
       summary: (document.getElementById('assignmentsSummary') || {}).textContent || '',
       registryUp: up('classView'), listUp: up('assignmentsView'), homeUp: up('homeView') }; })()`;
@@ -8386,9 +8375,6 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
   } else {
     await evalJs(`(function(){ var row = document.querySelector('[data-attendance-row="wo217-student"]');
       if (row) row.setAttribute('data-wo217-sentinel', '1'); return !!row; })()`);
-    /* WO-2.18: the panel is opened through the ⋯ the teacher taps, before anything is read, so that
-       every read below is taken with the third painted surface on screen. */
-    await clickSel('[data-attendance-detail="wo217-student"]');
     const before = await evalJs(READ);
     const todayIn = await evalJs(`(function(){
       var c = window.planbook.classes;
@@ -8412,14 +8398,14 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     check('and each student\'s own term line goes with it, rather than the class figure moving alone',
       before.rowText === ROW_A && after.rowText === ROW_B,
       JSON.stringify(before.rowText) + ' -> ' + JSON.stringify(after.rowText));
-    /* THE THIRD SURFACE (WO-2.18). paintRenderedTotals()'s own header names three, the two checks
-       above are the first two, and an open panel is the one a teacher opened because she wanted the
-       detail. Its own figures, read out of the panel, in the same tap as the two lines above. */
-    check('and the open detail panel moves with them, which is the third surface the same paint owes',
-      before.panelUp && after.panelUp
-        && before.panelText === PANEL_A && after.panelText === PANEL_B,
-      'panel open before = ' + before.panelUp + ', after = ' + after.panelUp + ' :: '
-        + JSON.stringify(before.panelText) + ' -> ' + JSON.stringify(after.panelText));
+    /* THE THIRD SURFACE WAS A CHECK HERE UNTIL WO-2.53, AND WHAT IT WATCHED NO LONGER EXISTS.
+       WO-2.18's reasoning was that paintRenderedTotals() painted three surfaces and these checks
+       asserted two, which licenses the third to be deleted; the third was the open row detail panel,
+       and WO-2.53 deleted the panel. What that function paints now is the class line, one line per
+       row, and WO-2.51's band — all three asserted, the first two here and the band in its own block
+       — so the license this check was written to withdraw is not open again. The history dialog is
+       not a fourth: it is built when it opens and no term tap reaches it, which is why re-pointing
+       this check at it would have asserted a repaint that does not happen. */
     /* THE TRAP, MEASURED. Repainting the whole registry would make the two checks above pass and
        this one fail: the marked row would be a different element by then. The registry's columns are
        a window of dates and do not move when the term does, so a term change owes the teacher the
@@ -8429,10 +8415,6 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
       after.sentinel && after.rowText !== before.rowText,
       'the marked row survived the switch = ' + after.sentinel + ', and its totals moved = '
         + (after.rowText !== before.rowText));
-
-    /* The panel closed the way it was opened (WO-2.18). The three checks below drive other screens,
-       and a panel left open behind them would be a fixture none of them asked for. */
-    await clickSel('[data-attendance-detail="wo217-student"]');
 
     /* THE OTHER SCREEN THE NAV SITS ON, which is WO-3.3's line and must not regress — and the same
        tap must leave the registry it is not on alone. */
@@ -8548,6 +8530,383 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
       delete window.__wo217;
       await s.flush();
       return 1; })()`);
+  }
+}
+
+/* ───────── the write block in the history dialog, and the row's door out (WO-2.53) ─────────
+ *
+ * TWO SURFACES, ONE WORK ORDER. The ⋯ at the end of a name used to open a panel under the row
+ * holding the mark, a note field and the un-confirm; on the state every row is in at the start of
+ * every period that panel repeated the row, so the note and the un-confirm moved into the student's
+ * own history dialog and the button became a door to their grade detail.
+ *
+ * WHY THIS IS ITS OWN FIXTURE AND ITS OWN DOCUMENT. Three of the four conditional cases have to be
+ * on screen at once — a confirmed mark, a confirmed-present student and a student nobody has reached
+ * — and the fourth needs today's class DROPPED, which destroys the marks on it. The attendance
+ * section below marks a real day across six classes and every count in it is arithmetic over those
+ * marks, so a block that dropped a class in the middle of it would be re-writing another section's
+ * fixture. The whole document is snapshotted here and put back at the foot, the way the WO-2.17
+ * block above does it.
+ *
+ * THE FIGURES ARE READ OUT OF THE DIALOG, never out of the module that drew it — the badge in the
+ * head, the open term's row, the *Whole year* row and the day-by-day table, as the strings a teacher
+ * reads. That is WO-2.18's rule about the panel this block replaces, and it is the reason the
+ * un-confirm check below is worth writing at all: the grid behind the dialog repaints itself on
+ * every write and looks like the whole answer.
+ */
+console.log('\n--- the history dialog writes, and the row goes to the grades (WO-2.53) ---');
+{
+  const D_ID = 'wo253-dismissed', P_ID = 'wo253-present', U_ID = 'wo253-waiting';
+  const plant = await evalJs(`(async function(){
+    var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+    var d = s.getDoc();
+    var cls = (d.classes || [])[0];
+    if (!cls) return { ok:false, why:'no class in the document' };
+    window.__wo253 = { doc: JSON.stringify(d), classId: c.getSelectedClassId(),
+                       termId: c.getSelectedTermId() };
+    var p = function(n){ return (n < 10 ? '0' : '') + n; };
+    var iso = function(off){ var t = new Date(); t.setDate(t.getDate() + off);
+      return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()); };
+    var today = a.todayISO(), before = iso(-7);
+    s.update(function(doc){
+      /* A term that HOLDS today, so the dialog draws an open-term row beside the year row — the two
+         figures an un-confirm has to move separately. The ended term written for the last case
+         replaces this one and the restore at the foot puts both back. */
+      cls.terms = [{ id:'tm_wo253', label:'WO-2.53 term', start: iso(-30), end: iso(30) }];
+      cls.roster = ['wo253-dismissed', 'wo253-present', 'wo253-waiting'];
+      doc.students = (doc.students || []).filter(function(x){
+        return String(x.id).indexOf('wo253-') !== 0; });
+      doc.students.push({ id:'wo253-dismissed', first:'Dee', last:'Dismissed' });
+      doc.students.push({ id:'wo253-present', first:'Pat', last:'Present' });
+      doc.students.push({ id:'wo253-waiting', first:'Ula', last:'Waiting' });
+      doc.attendance = (doc.attendance || []).filter(function(r){ return r.classId !== cls.id; });
+      /* One earlier meeting where everybody was present, so the day-by-day table has two rows and
+         the percentage the un-confirm moves is neither 0 nor 100 by construction. */
+      doc.attendance.push({ classId: cls.id, date: before, marks: {} });
+      doc.attendance.push({ classId: cls.id, date: today, marks: {
+        'wo253-dismissed': { code:'D', at: today + 'T08:14:00-04:00' },
+        'wo253-waiting': { code:'U' } } });
+    });
+    await s.flush();
+    c.selectClass(cls.id);
+    c.selectTerm('tm_wo253');
+    a.setSearch(''); a.setFilter('all');
+    a.renderAttendance();
+    return { ok:true, classId: cls.id, name: cls.name, today: today, before: before,
+             start: iso(-30), end: iso(30) };
+  })()`);
+
+  /* Everything inside the dialog that this block asserts, plus the row behind it and the state of
+     the grade screen the door leads to. One read, because half of these claims are about several of
+     those things agreeing in the same paint.
+     NO BACKTICKS ANYWHERE BELOW: it is a template literal shipped to the browser, and one closes it. */
+  const READ = `(async function(){
+    await window.planbook.store.flush();
+    var body = document.getElementById('attendanceHistoryBody');
+    var modal = document.getElementById('attendanceHistoryModal');
+    var box = body ? body.querySelector('[data-attendance-write]') : null;
+    var note = box ? box.querySelector('[data-attendance-note]') : null;
+    var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
+    var flat = function(el){ return (el.textContent || '').replace(/\\s+/g, ' ').trim(); };
+    var pick = function(sel){ var el = box ? box.querySelector(sel) : null;
+      return el ? flat(el) : ''; };
+    /* A row's cells, in order, as the strings a teacher reads. Read as a LIST rather than as the
+       row's textContent, which concatenates them with no separator and turns five counts into one
+       unreadable number. */
+    var cellsOf = function(tr){
+      return Array.prototype.slice.call(tr.children).map(flat); };
+    var labelled = function(label){
+      var hit = rows.filter(function(tr){ var th = tr.querySelector('th');
+        return !!th && flat(th).indexOf(label) === 0; })[0];
+      return hit ? cellsOf(hit) : []; };
+    var doorOf = function(tr){ return tr.querySelector('[data-student-detail]'); };
+    var gridRow = function(id){
+      var tr = document.querySelector('#attendanceBody tr[data-attendance-row="' + id + '"]');
+      if (!tr) return null;
+      var cell = tr.querySelector('td[data-attendance-col] .attendance-cell');
+      var door = doorOf(tr);
+      return { code: cell ? (cell.textContent || '').trim() : '',
+               doors: tr.querySelectorAll('[data-student-detail]').length,
+               promises: door ? String(door.getAttribute('aria-pressed')) + '/'
+                 + String(door.getAttribute('aria-haspopup')) : '',
+               glyph: door ? (door.textContent || '').trim() : '',
+               label: door ? (door.getAttribute('aria-label') || '') : '' }; };
+    var view = function(id){ var el = document.getElementById(id);
+      return !!(el && !el.classList.contains('hidden')); };
+    return {
+      dialogUp: !!(modal && !modal.classList.contains('hidden')),
+      overlays: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
+        .filter(function(o){ return !o.classList.contains('hidden'); })
+        .map(function(o){ return o.id; }),
+      block: !!box,
+      blocks: body ? body.querySelectorAll('[data-attendance-write]').length : 0,
+      student: box ? box.getAttribute('data-attendance-write') : '',
+      day: pick('.attendance-report-write-day'),
+      mark: pick('.attendance-report-write-mark'),
+      hint: pick('.attendance-report-write-hint'),
+      hasNote: !!note,
+      note: note ? note.value : '',
+      noteDate: note ? note.getAttribute('data-attendance-note-date') : '',
+      unconfirms: box ? box.querySelectorAll('[data-attendance-unconfirm]').length : 0,
+      /* The same field element, or a new one: the property is set by hand before typing, so "the
+         caret is not taken out of the field" is a fact about the element rather than about the
+         value that came back. */
+      sameField: !!(note && note.__wo253),
+      focused: !!(note && document.activeElement === note),
+      /* The four figures in the dialog that an un-confirm goes stale. */
+      rate: body && body.querySelector('.attendance-report-rate')
+        ? flat(body.querySelector('.attendance-report-rate')) : '',
+      openTerm: (function(){
+        var hit = rows.filter(function(tr){
+          return tr.className.indexOf('attendance-report-open') >= 0; })[0];
+        return hit ? cellsOf(hit) : []; })(),
+      year: labelled('Whole year'),
+      days: rows.filter(function(tr){ return !!tr.querySelector('.attendance-report-mark'); })
+        .map(cellsOf),
+      /* And the grid behind it. */
+      grid: { dismissed: gridRow('wo253-dismissed'), present: gridRow('wo253-present'),
+              waiting: gridRow('wo253-waiting') },
+      registryUp: view('classView'), detailUp: view('detailView'),
+      heading: (document.getElementById('detailStudentName') || {}).textContent || '',
+      /* THE VISIBLE STRIP, and it has to be found rather than named: every class screen carries its
+         own identical [data-screen-nav] and src/screen-nav.js paints all of them, so a check that
+         took the first in document order would be reading a hidden one. */
+      crumbs: (function(){
+        var strip = Array.prototype.slice.call(document.querySelectorAll('[data-screen-nav]'))
+          .filter(function(n){ return !!n.offsetParent; })[0];
+        if (!strip) return [];
+        return Array.prototype.slice.call(strip.querySelectorAll('.screen-nav-btn'))
+          .map(function(b){ return (b.textContent || '').trim()
+            + (b.classList.contains('detail') ? ' (name)' : ''); }); })(),
+      /* The entry itself, out of the document, so a claim about the screen is never the only one. */
+      entry: (function(){
+        var d = window.planbook.store.getDoc();
+        var r = (d.attendance || []).filter(function(x){
+          return x.date === window.planbook.attendance.todayISO()
+            && x.classId === ((d.classes || [])[0] || {}).id; })[0];
+        /* The marks map is ABSENT on a dropped day — the record is class, date and exception, and nothing
+           else (docs/data-model.md). Reading it off that shape is what took this block's first run
+           down after the drop case, on an app that was behaving exactly as specified. */
+        if (!r) return 'no record';
+        if (r.exception) return 'exception: ' + r.exception;
+        return JSON.stringify((r.marks || {})['wo253-dismissed'] || null); })() }; })()`;
+  const read253 = () => evalJs(READ);
+  const openFor = async (id) => {
+    await clickSel('#attendanceBody [data-attendance-history="' + id + '"]');
+    return read253();
+  };
+  const shut = () => clickSel('#attendanceHistoryModal [data-modal-close]');
+
+  if (!plant.ok) {
+    check('the WO-2.53 fixture is real: three students on a dated term that holds today, one dismissed, one present, one unconfirmed',
+      false, plant.why);
+  } else {
+    /* ── case 1: a confirmed mark gets the field and the un-confirm ── */
+    const onD = await openFor(D_ID);
+    check('the WO-2.53 fixture is real: three students on a dated term that holds today, one dismissed, one present, one unconfirmed',
+      onD.dialogUp && !!onD.grid.dismissed && onD.grid.dismissed.code === 'D'
+        && onD.grid.present.code === 'P' && onD.grid.waiting.code === '?'
+        && onD.openTerm[0] === 'WO-2.53 term — open'
+        && onD.year[0] === 'Whole year'
+        /* Every count after the label, not the label: this term holds both of the class's meetings,
+           so the open term's row and the year's row are the same figures under two names. */
+        && JSON.stringify(onD.openTerm.slice(1)) === JSON.stringify(onD.year.slice(1)),
+      'the column reads ' + JSON.stringify([onD.grid.dismissed && onD.grid.dismissed.code,
+        onD.grid.present && onD.grid.present.code, onD.grid.waiting && onD.grid.waiting.code])
+        + ' :: ' + JSON.stringify(onD.openTerm) + ' / ' + JSON.stringify(onD.year));
+    check('a confirmed mark gets the note field and the un-confirm, in ONE block that names the day it writes on',
+      onD.block && onD.blocks === 1 && onD.student === D_ID
+        && onD.day.indexOf('Today · ') === 0 && onD.day.indexOf(', ') > 0
+        && onD.mark.indexOf('Dismissed at ') === 0
+        && onD.hasNote && onD.noteDate === plant.today && onD.unconfirms === 1
+        && onD.hint === '',
+      JSON.stringify(onD.day) + ' :: ' + JSON.stringify(onD.mark) + ' :: field = ' + onD.hasNote
+        + ' on ' + JSON.stringify(onD.noteDate) + ', un-confirm(s) = ' + onD.unconfirms
+        + ', block(s) = ' + onD.blocks);
+
+    /* ── the note lands on that day's mark, and typing does not repaint ── */
+    await evalJs(`(function(){ var e = document.querySelector('[data-attendance-note]');
+      if (!e) return false; e.__wo253 = 1; e.focus();
+      e.value = 'walked in with a late pass';
+      e.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    const typed = await read253();
+    await shut();
+    const reopened = await openFor(D_ID);
+    check('a note typed in the dialog lands on that day\'s mark and comes back on it — and the field it was typed into is never replaced',
+      typed.sameField && typed.focused && typed.note === 'walked in with a late pass'
+        && typed.entry === JSON.stringify({ code: 'D', at: plant.today + 'T08:14:00-04:00',
+          note: 'walked in with a late pass' })
+        && reopened.hasNote && reopened.note === 'walked in with a late pass'
+        && reopened.noteDate === plant.today,
+      'the entry is now ' + typed.entry + '; the same element survived the keystroke = '
+        + typed.sameField + ', still focused = ' + typed.focused
+        + '; reopened, the field reads ' + JSON.stringify(reopened.note));
+
+    /* ── the un-confirm, and the four figures in the dialog that go stale with it ── */
+    await clickSel('#attendanceHistoryModal [data-attendance-unconfirm]');
+    const undone = await read253();
+    check('un-confirm from inside the dialog moves all five surfaces in one paint — the head percentage, the open term\'s row, the Whole year row, the day-by-day table, and the grid behind it',
+      undone.dialogUp
+        /* The badge in the head: two meetings, one of them now an absence. */
+        && reopened.rate === '100%' && undone.rate === '50%'
+        /* The open term's row and the year row, cell by cell — P T A E D, meetings, percentage. */
+        && JSON.stringify(reopened.openTerm)
+          === JSON.stringify(['WO-2.53 term — open', '1', '0', '0', '0', '1', '2', '100%'])
+        && JSON.stringify(undone.openTerm)
+          === JSON.stringify(['WO-2.53 term — open', '1', '0', '1', '0', '0', '2', '50%'])
+        && JSON.stringify(reopened.year)
+          === JSON.stringify(['Whole year', '1', '0', '0', '0', '1', '2', '100%'])
+        && JSON.stringify(undone.year)
+          === JSON.stringify(['Whole year', '1', '0', '1', '0', '0', '2', '50%'])
+        /* The day-by-day table: today's row is the second of the two, and its mark is a word. */
+        && reopened.days.length === 2 && undone.days.length === 2
+        && reopened.days[1][1] === 'Dismissed' && undone.days[1][1] === 'Absent'
+        && reopened.days[1][2] === '2 of 2 · 100%' && undone.days[1][2] === '1 of 2 · 50%'
+        /* And the grid behind the dialog, which is the surface that repaints itself. */
+        && undone.grid.dismissed.code === '?'
+        && undone.entry === JSON.stringify({ code: 'U' }),
+      'rate ' + JSON.stringify(reopened.rate) + ' -> ' + JSON.stringify(undone.rate)
+        + ' :: term ' + JSON.stringify(reopened.openTerm) + ' -> '
+        + JSON.stringify(undone.openTerm) + ' :: year ' + JSON.stringify(reopened.year) + ' -> '
+        + JSON.stringify(undone.year) + ' :: today\'s row ' + JSON.stringify(reopened.days[1])
+        + ' -> ' + JSON.stringify(undone.days[1]) + ' :: the cell behind it reads '
+        + JSON.stringify(undone.grid.dismissed.code) + ' and the entry is ' + undone.entry);
+    check('and the block redraws as the case it now is — the un-confirmed hint, and neither control',
+      undone.block && !undone.hasNote && undone.unconfirms === 0
+        && undone.hint.indexOf('Nobody has confirmed this student yet') === 0
+        && undone.mark === 'Not confirmed',
+      JSON.stringify(undone.mark) + ' :: ' + JSON.stringify(undone.hint)
+        + ' :: field = ' + undone.hasNote + ', un-confirm(s) = ' + undone.unconfirms);
+    await shut();
+
+    /* ── case 2: a confirmed present student ── */
+    const onP = await openFor(P_ID);
+    check('a confirmed present student gets the un-confirm and the sentence saying why there is nothing to note',
+      onP.block && !onP.hasNote && onP.unconfirms === 1 && onP.mark === 'Present'
+        && onP.hint.indexOf('Present is stored as no mark at all') === 0,
+      JSON.stringify(onP.mark) + ' :: ' + JSON.stringify(onP.hint) + ' :: field = ' + onP.hasNote
+        + ', un-confirm(s) = ' + onP.unconfirms);
+    await shut();
+
+    /* ── case 3, on a student nobody has reached rather than on one just put back ── */
+    const onU = await openFor(U_ID);
+    check('a student nobody has confirmed gets the hint and NEITHER control — nothing to type into and nothing to put back',
+      onU.block && !onU.hasNote && onU.unconfirms === 0 && onU.mark === 'Not confirmed'
+        && onU.hint.indexOf('Nobody has confirmed this student yet') === 0,
+      JSON.stringify(onU.mark) + ' :: field = ' + onU.hasNote + ', un-confirm(s) = '
+        + onU.unconfirms);
+    await shut();
+
+    /* ── case 4: a day with no meeting draws no block at all ── */
+    await evalJs(`(async function(){ var a = window.planbook.attendance;
+      a.dropClass(); await window.planbook.store.flush(); return 1; })()`);
+    const onDropped = await openFor(P_ID);
+    check('a day the class did not meet draws no write block — there is no mark on it to edit, and no path through the dialog that would make one',
+      onDropped.dialogUp && !onDropped.block && onDropped.blocks === 0
+        && !onDropped.hasNote && onDropped.unconfirms === 0
+        && onDropped.year[0] === 'Whole year',
+      'dialog up = ' + onDropped.dialogUp + ', block(s) = ' + onDropped.blocks
+        + ', field = ' + onDropped.hasNote + ', un-confirm(s) = ' + onDropped.unconfirms
+        + '; the year row is still drawn: ' + JSON.stringify(onDropped.year));
+    await shut();
+    await evalJs(`(async function(){ var a = window.planbook.attendance;
+      a.undropClass(); await window.planbook.store.flush(); return 1; })()`);
+
+    /*
+      ── editDate() answers '' : a past day, still locked ──
+
+      THE STATE IS REACHED THE WAY WO-2.52 DESCRIBES IT, by selecting a term that has ENDED: the
+      strip anchors on that term's last day, that day is in the past, and a past day is read-only
+      until its ✏ is pressed — so editDate() answers '', which matches no column, and every writer
+      refuses on the shape test in writableDate(). Paging the window back is NOT this state and never
+      was: the anchor does not move when the window does, so editDate() still answers today there and
+      the block is still drawn — naming the day it writes on, which is what makes that honest.
+    */
+    const ended = await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+      var d = s.getDoc(), cls = (d.classes || [])[0];
+      var p = function(n){ return (n < 10 ? '0' : '') + n; };
+      var iso = function(off){ var t = new Date(); t.setDate(t.getDate() + off);
+        return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()); };
+      s.update(function(){ cls.terms = [{ id:'tm_wo253over', label:'WO-2.53 ended',
+        start: iso(-60), end: iso(-30) }]; });
+      await s.flush();
+      c.selectTerm('tm_wo253over');
+      a.renderAttendance();
+      return { end: iso(-30) }; })()`);
+    const onLocked = await openFor(D_ID);
+    check('with the strip standing on a past day that has not been unlocked, the dialog draws no write block — the day it writes on is the day the registry accepts writes on, and there is none',
+      onLocked.dialogUp && !onLocked.block && onLocked.blocks === 0
+        && !onLocked.hasNote && onLocked.unconfirms === 0,
+      'the selected term ended ' + ended.end + '; dialog up = ' + onLocked.dialogUp
+        + ', block(s) = ' + onLocked.blocks + ', field = ' + onLocked.hasNote
+        + ', un-confirm(s) = ' + onLocked.unconfirms);
+    await shut();
+
+    /*
+      ── the row's door, in ONE activation ──
+
+      The whole of the owner's ask: the button at the end of a name lands on that student's grade
+      detail rather than opening a panel that repeats the row. Driven on the row with the least on it
+      — the student nobody has confirmed — because that is the state every row is in at the start of
+      every period and it is the state the panel was hollow on. One clickSel is one activation; what
+      is asserted is that no dialog opened on the way and that the screen it landed on is the grade
+      detail for that student, named on the switcher.
+    */
+    const atRow = await read253();
+    await clickSel('#attendanceBody tr[data-attendance-row="' + U_ID + '"] [data-student-detail]');
+    const arrived = await read253();
+    check('one activation of the row\'s door lands on the grade screen for that student, with the breadcrumb naming them, and no dialog opens on the way',
+      atRow.registryUp && !atRow.detailUp && atRow.overlays.length === 0
+        && arrived.detailUp && !arrived.registryUp && arrived.overlays.length === 0
+        && arrived.heading === 'Ula Waiting'
+        && arrived.crumbs[arrived.crumbs.length - 1] === 'Ula Waiting (name)',
+      'from the registry (' + atRow.registryUp + ') to the detail screen (' + arrived.detailUp
+        + ') in one activation; dialogs open on arrival = ' + JSON.stringify(arrived.overlays)
+        + ', heading ' + JSON.stringify(arrived.heading) + ', switcher '
+        + JSON.stringify(arrived.crumbs));
+    check('the door is one per row, it is not a toggle, and it does not promise a dialog — no aria-pressed and no aria-haspopup on it',
+      atRow.grid.waiting.doors === 1 && atRow.grid.dismissed.doors === 1
+        && atRow.grid.present.doors === 1
+        && atRow.grid.waiting.glyph === '›'
+        && atRow.grid.waiting.promises === 'null/null'
+        && atRow.grid.waiting.label === 'Grade detail for Ula Waiting',
+      'doors per row = ' + JSON.stringify([atRow.grid.dismissed.doors, atRow.grid.present.doors,
+        atRow.grid.waiting.doors]) + ', glyph ' + JSON.stringify(atRow.grid.waiting.glyph)
+        + ', aria-pressed/aria-haspopup = ' + atRow.grid.waiting.promises + ', label '
+        + JSON.stringify(atRow.grid.waiting.label));
+
+    /*
+      The document back as it was, IN PLACE rather than as a fresh object — every module holds the
+      reference getDoc() handed it — and the class, the term and the screen this block found open put
+      back with it. The section below opens a class from the home grid, so the last act puts the
+      registry back on screen and repaints it.
+    */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+      var saved = window.__wo253, d = s.getDoc();
+      var restored = JSON.parse(saved.doc);
+      Object.keys(d).forEach(function(k){ delete d[k]; });
+      Object.assign(d, restored);
+      s.update(function(){});
+      c.selectClass(saved.classId);
+      if (saved.termId) c.selectTerm(saved.termId);
+      a.setSearch(''); a.setFilter('all'); a.resetRegistry(); a.renderAttendance();
+      delete window.__wo253;
+      await s.flush();
+      return 1; })()`);
+    const cleaned = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc();
+      return { students: (d.students || []).filter(function(x){
+                 return String(x.id).indexOf('wo253-') === 0; }).length,
+               records: (d.attendance || []).filter(function(r){
+                 return JSON.stringify(r.marks || {}).indexOf('wo253-') >= 0; }).length,
+               terms: JSON.stringify(((d.classes || [])[0] || {}).terms || null) }; })()`);
+    check('the WO-2.53 fixture came back off the document — no planted student, no planted mark, and the first class\'s terms as they were',
+      cleaned.students === 0 && cleaned.records === 0 && cleaned.terms.indexOf('wo253') < 0,
+      cleaned.students + ' planted student(s) and ' + cleaned.records
+        + ' record(s) holding one left behind; the first class\'s terms are '
+        + cleaned.terms.slice(0, 120));
   }
 }
 
@@ -9018,7 +9377,9 @@ const INSTALL_ATT_READER = `(function(){
                  dates: tds.map(function(td){ return td.getAttribute('data-attendance-col'); }).join(' '),
                  tappable: tds.filter(function(td){
                    return !!td.querySelector('button[data-attendance-cell]'); }).length,
-                 detail: r.querySelector('[data-attendance-detail]') ? 1 : 0,
+                 /* The one door on the row that leaves this screen (WO-2.53): a count and not a
+                    boolean, so "one per row" and "not two" are the same read. */
+                 door: r.querySelectorAll('[data-student-detail]').length,
                  /* This row's Passes cell (WO-2.8): which types it offers, how many of them are
                     switched off, whether it shows a Return instead, and the time out beside it.
                     Read off the buttons rather than off the document, so "the screen says he is
@@ -9038,19 +9399,48 @@ const INSTALL_ATT_READER = `(function(){
                  named: tds.filter(function(td){
                    var c = td.firstElementChild;
                    return !!(c && c.getAttribute('aria-label')); }).length }; }),
-      /* The one open row-detail panel, or nulls. It is a <tr> of its own under the row it belongs
-         to, so "is it open" and "whose is it" are two different questions and both are asked. */
-      detail: (function(){
-        var tr = document.querySelector('#attendanceBody tr[data-attendance-detail-row]');
-        var note = tr ? tr.querySelector('[data-attendance-note]') : null;
-        return { open: !!tr, student: tr ? tr.getAttribute('data-attendance-detail-row') : '',
-                 text: tr ? (tr.textContent || '').replace(/\\s+/g, ' ').trim() : '',
-                 mark: tr && tr.querySelector('.attendance-detail-mark')
-                   ? (tr.querySelector('.attendance-detail-mark').textContent || '').trim() : '',
+      /* THE WRITE BLOCK IN THE HISTORY DIALOG (WO-2.53), or nulls. It was a <tr> under the row until
+         that work order moved it here, and the questions are the same ones: is it drawn, whose mark
+         is it about, which of the four cases is on screen, and which of the two controls are offered.
+         The "up" field is the dialog being open, which is a different question from the block being
+         drawn: the block is absent on a day that accepts no writes, and that is a case with its own
+         check. (No backticks in this block: it is inside a template literal, and one closes it.) */
+      dialog: (function(){
+        var modal = document.getElementById('attendanceHistoryModal');
+        var body = document.getElementById('attendanceHistoryBody');
+        var box = body ? body.querySelector('[data-attendance-write]') : null;
+        var note = box ? box.querySelector('[data-attendance-note]') : null;
+        var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
+        var flat = function(el){ return (el.textContent || '').replace(/\\s+/g, ' ').trim(); };
+        var rowText = function(label){
+          var hit = rows.filter(function(tr){
+            var th = tr.querySelector('th');
+            return !!th && flat(th).indexOf(label) === 0; })[0];
+          return hit ? flat(hit) : ''; };
+        var pick = function(sel){ var el = box ? box.querySelector(sel) : null;
+          return el ? flat(el) : ''; };
+        return { up: !!(modal && !modal.classList.contains('hidden')),
+                 open: !!box,
+                 student: box ? box.getAttribute('data-attendance-write') : '',
+                 text: box ? flat(box) : '',
+                 day: pick('.attendance-report-write-day'),
+                 mark: pick('.attendance-report-write-mark'),
                  hasNote: !!note, note: note ? note.value : '',
                  noteDate: note ? note.getAttribute('data-attendance-note-date') : '',
-                 unconfirms: tr ? tr.querySelectorAll('[data-attendance-unconfirm]').length : 0,
-                 rows: document.querySelectorAll('#attendanceBody tr[data-attendance-detail-row]').length }; })(),
+                 unconfirms: box ? box.querySelectorAll('[data-attendance-unconfirm]').length : 0,
+                 boxes: body ? body.querySelectorAll('[data-attendance-write]').length : 0,
+                 /* The three figures beside the block that an un-confirm goes stale, read the way the
+                    teacher reads them: the badge in the head, the open term's row, and the year. */
+                 rate: body && body.querySelector('.attendance-report-rate')
+                   ? flat(body.querySelector('.attendance-report-rate')) : '',
+                 openTerm: (function(){
+                   var hit = rows.filter(function(tr){
+                     return tr.className.indexOf('attendance-report-open') >= 0; })[0];
+                   return hit ? flat(hit) : ''; })(),
+                 year: rowText('Whole year'),
+                 /* And the fourth: the day-by-day table, one string per row of it. */
+                 days: rows.filter(function(tr){
+                   return !!tr.querySelector('.attendance-report-mark'); }).map(flat) }; })(),
       /* Anything that would turn one tap into two, or one screen into two. */
       submenus: document.querySelectorAll('#attendanceGridWrap select, #attendanceGridWrap [aria-expanded], #attendanceGridWrap details').length,
       /* The Traps line, as a structure rather than as a promise: no form to submit, and no control
@@ -9165,6 +9555,21 @@ if (!attBooted || !attSeam) {
   const cellSel = (student, date) => '#attendanceBody [data-attendance-cell="' + student
     + '"][data-attendance-date="' + date + '"]';
   const tapCell = (student, date) => clickSel(cellSel(student, date));
+  /* THE HISTORY DIALOG, WHICH IS WHERE A NOTE AND THE UN-CONFIRM LIVE SINCE WO-2.53. Opened the way
+     a teacher opens it — a tap on the student's own name in the grid — and closed through its own ✕,
+     because the grid behind it is out of a thumb's reach while it is up: clickSel dispatches at
+     viewport coordinates, so a click aimed at a cell under the overlay lands on the overlay. */
+  const openHistoryFor = async (student) => {
+    await clickSel('#attendanceBody [data-attendance-history="' + student + '"]');
+    return read();
+  };
+  const closeHistory = () => clickSel('#attendanceHistoryModal [data-modal-close]');
+  /* One keystroke's worth of typing into the note field, wherever it is drawn. `input` rather than a
+     synthesised key press for the reason src/shell.js listens for `input`: that is the event a paste,
+     dictation and the software keyboard's own suggestions all produce. */
+  const typeMarkNote = (text) => evalJs('(function(){ var e = document.querySelector("[data-attendance-note]");'
+    + ' if (!e) return false; e.value = ' + JSON.stringify(text)
+    + '; e.dispatchEvent(new Event("input", { bubbles: true })); return true; })()');
   const park = async () => {
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });
     await new Promise(r => setTimeout(r, 100));
@@ -9553,17 +9958,17 @@ if (!attBooted || !attSeam) {
       + JSON.stringify(tardyStamp) + ' -> ' + JSON.stringify(dismissStamp)
       + ' (an E carries no time, and the D carries exactly one field beside its code)');
 
-  /* A note on it, then the last tap. The note is written through the row's own panel, which is the
-     only way a teacher can write one. */
-  await clickSel('#attendanceBody [data-attendance-detail="' + undone + '"]');
-  await evalJs('(function(){ var e = document.querySelector("[data-attendance-note]");'
-    + ' e.value = "left at the end of the period"; e.dispatchEvent(new Event("input", { bubbles: true }));'
-    + ' return 1; })()');
+  /* A note on it, then the last tap. The note is written through the block in the student's own
+     history dialog, which since WO-2.53 is the only way a teacher can write one. */
+  await openHistoryFor(undone);
+  const typedOnD = await typeMarkNote('left at the end of the period');
   const noted = await read();
+  await closeHistory();
   await tapCell(undone, nodeToday);                       /* back to present */
   const backToTwo = await read();
   check('cycling all the way back to present clears the entry entirely — no code, no time, no note left behind',
-    (((noted.today[0] || {}).marks || {})[undone] || {}).note === 'left at the end of the period'
+    typedOnD
+      && (((noted.today[0] || {}).marks || {})[undone] || {}).note === 'left at the end of the period'
       && Object.keys((backToTwo.today[0] || {}).marks || {}).length === 2
       && !((backToTwo.today[0] || {}).marks || {})[undone]
       && backToTwo.today.length === 1 && !backToTwo.values.P
@@ -9594,17 +9999,17 @@ if (!attBooted || !attSeam) {
   /*
     ── WO-2.10 acceptance 12: a note survives a reload, on the same student, date and class ──
 
-    Written through the row's ⋯ panel, read back after a full reload out of IndexedDB, and checked
-    on BOTH sides: the field comes back filled for that student on that date, and the note is in the
-    cell rather than anywhere else in the document. The date the panel is bound to is asserted too —
-    a note that landed on today while the panel said yesterday would be invisible here otherwise.
+    Written through the block in the student's own history dialog — which is where a note is typed
+    since WO-2.53 — read back after a full reload out of IndexedDB, and checked on BOTH sides: the
+    field comes back filled for that student on that date, and the note is in the cell rather than
+    anywhere else in the document. The date the block is bound to is asserted too — a note that
+    landed on today while the block said yesterday would be invisible here otherwise.
   */
-  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
-  const panel = await read();
-  await evalJs('(function(){ var e = document.querySelector("[data-attendance-note]");'
-    + ' e.value = "left for the nurse at the bell"; e.dispatchEvent(new Event("input", { bubbles: true }));'
-    + ' return 1; })()');
+  await openHistoryFor(dismissed);
+  const dialogOnD = await read();
+  const noteTyped = await typeMarkNote('left for the nurse at the bell');
   const typedIn = await read();
+  await closeHistory();
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
@@ -9613,35 +10018,37 @@ if (!attBooted || !attSeam) {
   await evalJs(INSTALL_WALKER);
   await evalJs(INSTALL_ATT_READER);
   const backOnCard = await openCard(marking);
-  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
+  await openHistoryFor(dismissed);
   const reopenedNote = await read();
   const noteCell = ((reopenedNote.today.filter((r) => r.classId === marking)[0] || {}).marks
     || {})[dismissed] || {};
   check('a note typed on a mark survives a reload, on the same student, date and class',
-    noteReboot && panel.detail.open && panel.detail.student === dismissed
-      && panel.detail.hasNote && panel.detail.noteDate === nodeToday
-      && typedIn.detail.note === 'left for the nurse at the bell'
+    noteReboot && noteTyped && dialogOnD.dialog.open && dialogOnD.dialog.student === dismissed
+      && dialogOnD.dialog.hasNote && dialogOnD.dialog.noteDate === nodeToday
+      && typedIn.dialog.note === 'left for the nurse at the bell'
       && noteCell.note === 'left for the nurse at the bell'
       && noteCell.code === 'D' && !!noteCell.at
-      && reopenedNote.detail.open && reopenedNote.detail.student === dismissed
-      && reopenedNote.detail.note === 'left for the nurse at the bell'
+      && reopenedNote.dialog.open && reopenedNote.dialog.student === dismissed
+      && reopenedNote.dialog.note === 'left for the nurse at the bell'
       && backOnCard.rows.filter((r) => r.student === dismissed)[0].labels[0]
         .indexOf('left for the nurse at the bell') > 0
       && reopenedNote.records.filter((r) => JSON.stringify(r.marks || {}).indexOf('nurse') >= 0)
         .length === 1,
-    noteReboot ? 'the panel opened on ' + JSON.stringify(panel.detail.mark) + ' for '
-      + JSON.stringify(panel.detail.noteDate) + '; after a reload the cell holds '
+    noteReboot ? 'the block opened on ' + JSON.stringify(dialogOnD.dialog.mark) + ' for '
+      + JSON.stringify(dialogOnD.dialog.noteDate) + '; after a reload the cell holds '
       + JSON.stringify(noteCell) + ' and the field reads '
-      + JSON.stringify(reopenedNote.detail.note)
+      + JSON.stringify(reopenedNote.dialog.note)
       : 'the loading screen never came down');
 
   /*
-    ── the row's panel is where un-confirm lives, and it puts ONE student back ──
+    ── the history dialog is where un-confirm lives, and it puts ONE student back ──
 
-    The deliverable is that a student cycled by mistake can be returned to `?` without leaving the
-    screen. Driven through the panel's own button, and asserted the same way acceptance 1 is: every
-    other cell in the column is read, because a control that un-confirmed the class would be a
-    control that quietly turned twenty-five present students into absences.
+    The deliverable is that a student cycled by mistake can be returned to `?`. Driven through the
+    dialog's own button — the row's panel until WO-2.53 — and asserted the same way acceptance 1 is:
+    every other cell in the column is read, because a control that un-confirmed the class would be a
+    control that quietly turned twenty-five present students into absences. The dialog is left OPEN
+    across the read, which is what makes the grid behind it a claim about a repaint rather than about
+    a redraw on the way back to it.
 
     THE CELL HAS TO COME BACK AS `{ code: "U" }` AND NOTHING ELSE, and that clause is here because
     this check found the opposite on its first run: the note carried across the code change and left
@@ -9650,10 +10057,10 @@ if (!attBooted || !attSeam) {
     now stops the note at `U` and says why.
   */
   const beforeUnconfirm = await read();
-  await clickSel('#attendanceBody tr[data-attendance-detail-row] [data-attendance-unconfirm]');
+  await clickSel('#attendanceHistoryModal [data-attendance-unconfirm]');
   const unconfirmed = await read();
   const unconfirmedRec = unconfirmed.today.filter((r) => r.classId === marking)[0] || {};
-  check('the row\'s panel puts one student back to ? — and moves no other cell on the screen',
+  check('the history dialog puts one student back to ? — and moves no other cell on the screen behind it',
     beforeUnconfirm.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0) === 'D'
       && unconfirmed.rows.filter((r) => r.student === dismissed)[0].codes.charAt(0) === '?'
       && unconfirmedRec.marks[dismissed].code === 'U'
@@ -9668,16 +10075,20 @@ if (!attBooted || !attSeam) {
       + ' — the note and the time went with the mark. The column reads '
       + JSON.stringify(unconfirmed.rows.map((r) => r.codes.charAt(0)).join('')));
 
-  /* And back to where the rest of this section expects it: the dismissal restored, the panel shut.
-     Four taps from `?` — P, A, E, T, D — because a cell that has been un-confirmed enters the cycle
-     at present like any other question mark. */
+  /* And back to where the rest of this section expects it: the dialog shut and the dismissal
+     restored. Five taps from `?` — P, A, E, T, D — because a cell that has been un-confirmed enters
+     the cycle at present like any other question mark, and the dialog is shut first because the grid
+     under it is out of a thumb's reach while it is up. */
+  await closeHistory();
   for (let i = 0; i < 5; i++) await tapCell(dismissed, nodeToday);
-  await clickSel('#attendanceBody [data-attendance-detail="' + dismissed + '"]');
   const restored4 = await read();
   check('and a re-confirmed cell walks the same cycle from ? — five taps back to dismissed, with a fresh time',
     (((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed] || {}).code === 'D'
       && !!(((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed] || {}).at
-      && restored4.detail.open === false
+      /* The dialog is SHUT, which is the claim — and not that its body is empty. src/modal.js hides
+         the overlay and leaves the last paint inside it, so a check that asked whether the write
+         block was still in the DOM would be asking about a screen nobody can see. */
+      && restored4.dialog.up === false
       && JSON.stringify(restored4.todayValues) === JSON.stringify({ A: 1, T: 1, E: 1, D: 1 }),
     'the cell is ' + JSON.stringify((((restored4.today.filter((r) => r.classId === marking)[0] || {}).marks || {})[dismissed]))
       + ' and today\'s values are ' + JSON.stringify(restored4.todayValues));
@@ -14673,8 +15084,6 @@ if (!seam) {
   const LINE_LATE = LATE + ': 3 recorded meetings · Year: 5 recorded meetings';
   const ROW_EARLY = EARLY + ' · P 2 · T 0 · A 0 · E 0 · D 0 · 100%';
   const ROW_LATE = LATE + ' · P 3 · T 0 · A 0 · E 0 · D 0 · 100%';
-  const PANEL_EARLY = EARLY + ': P 2 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 5 · T 0 · A 0 · E 0 · D 0 · 100%';
-  const PANEL_LATE = LATE + ': P 3 · T 0 · A 0 · E 0 · D 0 · 100% | Year: P 5 · T 0 · A 0 · E 0 · D 0 · 100%';
 
   /* A CLICK THAT REPORTS RATHER THAN THROWS, for the reason the section above gives: the ✏ this
      block reaches for is a control a mutated build may not draw, `clickSel()` throws when it finds
@@ -14705,8 +15114,6 @@ if (!seam) {
     var tabs = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
     var row = document.querySelector('[data-attendance-row="wo251-student"]');
     var line = row ? row.querySelector('.attendance-student-totals') : null;
-    var panel = document.querySelector('tr[data-attendance-detail-row="wo251-student"]');
-    var panelLine = panel ? panel.querySelector('.attendance-detail-totals') : null;
     var text = band ? band.querySelector('.attendance-banner-text') : null;
     var view = document.getElementById('classView');
     var today = a.todayISO();
@@ -14725,8 +15132,6 @@ if (!seam) {
         .map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
       classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
       rowText: line ? line.textContent : '',
-      panelUp: !!panel,
-      panelText: panelLine ? panelLine.textContent : '',
       stateLine: (document.getElementById('attendanceState') || {}).textContent || '',
       editDate: (document.getElementById('attendanceDate') || {}).textContent || '',
       registryUp: !!(view && !view.classList.contains('hidden')),
@@ -14869,37 +15274,34 @@ if (!seam) {
       JSON.stringify(before.editDate) + ' -> ' + JSON.stringify(after.editDate)
         + ' (the early term ends ' + V[3] + ' and today is ' + V[0] + ')');
 
-    /* ── the third surface, across a term change that moves the anchor ──
+    /* ── the figures, across a term change that moves the anchor ──
 
-       THE OPEN DETAIL PANEL IS THE THIRD SURFACE paintRenderedTotals() PAINTS, and asserting two of
-       three licenses the third to be deleted (WO-2.18's own words). It needs a day that accepts
-       edits, and with the tab on an ended term the only one is the day the teacher unlocks — so the
-       ✏ on the early term's last day is pressed first, which is exactly the route acceptance line 7
-       of WO-2.52 describes. The switch is then driven from the term NAV rather than from the band,
-       because the band on an unlocked day is the "you are editing" message and carries no term
-       button: one band at a time, which is WO-2.51's own precedence rule still holding.
+       THE HARD VERSION OF THE TWO CHECKS ABOVE: the strip is rebuilt from the early term's last day,
+       and the class line has to come back describing the term that was tapped rather than the one
+       the columns were built from. The ✏ on that last day is pressed first — the route WO-2.52's
+       acceptance line 7 describes — so the day the screen is about is a day the teacher unlocked, and
+       the switch is driven from the term NAV rather than from the band, because the band on an
+       unlocked day is the "you are editing" message and carries no term button: one band at a time,
+       which is WO-2.51's own precedence rule still holding.
 
-       It crosses an anchor move with the panel open, which is the harder version of the same claim:
-       the strip is rebuilt from the early term's last day, the unlocked column survives the rebuild
-       because it is still on screen, and the panel comes back with the other term's figures in it. */
+       IT ASSERTED THE OPEN DETAIL PANEL'S OWN FIGURES UNTIL WO-2.53, on WO-2.18's reasoning that
+       paintRenderedTotals() painted a third surface nothing checked. That panel is gone and so is the
+       third surface; what the tap owes is the class line and the row lines, both asserted here and
+       above, and the band, asserted in the phases below. */
     await clickIf('#attendanceHead th[data-attendance-col="' + V[3] + '"] [data-attendance-edit]');
-    const panelOpened = await clickIf('[data-attendance-detail="wo251-student"]');
     const onLate = await read251();
     await clickSel('#termNav [data-term-select="' + EARLY_ID + '"]');
     const onEarly = await read251();
 
-    check('and the open detail panel repaints with them — the third surface, driven across a term change that moves the strip under it',
-      panelOpened && onLate.panelUp && onEarly.panelUp
-        && onLate.panelText === PANEL_LATE && onEarly.panelText === PANEL_EARLY
-        && onLate.classText === LINE_LATE && onEarly.classText === LINE_EARLY,
-      'panel open ' + onLate.panelUp + '/' + onEarly.panelUp + ' '
-        + JSON.stringify(onLate.panelText) + ' -> ' + JSON.stringify(onEarly.panelText)
-        + ' :: ' + JSON.stringify(onLate.classText) + ' -> ' + JSON.stringify(onEarly.classText));
+    check('the class figures repaint across a term change that moves the strip under them — from an unlocked day inside the term that has ended',
+      onLate.classText === LINE_LATE && onEarly.classText === LINE_EARLY
+        && onLate.rowText === ROW_LATE && onEarly.rowText === ROW_EARLY,
+      JSON.stringify(onLate.classText) + ' -> ' + JSON.stringify(onEarly.classText)
+        + ' :: ' + JSON.stringify(onLate.rowText) + ' -> ' + JSON.stringify(onEarly.rowText));
 
-    /* The panel closed the way it was opened and the unlocked day locked, then the tab put back on
-       the term today is in — the phases below page and unlock for themselves, and a fixture none of
-       them asked for is how a check reports about a screen it did not arrange. */
-    await clickSel('[data-attendance-detail="wo251-student"]');
+    /* The unlocked day locked again, then the tab put back on the term today is in — the phases
+       below page and unlock for themselves, and a fixture none of them asked for is how a check
+       reports about a screen it did not arrange. */
     await evalJs('(function(){ window.planbook.attendance.lockDay(); return 1; })()');
     await clickSel('#termNav [data-term-select="' + LATE_ID + '"]');
 
@@ -17585,7 +17987,7 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
         /* `spanW >= 100` is the guard against a vacuous pass rather than a claim about the design: a
            span of zero width has `scrollWidth - clientWidth === 0` too, and would report "not
            truncated" about a name nobody can see. 100px is well under the ~184px of text this name
-           lays out to inside a cell whose other 95px is avatar, ⋯ and padding, and well over
+           lays out to inside a cell whose other 95px is avatar, door and padding, and well over
            anything a collapsed column could produce. */
         check('a long name is drawn IN FULL in portrait — one day column leaves the name column more '
           + 'than it wants, so the cap never engages (the desk half of WO-2.12 acceptance line 4)',
@@ -17598,9 +18000,19 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
             + 'px under a cap of ' + cut.cap + ', showing ' + JSON.stringify(cut.shown));
       }
 
-      /* `P` is in the list and it is not redundant: present is stored as NO MARK, so the panel draws
-         the hint paragraph instead of the note field, and that paragraph is the widest thing this
-         panel ever holds. It spilled by the same 16px, and it is the case the owner named first. */
+      /*
+        THE NOTE FIELD IS MEASURED INSIDE THE DIALOG NOW (WO-2.53), NOT INSIDE THE GRID.
+
+        It was a field in a panel spanning the grid's own columns, and what was measured was its
+        right edge against the grid wrap's — the defect the owner found on 2026-08-06 was +16px past
+        it, in both orientations, at every one of the five codes. That panel is gone: the field is in
+        the student's history dialog, so the box it must not spill out of is the modal panel, and the
+        arithmetic that used to matter (six 72px columns against a 720px cap) does not apply to it at
+        all. The measurement is kept because the CLAIM is kept — a note is a sentence and it has to be
+        readable on the device this screen is for — and it is made at the same five codes for the same
+        reason: `P` is in the list because present is stored as NO MARK, so the block draws its widest
+        thing, the hint paragraph, instead of the field.
+      */
       for (const code of ['P', 'A', 'E', 'T', 'D']) {
         const m = await evalJs(`(async function(){
           window.planbook.attendance.takeClass(${JSON.stringify(day)});
@@ -17608,32 +18020,35 @@ console.log('\n--- the WO-2.10 note panel fits its screen ---');
             ${JSON.stringify(code)}, ${JSON.stringify(day)});
           await window.planbook.store.flush();
           window.planbook.attendance.renderAttendance();
-          window.planbook.attendance.toggleDetail(${JSON.stringify(ready.student)});
-          var wrap = document.querySelector('.attendance-grid-wrap');
-          var field = document.querySelector('.attendance-detail-note')
-                   || document.querySelector('.attendance-detail-hint');
-          if (!wrap || !field) return { noPanel: true };
-          var wr = wrap.getBoundingClientRect(), fr = field.getBoundingClientRect();
-          var out = { spill: Math.round(fr.right - wr.right),
-                      wrapOverflow: wrap.scrollWidth - wrap.clientWidth,
-                      wrapClientW: wrap.clientWidth, fieldW: Math.round(fr.width),
-                      panelW: Math.round(document.querySelector('.attendance-panel')
-                                .getBoundingClientRect().width) };
-          window.planbook.attendance.toggleDetail(${JSON.stringify(ready.student)});
+          window.planbook.attendanceReport.openHistory(${JSON.stringify(ready.student)});
+          var panel = document.querySelector('#attendanceHistoryModal .modal-panel');
+          var box = document.querySelector('#attendanceHistoryBody [data-attendance-write]');
+          var field = box ? (box.querySelector('.attendance-report-write-note')
+                   || box.querySelector('.attendance-report-write-hint')) : null;
+          if (!panel || !field) return { noPanel: true };
+          var pr = panel.getBoundingClientRect(), fr = field.getBoundingClientRect();
+          var out = { spill: Math.round(fr.right - pr.right),
+                      docOverflow: document.documentElement.scrollWidth - window.innerWidth,
+                      panelClientW: Math.round(pr.width), fieldW: Math.round(fr.width),
+                      viewportW: window.innerWidth };
+          window.planbook.closeModal('attendanceHistoryModal');
           return out; })()`);
 
         if (m.noPanel) {
-          check('the WO-2.10 note panel opens at all on ' + code + ', ' + label, false,
-            'the ⋯ toggle drew no field — the measurement below cannot be made');
+          check('the WO-2.53 write block opens at all on ' + code + ', ' + label, false,
+            'the history dialog drew no field and no hint — the measurement below cannot be made');
           continue;
         }
-        /* Guarded against a vacuous pass twice over: a field of zero width, or a wrap of zero
+        /* Guarded against a vacuous pass twice over: a field of zero width, or a panel of zero
            width, would both put the right edge "inside" the container without anything being
-           readable. The defect this replaces measured spill = +16 here. */
-        check('the note field sits inside the grid on ' + code + ', iPad ' + label,
-          m.spill <= 0 && m.fieldW >= 80 && m.wrapClientW >= 320,
-          'field right is ' + m.spill + 'px past the wrap right (<=0 is inside); field '
-            + m.fieldW + 'px, wrap ' + m.wrapClientW + 'px, panel ' + m.panelW + 'px');
+           readable. The panel this measures is the dialog's, and the page is asked for its own
+           overflow beside it — a dialog that fits its panel while the panel hangs off the viewport
+           is the same defect one level out. */
+        check('the note field sits inside the history dialog on ' + code + ', iPad ' + label,
+          m.spill <= 0 && m.fieldW >= 80 && m.panelClientW >= 320 && m.docOverflow <= 0,
+          'field right is ' + m.spill + 'px past the dialog panel (<=0 is inside); field '
+            + m.fieldW + 'px, panel ' + m.panelClientW + 'px in a ' + m.viewportW
+            + 'px viewport, page over by ' + m.docOverflow + 'px');
       }
 
       /* The condition underneath all four: the grid fits the box it is drawn in, so the safety
@@ -18206,23 +18621,20 @@ console.log('\n--- attendance totals render cost (WO-2.13) ---');
     samples.sort(function(x,y){return x-y;});
     var hasCount=typeof a.resetMeetingDatesCallCount==='function'&&typeof a.meetingDatesCallCount==='function';
     var calls=null;if(hasCount){a.resetMeetingDatesCallCount();a.renderAttendance();calls=a.meetingDatesCallCount();}
-    var target='2026-03-31';a.editDay(target);a.setFilter('A');a.toggleDetail(ids[0]);
+    var target='2026-03-31';a.editDay(target);a.setFilter('A');
     var rowSel='[data-attendance-row="'+ids[0]+'"] .attendance-student-totals';
-    var detailSel='[data-attendance-detail-row] .attendance-detail-totals';
     var beforeRow=(document.querySelector(rowSel)||{}).textContent||'';
-    var beforeDetail=(document.querySelector(detailSel)||{}).textContent||'';
     var beforeClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
     var threw='';try{a.setMark(ids[0],'P',target);}catch(e){threw=e&&e.message||String(e);}
     var afterRow=(document.querySelector(rowSel)||{}).textContent||'';
-    var afterDetail=(document.querySelector(detailSel)||{}).textContent||'';
     var afterClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
     a.setFilter('all');a.setMark(ids[0],'A',target);a.setFilter('A');
     var unconfirmThrew='';try{a.unconfirmAll(target);}catch(e){unconfirmThrew=e&&e.message||String(e);}
-    var afterUnconfirmDetail=(document.querySelector(detailSel)||{}).textContent||'';
+    var afterUnconfirmRow=(document.querySelector(rowSel)||{}).textContent||'';
     var result={fixture:true,records:d.attendance.length,meetings:175,rows:ids.length,
       median:samples[4],samples:samples,calls:calls,beforeRow:beforeRow,afterRow:afterRow,
-      beforeDetail:beforeDetail,afterDetail:afterDetail,beforeClass:beforeClass,afterClass:afterClass,
-      threw:threw,unconfirmThrew:unconfirmThrew,afterUnconfirmDetail:afterUnconfirmDetail};
+      beforeClass:beforeClass,afterClass:afterClass,
+      threw:threw,unconfirmThrew:unconfirmThrew,afterUnconfirmRow:afterUnconfirmRow};
     var restored=JSON.parse(old);Object.keys(d).forEach(function(k){delete d[k];});Object.assign(d,restored);
     s.update(function(){});if(oldClass)c.selectClass(oldClass);a.setFilter('all');a.renderAttendance();return result;
   })()`);
@@ -18234,19 +18646,22 @@ console.log('\n--- attendance totals render cost (WO-2.13) ---');
     JSON.stringify(timing && {records:timing.records,meetings:timing.meetings,rows:timing.rows}));
   check('meetingDates() is called a constant two times for a dated-term render',
     timing && (timing.calls === null || timing.calls === 2), timing ? timing.calls+' call(s)' : 'fixture did not run');
-  check('a filtered-out row and its open detail repaint exact term/year totals after a mark',
+  /* THE ROW IS THE WHOLE CLAIM NOW (WO-2.53). It was the row AND the open detail panel below it —
+     that panel carried the same student's term and year counts in one line, and it was the surface
+     this check watched from the MARK path while WO-2.18's watched it from the term-switch path. The
+     panel is gone; the row's own line is still folded out of the same shared per-render pass, on a
+     row an active filter has taken off the screen, which is the case WO-2.13 exists for. */
+  check('a filtered-out row repaints exact term totals after a mark',
     timing && !timing.threw
       && timing.beforeRow === 'Quarter 1 · P 87 · T 1 · A 2 · E 0 · D 0 · 98%'
       && timing.afterRow === 'Quarter 1 · P 88 · T 1 · A 1 · E 0 · D 0 · 99%'
-      && timing.beforeDetail === 'Quarter 1: P 87 · T 1 · A 2 · E 0 · D 0 · 98% | Year: P 172 · T 1 · A 2 · E 0 · D 0 · 99%'
-      && timing.afterDetail === 'Quarter 1: P 88 · T 1 · A 1 · E 0 · D 0 · 99% | Year: P 173 · T 1 · A 1 · E 0 · D 0 · 99%'
       && timing.beforeClass === timing.afterClass,
     JSON.stringify(timing && {row:[timing.beforeRow,timing.afterRow],
-      detail:[timing.beforeDetail,timing.afterDetail],class:[timing.beforeClass,timing.afterClass],threw:timing.threw}));
-  check('unconfirmAll() repaints an open detail under an active filter without throwing',
+      class:[timing.beforeClass,timing.afterClass],threw:timing.threw}));
+  check('unconfirmAll() repaints a filtered-out row under an active filter without throwing',
     timing && !timing.unconfirmThrew
-      && timing.afterUnconfirmDetail === 'Quarter 1: P 87 · T 1 · A 2 · E 0 · D 0 · 98% | Year: P 172 · T 1 · A 2 · E 0 · D 0 · 99%',
-    JSON.stringify(timing && {detail:timing.afterUnconfirmDetail,threw:timing.unconfirmThrew}));
+      && timing.afterUnconfirmRow === 'Quarter 1 · P 87 · T 1 · A 2 · E 0 · D 0 · 98%',
+    JSON.stringify(timing && {row:timing.afterUnconfirmRow,threw:timing.unconfirmThrew}));
 }
 
 /* ───────── recorded-meeting counts and Roll Call! percentage (WO-2.4) ───────── */

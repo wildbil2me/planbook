@@ -610,7 +610,7 @@ function commentLines(file) {
      a word character or a dot. Neither shape exists in the harness today; the guard is so that one
      arriving does not silently inflate the count.
    - Comment lines are excluded. The harness quotes call names in its prose constantly (`letterFor()`,
-     `paintDetail(totals)`), and a comment that came to mention `check()` would otherwise arrive here
+     `paintRenderedTotals()`), and a comment that came to mention `check()` would otherwise arrive here
      as a call site that does not exist — the false FAIL this file's header warns about twice. Zero
      comment lines match today.
    - THE COUNT IS A COUNT OF LINES, not of occurrences: one entry is pushed per line that holds a

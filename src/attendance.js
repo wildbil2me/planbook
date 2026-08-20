@@ -1062,12 +1062,11 @@ function visibleColumns() {
   and that is what makes it safe to listen to all of them.
 
   What it does NOT do is reset anything. renderAttendance() draws from the module state that is
-  already there, so the open detail panel, the filter, the search and the page offset all survive
-  the turn — which is the rest of acceptance line 3. A mark cannot be lost in flight because there
-  is no flight: a mark is stored on the tap (see setMark), and a note is written per keystroke
-  (setNote). What a repaint does cost is the caret, if the teacher is mid-word in a note when she
-  rotates; that is the same trade paintDetail() already makes everywhere else, and rotating the iPad
-  is not something done absent-mindedly mid-sentence.
+  already there, so the filter, the search and the page offset all survive the turn — which is the
+  rest of acceptance line 3. A mark cannot be lost in flight because there is no flight: a mark is
+  stored on the tap (see setMark). A note is not typed on this screen at all any more (WO-2.53): it
+  is typed in the history dialog, which is a modal over the top and is not rebuilt by a turn — so
+  the caret this paragraph used to warn about is no longer this function's to lose.
 
   THE ONE THING IT DOES HAVE TO RECONCILE IS AN UNLOCKED PAST COLUMN, and leaving it out ships a
   broken screen rather than an untidy one. Unlock Tuesday in landscape, turn the iPad upright, and
@@ -1662,11 +1661,13 @@ function stateChip(state, unconfirmed, cover, future, offTerm) {
 function openClass() { return getSelectedClass(); }
 
 /* ── THE VIEW STATE ──
-   Seven values, none of them student data and none of them persisted. They are reset on every
+   Six values, none of them student data and none of them persisted. They are reset on every
    arrival (see resetRegistry): a teacher who left a past column unlocked yesterday should not find
    it still unlocked when she opens the screen with a class walking in.
-   (The count said five until WO-2.5 and had said five since WO-2.10 added `detailFor` — it is a
-   number in a comment, which is the kind that goes stale silently. Counted, not guessed.) */
+   (The count said five until WO-2.5 made it seven, and it is six from WO-2.53 — that work order
+   deleted the row's detail panel and the one value that named the student it was open for. It is a
+   number in a comment, which is the kind that goes stale silently, so it is counted off the
+   declarations below and never stepped up or down from the last sentence that said it.) */
 let editingDay = null;     /* an ISO date the teacher has deliberately unlocked, or null.
                               IT WAS NAMED FOR THE PAST UNTIL WO-2.52, and the rename is that work
                               order's own: a day INSIDE a term of the class is unlockable ahead of
@@ -1682,7 +1683,6 @@ let pageDaysBack = 0;      /* WEEKDAYS back from the ANCHOR to the leftmost colu
 let searchText = '';
 let filterCode = 'all';    /* 'all' or one of P T A E D */
 let sortBy = 'last';       /* 'last' or 'first' */
-let detailFor = '';        /* the student whose row detail is open, or '' — one at a time */
 let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, and see that block
                               below for why it is a row rather than a cell */
 
@@ -2254,11 +2254,17 @@ export function unconfirmAll(date) {
       + ' already on it were cleared.' : ''));
 }
 
-/* One student back to `?`, from the row's own detail panel. The un-confirm the work order asks for
-   at the student level: a cell cycled by mistake goes back to where it started rather than round
-   the ring again. It writes a `U` on a record that exists and does nothing at all on one that does
-   not — an unconfirmed student on an untaken day is already `?`, and creating a record to say so
-   would be this screen taking a class the teacher never touched. */
+/* One student back to `?`, from the block at the top of their history dialog (WO-2.10, moved there
+   by WO-2.53). The un-confirm the work order asks for at the student level: a cell cycled by mistake
+   goes back to where it started rather than round the ring again. It writes a `U` on a record that
+   exists and does nothing at all on one that does not — an unconfirmed student on an untaken day is
+   already `?`, and creating a record to say so would be this screen taking a class the teacher never
+   touched.
+
+   THE WRITER DID NOT MOVE AND NEITHER DID ITS ROUTING: `data-attendance-unconfirm` is still
+   answered by the one delegated click listener in src/shell.js, which still chains the home screen's
+   redraw after it. What changed is the element that carries the hook — src/attendance-report.js
+   paints it now, and repaints the four figures in its own dialog that this write goes stale. */
 export function unconfirmStudent(studentId, date) {
   const cls = openClass();
   const on = date || editDate();
@@ -2268,17 +2274,19 @@ export function unconfirmStudent(studentId, date) {
 }
 
 /*
-  A NOTE ON A MARK, typed in the row's detail panel and written as it is typed — the same posture as
-  every other field editor in this app (src/roster.js), and for the same reason: there is no submit
-  step on this screen and there must never be one.
+  A NOTE ON A MARK, typed in the student's history dialog and written as it is typed — the same
+  posture as every other field editor in this app (src/roster.js), and for the same reason: there is
+  no submit step on this screen and there must never be one.
 
   IT DOES NOT REPAINT, and that is the load-bearing line rather than an optimisation. Re-rendering
-  the row would replace the <input> the teacher is typing into, which takes the caret and the
-  software keyboard with it — the same trap that keeps the search box in index.html rather than in a
-  renderer.
+  the surface the field is on would replace the <input> the teacher is typing into, which takes the
+  caret and the software keyboard with it — the same trap that keeps the search box in index.html
+  rather than in a renderer. That was true of the row panel this field used to live in (WO-2.10) and
+  it is true of the dialog it lives in now (WO-2.53): the un-confirm beside it repaints that dialog
+  and this deliberately does not.
 
   A note needs a mark to sit on. A present student has no entry by construction, so there is nothing
-  to attach one to and the panel does not offer the field; this refusal is the same rule stated
+  to attach one to and the dialog does not offer the field; this refusal is the same rule stated
   where it cannot be skipped.
 */
 export function setNote(studentId, text, date) {
@@ -2302,6 +2310,48 @@ export function setNote(studentId, text, date) {
     else delete next.note;
     r.marks[studentId] = next;
   });
+}
+
+/*
+  WHAT THE TWO WRITERS ABOVE WOULD ACCEPT FOR ONE STUDENT, RIGHT NOW (WO-2.53) — the read the
+  history dialog draws its write block from, and the reason that block is not a second gate.
+
+  It is exported for exactly one caller (src/attendance-report.js) and it hands over the state, never
+  a decision about markup: the date the writers will default to, the reading in that cell, the time
+  and note already on it, and the two booleans the panel this replaced computed inline —
+  `entry && code !== UNCONFIRMED` for the note field, `record && code !== UNCONFIRMED` for the
+  un-confirm. `null` means there is nothing to draw at all: no class, no such student, a day with no
+  meeting on it (dropped or covered — a day with no mark has no mark to edit), a day outside every
+  term of this class, or an edit date of `''`, which is what a strip standing on a past day answers
+  until its ✏ is pressed.
+
+  THE GATE STAYS HERE BECAUSE THE WRITERS ARE HERE. The alternative was the dialog asking
+  writableDate() and offTermDay() for itself, which is a second opinion about what is writable held
+  by a file that cannot see the ledger — and the way a screen comes to offer a field whose every
+  keystroke the gate below refuses. src/attendance-report.js words and lays out what this returns;
+  it decides none of it.
+*/
+export function editableMark(studentId) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return null;
+  if (!findStudent(studentId)) return null;
+  const on = editDate();
+  if (!on || !writableDate(on, cls) || offTermDay(cls.id, on)) return null;
+  const state = stateOf(cls.id, on);
+  if (state === DID_NOT_MEET || state === COVERED) return null;
+  const record = recordFor(cls.id, on);
+  const entry = marksOf(record)[studentId];
+  const code = readingOf(record, studentId);
+  return {
+    date: on,
+    code: code,
+    at: timeOf(entry),
+    note: noteOf(entry),
+    /* A note needs a mark to sit on, and an unconfirmed student has no mark yet. */
+    canNote: !!entry && code !== UNCONFIRMED,
+    /* And nothing can be put back to `?` on a day the class has no record for. */
+    canUnconfirm: !!record && code !== UNCONFIRMED,
+  };
 }
 
 /* And back off again. Offered only while the record holds no MARK — `U`s do not count, because a
@@ -2536,11 +2586,11 @@ export function editDay(date) {
      answers false there, which is decision 2 and is the only way back to the marks on it. */
   if (cls && offTermDay(cls.id, date)) return;
   editingDay = date;
-  /* The open detail panel describes ONE student on ONE date, and that date is the one accepting
-     edits. Moving the edit date with a panel open would leave a time and a note on screen that
-     belong to a day the teacher just left, so it closes — here and everywhere else the edit date
-     moves. */
-  detailFor = '';
+  /* Nothing on this screen has to be closed as the edit date moves any more (WO-2.53). The line that
+     stood here, and the same line at the two other places the edit date moves, shut the row's detail
+     panel: it described ONE student on ONE date and that date was this one, so moving it left a time
+     and a note on screen belonging to the day the teacher had just left. What holds them now is a
+     modal over the top of this screen, which cannot be open while the ✏ under it is pressed. */
   renderAttendance();
   /* "Not today" whichever side of today it falls on, which is the fact a teacher needs said out
      loud: a mark about to land on a day that is not the one she is standing in. */
@@ -2551,7 +2601,6 @@ export function lockDay() {
   if (!editingDay) return;
   const was = editingDay;
   editingDay = null;
-  detailFor = '';
   renderAttendance();
   /* Where "back" lands is the anchor, which is today on every ordinary day and the day the strip is
      standing on when it is not — so the sentence names it rather than claiming today. */
@@ -2600,7 +2649,6 @@ export function pageDays(direction) {
   else return;
   if (pageDaysBack === before && direction !== 'today') return;
   editingDay = null;
-  detailFor = '';
   renderAttendance();
   const shown = visibleColumns();
   /* A one-column window said "Back to this week, ending today" and "Showing Tuesday to Tuesday",
@@ -2640,22 +2688,18 @@ export function setSort(which) {
 }
 
 /*
-  THE ROW'S OWN DETAIL, opened and closed by the ⋯ at the end of the name (WO-2.10). One at a time,
-  the way one past column is unlocked at a time and for the same reason: a screen with twenty-six
-  panels open on it is a screen you scroll instead of read.
+  THE ROW'S OWN DETAIL PANEL IS GONE (WO-2.53), and this is where it was opened from.
 
-  What it holds is what the cell has no room for — the mark in words, the time a `T` or a `D`
-  settled, the note field, and the un-confirm — and it opens IN THE ROW rather than over it, which
-  is the work order's own wording. A dialog here would take the teacher off the grid mid-period,
-  and it would be the second screen this whole design is built to avoid.
+  It was a <tr> under the row, opened by the ⋯ at the end of the name, holding the mark in words, the
+  time a `T` or a `D` settled, the note field and the un-confirm — in the row rather than over it,
+  because a dialog on this screen would take the teacher off the grid mid-period. The reason it went
+  is that on the state EVERY row is in at the start of every period it repeated the row: the note and
+  the un-confirm were both gated on there being a confirmed mark, so twenty-six taps before the first
+  student is marked opened twenty-six panels holding the name, the date, the term counts and a hint.
+  Those two controls are in the history dialog now, one tap further in and on a surface that was
+  already about one student; the ⋯ became the door to that student's grades, which is the question
+  the owner was actually opening the panel to answer (see studentDoor()).
 */
-export function toggleDetail(studentId) {
-  detailFor = studentId && detailFor !== studentId ? studentId : '';
-  paintDetail();
-  if (!detailFor) return;
-  const student = findStudent(detailFor);
-  if (student) announce(fullName(student) + ' — details for ' + spokenDate(editDate()) + '.');
-}
 
 /* ───────────────────────────── THE KEYBOARD PATH (WO-2.5) ─────────────────────────────
 
@@ -2691,10 +2735,11 @@ export function toggleDetail(studentId) {
   second set of rules and no second writer — which is the same discipline the header states about
   `P` never being stored.
 
-  WHAT IS NOT HERE: no key takes the whole class, drops it, unlocks a past column, pages the window
-  or opens a row's detail. Those are the controls a mis-typed letter would be most expensive on, and
-  the deliverable names five letters, four arrows and Escape. The `?` that opens the shortcut list
-  is src/shell.js's, because it is about the dialog rather than about the grid.
+  WHAT IS NOT HERE: no key takes the whole class, drops it, unlocks a past column or pages the
+  window. Those are the controls a mis-typed letter would be most expensive on, and the deliverable
+  names five letters, four arrows and Escape. (The list had a fifth clause — "or opens a row's
+  detail" — until WO-2.53 deleted the panel it named.) The `?` that opens the shortcut list is
+  src/shell.js's, because it is about the dialog rather than about the grid.
 */
 
 const SELECTED_ROW_CLASS = 'attendance-row-selected';
@@ -2706,8 +2751,9 @@ function gridBody() { return document.getElementById(BODY_ID); }
 
   Read off the DOM rather than recomputed from visibleStudents(), and that is the load-bearing half:
   search, filter and sort have already decided which students are on screen and in what order, and a
-  second opinion here would let `↓` walk onto a row the teacher cannot see. The detail panel's own
-  <tr> carries no `data-attendance-row`, so it is never a stop.
+  second opinion here would let `↓` walk onto a row the teacher cannot see. (Every <tr> in the body
+  is a student's again since WO-2.53. The sentence that stood here said the detail panel's own <tr>
+  carried no `data-attendance-row` and was therefore never a stop; there is no such <tr> now.)
 */
 function selectableRows() {
   const body = gridBody();
@@ -2743,9 +2789,10 @@ function focusedRowId() {
   THE ROW WASH, AND NOTHING ELSE — no focus, no scroll. Called from renderRows(), so a selection
   survives a search keystroke, a filter pill and a sort.
 
-  A selection whose student is no longer on screen is DROPPED, which is the rule detailFor already
-  follows for the same reason: a highlight with no row under it belongs to nobody, and the next
-  letter would otherwise write into a student the teacher filtered away.
+  A selection whose student is no longer on screen is DROPPED: a highlight with no row under it
+  belongs to nobody, and the next letter would otherwise write into a student the teacher filtered
+  away. (The row panel's own value followed the same rule for the same reason until WO-2.53; this is
+  the only view-state value left that names a student.)
 */
 function paintSelection() {
   const body = gridBody();
@@ -4407,10 +4454,6 @@ function renderRows(sharedTotals) {
          terms, so per cell it would be a hundred and fifty-six walks for six answers. */
       offTerm: offTerm };
   });
-  /* Whether the day being edited is on screen at all. Paged two weeks back it is not — every column
-     is read-only there — and a ⋯ that opened a panel about a date behind the teacher would be the
-     only control on this screen that acted on a day she could not see. */
-  const editableToday = perColumn.some((col) => col.editable);
   /* Read once for the whole table rather than once per row: the cap is a fact about the class, and
      asking it twenty-six times would walk `openPasses` twenty-six times. */
   const passesFull = passes.atCap(doc, cls.id);
@@ -4433,11 +4476,13 @@ function renderRows(sharedTotals) {
     identity.append(el('span', 'attendance-student-totals',
       studentTotalsText(totals, student.id)));
     cell.append(avatar, identity);
-    /* The way into the row's own detail — the time, the note and the un-confirm. Drawn on every row
-       whenever the edit column accepts edits, rather than only on rows that have something in it:
-       a control that appears and disappears as marks are made is a control that moves the target
-       under a thumb aiming at the row below it. */
-    if (editableToday) cell.append(detailButton(student));
+    /* The way to this student's grades (WO-2.53). Drawn on EVERY row of every render, which is one
+       fewer condition than the ⋯ it replaces had: that button opened a panel about the day being
+       edited, so it was drawn only while some column accepted edits and vanished on a window paged
+       two weeks back. This one goes to a screen that has nothing to do with which day the strip is
+       standing on, and a door whose presence depends on state the teacher cannot see is a door she
+       cannot learn. */
+    cell.append(studentDoor(student));
     name.append(cell);
     /* The whole name stays reachable on `title`, the same arrangement a class card makes. */
     name.title = rosterName(student);
@@ -4470,12 +4515,6 @@ function renderRows(sharedTotals) {
      only in a variable would be a highlight the teacher watched vanish — or worse, an invisible one
      the next letter still wrote into. Filtered off the screen, it is dropped (paintSelection). */
   paintSelection();
-
-  /* The open panel goes back where it was. Rows are rebuilt by search, filter and sort, and a
-     detail that survived only in a variable would be a panel the teacher watched vanish. If the
-     student it belongs to has been filtered off the screen it closes, because a panel with no row
-     above it belongs to nobody. */
-  paintDetail(totals);
 }
 
 /*
@@ -4511,18 +4550,42 @@ function historyDoor(student) {
   return btn;
 }
 
-/* The ⋯ at the end of a name. Its pressed state is the panel below it, which is why it is a toggle
-   with `aria-pressed` rather than a link into something. */
-function detailButton(student) {
+/*
+  THE DOOR TO THIS STUDENT'S GRADES, at the end of their name (WO-2.53).
+
+  IT IS THE SAME BUTTON THE ⋯ WAS, RE-POINTED — not a seventh control. It sits inside the name cell,
+  where it costs no day column, which is what makes this compatible with the ruling historyDoor()
+  above records: WO-3.7 put the way to the grade screen one step further in, inside the history
+  dialog, because the name was already spoken for and the row's width is budgeted in 72px columns.
+  That argument is untouched. What WO-3.7 did not have was a control already on the row and doing
+  nothing — in August the ⋯ was believed to be carrying the note and the un-confirm on every row.
+
+  NO `aria-pressed` AND DELIBERATELY NO `aria-haspopup`. There is no pressed state, because there is
+  no panel to be open; and this navigates to a screen rather than opening a dialog. The identity
+  button an inch to its left DOES open one and says so correctly — two adjacent controls promising
+  opposite things is worse than either being wrong on its own.
+
+  IT CARRIES `data-student-detail`, WHICH IS ALREADY DELEGATED. src/shell.js routes that hook from
+  the score grid's names and from the door in the history dialog; this is a third element carrying
+  it, and src/shell.js gained no line for it. showStudentDetail() handles an opener that is not
+  inside a modal already — `opener.closest('.modal-overlay')` answers null and nothing is closed.
+
+  `›` RATHER THAN A WORD, and rather than the ⋯ it replaces. The ⋯ promised "more of this, here" and
+  this button leaves the screen; a word is paid for in day columns, because the name cell is `nowrap`
+  and its min-content is a floor the browser widens the table to honour (see the cap block in
+  src/attendance.css). Whether the chevron reads as "go to this student" is a reading on the glass,
+  and the owner's to take.
+*/
+function studentDoor(student) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'attendance-detail-btn' + (detailFor === student.id ? ' active' : '');
-  btn.setAttribute('data-attendance-detail', student.id);
-  btn.setAttribute('aria-pressed', detailFor === student.id ? 'true' : 'false');
-  btn.setAttribute('aria-label', (detailFor === student.id ? 'Hide' : 'Show') + ' the mark details '
-    + 'for ' + fullName(student) + ' on ' + spokenDate(editDate()));
-  btn.title = 'Time, note and un-confirm';
-  btn.textContent = '⋯';
+  btn.className = 'attendance-student-door';
+  btn.setAttribute('data-student-detail', student.id);
+  /* Named for where it goes, because a chevron reads as nothing to a screen reader and the name
+     beside it is a different control with its own label. */
+  btn.setAttribute('aria-label', 'Grade detail for ' + fullName(student));
+  btn.title = 'Where ' + rosterName(student) + '’s grade comes from';
+  btn.textContent = '›';
   return btn;
 }
 
@@ -4531,19 +4594,22 @@ function detailButton(student) {
   follow the same rule: rebuild the shared per-render pass, then replace only the text it feeds.
 
   EXPORTED AT WO-2.17, AND IT IS EVERY FIGURE ON THIS SCREEN THAT KNOWS WHICH TERM IS OPEN — the
-  class line, one line per row, and the open detail panel. Those three read getSelectedTerm() and
-  the rest of the registry does not: the columns are a window of recent dates and they do not move
-  when the term does. So this is what a term change owes the teacher here, and renderAttendance()
-  would be the same three lines plus a grid of students × days rebuilt for nothing. Called from
-  src/shell.js's afterTermChange(), which is where the order of operations lives; this module still
-  does not know that a term nav exists.
+  class line and one line per row. Both read getSelectedTerm() and the rest of the registry does
+  not: the columns are a window of recent dates and they do not move when the term does. So this is
+  what a term change owes the teacher here, and renderAttendance() would be the same two lines plus
+  a grid of students × days rebuilt for nothing. Called from src/shell.js's afterTermChange(), which
+  is where the order of operations lives; this module still does not know that a term nav exists.
+  *(There was a third figure until WO-2.53 — the open row detail panel, which carried the term and
+  year counts for one student. It went with the panel, and the harness check that asserted it went
+  with it, for the reason WO-2.18 wrote down: what that check was guarding against is a painted
+  surface nobody asserts, and there is no third surface left to be one.)*
 
-  A FOURTH SURFACE SINCE WO-2.51, and it is the one that is not a figure: the band above the grid
+  A THIRD SURFACE SINCE WO-2.51, and it is the one that is not a figure: the band above the grid
   says whether today belongs to a term other than the open one, so it is true or false BECAUSE of
   which term is open, and the tap that switches term is the tap that has to take it away. It is
   painted here rather than through a second call from afterTermChange() for the reason that chain's
   own comment gives — each branch asks its own module for the narrowest repaint that makes its
-  screen true, and that repaint is now these four things rather than three. The name of this
+  screen true, and that repaint is now these three things rather than two. The name of this
   function is one word narrower than what it does; the alternative was two entry points into this
   module for one event, which is how a screen ends up half-repainted by whichever caller forgot.
   It costs two elements on the write path, where the answer cannot have changed — cheap enough not
@@ -4570,8 +4636,8 @@ export function paintRenderedTotals() {
   */
   if (anchorDate() !== paintedAnchor) { renderAttendance(); return; }
   /* A write can change active-filter membership without rebuilding tbody. Fold the whole roster so
-     every row that was present before the write, and its still-open detail panel, has a value in
-     this render's maps even when that student is no longer visibleStudents(). */
+     every row that was present before the write has a value in this render's maps even when that
+     student is no longer visibleStudents(). */
   const students = rosterOf(cls);
   const totals = totalsForRender(cls, getSelectedTerm(), students);
   paintClassTotals(totals);
@@ -4580,103 +4646,7 @@ export function paintRenderedTotals() {
     const line = row && row.querySelector('.attendance-student-totals');
     if (line) line.textContent = studentTotalsText(totals, student.id);
   });
-  paintDetail(totals);
   paintBanner(visibleColumns());
-}
-
-/*
-  THE ROW'S DETAIL PANEL, as a <tr> under the row it belongs to. One at a time.
-
-  It is a row rather than an overlay because "reachable without leaving the row" is the deliverable,
-  and because a dialog on this screen would be the second screen the whole registry design refuses.
-  It spans the whole table, so the note field gets the width a sentence needs even at 390px, where
-  the cell it describes is 44px wide.
-
-  WHAT IT OFFERS DEPENDS ON WHAT THE CELL HOLDS, and the note field is the case worth naming: a note
-  needs a mark to live on, and a present student HAS no entry — writing one would be the stored-`P`
-  trap arriving through a text field. So a confirmed-present student gets the un-confirm and nothing
-  else, and the panel says why rather than showing a field that would silently discard what was
-  typed into it.
-*/
-function paintDetail(sharedTotals) {
-  const body = document.getElementById(BODY_ID);
-  if (!body) return;
-  const existing = body.querySelector('tr[data-attendance-detail-row]');
-  if (existing) existing.remove();
-
-  const cls = openClass();
-  if (!detailFor || !cls) return;
-  const row = body.querySelector('tr[data-attendance-row="' + detailFor + '"]');
-  const student = findStudent(detailFor);
-  if (!row || !student) { detailFor = ''; return; }
-
-  const on = editDate();
-  const record = recordFor(cls.id, on);
-  const state = stateOf(cls.id, on);
-  /* COVERED sits beside DID_NOT_MEET here rather than being a case of its own: the panel edits a
-     mark, and a day with no meeting on it has no mark to edit. Which way the day came to be
-     meeting-less is a question for the state line above, not for a panel that would have nothing
-     in it. */
-  /* WO-2.50 sits beside them on the same line and for the same reason: a day outside every term of
-     this class has no record, so it has no mark for this panel to edit — and every write the panel
-     offers would be refused by the gate anyway. */
-  if (state === DID_NOT_MEET || state === COVERED || !writableDate(on, cls)
-    || offTermDay(cls.id, on)) { detailFor = ''; return; }
-  const entry = marksOf(record)[detailFor];
-  const code = readingOf(record, detailFor);
-  const at = timeOf(entry);
-
-  const tr = el('tr', 'attendance-detail-row');
-  tr.setAttribute('data-attendance-detail-row', detailFor);
-  const td = el('td');
-  /* The name column plus one per day. Read off the row above rather than counted here, so a
-     narrower viewport that drew three columns cannot leave this cell short. */
-  td.colSpan = row.children.length;
-  const box = el('div', 'attendance-detail');
-
-  box.append(el('span', 'attendance-detail-who',
-    fullName(student) + ' — ' + spokenDate(on)));
-  const term = getSelectedTerm();
-  const totals = sharedTotals || totalsForRender(cls, term, [student]);
-  const year = totals.year.get(student.id);
-  const selected = totals.dated ? totals.selected.get(student.id) : null;
-  box.append(el('span', 'attendance-detail-totals',
-    (selected
-      ? term.label + ': ' + countText(selected) + ' · ' + percentText(selected) + ' | '
-      : 'Term dates not set · ')
-      + 'Year: ' + countText(year) + ' · ' + percentText(year)));
-  const says = el('span', 'attendance-detail-mark',
-    wordFor(code) + (at ? ' at ' + clockTime(at) : ''));
-  says.classList.add('attendance-cell-' + (code === UNCONFIRMED ? 'untaken' : code));
-  box.append(says);
-
-  if (entry && code !== UNCONFIRMED) {
-    const field = document.createElement('input');
-    field.type = 'text';
-    field.className = 'attendance-detail-note';
-    field.setAttribute('data-attendance-note', detailFor);
-    field.setAttribute('data-attendance-note-date', on);
-    field.value = noteOf(entry);
-    field.placeholder = 'Add a note — missed the bus, left for the nurse…';
-    field.setAttribute('aria-label', 'Note on ' + fullName(student) + '’s mark for '
-      + spokenDate(on));
-    box.append(field);
-  } else {
-    box.append(el('span', 'attendance-detail-hint', code === UNCONFIRMED
-      ? 'Nobody has confirmed this student yet. Tap their question mark once for present.'
-      : 'Present is stored as no mark at all, so there is nothing here to note. Mark them absent, '
-        + 'tardy, at an event or dismissed and the note field appears.'));
-  }
-
-  if (record && code !== UNCONFIRMED) {
-    const back = actionButton('Un-confirm', 'data-attendance-unconfirm', detailFor);
-    back.title = 'Put this student back to a question mark, as if nobody had looked at them yet.';
-    box.append(back);
-  }
-
-  td.append(box);
-  tr.append(td);
-  row.after(tr);
 }
 
 /* The whole screen, from the open document. Called at open and after anything that changes what
@@ -4767,9 +4737,10 @@ export function resetRegistry() {
     AND THE TERM ROLLS OVER HERE, ON ARRIVAL AND NOWHERE ELSE (WO-2.52). WO-2.51 ruled that nothing
     switches by itself and this narrows that ruling rather than deleting it: what it was protecting
     is a teacher part way through entering the last week of Quarter 1, and arrival is the one moment
-    nobody is part way through anything. It goes here, beside the six other things every arrival
-    already resets, because this is THE arrival function and it has two callers — one place to add
-    it is one place to forget it, and two is two.
+    nobody is part way through anything. It goes here, beside the six values every arrival already
+    puts back, because this is THE arrival function and it has two callers — one place to add it is
+    one place to forget it, and two is two. (Seven of them until WO-2.53 took the row panel's student
+    out of the view state; counted off the lines below, the way that block's own header says to.)
 
     FIRST, BEFORE THE SIX BELOW, because everything under it and every paint that follows reads the
     selected term: the anchor is derived from it, the totals are scoped to it, and the strip is
@@ -4789,7 +4760,6 @@ export function resetRegistry() {
   searchText = '';
   filterCode = 'all';
   sortBy = 'last';
-  detailFor = '';
   /* The keyboard starts on nobody in a new class, for the reason the paragraph above gives about
      every other value here: the screen is opened with a class walking through the door, and a
      selection carried in from the class before it would put the first letter typed onto a student
