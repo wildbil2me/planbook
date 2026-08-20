@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Who needs you (WO-4.2 · 4.3 · 4.5)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase4.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Every name, number and sentence below is typed in — no rule was evaluated to produce any of it.</span>
+  <span>Concern · praise · cooldown · the quiet middle ·
+    <a href="../../plans/work-orders/phase-4-signals.md">WO-4.2 · 4.3 · 4.5</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="signals.html" class="here">Who needs you</a>
+  <a href="behavior.html">Behavior log</a>
+  <a href="glance.html">Glance page</a>
+  <a href="calendar.html">Calendar</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!-- The app frame, copied from index.html rather than re-derived.
+
+     THE HEADER'S BOTTOM STRIP CARRIES THE CLASS TABS, which is the claim that this screen is one
+     of a class's own surfaces. WO-6.6 is the precedent and the scar: the calendar was built as a
+     destination and wired as a cul-de-sac — arriving replaced the whole class strip with a caption
+     and the way out was one button inside a panel header. The owner's ruling there was that a
+     surface which is ABOUT a class belongs on the switcher, and this screen is the second of that
+     kind. So: tabs above, five segments below, and the toolbar's own filter answers the question a
+     tab row cannot ("all of them"). -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p>Ms Toomey · St John's High School</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab" type="button">All classes</button>
+      <button class="cls-tab active" type="button">Biology I</button>
+      <button class="cls-tab" type="button">Biology I · P4</button>
+      <button class="cls-tab" type="button">Anatomy</button>
+      <button class="cls-tab" type="button">Env Science</button>
+      <button class="cls-tab" type="button">Research</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mk-section">The list — WO-4.2 and WO-4.3, on a Sunday afternoon in October</div>
+
+<main class="main">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Who needs you</h2>
+          <p>
+            Both directions, ranked by how much changed rather than by how high or low it is. Every
+            line under a name is the rule's own sentence, built from the numbers that fired it.
+          </p>
+        </div>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">
+            <span aria-hidden="true">🔕</span> Thresholds
+          </button>
+        </div>
+      </div>
+
+      <!-- FIVE SEGMENTS. The fourth was already a reversal (WO-6.6, the owner, 2026-08-19) of a
+           ruling that said THREE TABS, NOT FOUR — so a fifth is not something a drawing may add
+           quietly. It is drawn because the alternative is the cul-de-sac WO-6.6 was opened to fix,
+           and because this list is about a class in exactly the sense the calendar is. What it costs
+           at 390px is measured further down this page, in the two narrow strips, and the answer is
+           an amber note rather than a decision. -->
+      <div class="screen-nav" role="tablist" aria-label="Screens for this class">
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Scores</button>
+        <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Calendar</button>
+        <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Signals</button>
+      </div>
+    </div>
+
+    <!-- The toolbar: which class this list is about, and what it is sorted by. The filter keeps
+         "All classes" for src/calendar-view.js's reason — it is the one thing a tab row cannot say,
+         and a teacher working through this screen is working across five classes, not one. -->
+    <div class="sig-toolbar">
+      <span class="sig-toolbar-label">Showing</span>
+      <button class="pill active" type="button">All classes</button>
+      <button class="pill" type="button">Biology I</button>
+      <button class="pill" type="button">Biology I · P4</button>
+      <button class="pill" type="button">Anatomy</button>
+      <button class="pill" type="button">Env Science</button>
+      <button class="pill" type="button">Research</button>
+      <span class="sig-sorted">Ranked by <strong>change over the last 4 assignments</strong></span>
+    </div>
+
+    <div class="sig-two">
+      <!-- ══ CONCERN ══════════════════════════════════════════════════════════════════════ -->
+      <div class="sig-col concern">
+        <div class="sig-col-head concern">
+          Concern · 4
+          <span class="sig-col-note">worst change first</span>
+        </div>
+        <div class="sig-list">
+
+          <button class="sig-row" type="button">
+            <span class="avatar av5" aria-hidden="true" style="width:30px;height:30px;font-size:11px">OB</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av5" aria-hidden="true"></span>
+                Owen Bennett <span class="sig-row-class">Biology I</span>
+              </span>
+              <span class="sig-row-why">Grade fell 12 points across the last 4 assignments — 81% to 69%.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">3 missing</span>
+                <span class="sig-tag">2 scores under 60%</span>
+              </span>
+            </span>
+            <span class="sig-delta down">−12<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av7" aria-hidden="true" style="width:30px;height:30px;font-size:11px">SH</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av7" aria-hidden="true"></span>
+                Sami Haddad <span class="sig-row-class">Research</span>
+              </span>
+              <span class="sig-row-why">Grade fell 9 points across the last 4 assignments — 74% to 65%.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">3 scores in a row under 60%</span>
+              </span>
+            </span>
+            <span class="sig-delta down">−9<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av6" aria-hidden="true" style="width:30px;height:30px;font-size:11px">RE</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av6" aria-hidden="true"></span>
+                Ruth Egan <span class="sig-row-class">Anatomy</span>
+              </span>
+              <span class="sig-row-why">5 absences in the last 20 meetings of this class.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">3 missing</span>
+                <span class="sig-tag">attendance 88%</span>
+              </span>
+            </span>
+            <span class="sig-delta flat">5<span class="sig-delta-unit">absences</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av1" aria-hidden="true" style="width:30px;height:30px;font-size:11px">TM</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av1" aria-hidden="true"></span>
+                Theo Marsh <span class="sig-row-class">Env Science</span>
+              </span>
+              <span class="sig-row-why">Current grade 61%, which is below the 65% you set.</span>
+            </span>
+            <span class="sig-delta flat">61%<span class="sig-delta-unit">grade</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <!-- WO-4.5: hidden, not deleted, and counted. Drawn expanded in the next state. -->
+        <button class="sig-hidden" type="button">
+          2 more are quiet for now — you wrote home about them in the last 14 days. Show →
+        </button>
+      </div>
+
+      <!-- ══ PRAISE ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="sig-col praise">
+        <div class="sig-col-head praise">
+          Praise · 4
+          <span class="sig-col-note">biggest climb first</span>
+        </div>
+        <div class="sig-list">
+
+          <button class="sig-row" type="button">
+            <span class="avatar av4" aria-hidden="true" style="width:30px;height:30px;font-size:11px">CD</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av4" aria-hidden="true"></span>
+                Claire Dumont <span class="sig-row-class">Anatomy</span>
+              </span>
+              <span class="sig-row-why">Grade rose 14 points across the last 4 assignments — 66% to 80%.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">biggest climb in the class</span>
+              </span>
+            </span>
+            <span class="sig-delta up">+14<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av2" aria-hidden="true" style="width:30px;height:30px;font-size:11px">DC</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av2" aria-hidden="true"></span>
+                Daniel Cho <span class="sig-row-class">Biology I</span>
+              </span>
+              <span class="sig-row-why">Grade rose 11 points across the last 4 assignments — 58% to 69%.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">came off the concern list 9 days ago</span>
+              </span>
+            </span>
+            <span class="sig-delta up">+11<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av8" aria-hidden="true" style="width:30px;height:30px;font-size:11px">NG</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av8" aria-hidden="true"></span>
+                Nora Gallagher <span class="sig-row-class">Env Science</span>
+              </span>
+              <span class="sig-row-why">Grade rose 6 points across the last 4 assignments — 88% to 94%.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">no missing work in 8 assignments</span>
+              </span>
+            </span>
+            <span class="sig-delta up">+6<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+
+          <button class="sig-row" type="button">
+            <span class="avatar av3" aria-hidden="true" style="width:30px;height:30px;font-size:11px">ES</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av3" aria-hidden="true"></span>
+                Elena Suarez <span class="sig-row-class">Biology I · P4</span>
+              </span>
+              <span class="sig-row-why">8 assignments in a row handed in on time.</span>
+            </span>
+            <span class="sig-delta flat">8<span class="sig-delta-unit">in a row</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <button class="sig-hidden" type="button">
+          1 more is quiet for now — you wrote home about her on the 4th. Show →
+        </button>
+      </div>
+    </div>
+
+    <!-- WO-4.2's last acceptance line, drawn: "the behavior rule is inert until WO-4.4 exists, and
+         says so rather than erroring." Quiet grey and not amber, because nothing is wrong. -->
+    <div class="sig-inert">
+      Two rules are not running yet: <strong>behavior log entries</strong> needs somewhere to write
+      them down, which arrives with the behavior log. Nothing above is affected.
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Ranked by change, and the number in the strong position is the change.</strong>
+    <code>plans/ROADMAP.md</code> Phase 4 is explicit that this phase ranks by delta and not by
+    level — "top of the class" surfaces the same four students every week and is worth nothing. So
+    the bold figure on every row is the delta, the current grade is not on the row at all, and the
+    two column heads say <em>worst change first</em> and <em>biggest climb first</em> out loud.
+    A list that ranked by delta and drew the level big would be arguing with itself.
+  </div>
+
+  <div class="mk-caption">
+    <strong>Four rules have no delta, and they say a count instead.</strong> "5 absences", "61%",
+    "8 in a row" — there is no before-and-after to draw, and an empty column in that slot reads as
+    a missing value rather than an absent one. They sort below every real delta, which is the
+    drawing's guess at "ordered by severity" and one of the questions below.
+  </div>
+
+  <div class="mk-caption">
+    <strong>One student, one row.</strong> Owen is failing, missing three, and has two scores under
+    60%: that is one conversation, not three rows, and three rows for him would push two other
+    students off the screen. The extra rules ride as tags and the card opens with all of them in
+    full. WO-4.2 says "ordered by severity, each row tapping through to the student" and never says
+    how many rows one student may hold.
+  </div>
+
+  <div class="mk-caption">
+    <strong>Nothing on this screen renders a plan, an accommodation, medical text or behavior-plan
+    text.</strong> Not redacted — absent. The rows carry grades, counts and dates, and the one
+    <code>supports</code>-derived thing anywhere in this room is the attendance clause the behavior
+    log drawing shows at the point a teacher marks an absence. <code>CLAUDE.md</code>
+    § Accommodations is the standard, and WO-6.4's reworded acceptance line is the wording.
+  </div>
+
+  <div class="mk-section">The cooldown, expanded — WO-4.5</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Concern · 4, and 2 quiet for now</h2>
+          <p>The same column with its suppressed rows opened. Hidden, counted, and never dropped.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sig-list">
+      <button class="sig-row" type="button">
+        <span class="avatar av5" aria-hidden="true" style="width:30px;height:30px;font-size:11px">OB</span>
+        <span class="sig-row-main">
+          <span class="sig-row-name">
+            <span class="sig-dot av5" aria-hidden="true"></span>
+            Owen Bennett <span class="sig-row-class">Biology I</span>
+          </span>
+          <span class="sig-row-why">Grade fell 12 points across the last 4 assignments — 81% to 69%.</span>
+        </span>
+        <span class="sig-delta down">−12<span class="sig-delta-unit">points</span></span>
+        <span class="sig-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+    <div class="sig-muted">
+      <span class="avatar av9" aria-hidden="true" style="width:26px;height:26px;font-size:10px">JP</span>
+      <span class="sig-row-main">
+        <span class="sig-row-name">Jonah Price <span class="sig-row-class">Anatomy</span></span>
+        <span class="sig-row-why">
+          Fell 10 points — but you emailed his guardian about this on the 6th, 9 days ago.
+          Back on the list on the 20th.
+        </span>
+      </span>
+      <button class="sig-undo" type="button">Write anyway</button>
+    </div>
+    <div class="sig-muted">
+      <span class="avatar av0" aria-hidden="true" style="width:26px;height:26px;font-size:10px">MK</span>
+      <span class="sig-row-main">
+        <span class="sig-row-name">Mia Kowalski <span class="sig-row-class">Research</span></span>
+        <span class="sig-row-why">
+          4 missing — you emailed her counselor about missing work on the 11th, 4 days ago.
+          Back on the list on the 25th.
+        </span>
+      </span>
+      <button class="sig-undo" type="button">Write anyway</button>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>A suppressed row says which contact silenced it and when it comes back.</strong> A count
+    with no door on it is a count a teacher cannot trust, and "3 suppressed" with no names is
+    indistinguishable from a list that has quietly lost three students. The cooldown keys on
+    <em>student + rule</em>, per WO-4.5's trap, which is why Jonah is hidden for the grade fall and
+    would still appear if he started missing work.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Should <em>Write anyway</em> exist?</strong> WO-4.5 requires suppressed hits to be
+    visible and recoverable; it says nothing about writing to a guardian you contacted nine days
+    ago. Without the button this is a lockout rather than a cooldown, and a teacher who has just
+    had a phone call has a real reason to override it. With it, the feature that stops the weekly
+    list being identical is one tap from being ignored. Drawn with the button, quietly.
+    <strong>The owner's call.</strong>
+  </div>
+
+  <div class="mk-section">The signal card — one student, every rule she tripped, and the arithmetic</div>
+
+  <!-- Drawn inline rather than in a `.modal-overlay`, so it and the list above can both be seen. In
+       the app this is a real dialog on top of the list, which is the point: the list is a surface a
+       teacher works down for ten minutes, and one student is a task she finishes and dismisses —
+       plans/gradebook-surfaces.md's own test, applied rather than re-argued. -->
+  <div style="max-width:520px;margin:12px auto 0">
+    <div class="modal-panel" style="width:100%;animation:none">
+      <div class="modal-header">
+        <h2>Owen Bennett</h2>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="sig-card-hero">
+          <span class="avatar av5" aria-hidden="true" style="width:44px;height:44px;font-size:15px">OB</span>
+          <div class="sig-card-who">
+            <div class="sig-card-name">Owen Bennett</div>
+            <div class="sig-card-sub">Biology I · Quarter 1 · 3 rules fired</div>
+          </div>
+          <div class="sig-card-grade">69%<br>D+</div>
+        </div>
+
+        <div class="modal-section-label">Why he is on the list</div>
+
+        <div class="sig-card-rule concern">
+          <div class="sig-card-rule-why">
+            Grade fell 12 points across the last 4 assignments — 81% to 69%.
+          </div>
+          <div class="sig-card-ev">
+            <span class="sig-card-ev-item">before <b>81.4%</b></span>
+            <span class="sig-card-ev-item">after <b>69.2%</b></span>
+            <span class="sig-card-ev-item">change <b>−12.2</b></span>
+            <span class="sig-card-ev-item">window <b>4 assignments</b></span>
+          </div>
+          <div class="sig-card-thresh">
+            Your threshold: fell 10 points across 4 assignments. <a href="#">Change it</a>
+          </div>
+        </div>
+
+        <div class="sig-card-rule concern">
+          <div class="sig-card-rule-why">3 missing assignments.</div>
+          <div class="sig-card-ev">
+            <span class="sig-card-ev-item">Cell diagram <b>missing</b></span>
+            <span class="sig-card-ev-item">Osmosis lab <b>missing</b></span>
+            <span class="sig-card-ev-item">Reading 4 <b>missing</b></span>
+          </div>
+          <div class="sig-card-thresh">
+            Your threshold: 3 missing. <a href="#">Change it</a> · marked by you, never by a due date
+          </div>
+        </div>
+
+        <div class="sig-card-rule concern">
+          <div class="sig-card-rule-why">2 scores under 60% — 55% and 48%.</div>
+          <div class="sig-card-ev">
+            <span class="sig-card-ev-item">Osmosis quiz <b>55%</b></span>
+            <span class="sig-card-ev-item">Unit 2 test <b>48%</b></span>
+          </div>
+          <div class="sig-card-thresh">
+            Your threshold: 3 in a row under 60% — this is 2, so it is drawn as context rather than
+            as a flag. <a href="#">Change it</a>
+          </div>
+        </div>
+
+        <div class="modal-section-label">What you have written down</div>
+        <div class="log-list">
+          <div class="log-entry">
+            <div class="log-entry-top">
+              <span class="log-entry-kind behavior">Behavior</span>
+              <span class="log-entry-subject">Off task, second time this week</span>
+              <span class="log-entry-when">Oct 9</span>
+            </div>
+          </div>
+          <div class="log-entry">
+            <div class="log-entry-top">
+              <span class="log-entry-kind">Note</span>
+              <span class="log-entry-subject">Said he is working nights</span>
+              <span class="log-entry-when">Oct 2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section-label">What to do</div>
+        <div class="sig-card-acts">
+          <button class="sig-card-act" type="button">Open his grades</button>
+          <button class="sig-card-act" type="button">Write something down</button>
+          <button class="sig-card-act" type="button" disabled title="Outreach arrives with Phase 5">
+            Draft an email
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Every number under a sentence is the number the rule measured.</strong> WO-4.1 hands a
+    rule its own measured values and nothing else — not the document, not the clock, not the
+    threshold it just crossed — so that an explanation can never drift from the arithmetic behind
+    it. This card is that contract drawn: the sentence on top, the values under it, and the
+    threshold named as <em>yours</em> with a way to change it, because an absent threshold key IS
+    its default and a teacher who cannot see that has been given an opinion she cannot argue with.
+  </div>
+
+  <div class="mk-caption">
+    <strong>The third rule is drawn as context, not as a flag.</strong> Two scores under 60% against
+    a threshold of three: showing it is the difference between "why is he here?" and "here is
+    everything I know". Whether a card may show a rule that did <em>not</em> fire is a question
+    below — it is a short step from there to a card that argues for a signal the engine declined to
+    raise.
+  </div>
+
+  <div class="mk-caption">
+    <strong>One disabled control is the whole of Phase 5 on this drawing.</strong>
+    <em>Draft an email</em> is the door WO-5.3 and WO-5.4 both reach for by name — "entry points
+    from the signal card", "contact history on the signal card" — and drawing the draft, the
+    template picker or the audience list here would be pre-empting decisions that belong to that
+    phase. What the door buys now is that the card's shape does not have to change when outreach
+    lands.
+  </div>
+
+  <div class="mk-section">The quiet middle — WO-4.5's other half</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>The quiet middle</h2>
+          <p>Neither flagged, nor praised, nor contacted this term — and how long that has been true.</p>
+        </div>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">Back to the list</button>
+        </div>
+      </div>
+    </div>
+    <div class="sig-quiet-note">
+      No threshold will ever produce this list. These are the students a busy teacher loses track of
+      because nothing about them is wrong — ranked by how long it has been since anything was
+      written down, said, or sent.
+    </div>
+    <div class="sig-list">
+      <button class="sig-row" type="button">
+        <span class="avatar av2" aria-hidden="true" style="width:30px;height:30px;font-size:11px">HN</span>
+        <span class="sig-row-main">
+          <span class="sig-row-name">
+            <span class="sig-dot av2" aria-hidden="true"></span>
+            Hana Nakamura <span class="sig-row-class">Biology I</span>
+          </span>
+          <span class="sig-row-why">78% and steady. Nothing written down, nothing sent, all term.</span>
+        </span>
+        <span class="sig-since">41 days<span class="sig-delta-unit">since anything</span></span>
+        <span class="sig-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="sig-row" type="button">
+        <span class="avatar av6" aria-hidden="true" style="width:30px;height:30px;font-size:11px">LF</span>
+        <span class="sig-row-main">
+          <span class="sig-row-name">
+            <span class="sig-dot av6" aria-hidden="true"></span>
+            Luca Ferrari <span class="sig-row-class">Anatomy</span>
+          </span>
+          <span class="sig-row-why">83%, no missing work, no absences. Last note was on the first day.</span>
+        </span>
+        <span class="sig-since">39 days<span class="sig-delta-unit">since anything</span></span>
+        <span class="sig-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="sig-row" type="button">
+        <span class="avatar av1" aria-hidden="true" style="width:30px;height:30px;font-size:11px">AO</span>
+        <span class="sig-row-main">
+          <span class="sig-row-name">
+            <span class="sig-dot av1" aria-hidden="true"></span>
+            Adaeze Okonkwo <span class="sig-row-class">Env Science</span>
+          </span>
+          <span class="sig-row-why">91% and never late. You have not written home once.</span>
+        </span>
+        <span class="sig-since">37 days<span class="sig-delta-unit">since anything</span></span>
+        <span class="sig-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>A third list, not a third column.</strong> The two columns above share a ranking — how
+    much changed — and this one does not: it is ranked by how long it has been, which is a different
+    question with a different unit. Putting it beside them would imply it shares their order.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Is the quiet middle a panel or a page?</strong> Drawn twice on purpose: the glance page
+    reaches it through a <code>The quiet middle · 9</code> control in a panel header, and here it is
+    a panel of its own under the two columns. If it is a panel here, the control up there needs
+    somewhere to land; if it is a page, this screen has two states and the switcher has nothing to
+    say about which one you are on. <strong>Cheaper to answer before WO-4.5 is cut than after.</strong>
+  </div>
+
+  <div class="mk-section">Presentation mode — the screen closes rather than redacts</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Who needs you</h2>
+          <p>Both directions, ranked by how much changed rather than by how high or low it is.</p>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="sig-blocked-mark" aria-hidden="true">🔒</div>
+      <p class="sig-blocked-lead">Not while you are projecting.</p>
+      <p class="sig-blocked-text">
+        This screen is a list of named students who are struggling, which is the one thing in
+        Planbook that should never be on a classroom wall. Presentation mode is on — turn it off
+        with the screen button in the header and this comes straight back.
+      </p>
+    </div>
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Closed, or redacted to initials?</strong> Every other surface in the app redacts:
+    the roster hides plan details behind a tap, the calendar drops review dates out of the list it
+    is handed, the student detail shows the grade and hides <code>supports</code>. This one is drawn
+    as the first screen that refuses altogether, on the grounds that redacting a ranked list of who
+    is failing to "OB, SH, RE" protects nobody in a room of thirty who know each other's initials.
+    The cost is real: a teacher who leaves presentation mode on all period cannot use the screen at
+    all. <strong>The owner's call, and the most consequential question on this page.</strong>
+  </div>
+
+  <div class="mk-section">The fifth segment at 390px — the measurement, not the argument</div>
+
+  <div class="mk-caption">
+    <strong>Both strips below are 390px wide, which is the narrowest phone the suite supports.</strong>
+    The top one is <code>.screen-nav</code> exactly as it ships — <code>overflow-x: auto</code>, so
+    the fifth segment is reachable only by swiping a control a teacher does not know scrolls. That is
+    WO-6.6's own trap, one segment further along. The bottom one is the same strip with
+    <code>flex-wrap: wrap</code>, drawn with an inline style because this sheet may not restyle a
+    class <code>src/assignments.css</code> owns.
+  </div>
+
+  <div style="max-width:390px;margin:12px auto 0;border:1px dashed #c0cad5;padding:8px;background:#fff">
+    <div class="screen-nav" role="tablist" aria-label="Screens for this class — as it ships">
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Scores</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Calendar</button>
+      <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Signals</button>
+    </div>
+  </div>
+
+  <div style="max-width:390px;margin:8px auto 0;border:1px dashed #c0cad5;padding:8px;background:#fff">
+    <div class="screen-nav" role="tablist" aria-label="Screens for this class — wrapped" style="flex-wrap:wrap;overflow-x:visible">
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Scores</button>
+      <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Calendar</button>
+      <button class="screen-nav-btn active" type="button" role="tab" aria-selected="true">Signals</button>
+    </div>
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Five segments, wrapped — or four and a door somewhere else?</strong> The wrap is one
+    declaration in a shipped stylesheet and it makes every segment visible and thumb-sized at 390px,
+    at the cost of a two-row strip on a phone. The alternatives, both real: shorten the labels
+    (<em>Roll · Work · Scores · Month · Signals</em>), which trades a scroll for five words a teacher
+    has to learn; or keep four and reach this screen from the glance page only, which is the
+    cul-de-sac WO-6.6 was opened to remove. Drawn wrapped. <strong>The owner's call, and it is a
+    change to a shipped sheet, so it belongs in the work order rather than in this drawing.</strong>
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>What makes one concern worse than another?</strong> WO-4.2 says the list is "ordered by
+    severity" and nothing anywhere defines severity across rules. Is a 12-point fall worse than five
+    absences? Than a 61% that has been 61% all term? The drawing invents an order — real deltas
+    first, biggest first, then countable rules — and that order is a guess. It is the one open
+    question here that changes what the engine has to return rather than only what the screen draws.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>May the list be re-sorted?</strong> The toolbar states the ranking instead of offering
+    it, on the grounds that a "sort by grade" control puts the level back in charge of the order this
+    phase exists to replace. But a teacher looking for the four students she must talk to before
+    Friday may reasonably want the failing ones together. Drawn as a statement, not a control.
+  </div>
+
+</main>
+
+</body>
+</html>

@@ -11,6 +11,35 @@ gradebook with alarms. And it has a design trap that kills it: **rank by delta, 
 Thresholds and defaults are specified in [`../../docs/data-model.md`](../../docs/data-model.md)
 § Signal thresholds. Implement those numbers as defaults, all of them editable.
 
+**The screens are drawn, and the drawings are not a work order.** [`signals.html`](../../design/mockups/signals.html)
+and [`behavior.html`](../../design/mockups/behavior.html) in
+[`design/mockups/`](../../design/mockups/README.md) were made 2026-08-20, before any of this phase's
+screens existed, under [`PROTOCOL.md`](../../design/mockups/PROTOCOL.md). **Read them before building
+WO-4.2, 4.3, 4.4 or 4.5** — `proposed-phase4.css` is written to be lifted into `src/signals-view.css`
+almost as-is, and re-deriving it is the mistake `CLAUDE.md` § Reference implementation is about. Each
+of the four work orders below carries a **Surface** deliverable naming what the drawing settles.
+
+**What the drawings do NOT settle, and what happens if this list is ignored.** WO-1.25's ruling is
+that a drawing is not a work order: the questions it raises are answered here or they are not
+answered, and an amber note on a picture is not a tracker. Four are the owner's and are carried into
+the work orders below as **Open** lines. The one that is not merely cosmetic:
+
+- **What makes one concern worse than another** (WO-4.2). "Ordered by severity" appears in that work
+  order and severity across rules is defined nowhere — a 12-point fall against five absences against
+  a 61% that has been 61% all term. The drawing invents an order and says so. **This one changes what
+  the engine returns, not only what a screen draws.**
+- **Whether the signals screen closes or redacts in presentation mode** (WO-4.2). Every other surface
+  in the app redacts; this is the only one whose whole content is a ranked list of named students in
+  trouble, and it is drawn refusing to open.
+- **Whether a suppressed row may be overridden** (WO-4.5) — without it a cooldown is a lockout, with
+  it the feature is one tap from being ignored.
+- **Whether the log sheet's quick entries are fixed or the teacher's own** (WO-4.4) — fixed needs no
+  schema; editable is a settings block and a `docs/data-model.md` change.
+
+The other five are collected in [`design/mockups/README.md`](../../design/mockups/README.md) § Phase 4,
+with the two things the drawings assume without asking — one of which is that the absence prompt in
+WO-4.4 has a field to read, and it does not.
+
 ---
 
 ## WO-4.1 — Signal engine & thresholds
@@ -68,6 +97,26 @@ falls is exactly who a teacher wants to see twice.
 Plus: the concern list UI, per class and across all classes, ordered by severity, each row tapping
 through to the student.
 
+- **Surface: a main-area view, and the fifth segment on the class switcher** — drawn in
+  [`design/mockups/signals.html`](../../design/mockups/signals.html). It is a surface a teacher works
+  down for ten minutes, not a task she dismisses, so it is a view by
+  [`../gradebook-surfaces.md`](../gradebook-surfaces.md)'s test; and it is *about* a class without
+  being *owned* by one, which is the kind WO-6.6 ruled belongs on the switcher rather than behind a
+  panel button. It keeps its own **All classes** filter for the calendar's reason, and arriving from a
+  class arrives filtered to it — a door recomputed on arrival, never a stored preference. The drawing
+  also settles: concern and praise at `1fr 1fr` with **praise first** below 720px, the **delta** in
+  the strong position on every row with the current grade nowhere on it, **one student one row** with
+  the other fired rules as tags, and the **signal card as a modal** carrying each rule's sentence over
+  the numbers it measured and its threshold named as the teacher's own.
+- **Open, and both are the owner's** *(from the drawing, 2026-08-20)*. **(a) What severity means
+  across rules** — this work order says "ordered by severity" and nothing defines it; the drawing
+  invents real-deltas-first and says so, and whichever order is chosen is a property of what the
+  engine returns rather than of the screen. **(b) Whether the switcher can carry a fifth segment at
+  390px** — `.screen-nav` is `overflow-x: auto`, so a fifth scrolls silently, which is WO-6.6's own
+  trap one segment further along. The drawing measures both states and proposes `flex-wrap: wrap`,
+  which is one declaration in `src/assignments.css` and therefore this work order's to make, not a
+  drawing's.
+
 **Acceptance**
 - [ ] Every flag is reproducible by hand from the numbers it shows. Verify all nine.
 - [ ] "Fell N points" measures the weighted grade before and after the window, not raw scores.
@@ -106,6 +155,15 @@ The turnaround rule requires retaining enough history to know a student was prev
 derive it from the log and prior evaluations rather than storing a "was flagged" bit that can go
 stale.
 
+- **Surface: the right-hand column of WO-4.2's view, at equal width** — drawn in
+  [`design/mockups/signals.html`](../../design/mockups/signals.html), which is where the equal billing
+  is argued rather than asserted: a stacked layout buries praise on any screen shorter than both
+  lists, and every iPad is. Two consequences the drawing settles for this work order. The column head
+  says **biggest climb first** in as many words, because a teacher who reads "Praise" as "the top of
+  the class" stops reading it inside a fortnight. And the **delta is the only bold figure on a praise
+  row** — the current grade is not drawn at all, since a list that ranks by delta and draws the level
+  big is arguing with itself.
+
 **Acceptance**
 - [ ] Sorting the praise list by its default ranking puts the biggest *improvement* first, not the
       highest grade. Verify with a case where a B− student outranks an A student.
@@ -132,6 +190,30 @@ thirty seconds will never be used during a class period.
   proved fragile; same reasoning, same answer. Corrections are new entries, not edits.
 - Two taps from a class roster to a logged entry, with optional detail.
 - Log visible on the student record, newest first.
+
+- **Surface: a modal sheet off the roster row, and a card on the student record** — drawn in
+  [`design/mockups/behavior.html`](../../design/mockups/behavior.html). The door is on the **roster**
+  and deliberately not on the attendance registry: that row is the critical path by the working
+  agreements, and a fourth control on it competes with the tap that marks a student present. Two taps
+  means the quick entries write a **complete** record on their own — kind from the strip, subject from
+  the chip, time now — with the two fields under them as this work order's "optional detail". The
+  drawing also settles that the record card is another `.detail-card` on WO-3.7's screen, newest
+  first, and that it is **absent rather than redacted** in presentation mode: a card that redacts its
+  bodies still tells a room of thirty that four things have been written down. The suppression is
+  asked of `src/supports.js` and not tested here — two askers is two answers eventually.
+- **Open, and the drawing could not choose either** *(2026-08-20)*. **(a) Are the six quick entries
+  fixed or the teacher's own?** Fixed needs no schema — they write the documented `subject`. Editable
+  means a per-teacher list, which is a settings block and a `docs/data-model.md` decision. **(b) How
+  does a correction point at what it corrects?** Append-only means a wrong entry stays, and the
+  drawing strikes its subject through and puts the correction in the body — which implies a field the
+  record does not have. The alternative is an ordinary later entry that simply says so, which needs no
+  schema and cannot draw the strikethrough. Either way it is a data-model change, and this work order
+  owns it.
+- **And the prompt this work order owes has nothing to read yet.** The re-homed line below wants an
+  attendance-related plan clause and an *N*; `students[].supports` has no such field and the
+  thresholds block has no such key. The drawing wears WO-3.8's shipped `.accommodation-prompt`
+  component whole — same sentence-then-scope shape, same single reveal, same hard suppression in the
+  projected and print paths — so what is left to decide is the data, not the component.
 
 **Acceptance**
 - [ ] An entry is logged in under five seconds from the roster.
@@ -164,6 +246,20 @@ failing nor excelling, and no threshold will ever surface them.
 - The quiet middle: students neither flagged, nor praised, nor contacted all term, listed per class
   with how long it's been.
 - Both surfaced on the home screen slot from WO-1.10.
+
+- **Surface: the foot of each of WO-4.2's two columns, and a panel for the quiet middle** — drawn in
+  [`design/mockups/signals.html`](../../design/mockups/signals.html). A suppressed row **names the
+  contact that silenced it and the date it comes back**, because "3 suppressed" with no names is
+  indistinguishable from a list that has quietly lost three students. The quiet middle is a **third
+  list and not a third column**: it is ranked by how long it has been rather than by delta, and
+  putting it beside two columns that share a ranking would imply it shares one.
+- **Open, and both are the owner's** *(2026-08-20)*. **(a) Should a suppressed row carry a
+  *Write anyway*?** Drawn with one, quietly. Without it this is a lockout rather than a cooldown, and
+  a teacher who has just had a phone call has a real reason to override; with it, the feature that
+  stops the weekly list being identical is one tap from being ignored. **(b) Is the quiet middle a
+  panel on this screen or a page of its own?** The drawing shows it both ways — as a panel here, and
+  reached through a `The quiet middle · 9` control in a panel header on the glance page — and both
+  cannot be right.
 
 **Acceptance**
 - [ ] Logging a contact about a concern removes that student from that signal for 14 days and not

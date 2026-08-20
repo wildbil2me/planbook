@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The behavior log (WO-4.4)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/attendance.css">
+<link rel="stylesheet" href="../../src/assignments.css">
+<link rel="stylesheet" href="../../src/detail.css">
+<link rel="stylesheet" href="proposed-phase4.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here writes an entry, and no name below is a real student.</span>
+  <span>Behavior &amp; note logging ·
+    <a href="../../plans/work-orders/phase-4-signals.md">WO-4.4</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="signals.html">Who needs you</a>
+  <a href="behavior.html" class="here">Behavior log</a>
+  <a href="glance.html">Glance page</a>
+  <a href="calendar.html">Calendar</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!-- This page links four shipped stylesheets rather than one, because every state below is drawn
+     ON a screen that already exists: the roster panel and the log sheet are modals (src/shell.css),
+     the accommodation prompt is a component WO-3.8 shipped (src/assignments.css), and the log on the
+     student record is a card on WO-3.7's detail view (src/detail.css). Nothing in
+     proposed-phase4.css restyles any of them — § LOG SHEET and § LOG RECORD add new names to old
+     sheets, which is the case design/mockups/PROTOCOL.md rule 4's `not yet lifted` token exists
+     for. Without it the sweep would read "src/shell.css exists" as "this has already been lifted"
+     and stop checking these names entirely. -->
+
+<div class="mk-section">Tap one — the roster, with a door to write something down</div>
+
+<div style="max-width:560px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Roster &amp; contacts</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">Biology I · 24 students</div>
+
+      <div class="roster-row">
+        <div class="avatar av5" aria-hidden="true">OB</div>
+        <span class="roster-row-name">Bennett, Owen</span>
+        <span class="roster-row-note"></span>
+        <div class="roster-row-actions">
+          <button class="log-door" type="button" title="Write something down about Owen Bennett"
+                  aria-label="Write something down about Owen Bennett" aria-haspopup="dialog">
+            <span aria-hidden="true">✎</span>
+          </button>
+          <button class="class-action-btn" type="button">Edit</button>
+          <button class="class-action-btn archive" type="button">Remove</button>
+        </div>
+      </div>
+
+      <div class="roster-row">
+        <div class="avatar av2" aria-hidden="true">DC</div>
+        <span class="roster-row-name">Cho, Daniel</span>
+        <button class="support-dot" type="button" aria-label="Support details for Daniel Cho"
+                title="Support details for Daniel Cho"><span aria-hidden="true">•</span></button>
+        <span class="roster-row-note">also in Research</span>
+        <div class="roster-row-actions">
+          <button class="log-door" type="button" title="Write something down about Daniel Cho"
+                  aria-label="Write something down about Daniel Cho" aria-haspopup="dialog">
+            <span aria-hidden="true">✎</span>
+          </button>
+          <button class="class-action-btn" type="button">Edit</button>
+          <button class="class-action-btn archive" type="button">Remove</button>
+        </div>
+      </div>
+
+      <div class="roster-row">
+        <div class="avatar av8" aria-hidden="true">NG</div>
+        <span class="roster-row-name">Gallagher, Nora</span>
+        <span class="roster-row-note"></span>
+        <div class="roster-row-actions">
+          <button class="log-door" type="button" title="Write something down about Nora Gallagher"
+                  aria-label="Write something down about Nora Gallagher" aria-haspopup="dialog">
+            <span aria-hidden="true">✎</span>
+          </button>
+          <button class="class-action-btn" type="button">Edit</button>
+          <button class="class-action-btn archive" type="button">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mk-caption">
+  <strong>The door is on the roster and not on the attendance registry.</strong> WO-4.4 says "two
+  taps from a class roster", and the registry is the one screen the working agreements put on the
+  critical path — marked at the door while thirty students walk in. A fourth control on that row is
+  a control competing with the tap that marks a student present. The registry keeps the <code>›</code>
+  WO-2.53 gave it, which goes to the student, and the student's own screen carries the same door
+  (three states down).
+</div>
+
+<div class="mk-caption ask">
+  <strong>Is the roster panel where a teacher actually is when she wants to write this down?</strong>
+  She is mid-class, watching it happen, and the roster is two taps away behind a header icon —
+  so the real cost of this flow is not the two taps WO-4.4 measures but the two before them.
+  The alternatives both have a price: a control on the registry row (above), or a long-press on a
+  registry name, which is a gesture this suite uses nowhere and which iOS Safari also uses for its
+  own selection menu. <strong>Worth a reading on the real tablet during a real period.</strong>
+</div>
+
+<div class="mk-section">Tap two — the sheet, and the entry is written by the time it closes</div>
+
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Owen Bennett</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">What kind of entry</div>
+      <div class="log-kinds">
+        <button class="log-kind active" type="button">Behavior</button>
+        <button class="log-kind" type="button">Note to self</button>
+      </div>
+
+      <div class="modal-section-label">One tap and it is written</div>
+      <div class="log-quick-grid">
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">💬</span> Off task
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">🚪</span> Left the room
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">📵</span> Phone out
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">🗣</span> Disruptive
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">⭐</span> Great contribution
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">🤝</span> Helped someone
+        </button>
+      </div>
+
+      <div class="modal-section-label">Or say more (optional)</div>
+      <input class="class-input" type="text" placeholder="Off task, second time this week"
+             aria-label="What to call this entry">
+      <textarea class="student-notes" rows="2" style="margin-top:8px"
+                placeholder="Anything you want to remember. Nothing here is sent anywhere."
+                aria-label="Detail for this entry"></textarea>
+
+      <p class="log-append-note">
+        <strong>Entries are never edited or deleted.</strong> If you get one wrong, write another —
+        the log is what you wrote down at the time, and that is the whole reason it is worth
+        anything in a meeting six weeks from now.
+      </p>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Write it down</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mk-caption">
+  <strong>Two taps means the quick entries write a complete record on their own.</strong> Tap the
+  door, tap <em>Off task</em>, and the entry exists — the subject is the chip's own words, the kind
+  comes from the strip above, the time is now, and the sheet closes. The two fields under them are
+  WO-4.4's "optional detail" and are genuinely optional: a teacher who never touches them still has
+  a log. <em>Write it down</em> is for when she has used them.
+</div>
+
+<div class="mk-caption">
+  <strong>Behavior and note are the record's two kinds, and the strip comes first for a reason.</strong>
+  <code>docs/data-model.md</code> gives the entry a <code>kind</code> of <code>behavior</code> or
+  <code>note</code>, and they are not the same act — one is about conduct and one is a reminder to
+  yourself. It is chosen <em>before</em> the quick entries are read because the log is append-only:
+  a wrong kind cannot be fixed later, only annotated.
+</div>
+
+<div class="mk-caption ask">
+  <strong>Are those six chips fixed, or the teacher's own?</strong> Drawn fixed, which needs no
+  schema at all — they write the <code>subject</code> the data model already documents. But a teacher
+  whose six most common entries are not these six will use none of them and type every time, which
+  is the flow this work order exists to avoid. Making them editable means a per-teacher list, which
+  means a settings block, which means <code>docs/data-model.md</code> and a decision about whether it
+  travels in the year document. <strong>Cheaper to answer before WO-4.4 is cut than after.</strong>
+</div>
+
+<div class="mk-caption ask">
+  <strong>Do the praise chips belong in the same sheet as the conduct ones?</strong> Two of the six
+  are good news, and Phase 4's whole argument is that praise is not decoration. But a sheet opened
+  from a control labelled <em>write something down</em> that leads with <em>Off task</em> teaches a
+  teacher that this is where trouble goes, and she will not think of it when a student does something
+  well. Drawn together, deliberately, with the two good ones last — which may be exactly backwards.
+</div>
+
+<div class="mk-section">The absence prompt — WO-4.4's line, re-homed from WO-3.8</div>
+
+<div style="max-width:760px;margin:12px auto 0">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Biology I</h2>
+          <p>Wednesday 15 October · 24 students · 3 still to go</p>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 20px 16px">
+      <div class="supports-panel accommodation-prompt">
+        <div class="accommodation-prompt-said">
+          <span class="accommodation-prompt-lead">
+            That is Owen's 4th absence in this class.
+          </span>
+          <span class="accommodation-prompt-where">
+            One student on this roster has something on file about attendance. Nothing here is
+            shown while you are projecting, and none of it is written into a message.
+          </span>
+        </div>
+        <div class="accommodation-prompt-actions">
+          <button class="class-action-btn accommodation-prompt-btn" type="button">
+            Show me what it says
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mk-caption">
+  <strong>This is the one <code>supports</code>-derived thing in the whole Phase 4 room, and it wears
+  the component WO-3.8 already shipped.</strong> Same sentence-then-scope shape, same single reveal
+  button, same rule that the names appear only after a deliberate tap and never in presentation mode
+  (<code>src/assignments.css</code> hides <code>.accommodation-prompt</code> outright in the print and
+  projected paths). The drawing restyles none of it — the prompt is lifted whole, which is what
+  <code>CLAUDE.md</code> means by copy rather than re-derive.
+</div>
+
+<div class="mk-caption ask">
+  <strong>Neither half of what this prompt reads exists yet.</strong> WO-4.4's re-homed acceptance
+  line — "marking a student absent for the Nth time surfaces an attendance-related plan clause if
+  one exists" — needs a field on <code>students[].supports</code> that no schema has, and an
+  <em>N</em> that no threshold block has. The work order says both are its to shape. The drawing
+  shows the shape of the answer and cannot choose either: is the clause a free-text field beside the
+  existing ones, or a kind of its own? Is <em>N</em> a signals threshold, or the same number the
+  attendance rule already uses? <strong>Both are the owner's, and both change
+  <code>docs/data-model.md</code>.</strong>
+</div>
+
+<div class="mk-section">The log on the student record — newest first, on WO-3.7's screen</div>
+
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="detail-card">
+    <div class="detail-card-title">What you have written down</div>
+    <div class="log-list">
+      <div class="log-entry">
+        <div class="log-entry-top">
+          <span class="log-entry-kind behavior">Behavior</span>
+          <span class="log-entry-subject">Off task, second time this week</span>
+          <span class="log-entry-when">Oct 9</span>
+        </div>
+        <div class="log-entry-body">
+          Sat through the whole lab without opening the handout. Moved him to the front bench.
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="log-entry-top">
+          <span class="log-entry-kind">Note</span>
+          <span class="log-entry-subject">Said he is working nights</span>
+          <span class="log-entry-when">Oct 2</span>
+        </div>
+        <div class="log-entry-body">
+          Volunteered it on the way out. Worth remembering before the next missing-work conversation.
+        </div>
+      </div>
+      <div class="log-entry retracted">
+        <div class="log-entry-top">
+          <span class="log-entry-kind behavior">Behavior</span>
+          <span class="log-entry-subject">Phone out during the quiz</span>
+          <span class="log-entry-when">Sep 24</span>
+        </div>
+        <div class="log-entry-body">
+          <strong>Corrected on Sep 25:</strong> it was a calculator. Left as written — the entry
+          above is what was recorded at the time.
+        </div>
+      </div>
+      <button class="log-more" type="button">4 older entries →</button>
+    </div>
+  </div>
+</div>
+
+<div class="mk-caption">
+  <strong>Append-only, drawn.</strong> The Sep 24 entry is wrong and it is still there: its subject
+  is struck through, the correction rides in the body, and nothing was edited or removed. Roll Call!
+  made hall passes append-only after matching rows by <code>name + time</code> proved fragile — same
+  reasoning, same answer, and the visible consequence is a log a teacher can read in a hearing.
+  The strikethrough is on the subject and not the body, because what was retracted is the claim.
+</div>
+
+<div class="mk-caption ask">
+  <strong>How does a correction know which entry it corrects?</strong> The drawing shows one entry
+  struck through and the correction inside it, which is the readable version and implies a field the
+  record does not have — the documented shape is
+  <code>{ id, studentId, at, kind, audience, subject, body }</code> with nothing pointing at another
+  entry. Two honest options: a <code>correctsId</code>, which is a schema change; or the correction
+  as an ordinary later entry that simply says so, which needs no schema and cannot draw the
+  strikethrough. Drawn the first way. <strong>The owner's call, and it is a data-model change either
+  way it goes.</strong>
+</div>
+
+<div class="mk-section">The same card while projecting — absent, not redacted</div>
+
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="detail-card">
+    <div class="detail-card-title">Grade breakdown</div>
+    <div class="detail-break">
+      <span class="detail-break-cat">Labs · 30%</span>
+      <span class="detail-break-num">71%</span>
+    </div>
+    <div class="detail-break">
+      <span class="detail-break-cat">Tests · 40%</span>
+      <span class="detail-break-num">64%</span>
+    </div>
+    <div class="detail-break">
+      <span class="detail-break-cat">Homework · 30%</span>
+      <span class="detail-break-num">73%</span>
+    </div>
+  </div>
+</div>
+
+<div class="mk-caption">
+  <strong>There is no log card here at all, and no line saying one was hidden.</strong> A card that
+  redacts its own bodies still tells a room of thirty that four things have been written down about
+  this student. So the card is not built, the way WO-1.9's acceptance puts it: the data is
+  <em>absent from the DOM</em> rather than hidden in it.
+</div>
+
+<div class="mk-caption">
+  <strong>And the decision is not made on this screen.</strong> <code>src/supports.js</code> is the
+  one place that answers whether sensitive content is on screen, and the card asks it rather than
+  testing presentation mode itself — the same posture <code>proposed-phase6.css</code> takes with a
+  review date, where the calendar view holds no <code>presentationMode()</code> test because the
+  model hands it an empty list. Two askers is two answers eventually, and
+  <code>wo-sweep.mjs</code> counts the askers.
+</div>
+
+<div class="mk-caption ask">
+  <strong>Is a note to self as sensitive as a behavior entry?</strong> Both are suppressed together
+  here. "Said he is working nights" is arguably worse on a wall than "off task" — it is the
+  student's own disclosure — so suppressing both is the safe reading. But it also means a teacher
+  cannot see her own reminders on a projected screen at all, and the reminders are the half that has
+  nothing to do with conduct. Drawn suppressed together.
+</div>
+
+</body>
+</html>

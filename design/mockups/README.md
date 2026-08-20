@@ -1,13 +1,21 @@
 # Mockups
 
-Two rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
-**the Phase 6 drawings** were made 2026-08-19, before any of Phase 6 existed at all. Open
-[`index.html`](index.html) — or, with `node tools/serve-https.mjs` running,
+Three rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
+**the Phase 6 drawings** were made 2026-08-19, before any of Phase 6 existed at all; **the Phase 4
+drawings** were made 2026-08-20, three days before the work order they are for was due to start.
+Open [`index.html`](index.html) — or, with `node tools/serve-https.mjs` running,
 `https://<your-lan-ip>:8443/design/mockups/`.
 
-Everything below the next divider is about the gradebook drawings, which came first. The Phase 6
-pair has its own section at the bottom of this file; the rules — no JavaScript, the black band,
-`src/shell.css` linked rather than copied, never in `sw.js`'s precache — are the same for both.
+Everything below the next divider is about the gradebook drawings, which came first. The Phase 6 and
+Phase 4 rooms have their own sections at the bottom of this file; the rules — no JavaScript, the
+black band, `src/shell.css` linked rather than copied, never in `sw.js`'s precache — are the same for
+all three, and are written out once in [`PROTOCOL.md`](PROTOCOL.md).
+
+**Before drawing a third round, read [`PROTOCOL.md`](PROTOCOL.md).** This file describes the drawings
+that exist; that one is the procedure for making one, written 2026-08-20 out of the two rounds below
+after both had been reconstructed from scratch by different sittings. `node tools/wo-sweep.mjs` § 19
+is the half of it a grep settles — including the selector check this file used to describe as a
+hand-run step.
 
 These are **drawings**. There is no JavaScript in any of them, nothing reads or writes a document,
 and no number recomputes. Every page says so in a black band across the top, and `mockup.css` exists
@@ -47,11 +55,19 @@ drawing cannot quietly disagree with the app — if the shell changes, these cha
 of them breaks, that is information. The header, the panel, `.class-action-btn`, `.search-box`,
 `.modal-*`, `.avatar` and `.class-row` are all worn as shipped.
 
-`proposed.css` **defines no rule that targets a class any `src/` stylesheet styles** — checked by
+`proposed.css` **defined no rule that targeted a class any `src/` stylesheet styles** — checked by
 stripping its comments and diffing its selectors against `src/*.css`, not by reading it. The check
 caught one violation on the first run: `.detail-hero .avatar { width: 44px }`, which is the shorter
 way to enlarge the hero's avatar and exactly the thing the rule forbids. It is now `.detail-avatar`,
 a second class worn alongside `.avatar` — the shape `.hdr-mode-btn` uses.
+
+**Past tense, since 2026-08-20, and the tense is the point.** That sentence was true on the day it was
+written and is false now: 85 of this sheet's 98 classes are in `src/` today, because WO-3.3, WO-3.5 and
+WO-3.7 *lifted* them, and identical names are what a lift looks like. The rule holds where it still
+means something — a section whose target stylesheet does not exist yet — and
+[`PROTOCOL.md`](PROTOCOL.md) rule 5 is that scoping written down. `tools/wo-sweep.mjs` § 19 runs it
+that way, and flips to asking whether a landed section reached the stylesheet its banner named. A flat
+whole-file version of the check would have been red on arrival.
 
 The one shared name still in the file is `.active`, and it is always compound-qualified by one of
 this sheet's own classes (`.screen-nav-btn.active`), which is the posture `src/attendance.css` takes
@@ -61,7 +77,7 @@ with `.attendance-state.taken`. It splits three ways on lift, at the section ban
 § SCORE GRID       →  src/scores.css        (WO-3.5)
 § ASSIGNMENT LIST  →  src/assignments.css   (WO-3.3)
 § STUDENT DETAIL   →  src/detail.css        (WO-3.7)
-§ SHARED           →  whichever lands first
+§ SHARED           →  src/assignments.css   (WO-3.3, which landed first — written in 2026-08-20)
 ```
 
 It follows the app's own stylesheet rules so that "lift" means lift: colours inline and never as
@@ -278,3 +294,110 @@ so `glance.html`'s second drawing is what the glance page looks like for the fir
 the term it ships into. Either that is fine, because the class grid and the grading queue are real
 from day one, or the empty state needs a second voice for **"not yet" rather than "nothing"**.
 It is the state the owner will see most.
+
+---
+
+# Phase 4 — who needs you, and what was written down
+
+**Drawn 2026-08-20**, the third room and the first one made under [`PROTOCOL.md`](PROTOCOL.md)
+rather than before it. It is also the first room drawn *against a phase that is being built next*:
+WO-4.1, the signal engine, landed on 2026-08-19 and has no screen at all — it measures, explains,
+and returns, and every answer it produces currently goes nowhere. WO-4.2 is row 2 of Ship 3, dated
+Aug 24–26. This is the drawing of where those answers go, made in the days before someone has to
+decide it inside a work order.
+
+| File | What |
+|---|---|
+| `signals.html` | The concern and praise lists, the signal card, the cooldown opened, the quiet middle, the projected state, and the fifth segment measured at 390px — WO-4.2 · 4.3 · 4.5 |
+| `behavior.html` | Two taps from a roster to a written entry, the absence prompt, and the log on the student record in both states — WO-4.4 |
+| `proposed-phase4.css` | **The half that lifts.** Five sections, all pending, two of them targeting stylesheets that already ship |
+
+`behavior.html` links four shipped stylesheets — `shell.css`, `attendance.css`, `assignments.css`,
+`detail.css` — because every state on it is drawn *on* a screen that already exists. The
+accommodation prompt in particular is lifted whole rather than re-drawn: it is WO-3.8's shipped
+component, wearing its own classes, with nothing in `proposed-phase4.css` touching it.
+
+**Two sections target a stylesheet that already exists**, which no earlier round did, and that is
+what produced the `not yet lifted` token in PROTOCOL.md rule 4 and in `wo-sweep.mjs` § 19. The log
+sheet is a modal and this app styles its modals in `src/shell.css`; the log on the student record is
+a card on WO-3.7's detail view. Read by file existence alone, both would have counted as *already
+lifted* and their new class names would have gone unchecked — which is the one case the collision
+rule most needs to catch.
+
+## What the drawings propose
+
+1. **The number in the strong position is the change, never the level.** `plans/ROADMAP.md` Phase 4
+   says this phase ranks by delta; a list that ranks by delta and draws the level big is arguing
+   with itself. So the current grade is not on a row at all, the two column heads say *worst change
+   first* and *biggest climb first* out loud, and the rules with no arithmetic behind them
+   ("5 absences", "61%") draw a quiet count in the same slot rather than leaving it empty.
+2. **Concern and praise keep the glance page's `1fr 1fr`, at full width.** Not a matching decision —
+   the same one, argued in `proposed-phase6.css` § GLANCE: praise stacked under concern on a screen
+   shorter than both lists is praise that does not exist. Praise is drawn **first** below 720px.
+3. **One student, one row.** Three fired rules ride as tags and the card opens with all of them;
+   three rows for one student would push two other students off the screen.
+4. **The signal card is a modal.** `plans/gradebook-surfaces.md`'s own test rather than a new
+   opinion: the list is a surface she works down for ten minutes, one student is a task she finishes
+   and dismisses, and she wants the list still scrolled where she left it.
+5. **A suppressed row names the contact that silenced it and the date it comes back.** WO-4.5's
+   "hidden, not deleted" said out loud — a count with no door on it is indistinguishable from a list
+   that has quietly lost three students.
+6. **The screen closes in presentation mode rather than redacting.** It is the only surface in the
+   app whose entire content is a ranked list of named students in trouble.
+7. **The behavior log's door is on the roster, not on the attendance registry.** The registry is the
+   critical path by the working agreements — a fourth control on that row competes with the tap that
+   marks a student present.
+8. **Append-only, drawn with a wrong entry still in it**, struck through at the subject with the
+   correction in the body. Roll Call!'s hall passes reached the same answer the same way.
+
+## The open questions, collected
+
+Nine, in the order a reader meets them, each drawn in place with an amber note. **None is settled.**
+
+*On the signals list —*
+
+1. **What makes one concern worse than another?** WO-4.2 says "ordered by severity" and nothing
+   anywhere defines severity across rules. Is a 12-point fall worse than five absences? Than a 61%
+   that has been 61% all term? The drawing invents an order and says so. **This is the one question
+   in the room that changes what the engine returns rather than only what a screen draws.**
+2. **May the list be re-sorted?** The toolbar states the ranking rather than offering it, on the
+   grounds that a "sort by grade" control puts the level back in charge of the order this phase
+   exists to replace. A teacher hunting for the four students she must catch before Friday may
+   reasonably disagree.
+3. **Should *Write anyway* exist on a suppressed row?** Without it the cooldown is a lockout; with
+   it, the feature that stops the weekly list being identical is one tap from being ignored.
+4. **May the card show a rule that did not fire?** Drawn showing "2 scores under 60%" against a
+   threshold of three, as context. It is a short step from there to a card arguing for a signal the
+   engine declined to raise.
+5. **Is the quiet middle a panel or a page?** Drawn as a panel here and reached through a control in
+   a panel header on the glance page. Both cannot be right.
+6. **Closed while projecting, or redacted to initials?** Every other surface in the app redacts.
+   This one is drawn refusing altogether, because "OB, SH, RE" protects nobody in a room of thirty
+   who know each other's initials — at the cost of a teacher who leaves presentation mode on all
+   period being unable to use the screen. **The most consequential question in the room.**
+7. **Five segments in the switcher, wrapped — or four and a door somewhere else?** Drawn wrapped,
+   with both 390px states one under the other so the scroll can be seen rather than argued about.
+   The wrap is one declaration in a shipped stylesheet, so it belongs in the work order and not in a
+   drawing.
+
+*On the behavior log —*
+
+8. **Are the six quick entries fixed or the teacher's own?** Fixed needs no schema; editable means a
+   per-teacher list, a settings block, and a `docs/data-model.md` decision. A related one is drawn
+   rather than asked: whether the two praise chips belong in the same sheet as the four conduct ones,
+   given the control that opens it is labelled *write something down*.
+9. **How does a correction know which entry it corrects?** Drawn as a pointer the record does not
+   have. The alternative — an ordinary later entry that simply says so — needs no schema and cannot
+   draw the strikethrough. Either way it is a data-model change.
+
+## And two things the drawings assume without asking
+
+**That the absence prompt has something to read.** WO-4.4's re-homed line wants an
+attendance-related plan clause and an *N*, and neither exists: `students[].supports` has no such
+field and the thresholds block has no such key. The drawing shows the shape of the answer and cannot
+choose it.
+
+**That signals exist at all by the time this ships.** Phase 4's own note is that the rules need four
+to six weeks of real data before they fire, and the term starts 2026-09-02. Everything drawn here is
+the screen as it looks in mid-October; what the owner will actually see for the first fortnight is
+two empty columns, and no state on either page draws that.

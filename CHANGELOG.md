@@ -13,6 +13,28 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Phase 4 is drawn before it is built — 2026-08-20
+
+The signal engine landed on the 19th with no screen at all, and the concern list is due to start on
+the 24th, so the phase was drawn first: `design/mockups/signals.html` and `behavior.html` — concern
+and praise at equal billing and ranked by change rather than by level, the signal card with the
+arithmetic under every sentence, the cooldown opened so a suppressed student is named rather than
+counted, the quiet middle, the log sheet two taps from a roster, and the log on the student record
+absent rather than redacted while projecting. Nine questions are drawn in amber and left open, and
+the phase file now carries the four a work order has to answer — including the one nothing anywhere
+defines, which is what makes one concern worse than another.
+
+### Drawing a screen has a written procedure now — 2026-08-20
+
+The rules the mockups were made by existed only as prose about the drawings that already existed,
+and the one that matters — a drawing may not style a class the app already styles — was a selector
+diff run by hand, once per round, in a directory no harness looked at.
+`design/mockups/PROTOCOL.md` is the procedure and `tools/wo-sweep.mjs` § 19 is the six checks that
+hold it. It is scoped to sections whose target stylesheet does not exist yet, because a section that
+has been lifted is *supposed* to share its names with `src/`; its first run found that the calendar
+drawing's twenty-eight `.cal-*` classes never reached `src/calendar-view.css`, which shipped twenty
+`.calendar-*` of its own — re-derived rather than lifted, and nothing had recorded it.
+
 ### `Today` goes to today again, and takes the term with it — 2026-08-20
 
 **With a term other than the current one open, `Today` took you to *that* term's first day.** Quarter 4
