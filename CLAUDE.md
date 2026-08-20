@@ -50,13 +50,16 @@ argument is WO-G2's own, from 2026-08-10** — Ship 2 is first grades and contai
 eighth box was* **re-homed to WO-3.18's own third Acceptance line, not waived**, *which is the hatch that
 box has named since it was written.)*
 
-*(**Two things to know before reading `next` again.** It returns* **WO-G2** *now, and that is the tool
-saying Ship 2's build queue is empty rather than offering a dispatchable row — the gate wants a real
-class's real grades and cannot close before Sep 2.* **§ Ship 3 is still the running order**; *the note
-under § Ship 2's table says so and says why teaching* `next` *to skip a gate was refused. And the one
-piece of WO-3.18 that is not blocked is its* **privacy policy**, *which pairs with* `docs/FERPA.md`
-*(WO-8.5) — the document this file still records as missing, and the weaker half of the backup
-disclosure under § Accommodations.)*
+*(**Two things to know before reading `next` again.** Taking WO-3.18 out of § Ship 2 promoted*
+**WO-G2** *into its slot, and `next` stops at the first* `⬜` *in document order — so for part of that
+day the tool answered with a gate nobody can work until Sep 2, hiding seven* `⬜` *work orders behind
+it. **WO-G2 is now** `🔒 GATED`, which is the word the vocabulary already had and whose gate report
+reads "do not start it"; `next` returns* **WO-4.2** *again, the head of § Ship 3.* **Put it back to**
+`⬜` **when there are real grades to run it against** *— `--tick` refuses the status, so the gate
+cannot close while wearing it. And the one piece of WO-3.18 that is not blocked is its* **privacy
+policy**, *which is now* [WO-8.12](plans/work-orders/phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document)
+*together with* `docs/FERPA.md` *— the document this file still records as missing, and the weaker
+half of the backup disclosure under § Accommodations.)*
 
 *(**WO-3.26 is also the first work order here to be finished by a different session than started it.**
 Its dispatch died after the implementer's writes had landed and before anything was verified or

@@ -38,6 +38,15 @@ up, finished, and verified without needing to hold the rest of the project in yo
 `✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · `🚫 STRUCK — <date>` · `⏳ DEFERRED — <date>` ·
 🚩 marks a **go-live blocker**.
 
+**`🔒 GATED` means do not start it, and what it is gated *on* is the work order's to say.** `next`
+skips it and the gate report refuses it in those words. Every use of it in this directory meant
+*waiting on Google's OAuth verification* until 2026-08-20, when
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) took it for *waiting on the calendar* — four of its
+boxes want a real class's real grades, and the term begins Sep 2. **That is the word used as defined
+rather than widened**, and it is written here because two examples that happened to agree had started
+to look like the definition. It is not `🚫` or `⏳`: the work is coming, it is counted, and the status
+goes back to `⬜` when the thing it waits on arrives.
+
 **`🚫` and `⏳` are the two that mean this is not coming, and 2026-08-16 (WO-1.21) is when the tracker
 gained a word for it.** `🚫 STRUCK` is a *whether*: the owner decided it should not be built, and the
 roadmap box it closes — if it has one — stops being a promise. `⏳ DEFERRED` is a *when*: not now, the
@@ -211,7 +220,7 @@ indexes is a file nobody reads.
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 12 | 5 | — | 🔨 IN PROGRESS |
-| Gates | 4 | 1 | — | ⬜ NOT STARTED |
+| Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
 | | **136** | **111** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
@@ -455,15 +464,23 @@ re-homed rather than waived** *— to WO-3.18's own third Acceptance line, with*
 pointer, which is the mechanism* [WO-3.11](phase-3-gradebook.md#wo-311--owes-and-splitting-what--in-progress-means)
 *built for exactly this. Nothing else in the table moved.*
 
-***What `next` returns now, and why a gate is the honest answer.*** *With #78 removed,* `next` *lands
-on* **WO-G2** *— every one of its eleven dependencies is* `✅ DONE` *and the gate reports* `PASS`. *That
-is not a dispatchable row and it is not a mistake: it is the tool saying* **Ship 2's build queue is
-empty**, *which became true the moment WO-3.18 left. Four of WO-G2's nine boxes want a real class's
-real grades and cannot close before Sep 2 no matter what is built.* **Read [§ Ship 3](#ship-3--signals)
-for what to build**, *the same instruction* `CLAUDE.md` *has carried since 2026-08-19 — and note that
-this is the first time* `next` *and the running order disagree by design rather than by drift. It is
-recorded here rather than fixed in the tool: teaching* `next` *to skip a gate would teach it to skip
-WO-G1, which was the one row nobody was allowed to walk past.*
+***Removing #78 pinned `next` on the gate, and that took a second edit the same day.***
+`next` *walks these tables in* **document order** *and stops at the first* `⬜`. *WO-3.18 had been
+standing in that slot and was a real answer — the cell above said "startable now." With it gone,*
+`next` *returned* **WO-G2**, *whose eleven dependencies are all* `✅ DONE` *and which reports* `PASS`
+*— and which cannot be worked until there are real grades to run it against.* **It hid seven `⬜` work
+orders behind it:** *all four remaining rows of § Ship 3, plus WO-8.12, WO-7.1 and WO-3.18. A `next`
+that answers with a row nobody can start, for four weeks, is a `next` people stop running.*
+
+***The fix was the gate's status, not the tool.*** *WO-G2 is* `🔒 GATED` *as of 2026-08-20 — the word
+the vocabulary already had, and the gate report's own sentence for it is* **"do not start it,"** *which
+is the truth about a checklist waiting on Sep 2.* `next` *now returns* **WO-4.2**, *the head of*
+[§ Ship 3](#ship-3--signals) *— so the tool and the running order agree again, and* `CLAUDE.md`*'s
+"§ Ship 3 is the running order" is now something* `next` *says rather than something a human has to
+know.* **Put WO-G2 back to `⬜` when the grades exist** *— `--tick` refuses the status, so the gate
+cannot be closed while wearing it, which is the safety this leans on. **Teaching `next` to skip a gate
+by reading its `**Target**` was the alternative and was refused:** it would have taught the tool to
+walk past WO-G1, which was the one row nobody was allowed to walk past.*
 
 *WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
 app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is

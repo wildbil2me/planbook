@@ -34,6 +34,28 @@ fetches cold and sees the policy, the owner's iPad has a worker and does not. An
 a contact, which WO-8.7 rules is a spam and phishing target in a public file; that is the owner's call,
 not an implementer's, and the work order says so rather than leaving an address to be invented.
 
+### `next` answered with a gate nobody could work — 2026-08-20
+
+Taking WO-3.18 out of § Ship 2 promoted WO-G2 into row #78, and `next` walks the running order in
+document order and stops at the first `⬜`. All eleven of WO-G2's dependencies are `✅ DONE`, so it
+reported `PASS` — on a checklist whose boxes want a real class's real grades, which do not exist until
+Sep 2. It hid seven `⬜` work orders behind it: the rest of Phase 4, plus WO-8.12, WO-7.1 and WO-3.18.
+WO-3.18 had been standing in that slot and was a real answer, which is why nothing had surfaced this
+before.
+
+WO-G2 is `🔒 GATED` now — the word the vocabulary already carried, whose gate report reads *do not
+start it*, and which `next` skips. It goes back to `⬜` when there are grades to run it against;
+`--tick` refuses the status, so the gate cannot be closed while wearing it. This widens `🔒` from
+*waiting on OAuth verification* — its only meaning here until now — to *waiting on anything a work
+order names, the calendar included*; neither vocabulary line ever bound it to OAuth, and
+`work-orders/README.md` § Status vocabulary now defines it rather than leaving two agreeing examples
+to imply it. Teaching `next` to skip a gate by reading its `**Target**` was the alternative and was
+refused: it would have taught the tool to walk past WO-G1.
+
+Also corrected here: the § Dashboard table had gone stale in the undercounting direction — Phase 2 read
+`50 | 49` against a true `52 | 51` after WO-2.53 and WO-2.54 landed. That table is `--tick`'s to
+write and `--audit` checks the roadmap's rather than this one, so nothing was watching it.
+
 ### The OAuth paperwork was blocked on a sign-in nobody had built — 2026-08-20
 
 WO-3.18 owes Google a demo video *showing the scope in use*, and nothing in the app uses the scope:

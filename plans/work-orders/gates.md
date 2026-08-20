@@ -217,8 +217,31 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
+**Ship** 2 · **Status** 🔒 GATED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
 **Target** ~2026-09-15, before the first grades are entered for real
+
+*(**`⬜ NOT STARTED` until 2026-08-20**, owner-directed, and the change is about `next` rather than
+about this gate. Every one of the eleven dependencies above is `✅ DONE`, so the gate reported `PASS`
+— and `next` walks the running order in **document order** and stops at the first `⬜`. This row is #78
+of § Ship 2, which sits above § Ship 3 and § After Ship 3 in that file, **so `next` returned a row
+nobody could work and hid seven `⬜` work orders behind it** — all of Phase 4, plus WO-8.12, WO-7.1 and
+WO-3.18. It only became visible when WO-3.18 left the table on the same day and this row inherited the
+slot; before that, WO-3.18 stood here and was a real answer.*
+
+*`🔒 GATED` is what the vocabulary already had for it, and* **the gate report's words are exactly
+right: "do not start it."** *Four of the nine boxes below want a real class's real grades, and the term
+begins Sep 2 — no amount of building moves that.* **The one thing worth flagging: this widens `🔒`.**
+*Every other use of it in this directory means gated on Google's OAuth verification (all of Phase 7),
+and this one means gated on the calendar. The vocabulary line in* [`../ROADMAP.md`](../ROADMAP.md)
+*and in* [`README.md`](README.md) *never bound the word to OAuth — only the usage did — so this is a
+word being used as defined rather than bent, and* `README.md` *§ Status vocabulary now says so out
+loud rather than leaving it to be inferred from two examples that happen to agree.*
+
+*`--tick` will refuse this status when the day comes, which is correct and is the last step:* **put it
+back to `⬜` when there are real grades to run it against**, *then work the boxes. Teaching `next` to
+skip gates by reading `**Target**` was the alternative and was refused — it would have taught the tool
+to walk past* [WO-G1](#wo-g1--day-one-gate-a-real-class-on-a-real-morning)*, which was the one row
+nobody was allowed to walk past, and it buys nothing this status does not.)*
 
 *(That line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09. It was rewritten for two reasons, both
 found while writing the Ship 2 table. **The ellipsis was not a range to the tool** — `depsOf()` reads
