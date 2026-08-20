@@ -350,45 +350,74 @@ rule most needs to catch.
 8. **Append-only, drawn with a wrong entry still in it**, struck through at the subject with the
    correction in the body. Roll Call!'s hall passes reached the same answer the same way.
 
-## The open questions, collected
+## The questions, and how they were answered
 
-Nine, in the order a reader meets them, each drawn in place with an amber note. **None is settled.**
+Twelve were drawn in amber. **Eleven were answered by the owner on 2026-08-20**, the day after the
+drawings were made, and each is now a green **DECIDED** note in place on the page it belongs to — the
+question kept beside the answer, per [`PROTOCOL.md`](PROTOCOL.md) rule 10, because a drawing that
+quietly absorbs a decision loses the record of there having been a choice. Every one is also written
+into the work order it affects, as a `Decided` line with its consequence.
 
 *On the signals list —*
 
-1. **What makes one concern worse than another?** WO-4.2 says "ordered by severity" and nothing
-   anywhere defines severity across rules. Is a 12-point fall worse than five absences? Than a 61%
-   that has been 61% all term? The drawing invents an order and says so. **This is the one question
-   in the room that changes what the engine returns rather than only what a screen draws.**
-2. **May the list be re-sorted?** The toolbar states the ranking rather than offering it, on the
-   grounds that a "sort by grade" control puts the level back in charge of the order this phase
-   exists to replace. A teacher hunting for the four students she must catch before Friday may
-   reasonably disagree.
-3. **Should *Write anyway* exist on a suppressed row?** Without it the cooldown is a lockout; with
-   it, the feature that stops the weekly list being identical is one tap from being ignored.
-4. **May the card show a rule that did not fire?** Drawn showing "2 scores under 60%" against a
-   threshold of three, as context. It is a short step from there to a card arguing for a signal the
-   engine declined to raise.
-5. **Is the quiet middle a panel or a page?** Drawn as a panel here and reached through a control in
-   a panel header on the glance page. Both cannot be right.
-6. **Closed while projecting, or redacted to initials?** Every other surface in the app redacts.
-   This one is drawn refusing altogether, because "OB, SH, RE" protects nobody in a room of thirty
-   who know each other's initials — at the cost of a teacher who leaves presentation mode on all
-   period being unable to use the screen. **The most consequential question in the room.**
-7. **Five segments in the switcher, wrapped — or four and a door somewhere else?** Drawn wrapped,
-   with both 390px states one under the other so the scroll can be seen rather than argued about.
-   The wrap is one declaration in a shipped stylesheet, so it belongs in the work order and not in a
-   drawing.
+1. **Severity means attendance first.** A student who is not in the room is the more urgent problem
+   than a student whose grade slipped: the second is often a symptom of the first, and it is the one
+   a teacher cannot fix later. The list bands — attendance rules ahead of everything else, biggest
+   change leading inside each band. **This was the one question that changes what the engine returns
+   rather than what a screen draws.** Where missing work, low scores and tardies sit relative to a
+   grade fall is deliberately left at the drawn default.
+2. **The list re-sorts, and filters by which rule fired.** A sort control whose default is the ruled
+   order, with *the biggest change*, *lowest grade* and *most missing work* under it; and a second
+   toolbar strip of rule chips. What protects the phase's argument is which option the list **opens
+   on**, not which options are absent.
+3. **The screen closes in presentation mode rather than redacting** — the first surface in the app
+   that refuses rather than hides. Initials protect nobody in a room of thirty who know each other's
+   initials. The cost is accepted rather than argued away: a teacher who leaves the projector on for
+   a period loses the screen for that period, which is why the refusal names the control that undoes
+   it.
+4. **Five segments, wrapped.** `.screen-nav` gains `flex-wrap: wrap`, so the strip is two rows at
+   390px rather than one that scrolls silently — WO-6.6's trap, one segment further along. That edit
+   is a WO-4.2 deliverable: it touches a shipped sheet three other views already wear.
+5. ***Write anyway* exists on a suppressed row.** The cooldown suggests; it does not hold the door
+   shut. What stops it dissolving the cooldown is where it sits — quiet, at the end of a muted row,
+   behind an expansion opened on purpose.
+6. **The quiet middle is a panel on this screen**, not a page. The consequence belongs to WO-6.4: the
+   glance page's `The quiet middle · N` control is a **door onto this screen**, scrolled to that
+   panel. One list, one place, two ways in.
 
 *On the behavior log —*
 
-8. **Are the six quick entries fixed or the teacher's own?** Fixed needs no schema; editable means a
-   per-teacher list, a settings block, and a `docs/data-model.md` decision. A related one is drawn
-   rather than asked: whether the two praise chips belong in the same sheet as the four conduct ones,
-   given the control that opens it is labelled *write something down*.
-9. **How does a correction know which entry it corrects?** Drawn as a pointer the record does not
-   have. The alternative — an ordinary later entry that simply says so — needs no schema and cannot
-   draw the strikethrough. Either way it is a data-model change.
+7. **The door goes on the roster**, and both alternatives are refused with it — a control on the
+   registry row costs the critical path a thumb target, and a long-press is a gesture this suite uses
+   nowhere and iOS has already claimed. If the two taps *before* WO-4.4's two taps hurt in a real
+   period, that is a new row rather than a re-opening.
+8. **Six pre-written quick entries, with the back door left open by one rule:** a chip writes a
+   `subject` and never a code. That is what makes a per-teacher list later a settings block and a
+   picker rather than a migration.
+9. **Both directions belong in the sheet, and the middle ground goes fourth.** *Left the room* is
+   gone; *Showing improvement* takes position 4 — the first slot after the conduct entries, and the
+   one a thumb reaches without reading to the end.
+10. **The absence prompt's *N* is the attendance rule's own N.** No new threshold key: it fires on
+    the number *N absences within the last N meetings* already uses, so loosening the attendance
+    signal loosens the prompt with it and the two can never disagree.
+11. **Append-only stands, and there is no correction mechanism to build.** A correction is an
+    ordinary later entry that says so — no pointer, no strikethrough, no schema change. **This one
+    took a round trip**: the ruling first arrived as *"you can just delete and re-enter"*, which
+    would have reversed WO-4.4's deliverable, its acceptance line and `docs/data-model.md` § log in
+    one move. Put back to the owner the same day and settled the other way. Nothing in the log is
+    deletable.
+12. **Behavior entries and notes part company under a projector.** Behavior is not built — absent
+    from the DOM, WO-1.9's standard. Notes stay: they are the teacher's working memory, and hiding
+    her own reminders from her is not the app's job. No "N hidden" line, because a count is the
+    disclosure.
+
+## The one still open
+
+**`students[].supports` has no attendance clause for WO-4.4's prompt to read.** Is it a free-text
+field beside the existing ones, or a kind of its own? The work order owns the answer and it changes
+`docs/data-model.md` either way. The component is not in question — the drawing wears WO-3.8's
+shipped `.accommodation-prompt` whole.
+
 
 ## And two things the drawings assume without asking
 

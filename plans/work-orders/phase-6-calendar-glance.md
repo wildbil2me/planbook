@@ -452,7 +452,14 @@ is not the only one. **The owner's call, and it is cheaper before the build than
 3. What's waiting to be graded. **The per-class half of this is WO-3.26's**, which fills
    `.class-card-signals` in Ship 2; this work order is the page-level panel over the same engine call,
    and depends on it rather than assuming it.
-4. Who needs attention — concern and praise, post-cooldown, from WO-4.5.
+4. Who needs attention — concern and praise, post-cooldown, from WO-4.5. **The panel is a
+   summary and the list it summarises is WO-4.2's screen**, so every row here taps through to that
+   screen rather than expanding in place. Ranked the way WO-4.2 ranks: **attendance first, then the
+   biggest change** — the owner's severity ruling of 2026-08-20, which this page inherits rather than
+   re-decides. And **`The quiet middle · N` is a door onto that screen**, landing on it scrolled to
+   its quiet-middle panel — the owner ruled on 2026-08-20 that the quiet middle is a panel there and
+   not a surface of its own, so this control opens a place that already exists. One list, one place,
+   two ways in.
 5. Deadlines closing in, including grades-due lead times — the surface WO-6.1's lead-time warning is
    re-homed to.
 

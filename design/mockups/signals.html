@@ -99,8 +99,9 @@
         <div class="panel-title">
           <h2>Who needs you</h2>
           <p>
-            Both directions, ranked by how much changed rather than by how high or low it is. Every
-            line under a name is the rule's own sentence, built from the numbers that fired it.
+            Both directions. Attendance trouble first, then whoever changed the most — never
+            whoever is highest or lowest. Every line under a name is the rule's own sentence, built
+            from the numbers that fired it.
           </p>
         </div>
         <div class="panel-title-actions">
@@ -114,8 +115,8 @@
            ruling that said THREE TABS, NOT FOUR — so a fifth is not something a drawing may add
            quietly. It is drawn because the alternative is the cul-de-sac WO-6.6 was opened to fix,
            and because this list is about a class in exactly the sense the calendar is. What it costs
-           at 390px is measured further down this page, in the two narrow strips, and the answer is
-           an amber note rather than a decision. -->
+           at 390px is measured further down this page, in the two narrow strips, and the owner ruled
+           on it on 2026-08-20: FIVE, WRAPPED. See the green note beside those strips. -->
       <div class="screen-nav" role="tablist" aria-label="Screens for this class">
         <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Attendance</button>
         <button class="screen-nav-btn" type="button" role="tab" aria-selected="false">Assignments</button>
@@ -136,7 +137,29 @@
       <button class="pill" type="button">Anatomy</button>
       <button class="pill" type="button">Env Science</button>
       <button class="pill" type="button">Research</button>
-      <span class="sig-sorted">Ranked by <strong>change over the last 4 assignments</strong></span>
+      <span class="sig-sorted">
+        <label class="sig-sort-label" for="sigSort">Sorted by</label>
+        <select class="sig-sort" id="sigSort" aria-label="Sort this list by">
+          <option>Attendance first, then the biggest change</option>
+          <option>The biggest change</option>
+          <option>Lowest grade</option>
+          <option>Most missing work</option>
+        </select>
+      </span>
+    </div>
+
+    <!-- THE RULE FILTER — the owner's ruling of 2026-08-20, and the half of it that is not a sort.
+         Chips for the rules themselves, so "everyone with attendance trouble" is one tap rather than
+         a read down two columns. They are `.pill`s worn as shipped, the same as the class filter
+         above them, because they answer the same shape of question about a different axis. -->
+    <div class="sig-toolbar">
+      <span class="sig-toolbar-label">Rules</span>
+      <button class="pill active" type="button">All rules</button>
+      <button class="pill" type="button">Attendance · 3</button>
+      <button class="pill" type="button">Grade fell · 2</button>
+      <button class="pill" type="button">Missing work · 2</button>
+      <button class="pill" type="button">Low scores · 2</button>
+      <button class="pill" type="button">Tardies · 1</button>
     </div>
 
     <div class="sig-two">
@@ -144,9 +167,26 @@
       <div class="sig-col concern">
         <div class="sig-col-head concern">
           Concern · 4
-          <span class="sig-col-note">worst change first</span>
+          <span class="sig-col-note">attendance first, then the worst change</span>
         </div>
         <div class="sig-list">
+
+          <button class="sig-row" type="button">
+            <span class="avatar av6" aria-hidden="true" style="width:30px;height:30px;font-size:11px">RE</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">
+                <span class="sig-dot av6" aria-hidden="true"></span>
+                Ruth Egan <span class="sig-row-class">Anatomy</span>
+              </span>
+              <span class="sig-row-why">5 absences in the last 20 meetings of this class.</span>
+              <span class="sig-row-tags">
+                <span class="sig-tag">3 missing</span>
+                <span class="sig-tag">attendance 88%</span>
+              </span>
+            </span>
+            <span class="sig-delta flat">5<span class="sig-delta-unit">absences</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
+          </button>
 
           <button class="sig-row" type="button">
             <span class="avatar av5" aria-hidden="true" style="width:30px;height:30px;font-size:11px">OB</span>
@@ -178,23 +218,6 @@
               </span>
             </span>
             <span class="sig-delta down">−9<span class="sig-delta-unit">points</span></span>
-            <span class="sig-row-go" aria-hidden="true">›</span>
-          </button>
-
-          <button class="sig-row" type="button">
-            <span class="avatar av6" aria-hidden="true" style="width:30px;height:30px;font-size:11px">RE</span>
-            <span class="sig-row-main">
-              <span class="sig-row-name">
-                <span class="sig-dot av6" aria-hidden="true"></span>
-                Ruth Egan <span class="sig-row-class">Anatomy</span>
-              </span>
-              <span class="sig-row-why">5 absences in the last 20 meetings of this class.</span>
-              <span class="sig-row-tags">
-                <span class="sig-tag">3 missing</span>
-                <span class="sig-tag">attendance 88%</span>
-              </span>
-            </span>
-            <span class="sig-delta flat">5<span class="sig-delta-unit">absences</span></span>
             <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
 
@@ -391,13 +414,14 @@
     would still appear if he started missing work.
   </div>
 
-  <div class="mk-caption ask">
-    <strong>Should <em>Write anyway</em> exist?</strong> WO-4.5 requires suppressed hits to be
-    visible and recoverable; it says nothing about writing to a guardian you contacted nine days
-    ago. Without the button this is a lockout rather than a cooldown, and a teacher who has just
-    had a phone call has a real reason to override it. With it, the feature that stops the weekly
-    list being identical is one tap from being ignored. Drawn with the button, quietly.
-    <strong>The owner's call.</strong>
+  <div class="mk-caption decided">
+    <strong><em>Write anyway</em> exists — the owner's ruling, 2026-08-20.</strong> The cooldown
+    suggests; it does not hold the door shut. A teacher who has just had a phone call, or a parent
+    evening, or a second incident in the same week has a real reason to write again, and a feature
+    that tells her she may not is one she routes around outside the app. What keeps it from
+    dissolving the cooldown is where it sits: <strong>quiet, at the end of a muted row, behind an
+    expansion she opened on purpose</strong> — three deliberate acts, against one tap for the rows
+    the engine actually wants her to read.
   </div>
 
   <div class="mk-section">The signal card — one student, every rule she tripped, and the arithmetic</div>
@@ -584,12 +608,13 @@
     question with a different unit. Putting it beside them would imply it shares their order.
   </div>
 
-  <div class="mk-caption ask">
-    <strong>Is the quiet middle a panel or a page?</strong> Drawn twice on purpose: the glance page
-    reaches it through a <code>The quiet middle · 9</code> control in a panel header, and here it is
-    a panel of its own under the two columns. If it is a panel here, the control up there needs
-    somewhere to land; if it is a page, this screen has two states and the switcher has nothing to
-    say about which one you are on. <strong>Cheaper to answer before WO-4.5 is cut than after.</strong>
+  <div class="mk-caption decided">
+    <strong>A panel — the owner's ruling, 2026-08-20.</strong> It sits under the two columns on this
+    same screen, so this view has one state and the switcher never has to say which of two you are
+    on. The consequence, and it is the useful half of the ruling: the glance page's
+    <code>The quiet middle · 9</code> control is a <strong>door onto this screen</strong>, landing
+    here and scrolled to this panel — not a surface of its own, and not a modal. One list, one place,
+    two ways in.
   </div>
 
   <div class="mk-section">Presentation mode — the screen closes rather than redacts</div>
@@ -614,14 +639,16 @@
     </div>
   </div>
 
-  <div class="mk-caption ask">
-    <strong>Closed, or redacted to initials?</strong> Every other surface in the app redacts:
-    the roster hides plan details behind a tap, the calendar drops review dates out of the list it
-    is handed, the student detail shows the grade and hides <code>supports</code>. This one is drawn
-    as the first screen that refuses altogether, on the grounds that redacting a ranked list of who
-    is failing to "OB, SH, RE" protects nobody in a room of thirty who know each other's initials.
-    The cost is real: a teacher who leaves presentation mode on all period cannot use the screen at
-    all. <strong>The owner's call, and the most consequential question on this page.</strong>
+  <div class="mk-caption decided">
+    <strong>Closed — the owner's ruling, 2026-08-20, and it is the first screen in the app that
+    refuses rather than redacts.</strong> Initials protect nobody in a room of thirty who know each
+    other's initials, and this is the one surface whose entire content is a ranked list of named
+    students in trouble. So it does not draw itself at all.
+    <br><br>
+    <strong>The cost is accepted rather than argued away:</strong> a teacher who leaves presentation
+    mode on for a whole period cannot use this screen for that period. That is why the refusal names
+    the control that undoes it in the same sentence — the way out is one tap in the header, and the
+    screen says so rather than looking broken.
   </div>
 
   <div class="mk-section">The fifth segment at 390px — the measurement, not the argument</div>
@@ -655,29 +682,48 @@
     </div>
   </div>
 
-  <div class="mk-caption ask">
-    <strong>Five segments, wrapped — or four and a door somewhere else?</strong> The wrap is one
-    declaration in a shipped stylesheet and it makes every segment visible and thumb-sized at 390px,
-    at the cost of a two-row strip on a phone. The alternatives, both real: shorten the labels
-    (<em>Roll · Work · Scores · Month · Signals</em>), which trades a scroll for five words a teacher
-    has to learn; or keep four and reach this screen from the glance page only, which is the
-    cul-de-sac WO-6.6 was opened to remove. Drawn wrapped. <strong>The owner's call, and it is a
-    change to a shipped sheet, so it belongs in the work order rather than in this drawing.</strong>
+  <div class="mk-caption decided">
+    <strong>Five, wrapped — the owner's ruling, 2026-08-20.</strong> The lower strip is the shipped
+    behaviour: two rows at 390px, every segment visible and thumb-sized, nothing hidden behind a
+    swipe a teacher does not know exists. Both alternatives are refused with it — shortened labels
+    trade a silent scroll for five words she has to learn, and four segments plus a door from the
+    glance page is the cul-de-sac WO-6.6 was opened to remove.
+    <br><br>
+    <strong>It is one declaration in a sheet this drawing may not touch.</strong>
+    <code>.screen-nav</code> lives in <code>src/assignments.css</code> § SHARED, so the change —
+    <code>flex-wrap: wrap</code>, and the <code>overflow-x</code> that becomes pointless with it — is
+    a WO-4.2 deliverable and is written into that work order. The drawing shows the destination; the
+    work order owns the edit.
   </div>
 
-  <div class="mk-caption ask">
-    <strong>What makes one concern worse than another?</strong> WO-4.2 says the list is "ordered by
-    severity" and nothing anywhere defines severity across rules. Is a 12-point fall worse than five
-    absences? Than a 61% that has been 61% all term? The drawing invents an order — real deltas
-    first, biggest first, then countable rules — and that order is a guess. It is the one open
-    question here that changes what the engine has to return rather than only what the screen draws.
+  <div class="mk-caption decided">
+    <strong>Attendance outranks grade drops — the owner's ruling, 2026-08-20.</strong> This was the
+    one question in the room that changes what the <em>engine</em> returns rather than what a screen
+    draws, and it is settled: <strong>a student who is not in the room is the more urgent problem
+    than a student whose grade slipped</strong>, because the second is often a symptom of the first
+    and because attendance is the one a teacher cannot fix later. So the concern column bands —
+    attendance rules first, everything else after — and within each band the biggest change leads,
+    which is the rule the whole phase is built on. Ruth's five absences now sit above Owen's
+    twelve-point fall for that reason, and the column head says so out loud.
+    <br><br>
+    <strong>What is deliberately not settled:</strong> where missing work, low scores and tardies sit
+    relative to a grade fall. They keep the drawn order — real deltas first, then counts — and WO-4.2
+    may reorder them without re-opening this ruling. The ruling is <em>attendance leads</em>; the
+    rest is a default until someone has a reason.
   </div>
 
-  <div class="mk-caption ask">
-    <strong>May the list be re-sorted?</strong> The toolbar states the ranking instead of offering
-    it, on the grounds that a "sort by grade" control puts the level back in charge of the order this
-    phase exists to replace. But a teacher looking for the four students she must talk to before
-    Friday may reasonably want the failing ones together. Drawn as a statement, not a control.
+  <div class="mk-caption decided">
+    <strong>Yes to both — the owner's ruling, 2026-08-20.</strong> The ranking is now a control, and
+    a second strip filters by <strong>which rule fired</strong>, so "everyone with attendance
+    trouble" is one tap rather than a read down two columns. That pairs with the severity ruling
+    above: attendance leads the default order <em>and</em> is reachable on its own.
+    <br><br>
+    <strong>What protects the phase's argument is which option is first, not which are absent.</strong>
+    The default is the ruled order, and <em>Lowest grade</em> is available underneath it. The worry
+    that put this question here — that a level-sort puts the level back in charge of a list built to
+    replace it — is answered by the default rather than by refusing the option: a teacher who wants
+    her failing students together on a Friday has a real errand, and she goes back to the ranking
+    that surfaces someone new next week.
   </div>
 
 </main>

@@ -13,6 +13,30 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Phase 4's screens are settled — 2026-08-20
+
+Twelve questions were drawn in amber the day before; eleven are answered and written into the work
+orders that have to honour them. The list bands **attendance ahead of grade drops** — a student who
+is not in the room is the more urgent problem, and it is the one that changes what the engine returns
+rather than what a screen draws. It **closes rather than redacts under a projector**, the first
+surface in the app that refuses instead of hiding, on the grounds that initials protect nobody in a
+room of thirty. It re-sorts and filters by which rule fired, with the ruled order as the default. The
+switcher carries five segments and wraps to two rows at 390px instead of scrolling one silently.
+*Write anyway* survives on a suppressed row, quiet and three deliberate acts deep, so the cooldown
+suggests rather than locks. The behavior sheet's six quick entries ship pre-written with one rule
+keeping the door open for custom ones later — a chip writes a subject and never a code — and
+*Showing improvement* takes the fourth slot, because both directions belong in a sheet a teacher
+opens mid-class. Under a projector the two kinds part company: behavior entries are not built, notes
+stay, because a teacher's own working memory is not the app's to hide from her.
+
+**One ruling went back and came out the other way.** "Don't worry about corrections — you can just
+delete and re-enter" would have reversed WO-4.4's deliverable, its acceptance line, and
+`docs/data-model.md` § log in a single move, all three of which exist because Roll Call!'s hall passes
+proved that matching rows by name and time is fragile. Put back the same day and settled as
+append-only: nothing in the log is deletable, and a correction is an ordinary later entry that says
+so — no pointer, no strikethrough, no schema change. The one question still open is a field rather
+than a screen: `students[].supports` has no attendance clause for the absence prompt to read.
+
 ### The privacy policy and the FERPA document get one work order — 2026-08-20
 
 WO-3.18 has said since 2026-08-10 that its privacy policy and `docs/FERPA.md` say overlapping things

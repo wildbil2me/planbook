@@ -51,7 +51,7 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6. */
-.sig-row, .sig-hidden, .sig-card-act, .sig-undo,
+.sig-row, .sig-hidden, .sig-card-act, .sig-undo, .sig-sort,
 .log-door, .log-quick, .log-kind, .log-more {
   touch-action: manipulation;
   user-select: none;
@@ -122,10 +122,19 @@
   class screen arrives filtered TO that class, recomputed on arrival, written to no
   preference — a door, not a memory.
 
-  The sort line is NOT a control, and that is a decision drawn to be argued with. Every
-  list in this room is ranked by delta; offering "sort by grade" would put the level back
-  in charge of the order the phase exists to replace. So it states the rule rather than
-  offering to change it. The amber note in signals.html is where that argument lives.
+  THE SORT IS A CONTROL, AND THE DEFAULT IS THE RULING. Drawn as a statement first, on the grounds
+  that a "sort by grade" option puts the level back in charge of the order this phase exists to
+  replace; the owner ruled on 2026-08-20 that it is a control and that a rule filter rides with it.
+  What protects the argument is the DEFAULT rather than the absence of options — "attendance first,
+  then the biggest change" is what the list opens on, every time, and `Lowest grade` sits underneath
+  it for the Friday errand it is genuinely useful for. A teacher who sorts by level goes back to a
+  ranking that surfaces someone new next week; a list that OPENED on level would never surface anyone
+  new at all.
+
+  THE RULE FILTER IS THE SECOND STRIP AND WEARS `.pill` AS SHIPPED, exactly as the class filter
+  above it does — same shape of question, different axis, so a teacher who has learned one has
+  learned both. Neither strip is written to a preference: both are recomputed on arrival, for
+  src/calendar-view.js's reason about a month quietly hiding four fifths of the year.
 */
 .sig-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -136,9 +145,21 @@
   color: #a0aab8;
 }
 .sig-sorted {
-  margin-left: auto; font-size: 11px; color: #8a9bb0;
+  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: #8a9bb0;
 }
-.sig-sorted strong { color: #6b7a8d; font-weight: 700; }
+.sig-sort-label { font-size: 11px; color: #8a9bb0; white-space: nowrap; }
+/* A `<select>`, and this is the one place in this room where that is the right answer.
+   src/shell.css rejected one for `.dayoff-kinds` because those are eight parallel CHOICES a thumb
+   picks between; this is one setting with four values, phrased as sentences too long for pills, and
+   it is a desk control on a screen a teacher opens on a Sunday. The native control also brings its
+   own 44px picker on iOS, which is why the coarse block below sets a height and nothing else. */
+.sig-sort {
+  padding: 5px 8px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 700; color: #1a1a2e;
+}
+.sig-sort:focus-visible { outline: 2px solid #5b6fcc; outline-offset: 1px; }
 
 /* ── CONCERN AND PRAISE, SIDE BY SIDE, AT FULL WIDTH ── */
 /*
@@ -434,7 +455,12 @@
   written down about this student, in order, is exactly what a teacher needs open while a
   guardian is sitting across from her.
 
-  IT IS SUPPRESSED WHOLE IN PRESENTATION MODE, and the suppression is not decided here.
+  THE TWO KINDS PART COMPANY UNDER A PROJECTOR (owner, 2026-08-20): behavior entries are not built,
+  notes to self are. The card survives presentation mode holding fewer entries, with no "2 hidden"
+  line — a count is the disclosure. It was drawn suppressing both, and the ruling is that a teacher's
+  own working memory is not the app's to hide from her; what the app owes instead is that the KIND is
+  chosen before the words are, which the sheet's first strip is for. The suppression is not decided
+  here either way.
   src/supports.js is the one place that answers whether sensitive content is on screen, and
   the drawing of the projected state shows this card ABSENT rather than redacted — the same
   posture proposed-phase6.css takes with a review date, where the calendar view holds no
@@ -454,11 +480,18 @@
 .log-entry-subject { flex: 1 1 auto; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; }
 .log-entry-when { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: #a0aab8; font-variant-numeric: tabular-nums; }
 .log-entry-body { margin-top: 4px; font-size: 11px; line-height: 1.55; color: #6b7a8d; }
-/* A correction is a new entry pointing at the old one, never an edit — so the old entry
-   stays exactly as it was written and the new one carries the note. The strikethrough is on
-   the SUBJECT and not on the body: what was retracted is the claim, and deleting the words
-   would defeat the append-only property that made this readable in a hearing. */
-.log-entry.retracted .log-entry-subject { text-decoration: line-through; color: #a0aab8; }
+/* THERE IS NO STYLE HERE FOR A CORRECTION, AND ITS ABSENCE IS THE RULING (owner, 2026-08-20).
+   The drawing carried a `.retracted` rule that struck the subject of a superseded entry through,
+   which implied a field the record does not have — nothing in
+   `{ id, studentId, at, kind, audience, subject, body }` points at another entry. A correction is
+   an ORDINARY LATER ENTRY THAT SAYS SO: it needs no `correctsId`, no schema change, and no rule
+   about which of two entries a reader should believe, because both are simply there in order.
+
+   The ruling arrived as "don't worry about corrections — you can just delete and re-enter", which
+   would have reversed WO-4.4's deliverable, its acceptance line and `docs/data-model.md` § log in
+   one move. Put back to the owner the same day and settled the other way: NOTHING IN THE LOG IS
+   DELETABLE. Roll Call! made hall passes append-only after matching rows by `name + time` proved
+   fragile, and that scar is why the rule is there. */
 .log-more {
   padding: 8px 0 0; border: none; background: none; font-family: inherit;
   font-size: 11px; font-weight: 700; color: #8a9bb0; cursor: pointer; text-align: left;
@@ -496,4 +529,6 @@
   .log-quick { min-height: 56px; }
   .log-kind { min-height: 44px; display: inline-flex; align-items: center; }
   .log-more { min-height: 44px; }
+  /* The native picker iOS opens is already thumb-sized; what this owes is a target to open it. */
+  .sig-sort { min-height: 44px; }
 }

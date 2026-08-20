@@ -19,26 +19,25 @@ WO-4.2, 4.3, 4.4 or 4.5** — `proposed-phase4.css` is written to be lifted into
 almost as-is, and re-deriving it is the mistake `CLAUDE.md` § Reference implementation is about. Each
 of the four work orders below carries a **Surface** deliverable naming what the drawing settles.
 
-**What the drawings do NOT settle, and what happens if this list is ignored.** WO-1.25's ruling is
-that a drawing is not a work order: the questions it raises are answered here or they are not
-answered, and an amber note on a picture is not a tracker. Four are the owner's and are carried into
-the work orders below as **Open** lines. The one that is not merely cosmetic:
+**Eleven of the drawings' twelve questions were answered by the owner on 2026-08-20**, the day
+after they were drawn, and each is written into the work order it belongs to as a **Decided** line
+with its consequence. WO-1.25's ruling is why they are here rather than only in the pictures: a
+drawing is not a work order, and an amber note is not a tracker. The four that carry the most:
 
-- **What makes one concern worse than another** (WO-4.2). "Ordered by severity" appears in that work
-  order and severity across rules is defined nowhere — a 12-point fall against five absences against
-  a 61% that has been 61% all term. The drawing invents an order and says so. **This one changes what
-  the engine returns, not only what a screen draws.**
-- **Whether the signals screen closes or redacts in presentation mode** (WO-4.2). Every other surface
-  in the app redacts; this is the only one whose whole content is a ranked list of named students in
-  trouble, and it is drawn refusing to open.
-- **Whether a suppressed row may be overridden** (WO-4.5) — without it a cooldown is a lockout, with
-  it the feature is one tap from being ignored.
-- **Whether the log sheet's quick entries are fixed or the teacher's own** (WO-4.4) — fixed needs no
-  schema; editable is a settings block and a `docs/data-model.md` change.
+- **Attendance outranks grade drops** (WO-4.2) — the severity question, which was the one that
+  changes what the **engine returns** rather than what a screen draws.
+- **The signals screen closes in presentation mode rather than redacting** (WO-4.2). The first
+  surface in the app that refuses rather than hides, and the cost is accepted: a teacher who leaves
+  the projector on for a period loses the screen for that period.
+- **Append-only stands, and the correction UI goes** (WO-4.4). The ruling arrived as "you can just
+  delete and re-enter", which would have reversed this work order's deliverable, its acceptance line
+  and `docs/data-model.md` § log in one move; it was put back to the owner the same day and settled
+  the other way. **Nothing in the log is deletable.**
+- **Behavior entries and notes part company under a projector** (WO-4.4) — behavior is not built,
+  notes are.
 
-The other five are collected in [`design/mockups/README.md`](../../design/mockups/README.md) § Phase 4,
-with the two things the drawings assume without asking — one of which is that the absence prompt in
-WO-4.4 has a field to read, and it does not.
+**One question is still open and it is a field, not a screen:** `students[].supports` has no
+attendance clause for WO-4.4's absence prompt to read. See that work order.
 
 ---
 
@@ -108,14 +107,34 @@ through to the student.
   the strong position on every row with the current grade nowhere on it, **one student one row** with
   the other fired rules as tags, and the **signal card as a modal** carrying each rule's sentence over
   the numbers it measured and its threshold named as the teacher's own.
-- **Open, and both are the owner's** *(from the drawing, 2026-08-20)*. **(a) What severity means
-  across rules** — this work order says "ordered by severity" and nothing defines it; the drawing
-  invents real-deltas-first and says so, and whichever order is chosen is a property of what the
-  engine returns rather than of the screen. **(b) Whether the switcher can carry a fifth segment at
-  390px** — `.screen-nav` is `overflow-x: auto`, so a fifth scrolls silently, which is WO-6.6's own
-  trap one segment further along. The drawing measures both states and proposes `flex-wrap: wrap`,
-  which is one declaration in `src/assignments.css` and therefore this work order's to make, not a
-  drawing's.
+- **Decided: severity means attendance first** *(the owner, 2026-08-20)*. A student who is not in
+  the room is the more urgent problem than a student whose grade slipped — the second is often a
+  symptom of the first, and it is the one a teacher cannot fix later. **The concern list bands:
+  attendance rules ahead of everything else, and inside each band the biggest change leads.** That is
+  a property of what the evaluator returns, not of this screen: an ordering this work order builds
+  into the list is an ordering WO-6.4's glance panel and Phase 5's send flow both inherit.
+  **Deliberately not settled** — where missing work, low scores and tardies sit relative to a grade
+  fall. They keep the drawing's order (real deltas first, then counts) and may be re-cut here without
+  re-opening the ruling.
+- **Decided: the screen closes in presentation mode, it does not redact** *(the owner, 2026-08-20)*.
+  Initials protect nobody in a room of thirty who know each other's initials, and this is the only
+  surface in the app whose entire content is a ranked list of named students in trouble. It draws an
+  `.empty-state` naming the header control that undoes it, so it reads as refused rather than broken.
+  **This is the first screen in the app that refuses rather than hides**, and it is a departure from
+  how the roster, the calendar and the student detail all behave — say so at the point of departure,
+  per `CLAUDE.md` § Conventions.
+- **Decided: five segments, wrapped** *(the owner, 2026-08-20)*. The switcher carries Signals as its
+  fifth, and **`.screen-nav` in `src/assignments.css` § SHARED gains `flex-wrap: wrap`** so the
+  strip becomes two rows at 390px instead of scrolling one silently — WO-6.6's trap, one segment
+  further along. That edit is this work order's, not the drawing's, and it touches a shipped sheet
+  three views already wear: check Assignments, Scores and Calendar at 390px in the same pass, and
+  `verify-shell.mjs`'s existing strip measurement moves from `scrollWidth` to a row count.
+- **Decided: the list re-sorts and filters by rule** *(the owner, 2026-08-20)*. A sort control whose
+  **default is the ruled order** — attendance first, then the biggest change — with *the biggest
+  change*, *lowest grade* and *most missing work* under it; plus a second toolbar strip of `.pill`
+  chips filtering by which rule fired. Neither is written to a preference: both recompute on arrival,
+  for `src/calendar-view.js`'s reason. What protects the phase's argument is which option the list
+  **opens on**, not which options are absent.
 
 **Acceptance**
 - [ ] Every flag is reproducible by hand from the numbers it shows. Verify all nine.
@@ -201,19 +220,42 @@ thirty seconds will never be used during a class period.
   first, and that it is **absent rather than redacted** in presentation mode: a card that redacts its
   bodies still tells a room of thirty that four things have been written down. The suppression is
   asked of `src/supports.js` and not tested here — two askers is two answers eventually.
-- **Open, and the drawing could not choose either** *(2026-08-20)*. **(a) Are the six quick entries
-  fixed or the teacher's own?** Fixed needs no schema — they write the documented `subject`. Editable
-  means a per-teacher list, which is a settings block and a `docs/data-model.md` decision. **(b) How
-  does a correction point at what it corrects?** Append-only means a wrong entry stays, and the
-  drawing strikes its subject through and puts the correction in the body — which implies a field the
-  record does not have. The alternative is an ordinary later entry that simply says so, which needs no
-  schema and cannot draw the strikethrough. Either way it is a data-model change, and this work order
-  owns it.
-- **And the prompt this work order owes has nothing to read yet.** The re-homed line below wants an
-  attendance-related plan clause and an *N*; `students[].supports` has no such field and the
-  thresholds block has no such key. The drawing wears WO-3.8's shipped `.accommodation-prompt`
-  component whole — same sentence-then-scope shape, same single reveal, same hard suppression in the
-  projected and print paths — so what is left to decide is the data, not the component.
+- **Decided: six pre-written quick entries, and one rule that keeps the back door open** *(the
+  owner, 2026-08-20)*. They ship fixed, needing no schema — and **a chip writes a `subject` and never
+  a code.** That single constraint is what makes a per-teacher list later a settings block and a
+  picker rather than a migration: a written entry is indistinguishable from a typed one the moment it
+  lands. The six, in this order: *Off task · Phone out · Disruptive · Showing improvement · Great
+  contribution · Helped someone*. **Both directions belong in this sheet** and the middle ground sits
+  fourth, which is the first slot after the conduct entries and the one a thumb reaches without
+  reading to the end — the phase's own argument at chip scale.
+- **Decided: append-only stands, and there is no correction mechanism to build** *(the owner,
+  2026-08-20, after a round trip)*. A correction is **an ordinary later entry that says so**: no
+  `correctsId`, no strikethrough, no schema change, and no rule about which of two entries a reader
+  should believe. The ruling first arrived as *"don't worry about corrections — you can just delete
+  and re-enter"*, which would have reversed this work order's Append-only deliverable, its acceptance
+  line *"entries are never mutated or deleted"*, and `docs/data-model.md` § log in one move. Put back
+  to the owner the same day and settled the other way. **Nothing in the log is deletable**, the Roll
+  Call! hall-pass scar behind that rule is untouched, and the acceptance line below stands as written.
+- **Decided: behavior entries and notes part company under a projector** *(the owner, 2026-08-20)*.
+  Behavior entries are **not built** in presentation mode — absent from the DOM, WO-1.9's standard,
+  not redacted and not counted. **Notes to self stay**: they are the teacher's working memory and
+  suppressing them costs her the half of the card that has nothing to do with conduct. The card
+  therefore survives with fewer entries and **no "2 hidden" line**, because a count is the
+  disclosure. Two consequences for the build: `src/supports.js` still owns the answer and the card
+  still asks rather than testing presentation mode itself, so what changes is the shape of what the
+  model hands back; and the **kind strip comes before the words** in the sheet, which is what makes
+  "this may end up on a wall" a decision rather than an accident.
+- **Decided: *N* is the attendance rule's own N** *(the owner, 2026-08-20)*. **No new threshold
+  key.** The prompt fires on the number *N absences within the last N meetings* already uses — `4` by
+  default, and whatever the teacher has since made it — read through `thresholdsOf()` like every
+  other. A teacher who loosens her attendance signal loosens this prompt with it, and the two can
+  never disagree about what "too many" means.
+- **Still open, and it is the field rather than the screen.** `students[].supports` has no
+  attendance clause for the prompt to read: is it a free-text field beside the existing ones, or a
+  kind of its own? This work order owns the answer and it changes `docs/data-model.md`. The component
+  is not in question — the drawing wears WO-3.8's shipped `.accommodation-prompt` whole, same
+  sentence-then-scope shape, same single reveal, same hard suppression in the projected and print
+  paths.
 
 **Acceptance**
 - [ ] An entry is logged in under five seconds from the roster.
@@ -253,13 +295,17 @@ failing nor excelling, and no threshold will ever surface them.
   indistinguishable from a list that has quietly lost three students. The quiet middle is a **third
   list and not a third column**: it is ranked by how long it has been rather than by delta, and
   putting it beside two columns that share a ranking would imply it shares one.
-- **Open, and both are the owner's** *(2026-08-20)*. **(a) Should a suppressed row carry a
-  *Write anyway*?** Drawn with one, quietly. Without it this is a lockout rather than a cooldown, and
-  a teacher who has just had a phone call has a real reason to override; with it, the feature that
-  stops the weekly list being identical is one tap from being ignored. **(b) Is the quiet middle a
-  panel on this screen or a page of its own?** The drawing shows it both ways — as a panel here, and
-  reached through a `The quiet middle · 9` control in a panel header on the glance page — and both
-  cannot be right.
+- **Decided: *Write anyway* exists** *(the owner, 2026-08-20)*. The cooldown suggests; it does not
+  hold the door shut. What keeps it from dissolving the cooldown is **where it sits** — quiet, at the
+  end of a muted row, behind an expansion the teacher opened on purpose: three deliberate acts
+  against one tap for the rows the engine wants read. A teacher who has just had a phone call has a
+  real reason to write again, and a feature that tells her she may not is one she routes around
+  outside the app.
+- **Decided: the quiet middle is a panel on WO-4.2's screen** *(the owner, 2026-08-20)*. Under the
+  two columns, so that view has one state and the switcher never has to say which of two you are on.
+  **The consequence is WO-6.4's:** the glance page's `The quiet middle · N` control is a **door onto
+  that screen**, landing there and scrolled to this panel — not a surface of its own and not a modal.
+  One list, one place, two ways in.
 
 **Acceptance**
 - [ ] Logging a contact about a concern removes that student from that signal for 14 days and not

@@ -107,13 +107,15 @@
   (three states down).
 </div>
 
-<div class="mk-caption ask">
-  <strong>Is the roster panel where a teacher actually is when she wants to write this down?</strong>
-  She is mid-class, watching it happen, and the roster is two taps away behind a header icon —
-  so the real cost of this flow is not the two taps WO-4.4 measures but the two before them.
-  The alternatives both have a price: a control on the registry row (above), or a long-press on a
-  registry name, which is a gesture this suite uses nowhere and which iOS Safari also uses for its
-  own selection menu. <strong>Worth a reading on the real tablet during a real period.</strong>
+<div class="mk-caption decided">
+  <strong>The roster is where it goes — the owner's ruling, 2026-08-20.</strong> The question was
+  whether it is where a teacher actually <em>is</em> when she wants to write something down: she is
+  mid-class watching it happen, and the roster is two taps behind a header icon, so the real cost of
+  this flow is not the two taps WO-4.4 measures but the two before them. Ruled anyway, and the two
+  alternatives are refused with it — a control on the registry row costs the critical path a thumb
+  target, and a long-press is a gesture this suite uses nowhere and which iOS Safari has already
+  claimed for its own selection menu. If the two taps before the two turn out to hurt in a real
+  period, that is a new row, not a re-opening of this one.
 </div>
 
 <div class="mk-section">Tap two — the sheet, and the entry is written by the time it closes</div>
@@ -137,13 +139,13 @@
           <span class="log-quick-mark" aria-hidden="true">💬</span> Off task
         </button>
         <button class="log-quick" type="button">
-          <span class="log-quick-mark" aria-hidden="true">🚪</span> Left the room
-        </button>
-        <button class="log-quick" type="button">
           <span class="log-quick-mark" aria-hidden="true">📵</span> Phone out
         </button>
         <button class="log-quick" type="button">
           <span class="log-quick-mark" aria-hidden="true">🗣</span> Disruptive
+        </button>
+        <button class="log-quick" type="button">
+          <span class="log-quick-mark" aria-hidden="true">📈</span> Showing improvement
         </button>
         <button class="log-quick" type="button">
           <span class="log-quick-mark" aria-hidden="true">⭐</span> Great contribution
@@ -190,21 +192,25 @@
   a wrong kind cannot be fixed later, only annotated.
 </div>
 
-<div class="mk-caption ask">
-  <strong>Are those six chips fixed, or the teacher's own?</strong> Drawn fixed, which needs no
-  schema at all — they write the <code>subject</code> the data model already documents. But a teacher
-  whose six most common entries are not these six will use none of them and type every time, which
-  is the flow this work order exists to avoid. Making them editable means a per-teacher list, which
-  means a settings block, which means <code>docs/data-model.md</code> and a decision about whether it
-  travels in the year document. <strong>Cheaper to answer before WO-4.4 is cut than after.</strong>
+<div class="mk-caption decided">
+  <strong>Pre-written now, with the door left open — the owner's ruling, 2026-08-20.</strong> The six
+  ship as a fixed list, which needs no schema at all: they write the <code>subject</code> the data
+  model already documents, and a written entry is indistinguishable from a typed one the moment it
+  lands. <strong>That is what leaves the back door open.</strong> A per-teacher list added later reads
+  the same records, so it is a settings block and a picker and nothing else — no migration, no second
+  shape of entry, and nothing in this work order to undo. The rule that keeps it that way: <em>a chip
+  writes a subject and never a code.</em> The moment a chip writes an id the app has to know about,
+  the custom list becomes a schema change instead of a preference.
 </div>
 
-<div class="mk-caption ask">
-  <strong>Do the praise chips belong in the same sheet as the conduct ones?</strong> Two of the six
-  are good news, and Phase 4's whole argument is that praise is not decoration. But a sheet opened
-  from a control labelled <em>write something down</em> that leads with <em>Off task</em> teaches a
-  teacher that this is where trouble goes, and she will not think of it when a student does something
-  well. Drawn together, deliberately, with the two good ones last — which may be exactly backwards.
+<div class="mk-caption decided">
+  <strong>Both directions belong here, and the middle ground goes fourth — the owner's ruling,
+  2026-08-20.</strong> <em>Left the room</em> is gone and <em>Showing improvement</em> takes position
+  4, which is the first slot after the three conduct entries and the one a thumb reaches without
+  reading to the end. That answers the question two ways at once: the sheet is not where trouble goes,
+  and the list does not read as three bad things with two nice ones appended. It is also the phase's
+  own argument at chip scale — <code>plans/ROADMAP.md</code> Phase 4: the praise half is what makes
+  this a teacher's assistant rather than a gradebook with alarms.
 </div>
 
 <div class="mk-section">The absence prompt — WO-4.4's line, re-homed from WO-3.8</div>
@@ -249,15 +255,21 @@
   <code>CLAUDE.md</code> means by copy rather than re-derive.
 </div>
 
+<div class="mk-caption decided">
+  <strong><em>N</em> is the attendance rule's own N — the owner's ruling, 2026-08-20.</strong> There
+  is no new threshold key: the prompt fires on the number <em>N absences within the last N
+  meetings</em> already uses, which is <strong>4</strong> by default and is whatever the teacher has
+  since made it. So a teacher who loosens her attendance signal loosens this prompt with it, and the
+  two can never disagree about what "too many" means — one number, one place, read through
+  <code>thresholdsOf()</code> like every other. The drawn sentence says "4th absence" because that is
+  the shipped default and not because the number is written into this screen.
+</div>
+
 <div class="mk-caption ask">
-  <strong>Neither half of what this prompt reads exists yet.</strong> WO-4.4's re-homed acceptance
-  line — "marking a student absent for the Nth time surfaces an attendance-related plan clause if
-  one exists" — needs a field on <code>students[].supports</code> that no schema has, and an
-  <em>N</em> that no threshold block has. The work order says both are its to shape. The drawing
-  shows the shape of the answer and cannot choose either: is the clause a free-text field beside the
-  existing ones, or a kind of its own? Is <em>N</em> a signals threshold, or the same number the
-  attendance rule already uses? <strong>Both are the owner's, and both change
-  <code>docs/data-model.md</code>.</strong>
+  <strong>The other half is still open, and it is the field this prompt reads.</strong>
+  <code>students[].supports</code> has no attendance clause — is it a free-text field beside the
+  existing ones, or a kind of its own? WO-4.4 owns the answer and it changes
+  <code>docs/data-model.md</code> either way. <strong>Still the owner's.</strong>
 </div>
 
 <div class="mk-section">The log on the student record — newest first, on WO-3.7's screen</div>
@@ -286,15 +298,22 @@
           Volunteered it on the way out. Worth remembering before the next missing-work conversation.
         </div>
       </div>
-      <div class="log-entry retracted">
+      <div class="log-entry">
+        <div class="log-entry-top">
+          <span class="log-entry-kind behavior">Behavior</span>
+          <span class="log-entry-subject">It was a calculator, not a phone</span>
+          <span class="log-entry-when">Sep 25</span>
+        </div>
+        <div class="log-entry-body">
+          Yesterday's entry was wrong and is still below, because that is what was recorded at
+          the time.
+        </div>
+      </div>
+      <div class="log-entry">
         <div class="log-entry-top">
           <span class="log-entry-kind behavior">Behavior</span>
           <span class="log-entry-subject">Phone out during the quiz</span>
           <span class="log-entry-when">Sep 24</span>
-        </div>
-        <div class="log-entry-body">
-          <strong>Corrected on Sep 25:</strong> it was a calculator. Left as written — the entry
-          above is what was recorded at the time.
         </div>
       </div>
       <button class="log-more" type="button">4 older entries →</button>
@@ -310,60 +329,31 @@
   The strikethrough is on the subject and not the body, because what was retracted is the claim.
 </div>
 
-<div class="mk-caption ask">
-  <strong>How does a correction know which entry it corrects?</strong> The drawing shows one entry
-  struck through and the correction inside it, which is the readable version and implies a field the
-  record does not have — the documented shape is
-  <code>{ id, studentId, at, kind, audience, subject, body }</code> with nothing pointing at another
-  entry. Two honest options: a <code>correctsId</code>, which is a schema change; or the correction
-  as an ordinary later entry that simply says so, which needs no schema and cannot draw the
-  strikethrough. Drawn the first way. <strong>The owner's call, and it is a data-model change either
-  way it goes.</strong>
+<div class="mk-caption decided">
+  <strong>It does not, and it does not need to — the owner's ruling, 2026-08-20.</strong> The
+  strikethrough and the pointer-to-a-prior-entry are both gone: a correction is an <em>ordinary later
+  entry that says so</em>, which needs no <code>correctsId</code>, no schema change, and no rule about
+  which entry a reader should believe. The record shape stays exactly as
+  <code>docs/data-model.md</code> documents it.
+  <br><br>
+  <strong>And append-only stands.</strong> The ruling arrived as "don't worry about corrections — you
+  can just delete and re-enter", which would have reversed three written records at once: WO-4.4's
+  deliverable, its acceptance line <em>"entries are never mutated or deleted"</em>, and
+  <code>docs/data-model.md</code> § log. Put to the owner on the same day and settled the other way —
+  <strong>nothing in the log is deletable</strong>, and the Roll Call! hall-pass scar that put the rule
+  there in the first place is untouched. The drawing above is what that looks like: yesterday's wrong
+  entry is still there, underneath today's correction, because that is what was recorded at the time.
 </div>
 
-<div class="mk-section">The same card while projecting — absent, not redacted</div>
-
-<div style="max-width:520px;margin:12px auto 0">
-  <div class="detail-card">
-    <div class="detail-card-title">Grade breakdown</div>
-    <div class="detail-break">
-      <span class="detail-break-cat">Labs · 30%</span>
-      <span class="detail-break-num">71%</span>
-    </div>
-    <div class="detail-break">
-      <span class="detail-break-cat">Tests · 40%</span>
-      <span class="detail-break-num">64%</span>
-    </div>
-    <div class="detail-break">
-      <span class="detail-break-cat">Homework · 30%</span>
-      <span class="detail-break-num">73%</span>
-    </div>
-  </div>
-</div>
-
-<div class="mk-caption">
-  <strong>There is no log card here at all, and no line saying one was hidden.</strong> A card that
-  redacts its own bodies still tells a room of thirty that four things have been written down about
-  this student. So the card is not built, the way WO-1.9's acceptance puts it: the data is
-  <em>absent from the DOM</em> rather than hidden in it.
-</div>
-
-<div class="mk-caption">
-  <strong>And the decision is not made on this screen.</strong> <code>src/supports.js</code> is the
-  one place that answers whether sensitive content is on screen, and the card asks it rather than
-  testing presentation mode itself — the same posture <code>proposed-phase6.css</code> takes with a
-  review date, where the calendar view holds no <code>presentationMode()</code> test because the
-  model hands it an empty list. Two askers is two answers eventually, and
-  <code>wo-sweep.mjs</code> counts the askers.
-</div>
-
-<div class="mk-caption ask">
-  <strong>Is a note to self as sensitive as a behavior entry?</strong> Both are suppressed together
-  here. "Said he is working nights" is arguably worse on a wall than "off task" — it is the
-  student's own disclosure — so suppressing both is the safe reading. But it also means a teacher
-  cannot see her own reminders on a projected screen at all, and the reminders are the half that has
-  nothing to do with conduct. Drawn suppressed together.
-</div>
+import fs from 'node:fs';
+const P='design/mockups/behavior.html';
+let t=fs.readFileSync(P,'utf8');
+const start=t.indexOf('<div class="mk-section">The same card while projecting');
+if(start<0) throw new Error('projected section not found');
+const end=t.indexOf('</body>');
+const fresh=fs.readFileSync(process.argv[1],'utf8');
+fs.writeFileSync(P, t.slice(0,start)+fresh+'\n'+t.slice(end));
+console.log('projected state replaced');
 
 </body>
 </html>
