@@ -1793,6 +1793,7 @@ function commentLines(file) {
             name: m[1].trim(), line: i + 1, i,
             target: t ? 'src/' + t[1] : null,
             saysPending: /not yet lifted/i.test(line),
+            banner: line,
           });
         });
         preambles.set(sheet, declaredClasses(stripCssComments(lines.slice(0, marks.length ? marks[0].i : lines.length).join('\n'))));
@@ -1803,6 +1804,7 @@ function commentLines(file) {
             landed: !!mk.target && !mk.saysPending && fs.existsSync(path.join(REPO, mk.target)),
             saysPending: mk.saysPending,
             crossCutting: CROSS_CUTTING.has(mk.name),
+            banner: mk.banner,
             classes: declaredClasses(sectionBody(lines.slice(mk.i, end))),
           });
         });
@@ -1863,6 +1865,82 @@ function commentLines(file) {
           if (elsewhere.length) notes.push(`${at(s.sheet)}:${s.line} § ${s.name} names ${s.target}, but ${elsewhere.map(c => '.' + c + ' → ' + srcOwners.get(c).join(',')).join(', ')}`);
         }
         if (notes.length) review('a mockup banner and the build disagree about where a section went', `${notes.join(' · ')} — amend the banner, or say in the drawing that the build renamed it (design/mockups/PROTOCOL.md § When the drawing lands)`);
+
+    /* ── 19g · A DRAWING THAT NAMES AN UNBUILT WORK ORDER IS NAMED BACK BY IT ──
+       design/mockups/PROTOCOL.md rule 9: a room is not finished until the phase file points at it.
+       This is the half of that rule a grep settles, and it is the check that would have caught the
+       most expensive thing this section has found.
+
+       THE SCAR. proposed-phase6.css § CALENDAR was drawn the morning of 2026-08-19 and WO-6.3 built
+       the calendar the same day without a line anywhere pointing at it: twenty-eight `.cal-*` classes
+       proposed, twenty `.calendar-*` shipped, not one name carried across. Re-derived rather than
+       lifted — CLAUDE.md's copy-don't-re-derive rule at stylesheet scale — and nothing noticed for a
+       day. Phase 3's drawings did not have that happen to them, and the difference is not luck: WO-3.3,
+       WO-3.5 and WO-3.7 each carry a `Surface` deliverable naming the drawing, so every dispatch brief
+       assembled for them opened with it. Phase 6's rows carried nothing.
+
+       WHAT IT ASSERTS, AND WHY ONLY FOR UNBUILT ROWS. Every `WO-x.y` a pending section's banner names
+       must, if that work order is not yet `✅ DONE`, mention `design/mockups/` somewhere in its own
+       body. A finished work order is past being pointed at — the drawing either reached it or did not,
+       and § 19's review above is what reports that. An unbuilt one is the case this exists for, because
+       `tools/wo-brief.mjs` scans a work order for the files it references and puts them in the
+       dispatch's *Read these first* list. One line in the work order is therefore the whole mechanism:
+       point at the drawing there, and every future dispatch opens with it, unaided.
+
+       It found WO-6.4 on the day it was written — the glance page, drawn twice since 2026-08-19, with
+       no work order anywhere naming the drawing. */
+    {
+      const NAME = 'every drawing names an unbuilt work order that names it back';
+      const woFiles = fs.existsSync(path.join(REPO, 'plans', 'work-orders'))
+        ? fs.readdirSync(path.join(REPO, 'plans', 'work-orders')).filter(f => /\.md$/.test(f))
+        : [];
+      // Each work order's own body, from its `## WO-x.y` heading to the next `##`. Parsed here rather
+      // than shelled out to wo-gate.mjs: this file imports nothing from the other tools by design, and
+      // the sweep is not allowed to depend on the one script that writes to plans/.
+      const bodies = new Map();
+      for (const f of woFiles) {
+        const lines = fs.readFileSync(path.join(REPO, 'plans', 'work-orders', f), 'utf8').split(/\r?\n/);
+        let id = null, buf = [];
+        const flush = () => { if (id && !bodies.has(id)) bodies.set(id, { file: 'plans/work-orders/' + f, text: buf.join('\n') }); };
+        for (const line of lines) {
+          const h = line.match(/^##\s+(WO-\d+\.\d+)\b/);
+          if (h) { flush(); id = h[1]; buf = []; continue; }
+          if (/^##\s/.test(line)) { flush(); id = null; buf = []; continue; }
+          if (id) buf.push(line);
+        }
+        flush();
+      }
+
+      const wanted = new Map(); // WO id -> the sections that name it
+      for (const s of sections) {
+        if (s.landed || s.crossCutting) continue;
+        for (const m of (s.banner || '').matchAll(/WO-(\d+\.\d+)/g)) {
+          const id = 'WO-' + m[1];
+          if (!wanted.has(id)) wanted.set(id, []);
+          wanted.get(id).push(`${at(s.sheet)}:${s.line} § ${s.name}`);
+        }
+      }
+
+      const unpointed = [], unknown = [];
+      for (const [id, where] of wanted) {
+        const wo = bodies.get(id);
+        if (!wo) { unknown.push(`${id} (named by ${where[0]})`); continue; }
+        if (/✅\s*DONE/.test(wo.text)) continue;              // past being pointed at
+        if (/design\/mockups\//.test(wo.text)) continue;      // points back
+        unpointed.push(`${id} in ${wo.file} — drawn by ${where.join(', ')}`);
+      }
+
+      const faults = [];
+      if (unknown.length) faults.push(`${unknown.join(', ')} — a section banner names a work order no file under plans/work-orders/ defines. Either the id is a typo or the row was struck; a drawing pointed at nothing is a drawing nobody will be sent to`);
+      if (unpointed.length) faults.push(`${unpointed.join(' · ')} — the drawing names the work order and the work order names no drawing, so no dispatch brief for it will open with the picture. Add a **Surface** deliverable naming the file (design/mockups/PROTOCOL.md rule 9); tools/wo-brief.mjs picks it up from there with no further work. This is the gap that let WO-6.3 re-derive § CALENDAR rather than lift it`);
+      if (!wanted.size) faults.push('no pending section names a WO-x.y at all — the banners have stopped carrying work-order ids, so this check is watching nothing while reading green');
+
+      check(NAME, !faults.length,
+        faults.length ? faults.join(' · ')
+          : `${wanted.size} work order(s) named by a pending section — ${[...wanted.keys()].sort().join(', ')} — each either ✅ DONE or naming design/mockups/ in its own body, so every dispatch brief cut for one opens with the drawing`);
+    }
+
+
       }
     }
   }

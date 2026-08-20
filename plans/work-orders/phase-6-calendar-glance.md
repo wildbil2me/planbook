@@ -421,6 +421,31 @@ and what is in scope is the card and the panels inside a view that already exist
 fills were reserved by name: `src/home.js` appends `.class-card-signals` empty and `src/home.css`
 holds its height, so that the first real datum reflows nothing.
 
+**The page is drawn, and the drawing was here before the pointer was** *(2026-08-20)*.
+[`design/mockups/glance.html`](../../design/mockups/glance.html) has drawn this page twice — a Tuesday
+with things on it, and the quiet day that is what the owner will actually see for the term's first six
+weeks — since 2026-08-19, and nothing in this work order said so until now. **Read it before
+building**, and lift `design/mockups/proposed-phase6.css` § GLANCE rather than re-deriving it: that
+section is written to become `src/glance.css` almost as-is, and it links `src/home.css` directly so a
+drawing cannot quietly disagree with the card slot it fills.
+
+**This pointer is late by one work order, and the cost is already recorded.** § CALENDAR was drawn the
+same morning and WO-6.3 built the calendar without a line pointing at it: twenty-eight `.cal-*`
+classes proposed, twenty `.calendar-*` shipped, not one name carried across. Re-derived rather than
+lifted, and nothing noticed until `tools/wo-sweep.mjs` § 19 was written a day later.
+`design/mockups/PROTOCOL.md` rule 9 is that scar made a rule — a room is not finished until the phase
+file points at it — and § 19 now fails a build whose drawing names an unbuilt work order that does not
+point back.
+
+**What the drawing settles for this page, and the one thing it asks.** Five panels stacked in `.main`,
+each a `.panel` with its own header and destination; concern and praise at `1fr 1fr` with **praise
+first** below the phone breakpoint; the chip in `.class-card-signals` **reports and does not act**,
+because `classCard()` has been a single `<button>` since WO-1.13 and a control cannot nest inside one;
+and a quiet day is **one** panel with its warrant on it — four chips saying what was checked — rather
+than five empty ones. The open one is the amber note in the drawing: *the card says how many and the
+panels below say who* is a defensible reading of this work order's "every item taps through", and it
+is not the only one. **The owner's call, and it is cheaper before the build than after.**
+
 **Deliverables** — in the order a teacher needs it at 7:40am:
 1. **Every class with today's state — taken · dropped · not yet** — each with a one-tap fix.
 2. Today's and this week's events.

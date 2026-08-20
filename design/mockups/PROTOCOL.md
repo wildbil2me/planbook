@@ -151,7 +151,9 @@ file or they are not answered. So a room is not finished until, in
 That last one is what makes the pointer worth having, and `tools/wo-brief.mjs` then does the rest for
 free: it scans a work order for the files it references, so a drawing named in a `Surface` deliverable
 appears in the dispatch brief's *Read these first* list without anyone adding it there. Check with
-`node tools/wo-brief.mjs WO-x.y | head -80`. **This rule is the one the first two rounds did not
+`node tools/wo-brief.mjs WO-x.y | head -80`. Since 2026-08-20 § 19 **fails a sweep** whose drawing names an unbuilt work order that does not
+name a drawing back, so this rule is checked rather than remembered — it found WO-6.4 the hour it was
+written, drawn twice since the 19th with no work order pointing at it. **This rule is the one the first two rounds did not
 follow** — Phase 3's drawings got their `Surface` lines and Phase 6's got nothing, which is why
 `proposed-phase6.css` § CALENDAR was re-derived by the very work order it was drawn for.
 
@@ -204,10 +206,10 @@ fact, and is the one it reports.
 ## Before you commit a drawing
 
 ```
-node tools/wo-sweep.mjs        # § 19 is the mockup section — six checks and one review
+node tools/wo-sweep.mjs        # § 19 is the mockup section — seven checks and one review
 ```
 
-§ 19 asserts rules 3, 5, 6, 7 and 8, plus one rule this file adds by having a contents page: **every
+§ 19 asserts rules 3, 5, 6, 7, 8 and 9, plus one rule this file adds by having a contents page: **every
 drawing is linked from `index.html`**, so a round cannot leave an orphan nobody opens.
 
 Two things it cannot check, and they are the two that matter most:
