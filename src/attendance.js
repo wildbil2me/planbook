@@ -380,12 +380,18 @@ import { getSelectedClass, getSelectedTerm, initials, avatarClass } from './clas
 /* WO-2.51 adds `termContaining` to that list, and it is the READ half of the same predicate: which
    term of this class holds TODAY. It bounds nothing and writes nothing — it is compared against
    getSelectedTerm() in one place, termRollover(), and the whole of what comes out is a sentence. */
-/* WO-2.52 adds two more, and they are the two halves of the jump: `openTermForToday` writes the
-   preference on arrival when today has moved into another term, and `refreshClassBar` is how the
-   term nav finds out. Both are one-directional, like everything else on this line — src/classes.js
-   imports nothing from this file. */
-import { outOfTermGap, termIsDated, termName, termContaining, openTermForToday, refreshClassBar }
-  from './classes.js';
+/* WO-2.52 adds two more, and they are the two halves of the jump: `openTermNearToday` writes the
+   preference when today is not in the term the tab is on, and `refreshClassBar` is how the term nav
+   finds out. Both are one-directional, like everything else on this line — src/classes.js imports
+   nothing from this file. */
+/* WO-2.54 renames that writer — it was named for the term that HOLDS today, and answered only from
+   inside one — and adds `termNearest`, which is its READ half. Both halves are needed here, by two
+   different controls: the writer is called on arrival and on a press of `Today`, and the read is
+   what the pager asks to find out whether `Today` has anywhere to go before it greys the button
+   out. One walk, asked twice; a second opinion over here about which term is nearest is a button
+   that disables itself on a screen it would have moved. */
+import { outOfTermGap, termIsDated, termName, termContaining, termNearest, openTermNearToday,
+  refreshClassBar } from './classes.js';
 /* The two name helpers, imported rather than re-written. src/roster.js's own header explains why a
    student is one record referenced from many places; how that record READS — "Van Dyke, Mary" in a
    list, "Mary Van Dyke" in a sentence — is the same question here as it is there, off the same
@@ -2631,16 +2637,42 @@ export function lockDay() {
   and turning the iPad is how you read the week or reach a past day. Refused here as well as disabled
   in the pager, because a disabled button is a claim about the UI and this is a claim about the
   state — and `Today` stays live either way, since it is the escape from an unlocked past column
-  rather than a page control.
+  rather than a page control. WO-2.54 makes that second sentence carry more: `Today` is also the way
+  out of a term the teacher has browsed to, and portrait is the orientation the defect was reported
+  from, so the one control that can get her home has to work on the screen that cannot page.
 
   Paging away from today locks any unlocked past column, because the strip that says WHICH day you
   are editing is only honest while that day is on screen.
+
+  ── AND `Today` MOVES THE TERM (WO-2.54) ──
+
+  `Today` never went to today. It puts `pageDaysBack` back to 0 and the day it lands on is
+  anchorDate(), which since WO-2.52 answers the SELECTED term's near edge whenever today is outside
+  it — so with Quarter 4 up in August the button returned the teacher to Quarter 4's first day and
+  nothing on the screen could get back. The tempting fix is anchorDate(), and it is the wrong one:
+  it answers correctly for the term it is handed, and WO-2.52's whole soft wall rests on that. What
+  was wrong is WHICH TERM IT WAS HANDED. So the term moves first and everything under it follows.
+
+  THE ORDER OF THE FOUR STEPS BELOW IS THE FIX. Move the term; repaint the class bar when it moved,
+  for the reason resetRegistry()'s own comment gives — a term moved after the bar is painted leaves
+  the active mark on the term the teacher has just been moved off, with the counts under it
+  describing the other one; then render, because the anchor, the totals and the strip are all
+  derived from the selected term; then announce off an anchor RE-READ after the render. Any other
+  order draws or says the term she has just left.
+
+  ONLY THIS ARM. `'earlier'` and `'later'` move no term: they are a teacher reading her way out of
+  the term on purpose, which is WO-2.50's soft wall and the thing WO-2.51's ruling protects.
 */
 export function pageDays(direction) {
   const count = dayColumnCount();
   if (direction !== 'today' && isPortrait()) return;
   const before = pageDaysBack;
-  if (direction === 'today') pageDaysBack = 0;
+  let jumped = false;
+  if (direction === 'today') {
+    jumped = openTermNearToday(todayISO());
+    if (jumped) refreshClassBar();
+    pageDaysBack = 0;
+  }
   else if (direction === 'earlier') pageDaysBack += count;
   /* Clamped at the furthest thing there is to see rather than at the anchor — forwardLimit()
      carries the reasoning, and returns 0 when there is nothing past the anchor at all, which is the
@@ -2657,8 +2689,16 @@ export function pageDays(direction) {
   const one = shown.length === 1;
   const anchor = anchorDate();
   const home = anchor === todayISO() ? 'today' : spokenDate(anchor);
+  /* THE TERM IS NAMED ONLY WHEN THE TERM MOVED (WO-2.54), and it is read back rather than
+     remembered — the same re-read the anchor above gets, and for the same reason. On every ordinary
+     press this is the empty string and the sentence is the one this screen has always said; on the
+     press that moved her, "Back to today in Quarter 1." is the whole of what changed and the only
+     thing on screen that says so. selectTerm()'s own announcement is not reached from here, so it
+     is still one sentence per press. */
+  const landed = jumped ? ' in ' + termName(getSelectedTerm()) : '';
   if (pageDaysBack === 0) {
-    announce(one ? 'Back to ' + home + '.' : 'Back to this week, ending ' + home + '.');
+    announce(one ? 'Back to ' + home + landed + '.'
+      : 'Back to this week, ending ' + home + landed + '.');
   }
   else if (one) announce('Showing ' + spokenDate(shown[0]) + '.');
   else {
@@ -4303,11 +4343,32 @@ function paintPager(columns) {
      even on a screen that cannot page — so the existing rule is left to decide it, and in portrait
      `pageDaysBack` is pinned at 0 anyway. */
   const today = actionButton('Today', 'data-attendance-page', 'today');
-  today.disabled = pageDaysBack === 0 && !editingDay;
+  /*
+    THE THIRD REASON THIS BUTTON IS OFF (WO-2.54), and it is the half of that work order that reads
+    as finished the moment the button works while it is enabled. The state the defect was reported
+    from is one where it is NOT: arrive on the Quarter 4 tab in August, page nothing, unlock nothing,
+    and the two clauses that were here greyed out the one control that could take the teacher home,
+    under a tooltip reading *You are on Apr 6, 2027*.
+
+    So `Today` is off only when there is nowhere for it to go: unpaged, nothing unlocked, AND the
+    selected term is already the one a press would choose. That last question is asked of
+    src/classes.js — the same walk the writer runs, not a second opinion about it — and a class with
+    no dated terms answers null there, which leaves this button reading exactly as it did before this
+    work order.
+
+    This is the audit the comment on `Later ▶` below calls for: two independent reasons a page
+    control is off, arriving as three.
+  */
+  const near = openClass() ? termNearest(openClass().id, todayISO()) : null;
+  const wouldJump = !!near && near.id !== ((getSelectedTerm() || {}).id || '');
+  today.disabled = pageDaysBack === 0 && !editingDay && !wouldJump;
   /* WHERE "BACK" GOES IS THE ANCHOR (WO-2.52), which is today on every ordinary day and the term's
      own edge when today is outside the selected term. The label stays `Today` — it is the control a
      thumb has learned to find, and on the one screen measured in seconds a button that renames
-     itself is a button that has to be read — and the sentence under it tells the truth. */
+     itself is a button that has to be read — and the sentence under it tells the truth. The
+     disabled sentence *You are on …* is unchanged and is now true whenever it is shown: the state
+     it used to be able to lie about — you are on the wrong term's edge and this button would fix
+     it — is a state in which the button is live. */
   const anchor = anchorDate();
   const home = anchor === todayISO() ? 'today' : plainDate(anchor);
   today.title = today.disabled ? 'You are on ' + home
@@ -4734,13 +4795,24 @@ export function renderAttendance() {
 */
 export function resetRegistry() {
   /*
-    AND THE TERM ROLLS OVER HERE, ON ARRIVAL AND NOWHERE ELSE (WO-2.52). WO-2.51 ruled that nothing
-    switches by itself and this narrows that ruling rather than deleting it: what it was protecting
-    is a teacher part way through entering the last week of Quarter 1, and arrival is the one moment
-    nobody is part way through anything. It goes here, beside the six values every arrival already
-    puts back, because this is THE arrival function and it has two callers — one place to add it is
-    one place to forget it, and two is two. (Seven of them until WO-2.53 took the row panel's student
-    out of the view state; counted off the lines below, the way that block's own header says to.)
+    AND THE TERM ROLLS OVER HERE, ON ARRIVAL (WO-2.52). WO-2.51 ruled that nothing switches by
+    itself and this narrows that ruling rather than deleting it: what it was protecting is a teacher
+    part way through entering the last week of Quarter 1, and arrival is the one moment nobody is
+    part way through anything. It goes here, beside the six values every arrival already puts back,
+    because this is THE arrival function and it has two callers — one place to add it is one place to
+    forget it, and two is two. (Seven of them until WO-2.53 took the row panel's student out of the
+    view state; counted off the lines below, the way that block's own header says to.)
+
+    IT SAID "AND NOWHERE ELSE" UNTIL WO-2.54, and the second place is `Today` — see pageDays(). Both
+    are a deliberate act, which is the test WO-2.51's ruling was written with; a repaint and a term
+    tap still move nothing, which is the half of that ruling this app has never given up.
+
+    THE WALK IS WIDER THAN THE ONE THIS LINE FIRST CALLED (WO-2.54). The writer was named for the
+    term that HOLDS today and answered only from inside one, so on every day in a gap, every day
+    after the last term, and every day of the setup fortnight this app was readied in, the register
+    opened on whatever tab was last touched and called it correct. It answers the NEAREST dated term
+    on those days now, and anchorDate() — which is not touched — puts the strip on that term's near
+    edge.
 
     FIRST, BEFORE THE SIX BELOW, because everything under it and every paint that follows reads the
     selected term: the anchor is derived from it, the totals are scoped to it, and the strip is
@@ -4754,7 +4826,7 @@ export function resetRegistry() {
     year the answer changes and nothing at all on every other arrival, which is what the boolean is
     for.
   */
-  if (openTermForToday(todayISO())) refreshClassBar();
+  if (openTermNearToday(todayISO())) refreshClassBar();
   editingDay = null;
   pageDaysBack = 0;
   searchText = '';

@@ -15,17 +15,17 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — two rows left to build, gate waiting on the term;**
+**Status: Ship 1 delivered; Ship 2 — first grades — one row left to build, gate waiting on the term;**
 **Ship 3 building, its first row landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
 `https://planbook.hwgteach.com/`.
 
-*(The status line above changed on 2026-08-19; its counts were corrected on 2026-08-20, when
-WO-2.53 landed and WO-2.54 was booked. Every work order in `plans/work-orders/README.md`
-§ Ship 2 is ✅ except WO-2.54, WO-3.18 and WO-G2 itself, and* **WO-G2 is calendar-bound by
-construction** *— four of its nine boxes want a real class's real grades, which do not exist until
+*(The status line above changed on 2026-08-19; its counts were corrected twice on 2026-08-20 — once
+when WO-2.53 landed and WO-2.54 was booked, and again that evening when WO-2.54 landed too. Every
+work order in `plans/work-orders/README.md` § Ship 2 is ✅ except WO-3.18 and WO-G2 itself, and*
+**WO-G2 is calendar-bound by construction** *— four of its nine boxes want a real class's real grades, which do not exist until
 Sep 2. **Do not read that as a stall:*** **§ Ship 3 is the running order now**, *written the same day
 by WO-1.24, for the same reason § Ship 2 was written the day after Ship 1 closed —* `next` *was one work
 order from having no rows left to read.)*

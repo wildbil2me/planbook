@@ -3672,6 +3672,27 @@ if (!backupBooted || !backupSeam) {
  * physical iPad in portrait. The touch section below measures the boxes; it cannot press them.
  */
 
+/*
+  Today's date, computed HERE, in Node, off the same machine clock the browser is reading.
+
+  This is deliberately not asked of the app. src/attendance.js builds it out of the local calendar
+  fields precisely because toISOString() would return UTC — a different day from about 7pm Eastern
+  onward — and a check that asked the app what today was would agree with a UTC bug perfectly. Two
+  runtimes, one clock, one answer.
+
+  IT SITS ABOVE THE CLASSES & TERMS SECTION SINCE WO-2.54, and it has now moved twice for the same
+  reason. WO-3.17 pulled it up to the assignments section, which dates a new assignment today; this
+  work order pulls it up again because the reload below comes back on the term NEAREST today, and
+  the check that says so has to know which term that is without asking the app. Both sections
+  underneath still use it and the old site carries a pointer. One definition, because a second one
+  is the bug it guards.
+*/
+const nodeToday = (() => {
+  const n = new Date();
+  const p = (x) => (x < 10 ? '0' : '') + x;
+  return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
+})();
+
 console.log('\n--- classes & terms ---');
 
 /* The section above finishes with a modal open over the header. A reload starts from the app as a
@@ -4144,11 +4165,54 @@ if (!classesBooted || !classSeam) {
       && remembered.tabNames.length === 7 && remembered.navLabels.length === 4,
     rememberedBoot ? 'reopened with ' + remembered.navLabels.length + ' terms in the nav'
       : 'the loading screen never came down');
-  check('the open class and the open term survive the reload',
+  /*
+    WO-2.54 BROKE THIS CHECK'S PREMISE AND IT IS REPAIRED AGAINST THE NEW RULE RATHER THAN PINNED TO
+    THE OLD ONE, which is what WO-2.52 did to two sections further down for the same kind of reason.
+
+    It read "the open class and the open term survive the reload", and the second half of that is no
+    longer a rule this app has: arriving at the register moves the selected term to the one NEAREST
+    today, and a boot is an arrival. On this fixture — four terms typed overlapping, backwards and
+    empty, none of them anywhere near today — the term the teacher tapped a moment ago is not the one
+    the app comes back on, and it should not be.
+
+    SO WHAT IS ASSERTED IS THE ROLLOVER, AT A BOOT, and it is a stronger claim than the one it
+    replaces: the class survives, the nav marks exactly one tab, the preference on disk holds the same
+    id the screen is showing, and the term is the one this file works out for itself from the dates
+    the fixture typed — walked in Node off nodeToday, never read back off the app. A build that
+    stopped writing the preference, a build that stopped rolling over at boot, and a build that rolled
+    over to the wrong side of a gap are three different reds here.
+
+    THE HALF THAT LEAVES IS ASSERTED ELSEWHERE, twice, so nothing is being given up quietly: that a
+    term chosen by hand STICKS while the screen is open — three repaints, byte-identical preference —
+    is WO-2.52's section and WO-2.54's, and both drive it against a document where the rollover wants
+    a different term.
+  */
+  const nearestTermId = (() => {
+    const ids = remembered.termIds[1] || [];
+    const dated = (remembered.termDates[1] || []).map((d, i) => ({ id: ids[i], start: d[0], end: d[1] }))
+      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t.start) && /^\d{4}-\d{2}-\d{2}$/.test(t.end));
+    const holds = dated.filter((t) => t.start <= nodeToday && nodeToday <= t.end)[0];
+    if (holds) return holds.id;
+    const day = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;
+    let before = null;
+    let after = null;
+    dated.forEach((t) => {
+      if (t.end < nodeToday && (!before || t.end > before.end)) before = t;
+      if (t.start > nodeToday && (!after || t.start < after.start)) after = t;
+    });
+    if (!after) return before ? before.id : '';
+    if (!before) return after.id;
+    return day(after.start) - day(nodeToday) <= day(nodeToday) - day(before.end) ? after.id : before.id;
+  })();
+  check('the open class survives the reload, and the open term comes back on the one nearest today — the arrival rollover, seen at a boot',
     remembered.selectedClass === onTerm.selectedClass
-      && remembered.selectedTerm === onTerm.selectedTerm
-      && remembered.navActive.length === 1 && remembered.navActive[0] === onTerm.selectedTerm,
-    'class ' + remembered.selectedClass + ', term ' + remembered.selectedTerm);
+      && !!nearestTermId && remembered.selectedTerm === nearestTermId
+      && remembered.navActive.length === 1 && remembered.navActive[0] === nearestTermId
+      && (remembered.prefTerms || {})[remembered.selectedClass] === nearestTermId,
+    'class ' + remembered.selectedClass + ', term ' + remembered.selectedTerm + ' (tapped '
+      + onTerm.selectedTerm + ' before the reload; nearest to ' + nodeToday + ' over '
+      + JSON.stringify(remembered.termDates[1]) + ' is ' + nearestTermId + ', and the preference holds '
+      + JSON.stringify((remembered.prefTerms || {})[remembered.selectedClass]) + ')');
   const prefTermPairs = Object.keys(remembered.prefTerms || {})
     .map((k) => k + ' → ' + remembered.prefTerms[k]);
   check('and only ids are remembered — no class name, nothing else out of the document',
@@ -7234,23 +7298,10 @@ if (!supportSeam) {
  * them.
  */
 
-/*
-  Today's date, computed HERE, in Node, off the same machine clock the browser is reading.
-
-  This is deliberately not asked of the app. src/attendance.js builds it out of the local calendar
-  fields precisely because toISOString() would return UTC — a different day from about 7pm Eastern
-  onward — and a check that asked the app what today was would agree with a UTC bug perfectly. Two
-  runtimes, one clock, one answer.
-
-  It sits above the assignments section since WO-3.17, which gives a new assignment today in both
-  date fields and therefore needs the same value; the attendance section below still uses it and its
-  old site carries a pointer. One definition, because a second one is the bug it guards.
-*/
-const nodeToday = (() => {
-  const n = new Date();
-  const p = (x) => (x < 10 ? '0' : '') + x;
-  return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
-})();
+/* `nodeToday` was defined here until WO-2.54 and now sits above the classes & terms section, which
+   needs the same value for the same reason — the term the register comes back on after a reload is
+   the one NEAREST today. The definition moved rather than being copied, exactly as WO-3.17 moved it
+   here; its comment moved with it. */
 
 console.log('\n--- assignments and the screen switcher ---');
 
@@ -9024,9 +9075,10 @@ await evalJs(`(async function(){
   await s.flush();
   return n; })()`);
 
-/* `nodeToday` was defined here until WO-3.17 and now sits above the assignments section, which
-   needs the same value for the same reason — the definition moved rather than being copied, because
-   two answers to "what day is it" is the defect it exists to catch. Its comment moved with it. */
+/* `nodeToday` was defined here until WO-3.17, which moved it above the assignments section, and
+   WO-2.54 moved it again to the head of classes & terms — each time because a section further up
+   came to need the same value, and each time the definition MOVED rather than being copied, because
+   two answers to "what day is it" is the defect it exists to catch. Its comment travels with it. */
 
 /*
   And the COLUMNS, computed here too, for the same reason and for a second one.
@@ -14547,6 +14599,14 @@ if (!seam) {
     if (!cls) return { ok:false, why:'no class is open' };
     s.update(function(){ cls.terms = ${JSON.stringify([ANCHOR_TERM])}
       .concat(${JSON.stringify(terms)}); });
+    /* THE UNDATED TERM IS SELECTED OUT LOUD SINCE WO-2.54, where it used to be left to
+       getSelectedTermId()'s fallback to the first term. Two reasons, and the first is that a premise
+       this section depends on for fifteen checks should be stated rather than inherited. The second
+       is that the fallback is no longer the only thing that writes this: an ARRIVAL now moves the
+       selected term to the nearest DATED one, and every phase here is deliberately arranged so that
+       the nearest dated term is not where this block wants the tab.
+       (No backticks in this comment: it is inside a template literal.) */
+    c.selectTerm(${JSON.stringify(ANCHOR_TERM.id)});
     a.lockDay();
     a.setSearch(''); a.setFilter('all');
     a.renderAttendance();
@@ -14658,6 +14718,16 @@ if (!seam) {
     const home250 = await read250();
     const card250 = home250.cards.filter((c) => c.id === plant250.classId)[0] || null;
     await clickSel('#homeGrid .class-card-open[data-class-tab="' + plant250.classId + '"]');
+    /* AND THE TAB IS PUT BACK ON THE UNDATED TERM AFTER THAT RE-ENTRY (WO-2.54). Opening the class
+       from its card is an ARRIVAL, and an arrival now moves the selected term to the nearest dated
+       one — which on this fixture is the term starting ten weekdays out, so the strip would anchor
+       there and today would leave the screen. That is the app behaving as WO-2.54 specifies and this
+       block asking its questions about columns that are no longer drawn: it reported exactly that,
+       six reds deep, on a correct app. The line below is the fixture's own premise restated after the
+       one control in this section that disturbs it. */
+    await evalJs("(function(){ window.planbook.classes.selectTerm("
+      + JSON.stringify(ANCHOR_TERM.id) + "); window.planbook.attendance.renderAttendance();"
+      + " return 1; })()");
     check('the home card says exactly what the grid says, out of the one stateSummary() that decides both — and it is NOT the untaken amber',
       !!card250 && card250.text === 'Off term · before ' + AUTUMN
         && card250.text === beforeTerm.stateLine
@@ -15372,20 +15442,33 @@ if (!seam) {
     const paged = await read251();
     await clickSel('#attendancePager [data-attendance-page="today"]');
     const returned = await read251();
+    await clickSel('#termNav [data-term-select="' + EARLY_ID + '"]');
+    const chosenAgain = await read251();
     /* THE OFF-TODAY BAND IS AN OFF-ANCHOR BAND SINCE WO-2.52, and the sentence names the day the
        strip is standing on rather than today: with the tab on a term that ended, the strip opens on
        that term's last day and "Today is not on screen" would be true of an arrival nobody paged.
        The precedence is the one being asserted and it is unchanged — the message about the day on
-       screen beats the message about the term. */
-    check('paged back off the day the strip opened on, the band on screen is that one and not this one — and the pager own way back brings this one straight back',
+       screen beats the message about the term.
+
+       AND THE WAY BACK NOW ANSWERS THIS BAND RATHER THAN RETURNING TO IT (WO-2.54). `Today` moved the
+       selected term to the one that holds today as it came back, so what used to be the third state
+       here — the rollover band up again — is a screen with no band at all and the tab on the right
+       term. That is this band's own condition being RESOLVED, which is what it exists to ask for, so
+       the check follows it with a real tap on the early term's tab: the rollover is back on the paint
+       after it, unpaged, which is the precedence claim this check was written for. Three states, one
+       of them new, and none of them dropped. */
+    check('paged back off the day the strip opened on, the band on screen is that one and not this one — the pager’s way back RESOLVES this one by moving the tab, and tapping the early term again gives it straight back',
       backOn.up && backOn.text === SAYS
         && paged.up && paged.text.indexOf(' is not on screen.') > 0
         && paged.text.indexOf(', ' + V[3].slice(0, 4) + ' is not on screen.') > 0
         && paged.hooks === 'data-attendance-page=today'
-        && returned.up && returned.text === SAYS
-        && returned.hooks === 'data-term-select=' + LATE_ID,
+        && returned.term === LATE_ID && !returned.up
+        && chosenAgain.term === EARLY_ID && chosenAgain.up && chosenAgain.text === SAYS
+        && chosenAgain.hooks === 'data-term-select=' + LATE_ID,
       JSON.stringify(backOn.text) + ' -> paged ' + JSON.stringify(paged.text) + ' ['
-        + paged.hooks + '] -> back ' + JSON.stringify(returned.text) + ' [' + returned.hooks + ']');
+        + paged.hooks + '] -> back on term ' + JSON.stringify(returned.term) + ' with '
+        + JSON.stringify(returned.text) + ' [' + returned.hooks + '] -> the early tab tapped again '
+        + JSON.stringify(chosenAgain.text) + ' [' + chosenAgain.hooks + ']');
 
     /* The other arm of the same condition, and it is a different fact: today IS on the screen, and
        the day accepting edits is not today. The ✏ is the real control, on a past column inside the
@@ -15676,17 +15759,23 @@ if (!seam) {
   const noneMoved = (p) => Object.keys(p.moved).every((k) => p.moved[k] === false);
 
   /* One arrangement of terms and one choice of tab, through the store and through selectTerm() — no
-     control types six dates. Everything after a call to this is either a read or a real click. */
+     control types six dates. Everything after a call to this is either a read or a real click.
+
+     THE TAB IS CHOSEN LAST SINCE WO-2.54, and the reorder is that work order's, not a tidy-up:
+     `Today` moves the selected term to the one nearest today now, so a pageDays('today') used to put
+     the paging back to 0 walks straight out of the arrangement it was called to set up. It reported
+     exactly that — the tab on the term that holds today, in a phase whose whole subject is a tab on
+     the term that does not. The paging reset comes first and the tap comes after it. */
   const arrange52 = (terms, pick) => evalJs(`(async function(){
     var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
     var id = c.getSelectedClassId();
     var cls = (s.getDoc().classes || []).filter(function(x){ return x.id === id; })[0];
     if (!cls) return { ok:false, why:'no class is open' };
+    a.lockDay();
+    a.pageDays('today');
     s.update(function(){ cls.terms = ${JSON.stringify(terms)}; });
     c.selectTerm(${JSON.stringify(pick)});
-    a.lockDay();
     a.setSearch(''); a.setFilter('all');
-    a.pageDays('today');
     a.renderAttendance();
     await s.flush();
     return { ok:true, term: c.getSelectedTermId() }; })()`);
@@ -15706,8 +15795,14 @@ if (!seam) {
         date: ${JSON.stringify(DAY_OFF)}, endDate: ${JSON.stringify(DAY_OFF)},
         title:'WO-2.52 institute day', classIds: [] });
     });
+    /* THE TAB IS PUT BACK AFTER THE PAGING RESET (WO-2.54). This is a ledger reset rather than a
+       control the fixture is exercising, and since that work order pageDays('today') also moves the
+       selected term — so without these two lines it silently re-arranges the phase it is clearing
+       for. (No backticks in this comment: it is inside a template literal.) */
+    var pinned = c.getSelectedTermId();
     a.lockDay();
     a.pageDays('today');
+    if (pinned && c.getSelectedTermId() !== pinned) c.selectTerm(pinned);
     a.renderAttendance();
     await s.flush();
     return (s.getDoc().events || []).length; })()`);
@@ -16087,12 +16182,549 @@ if (!seam) {
       Object.assign(d, restored);
       s.update(function(){});
       c.selectClass(saved.classId);
-      if (saved.termId) c.selectTerm(saved.termId);
       a.lockDay();
+      /* THE PAGING RESET COMES BEFORE THE TERM IS PUT BACK (WO-2.54): pageDays('today') moves the
+         selected term to the one nearest today now, so a teardown that chose the term first would
+         hand the next section a different tab from the one it found. (No backticks: template
+         literal.) */
       a.pageDays('today');
+      if (saved.termId) c.selectTerm(saved.termId);
       a.setSearch(''); a.setFilter('all'); a.renderAttendance();
       delete window.__wo252save;
       delete window.__wo252;
+      await s.flush();
+      return 1; })()`);
+  }
+
+  await send('Emulation.clearDeviceMetricsOverride');
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+}
+
+/* ───────── `Today` goes to the term, and there is no way back to today (WO-2.54) ─────────
+ *
+ * THE FOURTH EDIT TO THIS SCREEN IN FOUR DAYS, AND IT IS A DEFECT IN THE THIRD. WO-2.52 anchored the
+ * strip on the SELECTED term, which is what made the fortnight before a term readable; what it did
+ * not do is move the term. So on 2026-08-20, with the Quarter 4 tab up and every term still ahead of
+ * today, the owner pressed `Today` on the deployed app and arrived at Quarter 4's first day — and
+ * nothing on the screen could get her back, because the one control that could was GREYED OUT. The
+ * arrival rollover had the same hole from the other side: it only ever answered from inside a term,
+ * so every day of a gap, every day after the last term, and every day of the setup fortnight opened
+ * on whatever tab was last touched and called it correct.
+ *
+ * WHAT IS MEASURED HERE IS WHICH TERM THE SCREEN IS HANDED, and never how it draws once it has one.
+ * anchorDate() is not touched by this work order and nothing below asserts anything new about it:
+ * every phase reads the strip's newest column purely as the evidence that the TERM moved, because
+ * the anchor's own rule — today inside the term, else the term's near edge — is WO-2.52's section's
+ * claim and is still made there.
+ *
+ * THE THREE GAP READINGS ARE ONE RULE ASKED THREE TIMES, and they are three rather than one because
+ * the work order's Acceptance and its Deliverables can be read as disagreeing. The Deliverables give
+ * the measurement — `after.start - today` against `today - before.end`, in calendar days, forward
+ * winning a TIE — and a tie-break is a rule with nothing to do unless nearest is what decides. The
+ * fifth Acceptance line illustrates the same case as "one day past a term's end and two before the
+ * next's start … the forward side still wins" and calls the forward side the nearer one, which it is
+ * not on those two numbers; on the dates it names (Quarter 1 ending 10/31, Quarter 2 starting 11/3)
+ * the one day in that gap a teacher opens a register on is 11/2, where the two numbers are the other
+ * way round and the forward side genuinely IS nearer. So the walk measures, and this block drives it
+ * from both sides and down the middle: forward when forward is nearer, back when back is nearer, and
+ * forward on an exact tie. A single reading could not tell the measurement from a build that simply
+ * always went forward.
+ *
+ * EVERY DATE HERE IS DERIVED FROM TODAY, for the reason the three sections above give at length. The
+ * gap phases need their two sides measured in CALENDAR days on either side of today — which is what
+ * the walk compares — so they step by calendar days rather than by weekdays; everything else steps
+ * by weekdays, because those dates have to be columns the strip can draw.
+ */
+console.log('\n--- `Today` goes to the term, and there is no way back to today (WO-2.54) ---');
+
+if (!seam) {
+  skip('`Today` moves the selected term to the one nearest today',
+    'the window.planbook seam is not present, so nothing here could arrange a term or press a pager');
+} else {
+  /* Six columns need a laptop's width, and the section above cleared its own override on the way
+     out. Stated here rather than inherited, which is the note every section in this run makes. */
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await new Promise(r => setTimeout(r, 300));
+
+  const W = nodeColumns(6, 0);                 /* [today, ...five weekdays back] */
+  /* THE CALENDAR-DAY STEP, which the weekday walkers above cannot express: a gap of two days either
+     side of today is two days whether or not they are school days, and it is exactly what the walk
+     under test compares. Same shape as `tomorrow` further up this file, with the step as an
+     argument. */
+  const calDay = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    const p = (x) => (x < 10 ? '0' : '') + x;
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  };
+
+  /* Four dated terms, all of them AHEAD of today — the owner's own screen on the day she reported
+     this, with the register being readied a fortnight before the year starts. */
+  const Q1_ID = 'tm_wo254a', Q2_ID = 'tm_wo254b', Q3_ID = 'tm_wo254c', Q4_ID = 'tm_wo254d';
+  const Q1 = 'WO-2.54 first', Q4 = 'WO-2.54 fourth';
+  const OPENS = nodeWeekdayAhead(10);
+  const FOUR_TERMS = [
+    { id: Q1_ID, label: Q1, start: OPENS, end: nodeWeekdayAhead(40) },
+    { id: Q2_ID, label: 'WO-2.54 second', start: nodeWeekdayAhead(41), end: nodeWeekdayAhead(70) },
+    { id: Q3_ID, label: 'WO-2.54 third', start: nodeWeekdayAhead(71), end: nodeWeekdayAhead(100) },
+    { id: Q4_ID, label: Q4, start: nodeWeekdayAhead(101), end: nodeWeekdayAhead(130) },
+  ];
+  const OPENS_IN = daysApart(OPENS, W[0]);
+  /* The ordinary day: one term with today inside it, which is what every day of a live term looks
+     like and the state acceptance line 3 says must not change by one keystroke. */
+  const NOW_ID = 'tm_wo254now', NOW = 'WO-2.54 running';
+  const NOW_TERM = { id: NOW_ID, label: NOW, start: W[5], end: nodeWeekdayAhead(20) };
+  /* February: the term that ENDED, selected by hand, with today inside the other one. WO-2.52's own
+     acceptance line, re-driven here because this work order is the one most likely to break it. */
+  const FEB_A_ID = 'tm_wo254feb1', FEB_B_ID = 'tm_wo254feb2';
+  const FEB_A = 'WO-2.54 finished', FEB_B = 'WO-2.54 current';
+  const FEB_TERMS = [
+    { id: FEB_A_ID, label: FEB_A, start: W[5], end: W[3] },
+    { id: FEB_B_ID, label: FEB_B, start: W[2], end: nodeWeekdayAhead(30) },
+  ];
+  const GAP_BACK_ID = 'tm_wo254gapb', GAP_FWD_ID = 'tm_wo254gapf';
+  const GAP_BACK = 'WO-2.54 ended', GAP_FWD = 'WO-2.54 opening';
+  /* One gap, three arrangements of it. Only the two inner edges move: the term behind today ends
+     `back` calendar days ago and the one ahead opens `fwd` calendar days from now. */
+  const gapTerms = (back, fwd) => [
+    { id: GAP_BACK_ID, label: GAP_BACK, start: calDay(-90), end: calDay(-back) },
+    { id: GAP_FWD_ID, label: GAP_FWD, start: calDay(fwd), end: calDay(fwd + 60) },
+  ];
+  const PAST_A_ID = 'tm_wo254pasta', PAST_B_ID = 'tm_wo254pastb';
+  const PAST_B = 'WO-2.54 last';
+  const PAST_TERMS = [
+    { id: PAST_A_ID, label: 'WO-2.54 first of two', start: calDay(-200), end: calDay(-120) },
+    { id: PAST_B_ID, label: PAST_B, start: calDay(-90), end: W[3] },
+  ];
+  const UNDATED_ID = 'tm_wo254undated';
+  const SR_254 = 'WO-2.54 sentinel — nothing was announced';
+
+  const INSTALL_254 = `(function(){
+    function hookOf(b){
+      var out = 'none';
+      Array.prototype.slice.call(b.attributes).forEach(function(x){
+        if (x.name.indexOf('data-') === 0 && x.name !== 'data-attendance-col') {
+          out = x.name + (x.value ? '=' + x.value : ''); }
+      });
+      return out;
+    }
+    window.__wo254 = function(){
+      var a = window.planbook.attendance, c = window.planbook.classes;
+      var id = c.getSelectedClassId();
+      var heads = Array.prototype.slice.call(
+        document.querySelectorAll('#attendanceHead th[data-attendance-col]'));
+      var band = document.getElementById('attendanceBanner');
+      var pager = document.getElementById('attendancePager');
+      var pagerBtns = pager ? Array.prototype.slice.call(pager.querySelectorAll('button')) : [];
+      var nav = document.getElementById('termNav');
+      var tabs = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
+      var live = document.getElementById('srLive');
+      var view = document.getElementById('classView');
+      return {
+        today: a.todayISO(),
+        classId: id,
+        term: c.getSelectedTermId(),
+        active: tabs.filter(function(b){ return b.classList.contains('active'); })
+          .map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
+        tabs: tabs.length,
+        pref: JSON.stringify(window.planbook.getPref('openTermIds') || {}),
+        registryUp: !!(view && !view.classList.contains('hidden')),
+        /* What the screen SAYS, in the same round trip as what it shows: this section's whole
+           second half is one sentence per press. (No backticks in this comment: it is inside a
+           template literal.) */
+        said: live ? live.textContent : '',
+        coarse: !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches),
+        band: {
+          up: !!(band && !band.classList.contains('hidden')),
+          cls: band ? band.className : '',
+          text: band ? band.textContent : '' },
+        pager: pagerBtns.map(function(b){
+          var r = b.getBoundingClientRect();
+          return { hook: hookOf(b), disabled: !!b.disabled, title: b.title || '',
+            w: Math.round(r.width), h: Math.round(r.height) }; }),
+        columns: heads.map(function(th){
+          var d = th.getAttribute('data-attendance-col');
+          var chip = th.querySelector('.attendance-day-state');
+          var btn = th.querySelector('button');
+          var cells = Array.prototype.slice.call(
+            document.querySelectorAll('#attendanceBody td[data-attendance-col="' + d + '"] > *'))
+            .filter(function(n){ return n.className.indexOf('attendance-cell-time') < 0; });
+          return {
+            date: d,
+            chip: chip ? chip.textContent : '',
+            btn: btn ? hookOf(btn) : 'none',
+            tappable: cells.filter(function(n){ return n.tagName === 'BUTTON'; }).length }; }) };
+    };
+    return 1; })()`;
+
+  /* Flushed before every read, for tools/README.md trap 6, and given the 250ms announce() needs:
+     src/live-region.js clears and re-writes on a 30ms timer so that a repeat reaches assistive tech
+     as a change, and a read taken straight back reports silence from a screen that spoke. */
+  const read54 = async () => {
+    await new Promise(r => setTimeout(r, 250));
+    return evalJs('(async function(){ await window.planbook.store.flush();'
+      + ' return window.__wo254(); })()');
+  };
+  const dates54 = (r) => r.columns.map((c) => c.date);
+  const col54 = (r, date) => r.columns.filter((c) => c.date === date)[0] || null;
+  const page54 = (r, which) => r.pager.filter((b) => b.hook === 'data-attendance-page=' + which)[0]
+    || { hook: 'missing', disabled: false, title: '', w: 0, h: 0 };
+
+  /*
+    ONE ARRANGEMENT OF TERMS AND ONE CHOICE OF TAB, through the store and through selectTerm() — no
+    control types six dates, and everything after a call to this is a read or a real click.
+
+    THE ORDER INSIDE IT IS LOAD-BEARING NOW, which is the one way this differs from its WO-2.52
+    sibling. That one ended with pageDays('today') to put the paging back to 0; since this work order
+    that call MOVES THE TERM, so it would arrange the fixture and then walk out of it. Paging is reset
+    FIRST, against whatever terms the phase above left behind, and the tab is chosen last.
+  */
+  const arrange54 = (terms, pick) => evalJs(`(async function(){
+    var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+    var id = c.getSelectedClassId();
+    var cls = (s.getDoc().classes || []).filter(function(x){ return x.id === id; })[0];
+    if (!cls) return { ok:false, why:'no class is open' };
+    a.lockDay();
+    a.pageDays('today');
+    s.update(function(){ cls.terms = ${JSON.stringify(terms)}; });
+    c.selectTerm(${JSON.stringify(pick)});
+    a.setSearch(''); a.setFilter('all');
+    a.renderAttendance();
+    await s.flush();
+    return { ok:true, term: c.getSelectedTermId() }; })()`);
+
+  /* The ledger back to empty for this class between phases, and the sentinel into the live region in
+     the same breath: WO-2.50's decision 2 says a day that already carries a record is never out of
+     term, so a mark left behind would make the next phase's locked column editable for a reason with
+     nothing to do with what it is asserting — and a sentence left behind would be read as this
+     phase's. */
+  const clear54 = () => evalJs(`(async function(){
+    var s = window.planbook.store, a = window.planbook.attendance;
+    var id = window.planbook.classes.getSelectedClassId();
+    s.update(function(d){
+      d.attendance = (d.attendance || []).filter(function(r){ return r.classId !== id; });
+    });
+    var live = document.getElementById('srLive');
+    if (live) live.textContent = ${JSON.stringify(SR_254)};
+    a.lockDay();
+    a.renderAttendance();
+    await s.flush();
+    return 1; })()`);
+
+  /* THE ARRIVAL IS A REAL CLICK ON THE CLASS TAB, never a call to resetRegistry() — that tab is one
+     of the two controls src/shell.js runs the whole arrival chain from, and a call to the module
+     would prove the writer works where the tap proves it is WIRED. */
+  const arrive54 = async (classId) => {
+    await clickSel('#classTabBar [data-class-tab="' + classId + '"]');
+    return read54();
+  };
+  const repaint54 = () => evalJs(`(async function(){
+    var a = window.planbook.attendance;
+    a.renderAttendance();
+    a.paintRenderedTotals();
+    a.renderAttendance();
+    await window.planbook.store.flush();
+    return 1; })()`);
+
+  const plant254 = await evalJs(`(async function(){
+    var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+    var d = s.getDoc();
+    if (!d) return { ok:false, why:'no year document is open' };
+    var id = c.getSelectedClassId();
+    var cls = (d.classes || []).filter(function(x){ return x.id === id; })[0];
+    if (!cls) return { ok:false, why:'no class is open, so there is no term to move' };
+    /* Parked on the window rather than carried back through CDP, for the reason every fixture in
+       this file gives: the teardown has to put the SAME object graph back, and a document that made
+       the round trip would come back a copy of a copy.
+       (No backticks in this comment: it is inside a template literal.) */
+    window.__wo254save = { doc: JSON.stringify(d), classId: id, termId: c.getSelectedTermId() };
+    s.update(function(doc){
+      if (!Array.isArray(doc.attendance)) doc.attendance = [];
+      if (!Array.isArray(doc.students)) doc.students = [];
+      if (!Array.isArray(doc.events)) doc.events = [];
+      if (!Array.isArray(cls.roster)) cls.roster = [];
+      doc.attendance = doc.attendance.filter(function(r){ return r.classId !== id; });
+      /* The calendar emptied, which is this section's second premise: a day off left behind by an
+         earlier section moves the forward horizon, and one of the phases below reads a locked
+         column at a term's end. (No backticks: template literal.) */
+      doc.events = [];
+      doc.students.push({ id:'wo254-a', first:'Term', last:'Nearest' });
+      cls.roster.push('wo254-a');
+    });
+    a.setSearch(''); a.setFilter('all');
+    c.selectClass(id);
+    a.renderAttendance();
+    await s.flush();
+    return { ok:true, classId:id, name:cls.name }; })()`);
+
+  if (!plant254.ok) {
+    check('the WO-2.54 fixture is real: a class with a roster is open on the registry, over an empty calendar',
+      false, plant254.why);
+  } else {
+    await evalJs(INSTALL_254);
+
+    /* ── PHASE A: the arrival, from a tab six months away ── */
+    await arrange54(FOUR_TERMS, Q4_ID);
+    await clear54();
+    const parked = await read54();
+    const arrived = await arrive54(plant254.classId);
+
+    check('the WO-2.54 fixture is real: the registry is up on a class with four dated terms, every one of them ahead of today, and the tab is parked on the fourth',
+      parked.registryUp && parked.today === W[0] && parked.term === Q4_ID
+        && parked.tabs === 4 && dates54(parked)[0] === FOUR_TERMS[3].start,
+      'the app says today is ' + JSON.stringify(parked.today) + ', this file derived '
+        + JSON.stringify(W[0]) + '; the nav draws ' + parked.tabs + ' tab(s), the open one is '
+        + JSON.stringify(parked.term) + ' (the fourth term runs ' + FOUR_TERMS[3].start + ' … '
+        + FOUR_TERMS[3].end + '), and the strip stands on ' + JSON.stringify(dates54(parked)));
+
+    check('arriving with the tab parked on a term six months out opens on the term NEAREST today instead — the first one — anchored on the day it starts, with the nav highlight and the preference both moved',
+      arrived.term === Q1_ID && arrived.active === Q1_ID
+        && dates54(arrived)[0] === OPENS
+        && arrived.pref !== parked.pref && arrived.pref.indexOf(Q1_ID) >= 0
+        && arrived.band.text === Q1 + ' opens in ' + OPENS_IN + ' days.',
+      'the open term went ' + JSON.stringify(parked.term) + ' -> ' + JSON.stringify(arrived.term)
+        + ', the nav highlight ' + JSON.stringify(parked.active) + ' -> '
+        + JSON.stringify(arrived.active) + ', the preference ' + parked.pref + ' -> '
+        + arrived.pref + ', and the strip opened on ' + JSON.stringify(dates54(arrived))
+        + ' under a band reading ' + JSON.stringify(arrived.band.text));
+
+    /* ── PHASE B: browsing to a far term, and getting home in one press ── */
+    await clickSel('#termNav [data-term-select="' + Q4_ID + '"]');
+    await clear54();
+    const browsed = await read54();
+
+    check('choosing that far term by hand still STICKS and still anchors the strip on it — and this is the state the defect was reported from, so `Today` is live rather than greyed out with a tooltip naming a day next April',
+      browsed.term === Q4_ID && browsed.active === Q4_ID
+        && dates54(browsed)[0] === FOUR_TERMS[3].start
+        && page54(browsed, 'today').disabled === false
+        && page54(browsed, 'today').title.indexOf('Back to') === 0,
+      'the open term is ' + JSON.stringify(browsed.term) + ', the strip stands on '
+        + JSON.stringify(dates54(browsed)) + ', and `Today` reads '
+        + JSON.stringify(page54(browsed, 'today')));
+
+    await clickSel('#attendancePager [data-attendance-page="today"]');
+    const home = await read54();
+
+    check('and one press of it takes the tab, the nav highlight and the strip back to the term nearest today — in ONE sentence, which names the term it landed in and is not selectTerm()’s',
+      home.term === Q1_ID && home.active === Q1_ID && dates54(home)[0] === OPENS
+        && home.said.indexOf('Back to this week, ending ') === 0
+        && home.said.slice(-(Q1.length + 5)) === ' in ' + Q1 + '.'
+        && home.said.indexOf('is open') < 0,
+      'the open term went ' + JSON.stringify(browsed.term) + ' -> ' + JSON.stringify(home.term)
+        + ', the strip ' + JSON.stringify(dates54(browsed)) + ' -> '
+        + JSON.stringify(dates54(home)) + ', and the screen said ' + JSON.stringify(home.said));
+
+    /* ── PHASE C: the ordinary day, unchanged to the keystroke ── */
+    await arrange54([NOW_TERM], NOW_ID);
+    await clear54();
+    const ordinary = await read54();
+
+    check('on an ordinary day — today inside the selected term, unpaged, nothing unlocked — `Today` is DISABLED under the same sentence it has always carried, because there is nowhere for it to go',
+      ordinary.term === NOW_ID && dates54(ordinary)[0] === W[0]
+        && page54(ordinary, 'today').disabled === true
+        && page54(ordinary, 'today').title === 'You are on today',
+      'the strip stands on ' + JSON.stringify(dates54(ordinary)) + ' in term '
+        + JSON.stringify(ordinary.term) + ' and `Today` reads '
+        + JSON.stringify(page54(ordinary, 'today')));
+
+    await clickSel('#attendancePager [data-attendance-page="earlier"]');
+    await clickSel('#attendancePager [data-attendance-page="today"]');
+    const backOrdinary = await read54();
+
+    check('and paged back and pressed, it does exactly what it did before this work order: the week ending today, the preference byte-identical, and NO term in the sentence',
+      dates54(backOrdinary)[0] === W[0] && backOrdinary.term === NOW_ID
+        && backOrdinary.pref === ordinary.pref
+        && backOrdinary.said === 'Back to this week, ending today.',
+      'the strip came back to ' + JSON.stringify(dates54(backOrdinary)) + ', the preference read '
+        + ordinary.pref + ' -> ' + backOrdinary.pref + ', and the screen said '
+        + JSON.stringify(backOrdinary.said));
+
+    /* ── PHASE D: WO-2.52's February line, which this work order is the one most likely to break ── */
+    await arrange54(FEB_TERMS, FEB_B_ID);
+    await clear54();
+    await clickSel('#termNav [data-term-select="' + FEB_A_ID + '"]');
+    const february = await read54();
+    await repaint54();
+    const repainted = await read54();
+
+    check('WO-2.52’s February line survives: with today inside the later term, choosing the FINISHED one by hand anchors the strip on its last day, locked behind its own ✏, with WO-2.51’s band up — and three repaints move nothing at all',
+      february.term === FEB_A_ID && dates54(february)[0] === W[3]
+        && (col54(february, W[3]) || {}).tappable === 0
+        && (col54(february, W[3]) || {}).btn === 'data-attendance-edit=' + W[3]
+        && february.band.cls.indexOf('rollover') >= 0
+        && repainted.term === FEB_A_ID && repainted.pref === february.pref,
+      'the open term is ' + JSON.stringify(february.term) + ', the strip stands on '
+        + JSON.stringify(dates54(february)) + ', its newest column reads '
+        + JSON.stringify(col54(february, W[3])) + ', the band reads '
+        + JSON.stringify(february.band.text) + ', and across three repaints the preference read '
+        + february.pref + ' -> ' + repainted.pref);
+
+    await clickSel('#attendancePager [data-attendance-page="today"]');
+    const outOfFebruary = await read54();
+
+    check('and `Today` is the way out of it — live on that screen, and one press puts the tab on the term that HOLDS today with the strip back on today, naming the term it landed in',
+      page54(february, 'today').disabled === false
+        && outOfFebruary.term === FEB_B_ID && outOfFebruary.active === FEB_B_ID
+        && dates54(outOfFebruary)[0] === W[0]
+        && outOfFebruary.said === 'Back to this week, ending today in ' + FEB_B + '.',
+      '`Today` read ' + JSON.stringify(page54(february, 'today'))
+        + ' on the finished term; after the press the tab is '
+        + JSON.stringify(outOfFebruary.term) + ', the strip stands on '
+        + JSON.stringify(dates54(outOfFebruary)) + ' and the screen said '
+        + JSON.stringify(outOfFebruary.said));
+
+    /* ── PHASE E: the gap, from both sides and down the middle ── */
+    await arrange54(gapTerms(4, 2), GAP_BACK_ID);
+    await clear54();
+    const gapForward = await arrive54(plant254.classId);
+
+    check('in the gap between two terms, with the one ahead NEARER, arrival takes the forward side — the strip opens on the day it starts and the band counts the days to it',
+      gapForward.term === GAP_FWD_ID && gapForward.active === GAP_FWD_ID
+        && dates54(gapForward)[0] === calDay(2)
+        && gapForward.band.text === GAP_FWD + ' opens in 2 days.',
+      'four calendar days past one term and two before the next, the open term is '
+        + JSON.stringify(gapForward.term) + ', the strip stands on '
+        + JSON.stringify(dates54(gapForward)) + ' and the band reads '
+        + JSON.stringify(gapForward.band.text));
+
+    await arrange54(gapTerms(2, 4), GAP_FWD_ID);
+    await clear54();
+    const gapBack = await arrive54(plant254.classId);
+
+    check('and with the FINISHED one nearer it takes that instead, anchored on the day it ended — the measurement, not a build that always walks forward',
+      gapBack.term === GAP_BACK_ID && gapBack.active === GAP_BACK_ID
+        && dates54(gapBack)[0] === calDay(-2)
+        && gapBack.band.text.indexOf(GAP_BACK + ' ended on ') === 0,
+      'two calendar days past one term and four before the next, the open term is '
+        + JSON.stringify(gapBack.term) + ', the strip stands on '
+        + JSON.stringify(dates54(gapBack)) + ' and the band reads '
+        + JSON.stringify(gapBack.band.text));
+
+    await arrange54(gapTerms(3, 3), GAP_BACK_ID);
+    await clear54();
+    const gapTie = await arrive54(plant254.classId);
+
+    check('and on an exact tie the forward side wins — three days either way, and a teacher opening her register in a gap is getting ready for what comes next',
+      gapTie.term === GAP_FWD_ID && dates54(gapTie)[0] === calDay(3)
+        && gapTie.band.text === GAP_FWD + ' opens in 3 days.',
+      'three calendar days either side, the open term is ' + JSON.stringify(gapTie.term)
+        + ', the strip stands on ' + JSON.stringify(dates54(gapTie)) + ' and the band reads '
+        + JSON.stringify(gapTie.band.text));
+
+    /* ── PHASE F: past the last term, where there is no forward side at all ── */
+    await arrange54(PAST_TERMS, PAST_A_ID);
+    await clear54();
+    const past = await arrive54(plant254.classId);
+
+    check('with every term behind today, arrival takes the LAST of them and anchors on the day it ended, locked — the walk does not fall through to no move at all for want of a term ahead',
+      past.term === PAST_B_ID && past.active === PAST_B_ID && dates54(past)[0] === W[3]
+        && (col54(past, W[3]) || {}).tappable === 0
+        && (col54(past, W[3]) || {}).btn === 'data-attendance-edit=' + W[3]
+        && past.band.text.indexOf(PAST_B + ' ended on ') === 0,
+      'the open term went ' + JSON.stringify(PAST_A_ID) + ' -> ' + JSON.stringify(past.term)
+        + ', the strip stands on ' + JSON.stringify(dates54(past)) + ', its newest column reads '
+        + JSON.stringify(col54(past, W[3])) + ' and the band reads '
+        + JSON.stringify(past.band.text));
+
+    /* ── PHASE G: a class whose terms carry no dates pays nothing and is promised nothing ── */
+    await arrange54([{ id: UNDATED_ID, label: 'WO-2.54 undated', start: '', end: '' }], UNDATED_ID);
+    await clear54();
+    const undated = await read54();
+    const undatedArrived = await arrive54(plant254.classId);
+
+    check('a class whose terms carry no dates is untouched: arrival moves nothing, the strip opens on today, and `Today` is disabled under exactly the sentence it carried before this work order',
+      undated.term === UNDATED_ID && dates54(undated)[0] === W[0]
+        && page54(undated, 'today').disabled === true
+        && page54(undated, 'today').title === 'You are on today'
+        && undatedArrived.term === UNDATED_ID && undatedArrived.pref === undated.pref,
+      'the strip stands on ' + JSON.stringify(dates54(undated)) + ', `Today` reads '
+        + JSON.stringify(page54(undated, 'today')) + ', and across an arrival the preference read '
+        + undated.pref + ' -> ' + undatedArrived.pref);
+
+    await clickSel('#attendancePager [data-attendance-page="earlier"]');
+    await clickSel('#attendancePager [data-attendance-page="today"]');
+    const undatedBack = await read54();
+
+    check('and pressing it there moves no term either — the week ending today, the preference byte-identical, and no term named in the sentence',
+      dates54(undatedBack)[0] === W[0] && undatedBack.term === UNDATED_ID
+        && undatedBack.pref === undated.pref
+        && undatedBack.said === 'Back to this week, ending today.',
+      'the strip came back to ' + JSON.stringify(dates54(undatedBack)) + ', the preference read '
+        + undated.pref + ' -> ' + undatedBack.pref + ', and the screen said '
+        + JSON.stringify(undatedBack.said));
+
+    /*
+      ── PHASE H: upright, under a thumb ──
+
+      THE ORIENTATION THE DEFECT WAS REPORTED FROM. Portrait cannot page at all (WO-2.12), so
+      `Today` is the only control on that screen that can move anything — which is why this work
+      order's 👤 line asks for one tap and 44px on the owner's own iPad.
+
+      IT CLOSES NOTHING ON THAT LINE. A device metric is not a device, this run has never seen a
+      thumb, and "in one tap" on hardware is a reading only she can take. What is measurable here is
+      the pair that makes the tap possible at all: the control is LIVE in the state she reported, and
+      it is at least 44 by 44 with the pointer actually coarse — asserted before anything below it is
+      believed (tools/README.md § CDP trap 3).
+    */
+    await arrange54(FOUR_TERMS, Q4_ID);
+    await clear54();
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 400));
+    await repaint54();
+    const upright = await read54();
+
+    check('held upright, on the one column portrait draws, `Today` is live in exactly the state the defect was reported from and clears 44px under a coarse pointer',
+      upright.coarse === true && upright.columns.length === 1
+        && upright.term === Q4_ID && dates54(upright)[0] === FOUR_TERMS[3].start
+        && page54(upright, 'today').disabled === false
+        && page54(upright, 'today').h >= 44 && page54(upright, 'today').w >= 44,
+      'the pointer is ' + (upright.coarse ? 'coarse' : 'FINE') + ', the strip drew '
+        + JSON.stringify(dates54(upright)) + ' on term ' + JSON.stringify(upright.term)
+        + ', and `Today` reads ' + JSON.stringify(page54(upright, 'today')));
+
+    await clickSel('#attendancePager [data-attendance-page="today"]');
+    const uprightHome = await read54();
+
+    check('and one tap of it gets home on the screen that cannot page — one column, the day the nearest term opens, and a one-date sentence naming that term',
+      uprightHome.term === Q1_ID && uprightHome.active === Q1_ID
+        && uprightHome.columns.length === 1 && dates54(uprightHome)[0] === OPENS
+        && uprightHome.said.indexOf('Back to ') === 0
+        && uprightHome.said.indexOf('this week') < 0
+        && uprightHome.said.indexOf(' in ' + Q1 + '.') > 0,
+      'one tap took the tab ' + JSON.stringify(upright.term) + ' -> '
+        + JSON.stringify(uprightHome.term) + ' and the strip '
+        + JSON.stringify(dates54(upright)) + ' -> ' + JSON.stringify(dates54(uprightHome))
+        + ', with the screen saying ' + JSON.stringify(uprightHome.said));
+
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 300));
+
+    /* The document back as it was, IN PLACE rather than as a fresh object — every module holds the
+       reference getDoc() handed it — with the class and term this block found open put back. */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+      var saved = window.__wo254save, d = s.getDoc();
+      var restored = JSON.parse(saved.doc);
+      Object.keys(d).forEach(function(k){ delete d[k]; });
+      Object.assign(d, restored);
+      s.update(function(){});
+      c.selectClass(saved.classId);
+      a.lockDay();
+      /* THE PAGING RESET COMES BEFORE THE TERM IS PUT BACK (WO-2.54): pageDays('today') moves the
+         selected term to the one nearest today now, so a teardown that chose the term first would
+         hand the next section a different tab from the one it found. (No backticks: template
+         literal.) */
+      a.pageDays('today');
+      if (saved.termId) c.selectTerm(saved.termId);
+      a.setSearch(''); a.setFilter('all'); a.renderAttendance();
+      delete window.__wo254save;
+      delete window.__wo254;
       await s.flush();
       return 1; })()`);
   }

@@ -5713,7 +5713,7 @@ already on screen.
 
 ## WO-2.54 — `Today` goes to the term, and there is no way back to today
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.50 · WO-2.51 · WO-2.52 · **Blocks** nothing
+**Ship** 2 · **Status** ✅ DONE — 2026-08-20 · **Size** M · **Depends on** WO-2.50 · WO-2.51 · WO-2.52 · **Blocks** nothing
 **Closes roadmap** Phase 2 → *(no box. A defect in what WO-2.52 shipped, reported off the deployed app
 three days later.)* **Widens WO-2.52's** *jump* — the writer it added moves the term when a term HOLDS
 today, and this is the case where none does.
@@ -5792,33 +5792,52 @@ test WO-2.51's ruling was written with and the one WO-2.52 narrowed it to.
   in `sw.js`**.
 
 **Acceptance**
-- [ ] Today 2026-08-20, one class, four dated terms with Quarter 1 starting 2026-09-02: **the register
+- [x] Today 2026-08-20, one class, four dated terms with Quarter 1 starting 2026-09-02: **the register
       opens on Quarter 1 anchored on 9/2 with the Quarter 4 tab stored as the preference.** The arrival
       half, driven rather than reasoned about.
-- [ ] From that screen, tap the Quarter 4 tab: the tab **sticks**, the strip anchors on Quarter 4's first
+- [x] From that screen, tap the Quarter 4 tab: the tab **sticks**, the strip anchors on Quarter 4's first
       day, and **`Today` is live** — pressing it returns the tab to Quarter 1 and the strip to 9/2, with
       one spoken sentence naming the term.
-- [ ] Today inside Quarter 1: `Today` behaves exactly as it does now — anchors on today, is disabled
+- [x] Today inside Quarter 1: `Today` behaves exactly as it does now — anchors on today, is disabled
       unpaged with nothing unlocked, and moves no term. **The ordinary day is unchanged, to the keystroke.**
-- [ ] **WO-2.52's February line survives:** today in Quarter 2, Quarter 1 selected by hand, the strip
+- [x] **WO-2.52's February line survives:** today in Quarter 2, Quarter 1 selected by hand, the strip
       anchored on Quarter 1's last day and locked. `Today` is live there and is the way out; **a term tap
       still moves nothing but the tab**, and no repaint moves it.
-- [ ] Today in the gap between Quarter 1 (ends 10/31) and Quarter 2 (starts 11/3): arrival selects
+- [x] Today in the gap between Quarter 1 (ends 10/31) and Quarter 2 (starts 11/3): arrival selects
       **Quarter 2**, the nearer side, and the band reads *Quarter 2 opens in n days*. With today one day
       past a term's end and two before the next's start, the forward side still wins.
-- [ ] Today after the last term ends: arrival selects the **last** term and anchors on its `end`, locked.
+      *(**Divergence, found by driving it 2026-08-20, and it is this line against the Deliverables above
+      it.** Those give the measurement — `after.start - today` against `today - before.end`, forward
+      winning a **tie** — and a tie-break decides nothing unless nearest is what decides. "One day past a
+      term's end and two before the next's start" is the forward side being FURTHER by a day, so the two
+      halves of this line cannot both hold. **The measurement is what shipped.** On the dates the line
+      names it makes no difference: 10/31 is a Saturday and 11/3 a Tuesday, so the one day in that gap a
+      teacher opens a register on is 11/2 — two days past the end, one before the start — where Quarter 2
+      is the nearer side and this line's first sentence is exactly what the app does. The harness drives
+      it three ways rather than one, because a single reading cannot tell a measurement from a build that
+      always walks forward: forward when forward is nearer, the finished side when THAT is nearer, and
+      forward on an exact tie. **Ruled by the owner 2026-08-20, after the iPad reading: nearest wins and
+      the measurement stands.** What is wrong is this line's illustration, not the build — the sentence
+      about the forward side winning when it is a day FURTHER is struck, and the decision paragraph's
+      *nearest dated term* is what this work order shipped and what a later one should read.)*
+- [x] Today after the last term ends: arrival selects the **last** term and anchors on its `end`, locked.
       There is no forward side and the walk does not fall through to no move at all.
-- [ ] **A class with no dated terms is untouched**: no jump on arrival, no jump on `Today`, and the
+- [x] **A class with no dated terms is untouched**: no jump on arrival, no jump on `Today`, and the
       disabled test reads exactly as it did before this work order.
-- [ ] `grep -rn "openTermForToday" src/ tools/ TESTING.md docs/` returns nothing — the rename swept
+- [x] `grep -rn "openTermForToday" src/ tools/ TESTING.md docs/` returns nothing — the rename swept
       rather than shadowed.
-- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md` reconciled
+- [x] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md` reconciled
       to it, and **one mutation proof over the nearest-term walk** — a build that only ever moves the term
       from inside one must go red.
-- [ ] `node tools/wo-sweep.mjs` green.
-- [ ] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): in portrait, browse to
+- [x] `node tools/wo-sweep.mjs` green.
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): in portrait, browse to
       Quarter 4 and get home in **one tap** on `Today`, which clears 44px under a thumb. This is the
       reading the report came off — the route back has to exist on the orientation that cannot page.
+      *(Read 2026-08-20 by the owner, on the device, after a force-quit: `Today` live on the distant tab,
+      one tap home with the tab and the strip moving together, 44px clear first attempt. **One reading
+      the harness cannot take was added to it** — the new section drives a single class, so nothing
+      asserts `openTermIds` is per class; moving one class's tab left the other four alone. A missing
+      assertion, not a defect. See `TESTING.md`.)*
 
 **Traps** — **the tempting wrong answer is `anchorDate()`**, which looks like the thing that is wrong and
 is the thing that is right: it answers for the term it is given, and WO-2.52's whole soft-wall argument

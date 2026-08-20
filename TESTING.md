@@ -4680,6 +4680,134 @@ inline — so the dialog words and lays out an answer it does not decide. A dial
 `writableDate()` for itself would be a second opinion about what is writable, held by a file that
 cannot see the ledger.
 
+### WO-2.54 — `Today` goes to the term, and there is no way back to today
+
+**What this changes for a teacher: `Today` means today, and the term follows it.** Owner-reported
+2026-08-20 off the deployed app, three days after WO-2.52 shipped: *if I hit "today" in quarter four,
+it brings me to the first day of quarter four not the actual first day of the year.* `Today` has never
+been a control that goes to today — it puts the paging back to 0 and lands on `anchorDate()`, which
+since WO-2.52 answers the **selected** term's near edge. **The half that is worse than the report is
+that in exactly the state that needs it the button was OFF**: unpaged, nothing unlocked, greyed out
+under a tooltip reading *You are on Apr 6, 2027*. The teacher's route home was to work out which term
+holds today and tap its tab.
+
+**The tempting fix is `anchorDate()` and it is the wrong one.** It answers correctly for the term it
+is handed, and WO-2.52's whole soft-wall argument rests on that; what was wrong is **which term it was
+handed**. So the term moves — on an arrival and on a press of `Today`, and nowhere else. **A term tap
+still moves nothing but the tab, and a repaint still moves nothing at all**, which is WO-2.51's ruling
+and WO-2.52's narrowing of it, both untouched.
+
+**The arrival half had the same hole from the other side.** The writer only ever answered from inside
+a term, so every day of a gap, every day after the last term, and **every day of the fortnight this
+app is being readied in** opened on whatever tab was last touched and called it correct. It answers
+the **nearest dated term** on those days now, and `anchorDate()` — unchanged — puts the strip on that
+term's near edge.
+
+- [x] **The register opens on the term nearest today.** Four dated terms, every one of them ahead of
+      today, with the preference parked on the fourth: arriving moves the tab, the nav highlight and
+      the preference to the **first**, anchors the strip on the day it opens, and the band reads
+      *WO-2.54 first opens in 14 days.* Driven by a real click on the class tab — the control
+      `src/shell.js` runs the whole arrival chain from — rather than by calling `resetRegistry()`.
+- [x] **Browsing to a far term still sticks, and `Today` is the way back in one press.** Tapping the
+      fourth term's tab anchors the strip on its first day and **`Today` is live there**, which is the
+      state the report came off; one press returns the tab, the highlight and the strip, and says so
+      in **one sentence that names the term** — *Back to this week, ending Thursday, September 3, 2026
+      in WO-2.54 first.* `selectTerm()`'s own announcement is not reached.
+- [x] **The ordinary day is unchanged, to the keystroke.** Today inside the selected term, unpaged,
+      nothing unlocked: `Today` is **disabled** under the same *You are on today* it has always
+      carried. Paged back and pressed, it returns the week ending today, leaves the preference
+      byte-identical and names **no term** — *Back to this week, ending today.*
+- [x] **WO-2.52's February line survives.** Today inside the later term, the finished one chosen by
+      hand: the tab sticks, the strip anchors on that term's last day, the day is locked behind its
+      own ✏, WO-2.51's rollover band is up, and **three repaints move nothing**. `Today` is live there
+      and is the way out — one press puts the tab on the term that holds today with the strip back on
+      today, naming it.
+- [x] **The gap is measured, from both sides and down the middle.** Four calendar days past one term
+      and two before the next, arrival takes the **forward** side and the band counts *opens in 2
+      days*; two past and four before, it takes the **finished** side and anchors on the day it ended;
+      three either way, the **forward** side wins the tie. Three readings rather than one, because a
+      single one could not tell the measurement from a build that always walked forward.
+      *(**Divergence, and it is the one place this work order's own text disagrees with itself.** The
+      Deliverables give the measurement — `after.start - today` against `today - before.end`, forward
+      winning a **tie** — and a tie-break means nothing unless nearest is what decides. This
+      Acceptance line then illustrates the gap as "one day past a term's end and two before the next's
+      start … the forward side still wins" and calls the forward side **the nearer one**, which on
+      those two numbers it is not. On the dates the line names — Quarter 1 ending 10/31, Quarter 2
+      starting 11/3 — the two numbers are the other way round on 11/2, the one day in that gap a
+      teacher opens a register on, and the forward side genuinely is nearer. **The measurement is what
+      shipped**, so on a today that is nearer the finished side the finished side is what opens.)*
+- [x] **Past the last term there is no forward side, and the walk does not fall through.** With every
+      term behind today, arrival takes the **last** of them, anchors on the day it ended, and that day
+      is locked behind its own ✏ with the band reading *WO-2.54 last ended on August 17, 2026.*
+- [x] **A class with no dated terms is untouched.** Arrival moves nothing, the strip opens on today,
+      `Today` is disabled under exactly the sentence it carried before this work order, and pressing
+      it off a paged window moves no term and names none.
+- [x] **The rename swept rather than shadowed.** `grep -rn` for the retired writer name over `src/`,
+      `tools/`, this file and `docs/` returns nothing — which took three comments with it, rewritten
+      to describe the old writer rather than to name it, the way WO-2.52 handled its own four.
+- [x] **`node tools/verify-shell.mjs` passes whole on the delivered tree** — `1067 checks · 1067 passed · 0 failed · 0 skipped`, 29,932 lines, 28.1 lines per check, 364s,
+      exit 0 — with the
+      call-site count in `tools/README.md` moved 1034 → 1051, which `wo-sweep.mjs` asserts.
+      `wo-sweep.mjs` is **25 checks · 23 passed · 0 failed · 2 to review**, both REVIEWs the standing
+      pair.
+- [x] 👤 On the iPad, **force-quit from the app switcher first** (`CLAUDE.md`): in portrait, browse to
+      the fourth term and get home in **one tap** on `Today`, which clears 44px under a thumb. This is
+      the reading the report came off — the route back has to exist on the orientation that cannot
+      page. `sw.js`'s `CACHE` is `planbook-shell-v89` → `v90`, so a cold relaunch is what puts this
+      build on the glass.
+      *(Read on the device 2026-08-20 after a force-quit, and it holds: `Today` live on a term tab six
+      months out, one tap landing on the term nearest today with the tab and the highlight moving
+      together, and the button clearing 44px first attempt. **A sixth reading was taken by hand because
+      the harness cannot see it** — the new section drives ONE class, so nothing here asserts that
+      `openTermIds` is written per class and a regression clobbering the other four classes' stored
+      tabs would print in the evidence without failing a check. Moving one class's tab left the others
+      where they were. That is a missing assertion rather than a defect, and it is one clause for a
+      later section rather than a work order. The spoken sentence was not read back with VoiceOver.)*
+
+**Eleven checks in four sections above the new one had their premise broken by this work order and were
+repaired against the new rule rather than pinned to the old one** — the same thing WO-2.52 did to two
+sections, and the reason it is worth a paragraph is that all eleven were red on a **correct** app:
+
+- **The reload check** in classes & terms read *"the open class and the open term survive the reload"*,
+  and the second half of that is no longer a rule this app has: a boot is an arrival. It asserts the
+  **rollover at a boot** now — the class survives, the term comes back on the one this file works out
+  for itself in Node from the dates the fixture typed, and the preference on disk holds that same id.
+  Three different builds go red there where one used to. (`nodeToday` moved up the file to make that
+  possible — one definition, moved rather than copied, the way WO-3.17 moved it once already.)
+- **WO-2.50's section** pins its selected term to an **undated** term so that the anchor stays on
+  today, which is the arrangement that lets it ask about out-of-term columns at all. Opening the class
+  from its home card is an arrival, and the arrival now moves the tab to the nearest **dated** term —
+  so today left the screen and six checks reported columns that were not drawn. The fixture states its
+  premise out loud now (it was relying on `getSelectedTermId()`'s fallback) and restates it after that
+  one re-entry.
+- **WO-2.51's band-precedence check** pressed `Today` to come back to the rollover band. `Today`
+  **resolves** that band now by moving the tab to the term it was asking for, so the third state it
+  asserts is a screen with no band and the right term — followed by a real tap on the early term's tab,
+  which brings the rollover back unpaged. Three states, one of them new, none dropped.
+- **WO-2.52's own fixture helpers** used `pageDays('today')` as a paging reset *after* choosing the
+  tab, which now walks straight out of the arrangement it was called to set up. The reset comes first
+  and the tap comes after it, in both helpers and in both teardowns.
+
+*Four runs. The first is the one worth reading, because ten of its eleven reds were correct app
+behaviour meeting stale fixtures rather than defects; the fourth is the delivered tree re-measured
+after a comment reflow landed in `src/attendance.js`, because a run over a tree that is not the one
+being delivered is a run about another tree (WO-2.53's own entry says so).*
+
+| Tree | Result |
+|---|---|
+| First run with the section in | `1067 checks · 1056 passed · 11 failed`, exit 1. **None of the eleven is in the new section** — all sixteen of its checks passed first time. Ten are the premise breakages listed above (six in WO-2.50's, two in WO-2.51's, two in WO-2.52's) and the eleventh is the reload check in classes & terms. Every one of them was red on an app doing exactly what this work order specifies |
+| **Delivered** | `1067 checks · 1067 passed · 0 failed · 0 skipped`, 29,932 lines, 28.1 lines per check, 364s, exit 0 — and again on the reflowed tree that is actually being delivered: `1067 checks · 1067 passed · 0 failed · 0 skipped`, 29,932 lines, 368s, exit 0 |
+| **Mutation**: `termNearest()` cut back to the term that CONTAINS today — the walk into the gap deleted, which is the build this work order replaces | `1067 checks · 1057 passed · 10 failed · 0 skipped`, exit 1 — **nine of the new section's sixteen, plus the repaired reload check**. The six that stay green are the ones about a term that contains today (the ordinary day, the February pair) and about a class with no dated terms, which is precisely the behaviour being mutated back to: the section is sensitive to the walk **in the half where the walk is new** |
+
+**One decision this work order did not settle, taken and written down at the point of departure.** The
+nearest walk needs two spans compared, which a string compare on `YYYY-MM-DD` cannot express — and the
+Deliverables ask for it "off the same `daysUntil()` WO-2.52 added", which lives in `src/attendance.js`
+and cannot be imported into `src/classes.js` without closing the loop that file's header records this
+repo refusing four times. So the comparison rides a private `dayIndex()` in `src/classes.js`: three
+numbers into `Date.UTC()`, never a parsed date string, never printed, never stored. Its comment says
+why it is not `daysUntil()` (a different question — that one is rounded off local midnight because it
+prints a number a teacher reads) and why it is not exported (one caller).
+
 ---
 
 ## Phase 3 — Gradebook

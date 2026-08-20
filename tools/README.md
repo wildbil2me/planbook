@@ -1011,7 +1011,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1034 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1051 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2036,6 +2036,44 @@ eleven writer names, and reconciles the review record's object literal against t
 acceptance line allows. The harness proves what today's code paths wrote on today's fixture; the
 grep proves there is nothing in the file that could write on any input, which is the difference that
 matters for a cache somebody adds later "just for the month being drawn".
+
+**WO-2.54 moved it from 1034 to 1051**: seventeen call sites in one new section directly under the
+WO-2.52 one, none of them inside a loop, of which **one is a fixture-guard failure arm** that never
+fires on a green run — so the section contributes sixteen executed results and **the run prints
+1067**, measured on the delivered tree: `1067 checks · 1067 passed · 0 failed · 0 skipped`, 29,932
+lines, 28.1 lines per check, 364s, exit 0. **The gap between sites and results narrows 17 → 16**, and
+the one is that new failure arm.
+
+**The entry worth reading is the eleven checks OUTSIDE the new section that this work order turned red
+on a correct app**, in four sections, none of which adds or removes a call site. All eleven had
+the same premise: that nothing moves the selected term. `Today` moves it now, and so does an arrival on a
+day that no term holds — which is every day of the fortnight this file is being run in.
+*(1)* Classes & terms' reload check read *"the open class and the open term survive the reload"*, and
+a boot is an arrival, so the term it comes back on is the one nearest today rather than the one that
+was tapped. It asserts the **rollover at a boot** now, against a nearest-term walk written out in Node
+off `nodeToday` — which had to move up the file for it, one definition moved rather than copied, the
+way WO-3.17 moved it once already. *(2)* WO-2.50's section pins its selected term to an **undated**
+term so the anchor stays on today; re-entering the class from its home card is an arrival, the arrival
+moved the tab to the nearest **dated** term, and six checks then reported columns that were no longer
+drawn. That fixture states its premise out loud now — it had been relying on `getSelectedTermId()`'s
+fallback to the first term — and restates it after the one control in the section that disturbs it.
+*(3)* WO-2.51's band-precedence check pressed `Today` to get the rollover band back; `Today`
+**resolves** that band now by moving the tab to the term it was asking for, so the check follows the
+press with a real tap on the early term's tab and asserts three states where it used to assert two.
+*(4)* WO-2.52's two fixture helpers and both teardowns used `pageDays('today')` as a paging reset
+*after* choosing the tab, which walked straight out of the arrangement they were called to set up —
+the reset comes first and the tap comes after it. **None of these is the harness being pinned to the
+old build**: each one is the same claim re-pointed at what the app now does, which is the shape
+WO-2.52 used on the two sections it broke.
+
+**One mutation, and it is the one the work order asked for.** `termNearest()` cut back to the term
+that CONTAINS today — the walk into the gap deleted, which is exactly the build this work order
+replaces — reads `1067 checks · 1057 passed · 10 failed · 0 skipped`, exit 1, and **which ten is the whole of the
+attribution**: nine of the new section's sixteen, plus the repaired reload check one level up. The six
+that stay green are exactly the ones about a term that CONTAINS today — the ordinary day, the February
+pair — and about a class with no dated terms, which is the build being mutated back to. So the section
+is not merely sensitive to the walk, it is sensitive to it **in the half where the walk is new**, and a
+reader can tell the two builds apart line by line rather than by a count.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

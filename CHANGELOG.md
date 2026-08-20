@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### `Today` goes to today again, and takes the term with it — 2026-08-20
+
+**With a term other than the current one open, `Today` took you to *that* term's first day.** Quarter 4
+up on an August afternoon, press `Today`, and you landed on the following April — reported off the
+deployed app. And in the state that needed the button most, it was **greyed out**: nothing on the screen
+could get you back, and the way home was to work out for yourself which term holds today and tap its tab.
+
+**`Today` moves the term now.** It selects the term that holds today, or, when no term does, the term
+**nearest** today, and it says which term it landed in. The strip anchors on that term's near edge, which
+is the rule that was already there — what was wrong was which term it was being asked about.
+
+**Arriving at the register does the same, which is the half that was quietly worse.** The old rollover
+gave up whenever no term contained today: every day between two terms, every day after the last one, and
+every day of the fortnight before a school year starts. The register opened on whichever tab you last
+touched, months away, and called it correct. It now opens on the term nearest today — so through the
+setup fortnight it opens on Quarter 1, on the first day of the year.
+
+**Browsing back to a finished term still sticks.** A term tab moves nothing but the tab, nothing moves
+while the screen is open, and a class whose terms have no dates is untouched. The term moves on an
+arrival and on a press of `Today`, and nowhere else — both are something you did on purpose.
+
 ### The ⋯ on a registry row goes to the student now — 2026-08-20
 
 **The ⋯ at the end of a name is a `›`, and it goes straight to that student's grade detail.** One tap

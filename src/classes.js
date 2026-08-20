@@ -320,6 +320,68 @@ export function outOfTermGap(classId, date) {
   return { before: before, after: after };
 }
 
+/*
+  WHICH TERM OF THIS CLASS IS NEAREST A DATE (WO-2.54) — the term that CONTAINS it if there is one,
+  else the nearer of the two the gap above names, else null. It is the read half of the writer at the
+  foot of this section, and it is exported because `Today` on the register has to ask the same
+  question in order to know whether it has anywhere to go: a second walk over there could disagree
+  with this one about which term the button lands on, which is a control that greys itself out on a
+  screen it would in fact have moved.
+
+  THE TWO NULLS OUT OF outOfTermGap() ARE DIFFERENT AND THE ORDER HERE TELLS THEM APART. It answers
+  null for a date INSIDE a term — asked first, above, and answered with that term — and null again
+  for a class with no dated terms at all, which is the case that must not read as a gap with no
+  sides. A class part way through having its dates typed is unbounded everywhere else in this app and
+  is unbounded here: nothing is nearest to anything, and the caller does nothing.
+
+  FORWARD WINS A TIE (the owner's decision, 2026-08-20). A teacher opening her register in the gap
+  between two terms is getting ready for what comes next rather than revisiting what ended, so an
+  equal number of days either side goes to the term that has not started.
+
+  THE ACCEPTANCE LINE THIS DEPARTS FROM, SAID OUT LOUD. WO-2.54's fifth acceptance line illustrates
+  the gap with "one day past a term's end and two before the next's start" and calls the forward side
+  the nearer one; on those numbers it is the FURTHER side by a day, and the same work order's
+  Deliverables state the measurement — `after.start - today` against `today - before.end`, forward
+  winning a tie — which only means anything if nearest is what decides. So nearest is what decides,
+  and the harness drives the gap from BOTH sides plus the tie rather than from the one date the
+  illustration picked. If that is ever reversed, it is reversed here: nowhere else in the app has an
+  opinion about which term is nearest.
+*/
+export function termNearest(classId, date) {
+  const holds = termContaining(classId, date);
+  if (holds) return holds;
+  const gap = outOfTermGap(classId, date);
+  if (!gap) return null;
+  if (!gap.after) return gap.before;
+  if (!gap.before) return gap.after;
+  const on = dayIndex(date);
+  return dayIndex(gap.after.start) - on <= on - dayIndex(gap.before.end) ? gap.after : gap.before;
+}
+
+/*
+  A DATE AS A WHOLE NUMBER OF DAYS, so that two spans can be compared. Private, and it is the one
+  piece of arithmetic in this file.
+
+  IT IS NOT THE `new Date()` THE SECTION HEADER FORBIDS, and the difference is the whole of why that
+  rule exists: nothing here parses a date STRING — three numbers go into Date.UTC(), which is the
+  same instant in every timezone — and nothing here bounds anything. Every bound in this file is
+  still a string compare on `YYYY-MM-DD`. What a string compare cannot express is the LENGTH of two
+  spans against each other, which is what "nearest" is.
+
+  IT IS NOT src/attendance.js's daysUntil() EITHER, and not because that function is wrong. This file
+  imports nothing from that one — the loop src/attendance.js's own header records this repo refusing
+  four times — and the two answer different questions anyway: that one is rounded off LOCAL midnight
+  because it prints a number a teacher reads on a band ("Quarter 1 opens in 14 days") and a 23-hour
+  day must not turn 14 into 13. This one is never printed, never read and never stored; it exists for
+  one comparison, where an exact integer is the honest answer and rounding is a thing that could go
+  wrong. src/calendar.js has the same UTC walk behind shiftDays(), private there for the same reason
+  it is private here: one caller.
+*/
+function dayIndex(iso) {
+  const p = String(iso).split('-');
+  return Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])) / 86400000;
+}
+
 /* A term's name for a sentence a teacher reads. The label is hers and may be anything, including
    nothing at all — newTerm() seeds one but removeTerm/editTermField let her empty it — and "before "
    with nothing after it is worse than a placeholder. */
@@ -673,13 +735,23 @@ export function selectTerm(termId) {
 /*
   THE ONE THING THAT MOVES THE SELECTED TERM WITHOUT A TAP (WO-2.52), and it is narrow on purpose.
 
-  WO-2.51 ruled that nothing switches by itself, and this overturns that ruling ON ARRIVAL AND
-  NOWHERE ELSE. Read what that ruling was protecting before widening this: the sentence it was
+  WO-2.51 ruled that nothing switches by itself, and this overturns that ruling ON A DELIBERATE ACT
+  AND NOWHERE ELSE. Read what that ruling was protecting before widening this: the sentence it was
   argued with is *an app that moves it for her is an app that moved it while she was part way
-  through entering the last week of Quarter 1* — and arrival is the one moment that cannot be true
-  of, because nothing is part way through anything on a screen that is being opened. So the caller
-  is src/attendance.js's resetRegistry(), which is THE arrival function on this screen and already
-  resets five other things for the same reason. NOTHING MOVES WHILE THE SCREEN IS OPEN.
+  through entering the last week of Quarter 1* — and neither of the two moments below can be true of
+  that. One is arrival, where nothing is part way through anything on a screen that is being opened;
+  the other is a press of `Today`, which is a button the teacher has just put her thumb on. So the
+  callers are src/attendance.js's resetRegistry(), which is THE arrival function on this screen and
+  already resets five other things for the same reason, and the `'today'` arm of pageDays().
+  NOTHING MOVES ON A REPAINT, AND NOTHING MOVES ON A TERM TAP.
+
+  IT WAS NAMED FOR THE TERM THAT HOLDS TODAY, AND ANSWERED ONLY FROM INSIDE ONE (WO-2.54). It gave
+  up when termContaining() answered null — which is every day in the gap between two terms, every day
+  after the last one, and every day of the fortnight this app was readied in — so the register opened
+  on whatever tab was last touched, six months from today, and called it correct. The rename is the
+  point rather than decoration: a function promising *for today* that answers Quarter 1 in August is
+  the kind of name WO-3.20 spent a work order removing. What it answers now is termNearest(), which
+  is the same question with the gap included.
 
   IT WRITES ONLY. No refreshClassBar(), no announcement, no render: this file's other writer of
   this preference — selectTerm() — is a control the teacher pressed and says so out loud, and this
@@ -696,16 +768,16 @@ export function selectTerm(termId) {
   leave every ordinary arrival — which is all of them but a handful of mornings a year — costing
   nothing at all.
 */
-export function openTermForToday(today) {
+export function openTermNearToday(today) {
   const cls = getSelectedClass();
   if (!cls) return false;
-  /* WO-2.50's predicate and nothing new: which term of this class holds today. It answers null for
-     a class with no dated terms and for a day in the gap between two, and in both cases there is
-     nothing to move to — the screen has its own things to say about those days. */
-  const holds = termContaining(cls.id, today);
-  if (!holds || holds.id === getSelectedTermId()) return false;
+  /* The whole of the walk, and it is one call: the term that holds today, else the nearer side of
+     the gap it falls in. A class with no dated terms answers null and is left exactly as it is —
+     nothing is nearest to anything, and the screen has its own things to say about that day. */
+  const near = termNearest(cls.id, today);
+  if (!near || near.id === getSelectedTermId()) return false;
   const map = Object.assign({}, getPref('openTermIds') || {});
-  map[cls.id] = holds.id;
+  map[cls.id] = near.id;
   setPref('openTermIds', map);
   return true;
 }
