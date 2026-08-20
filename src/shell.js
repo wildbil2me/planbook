@@ -47,7 +47,12 @@
                                       <main> — carried by the home screen's cards, which is how you
                                       ENTER a class, and by the header's tab row, which is how you
                                       SWITCH between them. The two are never on screen together:
-                                      the tab row is drawn on the class view only (src/classes.js)
+                                      the tab row is drawn on the class view only (src/classes.js).
+                                      ON THE CALENDAR IT MOVES THE LENS AND NOT THE SCREEN (WO-6.6):
+                                      the calendar is a screen ABOUT a class rather than of one, so
+                                      the tap keeps the month up and re-aims it at the class just
+                                      chosen. Which class is open still moves, in the same one
+                                      function that has always written it
       data-class-create               on a <form>: creates the class typed into it
       data-class-copy="<classId>"     duplicates that class's terms and categories into a fresh
                                       class, right beside it — the roster, attendance, assignments,
@@ -102,10 +107,13 @@
                                       which DELETES the keys rather than writing the numbers in —
                                       src/signal-settings.js argues why at the function
       data-class-screen="<view>"      moves between the open class's screens — Attendance ·
-                                      Assignments · Scores. Drawn by src/screen-nav.js on every one
-                                      of them, and it never changes WHICH class is open, only which
-                                      screen of it. A class always opens on Attendance, so nothing
-                                      here writes down which screen was left (src/views.js)
+                                      Assignments · Scores · Calendar (WO-6.6). Drawn by
+                                      src/screen-nav.js on every one of them, and it never changes
+                                      WHICH class is open, only which screen of it. A class always
+                                      opens on Attendance, so nothing here writes down which screen
+                                      was left (src/views.js). The fourth is the one that is not a
+                                      screen OF the class: arriving on it resets the month to today
+                                      and the filter to the class you came from
       data-assignment-new             adds an assignment to the open class and term, and opens the
                                       editor on it
       data-assignment-create-cancel   removes the assignment written by that still-open create flow
@@ -228,9 +236,13 @@
                                       they are read-only surfaces over the same ledger, and nothing
                                       about a printed page belongs in the flow that runs while
                                       students walk in)
-      data-dayoff-panel               fills the days-off panel, then opens it — carried by the home
-                                      screen's own header button and by the 📅 in a covered column's
-                                      head on the registry, which are two doors onto one route
+      data-dayoff-panel               fills the days-off panel, then opens it — carried by the
+                                      calendar's own panel header, by its empty state, and by the
+                                      📅 in a covered column's head on the registry: three doors
+                                      onto one route. THE ROUTE WAS RE-HOMED AND NOT NARROWED
+                                      (WO-6.6): it was the home screen's header, the attendance
+                                      action row and that same 📅 until 2026-08-19, and the buttons
+                                      that put things on the calendar now live on the calendar
       data-dayoff-kind="no-school|dropped"   which kind the form is about; the class picker below
                                       appears for the second and not for the first
       data-dayoff-class="<classId>"   adds or removes that class from the drop being authored
@@ -245,9 +257,10 @@
                                       along with the start, and rebuilds a field cleared by hand —
                                       the iPadOS picker quirk `data-term-field` answers above
       data-events-panel               fills the calendar-events panel, then opens it — the second
-                                      door onto `doc.events`, beside the days-off one on the home
-                                      screen. It authors the six kinds attendance does NOT read, and
-                                      cannot write a day off (WO-6.1)
+                                      door onto `doc.events`, beside the days-off one on the
+                                      CALENDAR's panel header since WO-6.6 and on the home screen's
+                                      before it. It authors the six kinds attendance does NOT read,
+                                      and cannot write a day off (WO-6.1)
       data-event-kind="early-release|grades-due|conference|meeting|trip|reminder"  which kind that
                                       form is about; the lead-time field appears for the second and
                                       for none of the others
@@ -270,10 +283,14 @@
                                       YEAR rather than about the entry being typed, and WHERE it
                                       warns is WO-6.4's glance page and not this panel
       data-calendar-open              puts the month grid in <main> — the sixth view (WO-6.3), and
-                                      the only one that belongs to no class. Carried by the third
-                                      button on the home screen's title row, beside the two panels
-                                      that author what the grid draws. It navigates rather than
-                                      opening a dialog, which is why it has no aria-haspopup
+                                      since WO-6.6 one of the open class's screens rather than a
+                                      view that belongs to no class. Carried by the ONE button left
+                                      on the home screen's title row, which is the door out of every
+                                      class at once and so opens with every class showing; the other
+                                      door is the Calendar segment on the class-screen switcher,
+                                      which is `data-class-screen` and opens filtered to the class
+                                      you were in. It navigates rather than opening a dialog, which
+                                      is why it has no aria-haspopup
       data-calendar-scale="month|week"  how much of the calendar is on screen. The anchor is kept
                                       across the switch: a teacher who paged to the week of the
                                       14th and then asked for the month means the month that week
@@ -284,7 +301,10 @@
                                       class. It is a LENS and not a selection — it changes nothing
                                       about which class is open, and it is not remembered, for the
                                       reason src/calendar-view.js gives: a filter that survived a
-                                      week would be a month quietly hiding four fifths of itself
+                                      week would be a month quietly hiding four fifths of itself.
+                                      Since WO-6.6 the ARRIVAL sets it from the door — every class
+                                      from the home screen's button, the open class from the pill —
+                                      which is recomputed each time and still stored nowhere
       data-calendar-item              on every chip on the grid, with four companions that say what
                                       it is: data-calendar-kind (an authored kind or one of
                                       src/calendar-derived.js's five), data-calendar-ref (the id of
@@ -562,12 +582,19 @@ function afterClassChange() {
     school's own events, and a document with no classes in it still has a Thanksgiving break on
     that month. Bouncing a teacher off this screen because she archived her last class would be
     that rule applied one view too far.
+
+    WO-6.6 MADE THE CALENDAR A CLASS SCREEN AND THIS BRANCH STAYS EXACTLY WHERE IT IS. The third
+    branch would now paint it — `isClassScreen('calendar')` answers true, and paintClassScreen() has
+    its own `calendar` line — so this one looks redundant and is not: what it is really guarding is
+    the SECOND branch, which would bounce a teacher who has just archived her last class off a month
+    that is still perfectly true. The paragraph above is the argument and it did not change when the
+    list did; the branch being first is what keeps it enforced.
   */
   if (views.currentView() === 'calendar') calendarView.renderCalendar();
   else if (!classes.getSelectedClassId()) showHome();
   else if (views.isClassScreen(views.currentView())) paintClassScreen(views.currentView());
   /* AND THE STRIP THAT SAYS WHICH SCREEN OF IT (WO-3.3). Cheap enough to repaint when nothing
-     changed — it is six elements — and the cost of leaving it out is a strip that survives a class
+     changed — it is eight elements — and the cost of leaving it out is a strip that survives a class
      going away, or one that is still empty on the first paint after boot. */
   screenNav.refreshScreenNav();
 }
@@ -575,16 +602,25 @@ function afterClassChange() {
 /*
   WHICH OF THE OPEN CLASS'S SCREENS IS PAINTED, and the one place that mapping lives (WO-3.3).
 
-  A class has four screens — Attendance, Assignments, Scores since WO-3.5, and one student's detail
-  since WO-3.7 — and every caller above that used to say `attendance.renderAttendance()` was really
-  saying "paint whatever screen of this class is up". Said once, here, because that is what this
-  file is for: the day a fourth screen exists, the modules that navigate do not each learn about it.
-  That day was WO-3.7 and this function is the only thing that changed for it.
+  A class has five screens — Attendance, Assignments, Scores since WO-3.5, one student's detail since
+  WO-3.7, and the calendar since WO-6.6 — and every caller above that used to say
+  `attendance.renderAttendance()` was really saying "paint whatever screen of this class is up". Said
+  once, here, because that is what this file is for: the day a fourth screen exists, the modules that
+  navigate do not each learn about it. That day was WO-3.7 and this function is the only thing that
+  changed for it; WO-6.6 is the second, and it is one line again.
+
+  THE `calendar` BRANCH IS THE ONE THAT IS NOT A SCREEN OF THE OPEN CLASS. It is a screen about it
+  (src/views.js's CLASS_SCREENS says why the owner put it on that list), so what it paints does not
+  depend on which class is open — renderCalendar() draws whatever the toolbar's filter names, which
+  the arrival set from the door and a header tab moves. Painting it from here is what makes the class
+  tabs, the term nav and everything else that repaints a class screen leave the month correct behind
+  them.
 */
 function paintClassScreen(view) {
   if (view === 'assignments') assignments.renderAssignments();
   else if (view === 'scores') scores.renderScores();
   else if (view === 'detail') detail.renderDetail();
+  else if (view === 'calendar') calendarView.renderCalendar();
   else attendance.renderAttendance();
 }
 
@@ -649,10 +685,21 @@ function showStudentDetail(studentId, opener) {
   a reload lands on Attendance (src/views.js's REMEMBERED_AS, and the owner's decision at
   plans/gradebook-surfaces.md). Said out loud for the reason selectClass() is: this is a screen a
   screen-reader user cannot see move.
+
+  AND THE FOURTH SEGMENT IS AN ARRIVAL, WHICH IS THE ONE THING THAT IS NOT THE SAME FOR ALL OF THEM
+  (WO-6.6). The other three screens are already drawn from the open class and the open term, so
+  showing one is a paint. The calendar holds three values of its own — the anchor, the scale and the
+  class filter — and this is the door it is entered by from inside a class, so it is RESET here and
+  reset BEFORE the view swaps, for showCalendar()'s reason: the first paint is then already of the
+  right month rather than of the one this browser was left on. What it is handed is the open class,
+  which is what makes the Calendar pill inside Period 3 open on Period 3's month (the owner's ruling,
+  2026-08-19). The home screen's own button is the other door and hands '' — showCalendar() below.
 */
 function showClassScreen(name) {
   if (!classes.getSelectedClassId()) { showHome(); return; }
-  const view = views.showView(views.isClassScreen(name) ? name : 'class');
+  const want = views.isClassScreen(name) ? name : 'class';
+  if (want === 'calendar') calendarView.resetCalendar(classes.getSelectedClassId());
+  const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
   paintClassScreen(view);
@@ -861,27 +908,39 @@ function showHome() {
 }
 
 /*
-  THE WAY ONTO THE CALENDAR (WO-6.3), and the shape is showHome()'s one view over.
+  THE WAY ONTO THE CALENDAR FROM THE CLASS GRID (WO-6.3), and the shape is showHome()'s one view
+  over. It is one of two doors since WO-6.6: this is the home screen's own button, and the other is
+  the Calendar pill inside a class, which lands in showClassScreen() above.
 
   Four calls, each a fact about a different part of the screen. The screen is RESET first — every
-  arrival starts on today, on the month, with every class showing (src/calendar-view.js says why
-  none of the three is remembered) — and reset before the view swaps, so that the first paint is
-  already of the right month rather than of the one this browser was left on. The view swaps. The
-  tab strip repaints because it takes the class tabs OFF anywhere that is not a class screen, which
-  this is not (src/classes.js's refreshClassBar reads which view is up). The screen switcher goes
-  empty for showHome()'s reason: this is not a screen OF a class, so there is nothing to switch
-  between, and an empty strip keeps the panel header the same height between views.
+  arrival starts on today and on the month (src/calendar-view.js says why neither is remembered) —
+  and reset before the view swaps, so that the first paint is already of the right month rather than
+  of the one this browser was left on. The view swaps. The tab strip repaints. The switcher repaints.
+
+  IT HANDS '' AND THAT IS THE WHOLE OF WHAT THIS DOOR MEANS (WO-6.6, the owner's ruling of
+  2026-08-19). A teacher on the class grid is not in a class, so the honest lens is every class —
+  which is also the reading the hint under the grid explains, and the one arrival that still gets it.
+  The pill inside a class hands that class instead. Nothing is remembered either way.
+
+  THE TWO REPAINTS BELOW STOPPED BEING NO-OPS ON THE SAME DAY, and they are worth reading now rather
+  than deleting later. Until WO-6.6 the tab strip took the class tabs OFF here and the switcher went
+  empty, because the calendar was not a class screen; it is one now, so refreshClassBar() draws the
+  class tabs and the *All classes* door over the month and refreshScreenNav() draws four segments
+  with Calendar current. Same two calls, same order, opposite output — which is the fix for the strip
+  this screen used to take over being a change to a list in src/views.js rather than a rule about
+  this one view.
 
   WHICH CLASS IS OPEN IS UNTOUCHED, and so is every preference except `openView`, which src/views.js
-  writes on any showView(). The class filter in the toolbar is a LENS: it changes what this grid
-  draws and nothing about which class a teacher goes back to.
+  writes on any showView() and which writes this view down as `class`. The class filter in the
+  toolbar is a LENS: it changes what this grid draws and nothing about which class a teacher goes
+  back to.
 
   Said out loud for the reason selectClass() and showHome() are: this moves a screen a screen-reader
   user cannot see move. The month is named in the sentence, because "Calendar" alone leaves the one
   thing she needs — which month — to be discovered by arrowing into the grid.
 */
 function showCalendar() {
-  calendarView.resetCalendar();
+  calendarView.resetCalendar('');
   views.showView('calendar');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -1232,11 +1291,38 @@ document.addEventListener('click', (e) => {
     unpaged and unfiltered, BEFORE it is painted — the class is walking through the door, and
     finding the screen where it was left an hour ago costs the seconds this design is about.
     afterClassChange() then paints: the cards behind, and the registry itself.
+
+    AND WITH THE CALENDAR UP THE SAME TAP MOVES THE LENS RATHER THAN THE SCREEN (WO-6.6, the owner's
+    ruling of 2026-08-19). The two calls above still happen and mean what they meant: the preference
+    moves, so the class she is IN is the one whose tab she tapped, and the registry is put back to
+    today because the class walking through the door is the same act whichever screen is showing —
+    the alternative is arriving at Attendance later on a window the last class was paged to.
+    src/classes.js's selectClass() is what keeps the calendar on screen, in the one function that
+    writes `openClassId`.
+
+    WHAT IS DIFFERENT IS THE THIRD CALL, AND WHY IT IS NOT afterClassChange(). That function repaints
+    the calendar when the calendar is up, which is right for a class being archived and one repaint
+    short here: the grid also has to stop being about the class she has just left. So the filter is
+    moved instead, through the module that owns it, and moving it renders — which is why there is no
+    render on this line. The cards behind are refreshed for afterClassChange()'s own reason: they
+    follow the open class whether or not anybody is looking at them.
+
+    THE FILTER MOVE BELONGS HERE AND NOWHERE ELSE. src/classes.js may not reach it (importing
+    src/calendar-view.js from there closes the loop that module's header names, since it imports
+    getActiveClasses from that file), and src/calendar-view.js must not know how a class is opened.
+    Three files, three jobs: the preference is src/classes.js's, the filter is
+    src/calendar-view.js's, and the order they happen in is this file's, the way every other chain
+    here is.
   */
   const classTab = e.target.closest('[data-class-tab]');
   if (classTab) {
     classes.selectClass(classTab.getAttribute('data-class-tab'));
     attendance.resetRegistry();
+    if (views.currentView() === 'calendar') {
+      calendarView.setCalendarFilter(classes.getSelectedClassId());
+      home.refreshHome();
+      return;
+    }
     afterClassChange();
     return;
   }
@@ -1592,7 +1678,8 @@ document.addEventListener('click', (e) => {
 
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
-     as from the home screen, and the two hooks must not be able to shadow each other. Nothing here
+     as from the calendar (from the home screen, until WO-6.6 moved that button onto the screen it
+     authors for), and the two hooks must not be able to shadow each other. Nothing here
      writes an attendance record — that is the work order's fifth acceptance line, and the way it is
      kept true is that none of these six calls reaches a function in src/attendance.js that writes.
 

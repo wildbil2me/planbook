@@ -428,6 +428,14 @@ export function refreshClassBar() {
     "All classes" door at the head of the row is the way out of any of them. Asked of src/views.js's
     isClassScreen() rather than by comparing against a list here, so that WO-3.5 adding the score
     grid changes one line in that file and none in this one.
+
+    AND WO-6.6 IS THAT PROMISE BEING PAID BY A SCREEN NOBODY EXPECTED. The calendar joined
+    `CLASS_SCREENS` on 2026-08-19 and this function needed no edit for it at all: the tabs and the
+    *All classes* door are over the month because the list says the month is inside a class, which is
+    the whole fix for the strip the calendar used to take over and hand nothing back from. The one
+    thing to know when reading the two together is that the tab marked active there means "this is
+    the class I am in", NOT "this is the class the grid is drawing" — the toolbar's own filter answers
+    that second question and keeps *All classes*, which a tab row cannot say.
   */
   const onClassView = isClassScreen(currentView());
 
@@ -463,21 +471,17 @@ export function refreshClassBar() {
     */
     const here = document.createElement('span');
     here.className = 'hdr-empty';
-    /* AND SINCE WO-6.3 THIS BRANCH IS REACHED BY TWO VIEWS, NOT ONE, which is what turned a
-       constant into a lookup. The paragraph above promises that "the header names the screen that
-       is up and the panel below it agrees"; the calendar is not a class screen and not the grid,
-       so it landed here and the header said *Your classes* over a panel headed *Calendar*. That is
-       the one thing this caption exists not to do.
-
-       A LOOKUP AND NOT A CHAIN OF `if`s, and it holds the two views that reach this branch rather
-       than every view there is — a class screen never gets here, and a name added to src/views.js
-       that does not appear below falls back to the grid's caption, which is where a browser holding
-       an unknown view name lands anyway (src/views.js's showView). What it must never become is a
-       second copy of what each screen is called: the words below are the panel titles in
-       index.html, and a third view arriving adds one line here in the same sitting that adds its
-       `<div>`, exactly as VIEWS itself does. */
-    const CAPTIONS = { calendar: 'Calendar' };
-    here.textContent = CAPTIONS[currentView()] || 'Your classes';
+    /* ONE VIEW REACHES THIS BRANCH AGAIN, AND THE LOOKUP THAT HELD THE SECOND ONE IS GONE
+       (WO-6.6, 2026-08-19). Between WO-6.3 and this work order there were two: the grid and the
+       calendar, which was not a class screen and so landed here — and the header said *Your classes*
+       over a panel headed *Calendar* until a two-entry `CAPTIONS` lookup fixed it. The calendar is a
+       class screen now (src/views.js's CLASS_SCREENS, and the owner's reversal of *THREE TABS, NOT
+       FOUR* on the date above), so it takes the `else` below with the class tabs on it and never
+       reaches this line. The lookup came out WITH it rather than being left to hold one entry: a
+       one-key map of the only screen that cannot reach it is a thing to read and disbelieve. The
+       constant is back, and it is the home panel's own title. A third view that belongs to neither
+       kind would put the lookup back in the same sitting that adds its `<div>`. */
+    here.textContent = 'Your classes';
     bar.append(here);
   } else {
     /* The way back to the class grid, at the head of the row a teacher navigates with, and only
@@ -623,11 +627,28 @@ function addClassTab(label) {
 
   Said out loud, because selecting a class changes two words in the header and a screen a
   screen-reader user cannot see change.
+
+  WITH THE CALENDAR UP IT MOVES THE LENS AND NOT THE SCREEN (WO-6.6, the owner's ruling of
+  2026-08-19). Every other class screen lands on Attendance when the class changes — that is
+  src/views.js's REMEMBERED_AS rule said in the one place it has to be said out of a preference, and
+  it is right for a screen OF a class: a teacher tapping Period 3 while looking at Period 2's score
+  grid is going to Period 3, not to a column of Period 3's scores she did not ask for. The calendar
+  is not a screen of a class, it is a screen ABOUT one, so the honest answer to the same tap is to
+  stay where she is and re-aim the grid.
+
+  THE TEST IS ON THE VIEW THAT IS UP, AND IT IS ONE LINE HERE RATHER THAN A SECOND WRITER SOMEWHERE
+  ELSE. `openClassId` is written in exactly one place in this app and this is that place; a hook that
+  wanted the calendar to keep its view would otherwise have had to write the preference itself and
+  then repaint, which is two answers to "which class is open" the first time one of them is edited.
+  What this function will not do is move the calendar's class FILTER: that value lives in
+  src/calendar-view.js, importing it here would close the loop that module's own header names (it
+  imports getActiveClasses from this file), and the order of operations belongs to src/shell.js.
+  Three files, three jobs.
 */
 export function selectClass(id) {
   if (!findClass(id)) return;
   setPref('openClassId', id);
-  showView('class');
+  showView(currentView() === 'calendar' ? 'calendar' : 'class');
   refreshClassBar();
   const cls = findClass(id);
   const term = getSelectedTerm();

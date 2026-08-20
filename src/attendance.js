@@ -3988,7 +3988,6 @@ function paintActions() {
 
   if (summary.state === DID_NOT_MEET) {
     actions.append(actionButton('The class met after all', 'data-attendance-undrop', on, 'restore'));
-    actions.append(daysOffDoor());
     note.textContent = 'Nothing is recorded for this day, and nothing counts toward anything. '
       + 'Undoing this leaves it not taken yet, ready to mark.';
     note.classList.remove('hidden');
@@ -4007,16 +4006,20 @@ function paintActions() {
     she has to guess at with a class walking in.
   */
   if (summary.state === COVERED) {
-    /* The same door every other state now draws, rather than a second one worded differently — see
-       daysOffDoor(). Here it is the ONLY control, because there is nothing on this day to act on;
-       everywhere else it sits at the far end past the controls that write. */
-    actions.append(daysOffDoor());
+    /* AND THE ROW IS EMPTY HERE (WO-6.6, 2026-08-19). It carried one control until that day — the
+       days-off door — and this is the state where losing it costs the most, so the sentence below
+       does the whole job instead and names the door that is still on screen: the 📅 on this day's
+       own column head, which dayHead() draws and which is the door a teacher MEETS rather than one
+       competing for her thumb. The owner's ruling took the permanent button off every state of this
+       row; it did not narrow the route (three doors reach the panel before and after — see
+       src/shell.js's census at `data-dayoff-panel`). */
     const named = Array.isArray(summary.cover && summary.cover.classIds)
       && summary.cover.classIds.length > 0;
     note.textContent = coverText(summary.cover) + ' — this is on the calendar'
       + (named ? ', for this class and any others it names' : ', for every class') + '. '
-      + 'Nothing is recorded here and nothing counts toward anything. Remove it from Days off & '
-      + 'drops and every day it covers goes back to not taken yet.';
+      + 'Nothing is recorded here and nothing counts toward anything. Tap the 📅 on this day’s '
+      + 'column to open Days off & drops; remove it there and every day it covers goes back to not '
+      + 'taken yet.';
     note.classList.remove('hidden');
     return;
   }
@@ -4030,10 +4033,11 @@ function paintActions() {
     and is a test on the modifier instead, placed after COVERED because the calendar outranks the
     term dates everywhere else on this screen too.
 
-    THE DOOR IS THE TERM EDITOR AND NOT THE CALENDAR. daysOffDoor()'s pattern, aimed at the screen
-    that owns the dates this day is outside of: a holiday is not what is wrong here, and offering
-    Days off would send the one teacher most likely to see this screen — the one who has not typed
-    her term dates yet — to the wrong screen with a class walking in. Nothing else is offered,
+    THE DOOR IS THE TERM EDITOR AND NOT THE CALENDAR. termDatesDoor()'s own shape — and, until
+    WO-6.6, the days-off door's — aimed at the screen that owns the dates this day is outside of: a
+    holiday is not what is wrong here, and offering Days off would send the one teacher most likely
+    to see this screen — the one who has not typed her term dates yet — to the wrong screen with a
+    class walking in. Nothing else is offered,
     because every control this row can draw writes on this day and every one of those writes the
     third gate refuses.
 
@@ -4050,7 +4054,9 @@ function paintActions() {
     where the way in is. The ✏️ named here is the one on that day's own column head.
   */
   if (!open) {
-    actions.append(daysOffDoor());
+    /* No control at all since WO-6.6, and this branch never had one that wrote: the days-off door
+       was the whole row and it has gone with every other copy of it. The sentence already named the
+       way in, which is the ✏️ on the column. */
     note.textContent = spokenDate(on) + ' has already been and gone, so this day is locked. Tap '
       + 'the ✏️ on its column to change what is recorded on it.';
     note.classList.remove('hidden');
@@ -4080,15 +4086,21 @@ function paintActions() {
 
   /*
     THE ACTION ROW, AND THE FIVE STATES IT ANSWERS. Three controls at most, because this row is read
-    standing up with a class walking in, and the fourth button is the one that gets mis-tapped. The
-    📅 past the middot is outside that count and daysOffDoor() says why: it writes nothing, acts on
-    no day, and is held at the far end of the row away from the three that do.
+    standing up with a class walking in, and the fourth button is the one that gets mis-tapped.
 
-      not taken            [Everyone’s here] · [Didn’t meet]                          · [📅]
-      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]              · [📅]
-      taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]        · [📅]
-      taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]  · [📅]
-      taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]                      · [📅]
+    THE 📅 AT THE FAR END OF EVERY ROW IS GONE (WO-6.6, the owner's ruling of 2026-08-19). It sat
+    outside the three-control count from 2026-08-08 — it wrote nothing and acted on no day — and the
+    ruling is not that the count was wrong: the buttons that put things on the calendar belong on the
+    calendar, which is now one of this class's own screens and one tap away on the switcher above.
+    What survives is the door a teacher MEETS rather than aims for: the 📅 in a covered column's head,
+    where the question is "where did this come from" and the answer is one tap. So this row is only
+    the controls that write on this day, which is what the rule always said it was.
+
+      not taken            [Everyone’s here] · [Didn’t meet]
+      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]
+      taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]
+      taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]
+      taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]
 
     The way back differs by row on purpose. With nothing real on the record the honest undo is to
     REMOVE it — that leaves the day not taken yet, which is what it was — and with marks on it the
@@ -4138,41 +4150,42 @@ function paintActions() {
       + (summary.marked === 1 ? ' mark' : ' marks') + ' on it will be cleared.'
     : 'Record that this class did not meet.';
   actions.append(drop);
-  actions.append(daysOffDoor());
 }
 
 /*
-  THE DOOR TO THE CALENDAR, ON EVERY STATE THIS ROW DRAWS (2026-08-08, the owner's call after the
-  first iPad sitting). It was reachable from here already, but only on a covered day — which is the
-  day you have no reason to go there, because the thing is already done. The tap that wants this
-  control is "we are off next Thursday", made standing in the classroom with the class screen open,
-  and until now that meant going back to All classes to find the button.
+  THE DOOR TO THE CALENDAR WAS HERE AND HAS GONE (2026-08-08 in, 2026-08-19 out, both the owner's
+  call, and this paragraph is the record rather than a leftover).
 
-  IT IS NOT A FOURTH ACTION, AND THE ROW'S THREE-CONTROL RULE SURVIVES INTACT. The rule above is
-  about the controls that WRITE ON THIS DAY: they are read at speed, they are aimed at with a class
-  walking in, and the fourth one of those is the one that gets mis-tapped. This writes nothing, acts
-  on no day, and opens a dialog — so it is separated from them, pushed to the far end of the row by
-  `.attendance-actions-door` (src/attendance.css) with the taken/dropped controls left where the
-  thumb has learned to find them. A mis-tap costs a dialog and an ✕, which is the cheapest wrong
-  outcome anything on this screen has.
+  It arrived after the first iPad sitting, on every state this row draws, because the tap that wanted
+  it is "we are off next Thursday" made standing in the classroom — and reaching it meant going back
+  to All classes to find the button. `daysOffDoor()` was the function; `.attendance-actions-door`
+  (src/attendance.css) still exists and is worn by termDatesDoor() below, which was written as its
+  twin.
 
-  Same hook, same words, same route as the home screen's button and the 📅 in a covered column's
-  head — three doors, one screen. The two that already existed each say why they are where they are;
-  this one is the one a teacher reaches for most, and it took a classroom to find that out.
+  WHAT REPLACED IT IS THE CALENDAR ITSELF (WO-6.6). The month became one of this class's own screens
+  on 2026-08-19 — the fourth segment on the switcher above the grid — and the two panels that author
+  what it draws moved onto its panel header. So the 2026-08-08 complaint is answered one tap away
+  and out of a row whose whole design is a three-control limit, instead of by a permanent fourth
+  button held at arm's length inside it. The door a teacher MEETS is untouched: the 📅 in a covered
+  column's head (dayHead()) is where she asks where a closed day came from, and it is not a control
+  competing for her thumb.
+
+  KEPT AS PROSE BECAUSE THE PATTERN IS STILL LIVE. termDatesDoor() below is this shape with another
+  destination, and the reasoning above is why it may be drawn on ONE state and not on every one.
 */
 /*
-  THE DOOR TO THE TERM DATES (WO-2.50), and it is daysOffDoor() below with a different destination
-  rather than a new kind of control: same shape, same class, same place at the far end of the row,
-  and it writes nothing and acts on no day. `data-term-manage` with an EMPTY value, which is that
-  hook's documented contract for "the class that is open" (src/shell.js § the census) — the class
-  row's own button is the one that carries an id, and this row is only ever drawn inside the open
-  class.
+  THE DOOR TO THE TERM DATES (WO-2.50), and it was daysOffDoor() with a different destination rather
+  than a new kind of control: same shape, same class, same place at the far end of the row, and it
+  writes nothing and acts on no day. `data-term-manage` with an EMPTY value, which is that hook's
+  documented contract for "the class that is open" (src/shell.js § the census) — the class row's own
+  button is the one that carries an id, and this row is only ever drawn inside the open class.
 
-  It is drawn on ONE state rather than on every one the way the days-off door is, and that is the
-  difference between the two: Days off is a place a teacher wants to go from any day ("we are off
-  next Thursday"), and the term editor is a place she wants to go from exactly this one. A second
-  permanent door in a row whose whole design is a three-control limit would be the fourth button
-  that gets mis-tapped.
+  IT IS THE ONLY DOOR LEFT IN THIS ROW, AND IT IS DRAWN ON ONE STATE. That was already the difference
+  between the two — Days off was a place a teacher wants to go from any day ("we are off next
+  Thursday"), and the term editor is a place she wants to go from exactly this one — and WO-6.6
+  settled the other half of it by moving the every-day door out of the row entirely. A second
+  permanent door in a row whose whole design is a three-control limit is the fourth button that gets
+  mis-tapped, which is now stated by the row rather than only argued in a comment.
 */
 function termDatesDoor() {
   const door = actionButton('📅 Terms', 'data-term-manage', '');
@@ -4180,15 +4193,6 @@ function termDatesDoor() {
   door.setAttribute('aria-haspopup', 'dialog');
   door.title = 'Set this class’s term dates — nothing on this day changes.';
   door.setAttribute('aria-label', 'Open the terms for this class and set their dates');
-  return door;
-}
-
-function daysOffDoor() {
-  const door = actionButton('📅 Days off', 'data-dayoff-panel', '');
-  door.classList.add('attendance-actions-door');
-  door.setAttribute('aria-haspopup', 'dialog');
-  door.title = 'Holidays, breaks and planned drops — nothing on this day changes.';
-  door.setAttribute('aria-label', 'Open days off and planned drops');
   return door;
 }
 
@@ -4487,7 +4491,7 @@ function renderRows(sharedTotals) {
   name is already there, it already means "this student", and there is nothing else it could do.
 
   IT WRITES NOTHING, which is what makes it safe to put on the critical-path screen: the cost of a
-  mis-tap is a dialog and an ✕, the same trade daysOffDoor() makes above and the cheapest wrong
+  mis-tap is a dialog and an ✕, the same trade termDatesDoor() makes above and the cheapest wrong
   outcome anything on this screen has. The cells a thumb is actually aiming at are on the far side
   of the Passes column.
 

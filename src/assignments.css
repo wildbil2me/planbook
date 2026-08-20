@@ -72,8 +72,32 @@
   background: #f0f2f5; border-radius: 9px; margin-bottom: 12px;
   max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
+/*
+  10px A SIDE, AND IT IS A MEASUREMENT MADE ON FOUR SEGMENTS (WO-6.6, 2026-08-19). It was 14 here
+  and 16 in the coarse block for three, and the fourth broke it: at 390px the panel leaves this
+  strip 330px, and Attendance · Assignments · Scores · Calendar measured 363. `.screen-nav` below is
+  `overflow-x: auto`, so it did not overflow the page — it SCROLLED, silently, with the document
+  reporting a clean 390 in 390 beside it, and the fourth segment simply sat off the end of a control
+  a teacher does not know scrolls. 10px takes it to ~315 in 330 and keeps it one row.
+
+  THE TOUCH TARGET IS UNTOUCHED: the coarse block still floors this at `min-height: 44px` and the
+  narrowest segment still measures ~56px wide, so all four clear 44 in both directions. The 28px
+  month chip in src/calendar-view.css is the owner's ruling for ONE control and explicitly not a
+  precedent (CLAUDE.md § Conventions); nothing here spends it.
+
+  UNCONDITIONAL, WHICH IS THE PART WORTH READING. The obvious fix was a phone-width block —
+  `@media (max-width: 640px)` further down this file, where two rules already live — and it cost a
+  red run. tools/verify-shell.mjs asserts, on the per-student print sheet, that no `max-width` rule
+  declares a property on an element the gated print block leaves unpinned; `.screen-nav-btn` is
+  inside `#detailView`, the pin would have to be written in whichever sheet owns this class, and a
+  `body[data-detail-print] .screen-nav-btn` rule in THIS file would make an unrelated sheet a
+  participant in that gate. One value at every width has none of that, and the strip has room to
+  spare on the two screens it is actually read on. The other two answers, both refused: wrapping the
+  strip to two rows (it is a segmented control, and two rows of one is a different control), and
+  shortening the label (the word is `Calendar`, and it matches the button on the home screen).
+*/
 .screen-nav-btn {
-  padding: 6px 14px; border-radius: 7px; border: none; background: transparent;
+  padding: 6px 10px; border-radius: 7px; border: none; background: transparent;
   font-size: 12px; font-weight: 700; color: #6b7a8d; cursor: pointer;
   white-space: nowrap; flex-shrink: 0; transition: all 0.15s;
 }
@@ -418,7 +442,13 @@
    `.search-box` lesson: a 44px row around a 19px input looks tappable above and below the text,
    does nothing there, and the teacher taps twice. */
 @media (pointer: coarse) {
-  .screen-nav-btn { min-height: 44px; padding: 6px 16px; }
+  /* 10px a side rather than 16 since WO-6.6, which is the same value the base rule carries and is
+     stated here anyway, for the reason the block's own header gives: a control covered only by some
+     other selector's rule is a control the next reader has to go and prove is covered. The
+     arithmetic that set it — four segments, 330px of strip at 390px, and a control that scrolls
+     instead of overflowing — is written out at the base rule. `min-height` is the floor and is what
+     makes these thumb-sized; the horizontal padding never was. */
+  .screen-nav-btn { min-height: 44px; padding: 6px 10px; }
   /* Five controls per row is design/mockups/README.md's open question 4 — nine assignments × five
      targets — and they are drawn wide on purpose so the crowding can be seen rather than argued
      about. What this block can do about it is make each one a real target and give the row enough

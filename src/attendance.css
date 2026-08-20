@@ -185,11 +185,17 @@
    call `.roster-actions` makes over the same kind of row. */
 .attendance-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 
-/* THE DOOR TO THE CALENDAR, HELD AWAY FROM THE CONTROLS THAT WRITE. src/attendance.js's
-   daysOffDoor() carries the reasoning: the three buttons to its left act on the day on screen and
-   are aimed at with a class walking in, this one opens a dialog and changes nothing. `margin-left:
-   auto` puts the row's spare width between them, so the separation is real on a laptop and on an
-   iPad in landscape rather than a convention a reader has to know about.
+/* A DOOR IN THIS ROW, HELD AWAY FROM THE CONTROLS THAT WRITE. src/attendance.js's termDatesDoor()
+   carries the reasoning: the buttons to its left act on the day on screen and are aimed at with a
+   class walking in, this one opens a dialog and changes nothing. `margin-left: auto` puts the row's
+   spare width between them, so the separation is real on a laptop and on an iPad in landscape
+   rather than a convention a reader has to know about.
+
+   IT WAS WRITTEN FOR THE DAYS-OFF DOOR AND IS NOW WORN BY ONE CONTROL ON ONE STATE (WO-6.6,
+   2026-08-19). That door was drawn on every state of this row from 2026-08-08 until the owner moved
+   the calendar's own controls onto the calendar; the term-dates door is its twin and the rule below
+   is unchanged. Kept rather than folded into a one-off, because the shape is the row's convention
+   for "a door, not an action" and the next one belongs here too.
 
    THE ROW WRAPS, AND THAT IS WHY THE MARGIN IS ALL THIS RULE DOES. On a narrow window the door
    wraps to a line of its own — still last, still apart, and with a whole line's gap instead of a

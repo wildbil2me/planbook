@@ -500,48 +500,31 @@
             attention, as those parts of Planbook arrive — the space on it is already theirs.
           </p>
         </div>
-        <!-- Days off & planned drops (WO-2.3). HERE rather than in the header, and that is a
-             measurement rather than a preference: the top row already carries the year, backup,
-             presentation mode and About beside a title, and the bottom row's three are all about
-             the class that is OPEN — which this is not. A fifth control in either strip puts the
-             page into horizontal overflow at 390px, and tools/verify-shell.mjs measures that width
-             on every run.
+        <!-- ONE BUTTON BESIDE THIS TITLE, AND IT IS THE DOOR ONTO THE CALENDAR (WO-6.6,
+             2026-08-19). It was three until that day — Days off, Events, Calendar — and the owner's
+             ruling is that the home screen keeps Calendar and loses the other two: one door from
+             here into the screen that owns all three, and the two panels that AUTHOR what the grid
+             draws now live on the grid's own panel header, where a teacher looking at a March that
+             already has one thing on it can add a second without leaving.
 
-             It is also where it belongs by meaning. A day off is a fact about the whole school, so
-             it sits on the screen that shows the whole school's classes rather than inside one of
-             them. The second door onto the same route is the 📅 in a covered column's head on the
-             registry, which is where a teacher meets the consequence and asks where it came
-             from — two doors, one route, exactly as `data-class-manage` has three. -->
-        <!-- TWO BUTTONS IN A WRAPPER RATHER THAN TWO BUTTONS IN THE ROW (WO-6.1). The comment
-             above measures this row at 390px and records that a fifth control in either header
-             strip overflows; this row is not one of those two, but a second non-shrinking button
-             beside a title block is the same arithmetic. `.panel-title-actions` wraps, so at phone
-             width the pair stacks instead of pushing the row into horizontal overflow — which
-             tools/verify-shell.mjs measures at 390x844 on every run.
+             WHAT THE COMMENT HERE USED TO ARGUE, AND WHY IT IS NOT DELETED WITH THE BUTTONS. It
+             measured this row at 390px twice over: HERE rather than in the navy header, because the
+             top strip already carries the year, backup, presentation mode and About beside a title
+             and the bottom strip's three are all about the class that is OPEN — a fifth control in
+             either one puts the page into horizontal overflow at 390px, which
+             tools/verify-shell.mjs measures on every run. And then, at WO-6.1, that a second and a
+             third non-shrinking button beside a title block is the same arithmetic one level in,
+             answered by `.panel-title-actions` wrapping (src/shell.css) rather than by squeezing.
+             Both arguments still bind — they are why the four buttons the calendar's own header now
+             carries are in a wrapper and not in a header strip — and this row is the easy end of
+             them again, at one.
 
-             The second door is the general event panel: conferences, grades-due dates, meetings,
-             trips and reminders. It is a SEPARATE panel from Days off on purpose — the two kinds
-             next door close a class, everything here does not, and `commit()` in src/days-off.js
-             stays the one place a day off is written (WO-6.1's second deliverable). -->
+             The 📅 in a covered column's head on the registry is untouched and is still the door a
+             teacher MEETS: it is where she asks where a closed day came from. What went with these
+             two buttons is the permanent one that was on the attendance action row from 2026-08-08
+             (src/attendance.js). Three doors reached the days-off panel before this work order and
+             three reach it after — the route was re-homed, not narrowed. -->
         <div class="panel-title-actions">
-          <button class="class-action-btn" type="button" data-dayoff-panel
-                  aria-haspopup="dialog" title="Holidays, breaks and planned drops">
-            <span aria-hidden="true">📅</span> Days off
-          </button>
-          <button class="class-action-btn" type="button" data-events-panel
-                  aria-haspopup="dialog"
-                  title="Grades due, conferences, meetings, trips and reminders">
-            <span aria-hidden="true">📌</span> Events
-          </button>
-          <!-- THE THIRD BUTTON IN THIS WRAPPER (WO-6.3), and it is the odd one out: the two above
-               open a dialog that AUTHORS something, and this one navigates — it puts the month
-               grid in <main>, which is why it carries no `aria-haspopup`. It is here because the
-               two panels beside it are where a teacher types the things the grid draws, so the
-               place she looks for "what does my month look like" is next to them. The wrapper
-               wraps (src/shell.css’s `.panel-title-actions`), so at phone width these three
-               stack rather than pushing the row into horizontal overflow — the arithmetic that
-               kept them out of the header strip is in the comment above, and
-               tools/verify-shell.mjs measures the result at 390x844 on every run. -->
           <button class="class-action-btn" type="button" data-calendar-open
                   title="The month and the week — what is due, what is off, and where the terms turn">
             <span aria-hidden="true">🗓</span> Calendar
@@ -1262,13 +1245,22 @@
   THE CALENDAR (WO-6.3) — the month and the week, over what the teacher authored and everything
   the document already knows.
 
-  IT IS THE SIXTH VIEW AND IT BELONGS TO NO CLASS. src/views.js's header states exactly what a new
-  view costs — one line in `VIEWS` and one `<div>` here — and this is that `<div>`. It adds no
-  entry to `CLASS_SCREENS`, draws no tab in src/screen-nav.js and needs no `REMEMBERED_AS` line,
-  because there is no class it is a screen OF: a break closes the whole school, a grades-due date is
-  the same date for all five, and the class filter in the toolbar is a lens rather than a selection.
-  A reload therefore lands on the class grid rather than here, which is right — `openView` answers
-  "was this browser inside a class or looking at the grid", and the calendar is neither.
+  IT IS THE SIXTH VIEW, AND SINCE WO-6.6 IT IS ONE OF THE OPEN CLASS'S SCREENS. src/views.js's
+  header states exactly what a new view costs — one line in `VIEWS` and one `<div>` here — and this
+  is that `<div>`.
+
+  IT BELONGED TO NO CLASS UNTIL 2026-08-19, AND THAT IS THE PARAGRAPH THIS ONE REPLACES. It carried
+  no `CLASS_SCREENS` entry, drew no tab in src/screen-nav.js and needed no `REMEMBERED_AS` line,
+  because there was no class it was a screen OF: a break closes the whole school, a grades-due date
+  is the same date for all five, and the class filter in the toolbar is a lens rather than a
+  selection. Every one of those sentences is still true — and the owner's ruling that day is that
+  they describe a screen ABOUT a class rather than one that belongs nowhere. So it takes all three
+  now: the entry, the fourth tab, and the `REMEMBERED_AS` line that keeps `planbook_openView` from
+  ever holding this view.
+
+  A RELOAD STILL LANDS ON ATTENDANCE for the open class, by that last line rather than in spite of
+  it — `openView` answers "was this browser inside a class or looking at the grid", and a month is
+  not an answer to either.
 
   EVERYTHING BELOW IS EMPTY IN THE MARKUP except the controls that must not be rebuilt. The grid,
   the class filter and the empty state's lead line are drawn from the open document by
@@ -1299,7 +1291,30 @@
           <!-- Which month or which week, written by src/calendar-view.js. -->
           <p id="calendarRange"></p>
         </div>
+        <!-- FOUR BUTTONS IN THIS WRAPPER, AND THE FIRST TWO ARRIVED HERE FROM THE HOME SCREEN
+             (WO-6.6, 2026-08-19). The buttons that put things on the calendar belong on the
+             calendar: until that day both lived on #homeView's title row and inside this screen's
+             own EMPTY STATE, so a teacher looking at a month that already had one thing on it had
+             no way to add a second without leaving. Same hooks, same route, no new panel — which is
+             why four buttons in this row is a measurement rather than a guess:
+             `.panel-title-actions` wraps (src/shell.css), so at phone width they stack instead of
+             pushing the row into horizontal overflow, and tools/verify-shell.mjs measures this
+             screen at 390x844 on every run. The arithmetic that keeps controls of this kind OFF the
+             navy header strip is in #homeView's own comment.
+
+             Authoring first, then the two that only look and leave: a tap on Days off or Events is
+             a thing a teacher came here to write down, and Print and the way back are what she does
+             when she is finished. -->
         <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" data-dayoff-panel
+                  aria-haspopup="dialog" title="Holidays, breaks and planned drops">
+            <span aria-hidden="true">📅</span> Days off
+          </button>
+          <button class="class-action-btn" type="button" data-events-panel
+                  aria-haspopup="dialog"
+                  title="Grades due, conferences, meetings, trips and reminders">
+            <span aria-hidden="true">📌</span> Events
+          </button>
           <button class="class-action-btn" type="button" data-calendar-month-print
                   title="Print the month or week on screen">
             <span aria-hidden="true">🖨</span> Print
@@ -1312,6 +1327,20 @@
           </button>
         </div>
       </div>
+
+      <!-- THE SWITCHER BETWEEN THIS CLASS'S SCREENS, ON THE SCREEN THAT IS ABOUT A CLASS RATHER
+           THAN OF ONE (WO-6.6). Empty in the markup and filled by src/screen-nav.js, exactly as the
+           other three class screens carry it — that file's stated contract is that a view wanting a
+           strip puts an empty `<nav data-screen-nav>` in its panel header and appears with no
+           change to it, and this is the first view to take it up since WO-3.5.
+
+           IT IS THE FOURTH SEGMENT AND IT REVERSES A RECORD: *THREE TABS, NOT FOUR* was the owner's
+           call of 2026-08-09 (plans/gradebook-surfaces.md), and the same owner reversed it on
+           2026-08-19 because the calendar is the first surface that is ABOUT a class without being
+           OWNED by one. The strip above answers "which class am I in"; this answers "which screen of
+           it"; and the toolbar's own filter below answers "what is this grid about" and keeps
+           *All classes*, which is the one thing a tab row cannot say. -->
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
 
       <!-- The toolbar: how much, where, and whose. Under the panel title rather than in the navy
            header, which is the measurement src/classes.js records — the header strip already
@@ -1360,10 +1389,13 @@
            dates whether or not anything is on them, and a month replaced by a sentence is a month
            she cannot look at.
 
-           The two buttons carry `data-dayoff-panel` and `data-events-panel` — the same hooks the
-           home screen's own header carries — so these are further doors onto two routes rather
-           than a second way of writing an event. An empty state that a teacher is meant to act on
-           has to lead somewhere. -->
+           The two buttons carry `data-dayoff-panel` and `data-events-panel` — the same hooks this
+           screen's own panel header carries (and the home screen's, until WO-6.6 moved them here) —
+           so these are further doors onto two routes rather than a second way of writing an event.
+           An empty state that a teacher is meant to act on has to lead somewhere, and that is why
+           these two stay where the header's pair now duplicates them: a centred zero-data block
+           whose only instruction is "look at the top of the screen" is a block that has stopped
+           leading anywhere. -->
       <div class="empty-state hidden" id="calendarEmpty">
         <p class="calendar-empty-lead" id="calendarEmptyLead"></p>
         <p class="calendar-empty-text">

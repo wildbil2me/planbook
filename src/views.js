@@ -50,18 +50,25 @@ import { getPref, setPref } from './prefs.js';
    gradebook and Phase 6's calendar are the two already known about", and both have now arrived. It
    cost exactly what the sentence above promised: one line here and one `<div>` in index.html.
 
-   IT IS THE FIRST VIEW THAT BELONGS TO NO CLASS, which is why it appears in neither list below. It
-   is not a `CLASS_SCREENS` entry, so src/classes.js draws no class tabs over it and src/shell.js
-   does not treat it as a screen of the open class; it draws no segment in src/screen-nav.js; and it
-   needs no `REMEMBERED_AS` line, because there is no class screen for it to be written down as.
+   IT WAS THE FIRST VIEW THAT BELONGED TO NO CLASS, AND IT NOW APPEARS IN BOTH LISTS BELOW
+   (WO-6.6, 2026-08-19). Until that day this paragraph read "it appears in neither list": not a
+   `CLASS_SCREENS` entry, so no class tabs over it and no segment on the switcher, and no
+   `REMEMBERED_AS` line because there was no class screen to write it down as. That is reversed, and
+   the reversal is the owner's on the day above rather than a tidy-up of this file. THE REASON IS NOT
+   "it turned out to be a class screen after all": the calendar is the first surface that is ABOUT a
+   class without being OWNED by one, which is a kind neither this file nor
+   plans/gradebook-surfaces.md's 2026-08-09 record had an instance of. Being a `CLASS_SCREENS` entry
+   is what puts the header's own class tabs and the *All classes* door back over it — the strip it
+   used to take over and hand nothing back from — and what earns it the fourth segment on the
+   switcher; the toolbar's own filter, which keeps *All classes*, is what says which class the GRID
+   is about. Two controls, two questions.
 
-   A RELOAD STILL LANDS ON THE CLASS GRID, and that is src/shell.js's boot line rather than anything
-   here: it restores `class` when the stored name is a class screen AND a class is open, and `home`
-   otherwise — so a stored `calendar` falls to the grid. Left as it stands, deliberately. Restoring
-   this view would mean deciding which month a reload comes back on, and the answer this screen
-   already gives on every arrival is "today", which is the class grid's answer said longer. What
-   `openView` is for is "was this browser inside a class or looking at the grid"; the calendar is
-   neither, and it is one tap from the grid either way.
+   A RELOAD STILL LANDS ON ATTENDANCE, and it now does so through this file rather than in spite of
+   it: `REMEMBERED_AS` below writes `calendar` down as `class`, so the preference cannot hold this
+   view at all and src/shell.js's boot line has nothing to restore it from. That is the same answer
+   as before by a better route. Restoring the calendar would mean deciding which month a reload comes
+   back on, and the answer this screen gives on every arrival is "today" — and since WO-6.6 the class
+   filter is decided by the door you came through, which a reload has not come through.
    (WO-6.4's glance page is `#homeView` grown and adds no line here at all; this is the one Phase 6
    view, and that work order says so in its own second paragraph.) */
 const VIEWS = {
@@ -90,8 +97,18 @@ const VIEWS = {
   src/screen-nav.js's own SCREENS. Adding one would draw a fourth tab that is dead until a student
   is chosen, which is the shape the owner rejected on 2026-08-09
   (plans/gradebook-surfaces.md § "Per-student detail is not a fourth tab").
+
+  AND `calendar` IS THE FIFTH ENTRY AND THE SWITCHER'S FOURTH SEGMENT (WO-6.6, 2026-08-19). It is
+  the one entry that is not a screen OF the open class — it is a screen ABOUT it — and the paragraph
+  at VIEWS above says why the owner moved it here rather than giving this one view a rule of its own.
+  What the list MEANS is unchanged, and it is what both callers are asking: src/classes.js draws the
+  class tabs and the way home on any of these, and src/shell.js paints the one that is up. The
+  sentence above about `detail` still holds for `detail` — a segment that is dead until something has
+  been chosen does not belong on the strip — and it does not apply here: the calendar is reachable
+  from a freshly-opened class on the day it is opened, which is what makes it a tab rather than a
+  breadcrumb.
 */
-const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail'];
+const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail', 'calendar'];
 
 export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
 
@@ -119,7 +136,16 @@ export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1;
   It costs nothing that anybody asked for: `openView` answers "was this browser inside a class or
   looking at the grid", which is exactly the granularity src/shell.js's boot restores at.
 */
-const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class' };
+/*
+  WO-6.6's `calendar` IS THE FOURTH, AND IT IS THE ONE THIS BLOCK'S OWN WARNING WAS WRITTEN FOR
+  (2026-08-19). "A screen added here adds its line, and forgetting is silent" — the omission would do
+  nothing at all until a teacher reloaded while standing on the month, and then `planbook_openView`
+  would be holding `calendar`: a browser that reopened onto a calendar rather than onto the class it
+  was in, with a month to choose and no door it came through to choose it from. Its second reason is
+  the class filter (src/calendar-view.js): arriving filtered is the door you walked through, and a
+  reload has not walked through one.
+*/
+const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class', calendar: 'class' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,

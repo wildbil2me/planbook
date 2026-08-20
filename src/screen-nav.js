@@ -1,5 +1,5 @@
 /*
-  The switcher between one open class's screens — Attendance · Assignments · Scores.
+  The switcher between one open class's screens — Attendance · Assignments · Scores · Calendar.
 
   WHY IT IS ITS OWN FILE. It is drawn on every class screen and belongs to none of them: the strip
   under the attendance panel's title and the strip under the assignment list's title are the same
@@ -16,6 +16,16 @@
   built below rather than argued:
 
     THREE TABS, NOT FOUR. Attendance · Assignments · Scores.
+
+    AND FOUR SINCE 2026-08-19, WHICH IS THE OWNER REVERSING HIMSELF RATHER THAN THIS FILE DRIFTING
+    (WO-6.6). Calendar is the fourth segment. The line above is kept because the reversal is only
+    readable against it, and because what it was protecting still holds: the strip carries the
+    screens a teacher can reach from a class the moment it opens, and nothing that is dead until
+    something has been chosen. WHAT CHANGED IS NOT "four is fine after all" — the calendar is the
+    first surface that is ABOUT a class without being OWNED by one, a kind the 2026-08-09 record had
+    no instance of, and the fourth pill is how a screen of that kind is reached the same way the
+    other three are. plans/gradebook-surfaces.md carries the reversal with both dates on it;
+    src/views.js's CLASS_SCREENS is the list that makes it true.
 
     PER-STUDENT DETAIL IS NOT ONE OF THEM. It is reached by tapping a student, and this strip shows
     that student's name as a breadcrumb WHILE YOU ARE IN IT — see setDetailBreadcrumb() below, which
@@ -45,7 +55,7 @@ import { currentView, isClassScreen, isView } from './views.js';
 const CONTAINER = '[data-screen-nav]';
 
 /*
-  The three, in order. `view` is the name in src/views.js — which is why Attendance's is `class`,
+  The four, in order. `view` is the name in src/views.js — which is why Attendance's is `class`,
   and that history is written down at VIEWS there.
 
   A SEGMENT IS ENABLED IFF src/views.js HAS ITS VIEW, and nothing here records which. That is what
@@ -66,12 +76,16 @@ const SCREENS = [
   { view: 'class', label: 'Attendance' },
   { view: 'assignments', label: 'Assignments' },
   { view: 'scores', label: 'Scores' },
+  /* WO-6.6, and it is the line the paragraph above promised ("Phase 6's calendar adds a line here
+     the day it is drawn"). It arrives already enabled, because its view landed at WO-6.3 — so this
+     is the one segment in the history of this file that was never on screen disabled. */
+  { view: 'calendar', label: 'Calendar' },
 ];
 
 /*
   What a screen is called, asked of this file rather than restated in src/shell.js, which announces
   a switch out loud (a screen swap is a change a screen-reader user cannot see). The labels above
-  are the only place the three screens are named, and a second copy would be a second name for the
+  are the only place the four screens are named, and a second copy would be a second name for the
   same button the day one of them is reworded.
 */
 export function screenLabel(view) {
@@ -131,7 +145,7 @@ function breadcrumbSegment(name) {
   /* `.detail` is the gap that says this is a different KIND of destination — the same separation
      `.cls-tab-home` makes at the head of the class row. It is active because you are standing in
      it, and it carries no `data-class-screen`: tapping the screen you are already on is a control
-     that does nothing, and the way out of it is one of the three beside it. */
+     that does nothing, and the way out of it is one of the four beside it. */
   btn.className = 'screen-nav-btn detail active';
   btn.textContent = name;
   btn.title = name;
@@ -144,7 +158,7 @@ function breadcrumbSegment(name) {
   Repaint every strip on the page from what is on screen right now.
 
   Called by src/shell.js after anything that changes which screen is up, and cheap enough to call
-  when nothing did: it is six elements, and the alternative is a second copy of "which screen is
+  when nothing did: it is eight elements, and the alternative is a second copy of "which screen is
   showing" living in this module to compare against — which is the second answer this repo keeps
   refusing (src/views.js's showView says the same thing about setPref).
 

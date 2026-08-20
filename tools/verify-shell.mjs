@@ -1164,6 +1164,70 @@ async function clickSel(sel, nth = 0) {
   await new Promise(r => setTimeout(r, 150));
 }
 
+/*
+  ONE VISIBLE MATCH, CLICKED BY INDEX — clickSel's oldest trap, wrapped so it stops being retyped.
+
+  Several hooks in this app are carried by four or five elements at once and which of them is on
+  screen depends on the view: `[data-view-home]` is on the header's own tab, on the class view's
+  panel header, on the assignment list's, on the score grid's and on the calendar's. A bare
+  `clickSel('[data-view-home]')` takes the FIRST in document order, which is usually `.hidden` —
+  clickSel measures it at 0x0 and dispatches the click at the top-left corner of the viewport
+  instead, onto whatever is there. That reads as "the button stopped working" and has cost two
+  sections a red run apiece (tools/README.md § "Driving a browser over CDP", trap 3).
+*/
+async function clickVisible(sel) {
+  const nth = await evalJs(`(function(){
+    var all = document.querySelectorAll(${JSON.stringify(sel)});
+    for (var i = 0; i < all.length; i++) {
+      var r = all[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return i;
+    }
+    return -1; })()`);
+  if (nth < 0) throw new Error('no visible ' + sel + ' on this screen');
+  await clickSel(sel, nth);
+}
+
+/*
+  THE DAYS-OFF AND EVENTS DOORS LIVE ON THE CALENDAR NOW (WO-6.6), AND THIS IS THE ONE PLACE THAT
+  KNOWS HOW TO REACH THEM.
+
+  Ten call sites in this file used to open those two panels from `#homeView`'s title row. The owner's
+  ruling of 2026-08-19 took both buttons off that row — the home screen keeps Calendar and loses the
+  other two — so every one of those selectors now names a button that does not exist. Rather than
+  re-typing the same three-step walk ten times, it is written once here: shut anything over the page,
+  get onto the calendar if we are not already, and tap the panel's own door in that screen's panel
+  header.
+
+  THE HOME SCREEN'S OWN Calendar BUTTON IS THE ROUTE IN, deliberately, rather than the fourth segment
+  on the class-screen switcher. Both doors are real and both are tested in § "the month and the week,
+  drawn" — but the pill arrives FILTERED to the class it came from, and a block that only wants to
+  author a day off should not be silently choosing a lens for itself. The home door is the one that
+  opens with every class showing.
+
+  IT IS SCOPED TO `.panel-title-actions`. The same two hooks are also inside `#calendarEmpty`, which
+  is `.hidden` on any month with something on it — so an unscoped selector would take whichever of
+  the two copies came first in document order and click a 0x0 element whenever the month was not
+  empty. That is clickVisible's trap above, met a second way.
+*/
+async function openCalendarPanel(hook) {
+  await evalJs(`(function(){
+    if (!window.planbook || !window.planbook.closeModal) return 0;
+    var open = document.querySelectorAll('.modal-overlay:not(.hidden)');
+    Array.prototype.forEach.call(open, function(o){ window.planbook.closeModal(o); });
+    return open.length; })()`);
+  const onCalendar = await evalJs("(function(){ var v = document.getElementById('calendarView');"
+    + ' return !!v && !v.classList.contains(\'hidden\'); })()');
+  if (!onCalendar) {
+    const onHome = await evalJs("(function(){ var v = document.getElementById('homeView');"
+      + ' return !!v && !v.classList.contains(\'hidden\'); })()');
+    if (!onHome) await clickVisible('[data-view-home]');
+    await clickSel('#homeView [data-calendar-open]');
+    await new Promise(r => setTimeout(r, 200));
+  }
+  await clickSel('#calendarView .panel-title-actions ' + hook);
+  await new Promise(r => setTimeout(r, 250));
+}
+
 /* Headless Chromium with no visible frame never advances a transition or a keyframe, so
    getBoundingClientRect returns start-of-animation values. `.modal-close` measures 42.24px —
    which is 44 x 0.96, the srIn keyframe's opening scale — and reads exactly like a failed
@@ -7388,13 +7452,22 @@ if (!classesBooted || !classSeam || !assignSeam) {
       renderings of one control drawn by one module and a build that painted only the visible one
       would flash the wrong active segment for a frame on every switch.
 
-      Three segments, named, in order, with no fourth. A student's name is not among them: WO-3.7's
-      per-student detail is reached by tapping a name, and the owner's 2026-08-09 decision is that
-      it is deliberately not a tab (plans/gradebook-surfaces.md).
+      FOUR SEGMENTS SINCE WO-6.6, named, in order, with no fifth — and this check was THREE, in as
+      many words, from 2026-08-09 until 2026-08-19. Both dates are the owner's: *THREE TABS, NOT
+      FOUR* was his call against the drawn candidate, and Calendar is his reversal of it ten days
+      later, because the calendar is the first surface that is ABOUT a class without being OWNED by
+      one (plans/gradebook-surfaces.md carries the reversal with both dates on it). The count is
+      still asserted exactly rather than as "at least", which is what makes a fifth tab arriving
+      without a decision behind it turn this red.
+
+      A student's name is still not among them: WO-3.7's per-student detail is reached by tapping a
+      name, and the half of the 2026-08-09 record that covers it is unchanged — a segment that is
+      dead until something has been chosen does not belong on this strip. That is the distinction the
+      reversal turns on, and it is why the breadcrumb count is read beside the labels.
     */
     const stripOnClass = await evalJs('window.__strip()');
-    const wantLabels = ['Attendance', 'Assignments', 'Scores'];
-    check('the switcher carries exactly three tabs — Attendance, Assignments, Scores — and no student tab',
+    const wantLabels = ['Attendance', 'Assignments', 'Scores', 'Calendar'];
+    check('the switcher carries exactly four tabs — Attendance, Assignments, Scores, Calendar — and no student tab',
       stripOnClass.length >= 2
         && stripOnClass.every((s) => JSON.stringify(s.labels) === JSON.stringify(wantLabels))
         && stripOnClass.every((s) => s.detail === 0)
@@ -7413,11 +7486,11 @@ if (!classesBooted || !classSeam || !assignSeam) {
        check that outlives the state it describes: it went on measuring the build it was written
        against. It is worded as a question about the SET now, so the day a fourth screen is drawn
        ahead of its view the disabled one is named rather than assumed. */
-    check('Attendance is the active segment on a freshly opened class, and all three segments carry their hook',
+    check('Attendance is the active segment on a freshly opened class, and all four segments carry their hook',
       stripOnClass.every((s) => s.active[0] === true && s.current[0] === 'true')
         && stripOnClass.every((s) => s.disabled.every((d) => d === false))
         && stripOnClass.every((s) => s.hooks[0] === 'class' && s.hooks[1] === 'assignments'
-          && s.hooks[2] === 'scores'),
+          && s.hooks[2] === 'scores' && s.hooks[3] === 'calendar'),
       'active ' + JSON.stringify(stripOnClass[0].active)
         + ', disabled ' + JSON.stringify(stripOnClass[0].disabled)
         + ', hooks ' + JSON.stringify(stripOnClass[0].hooks));
@@ -13333,9 +13406,11 @@ if (!attBooted || !attSeam) {
 
   /* ── acceptance line 1: a no-school range across a week closes every class on every date in it ── */
 
-  await clickSel('#homeView [data-dayoff-panel]');
+  /* Through the calendar's own panel header since WO-6.6, which is where this door lives now —
+     openCalendarPanel() walks the two steps and says why up at its definition. */
+  await openCalendarPanel('[data-dayoff-panel]');
   const panelOpen = await dayOffPanel();
-  /* The panel has just been opened from the home screen and its two dates are still empty, which is
+  /* The panel has just been opened from the calendar and its two dates are still empty, which is
      the first point in this run where `#daysOffFrom` and `#daysOffTo` are on screen to be read at
      all (WO-2.24). Read before the form is filled, so nothing below could be what makes it pass. */
   const dayOffReset = await dateResetOn('#daysOffModal .term-date', 2,
@@ -13614,22 +13689,41 @@ if (!attBooted || !attSeam) {
   await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
   await clickSel('[data-attendance-page="today"]');
 
-  /* ── the door, on a day with nothing special about it ── */
+  /*
+    ── AND THE DOOR IS NOT IN THIS ROW ANY MORE, ON A DAY WITH NOTHING SPECIAL ABOUT IT ──
 
+    THIS CHECK IS INVERTED AND NOT DELETED (WO-6.6, 2026-08-19). It asserted the opposite from
+    2026-08-08 until that day: `doors === 1`, "Days off" last in the row, on every state this row
+    draws — the owner's own call after the first iPad sitting, and the reason it was made is written
+    up in src/attendance.js where the function used to be. The same owner moved the calendar's own
+    controls onto the calendar, which is one of this class's screens now and one tap away on the
+    switcher above the grid, so a permanent fourth button held at arm's length inside a row whose
+    whole design is a three-control limit stopped paying for itself.
+
+    An ABSENCE is the claim, so the controls that WRITE are asserted beside it — a row that drew
+    nothing at all would satisfy "no days-off door" and be a screen a teacher cannot mark a class on.
+    The other half of the ruling, the 📅 in a COVERED column's head, is asserted by the forward-paging
+    check below (`aheadCol.btn === 'dayoff'`), which is where a covered column exists to be read.
+  */
   const doorOnPlainDay = await gridAhead();
-  check('the way to the calendar is on the class screen itself, on an ordinary day, past the controls that write',
-    doorOnPlainDay.doors === 1
-      && doorOnPlainDay.actions[doorOnPlainDay.actions.length - 1].indexOf('Days off') >= 0
-      /* Last in the row, which is the half that keeps the three-control rule true: it is not one of
-         the controls a teacher aims at with a class walking in, so it must not sit among them. */
-      && doorOnPlainDay.actions.filter((t) => t.indexOf('Days off') >= 0).length === 1,
-    'the action row reads ' + JSON.stringify(doorOnPlainDay.actions));
+  check('the attendance action row carries NO days-off door on an ordinary day — the permanent 📅 '
+    + 'came off every state of this row when the calendar became one of the class’s own screens — '
+    + 'while the controls that write on this day are all still in it',
+    doorOnPlainDay.doors === 0
+      && doorOnPlainDay.actions.filter((t) => t.indexOf('Days off') >= 0).length === 0
+      /* "Didn’t meet" is drawn on every state this row writes on, whatever else is beside it, so it
+         is the one label that says "the controls that write are still here" without this check
+         having to know which of the five states today is in. */
+      && doorOnPlainDay.actions.filter((t) => t.indexOf('meet') >= 0).length === 1
+      && doorOnPlainDay.actions.length >= 1,
+    'the action row reads ' + JSON.stringify(doorOnPlainDay.actions) + ' with '
+      + doorOnPlainDay.doors + ' days-off door(s) in it');
 
   /* ── the form empties itself, and does not summon the keyboard over the list it just changed ── */
 
   const beforeAhead = await read();
   await goHome();
-  await clickSel('#homeView [data-dayoff-panel]');
+  await openCalendarPanel('[data-dayoff-panel]');
   await fillDayOff('no-school', 'Teacher institute day', aheadDay, '', []);
   const formAfterAdd = await evalJs(`(function(){
     var a = document.activeElement;
@@ -13667,7 +13761,10 @@ if (!attBooted || !attSeam) {
     'an empty To became ' + JSON.stringify(carried.filled) + ' (start was ' + aheadDay
       + '); a To already set to ' + nodeWeekdayAhead(6) + ' stayed ' + JSON.stringify(carried.kept));
 
-  await closeAll();
+  /* goHome() rather than closeAll(), because the two lines above left the page on the CALENDAR and
+     not on the grid (WO-6.6 moved the days-off door there). `#homeGrid` is `.hidden` from the
+     calendar, and a card clicked at 0x0 lands the mouse at the top-left corner of the viewport. */
+  await goHome();
   await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
   await clickSel('[data-attendance-page="today"]');
 
@@ -13764,16 +13861,20 @@ if (!attBooted || !attSeam) {
 
   /* And with the event gone, the forward stop goes back to today — the behaviour of every year that
      has nothing scheduled in it, which is what this screen did before the change. */
-  /* Reached from the HOME screen rather than from the 📅 in the covered column head, and that is a
+  /* Reached from the CALENDAR rather than from the 📅 in the covered column head, and that is a
      consequence of the portrait detour above rather than a preference: turning upright pins the
      position to today, and landscape comes back on the week ending today rather than where the
      screen was before the turn (WO-2.12's documented cost). So the covered column is off screen by
-     the time this runs, and the 📅 with it. The home door is the orientation-independent one. */
+     the time this runs, and the 📅 with it. The calendar's own door is the orientation-independent
+     one, and since WO-6.6 it is the only permanent one — the home screen's copy went with the
+     ruling that moved the pair onto the screen they author for. */
   await goHome();
-  await clickSel('#homeView [data-dayoff-panel]');
+  await openCalendarPanel('[data-dayoff-panel]');
   const madeAhead = (await read()).events.filter((e) => e.title === 'Teacher institute day')[0];
   await clickSel('#daysOffList [data-dayoff-remove="' + madeAhead.id + '"]');
-  await closeAll();
+  /* goHome() rather than closeAll(): the removal happened over the calendar, so the grid is not
+     what is behind the modal that just closed. */
+  await goHome();
   await clickSel('#homeGrid .class-card-open[data-class-tab="' + marking + '"]');
   await clickSel('[data-attendance-page="today"]');
   const backAtToday = await gridAhead();
@@ -16232,6 +16333,13 @@ if (coarse !== true) {
       `byHand` — for a different reason from the first, which is why it gets its own paragraph
       rather than a mention in that one.
 
+      (WO-6.6 gave it a door on the switcher and a `screen` in the plan below, and changed neither
+      reason. What it did add is the strip itself: four segments on a control that is
+      `overflow-x: auto`, measured on the strip's own scrollWidth at 390px and at 834px in the same
+      section named at the end of this paragraph — because a fourth pill that does not fit makes
+      that control SCROLL rather than putting the page into the overflow this loop's neighbour
+      measures.)
+
       TWO REASONS, AND THE SECOND IS THE ONE THAT MATTERS. The first is this block's own arithmetic:
       the controls this screen is really about are the CHIPS on the grid, and a chip exists only
       where something is on the calendar. By the time this block runs the assignments section has
@@ -16256,7 +16364,11 @@ if (coarse !== true) {
       The reading that settles whether the departure is right is 👤 and stays owed: a thumb on a real
       iPad, which is what the work order asks for and what no emulator has.
     */
-    calendarView: { screen: null, floor: 5, byHand: 'the calendar\'s controls are chips over a '
+    /* `screen: 'calendar'` since WO-6.6 rather than `null`: this view has a `data-class-screen`
+       door of its own now — the fourth segment on the switcher — so the walk openView() would take
+       to it is a real one. Still `byHand`, for the two reasons below, which the ruling did not
+       touch. */
+    calendarView: { screen: 'calendar', floor: 5, byHand: 'the calendar\'s controls are chips over a '
       + 'fixture, and every assignment in the document is deleted by the time this block runs — so '
       + 'this loop would measure a toolbar over an empty grid. It is opened through its real door '
       + 'and measured in § "the month and the week, drawn (WO-6.3)", where the month chip\'s '
@@ -16648,15 +16760,35 @@ if (coarse !== true) {
     fields are `<input type="date">`, a control whose height nobody sets by accident and which the
     term editor above already had to be told about once.
   */
-  if (seam && await has('#homeView [data-dayoff-panel]')) {
+  /*
+    THE GUARD IS ON THE CALENDAR'S DOOR NOW, AND IT HAS AN `else` (WO-6.6).
+
+    It read `has('#homeView [data-dayoff-panel]')` until 2026-08-19, and that button no longer exists
+    — the owner moved both panels' doors onto the calendar's own header. A guard whose selector
+    stops matching does not fail: this whole block and the one nested inside it would have vanished
+    from the run with no FAIL and no SKIP, taking two 44px measurements with them and leaving a
+    green run two checks shorter. That is the vacuous pass tools/README.md § "Two rules that follow"
+    is about and the reason the `check()` count in that file is machine-read. So the guard follows
+    the door AND announces itself when it misses: a SKIP is a line a reader can see.
+  */
+  const dayOffDoorUp = seam && await has('#calendarView .panel-title-actions [data-dayoff-panel]');
+  if (!dayOffDoorUp) {
+    skip('every control in the days-off panel measures >=44px on a coarse pointer, date fields and class picker included',
+      seam ? 'no [data-dayoff-panel] in #calendarView\'s panel header — WO-6.6 put the door there, '
+        + 'and this block cannot open a panel it cannot reach'
+        : 'no window.planbook seam on the page, so nothing here can close the modals it opens');
+    skip('every control in the calendar-events panel measures >=44px on a coarse pointer, the '
+      + 'student <select>, the three date fields and the lead-time number included',
+      'the days-off door above was not reachable, so the walk that reaches this panel never ran');
+  }
+  if (dayOffDoorUp) {
     await evalJs("(function(){ ['classDeleteModal','termsModal','classesModal','backupModal',"
       + "'yearModal','aboutModal'].forEach(function(m){ window.planbook.closeModal(m); });"
       + " return 1; })()");
-    /* From the home view's own door, which means being on the home view: the coarse sweep reloads
-       the page and Chrome restores whichever view the preference last held. */
-    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
-    await clickSel('#homeView [data-dayoff-panel]');
-    await new Promise(r => setTimeout(r, 300));
+    /* From the calendar's own door since WO-6.6, which means getting onto the calendar: the coarse
+       sweep reloads the page and Chrome restores whichever view the preference last held.
+       openCalendarPanel() walks it, through the home screen's Calendar button. */
+    await openCalendarPanel('[data-dayoff-panel]');
     await clickSel('#daysOffModal [data-dayoff-kind="dropped"]');
     await new Promise(r => setTimeout(r, 200));
     const dom = await evalJs(`(function(){ var m = document.getElementById('daysOffModal');
@@ -16692,9 +16824,16 @@ if (coarse !== true) {
       wrapper by accident. The kind is switched to grades-due first, which is the only state in
       which that field is on screen at all.
     */
-    if (await has('#homeView [data-events-panel]')) {
-      await clickSel('#homeView [data-events-panel]');
-      await new Promise(r => setTimeout(r, 300));
+    /* The nested guard, re-routed with its parent and given the same `else` — see the paragraph
+       above the parent for why a guard that quietly stops matching is worse than one that fails. */
+    const eventsDoorUp = await has('#calendarView .panel-title-actions [data-events-panel]');
+    if (!eventsDoorUp) {
+      skip('every control in the calendar-events panel measures >=44px on a coarse pointer, the '
+        + 'student <select>, the three date fields and the lead-time number included',
+        'no [data-events-panel] in #calendarView\'s panel header — WO-6.6 put the door there');
+    }
+    if (eventsDoorUp) {
+      await openCalendarPanel('[data-events-panel]');
       await clickSel('#eventsModal [data-event-kind="grades-due"]');
       await new Promise(r => setTimeout(r, 200));
       const evm = await evalJs(`(function(){ var m = document.getElementById('eventsModal');
@@ -16733,7 +16872,16 @@ if (coarse !== true) {
       Measured as scrollWidth against clientWidth, which is the defect itself rather than a proxy
       for it: a control whose content is wider than its box IS the bug, whatever caused it. Asked of
       every button in the header row, so the next one added to that row inherits the check.
+
+      IT IS ONE BUTTON SINCE WO-6.6 AND IT IS MEASURED FROM THE HOME SCREEN, WHICH IS NOW SOMEWHERE
+      TO GO BACK TO. The two panels' doors moved onto the calendar, so this block reaches them there
+      and stands on the calendar by the time it gets here — and `#homeView` is `.hidden` from that
+      screen, where every rect is 0x0 and every one of these clauses fails for a reason that has
+      nothing to do with a label spilling. The calendar's own four-button row is measured the same
+      way in § "the month and the week, drawn", which is where the fixture for it lives.
     */
+    if (await has('#classTabBar [data-view-home]')) await clickSel('#classTabBar [data-view-home]');
+    await new Promise(r => setTimeout(r, 200));
     const titleRow = await evalJs(`(function(){
       var row = document.querySelector('#homeView .panel-title-row');
       if (!row) return null;
@@ -18609,7 +18757,11 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         check('the Scores segment is a live door: one tap lands on the grid, a view in <main> with no dialog anywhere in it, and the reload preference still says class',
           opened.shown && !opened.classShown && opened.inMain
             && opened.dialogBits === 0 && opened.openModals === 0
-            && opened.segHooks.join(',') === 'class,assignments,scores'
+            /* Four hooks since WO-6.6 — the calendar joined the strip (plans/gradebook-surfaces.md
+               carries the owner's reversal of THREE TABS, NOT FOUR with both its dates). The list is
+               asserted whole rather than by prefix so a segment appearing without a decision behind
+               it still turns this red. */
+            && opened.segHooks.join(',') === 'class,assignments,scores,calendar'
             && opened.segDisabled.every((d) => d === false)
             && openView === 'class',
           'grid up = ' + opened.shown + ', in <main> = ' + opened.inMain + ', dialog bits = '
@@ -21351,11 +21503,15 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
        set with no detail open is drawn nowhere); this is the half nobody had a screen to show. */
     const crumb = d.segments[d.segments.length - 1] || {};
     check('the switcher shows the open student\'s name as a breadcrumb segment while this screen '
-      + 'is up, set apart from the three tabs and carrying no screen of its own',
-      d.segments.length === 4 && crumb.label === S1_FULL && crumb.detail === true
+      + 'is up, set apart from the four tabs and carrying no screen of its own',
+      /* FIVE SEGMENTS SINCE WO-6.6, and the breadcrumb is still the last of them: the calendar
+         became the fourth tab on 2026-08-19 (the owner reversing THREE TABS, NOT FOUR), and the
+         distinction this check is really about is unchanged — the tabs carry a screen, the
+         breadcrumb carries a name and no `data-class-screen` at all. */
+      d.segments.length === 5 && crumb.label === S1_FULL && crumb.detail === true
         && crumb.screen === ''
-        && JSON.stringify(d.segments.slice(0, 3).map((s) => s.label))
-          === JSON.stringify(['Attendance', 'Assignments', 'Scores']),
+        && JSON.stringify(d.segments.slice(0, 4).map((s) => s.label))
+          === JSON.stringify(['Attendance', 'Assignments', 'Scores', 'Calendar']),
       d.segments.length + ' segment(s): ' + JSON.stringify(d.segments));
 
     /* ACCEPTANCE LINE 1. The contributions as PRINTED sum to the total as PRINTED, and both agree
@@ -21449,9 +21605,14 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
 
     /* ACCEPTANCE LINE 9, second half — the name goes when you leave, and it goes for all three
        tabs rather than for the one somebody tested. This is the half WO-3.3 could not demonstrate:
-       there was no screen to leave. */
+       there was no screen to leave.
+
+       FOUR TABS SINCE WO-6.6, and the fourth is walked with the others rather than exempted. The
+       calendar became a class screen on 2026-08-19, so it is a screen this name can be left on —
+       and a build where the breadcrumb outlived the screen it belongs to would show a student's name
+       over a month grid, which is the same defect on the surface most likely to be projected. */
     const left = [];
-    for (const screen of ['class', 'assignments', 'scores']) {
+    for (const screen of ['class', 'assignments', 'scores', 'calendar']) {
       await clickSel('#detailView [data-class-screen="' + screen + '"]');
       await new Promise(r => setTimeout(r, 200));
       left.push(await evalJs(`(function(){
@@ -21471,13 +21632,13 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       await new Promise(r => setTimeout(r, 250));
     }
     const back = await evalJs(READ);
-    check('switching to any of the three tabs takes the student\'s name off the strip with it, and '
+    check('switching to any of the four tabs takes the student\'s name off the strip with it, and '
       + 'coming back puts it there again',
-      left.length === 3 && left.every((l) => l.anyName === false && l.segments === 3)
+      left.length === 4 && left.every((l) => l.anyName === false && l.segments === 4)
         && JSON.stringify(left.map((l) => l.view))
-          === JSON.stringify(['classView', 'assignmentsView', 'scoresView'])
-        && back.segments.length === 4
-        && (back.segments[3] || {}).label === S1_FULL,
+          === JSON.stringify(['classView', 'assignmentsView', 'scoresView', 'calendarView'])
+        && back.segments.length === 5
+        && (back.segments[4] || {}).label === S1_FULL,
       JSON.stringify(left) + ' :: back on the detail with '
         + back.segments.length + ' segment(s)');
 
@@ -26975,11 +27136,9 @@ if (!seam) {
                  series: ser ? (ser.textContent || '').trim() : '' }; })
     }; })()`);
 
-  if (await has('#classTabBar [data-view-home]')) {
-    await clickSel('#classTabBar [data-view-home]');
-  }
-  await clickSel('#homeView [data-events-panel]');
-  await new Promise(r => setTimeout(r, 250));
+  /* Opened from the CALENDAR's panel header (WO-6.6 moved this door there, and openCalendarPanel()
+     walks the two steps): the three call sites in this section each reach the same one control. */
+  await openCalendarPanel('[data-events-panel]');
 
   /* ── acceptance line 1, first half: every kind, with and without a range ── */
   for (const kind of KINDS) {
@@ -27022,8 +27181,7 @@ if (!seam) {
      listed the array rather than its own kinds would show twelve rows with a Remove beside each,
      which is the mis-tap src/days-off.js's paintList() says it exists to prevent. */
   await evalJs("window.planbook.closeModal('eventsModal');1");
-  await clickSel('#homeView [data-dayoff-panel]');
-  await new Promise(r => setTimeout(r, 250));
+  await openCalendarPanel('[data-dayoff-panel]');
   const daysOffRows = await evalJs("document.querySelectorAll('#daysOffList .roster-row').length");
   await evalJs("window.planbook.closeModal('daysOffModal');1");
   check('with twelve of this work order\'s events in the document, the days-off panel still lists '
@@ -27033,8 +27191,7 @@ if (!seam) {
       + 'already held, and none of the ' + mine.length + ' this section added');
 
   /* ── acceptance line 1, second half: edited, and deleted ── */
-  await clickSel('#homeView [data-events-panel]');
-  await new Promise(r => setTimeout(r, 250));
+  await openCalendarPanel('[data-events-panel]');
   const target = ranges.filter((e) => e.kind === 'conference')[0];
   const beforeEdit = JSON.stringify(made.events.filter((e) => e.id !== target.id));
   /* Every id this section is responsible for, so the delete loop below cannot take a row an
@@ -27809,38 +27966,71 @@ if (!seam) {
     Array.prototype.forEach.call(open, function(o){ window.planbook.closeModal(o); });
     return open.length; })()`);
 
-  /* ── the sixth view, opened the way a teacher opens it ──
-     Through the button on the home screen and nothing else. The three claims beside it are the
-     work order's own: it is a view, it is NOT a class screen, and it draws no segment on the
-     switcher — a build that added it to CLASS_SCREENS would put class tabs over the school's
-     calendar and be reachable from a strip that belongs to one class. */
+  /* ── the sixth view, opened the way a teacher opens it from the grid ──
+     Through the button on the home screen, which is one of its two doors since WO-6.6 (the other is
+     the fourth segment on the class-screen switcher, walked further down). What is claimed here is
+     the shape of the screen a teacher arrives at from OUTSIDE every class: it is a view, it IS a
+     class screen, and the lens it opens on is every class. */
   if ((await onView()) !== 'homeView') await goHome();
   await clickSel('#homeView [data-calendar-open]');
   await new Promise(r => setTimeout(r, 200));
   const arrived = await evalJs(`(function(){
+    var cur = document.querySelector('#calendarView [data-screen-nav] [aria-current="true"]');
     return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
         return e ? e.id : ''; })(),
       segments: document.querySelectorAll('#calendarView [data-screen-nav] [data-class-screen]').length,
+      labels: Array.prototype.map.call(
+        document.querySelectorAll('#calendarView [data-screen-nav] button'),
+        function(b){ return (b.textContent || '').trim(); }),
+      current: cur ? (cur.textContent || '').trim() : '',
       navSegments: document.querySelectorAll('[data-screen-nav] [data-class-screen]').length,
       classTabs: document.querySelectorAll('#classTabBar [data-class-tab]').length,
+      homeDoor: !!document.querySelector('#classTabBar [data-view-home]'),
+      caption: (document.querySelector('#classTabBar .hdr-empty') || {}).textContent || '',
       heading: (document.getElementById('calendarRange') || {}).textContent || '',
       cells: document.querySelectorAll('#calendarGrid .calendar-day').length,
       heads: document.querySelectorAll('#calendarGrid th.calendar-dow').length }; })()`);
-  /* IT BELONGS TO NO CLASS IS ASSERTED AS THE THING A TEACHER WOULD SEE, rather than by asking
-     src/views.js. `isClassScreen` is not on the seam and is not being put there for one reading:
-     what "not a class screen" MEANS on the glass is that src/classes.js takes the class tabs off
-     the header and src/screen-nav.js draws no segment strip, and both are consequences of this view
-     being absent from CLASS_SCREENS. A build that added it to that list fails here, which is what
-     the claim is for. tools/wo-sweep.mjs is where a grep about the list itself would go. */
-  check('the calendar is the sixth VIEW and belongs to no class: the home screen’s own button puts '
-    + 'it in <main>, and once it is up the header draws no class tabs over it and there is no '
-    + 'class-screen switcher inside it — which is what not being a CLASS_SCREENS entry looks like',
+  const arrivedModel = await model();
+  /*
+    THIS CHECK IS INVERTED AND NOT DELETED (WO-6.6, 2026-08-19).
+
+    It asserted the opposite in as many words until that day — *the calendar is the sixth VIEW and
+    belongs to no class … which is what not being a `CLASS_SCREENS` entry looks like* — with a
+    comment saying that a build which added it to that list fails here. That build is this one, and
+    the owner's ruling of 2026-08-19 is the reason: the calendar was built as a destination and wired
+    as a cul-de-sac, taking over the header's whole left-hand strip and handing back one button
+    inside a panel header. So the same three things are read and the expected answers are the
+    opposite ones, which is what keeps the check honest in both directions — a build that reverts to
+    no tabs and no strip goes red here rather than quietly passing a check nobody rewrote.
+
+    STILL ASSERTED AS THE THING A TEACHER WOULD SEE rather than by asking src/views.js.
+    `isClassScreen` is not on the seam and is not being put there for one reading: what BEING a class
+    screen means on the glass is that src/classes.js draws the class tabs and the *All classes* door
+    over this view and src/screen-nav.js draws four segments inside it with Calendar current. The
+    caption that used to sit in that strip — `Calendar`, out of a two-entry lookup in src/classes.js
+    — has to be gone with it, so it is read and required to be empty.
+
+    AND THE LENS IS EVERY CLASS, BECAUSE OF THE DOOR THIS WALK CAME THROUGH. That is the other half
+    of the same ruling (the pill inside a class arrives filtered to it), and it is read off the
+    screen's own model rather than off a button's class list.
+  */
+  check('the calendar is the sixth VIEW and one of the open class’s SCREENS: the home screen’s own '
+    + 'button puts it in <main>, the header draws the class tabs and the All classes door over it, '
+    + 'the switcher inside it shows four segments with Calendar current, the Calendar caption is '
+    + 'gone from the strip — and arriving from OUTSIDE a class opens on every class showing',
     arrived.view === 'calendarView'
-      && arrived.segments === 0 && arrived.classTabs === 0
+      && arrived.segments === 4 && arrived.current === 'Calendar'
+      && arrived.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar'
+      && arrived.classTabs >= 2 && arrived.homeDoor === true && arrived.caption === ''
+      && arrivedModel.classId === ''
       && arrived.heads === 7 && arrived.cells >= 28,
     'view=' + arrived.view + ' switcher segments inside it=' + arrived.segments
-      + ' (anywhere on the page=' + arrived.navSegments + ') class tabs=' + arrived.classTabs
-      + ' weekday heads=' + arrived.heads + ' day cells=' + arrived.cells
+      + ' (anywhere on the page=' + arrived.navSegments + ') reading '
+      + JSON.stringify(arrived.labels) + ' with ' + JSON.stringify(arrived.current)
+      + ' current; class tabs=' + arrived.classTabs + ', way home in the strip='
+      + arrived.homeDoor + ', caption=' + JSON.stringify(arrived.caption)
+      + ', filter=' + JSON.stringify(arrivedModel.classId)
+      + '; weekday heads=' + arrived.heads + ' day cells=' + arrived.cells
       + ' heading=' + JSON.stringify(arrived.heading));
 
   const reachedMonth = await pageToMonth(MONTH_FROM);
@@ -28299,6 +28489,326 @@ if (!seam) {
     reachedBack === true && notEmpty.empty === false && notEmpty.chips >= 7,
     'back on ' + MONTH_FROM + ': ' + reachedBack + '; the empty state is up: ' + notEmpty.empty
       + ' over ' + notEmpty.chips + ' chip(s)');
+
+  /*
+    ══════════ WO-6.6: THE DOORS — in from every class screen, out of it to any of them ══════════
+
+    Measured inside this section rather than in one of its own, because everything it asks about
+    needs two classes, a roster and a recorded meeting, and that fixture is already standing here.
+    What only a browser can settle: which strip is on screen, what a tap on a header tab does while
+    the calendar is up, and whether four segments fit a control that is `overflow-x: auto` and will
+    therefore SCROLL rather than overflow when they do not.
+  */
+
+  /* ── in through the fourth pill, from inside a class ──
+     The other door. It is walked the way a teacher walks it — home, a card, then the segment on the
+     strip inside the class screen she landed on — and the claim is the owner's ruling of 2026-08-19:
+     the Calendar pill inside Period 3 opens on Period 3's month. */
+  await goHome();
+  await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+  await new Promise(r => setTimeout(r, 200));
+  const pillOnClass = await evalJs(`(function(){
+    var strip = document.querySelectorAll('#classView [data-screen-nav] button');
+    var seg = document.querySelector('#classView [data-class-screen="calendar"]');
+    return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })(),
+      labels: Array.prototype.map.call(strip, function(b){ return (b.textContent || '').trim(); }),
+      live: !!seg && !seg.disabled }; })()`);
+  await clickSel('#classView [data-class-screen="calendar"]');
+  await new Promise(r => setTimeout(r, 250));
+  const fromPill = await model();
+  const fromPillView = await onView();
+  const openViewPref = await evalJs("window.planbook.getPref('openView')");
+  check('the same strip on Attendance shows Calendar as a live segment, and tapping it opens the '
+    + 'month on TODAY, on the month, filtered to THAT CLASS — the door decides the lens (WO-6.6)',
+    pillOnClass.view === 'classView' && pillOnClass.live === true
+      && pillOnClass.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar'
+      && fromPillView === 'calendarView' && fromPill.classId === CLS
+      && fromPill.scale === 'month'
+      && fromPill.from <= (await evalJs('window.planbook.attendance.todayISO()'))
+      && fromPill.to >= (await evalJs('window.planbook.attendance.todayISO()')),
+    'the strip on Attendance reads ' + JSON.stringify(pillOnClass.labels) + ' (Calendar live='
+      + pillOnClass.live + '); the pill landed on ' + fromPillView + ' showing '
+      + fromPill.from + '..' + fromPill.to + ' at scale ' + fromPill.scale + ' filtered to '
+      + JSON.stringify(fromPill.classId));
+
+  /* ── and the preference it wrote down is `class`, not `calendar` ──
+     src/views.js's REMEMBERED_AS, asserted where it can be: a reload is what would reveal it, and
+     what a reload reads is this key. `planbook_openView` holding `calendar` is a browser that
+     reopens onto a month with no door behind it to say which class or which lens it should be. */
+  check('standing on the calendar, `planbook_openView` holds `class` and never `calendar` — so a '
+    + 'reload lands on Attendance for the open class, which is the owner’s rule surviving a screen '
+    + 'that is ABOUT a class rather than of one',
+    openViewPref === 'class',
+    'the preference reads ' + JSON.stringify(openViewPref) + ' while #calendarView is up');
+
+  /* ── the per-class ledger the month suppresses when every class is showing ──
+     Paged to the fixture month WITHOUT touching the filter, so what is drawn is the arrival's own
+     lens. The hint under the grid is the other half of the pair: it explains the month's silence and
+     must be DOWN here, where the month is about one class, and it was up on the unfiltered arrival
+     forty checks above. */
+  await pageToMonth(MONTH_FROM);
+  const pillMonth = await painted();
+  check('arriving through the pill draws that class’s own meeting ledger on the month — the '
+    + 'per-class state a month suppresses with every class showing — and the hint that explains '
+    + 'that silence is down, because this month is about one class',
+    kindsIn(pillMonth, MET).indexOf('meeting-state') !== -1
+      && (pillMonth.at[MET] || []).join(' ').indexOf('state-taken') !== -1
+      && pillMonth.hint === false && kindsIn(pillMonth, BARE) === '',
+    MET + ' draws ' + JSON.stringify(pillMonth.at[MET]) + '; the hint is up: ' + pillMonth.hint
+      + '; the bare weekday draws ' + JSON.stringify(kindsIn(pillMonth, BARE)));
+
+  /* ── a header tab moves the lens, not the screen ──
+     The tap that used to land on Attendance. Two answers are read back, because the whole ruling is
+     that they are two questions: the header tab says which class you are IN (and `openClassId` moves
+     with it), the toolbar filter says what the grid is ABOUT. */
+  await clickSel('#classTabBar [data-class-tab="' + OTHER + '"]');
+  await new Promise(r => setTimeout(r, 250));
+  const afterTab = await evalJs(`(function(){
+    var cur = document.querySelector('#classTabBar [data-class-tab][aria-current="true"]');
+    var filter = document.querySelector('#calendarClasses [data-calendar-filter].active');
+    return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })(),
+      open: window.planbook.classes.getSelectedClassId(),
+      tab: cur ? cur.getAttribute('data-class-tab') : '',
+      filterBtn: filter ? filter.getAttribute('data-calendar-filter') : '' }; })()`);
+  const afterTabModel = await model();
+  check('tapping another class’s header tab while the calendar is up leaves the calendar up, moves '
+    + 'the open class AND the grid’s filter to that class, and does not land on Attendance',
+    afterTab.view === 'calendarView' && afterTab.open === OTHER && afterTab.tab === OTHER
+      && afterTabModel.classId === OTHER && afterTab.filterBtn === OTHER,
+    'the view is ' + afterTab.view + ', the open class is ' + afterTab.open + ', the current tab is '
+      + afterTab.tab + ', the pressed filter is ' + afterTab.filterBtn + ' and the model is '
+      + 'filtered to ' + JSON.stringify(afterTabModel.classId));
+
+  /* ── two controls, two answers, neither one lying ──
+     *All classes* in the toolbar is the one thing a tab row cannot say, which is why the filter
+     strip keeps it. Pressing it must not move which class the teacher is in. */
+  await clickSel('#calendarClasses [data-calendar-filter=""]');
+  await new Promise(r => setTimeout(r, 250));
+  const bothAnswers = await evalJs(`(function(){
+    var cur = document.querySelector('#classTabBar [data-class-tab][aria-current="true"]');
+    return { open: window.planbook.classes.getSelectedClassId(),
+      tab: cur ? cur.getAttribute('data-class-tab') : '',
+      view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })() }; })()`);
+  const bothModel = await model();
+  check('tapping All classes in the toolbar shows every class while the header tab of the class you '
+    + 'are IN stays current — two controls, two answers, and the lens does not move the selection',
+    bothModel.classId === '' && bothAnswers.open === OTHER && bothAnswers.tab === OTHER
+      && bothAnswers.view === 'calendarView',
+    'the filter reads ' + JSON.stringify(bothModel.classId) + ' while the open class is '
+      + bothAnswers.open + ' and the current tab is ' + bothAnswers.tab);
+
+  /* ── the two panels that author what this grid draws, opened from the grid ──
+     The gap the owner reported: a teacher looking at a March that already has one thing on it could
+     not add a second without leaving, because both doors were on the home screen and inside this
+     screen's EMPTY state. Authored through the real form, and the grid behind the panel is read
+     after the panel closes — no reload, no second tap. */
+  await clickSel('#calendarView .panel-title-actions [data-dayoff-panel]');
+  await new Promise(r => setTimeout(r, 250));
+  const dayOffFromHere = await evalJs(
+    "(function(){ var m = document.getElementById('daysOffModal');"
+    + " return !!m && !m.classList.contains('hidden'); })()");
+  await closeAnyModal();
+  await clickSel('#calendarView .panel-title-actions [data-events-panel]');
+  await new Promise(r => setTimeout(r, 250));
+  const eventsFromHere = await evalJs(
+    "(function(){ var m = document.getElementById('eventsModal');"
+    + " return !!m && !m.classList.contains('hidden'); })()");
+  await evalJs(`(function(){
+    document.getElementById('eventTitle').value = 'WO-6.6 authored here';
+    document.getElementById('eventFrom').value = '${GRADES_DUE}';
+    document.getElementById('eventTo').value = '';
+    return 1; })()`);
+  await clickSel('#eventsModal [data-event-create] button[type="submit"]');
+  await new Promise(r => setTimeout(r, 250));
+  await closeAnyModal();
+  await new Promise(r => setTimeout(r, 250));
+  const behindThePanel = await evalJs(`(function(){
+    var chips = document.querySelectorAll('#calendarGrid .calendar-chip');
+    return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })(),
+      here: Array.prototype.filter.call(chips, function(c){
+        return (c.textContent || '').indexOf('WO-6.6 authored here') !== -1; }).length,
+      on: (function(){
+        var hit = Array.prototype.filter.call(chips, function(c){
+          return (c.textContent || '').indexOf('WO-6.6 authored here') !== -1; })[0];
+        return hit ? hit.getAttribute('data-calendar-date') : ''; })() }; })()`);
+  const authoredHere = await evalJs(`(async function(){
+    await window.planbook.store.flush();
+    var d = window.planbook.store.getDoc();
+    return (d.events || []).filter(function(e){
+      return e.title === 'WO-6.6 authored here'; }).map(function(e){ return e.id; }); })()`);
+  await evalJs(`(function(){ window.planbook.store.update(function(d){
+    d.events = (d.events || []).filter(function(e){
+      return e.title !== 'WO-6.6 authored here'; }); }); return 1; })()`);
+  check('Days off and Events open from the calendar’s OWN panel header, and an event authored there '
+    + 'is on the grid behind the panel the moment it closes — no reload and no second tap',
+    dayOffFromHere === true && eventsFromHere === true
+      && authoredHere.length === 1 && behindThePanel.view === 'calendarView'
+      && behindThePanel.here === 1 && behindThePanel.on === GRADES_DUE,
+    'the days-off panel opened from here: ' + dayOffFromHere + '; the events panel: '
+      + eventsFromHere + '; ' + authoredHere.length + ' event(s) written, drawing '
+      + behindThePanel.here + ' chip(s) on ' + JSON.stringify(behindThePanel.on)
+      + ' with #' + behindThePanel.view + ' still up');
+
+  /* ── the home screen keeps ONE door, and it is Calendar ──
+     Read as markup rather than as rectangles, so it can be asked from this screen: what is being
+     claimed is which controls are in that row at all. The two that were beside it author what this
+     grid draws and are on this grid now, which is the whole of the ruling. */
+  const homeRow = await evalJs(`(function(){
+    var row = document.querySelector('#homeView .panel-title-actions');
+    if (!row) return null;
+    return { count: row.querySelectorAll('button').length,
+      labels: Array.prototype.map.call(row.querySelectorAll('button'), function(b){
+        return (b.textContent || '').trim(); }),
+      dayoff: row.querySelectorAll('[data-dayoff-panel]').length,
+      events: row.querySelectorAll('[data-events-panel]').length,
+      calendar: row.querySelectorAll('[data-calendar-open]').length }; })()`);
+  const homeAnywhere = await evalJs(
+    "document.querySelectorAll('#homeView [data-dayoff-panel], #homeView [data-events-panel]').length");
+  check('the home screen’s title row carries Calendar and nothing else beside it — the days-off and '
+    + 'events doors are nowhere on that screen at all, in its header or anywhere else in it',
+    !!homeRow && homeRow.count === 1 && homeRow.calendar === 1
+      && homeRow.dayoff === 0 && homeRow.events === 0 && homeAnywhere === 0
+      && homeRow.labels.join('').indexOf('Calendar') !== -1,
+    homeRow ? homeRow.count + ' button(s) in that row: ' + JSON.stringify(homeRow.labels)
+      + '; days-off doors anywhere in #homeView = ' + homeAnywhere : 'no title-actions row found');
+
+  /* ── FOUR SEGMENTS ON A CONTROL THAT SCROLLS INSTEAD OF OVERFLOWING ──
+     The trap this work order names. `.screen-nav` is `overflow-x: auto` (src/assignments.css), so a
+     fourth pill that does not fit makes the STRIP scroll — silently, with no page overflow at all,
+     under a teacher who does not know that control scrolls. The page-width check every other
+     control here is measured by passes straight through it. So the strip's own scrollWidth is
+     measured against its clientWidth, at the two widths that matter, and the page is measured
+     beside it so a build that fixed one by breaking the other cannot pass.
+
+     The 44px floor is asserted here too, and NOT at 28: the month chip's departure is the owner's
+     ruling for one control and explicitly not a precedent (CLAUDE.md § Conventions). A new control
+     gets the full 44. */
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await new Promise(r => setTimeout(r, 400));
+  const stripAt390 = await evalJs(`(function(){
+    var strip = document.querySelector('#calendarView [data-screen-nav]');
+    var d = document.documentElement;
+    if (!strip) return null;
+    return { coarse: matchMedia('(pointer: coarse)').matches,
+      scroll: strip.scrollWidth, client: strip.clientWidth,
+      docScroll: d.scrollWidth, docClient: d.clientWidth,
+      segs: Array.prototype.map.call(strip.querySelectorAll('button'), function(b){
+        var r = b.getBoundingClientRect();
+        return { t: (b.textContent || '').trim(), w: Math.round(r.width * 100) / 100,
+                 h: Math.round(r.height * 100) / 100 }; }) }; })()`);
+  const shortSegs = stripAt390 ? stripAt390.segs.filter((s) => s.h < 44) : [];
+  check('the four-segment switcher FITS its own strip at 390px rather than scrolling inside it, '
+    + 'and every segment clears 44px high under a coarse pointer — measured on the strip because '
+    + '`.screen-nav` is overflow-x: auto and a pill that does not fit scrolls silently',
+    !!stripAt390 && stripAt390.coarse === true && stripAt390.segs.length === 4
+      && stripAt390.scroll <= stripAt390.client + 1 && shortSegs.length === 0
+      && stripAt390.docScroll <= stripAt390.docClient + 1,
+    stripAt390 ? 'the strip is ' + stripAt390.scroll + ' wide in ' + stripAt390.client
+      + ' (document ' + stripAt390.docScroll + ' in ' + stripAt390.docClient + '); segments '
+      + JSON.stringify(stripAt390.segs) + '; under 44 high = ' + JSON.stringify(shortSegs)
+      : 'no [data-screen-nav] inside #calendarView');
+
+  /* ── and the four buttons in its panel header, at the same width ──
+     The "Days off" spill from the first iPad sitting, asked of the row that just gained two
+     buttons: `.class-action-btn` is `white-space: nowrap`, so a shrunk one does not reflow, it
+     spills through its own border, and the coarse block's `min-width: 44px` is what gives it
+     permission to shrink. `.panel-title-actions` wraps, which is what pays for four. */
+  const headerRow = await evalJs(`(function(){
+    var row = document.querySelector('#calendarView .panel-title-actions');
+    var d = document.documentElement;
+    if (!row) return null;
+    return { docScroll: d.scrollWidth, docClient: d.clientWidth,
+      rows: Array.prototype.map.call(row.querySelectorAll('button'), function(b){
+        var r = b.getBoundingClientRect();
+        return { t: (b.textContent || '').trim(), over: b.scrollWidth - b.clientWidth,
+                 w: Math.round(r.width), h: Math.round(r.height) }; }) }; })()`);
+  const spilling = headerRow ? headerRow.rows.filter((b) => b.over > 0 || b.w < 44 || b.h < 44) : [];
+  check('the calendar’s panel header carries four buttons at 390px — Days off · Events · Print · '
+    + 'All classes — none of them narrower than its own label, none under 44px, and no horizontal '
+    + 'page scroll: the wrapper wraps, which is why four in that row is a measurement',
+    !!headerRow && headerRow.rows.length === 4 && spilling.length === 0
+      && headerRow.docScroll <= headerRow.docClient + 1,
+    headerRow ? headerRow.rows.map((b) => '"' + b.t + '" ' + b.w + 'x' + b.h + ' over by '
+      + b.over + 'px').join(' · ') + '; document ' + headerRow.docScroll + ' in '
+      + headerRow.docClient : 'no .panel-title-actions inside #calendarView');
+
+  /* And the iPad's own portrait, which is the width the 👤 line is read at — the strip is the same
+     control on a wider screen, so what this catches is a wrap or a squeeze that only 834px produces. */
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
+  await new Promise(r => setTimeout(r, 400));
+  const stripAt834 = await evalJs(`(function(){
+    var strip = document.querySelector('#calendarView [data-screen-nav]');
+    var d = document.documentElement;
+    if (!strip) return null;
+    return { scroll: strip.scrollWidth, client: strip.clientWidth,
+      docScroll: d.scrollWidth, docClient: d.clientWidth,
+      segs: strip.querySelectorAll('button').length,
+      short: Array.prototype.filter.call(strip.querySelectorAll('button'), function(b){
+        return b.getBoundingClientRect().height < 44; }).length }; })()`);
+  check('the same strip fits an iPad’s portrait width with room to spare, four segments and none of '
+    + 'them under 44px — the reading the 👤 line is owed at, taken here on an emulator that has no '
+    + 'thumb (so it does not close it)',
+    !!stripAt834 && stripAt834.segs === 4 && stripAt834.short === 0
+      && stripAt834.scroll <= stripAt834.client + 1
+      && stripAt834.docScroll <= stripAt834.docClient + 1,
+    stripAt834 ? 'the strip is ' + stripAt834.scroll + ' wide in ' + stripAt834.client
+      + ' over ' + stripAt834.segs + ' segment(s), ' + stripAt834.short + ' under 44 high; '
+      + 'document ' + stripAt834.docScroll + ' in ' + stripAt834.docClient
+      : 'no [data-screen-nav] inside #calendarView');
+
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await new Promise(r => setTimeout(r, 300));
+
+  /* ── AND A REAL RELOAD, FROM THIS SCREEN, because the preference read above is only half of it ──
+     The check further up asserts what `planbook_openView` HOLDS while the calendar is on screen,
+     which is the half a read-side fix cannot fake. This is the other half: the browser actually
+     reloaded from here, landing on Attendance for the class that was open — src/shell.js's boot line
+     restoring `class` for any class screen, met by a preference that cannot hold `calendar` at all
+     (src/views.js's REMEMBERED_AS). Both are needed. A build that wrote `calendar` into the key and
+     ALSO ignored it at boot would pass this one and fail that one, and the reverse build would pass
+     that one and come back on a month with no door behind it. */
+  await goHome();
+  await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+  await clickSel('#classView [data-class-screen="calendar"]');
+  await new Promise(r => setTimeout(r, 250));
+  const beforeReload = await evalJs(`(async function(){
+    await window.planbook.store.flush();
+    return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })(),
+      open: window.planbook.classes.getSelectedClassId(),
+      pref: window.planbook.getPref('openView'),
+      raw: String(localStorage.getItem('planbook_openView') || '') }; })()`);
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  const afterReload = await evalJs(`(function(){
+    return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');
+        return e ? e.id : ''; })(),
+      open: window.planbook.classes.getSelectedClassId(),
+      heading: (document.getElementById('attendanceClassName') || {}).textContent || '',
+      raw: String(localStorage.getItem('planbook_openView') || '') }; })()`);
+  check('reloading WHILE THE CALENDAR IS UP lands on Attendance for the class that was open — the '
+    + 'preference was already written down as `class` on the way in, so there is no `calendar` in '
+    + 'localStorage for a reload to restore and nothing decides which month to come back on',
+    beforeReload.view === 'calendarView' && beforeReload.open === CLS
+      && beforeReload.pref === 'class' && beforeReload.raw.indexOf('calendar') === -1
+      && afterReload.view === 'classView' && afterReload.open === CLS
+      && afterReload.raw.indexOf('calendar') === -1
+      && afterReload.heading.indexOf('WO-6.3 Grid') !== -1,
+    'left on #' + beforeReload.view + ' in ' + beforeReload.open + ' with openView = '
+      + JSON.stringify(beforeReload.raw) + '; came back on #' + afterReload.view + ' in '
+      + afterReload.open + ' headed ' + JSON.stringify(afterReload.heading) + ' with openView = '
+      + JSON.stringify(afterReload.raw));
 
   /* Teardown by id, WO-6.1's and WO-6.2's shape. The two classes, the student, the assignment, the
      ledger row and the three authored events go; the class that was open before this block ran is

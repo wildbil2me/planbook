@@ -81,8 +81,21 @@
   which class the filter names. None of the three is written to localStorage, and that is the call
   src/attendance.js's own filter pills make for the same reason: a remembered filter is a month grid
   quietly hiding four fifths of the school year from a teacher who does not remember setting it,
-  which is the one failure a calendar cannot afford. Every arrival starts on today, on the month,
-  with every class showing.
+  which is the one failure a calendar cannot afford. Every arrival starts on today and on the month.
+
+  AND THE THIRD OF THE THREE IS NOW DECIDED BY THE DOOR YOU CAME THROUGH (WO-6.6, the owner's ruling
+  of 2026-08-19). This paragraph ended "with every class showing" until that day. The first two
+  thirds stand exactly as written; what changed is that resetCalendar() is HANDED the class the
+  arrival is about — nothing from the home screen's button, the open class from the Calendar pill
+  inside a class — and the Calendar pill inside Period 3 therefore opens on Period 3's month.
+
+  THAT IS NOT THE REMEMBERED FILTER THIS PARAGRAPH REFUSES, and the difference is the whole of why
+  it was allowed. A remembered filter is a value that outlives the reason for it: nobody set it
+  today, nothing on screen says it is on, and four fifths of the year is missing. An arrival filter
+  is recomputed from the door on every arrival, it is the class whose screen the teacher was standing
+  on one tap ago, and the toolbar's *All classes* is beside it saying so. Nothing here is written to
+  localStorage by that work order either — src/views.js's `openView` is the only preference any of
+  this touches, and it writes this view down as `class`.
 */
 
 import { getDoc } from './store.js';
@@ -574,13 +587,22 @@ function paintEmpty(model) {
   teacher who has just paged to April must not be put back on today because something behind her
   redrew the screen.
 
-  EVERY ARRIVAL STARTS ON TODAY, on the month, with every class showing. The header says why none
-  of the three is remembered.
+  EVERY ARRIVAL STARTS ON TODAY AND ON THE MONTH. The header says why neither is remembered.
+
+  AND ON THE CLASS THE ARRIVAL IS ABOUT (WO-6.6). The caller passes it: '' from the home screen's
+  Calendar button, which is a door out of every class at once, and the open class's id from the
+  Calendar pill inside one. Recomputed here on every arrival rather than kept, which is what makes it
+  the door rather than a memory — the header's own paragraph is the argument, and it is the reason
+  this is an ARGUMENT and not a second module-level value.
+
+  An unknown or empty id lands on every class showing, and so does an id whose class has since been
+  archived: paintClassFilter() resolves that on the next paint, exactly as it does for a class
+  archived behind this screen.
 */
-export function resetCalendar() {
+export function resetCalendar(classId) {
   anchor = todayISO();
   scale = MONTH;
-  filterClassId = '';
+  filterClassId = String(classId || '');
 }
 
 /* Move the window. `today` returns to the day the screen opens on, which is the way back from a

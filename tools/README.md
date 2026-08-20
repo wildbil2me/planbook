@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1011 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1022 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1932,6 +1932,79 @@ calendar up, the navy header's caption read **"Your classes"** over a panel head
 `src/classes.js`'s caption branch is reached by anything that is not a class screen, and it had been
 a constant because until WO-6.3 only one view reached it. It is a two-entry lookup now, with the
 condition under which a third view adds its line written beside it.)*
+
+**WO-6.6 moved it from 1011 to 1022**: eleven call sites, all of them in the existing WO-6.3 section at
+the foot of the file, none inside a loop and none a failure arm — the fourth pill on Attendance and the
+month it opens filtered to that class, the `openView` preference read where the write happens, a real
+reload from the calendar landing on Attendance, the per-class ledger the unfiltered month suppresses, a
+header tab moving the lens instead of the screen, *All classes* moving the lens without moving the
+selection, both authoring panels opened from the calendar's own header with the event they wrote read
+off the grid behind them, the home screen's title row reduced to one door, and the four-segment strip
+measured at 390px and at 834px. **The run prints 1040**, measured on the delivered tree:
+`1040 checks · 1040 passed · 0 failed · 0 skipped`, 28,885 lines, 27.8 lines per check, 349s, exit 0.
+The gap of 18 between sites and results is unchanged — this work order added nothing inside a loop and
+removed nothing.
+
+**The preference is asserted TWICE and the pair is the point.** One check reads `planbook_openView`
+while the calendar is on screen, which is the half a read-side fix cannot fake — `showView()` collapses
+every class screen to `class` as it stores it, so nothing is ever sitting there to restore. The other
+reloads from that screen for real and reads which view came back. A build that wrote `calendar` into
+the key and also ignored it at boot passes the second and fails the first; a build that stored it
+correctly and then restored a month passes the first and fails the second. This is WO-3.5's
+"asserted here rather than after a reload" argument with the second half finally built, because
+WO-6.6 is the work order where a restored view would have had to decide which month to come back on.
+
+**Six existing checks asserted the opposite of this work order and were INVERTED rather than deleted.**
+Five of them counted three tabs — the switcher's own label list, its hook list, the *Scores segment is
+a live door* check's `class,assignments,scores`, the detail breadcrumb's four segments, and the walk
+that leaves the detail by each tab in turn (which now walks four, because the calendar is a screen a
+student's name can be left on) — and the sixth is *the calendar is the sixth VIEW and belongs to no
+class … which is what not being a `CLASS_SCREENS` entry looks like*, whose own comment said a build
+that added it to that list fails here. That build is this one. Inverting keeps the check honest in both
+directions; deleting it would have left the reversal asserted by nothing, and a build that quietly went
+back to no tabs and no strip would pass.
+
+**The first run was 6 red of 1039 and five of those six were exactly that bookkeeping** — the tab
+counts, found in the order the harness meets them, each one naming the strip it read. **The sixth was
+the app, and it is the trap the work order names by name.** `.screen-nav` is `overflow-x: auto`, so at
+390px the four-segment strip did not overflow the page — it measured **363 wide inside 330** and
+SCROLLED, with the document reporting a clean `390 in 390` beside it. Every page-width check in this
+file passes straight through that, and a teacher does not know that control scrolls: the fourth segment
+was simply not there. The check that caught it measures the strip's own `scrollWidth` against its
+`clientWidth` and prints both, which is the same shape as the *"Days off"* spill from the first iPad
+sitting one level out. The fix is `.screen-nav-btn`'s horizontal padding, 14/16 down to **10px**, in
+both the base rule and the coarse block of `src/assignments.css` — ~315 in 330, one row,
+`min-height: 44px` untouched. **An iPad in portrait was never the failing width**: the same strip
+measures 363 in 363 at 834px, which is a fit with no slack at all and the reason the 834 reading was
+added beside the 390 one rather than instead of it.
+
+**The second run was 1 red of 1039 and it is the entry worth having: the obvious fix trips a
+different check in this file.** The first attempt put the narrowing in `src/assignments.css`'s
+existing `@media (max-width: 640px)` block, which is where a phone-width rule belongs — and WO-3.7's
+general-form check went red naming it eight times: *no responsive rule declares a property on this
+sheet that the gated print block leaves unpinned.* `.screen-nav-btn` lives inside `#detailView`, so a
+`max-width` rule touching it needs a `body[data-detail-print]` rule restating the same property, and
+that pin would have to be written in whichever sheet owns the class — putting a print-gate rule for
+the per-student sheet into the assignments stylesheet. **The check is right and the rule was wrong**:
+an unconditional value has nothing to pin, so the padding is one number at every width now. What
+this says about the check is that it prices a `max-width` rule at the cost of a pin, which is the
+whole point of it — and it caught a rule that could never have reached paper (the strip is
+`display: none` on that sheet) alongside the ones that could, because it models declarations rather
+than specificity, and says so at its own definition.
+
+**Ten `clickSel` sites moved with the doors, and the two `has()` guards among them are why the count
+sentence above is machine-read.** Both authoring panels' 44px blocks in the coarse sweep were wrapped
+in a guard on `#homeView [data-dayoff-panel]` — a button this work order deletes. A guard whose
+selector stops matching does not fail: both blocks would have vanished from the run with **no FAIL and
+no SKIP**, and a green 1037 would have read exactly like a green 1039. That is § *Two rules that
+follow* at its most literal, so the guards now name the calendar's own door **and** carry `else skip()`
+arms, which is a line a reader can see. The other eight sites are re-routed through one helper —
+`openCalendarPanel()`, which shuts anything over the page, gets onto the calendar through the home
+screen's Calendar button, and taps the door inside `.panel-title-actions`. Scoped to that wrapper on
+purpose: the same two hooks are also inside `#calendarEmpty`, which is `.hidden` on any month with
+something on it, so an unscoped selector would click a 0x0 element whenever the month was not empty —
+trap 1 met a second way. And `clickVisible()` is now a module-level helper, because *"`[data-view-home]`
+is not one element"* had been rediscovered twice.
 
 The other half of WO-6.2's evidence is not here at all: `tools/wo-sweep.mjs` § 17 asserts
 structurally that `src/calendar-derived.js` contains no store call, no document mutation and none of
