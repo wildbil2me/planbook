@@ -7517,8 +7517,9 @@ if (!classesBooted || !classSeam || !assignSeam) {
       reversal turns on, and it is why the breadcrumb count is read beside the labels.
     */
     const stripOnClass = await evalJs('window.__strip()');
-    const wantLabels = ['Attendance', 'Assignments', 'Scores', 'Calendar'];
-    check('the switcher carries exactly four tabs — Attendance, Assignments, Scores, Calendar — and no student tab',
+    const wantLabels = ['Attendance', 'Assignments', 'Scores', 'Calendar', 'Signals'];
+    check('the switcher carries exactly five tabs — Attendance, Assignments, Scores, Calendar, '
+      + 'Signals — and no student tab',
       stripOnClass.length >= 2
         && stripOnClass.every((s) => JSON.stringify(s.labels) === JSON.stringify(wantLabels))
         && stripOnClass.every((s) => s.detail === 0)
@@ -7537,11 +7538,11 @@ if (!classesBooted || !classSeam || !assignSeam) {
        check that outlives the state it describes: it went on measuring the build it was written
        against. It is worded as a question about the SET now, so the day a fourth screen is drawn
        ahead of its view the disabled one is named rather than assumed. */
-    check('Attendance is the active segment on a freshly opened class, and all four segments carry their hook',
+    check('Attendance is the active segment on a freshly opened class, and all five segments carry their hook',
       stripOnClass.every((s) => s.active[0] === true && s.current[0] === 'true')
         && stripOnClass.every((s) => s.disabled.every((d) => d === false))
         && stripOnClass.every((s) => s.hooks[0] === 'class' && s.hooks[1] === 'assignments'
-          && s.hooks[2] === 'scores' && s.hooks[3] === 'calendar'),
+          && s.hooks[2] === 'scores' && s.hooks[3] === 'calendar' && s.hooks[4] === 'signals'),
       'active ' + JSON.stringify(stripOnClass[0].active)
         + ', disabled ' + JSON.stringify(stripOnClass[0].disabled)
         + ', hooks ' + JSON.stringify(stripOnClass[0].hooks));
@@ -17339,6 +17340,32 @@ if (coarse !== true) {
     assignmentsView: { screen: 'assignments', floor: 5 },
     scoresView: { screen: 'scores', floor: 4 },
     /*
+      #signalsView (WO-4.2) IS ENUMERATED HERE AND MEASURED SOMEWHERE ELSE, and it is the THIRD
+      `byHand` — for #calendarView's reason rather than #detailView's, but sharper.
+
+      THE LOOP BELOW WOULD MEASURE AN EMPTY SCREEN AND CALL IT A SCREEN. By the time this block
+      runs the assignments section has deleted every assignment in the document and the class left
+      open has no roster, so there is not one score and not one recorded meeting for a rule to fire
+      on: this view would draw its "nobody is flagged" state, which is a CORRECT rendering of an
+      empty document and says nothing whatever about a list whose whole job is to RANK people. A
+      floor over that is the vacuous pass this table's own header warns about — zero controls
+      measured and zero controls undersized are the same green.
+
+      SO IT IS MEASURED AT THE FOOT OF THIS FILE, in § "who needs you, drawn (WO-4.2)", against a
+      fixture built for it: three students carrying one answer each, ten recorded meetings, and the
+      two claims this screen exists to make — that attendance bands ahead of the grade, and that
+      presentation mode CLOSES it rather than redacting it. Everything the loop would have asked
+      (it opens through the app's own navigation; every control on it clears 44px) is asserted
+      there in full, on a screen with something on it.
+
+      `byHand` IS A POINTER TO COVERAGE AND NEVER A WAY OUT OF ONE. If that section is ever
+      deleted, delete this line with it and let the loop go red — a skip is not a pass, and an
+      entry here whose section no longer exists is the only way this table can lie.
+    */
+    signalsView: { byHand: 'the concern list needs scores, meetings and a roster before it can '
+      + 'rank anybody, and this block runs on a document the assignments section has emptied — so '
+      + 'it is opened through its real door and measured in § "who needs you, drawn (WO-4.2)"' },
+    /*
       #detailView (WO-3.7) IS ENUMERATED HERE AND MEASURED SOMEWHERE ELSE, and `byHand` is the whole
       of that. It is not a skip and it is not an exemption: the two checks the loop below would have
       made — it opens through the app's own navigation, and every control on it clears 44px — are
@@ -17368,11 +17395,12 @@ if (coarse !== true) {
       rather than a mention in that one.
 
       (WO-6.6 gave it a door on the switcher and a `screen` in the plan below, and changed neither
-      reason. What it did add is the strip itself: four segments on a control that is
+      reason. What it did add is the strip itself: four segments on a control that was
       `overflow-x: auto`, measured on the strip's own scrollWidth at 390px and at 834px in the same
-      section named at the end of this paragraph — because a fourth pill that does not fit makes
+      section named at the end of this paragraph — because a fourth pill that did not fit made
       that control SCROLL rather than putting the page into the overflow this loop's neighbour
-      measures.)
+      measures. WO-4.2 made it FIVE and made it WRAP, so that measurement is a row count now and
+      the scroll it was guarding against no longer exists to guard against.)
 
       TWO REASONS, AND THE SECOND IS THE ONE THAT MATTERS. The first is this block's own arithmetic:
       the controls this screen is really about are the CHIPS on the grid, and a chip exists only
@@ -19805,10 +19833,10 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           opened.shown && !opened.classShown && opened.inMain
             && opened.dialogBits === 0 && opened.openModals === 0
             /* Four hooks since WO-6.6 — the calendar joined the strip (plans/gradebook-surfaces.md
-               carries the owner's reversal of THREE TABS, NOT FOUR with both its dates). The list is
-               asserted whole rather than by prefix so a segment appearing without a decision behind
-               it still turns this red. */
-            && opened.segHooks.join(',') === 'class,assignments,scores,calendar'
+               carries the owner's reversal of THREE TABS, NOT FOUR with both its dates) — and FIVE
+               since WO-4.2 put Signals on it. The list is asserted whole rather than by prefix so a
+               segment appearing without a decision behind it still turns this red. */
+            && opened.segHooks.join(',') === 'class,assignments,scores,calendar,signals'
             && opened.segDisabled.every((d) => d === false)
             && openView === 'class',
           'grid up = ' + opened.shown + ', in <main> = ' + opened.inMain + ', dialog bits = '
@@ -22550,15 +22578,15 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
        set with no detail open is drawn nowhere); this is the half nobody had a screen to show. */
     const crumb = d.segments[d.segments.length - 1] || {};
     check('the switcher shows the open student\'s name as a breadcrumb segment while this screen '
-      + 'is up, set apart from the four tabs and carrying no screen of its own',
-      /* FIVE SEGMENTS SINCE WO-6.6, and the breadcrumb is still the last of them: the calendar
-         became the fourth tab on 2026-08-19 (the owner reversing THREE TABS, NOT FOUR), and the
-         distinction this check is really about is unchanged — the tabs carry a screen, the
-         breadcrumb carries a name and no `data-class-screen` at all. */
-      d.segments.length === 5 && crumb.label === S1_FULL && crumb.detail === true
+      + 'is up, set apart from the five tabs and carrying no screen of its own',
+      /* SIX SEGMENTS SINCE WO-4.2, and the breadcrumb is still the last of them: the calendar
+         became the fourth tab on 2026-08-19 (the owner reversing THREE TABS, NOT FOUR) and Signals
+         the fifth on 2026-08-20, and the distinction this check is really about is unchanged — the
+         tabs carry a screen, the breadcrumb carries a name and no `data-class-screen` at all. */
+      d.segments.length === 6 && crumb.label === S1_FULL && crumb.detail === true
         && crumb.screen === ''
-        && JSON.stringify(d.segments.slice(0, 4).map((s) => s.label))
-          === JSON.stringify(['Attendance', 'Assignments', 'Scores', 'Calendar']),
+        && JSON.stringify(d.segments.slice(0, 5).map((s) => s.label))
+          === JSON.stringify(['Attendance', 'Assignments', 'Scores', 'Calendar', 'Signals']),
       d.segments.length + ' segment(s): ' + JSON.stringify(d.segments));
 
     /* ACCEPTANCE LINE 1. The contributions as PRINTED sum to the total as PRINTED, and both agree
@@ -22679,13 +22707,19 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       await new Promise(r => setTimeout(r, 250));
     }
     const back = await evalJs(READ);
+    /* THE WALK IS STILL THE FOUR TABS THAT HAVE A DOOR BACK THROUGH A NAMED SCORE GRID, and the
+       counts around it moved to five when WO-4.2 added Signals: the strip a teacher sees on any
+       class screen is five segments now, and the detail's own strip is those five PLUS the student's
+       name, so the name sits at index 5 rather than 4. Signals is deliberately NOT walked here —
+       this check is about the NAME leaving the strip, and adding a fifth leg would be new coverage
+       written by the check that measures it rather than by the work order that specified it. */
     check('switching to any of the four tabs takes the student\'s name off the strip with it, and '
       + 'coming back puts it there again',
-      left.length === 4 && left.every((l) => l.anyName === false && l.segments === 4)
+      left.length === 4 && left.every((l) => l.anyName === false && l.segments === 5)
         && JSON.stringify(left.map((l) => l.view))
           === JSON.stringify(['classView', 'assignmentsView', 'scoresView', 'calendarView'])
-        && back.segments.length === 5
-        && (back.segments[4] || {}).label === S1_FULL,
+        && back.segments.length === 6
+        && (back.segments[5] || {}).label === S1_FULL,
       JSON.stringify(left) + ' :: back on the detail with '
         + back.segments.length + ' segment(s)');
 
@@ -27563,22 +27597,37 @@ console.log('\n--- the signal engine and its thresholds (WO-4.1) ---');
       const badNumbers = allHits.filter((h) => !h.numbers
         || Object.keys(h.numbers).length === 0
         || Object.keys(h.numbers).some((k) => !Number.isFinite(h.numbers[k])));
+      /* EIGHT SINCE WO-4.2, AND THE TWO NEW ONES ARE THE ATTENDANCE RULES REACHING A FIXTURE THAT
+         PREDATES THEM. WO-4.1 wrote these fixtures against the engine alone; WO-4.2 added the rule
+         table, and Fixture B's student is 6 of 7 recorded meetings = 85.71%, which is below the
+         90% line the work order documents. So the count is asserted at its new value rather than
+         loosened to `>=`: the point of the number is that a rule appearing here without a decision
+         behind it still turns this red. The rule ids are printed either way, so the next change to
+         this set arrives with its own evidence instead of a bare count. */
       check('every hit carries a non-empty bag of finite numbers, and no sentence anywhere in this '
         + 'section holds a placeholder, an "undefined" or a NaN',
-        allHits.length === 6 && badSentence.length === 0 && badNumbers.length === 0,
-        allHits.length + ' hit(s) swept'
+        allHits.length === 8 && badSentence.length === 0 && badNumbers.length === 0,
+        allHits.length + ' hit(s) swept: '
+          + JSON.stringify(allHits.map((h) => h.direction + ' ' + h.ruleId))
           + (badSentence.length ? ' :: bad sentence ' + JSON.stringify(badSentence[0]) : '')
           + (badNumbers.length ? ' :: bad numbers ' + JSON.stringify(badNumbers[0]) : ''));
 
       /* ── case 2 ── */
+      /* FOUND BY RULE AND BY DIRECTION, NEVER BY INDEX. Both of these hits used to be the only one
+         of their kind in their bag, so WO-4.1 could reach them at [0] and [1]; WO-4.2's attendance
+         rules put a second hit in each and an index is now a claim about ORDER that neither check
+         is trying to make (the ordering claim is the concern list's, asserted on the screen). */
+      const bGrade = engine.b.find((h) => h.ruleId === 'grade-below');
+      const bEdgePraise = engine.bEdge.find((h) => h.direction === 'praise');
       check('a grade of 64.9985% against the 65% line says 64.999%, NOT the "65.00%, below 65%" '
         + 'that two decimals would round it into — and the hit still carries the unrounded number',
-        engine.b.length === 1 && engine.b[0].explanation === B_CONCERN
-          && Math.abs(engine.b[0].numbers.percentage - 64.9985) < 1e-9
-          && engine.b[0].numbers.below === 65,
+        engine.b.length === 2 && !!bGrade && bGrade.explanation === B_CONCERN
+          && Math.abs(bGrade.numbers.percentage - 64.9985) < 1e-9
+          && bGrade.numbers.below === 65,
         engine.b.length + ' hit(s) :: '
+          + JSON.stringify(engine.b.map((h) => h.ruleId)) + ' :: '
           + JSON.stringify(engine.b.map((h) => h.explanation)) + ' :: numbers '
-          + JSON.stringify(engine.b[0] && engine.b[0].numbers));
+          + JSON.stringify(bGrade && bGrade.numbers));
 
       /* The same escalation in the other direction, which is the other arm of satisfies() and the
          only fixture shape that can reach it — see the comment at the planted threshold above. The
@@ -27587,11 +27636,12 @@ console.log('\n--- the signal engine and its thresholds (WO-4.1) ---');
          third, which is what leaves the comparison in the sentence readable as true. */
       check('and the same escalation happens in the at-or-above direction: 85.714% against an '
         + '85.714 line, where two decimals would have printed 85.71% and read as false',
-        engine.bEdge.length === 2 && engine.bEdge[1].direction === 'praise'
-          && engine.bEdge[1].explanation === B_PRAISE
-          && engine.bEdge[1].numbers.meetings === 7 && engine.bEdge[1].numbers.attended === 6
-          && engine.bEdge[1].numbers.asked === 20,
-        JSON.stringify(engine.bEdge.map((h) => h.explanation)));
+        engine.bEdge.length === 3 && !!bEdgePraise
+          && bEdgePraise.explanation === B_PRAISE
+          && bEdgePraise.numbers.meetings === 7 && bEdgePraise.numbers.attended === 6
+          && bEdgePraise.numbers.asked === 20,
+        JSON.stringify(engine.bEdge.map((h) => h.direction + ' ' + h.ruleId)) + ' :: '
+          + JSON.stringify(engine.bEdge.map((h) => h.explanation)));
 
       /* ── case 3 ── */
       check('a class six recorded meetings into the term says SIX and is never padded up to the '
@@ -29053,7 +29103,7 @@ if (!seam) {
     STILL ASSERTED AS THE THING A TEACHER WOULD SEE rather than by asking src/views.js.
     `isClassScreen` is not on the seam and is not being put there for one reading: what BEING a class
     screen means on the glass is that src/classes.js draws the class tabs and the *All classes* door
-    over this view and src/screen-nav.js draws four segments inside it with Calendar current. The
+    over this view and src/screen-nav.js draws five segments inside it with Calendar current. The
     caption that used to sit in that strip — `Calendar`, out of a two-entry lookup in src/classes.js
     — has to be gone with it, so it is read and required to be empty.
 
@@ -29063,11 +29113,11 @@ if (!seam) {
   */
   check('the calendar is the sixth VIEW and one of the open class’s SCREENS: the home screen’s own '
     + 'button puts it in <main>, the header draws the class tabs and the All classes door over it, '
-    + 'the switcher inside it shows four segments with Calendar current, the Calendar caption is '
+    + 'the switcher inside it shows five segments with Calendar current, the Calendar caption is '
     + 'gone from the strip — and arriving from OUTSIDE a class opens on every class showing',
     arrived.view === 'calendarView'
-      && arrived.segments === 4 && arrived.current === 'Calendar'
-      && arrived.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar'
+      && arrived.segments === 5 && arrived.current === 'Calendar'
+      && arrived.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar · Signals'
       && arrived.classTabs >= 2 && arrived.homeDoor === true && arrived.caption === ''
       && arrivedModel.classId === ''
       && arrived.heads === 7 && arrived.cells >= 28,
@@ -29543,7 +29593,8 @@ if (!seam) {
     Measured inside this section rather than in one of its own, because everything it asks about
     needs two classes, a roster and a recorded meeting, and that fixture is already standing here.
     What only a browser can settle: which strip is on screen, what a tap on a header tab does while
-    the calendar is up, and whether four segments fit a control that is `overflow-x: auto` and will
+    the calendar is up, and whether five segments fit a control that WRAPS (WO-4.2 took the
+    `overflow-x: auto` off it with the scroll it allowed) rather than one that will
     therefore SCROLL rather than overflow when they do not.
   */
 
@@ -29569,7 +29620,7 @@ if (!seam) {
   check('the same strip on Attendance shows Calendar as a live segment, and tapping it opens the '
     + 'month on TODAY, on the month, filtered to THAT CLASS — the door decides the lens (WO-6.6)',
     pillOnClass.view === 'classView' && pillOnClass.live === true
-      && pillOnClass.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar'
+      && pillOnClass.labels.join(' · ') === 'Attendance · Assignments · Scores · Calendar · Signals'
       && fromPillView === 'calendarView' && fromPill.classId === CLS
       && fromPill.scale === 'month'
       && fromPill.from <= (await evalJs('window.planbook.attendance.todayISO()'))
@@ -29723,17 +29774,26 @@ if (!seam) {
     homeRow ? homeRow.count + ' button(s) in that row: ' + JSON.stringify(homeRow.labels)
       + '; days-off doors anywhere in #homeView = ' + homeAnywhere : 'no title-actions row found');
 
-  /* ── FOUR SEGMENTS ON A CONTROL THAT SCROLLS INSTEAD OF OVERFLOWING ──
-     The trap this work order names. `.screen-nav` is `overflow-x: auto` (src/assignments.css), so a
-     fourth pill that does not fit makes the STRIP scroll — silently, with no page overflow at all,
-     under a teacher who does not know that control scrolls. The page-width check every other
-     control here is measured by passes straight through it. So the strip's own scrollWidth is
-     measured against its clientWidth, at the two widths that matter, and the page is measured
-     beside it so a build that fixed one by breaking the other cannot pass.
+  /* ── FIVE SEGMENTS, AND THE MEASUREMENT IS ROWS RATHER THAN A SCROLL (WO-4.2) ──
+     THIS CHECK ASSERTED `scrollWidth <= clientWidth` OVER FOUR SEGMENTS AND IT HAD TO CHANGE, which
+     is the one edit that work order names in the harness. The trap it was written for is WO-6.6's:
+     `.screen-nav` was `overflow-x: auto`, so a pill that did not fit made the STRIP scroll —
+     silently, with no page overflow at all, under a teacher who does not know that control scrolls,
+     and the page-width check every other control here is measured by passes straight through it.
+
+     Five does not fit one row at 390px and the owner ruled FIVE, WRAPPED (2026-08-20), so the strip
+     wraps now and the scroll is gone with the `overflow-x` (src/assignments.css says so at the
+     rule). Against a wrapped strip the old assertion is VACUOUS — a flex container that wraps has
+     nothing to overflow horizontally, so it passes whatever the layout is doing — and this is the
+     replacement rather than a loosening of it: the row count itself, TWO at 390px, plus every
+     segment proved to sit inside its own strip, which is the claim `scrollWidth` was standing in
+     for. A build that dropped the wrap fails on the rows AND on the segments hanging off the end; a
+     build that shortened the labels to squeeze five into one row fails on the rows too, which is
+     the alternative the owner refused by name.
 
      The 44px floor is asserted here too, and NOT at 28: the month chip's departure is the owner's
      ruling for one control and explicitly not a precedent (CLAUDE.md § Conventions). A new control
-     gets the full 44. */
+     gets the full 44 — and the fifth segment is a new control. */
   await send('Emulation.setDeviceMetricsOverride',
     { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -29742,23 +29802,38 @@ if (!seam) {
     var strip = document.querySelector('#calendarView [data-screen-nav]');
     var d = document.documentElement;
     if (!strip) return null;
+    var sr = strip.getBoundingClientRect();
     return { coarse: matchMedia('(pointer: coarse)').matches,
-      scroll: strip.scrollWidth, client: strip.clientWidth,
       docScroll: d.scrollWidth, docClient: d.clientWidth,
+      stripLeft: Math.round(sr.left * 100) / 100, stripRight: Math.round(sr.right * 100) / 100,
       segs: Array.prototype.map.call(strip.querySelectorAll('button'), function(b){
         var r = b.getBoundingClientRect();
         return { t: (b.textContent || '').trim(), w: Math.round(r.width * 100) / 100,
-                 h: Math.round(r.height * 100) / 100 }; }) }; })()`);
+                 h: Math.round(r.height * 100) / 100,
+                 top: Math.round(r.top * 100) / 100,
+                 left: Math.round(r.left * 100) / 100,
+                 right: Math.round(r.right * 100) / 100 }; }) }; })()`);
   const shortSegs = stripAt390 ? stripAt390.segs.filter((s) => s.h < 44) : [];
-  check('the four-segment switcher FITS its own strip at 390px rather than scrolling inside it, '
-    + 'and every segment clears 44px high under a coarse pointer — measured on the strip because '
-    + '`.screen-nav` is overflow-x: auto and a pill that does not fit scrolls silently',
-    !!stripAt390 && stripAt390.coarse === true && stripAt390.segs.length === 4
-      && stripAt390.scroll <= stripAt390.client + 1 && shortSegs.length === 0
+  /* The row count IS the assertion. Distinct `top` offsets, rounded to the pixel so a sub-pixel
+     baseline difference inside one row cannot read as two — a wrapped flex line moves a whole
+     segment by its own height, which is never a rounding artifact. */
+  const rows390 = stripAt390
+    ? [...new Set(stripAt390.segs.map((s) => Math.round(s.top)))].sort((a, b) => a - b) : [];
+  /* And every segment inside the strip's own box, which is the claim `scrollWidth` was standing in
+     for and the one a wrapped container can no longer make on its own. */
+  const outside390 = stripAt390 ? stripAt390.segs.filter((s) => s.left < stripAt390.stripLeft - 1
+    || s.right > stripAt390.stripRight + 1) : [];
+  check('the five-segment switcher WRAPS to two rows at 390px rather than scrolling inside itself, '
+    + 'every segment sits within its own strip, and each clears 44px high under a coarse pointer — '
+    + 'measured in ROWS because `.screen-nav` wraps now and a scrollWidth check is vacuous on it',
+    !!stripAt390 && stripAt390.coarse === true && stripAt390.segs.length === 5
+      && rows390.length === 2 && outside390.length === 0 && shortSegs.length === 0
       && stripAt390.docScroll <= stripAt390.docClient + 1,
-    stripAt390 ? 'the strip is ' + stripAt390.scroll + ' wide in ' + stripAt390.client
-      + ' (document ' + stripAt390.docScroll + ' in ' + stripAt390.docClient + '); segments '
-      + JSON.stringify(stripAt390.segs) + '; under 44 high = ' + JSON.stringify(shortSegs)
+    stripAt390 ? 'the strip spans ' + stripAt390.stripLeft + '–' + stripAt390.stripRight
+      + ' (document ' + stripAt390.docScroll + ' in ' + stripAt390.docClient + '); '
+      + rows390.length + ' row(s) at top offset(s) ' + JSON.stringify(rows390) + '; segments '
+      + JSON.stringify(stripAt390.segs) + '; hanging outside the strip = '
+      + JSON.stringify(outside390) + '; under 44 high = ' + JSON.stringify(shortSegs)
       : 'no [data-screen-nav] inside #calendarView');
 
   /* ── and the four buttons in its panel header, at the same width ──
@@ -29794,19 +29869,19 @@ if (!seam) {
     var strip = document.querySelector('#calendarView [data-screen-nav]');
     var d = document.documentElement;
     if (!strip) return null;
-    return { scroll: strip.scrollWidth, client: strip.clientWidth,
-      docScroll: d.scrollWidth, docClient: d.clientWidth,
+    return { docScroll: d.scrollWidth, docClient: d.clientWidth,
       segs: strip.querySelectorAll('button').length,
+      rows: [...new Set(Array.prototype.map.call(strip.querySelectorAll('button'), function(b){
+        return Math.round(b.getBoundingClientRect().top); }))].length,
       short: Array.prototype.filter.call(strip.querySelectorAll('button'), function(b){
         return b.getBoundingClientRect().height < 44; }).length }; })()`);
-  check('the same strip fits an iPad’s portrait width with room to spare, four segments and none of '
-    + 'them under 44px — the reading the 👤 line is owed at, taken here on an emulator that has no '
-    + 'thumb (so it does not close it)',
-    !!stripAt834 && stripAt834.segs === 4 && stripAt834.short === 0
-      && stripAt834.scroll <= stripAt834.client + 1
+  check('the same strip is ONE row at an iPad’s portrait width, five segments and none of them '
+    + 'under 44px — the wrap is a phone answer and 834px is where it must NOT fire; the reading '
+    + 'the 👤 line is owed at, taken here on an emulator that has no thumb (so it does not close it)',
+    !!stripAt834 && stripAt834.segs === 5 && stripAt834.rows === 1 && stripAt834.short === 0
       && stripAt834.docScroll <= stripAt834.docClient + 1,
-    stripAt834 ? 'the strip is ' + stripAt834.scroll + ' wide in ' + stripAt834.client
-      + ' over ' + stripAt834.segs + ' segment(s), ' + stripAt834.short + ' under 44 high; '
+    stripAt834 ? 'the strip is ' + stripAt834.rows + ' row(s) over ' + stripAt834.segs
+      + ' segment(s), ' + stripAt834.short + ' under 44 high; '
       + 'document ' + stripAt834.docScroll + ' in ' + stripAt834.docClient
       : 'no [data-screen-nav] inside #calendarView');
 
@@ -29890,6 +29965,595 @@ if (!seam) {
       + cleaned.assignments + ' assignment(s) left behind; ' + cleaned.events
       + ' event(s) in the document (wanted ' + (SEEDED.length - 3) + '), presentation mode = '
       + cleaned.mode + ', left on #' + (await onView()));
+}
+
+/*
+ * ───────── who needs you, drawn (WO-4.2) ─────────
+ *
+ * THE VIEW, NOT THE ENGINE. § "the signal engine (WO-4.1)" above installs four fixtures, runs
+ * evaluate() against them and reads the hits it returns; nothing there ever renders. This section
+ * is the other half — the screen those hits land on — and it is here rather than in the VIEW_PLAN
+ * loop for the reason #detailView and #calendarView are: by the time that loop runs, the
+ * assignments section has deleted every assignment in the document and the class left open has no
+ * roster, so the loop would measure a concern list over a document that cannot produce a single
+ * concern. A screen whose entire content is "nobody is flagged" is not a measurement of a screen
+ * that ranks flagged students.
+ *
+ * THE FIXTURE IS JUNE 2026 AND IT IS IN THE PAST ON PURPOSE. The view calls evaluate() with no
+ * `through`, which is what a teacher's own arrival does, so it defaults to today — a fixture dated
+ * forward would be a term this screen has not reached and would read as an empty list on a correct
+ * build. WO-4.1's block plants September and passes its own `through` precisely because it does
+ * not render; this one cannot borrow that trick.
+ *
+ * THREE STUDENTS, EACH CARRYING ONE ANSWER:
+ *
+ *   Abe   absent for the last five of ten recorded meetings, and PASSING (95%). The attendance
+ *         case, and passing so that the ordering claim below cannot be satisfied by a build that
+ *         merely sorts on the grade.
+ *   Lena  present at all ten, scoring 50 of 100. The grade case, and the row that must sit BELOW
+ *         Abe under the owner's ruling of 2026-08-20 — attendance first, whatever the grade says.
+ *   Nils  present at all ten and never scored at all. He is the screen's control: Acceptance line
+ *         4 is that no-graded-work is not a zero, and the way to assert it is a student who would
+ *         be bottom of the class if it were.
+ */
+console.log('\n--- who needs you, drawn (WO-4.2) ---');
+if (!seam) {
+  skip('the signals list (WO-4.2)', 'window.planbook is not on the page, so nothing here can seed '
+    + 'a concern, read what the list ranked, or put the document back');
+} else {
+  const CLS = 'c_wo42';
+  const OTHER = 'c_wo42b';
+  const TERM = 'tm_wo42';
+  const ASG = 'a_wo42';
+  const ABS = 's_wo42abs', LOW = 's_wo42low', NEW = 's_wo42new';
+  /* Surnames nothing else in this repository contains, so "no student name survived the refusal"
+     is a SEARCH over what the screen actually rendered rather than an inspection of the fields
+     somebody remembered to look at. WO-6.3's technique, pointed at this screen's own risk. */
+  const ABS_NAME = 'Wo42Absentee', LOW_NAME = 'Wo42Lowscore', NEW_NAME = 'Wo42Ungraded';
+
+  const onView = async () => await evalJs(
+    "(function(){var e=document.querySelector('main > :not(.hidden)');return e?e.id:'';})()");
+  /* clickSel's oldest trap, and the same guard § WO-6.3 carries: there is more than one
+     [data-view-home] in the document and the hidden ones measure 0x0, so the visible one is found
+     by index and clicked by index rather than by selector. */
+  async function goHome() {
+    const nth = await evalJs(`(function(){
+      var all = document.querySelectorAll('[data-view-home]');
+      for (var i = 0; i < all.length; i++) {
+        var r = all[i].getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) return i;
+      }
+      return -1; })()`);
+    if (nth < 0) throw new Error('no visible [data-view-home] on this screen');
+    await clickSel('[data-view-home]', nth);
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await send('Page.reload');
+  await new Promise(r => setTimeout(r, 600));
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+
+  /* ── the fixture ── */
+  const plant = await evalJs(`(function(){
+    var s = window.planbook.store;
+    var d = s.getDoc();
+    if (!d) return { ok:false, why:'no year document is open' };
+    if (!d.scores || typeof d.scores !== 'object') return { ok:false, why:'no scores map' };
+    var wasClass = window.planbook.classes.getSelectedClassId();
+    var mode = window.planbook.supports.presentationMode();
+    var hadSignals = JSON.stringify(d.signals || {});
+    var dropId = '';
+    function pad(n){ return (n < 10 ? '0' : '') + n; }
+    s.update(function(doc){
+      if (!Array.isArray(doc.classes)) doc.classes = [];
+      if (!Array.isArray(doc.students)) doc.students = [];
+      if (!Array.isArray(doc.assignments)) doc.assignments = [];
+      if (!Array.isArray(doc.attendance)) doc.attendance = [];
+      doc.students.push({ id:'${ABS}', first:'Abe', last:'${ABS_NAME}' });
+      doc.students.push({ id:'${LOW}', first:'Lena', last:'${LOW_NAME}' });
+      doc.students.push({ id:'${NEW}', first:'Nils', last:'${NEW_NAME}' });
+      doc.classes.push({ id:'${CLS}', name:'WO-4.2 Signals', archived:false,
+        /*
+          LENA IS FIRST ON THE ROSTER AND ABE IS SECOND, AND THAT ORDER IS THE BANDING CHECK'S
+          WHOLE LOAD. src/signals.js's evaluate() walks the roster OUTER and the rules inner, so
+          the order hits come back in — and therefore the order collect() creates rows in — is
+          roster order. Array.prototype.sort is stable, so a build whose ranking had been reduced
+          to a no-op would leave rows in exactly that order.
+
+          Seeded [Abe, Lena] the banding check passed either way: Abe was already first, and the
+          check could not tell "attendance bands ahead of the grade" from "the ranking does nothing
+          and the roster happened to agree with it." **Proved by mutation on 2026-08-20** —
+          severityOrder()'s rank comparison cut to a constant zero, and the run came back 1086 of
+          1086. (No backticks in here; it is inside a template literal and one would close it.)
+
+          Reversed, the unbanded order puts the FAILING-BUT-PRESENT student on top and only the
+          ranking can lift the passing absentee above her. The same mutation reddens it now.
+        */
+        roster:['${LOW}','${ABS}','${NEW}'], letterScale:null,
+        terms:[{ id:'${TERM}', label:'WO-4.2 Term', start:'2026-06-01', end:'2026-06-30' }],
+        categories:[{ id:'k_wo42', name:'All work', weight:100 }]});
+      /* A second class so the filter has something to be wrong about. Its roster is empty, so it
+         contributes no rows and cannot quietly supply the ones this section counts. */
+      doc.classes.push({ id:'${OTHER}', name:'WO-4.2 Other', archived:false,
+        roster:[], letterScale:null,
+        terms:[{ id:'tm_wo42b', label:'WO-4.2 Other Term', start:'2026-06-01', end:'2026-06-30' }],
+        categories:[{ id:'k_wo42b', name:'All work', weight:100 }]});
+      doc.assignments.push({ id:'${ASG}', classId:'${CLS}', termId:'${TERM}',
+        categoryId:'k_wo42', name:'WO-4.2 Quiz', points:100, assigned:'2026-06-01',
+        due:'2026-06-02' });
+      /*
+        NINE RECORDED MEETINGS WITH A HOLE IN THE MIDDLE OF THE ABSENCE RUN, and the hole is the
+        whole point — it is what turns Acceptance line 3 from a reading of the code into a
+        measurement. June 8th gets NO attendance record and an authored dropped event instead, so
+        the run of absences either side of it (the 6th, the 7th, then the 9th and the 10th) is only
+        four in a row if dropped and untaken days are SKIPPED rather than treated as a break.
+        (No backticks anywhere in this comment: it lives inside a template literal and one would
+        close it — the warning § the signal engine carries, earned again here.)
+
+        That is also the work order's own trap, one class along: consecutive means consecutive
+        MEETINGS OF THIS CLASS, never consecutive weekdays. Abe is absent on four consecutive
+        meetings that span five calendar days.
+      */
+      for (var i = 1; i <= 10; i++) {
+        if (i === 8) continue;
+        var marks = {};
+        if (i >= 6) marks['${ABS}'] = { code: 'A' };
+        doc.attendance.push({ classId:'${CLS}', date:'2026-06-' + pad(i), marks: marks });
+      }
+      /*
+        THE 8th IS A RECORD CARRYING AN EXCEPTION, NOT AN ABSENT ONE, and the difference is the
+        whole of why this fixture is worth its length. src/attendance.js's stateOf() has two ways to
+        not be a meeting: a record WITH an exception is DID_NOT_MEET, and no record at all is
+        COVERED or NOT_TAKEN. Only the first reaches meetingDates()'s stateOf() predicate — a date
+        with no record is filtered out one line earlier, by not being in the ledger at all.
+
+        Seeding the 8th as a bare gap therefore proves the UNTAKEN half and leaves the DROPPED half
+        untouched, while the Acceptance line names both. So the record exists and wears the
+        exception dropClass() writes, and the untaken half is proved by the rest of June, which has
+        twenty-one weekdays and nine meetings on it.
+      */
+      doc.attendance.push({ classId:'${CLS}', date:'2026-06-08', exception:'dropped' });
+      var cal = window.planbook.calendar;
+      var drop = cal.newEvent('dropped', '2026-06-08', '', 'WO-4.2 planned drop', ['${CLS}']);
+      cal.addEvent(doc, drop);
+      dropId = drop ? drop.id : '';
+      /* INSIDE the update rather than on the doc afterwards: the store is what marks a write
+         dirty, and a score set on the object it handed back is a score the next flush does not
+         know it has. Abe is planted PASSING on purpose — see this section's header. */
+      if (!doc.scores || typeof doc.scores !== 'object') doc.scores = {};
+      doc.scores['${ASG}'] = doc.scores['${ASG}'] || {};
+      doc.scores['${ASG}']['${ABS}'] = { v: 95 };
+      doc.scores['${ASG}']['${LOW}'] = { v: 50 };
+    });
+    var now = s.getDoc();
+    return { ok:true, wasClass:wasClass, mode:mode, hadSignals:hadSignals, dropId:dropId,
+      classes:(now.classes || []).length, students:(now.students || []).length }; })()`);
+  check('WO-4.2 fixture: two classes, three students, one assignment, NINE recorded meetings and a '
+    + 'dropped day in the middle of the absence run — an absentee who is passing, a low scorer who '
+    + 'is never absent, and a student with no graded work at all',
+    !!plant && plant.ok === true && !!plant.dropId,
+    plant && plant.ok ? plant.classes + ' class(es) and ' + plant.students + ' student(s) on the '
+      + 'document after the seed' : JSON.stringify(plant));
+
+  if (!plant || !plant.ok) {
+    skip('the whole of WO-4.2’s screen', 'the fixture did not install, so nothing below it '
+      + 'could be measured against a list that has anything on it');
+  } else {
+    /* AND THE APP IS BOOTED AGAIN ON TOP OF IT. The home grid was painted at the boot ABOVE, which
+       was before this fixture existed, so its cards are the ones the document had then — clicking
+       for a class card that no screen has drawn yet is a `nothing to click` and not a red check.
+       A reload is the honest way to get one: it is the state a teacher's own app is in, and it
+       proves the seed reached storage rather than only the object in memory. */
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 600));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    /* ── in through the fifth segment, from inside a class ──
+       Walked the way a teacher walks it: home, a card, then the new segment on the strip inside the
+       class screen she landed on. Two claims at once — it is a VIEW in <main> with no dialog
+       semantics, and it arrived FILTERED TO THE CLASS SHE CAME FROM, which is the door-not-a-memory
+       ruling this screen inherits from src/calendar-view.js. */
+    if ((await onView()) !== 'homeView') await goHome();
+    await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+    await new Promise(r => setTimeout(r, 250));
+    await clickSel('#classView [data-class-screen="signals"]');
+    await new Promise(r => setTimeout(r, 300));
+    const arrived = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var on = document.querySelector('main > :not(.hidden)');
+      var v = document.getElementById('signalsView');
+      return { view: on ? on.id : '',
+        inMain: !!(v && v.parentElement && v.parentElement.tagName === 'MAIN'),
+        dialogBits: v ? v.querySelectorAll('[role="dialog"],[aria-modal="true"]').length : -1,
+        openModals: document.querySelectorAll('.modal-overlay:not(.hidden)').length,
+        classId: m.classId, sort: m.sort, blocked: m.blocked,
+        rows: m.rows.map(function(r){ return { name:r.name, lead:r.lead.ruleId,
+          tags:r.tags.map(function(h){ return h.ruleId; }) }; }),
+        count: m.count, total: m.total }; })()`);
+    check('the fifth segment is a live door: one tap from inside a class lands on #signalsView, a '
+      + 'view in <main> with no dialog anywhere in it — and it arrives FILTERED TO THAT CLASS, '
+      + 'which is a door recomputed on arrival and never a stored preference',
+      arrived.view === 'signalsView' && arrived.inMain === true && arrived.dialogBits === 0
+        && arrived.openModals === 0 && arrived.classId === CLS,
+      'landed on #' + arrived.view + ' (in <main> = ' + arrived.inMain + ', dialog bits = '
+        + arrived.dialogBits + ', open modals = ' + arrived.openModals + '), filtered to '
+        + JSON.stringify(arrived.classId));
+
+    /*
+      THE OWNER'S RULING OF 2026-08-20, AND THE ONE CHECK IN THIS SECTION THAT THE PHASE TURNS ON:
+      attendance rules band ahead of everything else, and the fixture is built so that a build which
+      sorted on the grade instead would put these two rows the other way up. Abe is at 95% and Lena
+      at 50%; Abe leads anyway, because he is the one who is not in the room.
+    */
+    const order = arrived.rows.map((r) => r.name);
+    check('the list bands attendance ahead of the grade: the passing student who is absent leads '
+      + 'the failing student who is never absent — an ordering a build that sorted on the grade '
+      + 'would get exactly backwards',
+      arrived.rows.length === 2
+        && order[0] === 'Abe ' + ABS_NAME && order[1] === 'Lena ' + LOW_NAME,
+      arrived.rows.length + ' row(s): ' + JSON.stringify(arrived.rows));
+
+    check('and the lead sentence on each row is the rule that put it there — the absentee leads on '
+      + 'an attendance rule with the other two carried as tags, the low scorer on the grade',
+      arrived.rows.length === 2
+        && ['attendance-below', 'absence-window', 'absence-run'].indexOf(arrived.rows[0].lead) !== -1
+        && arrived.rows[0].tags.length === 2
+        && arrived.rows[1].lead === 'grade-below' && arrived.rows[1].tags.length === 0,
+      JSON.stringify(arrived.rows));
+
+    /* ACCEPTANCE LINE 4, and it is asserted as an ABSENCE from a list rather than as a null in a
+       model: a student with no graded work has no percentage, and a build that read that as a zero
+       would put Nils at the very top of a list sorted by lowest grade. */
+    const named = JSON.stringify(arrived.rows);
+    check('a student with no graded work at all is on NO concern list — not treated as a zero, '
+      + 'which is what would put him top of it (Acceptance line 4)',
+      named.indexOf(NEW_NAME) === -1 && arrived.total === 2,
+      'the list holds ' + arrived.total + ' row(s) and ' + NEW_NAME
+        + (named.indexOf(NEW_NAME) === -1 ? ' is on none of them' : ' IS ON ONE OF THEM'));
+
+    /*
+      ACCEPTANCE LINE 3, AND THE WORK ORDER'S NAMED TRAP WITH IT.
+
+      The absence run is read off the hit's own numbers rather than off the sentence: FOUR in a row,
+      out of NINE recorded meetings. Nine is the tell — ten calendar days were seeded and the 8th
+      was dropped, so a build that counted calendar days would say ten meetings here, and a build
+      that let a dropped or untaken day BREAK the run would say two (the 9th and the 10th) and the
+      rule would not fire at all at a threshold of three.
+
+      The trap the work order names is the same claim from the other side: consecutive means
+      consecutive MEETINGS OF THIS CLASS. These four span five calendar days, and the rule is right
+      to call them consecutive.
+    */
+    const run = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var row = m.rows.filter(function(r){ return r.name.indexOf('${ABS_NAME}') !== -1; })[0];
+      if (!row) return { found:false };
+      var hit = row.hits.filter(function(h){ return h.ruleId === 'absence-run'; })[0];
+      var att = row.hits.filter(function(h){ return h.ruleId === 'attendance-below'; })[0];
+      return { found:true, run: hit ? hit.numbers.run : -1,
+        meetings: hit ? hit.numbers.meetings : -1, need: hit ? hit.numbers.need : -1,
+        say: hit ? hit.explanation : '',
+        attMeetings: att ? att.numbers.meetings : -1 }; })()`);
+    check('the absence run counts FOUR in a row across NINE recorded meetings, walking straight '
+      + 'through a dropped day IN THE LEDGER in the middle of it — a record wearing an exception, '
+      + 'which is the only shape that reaches stateOf() — and through the untaken weekdays around '
+      + 'it; a build that broke on either would report two and fire nothing (Acceptance line 3)',
+      run.found === true && run.run === 4 && run.meetings === 9 && run.need === 3
+        && run.attMeetings === 9,
+      JSON.stringify(run));
+
+    /* ── the two toolbars ── */
+    const bars = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      return { rules: m.rules.map(function(r){ return { id:r.id, count:r.count }; }),
+        chips: document.querySelectorAll('#signalsRules [data-signals-rule]').length,
+        classChips: document.querySelectorAll('#signalsClasses [data-signals-filter]').length,
+        classCount: m.classes.length,
+        allRulesChip: !!document.querySelector('#signalsRules [data-signals-rule=""]'),
+        allClassesChip: !!document.querySelector('#signalsClasses [data-signals-filter=""]'),
+        sortValue: (document.getElementById('signalsSort') || {}).value,
+        sortOptions: Array.prototype.map.call(
+          document.querySelectorAll('#signalsSort option'), function(o){ return o.value; }),
+        inertShown: !(document.getElementById('signalsInert') || {classList:{contains:function(){return true;}}}).classList.contains('hidden'),
+        inertText: (document.getElementById('signalsInert') || {}).textContent || '',
+        emptyShown: !document.getElementById('signalsEmpty').classList.contains('hidden'),
+        blockedShown: !document.getElementById('signalsBlocked').classList.contains('hidden')
+      }; })()`);
+    const ruleIds = bars.rules.map((r) => r.id).sort();
+    /* PLUS THE *ALL RULES* CHIP, which is why the count is rules + 1 rather than rules: the strip
+       leads with the way back to the whole list, exactly as the class filter above it leads with
+       *All classes*. Both are asserted, because a strip that can be filtered and not unfiltered is
+       the cul-de-sac this screen's own filter rule was written against. */
+    check('one rule chip per rule that actually fired — four rules over two students, each counting '
+      + 'STUDENTS rather than hits so the absentee is counted once by each of his three — and the '
+      + 'strip leads with the way back to the whole list',
+      bars.chips === bars.rules.length + 1 && bars.rules.length === 4
+        && bars.allRulesChip === true && bars.allClassesChip === true
+        && bars.classChips === bars.classCount + 1
+        && JSON.stringify(ruleIds) === JSON.stringify(
+          ['absence-run', 'absence-window', 'attendance-below', 'grade-below'])
+        && bars.rules.every((r) => r.count === 1),
+      bars.chips + ' rule chip(s) (All rules present = ' + bars.allRulesChip + ') for '
+        + JSON.stringify(bars.rules) + '; ' + bars.classChips + ' class chip(s) over '
+        + bars.classCount + ' class(es) (All classes present = ' + bars.allClassesChip + ')');
+
+    /* THE DEFAULT IS THE RULING (the owner, 2026-08-20): what protects the phase's argument is
+       which option the list OPENS on, not which options are absent. So the four options are read
+       AND the selected one is asserted to be the ruled order. */
+    check('the sort opens on the ruled order every time — attendance first, then the biggest '
+      + 'change — with the other three offered under it and none of them the arrival default',
+      bars.sortValue === 'ruled'
+        && JSON.stringify(bars.sortOptions) === JSON.stringify(
+          ['ruled', 'change', 'grade', 'missing']),
+      'the control reads ' + JSON.stringify(bars.sortValue) + ' over options '
+        + JSON.stringify(bars.sortOptions));
+
+    /* ACCEPTANCE LINE 6. The behavior rule cannot fire until WO-4.4 exists, and the requirement is
+       that it SAYS SO rather than erroring or silently going missing — written from
+       src/signals.js's inertRules(), so it disappears of its own accord on the day WO-4.4 lands. */
+    check('the behavior rule is inert until WO-4.4 and the screen says so in words rather than '
+      + 'erroring or omitting it (Acceptance line 6)',
+      bars.inertShown === true && /behav/i.test(bars.inertText)
+        && bars.emptyShown === false && bars.blockedShown === false,
+      'the inert line is up: ' + bars.inertShown + ' reading '
+        + JSON.stringify(bars.inertText.slice(0, 160)));
+
+    /* ── the card behind a row ── */
+    await clickSel('#signalsView [data-signal-row]');
+    await new Promise(r => setTimeout(r, 300));
+    const card = await evalJs(`(function(){
+      var open = document.querySelector('.modal-overlay:not(.hidden)');
+      if (!open) return { open:false };
+      var text = open.textContent || '';
+      return { open:true, id: open.id,
+        dialog: !!open.querySelector('[role="dialog"][aria-modal="true"]'),
+        named: text.indexOf('${ABS_NAME}') !== -1,
+        rules: open.querySelectorAll('.sig-card-rule').length,
+        evidence: open.querySelectorAll('.sig-card-ev-item').length,
+        thresholds: open.querySelectorAll('.sig-card-thresh').length,
+        placeholder: /\\{\\{|undefined|NaN|\\[object/.test(text) }; })()`);
+    check('tapping a row opens the signal card, and it carries every rule that fired on that '
+      + 'student over the numbers that fired it — three rules for the absentee, each with its '
+      + 'own evidence and its threshold named, and no placeholder anywhere in it',
+      card.open === true && card.dialog === true && card.named === true
+        && card.rules === 3 && card.evidence >= 3 && card.thresholds === 3
+        && card.placeholder === false,
+      JSON.stringify(card));
+    await evalJs("(function(){var b=document.querySelector('.modal-overlay:not(.hidden) "
+      + "[data-modal-close]'); if(b) b.click(); return 1;})()");
+    await new Promise(r => setTimeout(r, 250));
+
+    /*
+      ACCEPTANCE LINE 5 — editing a threshold changes the list immediately.
+
+      The number is moved on the DOCUMENT and the screen redrawn through the app's own
+      renderSignals(), which is the same call src/shell.js makes from the thresholds panel's save
+      chain. What that proves is the half a fixture can prove: the list is a pure function of the
+      document and holds no evaluation of its own from before the edit. That the panel's own save
+      CALLS this is asserted where it can be — the delegated-hook census in § the shell — and the
+      👤 line is what closes the pair on a real device.
+
+      THE KEY IS DELETED AFTERWARDS RATHER THAN WRITTEN BACK TO 65, which is CLAUDE.md's rule that
+      an absent threshold key IS its default: writing today's number into the year is exactly the
+      edit that makes a later re-tuning invisible to this document.
+    */
+    const moved = await evalJs(`(function(){
+      var s = window.planbook.store;
+      var before = window.planbook.signalsView.signalsModel().rows.length;
+      s.update(function(doc){
+        if (!doc.signals || typeof doc.signals !== 'object') doc.signals = {};
+        doc.signals.gradeBelow = 40;
+      });
+      window.planbook.signalsView.renderSignals();
+      var after = window.planbook.signalsView.signalsModel();
+      var afterRows = document.querySelectorAll('#signalsList [data-signal-row]').length;
+      s.update(function(doc){ delete doc.signals.gradeBelow; });
+      window.planbook.signalsView.renderSignals();
+      var back = window.planbook.signalsView.signalsModel().rows.length;
+      var backRows = document.querySelectorAll('#signalsList [data-signal-row]').length;
+      return { before:before, after:after.rows.length, afterRows:afterRows,
+        afterNames:after.rows.map(function(r){ return r.name; }),
+        back:back, backRows:backRows,
+        keyGone: !Object.prototype.hasOwnProperty.call(
+          (s.getDoc().signals || {}), 'gradeBelow') }; })()`);
+    check('moving the grade line from 65 to 40 takes the 50% student off the list on the spot, and '
+      + 'putting it back brings her back — the rendered rows moving with the model, not just the '
+      + 'model (Acceptance line 5)',
+      moved.before === 2 && moved.after === 1 && moved.afterRows === 1
+        && moved.afterNames.indexOf('Lena ' + LOW_NAME) === -1
+        && moved.back === 2 && moved.backRows === 2,
+      JSON.stringify(moved));
+    check('and the threshold was put back by DELETING the key rather than by writing 65 into the '
+      + 'year — an absent key IS its default, and a number written here is a default that can '
+      + 'never be re-tuned for this document again',
+      moved.keyGone === true,
+      'gradeBelow still on doc.signals = ' + !moved.keyGone);
+
+    /*
+      ══════════ THE REFUSAL (the owner, 2026-08-20) ══════════
+
+      THE FIRST SCREEN IN THE APP THAT REFUSES RATHER THAN HIDES, and the check is written to match
+      that distinction rather than the usual one. Everywhere else — the roster, the calendar, the
+      student detail — presentation mode REDACTS and the screen stays usable. Here the whole screen
+      closes, because initials protect nobody in a room of thirty who know each other's initials and
+      this is the only surface whose entire content is a ranked list of named students in trouble.
+
+      So three things are asserted, and the third is the one that would catch a build that merely
+      styled the list away: not one of the three planted surnames survives anywhere in the view's
+      DOM. src/signals-view.js's model does not build the list at all while the mode is on — a list
+      that exists in memory is a list a later screen can render — and this is that claim measured
+      from the outside.
+    */
+    const shut = await evalJs(`(function(){
+      window.planbook.supports.setPresentationMode(true);
+      window.planbook.signalsView.renderSignals();
+      var v = document.getElementById('signalsView');
+      var text = v ? (v.textContent || '') : '';
+      var m = window.planbook.signalsView.signalsModel();
+      var blocked = document.getElementById('signalsBlocked');
+      return { blocked: !blocked.classList.contains('hidden'),
+        modelBlocked: m.blocked, modelRows: m.rows.length,
+        rendered: document.querySelectorAll('#signalsList [data-signal-row]').length,
+        emptyShown: !document.getElementById('signalsEmpty').classList.contains('hidden'),
+        names: ['${ABS_NAME}','${LOW_NAME}','${NEW_NAME}'].filter(function(n){
+          return text.indexOf(n) !== -1; }),
+        blockedText: blocked ? (blocked.textContent || '') : '' }; })()`);
+    check('presentation mode CLOSES this screen rather than redacting it: the refusal is drawn, the '
+      + 'model evaluates nobody, no row is rendered — and not one of the three planted surnames '
+      + 'survives anywhere in the view, which is what a build that only styled the list away fails',
+      shut.blocked === true && shut.modelBlocked === true && shut.modelRows === 0
+        && shut.rendered === 0 && shut.names.length === 0,
+      JSON.stringify(shut.names) + ' name(s) still in the view; blocked panel up = ' + shut.blocked
+        + ', model rows = ' + shut.modelRows + ', rendered rows = ' + shut.rendered);
+
+    /* AND IT READS AS REFUSED RATHER THAN BROKEN, which is the other half of the ruling: an
+       `.empty-state` that names the control that undoes it. A screen that just went blank would
+       satisfy every assertion above and teach a teacher that the feature is broken. */
+    check('and the refusal names the control that undoes it, so it reads as refused rather than '
+      + 'as broken — the ruling’s own words, and the reason it is an .empty-state and not a blank',
+      /presentation mode/i.test(shut.blockedText)
+        && /turn it off|header/i.test(shut.blockedText),
+      JSON.stringify(shut.blockedText.replace(/\s+/g, ' ').trim().slice(0, 200)));
+
+    const reopened = await evalJs(`(function(){
+      window.planbook.supports.setPresentationMode(false);
+      window.planbook.signalsView.renderSignals();
+      return { blocked: !document.getElementById('signalsBlocked').classList.contains('hidden'),
+        rows: document.querySelectorAll('#signalsList [data-signal-row]').length }; })()`);
+    check('and it comes straight back when the mode goes off — the refusal is a gate on the render '
+      + 'and never a state the screen has to be rebuilt out of',
+      reopened.blocked === false && reopened.rows === 2,
+      'blocked = ' + reopened.blocked + ' over ' + reopened.rows + ' row(s)');
+
+    /* ── nothing about this screen is remembered ──
+       The filter and the sort both recompute on arrival, for src/calendar-view.js's reason: a
+       remembered filter is a list quietly hiding four fifths of a roster from a teacher who does
+       not recall setting it. Asserted over EVERY planbook_ key rather than over the two this
+       screen might plausibly have written, so a third preference invented later is caught too. */
+    /* `planbook_openClassId` IS EXCLUDED BY NAME, AND IT IS NOT A HOLE IN THIS CHECK. That key is
+       WHICH CLASS IS OPEN — written by the class card this walk clicked, long before this screen
+       existed, and read by every class screen in the app. It is a different fact from *which
+       classes this list is showing*: the two happen to hold the same id right now only because the
+       walk arrived through that class's own door, and the check below the exclusion is what proves
+       they are separate — the filter is read back after arriving from the OTHER class, and it moved
+       while nothing new was written here. What is asserted is that this screen wrote NOTHING: not
+       its filter, not its sort, and not some third preference invented later, which is why the
+       sweep is over every planbook_ key rather than over the two names it might have used. */
+    const stored = await evalJs(`(function(){
+      var out = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k.indexOf('planbook_') !== 0) continue;
+        if (k === 'planbook_openClassId') continue;
+        var v = localStorage.getItem(k) || '';
+        if (/signal|concern|ruled|${CLS}/i.test(k + ' ' + v)) out.push(k + '=' + v.slice(0, 80));
+      }
+      return out; })()`);
+    check('neither the class filter nor the sort reached localStorage — no planbook_ key other than '
+      + 'the open-class one this walk arrived through mentions this screen, its sort, or the class '
+      + 'it was filtered to',
+      stored.length === 0,
+      stored.length ? JSON.stringify(stored) : 'no planbook_ key mentions any of them');
+
+    /* ── and every control on it under a thumb ──
+       44px, not 28: the month chip's departure is the owner's ruling for ONE control and explicitly
+       not a precedent (CLAUDE.md § Conventions). Every control this screen adds is new, so every
+       one of them gets the full floor. The `<select>` is measured with the rest — src/signals-view.css
+       gives it a height in the coarse block and nothing else, which is the whole of what it needs. */
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 400));
+    const thumb = await evalJs(`(function(){
+      var v = document.getElementById('signalsView');
+      var d = document.documentElement;
+      var nodes = Array.prototype.slice.call(
+        v.querySelectorAll('button, select, [data-signals-filter], [data-signals-rule]'));
+      var small = [];
+      nodes.forEach(function(n){
+        var r = n.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) return;
+        if (r.height < 44) small.push({ t:(n.textContent||'').trim().slice(0,24),
+          w:Math.round(r.width), h:Math.round(r.height) });
+      });
+      return { coarse: matchMedia('(pointer: coarse)').matches,
+        measured: nodes.length, small: small,
+        docScroll: d.scrollWidth, docClient: d.clientWidth }; })()`);
+    check('every control on the signals screen clears 44px high at 390px under a coarse pointer, '
+      + 'and the page does not scroll sideways — no control here takes the month chip’s 28px '
+      + 'departure, which is one control’s ruling and not a precedent',
+      thumb.coarse === true && thumb.measured >= 8 && thumb.small.length === 0
+        && thumb.docScroll <= thumb.docClient + 1,
+      thumb.measured + ' control(s) measured, under 44 = ' + JSON.stringify(thumb.small)
+        + '; document ' + thumb.docScroll + ' in ' + thumb.docClient);
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 300));
+
+    /* ── arriving from OUTSIDE a class opens on every class ──
+       The other half of the door ruling: the filter is recomputed on arrival, so the same screen
+       reached without a class behind it opens unfiltered rather than on whatever it held last. */
+    if ((await onView()) !== 'homeView') await goHome();
+    await clickSel('#homeGrid [data-class-tab="' + OTHER + '"]');
+    await new Promise(r => setTimeout(r, 250));
+    await clickSel('#classView [data-class-screen="signals"]');
+    await new Promise(r => setTimeout(r, 300));
+    const fromOther = await evalJs(
+      'JSON.stringify(window.planbook.signalsView.signalsModel().classId)');
+    check('the same screen reached from a DIFFERENT class arrives filtered to THAT one — the '
+      + 'filter is recomputed from the door every time and never carried over from the last visit',
+      fromOther === JSON.stringify(OTHER),
+      'filtered to ' + fromOther + ' after arriving from ' + OTHER);
+  }
+
+  /* ── and the fixture comes back off ── */
+  const cleaned = await evalJs(`(function(){
+    var s = window.planbook.store;
+    s.update(function(doc){
+      doc.classes = (doc.classes || []).filter(function(c){
+        return c.id !== '${CLS}' && c.id !== '${OTHER}'; });
+      doc.students = (doc.students || []).filter(function(p){
+        return p.id !== '${ABS}' && p.id !== '${LOW}' && p.id !== '${NEW}'; });
+      doc.assignments = (doc.assignments || []).filter(function(a){ return a.id !== '${ASG}'; });
+      doc.attendance = (doc.attendance || []).filter(function(r){ return r.classId !== '${CLS}'; });
+      if (doc.scores) delete doc.scores['${ASG}'];
+      doc.events = (doc.events || []).filter(function(e){
+        return (e.title || '').indexOf('WO-4.2 planned drop') === -1; });
+    });
+    window.planbook.supports.setPresentationMode(${plant && plant.mode ? 'true' : 'false'});
+    var d = s.getDoc();
+    return { classes:(d.classes || []).filter(function(c){
+        return c.id === '${CLS}' || c.id === '${OTHER}'; }).length,
+      students:(d.students || []).filter(function(p){
+        return p.id === '${ABS}' || p.id === '${LOW}' || p.id === '${NEW}'; }).length,
+      assignments:(d.assignments || []).filter(function(a){ return a.id === '${ASG}'; }).length,
+      attendance:(d.attendance || []).filter(function(r){ return r.classId === '${CLS}'; }).length,
+      scores: d.scores && d.scores['${ASG}'] ? 1 : 0,
+      events:(d.events || []).filter(function(e){
+        return (e.title || '').indexOf('WO-4.2 planned drop') !== -1; }).length,
+      signals: JSON.stringify(d.signals || {}),
+      mode: window.planbook.supports.presentationMode() }; })()`);
+  if ((await onView()) !== 'homeView') await goHome();
+  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  check('the WO-4.2 fixture came back off the document, the signals block was left exactly as it '
+    + 'was found, presentation mode was left as it was found, and the page was left on the grid',
+    cleaned.classes === 0 && cleaned.students === 0 && cleaned.assignments === 0
+      && cleaned.attendance === 0 && cleaned.scores === 0 && cleaned.events === 0
+      && cleaned.signals === (plant ? plant.hadSignals : '{}')
+      && cleaned.mode === !!(plant && plant.mode)
+      && (await onView()) === 'homeView',
+    cleaned.classes + ' class(es), ' + cleaned.students + ' student(s), ' + cleaned.assignments
+      + ' assignment(s), ' + cleaned.attendance + ' attendance row(s) and ' + cleaned.scores
+      + ' score bag(s) left behind; signals block = ' + cleaned.signals + ' (wanted '
+      + (plant ? plant.hadSignals : '{}') + '), presentation mode = ' + cleaned.mode
+      + ', left on #' + (await onView()));
 }
 
 /* ────────────────────────────── summary ────────────────────────────── */

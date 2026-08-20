@@ -1011,7 +1011,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1051 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1070 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2074,6 +2074,47 @@ that stay green are exactly the ones about a term that CONTAINS today — the or
 pair — and about a class with no dated terms, which is the build being mutated back to. So the section
 is not merely sensitive to the walk, it is sensitive to it **in the half where the walk is new**, and a
 reader can tell the two builds apart line by line rather than by a count.
+
+**WO-4.2 moved it from 1051 to 1070**: nineteen call sites in one new section at the foot of the
+file — § *"who needs you, drawn"* — none of them inside a loop and **none of them a failure arm**, so
+the section contributes nineteen executed results and **the run prints 1086**, measured on the
+delivered tree: `1086 checks · 1086 passed · 0 failed · 0 skipped`, 30,566 lines, 28.1 lines per
+check, 374s, exit 0. **The gap between sites and results stays at 16**, which is the first entry in
+this list to move neither number apart — the fixture-failure path there is a `skip()` rather than a
+second `check()`, on the reasoning the sweep's own allowlist gives: a skip is not a pass, and it is
+not a result either.
+
+**The entry worth reading is that this section was written after the fact, by a different session
+than the one that built the screen it measures.** The dispatch that implemented WO-4.2 was killed by
+an API error with its writes on disk and none of its claims made, and the harness was the half it had
+left unfinished — in the shape `plans/dispatch-retro.md` warns about rather than in the shape a
+half-finished edit usually takes. **The comment had been rewritten and the code had not.** The block
+over the class-switcher measurement described, in detail and correctly, a row-counting assertion that
+replaced `scrollWidth <= clientWidth` because a wrapped flex container has nothing to overflow and the
+old assertion had gone vacuous — and the assertion under it still read `segs.length === 4` and still
+compared `scrollWidth` to `clientWidth`. Prose claiming what the code never did, sitting directly on
+top of the code that did not do it.
+
+**Ten checks were red on that tree and nine of them were nothing to do with the new screen**: five
+strips that hardcoded four labels or four `data-class-screen` hooks, the student breadcrumb that
+counted five segments and found the name at index 4, and three of WO-4.1's own engine fixtures whose
+hit COUNTS moved when this work order's attendance rules reached them — Fixture B's student is 6 of 7
+recorded meetings, which is 85.71% and below the 90% line this work order documents, so
+`attendance-below` fires on a fixture written before it existed. Those three were re-cut to find their
+hits **by rule id and by direction rather than by index**, because an index there had become a claim
+about ordering that neither check was trying to make. **None of the nine was closed by loosening an
+assertion**: the 390px reading counts distinct row offsets and proves every segment sits inside the
+strip's own box, which is the claim `scrollWidth` was standing in for, and the 834px reading asserts
+ONE row so the wrap is proved to be a phone answer rather than a squeeze that fires everywhere.
+
+**The tenth was the one that mattered and it was left red on purpose for a while.** `signalsView` was
+not in `VIEW_PLAN`, which is the check that exists precisely to refuse a view shipped without
+coverage — and the harness diff for the whole work order was **comment-only**, so the new screen had
+none. The cheap exit was a `byHand` entry, and it was refused: `byHand` means *measured in full
+somewhere else*, `#detailView` and `#calendarView` earn theirs at the foot of this file, and this one
+would have earned nothing. A red run naming missing coverage is worth more than a green one that
+stopped asking. The section above is what closed it, and the `byHand` string it now carries points at
+that section by name.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
