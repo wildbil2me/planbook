@@ -1,0 +1,324 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Who needs you — the signals list, its toolbar, and the card behind a row (WO-4.2).
+
+   LIFTED FROM design/mockups/proposed-phase4.css RATHER THAN RE-DERIVED, which is
+   CLAUDE.md § "Reference implementation"'s rule applied to this repo's own drawing:
+   the sheet's §§ SHARED, SIGNALS and SIGNAL CARD were written to be carried here
+   almost as-is, and design/mockups/PROTOCOL.md § "When the drawing lands" is what
+   the banners over there now record. The scar it is avoiding is WO-6.3, which
+   re-derived twenty-seven `.cal-*` classes into twenty `.calendar-*` ones and left
+   the drawing reading as though it were the source.
+
+   WHAT DID NOT COME ACROSS, AND WHY IT IS AN ABSENCE RATHER THAN AN OMISSION. The
+   drawing draws the whole room — three work orders' worth — and this file is one of
+   them:
+
+     `.sig-two`, `.sig-col.praise`          WO-4.3. The praise column is that work
+                                            order's own Surface deliverable, in as
+                                            many words, so the two-column grid lands
+                                            with the column it is a grid for. What
+                                            ships today is one full-width column.
+     `.sig-hidden` `.sig-muted` `.sig-undo` WO-4.5. The cooldown, which suppresses a
+                                            hit and says which contact silenced it.
+     `.sig-quiet-note` `.sig-since`         WO-4.5's other half, the quiet middle.
+     `.log-*`                               WO-4.4. Those are the log sheet's and the
+                                            student record's, and their banners in the
+                                            drawing still say `not yet lifted`.
+     `.sig-dot`                             declined outright, and the note
+                                            design/mockups/PROTOCOL.md asks for is this
+                                            one. The drawing puts a coloured dot AND a
+                                            class-coloured `.avatar` on the same row, and
+                                            its own caption says the dot is not what
+                                            answers "which class" — the name beside it is.
+                                            One anchor per row, and it is the shipped
+                                            component that already carries a colour per
+                                            class (src/classes.js's avatarClass) and the
+                                            student's initials inside it.
+
+   `.sig-col.praise` IS HERE ANYWAY, and it is the one thing taken early: it is a
+   colour on a heading, WO-4.3 lands a column and not a stylesheet, and a sheet that
+   made the praise half re-open this file to be drawn at all would be the wrong shape
+   of gap to leave.
+
+   IT WEARS `.panel*`, `.pill`, `.avatar`, `.av0`–`.av9`, `.empty-state`,
+   `.class-action-btn`, `.modal-*` and `.screen-nav*` AS SHIPPED and restyles none of
+   them — two stylesheets never style one class. `.sig-dot` is worn alongside
+   `.av0`–`.av9` the way `.detail-avatar` is worn alongside `.avatar`, so the mapping
+   from a class to its colour stays src/classes.js's avatarClass() and is not copied
+   in here.
+
+   Colours inline and never as custom properties, no dark mode, one grouped
+   touch-action selector at the top, and a `@media (pointer: coarse)` block at the end
+   naming every control this file adds. Values come from design/style-guide.md and
+   from the two sheets the drawing lifted them from; nothing here is a new hex.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6. */
+.sig-row, .sig-card-act, .sig-sort {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ────────────────────────────── the toolbar ──────────────────────────────
+
+   Two strips, and neither is written to a preference.
+
+   THE CLASS FILTER KEEPS *ALL CLASSES*, for src/calendar-view.js's reason: it is the one thing a
+   tab row cannot say, and a teacher works this list across five classes on a Sunday rather than
+   once per class. Arriving from a class arrives filtered TO that class — recomputed on arrival,
+   stored nowhere, a door rather than a memory.
+
+   THE SORT IS A CONTROL AND ITS DEFAULT IS THE RULING (the owner, 2026-08-20). What protects the
+   phase's argument is which option the list OPENS on, not which options are absent: *attendance
+   first, then the biggest change* every time, with *Lowest grade* underneath it for the Friday
+   errand it is genuinely useful for.
+
+   THE RULE CHIPS ARE THE SECOND STRIP and wear `.pill` as shipped, exactly as the class filter
+   above them does — same shape of question, different axis, so a teacher who has learned one has
+   learned both.
+*/
+.sig-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 10px 20px; border-bottom: 1px solid #eef0f4;
+}
+.sig-toolbar-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  color: #a0aab8;
+}
+.sig-sorted {
+  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: #8a9bb0;
+}
+.sig-sort-label { font-size: 11px; color: #8a9bb0; white-space: nowrap; }
+/* The two containers the renderer rebuilds. They are not in the drawing, which has its chips
+   sitting straight in the strip: a repainted list needs something to be emptied, and a labelled
+   `role="group"` is what lets one strip hold two of them without a screen reader running them
+   together. They lay their own chips out because they are flex ITEMS of the strip above and so are
+   block boxes themselves — `.pill` carries its own 44px floor from src/shell.css. */
+.sig-classes, .sig-rules { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* A `<select>`, and this is the one place on this screen where that is the right answer.
+   src/shell.css rejected one for `.dayoff-kinds` because those are eight parallel CHOICES a thumb
+   picks between; this is one setting with four values, phrased as sentences too long for pills, and
+   it is a desk control on a screen a teacher opens on a Sunday. The native control also brings its
+   own picker on iOS, which is why the coarse block below sets a height and nothing else. */
+.sig-sort {
+  padding: 5px 8px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 700; color: #1a1a2e;
+}
+/* NO `.sig-sort:focus-visible` HERE. src/shell.css:102 carries the app's single global focus ring
+   and tools/verify-shell.mjs asserts that there is exactly one such rule with a global selector —
+   a second one scoped to this control was written here and removed, because the only thing it
+   changed was an outline-offset of 1px against the global 2px, which is not a reason to become the
+   first screen in the app with a focus ring of its own. */
+
+/* ────────────────────────────── the column ──────────────────────────────
+
+   One column today and two when WO-4.3 lands its own — see this file's header. The head says what
+   the column is FOR in a sentence under its own label, because the praise column will need that
+   badly: a teacher who reads "Praise" as "the top of the class" stops reading it in a fortnight,
+   and a heading cannot carry "ranked by how much they climbed" on its own. The concern column does
+   not need one and has one anyway, so the pair reads as a pair.
+*/
+.sig-col { background: #fff; min-width: 0; display: flex; flex-direction: column; }
+.sig-col-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 12px 20px 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+}
+.sig-col-head.concern { color: #c0392b; }
+.sig-col-head.praise  { color: #27ae60; }
+.sig-col-note {
+  font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none;
+  color: #a0aab8;
+}
+
+/* ────────────────────────────── one row ──────────────────────────────
+
+   A button, every one of them, for WO-6.4's reason about the glance page: a row that goes
+   somewhere and a row that does not must not look alike, and the way to guarantee that is for
+   there to be no second kind. They all open the same thing — the signal card below.
+
+   THE `why` LINE IS A SLOT, NOT COPY. A signal rule is handed its own measured numbers and
+   produces its own sentence (src/signals.js), so that an explanation cannot drift from the
+   arithmetic behind it. This file must therefore not truncate it to one line, must not compose
+   one, and must leave room for the longest one a rule can write.
+*/
+.sig-list { display: flex; flex-direction: column; }
+.sig-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 11px 20px;
+  border: none; border-top: 1px solid #f3f4f6; background: none;
+  font-family: inherit; text-align: left; cursor: pointer; transition: background 0.15s;
+}
+.sig-row:hover { background: #f8f9fb; }
+/* `display: block` is stated rather than inherited. A span carrying `flex: 1 1 auto` is a flex
+   ITEM of the row and still an inline BOX itself, so its own children go on one line — and the
+   stack of name, sentence and tags would only hold because two of the three declare a display of
+   their own. */
+.sig-row-main { display: block; flex: 1 1 auto; min-width: 0; }
+.sig-row-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.sig-row-class { font-size: 11px; font-weight: 600; color: #8a9bb0; }
+.sig-row-why { display: block; font-size: 11px; line-height: 1.5; color: #6b7a8d; margin-top: 3px; }
+.sig-row-go { flex: 0 0 auto; font-size: 14px; font-weight: 700; color: #c0cad5; }
+.sig-row:hover .sig-row-go { color: #5b6fcc; }
+
+/*
+  THE OTHER RULES THIS STUDENT ALSO TRIPPED, as tags rather than as more rows.
+
+  One student, one row: a student who is failing AND missing work AND absent is one conversation,
+  not three, and three rows for her would push two other students off the screen while telling the
+  teacher nothing she does not learn from the first. The card opens with all of them in full.
+*/
+.sig-row-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.sig-tag {
+  padding: 1px 7px; border-radius: 20px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+  font-size: 10px; font-weight: 700; color: #8a9bb0; white-space: nowrap;
+}
+
+/*
+  THE FIGURE IN THE STRONG POSITION, WHICH IS THE RANKING KEY.
+
+  plans/ROADMAP.md Phase 4 is explicit that this phase ranks by CHANGE and not by level: "top of
+  the class" surfaces the same four students every week and is worth nothing. A list that ranks by
+  delta and then draws the LEVEL in the strong position is a list arguing with itself, so the
+  number in this slot is whatever the RULE published as its own headline (src/signals.js's
+  `figure`) — signed and red where something moved, quiet grey where it is a standing count.
+
+  Colour is direction, not judgement, and there is no third colour for "no change": a row with no
+  change is not on this screen.
+*/
+.sig-delta {
+  flex: 0 0 auto; min-width: 44px; text-align: right;
+  font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
+}
+.sig-delta.down { color: #c0392b; }
+.sig-delta.up   { color: #27ae60; }
+/* A signal with no arithmetic behind it — "3 missing assignments" is a count, not a change — gets
+   the count in the same slot, quiet, because an empty column would read as a missing value rather
+   than an absent one. */
+.sig-delta.flat { color: #8a9bb0; font-size: 13px; }
+.sig-delta-unit { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; letter-spacing: 0.4px; text-transform: uppercase; }
+
+/* ────────────────────── two states that are not empty states ──────────────────────
+
+   A RULE THAT CANNOT FIRE YET SAYS SO. WO-4.2's last acceptance line: the behavior rule is inert
+   until WO-4.4 exists, and says so rather than erroring. That is a sentence about a list which is
+   otherwise working, so it is a line inside the panel and not an empty state — and it is quiet
+   grey rather than amber, because nothing is wrong.
+*/
+.sig-inert {
+  padding: 9px 20px; border-top: 1px solid #f3f4f6; background: #fbfcfd;
+  font-size: 11px; line-height: 1.5; color: #8a9bb0;
+}
+
+/*
+  AND THE SCREEN REFUSES TO DRAW ITSELF ON A PROJECTOR.
+
+  ── THE POINT OF DEPARTURE (CLAUDE.md § Conventions) ──
+
+  THIS IS THE FIRST SCREEN IN THE APP THAT REFUSES RATHER THAN HIDES, and the general rule it
+  departs from is real and is everywhere else: presentation mode SUPPRESSES support data and leaves
+  the screen working. The roster draws every student and takes the indicator dot off; the calendar
+  draws the month and drops the review chips; the student detail draws the whole record and drops
+  the hall passes. Nothing in the app has ever closed.
+
+  THE LOCAL RULE THAT BEATS IT (the owner, 2026-08-20): this is the only surface in Planbook whose
+  entire content is a ranked list of NAMED STUDENTS IN TROUBLE, and there is no support field
+  anywhere on it to suppress. Redacting the names to initials protects nobody in a room of thirty
+  who know each other's initials, and what is left after redaction — a grade, a count of absences,
+  a sentence about a fall — is the disclosure. So the screen closes, and it names the header
+  control that undoes it in the same sentence, which is the difference between refused and broken.
+
+  THE COST IS ACCEPTED RATHER THAN ARGUED AWAY: a teacher who leaves the mode on for a whole period
+  cannot use this screen for that period. That is why the way out is one tap and the copy says so.
+
+  It wears `.empty-state` for the centred block and adds only the three lines, the way src/home.css's
+  own empty state does.
+*/
+.sig-blocked-mark { font-size: 30px; line-height: 1; }
+.sig-blocked-lead { margin-top: 10px; font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.sig-blocked-text { max-width: 460px; margin: 8px auto 0; font-size: 13px; line-height: 1.6; color: #8a9bb0; }
+
+/* ────────────────────────────── the signal card ──────────────────────────────
+
+   ONE STUDENT, EVERY RULE SHE TRIPPED, AND THE ARITHMETIC UNDER EACH ONE — as a MODAL, which is
+   plans/gradebook-surfaces.md's own test applied rather than a new opinion. The list is the
+   surface a teacher works down for ten minutes; one student is a task she finishes, and she wants
+   the list still there and still scrolled where she left it when she is done.
+
+   `.modal-panel` is worn as shipped, at its 480px. The evidence rows are label-and-number pairs
+   rather than a table: a table implies columns that mean the same thing down their length, and
+   these are nine different rules with nine different units.
+
+   PHASE 5'S HALF IS ONE DISABLED CONTROL AND NOTHING ELSE. *Draft an email* is the door WO-5.3 and
+   WO-5.4 both reach for by name; what is behind it is that phase's decision, and what the door
+   buys now is that the shape of this card does not have to change when outreach lands.
+*/
+.sig-card-hero { display: flex; align-items: center; gap: 12px; }
+.sig-card-who { flex: 1 1 auto; min-width: 0; }
+.sig-card-name { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+.sig-card-sub { font-size: 12px; color: #8a9bb0; margin-top: 2px; }
+/* The current grade, in the quiet position on purpose. It is context for the delta, not the reason
+   the student is on the list, and drawing it big would put the level back in charge. */
+.sig-card-grade {
+  flex: 0 0 auto; text-align: right;
+  font-size: 13px; font-weight: 700; color: #6b7a8d; font-variant-numeric: tabular-nums;
+}
+
+/* One fired rule: its sentence, then the numbers it was measured from. */
+.sig-card-rule {
+  padding: 10px 12px; border-radius: 8px; border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+.sig-card-rule + .sig-card-rule { margin-top: 8px; }
+.sig-card-rule.concern { border-color: #f0b0b0; background: #fdeaea; }
+.sig-card-rule.praise  { border-color: #a3e4bc; background: #eafaf1; }
+.sig-card-rule-why { font-size: 12px; line-height: 1.55; color: #1a1a2e; font-weight: 600; }
+.sig-card-ev { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 7px; }
+.sig-card-ev-item { font-size: 11px; color: #6b7a8d; }
+.sig-card-ev-item b { font-weight: 700; color: #1a1a2e; font-variant-numeric: tabular-nums; }
+/* The threshold that was crossed, and the fact that it is the teacher's own number. An absent
+   threshold key IS its default (src/signals.js), and she can change any of them — so a card that
+   showed a number without saying it is adjustable would teach her that the app has opinions she
+   cannot argue with. */
+.sig-card-thresh {
+  margin-top: 7px; font-size: 10px; color: #a0aab8;
+}
+
+/* The actions. One row, wrapping, and the outreach one is disabled until Phase 5. */
+.sig-card-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.sig-card-act {
+  flex: 1 1 auto; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 12px; font-weight: 700; color: #1a1a2e;
+  cursor: pointer; transition: all 0.15s;
+}
+.sig-card-act:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.sig-card-act:disabled { opacity: 0.5; cursor: default; }
+.sig-card-act:disabled:hover { border-color: #e0e4ea; color: #1a1a2e; }
+
+/* ────────────────────────────── responsive ──────────────────────────────
+   The order design/style-guide.md §6 names. The two-column drop is WO-4.3's, with the column. */
+@media (max-width: 720px) {
+  .sig-toolbar { padding: 10px 14px; }
+  .sig-row, .sig-inert, .sig-col-head { padding-left: 14px; padding-right: 14px; }
+}
+
+/* Every control this sheet adds, at the floor, in one place — design/style-guide.md §6. Nothing
+   here departs from 44px: the one control in the app that does (the 28px month chip) is the
+   owner's own ruling for one control, and CLAUDE.md says in as many words that it is not a
+   precedent a new control may cite. `.pill` and `.class-action-btn` are worn as shipped and carry
+   their own floors from src/shell.css. */
+@media (pointer: coarse) {
+  .sig-row { min-height: 56px; }
+  .sig-inert { min-height: 44px; }
+  .sig-card-act { min-height: 44px; }
+  /* The native picker iOS opens is already thumb-sized; what this owes is a target to open it. */
+  .sig-sort { min-height: 44px; }
+}

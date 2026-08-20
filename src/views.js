@@ -71,6 +71,10 @@ import { getPref, setPref } from './prefs.js';
    filter is decided by the door you came through, which a reload has not come through.
    (WO-6.4's glance page is `#homeView` grown and adds no line here at all; this is the one Phase 6
    view, and that work order says so in its own second paragraph.) */
+/* AND WO-4.2's `signals` IS THE SEVENTH, AND THE SECOND OF THE KIND THE PARAGRAPH ABOVE NAMES: a
+   screen ABOUT a class rather than one OF it. It cost the same one line here, one `<div>` in
+   index.html, one entry in each of the two lists below and one segment in src/screen-nav.js —
+   which is the shape the calendar established and the reason it needed no rule of its own. */
 const VIEWS = {
   home: 'homeView',
   class: 'classView',
@@ -78,6 +82,7 @@ const VIEWS = {
   scores: 'scoresView',
   detail: 'detailView',
   calendar: 'calendarView',
+  signals: 'signalsView',
 };
 
 /*
@@ -108,7 +113,11 @@ const VIEWS = {
   from a freshly-opened class on the day it is opened, which is what makes it a tab rather than a
   breadcrumb.
 */
-const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail', 'calendar'];
+/* AND `signals` IS THE SIXTH (WO-4.2). Same argument as `calendar` beside it and it is not made
+   twice: it is a screen ABOUT the open class — the header's class tabs belong over it, the *All
+   classes* door belongs on it, and it earns a segment on the switcher — while its own toolbar
+   filter keeps *All classes* and says what the LIST is about. Two controls, two questions. */
+const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail', 'calendar', 'signals'];
 
 export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
 
@@ -145,7 +154,15 @@ export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1;
   the class filter (src/calendar-view.js): arriving filtered is the door you walked through, and a
   reload has not walked through one.
 */
-const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class', calendar: 'class' };
+/*
+  WO-4.2's `signals` IS THE FIFTH, and it has the strongest second reason of any of them. A browser
+  that reopened onto this screen would be reopening onto a ranked list of NAMED STUDENTS IN TROUBLE
+  — which is the one thing in this app that must never be on a wall by accident, and a reload is
+  exactly the arrival nobody asked for. The screen refuses while presentation mode is on
+  (src/signals-view.js), and this line is what stops a reload landing there at all.
+*/
+const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class', calendar: 'class',
+  signals: 'class' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,

@@ -160,6 +160,13 @@
        own for the reason src/detail.css gives about not sharing the attendance one: each block
        re-shows a different surface, and a shared gate would print the wrong one. -->
   <link rel="stylesheet" href="src/calendar-view.css">
+  <!-- The signals list’s own sheet (WO-4.2), seventh instance of the same convention. It WEARS
+       `.panel*`, `.pill`, `.avatar`, `.av0`–`.av9`, `.empty-state`, `.class-action-btn`, `.modal-*`
+       and `.screen-nav*` and restyles none of them; `.sig-dot` is worn ALONGSIDE an avatar colour
+       rather than restating one, the way `.detail-avatar` is. It is also the sheet that carries the
+       app’s first REFUSAL — presentation mode closes this screen instead of redacting it — and the
+       point of departure is written out there rather than here. -->
+  <link rel="stylesheet" href="src/signals-view.css">
 </head>
 <body>
 
@@ -1421,6 +1428,138 @@
   </div>
 </div>
 
+<!--
+  WHO NEEDS YOU (WO-4.2) — the concern list, and the seventh view.
+
+  IT IS A VIEW AND IT IS THE FIFTH SEGMENT ON THE SWITCHER, which are two decisions and both are
+  the owner's. A surface a teacher works down for ten minutes is a view rather than a dialog
+  (plans/gradebook-surfaces.md's test, applied rather than re-argued), so it is here in <main> as a
+  sibling of the other six, toggled by `.hidden`. And it is ABOUT a class without being OWNED by
+  one — the kind WO-6.6 ruled belongs on the switcher rather than behind a panel button — which is
+  why the strip below carries five segments now and `.screen-nav` in src/assignments.css wraps to
+  two rows at 390px rather than scrolling one silently. That edit is this work order's; the drawing
+  in design/mockups/signals.html measures both strips side by side and the owner ruled FIVE,
+  WRAPPED on 2026-08-20.
+
+  THE TOOLBAR'S FILTER KEEPS *ALL CLASSES* and is not the header's class tabs said twice. The tabs
+  answer "which class am I in"; the switcher answers "which screen of it"; this answers "what is
+  this LIST about", and the one thing a tab row cannot say is "all of them" — which is the whole
+  point of a screen a teacher works across five classes on a Sunday afternoon. Arriving from a
+  class arrives filtered to that class, recomputed on arrival and stored nowhere, exactly as the
+  calendar's is (src/calendar-view.js's header carries the reasoning).
+
+  EVERYTHING BELOW THE TOOLBAR IS EMPTY IN THE MARKUP and is drawn from the open document by
+  src/signals-view.js — the same call every other list in this app makes. What IS markup is what
+  does not change with the document: the title row, the doors, the switcher, and the copy in the
+  three states a teacher reads. That copy lives here rather than in a module for the reason the
+  install banner's and the calendar's do: it is the part she actually reads, and it should be
+  revisable without opening a JavaScript file.
+
+  THE REFUSAL IS THE ONE TO READ TWICE. #signalsBlocked is not an empty state and not a redaction:
+  presentation mode CLOSES this screen (the owner, 2026-08-20), because it is the only surface in
+  Planbook whose entire content is a ranked list of named students in trouble and initials protect
+  nobody in a room of thirty. It is the first screen in the app that refuses rather than hides, and
+  src/signals-view.css says so at its own point of departure. The way out is named in the copy
+  because a screen that is refused and a screen that is broken look identical otherwise.
+-->
+<div id="signalsView" class="hidden">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Who needs you</h2>
+          <p>
+            Ordered by what is most urgent: attendance first, then whoever changed the most — never
+            whoever is highest or lowest. Every line under a name is the rule's own sentence, built
+            from the numbers that fired it.
+          </p>
+        </div>
+        <!-- The thresholds door, carrying the same `data-signal-panel` hook the class manager's
+             does. A second hook would be a second route onto one panel; what makes this one worth
+             having is that it is beside the list the numbers decide, which is where a teacher is
+             standing when she disagrees with one. -->
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" data-signal-panel
+                  aria-haspopup="dialog" title="The numbers behind every rule on this list">
+            <span aria-hidden="true">🔕</span> Thresholds
+          </button>
+          <button class="class-action-btn" type="button" data-view-home>
+            <span aria-hidden="true">←</span> All classes
+          </button>
+        </div>
+      </div>
+
+      <!-- The same empty strip every class screen carries, filled by src/screen-nav.js. This is
+           the fifth segment, and the second reversal of *THREE TABS, NOT FOUR* — see that file. -->
+      <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
+
+      <!-- Which classes this list is about, and what it is sorted by. Drawn from the open document;
+           neither is written to a preference, for src/calendar-view.js's reason about a month
+           quietly hiding four fifths of the year. -->
+      <div class="sig-toolbar">
+        <span class="sig-toolbar-label" id="signalsShowingLabel">Showing</span>
+        <div class="sig-classes" id="signalsClasses" role="group"
+             aria-labelledby="signalsShowingLabel"></div>
+        <span class="sig-sorted">
+          <label class="sig-sort-label" for="signalsSort">Sorted by</label>
+          <!-- The options are markup because they are this screen's fixed control; which one is
+               selected is painted. The FIRST is the owner's ruled order and is what every arrival
+               opens on — what protects the phase's argument is the default rather than the absence
+               of the other three (the owner, 2026-08-20). -->
+          <select class="sig-sort" id="signalsSort" data-signals-sort
+                  aria-label="Sort this list by">
+            <option value="ruled">Attendance first, then the biggest change</option>
+            <option value="change">The biggest change</option>
+            <option value="grade">Lowest grade</option>
+            <option value="missing">Most missing work</option>
+          </select>
+        </span>
+      </div>
+
+      <!-- One chip per rule that actually fired, so "everyone with attendance trouble" is one tap
+           rather than a read down a column. `.pill` worn as shipped, the same as the strip above. -->
+      <div class="sig-toolbar">
+        <span class="sig-toolbar-label" id="signalsRulesLabel">Rules</span>
+        <div class="sig-rules" id="signalsRules" role="group"
+             aria-labelledby="signalsRulesLabel"></div>
+      </div>
+    </div>
+
+    <div class="sig-col concern" id="signalsConcern">
+      <div class="sig-col-head concern" id="signalsConcernHead"></div>
+      <div class="sig-list" id="signalsList"></div>
+    </div>
+
+    <!-- WO-4.2's last acceptance line, drawn: a rule that cannot fire yet says so. Quiet grey and
+         not amber, because nothing is wrong — and written from src/signals.js's inertRules(), so
+         it disappears of its own accord on the day WO-4.4 lands rather than needing to be found
+         and deleted. -->
+    <p class="sig-inert hidden" id="signalsInert"></p>
+
+    <!-- Nobody is on the list. It is a good day, and it has to be distinguishable from a screen
+         that failed to draw — an absence and a bug look identical (tools/README.md). -->
+    <div class="empty-state hidden" id="signalsEmpty">
+      <p class="sig-blocked-lead" id="signalsEmptyLead">Nobody is flagged right now.</p>
+      <p class="sig-blocked-text">
+        Every rule ran and none of them fired. The numbers each rule uses are yours — open
+        <strong>Thresholds</strong> above to see them or to move one.
+      </p>
+    </div>
+
+    <!-- THE REFUSAL. See this block's header comment: closed, not redacted, and it names the
+         control that undoes it. -->
+    <div class="empty-state hidden" id="signalsBlocked">
+      <div class="sig-blocked-mark" aria-hidden="true">🔒</div>
+      <p class="sig-blocked-lead">Not while you are projecting.</p>
+      <p class="sig-blocked-text">
+        This screen is a list of named students who are struggling, which is the one thing in
+        Planbook that should never be on a classroom wall. Presentation mode is on — turn it off
+        with the screen button in the header and this comes straight back.
+      </p>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
@@ -1456,12 +1595,17 @@
         included.
       </p>
       <p>
-        <strong>The gradebook itself is half here.</strong> You can set up what a class is graded
-        on, what each part is worth, and the assignments themselves — a class now has an
-        Assignments screen beside its attendance, with points, categories and dates on it. What is
-        still missing is the half that carries numbers: there are no scores yet and no grades, so
-        nothing in Planbook works out a percentage for anybody. That is what comes next. Signals,
-        outreach and Drive sync come after it.
+        <strong>The gradebook is here.</strong> You can set up what a class is graded on, what each
+        part is worth and the assignments themselves, enter scores down a column, and every screen
+        that shows a percentage works it out from weighted categories — with a printable grade
+        report and a per-student breakdown behind any name.
+      </p>
+      <p>
+        <strong>And the first half of who needs you.</strong> A Signals screen sits beside the
+        others on every class, ranking the students a rule caught — attendance trouble first, then
+        whoever changed the most — with the numbers behind each one on the row and the thresholds
+        yours to move. The praise half of that list, the behaviour log one of its rules is waiting
+        on, and outreach and Drive sync all come after it.
       </p>
       <p>
         The backup file that gets everything back out of the browser is already here, under the ⤓
@@ -1914,10 +2058,41 @@
         them, and no student is flagged by a number you cannot see on this screen.
       </p>
       <p class="class-hint">
-        The concern and praise lists themselves are not built yet — these are the numbers they will
-        read. Setting them now costs nothing and changes nothing on any screen.
+        <strong>The concern list reads these the moment you type them</strong> — it is the Signals
+        screen on any class, and it redraws behind this panel as you go. The praise list and the
+        behavior rule are not built yet; those rows are the numbers they will read, and setting them
+        now costs nothing.
       </p>
     </div>
+  </div>
+</div>
+
+<!--
+  ONE STUDENT'S SIGNAL CARD (WO-4.2) — every rule she tripped, the numbers under each sentence, and
+  the threshold named as hers.
+
+  A MODAL, AND THE LIST BEHIND IT IS NOT. plans/gradebook-surfaces.md's test, applied rather than
+  re-argued: the list is a surface a teacher works down for ten minutes, and one student is a task
+  she finishes and dismisses — she wants the list still there and still scrolled where she left it
+  when she is done.
+
+  THE BODY IS EMPTY IN THE MARKUP because every word of it is the engine's. src/signals.js hands a
+  rule its own measured numbers and the rule builds its own sentence out of them; a specimen
+  sentence here would be a second wording of one this app can already produce, and the first thing
+  it would do is disagree with the arithmetic beside it.
+
+  ONE DISABLED CONTROL IS THE WHOLE OF PHASE 5 ON THIS CARD. WO-5.3 and WO-5.4 both reach for "the
+  signal card" by name; drawing the draft, the template picker or the audience list here would be
+  pre-empting that phase's decisions. What the door buys now is that the shape of this card does not
+  have to change when outreach lands.
+-->
+<div class="modal-overlay hidden" id="signalCardModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="signalCardTitle">
+    <div class="modal-header">
+      <h2 id="signalCardTitle">Why they are on the list</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="signalCardBody"></div>
   </div>
 </div>
 

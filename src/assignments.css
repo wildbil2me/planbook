@@ -67,10 +67,37 @@
    It is a segmented control rather than five `.cls-tab`s because these are not peers of the classes
    above them — they are inside one class, and the box around them says so. Light-surface grammar
    (`.pill`'s edge, `.cls-tab.active`'s inversion) because it sits on a white panel, not on navy. */
+/*
+  IT WRAPS, AND `overflow-x: auto` IS GONE WITH THE SCROLL IT ALLOWED (WO-4.2, the owner's ruling of
+  2026-08-20). THIS REVERSES THE LAST SENTENCE OF THE BLOCK BELOW, which refused exactly this at
+  WO-6.6 — *"wrapping the strip to two rows (it is a segmented control, and two rows of one is a
+  different control)"* — and the refusal is kept rather than edited out, because the reversal is
+  only readable against it.
+
+  WHAT CHANGED IS THE COUNT, WHICH IS WHAT THAT REFUSAL WAS PRICED ON. Four segments fit 390px with
+  15px to spare once the padding came down to 10; the fifth (Signals) does not, and there is no
+  third notch of padding left to spend. The two answers that were cheaper are both worse: a shorter
+  label trades a silent scroll for a word a teacher has to learn, and leaving the screen off the
+  strip is the cul-de-sac WO-6.6 was opened to remove. So the segmented control becomes two rows of
+  segments on a phone — which IS a different control, and is a different control a thumb can reach
+  every part of, against one whose fifth segment sits off the end of a box nothing says scrolls.
+
+  THE SCROLL GOES BECAUSE IT IS NOW UNREACHABLE AND NOT BECAUSE IT IS UNTIDY: a flex container that
+  wraps has nothing left to overflow horizontally, so `overflow-x: auto` would sit here forever
+  meaning nothing while still reading like the mechanism that saves a strip that does not fit. It
+  does not save anything any more, and a rule that lies about what holds a layout up is the one that
+  gets trusted in the next work order.
+
+  MEASURED IN ROWS FROM HERE ON. tools/verify-shell.mjs asserted `scrollWidth <= clientWidth` on
+  this strip, which is the right assertion for a control that must not scroll and the WRONG one for
+  a control that is supposed to be two rows tall at 390px — a wrapped strip passes it while being
+  anything at all. It counts distinct row offsets now: ONE row at an iPad's 834px, and at 390px a
+  strip that has wrapped rather than overflowed, with the page still clean of horizontal scroll.
+*/
 .screen-nav {
-  display: inline-flex; gap: 2px; padding: 3px;
+  display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px;
   background: #f0f2f5; border-radius: 9px; margin-bottom: 12px;
-  max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 /*
   10px A SIDE, AND IT IS A MEASUREMENT MADE ON FOUR SEGMENTS (WO-6.6, 2026-08-19). It was 14 here

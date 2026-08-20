@@ -98,22 +98,51 @@
       data-band-remove="<index>"      removes it, on the tap — nothing is filed under a band
       data-band-field="letter|min" + data-band-index: an input; edits that band as it is typed, and
                                       redraws the derived range beside every row below it
-      data-signal-panel               fills the signal-threshold panel, then opens it. One door, and
-                                      it is document-level for the reason data-letter-scale is: these
-                                      are year-wide settings and the class-manager row is full
-      data-signal-threshold="<key>"   an input; edits that threshold as it is typed, and redraws the
-                                      line counting how many differ from their defaults
+      data-signal-panel               fills the signal-threshold panel, then opens it. THREE doors
+                                      onto it since WO-4.2 — the class manager, the concern list's
+                                      own panel header, and that list's signal card — and one hook,
+                                      because they are one route and not three. It is document-level
+                                      for the reason data-letter-scale is: these are year-wide
+                                      settings and the class-manager row is full
+      data-signal-threshold="<key>"   an input; edits that threshold as it is typed, redraws the
+                                      line counting how many differ from their defaults, and since
+                                      WO-4.2 redraws the concern list behind the panel on the
+                                      keystroke — that work order's fifth acceptance line
       data-signal-reset               puts every threshold this build names back to its default,
                                       which DELETES the keys rather than writing the numbers in —
                                       src/signal-settings.js argues why at the function
+      data-signals-filter="<classId>"  which classes the concern list is about; an empty value is
+                                      every class (WO-4.2). A LENS and not a selection, like the
+                                      calendar's: it changes nothing about which class is open, and
+                                      it is not remembered. The ARRIVAL sets it from the door — every
+                                      class from the home screen, the open class from the pill — and
+                                      a tap on a class TAB moves it rather than moving the screen
+      data-signals-rule="<ruleId>"    which rule the list is filtered to; an empty value is every
+                                      rule. Drawn only for rules that actually fired, and it moves
+                                      the LEAD sentence on a row as well as choosing the rows.
+                                      Recomputed on arrival and stored nowhere, like the filter above
+      data-signals-sort               on a <select>: how the list is ordered. Read on `change` rather
+                                      than `input`, like the other two <select>s in this file. Its
+                                      default is the owner's ruled order and every arrival returns
+                                      to it — what protects the phase's argument is which option the
+                                      list OPENS on, not which options are absent
+      data-signal-row="<id>|<class>"  opens the signal card for that row — one student, every rule
+                                      she tripped, and the numbers under each sentence. A modal over
+                                      the list rather than a seventh view, so the list is still
+                                      scrolled where she left it (plans/gradebook-surfaces.md)
+      data-signal-card-detail         from the card to that student's grade detail. It is the one
+                                      hook on this screen that navigates, and WHERE it goes is
+                                      resolved in the listener because the row may be about a class
+                                      that is not the open one: the class is selected first
       data-class-screen="<view>"      moves between the open class's screens — Attendance ·
-                                      Assignments · Scores · Calendar (WO-6.6). Drawn by
-                                      src/screen-nav.js on every one of them, and it never changes
-                                      WHICH class is open, only which screen of it. A class always
-                                      opens on Attendance, so nothing here writes down which screen
-                                      was left (src/views.js). The fourth is the one that is not a
-                                      screen OF the class: arriving on it resets the month to today
-                                      and the filter to the class you came from
+                                      Assignments · Scores · Calendar (WO-6.6) · Signals (WO-4.2).
+                                      Drawn by src/screen-nav.js on every one of them, and it never
+                                      changes WHICH class is open, only which screen of it. A class
+                                      always opens on Attendance, so nothing here writes down which
+                                      screen was left (src/views.js). The last two are the ones that
+                                      are not screens OF the class: arriving on either resets what it
+                                      holds — the month to today, the list to the ruled order — and
+                                      both filter to the class you came from
       data-assignment-new             adds an assignment to the open class and term, and opens the
                                       editor on it
       data-assignment-create-cancel   removes the assignment written by that still-open create flow
@@ -444,8 +473,13 @@ import * as letterScale from './letter-scale.js';
    the one evaluator — which WO-4.2's and WO-4.3's rules and WO-5.1's `{{signals.list}}` resolver all
    import, and none of them wants a modal. `signalSettings` is the surface over it, and the import
    runs one way: it reads the table out of `signals` and `signals` imports nothing back. */
+/* THREE SINCE WO-4.2, and the third is the one that draws. `signalsView` is to `signals` what
+   `signalSettings` already is — a surface over the engine, importing it and imported back by
+   nothing — and it is a separate module from the editor rather than more of it because one is a
+   panel of number fields and the other is a screen in <main>. */
 import * as signals from './signals.js';
 import * as signalSettings from './signal-settings.js';
+import * as signalsView from './signals-view.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
@@ -625,6 +659,10 @@ function paintClassScreen(view) {
   else if (view === 'scores') scores.renderScores();
   else if (view === 'detail') detail.renderDetail();
   else if (view === 'calendar') calendarView.renderCalendar();
+  /* The sixth, and the second of the kind that is ABOUT a class rather than OF one (WO-4.2). What
+     it paints does not depend on which class is open either — renderSignals() draws whatever the
+     toolbar's filter names, which the arrival set from the door and which *All classes* widens. */
+  else if (view === 'signals') signalsView.renderSignals();
   else attendance.renderAttendance();
 }
 
@@ -703,6 +741,14 @@ function showClassScreen(name) {
   if (!classes.getSelectedClassId()) { showHome(); return; }
   const want = views.isClassScreen(name) ? name : 'class';
   if (want === 'calendar') calendarView.resetCalendar(classes.getSelectedClassId());
+  /* AND THE FIFTH SEGMENT IS AN ARRIVAL FOR THE SAME REASON THE FOURTH IS (WO-4.2). The concern
+     list holds three values of its own — the class filter, the sort and the rule filter — and this
+     is the door it is entered by from inside a class, so all three are reset here and reset BEFORE
+     the view swaps, so the first paint is already of the right list. What it is handed is the open
+     class, which is what makes the Signals pill inside Period 3 open on Period 3's students; the
+     toolbar's *All classes* is one tap away and is the whole reason this screen keeps a filter of
+     its own. */
+  if (want === 'signals') signalsView.resetSignals(classes.getSelectedClassId());
   const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -1189,6 +1235,46 @@ function flipPresentationMode() {
     renders it on arrival, so a repaint of a hidden view is work nobody sees.
   */
   if (views.currentView() === 'calendar') calendarView.renderCalendar();
+  /*
+    AND THE CONCERN LIST IS ON THIS LIST FOR A REASON NO OTHER ENTRY HAS (WO-4.2): it is the one
+    screen that CLOSES rather than hiding something. Every line above suppresses a field and leaves
+    the screen working; this one takes the whole list off the glass and puts a lock and a sentence
+    in its place, because it is the only surface in Planbook whose entire content is a ranked list
+    of named students in trouble and initials protect nobody in a room of thirty who know each
+    other's initials (the owner, 2026-08-20).
+
+    WHICH MAKES THIS LINE THE MOST LOAD-BEARING OF THE FOUR. A teacher who reaches for this switch
+    is a teacher whose iPad is about to face the room, and a suppression that only applied to the
+    NEXT render would leave the list she is looking at exactly where it is — which is the defect
+    the paragraph at the top of this function describes, on the screen where it costs the most.
+
+    Guarded on the view like the others: every path onto this screen renders it on arrival, so a
+    repaint of a hidden view is work nobody sees. The refusal is src/signals-view.js's own test of
+    presentationMode() — the same switch through the accessor that matches the question, which is
+    src/pass-history.js's distinction rather than a new one, and NOT supportsVisible(), because
+    there is no support field anywhere on that screen to be visible.
+  */
+  if (views.currentView() === 'signals') signalsView.renderSignals();
+}
+
+/*
+  A SIGNAL THRESHOLD MOVED, AND THE LIST BEHIND THE PANEL REDRAWN (WO-4.2's fifth acceptance line).
+
+  This is the chain the threshold block in the click listener below promised and did not have:
+  *"nothing behind this panel reads a threshold yet... the day a screen draws a signal it adds its
+  line to a chain here, exactly as the categories and the bands did."* That day is this work order.
+
+  It runs PER KEYSTROKE, for the reason the category weight's chain does: the number a teacher is
+  typing is the number the list is computed from, and a list that lagged the field it comes out of
+  is worse than no list — she would be tuning a threshold against last keystroke's answer. The
+  panel opens over the screen from that screen's own Thresholds button, so the list is genuinely
+  behind it and genuinely visible while she types.
+
+  Guarded on the view, like every other repaint in this file. The other door onto that panel is in
+  the class manager, where the screen underneath is not this one and there is nothing to redraw.
+*/
+function afterThresholdChange() {
+  if (views.currentView() === 'signals') signalsView.renderSignals();
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -1324,6 +1410,18 @@ document.addEventListener('click', (e) => {
     attendance.resetRegistry();
     if (views.currentView() === 'calendar') {
       calendarView.setCalendarFilter(classes.getSelectedClassId());
+      home.refreshHome();
+      return;
+    }
+    /* AND THE CONCERN LIST IS THE SECOND SCREEN OF THAT KIND (WO-4.2), so it takes the same shape
+       one paragraph down rather than a rule of its own: the tap moves the LENS, not the screen.
+       src/classes.js's selectClass() keeps this view up for the same reason it keeps the calendar
+       up, and the filter is moved through the module that owns it — moving it renders, which is
+       why there is no render on this line either. The rule chips are deliberately NOT reset with
+       it: "attendance trouble, in whichever class I am looking at" is one question a teacher is
+       part-way through asking, and answering the class half should not throw the rule half away. */
+    if (views.currentView() === 'signals') {
+      signalsView.setSignalsFilter(classes.getSelectedClassId());
       home.refreshHome();
       return;
     }
@@ -1506,15 +1604,64 @@ document.addEventListener('click', (e) => {
     afterLetterScaleChange(); return;
   }
 
-  /* ── signal thresholds (WO-4.1) ──
+  /* ── signal thresholds (WO-4.1, and the chain since WO-4.2) ──
      Directly under the letter scale, because these are the same act as the two panels above it:
-     setting the year up. NEITHER HOOK CHAINS ANYTHING, and that is the state the letter-scale block
-     above was in until WO-3.5 — nothing behind this panel reads a threshold yet, because the concern
-     and praise lists are WO-4.2's and WO-4.3's. The day a screen draws a signal it adds its line to a
-     chain here, exactly as the categories and the bands did. */
+     setting the year up. NEITHER HOOK CHAINED ANYTHING UNTIL WO-4.2 — nothing behind this panel read
+     a threshold, because the concern list did not exist — and the comment here promised that "the day
+     a screen draws a signal it adds its line to a chain here, exactly as the categories and the bands
+     did." That day was WO-4.2 and afterThresholdChange() is the line.
+
+     THE DOOR IS TWO DOORS NOW and both land here: the one in the class manager, where the screen
+     underneath is not the list, and the one in the concern list's own panel header, where it is.
+     The chain is guarded on the view rather than on which door was used, so neither has to know. */
   const signalDoor = e.target.closest('[data-signal-panel]');
   if (signalDoor) { signalSettings.openSignalSettings(signalDoor); return; }
-  if (e.target.closest('[data-signal-reset]')) { signalSettings.resetThresholds(); return; }
+  if (e.target.closest('[data-signal-reset]')) {
+    signalSettings.resetThresholds(); afterThresholdChange(); return;
+  }
+
+  /* ── the concern list (WO-4.2) ──
+     Under the panel that holds its numbers, which is the order the screen is read in. None of the
+     four writes anything: the first three change which rows are on screen — a fact about this
+     browser and this minute, stored nowhere — and the fourth navigates.
+
+     THE ROW OPENS THE CARD AND THE CARD OPENS THE STUDENT, in two taps and not one, which is
+     plans/gradebook-surfaces.md's test applied twice: the list is the surface she works down, the
+     card is the task she finishes, and the grade detail is a different screen she means to go to.
+     Where the last one GOES is resolved here rather than in the renderer, like every other
+     order-of-operations answer in this app: the row may be about a class that is not the open one,
+     so the class is selected first and the detail opened after — and a renderer that knew how to
+     open a class would have to import the navigation that imports it. */
+  const signalsFilter = e.target.closest('[data-signals-filter]');
+  if (signalsFilter) {
+    signalsView.setSignalsFilter(signalsFilter.getAttribute('data-signals-filter'));
+    return;
+  }
+  const signalsRule = e.target.closest('[data-signals-rule]');
+  if (signalsRule) {
+    signalsView.setSignalsRule(signalsRule.getAttribute('data-signals-rule'));
+    return;
+  }
+  const signalRow = e.target.closest('[data-signal-row]');
+  if (signalRow) {
+    signalsView.openSignalCard(signalRow.getAttribute('data-signal-row'), signalRow);
+    return;
+  }
+  if (e.target.closest('[data-signal-card-detail]')) {
+    const target = signalsView.signalCardTarget();
+    if (target) {
+      /* The class first, because the detail screen is a screen OF a class and this list is not.
+         selectClass() is a no-op when it names the class already open, which is the common case
+         from inside one. */
+      if (target.classId && target.classId !== classes.getSelectedClassId()) {
+        classes.selectClass(target.classId);
+      }
+      /* The card is handed over as the opener so the modal's focus return has somewhere to go —
+         showStudentDetail() closes the dialog the door was in before the view swaps. */
+      showStudentDetail(target.studentId, e.target.closest('[data-signal-card-detail]'));
+    }
+    return;
+  }
 
   /* ── assignments (WO-3.3, and the chain since WO-3.5) ──
      Under the two setup panels because that is the order a class is built in: what it is graded
@@ -2249,12 +2396,16 @@ document.addEventListener('input', (e) => {
   const bandField = e.target.closest('[data-band-field]');
   if (bandField) { letterScale.editBandField(bandField); return; }
 
-  /* A signal threshold, saved as it is typed and by the same debounce. No chain, for the reason the
-     two click hooks above have none: nothing behind that panel reads a threshold yet. The row is not
+  /* A signal threshold, saved as it is typed and by the same debounce. THE CHAIN ARRIVED AT WO-4.2
+     and it is that work order's fifth acceptance line — "editing a threshold changes the list
+     immediately" — so it runs per keystroke, exactly as the category weight's does and for the same
+     reason: the number she is typing is the number the list is computed from. The row is not
      re-rendered — src/signal-settings.js redraws only the line that counts the changed ones, because
      replacing the input under the caret is the failure that rule exists for. */
   const signalField = e.target.closest('[data-signal-threshold]');
-  if (signalField) { signalSettings.editThreshold(signalField); return; }
+  if (signalField) {
+    signalSettings.editThreshold(signalField); afterThresholdChange(); return;
+  }
 
   /* The grades-due lead time, saved as it is typed and by the same debounce. No chain and no
      re-render, for the two reasons directly above: nothing behind that panel reads it yet — the
@@ -2405,6 +2556,13 @@ document.addEventListener('change', (e) => {
   if (assignmentCategory) {
     assignments.setAssignmentCategory(assignmentCategory); afterAssignmentChange();
   }
+  /* How the concern list is ordered (WO-4.2). Read HERE and not in the `input` listener above, for
+     the reason `data-support-kind` and `data-assignment-category` are: a <select> commits on
+     `change`, and hooking both would re-sort and re-announce twice for one tap. It writes nothing —
+     the option is a fact about this browser and this minute, and it is deliberately not a
+     preference (src/signals-view.js's header). */
+  const signalsSort = e.target.closest('[data-signals-sort]');
+  if (signalsSort) signalsView.setSignalsSort(signalsSort.value);
   /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);
@@ -2844,6 +3002,17 @@ window.planbook = {
      those two builds look identical on screen and evaluate identically today. Nothing in the app
      reads window.planbook — see the block above for why the seam outlived the shelf. */
   signals, signalSettings,
+  /* `signalsView` joined at WO-4.2, and its reason is `calendarView`'s: every control on that
+     screen is a button, a chip or a <select> a teacher can touch and tools/verify-shell.mjs touches
+     them. signalsModel() is the same build-it / hand-it-over split — the whole of what is on screen
+     as data, with no DOM between the readers and it — and what it answers is the claims a rendered
+     list cannot be asked cleanly: which student leads, which rule leads on a row, which hits rode
+     along as tags, and whether the pass ran at all while presentation mode is on. That last one is
+     the one no markup can settle, because a screen that built the list and then hid it and a screen
+     that never built it look identical from the outside, and the difference is whether a ranked
+     list of named students in trouble exists in the page at the moment the projector is on. Nothing
+     in the app reads window.planbook — see the block above for why the seam outlived the shelf. */
+  signalsView,
   /* `assignments` and `screenNav` joined at WO-3.3, and for the reading reason `classes` gives
      rather than a driving one: every control either feature has is a button, a field or a segment
      on a real screen, and a teacher can touch all of them. Two things no click can show. The first

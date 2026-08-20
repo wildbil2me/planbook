@@ -22,11 +22,11 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § SIGNALS       →  src/signals-view.css  (WO-4.2 · WO-4.3 · WO-4.5 — not yet lifted)
-     § SIGNAL CARD   →  src/signals-view.css  (WO-4.2 — not yet lifted)
+     § SIGNALS       →  src/signals-view.css  (WO-4.2 lifted 2026-08-20 · WO-4.3 · WO-4.5 pending)
+     § SIGNAL CARD   →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
      § LOG SHEET     →  src/shell.css         (WO-4.4 — not yet lifted)
      § LOG RECORD    →  src/detail.css        (WO-4.4 — not yet lifted)
-     § SHARED        →  src/signals-view.css  (WO-4.2 — not yet lifted)
+     § SHARED        →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
 
    TWO OF THOSE TARGETS ALREADY EXIST, AND THE `not yet lifted` IS LOAD-BEARING. The log
    sheet is a modal and this app styles its modals in `src/shell.css`; the log on the
@@ -36,6 +36,17 @@
    otherwise, and PROTOCOL.md rule 4 carries it. It came out of drawing this room: the
    first two rounds happened to propose only new stylesheets, so nothing had ever tested
    that half of the rule.
+
+   WO-4.2 LANDED THREE OF THE FIVE SECTIONS ON 2026-08-20, into `src/signals-view.css`, and
+   the banners above and below say so in the same sitting as the lift (PROTOCOL.md rule 4).
+   § SIGNALS went across in HALF, which is the honest reading of a section three work orders
+   share: the concern column, the toolbar, the row, the delta and the inert line are in the
+   app; the praise column, the two-column grid and the cooldown's suppressed rows are not, and
+   they are named in that file's own header as the things it declined to take. What the build
+   declined ALTOGETHER is `.sig-dot` — one class, with its reason written at the same place —
+   because the row already carries a class-coloured `.avatar` and this drawing's own caption
+   says the dot is not what answers "which class". Everything else arrived under the name it
+   was drawn with; there is no rename here to report.
 
    `src/signals.js` already exists and is the ENGINE (WO-4.1) — thresholds, rules, and
    the sentences they produce. The view is not it, which is why the sheet above is
@@ -59,7 +70,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SHARED — src/signals-view.css (WO-4.2 — not yet lifted)
+   § SHARED — src/signals-view.css (WO-4.2 — lifted 2026-08-20)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /*
@@ -108,7 +119,7 @@
 .sig-delta-unit { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; letter-spacing: 0.4px; text-transform: uppercase; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SIGNALS — src/signals-view.css (WO-4.2 · WO-4.3 · WO-4.5 — not yet lifted)
+   § SIGNALS — src/signals-view.css (WO-4.2 lifted 2026-08-20 · WO-4.3 · WO-4.5 pending)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── THE TOOLBAR: WHICH CLASS, AND WHAT THIS LIST IS SORTED BY ── */
@@ -325,7 +336,7 @@
 .sig-blocked-text { max-width: 460px; margin: 8px auto 0; font-size: 13px; line-height: 1.6; color: #8a9bb0; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SIGNAL CARD — src/signals-view.css (WO-4.2 — not yet lifted)
+   § SIGNAL CARD — src/signals-view.css (WO-4.2 — lifted 2026-08-20)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /*

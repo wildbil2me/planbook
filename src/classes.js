@@ -710,7 +710,15 @@ function addClassTab(label) {
 export function selectClass(id) {
   if (!findClass(id)) return;
   setPref('openClassId', id);
-  showView(currentView() === 'calendar' ? 'calendar' : 'class');
+  /* TWO SCREENS KEEP THEMSELVES ON A CLASS TAP AND EVERY OTHER ONE GOES BACK TO THE REGISTRY. The
+     calendar was the first (WO-6.6) and the concern list is the second (WO-4.2) — both are screens
+     ABOUT a class rather than OF one, and on both the tap means "same screen, different class"
+     rather than "take me to that class". The list of them is here because this is the one place
+     `openClassId` is written; what neither of them gets from this function is their own FILTER
+     moved, which is src/shell.js's order-of-operations answer for the reason the paragraph above
+     gives about import loops. */
+  const staysUp = currentView() === 'calendar' || currentView() === 'signals';
+  showView(staysUp ? currentView() : 'class');
   refreshClassBar();
   const cls = findClass(id);
   const term = getSelectedTerm();

@@ -80,6 +80,20 @@ const SCREENS = [
      the day it is drawn"). It arrives already enabled, because its view landed at WO-6.3 — so this
      is the one segment in the history of this file that was never on screen disabled. */
   { view: 'calendar', label: 'Calendar' },
+  /* WO-4.2's, and the FIFTH — the same kind as the fourth, which is why it needed no new argument:
+     the concern list is about a class without being owned by one, and it is reachable from a
+     freshly-opened class on the day it is opened, which is what makes it a tab rather than a
+     breadcrumb. It arrives enabled for the second time in this file's history.
+
+     FIVE IS WHERE THE STRIP STOPPED FITTING ONE ROW AT 390px, and the owner's ruling of 2026-08-20
+     is FIVE, WRAPPED: `.screen-nav` in src/assignments.css § SHARED gains `flex-wrap: wrap`, so the
+     strip becomes two rows on a phone instead of scrolling one silently under a teacher who does
+     not know that control scrolls. Both alternatives were refused with it — shortened labels trade
+     a silent scroll for five words she has to learn, and four segments plus a door from somewhere
+     else is the cul-de-sac WO-6.6 was opened to remove. design/mockups/signals.html measures the
+     two strips side by side; tools/verify-shell.mjs measures the shipped one in ROWS, which is the
+     assertion that had to change with the wrap. */
+  { view: 'signals', label: 'Signals' },
 ];
 
 /*
