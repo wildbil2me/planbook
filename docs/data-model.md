@@ -541,6 +541,27 @@ plumbing and are stated here because a later reader will otherwise re-derive the
   rule 1 of § Accommodations, asked through `supportsVisible()` at the point the datum is produced
   rather than at the point it is drawn.
 
+**`src/calendar-view.js` is the screen over that table** *(WO-6.3)* — the month and the week, and
+the sixth view in `<main>`. It computes no row of its own and holds no cache: what it decides is
+which of those rows a given screen SHOWS, and three of those decisions are rulings rather than
+plumbing:
+
+- **A per-class meeting state is drawn on a week, or on a month filtered to one class, and not
+  otherwise.** Five classes across twenty weekdays is a hundred `Taken` chips — the wall of amber
+  the bullet above refuses, in the reassuring colour. With every class showing, a month says what is
+  *on* the calendar; picking a class is one tap. The screen says so in words under the grid, because
+  an absence and a bug look identical.
+- **A review date follows its student through the class filter** — shown for a class that student is
+  on the roster of, and not for one they are not. This is the question `src/calendar-derived.js`
+  deliberately declined to answer on the screen's behalf. It is a plain roster read and touches
+  nothing in `supports`.
+- **No printout of a calendar emits a review date, whatever presentation mode says.** The mode is
+  the *screen's* suppression and a teacher can legitimately have it off; a sheet that has left the
+  building cannot be taken back. `src/calendar-view.css` removes the chip under the print gate and
+  again in one deliberately ungated rule — the only rule in that file outside a gate, because it can
+  only ever subtract, and rounding an unanswerable question toward hiding is `src/supports.js`'s own
+  rule for exactly this data.
+
 ### The record, field for field
 
 Nine fields, and **`newEvent()` in `src/calendar.js` writes every one of them on every event** —

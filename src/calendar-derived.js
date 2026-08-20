@@ -64,7 +64,7 @@
 */
 
 /* Five readers and not one writer, which is the claim the header above makes. */
-import { isDate, eventsIn, isAttendanceKind, coversDate, coversClass } from './calendar.js';
+import { isDate, eventsIn, isAttendanceKind, coversDate, coversClass, shiftDays } from './calendar.js';
 import { stateOf, coverOf, TAKEN, DID_NOT_MEET, COVERED, NOT_TAKEN } from './attendance.js';
 import { termName } from './classes.js';
 import { fullName } from './roster.js';
@@ -152,23 +152,14 @@ function inWindow(date, from, to) {
   return true;
 }
 
-/* `2026-11-26` + n days, in UTC and out again — the one place this file touches a Date, and it is
-   safe for the reason src/calendar.js's shiftDays() states in full: Date.UTC() is an exact instant
-   built from three numbers, a whole number of days cannot land on a DST seam because UTC has none,
-   and the getUTC* triple reads the same three numbers back. What is forbidden is
-   `new Date('2026-11-26')` — a UTC midnight read through the LOCAL clock, one timezone away from
-   being the day before. Parsing and formatting on the same side of that line is the whole of it.
-
-   Not imported from src/calendar.js because that file does not export it, and this is eight lines
-   against widening that module's surface for one caller. If a third file ever needs a day-step,
-   that is the moment it earns an export and both callers take it. */
-const DAY_MS = 86400000;
-function shiftDays(iso, days) {
-  const p = String(iso).split('-');
-  const at = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])) + days * DAY_MS);
-  const pad = (n) => (n < 10 ? '0' : '') + n;
-  return at.getUTCFullYear() + '-' + pad(at.getUTCMonth() + 1) + '-' + pad(at.getUTCDate());
-}
+/* THE DAY-STEP IS src/calendar.js's NOW, AND THAT IS THIS BLOCK'S OWN INSTRUCTION BEING FOLLOWED
+   (WO-6.3). What stood here was an eight-line copy of it under a note reading: *"Not imported from
+   src/calendar.js because that file does not export it … If a third file ever needs a day-step,
+   that is the moment it earns an export and both callers take it."* WO-6.3's month grid is the
+   third caller. So the function is exported from the file that carries the UTC scar in full, this
+   copy is gone, and there is no longer a second day-step in the tree that could disagree with it
+   about a DST seam. It is a READ like every other import above — a string in, a string out,
+   nothing touched. */
 
 function text(value) { return String(value == null ? '' : value).trim(); }
 

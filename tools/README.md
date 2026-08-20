@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 22-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 25-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -1008,7 +1008,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 991 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1011 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -1892,6 +1892,46 @@ that gets a sensitive assertion deleted next time. **The absence claims are deli
 filtered** — *no meeting state on the bare Wednesday, for any class* and *the string `not-taken`
 nowhere in a year* are made over everything, because an absence cannot be manufactured by somebody
 else's leftovers and a foreign row on that Wednesday is a thing this check should say out loud.
+
+**WO-6.3 moved it from 991 to 1011**: twenty call sites, all of them a new section at the foot of
+the file, none inside a loop and none a failure arm — the sixth view opened through the home
+screen's own button, one month with every row of the derived table on the day it belongs to, the
+wall of meeting states that is deliberately NOT drawn, the class filter read three ways, a review
+following its student through it, the review chip's own text searched against the five neighbours,
+presentation mode, the week's ledger, three touch measurements, the 390px overflow, the printed
+sheet, a due date moving with no other action, six tap-throughs in two checks, the empty state in
+both directions, and the teardown. **One call site elsewhere gains a result without being one:** the
+stuck-gate loop's `GATES` array takes `data-calendar-print` as its fourth entry — which is the block
+whose own comment says *"a fourth print surface … that names its button after its gate arrives here
+red on the run that adds it"* being collected on. So twenty-one executed results, and **the run
+prints 1029**, measured on the delivered tree: `1029 checks · 1029 passed · 0 failed · 0 skipped`,
+28,375 lines, 27.6 lines per check, 346s, exit 0.
+
+**It was NOT green on the first run, and both reds were the harness rather than the app** — worth
+the paragraph, because one of them is trap-shaped and is not in the numbered list. The first was
+`window.planbook.views`, which is not on the seam: the section asked `isClassScreen('calendar')`
+through it, the eval threw, and **the run died where it stood with no summary printed**, which is
+WO-2.26's shape (a `clickSel` on a door that had gone) arriving through a different door. The check
+was rewritten to assert what a teacher would SEE instead — no class tabs over the view, no switcher
+inside it, which is what not being a `CLASS_SCREENS` entry looks like on the glass — rather than
+widening the seam for one reading.
+
+**The second is trap 1's shape at the DOM level and it is worth adding to the list in spirit:
+`clickSel('[data-view-home]')` is not one element.** Four screens carry that hook and the header's
+own "All classes" tab carries a fifth, and which one is VISIBLE depends on the view —
+`src/classes.js` draws that tab on class screens only. On the calendar, which is not a class screen,
+the first match in document order is `#classView`'s, which is `.hidden`: `clickSel` measures it at
+0x0 and clicks the top-left corner of the viewport instead. Two checks went red and **a third passed
+by accident** — the navigation it thought it had done had not happened, and the screen it wanted was
+already up. The fix is a `goHome()` that finds the visible one by index. The lesson is the one trap 7
+teaches about hover: the artifact is indistinguishable from the defect, and a check that clicks a
+hidden element is measuring the corner of the page.
+
+*(That second red also found a real defect in the app, which is the part worth keeping: with the
+calendar up, the navy header's caption read **"Your classes"** over a panel headed **Calendar**.
+`src/classes.js`'s caption branch is reached by anything that is not a class screen, and it had been
+a constant because until WO-6.3 only one view reached it. It is a two-entry lookup now, with the
+condition under which a third view adds its line written beside it.)*
 
 The other half of WO-6.2's evidence is not here at all: `tools/wo-sweep.mjs` § 17 asserts
 structurally that `src/calendar-derived.js` contains no store call, no document mutation and none of

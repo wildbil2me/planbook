@@ -13,7 +13,11 @@ dependencies.
   ever — not "just for scripts." Anything scripted lives in `tools/*.mjs` under bare Node.
 - **Colors inline, not CSS variables.** This reads like a mistake and is not. Don't tidy it.
 - **No dark mode.** No `prefers-color-scheme`, no `[data-theme]`, anywhere.
-- **44px minimum** for every control, in the `@media (pointer: coarse)` block.
+- **44px minimum** for every control, in the `@media (pointer: coarse)` block. *(Exactly one control
+  departs: the 28px month chip in `src/calendar-view.css`, the owner's ruling on 2026-08-19, WO-6.3,
+  paid for by the week view where every chip is a real 44. It is written out at its point of departure
+  and the harness asserts it AS a departure. **It is not a precedent you may cite** — a new control
+  gets 44, or it gets the owner's own reading and its own note where it departs.)*
 - **`localStorage` prefix `planbook_`, UI preferences only** — never student data. Student data
   lives in IndexedDB.
 - **Accommodation, medical, and plan data never leaves the roster.** No merge field resolves it, no

@@ -13,6 +13,42 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A month you can actually look at — 2026-08-19
+
+**The calendar.** Open it from the home screen, beside *Days off* and *Events*. A month at a glance
+or a week up close, holding both the things you typed in and the things Planbook already knew:
+what is due, when a term starts and ends, which classes met and which you dropped, when grades are
+due, and whose IEP or 504 review is coming up.
+
+**Everything on it taps through to the thing that changes it.** A break opens Days off. A grades-due
+date opens Events with that row already in the form. A due date opens the assignment. A term edge
+opens that class's terms, a class's day opens its register, a review opens that student. Nothing on
+this screen is a dead label you have to go and find the real version of somewhere else.
+
+**Filter it to one class** and the filter reaches the computed items too, not just the ones you typed
+— so a term edge and a due date belong to their class the way you would expect. School-wide things
+stay put in every filter, because they were never about one class.
+
+**A quiet month says so** and points at the two panels that fill it, instead of looking broken.
+
+**A review date is still a date and a name.** No plan type, nothing medical, nothing from a behavior
+plan — not on screen, not on a printout, and with presentation mode on it is not there at all.
+Printing a month never emits one even with presentation mode off, which is the one rule on this
+screen that does not ask what mode you are in.
+
+**One deliberate trade, in case it reads as a bug.** Seven columns of a portrait iPad is about a
+hundred pixels of cell, and four thumb-sized chips plus the date is a cell twice that — which is a
+month you scroll through twice, which is no longer a month. So the chips in the **month** are smaller
+than everything else in this app is allowed to be, and the **week** is where every one of them is a
+full-sized target. The month is the survey; the week is the surface you touch.
+
+**A day you did not write anything down about is still blank** — not amber, not *not taken yet*.
+Planbook has not learned which classes are supposed to meet on a Tuesday, and drawing a month was
+the moment that would have been tempting.
+
+Two small things while we were in there: the caption over the calendar said *Your classes*, and the
+roster's review-date hint said nothing read that date yet. Both are true again.
+
 ### The calendar starts reading what is already there — 2026-08-19
 
 Nothing on screen changes yet. Under it, the calendar learned to answer four questions out of things

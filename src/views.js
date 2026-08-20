@@ -44,13 +44,33 @@ import { getPref, setPref } from './prefs.js';
    already, and renaming it would rename a stored preference to make a word in this file read
    better. WO-3.3 added `assignments` beside it; WO-3.5 added `scores` the same way, in one line and
    with no other change to this file than the two lists below. WO-3.7's `detail` is the third, and
-   the only one that is not a tab. */
+   the only one that is not a tab.
+
+   AND WO-6.3's `calendar` IS THE LINE THIS COMMENT HAS BEEN RESERVING SINCE WO-1.13 — "Phase 3's
+   gradebook and Phase 6's calendar are the two already known about", and both have now arrived. It
+   cost exactly what the sentence above promised: one line here and one `<div>` in index.html.
+
+   IT IS THE FIRST VIEW THAT BELONGS TO NO CLASS, which is why it appears in neither list below. It
+   is not a `CLASS_SCREENS` entry, so src/classes.js draws no class tabs over it and src/shell.js
+   does not treat it as a screen of the open class; it draws no segment in src/screen-nav.js; and it
+   needs no `REMEMBERED_AS` line, because there is no class screen for it to be written down as.
+
+   A RELOAD STILL LANDS ON THE CLASS GRID, and that is src/shell.js's boot line rather than anything
+   here: it restores `class` when the stored name is a class screen AND a class is open, and `home`
+   otherwise — so a stored `calendar` falls to the grid. Left as it stands, deliberately. Restoring
+   this view would mean deciding which month a reload comes back on, and the answer this screen
+   already gives on every arrival is "today", which is the class grid's answer said longer. What
+   `openView` is for is "was this browser inside a class or looking at the grid"; the calendar is
+   neither, and it is one tap from the grid either way.
+   (WO-6.4's glance page is `#homeView` grown and adds no line here at all; this is the one Phase 6
+   view, and that work order says so in its own second paragraph.) */
 const VIEWS = {
   home: 'homeView',
   class: 'classView',
   assignments: 'assignmentsView',
   scores: 'scoresView',
   detail: 'detailView',
+  calendar: 'calendarView',
 };
 
 /*

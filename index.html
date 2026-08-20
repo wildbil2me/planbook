@@ -153,6 +153,13 @@
        one because that block re-shows a dialog which is not on screen here — one idiom, one gate per
        surface, and src/detail.css says so at length. -->
   <link rel="stylesheet" href="src/detail.css">
+  <!-- The calendar grid’s own sheet (WO-6.3), sixth instance of the same convention and the
+       first that belongs to no class. It WEARS `.panel*`, `.class-action-btn`, `.toggle-btn` and
+       `.empty-state` from src/shell.css and restyles none of them; what it adds is the app’s
+       FOURTH @media print block, gated on its own `data-calendar-print` attribute — gated on its
+       own for the reason src/detail.css gives about not sharing the attendance one: each block
+       re-shows a different surface, and a shared gate would print the wrong one. -->
+  <link rel="stylesheet" href="src/calendar-view.css">
 </head>
 <body>
 
@@ -525,6 +532,19 @@
                   aria-haspopup="dialog"
                   title="Grades due, conferences, meetings, trips and reminders">
             <span aria-hidden="true">📌</span> Events
+          </button>
+          <!-- THE THIRD BUTTON IN THIS WRAPPER (WO-6.3), and it is the odd one out: the two above
+               open a dialog that AUTHORS something, and this one navigates — it puts the month
+               grid in <main>, which is why it carries no `aria-haspopup`. It is here because the
+               two panels beside it are where a teacher types the things the grid draws, so the
+               place she looks for "what does my month look like" is next to them. The wrapper
+               wraps (src/shell.css’s `.panel-title-actions`), so at phone width these three
+               stack rather than pushing the row into horizontal overflow — the arithmetic that
+               kept them out of the header strip is in the comment above, and
+               tools/verify-shell.mjs measures the result at 390x844 on every run. -->
+          <button class="class-action-btn" type="button" data-calendar-open
+                  title="The month and the week — what is due, what is off, and where the terms turn">
+            <span aria-hidden="true">🗓</span> Calendar
           </button>
         </div>
       </div>
@@ -1234,6 +1254,135 @@
 
       <p class="detail-empty hidden" id="detailEmpty"></p>
       <div id="detailContent"></div>
+    </div>
+  </div>
+</div>
+
+<!--
+  THE CALENDAR (WO-6.3) — the month and the week, over what the teacher authored and everything
+  the document already knows.
+
+  IT IS THE SIXTH VIEW AND IT BELONGS TO NO CLASS. src/views.js's header states exactly what a new
+  view costs — one line in `VIEWS` and one `<div>` here — and this is that `<div>`. It adds no
+  entry to `CLASS_SCREENS`, draws no tab in src/screen-nav.js and needs no `REMEMBERED_AS` line,
+  because there is no class it is a screen OF: a break closes the whole school, a grades-due date is
+  the same date for all five, and the class filter in the toolbar is a lens rather than a selection.
+  A reload therefore lands on the class grid rather than here, which is right — `openView` answers
+  "was this browser inside a class or looking at the grid", and the calendar is neither.
+
+  EVERYTHING BELOW IS EMPTY IN THE MARKUP except the controls that must not be rebuilt. The grid,
+  the class filter and the empty state's lead line are drawn from the open document by
+  src/calendar-view.js — the same call #homeGrid, #classTabBar and #yearList make, and for the same
+  reason: a hand-written specimen week here would be a second truth to keep in step with the real
+  one. The span pair and the pager are markup because they are this screen's fixed controls and a
+  renderer that rebuilt them would move a button out from under a thumb mid-tap; only their pressed
+  state is painted.
+
+  THE PRINT BUTTON IS NAMED DIFFERENTLY FROM THE GATE, ON PURPOSE. It carries
+  `data-calendar-month-print` and it only ASKS: src/print-gate.js answers `data-calendar-print` on
+  <body> — the attribute src/calendar-view.css's @media print block is selected under — from a
+  `beforeprint` listener, and no timer takes it off. `closest()` walks up to <body>, so a hook named
+  for the gate would match EVERY click on screen for as long as the gate is on, which is the owner's
+  own bug from 2026-08-13 (src/print-gate.js, and src/shell.js's census at `data-detail-sheet-print`).
+
+  THE COPY IN THE EMPTY STATE LIVES HERE rather than in a JavaScript file, the same call the install
+  banner, the backup nag and the home screen's own empty state make: it is the part a teacher reads,
+  and it should be revisable without opening a module. Only the line naming WHICH month is empty is
+  written from the renderer, because only that line changes.
+-->
+<div id="calendarView" class="hidden">
+  <div class="panel calendar-panel">
+    <div class="panel-header calendar-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Calendar</h2>
+          <!-- Which month or which week, written by src/calendar-view.js. -->
+          <p id="calendarRange"></p>
+        </div>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" data-calendar-month-print
+                  title="Print the month or week on screen">
+            <span aria-hidden="true">🖨</span> Print
+          </button>
+          <!-- The way back, and the same one route every other screen uses: `data-view-home` is
+               carried by the "All classes" tab in the header and by the class view's own panel
+               header, and this is a third door onto it rather than a third control. -->
+          <button class="class-action-btn" type="button" data-view-home>
+            <span aria-hidden="true">←</span> All classes
+          </button>
+        </div>
+      </div>
+
+      <!-- The toolbar: how much, where, and whose. Under the panel title rather than in the navy
+           header, which is the measurement src/classes.js records — the header strip already
+           carries the year, the backup, presentation mode and About, and a fifth control up there
+           overflows at 390px. -->
+      <div class="calendar-toolbar">
+        <div class="calendar-scale" role="group" aria-label="How much of the calendar to show">
+          <button type="button" class="toggle-btn" id="calendarScaleMonth"
+                  data-calendar-scale="month" aria-pressed="false"
+                  title="Show a whole month">Month</button>
+          <button type="button" class="toggle-btn" id="calendarScaleWeek"
+                  data-calendar-scale="week" aria-pressed="false"
+                  title="Show one week, with every class's day on it">Week</button>
+        </div>
+        <div class="calendar-pager" role="group" aria-label="Move the calendar">
+          <button type="button" class="class-action-btn move" data-calendar-page="earlier"
+                  aria-label="Show the month or week before this one"
+                  title="Show the month or week before this one">←</button>
+          <button type="button" class="class-action-btn" data-calendar-page="today"
+                  title="Come back to today">Today</button>
+          <button type="button" class="class-action-btn move" data-calendar-page="later"
+                  aria-label="Show the month or week after this one"
+                  title="Show the month or week after this one">→</button>
+        </div>
+        <!-- "All classes" and one button per active class, drawn from the open document. -->
+        <div class="calendar-classes" id="calendarClasses" role="group"
+             aria-label="Show only one class"></div>
+      </div>
+    </div>
+
+    <div class="calendar-body">
+      <!-- The printed sheet's own title. Never on screen — src/calendar-view.css shows it only
+           under the print gate, because the panel header above is the app talking to the teacher
+           and none of it belongs on paper. -->
+      <p class="calendar-print-stamp" id="calendarPrintStamp"></p>
+
+      <table class="calendar-table month" id="calendarGrid"></table>
+
+      <!-- Why a month with every class showing draws no per-class day. src/calendar-view.js writes
+           it and hides it the moment either condition stops holding; it is here because an absence
+           and a bug look identical, and this screen should say which one it is. -->
+      <p class="calendar-hint hidden" id="calendarHint"></p>
+
+      <!-- The honest empty state, shown by src/calendar-view.js only when the range on screen holds
+           nothing at all. The grid stays up behind it: a teacher who opened a calendar wants the
+           dates whether or not anything is on them, and a month replaced by a sentence is a month
+           she cannot look at.
+
+           The two buttons carry `data-dayoff-panel` and `data-events-panel` — the same hooks the
+           home screen's own header carries — so these are further doors onto two routes rather
+           than a second way of writing an event. An empty state that a teacher is meant to act on
+           has to lead somewhere. -->
+      <div class="empty-state hidden" id="calendarEmpty">
+        <p class="calendar-empty-lead" id="calendarEmptyLead"></p>
+        <p class="calendar-empty-text">
+          Nothing is due, no term turns, and nothing is written down here. Days off and breaks go in
+          one panel, and grades-due dates, conferences, meetings, trips and reminders in the other —
+          anything you add shows up on this grid, and so do your assignment due dates as you set them.
+        </p>
+        <div class="calendar-empty-actions">
+          <button class="class-action-btn" type="button" data-dayoff-panel
+                  aria-haspopup="dialog" title="Holidays, breaks and planned drops">
+            <span aria-hidden="true">📅</span> Days off
+          </button>
+          <button class="class-action-btn" type="button" data-events-panel
+                  aria-haspopup="dialog"
+                  title="Grades due, conferences, meetings, trips and reminders">
+            <span aria-hidden="true">📌</span> Events
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2233,9 +2382,16 @@
                      aria-label="Plan review date">
             </label>
           </div>
+          <!-- The second sentence said "nothing reads it yet" until WO-6.3, which is the work order
+               that made it read. It is corrected rather than deleted because the teacher needs to
+               know WHERE it shows up now — a date that quietly starts appearing on a screen she
+               projects is the disclosure presentation mode exists to prevent, so the copy says both
+               halves in the order she needs them. -->
           <p class="roster-hint">
             The review date is the annual review or re-evaluation you are expected to prepare for.
-            It is stored so the calendar can carry it later; nothing reads it yet.
+            It shows up on the calendar as the date and this student's name — never the plan type,
+            never an accommodation — and it disappears from every screen while presentation mode is
+            on. It never reaches a printout.
           </p>
 
           <div class="modal-section-label">Accommodations</div>

@@ -407,16 +407,42 @@ export const MAX_SERIES = 60;
   `new Date('2026-11-26')` — a UTC midnight then read through the LOCAL clock, which is one
   timezone away from being the day before, and which has already cost src/attendance.js twice.
   Parsing and formatting on the same side of that line is the whole of the difference.
+
+  EXPORTED SINCE WO-6.3, AND THAT IS THIS FILE COLLECTING ON A NOTE SOMEBODY ELSE LEFT. It was
+  private, and src/calendar-derived.js carried an eight-line copy of it under a comment saying so:
+  *"Not imported from src/calendar.js because that file does not export it, and this is eight lines
+  against widening that module's surface for one caller. If a third file ever needs a day-step, that
+  is the moment it earns an export and both callers take it."* WO-6.3's month grid is the third
+  caller, so the export happens here and the copy over there is gone. Two functions stepping a day
+  are two functions that can disagree about a DST seam, and this one is the one with the scar on it.
 */
 const DAY_MS = 86400000;
 function utcOf(iso) {
   const p = String(iso).split('-');
   return Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
 }
-function shiftDays(iso, days) {
+export function shiftDays(iso, days) {
   const at = new Date(utcOf(iso) + days * DAY_MS);
   const pad = (n) => (n < 10 ? '0' : '') + n;
   return at.getUTCFullYear() + '-' + pad(at.getUTCMonth() + 1) + '-' + pad(at.getUTCDate());
+}
+
+/* WHICH DAY OF THE WEEK AN ISO DATE IS — 0 for Sunday, 6 for Saturday, and −1 for anything this
+   file cannot read as a date. WO-6.3's month grid needs it to know which column a month starts in;
+   nothing else in the app has ever asked.
+
+   It rides on utcOf() above for the reason that block gives at length: `getUTCDay()` on an instant
+   built from three numbers is the same weekday everywhere on earth, where `new Date(iso).getDay()`
+   is one timezone away from being yesterday's. A grid whose first column shifted by a timezone
+   would draw the whole month one cell out, which is the kind of wrong that looks like a layout bug
+   and is a date bug.
+
+   IT ANSWERS NOTHING ABOUT WHETHER A CLASS MEETS. This is arithmetic on a string; the model that
+   plans/rotating-schedule.md removed is the one that maps a weekday to a class, and nothing here
+   or anywhere downstream of it does that. */
+export function weekdayOf(iso) {
+  if (!isDate(iso)) return -1;
+  return new Date(utcOf(iso)).getUTCDay();
 }
 
 /* The three rules plus the two a repeat adds. Same shape and same contract as eventFault(): the

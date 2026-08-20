@@ -269,6 +269,40 @@
                                       showing, written as it is typed. It is a setting about the
                                       YEAR rather than about the entry being typed, and WHERE it
                                       warns is WO-6.4's glance page and not this panel
+      data-calendar-open              puts the month grid in <main> — the sixth view (WO-6.3), and
+                                      the only one that belongs to no class. Carried by the third
+                                      button on the home screen's title row, beside the two panels
+                                      that author what the grid draws. It navigates rather than
+                                      opening a dialog, which is why it has no aria-haspopup
+      data-calendar-scale="month|week"  how much of the calendar is on screen. The anchor is kept
+                                      across the switch: a teacher who paged to the week of the
+                                      14th and then asked for the month means the month that week
+                                      is in
+      data-calendar-page="earlier|later|today"  moves the window one month or one week; `today`
+                                      comes back to the day the screen opens on
+      data-calendar-filter="<classId>"  which class the grid is about; an empty value is every
+                                      class. It is a LENS and not a selection — it changes nothing
+                                      about which class is open, and it is not remembered, for the
+                                      reason src/calendar-view.js gives: a filter that survived a
+                                      week would be a month quietly hiding four fifths of itself
+      data-calendar-item              on every chip on the grid, with four companions that say what
+                                      it is: data-calendar-kind (an authored kind or one of
+                                      src/calendar-derived.js's five), data-calendar-ref (the id of
+                                      the event, assignment, term or student behind it),
+                                      data-calendar-class and data-calendar-date. WHERE a tap goes
+                                      is resolved in the listener below, because it is an order of
+                                      operations — select a class, swap the view, open a panel —
+                                      and this file is where every other one in this app lives
+      data-calendar-month-print       prints the month or week on screen. Like the three print
+                                      doors above it, it only ASKS: `data-calendar-print` — the
+                                      attribute src/calendar-view.css's @media print block is
+                                      selected under — is answered by src/print-gate.js at
+                                      `beforeprint` and taken off by nothing here. THE `-month-` IS
+                                      LOAD-BEARING, for the reason spelled out at
+                                      `data-detail-sheet-print` above: `closest()` walks up to
+                                      <body>, so a hook named for its own gate matches every click
+                                      on screen for as long as the gate is on. This pair is
+                                      separate on purpose rather than by luck of naming (WO-6.3)
       data-attendance-drop="<iso>"    one tap: the class did not meet that day
       data-attendance-undrop="<iso>"  one tap back, leaving the day not taken yet
       data-attendance-edit="<iso>"    the deliberate unlock on a column, one column at a time — a
@@ -418,6 +452,13 @@ import * as events from './events.js';
    through src/attendance.js, which imports src/calendar.js, so the derived half living in the model
    would close the import loop this repo has refused six times. It has no writer in it at all. */
 import * as calendarDerived from './calendar-derived.js';
+/* WO-6.3's SCREEN over both of those — the sixth view, and the first surface in Phase 6 with a DOM
+   in it. It is a fourth calendar module rather than more of any of the three because it is a
+   RENDERER: it imports the authored reader, the derived reader, the class list and the attendance
+   state predicate, and none of them imports it back. It also imports src/views.js, for the one
+   question the print gate has to ask — is this screen the thing on screen — which is src/detail.js's
+   arrangement one view over. */
+import * as calendarView from './calendar-view.js';
 import * as roster from './roster.js';
 /* WO-1.23's contact import, and the two modules run ONE WAY: this one imports src/roster.js for the
    name parser, the match key and the record constructors, and src/roster.js imports it for nothing
@@ -509,7 +550,21 @@ function afterYearChange() {
 */
 function afterClassChange() {
   home.refreshHome();
-  if (!classes.getSelectedClassId()) showHome();
+  /*
+    AND THE CALENDAR, WHEN THAT IS WHAT IS UP (WO-6.3). Archiving a class takes its due dates, its
+    term edges and its meeting states off the grid — src/calendar-derived.js answers about active
+    classes only — and deleting or renaming one moves the class filter under the teacher's thumb.
+
+    IT IS AN `else if` CHAIN RATHER THAN A LINE BEFORE THE OTHERS, and that is the whole reason it
+    is written here at length. The next branch is "with no active class there is no working surface
+    to be on, so put her on the grid", which has been right for every view in this app because
+    every view until now was a class's or was the grid. The calendar is neither: it draws the
+    school's own events, and a document with no classes in it still has a Thanksgiving break on
+    that month. Bouncing a teacher off this screen because she archived her last class would be
+    that rule applied one view too far.
+  */
+  if (views.currentView() === 'calendar') calendarView.renderCalendar();
+  else if (!classes.getSelectedClassId()) showHome();
   else if (views.isClassScreen(views.currentView())) paintClassScreen(views.currentView());
   /* AND THE STRIP THAT SAYS WHICH SCREEN OF IT (WO-3.3). Cheap enough to repaint when nothing
      changed — it is six elements — and the cost of leaving it out is a strip that survives a class
@@ -689,6 +744,20 @@ function afterAssignmentChange() {
      name in a sentence a teacher is reading out to a parent; changing its points changes how many
      points are at stake and the score needed to reach the next band; deleting it takes both away. */
   if (views.currentView() === 'detail') detail.renderDetail();
+  /*
+    AND THE CALENDAR, WHERE AN ASSIGNMENT IS A DAY (WO-6.3). Its DUE DATE is a chip on a cell, read
+    out of `assignments[].due` every time the grid is drawn and copied nowhere — so moving the date
+    moves the chip, and this line is what makes that true while the editor is open OVER the grid.
+
+    IT IS NOT WHAT MAKES THE ACCEPTANCE LINE TRUE, and the difference is worth stating so that
+    deleting this line does not read as deleting the feature. "Change the date on the assignment and
+    the month grid shows it on the new day, with no other action" holds because nothing is stored:
+    the grid recomputes on arrival, so walking to the calendar afterwards shows the new day whether
+    or not this line exists. What this buys is the case where the teacher never walks anywhere —
+    she reached the editor from a chip on this grid, and the grid behind the dialog would otherwise
+    go on showing the day she has just moved the work off.
+  */
+  if (views.currentView() === 'calendar') calendarView.renderCalendar();
 }
 
 /*
@@ -792,6 +861,132 @@ function showHome() {
 }
 
 /*
+  THE WAY ONTO THE CALENDAR (WO-6.3), and the shape is showHome()'s one view over.
+
+  Four calls, each a fact about a different part of the screen. The screen is RESET first — every
+  arrival starts on today, on the month, with every class showing (src/calendar-view.js says why
+  none of the three is remembered) — and reset before the view swaps, so that the first paint is
+  already of the right month rather than of the one this browser was left on. The view swaps. The
+  tab strip repaints because it takes the class tabs OFF anywhere that is not a class screen, which
+  this is not (src/classes.js's refreshClassBar reads which view is up). The screen switcher goes
+  empty for showHome()'s reason: this is not a screen OF a class, so there is nothing to switch
+  between, and an empty strip keeps the panel header the same height between views.
+
+  WHICH CLASS IS OPEN IS UNTOUCHED, and so is every preference except `openView`, which src/views.js
+  writes on any showView(). The class filter in the toolbar is a LENS: it changes what this grid
+  draws and nothing about which class a teacher goes back to.
+
+  Said out loud for the reason selectClass() and showHome() are: this moves a screen a screen-reader
+  user cannot see move. The month is named in the sentence, because "Calendar" alone leaves the one
+  thing she needs — which month — to be discovered by arrowing into the grid.
+*/
+function showCalendar() {
+  calendarView.resetCalendar();
+  views.showView('calendar');
+  classes.refreshClassBar();
+  screenNav.refreshScreenNav();
+  calendarView.renderCalendar();
+  const range = document.getElementById('calendarRange');
+  announce('Calendar' + (range && range.textContent ? ' — ' + range.textContent : '') + '.');
+}
+
+/*
+  A TAP ON A CHIP, AND THE FIVE PLACES IT CAN LAND (WO-6.3's fourth acceptance line).
+
+  "Every item taps through to its source" is one sentence about six kinds of item, and the six do
+  not have one destination between them. What they have in common is the QUESTION — where is this
+  thing changed? — and each answer is a route this app already has, reached through the same module
+  the hook beside it reaches. Nothing new is opened here and nothing is written.
+
+    an authored day off or planned drop   the days-off panel, which is the only place one is
+                                          written and the only place one is deleted
+    any of the six general kinds          the events panel, with that row loaded into its form, so
+                                          the teacher lands on the entry she tapped rather than on a
+                                          list to find it in
+    an assignment's due date              that class's assignment list, with the assignment open —
+                                          the due date is a field in that editor, which is the thing
+                                          that moves the chip
+    a term edge                           the term editor for that class, where the two dates are
+    a class's day                         a COVERED one opens the days-off panel, because the undo
+                                          for a covered day lives on the event rather than on the
+                                          ledger (src/attendance.css says the same thing about the
+                                          column head); a taken or dropped one opens that class's
+                                          registry, which is the ledger itself
+    a review date                         that student's editor with the support panel already
+                                          showing — `data-supports-open`'s own route, reached
+                                          through the same call, because a tap on a review chip is
+                                          exactly the deliberate tap the roster dot is
+
+  THE LAST ONE IS THE ONE TO READ TWICE. It hands `true` as the third argument, which is what opens
+  the support panel rather than leaving it collapsed, and that is the same judgement WO-1.8 made
+  about the dot: the tap IS the deliberate one docs/data-model.md's rule 1 asks for, so a second tap
+  inside the dialog would be ceremony rather than protection. It cannot be reached in presentation
+  mode at all, because the chip that carries it is not drawn — src/calendar-derived.js returns no
+  review while the mode is on, and there is no other door here.
+
+  WHAT IT DOES NOT DO, said out loud so the gap is a decision rather than an oversight: a taken or
+  dropped class day opens that class's registry on TODAY rather than on the day that was tapped.
+  src/attendance.js's editDay() unlocks a column inside the strip that screen is already showing,
+  and there is no entry point that anchors the strip on a date from outside it. Opening the ledger
+  the chip is a fact about is the honest half of the answer; anchoring it is a follow-up with an
+  owner (src/attendance.js) rather than something to improvise from here.
+*/
+function openCalendarItem(button) {
+  const item = calendarView.itemAt(button);
+  if (!item) return;
+
+  if (item.authored) {
+    if (item.attendanceKind) { daysOff.openDaysOff(button); return; }
+    events.openEvents(button);
+    /* Opened first, then filled: openEvents() rebuilds the panel from the document, so loading the
+       row before it would be loading it into a form the open is about to redraw. */
+    if (item.ref) events.editEvent(item.ref);
+    return;
+  }
+
+  if (item.kind === calendarDerived.REVIEW_DATE) {
+    if (item.ref) roster.openStudentEditor(item.ref, button, true);
+    return;
+  }
+  if (item.kind === calendarDerived.TERM_START || item.kind === calendarDerived.TERM_END) {
+    classes.openTermEditor(item.classId, button);
+    return;
+  }
+  if (item.kind === calendarDerived.ASSIGNMENT_DUE) {
+    if (!openClassOn(item.classId, 'assignments')) return;
+    if (item.ref) assignments.openAssignmentEditor(item.ref, button);
+    return;
+  }
+  if (item.kind === calendarDerived.MEETING_STATE) {
+    if (item.ref) { daysOff.openDaysOff(button); return; }
+    openClassOn(item.classId, 'class');
+  }
+}
+
+/*
+  MAKE A CLASS THE OPEN ONE AND LAND ON ONE OF ITS SCREENS — the `data-class-tab` route with a
+  destination on the end of it, and its only caller is the tap-through above.
+
+  It is the same three acts that hook performs, in the same order and for the same reasons
+  (selectClass writes the preference and swaps the view, resetRegistry puts the marking screen back
+  to today BEFORE anything paints it), with showClassScreen() in place of afterClassChange()'s paint
+  because the destination is known. home.refreshHome() is what afterClassChange() would have done
+  for the cards, which have to follow the open class even though nobody is looking at them.
+
+  Answers false for a class that is not there — a chip can outlive the class it names by exactly as
+  long as it takes to archive one behind this screen — and the caller then opens nothing rather than
+  navigating somewhere blank.
+*/
+function openClassOn(classId, screen) {
+  if (!classId || !classes.getActiveClasses().some((c) => c.id === classId)) return false;
+  classes.selectClass(classId);
+  attendance.resetRegistry();
+  home.refreshHome();
+  showClassScreen(screen);
+  return true;
+}
+
+/*
   Today's attendance changed, and the card behind the dialog redrawn.
 
   THE SAME SHAPE AS afterClassChange() ABOVE, AND THE SAME COST OF FORGETTING. src/attendance.js
@@ -826,6 +1021,12 @@ function afterAttendanceChange() {
 function afterCalendarChange() {
   home.refreshHome();
   if (views.currentView() === 'class') attendance.renderAttendance();
+  /* AND THE GRID THAT DRAWS EVERY ONE OF THEM (WO-6.3) — the third surface this chain reaches, and
+     the only one that shows all eight kinds rather than the two attendance reads. It is also the
+     screen a teacher is most likely to be standing on when she authors one: the empty state's own
+     two doors open those panels over this view. Guarded on the view being up, for the reason the
+     other two lines are: painting a hidden screen is thirty-five cells nobody is looking at. */
+  if (views.currentView() === 'calendar') calendarView.renderCalendar();
 }
 
 /* A restore replaces the whole document, so everything drawn from one is redrawn — the class bar
@@ -907,6 +1108,24 @@ function flipPresentationMode() {
     order putting the roster's INDICATOR here answers for the print surface and the CSV first.
   */
   if (views.currentView() === 'detail') detail.renderDetail();
+  /*
+    AND THE CALENDAR IS ON THIS LIST FROM THE DAY IT SHIPPED (WO-6.3), which is what the paragraph
+    about src/home.js above predicts happens the first time a screen draws something out of a
+    student's `supports` block. This one does: an IEP/504 review date is a chip on a cell, with a
+    name on it.
+
+    THE SUPPRESSION IS NOT THIS LINE'S. src/calendar-derived.js's reviewDatesIn() asks
+    src/supports.js's one question and returns an empty list while the mode is on, so the chip is
+    absent from the next render rather than styled away — src/calendar-view.js has no test of its
+    own and must never grow one. What this line buys is the word "next": a teacher who reaches for
+    this switch with the month already on the glass is a teacher whose iPad is about to face the
+    room, and a suppression that only applies to the following render is the exact defect the
+    paragraph at the top of this function describes.
+
+    Guarded on the view, like the four other repaints in this file: every path onto this screen
+    renders it on arrival, so a repaint of a hidden view is work nobody sees.
+  */
+  if (views.currentView() === 'calendar') calendarView.renderCalendar();
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -1398,12 +1617,18 @@ document.addEventListener('click', (e) => {
 
   /* ── calendar events (WO-6.1) ──
      Directly under the days-off block because they are two doors onto one array and a reader
-     looking for one will be looking for the other. NONE OF THESE CHAINS afterCalendarChange(),
-     and the absence is deliberate rather than forgotten: that chain redraws the home cards and the
-     registry, both of which read `no-school` and `dropped` and nothing else (src/calendar.js's
-     coveringEvent()). A conference changes nothing on either screen, so a repaint here would be
-     two paints buying nothing — and the day WO-6.3's grid or WO-6.4's glance page reads these
-     kinds, its repaint joins the chain and these lines gain it. */
+     looking for one will be looking for the other.
+
+     THE TWO THAT WRITE NOW CHAIN afterCalendarChange(), AND THIS IS THE NOTE THAT PREDICTED IT
+     BEING COLLECTED ON. It used to read: "NONE OF THESE CHAINS afterCalendarChange() … that chain
+     redraws the home cards and the registry, both of which read `no-school` and `dropped` and
+     nothing else. A conference changes nothing on either screen … and the day WO-6.3's grid or
+     WO-6.4's glance page reads these kinds, its repaint joins the chain and these lines gain it."
+     That day is WO-6.3. The month grid draws all eight kinds, its empty state opens this very panel
+     over itself, and an event deleted behind a dialog would otherwise sit on the grid until the
+     teacher navigated away and back. The other four hooks below still chain nothing, and for the
+     unchanged reason: they move a pill, load a row into the form, or abandon an edit, and none of
+     them touches `doc.events`. */
   const eventsPanel = e.target.closest('[data-events-panel]');
   if (eventsPanel) { events.openEvents(eventsPanel); return; }
   const eventKind = e.target.closest('[data-event-kind]');
@@ -1415,10 +1640,45 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-event-cancel-edit]')) { events.cancelEdit(); return; }
   const eventRemoveSeries = e.target.closest('[data-event-remove-series]');
   if (eventRemoveSeries) {
-    events.removeSeries(eventRemoveSeries.getAttribute('data-event-remove-series')); return;
+    events.removeSeries(eventRemoveSeries.getAttribute('data-event-remove-series'));
+    afterCalendarChange();
+    return;
   }
   const eventRemove = e.target.closest('[data-event-remove]');
-  if (eventRemove) { events.removeEvent(eventRemove.getAttribute('data-event-remove')); return; }
+  if (eventRemove) {
+    events.removeEvent(eventRemove.getAttribute('data-event-remove'));
+    afterCalendarChange();
+    return;
+  }
+
+  /*
+    ── the calendar grid (WO-6.3) ──
+
+    The sixth view, and the only block in this listener whose last hook resolves to five different
+    destinations. That branching is HERE rather than in src/calendar-view.js on purpose: what a tap
+    on a chip means is "select this class, swap the view, open that panel", which is an order of
+    operations, and this file is where every other one in this app is stated. A renderer that knew
+    how to open a class would have to import the navigation that imports it.
+  */
+  if (e.target.closest('[data-calendar-open]')) { showCalendar(); return; }
+  const calendarScale = e.target.closest('[data-calendar-scale]');
+  if (calendarScale) {
+    calendarView.setCalendarScale(calendarScale.getAttribute('data-calendar-scale'));
+    return;
+  }
+  const calendarPage = e.target.closest('[data-calendar-page]');
+  if (calendarPage) {
+    calendarView.pageCalendar(calendarPage.getAttribute('data-calendar-page'));
+    return;
+  }
+  const calendarFilter = e.target.closest('[data-calendar-filter]');
+  if (calendarFilter) {
+    calendarView.setCalendarFilter(calendarFilter.getAttribute('data-calendar-filter'));
+    return;
+  }
+  if (e.target.closest('[data-calendar-month-print]')) { calendarView.printCalendar(); return; }
+  const calendarItem = e.target.closest('[data-calendar-item]');
+  if (calendarItem) { openCalendarItem(calendarItem); return; }
 
   /* ── attendance ──
      High in this listener, above the roster and the teacher's details: these are the taps a
@@ -1693,9 +1953,15 @@ document.addEventListener('submit', (e) => {
     daysOff.createFromForm(); afterCalendarChange(); return;
   }
   /* A calendar event, an edit to one, or a weekly repeat — one button, because the teacher made
-     one decision and the form already says which of the three it is about. No repaint chained, for
-     the reason the click block above gives: nothing behind this dialog reads these six kinds yet. */
-  if (form.hasAttribute('data-event-create')) { events.createFromForm(); return; }
+     one decision and the form already says which of the three it is about. It chains the repaint
+     unconditionally for the reason the day-off form above does — this tap may refuse instead of
+     writing, and a paint that was not needed costs a paint where a missing one costs a grid still
+     showing the conference she has just moved. The sentence that used to stand here ("nothing
+     behind this dialog reads these six kinds yet") stopped being true at WO-6.3: the month grid
+     draws all eight, and its own empty state opens this panel over it. */
+  if (form.hasAttribute('data-event-create')) {
+    events.createFromForm(); afterCalendarChange(); return;
+  }
   if (form.hasAttribute('data-class-rename-save')) {
     classes.saveRename(form.getAttribute('data-class-rename-save'));
     afterClassChange();
@@ -2612,6 +2878,18 @@ window.planbook = {
      identical on screen. Nothing in the app reads window.planbook — see the block above for why
      the seam outlived the shelf. */
   calendarDerived,
+  /* `calendarView` joined at WO-6.3, and its reason is `detail`'s and `gradesReport`'s rather than
+     the reading reason `calendar` gives: every control this screen has is a button a teacher can
+     touch and tools/verify-shell.mjs touches all of them. calendarModel() is the same build-it /
+     hand-it-over split those two use — the whole of what is on screen, as data, with no DOM
+     between the readers and it — and what it answers is the pair of claims a rendered grid cannot
+     be asked cleanly. "The class filter applies to derived items as well as authored ones" and "a
+     derived due date moves with its assignment" are claims about which items are in which cells,
+     and a check that read them out of markup would also have to be right about markup, which is how
+     a correct build reddens over a class name. The harness reads this AND the DOM, so a model that
+     is right about a grid nobody drew still fails. Nothing in the app reads window.planbook — see
+     the block above for why the seam outlived the shelf. */
+  calendarView,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

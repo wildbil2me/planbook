@@ -6966,6 +6966,14 @@ plan type all need a grid to be looked at. They stay `- [ ]` in
 `plans/work-orders/phase-6-calendar-glance.md` and close there. The model half of the review-date
 line is proven above; what is owed is the cell.
 
+*(**Two of the three closed at WO-6.3 on 2026-08-19** and are ticked back at their origin, because a
+re-homed line that lands and is never ticked where it was written leaves the tracker claiming an open
+box forever: the due date moves with its assignment, and tapping one opens that class's assignment
+list with that assignment's own editor up. **The third stays open**, and deliberately: the line it
+was re-homed to is 👤, and the whole of what that line is 👤 for — a palette and a suppression read on
+the device, across a room — is the half this box cannot be ticked without. The data half is green on
+the rendered grid.)*
+
 *Desk pass 2026-08-19: `verify-shell.mjs` **1008 of 1008, 0 failed, 0 skipped**, 319s, exit 0 — up
 from 998 on the tree this work order arrived on. Ten new executed checks in one new section at the
 foot of the file, none inside a loop, one of them a fixture guard. **Green on the first run**, which
@@ -6975,6 +6983,126 @@ review — both pre-existing shapes, and `src/calendar-derived.js` joins the fir
 lines: six comments stating the prohibition it obeys and one import of the two sanctioned readers in
 `src/supports.js`. Its § 17 was planted against on the delivered tree — a `d.events = out` and a
 `plan:` on the review record — and reddened on all three of its arms before the file was put back.*
+
+---
+
+
+### WO-6.3 — Month & week views
+
+**What this adds.** The calendar you can look at: a month grid and a week grid over everything the
+teacher typed into `doc.events` **plus** everything WO-6.2's read side computes — assignment due
+dates, term edges, which classes met and which were dropped, and IEP/504 review dates. It is the
+sixth view in `<main>` and the first that belongs to no class: no class tabs over it, no segment on
+the class-screen switcher, and its door is a third button on the home screen's title row, beside the
+two panels that author what it draws.
+
+**Everything on it taps through.** A closure opens the days-off panel, a grades-due date opens the
+events panel with that row loaded into its form, a term edge opens the term editor, an assignment's
+due date opens that class's assignment list with the assignment's own editor up, a class's recorded
+day opens that class's registry, and a review date opens that student's editor with the support
+panel already showing.
+
+**Nothing is stored and nothing is cached.** Move an assignment's due date and the chip is on the
+new day the next time the grid is drawn, because the month is recomputed from `assignments[].due`
+every time. There is nothing to invalidate.
+
+**Two things it deliberately does not draw**, and both are the same rule. A weekday nobody wrote
+anything down about is blank — `plans/rotating-schedule.md` is why, and it is a month grid that
+makes a schedule model look necessary. And a month showing *every* class draws no per-class meeting
+state at all: five classes across twenty weekdays is a hundred `Taken` chips, which is the wall of
+amber in the reassuring colour. Pick a class, or open the week, and the ledger is there. The screen
+says so in words under the grid.
+
+**The review chip is a date and a name.** `Review · Ada Probe`, never a plan type, never an
+accommodation, and nothing at all while presentation mode is on — it is not drawn, because the read
+side returns nothing while the mode is on. It never reaches a printout in either mode.
+
+- [x] The calendar is the sixth VIEW and belongs to no class: the home screen's button puts it in
+      `<main>`, and once it is up the header draws no class tabs over it and there is no
+      class-screen switcher inside it.
+- [x] One month draws every row of the derived table and every authored event on the day it belongs
+      to — the closure on both of its days, both term edges, the due date, the planned drop, the
+      grades-due date and the review — each as a labelled `<button>`.
+- [x] With every class showing, a month draws no per-class meeting state and says so in words under
+      the grid; the weekday nobody wrote anything down about is empty, and the word `Taken` appears
+      nowhere on it.
+- [x] The class filter applies to derived items as well as authored ones: filtered to one class the
+      due date, both term edges and both meeting states are there and filtered to the other class
+      none of them is — while the school-wide closure and grades-due date, which name no class,
+      survive both.
+- [x] A review date follows its student through the class filter — shown for the class whose roster
+      that student is on, gone for the class they are not in.
+- [x] A review date on a cell says the word, the name and its date and nothing else: no plan type,
+      no accommodation, no medical text, no behavior-plan text and no case manager anywhere in the
+      grid's text **or its markup**, though all five are on that student's record.
+- [x] In presentation mode the review is gone rather than redacted — no element, the token
+      `review-date` nowhere in the markup, and neither the surname nor the date anywhere in it —
+      while every other chip on the month is untouched.
+- [x] The week view draws the per-class meeting ledger with every class showing, wearing
+      `src/attendance.js`'s own sentence and the marking screen's own palette.
+- [x] A derived due date moves with its assignment **with no other action**: the date is changed on
+      the assignment, the calendar is left and opened again, and the chip is on the new day and not
+      on the old one. Both directions.
+- [x] All six kinds of item tap through to their source, each one clicked.
+- [x] A month with nothing in it shows an honest empty state: the grid stays up with its cells
+      drawn, the message names the month, and it leads to the two panels that fill it. And a month
+      with something in it does not show it.
+- [x] No printout of a calendar emits a review date, whatever presentation mode says: under an
+      emulated print media the review chip computes to `display: none` with the gate on **and with
+      the gate off**, while the due-date chip beside it is still drawn and the sheet keeps its own
+      stamp. (`wo-sweep.mjs` § 18 is the other half: no attribute handed to `registerPrintGate()`
+      anywhere in `src/` appears in `src/shell.js`'s delegated `closest()` census, and every gate is
+      reconciled with the `@media print` block selected under it, both directions.)
+- [x] Every control that is not a chip — the span pair, the pager, the class filter, Print, the way
+      back — clears 44px in both directions under a coarse pointer, over 25 controls.
+- [x] Every chip in the **week** view clears 44px; every chip in the **month** view sits at its
+      documented 28px floor and **below** 44, asserted as a departure so a silent drift down and a
+      silent "fix" up both go red.
+- [x] A month full of events does not scroll sideways at 390px: the document and the grid both
+      report a `scrollWidth` equal to their `clientWidth` over 35 cells.
+- [x] 👤 **A month with a break, two pre-drops, six assignments and a grades-due deadline renders
+      legibly on an iPad, without horizontal scrolling.** The overflow half is measured above; what
+      needs the device is *legibly* — seven columns of a ~100px cell, read at arm's length in
+      portrait and in landscape. Force-quit from the app switcher first: this is a `SHELL` change
+      (**v87**), and a reload is not enough. 👤
+- [x] 👤 **A review date on a month cell shows a date and a name and no plan type, and in
+      presentation mode the cell shows nothing at all where it was — read across a room.** The data
+      half is green above and is not what this asks. The chip takes `.supports-panel`'s subdued card
+      (amber means *act on this*, red means *this destroys something*, and a 504 review is neither);
+      whether that reads at a distance, and whether it is distinct enough from the term-edge chip
+      beside it, is the owner's call on her own hardware. 👤
+- [x] 👤 **Every control this screen adds clears 44px under a thumb — and the month chip's 28px
+      departure is the owner's to keep or refuse.** The arithmetic is in `src/calendar-view.css` at
+      the point of departure: four 44px chips plus a date line is a ~200px cell, six rows of which
+      is a month you scroll through twice. The week view's chips are a real 44 and are the trade
+      that pays for it. Read it under a thumb: if the month chip is too small to hit, the answer is
+      the owner's — a taller cell and a scrolling month, or fewer chips per cell with a "+2 more",
+      or the week as the only touch surface. 👤
+
+*👤 pass 2026-08-19, the owner's own iPad, after a force-quit onto v87: **all three green.** The
+month reads at arm's length in portrait and in landscape. The review chip reads across a room and is
+distinct from the term-edge chip — and note for the next reading, because it cost nothing here only
+because it was warned about: presentation mode is **on** unless this browser turned it off, so a fresh
+profile shows no chip for the right reason, and the reading has to start by turning it off or it is a
+reading of an absence. The 28px month chip is **kept** — ruled in under a thumb, which makes it the
+first sub-44px control in the app rather than another `.class-card-state`. The registry opening on
+today rather than on the day tapped was read, accepted as not blocking, and **booked as WO-6.5**
+rather than left in a dispatch result — see `plans/work-orders/phase-6-calendar-glance.md`.*
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **1029 of 1029, 0 failed, 0 skipped**, 346s, exit 0 — up
+from 1008 on the tree this work order arrived on. Twenty new call sites in one new section at the
+foot of the file, none inside a loop and none a failure arm, plus one extra result out of the
+stuck-gate loop, which takes `data-calendar-print` as its fourth gate.* `wo-sweep.mjs` *is 25 checks,
+23 passed, 0 failed, 2 to review — both pre-existing shapes; § 18 is new and was planted against on
+the delivered tree, renaming the print control to its own gate's string, which reddens it and names
+the file and line.* **It was not green on the first run and neither red was the app**: the section
+read `window.planbook.views`, which is not on the seam, and the eval threw hard enough to kill the
+run with no summary; and `clickSel('[data-view-home]')` clicked a `.hidden` copy of that hook,
+because which of the five is visible depends on the view. Both are written up in `tools/README.md`
+beside the count. **The second one found a real defect**: with the calendar up, the navy header's
+caption read *"Your classes"* over a panel headed *Calendar*, because `src/classes.js`'s caption
+branch is reached by anything that is not a class screen and had been a constant since only one view
+reached it. It is a two-entry lookup now.
 
 ---
 

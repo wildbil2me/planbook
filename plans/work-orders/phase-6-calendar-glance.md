@@ -140,7 +140,7 @@ recurrence, and the validation lift. Read the size against that list.
 
 ## WO-6.2 — Derived events
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-6.1, WO-3.3 · **Owes** WO-6.3
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-6.1, WO-3.3
 **Closes roadmap** Phase 6 → "Derived events computed at render from assignments, terms, and the
 schedule — not stored." *(the fragment elided the middle of the box until 2026-08-08, WO-2.15. An
 ellipsis inside a fragment matches nothing: `norm()` strips it rather than wildcarding it, so a
@@ -186,9 +186,9 @@ this work order is the whole argument.
   `**Traps**`.
 
 **Acceptance**
-- [ ] Changing an assignment's due date moves it on the calendar with no other action.
-      → WO-6.3 "A derived due date moves with its assignment: change the date on the assignment and
-      the month grid shows it on the new day, with no other action"
+- [x] Changing an assignment's due date moves it on the calendar with no other action.
+      *(Closed at WO-6.3 on 2026-08-19 and ticked back here, because a re-homed line that lands and
+      is never ticked at its origin leaves the tracker claiming an open box forever.)*
 - [x] `events[]` contains no derived entry, checked deterministically rather than by feel: seed a
       month holding an assignment due date, a term boundary, a recorded meeting, a planned drop and a
       review date; render it, page one month forward and one back, and re-read `doc.events` — it holds
@@ -202,11 +202,18 @@ this work order is the whole argument.
       half of the claim structurally — no store call and no document mutation anywhere in
       `src/calendar-derived.js` — because the harness proves what today's paths wrote on today's
       fixture and the grep proves there is nothing in the file that could write on any input.)*
-- [ ] Tapping a derived due date opens the assignment, not an event editor.
-      → WO-6.3 "Every item taps through to its source"
-- [ ] A review date reaches the calendar as a date and a student and nothing else — no plan type, no
+- [x] Tapping a derived due date opens the assignment, not an event editor.
+      *(Closed at WO-6.3 on 2026-08-19 and ticked back here. Measured as the stronger claim the
+      wording implies: the tap opens that class's assignment LIST with that assignment's own editor
+      up, carrying its id — so a build that opened some editor, or the events panel, fails.)*
+- [x] A review date reaches the calendar as a date and a student and nothing else — no plan type, no
       accommodation, no medical or behavior-plan text — and is gone entirely in presentation mode.
-      → WO-6.3 "A review date on a month cell shows a date and a name and no plan type"
+      *(Closed at WO-6.3 on 2026-08-19 and ticked back here, the last of the three re-homed lines to
+      go green. It was held open on purpose after the other two: the data half was measured desk-side
+      — the chip reads `Review · <name>` and a search of the grid's text **and markup** for the five
+      neighbours seeded on that record finds none of them — but the suppression and the palette are a
+      reading, and the note here said it ticks when WO-6.3's own 👤 line does. That reading happened
+      the same day and was green, so it does. With this box the `**Owes**` field comes off.)*
 - [x] A future weekday shows **no per-class meeting state at all**: the derived answers are read from
       `attendance[]` and from authored `no-school` / `dropped` events, so a weekday with neither is
       blank rather than *not taken yet*, and nothing in this work order stores, derives, caches or
@@ -259,7 +266,7 @@ here.
 
 ## WO-6.3 — Month & week views
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.2
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-6.2
 **Closes roadmap** Phase 6 → "Month and week views, filterable by class.", "IEP/504 review dates"
 *(the second fragment came from WO-6.2 on 2026-08-19, the owner's call — its box says review dates
 are **surfaced** ahead of time, and this is the work order that draws them. WO-6.2 built and measured
@@ -293,25 +300,108 @@ and a `Depends on` in the other direction would be a cycle the gate would call s
   a surface that ships before it.
 
 **Acceptance**
-- [ ] 👤 A month with a break, two pre-drops, six assignments, and a grades-due deadline renders
+- [x] 👤 A month with a break, two pre-drops, six assignments, and a grades-due deadline renders
       legibly on an iPad without horizontal scrolling.
-- [ ] The class filter applies to derived items as well as authored ones.
-- [ ] A month with nothing in it shows an honest empty state.
-- [ ] Every item taps through to its source.
-- [ ] A derived due date moves with its assignment: change the date on the assignment and the month
+      *(The desk half is measured and green: at 390x844 the document and the grid both report a
+      scrollWidth equal to their clientWidth over 35 cells, which is what `table-layout: fixed`
+      buys. **Legibly** is the half that needs the device — seven columns of a 100px cell is a
+      judgement about reading, not about overflow.)*
+      *(**Read on the device and green, 2026-08-19, the owner's own reading** — a busy month in both
+      portrait and landscape, after a force-quit onto v87. The overflow half was never the risk; the
+      seven-column cell reads.)*
+- [x] The class filter applies to derived items as well as authored ones.
+      *(Three readings of one month in `verify-shell.mjs`: everything, then one class, then the
+      other. Filtered to the fixture class the due date, both term edges and both meeting states
+      are on their days; filtered to the other class none of them is; and the school-wide closure
+      and grades-due date, which name no class, survive both — which is `docs/data-model.md`'s own
+      rule about `classIds: []` asserted rather than assumed. **One ruling the line did not settle
+      and the implementation had to:** a review date belongs to a student and carries no `classId`,
+      so it follows its student — shown for a class that student is on the roster of and not for
+      one they are not. `src/calendar-derived.js` declined to answer that on the screen's behalf, in
+      as many words, and the decision is written up in `docs/data-model.md` § Events.)*
+- [x] A month with nothing in it shows an honest empty state.
+      *(Paged four months past the fixture through the real pager. The grid STAYS UP with its 35
+      cells drawn — a teacher who opened a calendar wants the dates whether or not anything is on
+      them — and `shell.css`'s `.empty-state` appears under it naming the month and carrying the
+      two doors that put something in it. Asserted in both directions, because "the empty state is
+      always up" satisfies half of it.)*
+- [x] Every item taps through to its source.
+      *(Six kinds, six destinations, all six clicked in `verify-shell.mjs`: a closure opens the
+      days-off panel, a grades-due date opens the events panel **with that row loaded into its
+      form**, a term edge opens that class's term editor, a review opens that student's own editor
+      with the support panel already showing and the date in it, an assignment's due date opens that
+      class's assignment list with that assignment's editor up, and a class's recorded day opens
+      that class's registry. **One thing it does not do, stated rather than left to be found:** a
+      taken or dropped day opens the registry on TODAY rather than anchored on the day tapped.
+      `src/attendance.js`'s `editDay()` unlocks a column inside the strip that screen is already
+      showing and there is no entry point that anchors it from outside — that is a follow-up with
+      an owner rather than something to improvise from the calendar.)*
+- [x] A derived due date moves with its assignment: change the date on the assignment and the month
       grid shows it on the new day, with no other action.
-- [ ] 👤 A review date on a month cell shows a date and a name and no plan type, and in presentation
+      *(**With no other action** is asserted as no action: the date is changed on the assignment and
+      the harness then leaves the calendar and opens it again the way a teacher would — no repaint
+      is called from the check, because one that called `renderCalendar()` itself would be proving
+      the renderer runs rather than that the month is recomputed from `assignments[].due` every time
+      it is drawn. Both directions, so a build that moved the chip and lost it fails too, and the
+      chip count is unchanged across all three readings.)*
+- [x] 👤 A review date on a month cell shows a date and a name and no plan type, and in presentation
       mode the cell shows nothing at all where it was — read on the device, across a room, because a
       palette and a suppression are judgements a headless browser cannot make however green it
       measures (the WO-2.3 precedent).
-- [ ] 👤 Every control this screen adds clears 44px under `@media (pointer: coarse)`, checked under a
+      *(The DATA half is measured and green, and it is the half a headless browser can make: the
+      chip reads `Review · <name>`, labelled with the date, and a search of the whole grid's text
+      **and its markup** for the five things that share a student record with `reviewDate` — seeded
+      with phrases nothing else in this repository contains — finds none of them. With presentation
+      mode on there is no element, the token `review-date` is nowhere in the grid's markup, and
+      neither the surname nor the date is either, while every other chip is untouched. What is owed
+      is the reading: the chip takes `.supports-panel`'s subdued card — lifted with its argument,
+      that amber means *act on this* and red means *this destroys something* and a 504 review is
+      neither — and whether that reads at a distance beside the term chip is the owner's call.)*
+      *(**Read on the device and green, 2026-08-19.** The chip reads across a room and is distinct
+      from the term-edge chip beside it, and with presentation mode back on the cell shows nothing
+      where it was. Note for whoever reads this box next: presentation mode is ON unless this browser
+      turned it off, so a fresh profile shows no chip for the right reason — the reading has to start
+      by turning it off, or it is a reading of an absence.)*
+- [x] 👤 Every control this screen adds clears 44px under `@media (pointer: coarse)`, checked under a
       thumb rather than in a stylesheet — and if a month cell holding four chips cannot hold that
       floor and still fit a month on one screen, the departure is the owner's to make and is written
       down at the point of departure, the way `src/home.css` does for `.class-card-state`.
-- [ ] No printout of a calendar month emits a review date, a plan type, or any other `supports`
+      *(**The departure was needed and is taken, and it is the owner's to keep or refuse.** Seven
+      columns of an iPad in portrait is ~100px of cell; four chips at 44px plus the date line is a
+      ~200px cell, and six rows of that is a month you scroll through twice — which is a month that
+      has stopped being one. So `src/calendar-view.css` floors a MONTH chip at 28px, writes the
+      arithmetic out at the point of departure, and pays for it with the WEEK view, whose chips take
+      the full 44 — the month is the survey, the week is the surface you touch, and every item has
+      a thumb-sized path through the pair. Measured under a really coarse pointer: every non-chip
+      control (the span pair, the pager, the class filter, Print, the way back) clears 44 in both
+      directions over 25 controls; every week chip clears 44; every month chip sits at its floor and
+      **below** 44, asserted AS a departure so that a silent drift down and a silent "fix" up both
+      go red. `#calendarView` is enumerated in the whole-app touch sweep's `VIEW_PLAN` with a
+      `byHand` note saying so. **None of that closes this line** — it needs a thumb.)*
+      *(**Read under a thumb and green, 2026-08-19: the 28px month chip is ruled IN by the owner.**
+      Read knowing what the verifier named — the `src/home.css` precedent this line points at is
+      weaker than it looks. `.class-card-state` departs for *a line of text*, and says so; the target
+      it used to be is the whole card. A month chip is a `<button>` a teacher taps, so **this is the
+      first sub-44px control in the app**, not another instance of the same thing. It is kept on the
+      week view paying for it, which is the argument in the note above. One honest limit on that
+      payment: the harness measured the week's chips on the single fixture week it landed in — 2 chips
+      — so the thumb-sized-path half of the trade is machine-verified for 2 of the 6 item kinds and
+      argued for the rest.)*
+- [x] No printout of a calendar month emits a review date, a plan type, or any other `supports`
       value, whatever presentation mode says — and `data-calendar-print` appears nowhere in
       `src/shell.js`'s delegated `closest('[data-…]')` census, which is what keeps the gate from
       being a click hook.
+      *(Both halves, in both tools. Under `Emulation.setEmulatedMedia: 'print'` the review chip
+      computes to `display: none` while the due-date chip beside it is still drawn, the sheet keeps
+      its own stamp and loses its toolbar — and it computes to `none` with the gate OFF as well,
+      which is the one deliberately ungated rule in that stylesheet: it can only ever subtract, and
+      rounding an unanswerable question toward hiding is `src/supports.js`'s own rule for exactly
+      this data. The census half is `wo-sweep.mjs` § 18, written for this line and made GENERAL
+      rather than about this gate: every attribute handed to `registerPrintGate()` anywhere in
+      `src/` is diffed against every `data-*` inside a `closest()` in `src/shell.js`, and each gate
+      is reconciled with the `@media print` block selected under it in both directions. Planted
+      against on the delivered tree — renaming the control to the gate's own string reddens it and
+      names the file and line.)*
 
 ---
 
@@ -375,3 +465,52 @@ morning.
 **Traps** — Every section here is a summary of something built earlier. If any of it recomputes
 grades, attendance percentages, or signals rather than calling WO-2.4 / WO-3.4 / WO-4.1, you have
 created a second answer that will eventually disagree with the first.
+
+---
+
+## WO-6.5 — A tapped day opens on that day
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.3
+
+Tapping a class's recorded day in the calendar opens that class's register — **on today**, not on the
+day that was tapped. Every other item on that screen carries its own subject through the tap: a
+grades-due date arrives with its row loaded, a due date with its assignment's editor up, a review with
+that student open and the date in the field. This one arrives at the right screen and the wrong day.
+
+**This was read on the device and accepted rather than found later** (2026-08-19, the owner, WO-6.3's
+fourth 👤 reading). It is booked because the alternative was leaving it in a dispatch result file and
+a code comment at `src/shell.js`, and **a dispatch artifact is not a tracker** — WO-6.3's verifier
+said so in as many words, and the artifact is gone from anyone's attention the moment the dispatch is.
+
+**Why it was not simply fixed inside WO-6.3.** `src/attendance.js`'s `editDay()` has no entry point
+that takes a date from outside — it reads the day it is on. Giving it one is a change to the
+attendance surface, which WO-6.3 had no business making on the way past while it was drawing a
+calendar: the register is the screen five classes are marked on every morning, and the flow is on the
+critical path by the working agreements. That is a row of its own, not a rider.
+
+**Acceptance**
+- [ ] Tapping a recorded day in the calendar opens that class's register **on the tapped day**, with
+      that day's marks on screen — not on today, and not on the term's first day.
+- [ ] The date arrives through an argument, not through a module-level variable or a `data-` attribute
+      read back off the DOM: `editDay()` (or whatever entry point is added beside it) takes the day it
+      is to open on, so two callers cannot disagree about which day is current.
+- [ ] Opening the register the way it has always been opened — from the class screen, with no date —
+      still lands on **today**. The new argument is additive and the old path does not go through a
+      date that happens to be right most of the time.
+- [ ] A tapped day that is outside the class's current term still opens correctly, or is refused with
+      a message that says which term it is in. Silently landing on some other day is the failure this
+      row exists to remove.
+- [ ] No new state: nothing about *which day the register is on* is stored in the document, in
+      `localStorage`, or on `window`. It is an argument and then it is the screen's own business.
+- [ ] `verify-shell.mjs` asserts the tapped day and the tapped day's marks, not just that the register
+      opened — the check WO-6.3's could not make, which is why its own line passed on *the source* and
+      this row exists for *the day*.
+
+**Traps** — The tempting shortcut is to have the calendar write the date somewhere the register reads
+on the way up. That is the second truth this phase has refused six times over, at one-value scale: two
+places that both believe they know what day the register is on, and the bug is whichever one is read
+second. Pass it, or do not build it.
+
+Also resist making the register *navigate* to the day with the term nav after it opens. WO-2.17 is the
+scar there — a repaint of the screen you are sitting on is not the same as opening on a day, and a
+flash through today on the way is a worse experience than landing on today would have been.

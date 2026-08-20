@@ -463,7 +463,21 @@ export function refreshClassBar() {
     */
     const here = document.createElement('span');
     here.className = 'hdr-empty';
-    here.textContent = 'Your classes';
+    /* AND SINCE WO-6.3 THIS BRANCH IS REACHED BY TWO VIEWS, NOT ONE, which is what turned a
+       constant into a lookup. The paragraph above promises that "the header names the screen that
+       is up and the panel below it agrees"; the calendar is not a class screen and not the grid,
+       so it landed here and the header said *Your classes* over a panel headed *Calendar*. That is
+       the one thing this caption exists not to do.
+
+       A LOOKUP AND NOT A CHAIN OF `if`s, and it holds the two views that reach this branch rather
+       than every view there is — a class screen never gets here, and a name added to src/views.js
+       that does not appear below falls back to the grid's caption, which is where a browser holding
+       an unknown view name lands anyway (src/views.js's showView). What it must never become is a
+       second copy of what each screen is called: the words below are the panel titles in
+       index.html, and a third view arriving adds one line here in the same sitting that adds its
+       `<div>`, exactly as VIEWS itself does. */
+    const CAPTIONS = { calendar: 'Calendar' };
+    here.textContent = CAPTIONS[currentView()] || 'Your classes';
     bar.append(here);
   } else {
     /* The way back to the class grid, at the head of the row a teacher navigates with, and only

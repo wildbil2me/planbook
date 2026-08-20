@@ -156,6 +156,12 @@ Seven things that will bite:
   The obvious way to quiet that wall is to know which classes were meant to meet — the cycle model
   `plans/rotating-schedule.md` rejects, reached from the rendering side rather than the modelling
   side, which is why it will look new. Draw nothing where nothing was recorded.
+  *(**The grid exists now** — WO-6.3, 2026-08-19 — and it holds the line: a weekday with no
+  attendance row and no authored `no-school`/`dropped` event draws nothing, and `weekdayOf()` says so
+  at its own definition. With every class showing, a month draws no per-class meeting state at all
+  and says so in words under the grid; the per-class ledger appears when you filter to one class, and
+  in the **week** view. So the wall of amber was never rendered rather than rendered and then tuned —
+  which is the shape to keep if a later screen asks the same question.)*
 - **`late` and `missing` are marked by the teacher, never inferred from a due date.** Blank means
   ungraded and affects nothing. The grade must never change because a date rolled over. The date may
   still **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only
@@ -189,6 +195,14 @@ Seven things that will bite:
   third calendar module because it reads the ledger through `src/attendance.js`, which imports
   `src/calendar.js` — the derived half living in the model would close an import loop this repo has
   refused six times.
+  *(**And a fourth, `src/calendar-view.js`, draws it** — WO-6.3, 2026-08-19. Two things there that
+  look like omissions and are not. It contains **no** `presentationMode()` test: the suppression of a
+  review date arrives as an empty list out of `reviewDatesIn()`, so the rule stays defined in exactly
+  one place — `src/supports.js` — and the screen cannot disagree with it. **Adding a check here would
+  be the second opinion**, and `wo-sweep` counts the askers. Second, the view — not the model —
+  decides that a review date follows its student through the class filter, because a review carries
+  no `classId`; `src/calendar-derived.js` declined to answer that on the screen's behalf, in as many
+  words, and `docs/data-model.md` § Events carries the ruling.)*
 
 ## Accommodations are the most sensitive data here
 
@@ -265,6 +279,17 @@ device sees the change at all.
 
 - **Visual language:** `design/style-guide.md`. Colors inline, not CSS variables — deliberate.
   **No dark mode**; the suite is light-theme only. 44px touch targets under `@media (pointer: coarse)`.
+  *(**One control in the app is smaller, and it is the owner's ruling rather than a precedent**:
+  the month chip in `src/calendar-view.css` sits at a 28px floor, ruled in under a thumb on
+  2026-08-19, WO-6.3. Seven columns of a portrait iPad is ~100px of cell, and four 44px chips plus
+  the date line is a cell twice that — a month you scroll through twice has stopped being a month.
+  What pays for it is the **week** view, where every chip is a real 44 and every item on the month
+  has a thumb-sized path through the pair; `verify-shell.mjs` asserts the 28 **as a departure**, so a
+  drift down and a silent "fix" up both go red. Two things to know before citing it: the
+  `src/home.css` departure it was modelled on is a line of TEXT, not a control, so this is the
+  first sub-44px control here; and the argument that pays for it is measured on 2 of the 6 item kinds
+  and reasoned for the rest. **A new control does not get 28px by pointing at this one** — it gets 44,
+  or it gets its own reading and its own note at its own point of departure.)*
 - **Components:** lift from Roll Call!'s `design/portable-components.md` rather than hand-designing.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
 - **Git:** one branch — `main`. Work lands on it directly, in short imperative commit summaries, and a

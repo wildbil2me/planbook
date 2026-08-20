@@ -1379,6 +1379,123 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 18. a print gate is never a click hook, and every gate has a block that reads it ══════
+   WO-6.3's last acceptance line, generalised: "`data-calendar-print` appears nowhere in
+   `src/shell.js`'s delegated `closest('[data-…]')` census, which is what keeps the gate from being
+   a click hook." That is a grep, and `plans/verification-tooling.md` directs grep-shaped checks
+   here rather than into the browser harness — so it is made about EVERY gate rather than about the
+   one this work order added, for the reason § 12's own comment gives about re-asserting today's
+   accident.
+
+   THE BUG IT IS FOR IS THE OWNER'S OWN, 2026-08-13. `src/print-gate.js` leaves the gate attribute
+   on `<body>` when a print is refused — that is the fix, and it is right — and `src/shell.js`'s
+   delegated handler reaches its controls with `closest()`, which walks all the way up to `<body>`.
+   The detail screen's Print button was named `data-detail-print`, the same string as its own gate,
+   so with the gate stuck on `<body>` every click anywhere on screen matched that hook and re-opened
+   the print dialog. The deleted 500ms timer had been hiding it inside half a second; the fix that
+   stopped clearing the gate is what made it reachable. `src/print-gate.js` states the invariant
+   that came out of it — *a gate attribute is never also a click hook* — and until now nothing
+   asserted it except the browser harness, which asserts the CONSEQUENCE (a click on something that
+   is not a control does not print) rather than the rule.
+
+   THE TWO ARE NOT REDUNDANT, and the difference is the one § 17 draws. The harness proves that
+   today's four gates, stuck on `<body>` one at a time, print nothing from three neutral targets on
+   today's page. This proves there is no string in common between the two lists at all — including
+   for a fifth surface added by a work order that never runs the harness, and for a hook that only
+   appears on a screen the harness's three targets are not on.
+
+   AND IT CLOSES THE OTHER HALF OF THE LOOP, which nothing anywhere checked: that each registered
+   gate has an `@media print` block selected under it, and that each `body[data-…-print]` selector
+   in the stylesheets is a gate something registers. A block gated on a string no module ever sets
+   is a print surface that silently never applies — a Ctrl+P there prints the ordinary page, which
+   is the failure the gates exist to prevent wearing the fix's clothes. Both directions, because
+   both sides are closed sets of the same four things.
+
+   Every anchor FAILs loudly when it moves rather than going quiet, for the reason § 11's count
+   does: the registrations are found by `registerPrintGate(`, the attribute by the `const` line in
+   the same file, and the delegated set by the same `closest('…')` scan § 12 uses. A scan that
+   matched nothing reads exactly like an app with no print surfaces in it. */
+
+{
+  const NAME = 'no print-gate attribute is also a delegated click hook, and every gate has a block';
+  const shellPath = path.join(REPO, 'src', 'shell.js');
+  const srcDir = path.join(REPO, 'src');
+  if (!fs.existsSync(shellPath) || !fs.existsSync(srcDir)) {
+    check(NAME, false,
+      `${!fs.existsSync(shellPath) ? 'src/shell.js' : 'src/'} is not where this check expects it — the gate invariant is now asserted by nothing but the browser harness, which asserts the consequence rather than the rule. Restore the file or point this check at the new path.`);
+  } else {
+    // Every registration, and the attribute it hands in. All four callers today spell it the same
+    // way — `const PRINT_ATTR = '…';` beside a `registerPrintGate(PRINT_ATTR, …)` — so the
+    // identifier is CAPTURED rather than assumed, and one handed a literal is read directly.
+    const gates = [];
+    const unresolved = [];
+    for (const name of fs.readdirSync(srcDir).sort()) {
+      if (!/\.js$/i.test(name) || name === 'print-gate.js') continue;
+      const file = path.join(srcDir, name);
+      const lines = fs.readFileSync(file, 'utf8').split('\n');
+      const prose = commentLines(file);
+      lines.forEach((line, i) => {
+        if (prose.has(i + 1)) return;
+        const call = /registerPrintGate\s*\(\s*(?:'([^']+)'|([A-Za-z_$][\w$]*))\s*,/.exec(line);
+        if (!call) return;
+        if (call[1]) { gates.push({ file: 'src/' + name, line: i + 1, attr: call[1] }); return; }
+        const ident = call[2];
+        const decl = lines.filter((l, j) => !prose.has(j + 1))
+          .map(l => new RegExp(`^\\s*const\\s+${ident}\\s*=\\s*'([^']+)'`).exec(l))
+          .filter(Boolean)[0];
+        if (decl) gates.push({ file: 'src/' + name, line: i + 1, attr: decl[1] });
+        else unresolved.push({ file: 'src/' + name, line: i + 1, text: ident });
+      });
+    }
+
+    // The delegated set, by the same scan § 12 makes — one rule, one reading of what "delegated"
+    // means, so the two sections cannot come to disagree about it.
+    const delegated = new Map();
+    fs.readFileSync(shellPath, 'utf8').split('\n').forEach((line, i) => {
+      for (const call of line.matchAll(/closest\(\s*'([^']*)'/g)) {
+        for (const m of call[1].matchAll(/data-[a-z0-9-]+/g)) {
+          if (!delegated.has(m[0])) delegated.set(m[0], `src/shell.js:${i + 1}`);
+        }
+      }
+    });
+
+    // And every `body[data-…]` an @media print block is selected under, out of the stylesheets.
+    const styled = new Map();
+    for (const name of fs.readdirSync(srcDir).sort()) {
+      if (!/\.css$/i.test(name)) continue;
+      const file = path.join(srcDir, name);
+      const lines = fs.readFileSync(file, 'utf8').split('\n');
+      const prose = commentLines(file);
+      lines.forEach((line, i) => {
+        if (prose.has(i + 1)) return;
+        for (const m of line.matchAll(/body\[(data-[a-z0-9-]+)\]/g)) {
+          if (!styled.has(m[1])) styled.set(m[1], `src/${name}:${i + 1}`);
+        }
+      });
+    }
+
+    const attrs = [...new Set(gates.map(g => g.attr))];
+    const collisions = gates.filter(g => delegated.has(g.attr));
+    const unstyled = attrs.filter(a => !styled.has(a));
+    const unregistered = [...styled.keys()].filter(a => attrs.indexOf(a) === -1);
+
+    const faults = [];
+    // The vacuity guard, and it is a FAIL rather than a pass for the reason this file's header
+    // gives twice: a pattern that has stopped matching reads exactly like an app with no print
+    // surfaces in it, and green from a distance is the wrongness every section here is about.
+    if (gates.length < 4) faults.push(`only ${gates.length} registerPrintGate( call site(s) found in src/ — there are four print surfaces (attendance record, student detail, class grade sheet, calendar), so a smaller number means the scan in tools/wo-sweep.mjs § 18 has stopped matching rather than that a surface went away. If one really did, say which in the same edit`);
+    if (!delegated.size) faults.push('no closest(\'[data-…\') call found in src/shell.js at all — the delegated set is empty, so the collision test below can never fail. That reads green from a distance and is not');
+    if (unresolved.length) faults.push(`${report(unresolved)} hands registerPrintGate() an identifier this check cannot resolve to a string literal — the gate it registers is therefore not compared against anything. Declare it as \`const NAME = 'data-…-print';\` in the same file, which is what all four callers do, or pass the literal`);
+    if (collisions.length) faults.push(`${collisions.map(g => `${g.attr} (registered at ${g.file}:${g.line}, delegated at ${delegated.get(g.attr)})`).join(', ')} — a gate attribute that is ALSO a click hook. \`closest()\` walks up to <body> and src/print-gate.js leaves a refused print's gate ON, so this hook matches every click anywhere on screen for as long as it is there. Rename the CONTROL, never the gate: data-detail-sheet-print, data-attendance-record-print, data-grades-record-print, data-calendar-month-print`);
+    if (unstyled.length) faults.push(`${unstyled.join(', ')} — registered as a gate and named by no \`body[…]\` selector in any src/*.css. The attribute is being set on <body> for a print block that does not exist, so a print of that surface emits the ordinary page`);
+    if (unregistered.length) faults.push(`${unregistered.map(a => `${a} (${styled.get(a)})`).join(', ')} — an @media print block is selected under it and nothing registers it with src/print-gate.js. That block can never apply, so a Ctrl+P on that surface prints the whole app`);
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `${gates.length} gate(s) registered — ${gates.map(g => `${g.attr} at ${g.file}:${g.line}`).join(', ')} — none of them among the ${delegated.size} delegated attribute(s) in src/shell.js, each with an @media print block selected under it (${attrs.map(a => styled.get(a)).join(', ')}), and no print block gated on a string nothing registers`);
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

@@ -1,0 +1,422 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — the month and week grid (WO-6.3).
+
+   The sixth per-screen stylesheet, under the rule src/shell.css's header sets and
+   src/home.css was the first instance of: "a screen that needs styles of its own gets
+   src/<screen>.css, loaded after this file, styling only its own class names, with its
+   own @media (pointer: coarse) block at its end. Two stylesheets must never style the
+   same class." It is obeyed literally — no selector below names anything shell.css,
+   home.css, attendance.css, assignments.css, scores.css or detail.css styles. The panel
+   frame, the toolbar buttons and the class-filter chips are shell.css's `.panel`,
+   `.class-action-btn` and `.toggle-btn` WORN by this screen's markup, which is how
+   src/home.js's cards wear `.class-action-btn` and is the opposite of restyling them.
+
+   THE VALUES ARE LIFTED, NOT DERIVED. Every colour below is already somewhere in this
+   suite, and the file it came from is named at the rule:
+
+     - the chip palettes are src/attendance.css's three meeting states, src/shell.css's
+       `.event-kind` neutral, the caution wash the home card and the registry both use for
+       "act on this", and `.supports-panel`'s subdued card for the one chip that names a
+       student's review;
+     - 6px radius on a chip is the style guide's small control, 10px on a cell is its
+       feature card, 14px on the panel is shell.css's;
+     - hairlines are `#eef0f4` between cells and `#d0d8e4` where something has to hold at
+       arm's length, which is the same pair src/home.css draws on.
+
+   Two things read like mistakes here and are the same two that read like mistakes in
+   every other stylesheet in this repo: colours are written out inline rather than as
+   custom properties, and there is no dark variant of anything. Both are deliberate suite
+   conventions — read CLAUDE.md before tidying either one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE FRAME ── */
+/* The panel's own scroller. A busy month is taller than an iPad and that is fine — WO-6.3's
+   first acceptance line forbids HORIZONTAL scrolling, which is the one that makes a grid
+   unreadable, and says nothing about vertical, which is what every paper calendar does when
+   you turn the page. The table below is `table-layout: fixed` at `width: 100%`, so seven
+   columns always divide the panel and nothing can push it sideways. */
+.calendar-body { padding: 0 20px 20px; }
+
+/* The toolbar under the panel title: which span, where in the year, and which class. A
+   wrapping row rather than three fixed slots, so at 390px it stacks instead of pushing the
+   panel into horizontal overflow — the same call `.panel-title-actions` makes one element
+   up, measured at 390x844 by tools/verify-shell.mjs on every run. */
+.calendar-toolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 0 0 12px;
+}
+.calendar-scale { display: flex; flex-wrap: wrap; gap: 6px; }
+.calendar-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+/* Pushed to its own end of the row so the five class buttons never sit between the two
+   controls that move the window — at six classes this wraps to a line of its own, which is
+   what it should do. */
+.calendar-classes { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+/* One filter button, and the only thing this rule does is stop a long class name from being a
+   control wider than the phone it is on. `.toggle-btn` belongs to src/shell.css — it supplies the
+   shape, the wash and the active state, and this sheet does not touch any of them — but it sets
+   `white-space: nowrap`, so "Period 3 — Honors Biology B Day" is one unbreakable 300px button in a
+   row that can wrap between buttons and not inside one. Capped and ellipsised, with the whole name
+   on `title`: the same arrangement `.class-card-name` has in src/home.css, for the same reason. */
+.calendar-class-btn { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
+
+/* What the printed sheet says it is of. In the markup all the time, visible only under the
+   print gate — src/detail.css's `.detail-print-stamp` arrangement, and for its reason: the
+   panel header is the app talking to the teacher and none of it belongs on paper, so the
+   sheet needs its title from somewhere that is not the header. */
+.calendar-print-stamp { display: none; }
+
+/* ── THE GRID ── */
+/* `table-layout: fixed` is the whole of "no horizontal scrolling": the seven columns divide
+   whatever width the panel has, so a long assignment name ellipsises inside its cell rather
+   than widening a column and pushing the month off the screen.
+
+   A real <table> rather than a CSS grid of <div>s, because it IS a table of days: the
+   weekday heads are <th scope="col">, so a screen reader says "Wednesday" before the cell,
+   and it is the one structure that prints without being taught to. */
+.calendar-table {
+  width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px;
+}
+.calendar-dow {
+  padding: 4px 2px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  color: #8a9bb0; text-align: left;
+}
+.calendar-week { }
+
+/* One day. The subdued card src/home.css's `.class-card` uses, because a cell holding one
+   day should read as the same kind of object as a card holding one class. Top-aligned: the
+   chips grow downward from the date, and a cell whose contents centred would make one week
+   row look like five different heights. */
+.calendar-day {
+  vertical-align: top;
+  padding: 6px; border-radius: 10px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+/* A day borrowed from the month either side. Drawn rather than blanked — a break that runs
+   across the turn of a month is a real event on a real day, and blanking the cell would hide
+   it from the month a teacher is standing in. Quieted to the style guide's disabled/empty
+   tone so the month the heading names is the one that reads first. */
+.calendar-day.outside { background: #fff; border-color: #f3f4f6; }
+.calendar-day.outside .calendar-daynum { color: #a0aab8; }
+/* Today. The interactive wash `.class-card.open` and `.year-row.current` both use, and for
+   the same meaning: this is not an action, it is where you already are. */
+.calendar-day.today { background: #eef2ff; border-color: #b0bcf0; }
+
+.calendar-dayhead { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.calendar-daynum { font-size: 12px; font-weight: 700; color: #1a1a2e; }
+/* The word as well as the wash, because a colour alone is a legend a teacher has to learn
+   and this one has to survive being read across a room. */
+.calendar-todaymark {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+  color: #5b6fcc;
+}
+.calendar-chips { display: flex; flex-direction: column; gap: 3px; }
+
+/* ── THE CHIPS ── */
+/*
+  Every item on the grid is a <button>, because every item taps through to the thing that
+  resolves it. `font-family: inherit` and `text-align: left` are what a button needs to stop
+  looking like a platform control; the ellipsis is what keeps a long assignment name inside a
+  100px cell without widening the column. The whole label stays reachable — `title`,
+  `aria-label` and the text node itself are all the full string (src/calendar-view.js).
+*/
+.calendar-chip {
+  display: block; width: 100%; min-width: 0;
+  padding: 2px 6px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 700; line-height: 1.4;
+  color: #6b7a8d; text-align: left; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.calendar-chip:hover { border-color: #5b6fcc; color: #5b6fcc; }
+
+/* AN AUTHORED EVENT, IN ONE NEUTRAL WASH FOR ALL EIGHT KINDS — src/shell.css's `.event-kind`
+   makes exactly this call about exactly these kinds and says why: every kind can name
+   classes, six of them close nothing, and a palette would be eight colours encoding nothing
+   plus a legend to go with it. The word is on the chip; the colour does not have to carry it.
+   `no-school` wears this same wash, which is not an oversight — src/attendance.css's
+   `.attendance-state.covered` IS these three values, so the calendar and the registry are
+   already saying it the same way. */
+.calendar-chip.event { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+/* The two departures from that wash, and both are the marking screen's own grammar rather
+   than this sheet's invention. A planned drop is DASHED — the "set aside" edge
+   `.attendance-state.dropped` and `.class-card-state.dropped` both wear — because dashed is
+   the half of the distinction that survives being read at arm's length. */
+.calendar-chip.event.kind-dropped {
+  background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d;
+}
+/* And grades due takes the caution wash, which is the one alarm this grid draws. It is the
+   only authored kind with a DEADLINE behind it — src/calendar.js's `gradesDueLeadDays` exists
+   for this row and nothing else — and amber in this app means "act on this" (src/home.css at
+   `.class-card-state`, src/attendance.css at `.attendance-state.not-taken`). Nothing else on
+   this screen may take it: two ambers on one cell make the reader choose which one is real. */
+.calendar-chip.event.kind-grades-due {
+  background: #fff8e6; border-color: #f0dfa8; color: #8a6d1a;
+}
+
+/* WORK DUE. The interactive indigo wash `.class-card.open` and `.roster-row.editing` use —
+   this is the gradebook's own thing on a calendar full of the school's, and it is the chip a
+   teacher is most often looking for. */
+.calendar-chip.due { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+
+/* A TERM EDGE. The quietest thing on the grid, deliberately: a term boundary is furniture —
+   it is checked twice a year and read past on every other day — so it takes plain white on
+   the stronger hairline with the style guide's muted label colour, and never a wash. */
+.calendar-chip.term { background: #fff; border-color: #d0d8e4; color: #8a9bb0; }
+
+/* WHAT HAPPENED TO A CLASS. The three palettes are src/attendance.css's own, repeated rather
+   than shared for the reason every colour in this repo is repeated: there are no custom
+   properties here, deliberately (CLAUDE.md). They are repeated rather than re-chosen because
+   the card, the column head and this chip are one answer about one class and must not say it
+   three ways — src/home.css makes the identical argument at `.class-card-state`.
+   NOTE WHAT IS ABSENT: there is no rule for `not-taken` and there must never be one.
+   src/calendar-derived.js refuses to carry that state onto a date at all (CLAUDE.md — it is
+   the did-I-forget answer, right on the home screen and a wall of amber on a grid), so a
+   palette for it here would be a palette for a chip that cannot exist, waiting to be filled. */
+.calendar-chip.meeting.state-taken { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
+.calendar-chip.meeting.state-dropped {
+  background: #fff; border-style: dashed; border-color: #d0d8e4; color: #6b7a8d;
+}
+.calendar-chip.meeting.state-covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+
+/*
+  AN IEP/504 REVIEW COMING UP — a date and a name, and nothing else ever (WO-6.3).
+
+  THE PALETTE IS `.supports-panel`'s, LIFTED WITH ITS ARGUMENT. That box in the student editor
+  takes the style guide's subdued card "rather than a caution or a danger wash: amber means
+  'act on this' everywhere else in this app and red means 'this destroys something', and
+  neither is what a 504 plan is." A review date on a month cell is the same sentence one screen
+  over — it is a deadline she is legally obliged not to miss, and it is not an alarm three weeks
+  out — so it takes the same three values, and the WORD does the work: the chip reads
+  "Review · Ada Probe", never a plan type, never a kind, never a colour standing in for one.
+
+  IT IS NOT DRAWN AT ALL WHILE PRESENTATION MODE IS ON, and there is no rule below that does
+  that: src/calendar-derived.js returns no review record while the mode is on, so there is no
+  element here to hide. Suppressed, not styled away — an element with `display: none` is still
+  an element a screenshot tool, a find-in-page or an accessibility tree can reach.
+*/
+.calendar-chip.review { background: #f8f9fc; border-color: #e0e4f0; color: #6b7a8d; }
+
+/* ── WHAT THE GRID IS NOT SAYING ── */
+/* "Pick a class to see which of its days were taken." A month showing five classes does not
+   draw a meeting state (src/calendar-view.js's header argues the wall at length), and an
+   absence and a bug look identical — so the screen says which one this is. Prose, in the
+   style guide's muted label colour, sitting under the grid where the answer to "why is that
+   not here" belongs. */
+.calendar-hint {
+  margin-top: 10px; padding: 0 2px;
+  font-size: 11px; line-height: 1.6; color: #8a9bb0;
+}
+
+/* ── THE EMPTY STATE ── */
+/* Inside shell.css's `.empty-state`, which supplies the centred zero-data block; these three
+   are the children it does not have, exactly as src/home.css's are. The grid STAYS UP behind
+   it — a teacher who opened a calendar wants the dates whether or not anything is on them. */
+.calendar-empty-lead { font-size: 14px; font-weight: 700; color: #6b7a8d; }
+.calendar-empty-text {
+  max-width: 460px; margin: 8px auto 0;
+  font-size: 13px; line-height: 1.6; color: #8a9bb0;
+}
+.calendar-empty-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px;
+}
+
+/* ── RESPONSIVE ── */
+/* Same order design/style-guide.md §6 names and every other sheet here follows:
+   (pointer: coarse) first, then the width blocks. */
+
+/*
+  THE TOUCH PASS — and the one departure in it, which is written down here because the work
+  order says the departure is the owner's to make and has to be made at the point of departure,
+  the way src/home.css does at `.class-card-state`.
+
+  EVERY CONTROL ON THIS SCREEN CLEARS 44px EXCEPT A CHIP IN THE MONTH GRID. The scale pair, the
+  pager, the class filter, the print button and the way back are `.class-action-btn` and
+  `.toggle-btn`, whose 44px floors are in src/shell.css's own coarse block; they are named here
+  as well, for the reason `.hdr-mode-btn` is named in that block — a control covered only by
+  another class's rule is a control the next reader has to go and prove is covered.
+
+  THE MONTH CHIP TAKES 28px INSTEAD OF 44, AND HERE IS THE ARITHMETIC. Seven columns of an iPad
+  in portrait is about 100px of cell. A cell holding four chips at 44px plus its date line is
+  ~200px; six rows of that is ~1,200px of grid, which is a month a teacher scrolls through
+  twice — and a month you cannot see at once is a list with a grid's overheads. At 28px the same
+  cell is ~135px and the month fits the screen it is named after. That is the local rule beating
+  the suite rule: THIS SCREEN'S WHOLE JOB IS THE SHAPE OF A MONTH, and a 44px floor deletes it.
+
+  WHAT PAYS FOR IT, so this is a trade rather than a shortfall: the WEEK view is one tap away
+  and its chips take the full 44px. Seven cells instead of forty-two means the room exists there,
+  so every item on this screen has a thumb-sized path to it — the month is the survey and the
+  week is the surface you touch. The pair is the answer; either one alone is not.
+
+  It is stated rather than shipped quietly, and the reading that settles it is 👤: a thumb on a
+  real iPad, which is what the work order asks for and what no emulator has.
+*/
+@media (pointer: coarse) {
+  .calendar-body { padding: 0 20px 20px; }
+  .calendar-toolbar { gap: 10px; padding-bottom: 14px; }
+  /* Containers, not targets. Named here because a class that appears in no coarse rule is a
+     class the next reader has to go and prove is not a touch target — the same argument
+     src/home.css makes for writing `.class-card-open` out. What they take is the gap a row of
+     44px controls needs, not a floor of their own. */
+  .calendar-scale { gap: 8px; }
+  .calendar-pager { gap: 8px; }
+  .calendar-classes { gap: 8px; }
+  /* The 44px floor on this one is `.toggle-btn`'s, in src/shell.css's own coarse block. What is
+     named here is the cap — a thumb-sized button is still a button that must not be wider than the
+     screen — and it is named at all for the reason `.hdr-mode-btn` is named in that block: a control
+     covered only by another class's rule is a control the next reader has to go and prove is
+     covered. */
+  .calendar-class-btn { max-width: 46vw; }
+  /* The table, its heads and its cells are structure. The head text bumps because 10px is
+     unreadable at arm's length on a tablet, which is the same bump `.class-row-note` and
+     `.dayoff-kind` take in src/shell.css's coarse block. */
+  .calendar-table { border-spacing: 5px; }
+  .calendar-dow { font-size: 11px; }
+  .calendar-week { }
+  /* A cell is not a control — see src/calendar-view.js's dayCell(): a <button>'s content model
+     is phrasing content, so a tappable cell could not hold the tappable chips inside it. Its
+     min-height is here so that a day can never be shorter than one touch target, which is the
+     same reason `.class-card` carries one. */
+  .calendar-day { min-height: 44px; padding: 7px; }
+  .calendar-dayhead { gap: 8px; }
+  .calendar-daynum { font-size: 13px; }
+  /* Prose, not a target. */
+  .calendar-todaymark { font-size: 10px; }
+  .calendar-chips { gap: 4px; }
+  /* THE DEPARTURE. 28px, and the paragraph above this block is the whole argument; the week
+     view's own floor is the next rule and it is a real 44. */
+  .calendar-chip { min-height: 28px; padding: 5px 8px; font-size: 12px; }
+  .calendar-table.week .calendar-chip { min-height: 44px; padding: 11px 10px; font-size: 13px; }
+  /* Prose, not targets — the 44px next to them belongs to `.class-action-btn`, which the
+     empty state's own doors wear. */
+  .calendar-hint { font-size: 12px; }
+  .calendar-empty-lead { font-size: 15px; }
+  .calendar-empty-text { font-size: 14px; }
+  .calendar-empty-actions { gap: 10px; }
+  /* Never on screen — it is the printed sheet's title, and it is named here only so that no
+     class in this file is absent from this block. */
+  .calendar-print-stamp { font-size: 12px; }
+  .calendar-panel { padding-bottom: 2px; }
+}
+
+@media (max-width: 640px) {
+  /* `.main` drops to 10px of gutter at this width, so this sheet's own 20px would make 30px of
+     margin on a 390px screen — the same correction src/home.css makes to `.home-grid`. */
+  .calendar-body { padding: 0 12px 12px; }
+  .calendar-table { border-spacing: 2px; }
+  .calendar-day { padding: 4px; }
+  .calendar-chip { font-size: 10px; padding: 2px 4px; }
+  /* At 390px seven columns are 52px each, which is a date and a colour and no room for a word.
+     The class filter pushed onto its own line is the cheap half of that; the honest half is
+     that a month on a phone is a survey and the week is where the reading happens. */
+  .calendar-classes { margin-left: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   THE PRINTED PAGE
+
+   The app's FOURTH @media print block, and the fourth surface with a gate of its own:
+   src/attendance.css § THE PRINTED PAGE is the first, src/detail.css the second,
+   src/scores.css the third, and this is the one WO-6.3 owes WO-8.4. Each is selected
+   under an attribute of its own, and the census of them lives in those headers.
+
+   IT IS GATED, AND THE GATE IS THE POINT. `data-calendar-print` on <body>, put there by
+   src/print-gate.js from a `beforeprint` listener that asks whether this view is on
+   screen — never by a timer, which is the bug that module's header spends four paragraphs
+   on. Without the gate a Ctrl+P made anywhere else in the app would hide the whole page
+   and print a blank sheet, which is a regression this app has already had once.
+
+   PRINTING A VIEW IS HARDER THAN PRINTING A DIALOG, which src/detail.css says first and
+   this block inherits: a modal is a child of <body>, and this screen is inside <main>
+   under a panel header. So the hiding happens at TWO levels, and the panel header is
+   reached through a class of this screen's own (`.calendar-header`) rather than through
+   `.panel-header`, so that nothing here names a class src/shell.css styles even inside a
+   gated block.
+
+   ══ AND THE REVIEW CHIP COMES OFF, TWICE, ON PURPOSE ══
+
+   WO-6.3's last acceptance line: *no printout of a calendar month emits a review date, a
+   plan type, or any other `supports` value, whatever presentation mode says.* Presentation
+   mode is the SCREEN's suppression and a teacher can legitimately have it off — she is
+   looking at her own iPad — and a sheet that came out of the printer carrying a student's
+   review date is a disclosure that has left the building and cannot be taken back
+   (src/attendance-report.js makes the same argument about a printout disagreeing with a
+   screen). So the rule under the gate takes it off the calendar's own sheet.
+
+   THE SECOND RULE IS UNGATED, AND THAT IS DELIBERATE RATHER THAN A LAPSE. Everything else
+   in this block is gated because an ungated print rule HIDES THE PAGE and prints a blank
+   sheet — that is the regression, and it comes from rules that turn things off wholesale or
+   turn a hidden surface on. The last rule in this file can do neither: it removes exactly one
+   class of chip and nothing else, on any print, from any surface. What it buys is the case
+   the gate cannot cover — a print that reaches the printer without `beforeprint` having
+   fired and without coming through printCalendar(), on an engine that fires neither. Rounding
+   an unanswerable question toward hiding is src/supports.js's own rule for exactly this data,
+   and the asymmetry is the point: the cost of this rule firing when it need not is one chip
+   missing from a sheet, and the cost of it not existing is a student's file on paper.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  /* Everything on the page goes, and the view comes back. `body > *` rather than a list of
+     chrome class names: this sheet styles its own class names and nothing else, and a list
+     would also be a list to keep in step with every panel a later work order adds. */
+  body[data-calendar-print] > * { display: none !important; }
+  body[data-calendar-print] { background: #fff; }
+  /* The element rather than `.main`, deliberately: the class belongs to src/shell.css and
+     this sheet does not name it, gated block or not. */
+  body[data-calendar-print] > main {
+    display: block !important; max-width: none !important;
+    padding: 0 !important; margin: 0 !important;
+  }
+  /* The second level, and the half a modal never needed. Every other view in <main> is
+     already `.hidden`; saying so here as well is what makes the rule true of a document
+     where one is not. */
+  body[data-calendar-print] main > *:not(#calendarView) { display: none !important; }
+  body[data-calendar-print] #calendarView { display: block !important; }
+
+  body[data-calendar-print] .calendar-panel {
+    border: none !important; box-shadow: none !important; border-radius: 0 !important;
+    padding: 0 !important; margin: 0 !important; background: none !important;
+  }
+  /* The panel header is the app talking to the teacher — the title row, the way back, the
+     print button itself, the span switch, the pager and the class filter — and none of it is
+     the sheet. The stamp below is what titles the printout instead. */
+  body[data-calendar-print] .calendar-header,
+  body[data-calendar-print] .calendar-toolbar,
+  body[data-calendar-print] .calendar-hint { display: none !important; }
+  body[data-calendar-print] .calendar-body { padding: 0 !important; }
+  body[data-calendar-print] .calendar-print-stamp {
+    display: block !important;
+    font-size: 11pt; font-weight: 700; color: #000; margin: 0 0 4mm;
+  }
+
+  /* Colours go quiet, the call src/detail.css makes: nothing on this grid is encoded in a
+     colour alone — every chip says its word — so the washes print as a hairline and black
+     text, which is what a mono office printer would have made of them anyway. */
+  body[data-calendar-print] .calendar-day {
+    background: none !important; border-color: #999 !important; border-radius: 0 !important;
+  }
+  body[data-calendar-print] .calendar-day.today { background: none !important; }
+  body[data-calendar-print] .calendar-chip {
+    background: none !important; border-color: #999 !important; color: #000 !important;
+    /* Wrapped rather than ellipsised on paper: a sheet has no hover and no title attribute,
+       so a truncated assignment name is a name that is simply gone. */
+    white-space: normal !important; overflow: visible !important;
+  }
+  body[data-calendar-print] .calendar-dow { color: #000 !important; }
+  body[data-calendar-print] .calendar-daynum { color: #000 !important; }
+  body[data-calendar-print] .calendar-todaymark { color: #000 !important; }
+  /* A week row is not split across a page break: half a week at the foot of one sheet and
+     half at the head of the next is a month nobody can read. */
+  body[data-calendar-print] .calendar-week { page-break-inside: avoid; break-inside: avoid; }
+
+  /* THE REVIEW DATE, OFF THE CALENDAR'S OWN SHEET. See this block's header. */
+  body[data-calendar-print] .calendar-chip.review { display: none !important; }
+}
+
+/* The ungated belt to that braces, and the only rule in this file outside a gate. It removes
+   one class of chip and can never reveal anything or hide a page — the header above argues why
+   this one asymmetry is right, and why it is the only one. */
+@media print {
+  .calendar-chip.review { display: none !important; }
+}
