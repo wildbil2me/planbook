@@ -182,7 +182,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.6 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.11 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.12 | Phase 8 |
 
 *None of these files says where its work goes, on purpose. **Work lands on `main`** — step 3 above
 is the single answer for every phase, and the `Branch:` line that opened all eight went on
@@ -204,15 +204,26 @@ indexes is a file nobody reads.
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
 | 1 — Shell, store, roster | 25 | 25 | — | 🔨 IN PROGRESS (reopened six times; last on 2026-08-19) |
-| 2 — Attendance | 50 | 49 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
+| 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 1 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
-| 7 — Drive sync | 3 | 0 | — | 🔒 GATED — OAuth verification |
-| 8 — 1.0 packaging | 11 | 5 | — | 🔨 IN PROGRESS |
+| 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
+| 8 — 1.0 packaging | 12 | 5 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | ⬜ NOT STARTED |
-| | **133** | **109** | **2** | `[████████░░] 82%` |
+| | **136** | **111** | **2** | `[████████░░] 82%` |
+
+***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
+in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
+recomputed, and WO-8.12 was booked on the 20th. **This table is `--tick`'s to write, not a hand's** —
+`recomputeDashboard()` reads every phase file and rewrites columns 2, 3 and 4, which is why
+`wo-gate.mjs` says in as many words that it does not belong in `--audit`. It went stale anyway, because
+`--audit` checks* ROADMAP.md*'s dashboard and never this one, so nothing was watching. The numbers here
+were recomputed by hand against the same rule `--tick` applies — total is headings minus struck and
+deferred, done is `✅ DONE` — and* **the next `--tick` is still the authority.** *Recorded rather than
+quietly corrected, because a count that moves without a reason is the thing the paragraph below is
+about.*
 
 ***The fourth column arrived on 2026-08-16 (WO-1.21), and it is what makes the third honest.*** *The
 count is now work orders somebody intends to write, so a phase can reach 100%; the two that left are
@@ -429,8 +440,30 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 75 | [WO-3.26](phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen) The ungraded count on the home screen | S | | Aug 21, half a day |
 | 76 | [WO-2.54](phase-2-attendance.md#wo-254--today-goes-to-the-term-and-there-is-no-way-back-to-today) **`Today` goes to the term, and there is no way back to today** | M | | **Before Sep 2 — the register opens in the wrong term right now.** Aug 20, half a day |
 | 77 | [WO-2.53](phase-2-attendance.md#wo-253--the-rows-detail-panel-says-what-the-row-already-says) **The row's detail panel says what the row already says** | L | | **Before Sep 2 — while there is no habit to unlearn.** Aug 21, a day |
-| 78 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | | **One uninterrupted sitting, then a queue.** Submit by ~Sep 15 |
-| 79 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 78 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+
+***WO-3.18 left this table on 2026-08-20, owner-directed, and it is the only row ever removed from it
+rather than reordered.*** *Its row was #78 and its cell read* **"One uninterrupted sitting, then a
+queue. Submit by ~Sep 15."** *The sitting turned out not to exist yet: the work order's third
+deliverable is a demo video* **showing the scope in use**, *and nothing in the app uses the scope —
+the token flow is* [WO-7.1](phase-7-sync.md#wo-71--auth) *and it has not been built. So WO-3.18 gained
+a third dependency, dropped to* `**Ship** —`, *and moved to* [§ After Ship 3](#after-ship-3--the-sign-in-and-the-paperwork)
+*with WO-7.1 ahead of it. The full reasoning is in the two notes under its own header;* **the ship
+argument is WO-G2's own, from 2026-08-10:** *Ship 2 is first grades and contains no sync, and keeping
+the row would have put an M of token flow inside it to protect one checkbox.* **WO-G2's eighth box was
+re-homed rather than waived** *— to WO-3.18's own third Acceptance line, with* `--tick` *holding the
+pointer, which is the mechanism* [WO-3.11](phase-3-gradebook.md#wo-311--owes-and-splitting-what--in-progress-means)
+*built for exactly this. Nothing else in the table moved.*
+
+***What `next` returns now, and why a gate is the honest answer.*** *With #78 removed,* `next` *lands
+on* **WO-G2** *— every one of its eleven dependencies is* `✅ DONE` *and the gate reports* `PASS`. *That
+is not a dispatchable row and it is not a mistake: it is the tool saying* **Ship 2's build queue is
+empty**, *which became true the moment WO-3.18 left. Four of WO-G2's nine boxes want a real class's
+real grades and cannot close before Sep 2 no matter what is built.* **Read [§ Ship 3](#ship-3--signals)
+for what to build**, *the same instruction* `CLAUDE.md` *has carried since 2026-08-19 — and note that
+this is the first time* `next` *and the running order disagree by design rather than by drift. It is
+recorded here rather than fixed in the tool: teaching* `next` *to skip a gate would teach it to skip
+WO-G1, which was the one row nobody was allowed to walk past.*
 
 *WO-2.50 and WO-2.51 were booked on 2026-08-18, owner-directed, out of her own report from the deployed
 app: her first term begins Aug 28 and the attendance grid was offering Aug 18 to mark. **WO-2.50 is
@@ -1369,7 +1402,9 @@ The rows below, between 2026-08-20 and **~2026-10-16**, ending at
 [WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order),
 the day Ship 2's build queue emptied — every row in § Ship 2 is `✅ DONE` except WO-3.18 and
 the gate itself, and **WO-G2 is calendar-bound by construction**: four of its nine boxes want a real
-class's real grades. So this table is written now for the same reason § Ship 2's was written the day
+class's real grades. *(**WO-3.18 left § Ship 2 entirely on 2026-08-20** — see the note under that
+table. The sentence is left standing because it is an argument about the day this table was written,
+and because the conclusion it reaches only got stronger: § Ship 2 now holds nothing but its gate.)* So this table is written now for the same reason § Ship 2's was written the day
 after Ship 1 closed, and one work order earlier: `next` is about to run out of rows again.
 
 **The unit of urgency is different from Ship 2's, and it is not a deadline.** Ship 1 raced a fixed
@@ -1425,6 +1460,60 @@ alert has a working visual channel on hardware, so the tone is real work and not
 WO-4.2, WO-4.3, WO-4.5 and [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) all gate on it,
 and so, through those, does every work order in Phases 5 and 6. Cutting anything else here descopes a
 list; cutting this one descopes Phase 4, Phase 5, and the glance page.
+
+---
+
+## After Ship 3 — the sign-in and the paperwork
+
+**Two rows, and they are not a ship.** Both carry `**Ship** —`: no gate work order depends on either,
+which is what ship membership means in § Header fields. They are here because **a work order with no
+row is a work order `next` cannot reach**, and that is the failure
+[WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order) was written
+about. Written 2026-08-20, when WO-3.18 came out of § Ship 2 and would otherwise have had nowhere to
+land.
+
+| # | Work order | Size | G3 | Suggested |
+|---|---|---|---|---|
+| 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | **Nothing blocks it.** Booked 2026-08-20; dispatch it whenever |
+| 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | **Whenever a day opens.** Laptop only, and it unblocks the row below |
+| 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | The sitting, once there is a sign-in to film and a policy to link. Then somebody else's queue |
+
+***Row 7 was booked the same day this section was, and it is the row to start with.***
+[WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) *is the privacy
+policy and* `docs/FERPA.md` *together, split out of* [WO-8.5](phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations)
+*— which keeps the README and dropped M → S. It leads the section because it is the only row here that*
+**nothing blocks**: *its one dependency is WO-8.7, done since 2026-08-12, while row 8 is an M of code
+and row 9 waits on row 8. WO-3.18's first Acceptance line is re-homed to it, so the policy is asserted
+once, in the work order that publishes it. Two things a dispatch should know before opening a file:*
+**`sw.js:156` answers every navigation with the app shell**, *so the policy URL renders the gradebook
+on any device with the worker installed — invisible to Google's cold fetch and fatal on the owner's
+iPad — and* **the contact line on a public policy is the owner's call**, *because* [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided)
+*rules that an address in a public file is a spam target. Both are written up as traps in the work
+order.*
+
+***The numbering continues § Ship 3's rather than restarting, and that is deliberate.*** `shipOneOrder()`
+*reads document order and ignores the number entirely — `tools/wo-gate.mjs` says so at its own
+definition — so the digits are for a human. Restarting at 1 under a heading that is not a ship would
+read as a fourth ship, which is the thing the paragraph above is at pains to deny.*
+
+***Why these two sit after Ship 3 rather than inside it.*** *WO-7.1 is buildable today — the
+Testing-mode client issues real `drive.file` tokens and its* `🔒` *came off 2026-08-20 — so nothing
+technical holds it. What holds it is that* **Ship 3 races the data and this races nobody.** [§ Ship
+3](#ship-3--signals)*'s rows 2–5 are the ones that must be built in the setup fortnight to have four
+weeks of real signals by mid-October; slipping one of those to make room for an M of sync work spends
+the only capacity that is genuinely scarce. WO-3.18's own deadline is* [WO-7.3](phase-7-sync.md#wo-73--verification-complete)*,
+which is a* `—` *in a phase with no date, and its cost of delay is paid in Phase 7 — public sync
+moves right by however long Google's queue takes. **That is the trade this placement accepts, stated
+plainly:** the earlier WO-7.1 is built, the earlier the paperwork starts, and every week of drift here
+is a week later that a teacher who is not the owner can sign in.*
+
+***The half that is not blocked, and should not wait for the other half.*** *WO-3.18's first
+deliverable is a* **published privacy policy at the verified domain**, *which needs no sign-in and no
+video. It pairs with* `docs/FERPA.md` *(*[WO-8.5](phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations)*,
+unscheduled) — WO-3.18 says in its own body* **write them together or write them twice** *— and
+`CLAUDE.md` records that the backup's accommodation and medical disclosure currently lives in the UI
+alone, which is the weaker half of the obligation in* `docs/data-model.md` *§ Accommodations. Drafting
+both is the one part of this section that can be done before WO-7.1 exists.*
 
 ---
 

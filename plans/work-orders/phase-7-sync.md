@@ -16,6 +16,18 @@ because Google will not take a raw LAN address, so the auth handshake is drivabl
 until [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) settles a domain. The rest
 of the protocol is ordinary code and tests anywhere.
 
+***The dependency runs the other way too, and nobody had written that down until 2026-08-20.*** *WO-3.18's
+third deliverable is a demo video* **showing the scope in use** *— and until this phase builds a sign-in
+there is nothing to film, because the app contains no OAuth call of any kind. So the paperwork is not
+merely "slotted in wherever it opens": it waits on* [WO-7.1](#wo-71--auth) *first.* **The phase gate and
+the work order statuses had been contradicting each other the whole time.** *The paragraph above says
+building here is ungated; all three work orders below wore the glyph that says it is not — and on WO-7.1
+that glyph had quietly become a deadlock, with WO-3.18 blocked on a sign-in and the sign-in marked "do not
+start it."* **WO-7.1 is ⬜ NOT STARTED as of 2026-08-20 and buildable today.** *WO-7.2 and WO-7.3 keep
+their* `🔒`*: those genuinely are the public-launch half. And* [WO-7.3](#wo-73--verification-complete)
+*is what keeps the paperwork gated now that Ship 2 no longer does — it has depended on WO-3.18 since this
+phase was cut.*
+
 Read [`../../docs/sync.md`](../../docs/sync.md) first. The whole protocol is settled there.
 
 **Until it lands, the Phase 1 export file is the iPad story: crude, manual, and real.** That is
@@ -25,10 +37,23 @@ acceptable, and it is why sync is last.
 
 ## WO-7.1 — Auth
 
-**Ship** — · **Status** 🔒 GATED · **Size** M · **Depends on** WO-3.10 — the client, not the
-verification: Testing mode issues real tokens
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.10 — the client, not the
+verification: Testing mode issues real tokens · **Blocks** WO-3.18 — the demo video has nothing to film
+until a sign-in exists
 **Closes roadmap** Phase 7 → "Google Identity Services token flow", "Sign-in is opt-in and
 reversible."
+
+*(**`🔒 GATED` until 2026-08-20**, owner-directed. The glyph was the phase header's, inherited by all
+three work orders in this file, and on this one it was **false in the direction that costs**: the header
+says in as many words that the gate is on public launch and not on building, the Testing-mode client
+issues real `drive.file` tokens today, and `Depends on` names WO-3.10 — which is ✅ DONE. **Nothing was
+waiting.** What made it worth an edit rather than a note is that it had become **circular**: WO-3.18
+cannot film its demo video until a sign-in exists, this work order was gated on WO-3.18's verification,
+and `wo-gate.mjs` reports one "dependency is 🔒 GATED, not ✅ DONE" and the other "is 🔒 GATED — do not
+start it", with no way in from either end. A `🔒` that reads as a wait when the road is open is the rot
+[WO-1.21](phase-1-shell-store-roster.md#wo-121--the-tracker-has-no-word-for-work-that-is-not-coming)
+named from the other side — there, work nobody intends to do sitting on a dependency line; here, a work
+order nobody may start standing in front of the only thing that unblocks it.)*
 
 **Why it exists.** One OAuth client, owned and verified by us. Teachers deploy nothing — that is the
 entire difference from the predecessor app, where each teacher was their own unverified developer
@@ -118,6 +143,16 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 **Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
 follow from a client nobody submitted
 **Closes roadmap** Phase 7 → "Verification complete."
+
+*(**This work order is now the only thing gating the OAuth paperwork, as of 2026-08-20.** It always
+depended on WO-3.18; what changed is what does not.* [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)
+*carried a box reading* **"WO-3.18 OAuth paperwork submitted, with the date recorded"** *until that day,
+when WO-3.18 gained a dependency on WO-7.1 and left Ship 2 — so a grade-arithmetic gate would otherwise
+have been left waiting on the token flow. That box is re-homed to WO-3.18's own third Acceptance line,
+which is the same promise in the work order that owns it, and* **this `Depends on` field is what stops
+the re-home from being a quiet drop.** *No box was added here to receive it: WO-3.18's already says it,
+and a second one would be the duplicate reader this repository keeps refusing. Phase 7 cannot complete
+without the submission, which is where the deadline always belonged.)*
 
 **Deliverables**
 - Verification approved by Google, recorded here with the date.

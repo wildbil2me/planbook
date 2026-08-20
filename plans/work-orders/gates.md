@@ -217,7 +217,7 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
 **Target** ~2026-09-15, before the first grades are entered for real
 
 *(That line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09. It was rewritten for two reasons, both
@@ -250,13 +250,22 @@ the owner's real classes, before the numbers matter.
 - [ ] The printout order matches the SIS entry screen, confirmed against a real re-key.
 - [ ] Backup drill re-run now that grades exist.
 - [ ] `TESTING.md` Phase 3 section fully passing.
-- [ ] WO-3.18 OAuth paperwork **submitted**, with the date recorded. *(This line said **WO-3.10**
+- [ ] WO-3.18 OAuth paperwork **submitted**, with the date recorded.
+      → WO-3.18 "The submission date is written into this work order" *(This line said **WO-3.10**
       until 2026-08-11. After the 2026-08-10 split WO-3.10 is the client and the consent screen and
       submits nothing — so as written, the box named a work order that could never close it. **Read
       this before Ship 2 rather than at it:** WO-3.18 needs the domain WO-8.7 settles, so if that
       naming and hosting decision has not been made, this cannot be ticked. The answer is to make the
       decision or to move this line to a later gate deliberately — waving it through is the one
-      option these trackers exist to prevent.)*
+      option these trackers exist to prevent. **That hatch was taken on 2026-08-20** — owner-directed,
+      and for a reason the 2026-08-11 rewrite could not have seen. The domain arrived; a different
+      dependency did not. WO-3.18's demo video has to show the scope in use and **nothing in the app
+      uses the scope**, so it now depends on
+      [WO-7.1](phase-7-sync.md#wo-71--auth) — an M of token flow, in a ship that contains no sync.
+      The line stays `- [ ]` and points at WO-3.18's own third Acceptance box, per WO-3.11's rule;
+      what gates the promise now is
+      [WO-7.3](phase-7-sync.md#wo-73--verification-complete), which has depended on WO-3.18 since
+      Phase 7 was cut. **This gate is grade arithmetic again, which is what it is named for.**)*
 - [ ] **The `**Ship** —` work orders get a ship, or keep `—` on purpose.** Phases 5–8 and WO-G4 carry
       `—` because the delivery table in [`../ROADMAP.md`](../ROADMAP.md) stops at Ship 3 — outreach,
       calendar, sync and packaging are all *"Then | Nov →"*. By the time this gate runs, Ship 3 is

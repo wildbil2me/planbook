@@ -15,7 +15,7 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — one row left to build, gate waiting on the term;**
+**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
 **Ship 3 building, its first row landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
@@ -34,10 +34,29 @@ order from having no rows left to read.)*
 audit of Phase 6 found the home screen's ungraded slot belonged to Phase 3 and booked*
 [WO-3.26](plans/work-orders/phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen)
 *ahead of WO-3.18 and WO-G2 — one row to build, not a reopening of the ship. It is* **✅ as of
-2026-08-19**: *every class card now carries the work waiting on it, and* `next` *returns WO-3.18
-again. The warning this block used to carry — "do not go looking for Ship 2 work" — stays gone, and
+2026-08-19**: *every class card now carries the work waiting on it, and* `next` *returned WO-3.18
+again — until 2026-08-20 took that row out of the ship altogether; see the two blocks above. The warning this block used to carry — "do not go looking for Ship 2 work" — stays gone, and
 the reason is unchanged:* **§ Ship 3 is the running order.** *What is left in § Ship 2 is one
 submission and a calendar-bound gate.)*
+
+*(**§ Ship 2 lost that submission on 2026-08-20, and now holds nothing but its gate** — owner-directed,
+and the reason is a dependency nobody had written down.* [WO-3.18](plans/work-orders/phase-3-gradebook.md#wo-318--verification-submitted-)
+*owes Google a demo video* **showing the scope in use**, *and* **nothing in the app uses the scope**: the
+token flow is [WO-7.1](plans/work-orders/phase-7-sync.md#wo-71--auth), *which had not been built and was
+itself wearing Phase 7's* `🔒` — *so the paperwork was blocked on a sign-in and the sign-in was marked
+"do not start it." WO-7.1 is* `⬜ NOT STARTED` *and buildable now; WO-3.18 gained it as a third
+dependency and dropped to* `**Ship** —` *beside it, in a new* **§ After Ship 3** *section. **The ship
+argument is WO-G2's own, from 2026-08-10** — Ship 2 is first grades and contains no sync — and WO-G2's
+eighth box was* **re-homed to WO-3.18's own third Acceptance line, not waived**, *which is the hatch that
+box has named since it was written.)*
+
+*(**Two things to know before reading `next` again.** It returns* **WO-G2** *now, and that is the tool
+saying Ship 2's build queue is empty rather than offering a dispatchable row — the gate wants a real
+class's real grades and cannot close before Sep 2.* **§ Ship 3 is still the running order**; *the note
+under § Ship 2's table says so and says why teaching* `next` *to skip a gate was refused. And the one
+piece of WO-3.18 that is not blocked is its* **privacy policy**, *which pairs with* `docs/FERPA.md`
+*(WO-8.5) — the document this file still records as missing, and the weaker half of the backup
+disclosure under § Accommodations.)*
 
 *(**WO-3.26 is also the first work order here to be finished by a different session than started it.**
 Its dispatch died after the implementer's writes had landed and before anything was verified or
@@ -221,7 +240,8 @@ negotiable and are easy to break by accident:
 - **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
   paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
 - **Backups now contain this data.** The backup UI says so in as many words (`index.html`, the backup
-  panel). **`docs/FERPA.md` does not exist yet** — it is a WO-8.5 deliverable, still ⬜ NOT STARTED,
+  panel). **`docs/FERPA.md` does not exist yet** — it is a WO-8.12 deliverable, still ⬜ NOT STARTED
+  *(it was WO-8.5's until 2026-08-20, when it was split out and paired with WO-3.18's privacy policy),*
   and when it is written it must address the backup directly rather than only discussing grades. Until
   then the disclosure lives in the UI alone, which is the weaker half of the obligation in
   `docs/data-model.md` § Accommodations.

@@ -13,6 +13,52 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The privacy policy and the FERPA document get one work order — 2026-08-20
+
+WO-3.18 has said since 2026-08-10 that its privacy policy and `docs/FERPA.md` say overlapping things
+to different readers, and that the answer is to write them together or write them twice — and then left
+it at "whoever reaches this first should expect to draft both," which names nobody. The two documents
+sat in work orders on opposite sides of the board with nothing making them one sitting.
+
+WO-8.12 is that sitting. `docs/FERPA.md` came out of WO-8.5 with the roadmap box that names it, the
+data-flow statement and the accommodation clause; WO-8.5 keeps the README and dropped M → S. The split
+is WO-8.7's shape — one part blocked something five phases away and the rest did not. It leads the new
+§ After Ship 3 because it is the only row there that nothing blocks: WO-8.7 settled its one dependency
+on 2026-08-12, while WO-7.1 is an M of code and WO-3.18 waits on WO-7.1. WO-3.18's first Acceptance line
+is re-homed to it, so the policy is asserted once, in the work order that publishes it.
+
+Two traps found while writing it. `sw.js:156` answers every navigation out of the cache — `INDEX` is
+the app shell and the request path is never read — so the policy URL renders the gradebook on any device
+with the worker installed. That fails invisibly from the place it will be tested: Google's reviewer
+fetches cold and sees the policy, the owner's iPad has a worker and does not. And a public policy needs
+a contact, which WO-8.7 rules is a spam and phishing target in a public file; that is the owner's call,
+not an implementer's, and the work order says so rather than leaving an address to be invented.
+
+### The OAuth paperwork was blocked on a sign-in nobody had built — 2026-08-20
+
+WO-3.18 owes Google a demo video *showing the scope in use*, and nothing in the app uses the scope:
+`accounts.google`, `drive.file`, `gapi` and `oauth` return zero hits across `src/` and
+`index.html`. Its header named the client and the domain and never named the thing that exercises
+them, so both gates read clear on a work order that could not produce its own second deliverable —
+the fifth ordering constraint found somewhere other than a `Depends on` line, and the first that ran
+backwards into the phase it is the stated gate for.
+
+The token flow is WO-7.1, which was wearing Phase 7's `🔒` — so the paperwork was blocked on a
+sign-in and the sign-in was marked *do not start it*, with no way in from either end. WO-7.1's glyph
+was false in the direction that costs: the phase header says in as many words that the gate is on
+public launch and not on building, and the Testing-mode client issues real `drive.file` tokens today.
+It is `⬜ NOT STARTED` now, buildable on the laptop, and carries a `**Blocks**` field saying what
+waits on it.
+
+WO-3.18 gained WO-7.1 as a third dependency and left Ship 2 for `**Ship** —`. The argument is WO-G2's
+own, from 2026-08-10: Ship 2 is first grades and contains no sync, and keeping the row would have put
+an M of token flow inside it to protect one checkbox. WO-G2's eighth box took the hatch it has named
+since it was written — moved deliberately rather than waived — and now points at WO-3.18's own third
+Acceptance line, with `--tick` holding the pointer. What gates the promise is WO-7.3, which has
+depended on WO-3.18 since Phase 7 was cut. § Ship 2 holds nothing but its gate, both new rows live in
+a new **§ After Ship 3**, and `next` returns WO-G2 — which is the tool reporting an empty build queue,
+not offering a dispatchable row.
+
 ### Phase 4 is drawn before it is built — 2026-08-20
 
 The signal engine landed on the 19th with no screen at all, and the concern list is due to start on

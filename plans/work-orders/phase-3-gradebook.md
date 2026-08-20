@@ -1391,8 +1391,9 @@ the thing the no-timetable rule actually forbids.
 
 ## WO-3.18 — verification submitted 🔒
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7 — the client to
-verify and the domain to verify it at · **Blocks** a stranger seeing a clean consent screen
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-8.12 —
+the client to verify, the domain to verify it at, the sign-in the demo video has to film, and the policy
+whose URL goes in the form · **Owes** WO-8.12 · **Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
 
@@ -1406,9 +1407,35 @@ on a gate's checklist is being in that ship. **The `—` here was never the WO-3
 came off WO-G2's `Depends on` because a queue nobody controls must not block a grade-arithmetic gate,
 which is about where a **dependency** may sit, not about which ship the paperwork belongs to.)*
 
+*(**`**Ship** 2` and two dependencies until 2026-08-20**, owner-directed. The third deliverable below is
+**a demo video showing the scope in use**, and **nothing in the app uses the scope**: `accounts.google`,
+`drive.file`, `gapi` and `oauth` return **zero hits** across `src/` and `index.html`, because the token
+flow is [WO-7.1](phase-7-sync.md#wo-71--auth) and WO-7.1 has not been built. The header named the client
+and the domain and never named the thing that **exercises** them — so both gates read clear on a work
+order that could not produce its own second deliverable. **This is the fifth time a real ordering
+constraint has turned up somewhere other than `Depends on`** — [README.md](README.md) § Ship 3 counted
+four — and the first where the missing one ran **backwards**, into the phase this work order is the stated
+gate for. See WO-7.1's own note for the deadlock that made it circular. Filming a stub was considered and
+refused: a scope demo that does not show real usage is rejected on review, and it is exactly the class of
+claim this repository's verification culture exists to stop.)*
+
+*(**And that is why the ship changed rather than the schedule.** `**Ship** 2` is first grades and
+contains no sync — [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s own 2026-08-10 correction, written
+when WO-3.10 came off its dependency line for precisely this reason: **a grade-arithmetic gate must not
+slip on a queue nobody here controls, for a feature it does not ship.** Keeping the row would have put an
+M of token flow inside Ship 2 to protect one checkbox. So WO-G2's eighth box took **the escape hatch that
+box has named since the day it was written** — *"move this line to a later gate deliberately"* — and now
+points at the third Acceptance line below, which is the same promise in the work order that owns it.
+**What still gates it is [WO-7.3](phase-7-sync.md#wo-73--verification-complete)**, which has depended on
+this work order since Phase 7 was cut. The `~Sep 15` submit-by went with the row; what replaces it is
+WO-7.1's build date, and **Phase 7 has no date yet** — that is the honest cost of this move, and it is
+paid in Phase 7 rather than in Ship 2.)*
+
 **Split out of WO-3.10 on 2026-08-10**, which is where the full reasoning sits. This is the half that
 **cannot start until there is a domain**, and it is booked separately so that the half which can start
-is not held behind it.
+is not held behind it. *(**Read that sentence with the note above.** A domain is no longer the only thing
+it cannot start without, and the 2026-08-10 split could not have known so: WO-7.1 did not yet have a
+work order to depend on.)*
 
 **Why it exists.** `drive.file` is a *sensitive* scope, so the client needs Google's review before a
 teacher who is not the owner ever signs in. Until it clears, the consent screen wears **"Google hasn't
@@ -1434,8 +1461,18 @@ things to different readers — one is a legal artifact at a URL Google will rea
 document a principal or district IT reads. **Write them together or write them twice.** WO-8.5 is
 scheduled in Phase 8 and this is not, so whoever reaches this first should expect to draft both.
 
+*(**That paragraph got its own work order on 2026-08-20:**
+[WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document), owner-directed, which
+carries both documents and took the FERPA half out of WO-8.5 to do it. **"Whoever reaches this first"
+was the weak point** — it names no one, and the two documents were sitting in work orders on opposite
+sides of the board with nothing making them one sitting. The first deliverable below and the first
+Acceptance line are WO-8.12's now; **this work order stops owning any prose and goes back to being what
+its title says — a submission.** The paragraph is left standing because the argument in it is the reason
+WO-8.12 exists.)*
+
 **Acceptance**
 - [ ] The privacy policy is live at the verified domain and says the three things above in plain words.
+      → WO-8.12 "live at the verified domain and says the three things WO-3.18 names"
 - [ ] The consent screen shows exactly one scope **and no "Google hasn't verified this app" warning**,
       checked on an account that is not a test user — which is the only account that can tell.
 - [ ] The submission date is written into this work order. *(Fill it in when submitted, so the wait is
