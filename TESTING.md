@@ -7102,7 +7102,122 @@ because which of the five is visible depends on the view. Both are written up in
 beside the count. **The second one found a real defect**: with the calendar up, the navy header's
 caption read *"Your classes"* over a panel headed *Calendar*, because `src/classes.js`'s caption
 branch is reached by anything that is not a class screen and had been a constant since only one view
-reached it. It is a two-entry lookup now.
+reached it. It is a two-entry lookup now. *(**Both of those sentences were superseded within the day
+by WO-6.6**, which made the calendar a class screen: the caption branch is reached by one view again
+and the lookup came out with the calendar. The first acceptance line above — "belongs to no class …
+no class tabs over it and no class-screen switcher inside it" — is the record WO-6.6's own block
+below reverses, and it is left ticked because it was true of the build it was read against.)*
+
+---
+
+### WO-6.6 — The calendar's doors
+
+**What this adds.** The way in and the way out. The calendar became the app's sixth view at WO-6.3
+and was wired as a cul-de-sac: arriving replaced the header's whole class strip with a `Calendar`
+caption, the two panels that author what the grid draws were on the home screen and inside this
+screen's own *empty state*, and the only way out was one button in a panel header. Three gaps, all
+owner-reported on 2026-08-19 against that morning's build.
+
+**Four rulings, all the owner's, all 2026-08-19.** The calendar becomes a class screen and gets the
+fourth pill, with the header tabs answering *which class am I in* and the toolbar's filter answering
+*what is this grid about* — and a header tab tapped while the calendar is up **stays on the calendar**
+and moves the filter with it. Arriving through the pill arrives **filtered to the class you came
+from**; the home screen's own button still opens on every class. Days off comes off the attendance
+action row and the 📅 in a covered column's head stays. The home screen keeps Calendar and loses the
+other two.
+
+**Six written records said the opposite and were amended in the same sitting**, each with both dates
+and the reason: `plans/gradebook-surfaces.md` (**THREE TABS, NOT FOUR**, 2026-08-09), `src/screen-nav.js`,
+`src/views.js`, `src/classes.js`, `src/shell.js`, and `tools/verify-shell.mjs` — whose *"the calendar
+is the sixth VIEW and belongs to no class"* check is **inverted, not deleted**, along with two more in
+the assignments section that counted three tabs and one in the attendance section that asserted the
+days-off door was there. **The reason is not "four is fine after all":** the calendar is the first
+surface that is *about* a class without being *owned by* one, a kind the 2026-08-09 record had no
+instance of.
+
+**The route to Days off was re-homed, not narrowed.** Three doors reached it before (home, the
+attendance action row, the covered column head) and three reach it after (the calendar's panel header,
+its empty state, the covered column head).
+
+- [x] On the calendar the header's bottom strip carries the **All classes** door and one tab per
+      active class, exactly as on Attendance, Assignments and Scores — and the `Calendar` caption is
+      gone from `src/classes.js` along with the lookup that held it.
+- [x] The switcher inside `#calendarView` shows four segments with **Calendar** current, and the same
+      strip on the other three screens shows Calendar as a live segment that reaches it.
+- [x] Tapping **Calendar** from inside a class opens the month on **today**, filtered to **that
+      class**, with that class's meeting ledger drawn — the per-class state the month suppresses when
+      every class is showing, and the hint that explains that silence is down.
+- [x] The home screen's **Calendar** button still opens with every class showing, and the hint under
+      the grid is up there and not on the filtered arrival.
+- [x] Tapping another class's header tab while the calendar is up leaves the calendar up, moves the
+      open class **and** the filter to that class, and redraws. It does not land on Attendance.
+- [x] Tapping **All classes** in the toolbar shows every class while the header tab of the class you
+      are in stays current. Two controls, two answers, neither one lying.
+- [x] No `setPref('openClassId'` appears anywhere in `src/` outside `src/classes.js`, and **WO-6.6
+      added no writer**: the calendar keeps its view because `selectClass()` asks `currentView()`,
+      inside the one function that was already there. *(**The criterion was re-worded on 2026-08-20
+      before it was ticked** — the owner's ruling, and the phase file carries the record. It had
+      claimed `openClassId` was written in **exactly one function**, which a grep contradicted:
+      `createClassFromForm()` writes it too, at `src/classes.js:975`, guarded on a first class, from
+      commit 33bab80 on 2026-08-04 — a fortnight before this dispatch. The ruling was **create stays
+      separate from select**, and the line now says what the trap protects: one writer on any path a
+      teacher can reach twice. The `src/` narrowing is deliberate too — `tools/verify-shell.mjs:4165`
+      holds that literal inside a CDP eval string, harness scaffolding and not a writer.)*
+- [x] `planbook_openView` holds `class` while the calendar is up and can never hold `calendar`
+      (`REMEMBERED_AS`) — **and a real reload from that screen lands on Attendance** for the class
+      that was open, headed with that class's name. Both halves are asserted, because a build that
+      stored `calendar` and ignored it at boot would pass one of them.
+- [x] Days off and Events open from the calendar's own panel header, and an event authored there is
+      on the grid behind the panel the moment it closes — no reload, no second tap.
+- [x] The attendance action row carries **no** Days off button, and the 📅 in a covered column's head
+      still opens the panel with that day's exception in it.
+- [x] The home screen's title row carries **Calendar** and nothing else beside it, and neither
+      days-off nor events hook appears anywhere in `#homeView`.
+- [x] The four-segment switcher **fits its own strip** at 390px and at 834px rather than scrolling
+      inside it — measured as `scrollWidth` against `clientWidth` on the strip, because
+      `.screen-nav` is `overflow-x: auto` and a pill that does not fit scrolls silently — with every
+      segment clearing 44px high under a coarse pointer. The 28px month-chip floor is the owner's
+      ruling for one control and is **not** a precedent; this control takes the full 44.
+- [x] The calendar's panel header carries four buttons at 390px — Days off · Events · Print · All
+      classes — none narrower than its own label, none under 44px, and no horizontal page scroll.
+- [x] 👤 **On the iPad in portrait, the four-segment switcher fits its panel without the page
+      scrolling sideways, and every segment is thumb-sized.** The strip is `overflow-x: auto`, so a
+      fourth pill that does not fit scrolls silently rather than overflowing — the emulator readings
+      above measure the strip at 390 and 834, and what they cannot settle is whether four segments
+      and the class tabs above them read as one place rather than two rows of navigation. Force-quit
+      from the app switcher first: this is a `SHELL` change (**v88**), and a reload is not enough. 👤
+- [x] 👤 **The calendar's panel header at 390px carries four buttons on however many rows it needs,
+      with none of them clipped and no horizontal page scroll.** Measured on the emulator; what needs
+      the device is whether a two-row header over a month grid is still a header. 👤
+- [x] 👤 **Walking Attendance → Calendar → another class's tab → Attendance never passes through a
+      screen that looks like the wrong class's, and the class you land in is the one whose tab you
+      tapped.** Every step of that walk is asserted above; what is owed is the *flash* — a repaint
+      order that is correct and still shows the wrong class for a frame is invisible to a check that
+      reads the DOM after it settles. 👤
+
+*Desk pass 2026-08-19: `verify-shell.mjs` **1040 of 1040, 0 failed, 0 skipped**, 28,885 lines, 349s, exit 0, up from 1029 on the tree this work order
+arrived on — eleven new call sites in the existing WO-6.3 section, none inside a loop and none a
+failure arm, and* **six existing checks inverted rather than deleted** *(five counted three tabs; the
+sixth said the calendar belonged to no class, in as many words, with a comment saying that a build
+which added it to `CLASS_SCREENS` fails there — this is that build).* `wo-sweep.mjs` *is 25 checks, 23
+passed, 0 failed, 2 to review — both pre-existing shapes, unchanged by this work order.*
+
+**It was not green on the first run, and the sixth red was the app.** Five were the tab-count
+bookkeeping above. The sixth is the trap this work order names: at 390px the four-segment strip
+measured **363 wide inside 330** and, because `.screen-nav` is `overflow-x: auto`, it did not overflow
+the page — it **scrolled**, with the document reporting a clean `390 in 390` beside it. The fourth
+segment was simply not on screen, and every page-width check in the harness passed straight through
+it. The fix is `.screen-nav-btn`'s horizontal padding, 14/16 down to **10px** in both the base rule and
+the coarse block of `src/assignments.css`: ~315 in 330, one row, `min-height: 44px` untouched, every
+segment still ≥ 56px wide. **An iPad in portrait was never the failing width** — the same strip is 315
+in 315 at 834px — which is why the 834 reading sits beside the 390 one rather than instead of it.
+
+*And the second attempt at that fix cost a run of its own, which is worth one line: putting the
+narrowing in `src/assignments.css`'s existing* `@media (max-width: 640px)` *block turned WO-3.7's
+general-form check red eight times —* **no responsive rule declares a property on this sheet that the
+gated print block leaves unpinned** *— because `.screen-nav-btn` lives inside `#detailView` and the pin
+would have had to be a `body[data-detail-print]` rule written into the assignments stylesheet. An
+unconditional value has nothing to pin.*
 
 ---
 

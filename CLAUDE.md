@@ -161,7 +161,12 @@ Seven things that will bite:
   at its own definition. With every class showing, a month draws no per-class meeting state at all
   and says so in words under the grid; the per-class ledger appears when you filter to one class, and
   in the **week** view. So the wall of amber was never rendered rather than rendered and then tuned —
-  which is the shape to keep if a later screen asks the same question.)*
+  which is the shape to keep if a later screen asks the same question. **WO-6.6 added the second way to
+  arrive filtered** — the calendar is now the fourth pill on every class screen's switcher, and coming
+  through it filters to the class you came from — and that filter is a **door, recomputed on arrival,
+  never a stored preference**: a remembered filter is a month quietly hiding four fifths of the year
+  from a teacher who does not recall setting it. Nothing about scale, anchor or filter reaches
+  `localStorage`.)*
 - **`late` and `missing` are marked by the teacher, never inferred from a due date.** Blank means
   ungraded and affects nothing. The grade must never change because a date rolled over. The date may
   still **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only

@@ -59,6 +59,14 @@ dependencies.
   holds no writer at all — `wo-sweep.mjs` § 17 asserts that structurally, and a new derived answer
   goes in that file rather than in `src/calendar.js`, which it must not import backwards into.
 
+- **The calendar's class filter is a door, not a preference** (WO-6.6). The calendar is the fourth pill
+  on every class screen's switcher, and arriving through it filters to the class you came from —
+  recomputed on every arrival. Do **not** persist it: a remembered filter is a month quietly hiding
+  four fifths of the year from a teacher who does not recall setting it. Nothing about scale, anchor or
+  filter reaches `localStorage`. Two more rules ride with it — `openClassId` gets **no** new writer
+  (`selectClass()` owns it on every path reachable twice; the one other writer fires once on a first
+  class), and `src/calendar-view.js` must **not** be imported into `src/classes.js`, which closes a
+  loop. Order of operations lives in `src/shell.js`. Three files, three jobs.
 Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 ## If you were dispatched with a work order

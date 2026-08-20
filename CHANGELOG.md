@@ -13,6 +13,42 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The calendar is a place you can get to, and get out of — 2026-08-20
+
+**The calendar is now a tab on every class screen.** Attendance · Assignments · Scores · **Calendar**
+— four segments instead of three. You no longer have to go back to the home screen to look at the
+month, and you no longer arrive somewhere you cannot leave.
+
+**Tapping it from inside a class opens the month on today, already filtered to that class**, with that
+class's meeting ledger drawn. It is the class you were just looking at, so that is the class the grid
+is about. The home screen's *Calendar* button still opens on every class showing, the way it always did.
+
+**Your class tabs stay with you.** Arriving at the calendar used to replace the whole row of class tabs
+with the word *Calendar* — a screen with one button out of it, buried in a panel header. Now the tabs
+are right where they always are, and tapping another class while the month is up **keeps you on the
+month** and moves the grid to that class. It is the only screen in the app where tapping a class tab
+does not take you to Attendance, and that is deliberate: you asked for a different class, not a
+different screen.
+
+**Two controls, two questions, and they no longer argue.** The tabs across the top answer *which class
+am I in*. The filter on the calendar's own toolbar answers *what is this grid about* — and it keeps
+**All classes**, which is the one thing a row of class tabs cannot say. Tapping *All classes* shows
+everything while the tab for the class you are in stays lit.
+
+**Days off and Events moved to the calendar**, which is where you were going to look for them anyway.
+They sit in the calendar's own panel header beside *Print*, and an event you write there is on the grid
+the moment the panel closes — no reload, no second tap. The home screen's title row is just *Calendar*
+now. The 📅 in the head of a covered column still opens Days off with that day already in it, and the
+calendar's empty state still leads to both.
+
+**The filter is not remembered on purpose.** Every arrival recomputes it from the door you came
+through. A calendar that remembered a filter from last Tuesday is a month quietly hiding four fifths of
+your school year from you, and you would have no reason to suspect it.
+
+**Reloading while the month is up puts you back on Attendance** for the class that was open, headed
+with that class's name — the same as it has always done. The calendar is a place you go, not a place
+you get left.
+
 ### A month you can actually look at — 2026-08-19
 
 **The calendar.** Open it from the home screen, beside *Days off* and *Events*. A month at a glance

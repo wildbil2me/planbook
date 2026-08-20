@@ -130,6 +130,53 @@ carries the class tabs, the term nav and three icon buttons, and `src/classes.js
 fourth control up there puts the page into horizontal overflow at 390px. The class tabs answer
 *which class*; this answers *which screen of it*.
 
+**Four tabs since 2026-08-19, and the fourth is Calendar** *(the owner reversing the call above, ten
+days later, WO-6.6)*. **THREE TABS, NOT FOUR** was the ruling of 2026-08-09 and it is kept here rather
+than edited away, because the reversal is only readable against it and because the thing it was
+protecting still holds — see *Per-student detail is not a fourth tab* immediately below, which is
+unchanged and is still the reason `detail` has no segment.
+
+**The reason is not "four is fine after all."** The calendar is the first surface in this app that is
+**about** a class without being **owned by** one, and the 2026-08-09 record had no instance of that
+kind: Attendance, Assignments and Scores are each a view of one class's own data, and per-student
+detail is a view of one student's. A month grid is neither. It draws the school's own dates — a break
+closes every class, a grades-due date is the same date for all five — and what makes it *about* Period
+3 is a lens on the toolbar rather than the data behind it. WO-6.3 built it as the sixth view, belonging
+to no class, and the owner's report against that build on 2026-08-19 was that it had been **built as a
+destination and wired as a cul-de-sac**: arriving replaced the header's whole class strip with a
+`Calendar` caption, and the way out was one button inside a panel header.
+
+**So the fourth pill, and two controls answering two questions.** The header tabs answer *which class
+am I in*; the switcher answers *which screen of it*; and the calendar's own filter strip answers *what
+is this grid about* and keeps **All classes**, which is the one thing a tab row cannot say. Tapping a
+header tab while the calendar is up **stays on the calendar** and moves the filter with it — the
+calendar is the only screen where that tap does not land on Attendance, and `src/classes.js`'s
+`selectClass()` is the one place that is decided, because it is the only writer of `openClassId` on any
+path a teacher can reach twice. *(**Not the only writer, and the criterion was re-worded to say so** —
+2026-08-20, the owner's ruling on WO-6.6's seventh Acceptance line. `createClassFromForm()` writes it at
+`src/classes.js:975`, guarded on a first class, from 2026-08-04. The two cannot disagree — by the time
+there are tabs to tap, that guard is dead — and **create stays separate from select** because routing
+the first-class write through `selectClass()` runs before there is a class screen to select into.)*
+Arriving through the pill arrives **filtered to the class you came from**; the home screen's own
+Calendar button still opens on every class. That is a door, recomputed on each arrival, and not a
+remembered filter — `src/calendar-view.js`'s header is the argument for the difference.
+
+**Two edges the Acceptance lines never asked about, disclosed by the implementer** *(2026-08-19,
+recorded 2026-08-20)*. On a document with **zero active classes** the calendar still paints four
+segments, and tapping *Attendance* bounces straight back to the grid — legible, but new. The obvious
+guard is wrong: `afterClassChange()` deliberately keeps a teacher on the calendar after she archives
+her last class, so a rule that hid the strip there would fight the one that put her there. And a
+**header tap while the calendar is up speaks two sentences into one live region** — `selectClass()`'s
+and the calendar's, the calendar's winning. Both are cosmetic against a screen no teacher reaches in a
+normal week; both are written down here rather than fixed blind, because either fix touches a rule that
+was decided somewhere else.
+
+**What it cost, which is the same as WO-3.5's and WO-3.7's:** one entry in `SCREENS`
+(`src/screen-nav.js`), one in `CLASS_SCREENS` and one in `REMEMBERED_AS` (`src/views.js`), one empty
+`<nav data-screen-nav>` in `#calendarView`, and one branch in `paintClassScreen()`. The strip that used
+to be taken over comes back with no rule about this one view, which is the point — the fix is the
+calendar joining a list, not a second special case.
+
 **Per-student detail is not a fourth tab.** It is reached by tapping a student from any of the
 three, and the strip then shows that student's name as a fourth segment *while you are in it* — a
 breadcrumb back, which appears because you went somewhere. The drawings had it as a peer tab labelled
@@ -153,7 +200,9 @@ header and appears in the strip with no change to that file, the same contract `
 with its renderer; `src/shell.js` repaints it after anything that moves the view and paints the
 screen the switch landed on. **WO-3.5 and WO-3.7 add one line each to `VIEWS` and `CLASS_SCREENS` in
 `src/views.js` and one empty `<nav>` in their own markup, and nothing else** — the *Scores* segment
-is already drawn, disabled, and stops being disabled the moment its view exists. The always-opens-on-
+is already drawn, disabled, and stops being disabled the moment its view exists. *(WO-6.6's Calendar
+is the third to arrive that way, on 2026-08-19, and the only one whose view already existed when its
+segment landed — so it is the one segment in this strip's history that was never on screen disabled.)* The always-opens-on-
 Attendance half is not in the strip at all: it is `REMEMBERED_AS` in `src/views.js`, which writes
 every class screen down as `class`, so the preference cannot hold anything for a reload to restore.
 The `.screen-nav*` styles landed in `src/assignments.css` as § SHARED, per the rule below that the

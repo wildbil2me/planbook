@@ -519,7 +519,7 @@ flash through today on the way is a worse experience than landing on today would
 
 ## WO-6.6 — The calendar's doors: in from every class screen, out of it to any of them
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.3
+**Ship** — · **Status** ✅ DONE — 2026-08-20 · **Size** M · **Depends on** WO-6.3
 
 **Why it exists.** Three gaps, all owner-reported on 2026-08-19 against the build WO-6.3 shipped that
 morning, and all three are the same gap seen from three sides: **the calendar was built as a
@@ -618,40 +618,64 @@ to a decision record instead of a rules file.
 
 **Acceptance**
 
-- [ ] On the calendar the header's bottom strip carries the **All classes** door and one tab per active
+- [x] On the calendar the header's bottom strip carries the **All classes** door and one tab per active
       class, exactly as it does on Attendance, Assignments and Scores — and the `Calendar` caption is
       gone from `src/classes.js` along with the lookup that held it.
-- [ ] The switcher inside `#calendarView` shows four segments with **Calendar** current, and the same
+- [x] The switcher inside `#calendarView` shows four segments with **Calendar** current, and the same
       strip on the other three screens shows Calendar as a live segment that reaches it.
-- [ ] Tapping **Calendar** from inside a class opens the month on **today**, filtered to **that
+- [x] Tapping **Calendar** from inside a class opens the month on **today**, filtered to **that
       class**, with that class's meeting ledger drawn — the per-class state the month suppresses when
       every class is showing.
-- [ ] The home screen's **Calendar** button still opens on every class showing, and the hint under the
+- [x] The home screen's **Calendar** button still opens on every class showing, and the hint under the
       grid explaining why no per-class day is drawn still appears there and not on the filtered arrival.
-- [ ] Tapping another class's header tab while the calendar is up leaves the calendar up, moves the
+- [x] Tapping another class's header tab while the calendar is up leaves the calendar up, moves the
       filter to that class, and redraws. It does **not** land on Attendance.
-- [ ] Tapping **All classes** in the toolbar filter shows every class while the header tab of the class
+- [x] Tapping **All classes** in the toolbar filter shows every class while the header tab of the class
       you are in stays current. Two controls, two answers, neither one lying.
-- [ ] `openClassId` is written in exactly one function after this work order, and `grep` proves it:
-      no second writer, no `setPref('openClassId'` outside `src/classes.js`.
-- [ ] Reloading while the calendar is up lands on **Attendance** for the open class — `REMEMBERED_AS`
+- [x] `openClassId` is written by exactly one function on any path a teacher can reach twice —
+      `selectClass()` — and `grep` proves the rest: no `setPref('openClassId'` appears anywhere in
+      `src/` outside `src/classes.js`. The only other writer, `createClassFromForm()`, fires once on a
+      teacher's first class and never again. No second writer for the calendar, no import loop.
+- [x] Reloading while the calendar is up lands on **Attendance** for the open class — `REMEMBERED_AS`
       holds `calendar: 'class'`, and `planbook_openView` never contains `calendar`.
-- [ ] Days off and Events open from the calendar's own panel header, and an event authored there
+- [x] Days off and Events open from the calendar's own panel header, and an event authored there
       appears on the grid behind the panel when it closes, with no reload and no second tap.
-- [ ] The attendance actions row carries **no** Days off button on any state of any day, and the 📅 in
+- [x] The attendance actions row carries **no** Days off button on any state of any day, and the 📅 in
       a covered column's head still opens the panel with that day's exception in it.
-- [ ] The home screen's title row carries **Calendar** and nothing else beside it.
-- [ ] `node tools/verify-shell.mjs` is green, and the two coarse-pointer 44px blocks for the days-off
+- [x] The home screen's title row carries **Calendar** and nothing else beside it.
+- [x] `node tools/verify-shell.mjs` is green, and the two coarse-pointer 44px blocks for the days-off
       and events panels **ran** — they are guarded by a `has()` on the home screen's own hooks, so a
       re-route that misses them leaves a green run with two fewer checks in it.
-- [ ] The `check()` count in `tools/README.md` matches the run, and `node tools/wo-sweep.mjs` is green.
-- [ ] 👤 On the iPad in portrait, the four-segment switcher fits its panel without the page scrolling
+- [x] The `check()` count in `tools/README.md` matches the run, and `node tools/wo-sweep.mjs` is green.
+- [x] 👤 On the iPad in portrait, the four-segment switcher fits its panel without the page scrolling
       sideways, and every segment is thumb-sized. The strip is `overflow-x: auto`, so a fourth pill
       that does not fit **scrolls silently** rather than overflowing — measure the strip, not the page.
-- [ ] 👤 The calendar's panel header at 390px carries four buttons — Days off · Events · Print · All
+- [x] 👤 The calendar's panel header at 390px carries four buttons — Days off · Events · Print · All
       classes — on however many rows it needs, with none of them clipped and no horizontal page scroll.
-- [ ] 👤 Walking Attendance → Calendar → another class's tab → Attendance never passes through a screen
+- [x] 👤 Walking Attendance → Calendar → another class's tab → Attendance never passes through a screen
       that looks like the wrong class's, and the class you land in is the one whose tab you tapped.
+
+***This criterion was re-worded before it was ticked, and the wording is the whole record**
+(amended 2026-08-20, the owner's ruling; found 2026-08-19, the implementer). It read* **"written in
+exactly one function after this work order"** *— and a grep contradicted it on the day it was written.*
+`selectClass()` *writes it at* `src/classes.js:650`*;* `createClassFromForm()` *writes it too, at*
+`src/classes.js:975`*, guarded by* `activeClasses(getDoc()).length === 1`*, so that a teacher's FIRST
+class becomes the open one instead of a header saying nothing is selected. That writer predates this
+work order by a fortnight — commit 33bab80, 2026-08-04 — so the line was false before the dispatch
+opened, and WO-6.6 added neither writer.*
+
+*The **ruling: create stays separate from select**, and the criterion now says what the trap actually
+protects — one writer on any path a teacher can reach twice. The two cannot disagree: by the time a
+teacher is tapping header tabs there is more than one class and the guarded line is dead code. The
+alternative — routing the first-class write through* `selectClass()` *— was refused because it runs
+before there is a class screen to select into and would change what a brand-new teacher sees on her
+very first tap; that is its own work order, not a squeeze into this one.*
+
+*Two narrowings in the new wording are deliberate.* **"on any path a teacher can reach twice"** *is the
+clause doing the work — an unconditional second writer is still forbidden. And* **"anywhere in** `src/`**"**
+*replaces a flat "anywhere", because* `tools/verify-shell.mjs:4165` *holds a read-back-write of that
+literal inside a CDP eval string — harness scaffolding, unchanged from HEAD, and not a writer of the
+preference. The original phrase was one word wider than the tree.*
 
 **Traps**
 
