@@ -424,11 +424,21 @@ a navigation: a white screen on the home-screen icon (WO-1.14). And `_headers` p
 four-hour Browser Cache TTL rewrote it to `max-age=14400`. One is the host's routing and one is a
 setting in a dashboard. **What found both was a single HTTP request against the live origin.**
 
-Twelve checks, in five blocks: the shell document (200, HTML, `no-cache`), `/sw.js` (200,
-JavaScript, `no-cache`), the precache list read **out of the deployed worker** and walked entry by
-entry, the deployed `CACHE` string against the working tree's, and the four paths that would carry
-server-side code. Every request is printed with its status, content type, `Cache-Control` and byte
-count, so a run is evidence a human can read rather than a row of ticks.
+Seventeen checks, in six blocks: the shell document (200, HTML, `no-cache`), **the privacy policy**,
+`/sw.js` (200, JavaScript, `no-cache`), the precache list read **out of the deployed worker** and
+walked entry by entry, the deployed `CACHE` string against the working tree's, and the four paths
+that would carry server-side code. Every request is printed with its status, content type,
+`Cache-Control` and byte count, so a run is evidence a human can read rather than a row of ticks.
+
+**The policy block is six of those, and it is the one to read before adding a check here** — every
+one of the six exists because a status code could not see the thing it is about. This host answers
+an unknown path with the app shell at **200**, so *"is the policy deployed"* is a question about the
+document and not about the response: the block reads the `<title>` and the absence of the app's
+`#homeView`. The three claim regexes match a **whitespace-normalised** copy, because the raw body
+carries the source file's line wraps and a claim sentence that wrapped was reported missing while
+sitting in the page in those words. And two checks are about the contact rather than one: the
+placeholder token being **gone** is not the same fact as an address being **there**, and the way
+the address went missing was Cloudflare rewriting it in flight — nothing in this repository moved.
 
 **Three things in it look like oversights and are the work order.** The `SHELL` list is read out of
 the **deployed** `sw.js` and never the local one — sourcing both sides from the working tree

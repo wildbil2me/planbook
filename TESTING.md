@@ -8020,6 +8020,22 @@ fall through to the network. `CACHE` `v91` → `v92`.
       own comment draws that distinction between a link on its own line and a link inside a
       sentence. The reasoning for choosing a separate mailbox is at the point of use, in that file's
       header comment.
+      **AND THE HOST TOOK THE ADDRESS BACK OFF THE PAGE, which is the finding of the day.** On the
+      deployed copy — not in this repository — Cloudflare Scrape Shield's **Email Address
+      Obfuscation** rewrote the `mailto:` to `/cdn-cgi/l/email-protection#<hex>`, replaced the
+      visible address with `<span class="__cf_email__">[email&nbsp;protected]</span>`, and
+      **injected `email-decode.min.js`** into a page whose own header comment says it contains no
+      JavaScript. Read without a browser — which is how an automated reviewer reads it — the
+      Contact section named nobody. **`verify-deploy.mjs` passed while this was true**, because the
+      check it had asserts the placeholder is *gone* and a page with no token on it is not a page
+      with an address on it. The repair is a `<!--email_off-->` wrapper around the link, and the
+      trade — the address will now be scraped — is what the dedicated mailbox was chosen for.
+      A second check was added rather than the first one widened: *"the deployed policy carries a
+      contact a reader can actually reach, un-rewritten by the host"*, which fails on Cloudflare's
+      markup by name and on a missing `mailto:` at all, and is pinned to no particular address
+      because the contact is the owner's to change. **The scar: a deploy can change what a
+      published document says without any file in the repository moving**, and this is the first
+      time in this project that has happened.
 
 **`verify-shell.mjs` — 1,093 checks, seven of them new.** `1093 checks · 1093 passed · 0 failed ·
 0 skipped`, 30,753 lines, 28.1 lines per check, 389s, exit 0, measured on the delivered tree. The

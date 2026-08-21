@@ -31,6 +31,27 @@
     3. NO manifest, NO service-worker registration, NO app JavaScript. This page is prose. Linking
        the manifest here would offer to install a legal document to the home screen.
 
+       THE HOST BROKE THAT ONCE, ON THE FIRST DEPLOY THAT CARRIED A REAL ADDRESS — 2026-08-21, and
+       the `<!--email_off-->` wrapper in the Contact section is the repair. Cloudflare's Scrape
+       Shield has **Email Address Obfuscation** on for this zone, which rewrites any address it
+       finds in the HTML: the `mailto:` became `/cdn-cgi/l/email-protection#<hex>`, the visible
+       address became `<span class="__cf_email__">[email&nbsp;protected]</span>`, and Cloudflare
+       INJECTED `email-decode.min.js` into the page to undo its own rewrite in the browser. So the
+       claim above was false on the deployed copy while remaining true in this file, which is the
+       hardest kind of false to notice.
+       IT MATTERS MORE HERE THAN IT WOULD ANYWHERE ELSE. This is the page Google fetches during
+       OAuth verification (WO-3.18) and the page a principal reads before letting a teacher put
+       student data in this app. Read without JavaScript — which is how an automated check reads it
+       — the Contact section said `[email protected]` and named nobody. A privacy policy with no
+       reachable contact is the exact thing WO-8.12 trap 4 says not to ship, arrived at by a route
+       that work order could not have anticipated, because it is not in this repository.
+       THE TRADE IS ACCEPTED AND IS THE REASON THE ADDRESS IS THE ONE IT IS. Turning obfuscation
+       off for this address means it will be scraped. That is survivable precisely because the
+       owner chose a dedicated mailbox over the account this project runs on — see the note below —
+       and it is not survivable to have a legal page whose contact only exists if a script runs.
+       `tools/verify-deploy.mjs` now fails if the deployed policy carries Cloudflare's rewrite, so
+       a zone setting changed in a dashboard months from now cannot quietly undo this.
+
   THE CONTACT LINE WAS DECIDED 2026-08-21, and it is A DEDICATED MAILBOX RATHER THAN THE ACCOUNT
   THIS PROJECT RUNS ON. This file shipped with a single all-caps placeholder token where the
   address belongs, because WO-8.7 ruled that an address in a public file is a spam and phishing
@@ -374,7 +395,7 @@
          link inside a sentence is text and does not. A mailto set in the middle of that sentence
          would have been a tappable control under the floor on the one device a principal is most
          likely to be holding. -->
-    <a class="block-link" href="mailto:hwgteach@gmail.com">hwgteach@gmail.com</a>
+    <!--email_off--><a class="block-link" href="mailto:hwgteach@gmail.com">hwgteach@gmail.com</a><!--/email_off-->
   </section>
 
 </main>

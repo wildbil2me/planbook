@@ -359,6 +359,33 @@ try {
           + 'the address or form the owner decides on (WO-8.12 Acceptance line 7, still open)'
         : 'no placeholder token in the deployed policy');
 
+  /* AND THE CONTACT IS ACTUALLY READABLE, which the check above cannot see. That one asserts the
+     placeholder is GONE, and a page with no token in it is not the same thing as a page with an
+     address on it — every way of losing the address entirely passes it.
+     THE WAY IT WAS LOST WAS NOT AN EDIT TO THIS REPOSITORY. Cloudflare Scrape Shield's Email
+     Address Obfuscation is on for this zone, and on the first deploy that carried a real address
+     (2026-08-21) it rewrote the mailto to `/cdn-cgi/l/email-protection#<hex>`, replaced the visible
+     text with `<span class="__cf_email__">[email protected]</span>`, and injected
+     `email-decode.min.js` — into a page whose own header says it contains no JavaScript. Read
+     without a browser, which is how an automated reviewer reads it, the policy named nobody. The
+     repair is a `<!--email_off-->` wrapper in privacy.html; this check is what stops a zone setting
+     changed in a dashboard from silently undoing it, since nothing in the repository would move.
+     Deliberately NOT pinned to a particular address: the contact is the owner's to change, and a
+     check that hardcoded it would go red on a decision rather than on a defect. */
+  const cfRewrote = /__cf_email__|cdn-cgi\/l\/email-protection/.test(policyDoc.text);
+  const mailto = policyDoc.text.match(/href="mailto:([^"?]+)/i);
+  check('the deployed policy carries a contact a reader can actually reach, un-rewritten by the host',
+    isPolicyDoc && !cfRewrote && !!mailto && /.+@.+\..+/.test(mailto[1]),
+    !isPolicyDoc
+      ? 'not run — the document at that URL is not the policy'
+      : cfRewrote
+        ? 'THE HOST REWROTE IT: Cloudflare email obfuscation is on for this zone and the address is '
+          + 'now a cdn-cgi link that needs injected JavaScript to resolve. Wrap it in <!--email_off--> '
+          + 'in privacy.html, or turn the setting off under Scrape Shield'
+        : !mailto
+          ? 'no mailto: link in the deployed policy at all'
+          : 'reachable at ' + mailto[1]);
+
   /* OBSERVED, not asserted, for the reason `/index.html` is observed below: which of the two paths
      redirects is the host's routing and a different origin may answer both perfectly well. What it
      is here for is that a run says out loud which URL a human should hand to Google. */
