@@ -820,7 +820,7 @@ case is a caveat nobody reads in the abnormal one.
 
 ## WO-8.12 — the privacy policy and the FERPA document
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-8.7 — the domain and the host
+**Ship** — · **Status** ✅ DONE — 2026-08-21 · **Size** M · **Depends on** WO-8.7 — the domain and the host
 to publish at · **Blocks** WO-3.18 — a verification form with no policy URL to paste
 **Closes roadmap** Phase 8 → "`docs/FERPA.md`."
 
@@ -912,9 +912,17 @@ a last-updated date on each, and expect Phase 7 to move the data-flow statement 
 comes out from behind its flag.
 
 **Acceptance**
-- [ ] The policy is **live at the verified domain and says the three things WO-3.18 names**, in plain
+- [x] The policy is **live at the verified domain and says the three things WO-3.18 names**, in plain
       words — fetched over the wire rather than asserted from the repo. `verify-deploy.mjs` is the
       only check here that reads the live origin.
+      *(**Deployed and green 2026-08-21: `16 checks · 16 passed · 0 failed`** against
+      `https://planbook.hwgteach.com`. `/privacy` answers **19,450 B**, titled as the policy and with
+      no `#homeView` in it, where the same URL answered 204,614 B of app shell the day before.
+      **The first run against a real policy found a false negative in the check itself** — see
+      `TESTING.md`; it read the raw response body, so a claim sentence that wrapped across two source
+      lines could not match, and it called a sentence missing that was there in those words. Matching
+      now happens against a whitespace-normalised copy: a reworded policy still goes red, a reflowed
+      one no longer does.)*
 - [x] Navigating to the policy on a device that **already has the service worker installed** renders
       the policy and not the app. Force-quit before reading, per `CLAUDE.md`.
       *(👤 **Read on the iPad 2026-08-21 and green**, after the force-quit. Reached through the

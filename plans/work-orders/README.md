@@ -219,9 +219,9 @@ indexes is a file nobody reads.
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
-| 8 — 1.0 packaging | 12 | 5 | — | 🔨 IN PROGRESS |
+| 8 — 1.0 packaging | 12 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **136** | **112** | **2** | `[████████░░] 82%` |
+| | **136** | **113** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being

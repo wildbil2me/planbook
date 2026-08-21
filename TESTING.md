@@ -7941,8 +7941,10 @@ fall through to the network. `CACHE` `v91` → `v92`.
 
 *Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.12.*
 
-- [ ] **Acceptance 1 — the policy is live at the verified domain.** **Owed to a deploy.** Nothing in
-      this repository can close it, which is the line's own point: `verify-deploy.mjs` is the only
+- [x] **Acceptance 1 — the policy is live at the verified domain.** **Deployed 2026-08-21 and green:
+      `16 checks · 16 passed · 0 failed`.** `/privacy` answers 19,450 B, titled as the policy, with no
+      `#homeView` in it; the deployed `sw.js` reads `planbook-shell-v93`, matching the tree. Nothing in
+      this repository could close it, which is the line's own point: `verify-deploy.mjs` is the only
       check that reads the live origin, and it grew a § *"the privacy policy"* to answer this one.
       Run against the **current** deployment on 2026-08-20 it reads
       `16 checks · 14 passed · 2 failed`, and the two reds are true: the policy is not deployed yet,
@@ -7952,6 +7954,19 @@ fall through to the network. `CACHE` `v91` → `v92`.
       cannot tell a deployed policy from a missing one. The check that can is *"the document at that
       URL is the POLICY and not the app shell"*, which reads the `<title>` and the absence of the
       app's `#homeView`.
+      **The 2026-08-21 run — the first this check ever took against a real policy — found a false
+      negative in itself, and it is the kind worth keeping.** It reported *"NOT saying: Drive holds
+      only files this app created"* while `privacy.html:179` said exactly that, in those words. The
+      claims are matched against `policyDoc.text`, which is the **raw response body**, and that
+      sentence wraps between `Planbook` and `itself` — so the regex met a newline and eight spaces
+      of indent where it wanted one. **The defect could not surface before this deploy**: until it,
+      the host answered `/privacy` with the app shell, so the three claim regexes had never once been
+      run against a page capable of containing them, and all three failed together for a reason that
+      had nothing to do with wording. A check whose reds are all explained by one obvious cause is a
+      check nobody reads closely. The fix normalises runs of whitespace to a single space before
+      matching, which keeps the stated intent — a **reworded** policy still turns these red — and
+      stops a **reflowed** one doing the same. Recorded rather than fixed at the same site: an inline
+      tag opened inside one of the three sentences would still break the match.
 - [x] 👤 **Acceptance 2 — the policy URL on a device that already has the worker installed.**
       **Read on the iPad 2026-08-21, after the force-quit, and green.** Force-quit first, per `CLAUDE.md`. What is done at the desk is the same
       question asked of a real worker in headless Edge: `verify-shell.mjs` § *"the policy URL is not

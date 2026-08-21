@@ -1393,7 +1393,7 @@ the thing the no-timetable rule actually forbids.
 
 **Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-8.12 —
 the client to verify, the domain to verify it at, the sign-in the demo video has to film, and the policy
-whose URL goes in the form · **Owes** WO-8.12 · **Blocks** a stranger seeing a clean consent screen
+whose URL goes in the form · **Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
 
@@ -1471,8 +1471,13 @@ its title says — a submission.** The paragraph is left standing because the ar
 WO-8.12 exists.)*
 
 **Acceptance**
-- [ ] The privacy policy is live at the verified domain and says the three things above in plain words.
-      → WO-8.12 "live at the verified domain and says the three things WO-3.18 names"
+- [x] The privacy policy is live at the verified domain and says the three things above in plain words.
+      *(**Paid by [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) on
+      2026-08-21**, which is what the `→` marker on this line and the **Owes** field on the header
+      above were for; both are gone now, the way `--audit` says to discharge one. `verify-deploy.mjs`
+      reads all three claims off `https://planbook.hwgteach.com/privacy` over the wire —
+      `16 checks · 16 passed · 0 failed`. **The URL to paste into the form is `/privacy`**, and the
+      contact on it is a dedicated mailbox rather than the account this project runs on.)*
 - [ ] The consent screen shows exactly one scope **and no "Google hasn't verified this app" warning**,
       checked on an account that is not a test user — which is the only account that can tell.
 - [ ] The submission date is written into this work order. *(Fill it in when submitted, so the wait is

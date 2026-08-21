@@ -87,8 +87,8 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
-| 8 | 1.0 packaging | 🔨 IN PROGRESS | 1/8 `[█░░░░░░░░░] 13%` |
-| | | **Overall** | **52/81 `[██████░░░░] 64%`** · ⏳ 1 deferred |
+| 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
+| | | **Overall** | **53/81 `[██████░░░░] 65%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -552,7 +552,7 @@ it. If it can't be acted on, it doesn't earn a place.
       headless run found 66 unlabelled buttons in an area already ticked done — run the pass, don't
       assert it.*
 - [ ] `README.md` with a **Known limitations** section naming the gaps out loud.
-- [ ] `docs/FERPA.md` — stronger than Roll Call!'s (no vendor server, no account required) and it
+- [x] `docs/FERPA.md` — stronger than Roll Call!'s (no vendor server, no account required) and it
       **must address accommodation and medical data directly**, not only grades.
 - [ ] Print stylesheets for every printable surface.
 - [ ] Onboarding: install → marking attendance with no documentation.

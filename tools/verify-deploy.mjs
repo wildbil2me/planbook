@@ -318,7 +318,22 @@ try {
     ['no account is required', /no account is required/i],
     ['Drive holds only files this app created', /Drive holds only the file Planbook itself created/i],
   ];
-  const missing = CLAIMS.filter(([, re]) => !re.test(policyDoc.text)).map(([label]) => label);
+  /* MATCHED AGAINST A WHITESPACE-NORMALISED COPY, and that is a repair rather than a loosening.
+     `policyDoc.text` is the raw response body, so a claim sentence that happens to WRAP across two
+     source lines carries a newline and its indent in the middle of it and matches nothing. That is
+     exactly what this check did the first time it ever saw a real policy — the 2026-08-21 deploy,
+     the first with `privacy.html` actually at that URL: it reported "Drive holds only the file
+     Planbook itself created" MISSING while the sentence sat in the document in those words, broken
+     only between `Planbook` and `itself` by an editor's line wrap. Until that deploy this host
+     answered `/privacy` with the app shell, so the claims had never been run against a page that
+     could contain them and the defect could not surface.
+     Collapsing runs of whitespace to one space leaves the intent above intact: a REWORDED policy
+     still turns these red, which is the point. What it stops is a REFLOWED one doing the same.
+     KNOWN LIMIT, recorded rather than fixed: an inline tag introduced INSIDE one of these
+     sentences — bolding a word mid-claim — would still break the match. Today none of the three
+     has one, and the fix if that changes is to strip tags here, not to un-bold the policy. */
+  const policyText = policyDoc.text.replace(/\s+/g, ' ');
+  const missing = CLAIMS.filter(([, re]) => !re.test(policyText)).map(([label]) => label);
   /* The byte floor guards a vacuous pass in the other direction: this host answers an unknown path
      with the shell document at 200, and an empty or truncated body would fail every regex above
      for a reason that has nothing to do with the words. */
