@@ -47,22 +47,35 @@
        that work order could not have anticipated, because it is not in this repository.
        THE TRADE IS ACCEPTED AND IS THE REASON THE ADDRESS IS THE ONE IT IS. Turning obfuscation
        off for this address means it will be scraped. That is survivable precisely because the
-       owner chose a dedicated mailbox over the account this project runs on — see the note below —
-       and it is not survivable to have a legal page whose contact only exists if a script runs.
+       address is a ROLE ALIAS ON A DOMAIN THIS PROJECT OWNS rather than anybody's personal account
+       — see the note below — and it is not survivable to have a legal page whose contact only
+       exists if a script runs.
        `tools/verify-deploy.mjs` now fails if the deployed policy carries Cloudflare's rewrite, so
        a zone setting changed in a dashboard months from now cannot quietly undo this.
 
-  THE CONTACT LINE WAS DECIDED 2026-08-21, and it is A DEDICATED MAILBOX RATHER THAN THE ACCOUNT
-  THIS PROJECT RUNS ON. This file shipped with a single all-caps placeholder token where the
-  address belongs, because WO-8.7 ruled that an address in a public file is a spam and phishing
-  target and that which address goes here is therefore not a decision this repository can make
-  (WO-8.12, trap 4, and its Acceptance line 7). The owner made it, and the reason it is a separate
-  mailbox is that same ruling read forward: an address on a public legal page will be scraped, and
-  the one thing you want to be able to do with a scraped address is abandon it. The account that
-  holds the Cloud project and the domain verification — the personal Gmail, per
-  plans/work-orders/phase-3-gradebook.md — is the one address that cannot be abandoned, which is
-  exactly why it is not this one. `tools/verify-deploy.mjs` still fails on a deployment carrying
-  the token; that check is now a guard against losing this rather than a countdown to it.
+  THE CONTACT LINE WAS DECIDED 2026-08-21, and it is A ROLE ALIAS ON THIS PROJECT'S OWN DOMAIN.
+  This file shipped with a single all-caps placeholder token where the address belongs, because
+  WO-8.7 ruled that an address in a public file is a spam and phishing target and that which
+  address goes here is therefore not a decision this repository can make (WO-8.12, trap 4, and its
+  Acceptance line 7).
+  THE RULING IS WHAT PICKED THE SHAPE, not just the address. An address on a public legal page will
+  be scraped — obfuscation is theatre against anything that runs a browser, and this page pays for
+  it in the one currency it cannot spend, see item 3 above. So the thing to optimise for is not
+  secrecy but ABANDONABILITY, and a role alias is the shape that has it: `privacy@` is structural
+  rather than personal, it can be retired and republished without touching an account, and it can
+  be handed to somebody else the day this stops being a one-teacher project. The account that holds
+  the Cloud project and the domain verification — the personal Gmail, per
+  plans/work-orders/phase-3-gradebook.md — is the one address that can never be abandoned, which is
+  exactly why it is not this one. It was briefly a second Gmail, which had the abandonability and
+  none of the rest.
+  IT IS A FORWARD, NOT A MAILBOX. Cloudflare Email Routing carries it — the zone's MX already point
+  at `route1/2/3.mx.cloudflare.net` and SPF already includes `_spf.mx.cloudflare.net`. **That means
+  this address depends on a routing rule that lives in a dashboard and in no file here.** Delivery
+  is therefore a 👤 check and not a green run: `tools/verify-deploy.mjs` can prove the address is
+  ON the page and un-rewritten, and nothing in this repository can prove a message reaches a human.
+  `TESTING.md` § WO-8.12 carries that line. An unmonitored contact on a privacy policy is a worse
+  failure than a scraped one — Google writes here during verification, and so does a principal
+  deciding whether a teacher may put student data in this app.
 
   EVERY SENTENCE HERE IS A CLAIM ABOUT CODE IN THIS REPOSITORY, and the pairing is written out in
   `.claude/dispatch/WO-8.12-result.md`. Do not add a sentence that sounds reassuring and is not
@@ -395,7 +408,7 @@
          link inside a sentence is text and does not. A mailto set in the middle of that sentence
          would have been a tappable control under the floor on the one device a principal is most
          likely to be holding. -->
-    <!--email_off--><a class="block-link" href="mailto:hwgteach@gmail.com">hwgteach@gmail.com</a><!--/email_off-->
+    <!--email_off--><a class="block-link" href="mailto:privacy@hwgteach.com">privacy@hwgteach.com</a><!--/email_off-->
   </section>
 
 </main>

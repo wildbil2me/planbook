@@ -8008,9 +8008,17 @@ fall through to the network. `CACHE` `v91` → `v92`.
       and it is quoted from Google's own consent screen — but whether a principal can read them is a
       judgment about a reader the implementer is not, and no run in this repository settles it. It
       wanted one pass of the owner's eyes and it has had it.
-- [x] 👤 **Acceptance 7 — the contact on a public page.** **Answered 2026-08-21: a dedicated
-      mailbox on the project's own name, and deliberately not the personal Gmail** the Cloud project
-      and the domain verification sit on. The policy shipped with **`PLANBOOK-CONTACT-TBD`** in its
+- [x] 👤 **Acceptance 7 — the contact on a public page.** **Answered 2026-08-21:
+      `privacy@hwgteach.com`, a role alias on the project's own domain**, and deliberately not the
+      personal Gmail the Cloud project and the domain verification sit on. *(It was a second Gmail
+      for about an hour first. The alias is the better shape for the same reason the second Gmail
+      beat the first one, carried one step further: what a public legal page needs from its contact
+      is not secrecy — obfuscation is theatre against anything that runs a browser — but
+      **abandonability**. `privacy@` is structural rather than personal, retires and republishes
+      without touching an account, and hands over the day this stops being a one-teacher project.
+      Cloudflare Email Routing already carries the zone: MX at `route1/2/3.mx.cloudflare.net`, SPF
+      including `_spf.mx.cloudflare.net`, both checked over DNS-over-HTTPS before the address was
+      written into the page.)* The policy shipped with **`PLANBOOK-CONTACT-TBD`** in its
       Contact section — one token, one occurrence, so a grep returned one line and one edit finished
       it, which is exactly how it went. `docs/FERPA.md` still carries no second copy: it points at
       the policy's contact, so there is one address to change. `verify-deploy.mjs` fails on a
@@ -8101,6 +8109,15 @@ as part of the Acceptance 2 reading. `privacy.html` still has no link home, whic
 non-decision rather than a ruling: if a later reading finds a standalone window swallowing one of
 these anyway, the fix is a way back on the policy page, not dropping the target.
 
+- [ ] 👤 **A message sent to the published address reaches a human.** **Owed, and it cannot be
+      owed to anything else.** `verify-deploy.mjs` proves the address is on the page and
+      un-rewritten by the host; **no run in this repository can prove a message arrives**, because
+      the address is a Cloudflare Email Routing forward and the rule carrying it lives in a
+      dashboard and in no file here — the zone having MX is not the same fact as `privacy@` having
+      a destination. Send one from an account that is not the destination and confirm it lands.
+      **An unmonitored contact on a privacy policy is a worse failure than a scraped one**: Google
+      writes here during OAuth verification (WO-3.18), and so does a principal deciding whether a
+      teacher may put student data in this app.
 - [x] 👤 **The policy row opens the policy from the installed app.** Green on the iPad, 2026-08-21,
       after a force-quit. This is the same reading as Acceptance 2 above and is recorded there.
 - [x] 👤 **The administrators' guide row was found BROKEN, and the cause was not the link.**
