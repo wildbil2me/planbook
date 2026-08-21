@@ -58,8 +58,15 @@ reads "do not start it"; `next` returns* **WO-4.2** *again, the head of § Ship 
 `⬜` **when there are real grades to run it against** *— `--tick` refuses the status, so the gate
 cannot close while wearing it. And the one piece of WO-3.18 that is not blocked is its* **privacy
 policy**, *which is now* [WO-8.12](plans/work-orders/phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document)
-*together with* `docs/FERPA.md` *— the document this file still records as missing, and the weaker
-half of the backup disclosure under § Accommodations.)*
+*together with* `docs/FERPA.md`*.* **Both landed 2026-08-21 and WO-8.12 is** ✅ **DONE** *— the policy
+is live at* `/privacy`*, the FERPA document is in the tree, and § Accommodations below no longer
+records a missing half. Two things from that sitting are worth carrying: the app had no link to
+either document until About got one, because* **an installed PWA has no address bar and a document
+that lives only at a URL does not exist for a teacher**; *and* **the host rewrote the policy's
+contact address after deploy with no file in this repository moving** *— Cloudflare Scrape Shield,
+`<!--email_off-->` is the repair, and* `verify-deploy.mjs` *now fails if it comes back. WO-3.18's
+first Acceptance line is paid on this and its* **Owes** *pointer discharged; what it still wants is
+the consent screen, the demo video WO-7.1 gates, and a submission date.)*
 
 *(**WO-3.26 is also the first work order here to be finished by a different session than started it.**
 Its dispatch died after the implementer's writes had landed and before anything was verified or
@@ -143,9 +150,10 @@ predecessor. Read its `CLAUDE.md` and `design/README.md` before writing code her
 
 **Take from it:** the design system (`design/style-guide.md`, `design/portable-components.md`,
 `design/starter-template.html`) — visual identity, modal patterns, touch targets, the setup-flow
-skeleton. The at-risk threshold model. The FERPA stance in **Roll Call!'s** `docs/FERPA.md` — the
-path is relative to the reference implementation above, not to this repository, where no such file
-exists yet — which Planbook strengthens rather than weakens. Its `CLAUDE.md` is also a model of the kind of documentation this
+skeleton. The at-risk threshold model. The FERPA stance in **Roll Call!'s** `docs/FERPA.md` — which Planbook
+strengthens rather than weakens, and **has now actually strengthened**: this repository has its own
+[`docs/FERPA.md`](docs/FERPA.md) as of 2026-08-21, built on that one's six headings plus two this app
+needs. Mind which you are reading — an unqualified `docs/FERPA.md` in *this* file means the local one. Its `CLAUDE.md` is also a model of the kind of documentation this
 project wants: every gotcha carries the scar that produced it.
 
 **Lift the design with the function — copy, don't re-derive.** When a screen here has a counterpart
@@ -256,11 +264,15 @@ negotiable and are easy to break by accident:
 - **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
   paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
 - **Backups now contain this data.** The backup UI says so in as many words (`index.html`, the backup
-  panel). **`docs/FERPA.md` does not exist yet** — it is a WO-8.12 deliverable, still ⬜ NOT STARTED
-  *(it was WO-8.5's until 2026-08-20, when it was split out and paired with WO-3.18's privacy policy),*
-  and when it is written it must address the backup directly rather than only discussing grades. Until
-  then the disclosure lives in the UI alone, which is the weaker half of the obligation in
-  `docs/data-model.md` § Accommodations.
+  panel), **and since 2026-08-21 so does [`docs/FERPA.md`](docs/FERPA.md)** — WO-8.12, ✅ DONE, which
+  is the obligation in `docs/data-model.md` § Accommodations discharged rather than half-kept. That
+  document names IEP and 504 details, accommodations, case managers, review dates, medical needs and
+  behavior plans **in its backup section, in as many words**, and says they are neither redacted nor
+  encrypted — addressing the backup directly rather than only discussing grades, which is what this
+  file spent two weeks recording as missing. Its public twin is [`privacy.html`](privacy.html), served
+  at `/privacy`. **They carry the same data-flow statement word for word and divide everything else**;
+  change a fact in one and change it in the other in the same sitting, which both files say at their
+  own tops.
 
 ## How work is run here
 
