@@ -8036,6 +8036,17 @@ fall through to the network. `CACHE` `v91` → `v92`.
       because the contact is the owner's to change. **The scar: a deploy can change what a
       published document says without any file in the repository moving**, and this is the first
       time in this project that has happened.
+      **The fix then failed its own check, and the reason is worth more than the fix.** With the
+      `<!--email_off-->` wrapper deployed and the address plainly readable again — Cloudflare also
+      stopped injecting `email-decode.min.js`, so *"this page is prose"* is true on the served copy
+      once more — the new check still went red. It grepped the whole body for `__cf_email__` and
+      `cdn-cgi/l/email-protection`, and **`privacy.html`'s own header comment now names both while
+      explaining the repair**. The check was tripping on the documentation of the defect it exists
+      to catch. It keys on attribute syntax now — `data-cfemail="` and an `href="` at the
+      obfuscation endpoint — which prose does not emit. **A check must not be worded so that
+      writing down the bug sets it off**, because the write-up is the thing that most wants to live
+      next to the fix. Green afterwards: `17 checks · 17 passed · 0 failed`, *"reachable at"* the
+      address.
 
 **`verify-shell.mjs` — 1,093 checks, seven of them new.** `1093 checks · 1093 passed · 0 failed ·
 0 skipped`, 30,753 lines, 28.1 lines per check, 389s, exit 0, measured on the delivered tree. The

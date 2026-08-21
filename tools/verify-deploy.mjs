@@ -371,8 +371,16 @@ try {
      repair is a `<!--email_off-->` wrapper in privacy.html; this check is what stops a zone setting
      changed in a dashboard from silently undoing it, since nothing in the repository would move.
      Deliberately NOT pinned to a particular address: the contact is the owner's to change, and a
-     check that hardcoded it would go red on a decision rather than on a defect. */
-  const cfRewrote = /__cf_email__|cdn-cgi\/l\/email-protection/.test(policyDoc.text);
+     check that hardcoded it would go red on a decision rather than on a defect.
+     KEYED ON MARKUP AND NOT ON THE WORDS, which cost a red run to learn. The first version of this
+     check grepped the body for `__cf_email__` and `cdn-cgi/l/email-protection` anywhere in it — and
+     went red against a FIXED page, because privacy.html's own header comment now describes the
+     rewrite it was fixed for and quotes both strings while doing it. A check for a defect cannot
+     be worded so that DOCUMENTING the defect trips it; the documentation is the thing you most
+     want next to the fix. So the tells below are attribute syntax that only appears in real
+     markup: prose can name `__cf_email__`, and it does, but it does not emit `data-cfemail="` or
+     an `href="` pointing at the obfuscation endpoint. */
+  const cfRewrote = /data-cfemail="|href="\/cdn-cgi\/l\/email-protection/.test(policyDoc.text);
   const mailto = policyDoc.text.match(/href="mailto:([^"?]+)/i);
   check('the deployed policy carries a contact a reader can actually reach, un-rewritten by the host',
     isPolicyDoc && !cfRewrote && !!mailto && /.+@.+\..+/.test(mailto[1]),
