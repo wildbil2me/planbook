@@ -156,6 +156,14 @@ discovered by a user." *(The FERPA half of this paragraph moved to WO-8.12 with 
 - **A link to `docs/FERPA.md` and to the published privacy policy, and no restatement of either.**
   Two documents that paraphrase each other drift, and the one a principal reads is whichever they
   found first.
+- **The licence named, and the copyright line that goes with it.** `LICENSE.md` — Apache 2.0 — has
+  been in the tree since 2026-08-21 and **nothing outside it says so to a stranger**: `privacy.html`
+  and `docs/FERPA.md` name it in a footnote about the source being public, which is a privacy
+  argument rather than a licence statement. The README is the file a person who might fork this
+  actually opens. Name the licence, link the file, and carry the copyright holder — **copying the
+  line already in `LICENSE.md`, never composing a second one.** That appendix ships with
+  `[yyyy] [name of copyright owner]` unfilled and was filled on 2026-08-21; a README that words the
+  holder differently is the second truth this directory spends most of its rules avoiding.
 
 **Acceptance**
 - [ ] Every README feature has been run end-to-end against real data. *A documented feature that
@@ -166,6 +174,8 @@ discovered by a user." *(The FERPA half of this paragraph moved to WO-8.12 with 
       what the `→` marker on this line and the **Owes** field on the header above were for. Both are
       gone now: `--audit` names a debt whose box has closed, and this is that, settled the way it
       says to.)*
+- [ ] `README.md` names the licence, links `LICENSE.md`, and carries the copyright line **as
+      `LICENSE.md` words it** — read it, do not retype it from memory.
 - [ ] `README.md` is readable by a principal, not only by a developer.
 
 ---
@@ -981,3 +991,68 @@ also found the guide row 404'ing, and that was not the link: nothing from this w
 pushed, so `docs/FERPA.md` did not exist on GitHub and neither did `privacy.html`. **A link into
 your own repository is untestable until the commit carrying its target is pushed, and the failure
 is indistinguishable from a wrong URL.**)*
+
+---
+
+## WO-8.13 — the About modal names two documents and not the licence
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Closes roadmap** *(no box. The same call WO-8.9 through WO-8.11 made: this is the app reporting a
+fact about itself rather than a feature the roadmap costed. Booked 2026-08-21, owner-directed, out
+of the sitting that added `LICENSE.md`.)*
+
+**Why it exists.** `LICENSE.md` — Apache 2.0 — landed on 2026-08-21, and the two public documents
+that claim the source is public now name it: `privacy.html`'s footer and the *"The source is public"*
+bullet in `docs/FERPA.md`. **The app names nothing.** About carries a **Privacy and student data**
+section with a row for the policy and a row for the administrators' guide, both added in that same
+week, and a teacher — or the colleague she hands the iPad to — has no way from inside the app to
+find out what anyone may do with this.
+
+**It is not a compliance job, and dressing it as one would oversell it.** Apache §4 wants a recipient
+of the work to receive the licence, and every recipient already does: Cloudflare Pages serves
+`/LICENSE.md` out of the repository root, and the same file is on GitHub, pushed. The reader this row
+is for is the one WO-8.12's two rows were not written for — somebody wondering whether they may fork
+this, run it for their own department, or sell it. **One row. It stays one row.**
+
+**Deliverables**
+- **One `.doc-link` row in the About modal**, pointing at `LICENSE.md` on GitHub, with the licence
+  named in the link text — *"Apache License 2.0"*, not *"Licence"*. A reader who has to open a file
+  to learn which licence it is has been told nothing.
+- **Its own section label, not the privacy one.** **Privacy and student data** is an argument about
+  student records; a licence filed under it reads as a privacy term. A second
+  `modal-section-label` — *Source and licence*, or whatever survives being read aloud — in the same
+  grammar as the two that exist, above the build line.
+- **`sw.js`'s `CACHE` bumped in the same commit.** `index.html` is what `./` resolves to and `./` is
+  entry one in `SHELL`; without the bump no installed device sees the row at all.
+- **One `verify-shell.mjs` check.** The two rows beside it are asserted nowhere — they landed outside
+  a work order and only `TESTING.md` records them. A check written to read *every* `.doc-link` in
+  that modal closes all three at once and is the better shape.
+- **A `TESTING.md` line of its own**, and the 👤 reading below.
+
+**Acceptance**
+- [ ] The About modal names the licence and links `LICENSE.md`, and the link text says *which*
+      licence.
+- [ ] The row is **not** inside the **Privacy and student data** section.
+- [ ] **No new CSS.** It reuses `.modal-body .doc-link`, including that rule's `(pointer: coarse)`
+      entry in `src/shell.css`, which is what gives it 44px. **A row that needs a new rule is the
+      wrong shape** — say so in the result rather than adding one quietly.
+- [ ] `target="_blank" rel="noopener"`, matching the two rows beside it, for the reason written
+      above them in `index.html`.
+- [ ] `sw.js` `CACHE` bumped in the same commit that edits `index.html`.
+- [ ] `node tools/verify-shell.mjs` green, carrying a check that goes **red** when the row is
+      deleted — proved by deleting it once, not by reasoning about it.
+- [ ] 👤 On a **force-quit and relaunched** install: the row is there, tapping it opens the licence
+      in the browser, and Planbook is still where you left it when you come back.
+
+**Traps** — **The GitHub URL, not `./LICENSE.md`.** A `.md` served off this origin is a file some
+browsers download rather than a page they render; GitHub renders it. That argument and the one about
+`target="_blank"` are both already written in `index.html` in the comment above the FERPA row — read
+it before writing the href rather than re-deriving either. **Unlike that row, this target is already
+pushed**, so it is testable the moment it is written; do not take that as a reason to skip checking
+it. **Do not restate the licence in the modal.** A summary of Apache 2.0 sitting in this app's UI is
+a licence term this project did not write and cannot honour — link it and say its name. **Do not
+touch the two rows beside it.** They are `TESTING.md`'s record, not this work order's, and a change
+to them here lands in a commit whose message is about something else. **Do not add a version or a
+copyright line beside it.** The build line under it is generated from `caches.keys()` for the reason
+WO-8.10 gives, and the copyright holder is stated in `LICENSE.md` and nowhere else — a second copy in
+the modal is a second thing to keep true.

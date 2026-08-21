@@ -551,7 +551,9 @@ it. If it can't be acted on, it doesn't earn a place.
 - [ ] Accessibility pass: screen reader (NVDA/VoiceOver), keyboard-only, contrast. *Roll Call!'s
       headless run found 66 unlabelled buttons in an area already ticked done — run the pass, don't
       assert it.*
-- [ ] `README.md` with a **Known limitations** section naming the gaps out loud.
+- [ ] `README.md` with a **Known limitations** section naming the gaps out loud, and the licence
+      named — `LICENSE.md` (Apache 2.0, in the tree since 2026-08-21) carries the copyright line
+      the README quotes rather than re-words.
 - [x] `docs/FERPA.md` — stronger than Roll Call!'s (no vendor server, no account required) and it
       **must address accommodation and medical data directly**, not only grades.
 - [ ] Print stylesheets for every printable surface.

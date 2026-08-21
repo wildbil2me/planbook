@@ -191,7 +191,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 | [`phase-5-outreach.md`](phase-5-outreach.md) | WO-5.1 … WO-5.4 | Phase 5 |
 | [`phase-6-calendar-glance.md`](phase-6-calendar-glance.md) | WO-6.1 … WO-6.6 | Phase 6 |
 | [`phase-7-sync.md`](phase-7-sync.md) | WO-7.1 … WO-7.3 | Phase 7 🔒 |
-| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.12 | Phase 8 |
+| [`phase-8-packaging.md`](phase-8-packaging.md) | WO-8.1 … WO-8.13 | Phase 8 |
 
 *None of these files says where its work goes, on purpose. **Work lands on `main`** — step 3 above
 is the single answer for every phase, and the `Branch:` line that opened all eight went on
@@ -219,9 +219,9 @@ indexes is a file nobody reads.
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
-| 8 — 1.0 packaging | 12 | 6 | — | 🔨 IN PROGRESS |
+| 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **136** | **113** | **2** | `[████████░░] 83%` |
+| | **137** | **113** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1493,9 +1493,10 @@ land.
 
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
-| 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | **Nothing blocks it.** Booked 2026-08-20; dispatch it whenever |
+| 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — six of seven boxes; line 1 waits on the push and the deploy |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | **Whenever a day opens.** Laptop only, and it unblocks the row below |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | The sitting, once there is a sign-in to film and a policy to link. Then somebody else's queue |
+| 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
 [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) *is the privacy
@@ -1533,6 +1534,19 @@ unscheduled) — WO-3.18 says in its own body* **write them together or write th
 `CLAUDE.md` records that the backup's accommodation and medical disclosure currently lives in the UI
 alone, which is the weaker half of the obligation in* `docs/data-model.md` *§ Accommodations. Drafting
 both is the one part of this section that can be done before WO-7.1 exists.*
+
+***Row 10 was booked 2026-08-21, and it is last on purpose.*** [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)
+*is one link in the About modal naming the licence* `LICENSE.md` *has carried since that morning.
+Nothing blocks it and nothing depends on it, which is exactly why it sits at the foot of the table:*
+`next` *stops at the first* `⬜` *in document order, so a row placed higher would put an hour of
+`index.html` in front of an M of sync work and five signal boxes that race the term.* **It is the
+kind of row to fold into a sitting that already has that file open** *— which is also how the two
+rows it sits beside got written, outside a work order, on 2026-08-21.*
+
+***The section has three sizes and no shape.*** *§ Ship 3 is a plan; this is a shelf, and rows land
+on it because* **a work order with no row is a work order `next` cannot reach**. *Read the* `Suggested`
+*column as the only ordering argument here — the numbers continue Ship 3's for the reason two
+paragraphs up, and nothing in this section gates anything in it.*
 
 ---
 

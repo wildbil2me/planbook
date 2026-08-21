@@ -13,6 +13,38 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The project has a licence — 2026-08-21
+
+`LICENSE.md` holds the Apache License 2.0, owner-added. Until now this repository was public with no
+licence on it, which in copyright terms is not *"help yourself"* but **all rights reserved with the
+source visible** — a teacher or a district that wanted to keep its own copy of the code a teacher was
+using had no permission to take one.
+
+**It is permissive, and that is worth stating rather than discovering.** Anyone may fork Planbook,
+sell it, and keep their own changes closed; what they owe is attribution, the licence text, and a
+note of what they changed. Read that beside "marketable to other teachers" rather than apart from it.
+
+**The two public documents that said the source was public now say under what.** `privacy.html`'s
+footer and the *"The source is public"* bullet in `docs/FERPA.md` each gained one sentence naming the
+licence and linking the file — changed in the same sitting, because those two are kept in step by
+hand and a fact added to one is added to the other. Neither restates the licence; both link it. The
+policy is not in `sw.js`'s `SHELL`, so there is no `CACHE` bump to make and no installed app to
+update — but **the deployed policy carries the old footer until the next deploy**.
+
+**The copyright holder is named, once.** The Apache appendix ships its notice as
+`Copyright [yyyy] [name of copyright owner]`, and the placeholders are filled: **`Copyright 2026 Bill
+Toomey`**, at the foot of `LICENSE.md` and nowhere else. Every later file that has to state it — the
+README, whenever WO-8.5 is built — quotes that line instead of composing a second one, which is the
+same rule the policy and the FERPA document already live under.
+
+**No per-file Apache header, and none is coming.** The licence covers the work without one, and a
+nineteen-line banner above this repository's file headers would bury the thing those headers exist to
+say. **The app does not say it either, yet**: About links the policy and the administrators' guide and
+names no licence, which is booked as **WO-8.13** — a row in § After Ship 3, an S, and nothing depends
+on it. Apache §4 is already satisfied without it: Pages serves `/LICENSE.md` and GitHub holds the
+same file, so the licence reaches everyone who receives the work. That row is for the reader who
+wonders whether they may fork this, not for compliance.
+
 ### A privacy policy, a FERPA document, and a way to reach them — 2026-08-21
 
 Planbook now says in public what it does with student information, in two documents for two readers.

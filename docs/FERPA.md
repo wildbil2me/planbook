@@ -191,6 +191,9 @@ technical facts it needs, not to reach the conclusion on your behalf.
   same file.
 - **The source is public.** Every claim in this document is a claim about code at
   [github.com/wildbil2me/planbook](https://github.com/wildbil2me/planbook), where it can be read.
+  It is released under the
+  [Apache License 2.0](https://github.com/wildbil2me/planbook/blob/main/LICENSE.md), so a district
+  that wants to keep its own copy of the code a teacher is using may take one.
 
 ---
 

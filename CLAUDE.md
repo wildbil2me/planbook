@@ -351,6 +351,20 @@ device sees the change at all.
   already styles. `wo-sweep.mjs` § 19 is the half of it a grep settles. **A drawing is not a work
   order** (WO-1.25): the questions it raises are answered in the phase file or they are not answered.
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
+- **License:** Apache 2.0, in [`LICENSE.md`](LICENSE.md) since 2026-08-21, owner-added. It is a
+  **permissive** licence and that is a decision with a consequence rather than a formality: anyone
+  may fork this, sell it, and keep their own changes closed, and all they owe is attribution and the
+  licence text. Weigh that against "marketable to other teachers" above before assuming the two are
+  unrelated. **Do not add a per-file Apache header** — the licence covers the work without one, and
+  a nineteen-line banner on top of this repo's file headers would bury the thing those headers exist
+  to say. The two public documents that claim the source is public — [`privacy.html`](privacy.html)
+  and [`docs/FERPA.md`](docs/FERPA.md) — now name the licence too, changed in the same sitting per
+  § Accommodations' rule about that pair, and the app itself is booked to say it in
+  [WO-8.13](plans/work-orders/phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence).
+  **The copyright holder is stated in exactly one place** — `Copyright 2026 Bill Toomey`, in the
+  Apache appendix at the foot of `LICENSE.md`, filled 2026-08-21. Anything else that states it
+  (the README, [WO-8.5](plans/work-orders/phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations),
+  still unbuilt) **quotes that line rather than composing its own.**
 - **Git:** one branch — `main`. Work lands on it directly, in short imperative commit summaries, and a
   work order is a commit or a short stack of them. *(**Phase branches were retired on 2026-08-15**, the
   owner's call, WO-1.19 — they were the WO-1.1 convention and no work order had used one since Aug 12.
