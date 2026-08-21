@@ -939,8 +939,10 @@ comes out from behind its flag.
       open on purpose because no run in this repository settles it — it wanted one pass of the
       owner's eyes and it has had it.)*
 - [x] 👤 The owner has decided what contact appears on a public page, and it is what the policy says.
-      *(**Decided 2026-08-21: a dedicated mailbox on the project's own name, and deliberately NOT the
-      personal Gmail the Cloud project and the domain verification sit on.** The reasoning is
+      *(**Decided 2026-08-21: `privacy@hwgteach.com`, a role alias on the project's own domain, and
+      deliberately NOT the personal Gmail the Cloud project and the domain verification sit on.**
+      *(It was a second Gmail for about an hour first; the alias carries the same argument further —
+      what this page needs from a contact is abandonability, not secrecy.)* The reasoning is
       WO-8.7's ruling read forward and is written at the point of use, in `privacy.html`'s header
       comment: a public legal page will be scraped, and the one thing you want to be able to do with
       a scraped address is abandon it — which is the one thing you cannot do with the account that
