@@ -131,7 +131,7 @@ centralised the mechanism in `src/print-gate.js`. What is genuinely undone is `#
 
 ## WO-8.5 — README, FERPA, and known limitations
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1 · **Owes** WO-8.12
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1
 **Closes roadmap** Phase 8 → "`README.md` with a Known limitations section"
 
 *(**`docs/FERPA.md` came out of this work order on 2026-08-20**, owner-directed, into
@@ -161,8 +161,11 @@ discovered by a user." *(The FERPA half of this paragraph moved to WO-8.12 with 
 - [ ] Every README feature has been run end-to-end against real data. *A documented feature that
       fails on a teacher's first day loses that teacher permanently.*
 - [ ] Known limitations names at least every gap listed above.
-- [ ] `FERPA.md` has a section on accommodation and medical data, and one on backups.
-      → WO-8.12 "has a section on accommodation and medical data, and one on backups"
+- [x] `FERPA.md` has a section on accommodation and medical data, and one on backups.
+      *(Paid by [WO-8.12](#wo-812--the-privacy-policy-and-the-ferpa-document) on 2026-08-20, which is
+      what the `→` marker on this line and the **Owes** field on the header above were for. Both are
+      gone now: `--audit` names a debt whose box has closed, and this is that, settled the way it
+      says to.)*
 - [ ] `README.md` is readable by a principal, not only by a developer.
 
 ---
@@ -817,7 +820,7 @@ case is a caveat nobody reads in the abnormal one.
 
 ## WO-8.12 — the privacy policy and the FERPA document
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.7 — the domain and the host
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-8.7 — the domain and the host
 to publish at · **Blocks** WO-3.18 — a verification form with no policy URL to paste
 **Closes roadmap** Phase 8 → "`docs/FERPA.md`."
 
@@ -912,12 +915,59 @@ comes out from behind its flag.
 - [ ] The policy is **live at the verified domain and says the three things WO-3.18 names**, in plain
       words — fetched over the wire rather than asserted from the repo. `verify-deploy.mjs` is the
       only check here that reads the live origin.
-- [ ] Navigating to the policy on a device that **already has the service worker installed** renders
+- [x] Navigating to the policy on a device that **already has the service worker installed** renders
       the policy and not the app. Force-quit before reading, per `CLAUDE.md`.
-- [ ] `docs/FERPA.md` **has a section on accommodation and medical data, and one on backups** — and
+      *(👤 **Read on the iPad 2026-08-21 and green**, after the force-quit. Reached through the
+      About modal's new Privacy policy row rather than by typing a URL, which is a stronger reading
+      than the line asks for: an installed PWA has no address bar, so before those rows there was no
+      way to perform this check on hardware at all without a second browser.)*
+- [x] `docs/FERPA.md` **has a section on accommodation and medical data, and one on backups** — and
       the backup section says the JSON contains IEP and medical data in as many words.
-- [ ] Nothing in either document claims a behaviour the app does not have. Walk every sentence that
+- [x] Nothing in either document claims a behaviour the app does not have. Walk every sentence that
       makes a promise and name the code that keeps it.
-- [ ] The two documents agree on every fact, and neither restates the other's argument.
-- [ ] Both are readable by a principal, not only by a developer.
-- [ ] 👤 The owner has decided what contact appears on a public page, and it is what the policy says.
+- [x] The two documents agree on every fact, and neither restates the other's argument.
+- [x] Both are readable by a principal, not only by a developer.
+      *(**The owner read both, 2026-08-21, and passed them.** This is the line the implementer left
+      open on purpose because no run in this repository settles it — it wanted one pass of the
+      owner's eyes and it has had it.)*
+- [x] 👤 The owner has decided what contact appears on a public page, and it is what the policy says.
+      *(**Decided 2026-08-21: a dedicated mailbox on the project's own name, and deliberately NOT the
+      personal Gmail the Cloud project and the domain verification sit on.** The reasoning is
+      WO-8.7's ruling read forward and is written at the point of use, in `privacy.html`'s header
+      comment: a public legal page will be scraped, and the one thing you want to be able to do with
+      a scraped address is abandon it — which is the one thing you cannot do with the account that
+      holds the domain verification. The Contact section now carries it as a `.block-link` mailto
+      rather than the plain `<strong>` the placeholder wore, so it clears the 44px floor on the
+      device a principal is most likely to be holding; `docs/FERPA.md` still keeps no second copy.)*
+
+*(**Built 2026-08-20.** `privacy.html` at the repository root — served by Pages at
+`https://planbook.hwgteach.com/privacy`, which is the URL for the verification form — and
+`docs/FERPA.md`, plus the `sw.js` navigate fix (`CACHE` `v91` → `v92`) that the policy URL cannot be
+reached without. **Four of the seven lines are owed and none of them to a missing deliverable.**
+Lines 1 and 2 want a deploy and an installed iPad, which is what the tree is now built to pass:
+`tools/verify-deploy.mjs` grew a § "the privacy policy" that reads `/privacy` off the live origin —
+and its first run against the CURRENT deployment is the reason it has a check nobody planned, since
+**this host answers an unknown path with the app shell at 200**, so `/privacy` came back
+`200 text/html, 204,614 bytes` with no policy deployed at all. Status cannot see a missing policy
+here; the document can, and does. Line 7 is the owner's: the policy ships with
+**`PLANBOOK-CONTACT-TBD`** in its Contact section, once, and the deploy check goes red until it is
+replaced. **Line 6 is left unticked on purpose** — whether a principal can read these is a judgment
+about a reader the implementer is not, and no run settles it; it wants one pass of the owner's eyes
+and nothing more. `verify-shell.mjs` gained seven checks that navigate an iframe at the policy URL
+through the installed worker, which is the first block in that file to assert anything about `fetch`
+interception.)*
+
+*(**Five of the seven lines closed on 2026-08-21, and the sitting that closed them found the hole
+this work order left.** The owner read both documents, decided the contact, and took the iPad
+reading — lines 2, 6 and 7. Line 1 is still owed to the push and the deploy. **The hole: WO-8.12
+delivered two documents AT THE ORIGIN and nothing in the app pointing at either**, which is correct
+for the reader it was written for — a Google reviewer is handed a URL — and leaves a teacher with
+no way in at all, because an installed PWA has no address bar. It surfaced as an inability to take
+the Acceptance 2 reading the way a teacher would. The fix is owner-directed and outside any work
+order: the About modal now carries a **Privacy and student data** section with a row for each,
+`src/shell.css` gained `.modal-body .doc-link` — **the first `<a>` tags this app has ever had** —
+and `sw.js` went to `v93`. `TESTING.md` § "the About modal's two links" is the record. The reading
+also found the guide row 404'ing, and that was not the link: nothing from this work order had been
+pushed, so `docs/FERPA.md` did not exist on GitHub and neither did `privacy.html`. **A link into
+your own repository is untestable until the commit carrying its target is pushed, and the failure
+is indistinguishable from a wrong URL.**)*

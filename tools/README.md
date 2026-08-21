@@ -1011,7 +1011,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1070 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1077 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2115,6 +2115,49 @@ somewhere else*, `#detailView` and `#calendarView` earn theirs at the foot of th
 would have earned nothing. A red run naming missing coverage is worth more than a green one that
 stopped asking. The section above is what closed it, and the `byHand` string it now carries points at
 that section by name.
+
+**WO-8.12 moved it from 1070 to 1077**: seven call sites in one new section at the foot of the file
+— § *"the policy URL is not the app"* — none of them inside a loop and none a failure arm, so the
+section contributes seven executed results and **the run prints 1093**, measured on the delivered
+tree: `1093 checks · 1093 passed · 0 failed · 0 skipped`, 30,753 lines, 28.1 lines per check, 389s,
+exit 0. **The gap between sites and results stays at 16.**
+
+**It is the first block in this file that asserts anything about `fetch` interception**, so the
+sentence at the head of this section — *"it drives a page, not an installed app, and it has never
+seen a service worker"* — is narrowed for the third time rather than left to be read charitably.
+WO-8.10 read Cache Storage, which is a window API. WO-8.11 registered a second worker and read the
+`controllerchange` the browser delivered. This one navigates an **iframe** at this origin and asks
+which document came back, which is the only way to see the defect it exists for: `sw.js` answered
+every navigation out of the cache without looking at the path, so the privacy policy — a URL Google
+fetches during OAuth verification — rendered the gradebook on every device with the worker installed.
+Still nothing here installs an app.
+
+**The instrument is this file's own static server, not the page**, and that is the part worth
+lifting if a later block asks a similar question. Both navigations render a document, and from
+inside the browser one served out of Cache Storage and one fetched over the network are the same
+bytes and the same DOM — there is nothing to measure. So the server records every path it is asked
+for (`SERVED`, declared beside it), and *"the policy went to the network"* and *"the app did NOT"*
+are two readings of that one list. The second is what stops the block passing on a build that
+deleted the navigate branch rather than fixing it, which is the mutation that proved it.
+
+**Every navigation carries a unique query string, and that is not decoration.** The harness has
+already loaded `/index.html` once by the time this block runs and this server sends no cache
+headers, so a repeat of a URL the browser has seen can be answered out of its own memory cache —
+which would have this block reporting "Cache Storage" about the wrong cache. A URL with a fresh
+query has never been seen. The worker is unaffected: it compares `url.pathname`, and the server
+strips the query before it looks for the file.
+
+**Two mutations, on the tree the green run was measured on.** The pre-WO-8.12 branch — every
+navigation answered from the cache — turns **2 of the 1,093 red** (`1093 checks · 1091 passed ·
+2 failed`, exit 1), and the detail line is the defect in the teacher's own words: at the policy URL,
+`title = "Planbook"`, `h1 = "Planbook"`, *the app's #homeView present in that document = true*,
+`sections = 0`, and **0 requests for `/privacy.html`** reached the server. Deleting the navigate
+branch outright — the fix that overshoots — turns a **different** one red and only that one
+(`1093 checks · 1092 passed · 1 failed`): `1 request(s) for /index.html`, the app's own document
+fetched over the network, which is the offline launch gone. **Both of the policy readings stay green
+in that second run, and so does "the app's own navigation still lands on the app"** — online, with
+nothing intercepting, everything works. That is precisely why the `SERVED` reading is in the block:
+a section that could only see the first mutation would have called the second one a fix.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls

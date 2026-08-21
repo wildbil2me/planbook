@@ -255,6 +255,107 @@ try {
   check('the shell document carries Cache-Control: no-cache', directives(root.cacheControl).has('no-cache'),
     cacheDetail(root));
 
+  /* ── the privacy policy ──
+     WO-8.12's first Acceptance line, and it says in as many words that the policy is to be
+     "fetched over the wire rather than asserted from the repo" — so it is here, in the only check
+     in this repository that reads the live origin, rather than in verify-shell.mjs. The file being
+     in the working tree proves nothing: this is a URL Google fetches during OAuth verification
+     (WO-3.18), from the outside, once, and a 404 or a redirect at that moment is the whole cost.
+
+     THE CANONICAL URL IS `/privacy`, EXTENSIONLESS, and that is this host's doing rather than a
+     preference. Cloudflare Pages serves `privacy.html` at `/privacy` and answers the `.html` path
+     with a redirect, exactly as it does for `/index.html` → `/` (see the note on SHELL in sw.js
+     for what that redirect already cost this project once). `/privacy` is therefore the URL to
+     paste into the verification form, and the one asserted here. */
+  console.log('\n── the privacy policy (WO-8.12) ──');
+  const policyUrl = ORIGIN + '/privacy';
+  const policy = await get(policyUrl);
+  say('/privacy', policy);
+
+  check('the privacy policy answers 200 at /privacy — the URL that goes in the Google verification '
+    + 'form, fetched the way a reviewer fetches it', policy.status === 200,
+    isRedirect(policy)
+      ? `${policy.status} → ${policy.location}; ${await chainOf(policyUrl)} — paste the URL that answers `
+        + `200 into the form, or serve the policy at this one`
+      : String(policy.status) + ' — and on THIS host that is nearly free: an unknown path answers 200 '
+        + 'with the shell document, so the check below is the one that can tell a deployed policy '
+        + 'from a missing one');
+
+  /* Read at the end of the chain rather than at the redirect, so a host that normalizes the path
+     still gets its WORDS read: the status check above has already gone red, and a cascade of four
+     more failures about an empty body would bury the one finding a reader needs. One hop, because
+     that is the only shape this host produces. */
+  let policyDoc = policy;
+  if (isRedirect(policy) && policy.location) {
+    policyDoc = await get(new URL(policy.location, policyUrl).href);
+    say(policy.location, policyDoc);
+    observed('the readings below are taken from ' + policyDoc.url + ', the end of that redirect, '
+      + 'so that a redirected policy still has its words checked');
+  }
+
+  /* THE CHECK THAT IS NOT VACUOUS, and it is written down because the first run of this block
+     proved the point: against a deployment with no policy on it, `/privacy` answered **200
+     text/html, 204,614 bytes** — the app shell, which this host serves for any path it does not
+     recognize (measured 2026-08-12 on `/nope-does-not-exist`, and again here). Status and content
+     type therefore cannot see a policy that was never deployed. What can is the document itself:
+     the policy says so in its <title>, and it does not carry the app's home screen. */
+  const isPolicyDoc = /<title>[^<]*Privacy Policy[^<]*<\/title>/i.test(policyDoc.text)
+    && !/id="homeView"/.test(policyDoc.text);
+  check('the document at that URL is the POLICY and not the app shell — this host answers an '
+    + 'unknown path with the gradebook at 200, so nothing above can tell a deployed policy from a '
+    + 'missing one', isPolicyDoc,
+    isPolicyDoc
+      ? `${policyDoc.bytes} B, titled as the privacy policy, with no app markup in it`
+      : `${policyDoc.bytes} B and ${/id="homeView"/.test(policyDoc.text) ? 'it IS the app shell — the '
+        + 'policy is not deployed at this path' : 'not titled as the privacy policy'}`);
+
+  /* The three things WO-3.18 names, asserted as sentences the policy actually contains. A reworded
+     policy turns these red rather than turning them off — which is the intent: the wording is the
+     deliverable, and a check that accepted any paraphrase would accept a policy that had quietly
+     stopped making the claim. */
+  const CLAIMS = [
+    ['no vendor server ever receives student data', /no server of ours ever receives student information/i],
+    ['no account is required', /no account is required/i],
+    ['Drive holds only files this app created', /Drive holds only the file Planbook itself created/i],
+  ];
+  const missing = CLAIMS.filter(([, re]) => !re.test(policyDoc.text)).map(([label]) => label);
+  /* The byte floor guards a vacuous pass in the other direction: this host answers an unknown path
+     with the shell document at 200, and an empty or truncated body would fail every regex above
+     for a reason that has nothing to do with the words. */
+  check('the privacy policy says the three things WO-3.18 names, in plain words',
+    policyDoc.bytes > 2000 && !missing.length,
+    missing.length
+      ? `${policyDoc.bytes} B read, and NOT saying: ${missing.join(' · ')}`
+      : `${policyDoc.bytes} B read, all three claims present`);
+
+  /* WO-8.12 trap 4, as a check. The contact on a public page is the owner's decision, and this
+     file shipped with one marked placeholder standing in for it; a deployment still carrying the
+     token is a public policy with no way to reach anybody, which is the one thing that work order
+     says not to do quietly. THE OWNER DECIDED IT ON 2026-08-21 and privacy.html now names a real
+     mailbox, so this reads green — which turns it from a countdown into the guard that catches a
+     future edit reintroducing the placeholder, or a deploy of a stale copy that still has it. */
+  check('the privacy policy names a contact rather than the placeholder it ships with',
+    isPolicyDoc && !/PLANBOOK-CONTACT-TBD/.test(policyDoc.text),
+    !isPolicyDoc
+      ? 'not run — the document at that URL is not the policy, and a page with no token in it is not '
+        + 'a page with a contact on it. Announced rather than passed quietly'
+      : /PLANBOOK-CONTACT-TBD/.test(policyDoc.text)
+        ? 'the deployed policy still carries PLANBOOK-CONTACT-TBD — replace it in privacy.html with '
+          + 'the address or form the owner decides on (WO-8.12 Acceptance line 7, still open)'
+        : 'no placeholder token in the deployed policy');
+
+  /* OBSERVED, not asserted, for the reason `/index.html` is observed below: which of the two paths
+     redirects is the host's routing and a different origin may answer both perfectly well. What it
+     is here for is that a run says out loud which URL a human should hand to Google. */
+  const policyHtml = await get(ORIGIN + '/privacy.html');
+  say('/privacy.html', policyHtml);
+  observed(isRedirect(policyHtml)
+    ? `/privacy.html answers ${policyHtml.status} → ${policyHtml.location}, which is this host `
+      + `normalizing the extension away. No verdict: /privacy is the URL asserted above and the one to paste.`
+    : `/privacy.html answers ${policyHtml.status}. No verdict, and on this host a 200 at a path that `
+      + `was never deployed is the shell document — read this beside the check above rather than as `
+      + `a second opinion about it.`);
+
   /* ── the service worker ── */
   console.log('\n── the service worker ──');
   const swUrl = ORIGIN + '/sw.js';

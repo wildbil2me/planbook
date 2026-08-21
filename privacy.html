@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<!--
+  Planbook — the public privacy policy. WO-8.12.
+
+  THIS IS THE URL GOOGLE FETCHES during OAuth verification (WO-3.18), and it is also the page a
+  teacher or a principal lands on when they want to know what this app does with student data. It
+  is served by Cloudflare Pages straight out of the repository root like everything else here, so
+  the file you are reading IS the deployed page — there is no build step (CLAUDE.md).
+
+  THREE THINGS ABOUT THIS FILE READ LIKE OVERSIGHTS AND ARE NOT.
+
+    1. IT IS NOT IN sw.js's SHELL LIST, AND IT MUST NOT BE ADDED. A legal page read once, online,
+       by a reviewer or by someone who tapped a link is not the app shell. Precaching it adds a
+       hand-maintained entry to a list whose own header says the entry that gets missed is the one
+       nobody thinks of, and buys an offline reading of a document nobody reads offline. The
+       consequence is real and is accepted: tapping a link to this page with no network gives the
+       browser's error page rather than the policy. Ruled at WO-8.12, trap 2; the same ruling is
+       written at the SHELL list itself, which is where somebody would go to break it. If a later
+       work order decides that is wrong, it is one line plus a CACHE bump — and it should say why,
+       because this ruling is the reason the line is not there already.
+
+    2. THE STYLES ARE IN THIS FILE RATHER THAN IN src/shell.css. Every other page in this project
+       links the shell stylesheet and never copies it (design/mockups/PROTOCOL.md says so for
+       mockups, and index.html does it for the app). This page is the one document that has to
+       render correctly for a stranger fetching it cold, with no service worker, possibly on a
+       first visit that is also their last — so it is a single request with nothing to fail
+       independently of it. The values below are quoted literally from design/style-guide.md, the
+       same way src/shell.css quotes them; colors are inline and never CSS custom properties, and
+       there is no dark mode. Both are suite conventions — read CLAUDE.md before tidying either.
+
+    3. NO manifest, NO service-worker registration, NO app JavaScript. This page is prose. Linking
+       the manifest here would offer to install a legal document to the home screen.
+
+  THE CONTACT LINE WAS DECIDED 2026-08-21, and it is A DEDICATED MAILBOX RATHER THAN THE ACCOUNT
+  THIS PROJECT RUNS ON. This file shipped with a single all-caps placeholder token where the
+  address belongs, because WO-8.7 ruled that an address in a public file is a spam and phishing
+  target and that which address goes here is therefore not a decision this repository can make
+  (WO-8.12, trap 4, and its Acceptance line 7). The owner made it, and the reason it is a separate
+  mailbox is that same ruling read forward: an address on a public legal page will be scraped, and
+  the one thing you want to be able to do with a scraped address is abandon it. The account that
+  holds the Cloud project and the domain verification — the personal Gmail, per
+  plans/work-orders/phase-3-gradebook.md — is the one address that cannot be abandoned, which is
+  exactly why it is not this one. `tools/verify-deploy.mjs` still fails on a deployment carrying
+  the token; that check is now a guard against losing this rather than a countdown to it.
+
+  EVERY SENTENCE HERE IS A CLAIM ABOUT CODE IN THIS REPOSITORY, and the pairing is written out in
+  `.claude/dispatch/WO-8.12-result.md`. Do not add a sentence that sounds reassuring and is not
+  checkable — no encryption claim (nothing here is encrypted), no retention or deletion promise the
+  app cannot keep, and no "we do not sell your data", which is a sentence about a vendor that
+  receives data and reads as an admission that one does. The architecture is genuinely strong, and
+  an unverifiable sentence beside a true one invites doubt about the true one.
+
+  `docs/FERPA.md` is this document's twin, for a different reader. They carry the SAME data-flow
+  statement on purpose; nothing else is duplicated between them, and neither restates the other's
+  argument. Change a fact in one and change it in the other in the same sitting.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d2137">
+  <title>Planbook — Privacy Policy</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <style>
+    /* design/style-guide.md, quoted literally. No custom properties, no dark variants. */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      font-size: 14px;
+      line-height: 1.6;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .band {
+      background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+      color: #fff;
+      padding: 24px 20px calc(24px + env(safe-area-inset-top, 0px));
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .band-inner { max-width: 760px; margin: 0 auto; }
+    .band h1 { font-size: 22px; font-weight: 700; }
+    .band p { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+    main { max-width: 760px; margin: 0 auto; padding: 20px; }
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    h3 { font-size: 14px; font-weight: 700; margin: 16px 0 4px; }
+    p { margin-bottom: 12px; }
+    p:last-child, ul:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0 0 12px 20px; }
+    li { margin-bottom: 6px; }
+    .lede { font-size: 15px; }
+    .quiet { color: #6b7a8d; font-size: 13px; }
+    code {
+      font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+      background: #f8f9fc;
+      border: 1px solid #e0e4f0;
+      border-radius: 6px;
+      padding: 1px 4px;
+      font-size: 12px;
+    }
+    /* The caution palette, used once: the sentence that says what is NOT promised. A teacher who
+       skims this page should still meet it. design/style-guide.md § "Caution banner". */
+    .caution {
+      background: #fff8e6;
+      border: 1.5px solid #f0dfa8;
+      border-radius: 8px;
+      color: #8a6d1a;
+      padding: 12px 14px;
+    }
+    .caution strong { color: #8a6d1a; }
+    a { color: #5b6fcc; }
+    /* A link that stands on its own line is a thing you tap; an inline link inside a sentence is
+       text, and the 44px floor is written for controls (design/style-guide.md §6). The block links
+       below therefore take the touch pass and the inline ones do not — the same distinction
+       src/home.css draws where a line of TEXT sits under the floor. */
+    .block-link {
+      display: inline-block;
+      font-weight: 600;
+      padding: 8px 0;
+    }
+    footer { max-width: 760px; margin: 0 auto; padding: 0 20px 28px; }
+    :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }
+
+    @media (pointer: coarse) {
+      body { font-size: 15px; }
+      .block-link { min-height: 44px; display: flex; align-items: center; }
+    }
+    @media (max-width: 640px) {
+      main { padding: 10px; }
+      .panel { padding: 14px; }
+      .band { padding: 18px 14px calc(18px + env(safe-area-inset-top, 0px)); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="band">
+  <div class="band-inner">
+    <h1>Planbook — Privacy Policy</h1>
+    <p>Last updated 20 August 2026</p>
+  </div>
+</div>
+
+<main>
+
+  <section class="panel">
+    <p class="lede">
+      Planbook is a gradebook and classroom assistant that runs entirely inside a teacher's own
+      browser. It keeps class lists, attendance, grades, and the notes a teacher needs in order to
+      teach a class well. This page says, in plain words, what it stores, where that lives, and
+      what leaves the device.
+    </p>
+    <p>
+      It is written for teachers, and for the principals and technology directors who are asked to
+      approve it.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>The short version</h2>
+    <ul>
+      <li>
+        <strong>No server of ours ever receives student information.</strong> Planbook has no
+        server, no database and no place to send anything to. It is a web page and the files it is
+        made of, and everything you type stays on the device you typed it on.
+      </li>
+      <li>
+        <strong>No account is required.</strong> There is nothing to sign up for, nothing to sign
+        in to, and no password. You open Planbook and use it.
+      </li>
+      <li>
+        <strong>If you choose to turn on Google Drive sync, Drive holds only the file Planbook
+        itself created.</strong> The one permission Planbook asks for is
+        <code>drive.file</code>, which reaches files this app made and nothing else in your Drive.
+      </li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>What Planbook stores, and where</h2>
+    <p>
+      Everything Planbook holds for a school year is one file's worth of information kept in your
+      browser's own storage, on your own device:
+    </p>
+    <ul>
+      <li>your classes, terms and grading categories;</li>
+      <li>your roster — student names, and any guardian or counselor names, email addresses and
+        phone numbers you enter;</li>
+      <li>attendance, hall passes, assignments, scores and the letter scale you set;</li>
+      <li>the support details you keep on students — accommodations, IEP and 504 plans, case
+        managers and review dates, medical needs and behavior plans;</li>
+      <li>and, when the outreach feature ships, a record of the messages you sent — the app keeps
+        a place for it today and nothing writes to it yet.</li>
+    </ul>
+    <p>
+      Separately, Planbook remembers a few things about <em>this browser</em> rather than about any
+      student: which school year and class you had open last, whether you dismissed the install
+      banner, and when you last saved a backup. Nothing from inside a student's record is kept
+      there.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>What leaves your device, when, and to where</h2>
+    <!-- THE DATA-FLOW STATEMENT. docs/FERPA.md carries this same statement, deliberately: WO-8.12
+         exists because two documents that say what leaves the device in two different sets of
+         words are two documents that will eventually disagree in public. Change it here and change
+         it there in the same sitting. Phase 7 rewrites both the day sync comes out from behind its
+         flag (WO-8.12, trap 5). -->
+    <p>
+      <strong>Nothing leaves it on its own.</strong> Loading the page fetches Planbook's own files
+      from this website, the way any web page does, and the browser checks those same files for
+      updates. Beyond that, Planbook makes no network requests at all: no analytics, no usage
+      tracking, no error reporting, no advertising, and no third-party code of any kind.
+    </p>
+    <p>
+      Student information moves only when <em>you</em> move it, and there are three ways to do
+      that. Each is a deliberate act, and you can see it happen:
+    </p>
+    <ol>
+      <li>
+        <strong>Saving a backup file.</strong> Planbook writes a school year — or every year you
+        have — to a file, and your browser saves it wherever you tell it to. The file is yours, on
+        your disk. It is not sent anywhere.
+      </li>
+      <li>
+        <strong>Turning on Google Drive sync.</strong> Optional, off unless you switch it on, and
+        it uploads the year's file to <em>your</em> Google Drive so your laptop and your iPad show
+        the same gradebook. <em>Not in the released app yet — see below.</em>
+      </li>
+      <li>
+        <strong>Sending a message you drafted.</strong> Planbook drafts an email to a guardian,
+        counselor or administrator and hands it to your own mail app; you read it, edit it and send
+        it. Planbook never sends mail itself, and the sent copy lands in your own sent folder.
+        <em>Not in the released app yet — see below.</em>
+      </li>
+    </ol>
+    <p>There is no fourth destination.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Google Drive sync, and the one permission it asks for</h2>
+    <p>
+      Planbook is fully usable with no Google account at all, and that is not a temporary state of
+      affairs — an app that stops working when a school blocks third-party sign-in is not much use
+      to the teacher it stopped working for. Sync exists to carry one file between a teacher's own
+      devices, and it is off until it is turned on.
+    </p>
+    <p>
+      When it is on, Planbook asks for exactly one permission:
+    </p>
+    <p>
+      <code>https://www.googleapis.com/auth/drive.file</code> — <em>"See, edit, create and delete
+      only the specific Google Drive files that you use with this app."</em>
+    </p>
+    <p>
+      That permission reaches the file Planbook created and nothing else. The rest of your Drive is
+      invisible to it. Planbook does not ask for access to your other Drive files, to your
+      spreadsheets, or to your mail — and it does not ask to send email as you, because it never
+      sends email at all.
+    </p>
+    <p class="quiet">
+      Sync is not built into the released app yet. When it ships it will behave exactly as
+      described here; if it ever needs a different permission, this page changes first, and the
+      date at the top changes with it.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Student records with accommodation and medical information</h2>
+    <p>
+      Planbook deliberately holds IEP and 504 accommodations, case managers, plan review dates,
+      medical needs such as an allergy or a seizure protocol, and behavior plans. A teacher is
+      legally obliged to implement accommodations, and a list nobody opens protects nobody — so
+      Planbook puts them where the work happens rather than filing them away.
+    </p>
+    <p>
+      Because that is the most sensitive information in the app, three rules are built into it
+      rather than promised:
+    </p>
+    <ul>
+      <li>
+        <strong>They are never on screen by default.</strong> A list shows a small dot beside a
+        name, and the details open only when the teacher deliberately taps for them — because these
+        screens get projected onto classroom walls.
+      </li>
+      <li>
+        <strong>A presentation mode hides every sensitive field at once</strong>, for exactly that
+        moment.
+      </li>
+      <li>
+        <strong>They will never appear in a message Planbook drafts.</strong> The drafting feature
+        is not in the released app yet; when it ships, its templates will refuse to fill in
+        accommodation, medical or plan information at all, so that an email quoting a student's 504
+        plan is not a mistake that can be made.
+      </li>
+    </ul>
+    <p>
+      <strong>The one place this information does travel is a backup file you save</strong>, which
+      contains it in as many words. That is deliberate — a backup that left it out would not bring
+      your gradebook back — and the app says so on the screen where you save one. Keep that file
+      the way you keep a paper folder of the same information.
+    </p>
+    <a class="block-link" href="https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md">
+      Planbook and student-data privacy — the guide for administrators →
+    </a>
+  </section>
+
+  <section class="panel">
+    <h2>What this policy does not promise</h2>
+    <p class="caution">
+      <strong>Planbook does not encrypt anything.</strong> The information sits in ordinary browser
+      storage, and a backup file is plain text that anyone who opens it can read. Someone who can
+      unlock your device and open your browser can read what is in Planbook, the same way anyone
+      who opens your desk drawer can read a paper folder. Lock the device, do not share a login,
+      and keep backup files somewhere only you can reach — and not in an email.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Deleting it</h2>
+    <p>
+      There is nothing on our side to delete, because nothing was ever sent to us. What is on your
+      device is yours to remove: clearing this site's data in your browser's settings, or deleting
+      the installed app along with its data, removes everything Planbook is holding on that device.
+      That cannot be undone, so save a backup first if you want one.
+    </p>
+    <p>
+      A backup file you saved is an ordinary file and stays until you delete it. If you turned on
+      Drive sync, the file is in your own Google Drive and you delete it there, like any other
+      file.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Schools, FERPA, and children</h2>
+    <p>
+      Planbook is a teacher's own tool. The school's student information system remains the
+      official record; Planbook does not connect to it and does not replace it. Because no vendor
+      receives student information, adopting Planbook introduces no new third party for a district
+      to evaluate — but whether that satisfies a particular district's obligations is that
+      district's determination to make, not ours. The companion document written for that review is
+      linked above, and it addresses accommodation and medical information directly.
+    </p>
+    <p class="quiet">
+      This page describes how the software works. It is not legal advice and it does not make a
+      compliance determination on any school's behalf.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Changes to this policy</h2>
+    <p>
+      If what Planbook does with your information changes, this page changes before the behaviour
+      does, and the date at the top of the page changes with it.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Contact</h2>
+    <p>
+      Questions about Planbook or about this policy:
+    </p>
+    <!-- A BLOCK LINK RATHER THAN AN INLINE ONE, and rather than the plain <strong> this line
+         carried while the address was undecided. The distinction is written at `.block-link`
+         above: a link standing on its own line is a thing you tap and takes the 44px floor, and a
+         link inside a sentence is text and does not. A mailto set in the middle of that sentence
+         would have been a tappable control under the floor on the one device a principal is most
+         likely to be holding. -->
+    <a class="block-link" href="mailto:hwgteach@gmail.com">hwgteach@gmail.com</a>
+  </section>
+
+</main>
+
+<footer>
+  <p class="quiet">
+    Planbook is built and maintained by one classroom teacher. Its source code is public at
+    <a href="https://github.com/wildbil2me/planbook">github.com/wildbil2me/planbook</a>, so every
+    claim on this page can be checked against the code that makes it true.
+  </p>
+</footer>
+
+</body>
+</html>

@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v91';
+const CACHE = 'planbook-shell-v93';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -48,6 +48,16 @@ const CACHE = 'planbook-shell-v91';
    owner's iPad within minutes of the domain going live. Nothing local could have caught it —
    the redirect is the host's, so it does not exist until the app is on Pages.
    `./` is the same bytes without the redirect, and it is what a teacher's URL asks for anyway. */
+/* `./privacy.html` is deliberately NOT on this list either, and the reasoning is a different one
+   (WO-8.12, trap 2). It is not shell: it is a legal document read once, online, by a reviewer
+   during OAuth verification or by somebody who tapped a link. Precaching it adds a hand-maintained
+   entry to the list whose own rule 2 above says the forgotten entry is the one nobody thinks of,
+   and buys an offline reading of a page nobody reads offline. THE CONSEQUENCE IS REAL AND IS
+   ACCEPTED: tapping a link to the policy with no network gives the browser's error page rather
+   than the policy. If a later work order decides that is wrong, it is one line here and one CACHE
+   bump — and it should record why, because this ruling is the reason the line is not there. What
+   that work order must NOT do is reach for the navigate branch below to solve it: answering the
+   policy URL out of the app's cache is the defect that branch was fixed to stop. */
 const SHELL = [
   './',
   './manifest.webmanifest',
@@ -114,6 +124,15 @@ const SHELL = [
 const INDEX = new URL('./', self.location).href;
 const SHELL_PATHS = new Set(SHELL.map((p) => new URL(p, self.location).pathname));
 
+/* The paths that ARE this app's document, and the reason the `navigate` branch below asks. Both
+   resolve to the same bytes; see that branch, and the `_headers` note that pins no-cache on both
+   for the same reason. Anything else navigable at this origin — the privacy policy is the first —
+   is somebody else's document and the worker must not answer it out of the app's cache. */
+const APP_DOCUMENT = new Set([
+  new URL('./', self.location).pathname,
+  new URL('./index.html', self.location).pathname,
+]);
+
 self.addEventListener('install', (event) => {
   /* `reload` defeats the HTTP cache during precache. Without it a deploy can precache the
      browser-cached copy of the file it is supposed to be replacing — the cache name changes,
@@ -152,11 +171,30 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  /* A navigation offline has to land on the cached shell, whatever path it asked for —
-     otherwise a home-screen launch shows the browser's offline page and looks like data loss
-     to someone whose grades are in there. */
+  /* A navigation TO THE APP has to land on the cached shell — otherwise a home-screen launch with
+     the network off shows the browser's offline page and looks like data loss to someone whose
+     grades are in there.
+
+     THE PATH TEST IS THE WHOLE OF WO-8.12'S FIRST TRAP, and this branch is where it was. It used
+     to answer EVERY navigation out of the cache without looking at the path, which is fine while
+     the app is the only document at this origin and wrong the moment one is added: `/privacy` — the
+     policy Google fetches during OAuth verification — rendered the gradebook on every device with
+     this worker installed. It is invisible from exactly the place it gets tested, because a
+     reviewer's cold fetch has no worker and sees the policy; the owner's iPad has one and does not.
+
+     So: the app's own document is answered from the cache, and anything else at this origin falls
+     through to the network untouched. `respondWith` is not called on that path at all — the browser
+     does what it would have done with no worker here, which for the policy is fetch it, and offline
+     is the browser's own error page. That consequence is accepted and is written down at SHELL
+     above: a legal page nobody reads offline does not earn a hand-maintained precache entry.
+
+     TWO PATHS, not one, for `_headers`' reason: this host answers `/index.html` with a 308 to `/`,
+     but a teacher can still have bookmarked it, and a bookmark that works online and not offline is
+     the failure this branch exists to prevent. Both are the same document. */
   if (req.mode === 'navigate') {
-    event.respondWith(caches.match(INDEX).then((hit) => hit || fetch(req)));
+    if (APP_DOCUMENT.has(url.pathname)) {
+      event.respondWith(caches.match(INDEX).then((hit) => hit || fetch(req)));
+    }
     return;
   }
 

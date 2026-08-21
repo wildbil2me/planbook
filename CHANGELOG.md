@@ -13,6 +13,43 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A privacy policy, a FERPA document, and a way to reach them — 2026-08-21
+
+Planbook now says in public what it does with student information, in two documents for two readers.
+The **privacy policy** at `/privacy` is the page a teacher or a principal lands on and the URL Google
+fetches during verification; **`docs/FERPA.md`** is the longer argument for a principal or a district
+IT director deciding whether a teacher may put student data in this. They carry the same data-flow
+statement word for word and divide everything else, because two documents that paraphrase each other
+drift, and the one that gets read is whichever was found first.
+
+**What they claim is what the code does, and four sentences were cut for failing that test** — the
+merge-field refusal, the `mailto:` hand-off and Drive sync are all unbuilt, and the outreach record
+is a field nothing writes to. There is no encryption claim, because nothing here is encrypted; no
+retention promise the app cannot keep; and no *"we do not sell your data"*, which is a sentence about
+a vendor that receives data and reads as an admission that one does. The honest position is stronger
+than the reassuring one: no server of ours ever receives student information, because there is no
+endpoint to send it to.
+
+**The document that matters most here is the one about accommodations.** A Planbook backup contains
+IEP and 504 details, accommodations, case managers, review dates, medical needs and behavior plans in
+plain readable text. The app has said so on the screen where you save one since Ship 1; now the FERPA
+document says it too, which is the half of that obligation `docs/data-model.md` has been recording as
+missing.
+
+**The service worker no longer answers the policy URL with the gradebook.** Its navigate branch used
+to serve the cached shell for *every* navigation without looking at the path — fine while the app was
+the only document at this origin, and wrong the moment a second one arrived. The failure was invisible
+from exactly where it would have been tested: a reviewer fetching cold has no worker and sees the
+policy; an installed iPad has one and does not.
+
+**And both documents are reachable from inside the app**, which they were not when they landed. About
+carries a *Privacy and student data* section now, with a row for each. An installed PWA has no address
+bar, so a document that exists only at a URL does not exist for a teacher — and the gap surfaced as an
+inability to check the policy the way a teacher would. Both rows open out to the browser on purpose:
+iOS runs an installed app in a window with no chrome and no back button, and a legal page you cannot
+navigate back from is a trap with the app switcher as its only exit. These are the first two links in
+an app whose every other control is a button.
+
 ### Who needs you — the concern list, and the first screen that refuses — 2026-08-20
 
 Nine concern rules and the screen that ranks them. A class's switcher carries a fifth segment now:

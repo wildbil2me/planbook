@@ -7914,6 +7914,177 @@ would serve — proving that needs two deploys of two different trees onto one d
 from the current controller, which is the same thing the app cares about, but it is not iOS
 discarding a suspended app.*
 
+### WO-8.12 — the privacy policy and the FERPA document
+
+**What this is.** Two documents that say one set of facts to two readers, plus the service-worker
+fix without which one of them cannot be reached. `privacy.html` at the repository root is the public
+policy — the URL Google fetches during OAuth verification, and the page a teacher or a principal
+lands on from a link. `docs/FERPA.md` is the same facts written for a district privacy review. They
+carry the **same data-flow statement, word for word, on purpose**, and each says so in a comment at
+its own copy: two documents describing what leaves the device in two different sets of words are two
+documents that will eventually disagree in public, with this project's name on both.
+
+**The fix.** `sw.js`'s navigate branch answered **every** navigation out of the cache without
+looking at the path, which was correct while the app was the only document at this origin. Add the
+policy and every device with the worker installed renders the gradebook at the policy URL — and the
+failure is invisible from exactly the place it gets tested, because a reviewer fetches cold, with no
+worker, and sees the policy. The branch now answers the app's own document (`/` and `/index.html`,
+the two paths `_headers` already pins for the same reason) out of the cache and lets everything else
+fall through to the network. `CACHE` `v91` → `v92`.
+
+**What the teacher and the principal read**
+
+| Where | What it says |
+|---|---|
+| `https://planbook.hwgteach.com/privacy` | The three things WO-3.18 names, first: *no server of ours ever receives student information* · *no account is required* · *if you turn on Drive sync, Drive holds only the file Planbook itself created*. Then what is stored, what leaves the device, the accommodation and medical clause, and one amber panel headed **What this policy does not promise** — *"Planbook does not encrypt anything"* |
+| `docs/FERPA.md` | Roll Call!'s six headings, lifted, plus two this app needs and that one does not have: **accommodation, medical and behavior-plan information**, and **backups, and what is in one** |
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.12.*
+
+- [ ] **Acceptance 1 — the policy is live at the verified domain.** **Owed to a deploy.** Nothing in
+      this repository can close it, which is the line's own point: `verify-deploy.mjs` is the only
+      check that reads the live origin, and it grew a § *"the privacy policy"* to answer this one.
+      Run against the **current** deployment on 2026-08-20 it reads
+      `16 checks · 14 passed · 2 failed`, and the two reds are true: the policy is not deployed yet,
+      and the deployed `sw.js` is `v91` against `v92` in the tree. **That run is also why the section
+      has a check nobody planned.** `/privacy` came back **`200 · text/html · 204,614 B`** — the app
+      shell, which this host serves for any path it does not recognise — so status and content type
+      cannot tell a deployed policy from a missing one. The check that can is *"the document at that
+      URL is the POLICY and not the app shell"*, which reads the `<title>` and the absence of the
+      app's `#homeView`.
+- [x] 👤 **Acceptance 2 — the policy URL on a device that already has the worker installed.**
+      **Read on the iPad 2026-08-21, after the force-quit, and green.** Force-quit first, per `CLAUDE.md`. What is done at the desk is the same
+      question asked of a real worker in headless Edge: `verify-shell.mjs` § *"the policy URL is not
+      the app"* navigates an **iframe** to the policy on a page it has first asserted is controlled
+      by `./sw.js`, and reads which document came back — `title = "Planbook — Privacy Policy"`,
+      `h1` the same, the app's `#homeView` **absent**, 11 sections. That is the first block in that
+      file to assert anything about `fetch` interception. It is not the 👤 line and did not close
+      it: no emulator has a home-screen icon or an app switcher.
+      **What closed it was reached a way the work order did not anticipate.** The policy was opened
+      from the About modal's new **Privacy policy** row rather than by typing a URL — and that is
+      the stronger reading, because an installed PWA has no address bar. Before those rows existed
+      there was no way to take this reading on hardware at all without leaving the app for a second
+      browser, which is not the thing the line is about. See § "the About modal's two links" below.
+- [x] **Acceptance 3 — `docs/FERPA.md` has a section on accommodation and medical data, and one on
+      backups.** Both exist under those names. The backup section opens with the sentence the line
+      asks for, in as many words: ***"A Planbook backup file contains IEP and 504 plan details,
+      accommodations, case managers, plan review dates, medical needs and behavior plans, in plain
+      readable text"*** — then says it is neither redacted nor encrypted, that this is the correct
+      posture and the same one a paper folder has, and that the app says so on the screen where a
+      backup is saved. That last clause is checkable and was checked: it is the `.backup-notice`
+      block in `index.html`, and the two now say the same thing.
+- [x] **Acceptance 4 — nothing claims a behaviour the app does not have.** Every promise-making
+      sentence was walked against the code that keeps it, and the list is in
+      `.claude/dispatch/WO-8.12-result.md` rather than here. **Four claims were written and then cut
+      or marked** because the walk found no code under them: the merge-field refusal and the
+      `mailto:` hand-off (Phase 5, unbuilt), Drive sync (Phase 7, unbuilt) — all three now say *"not
+      in the released app yet"* — and *"a record of the outreach you have sent"*, which is a field
+      `newYearDocument()` creates and **nothing in `src/` writes to**, so both documents now say so.
+      No encryption claim, no retention promise, and no *"we do not sell your data"*, which is a
+      sentence about a vendor that receives data.
+- [x] **Acceptance 5 — the two agree on every fact and neither restates the other's argument.** The
+      data-flow statement is deliberately identical; everything else is divided. The policy carries
+      the scope argument for a teacher and the FERPA document points at it in one line; the FERPA
+      document carries the district-review argument, the network-tab demonstration and the host's
+      request logs, and the policy does not mention them.
+- [x] **Acceptance 6 — readable by a principal, not only by a developer.** **The owner read both on
+      2026-08-21 and passed them.** It was left unticked on purpose and it was never a 👤 line: both
+      were written for that reader — sentence case, no jargon, one code string in the whole policy
+      and it is quoted from Google's own consent screen — but whether a principal can read them is a
+      judgment about a reader the implementer is not, and no run in this repository settles it. It
+      wanted one pass of the owner's eyes and it has had it.
+- [x] 👤 **Acceptance 7 — the contact on a public page.** **Answered 2026-08-21: a dedicated
+      mailbox on the project's own name, and deliberately not the personal Gmail** the Cloud project
+      and the domain verification sit on. The policy shipped with **`PLANBOOK-CONTACT-TBD`** in its
+      Contact section — one token, one occurrence, so a grep returned one line and one edit finished
+      it, which is exactly how it went. `docs/FERPA.md` still carries no second copy: it points at
+      the policy's contact, so there is one address to change. `verify-deploy.mjs` fails on a
+      deployment carrying the token, which is now a regression guard rather than a countdown.
+      **The address is a `.block-link` mailto rather than the plain `<strong>` the token wore** —
+      an inline mailto would have been a tappable control under the 44px floor, and `privacy.html`'s
+      own comment draws that distinction between a link on its own line and a link inside a
+      sentence. The reasoning for choosing a separate mailbox is at the point of use, in that file's
+      header comment.
+
+**`verify-shell.mjs` — 1,093 checks, seven of them new.** `1093 checks · 1093 passed · 0 failed ·
+0 skipped`, 30,753 lines, 28.1 lines per check, 389s, exit 0, measured on the delivered tree. The
+seven are one section at the foot of the file. **The instrument is the harness's own static server,
+not the page:** both navigations render a document, and from inside the browser one served out of
+Cache Storage and one fetched over the network are the same bytes and the same DOM — so the server
+records every path it is asked for, and *"the policy went to the network"* and *"the app did not"*
+are two readings of that list. Every navigation carries a unique query string, because the harness
+has already loaded `/index.html` once and this server sends no cache headers; without it the reading
+could be saying "Cache Storage" about the browser's own memory cache. One clause is static, in Node:
+`privacy.html` is on disk and **is not in `SHELL`**, which is the trap-2 ruling as a grep, and it
+sits beside the driven half because the two are one claim.
+
+*Two mutations, both reverted, and both on the same tree the green run was measured on:*
+
+| Mutation | Result |
+|---|---|
+| the navigate branch as it was before this work order — every navigation answered out of the cache, which is the build WO-8.12 replaces | **2 red** of 1,093, and the detail line is the defect in the teacher's own words: at the policy URL, `title = "Planbook"`, `h1 = "Planbook"`, *the app's #homeView present in that document = true*, `sections = 0`, and **0 requests for `/privacy.html`** reached the server. The other five stay green, including both readings of the app's own navigation — which is the point: the app is perfect and the policy is unreachable |
+| the navigate branch deleted outright — the fix that overshoots, answering no navigation at all | **1 red** of 1,093, and it is a **different** check: `1 request(s) for /index.html` during the app's own navigation, which is the offline launch gone. Both policy readings stay green, and so does *“the app’s own navigation still lands on the app”* — online, with nothing intercepting, everything works. That is why the server-side reading is in the block at all: a section that could only see the first mutation would have called this one a fix |
+
+*What the desk cannot pay off here.* The harness drives a **page**, not an installed app: it can
+prove the worker lets the policy through, and it cannot prove anything about a home-screen icon, a
+force-quit, or iOS resuming a suspended app with no navigation at all (§ WO-8.11 above has that
+scar). And **no run in this repository can see the deployment** — `verify-deploy.mjs` can, and it is
+the tool Acceptance line 1 names, but it has to be run after the push.
+
+### the About modal's two links — owner-directed, 2026-08-21, outside a work order
+
+**Not a WO-8.12 deliverable and not a defect in one.** That work order asked for a policy *at the
+origin*, which is what a Google reviewer handed a URL needs, and it got one. The gap it left is a
+different reader: **an installed PWA has no address bar**, so both published documents existed at
+the origin and were reachable from inside the app by nothing at all. The owner found it while
+setting up to take the Acceptance 2 reading, which is the honest order of events — the check could
+not be performed the way a teacher would perform it, because a teacher has no way in.
+
+**What landed.** `index.html` gains a **Privacy and student data** section in the About modal with
+two rows: the policy, and the administrators' guide. `src/shell.css` gains `.modal-body .doc-link`
+and its entry in the `(pointer: coarse)` block. `sw.js` bumps `CACHE` `v91`→`v92`→**`v93`** — both
+edited files are in `SHELL`, and without the bump no device sees either.
+
+**These are the first two `<a>` tags in `index.html`.** Every control in that file was a `<button>`
+before this, which is why `src/shell.css` had no rule for `a` at all and why these take a class
+rather than a bare element selector — a bare `a { }` would be a rule about links this app does not
+otherwise have. The grammar is lifted from `privacy.html`'s own `.block-link` rather than
+re-derived, per `CLAUDE.md`.
+
+**`target="_blank"` is load-bearing here and not habit.** iOS runs an installed PWA in a standalone
+window with no chrome and no back button, so a same-window navigation to a page the app cannot
+navigate back from strands the teacher in a legal document with the app switcher as the only way
+out. Opening in the browser leaves the app running behind it. **Confirmed on hardware 2026-08-21**
+as part of the Acceptance 2 reading. `privacy.html` still has no link home, which is a deliberate
+non-decision rather than a ruling: if a later reading finds a standalone window swallowing one of
+these anyway, the fix is a way back on the policy page, not dropping the target.
+
+- [x] 👤 **The policy row opens the policy from the installed app.** Green on the iPad, 2026-08-21,
+      after a force-quit. This is the same reading as Acceptance 2 above and is recorded there.
+- [x] 👤 **The administrators' guide row was found BROKEN, and the cause was not the link.**
+      The owner read it on 2026-08-21 and got a 404. `github.com/wildbil2me/planbook` answers 200
+      anonymously and the org, repo and branch in the href are all correct — **`docs/FERPA.md` was
+      staged and never committed**, so nothing from WO-8.12 was on GitHub yet. `privacy.html`
+      404'd there too, and the FERPA link *inside the policy* (`privacy.html:308`) was broken for
+      the identical reason. One push clears all three. **The scar worth keeping: a link to your own
+      repository is not testable until the commit carrying its target is pushed, and the failure
+      looks exactly like a wrong URL.**
+- [ ] 👤 **Re-read the guide row after the push.** Owed to the same deploy Acceptance 1 is.
+
+*Why GitHub rather than `./docs/FERPA.md` at our own origin, checked rather than assumed:* the live
+origin serves a `.md` as `text/markdown; charset=utf-8` — measured against
+`https://planbook.hwgteach.com/docs/data-model.md` on 2026-08-21 — which most browsers download
+rather than render. Pointing the row at the origin would trade a 404 for a file download on a
+principal's iPad. GitHub renders it, and it is the same target `privacy.html` already uses, so the
+two agree.
+
+*(Measured the same day and worth having written down: `https://planbook.hwgteach.com/privacy`
+answered **200, `text/html`, 204,614 bytes** with no policy deployed — the app shell. That is the
+observation `verify-deploy.mjs` was built around, confirmed independently with `curl`. **A status
+code cannot see a missing page on this host.**)*
+
+---
+
 ---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the

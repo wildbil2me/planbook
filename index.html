@@ -1612,6 +1612,46 @@
         button in the header, because nothing that stores a student's name ships before the way to
         get it back.
       </p>
+      <!-- THE APP'S FIRST TWO LINKS, and the reason they exist: WO-8.12 published `privacy.html`
+           and `docs/FERPA.md` as documents AT THE ORIGIN with nothing in the app pointing at
+           either, which is fine for the Google reviewer who is handed a URL and useless for a
+           teacher. An installed PWA has no address bar. Without these two rows neither document
+           is reachable from inside the app at all, whatever the deploy says.
+
+           THIS MODAL, because the claim they expand on is already made four paragraphs up —
+           "Everything stays on this device. There is no account and no server." A policy is that
+           sentence's footnote, and a footnote belongs beside the sentence rather than in a
+           settings screen this app does not have.
+
+           BOTH OPEN OUT OF THE APP, and target=_blank here is load-bearing rather than habit.
+           iOS runs an installed PWA in a standalone window with NO CHROME AND NO BACK BUTTON, so
+           a same-window navigation to a page the app cannot navigate back from strands the
+           teacher in a legal document with the app switcher as the only way out. Opening in the
+           browser leaves the app running where it was. If a later reading on hardware finds a
+           standalone window swallowing one of these anyway, the fix is a way back ON THE POLICY
+           PAGE, not dropping the target — that page has no link home today, which is a
+           deliberate non-decision and not a ruling.
+
+           `./privacy.html` AND NOT `./privacy`, though the deployed URL is the second one: Pages
+           strips the extension with a 308 and answers this correctly, while `tools/serve-https.mjs`
+           resolves a path to a file or 404s and has no extensionless routing. The form with the
+           extension is the one that works against BOTH hosts, which is why `verify-shell.mjs`
+           drives it and `verify-deploy.mjs` reads the other.
+
+           THE FERPA ROW POINTS AT GITHUB rather than at `./docs/FERPA.md` — the same target
+           `privacy.html` already uses for it, so the two agree. A `.md` served off this origin is
+           a file some browsers download rather than a page they render, and GitHub renders it.
+           It 404s until the commit carrying that file is pushed: PUSH THE COMMIT AND THE DEPLOY
+           TOGETHER. -->
+      <div class="modal-section-label">Privacy and student data</div>
+      <p>
+        The policy is the whole of what leaves this device, and when. The administrator's guide is
+        the one to hand a principal or a district IT director.
+      </p>
+      <a class="doc-link" href="./privacy.html" target="_blank" rel="noopener">Privacy policy →</a>
+      <a class="doc-link" href="https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md"
+         target="_blank" rel="noopener">Planbook and student-data privacy — the guide for administrators →</a>
+
       <!-- WHICH COPY OF PLANBOOK THIS DEVICE IS ACTUALLY RUNNING (WO-8.10), and it is EMPTY HERE ON
            PURPOSE: src/shell.js writes it from what caches.keys() answers, every time this modal
            opens, and never from a string. A version typed into this file is a claim rather than

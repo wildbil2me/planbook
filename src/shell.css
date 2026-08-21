@@ -617,6 +617,23 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    top margin is added. */
 .modal-actions { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 4px; }
 
+/* ── ABOUT: THE WAY OUT TO THE TWO PUBLISHED DOCUMENTS ── */
+/* THE FIRST ANCHORS THIS APP HAS EVER HAD. Before these, `index.html` contained zero <a> tags —
+   every control in it is a <button> — which is why this stylesheet has no rule for `a` at all and
+   why these take a class instead of a bare element selector. A bare `a { }` here would be a rule
+   about links this app does not otherwise have, and the next person to add an inline one would
+   inherit a block link's padding without asking for it.
+
+   THE GRAMMAR IS privacy.html's `.block-link`, LIFTED AND NOT RE-DERIVED (CLAUDE.md: copy the
+   design with the function). Same #5b6fcc, same 600 weight, same 8px vertical padding, and the
+   underline left ON — that page keeps it, so this one keeps it. The 44px floor in the coarse
+   block below comes from the same distinction written out over there: a link standing on its own
+   line is a thing you tap and takes the touch pass; a link inside a sentence is text and does not.
+   There are no inline links in this app yet to apply the second half to. */
+.modal-body .doc-link {
+  display: block; color: #5b6fcc; font-size: 13px; font-weight: 600; padding: 8px 0;
+}
+
 /* ── ABOUT: WHICH BUILD THIS DEVICE IS RUNNING ── */
 /* The last line of #aboutModal's "This build" section, written by src/shell.js at open time.
    Qualified with `.modal-body` because it is a <p> in there and `.modal-body p` is more specific
@@ -1436,6 +1453,9 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .install-banner { font-size: 13.5px; }
   .install-banner-dismiss { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .hdr-year-btn { padding: 10px 14px; font-size: 14px; min-height: 44px; }
+  /* privacy.html gives its `.block-link` exactly this at (pointer: coarse), for the reason
+     written there: a link on its own line is a control, and controls take the floor. */
+  .modal-body .doc-link { min-height: 44px; display: flex; align-items: center; }
   .year-row { padding: 12px 14px; font-size: 14px; min-height: 44px; }
   .year-row-note { font-size: 12px; }
   /* The height belongs to the <input>, not to a wrapper around it — the WO-1.2 `.search-box`
