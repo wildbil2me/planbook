@@ -32,8 +32,12 @@
        the manifest here would offer to install a legal document to the home screen.
 
        THE HOST BROKE THAT ONCE, ON THE FIRST DEPLOY THAT CARRIED A REAL ADDRESS — 2026-08-21, and
-       the `<!--email_off-->` wrapper in the Contact section is the repair. Cloudflare's Scrape
-       Shield has **Email Address Obfuscation** on for this zone, which rewrites any address it
+       the `email_off` comment pair around the Contact section's link is the repair. (Its delimiters
+       are deliberately NOT spelled out here: this is itself an HTML comment, and an HTML comment
+       ends at the FIRST closing marker in it regardless of what the author meant. Writing the pair
+       out in full on this line is what broke this page once — see the note at the foot of this
+       block.) Cloudflare's Scrape Shield has **Email Address Obfuscation** on for this zone,
+       which rewrites any address it
        finds in the HTML: the `mailto:` became `/cdn-cgi/l/email-protection#<hex>`, the visible
        address became `<span class="__cf_email__">[email&nbsp;protected]</span>`, and Cloudflare
        INJECTED `email-decode.min.js` into the page to undo its own rewrite in the browser. So the
@@ -83,6 +87,24 @@
   app cannot keep, and no "we do not sell your data", which is a sentence about a vendor that
   receives data and reads as an admission that one does. The architecture is genuinely strong, and
   an unverifiable sentence beside a true one invites doubt about the true one.
+
+  THIS COMMENT BLOCK ESCAPED ONTO THE PAGE ONCE, 2026-08-21, AND IT IS THE WORST CLASS OF BUG THIS
+  FILE CAN HAVE. The note above about the `email_off` repair was written with the comment pair
+  spelled out in full, on what is now line 34. **An HTML comment ends at the first closing marker
+  inside it, whatever the author meant** — so this block terminated 55 lines early and everything
+  after it, down to the real terminator, rendered as visible text at the top of the published
+  privacy policy: internal notes, work-order numbers, `plans/` paths, and the reasoning about which
+  of the owner's accounts holds what. On the page a principal reads before trusting this app with
+  student data, and the page Google fetches during OAuth verification.
+  **NOTHING CAUGHT IT.** `verify-deploy.mjs` was green at 17/17 through the whole episode, because
+  every check it had asks whether something is PRESENT — the title, the three claims, the contact,
+  no placeholder token — and leaked comment text adds to a page without removing anything. The
+  owner saw it in a browser, which is the only thing that did. `verify-shell.mjs` § "the policy URL
+  is not the app" now carries a static clause that fails if this file's visible text contains any
+  marker that belongs only in a comment, so the next one is caught at the desk.
+  **The rule, and it is general rather than about this line:** do not write `<!` `--` or `--` `>` as
+  literal text anywhere inside an HTML comment. Name the thing without its delimiters, the way the
+  note on line 34 now does.
 
   `docs/FERPA.md` is this document's twin, for a different reader. They carry the SAME data-flow
   statement on purpose; nothing else is duplicated between them, and neither restates the other's

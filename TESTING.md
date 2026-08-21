@@ -8145,6 +8145,46 @@ answered **200, `text/html`, 204,614 bytes** with no policy deployed — the app
 observation `verify-deploy.mjs` was built around, confirmed independently with `curl`. **A status
 code cannot see a missing page on this host.**)*
 
+### the header comment that escaped onto the published policy — 2026-08-21
+
+**The worst defect of the sitting, and every automated check was green while it was live.** The note
+recording the Cloudflare repair was written into `privacy.html`'s header comment with the comment
+pair spelled out in full. **An HTML comment ends at the first closing marker inside it, whatever the
+author meant** — so the block terminated 55 lines early and everything after it rendered as visible
+text at the top of the deployed privacy policy: work-order numbers, `plans/` paths, `.claude/`
+paths, and the reasoning about which of the owner's accounts holds the Cloud project. On the page a
+principal reads before trusting this app with student data, and the page Google fetches during OAuth
+verification. **6,236 characters of it** — the policy's visible text measures 16,790 characters
+leaking against 10,554 clean.
+
+**Why nothing caught it, and it generalises past this file.** Every policy check written up to that
+point asks whether something is **present**: the `<title>`, the three claims, a contact, the absence
+of a placeholder token. **Leaked comment text adds to a page without removing anything**, so all of
+them stayed true. `verify-deploy.mjs` read 17/17 against the live origin while the defect was
+deployed. The owner found it by opening the page in a browser, which is the only instrument that
+was ever going to.
+
+- [x] **`verify-shell.mjs` grew the first check in the file that asks what a page does NOT contain.**
+      § *"the policy URL is not the app"* gained an eighth call site: strip comments, `script` and
+      `style`, flatten the tags, and assert the remaining prose carries no marker that belongs only
+      inside a comment. The markers are repository vocabulary — `plans/`, `sw.js`, `CLAUDE.md`,
+      `.claude/`, the harness names — rather than the strings that actually leaked, because the next
+      escape will quote different lines and what they all share is talking about this project
+      instead of to a teacher. Run: `1094 checks · 1094 passed · 0 failed · 0 skipped`.
+- [x] **Proved by mutation, and the mutation corrected the comment written above it.** Reinstating
+      the exact defect turns **1 of 1,094 red**, naming six markers found in visible text. The draft
+      comment claimed the delimiter count would catch it *"one step earlier"* — **it does not**: the
+      offending line writes an opener and a closer both, so the counts stay **balanced at 6 and 6**
+      and the marker list is what goes red. The count stays in the check for the other shape, an
+      unterminated comment swallowing the document forward. **A sentence about what a check catches
+      is worth nothing until the defect has been planted under it.**
+- [x] **`wo-sweep.mjs` caught the stale call-site count by itself** — 1078 sites against 1077
+      recorded — which is that check working exactly as written.
+
+*The rule this leaves behind, in `privacy.html`'s header where someone would go to break it again:*
+**never write the comment delimiters as literal text inside an HTML comment.** Name the thing
+without them.
+
 ---
 
 ---

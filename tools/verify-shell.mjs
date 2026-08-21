@@ -30622,6 +30622,48 @@ console.log('\n--- the policy URL is not the app (WO-8.12) ---');
     'privacy.html on disk = ' + policyOnDisk + ', SHELL parsed to ' + shellNow.length + ' entr(ies), '
       + 'matching privacy.html = ' + JSON.stringify(shellNow.filter(p => /privacy\.html$/.test(p))));
 
+  /* WHAT A READER ACTUALLY SEES AT THE TOP OF THE POLICY, and this check exists because on
+     2026-08-21 that was fifty-five lines of this repository's internal notes.
+     A literal closing marker written inside privacy.html's header comment ended that comment
+     early — an HTML comment closes at the FIRST such marker regardless of what the author meant —
+     so work-order numbers, `plans/` paths and the reasoning about which of the owner's accounts
+     holds what rendered as visible text on the page a principal reads before trusting this app
+     with student data, and the page Google fetches during OAuth verification.
+     NOTHING IN EITHER HARNESS CAUGHT IT, and the reason generalises: every policy check written
+     until then asks whether something is PRESENT — the title, the three claims, the contact, the
+     absence of a placeholder token. Leaked comment text ADDS to a page without removing anything,
+     so `verify-deploy.mjs` stayed green at 17/17 for the whole episode and the only thing that
+     found it was the owner opening the page in a browser.
+     So this asks the opposite question. It strips comments, script and style, flattens the tags,
+     and asserts the remaining prose carries no marker that belongs only inside a comment. The
+     markers are deliberately repository vocabulary rather than a list of the strings that leaked:
+     the next escape will quote different lines, and what every one of them has in common is that
+     it talks about this project instead of to a teacher.
+     THE DELIMITER COUNT IS THE SECOND CLAUSE AND IT WOULD NOT HAVE CAUGHT THIS ONE — proved by
+     mutation rather than assumed, which is how the sentence that used to sit here got corrected.
+     Reinstating the exact defect leaves the counts BALANCED at 6 and 6, because the line that
+     broke the page writes an opener and a closer both. The markers are what go red. The count
+     stays because it catches the other shape — an unterminated comment swallowing the document
+     forward — and because a balance that silently drifts is worth knowing about either way. */
+  const policySrc = policyOnDisk ? await fs.readFile(path.join(ROOT, 'privacy.html'), 'utf8') : '';
+  const opens = (policySrc.match(/<!--/g) || []).length;
+  const closes = (policySrc.match(/-->/g) || []).length;
+  const visible = policySrc
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(script|style)[\s\S]*?<\/>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ');
+  const LEAK_MARKERS = ['plans/', 'verify-deploy', 'verify-shell', 'wo-sweep', 'sw.js', 'SHELL',
+    'CLAUDE.md', 'TESTING.md', '.claude/', 'WO-8.12', 'ROADMAP'];
+  const leaked = LEAK_MARKERS.filter((m) => visible.includes(m));
+  check('the policy’s VISIBLE text is prose for a teacher and carries no comment that escaped '
+    + 'onto the page — delimiters balanced, and no repository vocabulary outside a comment '
+    + '(WO-8.12; this file’s header comment leaked 55 lines onto the deployed page once)',
+    policyOnDisk && opens === closes && !leaked.length,
+    'privacy.html on disk = ' + policyOnDisk + ', <!-- x' + opens + ' vs --> x' + closes
+      + ', visible text ' + visible.trim().length + ' chars, markers found in it = '
+      + JSON.stringify(leaked));
+
   const controller = await evalJs("(function(){ var c = navigator.serviceWorker.controller;"
     + " return c ? c.scriptURL : null; })()");
   /* Without this the two readings below prove nothing: an uncontrolled page fetches everything

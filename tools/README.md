@@ -1021,7 +1021,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1077 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1078 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2128,9 +2128,20 @@ that section by name.
 
 **WO-8.12 moved it from 1070 to 1077**: seven call sites in one new section at the foot of the file
 — § *"the policy URL is not the app"* — none of them inside a loop and none a failure arm, so the
-section contributes seven executed results and **the run prints 1093**, measured on the delivered
-tree: `1093 checks · 1093 passed · 0 failed · 0 skipped`, 30,753 lines, 28.1 lines per check, 389s,
-exit 0. **The gap between sites and results stays at 16.**
+section contributes seven executed results and the run printed 1093 on the delivered tree:
+`1093 checks · 1093 passed · 0 failed · 0 skipped`, 30,753 lines, 28.1 lines per check, 389s, exit 0.
+**The gap between sites and results stays at 16.**
+
+**An eighth call site joined that section later the same day and the run now prints 1094** —
+*"the policy’s VISIBLE text is prose for a teacher"*, and it is the only check in this file that
+asks what a page does NOT contain. It exists because `privacy.html`’s header comment escaped onto
+the deployed policy: a literal closing marker written inside it ended the comment 55 lines early,
+and 6,236 characters of work-order numbers and `plans/` paths rendered at the top of a public legal
+page. **Every policy check written before it asks whether something is PRESENT**, and leaked comment
+text adds without removing, so `verify-deploy.mjs` sat at 17/17 throughout and the owner found it in
+a browser. Proved by mutation, and the mutation corrected the comment above it: reinstating the
+defect leaves the delimiter counts BALANCED at 6 and 6 — the bad line writes an opener and a closer
+both — so it is the marker list that goes red and not the count.
 
 **It is the first block in this file that asserts anything about `fetch` interception**, so the
 sentence at the head of this section — *"it drives a page, not an installed app, and it has never
