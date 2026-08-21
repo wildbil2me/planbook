@@ -8109,8 +8109,11 @@ as part of the Acceptance 2 reading. `privacy.html` still has no link home, whic
 non-decision rather than a ruling: if a later reading finds a standalone window swallowing one of
 these anyway, the fix is a way back on the policy page, not dropping the target.
 
-- [ ] 👤 **A message sent to the published address reaches a human.** **Owed, and it cannot be
-      owed to anything else.** `verify-deploy.mjs` proves the address is on the page and
+- [ ] 👤 **A message sent to the published address reaches a human.** **Half paid: the owner
+      configured the Email Routing rule on 2026-08-21.** The remaining half is one sent message,
+      and it is deliberately not being ticked on the configuration — a routing rule existing and a
+      message arriving are two facts, and this project does not tick a 👤 line on the one that
+      was easier to check. **Owed, and it cannot be owed to anything else.** `verify-deploy.mjs` proves the address is on the page and
       un-rewritten by the host; **no run in this repository can prove a message arrives**, because
       the address is a Cloudflare Email Routing forward and the rule carrying it lives in a
       dashboard and in no file here — the zone having MX is not the same fact as `privacy@` having
