@@ -25,11 +25,14 @@ Entered by the teacher, for the teacher's own classes:
 - Assignments, scores, and teacher-marked flags: late, missing, excused
 - Guardian, counselor and case-manager names, email addresses and phone numbers, where the teacher
   enters them
-- A record of the outreach the teacher has sent — the document keeps a place for it, and the
-  feature that writes to it is not in the released app yet
+- What the teacher has written down about a student: short behavior entries and notes to herself,
+  each one a few words, a moment and whatever detail she chose to add. They are hers, they are never
+  edited or deleted once written, and nothing in the app sends one anywhere
+- A record of the outreach the teacher has sent — the document keeps a place for it in the same
+  collection, and the feature that writes to it is not in the released app yet
 - **Accommodation and plan information: IEP and 504 status, accommodations, plan review dates,
-  medical needs, and behavior plans.** This is the most sensitive data in the app and it has its
-  own section below.
+  medical needs, behavior plans, and what a plan says about attendance.** This is the most
+  sensitive data in the app and it has its own section below.
 
 No date of birth, no government identifier, and no student ID beyond whatever a teacher chooses to
 type into a name or a note field. No photographs. No location data. No device identifiers.
@@ -132,8 +135,8 @@ a document:
 ## Backups, and what is in one
 
 **A Planbook backup file contains IEP and 504 plan details, accommodations, case managers, plan
-review dates, medical needs and behavior plans, in plain readable text**, along with the roster,
-attendance, grades and contacts. It is not redacted and it is not encrypted.
+review dates, medical needs, behavior plans and what a plan says about attendance, in plain
+readable text**, along with the roster, attendance, grades and contacts. It is not redacted and it is not encrypted.
 
 That is the correct posture rather than an oversight, and it is the same posture a paper folder
 has: a backup that filtered out the support details would not bring the teacher's gradebook back,
@@ -144,8 +147,9 @@ information.
 Two things make that a decision rather than a trap:
 
 - **The app says so on the screen where a backup is saved**, in as many words, naming
-  accommodations, IEP and 504 plans, case managers, review dates, medical needs and behavior plans
-  — and saying the file is plain text that anyone who opens it can read.
+  accommodations, IEP and 504 plans, case managers, review dates, medical needs, behavior plans and
+  what a plan says about attendance — and saying the file is plain text that anyone who opens it can
+  read.
 - **Backups are the app's answer to data loss, and they are nagged for.** iOS deletes the stored
   data of a website that has not been used for about seven days unless the app has been installed
   to the home screen, so the downloadable file is not a nicety; it is what stands between a holiday

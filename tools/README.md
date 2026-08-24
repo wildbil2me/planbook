@@ -1021,7 +1021,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1100 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1126 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2195,6 +2195,36 @@ recorded number by nothing at all. *(This paragraph read "twenty-three call site
 twenty-third is the pre-existing check, split in place" until 2026-08-24, and both halves of that
 were wrong: the start was 1078 rather than 1077, and a re-cut in place is not a site. The arithmetic
 is the check on the prose — 1078 + 22 = 1100, and a twenty-third addition would have made it 1101.)*
+**WO-4.4 moved it from 1100 to 1126**: twenty-six call sites, all of them in one new section at the
+foot of the file — § *"behaviour & note logging"* — and the run prints 1141 on the delivered tree:
+`1141 checks · 1141 passed · 0 failed · 0 skipped`, 32,219 lines, 28.2 lines per check, 390s, exit 0,
+measured 2026-08-24. Two of the twenty-six sit behind fixture guards that report `ok:false` through
+the same call site rather than skipping it, so all twenty-six fire on a green run.
+
+**The gap between sites and results moved 16 → 15, and the missing result is not in this section.**
+1116 + 26 would print 1142; the tree prints 1141, so one result that fired on WO-7.1's tree does not
+fire on this one, somewhere in the pre-existing file. **It is recorded here unexplained rather than
+given a reason nobody measured** — the likeliest suspect is a pass that was conditional on the
+behaviour rule still being inert, which is the one thing about the old tree this work order changed
+out from under the rest of the file. Worth one grep the next time this file is opened; the number
+above is the run's own either way.
+
+**Two shipped checks were re-cut in place and neither moves the recorded count** — one call site
+before and one after, the same posture WO-7.1's coarse-pointer check took. WO-4.2's *"the behavior
+rule is inert until WO-4.4 and the screen says so in words"* now asserts that `inertRules()` is empty
+and that the notice went **because the rule landed** rather than because a screen stopped drawing it —
+deleting it would have retired the only reading that separates those two builds. WO-2.26's *"last in
+the right-hand column"* moved because the log card is under the hall-pass card now.
+
+*(**Four of this section's own checks were wrong when it was first written, and all four were caught
+by running it.** Three were the harness's own bugs: a `.log =` remover token that went red on the
+create-on-first-write guard CLAUDE.md mandates; a print check reading `textContent`, which cannot tell
+a CSS-hidden card from a drawn one and so contradicted the 0px height measured beside it; and a CSV
+check that stringified `studentCsv()`'s `{ name, text }` return, searching the fifteen characters of
+`[object Object]` for a subject and finding none — a clean negative against an empty haystack, caught
+only by the length floor that check carries for exactly that reason. **The fourth was a real defect in
+`src/log.js`** and is the one worth keeping: see the tie-break note at `entriesOfKind()`.)*
+
 That one is the entry worth reading, because it is the first time a modal in this
 app has held a control that comes and goes with a state, and the check's premise had been *every
 button inside an open overlay is on screen.* The About modal now draws **Connect** or **Disconnect**

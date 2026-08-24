@@ -32,16 +32,19 @@
   ── WHAT IS NOT HERE ──
 
   THE RULES THEMSELVES, all but two — UNTIL WO-4.2, WHICH IS WHERE THE NINE CONCERN RULES LANDED
-  (2026-08-20). WO-4.3 still owns four of the five praise rules, WO-4.4 the behavior log, WO-4.5
-  the cooldown. Two rules were registered at WO-4.1 — `grade-below` and `attendance-window` — as
+  (2026-08-20). WO-4.3 still owns four of the five praise rules and WO-4.5 the cooldown; WO-4.4 owned
+  the behavior log and delivered it on 2026-08-24, so the ninth concern rule counts something now. Two rules were registered at WO-4.1 — `grade-below` and `attendance-window` — as
   proofs of the contract above rather than as the feature: an engine with no rules in it cannot
   demonstrate both directions from one pass, and one with a single rule cannot demonstrate a
   student on both lists. Both survived WO-4.2 unaltered except for the `figure` every rule now
   carries; they are ordinary members of the registry and their work orders may still replace them.
 
-  THE BEHAVIOR RULE IS REGISTERED AND INERT, which is its own work order's acceptance line rather
-  than an omission — see `behaviorWindow` below, and inertRules(), which is how the screen says so
-  out loud instead of leaving a teacher to guess whether nobody qualified.
+  THE BEHAVIOR RULE STOPPED BEING INERT ON 2026-08-24 (WO-4.4), which is that work order's third
+  acceptance line and this paragraph's own prediction coming true. It was registered and returning
+  nothing while no screen wrote an entry for it to count; `inertRules()` is still here, still drives
+  the notice on the concern list, and now returns an EMPTY list — so the sentence that told a teacher
+  the rule was not running took itself off the screen the day the log landed, rather than needing to
+  be found and deleted.
 
   AND THE LIST SCREEN IS NOT HERE. src/signals-view.js draws it, the same split
   src/signal-settings.js makes with the editor and for the same reason: this module owns the
@@ -77,11 +80,14 @@
 
   ── AND NOTHING HERE READS A SUPPORT, A PLAN OR A MEDICAL NEED ──
 
-  Not now and not in WO-4.2. A signal's explanation is drafted into mail that goes to a guardian
-  (docs/data-model.md § Outreach templates, `{{signals.list}}`), so a rule that read that half of
-  the roster would make disclosure a one-keystroke mistake — the same reason no merge field
-  resolves those paths. Grades, scores, marks, meetings and the outreach log are the whole of what
-  a rule may see.
+  Not now, not in WO-4.2, and not in WO-4.4 — which is the one that could have. That work order
+  added `supports.attendanceClause` and a prompt that reads it, and the prompt lives in
+  src/accommodation-prompt.js precisely so that it does not live here: a signal's explanation is
+  drafted into mail that goes to a guardian (docs/data-model.md § Outreach templates,
+  `{{signals.list}}`), so a rule that read that half of the roster would make disclosure a
+  one-keystroke mistake — the same reason no merge field resolves those paths. Grades, scores,
+  marks, meetings and the log are the whole of what a rule may see, and of the log a rule sees a
+  COUNT of one kind and never a word of what was written.
 */
 
 /* The grade half, and BOTH of these are reads of the same arithmetic rather than two of them
@@ -116,6 +122,11 @@ import { termIsDated } from './classes.js';
    is the copy that eventually disagrees about a late blank. The run-of-low-scores rule is the only
    place in this file that reads one cell at a time. */
 import { formatPercent, scoreMark } from './scores.js';
+/* WO-4.4's half of the behavior rule, and it is ONE FUNCTION returning ONE NUMBER — see the rule
+   itself for why the entries themselves never cross this import. src/log.js is a model with no DOM
+   in it and it imports nothing from here, so the arrow runs one way exactly as it does for
+   src/grade-engine.js above. */
+import { behaviorCountSince } from './log.js';
 import { formatWeight } from './categories.js';
 
 /* ────────────────────────────── the thresholds ──────────────────────────────
@@ -736,21 +747,41 @@ const tardyCount = {
   qualified" from "this one is not built". So the fact is declared instead, `inertRules()` hands it
   to the screen, and the list says in words that this rule is not running yet.
 
-  WHAT WO-4.4 DOES TO THIS. It writes measure(), it writes say(), and it deletes the `inert` line —
-  one rule, in one place, with the threshold keys already named above and already editable. The
-  `…Days` window is the right unit here and SIGNAL_SETTINGS says why at its own row: a behavior
-  entry is a thing the teacher wrote down at a moment, and "two of them inside a month" is a
-  statement about how close together they were rather than about how often the class met.
+  WHAT WO-4.4 DID TO THIS, 2026-08-24. It wrote measure(), left say() exactly as it stood, and
+  deleted the `inert` line — one rule, in one place, with the threshold keys already named above
+  and already editable, and inertRules() now returns an empty list so the notice on the concern
+  screen disappeared of its own accord rather than having to be found. The `…Days` window is the
+  right unit here and SIGNAL_SETTINGS says why at its own row: a behavior entry is a thing the
+  teacher wrote down at a moment, and "two of them inside a month" is a statement about how close
+  together they were rather than about how often the class met.
+
+  WHAT IT COUNTS, AND THE THREE THINGS IT DOES NOT SEE. src/log.js's behaviorCountSince() hands back
+  a NUMBER — not the entries — and that is this file's own contract rather than a nicety: a rule is
+  handed its own measured numbers and nothing else, so a rule holding the entries could put a
+  teacher's own words about a child into a sentence Phase 5 drafts into an email
+  (docs/data-model.md § Outreach templates). It counts entries of kind `behavior` only — a note to
+  self is a reminder rather than an incident, and counting one would make a teacher's memory a
+  concern signal. It never asks whether presentation mode is on: the mode decides what a SCREEN may
+  draw, and a rule that changed its arithmetic when a projector was plugged in would make the whole
+  list disagree with itself twice a day.
+
+  IT COUNTS ACROSS CLASSES BECAUSE THE RECORD DOES. A log entry carries a `studentId` and no
+  `classId` (docs/data-model.md), so a student in two of the teacher's five sections trips this rule
+  in both. That is the honest reading of a record about a child rather than about a period, and the
+  alternative — inferring a class from which roster the entry was written on — would be a join on
+  something the document does not store.
 */
 const behaviorWindow = {
   id: 'behavior-window',
   direction: 'concern',
   keys: ['behaviorCount', 'behaviorWindowDays'],
-  inert: 'the behavior log arrives with WO-4.4, and nothing writes an entry for this rule to count '
-    + 'yet. Nothing else on this list is affected.',
-  measure() { return null; },
-  /* Unreachable while `inert` stands, and written out rather than left off so that the rule is a
-     whole registry member and not a stub with holes in it. */
+  measure(ctx, studentId) {
+    const need = ctx.t.behaviorCount;
+    const days = ctx.t.behaviorWindowDays;
+    const entries = behaviorCountSince(ctx.doc, studentId, ctx.through, days);
+    if (!(entries >= need) || !entries) return null;
+    return { entries: entries, days: days, need: need };
+  },
   say(numbers, who) {
     return 'In ' + who.className + ', ' + who.name + ' has '
       + plural(numbers.entries, 'behavior note', 'behavior notes') + ' in the last '

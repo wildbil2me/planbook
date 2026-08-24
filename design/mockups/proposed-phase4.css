@@ -24,18 +24,30 @@
 
      § SIGNALS       →  src/signals-view.css  (WO-4.2 lifted 2026-08-20 · WO-4.3 · WO-4.5 pending)
      § SIGNAL CARD   →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
-     § LOG SHEET     →  src/shell.css         (WO-4.4 — not yet lifted)
-     § LOG RECORD    →  src/detail.css        (WO-4.4 — not yet lifted)
+     § LOG SHEET     →  src/shell.css         (WO-4.4 — lifted 2026-08-24)
+     § LOG RECORD    →  src/detail.css        (WO-4.4 — lifted 2026-08-24)
      § SHARED        →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
 
-   TWO OF THOSE TARGETS ALREADY EXIST, AND THE `not yet lifted` IS LOAD-BEARING. The log
-   sheet is a modal and this app styles its modals in `src/shell.css`; the log on the
-   student record is a card on a screen whose stylesheet shipped at WO-3.7. § 19 would
-   otherwise read "target exists" as "this section has landed" and stop checking the very
-   names that most need it — the new ones going into an old sheet. The token says
-   otherwise, and PROTOCOL.md rule 4 carries it. It came out of drawing this room: the
-   first two rounds happened to propose only new stylesheets, so nothing had ever tested
-   that half of the rule.
+   TWO OF THOSE TARGETS ALREADY EXISTED, AND THE `not yet lifted` TOKEN WAS LOAD-BEARING
+   UNTIL 2026-08-24. The log sheet is a modal and this app styles its modals in
+   `src/shell.css`; the log on the student record is a card on a screen whose stylesheet
+   shipped at WO-3.7. § 19 would otherwise have read "target exists" as "this section has
+   landed" and stopped checking the very names that most needed it — the new ones going
+   into an old sheet. The token said otherwise, and PROTOCOL.md rule 4 carries it. It came
+   out of drawing this room: the first two rounds happened to propose only new stylesheets,
+   so nothing had ever tested that half of the rule. **WO-4.4 dropped it in the same sitting
+   as the lift, which is the other half of that rule** — and the sweep proved the token was
+   doing its job on the way past: the run that carried the lifted CSS and the un-amended
+   banners went RED on fifteen class names, by name, rather than passing quietly.
+
+   WO-4.4 LIFTED BOTH SECTIONS WHOLE, on 2026-08-24, and there is one rename and one
+   addition to report (PROTOCOL.md § When the drawing lands). Every class below arrived
+   under the name it was drawn with. What the build ADDED is `.log-card`, in
+   `src/detail.css`, which is not here: the record card needed a name of its own so that
+   the gated `@media print` block could hide that one card and nothing else on the student
+   record — the log is the one thing on that screen that does not go home on paper, argued
+   at src/detail.js's own import. What the build DECLINED is nothing: all fifteen names are
+   in the app.
 
    WO-4.2 LANDED THREE OF THE FIVE SECTIONS ON 2026-08-20, into `src/signals-view.css`, and
    the banners above and below say so in the same sitting as the lift (PROTOCOL.md rule 4).
@@ -401,20 +413,21 @@
 .sig-card-act:disabled:hover { border-color: #e0e4ea; color: #1a1a2e; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § LOG SHEET — src/shell.css (WO-4.4 — not yet lifted)
+   § LOG SHEET — src/shell.css (WO-4.4 — lifted 2026-08-24)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /*
   TWO TAPS FROM A ROSTER TO A LOGGED ENTRY, which is WO-4.4's own measure and the reason
-  this cannot be a form. Tap one is the `＋` on the student's row; tap two is one of the
+  this cannot be a form. Tap one is the `✎` on the student's row; tap two is one of the
   quick entries. The free-text field underneath is the "optional detail" of that same line,
   and it is optional in the sense that leaving it alone still logs a complete entry.
 
-  THE QUICK ENTRIES ARE A FIXED LIST IN THIS DRAWING AND THAT IS A QUESTION, NOT A DESIGN.
-  They write the `subject` of the record docs/data-model.md already documents, so nothing
-  here needs a schema change — but a teacher whose six most common notes are not these six
-  will use none of them, and making them editable is a settings block, a work order, and a
-  decision about where a per-teacher list lives. behavior.html carries the amber note.
+  THE QUICK ENTRIES SHIP AS A FIXED LIST — the owner's ruling of 2026-08-20, and the
+  question this paragraph used to raise. They write the `subject` of the record
+  docs/data-model.md already documents, so nothing here needs a schema change, and a
+  per-teacher list later is a settings block and a picker rather than a migration. The rule
+  that keeps it that way and that WO-4.4 built to: **a chip writes a subject and never a
+  code** (src/log.js's QUICK_ENTRIES).
 
   These land in src/shell.css on lift, with the app's other modal internals — the same
   place `.event-form`, `.student-field` and `.dayoff-kinds` live. It is a modal, and this
@@ -457,7 +470,7 @@
 .log-door:hover { border-color: #5b6fcc; color: #5b6fcc; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § LOG RECORD — src/detail.css (WO-4.4 — not yet lifted)
+   § LOG RECORD — src/detail.css (WO-4.4 — lifted 2026-08-24)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /*

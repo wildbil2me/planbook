@@ -88,7 +88,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
-.toggle-btn, .support-dot, .hdr-mode-btn, .presentation-strip-btn {
+.toggle-btn, .support-dot, .hdr-mode-btn, .presentation-strip-btn,
+.log-door, .log-quick, .log-kind {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -1315,6 +1316,61 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .student-delete-line { font-size: 12px; line-height: 1.5; color: #c0392b; }
 
+/* ── THE LOG SHEET (WO-4.4) ── */
+/* Lifted from design/mockups/proposed-phase4.css § LOG SHEET, which was written to be carried here
+   almost as-is. It lands in this sheet rather than in one of its own because it is a modal, and this
+   app does not give a modal its own stylesheet — `.event-form`, `.student-field` and `.dayoff-kinds`
+   are all here for the same reason. The card these entries are READ on is src/detail.css's
+   § THE LOG (WO-4.4); the drawing splits at exactly that line.
+
+   Two doors and six chips, and nothing here restyles a shipped component: the sheet's subject field
+   is `.class-input`, its detail field is `.student-notes`, its refusal is `.roster-error` and its
+   two buttons are `.class-action-btn` — worn as shipped, exactly as the drawing wears them.
+
+   DELIBERATELY NOT AMBER AND NOT RED, and the reason is src/assignments.css's one screen over:
+   amber means "act on this" in this app and red means "this destroys something". Writing something
+   down about a student is neither an alarm nor a hazard — including when it is a conduct entry —
+   and the `.log-entry-kind.behavior` chip on the record card is the one place any of this carries a
+   colour at all. */
+
+/* The door on a roster row. Small, at the end of the row, and not the row's own tap. */
+.log-door {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-size: 15px; line-height: 1; color: #6b7a8d; cursor: pointer; transition: all 0.15s;
+}
+.log-door:hover { border-color: #5b6fcc; color: #5b6fcc; }
+
+/* Behavior and note are the record's two kinds (docs/data-model.md), and they are not the same act:
+   one is about conduct and one is a reminder to yourself. The strip says which is being written
+   BEFORE the quick entries are read, because a wrong kind cannot be corrected later — the log is
+   append-only, and a correction is a new entry. */
+.log-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.log-kind {
+  padding: 6px 12px; border-radius: 20px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 12px; font-weight: 700; color: #6b7a8d; cursor: pointer;
+}
+.log-kind.active { border-color: #5b6fcc; background: #eef2ff; color: #5b6fcc; }
+
+/* The six, two up. Tap the door, tap one of these, and the entry exists — which is WO-4.4's own
+   two-tap measure and the reason this is a grid of buttons instead of a form. */
+.log-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.log-quick {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 12px; border-radius: 8px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 12px; font-weight: 700; color: #1a1a2e;
+  text-align: left; cursor: pointer; transition: all 0.15s;
+}
+.log-quick:hover { border-color: #5b6fcc; color: #5b6fcc; }
+.log-quick-mark { flex: 0 0 auto; font-size: 15px; line-height: 1; }
+
+/* Said out loud, at the point of writing, because it is the one property of this record a teacher
+   can get wrong by assuming otherwise. Roll Call! made hall passes append-only after matching rows
+   by name + time proved fragile; same reasoning, same answer, and the UI owes her the sentence. */
+.log-append-note { margin-top: 8px; font-size: 11px; line-height: 1.55; color: #8a9bb0; }
+
 /* ── BACKUP & RESTORE ── */
 /* The contents of #backupModal and #restoreConfirmModal. Two things here are not decoration:
    the notice block, which is where the app says out loud that the file contains accommodation
@@ -1414,6 +1470,21 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    listing the control by class. */
 @media (pointer: coarse) {
   button { min-height: 44px; }
+  /* WO-4.4's three, at the floor. `.log-door` is a square target rather than a tall one because it
+     sits inside a row of `.class-action-btn`s, and 44 on both axes is what the drawing asks for; the
+     quick entries get 56 for the reason `.sig-row` does — a two-column grid of six is a grid a thumb
+     picks from without reading, and the extra twelve pixels are what makes that true. Nothing here
+     departs from 44: the one control in the app that does (the 28px month chip) is the owner's own
+     ruling at its own point of departure and is not a precedent a new control may cite. */
+  .log-door { width: 44px; height: 44px; font-size: 18px; }
+  .log-quick { min-height: 56px; }
+  .log-kind { min-height: 44px; display: inline-flex; align-items: center; }
+  /* The three containers and the two pieces of type that go with them. Named here for the reason
+     .panel-title-row and .accommodation-prompt-actions are: the gap between 44px targets is part of
+     the touch pass, and a 30px door growing to 44 inside a row of buttons needs the row to breathe. */
+  .log-kinds, .log-quick-grid { gap: 10px; }
+  .log-quick-mark { font-size: 17px; }
+  .log-append-note { font-size: 12px; }
   .header-top { min-height: 60px; gap: 8px; }
   .header-bottom { min-height: 52px; }
   /* WHERE WO-2.29's FOURTH CONTROL CAME FROM, and it is a measurement rather than a taste. This is

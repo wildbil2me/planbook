@@ -104,7 +104,14 @@ nag, and nothing noticed until a verifier read the line for another reason.
         "appliesTo": ["tests","quizzes"]  // empty = everything
       }],
       "medical": "",                     // allergy, seizure protocol, diabetes …
-      "behaviorPlan": ""
+      "behaviorPlan": "",
+      // What the plan says about ATTENDANCE, free text, added 2026-08-24 (WO-4.4). Absent in every
+      // document written before that build and read as empty, the same tolerance every field in
+      // this block already has — no migration and no schemaVersion bump, because it is nested
+      // inside `students[]` and parseBackup() validates the TOP-LEVEL keys of newYearDocument().
+      // See the shape decision under this sketch for why it is a field and not a 13th accommodation
+      // kind.
+      "attendanceClause": ""
     }
   }],
 
@@ -243,7 +250,27 @@ Seven shape decisions that matter:
   `exception`. Three distinct states — *met* · *dropped* · *not taken yet* — and the third is not
   the second. See [`../plans/rotating-schedule.md`](../plans/rotating-schedule.md).
 - **`log` is append-only.** Roll Call! made hall passes append-only after matching rows by
-  `name + time` proved fragile. Same reasoning, same answer.
+  `name + time` proved fragile. Same reasoning, same answer. **There is no correction mechanism and
+  that is a ruling rather than a gap** *(the owner, 2026-08-20, after a round trip; built at
+  WO-4.4)*: a correction is **an ordinary later entry that says so** — no `correctsId`, no
+  strikethrough, no delete, and no rule about which of two entries a reader should believe. The
+  ruling first arrived as *"you can just delete and re-enter"*, which would have reversed this line,
+  WO-4.4's Append-only deliverable and its acceptance line in one move; it was put back the same day
+  and settled the other way. **Nothing in the log is deletable.** `src/log.js` is the only writer and
+  the only thing it does to the document is `push`.
+- **Three kinds share `log[]`, and the `kind` filter is the whole of the firewall between them.**
+  `behavior` and `note` are written by WO-4.4's sheet off a roster row; `contact` is Phase 5's record
+  of outreach that actually left the building, which the cooldown reads and `{{behavior.recent}}`
+  renders into an email. A behavior note is one missing filter away from going home in a message, so
+  every reader in `src/log.js` names the kinds it wants and **there is no exported reader that hands
+  back the whole array**. The second half of that firewall is `audience`: an entry written by the
+  teacher for herself carries `audience: ""` — it went to nobody, which is the truth — rather than a
+  value the cooldown could count as outreach.
+- **A log entry carries no `classId`, and that is the shape rather than an omission.** It is a
+  record about a child, so "two behavior notes in the last 30 days" counts across every class she is
+  in, and the concern rule fires in both sections of a student the teacher has twice. Inferring a
+  class from whichever roster the entry was written on would be a join on something the document
+  does not store.
 - **Hall passes are two collections, and neither of them is `log`.** *(Added 2026-08-06, WO-2.8.)*
   `openPasses` is **state** — who is out of the room right now — and `passes` is **history**, one
   entry appended per pass that ended and never edited afterward. An open pass is in the document
@@ -407,6 +434,34 @@ directly rather than only discussing grades.
 
 `reviewDate` earns its place by feeding the calendar: an annual review or a triennial re-evaluation
 is a date teachers are expected to prepare for and routinely learn about a week out.
+
+### The attendance clause — the field WO-4.4 had to shape *(2026-08-24)*
+
+`supports.attendanceClause` is free text holding what the plan says about a student's **attendance**:
+excused absences, a late arrival the plan allows, a re-entry routine. It is the second half of rule 3
+above — *"marking a student absent for the fourth time shows their plan has an attendance clause"* —
+which WO-3.8 built the assignment-editor half of and could not build this half of, because there was
+no field to read.
+
+**It is a field beside `medical` and `behaviorPlan`, and not a thirteenth accommodation kind.** That
+was the alternative and it is the wrong shape twice over. An accommodation row is scoped by
+`appliesTo`, which names **kinds of work** — tests, quizzes, homework — and attendance is not one, so
+the field would be meaningless on the row; worse, its documented default (*empty means everything*)
+would make every such row fire the assignment editor's accommodation prompt on every assignment in
+the year. Stopping that would take a rule about one kind, living in a second file, asked by a prompt
+that has nothing to do with attendance. The plainer reading is the true one: an attendance clause is
+a clause of a plan, like a behavior plan, not an adjustment to a piece of work.
+
+The name is `attendanceClause` rather than `attendance` because this app already has attendance —
+a ledger, a dozen readers — and `supports.attendance` in a grep for that word is a name that will be
+misread; and rather than `attendancePlan`, which reads as a separate document that does not exist.
+
+**Where it surfaces, and nowhere else.** Marking a student absent on the registry when that trips the
+`absence-window` signal rule — *N absences within the last N meetings*, the teacher's own numbers,
+**with no new threshold key** (the owner, 2026-08-20) — raises the prompt, and the clause itself is
+behind one deliberate tap. Rules 1, 2 and 4 above cover it unchanged: absent from the DOM in
+presentation mode, in no merge field, on no printout or export, and in the backup, which
+[`FERPA.md`](FERPA.md) and [`../privacy.html`](../privacy.html) name it in.
 
 ## Letter grades
 

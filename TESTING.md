@@ -7157,6 +7157,114 @@ diff for the entire work order was comment-only — not one check had been writt
 It was left red until the coverage existed. See* `plans/dispatch-retro.md` *§ "The comment that ran
 ahead of its code" and* `.claude/dispatch/WO-4.2-status.md`*.*
 
+### WO-4.4 — Behavior & note logging
+
+**What this adds.** A ✎ on every roster row, a sheet behind it, and a card on the student record.
+Two taps from a class roster to a logged entry: the kind strip picks *Behavior* or *Note to self*,
+one of six fixed quick entries writes the record and closes the sheet, and the two fields under them
+are the optional detail. The entries live in `log[]` per `docs/data-model.md` — `{ id, studentId, at,
+kind, audience, subject, body }` and no eighth field — and **nothing in the app can delete one**.
+
+**The ninth concern rule stopped being inert.** `src/signals.js`'s `behavior-window` counts entries
+of kind `behavior` inside the threshold's own window of days, and `inertRules()` returns an empty
+list — so the notice WO-4.2 drew on the concern list took itself off the screen rather than needing
+to be found and deleted.
+
+**Behavior entries and notes part company under a projector.** A behavior entry is **absent from the
+page** in presentation mode — not redacted, not counted, no "2 hidden" line — and a note to self
+stays, because a teacher's own working memory is not the app's to hide from her. The rule lives in
+`src/supports.js`'s `logKindVisible()`; the card asks the model, the model asks that function, and
+no screen tests `presentationMode()` for itself.
+
+**And `supports` gained its attendance clause**, which is the field this work order had to shape:
+`supports.attendanceClause`, free text beside `medical` and `behaviorPlan`. Marking a student absent
+once too often raises WO-3.8's `.accommodation-prompt` on the registry, with the clause behind one
+deliberate tap — on **the attendance rule's own N**, read through `thresholdsOf()`, with no new
+threshold key.
+
+- [x] An entry is logged in under five seconds from the roster.
+      *(**Half closed and half owed.** The TAPS are measured: the harness opens the roster, taps the
+      ✎, taps *Phone out*, and reads the finished record off the document — two taps, one complete
+      entry, sheet closed. **The five seconds are a stopwatch and a thumb and are 👤 below**; a
+      headless click is not a teacher reaching past a lock screen with a class walking in.)*
+- [x] Entries are never mutated or deleted — verify by inspecting the document after a "correction".
+      *(Measured exactly as the line asks. A wrong entry is read field by field, a correction is
+      written through the sheet, and the earlier entry is compared byte for byte afterwards: same id,
+      same subject, same stamp, nothing added and nothing gone. **Plus a structural reading** —
+      `src/log.js` does one `push` and holds no `splice`, `pop`, `shift`, `delete`, no assignment into
+      `log[...]`, and no reassignment of `log` **other than the create-on-first-write guard**
+      `if (!Array.isArray(d.log)) d.log = [];`, which is CLAUDE.md's own rule and can only fire
+      where there is no array to take an entry away from. That exemption is named in the check
+      rather than assumed by it — the first cut of the token list caught the guard, called correct
+      code a remover, and had no token at all for the `log[...] =` it was written for.)*
+- [x] Behavior entries feed WO-4.2's behavior rule and the count matches.
+      *(Measured against a fixture built so that three different mistakes give three different wrong
+      numbers: a forty-day-old entry outside the window, a note rather than an incident, and four
+      that genuinely count. The rule answers 4 out of 6 entries held, its sentence prints the same 4,
+      and the student holding one entry against a threshold of two is not on the list at all. The
+      count is also asserted **with presentation mode on**, because a rule whose arithmetic moved
+      when a projector was plugged in would make the list disagree with itself twice a day.)*
+- [x] Behavior notes are suppressed in presentation mode.
+      *(Measured as an ABSENCE from the whole rendered page rather than as a hidden element: the
+      behavior entries' subjects and bodies are searched for in `document.body.innerHTML` and are not
+      there, while the note's subject is; the model reports it handed over one entry of six; and no
+      count, "hidden", "suppressed" or ellipsis stands where they were. **And the empty sentence is
+      the same sentence in both modes** — a student whose every entry is suppressed reads character
+      for character like a student who has none, so the card cannot be used to tell the two apart
+      from across a room.)*
+- [x] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
+      exists, and nothing appears in presentation mode.
+      *(Measured through the real cells. Two taps on a student's column today take her to `A`, the
+      prompt appears naming her and the count the **signal rule** measured, and the clause itself is
+      not in the page until the reveal is tapped. Three negatives beside it: a student with the same
+      absences and an **empty** clause gets no box at all, marking the first student something other
+      than `A` takes the box off the glass, and with presentation mode on `paintAbsencePrompt()`
+      returns false and `toggleAbsenceClause()` called straight through the seam puts nothing on the
+      page — the refusal is the module's, not the missing button's.)*
+
+#### The 👤 sitting this work order owed — RUN 2026-08-24, all nine green
+
+None of these can be closed from a desk, and the first is the work order's own headline.
+
+- [x] **Under five seconds, on the iPad, with a stopwatch** — home screen to a logged entry: open the
+      class, open the roster, ✎, chip. The drawing's own caption says the real cost of this flow is
+      the two taps *before* the two WO-4.4 measures, and this is the reading that settles whether
+      that matters. 👤
+- [x] The ✎ under a thumb on a roster row at iPad portrait — 44px, and it does not crowd *Edit* and
+      *Remove* into a second line that pushes the row past a scannable height. 👤
+- [x] The six quick entries as a two-column grid at 390px: one column, 56px apiece, every one
+      readable without the emoji doing the work. 👤
+- [x] The sheet at phone width with the keyboard up — the two optional fields reachable, *Write it
+      down* not under the keyboard, and Cancel not the easier target. 👤
+- [x] The log card on the student record during a real conference posture: four entries and the
+      *older entries* control, beside the hall-pass card, without the column becoming a scroll. 👤
+- [x] **Presentation mode flipped with the student record already open** — the behavior rows go from
+      the screen in front of you rather than at the next navigation, and the notes stay. 👤
+- [x] The absence prompt raised mid-marking, on the registry, with a class in the room: it appears
+      above the grid without moving the cells under a thumb that is already travelling. 👤
+- [x] *Show me what it says* under a thumb, and the clause readable at the size it renders. 👤
+- [x] A printed student record with entries on the card: **the log is not on the sheet**. Measured
+      headless as a zero-height box; nobody has held the paper. 👤
+
+*(**Run by the owner on 2026-08-24, on the iPad, and all nine passed.** The headline reading is the
+one that mattered: home screen to a logged entry inside five seconds, with the stopwatch started at
+the home screen rather than at an open roster, so the two taps the drawing worried about are inside
+the number rather than excluded from it.)*
+
+*(**One observation from the sitting, and it is the ruling rather than a defect:** notes to self do
+not blank under a projector. `logKindVisible()` returns `true` for `note` unconditionally —
+`src/supports.js:130` — which is the owner's own call of 2026-08-20: behavior entries are not built
+in presentation mode and notes stay, because they are the teacher's working memory and suppressing
+them costs her the half of the card that has nothing to do with conduct. **Seen on hardware now**
+rather than only argued on paper. What the sitting did not settle is whether the premise holds — a
+note is free text with the placeholder *"anything you want to remember"*, so nothing enforces that
+it is not about the child, where a behavior entry is structurally about conduct and is suppressed.
+Left as the owner found it; see the open question in this work order's result file.)*
+**Where this stands.** Both tools are green on the delivered tree. The harness is
+§ *"the log, written down (WO-4.4)"* at the foot of the file — twenty-six call sites against a
+fixture built for it, one of them a fixture-guard arm that never fires on a green run. The 👤 sitting
+above is owed in full.
+
 ---
 
 ## Phase 5 — Outreach

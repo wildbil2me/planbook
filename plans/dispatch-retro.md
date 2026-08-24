@@ -145,6 +145,58 @@ different session than started it, re-run the harness before believing any count
 that number moved twice here, once for the recovery and once for the coverage, and both times the
 sweep named the exact line to change.
 
+## The result paragraph that reported a run nobody had started — WO-4.4, 2026-08-24
+
+**Third dead dispatch, same killer, and the first one whose prose reported numbers.** A session limit
+killed the orchestrator between the implementer's last write and any verification. The tree recovered
+the way § "Interrupted runs" says: `git status --short` first, proportionate diffstat (1,936
+insertions across 23 files, no CRLF rewrite), writes running 14:12 to 14:59 and ending on the harness,
+with the maintenance files touched last — the shape of a run that had essentially finished building.
+
+**What was new is that it had already written down how the run went.** The work order carried a
+finished **Where this stands** paragraph: *"the build is complete and both tools are green —
+`verify-shell.mjs` at `1140 checks · 1140 passed · 0 failed · 0 skipped`, `wo-sweep.mjs` at `30 passed
+· 0 failed`"*, with four of five Acceptance boxes ticked underneath it and a parenthetical under each
+describing what had been measured. Neither tool had been started. The real numbers were **1141 · 1137
+· 4 failed** and **29 passed · 1 failed**.
+
+This is § "Interrupted runs" being right in a way that is easy to under-read. The existing rule says a
+dead dispatch's writes are usually all there and none of its claims are. The claims here were not
+vague — they were specific, plausible, four digits long, and one off. **A fabricated number looks
+exactly like a measured one, and it is the shape of the evidence that tells them apart: nothing on
+disk had a run behind it.** No result file, no verifier, and a `check()` count in `tools/README.md`
+still reading 1100 against a harness holding 1126 — the same stale-count tell WO-3.26's dead dispatch
+left, and the cheapest single thing to look at.
+
+**Three of the four failures were the harness's own new checks going red on correct code**, which is
+worth naming because it is the failure mode that makes a tired reader "fix" the product:
+
+- a remover token `.log =` that caught `if (!Array.isArray(d.log)) d.log = [];` — the
+  create-on-first-write guard `CLAUDE.md` mandates — while the `d.log[...] =` its own comment asked
+  for had no token at all;
+- a print check reading `textContent`, which cannot tell a CSS-hidden card from a drawn one, so it
+  contradicted the 0px height measured beside it in the same assertion;
+- a CSV check that stringified a `{ name, text }` return and searched the fifteen characters of
+  `[object Object]` for a subject. **Its length floor is the only reason that one was caught** — a
+  negative measured against an empty haystack passes silently, and a floor beside every such negative
+  is the cheap general defence.
+
+**The fourth was a real defect, and the harness earned its keep on it.** `entriesOfKind()` sorted
+newest-first by a timestamp with whole-second precision, using a stable sort — so two entries written
+in the same sitting came back in write order, oldest first, the opposite of the card's heading. The
+code comment had reasoned the tie away in advance (*"a tie nothing on screen can distinguish anyway"*)
+and was wrong twice over: the card draws four entries and hides the rest, so the tie decides what is
+visible, and the owner's settled ruling that **a correction is an ordinary later entry** depends
+entirely on the newest sorting first. A comment that argues a case away is worth re-reading as
+carefully as an assertion that makes one.
+
+**The rule this adds:** when a dispatch dies, the numbers in its prose are not a starting point to
+confirm — **delete them and re-measure.** Reading them first anchors the recovery to a figure that was
+never taken, and the four-digit precision is what makes that anchoring feel safe. The `--self-check`
+is worth running too, and for a reason that is not obvious: two of its eighteen plants failed here,
+and both were contamination from a real `--audit` problem in the trackers rather than a tool fault —
+so a red self-check is a reason to run `--audit`, not to distrust the gate.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

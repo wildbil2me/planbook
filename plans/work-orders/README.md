@@ -215,13 +215,13 @@ indexes is a file nobody reads.
 | 1 — Shell, store, roster | 25 | 25 | — | 🔨 IN PROGRESS (reopened six times; last on 2026-08-19) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
-| 4 — Signals | 5 | 2 | — | 🔨 IN PROGRESS |
+| 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **137** | **114** | **2** | `[████████░░] 83%` |
+| | **137** | **115** | **2** | `[████████░░] 84%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1438,7 +1438,7 @@ that need a term of data close on their own schedule.**
 |---|---|---|---|---|
 | 1 | [WO-4.1](phase-4-signals.md#wo-41--signal-engine--thresholds) **Signal engine & thresholds** | M | ✔ | **Aug 20–21, before the term.** Unblocks five work orders — nothing else in Phase 4 or 5 can start |
 | 2 | [WO-4.2](phase-4-signals.md#wo-42--concern-signals) Concern signals | M | ✔ | ✅ **2026-08-20, four days early** — all six boxes and thirteen 👤 readings, the nine-rule read done by hand on a test install |
-| 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | Aug 27, half a day. Carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line |
+| 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | 🔨 **2026-08-24, three days early** — four of five boxes closed, nine 👤 readings owed; carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line, which is closed |
 | 4 | [WO-4.3](phase-4-signals.md#wo-43--praise-signals) Praise signals | M | ✔ | Built Aug 31–Sep 1; **its real-data box cannot close before ~Sep 16** |
 | 5 | [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) Cooldown & the quiet middle | M | ✔ | Built Sep 12–13, a weekend; **its real-data box cannot close before ~Sep 23** |
 | 6 | [WO-G3](gates.md#wo-g3--ship-3-gate-signals) **Ship 3 gate: signals** | S | — | **~Oct 16**, once four weeks of real data exist |

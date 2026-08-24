@@ -411,20 +411,23 @@ into the work order it affects, as a `Decided` line with its consequence.
     her own reminders from her is not the app's job. No "N hidden" line, because a count is the
     disclosure.
 
-## The one still open
+## The twelfth, closed 2026-08-24
 
-**`students[].supports` has no attendance clause for WO-4.4's prompt to read.** Is it a free-text
-field beside the existing ones, or a kind of its own? The work order owns the answer and it changes
-`docs/data-model.md` either way. The component is not in question — the drawing wears WO-3.8's
-shipped `.accommodation-prompt` whole.
+**`students[].supports` had no attendance clause for WO-4.4's prompt to read** — free-text field, or
+a kind of its own? **A free-text field, `attendanceClause`, beside `medical` and `behaviorPlan`,
+settled by the work order that owned it.** A thirteenth accommodation KIND was refused with it: an
+accommodation row is scoped by `appliesTo`, which names kinds of WORK, so the field would be
+meaningless on the row — and its documented default, *empty means everything*, would make every such
+row fire the assignment editor's own prompt on every assignment in the year. `docs/data-model.md`
+§ Accommodations carries the ruling. The component was not in question and was not touched.
 
 
 ## And two things the drawings assume without asking
 
 **That the absence prompt has something to read.** WO-4.4's re-homed line wants an
-attendance-related plan clause and an *N*, and neither exists: `students[].supports` has no such
-field and the thresholds block has no such key. The drawing shows the shape of the answer and cannot
-choose it.
+attendance-related plan clause and an *N*, and when this was drawn neither existed. Both are settled
+now: the clause is `supports.attendanceClause` (above) and the *N* is the attendance rule's own, with
+**no new threshold key** — so the drawing's assumption held and is no longer one.
 
 **That signals exist at all by the time this ships.** Phase 4's own note is that the rules need four
 to six weeks of real data before they fire, and the term starts 2026-09-02. Everything drawn here is

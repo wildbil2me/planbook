@@ -174,6 +174,12 @@
                                       the counts are about. Refused while presentation mode is on,
                                       by the module rather than here — this file states no part of
                                       that rule (src/supports.js owns all of it)
+      data-absence-prompt             not a control: the empty host on the REGISTRY that the second
+                                      prompt in that same module paints into (WO-4.4). One element,
+                                      the same contract [data-past-due] has
+      data-absence-clause             the one control in THAT prompt; shows or hides what the
+                                      student's plan says about attendance. Refused while
+                                      presentation mode is on, by the module, for the reason above
       data-score-cell="<assignmentId>" + data-score-student="<id>": ONE SCORE. It is FIVE hooks in
                                       one element since WO-3.25, which nothing else in this file is:
                                       a beforeinput target that refuses any character a score cannot
@@ -408,6 +414,22 @@
       data-paste-swap="<index>"       swaps first and last on that row
       data-paste-swap-all             swaps first and last on every row
       data-paste-field="first|last" + data-paste-index: an input; edits that preview row
+      data-log-open="<id>"            the ✎ on a roster row: opens the log sheet for that student
+                                      (WO-4.4). Tap one of two, and it is on the ROSTER rather than
+                                      on the registry because that row is the critical path and a
+                                      fourth control on it competes with the tap that marks a
+                                      student present
+      data-log-kind="behavior|note"   which kind the sheet is about. It is chosen BEFORE the words,
+                                      because the log is append-only and a wrong kind can only be
+                                      annotated afterwards
+      data-log-quick="<subject>"      tap two: writes a complete entry and closes the sheet. THE
+                                      VALUE IS THE SUBJECT AND NEVER A CODE — that one constraint is
+                                      what keeps a per-teacher list later a settings block rather
+                                      than a migration (src/log.js)
+      data-log-write                  the same write from the two optional fields under the chips
+      data-log-more                   shows or hides the older entries on the student record's log
+                                      card. A disclosure and not a preference, like the key legend
+                                      on the score grid; it goes back to closed on every repaint
       data-student-edit="<id>"        opens the editor for that student
       data-student-remove="<id>"      takes that student off the open class's roster
       data-student-add-to-class="<id>" puts a student who is in no class onto the open one
@@ -488,6 +510,13 @@ import * as letterScale from './letter-scale.js';
 import * as signals from './signals.js';
 import * as signalSettings from './signal-settings.js';
 import * as signalsView from './signals-view.js';
+/* WO-4.4's two, and they are two for the reason src/calendar.js and src/calendar-view.js are:
+   `log` is the MODEL — the record's shape, the one append, and the readers — and `logSheet` is the
+   pair of surfaces over it, the sheet off a roster row and the card on the student record. This file
+   drives the second; the first is imported by src/signals.js for one count and by nothing else here,
+   which is why it does not appear below. The import runs one way in both cases. */
+import * as log from './log.js';
+import * as logSheet from './log-sheet.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
@@ -669,6 +698,14 @@ function afterClassChange() {
   them.
 */
 function paintClassScreen(view) {
+  /* AND THE ABSENCE PROMPT COMES OFF THE GLASS FIRST (WO-4.4). It is a sentence about ONE student,
+     raised by one mark, and every path through here is a different screen, a different class or a
+     different term — none of which the sentence is still about. Clearing it here rather than in
+     src/attendance.js is what keeps that module one import away from a support block, which its own
+     header and src/accommodation-prompt.js's both refuse. What is deliberately NOT cleared is a
+     paged day column: "that is her 4th absence in the last 20 recorded meetings" names the class and
+     the student and not the column, so it stays true while she looks back at last week. */
+  accommodationPrompt.clearAbsencePrompt();
   if (view === 'assignments') assignments.renderAssignments();
   else if (view === 'scores') scores.renderScores();
   else if (view === 'detail') detail.renderDetail();
@@ -1125,6 +1162,50 @@ function openClassOn(classId, screen) {
 */
 function afterAttendanceChange() {
   home.refreshHome();
+  /* AND THE ABSENCE PROMPT IS TAKEN DOWN BEFORE ANYTHING PUTS ONE UP (WO-4.4). Every write on the
+     registry lands here — one cell, a letter from the keyboard, "everyone's here", a class reset, a
+     drop — and all but one of them make a standing prompt wrong. The one that does not is a mark
+     landing on `A`, and afterMark() below runs immediately after this and paints it again. Two
+     lines rather than one branch, because "clear, then decide" cannot leave a stale sentence up and
+     a single conditional can. */
+  accommodationPrompt.clearAbsencePrompt();
+}
+
+/*
+  A MARK JUST LANDED ON ONE STUDENT (WO-4.4), and the question that follows is whether her plan says
+  anything about attendance.
+
+  IT IS HERE RATHER THAN IN src/attendance.js, and that is the whole shape of this feature. The
+  prompt reads a support block; the registry must never be able to. So the marking module writes the
+  mark, this file notices whose it was, and src/accommodation-prompt.js — the one place outside
+  src/roster.js that may read `supports` — decides whether there is anything to say. Both marking
+  paths call it: the tap on a cell, which knows the student from the element, and the keyboard
+  letter, which knows it from the selection BEFORE markSelected() advances to the next row.
+
+  N IS THE ATTENDANCE RULE'S OWN N (the owner, 2026-08-20) and no threshold is read here: that module
+  runs one evaluate() pass and looks for the `absence-window` hit, so a teacher who loosens her
+  attendance signal loosens this prompt with it and the two can never disagree about what "too many"
+  means.
+*/
+function afterMark(studentId) {
+  if (!studentId) return;
+  accommodationPrompt.paintAbsencePrompt(classes.getSelectedClass(),
+    (classes.getSelectedTerm() || {}).id || '', studentId);
+}
+
+/*
+  AN ENTRY WAS WRITTEN INTO THE LOG (WO-4.4), and the two screens that read one redrawn.
+
+  The card on the student record is the obvious one. The concern list is the one worth naming: the
+  ninth concern rule counts behavior entries inside a window, and it stopped being inert the day this
+  work order landed — so a teacher who writes a second entry about a student while that list is up
+  behind the sheet has just changed what the list says. Guarded on the view like every other repaint
+  in this file: painting a hidden screen is work nobody sees.
+*/
+function afterLogWrite() {
+  if (views.currentView() === 'detail') detail.renderDetail();
+  if (views.currentView() === 'signals') signalsView.renderSignals();
+  home.refreshHome();
 }
 
 /*
@@ -1269,6 +1350,20 @@ function flipPresentationMode() {
     there is no support field anywhere on that screen to be visible.
   */
   if (views.currentView() === 'signals') signalsView.renderSignals();
+  /*
+    AND THE ABSENCE PROMPT GOES, WHEREVER IT IS (WO-4.4). It is the fifth entry and the only one that
+    is not guarded on a view, because it is not a view: it is a box on the registry that a mark put
+    there, and a box carrying "this student's plan has something on file about attendance" is exactly
+    what must not survive the flip a teacher makes as she turns the iPad toward the room. The module
+    would draw nothing on its next paint anyway — supportsVisible() is asked inside it — and "its
+    next paint" is the word this line buys, which is the defect the paragraph at the top of this
+    function describes.
+
+    The LOG CARD on the student record is not a line of its own: renderDetail() above already
+    redraws it, and what changes inside it is decided by src/supports.js through src/log.js rather
+    than by anything here.
+  */
+  accommodationPrompt.clearAbsencePrompt();
 }
 
 /*
@@ -1965,9 +2060,11 @@ document.addEventListener('click', (e) => {
      two files can answer differently. src/attendance.js refuses a date it should not write. */
   const cell = e.target.closest('[data-attendance-cell]');
   if (cell) {
-    attendance.cycleMark(cell.getAttribute('data-attendance-cell'),
-      cell.getAttribute('data-attendance-date'));
+    const marked = cell.getAttribute('data-attendance-cell');
+    attendance.cycleMark(marked, cell.getAttribute('data-attendance-date'));
     afterAttendanceChange();
+    /* WO-4.4, and it runs AFTER the clear inside the line above rather than instead of it. */
+    afterMark(marked);
     return;
   }
 
@@ -2154,6 +2251,36 @@ document.addEventListener('click', (e) => {
      The dot opens the editor the same way [data-student-edit] does and passes one extra argument:
      the tap on the dot is the deliberate one docs/data-model.md § Accommodations rule 1 asks for,
      so the panel inside arrives open. Every other route into that editor leaves it shut. */
+  /* ── the log (WO-4.4) ── */
+  const logOpen = e.target.closest('[data-log-open]');
+  if (logOpen) { logSheet.openLogSheet(logOpen.getAttribute('data-log-open'), logOpen); return; }
+  const logKind = e.target.closest('[data-log-kind]');
+  if (logKind) { logSheet.setLogKind(logKind.getAttribute('data-log-kind')); return; }
+  /* THE ATTRIBUTE'S VALUE IS THE SUBJECT ITSELF and is handed straight to the writer — see the
+     inventory above, and src/log.js's QUICK_ENTRIES for why it is never a code. */
+  const logQuick = e.target.closest('[data-log-quick]');
+  if (logQuick) {
+    if (logSheet.writeQuick(logQuick.getAttribute('data-log-quick'))) afterLogWrite();
+    return;
+  }
+  if (e.target.closest('[data-log-write]')) {
+    if (logSheet.writeTyped()) afterLogWrite();
+    return;
+  }
+  /* The card's one control. It changes what is on screen and nothing in the document, so it redraws
+     the screen it is on and chains nothing — the same shape `data-scores-keys` has. */
+  if (e.target.closest('[data-log-more]')) {
+    logSheet.toggleLogEntries();
+    if (views.currentView() === 'detail') detail.renderDetail();
+    return;
+  }
+  /* The absence prompt's reveal. Refused while presentation mode is on by the module rather than
+     here, exactly as [data-accommodation-names] above is — this file states no part of that rule. */
+  if (e.target.closest('[data-absence-clause]')) {
+    accommodationPrompt.toggleAbsenceClause();
+    return;
+  }
+
   const supportsOpen = e.target.closest('[data-supports-open]');
   if (supportsOpen) {
     roster.openStudentEditor(supportsOpen.getAttribute('data-supports-open'), supportsOpen, true);
@@ -2352,11 +2479,17 @@ document.addEventListener('keydown', (e) => {
   }
   const code = String(e.key).toUpperCase();
   if (MARK_KEYS.indexOf(code) === -1) return;
+  /* WHOSE ROW THE LETTER LANDED ON, READ BEFORE THE WRITE (WO-4.4). markSelected() advances the
+     selection to the next student on its way out — that is the whole flow it exists for — so asking
+     afterwards would name the student below the one just marked, and the absence prompt would be
+     about the wrong child. */
+  const marked = attendance.selectedStudent();
   if (!attendance.markSelected(code)) return;
   e.preventDefault();
   /* The same chain a tap on a cell makes: the card behind this view carries today's state, and a
      letter changes it exactly as a finger does. */
   afterAttendanceChange();
+  afterMark(marked);
 });
 
 /*
@@ -3225,6 +3358,20 @@ window.planbook = {
      button was the whole of the protection. Nothing in the app reads window.planbook — see the
      block above for why the seam outlived the shelf. */
   accommodationPrompt,
+  /* `log` and `logSheet` joined at WO-4.4, and their reasons are different from each other's.
+     `log` is the model and its reason is `gradeEngine`'s: writeEntry() is a pure append and
+     visibleEntriesFor() is a pure read, and what has to be asserted is what a tap ACTUALLY WROTE —
+     that the record carries the seven fields docs/data-model.md names and no eighth, that a second
+     entry is appended rather than the first being edited, and that a behavior entry is ABSENT from
+     what a screen is handed while presentation mode is on rather than hidden inside it. A card that
+     built the list and then styled it away and a card that never received it look identical from the
+     markup, and the difference is the whole of the acceptance line. `logSheet` is here for the
+     narrower reason src/pass-history.js's entry gives: one path no control can produce. With the
+     mode on the card's entries are simply not there, so there is nothing to tap to find out whether
+     the refusal is real, and studentLogCard() has to be called directly to ask.
+     Nothing in the app reads window.planbook — see the block above for why the seam outlived the
+     shelf. */
+  log, logSheet,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

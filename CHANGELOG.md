@@ -13,6 +13,53 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Behavior and notes, two taps from the roster — 2026-08-24
+
+A teacher can write down what just happened without leaving the roster. The ✎ on a roster row opens a
+sheet with six pre-written entries — *Off task · Phone out · Disruptive · Showing improvement · Great
+contribution · Helped someone* — and one tap on any of them writes a complete record: the kind, the
+subject, the student, the time. Two taps, start to finish. The two fields underneath are there when
+there is more to say and are never required.
+
+**Both directions are in the sheet, and the good ones are not at the bottom.** *Showing improvement*
+sits fourth, the first slot after the conduct entries and the one a thumb reaches without reading to
+the end. This app ranks by change rather than by level everywhere else; a log that made praise the
+long way round would have taught the opposite habit at the one moment a teacher is in a hurry.
+
+**Nothing in the log can be deleted, and that is deliberate.** A correction is an ordinary later entry
+that says so — there is no edit, no strikethrough, and no rule about which of two entries to believe,
+because the reader believes the newest. The door that ruling leaves open had to be nailed shut twice:
+the entries are sorted newest-first by their timestamp, and the clock only records whole seconds, so
+two entries written in the same sitting used to come back in **write** order — which is oldest first,
+the exact opposite of the heading on the card. A correction written seconds after the entry it
+corrects sorted underneath it. The tie is now broken toward the newer entry.
+
+**The log is on the student record**, newest first, with the four most recent drawn and the rest one
+tap away — including entries too old for any rule to count, because a log that hid what it no longer
+counts is a log nobody can read in a meeting.
+
+**Under a projector, behavior entries and notes part company.** Behavior entries are not drawn at all —
+not redacted, not counted, not present — while notes to self stay, because they are the teacher's
+working memory and have nothing to do with conduct. There is no *"2 hidden"* line: a count is the
+disclosure. The card's empty sentence is the same sentence either way, so a card whose every entry is
+suppressed cannot be told from one that never had any. The log is also **the one card on the student
+record that does not go home on paper**, and it is not in the CSV export either.
+
+**The behavior signal rule works now.** *N behavior log entries within N days* had nothing to read
+since it shipped, and the signals screen said so in words; that notice is gone, and it went because
+the rule started counting rather than because a screen stopped drawing it.
+
+**And marking a student absent can now surface what their plan says about absence.** A new free-text
+field on the roster — beside medical needs and behavior plans — holds what an IEP or 504 says about
+this student's attendance. Marking the *N*th absence raises a discreet box naming the count, with the
+clause itself behind one deliberate tap. **It uses the attendance signal's own N** rather than a
+threshold of its own, so a teacher who loosens that signal loosens this prompt with it and the two can
+never disagree about what *too many* means. A student with nothing on file gets no box at all — a
+prompt announcing that the app had looked would be the disclosure it exists to prevent — and with a
+projector on it is refused by the module rather than by the absence of a button. The new field is
+named in `docs/FERPA.md`, in the privacy policy and on the backup panel, in the same sitting it
+landed.
+
 ### A Google Drive sign-in, and nothing uploaded yet — 2026-08-24
 
 Planbook can sign in to Google Drive. The About modal has a new **Google Drive sync** section with one

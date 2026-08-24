@@ -10,8 +10,8 @@
   this one does.
 
   THE FILE CONTAINS EVERYTHING, ON PURPOSE. Since WO-1.8 the year document carries IEP and 504
-  accommodations, a case manager, a review date, medical needs, and behavior plans on every
-  student who has any — `students[].supports`, src/supports.js — and the backup carries them too,
+  accommodations, a case manager, a review date, medical needs, behavior plans, and what a plan
+  says about attendance on every student who has any — `students[].supports`, src/supports.js — and the backup carries them too,
   today rather than eventually: this file is the one place that data is written out. A backup
   that filtered them out would restore a gradebook that had quietly lost the things a teacher is
   legally obliged to implement — that is not a recovery path, it is a trap. CLAUDE.md's rule

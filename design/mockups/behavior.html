@@ -38,7 +38,10 @@
      proposed-phase4.css restyles any of them — § LOG SHEET and § LOG RECORD add new names to old
      sheets, which is the case design/mockups/PROTOCOL.md rule 4's `not yet lifted` token exists
      for. Without it the sweep would read "src/shell.css exists" as "this has already been lifted"
-     and stop checking these names entirely. -->
+     and stop checking these names entirely. WO-4.4 lifted both on 2026-08-24 and dropped the token
+     in the same sitting, which is the other half of that rule; the token had already done its job by
+     then, turning the sweep red on all fifteen names in the run that carried the CSS and the stale
+     banners. -->
 
 <div class="mk-section">Tap one — the roster, with a door to write something down</div>
 
@@ -272,6 +275,29 @@
   <code>docs/data-model.md</code> either way. <strong>Still the owner's.</strong>
 </div>
 
+<div class="mk-caption decided">
+  <strong>A free-text field, <code>supports.attendanceClause</code> — settled by WO-4.4,
+  2026-08-24.</strong> It sits beside <code>medical</code> and <code>behaviorPlan</code> and holds
+  what the plan says about this student's attendance. <strong>A thirteenth accommodation
+  <em>kind</em> was refused with it</strong>, and the reason is about the other prompt rather than
+  about this one: an accommodation row is scoped by <code>appliesTo</code>, which names kinds of
+  <em>work</em> — so the field would be meaningless on the row, and its documented default (<em>empty
+  means everything</em>) would make every such row fire the assignment editor's summary on every
+  assignment in the year. Stopping that takes a rule about one kind, living in a second file, asked
+  by a prompt that has nothing to do with attendance. The name is <code>attendanceClause</code> and
+  not <code>attendance</code> because this app already has attendance and the shorter name is one a
+  grep will misread. <code>docs/data-model.md</code> § Accommodations carries it, and
+  <code>docs/FERPA.md</code>, <code>privacy.html</code> and the backup panel name the field in the
+  same sitting.
+  <br><br>
+  <strong>The built sentence says more than the drawn one.</strong> This drawing reads <em>"That is
+  Owen's 4th absence in this class"</em>; the app says <em>"That is Owen Bennett's 6th absence in
+  the last 11 recorded meetings."</em> The window is back because the rule's window is the last N
+  recorded meetings and not the term — a student with ten absences on the year and four inside the
+  window would otherwise be told this was her fourth — and the full name is there because two Owens
+  on one roster is a real class.
+</div>
+
 <div class="mk-section">The log on the student record — newest first, on WO-3.7's screen</div>
 
 <div style="max-width:520px;margin:12px auto 0">
@@ -344,16 +370,6 @@
   there in the first place is untouched. The drawing above is what that looks like: yesterday's wrong
   entry is still there, underneath today's correction, because that is what was recorded at the time.
 </div>
-
-import fs from 'node:fs';
-const P='design/mockups/behavior.html';
-let t=fs.readFileSync(P,'utf8');
-const start=t.indexOf('<div class="mk-section">The same card while projecting');
-if(start<0) throw new Error('projected section not found');
-const end=t.indexOf('</body>');
-const fresh=fs.readFileSync(process.argv[1],'utf8');
-fs.writeFileSync(P, t.slice(0,start)+fresh+'\n'+t.slice(end));
-console.log('projected state replaced');
 
 </body>
 </html>

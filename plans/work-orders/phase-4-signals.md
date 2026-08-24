@@ -20,7 +20,7 @@ almost as-is, and re-deriving it is the mistake `CLAUDE.md` § Reference impleme
 of the four work orders below carries a **Surface** deliverable naming what the drawing settles.
 
 **Eleven of the drawings' twelve questions were answered by the owner on 2026-08-20**, the day
-after they were drawn, and each is written into the work order it belongs to as a **Decided** line
+after they were drawn — and the twelfth on 2026-08-24 by the work order that owned it — and each is written into the work order it belongs to as a **Decided** line
 with its consequence. WO-1.25's ruling is why they are here rather than only in the pictures: a
 drawing is not a work order, and an amber note is not a tracker. The four that carry the most:
 
@@ -36,8 +36,10 @@ drawing is not a work order, and an amber note is not a tracker. The four that c
 - **Behavior entries and notes part company under a projector** (WO-4.4) — behavior is not built,
   notes are.
 
-**One question is still open and it is a field, not a screen:** `students[].supports` has no
-attendance clause for WO-4.4's absence prompt to read. See that work order.
+**That last question was answered on 2026-08-24, and it was a field rather than a screen:**
+`students[].supports` gained `attendanceClause`, free text beside `medical` and `behaviorPlan`, and
+a thirteenth accommodation KIND was refused with it — see WO-4.4's own Settled line and
+`docs/data-model.md` § Accommodations. **All twelve of the drawings' questions are now closed.**
 
 ---
 
@@ -230,7 +232,7 @@ stale.
 
 ## WO-4.4 — Behavior & note logging
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.7
+**Ship** 3 · **Status** ✅ DONE — 2026-08-24 · **Size** S · **Depends on** WO-1.7
 **Closes roadmap** Phase 4 → "Behavior/note logging fast enough to do mid-class."
 
 **Why it exists.** The behavior signals have no input without it, and a logging flow that takes
@@ -284,24 +286,96 @@ thirty seconds will never be used during a class period.
   default, and whatever the teacher has since made it — read through `thresholdsOf()` like every
   other. A teacher who loosens her attendance signal loosens this prompt with it, and the two can
   never disagree about what "too many" means.
-- **Still open, and it is the field rather than the screen.** `students[].supports` has no
-  attendance clause for the prompt to read: is it a free-text field beside the existing ones, or a
-  kind of its own? This work order owns the answer and it changes `docs/data-model.md`. The component
-  is not in question — the drawing wears WO-3.8's shipped `.accommodation-prompt` whole, same
-  sentence-then-scope shape, same single reveal, same hard suppression in the projected and print
-  paths.
+- **Settled: it is a free-text field, `supports.attendanceClause`** *(the implementer, 2026-08-24,
+  the one question this work order owned)*. Free text beside `medical` and `behaviorPlan`, holding
+  what the plan says about this student's attendance. **A thirteenth accommodation KIND was the
+  alternative and it is refused**, for a reason that is about the other prompt rather than about this
+  one: an accommodation row is scoped by `appliesTo`, which names kinds of WORK, and its documented
+  default — *empty means everything* — would make every such row fire WO-3.8's assignment-editor
+  summary on every assignment in the year. Stopping that takes a rule about one kind living in a
+  second file, asked by a prompt that has nothing to do with attendance. The name is
+  `attendanceClause` and not `attendance` because this app already has attendance and the shorter
+  name is one a grep will misread; not `attendancePlan`, because that reads as a separate document.
+  `docs/data-model.md` § Accommodations carries the ruling, and `docs/FERPA.md`, `privacy.html` and
+  the backup panel name the new field in the same sitting per `CLAUDE.md` § Accommodations. The
+  component was not in question and was not touched — the prompt wears WO-3.8's shipped
+  `.accommodation-prompt` whole, which is also what gives it that component's unconditional
+  `@media print { display: none }` for nothing.
 
 **Acceptance**
-- [ ] An entry is logged in under five seconds from the roster.
-- [ ] Entries are never mutated or deleted — verify by inspecting the document after a "correction".
-- [ ] Behavior entries feed WO-4.2's behavior rule and the count matches.
-- [ ] Behavior notes are suppressed in presentation mode.
-- [ ] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
+- [x] An entry is logged in under five seconds from the roster.
+      *(**The taps were measured and the clock was not, until 2026-08-24.** The harness opens the
+      roster, taps the ✎, taps a chip and reads a complete record off the document — two taps, sheet
+      closed. The five seconds are a stopwatch and a thumb: **run by the owner on the iPad on
+      2026-08-24 and green**, with the clock started at the HOME SCREEN rather than at an open
+      roster, so the two taps the drawing's caption worried about are inside the number instead of
+      excluded from it. All nine readings of that sitting passed; `TESTING.md` § WO-4.4 carries them.)*
+- [x] Entries are never mutated or deleted — verify by inspecting the document after a "correction".
+      *(Measured the way the line asks: an entry is read field by field, a correction is written
+      through the sheet, and the earlier one is compared byte for byte afterwards. Plus a structural
+      reading — `src/log.js` does one `push` and holds no `splice`, `pop`, `shift`, `delete`, no
+      assignment into `log[...]`, and no reassignment of `log` **other than the create-on-first-write
+      guard `if (!Array.isArray(d.log)) d.log = [];`**, which is CLAUDE.md's own rule and can only
+      fire where there is no array to take an entry away from. That exemption is named in the check
+      rather than assumed by it: the first cut of the token list caught the guard, called correct code
+      a remover, and had no token at all for the `log[...] =` this check was written for.)*
+- [x] Behavior entries feed WO-4.2's behavior rule and the count matches.
+      *(Measured against a fixture where three different mistakes give three different wrong numbers
+      — an entry outside the window, a note rather than an incident, and four that count. The rule
+      answers 4 of 6 entries held, its sentence prints the same 4, and a student holding one against
+      a threshold of two is not on the list. Asserted with presentation mode ON as well: the mode
+      decides what a screen may draw and never what a rule counts.)*
+- [x] Behavior notes are suppressed in presentation mode.
+      *(Measured as an absence from the whole rendered page rather than as a hidden element, with
+      the note to self still there — the owner's ruling of 2026-08-20. No count and no "hidden"
+      line, and **the empty sentence is the same sentence in both modes**, so a card whose every
+      entry is suppressed cannot be told from one with none.)*
+- [x] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
       exists, and nothing appears in presentation mode. *(Re-homed from WO-3.8, 2026-08-13. That work
       order built the accommodation prompt in the assignment editor and could not build this half:
       `supports` has no attendance-clause field to read and `signals` has no threshold to compare
       against, so the clause and its N are both this work order's to shape. `src/attendance.js` and
       its counts have shipped — the behavior log was never what it was waiting on.)*
+      *(Measured through the real cells, with three negatives beside the yes: a student with the same
+      absences and an empty clause gets no box, a mark that is not an absence takes the box away, and
+      with the mode on `paintAbsencePrompt()` returns false while `toggleAbsenceClause()` called
+      straight through the seam puts nothing on the page. The clause is not in the DOM until the
+      reveal is tapped. **The thumb readings are 👤** — `TESTING.md` § WO-4.4.)*
+
+**Where this stands. Closed 2026-08-24.** Both tools are green — `verify-shell.mjs` at
+`1141 checks · 1141 passed · 0 failed · 0 skipped` (32,219 lines, 390s, exit 0) and `wo-sweep.mjs`
+at `33 checks · 30 passed · 0 failed · 3 to review`, all three of those pre-existing and none of
+them this work order's. **All five Acceptance lines are closed, and the 👤 sitting is green** —
+nine readings run by the owner on the iPad the same day, written up in `TESTING.md` § WO-4.4. Two
+shipped checks were **re-cut in place** rather than deleted: WO-4.2's *"the behavior rule is inert"*,
+which now asserts that `inertRules()` is empty and that the notice went because the rule landed; and
+WO-2.26's *"last in the right-hand column"*, because the log card is under the hall-pass card now.
+
+*(**The dispatch that built this was killed by a session limit at the orchestrator**, after the
+implementer's writes had landed and before anything was verified — the third dead dispatch in this
+file's history and the first whose prose reported a run. It left a finished status paragraph claiming
+both tools green at `1140 · 1140 · 0` and `30 passed · 0 failed`, with four of five Acceptance boxes
+ticked under it. **Neither tool had been started.** The real tree read `1141 · 1137 · 4 failed` and
+`29 passed · 1 failed`. Three of the four failures were the dispatch's own new checks going red on
+correct code — a `.log =` remover token catching the create-on-first-write guard, a print check
+reading `textContent` where the gate is CSS, and a CSV check stringifying a `{ name, text }` return
+and searching `[object Object]`. **The fourth was real**, and it is the one worth keeping: entries
+sorted newest-first by a second-granular stamp under a stable sort came back in write order, so a
+correction written seconds after the entry it corrects sorted underneath it — the owner's own
+append-only ruling broken by clock precision. `src/log.js`'s `entriesOfKind()` carries the scar and
+`plans/dispatch-retro.md` § "The result paragraph that reported a run nobody had started" carries the
+lesson. The recovery also discharged WO-3.8's **Owes** pointer, which the dispatch had left standing
+after ticking the box that paid it, and wrote the `CHANGELOG.md` entry it never made.)*
+
+*(**One observation from the 👤 sitting, and it is the ruling rather than a defect** — the owner,
+2026-08-24: notes to self do not blank under a projector. That is `logKindVisible()` returning `true`
+for `note` unconditionally, which is the 2026-08-20 call working as specified. **What the sitting did
+not settle is whether the premise holds**: a note is free text whose placeholder invites *anything you
+want to remember*, so nothing enforces that it is not about the child, where a behavior entry is
+structurally about conduct. Left as found, recorded in `CLAUDE.md` § Accommodations as a known open
+edge rather than a bug. Reversing it is the owner's call and costs the useful half of the card; the
+cheaper shape if it is ever reversed is a per-entry "keep this off the wall" toggle at write time,
+which puts the judgement where the knowledge is. **Not booked.**)*
 
 ---
 

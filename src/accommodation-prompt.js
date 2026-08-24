@@ -58,6 +58,28 @@
   browser, and src/prefs.js's list is the shorter for not carrying it — the same call
   src/past-due.js makes about its review. Nothing in this file writes to the year document either:
   it reads, counts, and draws.
+
+  ── AND SINCE WO-4.4 THERE ARE TWO PROMPTS IN HERE, WHICH IS DELIBERATE ──
+
+  The second is the ABSENCE prompt: mark a student absent once too often and the plan's attendance
+  clause is offered, at the moment of use, on the registry. docs/data-model.md § Accommodations rule
+  3 names both in one breath — *"Creating a test prompts '3 students have extended time'. Marking a
+  student absent for the fourth time shows their plan has an attendance clause."* — so they are two
+  instances of one rule rather than two features.
+
+  THEY SHARE THIS FILE BECAUSE OF THE SENTENCE AT THE TOP OF IT: this is the only place outside
+  src/roster.js that reads a student's `supports` block, and tools/wo-sweep.mjs § 5 is a short read
+  because of it. A third module would have widened that set by a third for one paragraph of markup,
+  and the paragraph is the same paragraph: the same `.accommodation-prompt` component, the same
+  sentence-then-scope shape, the same single reveal, and the same one question asked of
+  src/supports.js. What is NOT shared is state — two hosts, two `painted` records, two reveals — so
+  neither prompt can put the other's content on screen.
+
+  THE SECOND ONE READS THE SIGNAL ENGINE RATHER THAN COUNTING FOR ITSELF, and that is the owner's
+  ruling of 2026-08-20 obeyed structurally: *N is the attendance rule's own N*, no new threshold key,
+  so a teacher who loosens her attendance signal loosens this prompt with it. It runs one evaluate()
+  pass for one student and looks for the `absence-window` hit — so the prompt fires exactly when the
+  rule fires, and the two cannot come to disagree about which meetings were in the window either.
 */
 
 import { announce } from './live-region.js';
@@ -65,14 +87,24 @@ import { announce } from './live-region.js';
    file only ever looks, and supportsOf() repairs a missing block in place — a mutation, however
    harmless, made by a prompt that is drawing itself. */
 import {
-  ACCOMMODATION_KINDS, accommodationsOf, appliesToMatches, kindLabel, readSupports,
-  setSensitiveText, supportsVisible,
+  ACCOMMODATION_KINDS, accommodationsOf, appliesToMatches, attendanceClauseOf, kindLabel,
+  readSupports, setSensitiveText, supportsVisible,
 } from './supports.js';
+/* WO-4.4's half. `evaluate` is the whole of the absence prompt's arithmetic — see the header — and
+   nothing here re-counts an absence or reads a threshold for itself. The import runs one way:
+   src/signals.js has never heard of this file and must not, because a rule that could reach a
+   support block is the disclosure that module's own header refuses. */
+import { evaluate } from './signals.js';
+/* Which day the registry's writers will accept, and what the cell it just wrote says. Exported for
+   src/attendance-report.js at WO-2.53 and read here for the second time: it answers the two things
+   this prompt needs — the day a mark landed on and the code on it — without this file holding a
+   second opinion about which column is writable. */
+import { editableMark } from './attendance.js';
 /* How a student's name reads in a list. Imported from src/roster.js for the reason src/past-due.js
    imports the same function: a second copy of those eight lines could be right about a hyphen, a
    suffix or a half-typed name in a way this one is not. The import runs one way — nothing in
    src/roster.js knows this file exists. */
-import { rosterName } from './roster.js';
+import { fullName, rosterName } from './roster.js';
 import { getDoc } from './store.js';
 
 /* The screen that wears this prompt carries an empty host with this attribute, and this file paints
@@ -80,6 +112,10 @@ import { getDoc } from './store.js';
    markup rather than a line here, which is the same contract `[data-past-due]` has with
    src/past-due.js and `[data-screen-nav]` has with src/screen-nav.js. */
 const HOST_SEL = '[data-accommodation-prompt]';
+/* The registry's own host, WO-4.4's. A different attribute rather than a second element carrying the
+   first, so neither draw() can find the other's host and paint a category summary onto the marking
+   screen. Markup, never a click target. */
+const ABSENCE_HOST_SEL = '[data-absence-prompt]';
 
 /* Whether the names are showing. Reset by every paint — see rule 3 in the header. */
 let namesShown = false;
@@ -324,4 +360,186 @@ export function toggleAccommodationNames() {
   announce(namesShown
     ? 'The names these apply to are now on screen, in this dialog only.'
     : 'The names are hidden again. The counts are still on screen.');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   THE ABSENCE PROMPT (WO-4.4) — the second instance of docs/data-model.md rule 3
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  WHAT IT SAYS, AND THE ORDER IT SAYS IT IN. Same shape as the prompt above, because it is the same
+  component: the fact first — *"That is Owen Bennett's 4th absence in the last 9 recorded meetings"*
+  — then the scope, then one button that reveals the clause itself. What a teacher reads at a glance
+  is a number she can act on; what she reads if the box makes her uneasy is where it came from and
+  where it does not go.
+
+  IT DEPARTS FROM THE DRAWN SENTENCE IN ONE PLACE AND THIS IS THE POINT OF DEPARTURE.
+  design/mockups/behavior.html draws *"That is Owen's 4th absence in this class."* — a first name and
+  no window. The window is back because the rule's window is the last N recorded MEETINGS and not the
+  term: a student with ten absences on the year and four inside the window would be told this was her
+  fourth, which is a wrong number beside a child's name on the screen where the number is the whole
+  content. The name is `fullName()` rather than a first name for the plainer reason: two Owens on one
+  roster is a real class, and the prompt is about exactly one of them.
+
+  IT HOLDS ONE STUDENT AND NEVER A LIST. The prompt above counts a roster and says how many; this one
+  is about the student whose row was just tapped, so there is no count to protect and the name is
+  already on the screen it is drawn over. What is protected is the CLAUSE, which sits behind the same
+  deliberate tap the roster dot is, and the whole prompt is absent while presentation mode is on.
+*/
+let paintedAbsence = { studentId: '', lead: '', clause: '' };
+let clauseShown = false;
+
+/* The scope sentence, and it is a constant because it never varies: one student, one clause, one
+   promise about where it goes. The second half is whereOf()'s own words above, so the two prompts
+   make a teacher one promise rather than two. */
+const ABSENCE_WHERE = 'Their plan has something on file about attendance. This is on screen only — '
+  + 'it is never printed, exported or put in a draft — and presentation mode hides it entirely.';
+
+/* Turned into an ordinal rather than printed as a bare number, because "That is 4 absence" is the
+   sentence a teacher reads as a bug. Small and local: nothing else in this app orders a number. */
+function ordinal(n) {
+  const num = Math.floor(Number(n) || 0);
+  const tens = num % 100;
+  if (tens >= 11 && tens <= 13) return num + 'th';
+  const ones = num % 10;
+  if (ones === 1) return num + 'st';
+  if (ones === 2) return num + 'nd';
+  if (ones === 3) return num + 'rd';
+  return num + 'th';
+}
+
+function plural(n, one, many) {
+  return n + ' ' + (n === 1 ? one : many);
+}
+
+/*
+  ONE HOST, DRAWN FROM `paintedAbsence` AND NOTHING ELSE — the same contract draw() has above, and
+  the same two states: something to say, or empty and hidden. There is no third rendering that hints
+  at a clause without showing one.
+*/
+function drawAbsence() {
+  const hosts = Array.prototype.slice.call(document.querySelectorAll(ABSENCE_HOST_SEL));
+  const live = supportsVisible() && !!paintedAbsence.clause;
+  hosts.forEach((host) => {
+    host.textContent = '';
+    host.classList.toggle('hidden', !live);
+    if (!live) return;
+
+    const said = el('div', 'accommodation-prompt-said');
+    /* The lead is attendance arithmetic and carries no support field at all, so it goes on the
+       element directly — but the WHOLE BOX is gone in presentation mode anyway (see `live` above),
+       because the box's existence is what says this student has something on file. */
+    said.append(el('span', 'accommodation-prompt-lead', paintedAbsence.lead));
+    said.append(el('span', 'accommodation-prompt-where', ABSENCE_WHERE));
+    host.append(said);
+
+    const actions = el('div', 'accommodation-prompt-actions');
+    const reveal = el('button', 'class-action-btn accommodation-prompt-btn',
+      clauseShown ? 'Hide what it says' : 'Show me what it says');
+    reveal.type = 'button';
+    reveal.setAttribute('data-absence-clause', '');
+    reveal.setAttribute('aria-expanded', clauseShown ? 'true' : 'false');
+    /* The label says what the tap DOES and never a word of what it will show — src/roster.js's rule
+       about the dot's own label, one screen along. */
+    reveal.title = 'Shows what this student’s plan says about attendance. It is the same '
+      + 'information as the roster and it is on screen until you hide it again.';
+    actions.append(reveal);
+    host.append(actions);
+
+    if (!clauseShown) return;
+    const box = el('div', 'accommodation-prompt-names');
+    const text = el('p', 'accommodation-prompt-clause');
+    /* Through setSensitiveText() rather than onto the element, for the reason every support field in
+       this app takes that funnel: "hidden in presentation mode" becomes a property of the writing
+       rather than of somebody having remembered the check above. Both are here on purpose. */
+    setSensitiveText(text, paintedAbsence.clause);
+    box.append(text);
+    host.append(box);
+  });
+}
+
+/*
+  A MARK JUST LANDED ON A STUDENT — should the prompt be up, and saying what.
+
+  Called by src/shell.js after both marking paths (the tap on a cell and the keyboard letter), which
+  is where every other order of operations in this app is stated; src/attendance.js does not know
+  this prompt exists and must not, because it would then be one import away from a support block.
+
+  FIVE THINGS HAVE TO BE TRUE, cheapest first with the disclosure last:
+
+    1. Presentation mode is off. Nothing is built otherwise — not the sentence, not the box.
+    2. The mark that just landed reads `A`. Marking a student PRESENT is not the moment to raise
+       their plan, and a student who was already over the line must not have the prompt follow her
+       around the screen; `editableMark()` answers what the writable column says right now.
+    3. The signal engine's `absence-window` rule fires for this student. That is the owner's N and
+       the owner's window, read where they already live — see the header.
+    4. There is a clause on file. No clause, no prompt: WO-4.4's acceptance line is "surfaces an
+       attendance-related plan clause IF ONE EXISTS", and a box saying nothing is on file would be a
+       box announcing that this app looked.
+    5. And the clause itself is behind the tap, never in the first paint.
+
+  It returns whether it painted, so a caller can say something happened without this file having to
+  know how it would say it — paintAccommodationPrompt()'s own contract.
+*/
+export function paintAbsencePrompt(cls, termId, studentId) {
+  clauseShown = false;
+  paintedAbsence = { studentId: '', lead: '', clause: '' };
+
+  const doc = getDoc();
+  const student = studentsIn(doc).filter((s) => s && s.id === studentId)[0];
+  if (!supportsVisible() || !doc || !cls || !student) { drawAbsence(); return false; }
+
+  const mark = editableMark(studentId);
+  if (!mark || mark.code !== 'A') { drawAbsence(); return false; }
+
+  const hit = evaluate(doc, cls, termId, { studentIds: [studentId] })
+    .filter((h) => h.ruleId === 'absence-window')[0];
+  if (!hit) { drawAbsence(); return false; }
+
+  const clause = attendanceClauseOf(readSupports(student)).trim();
+  if (!clause) { drawAbsence(); return false; }
+
+  paintedAbsence = {
+    studentId: studentId,
+    lead: 'That is ' + fullName(student) + '’s ' + ordinal(hit.numbers.absences)
+      + ' absence in the last '
+      + plural(hit.numbers.meetings, 'recorded meeting', 'recorded meetings') + '.',
+    clause: clause,
+  };
+  drawAbsence();
+  return true;
+}
+
+/* Take it off the screen, and forget what it was about. Called when the registry redraws under it —
+   a class switch, a paged window, a term change — and when presentation mode flips, because a
+   suppression that only applies to the NEXT render leaves the box on the glass of the iPad the
+   teacher just turned toward the room (src/shell.js's flipPresentationMode carries the long
+   version). */
+export function clearAbsencePrompt() {
+  clauseShown = false;
+  paintedAbsence = { studentId: '', lead: '', clause: '' };
+  drawAbsence();
+}
+
+/* Which student the prompt is about, or ''. Read by tools/verify-shell.mjs through the seam and by
+   nothing in the app. It answers WHO, never what the clause says: a getter that handed back a
+   teacher's own words about a child would be the one export this file's header refuses. */
+export function absencePromptStudent() { return paintedAbsence.studentId; }
+
+/*
+  THE DELIBERATE TAP, guarded on the same question as everything else here rather than on a second
+  copy of it — so a teacher who turned presentation mode on with the prompt up cannot reach the
+  clause through a button that is no longer drawn, or through the keyboard, or through the console.
+
+  WHAT IS ANNOUNCED IS THAT IT IS SHOWING, NEVER WHAT IT SAYS. Reading a plan's attendance clause
+  aloud is the disclosure the tap is guarding; toggleAccommodationNames() above and src/roster.js's
+  toggleSupports() make the same distinction, and this is the fourth instance of it.
+*/
+export function toggleAbsenceClause() {
+  if (!supportsVisible() || !paintedAbsence.clause) return;
+  clauseShown = !clauseShown;
+  drawAbsence();
+  announce(clauseShown
+    ? 'What their plan says about attendance is now on screen, on this screen only.'
+    : 'It is hidden again. The prompt is still there.');
 }

@@ -66,7 +66,11 @@
   presentation mode is on, which is a question only src/supports.js answers and which this file may
   not ask; and a list of trips counted here would be a second walk over a log this file cannot see.
   So this file asks nobody. What crosses the import is two ids and a term, and what comes back is
-  DOM. There is still no import of src/supports.js here, still no path to `student.supports`, and
+  DOM. WO-4.4'''s log card is the same arrangement a third time, and it is worth saying that the
+  import CHAIN now reaches src/supports.js — src/log-sheet.js imports src/log.js, which asks that
+  module whether a behavior entry may be drawn. Nothing crosses it: what this file passes is one
+  student id, what comes back is DOM, and no support field, plan or clause is inside it. The claim
+  above is about what reaches THIS file, and it is unchanged. There is still no import of src/supports.js here, still no path to `student.supports`, and
   the paragraph above is still true of the printed page and the CSV in both modes. The one thing
   this DOES oblige, and it is on the list at src/shell.js's flipPresentationMode(): a screen whose
   content changes with the mode has to be repainted when the mode flips, and this one now is.
@@ -180,6 +184,25 @@ import { registerPrintGate } from './print-gate.js';
   exists.
 */
 import { studentPassCard } from './pass-history.js';
+/*
+  AND THE LOG CARD (WO-4.4), on exactly the arrangement above and for the same three reasons. This
+  file passes one student id and appends what comes back; it never reads `log`, never counts an
+  entry, never words one, and never asks whether presentation mode is on. That last one matters more
+  here than it did for the trips: the card's two kinds part company under a projector — behavior
+  entries are absent, notes to self stay — and the rule that decides which lives in src/supports.js,
+  two imports away, where the whole app asks it. A test in this file would be the second asker.
+
+  IT IS THE ONE THING ON THIS SCREEN THAT DOES NOT PRINT, and that is a departure from WO-2.26's
+  ruling one card up ("what prints is what is on screen") rather than an oversight, so it is written
+  down here at the point of departure. The sheet that writes these entries promises the teacher
+  *"Anything you want to remember. Nothing here is sent anywhere"* — and a sheet a guardian carries
+  out of the building is somewhere. The hall-pass card could keep the simpler rule because a trip is a
+  fact about a corridor; a note to self is the teacher's own working memory, and half of what is on
+  this card was written on the understanding that it stays on her screen. src/detail.css's gated print
+  block hides `.log-card` outright, and studentCsv() is untouched for the same reason — the same
+  boundary WO-2.26 drew around the file, with an argument this time instead of only a scope line.
+*/
+import { studentLogCard } from './log-sheet.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -694,16 +717,26 @@ export function renderDetail() {
      here is where it goes. It is the last card in the column deliberately: it is the answer to a
      follow-up question, and the grade is what the screen is for. */
   right.append(studentPassCard(cls.id, student.id, term));
+  /* AND WHAT WAS WRITTEN DOWN, UNDER THE TRIPS (WO-4.4). Last in the column for the reason the trips
+     are second-to-last: the grade is what the screen is for, and this is the card a teacher turns to
+     when the conversation has moved past the number. It is drawn even when it is empty — Roll Call!
+     draws its own inline table only when there is something in it and that is the half deliberately
+     not lifted (src/pass-history.js says so at the same seam): a missing block reads as "this build
+     does not show that" rather than as "none". */
+  right.append(studentLogCard(student.id));
   cols.append(left, right);
   content.append(cols);
 
   /* The sentence names what IS on the page as well as what is not, so it has to keep step with the
-     page: hall passes joined grades and attendance at WO-2.26. A list that goes stale is a list that
+     page: hall passes joined grades and attendance at WO-2.26, and the log at WO-4.4 — which is also
+     the first thing on this screen that is NOT on the printed sheet, so the sentence says that too.
+     A list that goes stale is a list that
      stops being read, and this one is the screen's own statement of the firewall in its header. */
   content.append(el('p', 'detail-note',
-    'This page is grades, attendance and hall passes and nothing else. Nothing from ' + person
-      + '’s support details is on it, on the printed sheet or in the CSV, in either mode — those '
-      + 'live on the roster and go nowhere but your own backup file.'));
+    'This page is grades, attendance, hall passes and what you have written down, and nothing else. '
+      + 'Nothing from ' + person + '’s support details is on it, on the printed sheet or in the CSV, '
+      + 'in either mode — those live on the roster and go nowhere but your own backup file. What you '
+      + 'have written down is on the screen only: it is not on the sheet and not in the CSV.'));
 }
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */

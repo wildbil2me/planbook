@@ -16,7 +16,7 @@ Built first for its author's own five classes, but intended to be marketable to 
 That second goal is what drives the architecture below.
 
 **Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
-**Ship 3 building, its first two rows landed.**
+**Ship 3 building, its first three rows landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
@@ -247,6 +247,15 @@ Seven things that will bite:
   own measured numbers and nothing else — not the document, not the clock, not the threshold it just
   crossed — which is what stops an explanation drifting from the arithmetic behind it and what keeps
   accommodation data out of a sentence Phase 5 mails home.
+- **The log is append-only, and nothing in the app can delete an entry** (WO-4.4). A correction is
+  an ordinary later entry that says so — no `correctsId`, no strikethrough, and no rule about which
+  of two entries a reader should believe, **because the reader believes the newest**. `src/log.js`
+  exports one writer and does exactly one thing to the document. That last clause is load-bearing:
+  entries are ordered newest-first by `at`, and **the tie is broken toward the later write** because
+  `localStamp()` is second-granular, so two entries logged in one sitting carry the same stamp and a
+  stable sort left alone resolves them *oldest* first — the opposite of the card's heading, and it
+  put a correction underneath the entry it corrected. The card draws four and hides the rest, so the
+  tie decides what is visible as well as what order it reads in.
 - **A settings block is created by its first write, never seeded** (WO-6.1). `newYearDocument()`
   returns no `calendar` block at all; `leadDaysOf()` defaults when the key is absent, exactly as
   `thresholdsOf()` does — the rule above is general, and this is its second block rather than a
@@ -284,6 +293,19 @@ negotiable and are easy to break by accident:
   classroom walls. IEP status on that wall is a disclosure to thirty students.
 - **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
   paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
+- **A note to self is the one thing here a projector does not hide, and that is a ruling rather than
+  an oversight** (WO-4.4, the owner, 2026-08-20, seen on hardware 2026-08-24). `logKindVisible()`
+  returns `true` for `note` unconditionally: **behavior** entries are absent from the page in
+  presentation mode — not redacted, not counted, no "2 hidden" line, because a count is the
+  disclosure — and **notes stay**, because they are the teacher's working memory and suppressing them
+  costs her the half of the card that has nothing to do with conduct. **The premise is not enforced
+  anywhere**: a note is free text whose placeholder invites *anything you want to remember*, so
+  nothing stops one being about a child, where a behavior entry is structurally about conduct. Read
+  that as a known open edge before widening what the note field is used for, not as a bug to fix
+  quietly — reversing it is the owner's call and costs the teacher the useful half of the card.
+- **`supports.attendanceClause` is sensitive and is on this list** (WO-4.4). Free text beside
+  `medical` and `behaviorPlan`, holding what an IEP or 504 says about a student's attendance. It is
+  in the backup, and `docs/FERPA.md` and `privacy.html` name it.
 - **Backups now contain this data.** The backup UI says so in as many words (`index.html`, the backup
   panel), **and since 2026-08-21 so does [`docs/FERPA.md`](docs/FERPA.md)** — WO-8.12, ✅ DONE, which
   is the obligation in `docs/data-model.md` § Accommodations discharged rather than half-kept. That

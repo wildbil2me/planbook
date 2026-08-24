@@ -55,7 +55,8 @@
      504 plans, medical needs, behavior plans — are the most consequential data in this app if
      they leak, and this list gets projected onto a classroom wall. So the row carries one
      indicator: the same dot, the same shape and the same colour for every student who has
-     anything on file, saying only "there is something here". A dot that were amber for a 504 and
+     anything on file — including, since WO-4.4, what the plan says about attendance — saying only
+     "there is something here". A dot that were amber for a 504 and
      indigo for an IEP would be a legible key on that wall, which is why nothing about it varies.
      The details are one deliberate tap away and arrive in a panel that is shut on every open, and
      whether any of it may be on screen at all is src/supports.js's single question — not a test
@@ -103,6 +104,7 @@ const SUPPORTS_HINT_ID = 'supportsHint';
 const SUPPORTS_HINT_PRESENTATION_ID = 'supportsHintPresentation';
 const SUPPORTS_PLAN_ROW_ID = 'supportsPlanRow';
 const ACCOMMODATION_LIST_ID = 'accommodationList';
+const SUPPORTS_ATTENDANCE_ID = 'supportsAttendanceClause';
 
 const DELETE_LEAD_ID = 'studentDeleteLead';
 const DELETE_FACTS_ID = 'studentDeleteFacts';
@@ -470,6 +472,35 @@ function studentRow(student, cls) {
 
   const actions = document.createElement('div');
   actions.className = 'roster-row-actions';
+
+  /*
+    THE DOOR TO THE LOG (WO-4.4), AND IT IS ON THIS ROW RATHER THAN ON THE REGISTRY'S.
+
+    "Two taps from a class roster to a logged entry" is that work order's own measure, and this is
+    tap one. It is deliberately NOT a fourth control on the attendance row: that row is the critical
+    path by the working agreements — marked at the door while thirty students walk in — and a control
+    beside the mark cells is a control competing with the tap that says a student is here (the owner,
+    2026-08-20, with a long-press and a registry control both refused beside it).
+
+    It carries no state and says nothing about the student. Unlike the dot above it, it is drawn for
+    every student on every roster and in every mode: an entry is something the teacher writes, not
+    something on file about a child, so there is nothing here for presentation mode to suppress. What
+    is written is suppressed where it is READ (src/log-sheet.js's card), which is the only place a
+    projector can reach it.
+  */
+  const logDoor = document.createElement('button');
+  logDoor.type = 'button';
+  logDoor.className = 'log-door';
+  logDoor.setAttribute('data-log-open', student.id);
+  logDoor.setAttribute('aria-haspopup', 'dialog');
+  logDoor.setAttribute('aria-label', 'Write something down about ' + fullName(student));
+  logDoor.title = 'Write something down about ' + fullName(student);
+  const pen = document.createElement('span');
+  pen.setAttribute('aria-hidden', 'true');
+  pen.textContent = '✎';
+  logDoor.append(pen);
+  actions.append(logDoor);
+
   const edit = actionButton('Edit', 'data-student-edit', student.id);
   edit.setAttribute('aria-haspopup', 'dialog');
   edit.setAttribute('aria-label', 'Edit ' + fullName(student));
@@ -644,7 +675,10 @@ const COUNSELOR_FIELDS = ['name', 'email'];
    an ordinary one, or the reverse, then writes nothing instead of writing into the wrong half of a
    student's record. `plan` and `kind` are on neither list — both are enumerated, so both are
    written by their own function against src/supports.js's list rather than from a typed value. */
-const SUPPORT_FIELDS = ['reviewDate', 'medical', 'behaviorPlan'];
+/* `attendanceClause` joined at WO-4.4 — the field that work order had to shape, argued at
+   newSupports() in src/supports.js. It is a support path like the three beside it, which is
+   what gives it the refusal below while presentation mode is on for free. */
+const SUPPORT_FIELDS = ['reviewDate', 'medical', 'behaviorPlan', 'attendanceClause'];
 const CASE_MANAGER_FIELDS = ['name', 'email'];
 const ACCOMMODATION_FIELDS = ['detail', 'appliesTo'];
 
@@ -945,6 +979,7 @@ function renderSupportFields(student) {
   fieldValue('supportsReviewDate', value(supports.reviewDate));
   fieldValue('supportsMedical', value(supports.medical));
   fieldValue('supportsBehaviorPlan', value(supports.behaviorPlan));
+  fieldValue(SUPPORTS_ATTENDANCE_ID, value(supports.attendanceClause));
 
   renderPlanRow(student);
   if (show) renderAccommodations(student);

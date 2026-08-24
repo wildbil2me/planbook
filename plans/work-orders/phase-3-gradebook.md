@@ -624,7 +624,7 @@ same way, or a Ctrl+P from any other screen starts producing blank paper again.
 
 ## WO-3.8 — Accommodation prompts at point of use
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** S · **Depends on** WO-1.8, WO-3.3 · **Owes** WO-4.4
+**Ship** 2 · **Status** ✅ DONE — 2026-08-13 · **Size** S · **Depends on** WO-1.8, WO-3.3
 **Closes roadmap** Phase 3 → "Accommodation prompts at point of use."
 
 **Why it exists.** "A list nobody opens protects nobody." A teacher is legally obligated to
@@ -659,7 +659,7 @@ compliance.
       the seam under the mode it writes nothing either. Flipping back brings the same sentence back to
       the same open dialog, which is what makes the absence a suppression rather than a build that
       cannot draw one.)*
-- [ ] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
+- [x] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
       exists. *(Deferred to Phase 4 if the behavior log isn't ready; note it if so.)* **It is
       deferred, and for a reason narrower than the parenthetical guessed** *(2026-08-13, WO-3.8):
       attendance marking and its counts have shipped, so the behavior log is not what this was
@@ -668,7 +668,16 @@ compliance.
       `appliesTo` is documented as being about grading categories — and `signals` is deliberately
       empty in `src/store.js`, so there is no N either. Inventing both, plus a surface on the
       registry, is three decisions this work order's Deliverables never name.*
-      → WO-4.4 "surfaces an attendance-related plan clause if one exists"
+      **Paid by WO-4.4 on 2026-08-24, and the pointer is discharged rather than left standing.**
+      That work order shaped both of the missing pieces this deferral named: the clause is a free-text
+      `supports.attendanceClause` — a field beside `medical` and `behaviorPlan`, not a thirteenth
+      accommodation KIND, which would have fired this very editor's summary on every assignment in the
+      year — and the N is **the attendance signal rule's own N**, read through `thresholdsOf()`, so no
+      new threshold key exists to disagree with it. The surface is WO-3.8's shipped
+      `.accommodation-prompt`, worn whole and untouched, which is where this box's presentation-mode
+      half comes from for nothing. Measured in `verify-shell.mjs` with three negatives beside the yes;
+      **the thumb readings are still 👤** and are written up in `TESTING.md` § WO-4.4, so if that
+      sitting fails, this box and WO-4.4's fifth come back together.
 
 ---
 

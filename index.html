@@ -680,6 +680,20 @@
            surface. -->
       <div class="attendance-pass-banner hidden" id="attendancePassBanner" role="group"></div>
 
+      <!-- WO-4.4's absence prompt, painted by src/accommodation-prompt.js and by nothing else.
+           Markup, never a click target: the one control inside it is built by that module.
+
+           IT IS HERE, WITH THE STATE LINE AND THE PASS BANNER, because those three are what is true
+           right now — the toolbar, the pager and the grid below them are the working surface. It
+           wears `.supports-panel .accommodation-prompt` exactly as the assignment editor's host
+           does, which is what gives it that component's look, its 44px control and its unconditional
+           `@media print { display: none }` without a line of new CSS.
+
+           It is EMPTY at rest and empty again the moment the registry redraws under it
+           (src/attendance.js's renderAttendance clears it). What fills it is a mark landing on `A`
+           for a student whose plan has something on file about attendance — never a render. -->
+      <div class="supports-panel accommodation-prompt hidden" data-absence-prompt></div>
+
       <div class="attendance-toolbar">
         <div class="search-box">
           <span aria-hidden="true">🔍</span>
@@ -2630,8 +2644,9 @@
              are gone" is the reasonable reading. src/roster.js swaps them from the one visibility
              question every screen asks; nothing here decides for itself. -->
         <p class="supports-hint" id="supportsHint">
-          Accommodations, plan details, medical needs and behavior plans stay out of sight until
-          you ask for them, because this screen gets projected. They are on file either way.
+          Accommodations, plan details, medical needs, behavior plans and what the plan says about
+          attendance stay out of sight until you ask for them, because this screen gets projected.
+          They are on file either way.
         </p>
         <p class="supports-hint hidden" id="supportsHintPresentation">
           <strong>Presentation mode is on, so these cannot be opened here.</strong> Nothing has
@@ -2716,6 +2731,23 @@
           <textarea class="student-notes" id="supportsBehaviorPlan" rows="2"
                     data-student-field="supports.behaviorPlan"
                     aria-label="Behavior plan for this student"></textarea>
+
+          <!-- WO-4.4's field, and the one that work order had to shape. It is free text beside the
+               two above rather than a thirteenth accommodation kind, and src/supports.js argues why
+               at newSupports(): an accommodation is scoped to KINDS OF WORK, and attendance is not
+               one. The hint says where it shows up, in the shape the review date's hint above uses
+               and for the same reason — a field that quietly starts appearing on a screen she
+               projects is the disclosure presentation mode exists to prevent. -->
+          <div class="modal-section-label">Attendance</div>
+          <textarea class="student-notes" id="supportsAttendanceClause" rows="2"
+                    data-student-field="supports.attendanceClause"
+                    aria-label="What this student’s plan says about attendance"></textarea>
+          <p class="roster-hint">
+            What the plan says about this student’s attendance — excused absences, a late arrival
+            the plan allows, a re-entry routine. Planbook offers it back to you on the marking
+            screen when you mark this student absent once too often, and nowhere else. It never
+            reaches a printout, an export or a message, and presentation mode hides it.
+          </p>
         </div>
       </div>
 
@@ -2743,6 +2775,58 @@
       <div class="modal-actions">
         <button class="class-action-btn danger" id="studentDeleteBtn" data-student-delete-confirm>Delete</button>
         <button class="class-action-btn" data-student-delete-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WO-4.4's log sheet — tap two of two, opened from the ✎ on a roster row.
+
+     THE STRIP, THE SIX CHIPS AND THE ERROR LINE ARE EMPTY HERE AND FILLED BY src/log-sheet.js. The
+     six quick entries ship fixed (the owner, 2026-08-20) and a per-teacher list later is a settings
+     block and a picker — which is a change to one array in src/log.js and to nothing else, because
+     this markup is already a loop over it. Writing the six into this file would be the one thing
+     that turns that into a migration.
+
+     THE KIND STRIP COMES FIRST, ABOVE THE WORDS, and that is a decision rather than a layout: the
+     log is append-only, so a wrong kind cannot be corrected later — only annotated — and the kind is
+     what decides whether the entry is ever on a projected screen at all.
+
+     The two fields under the chips are the work order's "optional detail" and are genuinely
+     optional. A teacher who only ever taps a chip still has a log. -->
+<div class="modal-overlay hidden" id="logSheetModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="logSheetTitle">
+    <div class="modal-header">
+      <h2 id="logSheetTitle"></h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">What kind of entry</div>
+      <div class="log-kinds" id="logSheetKinds" role="group"
+           aria-label="What kind of entry this is"></div>
+
+      <div class="modal-section-label">One tap and it is written</div>
+      <div class="log-quick-grid" id="logSheetQuick"></div>
+
+      <div class="modal-section-label">Or say more (optional)</div>
+      <input class="class-input" type="text" id="logSheetSubject" autocomplete="off"
+             placeholder="Off task, second time this week"
+             aria-label="What to call this entry">
+      <textarea class="student-notes" id="logSheetBody" rows="2"
+                placeholder="Anything you want to remember. Nothing here is sent anywhere."
+                aria-label="Detail for this entry"></textarea>
+
+      <p class="log-append-note">
+        <strong>Entries are never edited or deleted.</strong> If you get one wrong, write another —
+        the log is what you wrote down at the time, and that is the whole reason it is worth
+        anything in a meeting six weeks from now.
+      </p>
+
+      <p class="roster-error hidden" id="logSheetError"></p>
+
+      <div class="modal-actions">
+        <button class="class-action-btn primary" data-log-write>Write it down</button>
+        <button class="class-action-btn" data-modal-close>Cancel</button>
       </div>
     </div>
   </div>
@@ -2864,7 +2948,8 @@
           your classes, your roster, guardian and counselor contacts, attendance, grades, and
           your record of who you have contacted. <strong>It also contains the support details
           you keep on students — accommodations, IEP and 504 plans, case managers and review
-          dates, medical needs, and behavior plans.</strong> That is on purpose: a backup that
+          dates, medical needs, behavior plans, and what a plan says about attendance.</strong>
+          That is on purpose: a backup that
           left them out would not bring your gradebook back.
         </p>
         <p>

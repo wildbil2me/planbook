@@ -53,6 +53,15 @@ dependencies.
   clock, not the threshold it just crossed. That is what makes an explanation unable to drift from
   the arithmetic behind it, and what keeps accommodation, medical and plan data out of a sentence
   that Phase 5 mails home. A new rule must not need a new explanation mechanism.
+- **The log is append-only, and nothing in the app can delete an entry** (WO-4.4). A correction is
+  an ordinary later entry that says so — no `correctsId`, no strikethrough, and no rule about which
+  of two entries a reader should believe, **because the reader believes the newest**. `src/log.js`
+  exports one writer and does exactly one thing to the document. That last clause is load-bearing:
+  entries are ordered newest-first by `at`, and **the tie is broken toward the later write** because
+  `localStamp()` is second-granular, so two entries logged in one sitting carry the same stamp and a
+  stable sort left alone resolves them *oldest* first — the opposite of the card's heading, and it
+  put a correction underneath the entry it corrected. The card draws four and hides the rest, so the
+  tie decides what is visible as well as what order it reads in.
 - **Taken · dropped · not-taken-yet are three states, not two.** Everything counts *recorded
   meetings*, never calendar days. There is deliberately no schedule model — see
   [`plans/rotating-schedule.md`](plans/rotating-schedule.md). The fourth state, `NOT_TAKEN`, is the

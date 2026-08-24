@@ -453,6 +453,16 @@
   font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
 }
 
+/* THE ATTENDANCE CLAUSE, INLINE AND ONLY AFTER THE TAP (WO-4.4). The second prompt this component
+   dresses is about ONE student and one paragraph rather than a roster and a count, so what appears
+   under the button is prose rather than a list of chips — inside `.accommodation-prompt-names`,
+   which is the same white box the names arrive in, for the same reason: a disclosure under a
+   sentence rather than a second dialog. `white-space: pre-line` because the teacher may have typed
+   the clause as two lines and the plan's own shape is part of what she is reading back. */
+.accommodation-prompt-clause {
+  margin: 0; font-size: 12px; line-height: 1.6; color: #1a1a2e; white-space: pre-line;
+}
+
 /* ── DUPLICATING ── */
 /* The class picker is `.pill`s worn as-is, in the shape src/letter-scale.js's subject row uses; this
    class only holds them in a wrapping row. */
@@ -545,6 +555,7 @@
   .accommodation-prompt-group + .accommodation-prompt-group { margin-top: 10px; padding-top: 10px; }
   .accommodation-prompt-name { font-size: 12px; padding: 3px 9px; }
   .accommodation-prompt-names { padding: 12px; }
+  .accommodation-prompt-clause { font-size: 13px; }
   .accommodation-prompt-people { gap: 6px 8px; }
 }
 

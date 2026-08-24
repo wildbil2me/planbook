@@ -1,6 +1,7 @@
 /*
   The support block — IEP and 504 plans, a case manager, a review date, accommodations, medical
-  needs and behavior plans — and the one door any of it takes to a screen.
+  needs, behavior plans and what a plan says about attendance — and the one door any of it takes to
+  a screen.
 
   SHAPED LIKE THE REST OF src/, and named for the thing it owns rather than for its layer
   (src/README.md). It holds no DOM of its own: src/roster.js renders the editor and the roster row,
@@ -98,6 +99,40 @@ export function supportsVisible() {
 }
 
 /*
+  AND THE SAME HAND ON THE SAME SWITCH, ASKED ABOUT A LOG ENTRY (WO-4.4).
+
+  This file owns no log and reads none — src/log.js does — but the QUESTION is this file's, because
+  it is the same question every screen asks before it draws something a projector must not carry.
+  The card on the student record asks src/log.js for the entries it may draw, src/log.js walks them
+  past this function, and no screen anywhere tests presentationMode() for itself. That is the
+  arrangement WO-4.4 asks for in as many words, and DO NOT ADD A SECOND COPY OF THIS TEST is rule 1
+  above applying to a second kind of secret.
+
+  THE TWO KINDS PART COMPANY UNDER A PROJECTOR (the owner, 2026-08-20), and the split is the whole
+  of the rule:
+
+    · A `behavior` entry goes. Read off a classroom wall it is a disclosure about a child in front
+      of the thirty people it is about, and it is the one kind of entry that names conduct.
+    · A `note` STAYS. It is the teacher's working memory — "said he is working nights", "call home
+      about the field trip" — and suppressing it costs her the half of the card that has nothing to
+      do with conduct. The app does not get to hide a teacher's own reminders from her.
+
+  ANY OTHER KIND IS TREATED AS A BEHAVIOR ENTRY, which is the safe rounding this file already makes
+  at presentationMode(): a `contact` from Phase 5, or a kind out of a hand-edited file, is something
+  this build cannot vouch for, and the unreadable answer is rounded toward hiding. A teacher who
+  finds a row missing turns the mode off and has it back; a teacher who finds one on the wall cannot
+  take it back at all.
+
+  NOTE WHAT IT IS NOT: a count, a summary, or a filter that reports what it removed. It answers about
+  ONE kind, so the caller cannot learn from it how many entries went — a count is the disclosure, and
+  that is why there is no "2 hidden" line anywhere on that card.
+*/
+export function logKindVisible(kind) {
+  if (kind === 'note') return true;
+  return supportsVisible();
+}
+
+/*
   IS PRESENTATION MODE ON. The preference, read fresh every time rather than cached: a cached copy
   is a copy that can disagree with the switch, and the disagreement that costs something is the one
   where the app thinks it is hidden and the projector disagrees.
@@ -169,8 +204,49 @@ export function newSupports() {
     accommodations: [],
     medical: '',
     behaviorPlan: '',
+    attendanceClause: '',
   };
 }
+
+/*
+  ── `attendanceClause`: THE FIELD WO-4.4 HAD TO SHAPE, AND WHAT WAS REFUSED ──
+
+  The work order left one thing open and it is this field rather than a screen: `supports` had no
+  attendance clause for the absence prompt to read (WO-3.8 could not build that half for exactly this
+  reason). Two shapes were possible and the choice changes docs/data-model.md either way.
+
+  WHAT IT IS: free text, beside `medical` and `behaviorPlan`, holding what the plan says about this
+  student's attendance — "absences for medical appointments are excused per the IEP", "transport
+  arrives after the bell, do not mark tardy". Empty means there is nothing on file, exactly as the two
+  fields beside it mean it.
+
+  WHAT WAS REFUSED: a thirteenth ACCOMMODATION KIND. It is the smaller-looking change and it is the
+  wrong shape twice over. An accommodation row is scoped by `appliesTo`, which names KINDS OF WORK —
+  tests, quizzes, homework — and attendance is not a kind of work, so the field would be meaningless
+  on the row and its documented default, "empty means everything", would make every such row fire
+  WO-3.8's assignment-editor prompt on every assignment in the year ("1 student needs attendance").
+  Stopping that would take a rule about one kind, living in a second file, asked by a prompt that has
+  nothing to do with attendance — which is the second opinion this file exists to prevent. The plainer
+  reading is the true one: an attendance clause is a clause of a plan, like a behavior plan, not an
+  adjustment to a piece of work.
+
+  WHY THE NAME IS `attendanceClause` AND NOT `attendance`. This app already has attendance — a
+  ledger, 4,800 lines and a dozen readers — and `student.supports.attendance` in a grep for that word
+  is a name that will be misread. `attendancePlan` was the parallel-to-`behaviorPlan` candidate and
+  reads as a document that does not exist; the work order's own words are *"an attendance-related plan
+  clause"*, so the field is the clause.
+
+  NO MIGRATION, and none is needed: the key is absent in every document written before this build and
+  reads as empty everywhere — the same tolerance every field in this block already has. It is nested
+  inside `students[]`, so src/backup.js's parseBackup() (which validates the TOP-LEVEL keys of
+  newYearDocument()) refuses nothing that it accepted yesterday. See the NO SCHEMA MIGRATION note at
+  supportsOf() below, which is the same rule this field is the second instance of.
+
+  AND IT IS SENSITIVE, so the same three rules cover it as cover everything else in this block: it
+  reaches no merge field, no export, no printout and no log line, and the one file it is written into
+  is the teacher's own backup — which is why docs/FERPA.md and privacy.html name it in the same
+  sitting as this line landed (CLAUDE.md § Accommodations).
+*/
 
 /*
   A fresh accommodation row, and the one field that is NOT seeded from the enumerated list: `kind`
@@ -222,6 +298,14 @@ export function accommodationsOf(supports) {
   return supports && Array.isArray(supports.accommodations) ? supports.accommodations : [];
 }
 
+/* And the attendance clause, read the same way and for the same reason — a block written before
+   WO-4.4 has no such key, and "there is nothing on file about attendance" is what that means. It is
+   a reader and not a summary: it hands back the teacher's own words, which reach a screen only
+   through setSensitiveText() like every other string in this block. */
+export function attendanceClauseOf(supports) {
+  return supports && typeof supports.attendanceClause === 'string' ? supports.attendanceClause : '';
+}
+
 /*
   Is there anything on file for this student — the question the roster dot is the answer to, and
   the only question a list view is allowed to ask.
@@ -234,7 +318,10 @@ export function hasSupports(student) {
   if (!s) return false;
   if (typeof s.plan === 'string' && s.plan && s.plan !== 'none') return true;
   if (s.reviewDate) return true;
-  if (s.medical || s.behaviorPlan) return true;
+  /* `attendanceClause` joins the two free-text fields here at WO-4.4 rather than being tested
+     somewhere of its own: the dot means "there is something on file", and a student whose plan says
+     only that her absences are excused has something on file. */
+  if (s.medical || s.behaviorPlan || s.attendanceClause) return true;
   const manager = s.caseManager && typeof s.caseManager === 'object' ? s.caseManager : {};
   if (manager.name || manager.email) return true;
   return accommodationsOf(s).some((a) => !!a

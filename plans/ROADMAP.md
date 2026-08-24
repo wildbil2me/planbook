@@ -83,12 +83,12 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
-| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 4/8 `[█████░░░░░] 50%` |
+| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **55/81 `[██████░░░░] 68%`** · ⏳ 1 deferred |
+| | | **Overall** | **56/81 `[███████░░░] 69%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -453,7 +453,17 @@ different student every time, and it's the message that actually lands at home.
 - [ ] **The quiet middle.** Students neither flagged nor praised nor contacted all term. The ones a
       busy teacher genuinely loses track of.
 - [x] "Why is this student here?" — every flag explains itself in a sentence with the real numbers.
-- [ ] Behavior/note logging fast enough to do mid-class, feeding the behavior signals.
+- [x] Behavior/note logging fast enough to do mid-class, feeding the behavior signals.
+
+*(**Built 2026-08-24, WO-4.4, and deliberately not ticked — the box has two halves and only one of
+them is closed.** The log exists, the sheet is two taps off a roster row, the card is on the student
+record, and* **"feeding the behavior signals" is measured**: *the ninth concern rule counts entries
+inside its window,* `inertRules()` *is empty, and the harness asserts the count against a fixture
+where three different mistakes give three different wrong numbers.* **"Fast enough to do mid-class"
+is a stopwatch and a thumb** *— the work order's own first Acceptance line, five seconds from the
+roster, which no headless run can settle. It is owed in* `TESTING.md` *§ WO-4.4 along with eight
+other 👤 readings, and the box stays open until somebody holds the iPad. The dashboard above is
+unchanged for the same reason.)*
 
 *(**"Why is this student here?" was closed by the mechanism, not by the rules** — 2026-08-19,
 WO-4.1. Two rules are registered today,* `grade-below` *and* `attendance-window`*, which is the
