@@ -13,6 +13,57 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A Google Drive sign-in, and nothing uploaded yet — 2026-08-24
+
+Planbook can sign in to Google Drive. The About modal has a new **Google Drive sync** section with one
+control — **Connect Google Drive** — which signs in, reports the time the sign-in lasts, and offers
+**Disconnect**. That is the whole of it: **nothing is uploaded**, and the panel says so in as many
+words, because a teacher who connects and assumes her gradebook is now in Drive would stop
+downloading backups. The backup file is still the backup.
+
+**Google asks for one permission, and it was read on the screen rather than promised.** The consent
+screen lists exactly one line — *"See, edit, create and delete only the specific Google Drive files
+that you use with this app"* — confirmed on the laptop on 2026-08-24. Google prints one line per
+scope requested, so the harness holds the screen honest from the other side: it asserts that the
+`drive.file` scope string occurs **exactly once across the 54 files the app runs**, and that it is the
+only Google scope of any kind in any of them. A second scope cannot reach that screen without turning
+the run red. The *"Google hasn't verified this app"* warning is still there and is expected — the
+OAuth client sits in Testing mode until the verification submission (WO-3.18), which this unblocks by
+finally giving it a sign-in to film.
+
+**The sign-in is switched off everywhere but the author's own laptop, and that is the flag rather than
+an oversight.** The section draws only on a loopback origin, because the OAuth client's single
+authorized JavaScript origin is `https://localhost:8443`. So the deployed app — and the iPad, and the
+LAN address — show the About modal exactly as they did yesterday, fetch no Google script, and contact
+Google not at all, which is what keeps the privacy policy's *"no third-party code of any kind"* true
+word for word. WO-7.3 widens that one function and the client's origin list in the same sitting.
+
+**Close Planbook and you are signed out.** The token lives in memory and only in memory. A browser
+sign-in has no refresh token, so storing the token could preserve the tail of one hour at most — and
+a bearer credential in the browser's storage outlives the tab and survives a laptop handed to a
+substitute. Nothing about the sign-in reaches `localStorage`, and nothing about it touches the year
+document: signing out leaves the document byte-for-byte as it was.
+
+**Signed out, the app is unchanged, and that is measured rather than assumed.** All 1,116 checks in
+`verify-shell.mjs` run with nobody signed in, and `src/shell.js` is the only file in the app that
+imports the new `src/auth.js` — so no screen, report or signal can observe a sign-in and behave
+differently. A teacher whose Workspace admin blocks third-party apps loses nothing.
+
+**The hour was sat through rather than reasoned about.** A real token was left to lapse at its full
+~3,600s on 2026-08-24: the panel then reported *not connected* rather than an hour it no longer had,
+and reconnecting did not ask for consent a second time. The iPad was read the same day and the
+expected nothing was there — no Drive section, no Google anything — which is the reading worth taking
+precisely because a flag failing *open* on a device that cannot complete a handshake is the one way
+this lands badly.
+
+**Still to come:** uploading and downloading the year document, the `rev` comparison that decides
+which side is ahead, and the conflict that keeps both copies rather than discarding one — all of that
+is WO-7.2, and none of it is in this build.
+
+**Deploy note.** `sw.js` is at `planbook-shell-v94` and `index.html` changed, so **force-quit
+Planbook from the app switcher** after deploying — a reload draws the old document under a build line
+that is reporting honestly.
+
 ### The project has a licence — 2026-08-21
 
 `LICENSE.md` holds the Apache License 2.0, owner-added. Until now this repository was public with no

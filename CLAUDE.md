@@ -44,8 +44,9 @@ and the reason is a dependency nobody had written down.* [WO-3.18](plans/work-or
 *owes Google a demo video* **showing the scope in use**, *and* **nothing in the app uses the scope**: the
 token flow is [WO-7.1](plans/work-orders/phase-7-sync.md#wo-71--auth), *which had not been built and was
 itself wearing Phase 7's* `🔒` — *so the paperwork was blocked on a sign-in and the sign-in was marked
-"do not start it." WO-7.1 is* `⬜ NOT STARTED` *and buildable now; WO-3.18 gained it as a third
-dependency and dropped to* `**Ship** —` *beside it, in a new* **§ After Ship 3** *section. **The ship
+"do not start it." WO-7.1 was* `⬜ NOT STARTED` *and buildable, and is* `🔨 IN PROGRESS` *as of
+2026-08-24 — read the last block in this run before acting on the two sentences above. WO-3.18
+gained it as a third dependency and dropped to* `**Ship** —` *beside it, in a new* **§ After Ship 3** *section. **The ship
 argument is WO-G2's own, from 2026-08-10** — Ship 2 is first grades and contains no sync — and WO-G2's
 eighth box was* **re-homed to WO-3.18's own third Acceptance line, not waived**, *which is the hatch that
 box has named since it was written.)*
@@ -95,6 +96,26 @@ a harness comment describing a row-counting assertion nobody had written, sittin
 the four-segment assertion it claimed to replace. The scar is in* `plans/dispatch-retro.md`
 *§ "The comment that ran ahead of its code" and the recovery in*
 `.claude/dispatch/WO-4.2-status.md`*.)*
+
+*(**The sign-in exists as of 2026-08-24, and it is the block above's two sentences going stale rather
+than a new row of Ship 3.*** [WO-7.1](plans/work-orders/phase-7-sync.md#wo-71--auth) *— the Google
+Identity Services token flow — is* `🔨 IN PROGRESS`*: built, both harnesses green, the consent
+screen read on the laptop by the owner the same day showing* **one permission line**, *and its own
+first two Acceptance boxes ticked on that reading. What holds it open is an hour nobody can hurry — a
+real token lapsing at ~3,600s — and one glance at the iPad.* **Three things about it that are
+decisions, not details.** *The token lives* **in memory and only in memory**, *so a reload is a
+sign-out: there is no refresh token in a browser flow, so persisting a bearer credential would buy the
+tail of one hour and cost a laptop handed to a substitute.* **The control is in the About modal, not
+the backup panel** — *sync is not a backup, and a Connect button under "Download a backup" teaches the
+one misconception that costs a term of grades.* **And the flag** `docs/sync.md` **asks for is the
+origin** — *the section draws only on a loopback host, because the OAuth client's only authorized
+JavaScript origin is* `https://localhost:8443`*. So the deployed app and the iPad show the About modal
+exactly as before, fetch no Google script, and contact Google not at all — which is what keeps*
+`privacy.html`*'s "no third-party code of any kind" true word for word.* **It moves no data**: *upload,
+download, the* `rev`/`baseRev` *comparison and the keep-both conflict are* [WO-7.2](plans/work-orders/phase-7-sync.md#wo-72--document-transfer--conflicts)*,
+still* `🔒`*, and the panel says so on screen because a teacher who connects and assumes her
+gradebook is in Drive would stop downloading backups. **WO-3.18's demo video is unblocked** — the
+scope is now in use and there is a handshake to film.)*
 
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
