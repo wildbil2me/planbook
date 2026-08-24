@@ -184,7 +184,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.25 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.26 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -212,7 +212,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 25 | 25 | — | 🔨 IN PROGRESS (reopened six times; last on 2026-08-19) |
+| 1 — Shell, store, roster | 26 | 25 | — | 🔨 IN PROGRESS (reopened seven times; last on 2026-08-24) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -221,7 +221,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **137** | **115** | **2** | `[████████░░] 84%` |
+| | **138** | **115** | **2** | `[████████░░] 84%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1491,12 +1491,34 @@ row is a work order `next` cannot reach**, and that is the failure
 about. Written 2026-08-20, when WO-3.18 came out of § Ship 2 and would otherwise have had nowhere to
 land.
 
+*(**"Two rows" is the count on the day this was written and the table now holds five.** The heading
+sentence is left standing because it is an argument about what this section is *for* — a landing
+place for work no gate depends on — and that argument is unchanged by the count. **But the heading's
+other word is now doing damage.** Two of the five rows are recommended to run *before* Ship 3 closes,
+not after it: row 9 has said "startable now" since it was written, and row 11 says late August.
+**§ After Ship 3 sorts by ship membership, not by date** — every row here carries `**Ship** —`
+because no gate depends on it, which is the only thing the section actually asserts. Read the
+Suggested column for when, and never the heading.)*
+
+*(**Row 11 was re-rowed the day it was booked**, 2026-08-24, owner-directed. It went in reading "not
+before WO-G3, do it when the harness is quiet" and came out reading late August, because the argument
+that put it late was wrong twice over. **The September gap is inside a live term** — WO-1.26 rewrites
+the file that proves a hot fix to a real gradebook broke nothing, and the first weeks of real use are
+when hot fixes happen, so that gap is when the net is least affordable to lose rather than most.
+**And Ship 3's first three rows all landed early** — WO-4.1 and WO-4.2 on Aug 20, WO-4.4 on the 24th,
+against a table that wanted them through the 24th — which left Aug 25–30 unallocated and is the last
+capacity before Sep 2. **The ordering inside that window is not free**: WO-4.3's real-data box wants
+the praise list run twice a fortnight apart, so it has to be built and running by go-live, and it
+takes the front of the window. WO-1.26 follows it and pays one extra section's move for the
+privilege.)*
+
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — six of seven boxes; line 1 waits on the push and the deploy |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Startable now** — all four dependencies ✅ as of 2026-08-24. Then somebody else's queue, which is why it is worth starting ahead of its row. **Read its second deliverable first:** the app signs in and touches no file yet |
 | 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
+| 11 | [WO-1.26](phase-1-shell-store-roster.md#wo-126--verify-shellmjs-is-32000-lines-and-most-runs-never-see-it-green) verify-shell.mjs is 32,000 lines | L | — | **Aug 27–31, after WO-4.3 and before the term** — not in the September gap and not after WO-G3. **Hard-stop it on the 31st** and revert rather than carry a half-split harness into a live classroom |
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
 [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) *is the privacy

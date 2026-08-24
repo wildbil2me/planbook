@@ -2321,3 +2321,101 @@ every row in the ship, and* [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-
   findings are corroborated there and two — the 44px chips and the review-date collision — were found
   independently by both. **A drawing is not a work order**; the questions it raises are answered in
   the phase file or they are not answered.
+
+---
+
+## WO-1.26 — verify-shell.mjs is 32,000 lines and most runs never see it green
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** — · **Blocks** nothing by name,
+and every future harness edit by weight
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the harness is not a promise the roadmap
+makes, the way WO-2.14 and WO-2.15 are not. Booked 2026-08-24, owner-directed, out of a token audit
+of 412 dispatch transcripts.)*
+
+**Why it exists.** `tools/verify-shell.mjs` is **32,218 lines** — about three quarters the size of
+everything ever added under `src/`. It has grown one WO-labelled section at a time, 31 of them, and
+nothing has ever taken anything out. Two costs, both measured across every dispatch this repository
+has run.
+
+**Agents no longer read it; they navigate it.** Implementers made **616 `Edit`/`Write` calls** against
+this one file and **511 shell-outs to read it** — `sed -n '13206,13222p'`, `grep -n` for a helper's
+definition, thirty-line windows hunting for where a check belongs. Verifiers read it another 257
+times. That is turns spent on address arithmetic inside a file, and it is the largest single
+mechanical drag in the implementer profile.
+
+**And most runs cannot confirm it is green.** It was executed 552 times by implementers and 262 by
+verifiers, but only **59 of 142 implementer runs and 48 of 147 verifier runs ever saw a
+`0 failed` summary line**. The rest reported on a harness they had run in fragments — filtered
+through `grep`, or interrupted. **A green harness closes no 👤 item** is already the rule; this is
+the quieter half of the same problem, where a run cannot even establish the green.
+
+**This is not a request to add a test framework.** The suite rule stands — no dependencies, no
+linter, no test framework, no `package.json`. The output contract does not change either: one
+process, one summary line, one exit code. What changes is that the checks stop living in one file.
+
+**Traps**
+
+- **The check count is the contract, and it must not move.** `verify-shell.mjs` prints
+  `N checks · N passed · 0 failed · 0 skipped` and `wo-sweep.mjs` prints its own; `tools/README.md`
+  carries a `check()` count that has already turned the sweep red once when it went stale (WO-3.26's
+  dead dispatch). Capture the count on the pre-split tree, and prove the post-split count is
+  **identical**. A split that silently drops a section reads as a pass.
+- **A skipped check is the failure mode this hides.** WO-2.54's verifier caught that a guarded
+  section would have turned sixteen checks into one green-looking `skip(...)`. `grep -c "^SKIP"`
+  must be **0** before and after, and the split must not introduce a new reason to skip — a module
+  that fails to load is not a section that skipped.
+- **Do not reach for a runner that discovers files.** Globbing a directory makes the check count
+  depend on what is on disk, which is exactly the property that lets a section vanish quietly. An
+  explicit import list in the entry file is longer and is the point: adding a section is a visible
+  diff in one place.
+- **One browser, one server, one document.** The sections share a CDP connection, a local HTTPS
+  server and a seeded document. Splitting the file must not split those — a per-module browser
+  launch turns a 380-second run into something nobody waits for, and the sections are not
+  independent of each other's fixture state everywhere.
+- **`plans/verification-tooling.md` holds the reasoning for the retired line cap** and for reporting
+  lines-per-check beside the count. Both survive the split and both need a home in the new shape.
+- **This one is time-boxed, and the box is a real one.** It is rowed for **Aug 27–31**, after WO-4.3
+  and before the term opens on Sep 2, and the owner's instruction is to **hard-stop on the 31st and
+  revert rather than carry a half-split harness into a live classroom.** So work in whole sections:
+  move one, run the harness, confirm the count, commit. A tree that is twelve sections into a
+  thirty-one section move is a tree that reverts cleanly at any point; one mid-section is not. **Do
+  not begin a section you cannot finish and verify in the same sitting**, and never leave the entry
+  file importing a module that does not exist yet.
+
+**Deliverables**
+
+- **`tools/verify-shell.mjs` becomes a thin entry**: argument handling, the server, the browser, the
+  seeded document, the shared helpers (`check`, `skip`, `evalJs`, `has`, `clickSel`), an explicit
+  ordered import list, and the summary line. Nothing else.
+- **The 31 WO-labelled sections move into `tools/verify/` as modules**, each exporting one async
+  function taking the shared harness object. Group by surface rather than by work order where two
+  sections drive the same screen — the file name should say what a reader is looking for.
+- **The summary line, the exit code, the lines-per-check report and the `SKIP` accounting are
+  unchanged**, and `tools/README.md` § "Driving a browser over CDP" is updated to describe where a
+  new check now goes — that section is the one both agents are told to read first.
+- **`tools/README.md`'s `check()` count is recomputed** and the command that recomputes it is named
+  beside the number, so the next split-adjacent edit does not leave it stale the way WO-3.26 did.
+- **A note in `plans/verification-tooling.md`** recording the split, the before/after counts, and the
+  measured reason — the 616 edits and the 42% of runs that never saw a green summary.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs` on the post-split tree reports **the same check count** as the
+      pre-split tree, `0 failed`, `0 skipped`, and exits 0. Both numbers quoted in the result file.
+- [ ] `grep -c "^SKIP"` on the post-split output is `0`, and no module fails to import.
+- [ ] `node tools/wo-sweep.mjs` passes with no new REVIEW line, and `tools/README.md`'s `check()`
+      count matches what the harness actually reports.
+- [ ] No file under `tools/` exceeds 4,000 lines, and `tools/verify-shell.mjs` itself is under 800.
+- [ ] The repository still has **no dependencies, no `package.json`, no linter and no test
+      framework**, and every new file is a `.mjs` run by bare Node.
+- [ ] Adding a check is a one-file diff: `tools/README.md` says which file, and the entry file's
+      import list is the only shared thing a new section touches.
+- [ ] The run time is within 15% of the pre-split run, measured the same way on the same machine —
+      one browser and one server, not one per module.
+
+**Not in scope, and each is a decision rather than an omission.**
+- **No new checks, and no deleted ones.** This work order moves code and proves the count did not
+  change. A section that looks wrong on the way past gets a note in the result file, not an edit —
+  a behaviour change hidden inside a 32,000-line move is unreviewable.
+- **`tools/wo-sweep.mjs` is not split.** It is 1,967 lines and nobody navigates it by line number.
+- **No change to what `verify-shell.mjs` can settle.** It still drives a page and not an installed
+  app, it has still never seen a service worker, and **a green harness still closes no 👤 item.**
