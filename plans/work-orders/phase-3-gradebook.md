@@ -771,7 +771,7 @@ layout, already designed, not a redesign from nothing.
 ## WO-3.10 — the OAuth client exists and asks for one scope
 
 **Ship** — · **Status** ✅ DONE — 2026-08-11 · **Size** S · **Depends on** nothing — no domain, no name, no
-policy · **Owes** WO-7.1 · **Blocks** Phase 7 can be built and run once this exists
+policy · **Blocks** Phase 7 can be built and run once this exists
 **Closes roadmap** Phase 3 → *(no box. The roadmap's **Parallel, non-code** line at the end of Phase
 3 is a paragraph, not a checkbox, so there has never been anything here to tick — the quotation
 marks came off on 2026-08-08, WO-2.15, because the sweep was reading it as a fragment that matched
@@ -862,11 +862,12 @@ machine. Do not plan an iPad sitting around the auth flow before that domain exi
 **Acceptance**
 - [x] The consent screen lists exactly one scope, and the scope string is `drive.file`.
       *(Owner, in the console, 2026-08-11.)*
-- [ ] A sign-in completes on the owner's own account and the app receives a token — driven, not
-      assumed. The unverified-app screen is expected here and is not a failure. **Open on purpose:
-      there is no sign-in code in the app yet — this line names WO-7.1's token flow, and closes in
-      Phase 7's first hour.** → WO-7.1 "A sign-in completes on the owner's own account and the app
-      receives a token"
+- [x] A sign-in completes on the owner's own account and the app receives a token — driven, not
+      assumed. The unverified-app screen is expected here and is not a failure. *(Paid 2026-08-24 by
+      WO-7.1's own sitting, owner on the laptop at `https://localhost:8443`: the handshake completed,
+      the About panel read **Connected to Google Drive** with a clock time about an hour out, and the
+      consent screen carried one permission line. This box was open on purpose until then — there was
+      no sign-in code in the app to drive.)*
 - [x] The client id is recorded where WO-7.1 will look for it. *(The table above, 2026-08-11.)*
 
 **Traps** — Adding `spreadsheets` or a mail scope re-opens verification and puts the warning back in

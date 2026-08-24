@@ -7626,12 +7626,79 @@ unconditional value has nothing to pin.*
 
 *Phase goal: the same year on the laptop and the iPad, with one scope and no fear.*
 
-Nothing here yet — WO-7.1 through WO-7.3 append their acceptance lines as they land. Gated on
-Google OAuth verification.
+WO-7.1's lines are below. WO-7.2 and WO-7.3 append theirs as they land, and both are still 🔒 on
+Google OAuth verification — **which never gated building this phase**, only launching it.
 
 Two checks matter more than the sync working: the app is fully functional signed-out, forever,
 and the consent screen shows `drive.file` and nothing else. A conflict keeps both copies and
 says where the loser went.
+
+### WO-7.1 — Auth
+
+**What this adds.** A *Google Drive sync* section at the foot of the About modal, with one control:
+**Connect Google Drive**. It signs in — silent first, a visible Google prompt when that fails — holds
+the token in memory for the hour it lasts, and offers **Disconnect**. That is all it does: **nothing
+is uploaded**, and the panel says so in as many words, because a teacher who connects and assumes her
+gradebook is now in Drive would stop downloading backups.
+
+**It is hidden on almost every device**, and that is the flag `docs/sync.md` asks for rather than an
+accident. `src/auth.js` draws the section only on a loopback origin, because the OAuth client's only
+authorized JavaScript origin is `https://localhost:8443`. **So the deployed app — and the iPad, and
+the LAN address — show the About modal exactly as they did before**, fetch no Google script, and
+contact Google not at all. WO-7.3 widens that one function and the client's origin list together.
+
+**Three lines below need a real Google account and cannot be closed at a desk**, and they are all one
+sitting on the laptop. The procedure, once:
+
+1. `node tools/serve-https.mjs`
+2. Open **`https://localhost:8443`** in the laptop's browser. **That exact origin.** Not the LAN
+   address the iPad uses, not `127.0.0.1`, not the deployed site — Google matches the registered
+   origin exactly, and it is the only one this client has.
+3. About (the ⓘ button in the header) ▸ scroll to **Google Drive sync** ▸ **Connect Google Drive**.
+4. **The "Google hasn't verified this app" screen is expected and is not a failure** — the client
+   sits in Testing mode with the owner as its only test user, which is what WO-3.18 replaces. Click
+   through it (*Advanced* ▸ *Go to Planbook*).
+
+- [x] A sign-in completes and the app receives a token: the status line changes to **"Connected to
+      Google Drive"** and names a clock time about an hour out, and **Disconnect** replaces
+      **Connect**. 👤
+      *(Owner, laptop, `https://localhost:8443`, 2026-08-24. All three readings on that line came
+      back as written.)*
+- [x] The consent screen lists **exactly one** permission, and it is *"See, edit, create and delete
+      only the specific Google Drive files that you use with this app."* **One line, not two.** 👤
+      *(A second scope cannot get there without turning `verify-shell.mjs` red — it asserts the
+      string occurs exactly once across the 54 files the app itself **runs**, `index.html`, `sw.js`
+      and all of `src/`. Not "everything the browser loads": `privacy.html` is served and names the
+      scope in prose, and it carries no script, so nothing on it can ask for anything. **Read by the
+      owner on the laptop, 2026-08-24 — one permission line.**)*
+- [x] An hour later, the same window: the About panel says **not connected** rather than reporting a
+      time that has passed, and connecting again does not ask for consent a second time. 👤
+      *(This is the half of token expiry a desk cannot reach. The mechanism is driven in three
+      seconds in `verify-shell.mjs` with a 63-second token; what a human has to sit through is a real
+      one lapsing at ~3,600s, and the silent re-auth `ensureFreshToken()` attempts when it does.
+      **Sat through by the owner on 2026-08-24: the real lapse reads as written.**)*
+- [x] Everything else in the app works identically with nobody signed in.
+      *(All 1,116 checks in `verify-shell.mjs` run signed-out and pass, and no file in `src/` imports
+      `src/auth.js` except `src/shell.js` — so there is nothing anywhere else that can observe a
+      sign-in. Not read on an installed app: the harness drives a page.)*
+- [x] Sign-out removes the token and leaves the year document untouched.
+      *(Driven by a real tap on **Disconnect**, with the document's length, `rev` and a hash over it
+      identical on both sides. `src/auth.js` imports `src/live-region.js` and nothing else, so there
+      is no path from it to the store at all.)*
+- [x] No refresh token is requested or stored.
+      *(`acceptTokenResponse()` copies three fields out of Google's answer and keeps the answer
+      nowhere, so there is no field one could sit in. Driven with a response carrying a refresh token
+      and an id token: the session still holds those same three fields.)*
+- [x] Both controls clear 44px under a coarse pointer at 390px.
+      *(Measured. They are `.class-action-btn`, whose floor `src/shell.css` already owns — this work
+      order invented no new control grammar, which is the point.)*
+- [x] On the iPad, the About modal is unchanged: no Drive section, no Google anything. **Force-quit
+      from the app switcher first** — v94 is a `SHELL` change, so a reload draws the old document
+      under a build line reporting honestly. 👤
+      *(The expected reading is that nothing is there. It is worth taking anyway: the flag failing
+      OPEN on a device that cannot complete a handshake is the one way this lands badly, and it shows
+      up as a section that should not be on that screen. **Read by the owner on 2026-08-24: nothing
+      is there — the flag failed shut on the device that cannot complete a handshake.**)*
 
 ---
 

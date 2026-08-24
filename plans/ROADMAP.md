@@ -86,9 +86,9 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 4/8 `[█████░░░░░] 50%` |
 | 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
-| 7 | Drive sync (opt-in) | 🔒 GATED — needs OAuth verification | 0/7 `[░░░░░░░░░░] 0%` |
+| 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **53/81 `[██████░░░░] 65%`** · ⏳ 1 deferred |
+| | | **Overall** | **55/81 `[██████░░░░] 68%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -527,8 +527,8 @@ it. If it can't be acted on, it doesn't earn a place.
 
 **Gated on Google OAuth verification** — start the paperwork in Phase 3, not here.
 
-- [ ] Google Identity Services token flow, browser-only, **`drive.file` and nothing else**.
-- [ ] Sign-in is opt-in and reversible; the app stays fully functional signed-out, forever.
+- [x] Google Identity Services token flow, browser-only, **`drive.file` and nothing else**.
+- [x] Sign-in is opt-in and reversible; the app stays fully functional signed-out, forever.
 - [ ] Upload/download the year document, matched by `appProperties.docId`.
 - [ ] `rev`/`baseRev` comparison per [`../docs/sync.md`](../docs/sync.md).
 - [ ] **Conflict: keep both, never merge, never discard.** Write the loser as a named conflict copy

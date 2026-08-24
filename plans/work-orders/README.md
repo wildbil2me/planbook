@@ -218,10 +218,10 @@ indexes is a file nobody reads.
 | 4 — Signals | 5 | 2 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
-| 7 — Drive sync | 3 | 0 | — | ⬜ NOT STARTED — WO-7.1 ungated 2026-08-20; WO-7.2 and WO-7.3 still 🔒 |
+| 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **137** | **113** | **2** | `[████████░░] 82%` |
+| | **137** | **114** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1494,7 +1494,7 @@ land.
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — six of seven boxes; line 1 waits on the push and the deploy |
-| 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | **Whenever a day opens.** Laptop only, and it unblocks the row below |
+| 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | 🔨 **2026-08-24** — built and green; three lines open, and they are one sitting on the laptop at `https://localhost:8443`. Row 9 is unblocked the moment that sitting happens |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | The sitting, once there is a sign-in to film and a policy to link. Then somebody else's queue |
 | 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 
