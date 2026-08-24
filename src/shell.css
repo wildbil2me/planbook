@@ -634,6 +634,20 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   display: block; color: #5b6fcc; font-size: 13px; font-weight: 600; padding: 8px 0;
 }
 
+/* ── ABOUT: THE GOOGLE DRIVE SIGN-IN, WHICH MOST DEVICES NEVER SHOW ── */
+/* #drivePanel (WO-7.1). One declaration, and it is the gap the section would have had for free if
+   its label were still a sibling of the paragraph above it: `.modal-body p + .modal-section-label`
+   gives a label following prose its 16px, and wrapping the section in a div to make ONE class hide
+   the whole of it puts the label inside and breaks that adjacency. The wrapper exists for the flag
+   in src/auth.js and for nothing else.
+
+   NOTHING HERE IS A CONTROL, so nothing is owed to the coarse-pointer block below — the same note
+   `.build-caches` carries for the same reason. Both buttons in that section are
+   `.class-action-btn`, whose 44px floor is in the coarse block already, and both notes are
+   `.class-hint`: it is the panel grammar this sheet already owns rather than a seventh one, which
+   is the call every dialog since the class manager has made. */
+.modal-body .drive-panel { margin-top: 16px; }
+
 /* ── ABOUT: WHICH BUILD THIS DEVICE IS RUNNING ── */
 /* The last line of #aboutModal's "This build" section, written by src/shell.js at open time.
    Qualified with `.modal-body` because it is a <p> in there and `.modal-body p` is more specific

@@ -1652,6 +1652,57 @@
       <a class="doc-link" href="https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md"
          target="_blank" rel="noopener">Planbook and student-data privacy — the guide for administrators →</a>
 
+      <!-- GOOGLE DRIVE SIGN-IN (WO-7.1), AND IT IS HIDDEN ON ALMOST EVERY DEVICE THAT LOADS THIS
+           FILE. src/auth.js decides, from the page's own hostname: the OAuth client's only
+           authorized JavaScript origin is `https://localhost:8443`, so the sign-in is reachable
+           exactly where the handshake can succeed and nowhere else. On the deployed app this whole
+           block stays `hidden`, no Google script is ever fetched, and privacy.html's flat claim
+           that Planbook loads no third-party code of any kind stays true word for word. That is
+           the flag docs/sync.md asks for; WO-7.3 widens the one function in src/auth.js in the
+           same sitting as it adds a real origin to the client.
+
+           IN THIS MODAL AND NOT IN THE BACKUP PANEL, which was the other candidate and lost on one
+           sentence: SYNC IS NOT A BACKUP. Drive holds one live copy that sync will overwrite with a
+           newer one, and the downloadable file is the safety net either way — so a Connect button
+           sitting under "Download a backup" would teach the one misconception that costs a term of
+           grades. It goes here because the sentence it qualifies is already here, four paragraphs
+           up: "There is no account and no server." Same argument as the two links above it.
+
+           AFTER THE POLICY ROWS, DELIBERATELY: the way out to what leaves this device is read
+           before the control that starts sending it anywhere.
+
+           THE COPY SAYS NOTHING IS UPLOADED YET, and that line is a deliverable rather than a
+           caveat. This build signs in and stops — upload, download and conflicts are WO-7.2 — and a
+           teacher who connects, assumes her gradebook is now in Drive and stops downloading backups
+           has been misled by an omission this panel could have prevented.
+
+           BOTH BUTTONS ARE `.class-action-btn`, whose 44px floor already sits in src/shell.css's
+           coarse block, and both notes are `.class-hint` — the same grammar every other dialog in
+           this app uses (src/shell.css says why at that rule). The only new selector is the
+           wrapper, which exists so one class hides the section, and it is not a control. -->
+      <div class="drive-panel hidden" id="drivePanel">
+        <div class="modal-section-label">Google Drive sync</div>
+        <p>
+          Sync carries one school year between your own devices — the laptop and the iPad — through
+          your own Google Drive. It is off until you turn it on, and Planbook works exactly the same
+          with it off, forever.
+        </p>
+        <!-- Written by src/auth.js when this modal opens, never from a string in this file: it is a
+             fact about a sign-in that lasts about an hour, and a sentence typed here would be a
+             claim rather than the state. Same reason #buildCaches below is empty. -->
+        <p class="class-hint" id="driveStatus"></p>
+        <div class="modal-actions">
+          <button class="class-action-btn primary" id="driveConnectBtn" data-drive-connect>Connect Google Drive</button>
+          <button class="class-action-btn hidden" id="driveDisconnectBtn" data-drive-disconnect>Disconnect</button>
+        </div>
+        <p class="class-hint">
+          Planbook asks Google for one permission and no others: to see, edit, create and delete
+          only the files you use with this app. It cannot see anything else in your Drive.
+          <strong>Nothing is uploaded yet</strong> — this build signs you in and stops there, and
+          the file you download from the ⤓ button is still the backup that matters.
+        </p>
+      </div>
+
       <!-- WHICH COPY OF PLANBOOK THIS DEVICE IS ACTUALLY RUNNING (WO-8.10), and it is EMPTY HERE ON
            PURPOSE: src/shell.js writes it from what caches.keys() answers, every time this modal
            opens, and never from a string. A version typed into this file is a claim rather than

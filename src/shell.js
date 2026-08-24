@@ -431,6 +431,14 @@
       data-teacher-panel              fills the teacher's own details, then opens them
       data-teacher-field="<name>"     an input; edits that field as it is typed
       data-teacher-cc                 toggles whether outreach drafts copy the teacher
+      data-drive-connect              signs in to Google Drive — silent first, a visible Google
+                                      prompt when that fails (WO-7.1). It lives in the About
+                                      modal and is HIDDEN on every origin but loopback, which
+                                      is the flag src/auth.js owns; the handler here still
+                                      asks that module rather than trusting the markup
+      data-drive-disconnect           signs out. Clears the in-memory token, asks Google to
+                                      revoke it, and touches no year document — src/auth.js
+                                      imports the store for nothing at all
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -566,6 +574,12 @@ import * as detail from './detail.js';
    in, and nothing about a printed sheet belongs in it. It reads the grade engine, the score grid's
    own order and cell reader, and src/backup.js's file hand-off; nothing imports it back. */
 import * as gradesReport from './grades-report.js';
+/* The Drive sign-in (WO-7.1). Imported for two calls and nothing more — the two controls in the
+   About modal's Drive section, and the paint on the path that opens it. It is the ONE module here
+   that is hidden from almost every device that loads this file: src/auth.js decides from the page's
+   own hostname whether the section exists at all, and that decision is not repeated here for
+   src/supports.js's reason — one asker, so the screen cannot disagree with the rule. */
+import * as auth from './auth.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -1293,6 +1307,13 @@ document.addEventListener('click', (e) => {
        opens and then fills in is a modal that flickers. Both arms open it, because a panel that
        failed to say which build this is still has to say everything else. */
     if (overlayId === 'aboutModal') {
+      /* The Drive section is painted in the same breath (WO-7.1), and synchronously: it reads a
+         module variable rather than Cache Storage, so there is nothing to await, and a token's
+         remaining hour is exactly the kind of fact that must not be drawn from a string typed into
+         index.html. It is BEFORE the await for the flicker reason above — both halves of this panel
+         are true the moment it appears — and outside the .then arms because it cannot fail: the
+         module returns early when the section is not on the page or the flag is shut. */
+      auth.refreshAuthChrome();
       paintBuildLine().then(() => openModal(overlayId, open), () => openModal(overlayId, open));
       return;
     }
@@ -1320,6 +1341,14 @@ document.addEventListener('click', (e) => {
      changes what the NEXT alert does and touches no screen that is currently drawn, which is the
      opposite of the mode above, where the redraw is the point. */
   if (e.target.closest('[data-sounds-toggle]')) { alertSound.toggleAlertSounds(); return; }
+
+  /* THE TWO DRIVE CONTROLS (WO-7.1), and neither is awaited. Both report into the panel they sit
+     in — src/auth.js repaints it on every outcome, including the failures — and there is nothing
+     here to chain onto the end of either: a sign-in changes no screen but that section, because
+     this build moves no data. The day one does, it is WO-7.2 that adds the line, exactly as the
+     categories, the bands and the thresholds each added theirs. */
+  if (e.target.closest('[data-drive-connect]')) { auth.connect(); return; }
+  if (e.target.closest('[data-drive-disconnect]')) { auth.disconnect(); return; }
 
   const picker = e.target.closest('[data-year-picker]');
   if (picker) { openYearPicker(picker); return; }
@@ -3199,4 +3228,19 @@ window.planbook = {
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,
+  /* `auth` joined at WO-7.1, and its reason is `backup`'s rather than the reading reason `classes`
+     gives: a page cannot be handed a real Google token by a script any more than it can be handed a
+     real file. No headless browser has an account, a consent screen or a Google session, so the
+     SUCCESS path of the whole feature is unreachable by clicking — and the states that matter most
+     sit on the far side of it: a token in memory and in no storage, an expired token reading as
+     signed out, a sign-out clearing it, a grant of the wrong scope refused. src/auth.js's
+     acceptTokenResponse() is that seam and the GIS callback is its only caller in the app; the
+     harness drives everything after it through here, and taps the two real buttons for the rest.
+     THE TOKEN GETTER COMES WITH IT, and that is a deliberate acceptance rather than an oversight.
+     A curated object would be the first entry here that hides part of its module, which is a worse
+     precedent than the one thing it hides — and what it hides is available for at most an hour,
+     only after the teacher tapped Connect in this session, on an origin whose only script is this
+     app, to anything that could equally have called Google itself. Nothing in the app reads
+     window.planbook — see the block above for why the seam outlived the shelf. */
+  auth,
 };
