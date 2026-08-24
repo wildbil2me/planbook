@@ -1,0 +1,822 @@
+<title>WO-3.18 Submission Runbook</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. This page obeys both, which is why every value below
+     is a literal. tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block
+     here is a red sweep; the first draft of this file was written as an artifact and had one. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  code, .mono {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 {
+    font-size: clamp(30px, 5.2vw, 46px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .band .standfirst {
+    color: rgba(255,255,255,0.62);
+    font-size: 17px;
+    max-width: 62ch;
+    margin: 0;
+  }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .sec-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e0e4f0;
+  }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Dependency tiles ─────────────────────────────────────── */
+  .deps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+    gap: 12px;
+  }
+  .dep {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .dep-id {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .dep-what { font-size: 13.5px; color: #4c5a6d; line-height: 1.45; }
+  .dep-state {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .is-done   { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+  .is-open   { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+  .is-flight { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .dep.done   { border-left: 3px solid #a3e4bc; }
+  .dep.open   { border-left: 3px solid #d8bd63; }
+  .dep.flight { border-left: 3px solid #b0bcf0; }
+  .dep-what strong { color: #1a1a2e; font-weight: 600; }
+
+  /* ── Callout ──────────────────────────────────────────────── */
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+
+  /* ── Steps ────────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+  .step-num {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 18px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .step.blocked .step-body { border-left: 3px solid #d8bd63; }
+  .step.now .step-body { border-left: 3px solid #b0bcf0; }
+  .step.wait .step-body { border-left: 3px solid #e0e4f0; background: #f6f8fb; }
+
+  .step-head { display: flex; flex-direction: column; gap: 8px; }
+  .step h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #e0e4f0;
+    background: #f6f8fb;
+    color: #6b7a8d;
+    white-space: nowrap;
+  }
+  .chip.who-you   { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .chip.who-build { color: #4c5a6d; }
+  .chip.who-them  { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+  .chip.today     { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+
+  .step-body p { font-size: 15.5px; color: #4c5a6d; }
+  .step-body p strong { color: #1a1a2e; font-weight: 600; }
+
+  ul.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.todo li {
+    position: relative;
+    padding-left: 26px;
+    font-size: 15.5px;
+    color: #4c5a6d;
+    max-width: 66ch;
+  }
+  ul.todo li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid #b0bcf0;
+    border-radius: 2px;
+    background: #ffffff;
+  }
+  ul.todo li strong { color: #1a1a2e; font-weight: 600; }
+
+  .subhead {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+
+  .note {
+    border-left: 2px solid #e0e4f0;
+    padding-left: 14px;
+    font-size: 14.5px;
+    color: #6b7a8d;
+    font-style: italic;
+    max-width: 66ch;
+  }
+  .note b { font-style: normal; font-weight: 600; color: #4c5a6d; }
+
+  .quote {
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 5px;
+    padding: 14px 16px;
+    font-size: 14.5px;
+    color: #4c5a6d;
+    overflow-x: auto;
+  }
+  .quote p { font-size: 14.5px; margin-bottom: 10px; max-width: none; }
+
+  .gate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 0 74px;
+    padding: 10px 0 10px 24px;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    color: #8a9bb0;
+  }
+  .gate::before {
+    content: "";
+    width: 1px;
+    align-self: stretch;
+    background: #e0e4f0;
+    margin-left: -24px;
+    margin-right: 12px;
+  }
+
+  /* ── Traps ────────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #f0b0b0;
+    border-radius: 6px;
+    padding: 15px 17px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .trap h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
+  .trap p { font-size: 14.5px; color: #4c5a6d; margin: 0; }
+
+  /* ── Acceptance ───────────────────────────────────────────── */
+  .accept {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    overflow: hidden;
+  }
+  .accept-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 180px;
+    gap: 14px;
+    padding: 15px 18px;
+    border-bottom: 1px solid #eef0f4;
+    align-items: start;
+  }
+  .accept-row:last-child { border-bottom: 0; }
+  .box {
+    width: 15px; height: 15px;
+    border: 1.5px solid #8a9bb0;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+  .accept-row .txt { font-size: 15px; color: #4c5a6d; }
+  .accept-row .txt strong { color: #1a1a2e; font-weight: 600; }
+  .accept-row .by {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    line-height: 1.5;
+  }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .step { grid-template-columns: 1fr; gap: 0; }
+    .step-num { text-align: left; padding: 0 0 6px; font-size: 26px; }
+    .gate { margin-left: 0; }
+    .accept-row { grid-template-columns: 26px 1fr; }
+    .accept-row .by { grid-column: 2; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">WO-3.18 · phase 3 · ship — · size S</div>
+    <h1>Getting the OAuth&nbsp;verification submitted</h1>
+    <p class="standfirst">
+      Six steps, in a fixed order. <strong>Two of them are build work you dispatch, three are yours in
+      a browser, and the last one is Google's queue.</strong> Nothing here is hard; the order is the
+      whole difficulty, because one of the four dependencies does not exist yet and another is
+      half-landed.
+    </p>
+    <div class="band-meta">
+      <span><b>Status</b> ⬜ NOT STARTED</span>
+      <span><b>Gate</b> 1 dependency open · 1 in flight</span>
+      <span><b>Blocks</b> a stranger seeing a clean consent screen</span>
+      <span><b>Read on</b> 2026-08-20, evening</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ── WHERE IT STANDS ───────────────────────────────────── -->
+  <section>
+    <div class="sec-label">Where it stands</div>
+    <div class="deps">
+      <div class="dep done">
+        <div class="dep-id">WO-3.10</div>
+        <div class="dep-what">The OAuth client, one scope, sitting in Testing mode with you as the only test user.</div>
+        <div class="dep-state is-done">✅ done 2026-08-11</div>
+      </div>
+      <div class="dep done">
+        <div class="dep-id">WO-8.7</div>
+        <div class="dep-what">The name, the host and the domain — <code>planbook.hwgteach.com</code>, live on Cloudflare Pages.</div>
+        <div class="dep-state is-done">✅ done 2026-08-12</div>
+      </div>
+      <div class="dep flight">
+        <div class="dep-id">WO-8.12</div>
+        <div class="dep-what">The privacy policy and <code>docs/FERPA.md</code>. <strong>Built and verified at the desk, uncommitted and undeployed</strong> — and the contact line is still a placeholder.</div>
+        <div class="dep-state is-flight">🔨 in progress · 3 of 7</div>
+      </div>
+      <div class="dep open">
+        <div class="dep-id">WO-7.1</div>
+        <div class="dep-what">Auth — the sign-in the demo video has to film. Nothing in the app touches the scope today.</div>
+        <div class="dep-state is-open">⬜ not started · M</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHAT YOU CAN DO TODAY ─────────────────────────────── -->
+  <section>
+    <div class="callout">
+      <h3>Where the work actually is right now</h3>
+      <p>
+        <strong>Step 1 is built and needs a deploy and one decision from you.</strong> A WO-8.12 dispatch
+        landed on the evening of 2026-08-20 with <code>privacy.html</code>, <code>docs/FERPA.md</code>,
+        the <code>sw.js</code> navigate fix and twelve new harness checks. It sits at
+        <code>🔨 IN PROGRESS</code> with three of seven boxes ticked, because
+        <code>--tick</code> refused <code>✅ DONE</code> over an open list — and the four open boxes are
+        owed to a deploy, to hardware, to a reader, and to you.
+      </p>
+      <p>
+        <strong>Step 3 can start today</strong> and depends on no code at all. Domain verification in
+        particular is worth clearing early, because it is the step with a known way to go wrong.
+      </p>
+      <p>
+        Everything else waits on <strong>WO-7.1</strong>, and WO-7.1 is an M of token flow with no date on
+        it. That is the long pole, and it is the honest reason this work order has no submit-by.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── THE SEQUENCE ──────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">The sequence — the numbers are hard order, not decoration</div>
+    <div class="steps">
+
+      <!-- 1 -->
+      <article class="step now" id="step-1">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Finish WO-8.12 — the privacy policy and the FERPA document</h2>
+            <div class="chips">
+              <span class="chip who-build">Built, unverified</span>
+              <span class="chip who-you">Needs you to close it</span>
+              <span class="chip">Size M</span>
+            </div>
+          </div>
+          <p>
+            This produces the policy URL the verification form asks for, and <code>docs/FERPA.md</code>
+            alongside it, so the two documents cannot come to disagree about what leaves the device. It
+            also carries the <code>sw.js</code> fix without which your own devices answer the policy URL
+            with the gradebook.
+          </p>
+          <div class="subhead">What the dispatch left in the tree</div>
+          <ul class="todo">
+            <li><code>privacy.html</code> at the repo root — Pages serves it at <code>/privacy</code>,
+              which is the URL you paste in step 5 — plus <code>docs/FERPA.md</code>, both dated
+              20 August 2026 and each linking the other.</li>
+            <li>The <code>sw.js</code> navigate branch fixed, a new <code>APP_DOCUMENT</code> set, and
+              <code>CACHE</code> bumped to <strong>v92</strong>. Proved by two mutations, not by
+              reading: restoring the old branch turns the harness red at the policy URL with
+              <em>0 requests</em> reaching the server.</li>
+            <li>Twelve new checks — seven in <code>verify-shell.mjs</code>, five in
+              <code>verify-deploy.mjs</code> — and <code>TESTING.md</code> § WO-8.12 carrying the
+              evidence per line. <code>1093 checks · 1093 passed</code> on the delivered tree.</li>
+            <li><strong>Nothing committed, and the tree is partly staged</strong> as an artefact of the
+              mutation runs rather than a decision. <code>git reset</code> if you would rather stage the
+              commit yourself.</li>
+          </ul>
+          <div class="subhead">Your part, and it is four things</div>
+          <ul class="todo">
+            <li><strong>Replace <code>PLANBOOK-CONTACT-TBD</code></strong> — one occurrence, in
+              <code>privacy.html</code>'s Contact section. WO-8.7 ruled that an address in a public file
+              is a spam target, so the implementer left a placeholder rather than inventing one, and
+              <code>verify-deploy.mjs</code> now fails any deployment still carrying the token.
+              <em>An address or a form link; the sentence around it reads the same either way.</em></li>
+            <li><strong>Read both documents end to end.</strong> Box 6 — "readable by a principal" — was
+              left open <em>deliberately</em>, not forgotten: the implementer could name what they did
+              for that reader but not evidence that it worked, so they declined to tick it. It wants
+              your eyes and ideally one pair from outside the project.</li>
+            <li><strong>Commit and deploy.</strong> Two open boxes read the live origin and cannot be
+              attempted until Pages has the file. Today's real run against production is
+              <code>16 checks · 14 passed · 2 failed</code>, and both reds are honest: the policy is not
+              deployed, and the wire is still serving <code>sw.js</code> v91.</li>
+            <li><strong>Then open <code>/privacy</code> on the iPad after a force-quit</strong>, not a
+              reload — relaunch once so the new worker installs and activates, then navigate. Before the
+              fix that shows the gradebook; after it, the policy.</li>
+          </ul>
+          <p class="note">
+            <b>The check nobody planned is the one worth knowing about.</b> This host answers any
+            unrecognised path with the app shell, at <code>200 text/html</code> — so status and content
+            type cannot tell a deployed policy from a missing one. The first live run came back
+            204,614 bytes of gradebook at <code>/privacy</code>. The check that can see it reads the
+            <code>&lt;title&gt;</code> and the absence of <code>#homeView</code>; without it the whole
+            section would go green on a deployment with no policy on it.
+          </p>
+          <p class="note">
+            <b>Why it must be first and not last:</b> the form has a required privacy-policy field, and a
+            reviewer fetches that URL cold. There is no version of this where the policy is written after
+            the submission.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 2 needs nothing from step 1 — run them in either order, or at once.</div>
+
+      <!-- 2 -->
+      <article class="step now" id="step-2">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Dispatch WO-7.1 — Auth</h2>
+            <div class="chips">
+              <span class="chip who-build">Claude builds it</span>
+              <span class="chip today">Startable today</span>
+              <span class="chip">Size M · the long pole</span>
+            </div>
+          </div>
+          <p>
+            The Google Identity Services token flow: <code>drive.file</code> and nothing else, opt-in,
+            reversible, off by default, and the app still fully usable signed out. <strong>The demo video
+            has nothing to film until this exists</strong> — <code>accounts.google</code>, <code>gapi</code>
+            and <code>oauth</code> return zero hits across <code>src/</code> today.
+          </p>
+          <div class="subhead">Your part, inside it</div>
+          <ul class="todo">
+            <li><strong>Complete a sign-in on your own account and confirm a token arrives.</strong> The
+              "Google hasn't verified this app" screen appears here and <em>is not a failure</em> — the
+              client is in Testing mode and you are its test user.</li>
+            <li><strong>Walk the app with sync off</strong> and confirm nothing else changed.</li>
+          </ul>
+          <p class="note">
+            <b>It was marked 🔒 GATED until 2026-08-20 and nothing was waiting.</b> The glyph came off
+            because it had become circular — the paperwork could not film a sign-in that was marked
+            do-not-start. It is buildable now.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 3 needs neither of the above, but the origin entry only matters once step 2 lands.</div>
+
+      <!-- 3 -->
+      <article class="step now" id="step-3">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Console housekeeping: the origin, the domain, the API</h2>
+            <div class="chips">
+              <span class="chip who-you">You, in the console</span>
+              <span class="chip today">Startable today</span>
+              <span class="chip">~30 min</span>
+            </div>
+          </div>
+          <p>
+            All of this is in the Google Cloud console for the project that owns the client
+            <span class="mono">953887983230-ub72ee8rs6r6ejggn55l83pva3e8pedl</span>. Recent consoles split
+            the old "OAuth consent screen" page across <strong>Branding</strong>, <strong>Audience</strong>
+            and <strong>Data Access</strong>; the fields are the same ones.
+          </p>
+          <div class="subhead">Do</div>
+          <ul class="todo">
+            <li><strong>Sign in as the personal Gmail that owns the project</strong> — not the
+              <code>@stjohnshigh.org</code> account. Confirmed matching on 2026-08-12; getting this wrong is
+              what makes the next item fail mysteriously.</li>
+            <li><strong>Add <code>https://planbook.hwgteach.com</code> as an Authorized JavaScript origin</strong>
+              on the existing client. The recorded list is <code>https://localhost:8443</code> only, from
+              2026-08-11 — the domain did not exist then. Keep localhost; add the real one.
+              <em>Write whatever the console accepts back into WO-3.10's table.</em></li>
+            <li><strong>Verify <code>hwgteach.com</code></strong> and add it under Authorized domains.
+              Verifying the apex covers the subdomain, so there is nothing to do for
+              <code>planbook.</code> separately.</li>
+            <li><strong>Confirm the Drive API is enabled</strong> in the project. A scope on the consent
+              screen and a disabled API is a sign-in that works and a call that 403s.</li>
+          </ul>
+          <p class="note">
+            <b>The known trap, written down in WO-3.10 before it could bite:</b> domain verification is
+            <em>per account</em>. Search Console can show you as a verified owner of
+            <code>hwgteach.com</code> — it does, from a TXT record that predates this project — while the
+            Cloud console refuses the same domain, if the two are different accounts. The symptom is an
+            authorized-domain field rejecting a domain that is visibly verified. If that happens, check
+            which account you are signed in as before you touch DNS.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 4 needs step 2 (something to film) and step 3 (a real domain to film it at).</div>
+
+      <!-- 4 -->
+      <article class="step blocked" id="step-4">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Film the demo video</h2>
+            <div class="chips">
+              <span class="chip who-you">You, with a screen recorder</span>
+              <span class="chip">Blocked on 2 + 3</span>
+              <span class="chip">~1 hour</span>
+            </div>
+          </div>
+          <p>
+            The video's whole job is to show <strong>the scope in use</strong> — a reviewer watching where
+            <code>drive.file</code> is requested, what it touches, and that it touches nothing else. Record
+            at the real domain with the URL bar visible.
+          </p>
+          <div class="subhead">The shot list</div>
+          <ul class="todo">
+            <li><strong>The app at <code>https://planbook.hwgteach.com/</code>, signed out and working.</strong>
+              This is the architecture's strongest claim and it takes ten seconds to show.</li>
+            <li><strong>Tap sign in.</strong> Account chooser, then the consent screen — hold on it long enough
+              to read the single scope.</li>
+            <li><strong>A sync that writes the year document</strong>, then the file itself in Drive.</li>
+            <li><strong>Sign out</strong>, and the app still working.</li>
+            <li><strong>No real student data anywhere on screen.</strong> Use a throwaway class. This ends up on
+              YouTube, and it is your own FERPA rule before it is Google's.</li>
+            <li><strong>Upload unlisted</strong> and keep the link for step 5.</li>
+          </ul>
+          <p class="note">
+            <b>The unverified-app warning will appear in your recording.</b> That is expected in a
+            submission video — the client is in Testing mode, which is precisely what you are asking them
+            to change.
+          </p>
+          <p class="note">
+            <b>Filming a stub was considered and refused.</b> A scope demo that does not show real usage
+            gets rejected on review, and it is exactly the class of claim this project's verification
+            culture exists to stop.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 5 needs the policy URL from step 1 and the video link from step 4.</div>
+
+      <!-- 5 -->
+      <article class="step blocked" id="step-5">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Fill in the form, submit, and write the date down</h2>
+            <div class="chips">
+              <span class="chip who-you">You, in the console</span>
+              <span class="chip">Blocked on 1 + 4</span>
+              <span class="chip">~45 min</span>
+            </div>
+          </div>
+          <p>
+            Moving the publishing status off <strong>Testing</strong> is what triggers the verification
+            request, because <code>drive.file</code> is a sensitive scope. Have all four things ready before
+            you start: the app name, the homepage, the policy URL, the video link.
+          </p>
+          <div class="subhead">What goes in</div>
+          <ul class="todo">
+            <li><strong>App name: <code>Planbook</code></strong> — the same word as the manifest and the
+              README. WO-8.6 checks all three rather than assuming from one.</li>
+            <li><strong>Homepage:</strong> <code>https://planbook.hwgteach.com/</code></li>
+            <li><strong>Privacy policy:</strong> <code>https://planbook.hwgteach.com/privacy</code> —
+              the URL <code>docs/FERPA.md</code> already points at. Fetch it yourself first.</li>
+            <li><strong>Authorized domain:</strong> <code>hwgteach.com</code>, verified in step 3.</li>
+            <li><strong>Scope justification</strong> — one paragraph, and the draft below is accurate against
+              <code>docs/sync.md</code>.</li>
+            <li><strong>Demo video:</strong> the unlisted link from step 4.</li>
+          </ul>
+          <div class="subhead">A scope justification you can paste and edit</div>
+          <div class="quote">
+            <p>
+              Planbook is a local-first gradebook for classroom teachers. Everything it stores lives in the
+              browser's own storage on the teacher's device; there is no backend and no account.
+            </p>
+            <p>
+              <code>drive.file</code> is used for exactly one feature: an optional sync that carries a single
+              JSON document — the teacher's year file — between their laptop and their tablet. The app creates
+              that file and reads back only that file, matched by an <code>appProperties</code> id it wrote
+              itself. It never lists, opens or modifies anything else in the user's Drive, and it requests no
+              other Google API or scope.
+            </p>
+            <p style="margin-bottom:0">
+              A narrower scope would not work, because the app must create and then update its own file across
+              sessions and devices. A broader scope is not needed and is deliberately refused.
+            </p>
+          </div>
+          <div class="subhead">The moment you submit</div>
+          <ul class="todo">
+            <li><strong>Write the submission date and the reference into WO-3.18</strong>, in
+              <code>plans/work-orders/phase-3-gradebook.md</code>. That is its third Acceptance line, and it
+              exists so the wait is measurable rather than remembered — it is also the box WO-G2 re-homed here
+              on 2026-08-20, so it is carrying a gate's promise, not just a note.</li>
+            <li><strong>Move the status to 🔨 IN PROGRESS.</strong> The work is submitted and three boxes are
+              still open; that is what that glyph means here.</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="gate">Step 6 is not work. It is a queue.</div>
+
+      <!-- 6 -->
+      <article class="step wait" id="step-6">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Wait, then check it on an account that is not yours</h2>
+            <div class="chips">
+              <span class="chip who-them">Google's queue</span>
+              <span class="chip">Days to weeks</span>
+            </div>
+          </div>
+          <p>
+            <code>drive.file</code> is <strong>sensitive, not restricted</strong>, so there is no CASA security
+            assessment and no third-party audit — days, not months, provided nothing is added to the scope
+            list. Expect at least one round of questions; answer them from the same paragraph you submitted.
+          </p>
+          <div class="subhead">When it clears</div>
+          <ul class="todo">
+            <li><strong>Confirm the publishing status is In production</strong> and the client no longer wears
+              the Testing banner.</li>
+            <li><strong>Open the consent screen on an account that has never been a test user.</strong> That is
+              the only account that can tell you whether the warning is gone — your own will lie to you by
+              being allowed.</li>
+            <li><strong>👤 Put it in front of a teacher who is not you</strong> and watch them sign in. The last
+              Acceptance line is about whether anything frightens them, which is not a thing you can check
+              from a console.</li>
+            <li><strong>Then WO-7.3 records the approval</strong>, with the date. That work order owns Phase 7's
+              "Verification complete." box — this one closes no roadmap box at all.</li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── TRAPS ─────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">Five ways this goes wrong</div>
+    <div class="traps">
+      <div class="trap">
+        <h3>Adding a scope resets the clock</h3>
+        <p>A <code>spreadsheets</code> scope to read Roll Call!'s sheets, or a mail scope instead of
+          <code>mailto:</code>, re-opens verification and puts the warning back in front of a teacher. The
+          architecture in <code>CLAUDE.md</code> exists to keep that list at one.</p>
+      </div>
+      <div class="trap">
+        <h3>The service worker hid the policy from you and not from them</h3>
+        <p><code>sw.js</code> used to answer <em>every</em> navigation out of the cache with the app shell, so
+          any device with the worker installed rendered the gradebook at the policy URL — invisible from
+          exactly where you would test it, since a reviewer fetches cold and sees the policy.
+          <strong>Fixed in the tree, <code>CACHE</code> bumped to v92, and proved by mutation</strong> in a
+          real worker — but unverified on hardware, which takes a deploy and a force-quit.</p>
+      </div>
+      <div class="trap">
+        <h3>The wrong Google account</h3>
+        <p>Domain verification is per-account. Personal Gmail, not the school Workspace one — which is also
+          the right long-term call, since an employer's account disappears with the job and takes the Cloud
+          project with it.</p>
+      </div>
+      <div class="trap">
+        <h3>A policy that oversells the architecture</h3>
+        <p>No encryption claim — IndexedDB is not encrypted and neither is the JSON backup. No retention
+          promise the app cannot keep. No "we do not sell your data," which is a sentence about a vendor that
+          receives data. The position here is genuinely strong, and every unverifiable sentence beside it
+          invites doubt about the true ones.</p>
+      </div>
+      <div class="trap">
+        <h3>Treating Testing mode as a destination</h3>
+        <p>It works for you and up to a hundred test users, and it is exactly the thing this work order
+          replaces. Every one of those users is a name you typed into a console by hand.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ACCEPTANCE ────────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">The four boxes, and who closes each</div>
+    <div class="accept">
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">The privacy policy is <strong>live at the verified domain</strong> and says the three
+          things in plain words: no vendor server ever receives student data, no account is required, and Drive
+          holds only files this app created.</div>
+        <div class="by">step 1 → WO-8.12<br>written; needs a deploy</div>
+      </div>
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">The consent screen shows <strong>exactly one scope and no "Google hasn't verified this
+          app" warning</strong>, checked on an account that is not a test user.</div>
+        <div class="by">step 6<br>after approval</div>
+      </div>
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">The <strong>submission date is written into this work order</strong>, so the wait is
+          measurable rather than remembered.</div>
+        <div class="by">step 5<br>the same hour you submit</div>
+      </div>
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">👤 <strong>A teacher who is not the owner completes sign-in</strong> and sees nothing
+          that frightens them.</div>
+        <div class="by">step 6<br>on real hardware, by hand</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Source: plans/work-orders/phase-3-gradebook.md §WO-3.18</span>
+    <span>Deps read from wo-gate.mjs and the working tree, 2026-08-20</span>
+    <span>Client: WO-3.10 · Domain: WO-8.7 · Policy: WO-8.12</span>
+    <span>This page is a reading of the tracker, not the tracker. Where they disagree, the work order wins.</span>
+  </footer>
+
+</main>

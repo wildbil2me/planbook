@@ -1,0 +1,547 @@
+<title>Back to WO-7.1</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. Same rules as plans/wo-7-1-runbook.html, and for the
+     same reason: tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block
+     here is a red sweep. This page is deliberately the runbooks' sibling — it is what you read
+     BEFORE either of them, and it should look like it came from the same drawer. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  code, .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 700; letter-spacing: -0.015em; }
+  .band .standfirst { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 64ch; margin: 0; }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+  section { display: flex; flex-direction: column; gap: 16px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: #e0e4f0; }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  h2.head { font-size: 23px; font-weight: 700; letter-spacing: -0.012em; }
+
+  /* ── State tiles ──────────────────────────────────────────── */
+  .state { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 12px; }
+  .tile {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .tile-k {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+  .tile-v { font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .tile-n { font-size: 13px; color: #4c5a6d; line-height: 1.45; }
+  .tile.good { border-left: 3px solid #a3e4bc; }
+  .tile.open { border-left: 3px solid #d8bd63; }
+  .tile.info { border-left: 3px solid #b0bcf0; }
+
+  /* ── Callout ──────────────────────────────────────────────── */
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout.warn { background: #fff8e6; border-color: #d8bd63; }
+  .callout h3 { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+  .callout p strong { color: #1a1a2e; }
+
+  /* ── Fork ─────────────────────────────────────────────────── */
+  .fork { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .path {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .path h3 { font-size: 18px; font-weight: 700; }
+  .path .races {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+    color: #8a6d1a; background: #fff8e6; border-color: #d8bd63;
+  }
+  .path.queue .races { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .path p { font-size: 15px; color: #4c5a6d; max-width: none; }
+  .path p strong { color: #1a1a2e; }
+
+  /* ── Steps ────────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 0 18px;
+    align-items: start;
+  }
+  .step-num {
+    font-size: 26px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 16px;
+    text-align: right;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 16px 18px 18px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step.you .step-body { border-left: 3px solid #d8bd63; }
+  .step.bot .step-body { border-left: 3px solid #b0bcf0; }
+  .step h3 { font-size: 17px; font-weight: 700; }
+  .step p { font-size: 14.5px; color: #4c5a6d; margin: 0; max-width: none; }
+  .step p strong { color: #1a1a2e; }
+  .who {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+
+  /* ── Trap list ────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #d8bd63;
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .trap h3 { font-size: 15px; font-weight: 700; }
+  .trap p { font-size: 14px; color: #4c5a6d; margin: 0; max-width: none; }
+
+  ul.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+  ul.plain li { max-width: 68ch; }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 40px;
+    font-size: 13.5px;
+    color: #4c5a6d;
+  }
+  footer .wrap { display: flex; flex-direction: column; gap: 8px; }
+
+  @media (max-width: 560px) {
+    .step { grid-template-columns: 1fr; gap: 6px; }
+    .step-num { text-align: left; padding-top: 0; font-size: 22px; }
+  }
+</style>
+
+<div class="band">
+  <div class="wrap">
+    <div class="eyebrow">Planbook · return brief · written 2026-08-21</div>
+    <h1>Back to WO-7.1</h1>
+    <p class="standfirst">Nothing is half-finished and nothing is broken. <strong>WO-7.1 has not been
+    started</strong> — there is not one line of OAuth code in the tree — so "finish 7.1" is really
+    "start 7.1", and that is the good news: there is no half-built state to reconstruct. This page is
+    the orientation. The step-by-step lives in the two runbooks beside it.</p>
+    <div class="band-meta">
+      <span><b>Branch</b> main, pushed, clean</span>
+      <span><b>Last commit</b> 3eadc3f, 2026-08-21</span>
+      <span><b>next says</b> WO-4.4</span>
+      <span><b>Term begins</b> Sep 2</span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-label">Sixty seconds of state</div>
+    <h2 class="head">Where the project actually is</h2>
+    <p>Take the progress numbers from <code>plans/ROADMAP.md</code>'s dashboard, as always. These are
+    the five facts that decide what you do on the first morning back.</p>
+    <div class="state">
+      <div class="tile good">
+        <div class="tile-k">Last thing landed</div>
+        <div class="tile-v">WO-8.12 ✅ 2026-08-21</div>
+        <div class="tile-n">Privacy policy live at <code>/privacy</code>, <code>docs/FERPA.md</code>
+        in the tree, all seven boxes ticked — plus the licence commits. Nothing owed.</div>
+      </div>
+      <div class="tile open">
+        <div class="tile-k">WO-7.1 — Auth</div>
+        <div class="tile-v">⬜ NOT STARTED</div>
+        <div class="tile-n">Zero hits for <code>accounts.google</code>, <code>drive.file</code>,
+        <code>gapi</code> and <code>oauth</code> across <code>src/</code> and <code>index.html</code>.
+        Gates clear. An M of work, from cold.</div>
+      </div>
+      <div class="tile info">
+        <div class="tile-k">What the gate tool answers</div>
+        <div class="tile-v">WO-4.4 — Behavior &amp; note logging</div>
+        <div class="tile-n">Ship 3 row 3, size S, gates clear. <code>next</code> stops at the first
+        ⬜ in document order, and WO-7.1 sits below it in § After Ship 3.</div>
+      </div>
+      <div class="tile good">
+        <div class="tile-k">Working tree</div>
+        <div class="tile-v">Clean but for two files</div>
+        <div class="tile-n">Only <code>plans/wo-7-1-runbook.html</code> and
+        <code>plans/wo-3-18-runbook.html</code> are untracked — plus this page. No unpushed
+        commits, nothing mid-flight in <code>.claude/dispatch/</code>.</div>
+      </div>
+      <div class="tile open">
+        <div class="tile-k">The clock</div>
+        <div class="tile-v">The setup fortnight is spending itself</div>
+        <div class="tile-n">You teach from <b>Sep 2</b>. Ship 3 rows 3–5 are the ones that must be
+        built while capacity exists; WO-7.1 races nobody but Google's queue.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">First thing, before you decide anything</div>
+    <h2 class="head">Fifteen minutes in the Google console</h2>
+    <div class="callout">
+      <h3>Do this the morning you come back, whichever work order you then pick.</h3>
+      <p>The OAuth client's only authorized origin is <code>https://localhost:8443</code>, so today a
+      sign-in can only work on the laptop and nowhere else.
+      <strong>Add <code>https://planbook.hwgteach.com</code> to Authorized JavaScript origins</strong>
+      — personal Gmail account, not the school one — and while you are in there, enable the Google
+      Drive API for WO-7.2's sake. <strong>Do not press Publish app.</strong></p>
+      <p>It costs a quarter of an hour, needs no code, and is the one part of this whose wait is
+      Google's rather than yours. The exact click path is <strong>step 0 of
+      <code>plans/wo-7-1-runbook.html</code></strong>.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">The decision waiting for you</div>
+    <h2 class="head">Two work orders, racing different things</h2>
+    <p>You asked about WO-7.1, so here is the trade rather than a nudge. Both are legitimate and the
+    tree supports either today.</p>
+    <div class="fork">
+      <div class="path">
+        <span class="races">Races the term</span>
+        <h3>WO-4.4 — Behavior &amp; note logging</h3>
+        <p>Size <strong>S</strong>, half a day, gates clear, and it is what <code>next</code>
+        answers. It is fully specced — three owner rulings from 2026-08-20 are written into it: the
+        six quick-entry chips, append-only stands with no correction mechanism, and behavior entries
+        absent (not redacted) under a projector. <strong>A dispatch could start it without asking you
+        anything.</strong></p>
+        <p>It carries WO-3.8's owed line, and WO-4.2's behavior rule stays inert until it exists. The
+        rows behind it — WO-4.3, WO-4.5 — must be <em>built</em> before the term so their real-data
+        boxes can close in mid- and late September.</p>
+      </div>
+      <div class="path queue">
+        <span class="races">Races Google's queue</span>
+        <h3>WO-7.1 — Auth</h3>
+        <p>Size <strong>M</strong>. § After Ship 3 argues in as many words that it should not displace
+        a Ship 3 row: <em>Ship 3 races the data and this races nobody.</em> But its cost of delay is
+        real and paid elsewhere — <strong>every week WO-7.1 slips is a week later that a teacher who
+        is not you can sign in</strong>, because WO-3.18 cannot be filed until a sign-in exists to
+        film.</p>
+        <p>It is <strong>laptop-only work</strong> until the console origin above is added, and it
+        wants your hands twice: the sign-in reading and the iPad pass.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <h3>If you want one recommendation to act on cold</h3>
+      <p>Do the console step. Then <strong>take WO-4.4 first</strong> — it is an S that races a date
+      you cannot move, and it is the answer <code>next</code> gives, so you are not fighting your own
+      tooling on your first morning back. <strong>Then take WO-7.1</strong> as the next M, which is
+      exactly the order § After Ship 3 argues for. If you would rather start Google's clock sooner,
+      WO-7.1 first costs you Ship 3 slack — take that deliberately rather than drifting into it.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">If you take WO-7.1</div>
+    <h2 class="head">The shape of the sitting</h2>
+    <p>This is the map. <strong><code>plans/wo-7-1-runbook.html</code> is the territory</strong> — it
+    has the greps, the exact URLs, the six boxes and the traps. Open it in a browser from disk; it is
+    a local file, not a page on the site.</p>
+    <div class="steps">
+      <div class="step you">
+        <div class="step-num">0</div>
+        <div class="step-body">
+          <div class="who">👤 You · ~15 min · described above</div>
+          <h3>The console origin, and the Drive API</h3>
+          <p>Nothing else in the sitting depends on it, which is exactly why it goes first — the wait
+          belongs to Google.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="who">👤 You · 2 min</div>
+          <h3>Clear the tree, then <code>node tools/wo-gate.mjs WO-7.1</code></h3>
+          <p>Commit or stash the untracked runbooks first. A dispatch reads <code>git status</code>,
+          and stray files muddy its report.</p>
+        </div>
+      </div>
+      <div class="step bot">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="who">🤖 Dispatch · from a brand new chat window</div>
+          <h3><code>/wo WO-7.1</code></h3>
+          <p>Its own window, per the standing rule — never dispatched inline from a session that has
+          been doing something else. <strong>Give it ~20 minutes of silence before you believe
+          anything is wrong</strong>: implementers read the repo before their first write, and file
+          mtimes are not a liveness signal. If it does die mid-flight — twice so far — the writes are
+          usually all there and none of the claims are. Re-derive from the tree and re-run every
+          command; <code>plans/dispatch-retro.md</code> holds both scars.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="who">👤 You · the five greps</div>
+          <h3>Read the diff before you trust it</h3>
+          <p>One scope, and only <code>drive.file</code>. No client secret anywhere. No backend, no
+          Apps Script, no <code>functions/</code>. Nothing that assumes background or scheduled sync.
+          And <strong>check the diffstat</strong> — a 5,000-line diff for a 200-line change means a
+          file was silently rewritten to CRLF.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="who">👤 You · laptop · personal Gmail</div>
+          <h3>Sign in at exactly <code>https://localhost:8443</code></h3>
+          <p>Google matches the origin string exactly. The <em>"Google hasn't verified this app"</em>
+          screen is expected while the client sits in Testing mode — that is not a failure, it is the
+          thing WO-3.18 exists to clear. Confirm the consent screen shows <strong>one</strong>
+          scope.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="who">👤 You · six Acceptance boxes</div>
+          <h3>Walk them — including the signed-out walk</h3>
+          <p>Sign-in completes · one scope on the consent screen · <strong>every feature outside
+          Phase 7 works identically signed-out</strong> · sign-out leaves the local document intact
+          and removes the token · ~1 hour expiry handled with no data loss and no silent failure · no
+          refresh token requested or stored.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="who">👤 You · iPad · force-quit first</div>
+          <h3>Then the hardware pass</h3>
+          <p>Force-quit from the app switcher — a reload is not enough, and iOS resumes a backgrounded
+          app without looking for an update at all. A green harness closes no 👤 item, and
+          <code>verify-shell.mjs</code> usually cannot run inside a dispatch: <em>"could not run"</em>
+          is an environment, not a result. Re-run it locally before ticking anything.</p>
+        </div>
+      </div>
+      <div class="step you">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="who">👤 You · the paperwork half</div>
+          <h3>Tick it — and bump <code>CACHE</code></h3>
+          <p>Any change to a file in <code>SHELL</code> — <code>index.html</code> included — needs the
+          <code>sw.js</code> <code>CACHE</code> bump, or no device sees the change at all. Then
+          <code>--tick</code>, the roadmap box, the dashboard, <code>TESTING.md</code> and
+          <code>CHANGELOG.md</code>. <strong>WO-3.10 has an open box that closes on this work order's
+          sign-in</strong> — it points here through <code>Owes</code>, and
+          <code>node tools/wo-gate.mjs --audit</code> will say so once the pointer resolves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">What "immediately after" actually is</div>
+    <h2 class="head">One sitting, then somebody else's queue</h2>
+    <p><strong>WO-3.18 — verification submitted.</strong> Size S, and the moment WO-7.1 lands it is
+    the only thing standing between you and the start of Google's clock. Its four dependencies are
+    WO-3.10 ✅, WO-8.7 ✅, WO-8.12 ✅ and WO-7.1 — so <strong>WO-7.1 is the last one</strong>. It has
+    its own runbook: <code>plans/wo-3-18-runbook.html</code>. The sitting is console housekeeping,
+    filming a demo video that shows the scope <em>actually in use</em> (a stub gets rejected on
+    review), filling in the form, and writing the submission date down. Then days to weeks in a queue
+    no amount of effort compresses — which is the whole argument for starting it early.</p>
+    <ul class="plain">
+      <li><strong>WO-8.13</strong> — the About modal names two documents and not the licence. Size S,
+      nothing blocks it, about an hour. It sits last in § After Ship 3 on purpose: fold it into a
+      sitting that already has <code>index.html</code> open, which the WO-7.1 sign-in control probably
+      will.</li>
+      <li><strong>WO-7.2 and WO-7.3 stay 🔒 GATED.</strong> WO-7.3 genuinely waits on the submission
+      clearing. <strong>WO-7.2's gate is worth one minute of your attention</strong> — the Phase 7
+      header argues that everything in the phase is buildable and usable on your own devices today,
+      and WO-7.2 is document transfer, which is precisely what you would use across your own two
+      devices. That is the same shape as the false 🔒 that had WO-7.1 deadlocked until 2026-08-20.
+      It is your call, not a dispatch's: make it deliberately, or leave the glyph alone.</li>
+      <li><strong>Back to Ship 3 either way.</strong> WO-4.3 is booked for Aug 31–Sep 1 and WO-4.5 for
+      the Sep 12–13 weekend, and both carry real-data boxes that cannot close before ~Sep 16 and
+      ~Sep 23. WO-G3 is ~Oct 16.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-label">Cold-start traps</div>
+    <h2 class="head">The ones that bite hardest after a gap</h2>
+    <div class="traps">
+      <div class="trap">
+        <h3>The injected <code>CLAUDE.md</code> can be stale</h3>
+        <p>What a session is handed is a snapshot from when it started. Read the file before calling
+        any of it out of date — especially the status paragraph, which changes most days.</p>
+      </div>
+      <div class="trap">
+        <h3>Never a second scope</h3>
+        <p><code>drive.file</code> and nothing else, ever. Not <code>spreadsheets</code>, not a mail
+        scope — outreach is <code>mailto:</code>. Adding a scope also resets Google's clock.</p>
+      </div>
+      <div class="trap">
+        <h3>The whole point is that there is no backend</h3>
+        <p>No Apps Script, no <code>functions/</code> directory, no client secret. If you find
+        yourself copying a secret into a file, something has gone architecturally wrong.</p>
+      </div>
+      <div class="trap">
+        <h3>Sync is not a backup</h3>
+        <p>Drive holds one live copy that sync will happily overwrite. The downloadable JSON backup
+        stays mandatory, and no feature that writes student data lands ahead of it.</p>
+      </div>
+      <div class="trap">
+        <h3>Check the code before rescheduling</h3>
+        <p>A work order's premise may already be satisfied by something that landed since it was
+        written. WO-8.4 cost a commit and a correction. Cheap to check, expensive to miss.</p>
+      </div>
+      <div class="trap">
+        <h3>Mutation tests clobber unstaged edits</h3>
+        <p>The <code>git checkout</code> after a mutation reverts your own unstaged work in that
+        file. Stage first.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Loose ends</div>
+    <h2 class="head">Three files that exist only on this laptop</h2>
+    <div class="callout warn">
+      <h3>The two runbooks — and this page — are untracked.</h3>
+      <p><code>plans/wo-7-1-runbook.html</code>, <code>plans/wo-3-18-runbook.html</code> and
+      <code>plans/return-brief.html</code> have never been committed. <strong>If this is not the
+      machine you come back on, they do not exist.</strong> Committing them is one command and makes
+      them part of the record the way <code>plans/dispatch-retro.md</code> is; leaving them out is
+      also a fine answer, as long as it is the one you chose.</p>
+      <p>Nothing else is outstanding. <code>main</code> is pushed, the deploy is live, and no work
+      order is mid-flight.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Written 2026-08-21 against commit 3eadc3f. Every fact here was read out of the tree that day —
+    <code>plans/work-orders/README.md</code> § After Ship 3, <code>phase-7-sync.md</code>,
+    <code>phase-4-signals.md</code>, and <code>node tools/wo-gate.mjs next</code>. If this page and
+    the repository disagree, <strong>the repository is right</strong>.</p>
+    <p>Start the sitting the way every sitting starts here:
+    <code>node tools/wo-gate.mjs next</code>, never by opening an editor.</p>
+  </div>
+</footer>

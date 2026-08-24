@@ -1,0 +1,926 @@
+<title>WO-7.1 Auth Runbook</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. This page obeys both, which is why every value below
+     is a literal. tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block
+     here is a red sweep; the first draft of this file was written as an artifact and had one. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  code, .mono {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 {
+    font-size: clamp(30px, 5.2vw, 46px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .band .standfirst {
+    color: rgba(255,255,255,0.62);
+    font-size: 17px;
+    max-width: 62ch;
+    margin: 0;
+  }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .sec-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e0e4f0;
+  }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Dependency tiles ─────────────────────────────────────── */
+  .deps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+    gap: 12px;
+  }
+  .dep {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .dep-id {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .dep-what { font-size: 13.5px; color: #4c5a6d; line-height: 1.45; }
+  .dep-state {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .is-done   { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+  .is-open   { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+  .is-flight { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .dep.done   { border-left: 3px solid #a3e4bc; }
+  .dep.open   { border-left: 3px solid #d8bd63; }
+  .dep.flight { border-left: 3px solid #b0bcf0; }
+  .dep-what strong { color: #1a1a2e; font-weight: 600; }
+
+  /* ── Callout ──────────────────────────────────────────────── */
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+
+  /* ── Steps ────────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+  .step-num {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 18px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .step.blocked .step-body { border-left: 3px solid #d8bd63; }
+  .step.now .step-body { border-left: 3px solid #b0bcf0; }
+  .step.wait .step-body { border-left: 3px solid #e0e4f0; background: #f6f8fb; }
+
+  .step-head { display: flex; flex-direction: column; gap: 8px; }
+  .step h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #e0e4f0;
+    background: #f6f8fb;
+    color: #6b7a8d;
+    white-space: nowrap;
+  }
+  .chip.who-you   { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .chip.who-build { color: #4c5a6d; }
+  .chip.who-them  { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+  .chip.today     { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+
+  .step-body p { font-size: 15.5px; color: #4c5a6d; }
+  .step-body p strong { color: #1a1a2e; font-weight: 600; }
+
+  ul.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.todo li {
+    position: relative;
+    padding-left: 26px;
+    font-size: 15.5px;
+    color: #4c5a6d;
+    max-width: 66ch;
+  }
+  ul.todo li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid #b0bcf0;
+    border-radius: 2px;
+    background: #ffffff;
+  }
+  ul.todo li strong { color: #1a1a2e; font-weight: 600; }
+
+  .subhead {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+
+  .note {
+    border-left: 2px solid #e0e4f0;
+    padding-left: 14px;
+    font-size: 14.5px;
+    color: #6b7a8d;
+    font-style: italic;
+    max-width: 66ch;
+  }
+  .note b { font-style: normal; font-weight: 600; color: #4c5a6d; }
+
+  .quote {
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 5px;
+    padding: 14px 16px;
+    font-size: 14.5px;
+    color: #4c5a6d;
+    overflow-x: auto;
+  }
+  .quote p { font-size: 14.5px; margin-bottom: 10px; max-width: none; }
+
+  .gate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 0 74px;
+    padding: 10px 0 10px 24px;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    color: #8a9bb0;
+  }
+  .gate::before {
+    content: "";
+    width: 1px;
+    align-self: stretch;
+    background: #e0e4f0;
+    margin-left: -24px;
+    margin-right: 12px;
+  }
+
+  /* ── Traps ────────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #f0b0b0;
+    border-radius: 6px;
+    padding: 15px 17px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .trap h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
+  .trap p { font-size: 14.5px; color: #4c5a6d; margin: 0; }
+
+  /* ── Acceptance ───────────────────────────────────────────── */
+  .accept {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    overflow: hidden;
+  }
+  .accept-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 180px;
+    gap: 14px;
+    padding: 15px 18px;
+    border-bottom: 1px solid #eef0f4;
+    align-items: start;
+  }
+  .accept-row:last-child { border-bottom: 0; }
+  .box {
+    width: 15px; height: 15px;
+    border: 1.5px solid #8a9bb0;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+  .accept-row .txt { font-size: 15px; color: #4c5a6d; }
+  .accept-row .txt strong { color: #1a1a2e; font-weight: 600; }
+  .accept-row .by {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    line-height: 1.5;
+  }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .step { grid-template-columns: 1fr; gap: 0; }
+    .step-num { text-align: left; padding: 0 0 6px; font-size: 26px; }
+    .gate { margin-left: 0; }
+    .accept-row { grid-template-columns: 26px 1fr; }
+    .accept-row .by { grid-column: 2; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">WO-7.1 · phase 7 · ship — · size M</div>
+    <h1>Teach the app to ask Google for a key</h1>
+    <p class="standfirst">
+      This work order adds <strong>one button and one hour-long key</strong>. Nothing moves to Drive yet
+      — that is WO-7.2. What it buys today is the thing <strong>the demo video has to film</strong>, which
+      is why it sits in front of every piece of OAuth paperwork you have left.
+    </p>
+    <div class="band-meta">
+      <span><b>Status</b> ⬜ NOT STARTED</span>
+      <span><b>Gate</b> PASS — nothing is waiting</span>
+      <span><b>Depends on</b> WO-3.10 ✅</span>
+      <span><b>Blocks</b> WO-3.18 · WO-7.2 · WO-7.3</span>
+      <span><b>Written</b> 21 August 2026</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ── WHAT IT IS ────────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">What this actually is, in small words</div>
+
+    <div class="callout">
+      <h3>It is a hotel keycard, not a password</h3>
+      <p>
+        The app walks up to Google's front desk and says <em>I am Planbook, and I would like to open one
+        drawer.</em> You show Google who you are — <strong>the app never sees your password, ever</strong>
+        — and Google hands back a plastic card. The card opens <strong>only the files this app itself
+        made</strong>, nothing else in your Drive. It stops working after about an hour, and there is no
+        way to renew it while you are asleep. If you want a new one, you have to be standing at the desk.
+      </p>
+      <p>
+        That last part is not a limitation to work around. It is why <strong>sync can only ever happen
+        while the app is open in front of you</strong>, and why nothing in this project may be built as
+        if it syncs in the background.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">What it does, and what it deliberately does not</div>
+    <div class="deps">
+      <div class="dep done">
+        <div class="dep-id">This one does</div>
+        <div class="dep-what">A sign-in control. Getting a key. Giving the key back (sign-out). Asking
+          quietly for a fresh key first, and only showing you a Google screen if the quiet way fails.</div>
+        <div class="dep-state is-done">WO-7.1 · size M</div>
+      </div>
+      <div class="dep open">
+        <div class="dep-id">This one does not</div>
+        <div class="dep-what">Upload. Download. Matching the file by <code>docId</code>. The
+          <code>rev</code> / <code>baseRev</code> comparison. Conflict copies. <strong>None of that
+          exists after this lands</strong> — and that is correct.</div>
+        <div class="dep-state is-open">WO-7.2 · size L</div>
+      </div>
+      <div class="dep flight">
+        <div class="dep-id">Why now</div>
+        <div class="dep-what">WO-3.18 owes Google a video <strong>showing the scope in use</strong>, and
+          <code>accounts.google</code>, <code>gapi</code> and <code>oauth</code> return zero hits across
+          <code>src/</code> today. There is nothing to film.</div>
+        <div class="dep-state is-flight">the long pole</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHERE IT STANDS ───────────────────────────────────── -->
+  <section>
+    <div class="sec-label">Where it stands</div>
+    <div class="deps">
+      <div class="dep done">
+        <div class="dep-id">WO-3.10</div>
+        <div class="dep-what">The OAuth client — one scope, Testing mode, you as the only test user. The
+          client id lives in <code>phase-3-gradebook.md</code> and is not a secret.</div>
+        <div class="dep-state is-done">✅ done 2026-08-11</div>
+      </div>
+      <div class="dep done">
+        <div class="dep-id">WO-8.7</div>
+        <div class="dep-what">The domain — <code>planbook.hwgteach.com</code>, live. <strong>It is not on
+          the client's origin list yet.</strong> That is step 0 below.</div>
+        <div class="dep-state is-done">✅ done 2026-08-12</div>
+      </div>
+      <div class="dep open">
+        <div class="dep-id">WO-7.1</div>
+        <div class="dep-what">This one. The gate report says <code>PASS | gates clear for WO-7.1</code> —
+          nothing is blocking it and nothing has claimed it.</div>
+        <div class="dep-state is-open">⬜ not started · M</div>
+      </div>
+      <div class="dep flight">
+        <div class="dep-id">WO-8.12</div>
+        <div class="dep-what">The privacy policy and <code>docs/FERPA.md</code> — in your working tree
+          right now, uncommitted. Unrelated to this build, but it is the diff you are sitting on.</div>
+        <div class="dep-state is-flight">🔨 in progress</div>
+      </div>
+    </div>
+    <p class="note">
+      <b>It wore a 🔒 until 2026-08-20 and nothing was waiting behind it.</b> The lock was inherited from
+      the phase header, which says in as many words that the gate is on public launch and not on building.
+      It had gone circular: the paperwork could not film a sign-in that was marked do-not-start.
+    </p>
+  </section>
+
+  <!-- ── THE SEQUENCE ──────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">The sequence — the numbers are hard order</div>
+    <div class="steps">
+
+      <!-- 0 -->
+      <article class="step now" id="step-0">
+        <div class="step-num">0</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Fifteen minutes in the Google console, before anyone writes code</h2>
+            <div class="chips">
+              <span class="chip today">✅ Done — 21 Aug 2026</span>
+              <span class="chip who-you">Only you can do it</span>
+              <span class="chip">~15 min</span>
+            </div>
+          </div>
+          <p>
+            The client already exists. What it was missing is <strong>your live domain in its list of
+            allowed origins</strong>. Google matches that list exactly, so until this was added the
+            sign-in could only work at <code>https://localhost:8443</code> — the laptop, and nowhere
+            else. Kept below because it is the list to re-read if step 4 refuses.
+          </p>
+          <ul class="todo">
+            <li><strong>Sign into the personal Gmail account</strong> — not the
+              <code>@stjohnshigh.org</code> one. The Cloud project and the domain verification both live
+              on the personal account, on purpose: a school account disappears with the job and takes
+              the project with it.</li>
+            <li>Go to <strong>console.cloud.google.com</strong> → the Planbook project → <strong>APIs
+              &amp; Services</strong> → <strong>Credentials</strong> → the OAuth 2.0 Client ID ending
+              <code>…pva3e8pedl</code>.</li>
+            <li>Under <strong>Authorized JavaScript origins</strong>, add
+              <code>https://planbook.hwgteach.com</code> beside the existing
+              <code>https://localhost:8443</code>. <strong>No path, no trailing slash, no
+              <code>www</code>.</strong> Save.</li>
+            <li><strong>Leave everything else exactly as it is.</strong> Publishing status stays
+              <strong>Testing</strong>, you stay the test user, the scope stays
+              <code>drive.file</code> and only <code>drive.file</code>. Do not press
+              <em>Publish app</em> — that starts a verification you are not ready to submit.</li>
+            <li>While you are in there: <strong>APIs &amp; Services → Enabled APIs → enable Google Drive
+              API</strong> if it is not already on. The key in this work order does not need it; the
+              upload in WO-7.2 does, and you will not be back here before then.</li>
+          </ul>
+          <p class="note">
+            <b>There is no client secret in any of this.</b> A browser sign-in does not use one. If you
+            find yourself copying a secret out of that page and into a file, stop — something has gone
+            architecturally wrong.
+          </p>
+          <p class="note">
+            <b>Nothing here can be confirmed from the repository</b> — the origin list lives in Google's
+            console and no file in this tree records it. <strong>Step 4 is the proof.</strong> If the
+            entry did not take, the browser console says <em>The given origin is not allowed for the
+            given client ID</em> and the sign-in never reaches an account chooser. That message means
+            this step, not the build — come back here and re-read the four rules above, the trailing
+            slash being the usual culprit.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Steps 0 and 1 are behind you. Step 2 is where this picks up.</div>
+
+      <!-- 1 -->
+      <article class="step now" id="step-1">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Clear your working tree, then check the gate</h2>
+            <div class="chips">
+              <span class="chip today">✅ Done — 21 Aug 2026</span>
+              <span class="chip who-you">You</span>
+              <span class="chip">~5 min</span>
+            </div>
+          </div>
+          <p>
+            WO-8.12 was sitting in the tree as twelve uncommitted paths. It is now
+            <strong>committed</strong> — <code>780d4a6</code> landed the policy, <code>docs/FERPA.md</code>
+            and the <code>sw.js</code> navigate fix, and three follow-ups through <code>3eadc3f</code>
+            carried the contact alias and the licence. <strong>Committed rather than stashed is the better
+            outcome</strong>: a stash would have taken the deployed policy back out of the tree the build
+            is about to read.
+          </p>
+          <div class="quote">
+            <p><code>git status</code> — <em>clean, bar the untracked runbooks in <code>plans/</code></em></p>
+            <p><code>node tools/wo-gate.mjs WO-7.1</code> — <em>PASS | gates clear for WO-7.1</em></p>
+          </div>
+          <p>
+            The gate also prints a <strong>NOTE</strong> about the dependency line carrying prose — that is
+            normal, and the prose says the dependency is the client, not its verification. The three
+            untracked <code>.html</code> files under <code>plans/</code> are this runbook and its
+            neighbours; they are not code and the dispatch will not touch them.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 2 must be the next thing you do — a claimed work order should not sit claimed.</div>
+
+      <!-- 2 -->
+      <article class="step now" id="step-2">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Dispatch it — from a brand new chat window</h2>
+            <div class="chips">
+              <span class="chip who-build">Claude builds it</span>
+              <span class="chip">20–40 min</span>
+            </div>
+          </div>
+          <p>
+            Open a <strong>fresh Claude Code window</strong> and type <code>/wo WO-7.1</code>. Not this
+            window: a dispatch spends its whole life inside nested subagents, and running it beside a
+            conversation is how the two get confused with each other.
+          </p>
+          <ul class="todo">
+            <li>It runs in the background. <strong>Poll
+              <code>.claude/dispatch/WO-7.1-status.md</code></strong> if you want to watch.</li>
+            <li><strong>Silence is normal for the first twenty minutes.</strong> The implementer reads
+              before it writes. A file with an old timestamp is not a dead dispatch, and the cure for a
+              slow one is never a second dispatch.</li>
+            <li>If it genuinely dies mid-flight — it has happened twice —
+              <strong>the writes are usually all there and none of the claims are.</strong> Re-derive
+              from the tree, re-run every command it says it ran, and read
+              <code>plans/dispatch-retro.md</code> before believing a word of the prose.</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="gate">Step 3 is reading, at the desk, before any device is involved.</div>
+
+      <!-- 3 -->
+      <article class="step now" id="step-3">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Read the diff before you trust it — five greps</h2>
+            <div class="chips">
+              <span class="chip who-you">You</span>
+              <span class="chip">~10 min</span>
+            </div>
+          </div>
+          <p>
+            You do not have to read the token flow line by line. You have to check that
+            <strong>nothing forbidden got in</strong>, and each of those is one command. Run them from
+            the repo root; the expected answer is in italics.
+          </p>
+          <div class="quote">
+            <p><code>grep -rn "spreadsheets\|mail.google\|gmail" src/ index.html</code> — <em>nothing</em></p>
+            <p><code>grep -rn "access_type\|offline\|refresh_token" src/</code> — <em>nothing</em></p>
+            <p><code>grep -rn "client_secret\|apps.googleusercontent" src/ index.html</code> — <em>the client id, once; never a secret</em></p>
+            <p><code>grep -rn "drive.file" src/</code> — <em>one place, not four</em></p>
+            <p><code>grep -n "CACHE = " sw.js</code> — <em>v94 — it stands at v93 today</em></p>
+          </div>
+          <div class="subhead">What should be there</div>
+          <ul class="todo">
+            <li>A new module — something like <code>src/sync-auth.js</code> — holding the whole flow, and
+              <strong>listed in <code>SHELL</code> in <code>sw.js</code> with <code>CACHE</code>
+              bumped in the same commit</strong>. Forget the bump and no device sees the change at
+              all.</li>
+            <li>Google's own script loaded from <code>accounts.google.com</code> in
+              <code>index.html</code>. <strong>That one must NOT go in <code>SHELL</code></strong> — it
+              is cross-origin, it cannot be precached, and the app must open perfectly offline without
+              it.</li>
+            <li>A sign-in control somewhere a teacher can find, <strong>off by default</strong>, with the
+              app unchanged for anyone who never touches it.</li>
+            <li><code>TESTING.md</code> § WO-7.1 with a 👤 line per hand-check, and new assertions in
+              <code>tools/verify-shell.mjs</code>.</li>
+          </ul>
+          <p class="note">
+            <b>A green harness closes no 👤 item.</b> If the dispatch reports that
+            <code>verify-shell.mjs</code> could not run, it has reported an environment and not a
+            result — re-run it here before ticking anything.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 4 is the first time you see it work. Laptop only — the iPad cannot do this yet.</div>
+
+      <!-- 4 -->
+      <article class="step now" id="step-4">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Sign in, on the laptop, at exactly the right URL</h2>
+            <div class="chips">
+              <span class="chip who-you">Only you can do it</span>
+              <span class="chip">~20 min</span>
+            </div>
+          </div>
+          <div class="quote">
+            <p><code>node tools/serve-https.mjs</code> — then open <code>https://localhost:8443</code></p>
+          </div>
+          <p>
+            <strong>That exact address.</strong> Not <code>127.0.0.1</code>, not the LAN address, not
+            port 8080. Google matches scheme, host and port as one string, so a different spelling of the
+            same machine is a different origin and it will refuse. An
+            <em>origin not allowed</em> error here almost always means you are at the wrong URL, not that
+            the code is broken.
+          </p>
+          <div class="subhead">The scary screen is supposed to happen</div>
+          <p>
+            After you pick your account, Google will say <strong>Google hasn't verified this app</strong>.
+            <strong>That is expected and is not a failure.</strong> The client is in Testing mode and you
+            are its test user. Click <em>Advanced</em>, then <em>Go to Planbook (unsafe)</em>. A stranger
+            must never see this screen — clearing it is WO-7.3, months away — but you are not a stranger.
+          </p>
+          <p class="note">
+            <b>If you want to see the consent screen a second time</b>, Google will not show it again on
+            its own. Go to <strong>myaccount.google.com/permissions</strong>, remove Planbook's access,
+            and sign in fresh. That is also how you test expiry in step 5 without waiting an hour.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 5 is the acceptance list. It is the work order, not a formality.</div>
+
+      <!-- 5 -->
+      <article class="step now" id="step-5">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Walk the six boxes</h2>
+            <div class="chips">
+              <span class="chip who-you">All six need you</span>
+              <span class="chip">~30 min</span>
+            </div>
+          </div>
+          <p>
+            They are laid out in full in the next section. Two of them — <strong>works signed-out</strong>
+            and <strong>sign-out leaves the document intact</strong> — are the ones people skim, and they
+            are the two that protect a teacher whose Workspace admin blocks third-party apps. That teacher
+            is still a customer.
+          </p>
+        </div>
+      </article>
+
+      <div class="gate">Step 6 happens after step 0's origin has propagated and the app is deployed.</div>
+
+      <!-- 6 -->
+      <article class="step wait" id="step-6">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Then the iPad — and force-quit first</h2>
+            <div class="chips">
+              <span class="chip who-you">You</span>
+              <span class="chip">~15 min</span>
+            </div>
+          </div>
+          <ul class="todo">
+            <li><strong>Deploy first.</strong> The iPad has to reach the app at
+              <code>planbook.hwgteach.com</code>, because that is the origin you registered — the LAN
+              server is not on Google's list and never can be.</li>
+            <li><strong>Force-quit from the app switcher.</strong> A reload is not enough and neither is
+              a pull-to-refresh. iOS resumes a backgrounded app without loading a document at all, so
+              nothing even checks for an update, and you will read yesterday's build honestly reporting
+              itself.</li>
+            <li><strong>Watch the popup.</strong> Google's sign-in opens a window, and iOS Safari blocks
+              windows that are not opened straight out of your tap. If nothing happens when you press the
+              button, that is the bug — not the network.</li>
+            <li>Sign in, then <strong>walk the app signed-out again on this device</strong>. The iPad is
+              where the offline story matters.</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="gate">Step 7 closes it out. Do not skip the bookkeeping — the trackers are the memory.</div>
+
+      <!-- 7 -->
+      <article class="step wait" id="step-7">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Tick it, write it down, then go film the video</h2>
+            <div class="chips">
+              <span class="chip who-you">You</span>
+              <span class="chip">~15 min</span>
+            </div>
+          </div>
+          <div class="quote">
+            <p><code>node tools/wo-gate.mjs --tick WO-7.1 --dry-run</code> — read the diff</p>
+            <p><code>node tools/wo-gate.mjs --tick WO-7.1</code></p>
+          </div>
+          <ul class="todo">
+            <li>Any Acceptance line still <code>[ ]</code> and it writes <strong>🔨 IN PROGRESS</strong>
+              instead of ✅ DONE, and names the lines. That is the tool working, not failing.</li>
+            <li>It touches <strong>no</strong> 👤 line in <code>TESTING.md</code>, <strong>no</strong>
+              <code>CHANGELOG.md</code>, and <strong>not</strong> the roadmap dashboard. Those three are
+              hand edits and they are yours.</li>
+            <li><strong>Then film the demo video.</strong> That is the entire point of building this
+              first: WO-3.18 has been waiting on a sign-in to point a camera at. Show the consent screen
+              with its one line, and show the app using the scope.</li>
+            <li><strong>WO-7.2 becomes buildable</strong> the moment this is ✅ — that is the L-sized one
+              with the conflict copies, and it is the one that actually moves your gradebook between
+              devices.</li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── ACCEPTANCE ────────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">The six boxes, and how to actually check each one</div>
+    <div class="accept">
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>A sign-in completes on your own account and the app receives a token.</strong>
+          Driven, not assumed. Press the button, pick the account, click through the unverified-app
+          screen, and watch the app change to a signed-in state. If it silently does nothing, the token
+          did not arrive — a green console is not a pass.
+        </div>
+        <div class="by">👤 you<br>laptop, localhost:8443<br>the scary screen is expected</div>
+      </div>
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>The consent screen shows exactly one scope.</strong> One line, reading roughly
+          <em>See, edit, create and delete only the specific Google Drive files you use with this
+          app.</em> <strong>If there are two lines, stop everything</strong> — nothing else on this list
+          matters, and the whole architecture rests on this one being alone.
+        </div>
+        <div class="by">👤 you<br>read the screen, do not<br>infer it from the code</div>
+      </div>
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>Every feature outside this phase works identically signed-out.</strong> Walk it with
+          sync off: home, a class, the roster, mark attendance, enter grades, the calendar month and
+          week, the concern list, backup and restore. Nothing should nag you to sign in, and nothing
+          should be missing.
+        </div>
+        <div class="by">👤 you<br>the full walk, both<br>devices ideally</div>
+      </div>
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>Sign-out leaves the local document intact and removes the token.</strong> Sign out,
+          then check your grades and roster are exactly as they were. Then DevTools →
+          <em>Application</em> → Local Storage and Session Storage: <strong>no key holding a
+          token</strong>. Student data lives in IndexedDB and a token is not a UI preference.
+        </div>
+        <div class="by">👤 you<br>DevTools storage panel</div>
+      </div>
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>Token expiry after about an hour is handled without data loss and without a silent
+          failure.</strong> Do not wait an hour — go to <strong>myaccount.google.com/permissions</strong>
+          and remove Planbook's access while the app is open, then use it. Pass looks like the app
+          quietly getting a new key, or asking you plainly. <strong>A silent no-op is a fail.</strong>
+        </div>
+        <div class="by">👤 you<br>revoke, do not wait</div>
+      </div>
+
+      <div class="accept-row">
+        <div class="box"></div>
+        <div class="txt">
+          <strong>No refresh token is requested or stored.</strong> There is not one in a browser flow —
+          the risk is building as though there were, which is how a background-sync assumption gets in
+          through the back door. The greps in step 3 settle it:
+          <code>access_type</code>, <code>offline</code> and <code>refresh_token</code> must all return
+          nothing.
+        </div>
+        <div class="by">👤 you<br>grep, at the desk</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── TRAPS ─────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-label">Traps — every one of these has bitten this project or its predecessor</div>
+    <div class="traps">
+
+      <div class="trap">
+        <h3>The origin is a string, not a machine</h3>
+        <p><code>https://localhost:8443</code> and <code>https://127.0.0.1:8443</code> are the same
+        computer and two different origins. So is the LAN address. Google compares the text. Test at the
+        exact URL you registered, every time.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Never a second scope</h3>
+        <p>Not <code>spreadsheets</code> — it reads every spreadsheet you own. Not a mail scope — outreach
+        goes out through <code>mailto:</code> and needs no permission at all. Those two additions are what
+        put an unverified-app warning in front of a stranger forever.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Never a backend, never Apps Script</h3>
+        <p>Both look tempting the moment sync gets awkward. A backend makes us a FERPA data processor with
+        breach liability; Apps Script makes every teacher their own unverified developer. Neither is a
+        casual decision to revisit.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Never assume background sync</h3>
+        <p>There is no refresh token in a browser. Sync is a foreground act, while the app is open and you
+        are signed in. A feature that assumes otherwise cannot be built here, however reasonable it
+        sounds in a sentence.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Google's script is the first remote file in this app</h3>
+        <p>It cannot be precached and must not go in <code>SHELL</code>. The app has to open, work and
+        stay useful when that script never loads — offline, or behind a Workspace admin who blocks
+        third-party apps.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Sync is still not a backup</h3>
+        <p>Drive holds one live copy that the next sync will happily overwrite. The downloadable JSON stays
+        mandatory. Nothing in this work order or the next one relaxes that.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Bump CACHE in sw.js</h3>
+        <p>Any change to a file in <code>SHELL</code> needs the bump in the same commit. Without it, no
+        device sees the change — and you will spend an afternoon debugging a build that was never
+        delivered.</p>
+      </div>
+
+      <div class="trap">
+        <h3>Do not press Publish app</h3>
+        <p>Testing mode is doing exactly what you need: real <code>drive.file</code> tokens for one test
+        user. Publishing starts a verification you cannot complete until the policy is live, the video is
+        filmed and WO-3.18 is submitted.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>plans/work-orders/phase-7-sync.md § WO-7.1</span>
+    <span>docs/sync.md</span>
+    <span>plans/work-orders/phase-3-gradebook.md § WO-3.10 — the client id and the account</span>
+    <span>plans/dispatch-retro.md</span>
+    <span>TESTING.md</span>
+  </footer>
+
+</main>
