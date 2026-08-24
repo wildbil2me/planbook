@@ -173,6 +173,20 @@ marker when it reaches an implementer is incomplete.
 The brief is the audit trail on both routes: the record of what was actually asked for, separate
 from what the agent decided to do.
 
+**Keep what you add under ~10 KB, and the whole brief under ~14 KB.** *(2026-08-24, from a token
+audit of 412 dispatch transcripts.)* The generated body is not the thing to trim — the cap governs
+what **you** write at the `<!-- ORCHESTRATOR: … -->` markers. The reason is that the length has never
+bought anything: across 103 work orders with a brief and an implementer, brief size correlates
+**+0.35** with implementer turns and **+0.13** with the number of implementer spawns. Both point the
+wrong way. The smallest-brief third ran 187 median turns; the largest third ran 221. Task complexity
+confounds it — hard work gets long briefs and takes longer — but if briefing were buying efficiency
+it would show somewhere in that data and it does not.
+
+**So the brief's job is the routing decision, the acceptance grid, the pointers, and the traps — not
+a pre-written implementation.** A brief that reaches 30 KB is one that has started doing the
+implementer's reading for it, and the implementer reads the tree anyway. Write the constraint it
+would not guess; delete the walkthrough it does not need.
+
 ### 3b. Leave a trail as you go — you are invisible while you work
 
 A dispatch runs 20–40 minutes inside nested subagents that surface nothing, which is
@@ -194,6 +208,31 @@ largest work orders** — the ones a duplicate dispatch hurts most. The story is
 
 Do both even when the run is going well. A silent 30 minutes and a stuck 30 minutes should not look
 the same.
+
+**Write the status file for the run that has to replace you, not for the watcher.** *(2026-08-24,
+from a token audit of 412 dispatch transcripts.)* **26 of 118 orchestrator runs — 22% — carry a
+session-limit message and stop there**, against 11% for the implementer and 10% for the verifier. The
+orchestrator is worst because it is the role that idles longest: it holds a context across a
+30-minute build it cannot hurry, and the limit lands while it waits. That is not a bug to design
+around and **§ 4b is not up for renegotiation** — a spawn-and-exit orchestrator would buy back the
+wait and pay for it with the one guarantee WO-2.20 bought, that no report exists about a child which
+has not returned.
+
+**What is fixable is the blast radius.** Those deaths arrive in pairs — orchestrator and implementer
+dying on the same date — which is the mechanical origin of every "dead dispatch" in
+[`plans/dispatch-retro.md`](../../plans/dispatch-retro.md). A dead run's writes are usually all
+there and none of its claims are, so a replacement re-derives from the tree; the status file is the
+only thing that tells it what was already *decided*. Each line must therefore carry the decision, not
+just the step name:
+
+- **Route**: which runner, and the sentence of reasoning — not `route chosen`.
+- **Claim**: that `--start` ran, so a replacement knows whether it is resuming or starting.
+- **Spawn**: the tier, and the brief path it was handed.
+- **Return**: what came back, in one line, before you do anything with it.
+- **Verifier**: dispatched, and then the verdict, before you write the report.
+
+A replacement that reads *`route chosen`* has learned nothing and re-derives the routing decision
+from scratch. One that reads *`route Claude — no exec, three source files, ROUTING § 2`* resumes.
 
 ### 4. Dispatch
 
