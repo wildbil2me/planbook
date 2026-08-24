@@ -77,10 +77,14 @@
        · The iPad shows the released app's About panel, which is correct: Google will not register
          a raw LAN address, so the handshake is drivable on the laptop only until a real origin is
          added to the client (WO-3.10 says so in as many words).
-     WO-7.3 WIDENS THIS ONE FUNCTION, in the same sitting as it adds the deployed origin to the
-     OAuth client in the console. Widen one and not the other and you get a button that ends in
-     Google's `origin_mismatch` — which is why `connect()` below refuses off-flag rather than
-     trusting the section to stay hidden.
+     WO-7.3 WIDENS THIS ONE FUNCTION, AND THAT IS ALL THAT IS LEFT OF THE PAIR. The two halves are
+     this function and the OAuth client's authorized-origin list, and the console half is already
+     paid: the client has carried `https://planbook.hwgteach.com` beside the loopback origin since
+     2026-08-21 (confirmed 2026-08-24, recorded in WO-3.10's table). Do not book a console trip for
+     it. The pairing rule still holds for any origin added later — widen one and not the other and
+     you get a button that ends in Google's `origin_mismatch` — and today it is the code that is
+     behind, which is the safe direction: nothing can reach a live handshake early. That is why
+     `connect()` below refuses off-flag rather than trusting the section to stay hidden.
 
   ── THE ONE SCOPE, IN THE ONE PLACE ──
 
@@ -199,7 +203,8 @@ export function signInAvailable() {
   about `planbook.hwgteach.com` and about the LAN address the iPad uses, and gets false for both.
 
   WO-7.3's "sync taken out from behind its flag" is an edit to this list and to the OAuth client's
-  authorized origins in the Cloud console, in one sitting. Neither half works alone.
+  authorized origins in the Cloud console. Neither half works alone — and the console half is done,
+  as of 2026-08-21: both origins are registered. So what WO-7.3 has left here is this list.
 */
 export function hostAllowsSignIn(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1';

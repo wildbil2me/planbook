@@ -814,6 +814,7 @@ is why it is not paperwork.
 | **Scope** | `https://www.googleapis.com/auth/drive.file`, and nothing else |
 | **Publishing status** | Testing, owner added as a test user |
 | **Authorized JS origins** | **two, and both are registered.** `https://localhost:8443` — accepted by the console 2026-08-11 · `https://planbook.hwgteach.com` — added 2026-08-21, **confirmed in the console by the owner 2026-08-24: two entries, exactly these** |
+| **Google Drive API** | enabled on the project — confirmed by the owner 2026-08-24. WO-7.1 does not need it; **WO-7.2's first upload does**, and a project without it fails on the request as a 403 rather than at sign-in |
 | **Owning Google account** | the owner's **personal Gmail**, not the `@stjohnshigh.org` Workspace account — confirmed 2026-08-12 against the Search Console verification, and named this way on purpose (see below) |
 
 **The second origin was added 2026-08-21 and this table did not learn it for three days — 2026-08-24.**

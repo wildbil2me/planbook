@@ -7645,7 +7645,7 @@ gradebook is now in Drive would stop downloading backups.
 accident. `src/auth.js` draws the section only on a loopback origin, because the OAuth client's only
 authorized JavaScript origin is `https://localhost:8443`. **So the deployed app — and the iPad, and
 the LAN address — show the About modal exactly as they did before**, fetch no Google script, and
-contact Google not at all. WO-7.3 widens that one function and the client's origin list together.
+contact Google not at all. WO-7.3 widens that one function, which is all that is left of the pair — the client's origin list already carries the deployed origin.
 
 **Three lines below need a real Google account and cannot be closed at a desk**, and they are all one
 sitting on the laptop. The procedure, once:
@@ -7693,8 +7693,9 @@ sitting on the laptop. The procedure, once:
       *(Measured. They are `.class-action-btn`, whose floor `src/shell.css` already owns — this work
       order invented no new control grammar, which is the point.)*
 - [x] On the iPad, the About modal is unchanged: no Drive section, no Google anything. **Force-quit
-      from the app switcher first** — v94 is a `SHELL` change, so a reload draws the old document
-      under a build line reporting honestly. 👤
+      from the app switcher first** — this build changes `SHELL`, so a reload draws the old document
+      under a build line reporting honestly. *(Read on v94; the v95 bump that followed is comments in
+      two `SHELL` files and changes nothing this line measures.)* 👤
       *(The expected reading is that nothing is there. It is worth taking anyway: the flag failing
       OPEN on a device that cannot complete a handshake is the one way this lands badly, and it shows
       up as a section that should not be on that screen. **Read by the owner on 2026-08-24: nothing

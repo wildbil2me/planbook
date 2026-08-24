@@ -56,8 +56,10 @@ a sign-in qualifies — "There is no account and no server" — and that is wher
 where the OAuth client's only authorized JavaScript origin (`https://localhost:8443`) can actually
 succeed. On the deployed app the section is not drawn, no Google script is ever fetched, and
 [`../privacy.html`](../privacy.html)'s claim that Planbook loads no third-party code of any kind
-stays true word for word. **WO-7.3 widens that one function and the client's origin list in the
-same sitting** — either alone gives a button that ends in `origin_mismatch`.
+stays true word for word. **WO-7.3 widens that one function, and that is all that is left of the
+pair** — the client's origin list already carries `https://planbook.hwgteach.com` beside the loopback
+origin, registered 2026-08-21 and confirmed 2026-08-24. Either half alone gives a button that ends in
+`origin_mismatch`, and today the code is the half that is behind, which is the safe direction.
 
 Two more things worth carrying forward. A grant that does not contain this scope is **refused**
 rather than held, so a token whose consent screen said something else never gets stored. And

@@ -31049,7 +31049,7 @@ console.log('\n--- the policy URL is not the app (WO-8.12) ---');
   check('the flag is the origin, and it is shut everywhere but loopback: the deployed host and the '
     + 'iPad’s LAN address both answer false, so the released app draws no sign-in and fetches no '
     + 'Google script at all — which is what keeps privacy.html’s "no third-party code of any kind" '
-    + 'true word for word (WO-7.3 widens this one function and the client’s origin list together)',
+    + 'true word for word (WO-7.3 widens this one function; the client’s origin list already carries the deployed origin, so the code is the half that is behind)',
     flag71.table['localhost'] === true && flag71.table['127.0.0.1'] === true
       && flag71.table['planbook.hwgteach.com'] === false
       && flag71.table['192.168.50.142'] === false

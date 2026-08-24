@@ -36,7 +36,7 @@ an oversight.** The section draws only on a loopback origin, because the OAuth c
 authorized JavaScript origin is `https://localhost:8443`. So the deployed app — and the iPad, and the
 LAN address — show the About modal exactly as they did yesterday, fetch no Google script, and contact
 Google not at all, which is what keeps the privacy policy's *"no third-party code of any kind"* true
-word for word. WO-7.3 widens that one function and the client's origin list in the same sitting.
+word for word. WO-7.3 widens that one function, which is all that is left of the pair: the client has carried the deployed origin beside the loopback one since 2026-08-21.
 
 **Close Planbook and you are signed out.** The token lives in memory and only in memory. A browser
 sign-in has no refresh token, so storing the token could preserve the tail of one hour at most — and
@@ -60,9 +60,10 @@ this lands badly.
 which side is ahead, and the conflict that keeps both copies rather than discarding one — all of that
 is WO-7.2, and none of it is in this build.
 
-**Deploy note.** `sw.js` is at `planbook-shell-v94` and `index.html` changed, so **force-quit
+**Deploy note.** `sw.js` is at `planbook-shell-v95` and `index.html` changed, so **force-quit
 Planbook from the app switcher** after deploying — a reload draws the old document under a build line
-that is reporting honestly.
+that is reporting honestly. *(It was v94 until a comment sweep the same day touched two `SHELL` files;
+v94 never reached the origin, which was still serving v93, so no device ever held it.)*
 
 ### The project has a licence — 2026-08-21
 

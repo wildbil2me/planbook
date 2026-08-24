@@ -1658,8 +1658,9 @@
            exactly where the handshake can succeed and nowhere else. On the deployed app this whole
            block stays `hidden`, no Google script is ever fetched, and privacy.html's flat claim
            that Planbook loads no third-party code of any kind stays true word for word. That is
-           the flag docs/sync.md asks for; WO-7.3 widens the one function in src/auth.js in the
-           same sitting as it adds a real origin to the client.
+           the flag docs/sync.md asks for; WO-7.3 widens the one function in src/auth.js, and that
+           is the whole of what is left — the client already carries the deployed origin beside the
+           loopback one, registered 2026-08-21 and confirmed 2026-08-24.
 
            IN THIS MODAL AND NOT IN THE BACKUP PANEL, which was the other candidate and lost on one
            sentence: SYNC IS NOT A BACKUP. Drive holds one live copy that sync will overwrite with a

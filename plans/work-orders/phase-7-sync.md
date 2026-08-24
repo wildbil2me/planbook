@@ -92,10 +92,10 @@ both is that one is the decision and the other is the protocol a later work orde
   and **the released app draws no sign-in and fetches no Google script at all**, which keeps
   `privacy.html`'s flat claim that Planbook loads no third-party code of any kind true word for word.
   A preference-shaped flag would have put a Google script one toggle away from every teacher and made
-  that sentence conditional; that is the argument that settled it. **WO-7.3 widens that one function
-  and the client's origin list in the same sitting** — either alone gives a button that ends in
-  `origin_mismatch`, which is why `connect()` refuses off-flag rather than trusting the markup to stay
-  hidden.
+  that sentence conditional; that is the argument that settled it. **WO-7.3 widens that one function, and the
+  console half of the pair is already paid** — both origins have been registered since 2026-08-21. Either
+  half alone gives a button that ends in `origin_mismatch`, and today it is the code that is behind,
+  which is why `connect()` refuses off-flag rather than trusting the markup to stay hidden.
 
 **Two things it deliberately did not build.** The save indicator's `syncing` state still has no
 caller — that is WO-7.2's own deliverable, verbatim — and `ensureFreshToken()`, the silent-renewal
