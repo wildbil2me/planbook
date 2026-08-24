@@ -1021,7 +1021,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1078 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1100 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2179,6 +2179,76 @@ fetched over the network, which is the offline launch gone. **Both of the policy
 in that second run, and so does "the app's own navigation still lands on the app"** — online, with
 nothing intercepting, everything works. That is precisely why the `SERVED` reading is in the block:
 a section that could only see the first mutation would have called the second one a fix.
+
+**WO-7.1 moved it from 1078 to 1100**: twenty-two call sites, none of them inside a loop and none a
+failure arm, so the section contributes twenty-two executed results and the run prints 1116 on the
+delivered tree: `1116 checks · 1116 passed · 0 failed · 0 skipped`, 31,394 lines, 28.1 lines per
+check, 378s, exit 0 — re-measured 2026-08-24 after the wording fix below, and **the figures here are
+the summary's own**: lines-per-check divides by the 1116 results, not the 1100 sites, which is a
+distinction easy to lose and worth one clause. **The gap between sites and results stays at 16.**
+**All twenty-two are in one new section at the foot of the file** — § *"the drive sign-in"*.
+
+**One further check changed and is deliberately not in that twenty-two: the pre-existing "modal
+controls measure >=44px on a coarse pointer" check was re-cut IN PLACE** — one call site before and
+one after, with the three-way split carried inside its condition and its detail line, so it moved the
+recorded number by nothing at all. *(This paragraph read "twenty-three call sites … and the
+twenty-third is the pre-existing check, split in place" until 2026-08-24, and both halves of that
+were wrong: the start was 1078 rather than 1077, and a re-cut in place is not a site. The arithmetic
+is the check on the prose — 1078 + 22 = 1100, and a twenty-third addition would have made it 1101.)*
+That one is the entry worth reading, because it is the first time a modal in this
+app has held a control that comes and goes with a state, and the check's premise had been *every
+button inside an open overlay is on screen.* The About modal now draws **Connect** or **Disconnect**
+and never both, so one of the two is always `.hidden` and measures 0x0 inside an overlay that is
+open — which reads exactly like a failed touch target. **It went red on the first run of the delivered
+tree, and it was right to**: the premise was gone, not the rule. Filtering on size alone would have
+been trap 8 — a sensitive check quietly measuring less — so the set is split three ways and all three
+are asserted: what is DRAWN clears 44, what is `.hidden` is **named in the detail line rather than
+silently dropped**, and a 0x0 control carrying no `.hidden` class still FAILS as a collapsed layout.
+`src/modal.js`'s own `focusablesIn()` draws the same line for the same reason. Nothing left the run:
+both controls are measured in the state each is actually drawn in, by two of the new sites.
+
+**The new section is shaped by one fact stated at its top: the success path of the handshake is
+unreachable from this file and always will be.** No headless browser has a Google account, a Google
+session or a consent screen, so *"a sign-in completes"* and *"the consent screen shows exactly one
+scope"* are 👤 lines against `https://localhost:8443` — the client's only authorized origin — and no
+run here closes either. What the section does instead is take everything around them, and it is most
+of the risk. **Five sites are static, in Node**: the scope string occurs exactly once in all 54 files
+the app itself *runs* — `index.html`, `sw.js` and all of `src/`, which is not the same set as
+"everything the browser loads": `privacy.html` is served, names the scope in prose, and carries no
+script, so nothing on it can ask for anything — and it is the only `googleapis.com/auth/` string of
+any kind in any of them (which is
+what makes "one scope on the consent screen" a property of the code, since Google prints one line per
+string requested); no served file *uses* `client_secret`, `refresh_token`, `access_type`,
+`approval_prompt` or `grant_type`; `src/auth.js` reaches no storage that outlives the page and imports
+exactly one module; the GIS library is in no precache list and in no `<script>` tag; and
+`src/shell.js` is the only importer of `src/auth.js` anywhere in the app — which is the half of *"every
+feature outside this phase works identically signed-out"* that a green run cannot give, because a run
+proves the app works signed-out and says nothing about whether signing in would change anything.
+
+**`acceptTokenResponse()` is the seam the rest of it goes through, and the argument is
+`backup.restoreFromText()`'s exactly**: a page cannot be handed a real file, a page cannot be handed a
+real Google token, and everything after the arrival is the same code either way. Through it: a token
+is held as exactly three fields and is in no storage that survives the page — localStorage,
+sessionStorage, cookies and the year document all searched for the live token; a response carrying a
+refresh token, an id token and three extras leaves the session at those same three fields, **which is
+the one edit that would break the sixth acceptance line and pass every grep in this file**; and a
+grant of `spreadsheets` is refused outright rather than held.
+
+**Token expiry is driven in three seconds rather than an hour**, and that is the shape of the fifth
+acceptance line a desk can reach. `signedIn` is computed from the clock on every read and stored as no
+flag anywhere, so a token seeded with 63 seconds of life reads as signed in and then — with no code
+running, nothing dispatched and nothing polled by the app — reads as signed out the moment it crosses
+the one-minute freshness margin. The panel opened on it says *not connected* rather than reporting an
+hour it no longer has, and the document's fingerprint is identical across the whole thing. The real
+hour, and the silent re-auth after it, stay 👤.
+
+**Two sites are taps on the real buttons, and the second one is asserted as the union of two
+outcomes on purpose.** Disconnect talks to nobody, so it is driven end to end: one tap, signed out,
+document byte-identical. Connect talks to Google, and this run cannot know whether it can reach it —
+so what is asserted is that the tap **left the resting line** (for either *"Waiting for Google…"* or a
+sentence naming what went wrong) and signed nobody in. Demanding one particular message would be a
+check that goes red about the network rather than about the app, which is trap 8 again. On the
+delivered run the line read *"Waiting for Google…"* and one GIS `<script>` tag had appeared.
 
 **That number is a count of lines, and since WO-2.22 that is a check rather than a premise.** The
 sweep pushes one entry per *line* that holds a call, so what it asserts equals the number of calls
