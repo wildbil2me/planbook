@@ -1494,8 +1494,8 @@ land.
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — six of seven boxes; line 1 waits on the push and the deploy |
-| 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | 🔨 **2026-08-24** — built and green; three lines open, and they are one sitting on the laptop at `https://localhost:8443`. Row 9 is unblocked the moment that sitting happens |
-| 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | The sitting, once there is a sign-in to film and a policy to link. Then somebody else's queue |
+| 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
+| 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Startable now** — all four dependencies ✅ as of 2026-08-24. Then somebody else's queue, which is why it is worth starting ahead of its row. **Read its second deliverable first:** the app signs in and touches no file yet |
 | 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
