@@ -813,8 +813,24 @@ is why it is not paperwork.
 | **Client type** | Web application |
 | **Scope** | `https://www.googleapis.com/auth/drive.file`, and nothing else |
 | **Publishing status** | Testing, owner added as a test user |
-| **Authorized JS origin** | `https://localhost:8443` — accepted by the console 2026-08-11 |
+| **Authorized JS origins** | **two, and both are registered.** `https://localhost:8443` — accepted by the console 2026-08-11 · `https://planbook.hwgteach.com` — added 2026-08-21, **confirmed in the console by the owner 2026-08-24: two entries, exactly these** |
 | **Owning Google account** | the owner's **personal Gmail**, not the `@stjohnshigh.org` Workspace account — confirmed 2026-08-12 against the Search Console verification, and named this way on purpose (see below) |
+
+**The second origin was added 2026-08-21 and this table did not learn it for three days — 2026-08-24.**
+The row above held one origin until then, because the addition happened during a console sitting whose
+only record was `plans/wo-7-1-runbook.html` § step 0, a dated HTML page that marks it ✅ done. **A
+runbook is a click path, not a register**, and that page says so about itself in as many words: *nothing
+here can be confirmed from the repository — the origin list lives in Google's console and no file in
+this tree records it.* It is recorded here now, on the owner's reading of the console, because this
+table is the thing WO-7.1 and WO-7.3 are told to read.
+
+**Registered is not the same as reachable, and the difference is a function rather than a form.**
+`hostAllowsSignIn()` in `src/auth.js` still answers **false** for `planbook.hwgteach.com` — asserted
+by `verify-shell.mjs` as a deliberate departure — so the deployed app draws no sign-in even though
+Google would now accept the handshake from it. That half is WO-7.3's, and the console half of the pair
+it names is already paid. The two failure modes read differently and it is worth knowing which is
+which before opening a console: *"The given origin is not allowed for the given client ID"* is the
+list; **no Drive section on the screen at all** is the flag.
 
 **The account that owns this project was never written down, and WO-8.7 is where that started to
 cost — 2026-08-12.** The table records what the client *is* and nothing about *whose* it is. That was

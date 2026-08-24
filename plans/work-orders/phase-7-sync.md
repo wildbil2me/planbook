@@ -253,6 +253,18 @@ without the submission, which is where the deadline always belonged.)*
 - Demo video accepted.
 - Sync taken out from behind its flag.
 
+*(**One half of "sync taken out from behind its flag" is already paid — 2026-08-24.** `src/auth.js`
+says twice that this work order widens `hostAllowsSignIn()` *in the same sitting as* it adds the
+deployed origin to the OAuth client, because widening one and not the other ends in Google's
+`origin_mismatch`. **The console half is done**: the client has carried both
+`https://localhost:8443` and `https://planbook.hwgteach.com` since 2026-08-21, confirmed by the owner
+in the console on 2026-08-24 and recorded in
+[WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope)'s table. So
+what is left of that pairing is **the one function**, and a reader of those comments should not book a
+console trip for the other half. The safety argument behind the pairing is untouched and still points
+the same way: the code is the half that is behind, so nothing can reach a live handshake early.)*
+
+
 **Acceptance**
 - [ ] A teacher signing in from a clean Google account sees one scope and **no unverified-app
       warning**. Verify on an account that has never used the app.
