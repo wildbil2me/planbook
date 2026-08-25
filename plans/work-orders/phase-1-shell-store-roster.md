@@ -2326,7 +2326,7 @@ every row in the ship, and* [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-
 
 ## WO-1.26 — verify-shell.mjs is 32,000 lines and most runs never see it green
 
-**Ship** — · **Status** 🤖 CLAIMED — 2026-08-25 · **Size** L · **Depends on** — · **Blocks** nothing by name,
+**Ship** — · **Status** ✅ DONE — 2026-08-25 · **Size** L · **Depends on** — · **Blocks** nothing by name,
 and every future harness edit by weight
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the harness is not a promise the roadmap
 makes, the way WO-2.14 and WO-2.15 are not. Booked 2026-08-24, owner-directed, out of a token audit

@@ -13,6 +13,35 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness stops being one file — 2026-08-25
+
+`tools/verify-shell.mjs` had reached **32,853 lines**, about three quarters the size of everything
+ever added under `src/`, and agents had measurably stopped reading it: **616 `Edit`/`Write` calls**
+against that one path across every dispatch this repository has run, **511 shell-outs** to read
+thirty-line windows of it, and only **59 of 142 implementer runs** ever seeing a `0 failed` summary
+line. The checks now live in **58 section files under `tools/verify/`**, one per surface, plus
+`lib-dates.mjs` and the far half of attendance. The entry file keeps the arguments, the server, the
+browser, the seeded document, the shared helpers, two ordered lists and the summary — **738 lines**.
+
+**The check count is the contract and it did not move.** Pre-split, clean tree: 1,156 checks, 1,156
+passed, 0 failed, 0 skipped, 394s. Post-split, same machine: **1,156 · 1,156 passed · 0 failed ·
+0 skipped**, 382s, exit 0. Zero `SKIP` lines either side, no module fails to import, and the full
+multiset of `check()` call-site names is byte-identical across the move — nothing was added, deleted
+or reworded. No app file was touched.
+
+**The import list is explicit, and a directory scan is what it exists instead of.** Globbing
+`tools/verify/*.mjs` would make the count depend on what happens to be on disk, which is precisely
+the property that lets a section vanish and still print green. `wo-sweep.mjs` reads the same
+`STATIC_SECTIONS` and `BROWSER_SECTIONS` rows, so the set counted is the set run. One process, one
+browser, one server, one seeded document — a per-module browser launch turns a 380-second run into
+something nobody waits for. Nothing wraps `run(h)` in a `try/catch`: catching would turn a section
+that broke into a section that quietly did not happen.
+
+Lines-per-check is now summed across the whole harness rather than the entry file — measuring only
+the entry would report ~700 lines over 1,156 checks, which is not a smaller number, it is a false
+one. The reasoning is `plans/verification-tooling.md` § "Splitting the harness"; where a new check
+goes is `tools/README.md` § "Driving a browser over CDP". **A green harness still closes no 👤 item.**
+
 ### Praise, beside concern, ranked by how far someone came — 2026-08-24
 
 *Who needs you* has a second column. It is the same width as the first, it is drawn **first** on a
