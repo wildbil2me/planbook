@@ -6,6 +6,14 @@ Planbook has exactly one verification script, [`tools/verify-shell.mjs`](../tool
 It is run by hand, it has no dependencies, it gates nothing, and **it is not the beginning of a test
 suite.**
 
+*(**One script, and since 2026-08-25 more than one file.** WO-1.26 moved the sections into
+`tools/verify/`, one per surface, behind an explicit import list in that same entry file — still one
+process, one browser, one command, no dependency and no runner. The paragraph below is the failure
+mode this document was written about and it has not happened; what did happen, what it cost and what
+was given up is § "Splitting the harness, 2026-08-25 (WO-1.26)". **Read that section before reading
+"one file" anywhere else in here as current rule** — several places below still say it, correctly, as
+the record of what was true when they were written.)*
+
 This document exists because a future session will look at that file and start growing it. Every
 addition will be individually reasonable. Somewhere around the fourth one, someone factors out
 `tools/lib/`, adds a config file, then a runner — and the suite has acquired a test framework that
@@ -42,12 +50,12 @@ These are the rules that keep it a script. Breaking any one of them is how it st
 
 | Rule | Why |
 |---|---|
-| **One file.** No `tools/lib/`, no second harness, no plugin seam | A shared helper directory is the first structural step from "a script" to "a framework" |
+| **One entry, one process, one explicit list.** No discovery, no second harness, no plugin seam, no registration protocol | This read **"one file"** until WO-1.26, 2026-08-25, when the file reached 32,853 lines and agents had measurably stopped reading it. The rule was never about the file count — it is about not acquiring a framework's machinery — and every clause that carries that weight survives intact. The one clause that did not is recorded below, with what was given up |
 | **If it wants a config file, stop** | Configuration is what a runner needs. A script that needs configuring has outgrown the decision recorded here — bring it to the teacher rather than building it |
 | **It gates nothing.** No git hook, no CI, no commit check | Everything in `tools/` is optional and run by hand. A gate makes it required infrastructure |
 | **It measures; `TESTING.md` judges** | A green run closes **zero** boxes by itself, and never a 👤 item. The checklist is the gate; this feeds it evidence |
 | **Never required to run or ship the app** | A teacher's laptop never runs Node. `index.html` and `src/` are served as they sit on disk |
-| **No line cap.** Watch **lines per check** (~17.9) and **runtime** (58s) instead | The ~950-line cap was retired on 2026-08-05 after binding once in four work orders. It could not tell coverage from bloat on a file that grows with the app's surface. The reasoning, and the two controls that replace it, are recorded below |
+| **No line cap.** Watch **lines per check** and **runtime** instead — both across the whole harness, entry file plus `tools/verify/`, since WO-1.26 | The ~950-line cap was retired on 2026-08-05 after binding once in four work orders. It could not tell coverage from bloat on a file that grows with the app's surface. The reasoning, and the two controls that replace it, are recorded below |
 
 ## What it is allowed to check
 
@@ -326,6 +334,22 @@ the arms in the file and compares that with the cases written for them, so an ar
 goes red on the next run instead of on the day somebody remembers. If the case count ever outruns the
 arm count, a case is testing something that no longer exists.
 
+*(**WO-1.26 took one premise of this section away and left every conclusion standing, which is worth
+saying plainly rather than leaving for somebody to notice.** The two reads ARE exported now —
+`readScoresKeys` out of `tools/verify/keys-legend-scores.mjs`, `readMarkingKeys` out of
+`keys-legend-marking.mjs` — because after the split every section is a module and every shared helper
+is an export. So "a sibling would need the two reads exported, which is the shared seam" no longer
+argues for anything: exports are ordinary here. What has not changed is what the argument was
+protecting. The guard still rides the ordinary run rather than a flag, on the writes/spawns/waits
+distinction above, which had nothing to do with file count. It still lives beside the reads it tests —
+`keys-legend-guards.mjs` is the next file along in the same directory, importing them by name — rather
+than in a sibling holding its own copy, which is the hand-maintained second copy WO-2.36 refused and
+is still refused. And the "one case per arm" count now reads those two files instead of
+`fileURLToPath(import.meta.url)`, because the arms went with the readers; the number is nineteen
+either side of the split, and the read is named at the check. **The rule to carry forward is the same
+sentence with one word changed: a self-test lives in the module it tests, never in a sibling with its
+own copy.**)*
+
 ## The `:NNN` pointers into the harness are anchored by text, not swept, 2026-08-17 (WO-2.39)
 
 `tools/README.md` carries about twenty `path:NNN` pointers, most of them into `verify-shell.mjs`. Three
@@ -504,6 +528,100 @@ holding a deliberate defect, at the exact moment the next step was a commit.
 **A signal is not an exception, and `finally` does not catch one.** Either mutate in memory the way
 `wo-gate.mjs --self-check` does, or run detached where nothing kills the process — and either way,
 grep the shipped line back before trusting the tree. That grep is what caught this one.
+
+## Splitting the harness, 2026-08-25 (WO-1.26)
+
+**Decided, owner-directed, out of a token audit of 412 dispatch transcripts.** `verify-shell.mjs`
+becomes a thin entry file and the sections move to one file each under `tools/verify/`. The counts
+either side, both taken on the same machine the same afternoon:
+
+| | Before | After |
+|---|---|---|
+| Executed checks | **1156 checks · 1156 passed · 0 failed · 0 skipped** | **1156 checks · 1156 passed · 0 failed · 0 skipped** |
+| `check()` call sites (`wo-sweep.mjs` § 11) | 1141 | 1141 |
+| Lines | 32,853 in one file | 34,066 across 61 |
+| Lines per check | 28.4 | 29.5 |
+| Runtime | 394s | 383s |
+| Entry file | 32,853 lines | 738 |
+| Largest single file | 32,853 lines | 2,753 |
+
+**The check count is the contract and it did not move.** Nothing was added, nothing was deleted, and
+no section was allowed to become a `skip(...)` on the way past — `grep -c "^SKIP"` is 0 on both runs.
+Anything that looked wrong in passing was written down in the result file rather than edited, which
+is the rule a move this size needs if it is to be reviewable at all.
+
+### The measured reason, which is not "the file was big"
+
+A total-line number was retired as a control on 2026-08-05, above, and this is not that control
+coming back. What was measured across every dispatch this repository has run is **behaviour**:
+
+- **616 `Edit`/`Write` calls** against this one path, and **511 shell-outs to read it** —
+  `sed -n '13206,13222p'`, `grep -n` for a helper's definition, thirty-line windows hunting for where
+  a check belongs. Verifiers read it another 257 times. **Agents had stopped reading the file and
+  started navigating it**, and address arithmetic inside one file was the largest single mechanical
+  drag in the implementer profile.
+- It was executed 552 times by implementers and 262 by verifiers, but only **59 of 142 implementer
+  runs and 48 of 147 verifier runs ever saw a `0 failed` summary line.** The rest reported on a
+  harness they had run in fragments — filtered through `grep`, or interrupted. *A green harness closes
+  no 👤 item* was already the rule; **this is the quieter half of the same problem, where a run cannot
+  even establish the green.**
+
+That is a different axis from the one the line cap measured, and it is the axis
+§ "Retiring the line cap" said to come back for: *"if both sit flat for three work orders while the
+file doubles again, that is the signal to come back here."* Lines per check sat flat at ~28 while the
+file went from 3,000 to 32,000. The control that bound was neither of the two.
+
+### What was given up, stated rather than glossed
+
+**One clause of the boundary rule, and only one: "one file."** `tools/verify/` exists, and one file
+in it — `lib-dates.mjs` — is a shared helper module, which is the `tools/lib/` the old row named. That
+is a real cost and the row above now says so.
+
+What the rule was actually protecting is intact, and each clause is worth naming because each is a
+thing this split could have quietly acquired and did not:
+
+- **No discovery.** The entry file names every section in an explicit ordered list. A runner that
+  globbed the directory would make the check count depend on what is on disk, which is exactly the
+  property that lets a section vanish and still print green. `wo-sweep.mjs` § 11 reads the same rows,
+  so the set counted is the set run.
+- **No config**, no options file, no per-section manifest, no lifecycle hooks, no `describe`/`it`, no
+  registration protocol. A section exports one `async function run(h)` and is called.
+- **One process, one browser, one server, one seeded document.** The sections are not independent of
+  each other's fixture state and were not made so; a per-module browser launch would have turned a
+  394-second run into something nobody waits for, which is how a verification tool actually dies.
+- **No dependency, no `package.json`, no framework, no bundler.** Bare Node, `.mjs`, run by hand.
+- **A section that throws still kills the run.** Nothing wraps `run(h)`, deliberately: catching would
+  turn a section that broke into a section that quietly did not happen, which is a silent skip under
+  another name.
+
+### The two controls, in the shape they now take
+
+**Lines per check counts the whole harness**, entry plus every module. Before the split those were the
+same number; after it, measuring only the entry would report 738 lines over 1,156 checks — not a
+smaller figure but a false one. The summary sums the same explicit list the run is driven from, so a
+module nothing imports is not counted any more than it is run. **Runtime is unchanged in meaning**, and
+the 383s reading is 2.8% under the 394s before — one process, one browser, as above, and well inside
+the 15% band the work order set.
+
+The density moved from 28.4 to 29.5, which is the ~1,200 lines of file headers, import lines and
+destructure lines the split added and nothing else. If it drifts materially above that, the reason will be checks, not
+this.
+
+### The honest objections, recorded
+
+**A directory of files can rot in a way one file cannot**: a module that stops being imported keeps
+compiling and stops running. That is why the explicit list is not negotiable, why `wo-sweep.mjs` § 11
+reads it, and why a file named in the list and missing from disk is a FAIL there rather than a
+shrug. The gap that is still open: **a `.mjs` sitting in `tools/verify/` that nothing imports is
+invisible to both tools.** It contributes no checks, so no count moves — which is honest — but nothing
+says out loud that it is dead. A sweep clause for that was considered and left out of WO-1.26 on its
+own Out-of-scope line; it is the obvious next thing if one ever appears.
+
+**And the bodies are at their original indentation, at column zero inside `run(h)`.** That is
+deliberate: it made the split a move rather than a re-wrap, so every line under `tools/verify/` is
+byte-for-byte the line it was, and the diff is reviewable as such. Re-indenting would have rewritten
+the inside of every page-side template literal in the harness. It reads slightly oddly and it is the
+convention; `tools/README.md` § "Where a new check goes" says to match it.
 
 ## What it cannot do, and must never claim to
 

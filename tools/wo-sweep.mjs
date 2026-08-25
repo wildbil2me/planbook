@@ -632,11 +632,23 @@ function commentLines(file) {
    check that compared the two and passed when they were close would restate the problem it was
    written to solve.
 
+   THE HARNESS IS MORE THAN ONE FILE SINCE WO-1.26, and this census follows the entry file's own
+   explicit list rather than scanning `tools/verify/`. That is the same decision the entry file makes
+   about what it runs, and for the same reason: a directory scan makes the count depend on what
+   happens to be on disk, so a module that is present but imported by nothing would be counted here
+   and never executed there — two numbers that disagree, with the sweep's the wrong one. Reading the
+   list means the set counted is the set run. The list is greppable because every row in
+   `STATIC_SECTIONS` and `BROWSER_SECTIONS` carries its path as a string, which is why those rows
+   name the file twice; that redundancy is what this check reads. A file named in the list and
+   missing from disk FAILs, below, with the same reasoning as a missing harness.
+
    ALLOWLIST, so the next reader does not re-derive it:
-   - `tools/verify-shell.mjs:68` is `function check(name, ok, detail)` — the definition, excluded by
-     name. It is the only occurrence of `check(` in that file that is not a call.
-   - The one `else check(` in the harness — `grep -n 'else check(' tools/verify-shell.mjs`, exactly one
-     hit — is the one call site not first on its line. The pattern is therefore NOT line-anchored; it
+   - `function check(name, ok, detail)` in `tools/verify-shell.mjs` is the definition, excluded by
+     name. It is the only occurrence of `check(` in the harness that is not a call. The modules'
+     `const { check, … } = h;` lines are not matched either — the pattern wants a `(` after the
+     name — so the split added no call sites and took none away: 1141 before it and 1141 after.
+   - The one `else check(` in the harness — `grep -rn 'else check(' tools/verify-shell.mjs tools/verify/`,
+     exactly one hit — is the one call site not first on its line. The pattern is therefore NOT line-anchored; it
      matches `check(` anywhere a call could be written. (Cited by line here until WO-2.39 — `:10570`,
      then `:10773` — while the call site went on to `:10838`, `:10941`, and thousands of lines past
      that. The number was illustration rather than something either tool resolves, and it lived in two
@@ -666,23 +678,37 @@ function commentLines(file) {
 {
   const harnessPath = path.join(REPO, 'tools', 'verify-shell.mjs');
   const readmePath = path.join(REPO, 'tools', 'README.md');
-  if (!fs.existsSync(harnessPath) || !fs.existsSync(readmePath)) {
+  // The section files, taken off the entry file's own two ordered lists plus the two files that are
+  // part of the harness without being sections. One regex over the paths those rows carry as
+  // strings; see the note above for why this is read rather than globbed.
+  const named = fs.existsSync(harnessPath)
+    ? [...new Set(fs.readFileSync(harnessPath, 'utf8').match(/'verify\/[a-z0-9-]+\.mjs'/g) || [])]
+      .map(s => s.slice(1, -1))
+    : [];
+  const harnessFiles = [harnessPath, ...named.map(r => path.join(REPO, 'tools', r))];
+  const absent = harnessFiles.filter(f => !fs.existsSync(f));
+  if (!fs.existsSync(harnessPath) || !fs.existsSync(readmePath) || absent.length || !named.length) {
     // A missing file FAILs. It was a REVIEW until WO-2.22, and this file's header defines REVIEW as
     // "greppable evidence that needs a human decision" — a vanished harness is not a decision anybody
     // is being asked to make, it is the one condition under which every claim this section makes is
     // void. It is also the same shape as the empty-grep failure below, one step further along: a run
     // that exits 0 over a file that is not there reads green from a distance and is not.
     check('the recorded `check()` call-site count matches the harness', false,
-      `${!fs.existsSync(harnessPath) ? 'tools/verify-shell.mjs' : 'tools/README.md'} is not where this check expects it — the count is now watching nothing, and so is the one-call-per-line check beside it. Restore the file or point this check at the new path.`);
+      !fs.existsSync(harnessPath) ? 'tools/verify-shell.mjs is not where this check expects it — the count is now watching nothing, and so is the one-call-per-line check beside it. Restore the file or point this check at the new path.'
+        : !fs.existsSync(readmePath) ? 'tools/README.md is not where this check expects it — the count is now watching nothing, and so is the one-call-per-line check beside it. Restore the file or point this check at the new path.'
+          : absent.length ? `tools/verify-shell.mjs names ${absent.map(rel).join(', ')} in its run order and the file is not there — the run would die on the import, and this count would be short by a whole section without saying so`
+            : "tools/verify-shell.mjs no longer names a single 'verify/….mjs' path — the pattern in tools/wo-sweep.mjs has stopped matching the entry file's run order, which reads green from a distance and is not");
   } else {
-    const comments = commentLines(harnessPath);
     const CALL = /(^|[^A-Za-z0-9_$.])check\s*\(/;
     const DEFINITION = /function\s+check\s*\(/;
     const sites = [];
-    fs.readFileSync(harnessPath, 'utf8').split('\n').forEach((line, i) => {
-      if (comments.has(i + 1) || DEFINITION.test(line) || !CALL.test(line)) return;
-      sites.push({ file: 'tools/verify-shell.mjs', line: i + 1, text: line.trim() });
-    });
+    for (const file of harnessFiles) {
+      const comments = commentLines(file);
+      fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+        if (comments.has(i + 1) || DEFINITION.test(line) || !CALL.test(line)) return;
+        sites.push({ file: rel(file), line: i + 1, text: line.trim() });
+      });
+    }
 
     // The sentence in tools/README.md that carries the number, and where it sits.
     const RECORDED = /holds (\d+) `check\(\)` call sites/g;
@@ -698,7 +724,7 @@ function commentLines(file) {
       // loudly here is the guard against a green run over an empty grep, which is the shape of
       // wrongness this whole section exists to catch in the other file.
       check('the recorded `check()` call-site count matches the harness', false,
-        'no `check()` call site found in tools/verify-shell.mjs at all — the pattern in tools/wo-sweep.mjs has stopped matching, which reads green from a distance and is not');
+        `no \`check()\` call site found across the ${harnessFiles.length} harness file(s) at all — the pattern in tools/wo-sweep.mjs has stopped matching, which reads green from a distance and is not`);
     } else if (stated.length !== 1) {
       check('the recorded `check()` call-site count matches the harness', false,
         stated.length
@@ -706,10 +732,10 @@ function commentLines(file) {
           : 'tools/README.md no longer contains the sentence this check reads (`… holds N `check()` call sites …`) — restore the wording or re-point this check; a reworded sentence must not read as a passing count');
     } else if (stated[0].n !== sites.length) {
       check('the recorded `check()` call-site count matches the harness', false,
-        `tools/verify-shell.mjs has ${sites.length} \`check()\` call site(s), ${sites.length > stated[0].n ? 'up' : 'down'} ${Math.abs(sites.length - stated[0].n)} on the ${stated[0].n} recorded at ${stated[0].at} — update that line, and the executed-check count in the paragraph beside it, from a run rather than by arithmetic. Sites run ${sites[0].file}:${sites[0].line}..${sites[sites.length - 1].line}`);
+        `the harness has ${sites.length} \`check()\` call site(s) across ${harnessFiles.length} file(s), ${sites.length > stated[0].n ? 'up' : 'down'} ${Math.abs(sites.length - stated[0].n)} on the ${stated[0].n} recorded at ${stated[0].at} — update that line, and the executed-check count in the paragraph beside it, from a run rather than by arithmetic. Sites run ${sites[0].file}:${sites[0].line} .. ${sites[sites.length - 1].file}:${sites[sites.length - 1].line}`);
     } else {
       check('the recorded `check()` call-site count matches the harness', true,
-        `${sites.length} \`check()\` call site(s) in tools/verify-shell.mjs, matching ${stated[0].at} — call sites, not executed checks; the gap is named there`);
+        `${sites.length} \`check()\` call site(s) across ${harnessFiles.length} harness file(s), matching ${stated[0].at} — call sites, not executed checks; the gap is named there`);
     }
 
     // The premise the count above rests on, asserted rather than assumed (WO-2.22). The push is one
@@ -722,7 +748,7 @@ function commentLines(file) {
     check('one `check()` call per line in the harness', !doubled.length,
       doubled.length
         ? `${report(doubled)} hold(s) more than one \`check(\` — the count above pushes one entry per line, so a second call on a line that already has one moves no number and leaves the count in tools/README.md quietly wrong. Put it on its own line. (If the second occurrence is a trailing comment rather than a call, this clause still reads the line as written: move the comment.)`
-        : `${sites.length} call-site line(s) in tools/verify-shell.mjs, none holding a second \`check(\` — which is what makes the count above a count of calls`);
+        : `${sites.length} call-site line(s) across the harness, none holding a second \`check(\` — which is what makes the count above a count of calls`);
   }
 }
 

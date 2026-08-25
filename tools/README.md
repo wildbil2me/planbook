@@ -1021,12 +1021,21 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1141 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1141 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
-sweep red rather than turning the check off. Its allowlist is written down at the check: the
-definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
-there is exactly one — is why the pattern is not line-anchored, and comment lines are excluded because
-the harness quotes call names in its prose constantly. WO-3.12 moved it from 592 to 596, four literal
+sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
+`node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
+the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
+numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
+the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
+and the sixty files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+`STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
+directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
+`const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
+Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
+call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
+line-anchored, and comment lines are excluded because the harness quotes call names in its prose
+constantly. WO-3.12 moved it from 592 to 596, four literal
 call sites (case 8's third
 direction and cases 13-15) added to the grade-engine block, none inside a loop; WO-2.24 moved it from
 596 to 599, three literal call sites in three different sections, likewise none inside a loop; WO-3.7
@@ -2237,6 +2246,19 @@ card, the fortnight comparison, and the ordering check whose fifth row was the t
 **Neither was reverted with `git checkout` over unstaged work** — the tree was staged first, which is
 the trap that has cost this repo an afternoon before.
 
+**WO-1.26 moved it from 1141 to 1141**, and that is the entry: the harness was split into
+`tools/verify-shell.mjs` plus sixty files under `tools/verify/`, and **the tree prints 1156**:
+`1156 checks · 1156 passed · 0 failed · 0 skipped`, 34,066 lines, 29.5 lines per check, 383s, exit 0,
+measured 2026-08-25 against a pre-split reading of `1156 checks · 1156 passed · 0 failed · 0 skipped`,
+32,853 lines, 28.4 lines per check, 394s, exit 0 taken on the same machine an hour earlier. Not one
+call site was added or deleted, the `SKIP` count is 0 on both, and the gap between sites and results
+stays at 15. **The lines figure is the whole harness now** — the entry file plus every module the run
+imports — because measuring only the entry after a split reports a smaller number that is not a truer
+one; the summary sums the same explicit list it runs. The 1,213-line rise is the sixty file headers,
+their `import` lines and their `const { … } = h;` lines, and nothing else. Where a new check goes is
+§ "Driving a browser over CDP" above, first subsection; why the split happened is
+`plans/verification-tooling.md` § "Splitting the harness, 2026-08-25 (WO-1.26)".
+
 **Four shipped checks in § who needs you were re-cut in place and none of them moves the count.**
 `signalsModel()` gained a second column, so `m.rows` is `m.concern.rows` in three of them; the fourth
 is the rule-chip census, which now reads FIVE rules over that fixture rather than four — Lena and
@@ -2790,6 +2812,47 @@ looks like a dialog rather than like a mistake. Three mutations, all reverted an
 
 Every one of these was hit and diagnosed twice, by two different agents, before it was written
 down here. That is the entire reason this section exists.
+
+#### Where a new check goes (WO-1.26)
+
+The harness is `tools/verify-shell.mjs` **plus one file per section under `tools/verify/`**. The
+entry file holds the argument handling, the static server, the browser, the page, the shared
+helpers, the two ordered lists of sections and the summary — and nothing else. A check belongs in
+the section file named after the surface it drives, so `ls tools/verify/` is the index: the score
+grid's checks are in `score-grid.mjs`, the month grid's in `calendar-drawn.mjs`. If the surface is
+genuinely new, adding it is three lines and a file:
+
+1. Write `tools/verify/<surface>.mjs` exporting one `export async function run(h)`.
+2. Add one `import { run as <surface> } from './verify/<surface>.mjs';` to the entry file.
+3. Add one row to `BROWSER_SECTIONS` — or to `STATIC_SECTIONS`, if it never touches the browser and
+   can report in two seconds instead of after a six-minute drive.
+
+**That list is explicit rather than a directory scan, and the length is the point.** A runner that
+globbed `tools/verify/*.mjs` would make the check count depend on what happens to be on disk, which
+is exactly the property that lets a section disappear and still print green — the vacuous pass this
+file's two rules are about, one level up. `tools/wo-sweep.mjs` § 11 reads the same rows to know
+which files to count, so the set that is counted is the set that runs.
+
+**What rides on `h`, and what is imported.** Anything that talks to the browser, the server or the
+run's bookkeeping is on the harness object: `check`, `skip`, `evalJs`, `has`, `clickSel`,
+`clickVisible`, `openCalendarPanel`, `send`, `load`, `waitForBoot`, `dateResetOn`, `KILL_ANIM`,
+`INSTALL_WALKER`, `ROOT`, `PORT`, `SERVED`, `udd`, `consoleLog`, `results`, `SCHEMA_NOW`, and three
+readings one section takes that later ones live on — `seam`, `classesBooted`, `classSeam`. Anything
+that does **not** talk to the browser stays in the module that documents it and is imported by name:
+`lib-dates.mjs`'s date helpers, `measureIn` out of `touch-targets.mjs`, `readScoresKeys` and
+`readMarkingKeys` out of the two legend sections, the page-side reader strings out of
+`classes-terms.mjs` and `roster-contacts.mjs`. One `import` line then tells a reader where a helper
+lives. Neither the harness object nor a `lib-` file is a place to put a section's own working parts.
+
+**Section bodies sit at their original indentation, and that is deliberate.** A body is at column
+zero inside its `run(h)` rather than indented two spaces, so that the split was a pure move: every
+line under `tools/verify/` is byte-for-byte the line it was in the 32,000-line file, and anyone
+re-reading that diff reads a move rather than a re-wrap. Indenting would have rewritten the inside
+of every page-side template literal in the harness for a cosmetic gain. Match it; do not tidy it.
+
+**A section that throws still kills the run.** Nothing wraps `run(h)` in a `try`/`catch`, on purpose
+— catching would turn a section that broke into a section that quietly did not happen, which is the
+same lie as a silent skip and is what the `SKIP` accounting below exists to make loud.
 
 1. **A modern `CSSStyleRule` has its own empty-but-truthy `.cssRules`** (CSS nesting). So the
    obvious rule walk — `if (r.cssRules) { walk(r.cssRules); continue; }` — treats every

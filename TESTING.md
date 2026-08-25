@@ -1013,6 +1013,48 @@ and the owner's own file can answer. **All three were answered on 2026-08-18** �
 `.csv` is selectable, and a real section imports with the right count — against the LAN build rather
 than the deployed one, which is the amendment recorded on that line.
 
+### WO-1.26 — the harness stops being one file
+
+**What this changes.** Nothing a teacher sees, nothing the app does, and nothing the harness prints
+except the lines figure in its own health line. `src/`, `index.html` and `sw.js` are byte-identical to
+HEAD. `tools/verify-shell.mjs` keeps the arguments, the server, the browser, the page, the shared
+helpers, two ordered lists of sections and the summary; the checks move to one file per surface under
+`tools/verify/`. The reasoning is `plans/verification-tooling.md`
+§ "Splitting the harness, 2026-08-25 (WO-1.26)"; where a new check goes is `tools/README.md`
+§ "Driving a browser over CDP", first subsection.
+
+- [x] **The check count is the contract, and it did not move.** Pre-split, on a clean tree:
+      `1156 checks · 1156 passed · 0 failed · 0 skipped`, 32,853 lines, 28.4 lines per check, 394s,
+      exit 0. Post-split, same machine, same afternoon:
+      `1156 checks · 1156 passed · 0 failed · 0 skipped`, 34,066 lines, 29.5 lines per check, 383s,
+      exit 0. `grep -c "^SKIP"` is **0** on both outputs and `grep -c "^FAIL"` is **0** on both.
+- [x] **No module fails to import**, asserted twice: all 60 files under `tools/verify/` were imported
+      in isolation and every section file exports a `run`, and the green run above then executed all
+      of them end to end — which is the stronger of the two, because a section that loads and never
+      runs is exactly the failure a green count is supposed to catch.
+- [x] `node tools/wo-sweep.mjs` is `33 checks · 30 passed · 0 failed · 3 to review` — **no new REVIEW
+      line**; the three are the standing sensitive-field-name census, the due-date/late-missing
+      census and the mockup-banner one, all of them over `src/` and `design/`, neither of which this
+      work order touches. Its § 11 census was widened to follow the entry file's own run order and
+      reads *"1141 `check()` call site(s) across 61 harness file(s), matching tools/README.md:1024"* —
+      **1141 before the split and 1141 after**, because the modules' `const { check, … } = h;` lines
+      are not call sites.
+- [x] **Sizes.** `tools/verify-shell.mjs` is 738 lines; the largest file anywhere under `tools/` is
+      `tools/verify/attendance-passes.mjs` at 2,753, then `tools/verify/attendance.mjs` at 2,653 and
+      `tools/README.md` at 2,987. Nothing is over 4,000.
+- [x] **No dependency arrived.** `node tools/wo-sweep.mjs` § 1 is green at *"no package.json, no
+      lockfile, no node_modules"*, every one of the 60 new files is a `.mjs` run by bare Node, and
+      the run is still one process, one browser, one server and one seeded document — the 383s
+      reading is what proves the last of those, since a per-module browser launch could not come in
+      under the pre-split number.
+- [x] The attendance section is the one that could not stay whole: at 5,404 lines it is over the cap
+      by itself, so it is two files that are **one section** — `attendance.mjs` hands
+      `attendance-passes.mjs` the fixtures it has already built, by name, in one object. Nothing else
+      was cut mid-section.
+
+*No 👤 line. Nothing here renders and nothing reaches a device; the harness still drives a page rather
+than an installed app, and a green run here still closes no 👤 item anywhere else in this file.*
+
 ---
 
 ## Phase 2 — Attendance

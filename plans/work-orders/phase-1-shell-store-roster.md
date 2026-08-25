@@ -2326,7 +2326,7 @@ every row in the ship, and* [WO-3.25](phase-3-gradebook.md#wo-325--a-score-cell-
 
 ## WO-1.26 — verify-shell.mjs is 32,000 lines and most runs never see it green
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** — · **Blocks** nothing by name,
+**Ship** — · **Status** 🤖 CLAIMED — 2026-08-25 · **Size** L · **Depends on** — · **Blocks** nothing by name,
 and every future harness edit by weight
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the harness is not a promise the roadmap
 makes, the way WO-2.14 and WO-2.15 are not. Booked 2026-08-24, owner-directed, out of a token audit
@@ -2399,17 +2399,17 @@ process, one summary line, one exit code. What changes is that the checks stop l
   measured reason — the 616 edits and the 42% of runs that never saw a green summary.
 
 **Acceptance**
-- [ ] `node tools/verify-shell.mjs` on the post-split tree reports **the same check count** as the
+- [x] `node tools/verify-shell.mjs` on the post-split tree reports **the same check count** as the
       pre-split tree, `0 failed`, `0 skipped`, and exits 0. Both numbers quoted in the result file.
-- [ ] `grep -c "^SKIP"` on the post-split output is `0`, and no module fails to import.
-- [ ] `node tools/wo-sweep.mjs` passes with no new REVIEW line, and `tools/README.md`'s `check()`
+- [x] `grep -c "^SKIP"` on the post-split output is `0`, and no module fails to import.
+- [x] `node tools/wo-sweep.mjs` passes with no new REVIEW line, and `tools/README.md`'s `check()`
       count matches what the harness actually reports.
-- [ ] No file under `tools/` exceeds 4,000 lines, and `tools/verify-shell.mjs` itself is under 800.
-- [ ] The repository still has **no dependencies, no `package.json`, no linter and no test
+- [x] No file under `tools/` exceeds 4,000 lines, and `tools/verify-shell.mjs` itself is under 800.
+- [x] The repository still has **no dependencies, no `package.json`, no linter and no test
       framework**, and every new file is a `.mjs` run by bare Node.
-- [ ] Adding a check is a one-file diff: `tools/README.md` says which file, and the entry file's
+- [x] Adding a check is a one-file diff: `tools/README.md` says which file, and the entry file's
       import list is the only shared thing a new section touches.
-- [ ] The run time is within 15% of the pre-split run, measured the same way on the same machine —
+- [x] The run time is within 15% of the pre-split run, measured the same way on the same machine —
       one browser and one server, not one per module.
 
 **Not in scope, and each is a decision rather than an omission.**
