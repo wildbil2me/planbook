@@ -49,6 +49,12 @@ dependencies.
   key is absent. Seeding one as an empty object makes `parseBackup()` refuse **every backup written
   by every earlier build** — it validates against the shape `newYearDocument()` returns. Do not
   answer that with a `SCHEMA_VERSION` bump.
+- **Concern state is derived at read time, and there is no "was flagged" bit** (WO-4.3). The
+  turnaround rule answers *was this student on the concern list and is she off it now* by running
+  the concern rules a second time against a shifted `{ through }` — it stores nothing, and
+  `src/signals.js` holds no writer of any kind. Do not add a remembered flag, and do not answer the
+  cost by walking every day of the window: the rule samples **once**, at the far edge, and therefore
+  under-fires rather than over-claims. That trade is deliberate and argued at the rule.
 - **A signal rule is handed its own measured numbers and nothing else** — not the document, not the
   clock, not the threshold it just crossed. That is what makes an explanation unable to drift from
   the arithmetic behind it, and what keeps accommodation, medical and plan data out of a sentence

@@ -22,7 +22,8 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § SIGNALS       →  src/signals-view.css  (WO-4.2 lifted 2026-08-20 · WO-4.3 · WO-4.5 pending)
+     § SIGNALS       →  src/signals-view.css  (WO-4.2 lifted 2026-08-20 · WO-4.3 lifted
+                                              2026-08-24 · WO-4.5 pending)
      § SIGNAL CARD   →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
      § LOG SHEET     →  src/shell.css         (WO-4.4 — lifted 2026-08-24)
      § LOG RECORD    →  src/detail.css        (WO-4.4 — lifted 2026-08-24)
@@ -48,6 +49,19 @@
    record — the log is the one thing on that screen that does not go home on paper, argued
    at src/detail.js's own import. What the build DECLINED is nothing: all fifteen names are
    in the app.
+
+   WO-4.3 LIFTED THE REST OF § SIGNALS, on 2026-08-24 — `.sig-two`, `.sig-col.praise` and
+   the phone breakpoint that drops to one column with PRAISE FIRST, all three under the
+   names they were drawn with. Two things to report (PROTOCOL.md § When the drawing lands).
+   What the build ADDED is `.sig-col-empty`, which is not here: the drawing has no state for
+   ONE column being empty beside a column that is not, and an `.empty-state` — a centred
+   block for a whole screen — reads as the working list beside it being broken too. What the
+   build DECLINED is the praise row's `.sig-tag` reading *"came off the concern list 9 days
+   ago"*: the day count is the one figure in this drawing the record cannot produce without
+   either storing a "was flagged" bit, which WO-4.3 forbids in as many words, or running
+   twenty-one full evaluations per student. The rule says what one sample at the edge of the
+   window can prove instead, and src/signals.js's `turnaround` carries the reasoning.
+   `.sig-hidden` stays pending with WO-4.5, which is the only part of this section left.
 
    WO-4.2 LANDED THREE OF THE FIVE SECTIONS ON 2026-08-20, into `src/signals-view.css`, and
    the banners above and below say so in the same sitting as the lift (PROTOCOL.md rule 4).
@@ -131,7 +145,7 @@
 .sig-delta-unit { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; letter-spacing: 0.4px; text-transform: uppercase; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SIGNALS — src/signals-view.css (WO-4.2 lifted 2026-08-20 · WO-4.3 · WO-4.5 pending)
+   § SIGNALS — src/signals-view.css (WO-4.2 lifted 2026-08-20 · WO-4.3 lifted 2026-08-24 · WO-4.5 pending)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── THE TOOLBAR: WHICH CLASS, AND WHAT THIS LIST IS SORTED BY ── */

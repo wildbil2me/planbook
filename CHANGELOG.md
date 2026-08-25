@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Praise, beside concern, ranked by how far someone came — 2026-08-24
+
+*Who needs you* has a second column. It is the same width as the first, it is drawn **first** on a
+phone, and it is ordered by **biggest climb** — the student who came up sixteen points leads the
+student sitting at 96%, and the current grade is not on the row at all. Five rules: a grade that
+rose, a run of strong scores, nothing missing across recent work, attendance over a window, and
+**coming off the concern list**.
+
+**Ranking by change rather than by level is the whole point, and it is structural.** The rules are
+banded before anything is compared, so a rule that can only ever fire for high achievers — a run of
+top scores — can never head a column that has a climber in it. A student with a perfect record and no
+improvement still appears; she just does not lead. "Top of the class" names the same four students
+every week and is worth nothing.
+
+**Nothing remembers that a student was ever flagged.** The turnaround is worked out fresh every time
+from what the register and the log already say — there is no "was flagged" field in your year file
+and there never will be one. The cost of that is honest and is worth knowing: the rule checks once,
+at the far edge of its window, so a student who was flagged ten days ago and has been clear since is
+not caught. It under-fires rather than over-claims, because praise that goes unsent is a missed
+opportunity and praise for coming off a list you were never on is what stops the column being
+trusted.
+
+**A student can be on both columns at once**, and her card shows both halves rather than only the
+half you tapped. Under a projector the screen still closes entirely — both columns — because a ranked
+list of named students is the one surface initials cannot protect.
+
 ### Behavior and notes, two taps from the roster — 2026-08-24
 
 A teacher can write down what just happened without leaving the roster. The ✎ on a roster row opens a

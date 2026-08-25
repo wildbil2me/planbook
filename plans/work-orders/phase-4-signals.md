@@ -187,7 +187,8 @@ class*. Three absences across three weeks of a twice-weekly section is still thr
 
 ## WO-4.3 — Praise signals
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.1
+**Ship** 3 · **Status** 🔨 IN PROGRESS — built 2026-08-24 · **Size** M · **Depends on** WO-4.1
+**Owes** the real-data box (Acceptance line 3) — and nothing else; the 👤 sitting is green, 2026-08-25
 **Closes roadmap** Phase 4 → "Praise signals."
 
 **Why it exists.** "Top of the class" surfaces the same four students every week and is worth
@@ -219,14 +220,85 @@ stale.
   row** — the current grade is not drawn at all, since a list that ranks by delta and draws the level
   big is arguing with itself.
 
+- **Decided by the build, not by this work order: the ranking is banded by rule, then by figure**
+  *(2026-08-24)*. `praiseOrder()` in `src/signals.js`, the same shape `severityOrder()` has and for
+  the same reason — a flat sort on the figure would subtract *rules cleared* from *points* and let
+  whichever number happened to be larger lead, which is the question the concern side already
+  refuses to ask about 61% and 3 missing. The order is **grade-rose · turnaround · no-missing ·
+  attendance-window · high-score-run**, and every position is argued at the array. The last of those
+  is trap 2's answer twice over: `high-score-run` *is* the rule that can only ever fire for high
+  achievers, so it is registered, it is drawn, and it sorts under everything.
+- **Decided by the build: the *Sorted by* control orders the CONCERN list only** *(2026-08-24)*. Two
+  of its four options are concern errands with no praise reading, and the only praise reading of
+  *lowest grade* is *top of the class* upside down — which is the one thing this phase exists to
+  refuse. So the praise column keeps one ranking, its head says *biggest climb first* in as many
+  words, and the `<select>`'s aria-label now says which list it orders. **The alternative — a second
+  sort control — was declined** on a screen already carrying two filter strips and one sort.
+- **Decided by the build: a rule chip narrows the column its rule is in and leaves the other whole**
+  *(2026-08-24)*. The strip carries both directions now. Filtering to *a run of low scores* is a
+  concern errand, and emptying the praise half while a teacher does it would bury the column this
+  phase exists to protect for a reason she never asked for. Reasoned at `columnRows()`.
+
 **Acceptance**
-- [ ] Sorting the praise list by its default ranking puts the biggest *improvement* first, not the
+- [x] Sorting the praise list by its default ranking puts the biggest *improvement* first, not the
       highest grade. Verify with a case where a B− student outranks an A student.
-- [ ] The turnaround rule fires for a student who was on the concern list and no longer is.
+      *(Measured on the rendered column, 2026-08-24. The fixture's B− is at **80.50%** and came up
+      **16.25** points; the A beneath her is at **94.20%** and came up **9.20**; and the highest
+      grade in the class — **96.50%**, an A — is **last of five**. Both letters are read off the
+      app's own scale, so the work order's own sentence is true of what was measured. **Proved by
+      mutation**: `orderPraise()` cut to a sort on `row.grade` — the build this phase exists to
+      refuse — reddens four checks including this one.)*
+- [x] The turnaround rule fires for a student who was on the concern list and no longer is.
+      *(Measured. The fixture's student is flagged by **two** concern rules at `through − 21 days`
+      and by none today; the hit carries `cleared: 2`, `days: 21`, and it fires for **nobody else**
+      on the roster. **Derived, not stored** — the document is byte-identical either side of the
+      pass and carries no key shaped like a remembered flag, which is asserted separately. **Proved
+      by mutation**: sampling the window at today instead of at its far edge reddens five checks.)*
 - [ ] Running the praise list two weeks apart on real data surfaces a materially different set of
       students. *(If it doesn't, the ranking is wrong — this is the acceptance test that matters.)*
-- [ ] A student with a perfect record but no improvement does not dominate the list.
-- [ ] Every praise hit's explanation contains the delta and the window it was measured over.
+      *(**Left open deliberately — it wants a real term and there is not one until Sep 2.** What
+      exists is the mechanism, measured: the same document evaluated through `{ through }` a
+      fortnight apart returns different lists in both directions — the turnaround fires today and
+      fired for nobody two weeks ago, because two weeks ago that student was still on the concern
+      list. **A fixture built to move is not evidence that a real class moves**, which is the whole
+      of what this line asks. Re-run it against the owner's own five classes after ~Sep 16.)*
+- [x] A student with a perfect record but no improvement does not dominate the list.
+      *(Measured. The fixture's student has every assignment in, every score at or above 90 and
+      every meeting attended, and she sorts **last of five** — under both climbers, under the
+      turnaround, and under the failing student who has simply handed everything in. She is still
+      **on** the column rather than dropped from it: a level is worth saying, it is just not worth
+      the strong position.)*
+- [x] Every praise hit's explanation contains the delta and the window it was measured over.
+      *(Swept over all **fourteen** praise hits the fixture produces, across all five rules, then
+      pinned by three hand-written sentences matching character for character. **Read the sweep's
+      own terms before treating this as unqualified**: two of the five rules publish a
+      before-and-after delta — `grade-rose` in points and `turnaround` in rules cleared — and the
+      other three measure a level or a count and have none to state. **The drawing's caption is the
+      principle, not the count** — *"four rules have no delta, and they say a count instead"* reads
+      across **both** columns and two of its three examples ("5 absences", "61%") are concern-side.
+      It establishes that a count is a legitimate figure where there is no before-and-after; the
+      number on the praise side is **three of five**. What every one of the
+      fourteen carries is **the figure the rule measured and the window it measured it over**, both
+      asserted per hit. If the owner reads the line as requiring a numeric delta on all five, this
+      box goes back to `- [ ]` and the three level rules need a decision this work order did not
+      make.)*
+
+**Where this stands.** The build is complete and both tools are green on the delivered tree —
+`verify-shell.mjs` at `1156 checks · 1156 passed · 0 failed · 0 skipped`, 384s, exit 0, and
+`wo-sweep.mjs` at `33 checks · 29 passed · 0 failed · 4 to review`, all four pre-existing or answered
+at the check. The column is measured in § *"the praise column, drawn (WO-4.3)"* at the foot of the
+harness, fifteen checks against a fixture built for it, and two mutations were run and reverted (see
+`tools/README.md`). **Four of the five Acceptance lines are closed; the third is calendar-bound and
+says so above.** **The 👤 sitting was run by the owner on 2026-08-25 and all eight readings
+passed** — `TESTING.md` § WO-4.3 carries them. The two that mattered most both held: the columns are
+readable at equal width on a real iPad in both orientations, so the breakpoint did not need moving,
+and the one-column drop with praise drawn first was not found infuriating — the drawing's argument
+surviving a thumb rather than being taken on trust. **So one box stands between this and ✅, and
+nobody can hurry it:** Acceptance line 3 wants a fortnight of a real term, ~Sep 16.
+
+**Traps** — the delta is the ranking *and* the only bold figure on a praise row; the current grade
+is not drawn on the row at all. And the turnaround is derived at read time from the evaluator's own
+`{ through }`: **there is no "was flagged" bit anywhere in the document and there must never be one.**
 
 ---
 

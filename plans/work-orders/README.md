@@ -1438,8 +1438,8 @@ that need a term of data close on their own schedule.**
 |---|---|---|---|---|
 | 1 | [WO-4.1](phase-4-signals.md#wo-41--signal-engine--thresholds) **Signal engine & thresholds** | M | ✔ | **Aug 20–21, before the term.** Unblocks five work orders — nothing else in Phase 4 or 5 can start |
 | 2 | [WO-4.2](phase-4-signals.md#wo-42--concern-signals) Concern signals | M | ✔ | ✅ **2026-08-20, four days early** — all six boxes and thirteen 👤 readings, the nine-rule read done by hand on a test install |
-| 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | 🔨 **2026-08-24, three days early** — four of five boxes closed, nine 👤 readings owed; carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line, which is closed |
-| 4 | [WO-4.3](phase-4-signals.md#wo-43--praise-signals) Praise signals | M | ✔ | Built Aug 31–Sep 1; **its real-data box cannot close before ~Sep 16** |
+| 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | ✅ **2026-08-24, three days early** — all five boxes closed and the nine 👤 readings green the same day; carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line, which is closed |
+| 4 | [WO-4.3](phase-4-signals.md#wo-43--praise-signals) Praise signals | M | ✔ | 🔨 **2026-08-24, a week early** — four of five boxes closed and mutation-proved, and the 👤 sitting green 2026-08-25; **only its real-data box is left and cannot close before ~Sep 16** |
 | 5 | [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) Cooldown & the quiet middle | M | ✔ | Built Sep 12–13, a weekend; **its real-data box cannot close before ~Sep 23** |
 | 6 | [WO-G3](gates.md#wo-g3--ship-3-gate-signals) **Ship 3 gate: signals** | S | — | **~Oct 16**, once four weeks of real data exist |
 

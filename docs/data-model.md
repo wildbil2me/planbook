@@ -524,6 +524,20 @@ week and is worth nothing; "up 14 points since October" surfaces a different stu
 is the message that actually lands at home. A rule that can only ever fire for high achievers is
 the wrong rule.
 
+**The turnaround is derived, and nothing in the document remembers who was on a list** (WO-4.3).
+"Came off the concern list" is answered by running the same evaluator over the same document with
+`through` set back to the far edge of the window — a *prior evaluation*, not a stored bit. A bit
+would go stale the moment a threshold moved, and it would be a second truth about who was flagged,
+sitting beside the rules that decide it. **There is no `wasFlagged` field, and there must never be
+one.** Two consequences follow and both are honest limits rather than defects. The rule is asked
+**once**, at the edge of the window, not once per day inside it: walking the window costs twenty-one
+full passes per student per class, so a student flagged ten days ago and clear since is not caught.
+And only the rules whose facts are **dated** can differ across the gap — the attendance ledger and
+the log are dated, a score is not, and no window here is taken by due date (§ Grade math, and
+`src/assignments.js`'s refusal to sort by one). **A grade recovery on its own therefore produces no
+turnaround**; it produces "rose N points across the last N assignments", which is the better
+sentence for it. The reasoning is at `src/signals.js`'s `turnaround`.
+
 **Windows count meetings, not days.** A class may go a week without meeting; "4 absences in the
 last 20 days" would be nonsense. A meeting is an attendance record without an `exception`.
 

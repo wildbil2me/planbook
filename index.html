@@ -1443,7 +1443,7 @@
 </div>
 
 <!--
-  WHO NEEDS YOU (WO-4.2) — the concern list, and the seventh view.
+  WHO NEEDS YOU (WO-4.2, and both columns since WO-4.3) — the seventh view.
 
   IT IS A VIEW AND IT IS THE FIFTH SEGMENT ON THE SWITCHER, which are two decisions and both are
   the owner's. A surface a teacher works down for ten minutes is a view rather than a dialog
@@ -1483,9 +1483,10 @@
         <div class="panel-title">
           <h2>Who needs you</h2>
           <p>
-            Ordered by what is most urgent: attendance first, then whoever changed the most — never
-            whoever is highest or lowest. Every line under a name is the rule's own sentence, built
-            from the numbers that fired it.
+            Both directions, side by side. On the left, what is most urgent: attendance first, then
+            whoever changed the most. On the right, whoever climbed the most — <strong>not</strong>
+            whoever is highest, which would name the same four students every week. Every line
+            under a name is the rule's own sentence, built from the numbers that fired it.
           </p>
         </div>
         <!-- The thresholds door, carrying the same `data-signal-panel` hook the class manager's
@@ -1520,8 +1521,13 @@
                selected is painted. The FIRST is the owner's ruled order and is what every arrival
                opens on — what protects the phase's argument is the default rather than the absence
                of the other three (the owner, 2026-08-20). -->
+          <!-- IT ORDERS THE CONCERN LIST AND THE LABEL SAYS SO (WO-4.3). Two of its four options
+               are concern errands with no praise reading, and the only praise reading of "lowest
+               grade" is *the top of the class* upside down — which is the one thing this phase
+               exists to refuse. The praise column keeps its own ranking and its head says what it
+               is; see PRAISE_NOTE in src/signals-view.js. -->
           <select class="sig-sort" id="signalsSort" data-signals-sort
-                  aria-label="Sort this list by">
+                  aria-label="Sort the concern list by">
             <option value="ruled">Attendance first, then the biggest change</option>
             <option value="change">The biggest change</option>
             <option value="grade">Lowest grade</option>
@@ -1531,7 +1537,10 @@
       </div>
 
       <!-- One chip per rule that actually fired, so "everyone with attendance trouble" is one tap
-           rather than a read down a column. `.pill` worn as shipped, the same as the strip above. -->
+           rather than a read down a column. `.pill` worn as shipped, the same as the strip above.
+           BOTH DIRECTIONS SINCE WO-4.3, concern chips first — and a chip narrows the column its
+           rule belongs to and leaves the other whole, because the two lists answer different
+           questions and a teacher who filters one has not stopped caring about the other. -->
       <div class="sig-toolbar">
         <span class="sig-toolbar-label" id="signalsRulesLabel">Rules</span>
         <div class="sig-rules" id="signalsRules" role="group"
@@ -1539,9 +1548,42 @@
       </div>
     </div>
 
-    <div class="sig-col concern" id="signalsConcern">
-      <div class="sig-col-head concern" id="signalsConcernHead"></div>
-      <div class="sig-list" id="signalsList"></div>
+    <!--
+      TWO COLUMNS, AT EQUAL WIDTH, AND PRAISE FIRST ON A PHONE (WO-4.3).
+
+      The equal billing is the drawing's own argument and this work order's Surface deliverable in
+      as many words: a stacked layout buries praise on any screen shorter than both lists, and every
+      iPad is. `1fr 1fr` on a laptop, one column below 720px with praise drawn FIRST — the one place
+      the pair is not symmetrical, broken toward the half a teacher would otherwise never reach.
+
+      EACH HEAD SAYS WHAT ITS COLUMN IS ORDERED BY, and the praise one says *biggest climb first* in
+      those words, because a teacher who reads "Praise" as "the top of the class" stops reading it
+      inside a fortnight. The concern head's note moves with the Sorted-by control; the praise one
+      does not, and the control's aria-label says which list it orders — the reasoning is in
+      src/signals-view.js beside PRAISE_NOTE.
+
+      THE QUIET LINE UNDER EACH LIST is for a column with nothing in it while the other has
+      something. "Nobody is flagged" and "nobody is climbing" are two different pieces of news, and
+      neither may take the other column off the screen to deliver itself. Both columns come down
+      together only when both are silent, and then the empty state below says so.
+    -->
+    <div class="sig-two" id="signalsColumns">
+      <div class="sig-col concern" id="signalsConcern">
+        <div class="sig-col-head concern" id="signalsConcernHead"></div>
+        <div class="sig-list" id="signalsList"></div>
+        <p class="sig-col-empty hidden" id="signalsConcernEmpty">
+          Nobody is flagged here right now.
+        </p>
+      </div>
+
+      <div class="sig-col praise" id="signalsPraise">
+        <div class="sig-col-head praise" id="signalsPraiseHead"></div>
+        <div class="sig-list" id="signalsPraiseList"></div>
+        <p class="sig-col-empty hidden" id="signalsPraiseEmpty">
+          Nobody is climbing yet. Every rule on this side needs a window of work or of meetings
+          behind it — the praise list fills up as the term does.
+        </p>
+      </div>
     </div>
 
     <!-- WO-4.2's last acceptance line, drawn: a rule that cannot fire yet says so. Quiet grey and
@@ -1553,10 +1595,12 @@
     <!-- Nobody is on the list. It is a good day, and it has to be distinguishable from a screen
          that failed to draw — an absence and a bug look identical (tools/README.md). -->
     <div class="empty-state hidden" id="signalsEmpty">
-      <p class="sig-blocked-lead" id="signalsEmptyLead">Nobody is flagged right now.</p>
+      <p class="sig-blocked-lead" id="signalsEmptyLead">
+        Nobody is flagged and nobody is climbing right now.
+      </p>
       <p class="sig-blocked-text">
-        Every rule ran and none of them fired. The numbers each rule uses are yours — open
-        <strong>Thresholds</strong> above to see them or to move one.
+        Every rule ran, in both directions, and none of them fired. The numbers each rule uses are
+        yours — open <strong>Thresholds</strong> above to see them or to move one.
       </p>
     </div>
 

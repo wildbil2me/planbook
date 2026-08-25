@@ -16,7 +16,7 @@ Built first for its author's own five classes, but intended to be marketable to 
 That second goal is what drives the architecture below.
 
 **Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
-**Ship 3 building, its first three rows landed.**
+**Ship 3 building, its first four rows landed.**
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
@@ -116,6 +116,28 @@ download, the* `rev`/`baseRev` *comparison and the keep-both conflict are* [WO-7
 still* `🔒`*, and the panel says so on screen because a teacher who connects and assumes her
 gradebook is in Drive would stop downloading backups. **WO-3.18's demo video is unblocked** — the
 scope is now in use and there is a handshake to film.)*
+
+*(**Row 4 landed 2026-08-24, a week early, and it is the one row of Ship 3 that cannot close on
+build quality alone.*** [WO-4.3](plans/work-orders/phase-4-signals.md#wo-43--praise-signals) *— the
+praise column — is* `🔨`*: four of five Acceptance boxes closed and both claims worth mutating
+mutation-proved, the* 👤 *sitting green on hardware 2026-08-25, and* **one box left that nobody can
+hurry** *— a fortnight of a real term, ~Sep 16.* **Do not read the** `🔨` **as unfinished work.**
+*Three things about it that are rulings rather than details.* **The ranking is banded by rule before
+anything is compared** *(*`PRAISE_RANK`*), which is what makes "delta, not level" structural instead
+of incidental: a rule that can only ever fire for high achievers — a run of top scores — is last in
+the band order and can never head a column holding a climber. A flat sort on the figure would
+subtract* rules cleared *from* points *and let whichever number happened to be larger lead, which is
+the question the concern side already refuses to ask about "61%" versus "3 missing".* **The* Sorted
+by *control orders the concern list only** *— two of its four options are concern errands with no
+praise reading — so the praise column keeps one ranking and says so in its own head, and a second
+sort control was declined on a screen already carrying two filter strips.* **And a rule chip narrows
+the column its rule is in and leaves the other whole**: *filtering to* a run of low scores *is a
+concern errand, and emptying the praise half while a teacher does it would bury the column this phase
+exists to protect for a reason she never asked for. The dispatch that built it was* **killed by an
+API session limit at the handoff to its verifier** *— the third dead dispatch here and the first
+killed by a quota; the implementer's writes were all present and none of its claims were, so every
+command its result file cited was re-run from the tree before anything was ticked. See*
+`.claude/dispatch/WO-4.3-status.md`*.)*
 
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
@@ -247,6 +269,19 @@ Seven things that will bite:
   own measured numbers and nothing else — not the document, not the clock, not the threshold it just
   crossed — which is what stops an explanation drifting from the arithmetic behind it and what keeps
   accommodation data out of a sentence Phase 5 mails home.
+- **Concern state is derived at read time, and there is no "was flagged" bit** (WO-4.3). The
+  turnaround rule asks *was this student on the concern list and is she off it now* by running the
+  concern rules a second time against a shifted `{ through }`. `src/signals.js` holds **no writer of
+  any kind** — the document is byte-identical either side of a pass, and `newYearDocument()` gained
+  nothing, so every backup written by every earlier build still restores. The obvious way to pay for
+  it is to walk every day of the window, which is twenty-one full concern passes per student per
+  class on a screen a teacher opens across five classes — WO-2.13's defect reached from a different
+  direction. So the rule samples **once**, at the far edge, and **under-fires rather than
+  over-claims**: a student flagged ten days ago and clear since is not caught. Praise not sent is a
+  missed opportunity; praise claiming a student came off a list she was never on is what stops the
+  column being trusted. A second honest limit: only rules whose facts are *dated* can differ across
+  the gap — the ledger and the log are dated, a score is not — so **a grade recovery on its own
+  produces no turnaround**, it produces `grade-rose`, which is the better sentence for it anyway.
 - **The log is append-only, and nothing in the app can delete an entry** (WO-4.4). A correction is
   an ordinary later entry that says so — no `correctsId`, no strikethrough, and no rule about which
   of two entries a reader should believe, **because the reader believes the newest**. `src/log.js`

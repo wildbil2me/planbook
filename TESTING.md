@@ -7157,6 +7157,102 @@ diff for the entire work order was comment-only — not one check had been writt
 It was left red until the coverage existed. See* `plans/dispatch-retro.md` *§ "The comment that ran
 ahead of its code" and* `.claude/dispatch/WO-4.2-status.md`*.*
 
+### WO-4.3 — Praise signals
+
+**What this adds.** The other half of the *Who needs you* screen: the four praise rules WO-4.1 left
+named and editable with nothing behind them, and the column that ranks what they catch. **Concern and
+praise sit side by side at equal width**, and below 720px the pair becomes one column with **praise
+drawn first** — the one place the two are deliberately not symmetrical, broken toward the half a
+teacher would otherwise never scroll to.
+
+**It ranks by delta, not by level, and that is the whole phase.** The head says *biggest climb first*
+in as many words, the bold figure on a praise row is the change, and **the current grade is not on the
+row at all** — a list that ranks by delta and draws the level big is arguing with itself. Two of the
+five rules measure a change; the other three measure a level or a count and sort under both of them,
+`high-score-run` last of all, because a run of 90s can only ever fire for a student already at the top.
+
+**The turnaround stores nothing.** "Was on the concern list and no longer is" is derived at read time
+by asking this same evaluator about `through − 21 days` — no bit in the document, nothing added to
+`newYearDocument()`, and the year is byte-identical either side of a pass. What that derivation can
+and cannot prove is written at the rule: four of the nine concern rules genuinely move when `through`
+moves because the ledger and the log are dated, and the five grade-shaped rules cannot, because the
+document dates nothing about a score and a window taken by due date would put the clock inside a grade
+signal. **A grade recovery therefore does not produce a turnaround** — it produces a `grade-rose`,
+which is the better sentence for it anyway.
+
+- [x] Sorting the praise list by its default ranking puts the biggest improvement first, not the
+      highest grade — a B− outranking an A. *(Measured: 80.50% up 16.25 leads 94.20% up 9.20, and the
+      class's highest grade at 96.50% is last of five. Mutation-proved.)*
+- [x] The turnaround rule fires for a student who was on the concern list and no longer is.
+      *(Measured: two rules 21 days ago, none today, `cleared: 2`, and nobody else on the roster.
+      Mutation-proved by sampling the wrong end of the window.)*
+- [ ] Running the praise list two weeks apart on real data surfaces a materially different set of
+      students. **→ the term.** *(The mechanism is measured — two passes a fortnight apart return
+      different lists in both directions — but a fixture built to move is not evidence that a real
+      class moves. Re-run against the owner's own five classes after ~Sep 16.)*
+- [x] A student with a perfect record but no improvement does not dominate the list.
+      *(Measured: last of five, and still on the column rather than dropped from it.)*
+- [x] Every praise hit's explanation contains the delta and the window it was measured over.
+      *(Swept over all fourteen hits across all five rules, then pinned by three hand-written
+      sentences. **Read the qualification in the work order**: two rules publish a before-and-after
+      delta and three publish the count they measured, which is the drawing's own caption.)*
+
+**The 👤 sitting — RUN 2026-08-25, all eight green.** The harness drives a page, not an installed
+app, and no emulator has a thumb, so none of these could be closed from a desk. The two that matter
+most are first.
+
+- [x] **The two columns at equal width on a real iPad, portrait and landscape.** The harness measures
+      620px against 620px in a 1280px window; what it cannot tell you is whether two columns of names
+      are readable at all on the device this is for. If they are not, the fix is the breakpoint and
+      not the ranking. 👤
+- [x] **The one-column drop with praise drawn first**, on the phone width, and whether a teacher who
+      scrolls past the praise column to reach the concern one finds that infuriating. The drawing's
+      argument is that the reverse is worse; the device is where that gets settled. 👤
+- [x] A praise row tapped with a real thumb — the untruncated sentence wraps without making a row too
+      tall to scan five of, the same reading WO-4.2 took on the concern side. 👤
+- [x] The signal card for a student who is on **both** columns — three concern rules and two praise
+      ones in one dialog, scrolling on a phone with the close button reachable. 👤
+- [x] The rule chips now carry both directions, so the strip is longer. Read it wrapped at 390px, and
+      confirm that pressing a praise chip visibly leaves the concern list alone (and the reverse). 👤
+- [x] A column that is empty beside one that is not: the quiet line reads as *nothing to say here*
+      rather than as a screen that failed to draw. An absence and a bug look identical. 👤
+- [x] Presentation mode still closes the whole screen, both columns, with the praise column gone from
+      the page rather than styled away. The harness asserts it; the projector is where it counts. 👤
+- [x] The real class list on a test install with test grades and attendance — and the honest question
+      this phase turns on: **is anybody in the praise column who is not also at the top of the
+      class?** If not, the thresholds want tuning before Sep 2, not the code. 👤
+
+*(**Run by the owner on 2026-08-25, and all eight passed.** The two the work order put first both
+held: the columns are readable at equal width on the device in both orientations, so the breakpoint
+did not need moving, and the one-column drop with **praise first** was not found infuriating — which
+is the drawing's argument surviving contact with a thumb rather than being taken on trust. The
+refusal was read on a projector rather than only asserted by the harness.)*
+
+*Desk pass 2026-08-24:* `verify-shell.mjs` ***1156 of 1156, 0 failed, 0 skipped***, *384s, exit 0 — up
+from 1141 on the tree this work order arrived on. Fifteen new call sites in one new section at the
+foot of the file, none inside a loop and none a failure arm.* `wo-sweep.mjs` *is 33 checks, 29 passed,
+0 failed, 4 to review — all four pre-existing or answered at the check;* `wo-gate --audit` *passes.*
+
+*Mutation pass 2026-08-24, two cuts, both reverted, and they redden different halves of the section.*
+***Ranking by level*** *—* `orderPraise()` *cut to a sort on* `row.grade`*, which is the build this
+phase exists to refuse — reads* `1156 · 1152 passed · 4 failed`*: the B−-over-an-A ordering, the
+perfect-record student sorting last, the row's own children census, and the rule-chip check whose
+expected names come out of that order.* ***Sampling the turnaround at today*** *rather than at*
+`through − 21 days` *— a build that has the rule and can never fire it — reads*
+`1156 · 1151 passed · 5 failed`*: the turnaround itself, the sentence sweep, the both-columns card,
+the fortnight comparison, and the ordering check whose fifth row it was holding.* **Both were reverted
+without `git checkout` over unstaged work** — *the tree was staged first, which is the trap that has
+cost this repo an afternoon before.*
+
+**One thing worth carrying forward, and it is arithmetic rather than judgement.** *An
+eight-assignment class of equal weight* **cannot** *produce an eight-point rise for a student who ends
+at an A: remove the last four and the earlier four are still 400 points, which caps the rise at seven.
+The fixture's A-who-climbed only exists because three of his cells are* **blank** *— a blank is
+ungraded and affects nothing, so it shortens the counted window without moving the grade. That is a
+property of the rule, not of the fixture:* **`grade-rose` structurally favours students with a short
+graded history and students who were low**, *which is what the phase wants and is worth knowing before
+anybody tunes the 8-point default.*
+
 ### WO-4.4 — Behavior & note logging
 
 **What this adds.** A ✎ on every roster row, a sheet behind it, and a card on the student record.

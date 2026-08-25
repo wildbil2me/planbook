@@ -1,5 +1,18 @@
 /*
-  Who needs you — the concern list, drawn (WO-4.2).
+  Who needs you — the concern list and the praise list, drawn (WO-4.2, WO-4.3).
+
+  ── BOTH COLUMNS, AT EQUAL WIDTH, AND THAT IS AN ARGUMENT RATHER THAN A LAYOUT (WO-4.3) ──
+
+  The praise half is what makes this a teacher's assistant rather than a gradebook with alarms
+  (plans/ROADMAP.md Phase 4), and the way it dies is by being STACKED: a screen shorter than both
+  lists buries it, and every iPad is. So the two are `1fr 1fr` on a laptop and praise is drawn
+  FIRST below 720px, which is the one place the drawing breaks the symmetry and it breaks it toward
+  the half a teacher would otherwise never scroll to (src/signals-view.css § the two columns).
+
+  AND IT RANKS BY DELTA, NOT BY LEVEL. The head says *biggest climb first* in as many words, the
+  bold figure on a praise row is the change, and the current grade is not on the row at all — a list
+  that ranks by delta and draws the level big is arguing with itself. The ordering itself is
+  src/signals.js's praiseOrder(), for the reason severityOrder() lives there.
 
   ── WHAT THIS FILE IS, AND THE TWO IT IS NOT ──
 
@@ -72,8 +85,11 @@ import { presentationMode } from './supports.js';
    them matters most, `signalFigure` is the number a row draws big, and the last three are the
    words a chip, a threshold line and an inert notice say — every one of them read from the same
    table the editor renders, so the two cannot come to disagree. */
-import { evaluate, severityOrder, signalFigure, signalRules, ruleText, ruleThresholdText,
-  inertRules } from './signals.js';
+/* `praiseOrder` and `orderHits` joined at WO-4.3 and are the same kind of thing as `severityOrder`:
+   the engine's answer to "which of these matters most", asked once and inherited by every surface
+   rather than re-decided per screen. */
+import { evaluate, severityOrder, praiseOrder, orderHits, signalFigure, signalRules, ruleText,
+  ruleThresholdText, inertRules } from './signals.js';
 /* The grade beside a name on the card, and the key the *Lowest grade* sort reads. It is the same
    engine every other grade in this app comes out of; nothing here sums a cell. */
 import { weightedClassGrade } from './grade-engine.js';
@@ -85,7 +101,14 @@ const RULES_ID = 'signalsRules';
 const SORT_ID = 'signalsSort';
 const LIST_ID = 'signalsList';
 const HEAD_ID = 'signalsConcernHead';
-const COLUMN_ID = 'signalsConcern';
+const CONCERN_EMPTY_ID = 'signalsConcernEmpty';
+/* WO-4.3's half of the screen. `signalsList` keeps its name — it was the only list when it was
+   named — and the praise column's three ids say which column they are, which is the naming this
+   file would use for both if it were being written today. */
+const PRAISE_LIST_ID = 'signalsPraiseList';
+const PRAISE_HEAD_ID = 'signalsPraiseHead';
+const PRAISE_EMPTY_ID = 'signalsPraiseEmpty';
+const COLUMN_ID = 'signalsColumns';
 const INERT_ID = 'signalsInert';
 const EMPTY_ID = 'signalsEmpty';
 const EMPTY_LEAD_ID = 'signalsEmptyLead';
@@ -108,6 +131,29 @@ const SORT_NOTES = {
   grade: 'the lowest grade first',
   missing: 'the most missing work first',
 };
+
+/*
+  AND THE PRAISE COLUMN'S HEAD SAYS ONE THING, ALWAYS — *biggest climb first*, in as many words,
+  which design/mockups/signals.html settles for this work order: a teacher who reads "Praise" as
+  "the top of the class" stops reading it inside a fortnight, and the heading cannot carry the
+  ranking on its own.
+
+  IT IS A CONSTANT AND NOT A `SORT_NOTES` ENTRY BECAUSE THE SORT CONTROL DOES NOT REACH THIS COLUMN.
+  Two of its four options — *lowest grade* and *most missing work* — are concern errands with no
+  praise reading at all, and the only praise reading the third has is "top of the class", which is
+  the one thing this phase exists to refuse. So the `<select>` orders the concern list, its own
+  aria-label says so, and each column's head states what it is ordered by; a teacher comparing the
+  two heads can see which control moved which list. **This is a decision WO-4.3 did not settle** —
+  it is recorded here rather than in a work order because the alternative, a second sort control,
+  is a second control on a screen that already carries two filter strips and one sort.
+*/
+const PRAISE_NOTE = 'biggest climb first';
+
+/* Which column a rule belongs to, built once from the registry. A chip filters the column its rule
+   is in and leaves the other alone — the two lists answer different questions, and a teacher who
+   narrows one has not stopped caring about the other. */
+const RULE_DIRECTION = Object.create(null);
+signalRules().forEach((rule) => { RULE_DIRECTION[rule.id] = rule.direction; });
 
 /* ── THE VIEW STATE ──
    Three values, none of them student data and none of them persisted — the header says why. */
@@ -135,7 +181,18 @@ function studentIn(doc, id) {
 function rowKey(hit) { return hit.studentId + '|' + hit.classId; }
 
 /*
-  EVERY CONCERN HIT IN EVERY CLASS ON SCREEN, GROUPED ONE ROW PER STUDENT PER CLASS.
+  EVERY HIT IN EVERY CLASS ON SCREEN, BOTH DIRECTIONS, GROUPED ONE ROW PER STUDENT PER CLASS.
+
+  IT COLLECTS BOTH HALVES IN ONE WALK SINCE WO-4.3, and that is WO-4.1's argument arriving on the
+  screen rather than a convenience: one evaluator produces both lists, a student can be on both at
+  once, and that is information rather than a bug. Two walks would make that state a coincidence
+  between two loops instead of one pass's honest answer, and the first time they disagreed about
+  which term a class was open on nobody would notice.
+
+  A BASE ROW CARRIES ALL OF A STUDENT'S HITS IN BOTH DIRECTIONS, ordered by the engine — concern by
+  severity, then praise by climb (`orderHits`). The two COLUMNS are derived from it below, each
+  holding that direction's slice; the CARD is built from the base row and shows both, which is the
+  one place on this screen a teacher sees the whole student at once.
 
   ONE STUDENT, ONE ROW (the drawing, and WO-4.2 never says how many rows one student may hold). A
   student who is failing AND missing work AND absent is one conversation, not three, and three rows
@@ -159,9 +216,9 @@ function collect(doc) {
   classesShown().forEach((cls) => {
     const termId = getOpenTermId(cls.id);
     const term = getTerms(cls.id).filter((t) => t.id === termId)[0] || null;
-    const hits = evaluate(doc, cls, termId).filter((hit) => hit.direction === 'concern');
+    const hits = evaluate(doc, cls, termId);
     if (!hits.length) return;
-    severityOrder(hits).forEach((hit) => {
+    orderHits(hits).forEach((hit) => {
       const key = rowKey(hit);
       if (!byKey[key]) {
         const student = studentIn(doc, hit.studentId);
@@ -201,7 +258,43 @@ function leadFigure(row) {
 }
 
 /*
-  THE ORDER THE ROWS ARE DRAWN IN.
+  ONE COLUMN'S ROWS, DERIVED FROM THE BASE ROWS (WO-4.3).
+
+  A shallow copy per column rather than a `lead` written onto the base row: the same student can be
+  on both lists, and one row object cannot hold two leads. The copies share nothing that is written
+  to — a base row is read-only from here down.
+
+  THE RULE FILTER APPLIES TO THE COLUMN ITS RULE IS IN, and leaves the other column whole. Filtering
+  to *absences* is a concern errand; emptying the praise half while she does it would bury the half
+  of the screen this phase exists to protect, and it would do it for a reason a teacher never asked
+  for. The same is true the other way round.
+
+  AND THE FILTER MOVES THE LEAD as well as choosing the rows — WO-4.2's rule, unchanged: filtering
+  to the attendance rules and then reading a headline about a grade would be the filter answering a
+  question the teacher did not ask.
+*/
+function columnRows(base, direction) {
+  const mine = filterRuleId && RULE_DIRECTION[filterRuleId] === direction ? filterRuleId : '';
+  const out = [];
+  base.forEach((row) => {
+    const hits = row.hits.filter((hit) => hit.direction === direction);
+    if (!hits.length) return;
+    if (mine && !hits.some((hit) => hit.ruleId === mine)) return;
+    const lead = mine ? hits.filter((hit) => hit.ruleId === mine)[0] : hits[0];
+    out.push(Object.assign({}, row, { hits: hits, lead: lead,
+      tags: hits.filter((hit) => hit !== lead) }));
+  });
+  return out;
+}
+
+/* How many rows that column would hold with no rule filter on it — the number a head would show
+   before a chip was pressed. Counted off the base rows rather than by running columnRows() twice. */
+function columnTotal(base, direction) {
+  return base.filter((row) => row.hits.some((hit) => hit.direction === direction)).length;
+}
+
+/*
+  THE ORDER THE CONCERN ROWS ARE DRAWN IN.
 
   THE DEFAULT IS THE ENGINE'S, NOT THIS FILE'S. `ruled` hands the lead hits straight to
   severityOrder() — the owner's severity ruling, which lives in src/signals.js because WO-6.4's
@@ -239,6 +332,22 @@ function order(rows) {
     });
   }
   const leads = severityOrder(rows.map((row) => row.lead));
+  return leads.map((hit) => rows.filter((row) => row.lead === hit)[0]).filter(Boolean);
+}
+
+/*
+  THE ORDER THE PRAISE ROWS ARE DRAWN IN, AND THERE IS ONLY ONE OF IT.
+
+  praiseOrder() is the engine's — banded by rule, biggest figure inside the band — and this column
+  has no alternative to offer, which is the point rather than an omission. The sort control's other
+  three options are *the biggest change* (which is already this), *lowest grade* and *most missing
+  work*; the only praise reading of the last two is "top of the class", and a praise list that can be
+  re-sorted into the top of the class is a praise list that will be, on the Friday a teacher is in a
+  hurry. What protects the phase's argument on the concern side is which option the list OPENS on;
+  what protects it here is that the wrong option does not exist.
+*/
+function orderPraise(rows) {
+  const leads = praiseOrder(rows.map((row) => row.lead));
   return leads.map((hit) => rows.filter((row) => row.lead === hit)[0]).filter(Boolean);
 }
 
@@ -282,37 +391,49 @@ export function signalsModel() {
     });
   });
 
-  const rules = signalRules()
-    .filter((rule) => rule.direction === 'concern' && counts[rule.id])
+  /* BOTH DIRECTIONS SINCE WO-4.3, concern chips first and each group in its own table's order —
+     `rank` is the rule's position within its direction (src/signals.js), so the praise chips read
+     biggest-climb-first exactly as the column under them does. A rule nobody tripped still gets no
+     chip: a control that empties the screen is not worth a strip position. */
+  const chipsFor = (direction) => signalRules()
+    .filter((rule) => rule.direction === direction && counts[rule.id])
     .sort((a, b) => a.rank - b.rank)
-    .map((rule) => ({ id: rule.id, text: rule.text, count: counts[rule.id] }));
+    .map((rule) => ({ id: rule.id, direction: direction, text: rule.text,
+      count: counts[rule.id] }));
+  const rules = chipsFor('concern').concat(chipsFor('praise'));
 
-  /* THE RULE FILTER MOVES THE LEAD as well as choosing the rows. Filtering to the attendance rules
-     and then reading a headline about a grade would be the filter answering a question the teacher
-     did not ask; the sentence she is shown is the one from the rule she filtered to. */
-  const shown = all.filter((row) => !filterRuleId
-    || row.hits.some((hit) => hit.ruleId === filterRuleId));
-  shown.forEach((row) => {
-    row.lead = filterRuleId
-      ? row.hits.filter((hit) => hit.ruleId === filterRuleId)[0]
-      : row.hits[0];
-    row.tags = row.hits.filter((hit) => hit !== row.lead);
-  });
+  const concern = columnRows(all, 'concern');
+  const praise = columnRows(all, 'praise');
 
   return {
     blocked: blocked,
     classId: filterClassId,
     ruleId: filterRuleId,
     sort: sortBy,
-    note: SORT_NOTES[sortBy] || SORT_NOTES[RULED],
     classes: classes.map((cls) => ({ id: cls.id, name: cls.name })),
     rules: rules,
-    rows: order(shown),
-    /* What the head counts: the rows on screen. The two numbers differ the moment a rule chip is
-       pressed, and the one a teacher is looking at is the list in front of her. */
-    count: shown.length,
-    total: all.length,
-    inert: inertRules().filter((rule) => rule.direction === 'concern'),
+    /* THE TWO COLUMNS, SYMMETRICAL — same fields, same meanings, so a reader of either half is a
+       reader of both. `count` is what is on screen and `total` is what the column holds with no
+       rule filter on it; the two differ the moment a chip is pressed, and the one a teacher is
+       looking at is the list in front of her. */
+    concern: {
+      rows: order(concern),
+      count: concern.length,
+      total: columnTotal(all, 'concern'),
+      note: SORT_NOTES[sortBy] || SORT_NOTES[RULED],
+    },
+    praise: {
+      rows: orderPraise(praise),
+      count: praise.length,
+      total: columnTotal(all, 'praise'),
+      note: PRAISE_NOTE,
+    },
+    /* Every base row, both directions, unfiltered — what the card is built from. It is here rather
+       than re-collected because opening a card would otherwise be a second full evaluation, and
+       because the card must show a student's whole picture even when a rule chip has narrowed the
+       column she was tapped in. */
+    all: all,
+    inert: inertRules(),
   };
 }
 
@@ -384,6 +505,34 @@ function rowButton(row) {
   return button;
 }
 
+/*
+  ONE COLUMN: its head, its rows, and the quiet line that stands in for them when it has none.
+
+  BOTH COLUMNS GO THROUGH THIS, which is what stops the praise half becoming the concern half with
+  different words in it — one function means one row shape, one head shape and one empty rule, and a
+  change to either column is a change to both. The head says what the column is ordered by OUT LOUD
+  because a ranking a teacher has to infer is a ranking she will infer wrongly, and on the praise
+  side that inference is *the top of the class*, which is the whole thing this phase exists to
+  refuse (design/mockups/signals.html).
+*/
+function paintColumn(headId, label, column, list, emptyId) {
+  const head = document.getElementById(headId);
+  if (head) {
+    head.textContent = '';
+    head.append(document.createTextNode(label + ' · ' + column.count));
+    head.append(el('span', 'sig-col-note', column.note));
+  }
+  if (list) {
+    list.textContent = '';
+    column.rows.forEach((row) => list.append(rowButton(row)));
+  }
+  const empty = document.getElementById(emptyId);
+  /* The copy is in index.html and is not written here: it is the part a teacher actually reads, and
+     it should be revisable without opening a JavaScript file (the install banner's rule, and the
+     calendar's). What this owns is whether it is on screen. */
+  if (empty) empty.classList.toggle('hidden', column.rows.length > 0);
+}
+
 /* Paint the screen from the open document. Called on every arrival and from the chains in
    src/shell.js that can change what is on this list — a threshold typed, a threshold reset, a
    score, a mark, a class or a term. Not subscribed to the store, for the reason src/home.js gives
@@ -397,7 +546,6 @@ export function renderSignals() {
   const column = document.getElementById(COLUMN_ID);
   const blocked = document.getElementById(BLOCKED_ID);
   if (blocked) blocked.classList.toggle('hidden', !model.blocked);
-  if (column) column.classList.toggle('hidden', model.blocked);
   /* The toolbars go with the list. A filter strip over a refusal is a control that changes nothing
      a teacher can see, which reads as a screen that is broken rather than one that is closed. */
   document.querySelectorAll('#signalsView .sig-toolbar').forEach((strip) => {
@@ -408,25 +556,32 @@ export function renderSignals() {
   paintRuleFilter(model);
   paintSort(model);
 
-  const head = document.getElementById(HEAD_ID);
-  if (head) {
-    head.textContent = '';
-    head.append(document.createTextNode('Concern · ' + model.count));
-    head.append(el('span', 'sig-col-note', model.note));
-  }
+  paintColumn(HEAD_ID, 'Concern', model.concern, list, CONCERN_EMPTY_ID);
+  paintColumn(PRAISE_HEAD_ID, 'Praise', model.praise,
+    document.getElementById(PRAISE_LIST_ID), PRAISE_EMPTY_ID);
 
-  list.textContent = '';
-  model.rows.forEach((row) => list.append(rowButton(row)));
-
+  /*
+    THE BIG EMPTY STATE IS FOR A SCREEN WITH NOTHING ON EITHER SIDE, and a column that is empty
+    while the other is not gets a quiet line inside its own head instead. The two facts are
+    different: "every rule ran and none fired" is a good day worth a paragraph, and "nobody is
+    climbing this week" is one column's news that must not take the other column off the screen to
+    tell. Drawn in that order, so the columns come down only when both are silent.
+  */
+  const nothing = model.concern.rows.length === 0 && model.praise.rows.length === 0;
+  if (column) column.classList.toggle('hidden', model.blocked || nothing);
   const empty = document.getElementById(EMPTY_ID);
-  if (empty) empty.classList.toggle('hidden', model.blocked || model.rows.length > 0);
+  if (empty) empty.classList.toggle('hidden', model.blocked || !nothing);
   const lead = document.getElementById(EMPTY_LEAD_ID);
   if (lead) {
     const cls = model.classId ? classNameOf(model.classId) : '';
+    /* THE SENTENCE NAMES THE COLUMN THE FILTERED RULE BELONGS TO (WO-4.3). "Nobody is flagged for a
+       run of strong scores" is a screen telling a teacher the wrong thing about a good result. */
+    const praiseRule = model.ruleId && RULE_DIRECTION[model.ruleId] === 'praise';
     lead.textContent = model.ruleId
-      ? 'Nobody is flagged for ' + ruleText(model.ruleId).toLowerCase()
-        + (cls ? ' in ' + cls : '') + '.'
-      : 'Nobody is flagged right now' + (cls ? ' in ' + cls : '') + '.';
+      ? (praiseRule ? 'Nobody is praised for ' : 'Nobody is flagged for ')
+        + ruleText(model.ruleId).toLowerCase() + (cls ? ' in ' + cls : '') + '.'
+      : 'Nobody is flagged and nobody is climbing right now'
+        + (cls ? ' in ' + cls : '') + '.';
   }
 
   paintInert(model);
@@ -476,8 +631,13 @@ function paintRuleFilter(model) {
     host.append(button);
   };
   add('', 'All rules', 'Show every rule that fired');
+  /* The title says which COLUMN the chip narrows, because that is the half of the behaviour a
+     teacher cannot see until she presses it: a praise chip leaves the concern list exactly as it
+     was, and the other way round. */
   model.rules.forEach((rule) => add(rule.id, rule.text + ' · ' + rule.count,
-    'Show only the students ' + rule.text.toLowerCase() + ' caught'));
+    rule.direction === 'praise'
+      ? 'Show only the students ' + rule.text.toLowerCase() + ' praised — the concern list stays'
+      : 'Show only the students ' + rule.text.toLowerCase() + ' caught — the praise list stays'));
 }
 
 /* Which option the <select> is showing. The options themselves are markup — this screen's fixed
@@ -528,12 +688,16 @@ const EVIDENCE = {
   lowest: 'lowest', missing: 'marked missing', absences: 'absences',
   meetings: 'recorded meetings', attended: 'attended', percent: 'attendance',
   atLeast: 'the line', tardies: 'tardies', entries: 'entries', days: 'days',
+  /* WO-4.3's three. `cleared` is how many concern rules were firing at the far edge of the
+     turnaround window and are not firing now — a count of RULES, which is why it takes the plain
+     formatter and not the percentage one. */
+  rose: 'rose by', highest: 'highest', cleared: 'rules cleared',
 };
 
 /* A measured percentage takes the app's own two-decimal formatter; a line a teacher typed takes
    formatWeight(), which prints it the way she typed it. Which one a number takes is decided by
    where the number came from — src/signals.js's import block sets that rule and this follows it. */
-const MEASURED_PERCENT = ['percentage', 'before', 'after', 'percent', 'lowest'];
+const MEASURED_PERCENT = ['percentage', 'before', 'after', 'percent', 'lowest', 'highest'];
 const LINE_PERCENT = ['below', 'under', 'atLeast'];
 
 function evidenceText(key, value) {
@@ -589,8 +753,15 @@ function cardActions() {
   return box;
 }
 
+/*
+  THE BASE ROW BEHIND A TAP, and it is read off `model.all` rather than off either column since
+  WO-4.3. A student on both lists has one card, carrying every rule she tripped in both directions —
+  which is WO-4.1's "a student can be on both at once, and that is information rather than a bug"
+  arriving where a teacher can act on it. Tapping her name in either column opens the same card, so
+  the concern half of a climbing student cannot be hidden by the column she was tapped in.
+*/
 function rowFor(key) {
-  return signalsModel().rows.filter((row) => row.key === key)[0] || null;
+  return signalsModel().all.filter((row) => row.key === key)[0] || null;
 }
 
 /*

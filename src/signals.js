@@ -32,7 +32,8 @@
   ── WHAT IS NOT HERE ──
 
   THE RULES THEMSELVES, all but two — UNTIL WO-4.2, WHICH IS WHERE THE NINE CONCERN RULES LANDED
-  (2026-08-20). WO-4.3 still owns four of the five praise rules and WO-4.5 the cooldown; WO-4.4 owned
+  (2026-08-20), AND WO-4.3, WHICH LANDED THE OTHER FOUR PRAISE RULES ON 2026-08-24. All fourteen
+  the data model tabulates are now here, and WO-4.5 still owns the cooldown; WO-4.4 owned
   the behavior log and delivered it on 2026-08-24, so the ninth concern rule counts something now. Two rules were registered at WO-4.1 — `grade-below` and `attendance-window` — as
   proofs of the contract above rather than as the feature: an engine with no rules in it cannot
   demonstrate both directions from one pass, and one with a single rule cannot demonstrate a
@@ -57,7 +58,17 @@
 
   RANKING IS NOT A FIELD ON A HIT. WO-4.2 orders its list by severity and WO-4.3 ranks by DELTA
   rather than by level, and both of those numbers are already in `numbers` — a `rank` beside them
-  would be a second copy of a figure the hit carries, free to disagree with it.
+  would be a second copy of a figure the hit carries, free to disagree with it. Both orders are
+  FUNCTIONS below — severityOrder() and praiseOrder() — and both band by rule before they compare a
+  figure, because "is a 14-point climb bigger than two flags going away?" has no answer and asking
+  it would let whichever number happened to be larger decide.
+
+  AND NOTHING IN THE DOCUMENT REMEMBERS WHO WAS ON A LIST. The turnaround rule needs to know that a
+  student WAS flagged and is not now, and it derives that by asking this same evaluator about an
+  earlier day (`through`) rather than by storing a bit — WO-4.3's own instruction, and the reason
+  `newYearDocument()` gained nothing for this work order. A stored bit goes stale the moment a
+  threshold moves, and it would be a second truth about who was on the list sitting beside the rules
+  that decide it. The rule's own comment carries what that derivation can and cannot prove.
 
   *(That paragraph ended "Ordering is the list screen's business; this module answers who and why"
   until 2026-08-20, and the owner's severity ruling moved half of it: the ORDER now lives here, as
@@ -109,6 +120,11 @@ import { fullName } from './roster.js';
    carrying `start: "sometime"` is not dated, and deciding that here would be the fifth home for a
    rule about one field. */
 import { termIsDated } from './classes.js';
+/* THE DAY-STEP, IMPORTED RATHER THAN WRITTEN AGAIN (WO-4.3). src/calendar.js's shiftDays() never
+   leaves UTC, so a whole number of days cannot land on a DST seam — the scar its own comment
+   carries, and the reason src/log.js takes it rather than doing the arithmetic locally. The
+   turnaround rule needs one date and one only: the far edge of its own window. */
+import { shiftDays } from './calendar.js';
 /* The app's two number formatters, imported rather than re-declared. formatPercent() is how every
    percentage in Planbook is written down — two fixed decimals, because the SIS carries two and this
    number is re-keyed into it by hand (src/scores.js) — and src/detail.js already imports it from
@@ -369,8 +385,9 @@ function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
 /* ────────────────────────────── the rules ──────────────────────────────
 
-   TEN SINCE WO-4.2 — the nine concern rules the data model tabulates, plus the one praise rule
-   WO-4.1 registered to prove the contract. WO-4.3 adds the other four praise rules beside them.
+   FOURTEEN SINCE WO-4.3 — the nine concern rules the data model tabulates and all five praise
+   rules, which is every rule Phase 4 specifies. The praise four landed 2026-08-24 beside the one
+   WO-4.1 had registered to prove the contract, and none of them changed the shape below.
 
    A THIRD FUNCTION ARRIVED WITH THE EIGHT, and it is the only change to the shape this file's
    header describes:
@@ -792,6 +809,261 @@ const behaviorWindow = {
   },
 };
 
+/* ────────────────────────────── the four praise rules (WO-4.3) ──────────────────────────────
+
+   THE PHASE'S WHOLE ARGUMENT IS THAT ONLY ONE OF THEM CAN LEAD A LIST. plans/ROADMAP.md Phase 4
+   and docs/data-model.md § Praise both say it: rank by DELTA, not by level, because "top of the
+   class" surfaces the same four students every week and is worth nothing. Of the five praise rules
+   the data model tabulates, exactly TWO measure a change — the grade that rose, and the concern
+   flags that went away — and the other three measure a level or a count. That is not a defect in
+   the table; it is why PRAISE_RANK below exists and why a run of 90s sorts last of all five.
+*/
+
+/*
+  PRAISE — the weighted grade rose across the last N assignments, and it is `grade-fell` read the
+  other way up.
+
+  DELIBERATELY THE SAME ARITHMETIC, NOT A SECOND OPINION ABOUT IT. Same window
+  (ctx.countedWork()), same `before` (ctx.gradeWithout() — the weighted grade as it stood before
+  that work existed, with the category redistribution intact), same `after` (the grade the score
+  grid is showing). Everything the concern rule's own comment argues about which assignments are
+  "the last N" — not by due date, not the last N rows regardless, excused work in neither end —
+  holds here word for word and is not repeated: a second reading of the same question is the second
+  answer this file keeps refusing.
+
+  THIS IS THE RULE THE ACCEPTANCE LINE IS ABOUT. A B− student who came up 14 points outranks an A
+  student who came up 6, and an A student who came up nothing at all is not on this rule's list
+  however high she is sitting — because a rise of zero is not a rise. That is what "a rule that can
+  only ever fire for high achievers is the wrong rule" looks like when it is the arithmetic rather
+  than the intention.
+
+  A STUDENT WHOSE WHOLE GRADED HISTORY IS THE WINDOW HAS NO `before` AND DOES NOT FIRE, for the
+  concern rule's reason inverted: answering "rose from 0%" would praise every student in a new class
+  in the week the first four assignments were graded, which is the fastest way to teach a teacher
+  that this column means nothing.
+*/
+const gradeRose = {
+  id: 'grade-rose',
+  direction: 'praise',
+  keys: ['gradeRosePoints', 'gradeRoseAssignments'],
+  measure(ctx, studentId) {
+    const line = ctx.t.gradeRosePoints;
+    const asked = Math.max(0, Math.floor(Number(ctx.t.gradeRoseAssignments) || 0));
+    if (!asked) return null;
+    const window = ctx.countedWork(studentId).slice(-asked);
+    if (!window.length) return null;
+    const after = ctx.grade(studentId);
+    const before = ctx.gradeWithout(studentId, window.length);
+    if (!after || after.percentage === null || !before || before.percentage === null) return null;
+    const rose = after.percentage - before.percentage;
+    if (!(rose >= line)) return null;
+    return { rose: rose, points: line, before: before.percentage, after: after.percentage,
+      assignments: window.length, asked: asked };
+  },
+  say(numbers, who) {
+    return 'In ' + who.className + ', ' + who.name + '’s grade rose '
+      + sayPoints(numbers.rose, numbers.points, 'atLeast') + ' points across the last '
+      + plural(numbers.assignments, 'assignment', 'assignments') + ', from '
+      + formatPercent(numbers.before) + ' to ' + formatPercent(numbers.after)
+      + ' — a rise of ' + sayNumber(numbers.points) + ' or more.';
+  },
+  /* THE ONE PRAISE RULE WITH A DELTA IN POINTS, and the number the drawing puts in the strong
+     position on every praise row. Signed, because the row draws what happened rather than the size
+     of it — and the current grade is nowhere on that row, because a list that ranks by delta and
+     draws the level big is arguing with itself (design/mockups/signals.html). */
+  figure(numbers) {
+    return { value: numbers.rose, text: '+' + Number(numbers.rose).toFixed(2),
+      unit: 'points', tone: 'up' };
+  },
+};
+
+/*
+  PRAISE — N scores in a row at or above N%, and it is `low-score-run` read the other way up.
+
+  THE RUN IS THE ONE ENDING AT THE MOST RECENT SCORE, what counts as a score, and why a blank, a
+  `missing` and zero-point work are each excluded — all of that is the concern rule's own comment
+  and is not written twice here. One asymmetry is worth naming: a `missing` breaks nothing on
+  either rule, but on this one skipping it is the generous reading. A student with three 95s and a
+  missing between them still fires, and that is deliberate — the missing work is what the concern
+  column is for, and a praise rule that also policed it would be the same fact said twice in two
+  colours.
+
+  AND IT IS THE RULE THIS PHASE IS SUSPICIOUS OF. "Three scores at or above 90%" can only ever fire
+  for a student who is already at the top — it has no before and no after, and it will name the same
+  four students every week. It is a deliverable, so it is here; what the phase's argument buys is
+  that it sorts LAST of the five (PRAISE_RANK below) and that its figure is `flat`, so it can never
+  head a list that has a single climber on it.
+*/
+const highScoreRun = {
+  id: 'high-score-run',
+  direction: 'praise',
+  keys: ['highScoreRun', 'highScoreAtLeast'],
+  measure(ctx, studentId) {
+    const need = ctx.t.highScoreRun;
+    const atLeast = ctx.t.highScoreAtLeast;
+    const scores = ctx.scorePercents(studentId);
+    const run = [];
+    for (let i = scores.length - 1; i >= 0; i--) {
+      if (!(scores[i] >= atLeast)) break;
+      run.unshift(scores[i]);
+    }
+    if (!run.length || !(run.length >= need)) return null;
+    return { run: run.length, need: need, atLeast: atLeast, scores: run,
+      highest: Math.max.apply(null, run) };
+  },
+  say(numbers, who) {
+    const list = numbers.scores.map((p) => sayPercent(p, numbers.atLeast, 'atLeast'));
+    const said = list.length > 1
+      ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1]
+      : list[0];
+    return 'In ' + who.className + ', ' + who.name + ' has '
+      + plural(numbers.run, 'score', 'scores') + ' in a row at or above '
+      + sayNumber(numbers.atLeast) + '% — ' + said + ' — ' + sayNumber(numbers.need) + ' or more.';
+  },
+  figure(numbers) {
+    return { value: numbers.run, text: String(numbers.run), unit: 'in a row', tone: 'flat' };
+  },
+};
+
+/*
+  PRAISE — the concern list was flagging this student and is not any more.
+
+  ── NO STORED BIT, AND THAT IS THE WORK ORDER'S OWN INSTRUCTION ──
+
+  WO-4.3: *"derive it from the log and prior evaluations rather than storing a 'was flagged' bit
+  that can go stale."* A bit would go stale in the ordinary way — a threshold moves and every bit
+  written under the old number is a lie — and in a worse way this app is specifically shaped against:
+  it would be a second truth about who was on the list, sitting beside the rules that decide it, free
+  to disagree with them and impossible to check. So there is nothing new in the document for this
+  rule, `newYearDocument()` is untouched, and every backup written by every earlier build still
+  restores (the scar under CLAUDE.md § "A settings block is created by its first write").
+
+  WHAT "A PRIOR EVALUATION" IS, LITERALLY: this same evaluator, over this same document, with
+  `through` set back to the far edge of the window. evaluate() has taken that argument since WO-4.1
+  and the whole engine already honours it, so the historical answer is produced by the nine concern
+  rules themselves rather than by a reconstruction of what they might have said.
+
+  ── WHAT THE RECORD CAN AND CANNOT PROVE, STATED RATHER THAN GLOSSED ──
+
+  Four of the nine concern rules genuinely move when `through` moves, because the facts under them
+  are DATED in the document: absence-run, absence-window and attendance-below read a ledger with a
+  date on every row, and behavior-window reads a log with a timestamp on every entry. The other five
+  are grade-shaped, and the document dates NOTHING about a score — there is no "when this was
+  entered" field and there is deliberately no window taken by due date (src/assignments.js decision
+  4, and `grade-fell`'s own comment: sorting by a date behind the teacher's back is a second opinion
+  about an order she can see, and it would put the clock inside a grade signal). So those five answer
+  the same thing at both ends of the window.
+
+  The consequence is honest and worth knowing: **a turnaround fires on attendance and behavior, and
+  a grade recovery on its own will not produce one.** A grade recovery has its own rule — `grade-rose`
+  above, which is the better sentence for it anyway. What this rule must never do is claim otherwise,
+  and it cannot: it reports how many rules were firing then and that none is firing now.
+
+  ── ONE SAMPLE, AT THE FAR EDGE, AND THE ALTERNATIVE THAT WAS REFUSED ──
+
+  The window is asked ONCE, at `through − turnaroundDays`. Walking every day of the window and
+  stopping at the most recent day the student was flagged would let the sentence say *"came off the
+  list nine days ago"* the way design/mockups/signals.html's tag does — and it costs twenty-one full
+  passes of the concern half, per student, per class, on a screen a teacher opens across five
+  classes. That is the defect WO-2.13's meetingDatesCallCount() instrumentation exists because of,
+  reached from a different direction. **So the drawing's tag wording is the one thing in it this
+  rule does not lift**, and the sentence says what one sample can prove: she was on the list when
+  this window opened, and she is not on it now.
+
+  IT UNDER-FIRES RATHER THAN OVER-CLAIMS, deliberately. A student flagged ten days ago and clear
+  since is not caught. Praise that is not sent is a missed opportunity; praise that says a student
+  came off a list she was never on is the thing that stops a teacher trusting this column.
+
+  ── AND THE "NOT ANY MORE" HALF IS COMPLETE ──
+
+  `concernNow()` is all nine rules, not the four that time-travel. A student who has stopped being
+  absent but is now failing is still on the concern list, and praising her for coming off it while
+  her name sits in the left-hand column would be the two halves of one screen contradicting each
+  other in front of the teacher.
+*/
+const turnaround = {
+  id: 'turnaround',
+  direction: 'praise',
+  keys: ['turnaroundDays'],
+  measure(ctx, studentId) {
+    const days = Math.max(0, Math.floor(Number(ctx.t.turnaroundDays) || 0));
+    if (!days) return null;
+    const then = ctx.concernAsOf(studentId, days);
+    /* null is "this pass has no history to consult" — a historical pass itself, which is where the
+       recursion would otherwise be. An empty list is a student who was not flagged then. */
+    if (!then || !then.length) return null;
+    if (ctx.concernNow(studentId).length) return null;
+    return { cleared: then.length, days: days };
+  },
+  /*
+    THE RULE IDS ARE NOT PUBLISHED, and that is the contract rather than an omission. `numbers` is
+    numbers (this file's header), `who` is names and nothing else, and a sentence built out of
+    strings the rule chose is one edit away from a sentence carrying something that should not
+    travel — these explanations are drafted into mail through WO-5.1's `{{signals.list}}`. The
+    concern column is on the same screen and says which rules they were.
+  */
+  say(numbers, who) {
+    return 'In ' + who.className + ', ' + who.name + ' is off the concern list — '
+      + plural(numbers.cleared, 'rule was', 'rules were') + ' flagging them '
+      + plural(numbers.days, 'day', 'days') + ' ago and none is today.';
+  },
+  /* A CHANGE, so it is `up` and it bands above the three rules that measure a level. The figure is
+     how many rules went away, which is not comparable with a number of points — PRAISE_RANK is what
+     keeps the two from ever being subtracted from one another. */
+  figure(numbers) {
+    return { value: numbers.cleared, text: String(numbers.cleared), unit: 'cleared', tone: 'up' };
+  },
+};
+
+/*
+  PRAISE — nothing marked missing across the last N pieces of work that count.
+
+  THE WINDOW IS `countedWork`, THE SAME LIST THE FALL AND THE RISE ARE MEASURED OVER, so "the last
+  8 assignments" means the same eight rows on every rule in this file. A cell counts when the
+  teacher put a number in it or marked it missing; a blank is ungraded and affects nothing, and an
+  excused is out of the grade in both directions.
+
+  A BLANK NOT COUNTING IS THE WHOLE OF WHY THIS RULE IS NOT A GIFT. If the window were the last N
+  assignments regardless, a student who has handed in nothing at all would have nothing marked
+  missing across them and would be praised for it — which is the exact inversion of what a teacher
+  means by "no missing work". Read over counted work, that student has an empty window and fires
+  nothing.
+
+  THE WINDOW MUST BE FULL, and this is the departure from `grade-fell`, which reports a short window
+  honestly and fires on it. A short window here is not honest, it is early: in the first fortnight
+  of a term every student in the class has three clean pieces of work, and a rule that fired on
+  three at a threshold of eight would fill the praise column with everybody on the day the term
+  opened and empty it as the term went on. `missing` is the teacher's own mark and is never inferred
+  from a date (CLAUDE.md), so nothing here reads a due date to decide what "yet" means; what it does
+  instead is refuse to speak until the work the threshold asks for exists.
+*/
+const noMissing = {
+  id: 'no-missing',
+  direction: 'praise',
+  keys: ['noMissingAssignments'],
+  measure(ctx, studentId) {
+    const asked = Math.max(0, Math.floor(Number(ctx.t.noMissingAssignments) || 0));
+    if (!asked) return null;
+    const rows = ctx.countedRows(studentId);
+    if (rows.length < asked) return null;
+    const window = rows.slice(-asked);
+    if (window.some((row) => row.missing)) return null;
+    return { assignments: window.length, asked: asked, missing: 0 };
+  },
+  say(numbers, who) {
+    return 'In ' + who.className + ', ' + who.name + ' has nothing marked missing across the last '
+      + plural(numbers.assignments, 'assignment', 'assignments') + ' — '
+      + sayNumber(numbers.asked) + ' or more.';
+  },
+  /* `flat`, because there is no before and no after: a clean window is a standing count. The count
+     is drawn anyway, because an empty slot in that column reads as a missing value rather than an
+     absent one (design/mockups/proposed-phase4.css). */
+  figure(numbers) {
+    return { value: numbers.assignments, text: String(numbers.assignments), unit: 'in a row',
+      tone: 'flat' };
+  },
+};
+
 /*
   PRAISE — attendance over the last N recorded meetings is at or above the line.
 
@@ -829,8 +1101,12 @@ const attendanceWindow = {
       + sayNumber(numbers.atLeast) + '%.';
   },
   /* `flat`, because a rate is a level and this rule has no before to compare an after with.
-     WO-4.3 ranks praise BY DELTA and owns the four rules that have one; if that work order re-cuts
-     this rule into one, the figure is the line that changes. */
+     WO-4.3 LEFT IT ALONE, and that paragraph is what the decision looked like from the other side:
+     the four rules it added include only one with a delta in points, so re-cutting this one into a
+     change would have meant inventing a before — "up from what?" over a window that has no earlier
+     end — rather than measuring one. What that work order did instead is decide where a level-only
+     praise hit SITS, which is PRAISE_RANK below: fourth of five, under both rules that measure a
+     change, so a student with perfect attendance and no improvement cannot head this column. */
   figure(numbers) {
     return { value: numbers.percent, text: formatPercent(numbers.percent), unit: 'attendance',
       tone: 'flat' };
@@ -842,7 +1118,16 @@ const attendanceWindow = {
    that have to be read side by side while the numbers are being tuned. It is NOT the order a list
    is drawn in; that is SEVERITY below, and the two are deliberately separate. */
 const RULES = [gradeBelow, gradeFell, lowScoreRun, missingCount, attendanceBelow, absenceWindow,
-  absenceRun, tardyCount, behaviorWindow, attendanceWindow];
+  absenceRun, tardyCount, behaviorWindow,
+  /* FOURTEEN SINCE WO-4.3, and the five praise rules are in the order docs/data-model.md § Praise
+     tabulates them — which moved `attendance-window` off the end of this array, where it had been
+     sitting alone since WO-4.1, to the foot of its own group. It is the same rule and the same
+     object; what changed is that it now has four neighbours and the table has an order. */
+  gradeRose, highScoreRun, turnaround, noMissing, attendanceWindow];
+
+/* The concern half of the registry, resolved once. The turnaround rule asks "which of these fired"
+   twice per student and a filter per call is a filter per student per pass. */
+const CONCERN_RULES = RULES.filter((rule) => rule.direction === 'concern');
 
 /*
   ────────────────────────────── HOW URGENT, AND WHY IT LIVES HERE ──────────────────────────────
@@ -930,6 +1215,84 @@ export function severityOrder(hits) {
 export function isAttendanceRule(ruleId) { return rankOf(ruleId) < ATTENDANCE_BAND; }
 
 /*
+  ────────────────────── BIGGEST CLIMB FIRST, AND WHY IT IS A LIST OF RULES ──────────────────────
+
+  THE PRAISE HALF RANKS BY DELTA — plans/ROADMAP.md Phase 4, docs/data-model.md § Praise, and this
+  work order's whole argument. "Top of the class" surfaces the same four students every week and is
+  worth nothing; "came up 14 points since October" surfaces a different student every time.
+
+  IT IS BANDED BY RULE FIRST AND BY FIGURE SECOND, which is severityOrder()'s shape above and is
+  taken deliberately rather than by habit. A pure sort on the figure would subtract a number of
+  RULES CLEARED from a number of POINTS and put whichever happened to be larger on top, and "is a
+  14-point climb bigger than two flags going away?" has no answer — the same question the concern
+  side refuses to ask about 61% and 3 missing. Inside a band the two figures are the same kind of
+  thing and the comparison means something.
+
+  THE ORDER, AND EVERY POSITION IN IT IS AN ARGUMENT:
+
+    grade-rose         the only rule here with a delta in points. It is the sentence that lands at
+                       home, it is available to every student in the class, and a B− who came up 14
+                       outranks an A who came up 6 — which is the acceptance line, straight out of
+                       the banding.
+    turnaround         the other rule that measures a change. Second rather than first because its
+                       figure counts rules rather than points and because it is derived from one
+                       sample at the edge of its window (see the rule): a real climb is the stronger
+                       claim, and this one rides above every level.
+    no-missing         a count, and the most available of the three that have no delta — turning
+                       work in is something a struggling student can do this week.
+    attendance-window  a level, and available to anyone who turns up. Trap 2 of this work order in
+                       one line: a perfect-attendance student with no improvement sits here, under
+                       both rules that measure a change, and cannot head a column that has a single
+                       climber in it.
+    high-score-run     LAST, and it is the rule this phase is suspicious of. Three scores at or
+                       above 90% can only ever fire for a student who is already at the top. It is a
+                       deliverable and it is registered; what it does not get is the strong position.
+
+  A rule nobody put in this table sorts after every rule somebody did, for rankOf()'s reason: the
+  failure mode of the other choice is a praise rule added later silently leading the column because
+  its author did not know this array existed.
+*/
+const PRAISE_RANK = ['grade-rose', 'turnaround', 'no-missing', 'attendance-window',
+  'high-score-run'];
+
+function praiseRankOf(ruleId) {
+  const at = PRAISE_RANK.indexOf(ruleId);
+  return at < 0 ? PRAISE_RANK.length : at;
+}
+
+/*
+  THE PRAISE ORDER, as a new array, and a FUNCTION over hits rather than a field on one — the same
+  fence severityOrder() stands behind. Nothing below writes a rank onto a hit, so there is no number
+  on one that can go stale against the arithmetic beside it.
+
+  It lives here and not on the screen for severityOrder()'s reason, which is the owner's own: WO-6.4's
+  glance panel and Phase 5's send flow both inherit "who is most worth writing home about", and three
+  surfaces answering that for themselves is three answers.
+*/
+export function praiseOrder(hits) {
+  return (Array.isArray(hits) ? hits.slice() : []).sort((a, b) => {
+    const ra = praiseRankOf(a.ruleId);
+    const rb = praiseRankOf(b.ruleId);
+    if (ra !== rb) return ra - rb;
+    const fa = signalFigure(a);
+    const fb = signalFigure(b);
+    const va = fa && Number.isFinite(fa.value) ? Math.abs(fa.value) : -Infinity;
+    const vb = fb && Number.isFinite(fb.value) ? Math.abs(fb.value) : -Infinity;
+    return vb - va;
+  });
+}
+
+/* Which order a hit takes, chosen by its own direction — so a caller holding a mixed list does not
+   have to know which table a rule is in. The two orders are separate arrays on purpose: severity is
+   the owner's ruling about urgency and this one is about size of change, and a single table would
+   have to answer both questions with one number. */
+export function orderHits(hits) {
+  const all = Array.isArray(hits) ? hits : [];
+  return severityOrder(all.filter((h) => h && h.direction !== 'praise'))
+    .concat(praiseOrder(all.filter((h) => h && h.direction === 'praise')));
+}
+
+/*
   THE RULES THAT ARE REGISTERED AND CANNOT FIRE YET, with the reason each one gives, so a screen
   can say so instead of leaving a teacher to wonder which of "nobody qualified" and "not built" she
   is looking at. Empty the day WO-4.4 lands, and the screen's line disappears with it because it is
@@ -982,7 +1345,14 @@ export function ruleThresholdText(doc, ruleId) {
    `inert` arrived at WO-4.2 with the two questions a list asks that this one could not answer. */
 export function signalRules() {
   return RULES.map((rule) => ({ id: rule.id, direction: rule.direction, keys: rule.keys.slice(),
-    text: ruleText(rule.id), rank: rankOf(rule.id), inert: rule.inert || '' }));
+    text: ruleText(rule.id),
+    /* `rank` IS THE RULE'S POSITION IN ITS OWN DIRECTION'S TABLE (WO-4.3), not one number over
+       fourteen rules. A concern rule reads SEVERITY and a praise rule reads PRAISE_RANK, because
+       the two tables answer different questions — how urgent, and how big a change — and a chip
+       strip that sorted the praise rules by a severity table they are not in would have drawn them
+       in registry order and called it a ranking. The only caller groups by direction first. */
+    rank: rule.direction === 'praise' ? praiseRankOf(rule.id) : rankOf(rule.id),
+    inert: rule.inert || '' }));
 }
 
 /* ────────────────────────────── the pass ────────────────────────────── */
@@ -1023,7 +1393,7 @@ function rosterOf(cls) { return cls && Array.isArray(cls.roster) ? cls.roster : 
   `t` is the thresholds resolved once. A rule reads `ctx.t.gradeBelow` rather than calling a
   resolver, so a rule cannot accidentally read a raw key off the document and get `undefined`.
 */
-function makeContext(doc, cls, termId, through) {
+function makeContext(doc, cls, termId, through, historical) {
   const classId = cls && cls.id;
   const grades = new Map();
   const windows = new Map();
@@ -1031,9 +1401,15 @@ function makeContext(doc, cls, termId, through) {
   const termWalks = new Map();
   const termRuns = new Map();
   const counted = new Map();
+  const countedIds = new Map();
   const beforeGrades = new Map();
   const percents = new Map();
   const missing = new Map();
+  /* WO-4.3's three, and the last of them holds whole CONTEXTS rather than answers — one per window
+     length, which in practice is one. See concernAsOf() below. */
+  const flaggedNow = new Map();
+  const flaggedThen = new Map();
+  const pasts = new Map();
 
   /*
     THE TERM'S RANGE, RESOLVED ONCE, and `null` when this class's term is not dated — which reads
@@ -1134,14 +1510,77 @@ function makeContext(doc, cls, termId, through) {
       opinion about what `{ v: null, flag: 'late' }` means.
     */
     countedWork(studentId) {
+      if (!countedIds.has(studentId)) {
+        countedIds.set(studentId, this.countedRows(studentId).map((row) => row.id));
+      }
+      return countedIds.get(studentId);
+    },
+
+    /*
+      THE SAME LIST WITH THE ONE THING countedWork() DROPS: whether the teacher marked that cell
+      MISSING (WO-4.3).
+
+      It is one memo and countedWork() is a projection of it, rather than two filters that both
+      decide what "counts" — the second copy would be free to disagree the first time the excused
+      rule moved, and the two rules reading them would then be measuring different windows while
+      both saying "the last 8 assignments". `no-missing` is the only caller that needs the flag;
+      everything else wants the ids and takes them from above.
+    */
+    countedRows(studentId) {
       if (!counted.has(studentId)) {
-        counted.set(studentId, sequence.filter((a) => {
+        counted.set(studentId, sequence.map((a) => {
           const mark = scoreMark(doc, a.id, studentId);
-          if (mark.flag === 'excused') return false;
-          return mark.flag === 'missing' || mark.value !== null;
-        }).map((a) => a.id));
+          if (mark.flag === 'excused') return null;
+          if (mark.flag === 'missing') return { id: a.id, missing: true };
+          return mark.value !== null ? { id: a.id, missing: false } : null;
+        }).filter(Boolean));
       }
       return counted.get(studentId);
+    },
+
+    /*
+      ── THE TWO READINGS THE TURNAROUND RULE TAKES, AND THE ONLY RECURSION IN THIS FILE ──
+
+      `concernNow` runs the nine concern rules over THIS context and hands back the ids that fired.
+      `concernAsOf` does the same over a context built at `through − days`, which is this same
+      evaluator asked about an earlier day — the "prior evaluation" WO-4.3 asks the turnaround to be
+      derived from, rather than a bit written into the document that a moved threshold turns into a
+      lie. See the rule itself for what the record can and cannot prove across that gap.
+
+      THE RECURSION TERMINATES BECAUSE THE HISTORICAL CONTEXT REFUSES TO MAKE ANOTHER. `historical`
+      is true on the one below, so its own concernAsOf() answers null and the turnaround rule inside
+      it returns null — which is also the right answer on its own terms: a pass being consulted as
+      history has no history of its own to consult. Only the CONCERN rules are run over it in any
+      case, and the turnaround is a praise rule, so the guard is a second lock on a door already
+      shut. Two locks, because the cost of the first one being quietly removed is an evaluator that
+      recurses once per 21 days for ever.
+
+      THE COST IS ONE EXTRA CONTEXT PER PASS, not one per student: the historical context is built
+      on the first student who reaches it and memoized by window length, and everything expensive
+      inside it — the meetings resolution, the totals walk, the weighted grade — memoizes exactly as
+      it does out here. What a pass costs is therefore roughly doubled and never multiplied, which
+      is the line WO-2.13's instrumentation drew.
+    */
+    concernNow(studentId) {
+      if (!flaggedNow.has(studentId)) {
+        flaggedNow.set(studentId, CONCERN_RULES
+          .filter((rule) => !!rule.measure(this, studentId)).map((rule) => rule.id));
+      }
+      return flaggedNow.get(studentId);
+    },
+    concernAsOf(studentId, days) {
+      if (historical) return null;
+      const span = Math.max(0, Math.floor(Number(days) || 0));
+      if (!span) return null;
+      const key = studentId + '|' + span;
+      if (!flaggedThen.has(key)) {
+        const back = String(span);
+        if (!pasts.has(back)) {
+          pasts.set(back, makeContext(doc, cls, termId, shiftDays(through, -span), true));
+        }
+        flaggedThen.set(key, pasts.get(back).concernNow(studentId));
+      }
+      return flaggedThen.get(key);
     },
 
     /*

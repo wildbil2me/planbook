@@ -1021,7 +1021,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**`verify-shell.mjs` holds 1126 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**`verify-shell.mjs` holds 1141 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. Its allowlist is written down at the check: the
 definition at `tools/verify-shell.mjs:68` is not a call, the one `else check(` in the file — grep it,
@@ -2215,6 +2215,34 @@ rule is inert until WO-4.4 and the screen says so in words"* now asserts that `i
 and that the notice went **because the rule landed** rather than because a screen stopped drawing it —
 deleting it would have retired the only reading that separates those two builds. WO-2.26's *"last in
 the right-hand column"* moved because the log card is under the hall-pass card now.
+
+**WO-4.3 moved it from 1126 to 1141**: fifteen call sites, all of them in one new section at the
+foot of the file — § *"the praise column, drawn"* — none inside a loop and none a failure arm, so all
+fifteen fire on a green run and **the tree prints 1156**:
+`1156 checks · 1156 passed · 0 failed · 0 skipped`, 32,850 lines, 28.4 lines per check, 384s, exit 0,
+measured 2026-08-24. **The gap between sites and results stays at 15** — 1141 + 15, the same offset
+the block above ends on, so the unexplained result that went missing at WO-4.4 is still missing and
+still not in either new section. The one grep that block asks for is still owed.
+
+**Two mutations, both reverted, and they redden different halves of the section.** Ranking the praise
+column by the current GRADE instead of by the delta — `orderPraise()` cut to a sort on `row.grade`,
+which is the build `plans/ROADMAP.md` Phase 4 exists to refuse — reads `1156 checks · 1152 passed ·
+4 failed`, exit 1, and **which four is the whole of the attribution**: the B−-outranks-an-A ordering,
+the perfect-record student sorting last, the row's own children census, and the rule-chip check whose
+expected names come out of that order. Sampling the turnaround at TODAY instead of at
+`through − 21 days` — `shiftDays(through, 0)` inside `concernAsOf()`, which is a build that has the
+rule registered and can never fire it — reads `1156 checks · 1151 passed · 5 failed`, exit 1: the
+turnaround check itself, the sentence sweep (which names all five praise rules), the both-columns
+card, the fortnight comparison, and the ordering check whose fifth row was the turnaround student.
+**Neither was reverted with `git checkout` over unstaged work** — the tree was staged first, which is
+the trap that has cost this repo an afternoon before.
+
+**Four shipped checks in § who needs you were re-cut in place and none of them moves the count.**
+`signalsModel()` gained a second column, so `m.rows` is `m.concern.rows` in three of them; the fourth
+is the rule-chip census, which now reads FIVE rules over that fixture rather than four — Lena and
+Nils are present at all nine of its recorded meetings, which is a praise hit at 100%, and the chip
+counts are asserted as an exact map rather than as *every count is one*, because that shape could not
+tell a praise rule that fired twice from one that fired once.
 
 *(**Four of this section's own checks were wrong when it was first written, and all four were caught
 by running it.** Three were the harness's own bugs: a `.log =` remover token that went red on the

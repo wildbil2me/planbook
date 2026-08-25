@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   Who needs you — the signals list, its toolbar, and the card behind a row (WO-4.2).
+   Who needs you — the signals lists, their toolbar, and the card behind a row
+   (WO-4.2, and the second column since WO-4.3).
 
    LIFTED FROM design/mockups/proposed-phase4.css RATHER THAN RE-DERIVED, which is
    CLAUDE.md § "Reference implementation"'s rule applied to this repo's own drawing:
@@ -13,11 +14,6 @@
    drawing draws the whole room — three work orders' worth — and this file is one of
    them:
 
-     `.sig-two`, `.sig-col.praise`          WO-4.3. The praise column is that work
-                                            order's own Surface deliverable, in as
-                                            many words, so the two-column grid lands
-                                            with the column it is a grid for. What
-                                            ships today is one full-width column.
      `.sig-hidden` `.sig-muted` `.sig-undo` WO-4.5. The cooldown, which suppresses a
                                             hit and says which contact silenced it.
      `.sig-quiet-note` `.sig-since`         WO-4.5's other half, the quiet middle.
@@ -35,10 +31,13 @@
                                             class (src/classes.js's avatarClass) and the
                                             student's initials inside it.
 
-   `.sig-col.praise` IS HERE ANYWAY, and it is the one thing taken early: it is a
-   colour on a heading, WO-4.3 lands a column and not a stylesheet, and a sheet that
-   made the praise half re-open this file to be drawn at all would be the wrong shape
-   of gap to leave.
+   `.sig-two` AND `.sig-col.praise` CAME ACROSS AT WO-4.3, 2026-08-24, which is where
+   this list used to name them: the two-column grid, the phone breakpoint that drops
+   to one column with PRAISE FIRST, and nothing else from the drawing. `.sig-col.praise`
+   had been taken early — a colour on a heading — so what that work order added to this
+   file was six declarations and a breakpoint. One class is this sheet's own and is
+   not in the drawing: `.sig-col-empty`, the quiet line a column shows when it is empty
+   beside a column that is not, which the drawing never had a state for.
 
    IT WEARS `.panel*`, `.pill`, `.avatar`, `.av0`–`.av9`, `.empty-state`,
    `.class-action-btn`, `.modal-*` and `.screen-nav*` AS SHIPPED and restyles none of
@@ -113,14 +112,24 @@
    changed was an outline-offset of 1px against the global 2px, which is not a reason to become the
    first screen in the app with a focus ring of its own. */
 
-/* ────────────────────────────── the column ──────────────────────────────
+/* ────────────────────────────── the two columns ──────────────────────────────
 
-   One column today and two when WO-4.3 lands its own — see this file's header. The head says what
-   the column is FOR in a sentence under its own label, because the praise column will need that
-   badly: a teacher who reads "Praise" as "the top of the class" stops reading it in a fortnight,
-   and a heading cannot carry "ranked by how much they climbed" on its own. The concern column does
-   not need one and has one anyway, so the pair reads as a pair.
+   CONCERN AND PRAISE, SIDE BY SIDE, AT `1fr 1fr` (WO-4.3) — and the equal billing is the argument
+   rather than the layout. plans/ROADMAP.md Phase 4: the praise half is what makes this a teacher's
+   assistant rather than a gradebook with alarms, and the way it dies is by being STACKED. Praise
+   buried under concern on any screen shorter than both lists is praise that does not exist, and
+   every iPad is shorter than both lists. design/mockups/proposed-phase4.css argues it at length and
+   this is that sheet's rule carried across, not a matching one.
+
+   The 1px gap over a `#eef0f4` background is the divider: one grid gap doing the work of a border,
+   so neither column has to own an edge the other might disagree about.
+
+   THE HEAD SAYS WHAT THE COLUMN IS FOR in a sentence under its own label. The praise column needs
+   that badly — a teacher who reads "Praise" as "the top of the class" stops reading it in a
+   fortnight, and a heading cannot carry "ranked by how much they climbed" on its own. The concern
+   column does not need one and has one anyway, so the pair reads as a pair.
 */
+.sig-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #eef0f4; }
 .sig-col { background: #fff; min-width: 0; display: flex; flex-direction: column; }
 .sig-col-head {
   display: flex; align-items: baseline; gap: 8px;
@@ -132,6 +141,15 @@
 .sig-col-note {
   font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none;
   color: #a0aab8;
+}
+/* ONE COLUMN WITH NOTHING IN IT WHILE THE OTHER HAS SOMETHING (WO-4.3). Not an `.empty-state`: that
+   is a centred block for a whole screen, and half a screen's worth of it beside a working list
+   would read as the working list being broken too. A quiet line where the rows would have been,
+   in the same grey the rest of this sheet uses for news that is not bad news. It is a <p> and not a
+   control, so it takes no floor in the coarse block below. */
+.sig-col-empty {
+  padding: 10px 20px 16px; margin: 0;
+  font-size: 11px; line-height: 1.5; color: #a0aab8;
 }
 
 /* ────────────────────────────── one row ──────────────────────────────
@@ -304,10 +322,21 @@
 .sig-card-act:disabled:hover { border-color: #e0e4ea; color: #1a1a2e; }
 
 /* ────────────────────────────── responsive ──────────────────────────────
-   The order design/style-guide.md §6 names. The two-column drop is WO-4.3's, with the column. */
+   The order design/style-guide.md §6 names.
+
+   ONE COLUMN BELOW 720px, AND PRAISE FIRST (WO-4.3) — the drawing's rule, and the one place the
+   pair is deliberately not symmetrical. Two columns of names at 390px are two columns of ellipsis;
+   and if only one of them can be first, it is the one a teacher would otherwise never scroll to.
+   Ordered with `order` rather than by moving the markup, because the DOM order is the reading order
+   a screen reader and the tab key take, and on a laptop that order is left column then right. */
 @media (max-width: 720px) {
+  .sig-two { grid-template-columns: 1fr; }
+  .sig-col.praise { order: 1; }
+  .sig-col.concern { order: 2; }
   .sig-toolbar { padding: 10px 14px; }
-  .sig-row, .sig-inert, .sig-col-head { padding-left: 14px; padding-right: 14px; }
+  .sig-row, .sig-inert, .sig-col-head, .sig-col-empty {
+    padding-left: 14px; padding-right: 14px;
+  }
 }
 
 /* Every control this sheet adds, at the floor, in one place — design/style-guide.md §6. Nothing
