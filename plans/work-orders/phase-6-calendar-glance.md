@@ -268,6 +268,7 @@ here.
 
 **Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-6.2
 **Closes roadmap** Phase 6 → "Month and week views, filterable by class.", "IEP/504 review dates"
+
 *(the second fragment came from WO-6.2 on 2026-08-19, the owner's call — its box says review dates
 are **surfaced** ahead of time, and this is the work order that draws them. WO-6.2 built and measured
 the read side and holds the presentation-mode rule; ticking the box there would have had the roadmap

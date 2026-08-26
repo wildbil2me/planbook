@@ -2419,3 +2419,228 @@ process, one summary line, one exit code. What changes is that the checks stop l
 - **`tools/wo-sweep.mjs` is not split.** It is 1,967 lines and nobody navigates it by line number.
 - **No change to what `verify-shell.mjs` can settle.** It still drives a page and not an installed
   app, it has still never seen a service worker, and **a green harness still closes no 👤 item.**
+
+---
+
+## WO-1.27 — a field name in prose is read as a field, and only half the parser knows the rule
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing; every
+header block in the directory is parsed by the function this fixes
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
+makes, the way WO-2.14, WO-2.15 and WO-1.26 are not. Booked 2026-08-25, owner-directed, found while
+reading a gate report for an unrelated work order.)*
+
+**Why it exists.** `plans/work-orders/README.md` § "Header fields" states the rule in as many words:
+**a field is recognised by where it sits as much as by its name** — it must start a line of the
+header block or follow a `·`, and *"the asterisks must hold nothing but capitalised words."*
+**`wo-gate.mjs` enforces that in one of the two functions that need it.**
+
+`fieldsIn()` reads the block's **lines** and applies the position rule; it is what populates
+`unknownFields` and the "field nothing reads" note. `fieldRe()` — which extracts the field's
+**value**, and is what every consumer actually uses — is a bare `\*\*Name\*\*\s*(.*?)` match run
+against `joined`, the block collapsed into one string with the line boundaries gone. It cannot apply
+a position rule because by the time it runs there are no positions left.
+
+**What that cost, concretely.** WO-6.3's header paragraph ran straight on into an italic note with no
+blank line between them, so seven lines of prose were inside the header block. The note ends:
+
+```
+here under WO-6.2's `**Owes**`.)*
+```
+
+`fieldsIn()` correctly declined to call that a field. `fieldRe('Owes', …)` matched it anyway and
+captured `` `.)* `` as the value. WO-6.3 then carried a phantom **Owes** field, and because
+`wo-gate.mjs:481` prints a *dependency's* `Owes` beside it, the phantom surfaced on **WO-6.4 and
+WO-6.5** — two work orders that have no `Owes` field at all and never had one. It read as a
+malformed field on the wrong work orders.
+
+**The blank line is repaired and the tree is clean — do not go looking for a live reproduction.**
+Fixed 2026-08-25 in the same sitting that found it, and all 138 work orders were scanned for the
+same shape: WO-6.3 was the only one. **This work order is about the parser, not the document**, and
+it needs a fixture.
+
+**And nothing was watching.** `--audit` passed clean with the phantom in place, every run, because it
+checks fragments, `Owes` *pointers*, § The files and the dashboards — not whether a field it read was
+field-shaped in the first place. This is the same failure the § "Header fields" table already
+records three times — **Amends roadmap**, **Blocks** and **Target** were each invented by a hand,
+absorbed in silence, and found one at a time by a human who thought the output looked odd. That row
+says a new field is *"read by nothing, and said so once per gate report."* A field name in prose is
+the inverse: read by everything, and said nowhere.
+
+**Traps**
+
+- **`joined` is the problem, not the regex.** Making the value parse position-aware means reading it
+  off `block`'s lines the way `fieldsIn()` does. A cleverer regex over `joined` cannot recover a
+  boundary that was replaced by a space.
+- **Do not over-tighten — bold prose inside a value must stay in the value.** § "Header fields" names
+  two that break if the fix is a blanket "a value ends at the next `**`": WO-1.13's
+  *see **Why it exists** below* must not end its **Closes roadmap**, and WO-1.11's
+  **Not a go-live blocker.** must not end its **Depends on**. Both are regression cases, not edge
+  cases.
+- **`**Takes from WO-2.9**` holds a `WO-` id inside the asterisks** and is a real field. A rule of
+  "capitalised words only, no digits" refuses it.
+- **A field may follow a `·` mid-line** — that is the normal case for **Ship**, **Status** and
+  **Size**, which share one line. Position-aware does not mean line-start-only.
+- **The four refusals, the fences and the dry runs are `--self-check`'s to keep.** It stands at 18
+  plants and this class is not among them, which is why the bug survived. A fix without a plant is
+  the same bug waiting for the next italic note.
+- **CRLF.** `parseFile` splits on `/\r?\n/` and the writers preserve terminators. A rewrite of the
+  block-reading path must not start converting line endings — `wo-gate.mjs` says so at its own
+  definition and WO-3.25 is the scar.
+
+**Deliverables**
+
+- **`fieldRe()`/`field()` are replaced by a value parse that reads the block's lines**, applying the
+  same position rule `fieldsIn()` already uses: a field starts a line or follows a `·`, and a
+  field-shaped token anywhere else is prose and belongs to whatever value it sits inside.
+- **`fieldsIn()` and the value parse read the position rule from one place**, so the two cannot drift
+  again. One predicate, used twice — this is WO-2.25's argument, the one mechanism lifted rather than
+  reimplemented.
+- **A gate-report note when a header block contains a field-shaped token that is *not* positional**,
+  naming the line. The tree is clean today; the note is what catches the next one at the moment it is
+  written rather than a week later. It is a NOTE and not a refusal — prose legitimately discusses
+  field names, as this very work order does.
+- **New `--self-check` plants**: a field name in prose mid-line is not read as a field; the two
+  bold-prose-in-value regressions above parse unchanged; `**Takes from WO-x.y**` parses; a field
+  after a `·` parses. The plant count rises and the closing summary says what the new ones cover.
+- **`plans/work-orders/README.md` § "Header fields"** gains a sentence saying the position rule is
+  enforced in both the name scan and the value parse, and `plans/verification-tooling.md` gains the
+  scar — a rule documented in one file and half-implemented in another is the shape worth recording.
+
+**Acceptance**
+- [ ] A header block containing `` here under WO-6.2's `**Owes**`.)* `` yields **no** `Owes` value,
+      and `--self-check` has a plant that fails if that regresses.
+- [ ] WO-1.13's **Closes roadmap** and WO-1.11's **Depends on** parse byte-identically to today —
+      quote both values before and after in the result file.
+- [ ] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
+      `Size`, `Depends on`, `Owes`, `Blocks`, `Target`, `Closes roadmap` and `Amends roadmap` is
+      **unchanged across all 139**, proved by dumping them before and after and diffing.
+- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today, and the new
+      ones are named in its closing summary.
+- [ ] A header block with a non-positional field-shaped token draws a NOTE naming the line, and no
+      work order in the tree draws one today.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` are unaffected — quoted, both green.
+- [ ] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
+
+**Not in scope, and each is a decision rather than an omission.**
+- **No new header fields, and no change to `KNOWN_FIELDS`.** This fixes how a field is *found*, not
+  which ones exist.
+- **`--audit` does not gain a refusal for this.** A NOTE is the right weight: the malformed case is
+  rare, the false-positive case is prose about fields, and a refusal that fires on a work order
+  discussing `**Owes**` would make this file unwriteable.
+- **WO-6.3 is already repaired** and is not re-touched. The fixture carries the shape.
+
+---
+
+## WO-1.28 — a dependency waiting on the calendar blocks work that is ready to build
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-4.5 today, and
+WO-6.4 in three weeks when WO-4.5 does the same thing to it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
+makes, the way WO-2.14, WO-2.15, WO-1.26 and WO-1.27 are not. Booked 2026-08-25, owner-directed,
+found when WO-4.5's gate refused a dependency that has shipped every line of code it owes.)*
+
+**Why it exists.** `node tools/wo-gate.mjs WO-4.5` reports
+`FAIL | dependency WO-4.3 is 🔨 IN PROGRESS, not ✅ DONE`. WO-4.3's code landed 2026-08-24 and its
+👤 sitting was green on the 25th. **One box is open and no build can close it** — *"Running the praise
+list two weeks apart on real data surfaces a materially different set of students"* — which needs a
+fortnight of a term that starts Sep 2.
+
+WO-4.5 needs exactly one thing from WO-4.3: its praise rules, so the quiet middle can exclude anyone
+*praised*. Those exist. **The gate reads status where the question is substance**, and refuses a work
+order that is ready to build.
+
+**§ Ship 3 already knew this and said so in prose.** *"Rows 4 and 5 are rowed twice on purpose —
+built before the term, closed after it,"* and it rows WO-4.5 for Sep 12–13, deliberately while
+WO-4.3 is still open on its Sep 16 box. **The running order anticipated the case and the tool cannot
+express it** — the same shape as WO-1.27, where a rule the README states is enforced in half the
+parser.
+
+***The mechanism this is NOT, and the argument has to be made or it will be re-derived.***
+`wo-gate.mjs:476` states the existing answer at its own point of decision: *"a dependency that landed
+with lines owed elsewhere is ✅ DONE plus `**Owes**`, so it stops gating its dependents while still
+saying what it owes."* That is WO-3.11's mechanism and it is the right one **for the case it was
+built for**. It does not fit here, for one narrow reason: **`**Owes**` means another work order will
+do this work.** § "Header fields" requires each pointer to land on exactly one open box under a named
+target, and `--audit` resolves every one. WO-4.3's box is not work anyone else does — it is the same
+work, waiting on the calendar. **Re-homing it to WO-G3 would be inventing a debtor to satisfy a
+parser**, and it would put the box under the one work order that must not be able to open without it.
+
+**The mechanism is a mark on the box, not a field in the header.** A line no build can close carries
+a mark, exactly as 👤 marks a line no headless browser can close. *Code-complete* is then **derived
+from the boxes** rather than asserted by a hand. That is the whole design decision: a header field —
+`**Soft depends on**`, or any spelling of it — is an assertion that drifts from the boxes it
+describes, and § "Header fields" already records three fields invented by a hand and absorbed in
+silence. A derived answer cannot drift, because there is nothing to drift from.
+
+**The rule, in one sentence.** A dependency that is 🔨 IN PROGRESS and whose every **open** Acceptance
+line is marked reports as *code-complete* with a NOTE naming the outstanding lines, instead of
+refusing.
+
+**Traps** — each of these is a way the mark eats something it must not.
+
+- **A gate work order never accepts a marked dependency.** WO-G3 exists precisely to check what the
+  mark defers; if WO-G3 could open on one, the mark has eaten the gate. **This is the load-bearing
+  rule of the work order** and the one its acceptance proves twice, in both directions, on the same
+  tree in the same run.
+- **The mark must never let `--tick` close the line.** It changes *dependency gating* and nothing
+  else. 👤 already has this shape — a marked line stays `- [ ]` on a green harness — and the two must
+  behave identically at tick time or the mark becomes a way to close a box by describing it.
+- **Only 🔨 qualifies, never ⬜, and never 🤖 CLAIMED.** A not-started dependency has no code, so the
+  mark means nothing on it; a claimed one is in flight and its tree is moving under the dependent.
+- **Mark the line, not the work order.** One unmarked open box and the dependency blocks again. That
+  is what stops the mark waving through genuinely part-built work, and it is why this cannot be a
+  status word — a status is about the work order and the question is about each line.
+- **It chains, and every hop must be said out loud.** WO-4.5 will itself be 🔨-with-a-marked-box from
+  ~Sep 13 to ~Sep 23, and WO-6.4 depends on WO-4.5. The report must name the whole chain rather than
+  reporting the near hop as clean — a two-hop defer that reads like a one-hop pass is worse than the
+  refusal it replaced.
+- **`notComing()` still wins.** 🚫 STRUCK and ⏳ DEFERRED are dead ends and are not deferrals; WO-1.21's
+  distinction between *a wait* and *a dead end* survives untouched.
+
+**Deliverables**
+
+- **A mark for an Acceptance line no build can close**, defined once beside 👤 and documented in
+  `plans/work-orders/README.md` § "Header fields" — or in a section of its own if that table is the
+  wrong home, since this marks a box and that table describes the header block. Pick one and say why
+  in the work order's result.
+- **`gate()`'s dependency walk learns the rule above**, reporting code-complete-with-a-NOTE where it
+  now returns `FAIL`, and refusing as it does today the moment any open box is unmarked, the
+  dependent is a gate work order, or the dependency is ⬜ / 🤖 / 🚫 / ⏳.
+- **The chain is reported**, not just the near hop: when a marked dependency itself depends on
+  another, the NOTE names each and what each is waiting for.
+- **Phase 4's Acceptance lines are marked.** *(The second half, and without it the rule has nothing to
+  read.)* **Phase 4 carries no 👤 anywhere** — WO-1.25 swept Phase 6 for exactly this and Phase 4
+  never had the same pass. WO-4.3's real-data line and WO-4.5's *"Two consecutive weekly runs on real
+  data"* need the new mark; the lines wanting the owner's own judgement need 👤. Sweep the phase, do
+  not mark only the two that unblock today's dispatch.
+- **New `--self-check` plants** for the rule and for every trap above, and the closing summary names
+  what they cover. The count has stood at 18 and neither this class nor WO-1.27's is in it.
+- **A note in `plans/verification-tooling.md`** — the running order stated this case in prose on
+  2026-08-19 and the tool refused it on 2026-08-25. A rule that lives in a table and not in the
+  script is the shape worth recording, and it is the second one found in two days.
+
+**Acceptance**
+- [ ] `node tools/wo-gate.mjs WO-4.5` reports code-complete against WO-4.3 with a NOTE naming the
+      outstanding line, and does **not** FAIL. Output quoted.
+- [ ] `node tools/wo-gate.mjs WO-G3` **still refuses** WO-4.3, on the same tree in the same run,
+      because a gate work order does not accept a marked dependency. Output quoted beside the line
+      above — **the two together are the proof the mark did not eat the gate.**
+- [ ] `--tick` refuses to close a marked line on a green harness, exactly as it refuses a 👤 line, and
+      a plant fails if that regresses.
+- [ ] A dependency with one marked and one unmarked open box still FAILs.
+- [ ] A ⬜, 🤖 CLAIMED, 🚫 STRUCK or ⏳ DEFERRED dependency is unaffected however its boxes are marked.
+- [ ] A two-hop defer names both hops in the NOTE.
+- [ ] `--self-check` passes with more plants than today, all new ones named in its summary.
+- [ ] `--audit` passes, and every work order's parsed fields are unchanged across all 140 — dump
+      before and after and diff.
+- [ ] Phase 4's Acceptance lines carry the right marks, and no line naming real data, a fortnight, or
+      the owner's own judgement is unmarked.
+
+**Not in scope, and each is a decision rather than an omission.**
+- **`**Owes**` is not touched, extended, or reinterpreted.** It answers a different question and
+  WO-3.11's scar stays exactly as it is.
+- **No new **Status** word.** The question is per-line; a status is per-work-order. Adding a fifth
+  status would also mean teaching `--start`, `--release` and `--tick` to write it.
+- **WO-4.5 is not built here.** This work order unblocks it and stops. A tooling change graded by
+  whether the work it unblocks came out well is a tooling change nobody can verify.
