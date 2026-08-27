@@ -256,7 +256,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.28 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.29 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -284,7 +284,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 28 | 27 | — | 🔨 IN PROGRESS (reopened nine times; last on 2026-08-25) |
+| 1 — Shell, store, roster | 29 | 27 | — | 🔨 IN PROGRESS (reopened ten times; last on 2026-08-27) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -293,7 +293,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **140** | **117** | **2** | `[████████░░] 84%` |
+| | **141** | **117** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1563,7 +1563,7 @@ row is a work order `next` cannot reach**, and that is the failure
 about. Written 2026-08-20, when WO-3.18 came out of § Ship 2 and would otherwise have had nowhere to
 land.
 
-*(**"Two rows" is the count on the day this was written and the table now holds five.** The heading
+*(**"Two rows" is the count on the day this was written and the table now holds eight.** The heading
 sentence is left standing because it is an argument about what this section is *for* — a landing
 place for work no gate depends on — and that argument is unchanged by the count. **But the heading's
 other word is now doing damage.** Two of the five rows did not wait for Ship 3 at all: row 9 has said
@@ -1590,6 +1590,7 @@ it, never from a reading taken earlier in the same session.)*
 | 11 | [WO-1.26](phase-1-shell-store-roster.md#wo-126--verify-shellmjs-is-32000-lines-and-most-runs-never-see-it-green) verify-shell.mjs is 32,000 lines | L | — | ✅ **2026-08-25** — booked and built inside one day. `verify-shell.mjs` 32,218 → **738 lines**, the checks in `tools/verify/` one file per surface, check count and exit code unchanged |
 | 12 | [WO-1.27](phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule) A field name in prose is read as a field | M | — | **Whenever the tracker is quiet.** Nothing depends on it and the tree is clean today — it is the plant that stops the next italic note doing it again |
 | 13 | [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build) A calendar-bound dependency blocks buildable work | M | — | **Ahead of WO-4.5, which it unblocks.** The only row here on anything's critical path: it pulls WO-4.5's own real-data box from ~Sep 23 to ~Sep 16 and takes ten days off WO-G3 |
+| 14 | [WO-1.29](phase-1-shell-store-roster.md#wo-129--the-owes-field-on-wo-43-names-no-work-order-and-nothing-notices) An Owes field that names no work order passes its own check | S | — | **Whenever the tracker is quiet, and it pairs with row 12** — same field, same file, one sitting. Nothing depends on it and the only live instance is WO-4.3's, which it removes |
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
 [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) *is the privacy

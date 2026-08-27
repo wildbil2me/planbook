@@ -2680,3 +2680,135 @@ them silently.**
   status would also mean teaching `--start`, `--release` and `--tick` to write it.
 - **WO-4.5 is not built here.** This work order unblocks it and stops. A tooling change graded by
   whether the work it unblocks came out well is a tooling change nobody can verify.
+
+---
+
+## WO-1.29 — the Owes field on WO-4.3 names no work order, and nothing notices
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
+makes, the way WO-1.26, WO-1.27 and WO-1.28 are not. Booked 2026-08-27, owner-directed, found by
+WO-1.28's verifier while reading WO-4.3's header for an unrelated reason.)*
+
+**Why it exists.** `plans/work-orders/README.md` § "Header fields" is unambiguous about this one
+field: it is **"the one field here that is acted on rather than only reported"**, it is
+*"present exactly when a line has been moved, absent everywhere else"*, and *"each named ID must be
+pointed at by a `- [ ] … → WO-x.y` line below."* **WO-4.3 carries it with no ID in it, no line moved,
+and no marker anywhere below.** It reads:
+
+```
+the real-data box (Acceptance line 3) — and nothing else; the 👤 sitting is green, 2026-08-25
+```
+
+That is a true and useful sentence. It is not a field, and it is sitting in the one slot the parser
+treats as machine-readable.
+
+**What that costs, concretely.** `rehomesOf()` extracts the named work orders with a single match at
+`tools/wo-gate.mjs:425`:
+
+```js
+const named = [...new Set((wo.owesRaw.match(/WO-[\dG][\w.]*/g) || []))];
+```
+
+Against WO-4.3's value that returns `[]`. `pointed` is `[]` too. Both cross-check loops — the one
+that catches a field naming a work order no line points at, and the one that catches a line pointing
+somewhere the field does not name — iterate **zero times**. The field is read, found to contain
+nothing, and reported clean. **A check that cannot fail on the input it was written for is not a
+check**, and this is the second one this directory has found in three days.
+
+**And the audit prints the discrepancy without seeing it.** The section skips a work order only when
+it has neither a field nor a marker (`tools/wo-gate.mjs:1571`), so WO-4.3 is counted into
+`withOwes`; the rows are printed per marker, so it prints none. Today's run says, in full:
+
+```
+  ok   WO-G2    [ ] → WO-3.18   WO-3.18 OAuth paperwork **submitted**, with the date re…
+  ok   WO-2.31  [ ] → WO-2.33   👤 **RUN 2026-08-16 — FAILED, and left unticked deliber…
+  ok   WO-6.1   [ ] → WO-6.4   A grades-due event warns at its configured lead time.
+
+  4 work order(s) with a **Owes** field or a "→" marker, 3 pointer(s) resolving, 0 problem(s)
+```
+
+**Four counted, three shown, nought wrong.** The missing row is the whole defect, printed every run
+since 2026-08-24 and read by nobody, because a summary line that says `0 problem(s)` is where a
+reader stops.
+
+**It is also now redundant, which is what makes it cheap to remove.** The sentence exists to say
+*this work order landed with one box open and here is which one*. Since WO-1.28 that box carries 📆 at
+`plans/work-orders/phase-4-signals.md:257`, which says the same thing **in the place a tool looks** —
+`--tick` refuses it, `WO-4.5`'s gate report names it, and `WO-G3` refuses on it. The header sentence
+is a second statement of a fact the line now carries itself, and § "Header fields" already records
+what happens to those: they rot apart.
+
+**This is WO-1.27's family and not its duplicate.** WO-1.27 is about how a field is **found** — a
+field name in prose read as a field. This is about what a found field is allowed to **contain**. The
+two are orthogonal and neither blocks the other, but they touch the same neighbourhood; see Traps.
+
+**Traps**
+
+- **Do not write a bold `Owes` inside this work order's own header block.** WO-1.27 is unbuilt, so
+  `fieldRe()` still matches a field name anywhere in the collapsed block — a work order *about* this
+  field can give itself a phantom one, and the audit would then report the defect on the work order
+  written to fix it. This heading says `Owes` unbolded for exactly that reason. Body prose after a
+  blank line is safe; WO-1.28's body carries it a dozen times and parses clean.
+- **A refusal here, not a NOTE, and the argument is not WO-1.27's.** WO-1.27 chose a NOTE because
+  prose legitimately discusses field names and a refusal would make this file unwriteable. That does
+  not apply: this field is positional and real, and § "Header fields" says a value with no ID in it
+  is wrong **in every case**, with no legitimate reading. Once WO-4.3's is removed nothing in the
+  tree trips it.
+- **`--tick` must refuse on it too, and that is the point rather than a side effect.** The field is
+  cross-checked in both directions at tick time; an empty one currently passes that gate silently.
+- **Removing the field must not lose the sentence.** "The 👤 sitting is green, 2026-08-25" is
+  evidence, and it is the only place in the tree that records it. It moves into WO-4.3's body prose,
+  where a reader looks for it and no parser does.
+- **Do not touch 📆, `calendarHold()` or the fences.** WO-1.28 landed 2026-08-26 and is not reopened
+  here. This work order reads that mark as *already carrying the fact* and removes the duplicate.
+- **`--self-check` writes synthetic work orders into a copy of `plans/`.** A plant for this class
+  needs a header whose field holds prose with no ID — which is a header the *other* plants must not
+  accidentally match. Check the two existing fixtures before adding a third.
+
+**Deliverables**
+
+- **`rehomesOf()` refuses a field that parses to zero IDs.** A non-empty value from which
+  `/WO-[\dG][\w.]*/g` extracts nothing is a problem, worded so the fix is obvious: name the work
+  order carrying the line, or take the field off and say it in prose.
+- **The audit's section prints a row for every work order it counts.** A work order with a field and
+  no marker gets a line of its own rather than vanishing between the rows and the tally — so
+  `4 work order(s) … 3 pointer(s)` can never again be the only trace of a defect.
+- **WO-4.3's header loses the field**, and the sentence it carried moves into that work order's body
+  beside the 📆 line, which is where the same fact is now enforced.
+- **New `--self-check` plants**: a field holding prose with no ID is caught; a field naming a real
+  work order with a matching marker still passes; a work order with no field and no marker is still
+  skipped rather than flagged. The plant count rises and the closing summary names the new ones.
+- **`plans/work-orders/README.md` § "Header fields"** gains a clause on that row saying a value from
+  which no ID parses is refused, and `plans/verification-tooling.md` gains the scar — *a cross-check
+  whose input is a list can pass by being handed an empty one* is the general shape, and it is worth
+  one paragraph beside WO-1.28's.
+
+**Acceptance**
+- [ ] A header field holding prose with no work-order ID is refused by `--audit`, naming the work
+      order and the file line, and `--self-check` has a plant that fails if that regresses.
+- [ ] `node tools/wo-gate.mjs --tick` refuses a work order whose field parses to zero IDs. Output
+      quoted.
+- [ ] The audit's section prints one row per counted work order — the printed rows and the
+      `N work order(s)` tally agree on every run. Quote the section before and after.
+- [ ] WO-4.3 no longer carries the field, its body records the 2026-08-25 👤 sitting, and
+      `node tools/wo-gate.mjs WO-4.3` still reports the 📆 line exactly as it does today.
+- [ ] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
+      `Size`, `Depends on`, `Blocks`, `Target`, `Closes roadmap` and `Amends roadmap` is unchanged
+      across all 141 — dump before and after and diff.
+- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today, and the new
+      ones are named in its closing summary.
+- [ ] This work order's own header parses with **no** field of the kind it is about — `--audit`
+      reports nothing against WO-1.29 itself.
+- [ ] `node tools/wo-sweep.mjs` is unaffected — quoted, green. `verify-shell.mjs` is not touched by
+      this work order and does not need re-running; say so rather than quoting a stale run.
+- [ ] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
+
+**Not in scope, and each is a decision rather than an omission.**
+- **The field is not widened to carry prose alongside an ID.** A field that means two things is the
+  rot § "Header fields" exists to prevent; the prose goes in the body.
+- **No new header field, and no change to `KNOWN_FIELDS`.** This constrains a value, not the set.
+- **WO-1.27 is not done here and is not a dependency.** Whichever lands second rebases onto the
+  other; both are small and neither changes what the field *means*.
+- **The 📆 mechanism is not reopened.** WO-1.28 is done and this work order depends on its output
+  being correct, not on its code changing.
