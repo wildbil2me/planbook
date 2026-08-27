@@ -1512,7 +1512,7 @@ that need a term of data close on their own schedule.**
 | 2 | [WO-4.2](phase-4-signals.md#wo-42--concern-signals) Concern signals | M | ✔ | ✅ **2026-08-20, four days early** — all six boxes and thirteen 👤 readings, the nine-rule read done by hand on a test install |
 | 3 | [WO-4.4](phase-4-signals.md#wo-44--behavior--note-logging) Behavior & note logging | S | ✔ | ✅ **2026-08-24, three days early** — all five boxes closed and the nine 👤 readings green the same day; carries [WO-3.8](phase-3-gradebook.md#wo-38--accommodation-prompts-at-point-of-use)'s owed line, which is closed |
 | 4 | [WO-4.3](phase-4-signals.md#wo-43--praise-signals) Praise signals | M | ✔ | 🔨 **2026-08-24, a week early** — four of five boxes closed and mutation-proved, and the 👤 sitting green 2026-08-25; **only its real-data box is left and cannot close before ~Sep 16** |
-| 5 | [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) Cooldown & the quiet middle | M | ✔ | Built Sep 12–13, a weekend; **its real-data box cannot close before ~Sep 23** |
+| 5 | [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) Cooldown & the quiet middle | M | ✔ | **Build it in the setup fortnight, Aug 27 – Sep 1** — revised 2026-08-27, see the note below; the weekend this row used to name was the tooling's date, not the work's. **Its real-data box cannot close before ~Sep 16** |
 | 6 | [WO-G3](gates.md#wo-g3--ship-3-gate-signals) **Ship 3 gate: signals** | S | — | **~Oct 16**, once four weeks of real data exist |
 
 ***The order is not the phase order, because two Acceptance lines carry dependencies their headers do
@@ -1538,6 +1538,32 @@ table was built and rewriting the premise under a finished table makes the table
 this one is built on Sep 2**, which is what buys rows 1–4 a setup fortnight at full capacity. Rows 5
 and 6 are the ones worked in and out of a teaching week, which is why row 5 sits on a weekend and row
 6 is a gate rather than a build.
+
+*(**Row 5's date changed on 2026-08-27, and both paragraphs above are left standing because both were
+true when they were written.** Row 5 said* **Sep 12–13, a weekend** *from the day this table was cut,
+and the sentence directly above gives the reason. That was never a preference:* `WO-4.5` *carries*
+`**Depends on** WO-4.2, WO-4.3`*, the tooling reads that field as* **must be ✅ DONE**, *and WO-4.3's
+last box cannot close before ~Sep 16. The earliest a gate report would clear WO-4.5 was therefore
+after the term had started — so* **row 5 was the one row here that could not obey the note two
+paragraphs up**, *the one saying rows 4 and 5 are "built before the term, closed after it." Its date
+was set by the tooling rather than by the work.*
+
+[WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build)
+*removed that on 2026-08-26. WO-4.3 is code-complete, its one open box wears 📆, and WO-4.5's gate
+clears today — so row 5 moves into the setup fortnight where that note always said it belonged, and
+its own real-data box moves with it, from ~Sep 23 to ~Sep 16.* **Read this before the Sep 12–13 date
+is quoted from anywhere else:** *it is not a slipped row, it is a row that was waiting on a gate that
+no longer exists.*
+
+***Row 13 of § After Ship 3 was corrected in the same sitting, and the claim it lost is worth naming.***
+*It read that WO-1.28* **"takes ten days off WO-G3."** *It does not.* [WO-G3](gates.md#wo-g3--ship-3-gate-signals)
+*targets* **"October 2026, once 4–6 weeks of real data exist"** *— a floor of ~Sep 30 counting from
+Sep 2. WO-4.5's box lands ~Sep 16 built now and ~Sep 23 built on the weekend, and* **both sit inside
+that floor**, *so WO-4.5 was never the binding constraint on the gate and moving it takes nothing off
+WO-G3 at all. What WO-1.28 buys is the paragraph above: an M of signal work moved out of a teaching
+week.* **That is the better payoff and it is the one the row now claims** *— a tooling change credited
+with a schedule saving it did not make is the same class of thing as a tracker count nothing
+maintains.)*
 
 **What Ship 3 does not carry.** Phases 5–8 and WO-G4 keep `**Ship** —`:
 [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s ninth box owns that call and says to take it *at*
@@ -1589,7 +1615,7 @@ it, never from a reading taken earlier in the same session.)*
 | 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 | 11 | [WO-1.26](phase-1-shell-store-roster.md#wo-126--verify-shellmjs-is-32000-lines-and-most-runs-never-see-it-green) verify-shell.mjs is 32,000 lines | L | — | ✅ **2026-08-25** — booked and built inside one day. `verify-shell.mjs` 32,218 → **738 lines**, the checks in `tools/verify/` one file per surface, check count and exit code unchanged |
 | 12 | [WO-1.27](phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule) A field name in prose is read as a field | M | — | **Whenever the tracker is quiet.** Nothing depends on it and the tree is clean today — it is the plant that stops the next italic note doing it again |
-| 13 | [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build) A calendar-bound dependency blocks buildable work | M | — | **Ahead of WO-4.5, which it unblocks.** The only row here on anything's critical path: it pulls WO-4.5's own real-data box from ~Sep 23 to ~Sep 16 and takes ten days off WO-G3 |
+| 13 | [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build) A calendar-bound dependency blocks buildable work | M | — | **Ahead of WO-4.5, which it unblocks.** The only row here on anything's critical path: it pulls WO-4.5's own real-data box from ~Sep 23 to ~Sep 16, and what it actually buys is **capacity rather than schedule** — an M of signal work moves off a teaching-week weekend into the last days of full capacity. *(Corrected 2026-08-27: this row read "and takes ten days off WO-G3" and that does not hold — see the note under § Ship 3's table.)* |
 | 14 | [WO-1.29](phase-1-shell-store-roster.md#wo-129--the-owes-field-on-wo-43-names-no-work-order-and-nothing-notices) An Owes field that names no work order passes its own check | S | — | **Whenever the tracker is quiet, and it pairs with row 12** — same field, same file, one sitting. Nothing depends on it and the only live instance is WO-4.3's, which it removes |
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
