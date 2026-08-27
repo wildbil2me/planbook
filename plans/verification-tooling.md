@@ -623,6 +623,49 @@ byte-for-byte the line it was, and the diff is reviewable as such. Re-indenting 
 the inside of every page-side template literal in the harness. It reads slightly oddly and it is the
 convention; `tools/README.md` § "Where a new check goes" says to match it.
 
+## A rule stated in a table and enforced nowhere, 2026-08-26 (WO-1.28)
+
+**The running order said it in prose on 2026-08-19 and the tool refused it on 2026-08-25.** § Ship 3
+of `plans/work-orders/README.md` rows WO-4.5 for Sep 12–13 and explains, in as many words, that
+*"rows 4 and 5 are rowed twice on purpose — built before the term, closed after it"*: WO-4.3's code
+landed Aug 24, one of its five Acceptance lines wants a fortnight of a term that starts Sep 2, and
+WO-4.5 needs nothing from it but the praise rules. Six days later `node tools/wo-gate.mjs WO-4.5`
+answered `FAIL | dependency WO-4.3 is 🔨 IN PROGRESS, not ✅ DONE` — a refusal of a work order that
+had shipped every line of code it owed, produced by reading a **status** where the question was
+**substance**.
+
+**This is the second one found in two days, and the shape is what is worth recording.**
+[WO-1.27](work-orders/phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule)
+is the other: § "Header fields" states that a field is recognised by where it sits, and `wo-gate.mjs`
+enforces that in one of the two functions that need it. Both are the same class — **a rule the
+trackers state and the script does not know** — and both are invisible in the same way, because a
+tool that never asks the question never reports being unable to answer it. `--audit` passed clean
+through both, every run, and would go on doing so.
+
+**So the control this document should carry is not "add a check".** It is: *when a table in
+`plans/work-orders/README.md` states a rule about how a work order is read, ask which function in
+`wo-gate.mjs` implements it, and if the answer is "a person, by reading", say so at the table.* The
+two found so far were each caught by a human reading the gate's output and thinking it looked odd,
+which is the same way § "Header fields" found **Amends roadmap**, **Blocks** and **Target**. That is
+five of one kind, and none of them was found by a tool.
+
+**The fix that landed is a mark on a box, and it earned six plants.** `--self-check` went from 18 to
+24, and the six are the first in that array to exercise `gate()`'s dependency walk at all — which the
+run's own closing summary had named as uncovered since WO-2.14 and now names more narrowly. Each is
+proved able to fail: two go red against the pre-WO-1.28 script, and the other four are the *refusals*
+that script also makes for a different reason, so they were proved against four one-line mutations of
+the new code instead — the gate-work-order arm deleted, `every` weakened to `some`, the 🔨 fence
+dropped, and the empty-list fence dropped. Each reddens exactly the plant that names it and nothing
+else.
+
+**And the count rule above still holds, which is worth checking rather than assuming.** *"If the
+plant count outruns the behaviour count, something is being tested twice"* — 18 → 24 buys six
+behaviours, one per fence, and the six were cut from the work order's own Traps list rather than from
+the code. The one they do not separate is `isGateWorkOrder()`'s two arms: it answers on a `WO-G` ID
+**or** on the file being `gates.md`, the four real gate work orders satisfy both, and the fixture
+satisfies only the first. The `gates.md` arm is a guard for a gate written somewhere unexpected and
+it is proved by mutation, not by plant. The run says so.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

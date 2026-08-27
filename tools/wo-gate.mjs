@@ -37,6 +37,15 @@
 // that conditional is the whole design, because a marker the tool trusts is just a `- [x]` spelled
 // with an arrow, and the `- [x]` is what WO-3.11 exists to undo.
 //
+// WO-1.28 added the other half of that, for the case **Owes** cannot express: a dependency whose code
+// has all landed and whose last Acceptance line is waiting on a term to start. `**Owes**` says
+// *another work order will do this*; this line is the SAME work, waiting on the calendar. So the
+// Acceptance line wears 📆 — the mark defined at marked(), documented in
+// plans/work-orders/README.md § "Acceptance-line marks", and shaped after 👤 — and gate() reads
+// code-completeness off the boxes rather than off a header field a hand would have to keep true. It
+// closes nothing: --tick treats a 📆 line exactly as it treats any other open box, and a GATE work
+// order refuses a 📆 dependency outright, because the gate is where the wait is actually paid.
+//
 // --audit and --self-check (WO-2.15) write nothing anywhere. --audit reads the two trackers and
 // reports where they have drifted apart; --self-check copies plans/ to a temp directory, plants the
 // violations WO-2.14 and WO-2.15 proved by hand, and fails if any of them stops being caught. Since
@@ -332,10 +341,47 @@ function checkboxesOf(lines, from, to) {
 const REHOME_MARKER = /→\s*(WO-[\dG][\w.]*)\s*(?:"([^"]*)")?/g;
 const CODE_SPAN = /`[^`]*`/g;
 
+// ------------------------------------------- a line no build can close (WO-1.28)
+//
+// `- [ ] 📆 Two consecutive weekly runs on real data …`. The mark says this Acceptance line waits on
+// the CALENDAR: not on a person, not on a keystroke, but on a term of real grades and real
+// attendance accumulating at one day per day. Nothing anyone builds can close it early.
+//
+// **It is the second mark in this repository that says what kind of evidence closes a box, and it is
+// shaped after the first on purpose.** 👤 marks a line no headless browser can close; 📆 marks a line
+// no BUILD can close. The two behave identically everywhere they touch a tick — a marked line is
+// `- [ ]` and stays `- [ ]`, and `--tick` holds the work order at 🔨 IN PROGRESS over it exactly as
+// it does over any other open box. 📆 changes ONE thing and only one: whether the work order it sits
+// in gates its DEPENDENTS. See calendarHold() beside gate().
+//
+// **The glyph is 📆 and not 📅, and not ⏳.** `src/attendance.js` and `src/classes.js` already label
+// the Days off and Terms doors with 📅, and a glyph doing two jobs in one repository is a glyph a
+// grep cannot separate. ⏳ is worse: it is the ⏳ DEFERRED status word AND the BOX_MARK a roadmap box
+// wears when its work order is not coming, and those mean the *opposite* of this — a dead end where
+// this is a wait with a date on it. WO-1.21's distinction is the one thing this mark must not blur.
+//
+// **A mark inside backticks is prose about the mark, not a mark**, which is REHOME_MARKER's rule
+// above, inherited whole rather than re-argued. **Nothing pays for it today and that is the honest
+// statement of it** — an earlier draft of this comment named this work order's own Acceptance list
+// and README.md § "Acceptance-line marks" as the payers, and neither is one: the Acceptance list
+// carries no 📆 on any of its nine lines, and README.md is never parsed at all (allWorkOrders()
+// filters it out by name, and so does every other reader of this directory). The one place in the
+// tree that writes `- [ ] 📆` inside backticks is that README section, which is exactly the file the
+// parser cannot see. So this is prophylactic: it costs one replace() and it is what stops the first
+// phase file that explains the mark to a reader from silently deferring the box it explains it on.
+// Strip the code spans first and the two cannot be confused. There is deliberately NO position rule —
+// 👤 is written at both ends of a line across forty-two lines of this directory depending on whether
+// the whole line or one clause is the human's, and a position rule on the new mark alone is the drift
+// the trap warns about. The convention README.md states is "straight after the checkbox"; the parser
+// accepts it anywhere, because over-reading a mark costs a NOTE and under-reading one costs a gate.
+const CALENDAR_MARK = '📆';
+
 function marked(items) {
   for (const it of items) {
-    it.rehomes = [...it.text.replace(CODE_SPAN, '').matchAll(REHOME_MARKER)]
+    const bare = it.text.replace(CODE_SPAN, '');
+    it.rehomes = [...bare.matchAll(REHOME_MARKER)]
       .map(m => ({ target: m[1], fragment: m[2] || '' }));
+    it.calendar = bare.includes(CALENDAR_MARK);
   }
   return items;
 }
@@ -454,6 +500,77 @@ function dispatchFiles(id) {
   return found;
 }
 
+// A gate work order, asked two ways because either one alone can be wrong in a direction that
+// matters. `WO-G…` is the ID convention every reader uses; `gates.md` is where they live. They agree
+// on all four today, and the OR is the safe direction on purpose: over-answering true costs a
+// dependency that stays refused until somebody ticks it, and under-answering true lets a gate open
+// on a line the gate exists to check. See calendarHold() for why that asymmetry decides this.
+function isGateWorkOrder(wo) {
+  return /^WO-G/.test(wo.id) || path.basename(wo.file) === 'gates.md';
+}
+
+// ------------------------------------- code-complete, waiting on the calendar (WO-1.28)
+//
+// **The rule, in one sentence.** A dependency that is 🔨 IN PROGRESS and whose every OPEN Acceptance
+// line carries 📆 is code-complete: it reports as a NOTE naming what it is still waiting for, instead
+// of the `FAIL | dependency … is 🔨 IN PROGRESS, not ✅ DONE` it used to earn.
+//
+// **Why this is not `**Owes**`, and the argument has to survive here or it gets re-derived.** WO-3.11's
+// mechanism — ✅ DONE plus a **Owes** field, with the line re-homed under a `→ WO-x.y` marker — answers
+// a different question: it says *another work order will do this work*, and § "Header fields" makes the
+// pointer resolve against exactly one open box under the named target. WO-4.3's real-data box is not
+// work anyone else does. It is the same work, waiting on a term that starts Sep 2. Re-homing it to
+// WO-G3 would invent a debtor to satisfy a parser, and would file the box under the one work order
+// that must not be able to open without it. So **Owes** is untouched here, in both directions: an open
+// re-homed line still counts as open below, and nothing in this function reads or writes that field.
+//
+// **And it is not a header field either.** `**Soft depends on**` was the tidy version and is refused:
+// a field is an assertion a hand writes about the boxes underneath it, and § "Header fields" already
+// records three fields invented by a hand and absorbed in silence. Code-complete is DERIVED from the
+// boxes. A derived answer cannot drift, because there is nothing to drift from.
+//
+// Four fences, and each of them is a way the mark eats something it must not:
+//
+//   1. **Only 🔨 IN PROGRESS.** ⬜ has no code, so a mark on it means nothing; 🤖 CLAIMED is in flight
+//      and its tree is moving under the dependent; 🚫 and ⏳ are dead ends rather than waits and
+//      notComing() keeps them that way, which WO-1.21 paid for and this must not blur. ✅ never
+//      reaches here — it passed already.
+//   2. **Every open line, not some of them.** One unmarked open box and the dependency blocks again.
+//      That is what stops the mark waving through genuinely part-built work, and it is why this is a
+//      per-LINE mark rather than a status word: a status is about the work order, the question is
+//      about each line.
+//   3. **At least one open line.** A 🔨 work order with nothing open is not code-complete-and-waiting,
+//      it is a work order somebody forgot to `--tick`. Vacuous truth here would report a defer with
+//      an empty list of things being waited for, which reads like a pass and is not one.
+//   4. **A gate work order never accepts it** — enforced by the caller, not here, because this
+//      function answers *is the dependency code-complete* and that is true regardless of who is
+//      asking. WO-G3 exists precisely to check the lines 📆 defers; if a gate could open on one, the
+//      mark has eaten the gate.
+//
+// **It chains, and every hop is said out loud.** WO-4.5 will itself be 🔨-with-a-📆-box from ~Sep 13
+// to ~Sep 23, and WO-6.4 depends on WO-4.5 — so a gate report on WO-6.4 that named only the near hop
+// would read as a one-hop pass over a two-hop wait, which is worse than the refusal it replaced. Each
+// hop carries the chain it was reached through, and `seen` stops a cycle in the **Depends on** graph
+// from walking forever.
+//
+// Returns null when the dependency does not qualify, or a non-empty array of
+// `{ id, via, file, lines }` — the near hop first, then anything it is itself waiting on.
+function calendarHold(dep, wos, seen = new Set(), via = []) {
+  if (!dep || seen.has(dep.id)) return null;
+  seen.add(dep.id);
+  if (!dep.status.startsWith('🔨 IN PROGRESS')) return null;             // fence 1
+  const open = (dep.acceptance || []).filter(a => !a.ticked);
+  if (!open.length) return null;                                        // fence 3
+  if (!open.every(a => a.calendar)) return null;                        // fence 2
+
+  const hops = [{ id: dep.id, via, file: dep.file, lines: open }];
+  for (const id of depsOf(dep).ids) {
+    const sub = calendarHold(wos.get(id), wos, seen, [...via, dep.id]);
+    if (sub) hops.push(...sub);
+  }
+  return hops;
+}
+
 function gate(id, wos) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id} in ${path.relative(REPO, WO_DIR)}`); return 1; }
@@ -479,14 +596,54 @@ function gate(id, wos) {
       // ✅ DONE plus **Owes**, so it stops gating its dependents while still saying what it owes.
       const ok = st.startsWith('✅ DONE');
       const owed = d && d.owesRaw ? `   owes ${d.owesRaw}` : '';
-      console.log(`  depends ${dep.padEnd(8)} ${st}${ok ? owed : '   <-- not done'}`);
+      // 📆, and the whole of what it changes (WO-1.28). `hold` is non-null only for a 🔨 IN PROGRESS
+      // dependency whose every open Acceptance line is marked — see calendarHold() for the four
+      // fences and for why this is neither **Owes** nor a header field.
+      const hold = ok ? null : calendarHold(d, wos);
+      const held = hold ? hold.reduce((n, h) => n + h.lines.length, 0) : 0;
+      const lines = `${held} line${held === 1 ? '' : 's'}`;
+      const gateAsking = isGateWorkOrder(wo);
+      const flag = ok ? owed
+        : hold && !gateAsking ? `   <-- code-complete; ${lines} ${CALENDAR_MARK}`
+        : hold ? `   <-- ${lines} ${CALENDAR_MARK}, and a gate does not accept them`
+        : '   <-- not done';
+      console.log(`  depends ${dep.padEnd(8)} ${st}${flag}`);
+      // The lines themselves, near hop first, each carrying the chain it was reached through. Named
+      // whichever way this goes: on a defer they are what the dependent is quietly riding on, and on
+      // a gate's refusal they are the list the gate exists to check. The mark is stripped out of the
+      // quoted text — it is already the first thing on the row, and printing it twice reads like two
+      // marks on one line.
+      const nameHeldLines = () => {
+        for (const h of hold) {
+          const where = h.via.length ? `${h.id} (through ${h.via.join(' → ')})` : h.id;
+          for (const a of h.lines) {
+            const text = clip(a.text.split(CALENDAR_MARK).join('').replace(/\s+/g, ' ').trim(), 78);
+            notes.push(`  ${CALENDAR_MARK} ${where}  ${path.relative(REPO, h.file)}:${a.line + 1}  ${text}`);
+          }
+        }
+      };
       // A dependency that is not coming can never become ✅ DONE, so this gate can never open on its
       // own — the difference between a wait and a dead end, and the reader has to be told which. Both
       // of WO-1.21's two were taken off the dependency lines they sat on at the moment they were
       // decided (WO-3.13 off WO-3.20, WO-2.7 off WO-G2) precisely because of this, and the note under
       // each says why: a gate that waits on work nobody intends to do is a gate that gets waived.
+      //
+      // notComing() is asked FIRST and still wins. 🚫 and ⏳ never reach calendarHold() anyway — it
+      // takes only 🔨 — but the order is written out rather than relied on, because a dead end
+      // reported as a wait is the one confusion WO-1.21 exists to prevent.
       if (!ok && d && notComing(d.status)) {
         problems.push(`dependency ${dep} is ${d.status} — it will never be ✅ DONE, so this gate cannot open. Take it off the **Depends on** line, or revive ${dep} by hand and say so in its header`);
+      } else if (!ok && hold && gateAsking) {
+        // The load-bearing refusal. WO-G3 is what checks the lines 📆 defers, so it is the one
+        // dependent for which "code-complete" is not an answer to anything it was written to ask.
+        // The lines go in a NOTE above and the refusal names them, because notes print first and an
+        // indented list under no heading is a list a reader cannot attribute.
+        notes.push(`${wo.id} is a GATE work order, so ${CALENDAR_MARK} buys ${dep} nothing here — refused below. ${held === 1 ? "This is the line" : `These are the ${held} lines`} the gate exists to check:`);
+        nameHeldLines();
+        problems.push(`dependency ${dep} is ${st} and code-complete — every open Acceptance line is ${CALENDAR_MARK} — but ${wo.id} is a gate work order, and a gate never opens on a deferred line. ${CALENDAR_MARK} moves a wait past the work orders that only need ${dep}'s CODE; the gate is where the wait is actually paid. Tick ${dep} once what is named above is true`);
+      } else if (!ok && hold) {
+        notes.push(`dependency ${dep} is ${st} and every open Acceptance line on it is ${CALENDAR_MARK} — code-complete, so it does not gate ${wo.id}. It is NOT done: ${CALENDAR_MARK} changes dependency gating and nothing else, --tick still refuses to close these lines, and a gate work order still refuses ${dep}. Still waiting on:`);
+        nameHeldLines();
       } else if (!ok) {
         problems.push(`dependency ${dep} is ${st}, not ✅ DONE`);
       }
@@ -1218,10 +1375,24 @@ function applyTick(id, wos, dryRun) {
     console.log('');
     console.log(`HELD | ${open.length} of ${wo.acceptance.length} Acceptance lines are still [ ] — ${id} is not done:`);
     for (const a of open) {
-      console.log(`  ${path.relative(REPO, wo.file)}:${a.line + 1}  ${clip(a.text)}`);
+      // The mark is a column here, so it comes out of the quoted text — printed twice on one row it
+      // reads like two marks on one line, which is the same tidy-up gate() makes for the same reason.
+      const text = clip(a.text.split(CALENDAR_MARK).join('').replace(/\s+/g, ' ').trim());
+      console.log(`  ${a.calendar ? CALENDAR_MARK : '  '} ${path.relative(REPO, wo.file)}:${a.line + 1}  ${text}`);
     }
     console.log('');
     console.log('NOTE | roadmap boxes left unticked and the dashboard left alone — an unfinished work order closes nothing.');
+    // 📆 is reported here and closes nothing here (WO-1.28). It has exactly one effect anywhere in
+    // this script — a 🔨 dependency whose every open line carries it stops gating its non-gate
+    // dependents — and saying so at the tick is what stops the next reader treating the mark as a
+    // way to finish a work order by describing it. 👤 has had this shape since WO-2.14 and the two
+    // must behave identically at tick time or the mark becomes a `- [x]` spelled with a calendar.
+    {
+      const cal = open.filter(a => a.calendar);
+      if (cal.length) {
+        console.log(`NOTE | ${cal.length} of those ${cal.length === 1 ? 'is' : 'are'} ${CALENDAR_MARK} — waiting on the calendar, not on a build. That does NOT close them and it does not tick ${id}; it only stops ${id} gating the work orders that depend on it for its code. A gate work order still refuses ${id}, and so does this tick.`);
+      }
+    }
     if (!dryRun) fs.writeFileSync(wo.file, phaseLines.join('\n'));
     console.log(dryRun
       ? 'DRY RUN | re-run without --dry-run to write 🔨 IN PROGRESS. It will still refuse to write ✅ DONE.'
@@ -1481,10 +1652,15 @@ function audit(wos) {
 //
 // WHAT IT DOES NOT COVER, printed by the run because a green check trusted for what it never touched
 // is worse than no check: the Acceptance parser otherwise — WO-2.49 plants ONE fault in it, a CRLF
-// fixture, and nothing else of it is exercised and none of it against a real list — gate()'s dependency
-// and ordering walk, `next`'s ordering, recomputeDashboard()'s arithmetic beyond one row and one
+// fixture, and nothing else of it is exercised and none of it against a real list — gate()'s ordering
+// walk, `next`'s ordering, recomputeDashboard()'s arithmetic beyond one row and one
 // total, --audit against the real trackers, and every word of every real work order. It checks the
 // handful of behaviours WO-2.14 and WO-2.15 built, against one work order it made up.
+//
+// **gate()'s DEPENDENCY walk came off that list at WO-1.28** and is the one place to be careful about
+// what changed: six plants exercise 📆 against a synthetic dependency, so the walk is no longer
+// untouched — but nothing here reads a real **Depends on** line, and the four statuses those plants
+// try are tried one at a time against one fixture. A narrowed gap, again, not a closed one.
 //
 // IT HAS A PRECONDITION, AND SINCE WO-2.16 IT SAYS SO FIRST. The copy is made from the live plans/,
 // so it inherits whatever drift the trackers are carrying, and drift makes plants fail — `--tick`
@@ -1514,6 +1690,24 @@ const FIXTURE_BOX = 'self-check fixture box, planted in a temp copy and never in
 const TARGET_ID = 'WO-9.8';
 const TARGET_BOX = 'the re-homed line, carried by the target fixture';
 
+// The third and fourth fixtures, added at WO-1.28 for 📆. Both exist because the mark's whole subject
+// is the RELATIONSHIP between two work orders, and one fixture cannot hold a relationship.
+//
+// WO-G9 is the dependent that must never accept a deferral — the load-bearing trap. It sits in
+// the phase file with the other fixtures rather than in gates.md, which means it exercises
+// isGateWorkOrder()'s ID arm and not its `gates.md` arm. That is a real gap and it is named rather
+// than papered over: writing a fifth fixture into the sandbox's gates.md would move that file's
+// § The files row and its dashboard row for one assertion the ID arm already makes, and the two arms
+// agree on all four real gate work orders. The file arm is a guard for a gate written somewhere
+// unexpected, and it is proved by mutation rather than by plant.
+//
+// WO-9.7 is what WO-9.9 itself waits on, so the two-hop chain has a second hop to name.
+// It is ✅ DONE and inert unless a plant asks for it, because a fixture that changes the answer to
+// every other plant is a fixture that makes eighteen green lights mean less than they did.
+const GATE_ID = 'WO-G9';
+const CHAIN_ID = 'WO-9.7';
+const CHAIN_BOX = 'the far hop, waiting on the calendar behind the near one';
+
 // `target` says what WO-9.8 does with the box WO-9.9's pointer names: carries it open, carries it
 // ticked, reworded it, or deleted it. Those four are the whole life of a pointer, and three of them
 // have to hold the tick.
@@ -1529,29 +1723,38 @@ function targetBoxLine(target) {
 // does not look, or the file cannot be read the way it is written — and it is the state EVERY work
 // order in a CRLF file was in until parseFile() started splitting on either terminator. It is a
 // separate option rather than `open: 'none'` because "no boxes at all" is not a third tick state.
-function acceptanceSection({ open, rehome, boxes }) {
+//
+// `calendar` (WO-1.28) puts 📆 on the second line — the one `open` decides the tick state of — and
+// `'mixed'` adds a THIRD open line without it. That third line is the whole of the "mark the line,
+// not the work order" trap: one unmarked open box and the dependency has to block again, so a fixture
+// that can only be all-marked cannot express the failure it is supposed to catch.
+function acceptanceSection({ open, rehome, boxes, calendar = false }) {
   if (!boxes) return 'This heading carries no boxes, deliberately: a list that parses empty is not a list that is satisfied.';
+  const second = `- [${open ? ' ' : 'x'}] ${calendar ? `${CALENDAR_MARK} ` : ''}the second line, which one plant unticks`;
+  const third = calendar === 'mixed' ? '\n- [ ] the third line, open and carrying no mark at all' : '';
   return `- [x] the first line, ticked
-- [${open ? ' ' : 'x'}] the second line, which one plant unticks${rehome ? `\n- [ ] ${rehome}` : ''}`;
+${second}${third}${rehome ? `\n- [ ] ${rehome}` : ''}`;
 }
 
-function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true }) {
+function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true,
+                        calendar = false, depends = 'nothing',
+                        chainStatus = '⬜ NOT STARTED', chainCalendar = false }) {
   return `
 ---
 
 ## ${FIXTURE_ID} — self-check fixture
 
-**Ship** — · **Status** ${status} · **Size** S · **Depends on** nothing${owes ? ` · **Owes** ${owes}` : ''}
+**Ship** — · **Status** ${status} · **Size** S · **Depends on** ${depends}${owes ? ` · **Owes** ${owes}` : ''}
 **Closes roadmap** Phase ${FIXTURE_PHASE} → "${fragment}"
 
 **Why it exists.** \`wo-gate.mjs --self-check\` writes this into a temp copy of \`plans/\` and deletes
 it with the copy. **If you are reading this inside the repository, a self-check died before its
-cleanup ran** — delete this block, the ${TARGET_ID} block under it, and the matching fixture box in
-\`ROADMAP.md\`. Nothing depends on any of them, and nothing else in the repository mentions
-${FIXTURE_ID} or ${TARGET_ID}.
+cleanup ran** — delete this block, the ${TARGET_ID}, ${GATE_ID} and ${CHAIN_ID} blocks under it, and
+the matching fixture box in \`ROADMAP.md\`. Nothing depends on any of them, and nothing else in the
+repository mentions ${FIXTURE_ID}, ${TARGET_ID}, ${GATE_ID} or ${CHAIN_ID}.
 
 **Acceptance**
-${acceptanceSection({ open, rehome, boxes })}
+${acceptanceSection({ open, rehome, boxes, calendar })}
 
 ---
 
@@ -1564,6 +1767,36 @@ status gates. Written into the same temp copy and deleted with it.
 
 **Acceptance**
 ${targetBoxLine(target)}
+
+---
+
+## ${GATE_ID} — self-check gate fixture
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** ${FIXTURE_ID}
+
+**Why it exists.** The one dependent that must never open on a 📆 deferral (WO-1.28). Same
+**Depends on** as ${TARGET_ID} and the opposite answer, which is the whole assertion: the pair are run
+against one tree in one plant, so "the mark did not eat the gate" is measured rather than argued.
+
+**Acceptance**
+- [ ] the gate fixture's own line, which nothing here ticks
+
+---
+
+## ${CHAIN_ID} — self-check chain fixture
+
+**Ship** — · **Status** ${chainStatus} · **Size** S · **Depends on** nothing
+
+**Why it exists.** The far hop. When a plant points ${FIXTURE_ID}'s **Depends on** at this one and
+gives both a 📆 line, a gate report on ${TARGET_ID} has two hops to name and not one.
+
+Its default status is ⬜ NOT STARTED and its box is open, which is the inert shape: an ✅ DONE default
+was tried first and moved the work-orders dashboard's Done cell by two on the next tick, reddening
+the plant that asserts a tick moves it by one. **A fixture that changes the answer to another plant
+is a fixture that makes every green light here mean less than it did.**
+
+**Acceptance**
+- [ ] ${chainCalendar ? `${CALENDAR_MARK} ` : ''}${CHAIN_BOX}
 `;
 }
 
@@ -1857,16 +2090,23 @@ function runPlants(subject, sandbox) {
   }
 
   // 2c. The § The files row for the phase file the fixture is appended to (WO-1.21). Every reset()
-  //     writes WO-9.9 and WO-9.8 into that file, so the index saying which work orders it holds has
-  //     to say WO-9.8 as well or --audit is reporting the fixture as rot. Same rule as step 2 above,
-  //     and the same reason: the only drift in this copy may be drift a plant put there.
+  //     writes the fixture blocks into that file, so the index saying which work orders it holds has
+  //     to name the LAST of them or --audit is reporting the fixture as rot. Same rule as step 2
+  //     above, and the same reason: the only drift in this copy may be drift a plant put there.
+  //
+  //     `WO-1.28` made that last one WO-9.7 rather than WO-9.8 by appending two more fixtures, and
+  //     the constant is read off the block rather than typed here, so the next fixture added to the
+  //     end cannot leave this row a work order behind. § The files claims first-and-last in DOCUMENT
+  //     order, so it is the last block written and not the highest number.
+  const LAST_FIXTURE_ID = (fixtureBlock({ status: '⬜ NOT STARTED', fragment: FIXTURE_BOX, open: false })
+    .match(/^##\s+(WO-[\dG][\w.]*)/gm) || []).pop().replace(/^##\s+/, '');
   {
     const p = path.join('work-orders', 'README.md');
     const lines = readSb(p).split('\n');
     const i = lines.findIndex(l => l.includes(`](${FIXTURE_FILE})`));
     if (i < 0) throw new Error(`--self-check found no § The files row for ${FIXTURE_FILE}`);
     const cells = lines[i].split('|');
-    cells[2] = ` ${(cells[2].match(/WO-[\dG][\w.]*/) || [`WO-${FIXTURE_PHASE}.1`])[0]} … ${TARGET_ID} `;
+    cells[2] = ` ${(cells[2].match(/WO-[\dG][\w.]*/) || [`WO-${FIXTURE_PHASE}.1`])[0]} … ${LAST_FIXTURE_ID} `;
     lines[i] = cells.join('|');
     plantWrite(p, lines.join('\n'));
   }
@@ -2466,6 +2706,118 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+
+    // ------------------------------------------------------------ 📆, WO-1.28
+    //
+    // Six plants, one per way the mark could eat something. They are the FIRST plants in this array
+    // to exercise gate()'s dependency walk at all — the closing summary named that walk as uncovered
+    // from WO-2.14 until now, and it is narrowed here rather than closed: the ordering walk and
+    // `next` over the real running order are still untouched.
+    {
+      name: '📆 on every open line of a 🔨 dependency stops it gating, and a gate work order still refuses it',
+      run: () => {
+        // Both halves on ONE tree in ONE reset, which is the work order's own acceptance shape: the
+        // pair together is what proves the mark did not eat the gate, and running them against two
+        // trees would let a difference between the trees pass for the difference being asserted.
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: true, calendar: 'all' });
+        const bad = [];
+
+        const dependent = run([TARGET_ID]);
+        if (dependent.code !== 0) bad.push(`the gate on ${TARGET_ID} exited ${dependent.code} over a code-complete dependency:`, ...verdict(dependent.out));
+        if (!/code-complete/.test(dependent.out)) bad.push('the gate report never used the word "code-complete"');
+        if (!/the second line/.test(dependent.out)) bad.push('the NOTE did not name the outstanding line');
+        if (/FAIL \| dependency/.test(dependent.out)) bad.push('the dependency still FAILed the dependent');
+
+        const gate = run([GATE_ID]);
+        if (gate.code === 0) bad.push(`${GATE_ID} is a gate work order and it opened on a 📆 dependency — the mark has eaten the gate`);
+        if (!/gate work order/.test(gate.out)) bad.push('the gate\'s refusal did not say it refused because it is a gate work order');
+        if (!/the second line/.test(gate.out)) bad.push('the gate\'s refusal did not name the line it is waiting for');
+        return bad;
+      },
+    },
+    {
+      name: '📆 closes nothing at tick time — the line stays [ ] and holds the work order at 🔨, exactly as 👤 does',
+      run: () => {
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: true, calendar: 'all' });
+        const bad = [];
+        const r = run(['--tick', FIXTURE_ID]);
+        if (r.code === 0) bad.push('--tick exited 0 over an open 📆 line — the mark is a description, never a tick');
+        if (!/HELD/.test(r.out)) bad.push('the run never said HELD over a 📆 line');
+        if (!/the second line/.test(r.out)) bad.push('the run did not name the 📆 line that held it open');
+        if (/✅ DONE/.test(fixtureStatus())) bad.push(`it wrote "${fixtureStatus()}" over an open 📆 line`);
+        if (!fixtureStatus().startsWith(RUN)) bad.push(`a held tick left the status at "${fixtureStatus()}", not 🔨 IN PROGRESS`);
+        if (/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('it ticked the roadmap box of a work order with a 📆 line still open');
+        // The box itself, read out of the phase file rather than inferred from the exit code: a
+        // regression that ticked the line would leave the status honest and the list wrong.
+        const list = readSb(path.join('work-orders', FIXTURE_FILE));
+        if (!new RegExp(`- \\[ \\] ${CALENDAR_MARK} the second line`).test(list)) bad.push('the 📆 line no longer reads "- [ ] 📆 …" after the tick');
+        return bad;
+      },
+    },
+    {
+      name: 'one marked and one unmarked open box still FAILs — the mark is on the line, not the work order',
+      run: () => {
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: true, calendar: 'mixed' });
+        const bad = [];
+        const r = run([TARGET_ID]);
+        if (r.code === 0) bad.push(`the gate on ${TARGET_ID} exited 0 with one unmarked open box on its dependency`);
+        if (!/not ✅ DONE/.test(r.out)) bad.push('the refusal did not read as the ordinary "not ✅ DONE" one');
+        if (/code-complete/.test(r.out)) bad.push('a dependency with an unmarked open box was called code-complete');
+        return bad;
+      },
+    },
+    {
+      name: 'only 🔨 qualifies — ⬜, 🤖 CLAIMED, 🚫 STRUCK and ⏳ DEFERRED are unaffected however their boxes are marked',
+      run: () => {
+        const bad = [];
+        // Every one of these carries the SAME fully-marked Acceptance list as the plant above, so the
+        // only thing that differs across the four is the status word. ⬜ has no code for the mark to
+        // be about; 🤖 is in flight and its tree is moving; 🚫 and ⏳ are dead ends rather than waits,
+        // and notComing() has to go on saying so in its own words (WO-1.21).
+        for (const status of [OK, `${CLAIM} — 2026-01-01`, STRUCK_AT, DEFERRED_AT]) {
+          reset({ status, fragment: FIXTURE_BOX, open: true, calendar: 'all' });
+          const r = run([TARGET_ID]);
+          if (r.code === 0) bad.push(`the gate on ${TARGET_ID} exited 0 over a "${status}" dependency with every open line 📆`);
+          if (/code-complete/.test(r.out)) bad.push(`a "${status}" dependency was called code-complete`);
+          if (notComing(status) && !/will never be ✅ DONE/.test(r.out)) {
+            bad.push(`a "${status}" dependency lost WO-1.21's wording — a dead end must not be reported as a wait`);
+          }
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'a two-hop defer names both hops, and says which one it was reached through',
+      run: () => {
+        // WO-9.8 → WO-9.9 → WO-9.7, with the middle and the far hop both 🔨-with-a-📆-line. This is
+        // WO-6.4 → WO-4.5 → WO-4.3 from ~Sep 13, built as a fixture so it can be asserted in August.
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: true, calendar: 'all',
+                depends: CHAIN_ID, chainStatus: RUN, chainCalendar: true });
+        const bad = [];
+        const r = run([TARGET_ID]);
+        if (r.code !== 0) bad.push(`the gate on ${TARGET_ID} exited ${r.code} over a two-hop defer:`, ...verdict(r.out));
+        if (!/the second line/.test(r.out)) bad.push('the NOTE did not name the near hop\'s outstanding line');
+        if (!new RegExp(CHAIN_BOX).test(r.out)) bad.push(`the NOTE did not name the far hop's outstanding line — a two-hop defer reported as a one-hop pass is worse than the refusal it replaced`);
+        if (!new RegExp(`${CHAIN_ID} \\(through ${FIXTURE_ID}\\)`).test(r.out)) bad.push(`the NOTE did not say ${CHAIN_ID} was reached through ${FIXTURE_ID}`);
+        return bad;
+      },
+    },
+    {
+      name: 'a 🔨 dependency with NO open line at all is not code-complete — it is a work order nobody ticked',
+      run: () => {
+        // The vacuous case, and the reason fence 3 exists: "every open line is marked" is trivially
+        // true of a list with no open lines, and a defer reported over an empty list of things being
+        // waited for reads exactly like a pass. The right answer is the old refusal, which sends the
+        // reader to --tick.
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: false, calendar: 'all' });
+        const bad = [];
+        const r = run([TARGET_ID]);
+        if (r.code === 0) bad.push(`the gate on ${TARGET_ID} exited 0 over a 🔨 dependency with nothing open — vacuous truth read as a deferral`);
+        if (/code-complete/.test(r.out)) bad.push('a 🔨 dependency with no open Acceptance line was called code-complete');
+        if (!/not ✅ DONE/.test(r.out)) bad.push('the refusal did not read as the ordinary "not ✅ DONE" one');
+        return bad;
+      },
+    },
   ];
 
   // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
@@ -2495,10 +2847,19 @@ function runPlants(subject, sandbox) {
   console.log('  counting, and § The files against the files — and ONE FAULT in the Acceptance parser:');
   console.log('  a fixture written CRLF in its own bytes, whose boxes a reader splitting on "\\n" alone');
   console.log('  cannot see, plus the heading with no boxes under it that must refuse rather than read');
-  console.log('  as satisfied. NOT covered: the Acceptance parser otherwise. It is still never run');
+  console.log('  as satisfied. And WO-1.28\'s SIX, which are the first here to run gate()\'s dependency');
+  console.log('  walk at all: 📆 on every open line of a 🔨 dependency stops it gating and a GATE work');
+  console.log('  order still refuses the same dependency on the same tree in the same plant; 📆 closes');
+  console.log('  nothing at tick time, the line staying [ ] and the status 🔨; one marked and one');
+  console.log('  unmarked open box still FAILs; ⬜, 🤖, 🚫 and ⏳ are unaffected however their boxes are');
+  console.log('  marked, with 🚫/⏳ keeping WO-1.21\'s "will never be ✅ DONE" wording; a two-hop defer');
+  console.log('  names both hops and which one the far one was reached through; and a 🔨 dependency');
+  console.log('  with NO open line is refused rather than deferred over an empty list.');
+  console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
-  console.log('  hard-ordering walk, `next` over the real running order, the rest of');
+  console.log('  hard-ordering walk, isGateWorkOrder()\'s `gates.md` arm — the six above reach only');
+  console.log('  its WO-G ID arm — `next` over the real running order, the rest of');
   console.log('  recomputeDashboard()\'s arithmetic, or --audit against the real trackers.');
   console.log(`  A green run here is not coverage — it is ${plants.length} claims about ${plants.length} plants.`);
   console.log('');
@@ -2551,6 +2912,14 @@ will actually close them — those lines stay - [ ] and carry a "→ WO-x.y" mar
 one only while it can find the matching OPEN box under that target.
 None of them touches a 👤 line in TESTING.md, and none touches CHANGELOG.md, and none of them
 writes ROADMAP.md's progress dashboard — that stays a hand edit (ROADMAP.md, maintenance step 3).
+
+One mark on an Acceptance line changes a gate report (WO-1.28). 📆 says no BUILD can close this line —
+it waits on a term of real grades and real attendance — the way 👤 says no headless browser can. A
+dependency that is 🔨 IN PROGRESS and whose EVERY open line is 📆 reports as code-complete with a NOTE
+naming what it is waiting for, and stops gating its dependents. It closes nothing: --tick holds the
+work order at 🔨 over a 📆 line exactly as over any other, one unmarked open box blocks again, and a
+GATE work order refuses a 📆 dependency by design — WO-G3 is what checks the lines the mark defers.
+See plans/work-orders/README.md § "Acceptance-line marks".
 
 Two statuses this NEVER writes (WO-1.21), because both are the owner's decision and a hand edit:
 🚫 STRUCK — <date, reason> is a *whether*: do not build it, and the roadmap box it closes stops

@@ -2534,7 +2534,7 @@ the inverse: read by everything, and said nowhere.
 
 ## WO-1.28 — a dependency waiting on the calendar blocks work that is ready to build
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-4.5 today, and
+**Ship** — · **Status** ✅ DONE — 2026-08-26 · **Size** M · **Depends on** — · **Blocks** WO-4.5 today, and
 WO-6.4 in three weeks when WO-4.5 does the same thing to it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
 makes, the way WO-2.14, WO-2.15, WO-1.26 and WO-1.27 are not. Booked 2026-08-25, owner-directed,
@@ -2621,21 +2621,57 @@ refusing.
   script is the shape worth recording, and it is the second one found in two days.
 
 **Acceptance**
-- [ ] `node tools/wo-gate.mjs WO-4.5` reports code-complete against WO-4.3 with a NOTE naming the
+- [x] `node tools/wo-gate.mjs WO-4.5` reports code-complete against WO-4.3 with a NOTE naming the
       outstanding line, and does **not** FAIL. Output quoted.
-- [ ] `node tools/wo-gate.mjs WO-G3` **still refuses** WO-4.3, on the same tree in the same run,
+- [x] `node tools/wo-gate.mjs WO-G3` **still refuses** WO-4.3, on the same tree in the same run,
       because a gate work order does not accept a marked dependency. Output quoted beside the line
       above — **the two together are the proof the mark did not eat the gate.**
-- [ ] `--tick` refuses to close a marked line on a green harness, exactly as it refuses a 👤 line, and
+- [x] `--tick` refuses to close a marked line on a green harness, exactly as it refuses a 👤 line, and
       a plant fails if that regresses.
-- [ ] A dependency with one marked and one unmarked open box still FAILs.
-- [ ] A ⬜, 🤖 CLAIMED, 🚫 STRUCK or ⏳ DEFERRED dependency is unaffected however its boxes are marked.
-- [ ] A two-hop defer names both hops in the NOTE.
-- [ ] `--self-check` passes with more plants than today, all new ones named in its summary.
-- [ ] `--audit` passes, and every work order's parsed fields are unchanged across all 140 — dump
+- [x] A dependency with one marked and one unmarked open box still FAILs.
+- [x] A ⬜, 🤖 CLAIMED, 🚫 STRUCK or ⏳ DEFERRED dependency is unaffected however its boxes are marked.
+- [x] A two-hop defer names both hops in the NOTE.
+- [x] `--self-check` passes with more plants than today, all new ones named in its summary.
+- [x] `--audit` passes, and every work order's parsed fields are unchanged across all 140 — dump
       before and after and diff.
-- [ ] Phase 4's Acceptance lines carry the right marks, and no line naming real data, a fortnight, or
+- [x] Phase 4's Acceptance lines carry the right marks, and no line naming real data, a fortnight, or
       the owner's own judgement is unmarked.
+
+**Where this stands.** Built 2026-08-26. Both tools are green on the delivered tree —
+`verify-shell.mjs` at `1156 checks · 1156 passed · 0 failed · 0 skipped` (34,066 lines, 391s, exit 0),
+unmoved because this work order touches no `src/` and adds no harness check, and `wo-sweep.mjs` at
+`33 checks · 30 passed · 0 failed · 3 to review`, all three pre-existing and none of them this work
+order's. `--self-check` went **18 → 24** and `--audit` passes with every one of the **142** work
+orders' parsed header fields byte-identical to the pre-change dump; the only Acceptance-box text that
+moved anywhere in the directory is the five Phase 4 lines this work order marked. *(The Acceptance
+line says "all 140" and this paragraph says 142, and* **neither is stale** *— they are the two counts
+this directory keeps. 142 is every header block on disk; 140 is the countable set, which is 142 less
+the two work orders that are not coming (WO-2.7 ⏳, WO-3.13 🚫). The dashboard denominator is the
+countable one —* `total = wos.length - out.length` *— so 140 is what an audit across "all" of them
+means. An earlier draft of this block called the 140 a stale count; it was not, and the correction is
+recorded rather than swept because* **the gap between those two numbers is a rule this repo enforces**,
+*not an accident of timing.)*
+
+**Two calls the work order left open, and both went the same way.** The mark is documented in a
+section of its own — § "Acceptance-line marks" — rather than as a tenth row in § "Header fields",
+because that table describes the header paragraph and says so at its own top, and because **👤 had
+never been defined anywhere in this directory**: putting the pair in one place is the only way a
+reader can check the claim that they behave identically at tick time. And the glyph is **📆 and not
+📅**, because `src/attendance.js` and `src/classes.js` already label the Days off and Terms doors with
+📅 — a glyph doing two jobs in one repository is a glyph a grep cannot separate. ⏳ was refused for a
+harder reason: it is the ⏳ DEFERRED status word and the roadmap `BOX_MARK`, and those mean a **dead
+end** where this means a **wait with a date on it**, which is exactly the distinction WO-1.21 exists
+to hold.
+
+**Two Phase 4 lines were considered for a mark and left bare, deliberately.** WO-4.3's fifth box
+(*"Every praise hit's explanation contains the delta and the window"*) carries a note saying it goes
+back to `- [ ]` if the owner reads the line as requiring a numeric delta on all five rules — that is a
+**pending interpretive question about a closed box**, not evidence the box is waiting for, and a 👤
+there would claim a human closed something a harness sweep closed. WO-4.4's fourth
+(*"Behavior notes are suppressed in presentation mode"*) cites the owner's ruling of 2026-08-20 as the
+reason the feature has the shape it has, not as its evidence; it was measured as an absence from the
+rendered page. **Neither is marked, and both are named here so the next sweep does not re-litigate
+them silently.**
 
 **Not in scope, and each is a decision rather than an omission.**
 - **`**Owes**` is not touched, extended, or reinterpreted.** It answers a different question and

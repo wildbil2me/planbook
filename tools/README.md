@@ -69,13 +69,18 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
                                        temp copy of plans/, and fail if one stops being caught
 ```
 
-`--self-check` copies `plans/` to a temp directory, writes two **synthetic** work orders into the copy,
-plants eighteen violations against them, runs the script over the copy, and deletes the directory on
+`--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
+plants twenty-four violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
 own bytes, because the other seventeen are written into the copy by this script in LF and so can
-never carry the defect. `18 plants, 18 caught, 0 missed` / `PASS | 18 of 18 plants were caught`, read
+never carry the defect. **WO-1.28 added six on 2026-08-26**, all about 📆 — the mark an Acceptance
+line wears when no build can close it — and they are the first plants here to exercise `gate()`'s
+dependency walk at all, which the run's closing summary had listed as uncovered since WO-2.14. They
+brought two more synthetic work orders with them: a **gate** fixture that must refuse what the other
+dependent accepts, and a **chain** fixture so a two-hop defer has a second hop to name.
+`24 plants, 24 caught, 0 missed` / `PASS | 24 of 24 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -150,8 +155,19 @@ part is what did **not** go red beside it:
 | the win32 fold deleted from `assertOutsideRepo()` — WO-2.47, **and the mutation is of the real file, not of a copy** | **0 plants run**: the guard precondition refuses before the sandbox exists, naming `C:\dev\planbook\.probe` as the path it should have refused and printing `0 plants made`. Every plant stays green on the fixed tree, because a precondition is not a plant |
 | the split at `parseFile()` back to `'\n'` — WO-2.49, driven with `--against` over a copy in `TMP`, so the file in the tree was never edited | **1 red**: the CRLF plant, on its open-line half — *"--tick read a CRLF work order's Acceptance list as empty"*, *"the run did not name the open line of a CRLF file"*, *"left the status at 🤖 CLAIMED — 2026-01-01, not 🔨 IN PROGRESS"*. Its empty-list half stays **green**, and that is exactly why both halves are there: a CRLF file parses empty either way, so the refusal fires for the wrong reason, and only the CRLF file with a real list can tell the two apart |
 | the empty-**Acceptance** refusal deleted from `applyTick()` — WO-2.49, same method | **1 red**: the same plant, on its other half — `--tick` exits 0, says *"all 0 Acceptance lines are ticked"*, and writes `ROADMAP.md`, the phase file and the dashboard over a list it could not read. Nothing else moves |
+| the gate arm deleted from `gate()`'s 📆 branch, so a gate work order accepts a deferral — WO-1.28, `--against` over a copy in the scratchpad | **1 red**: the paired plant, on its gate half only — *"WO-G9 is a gate work order and it opened on a 📆 dependency — the mark has eaten the gate"*. Its non-gate half stays green, which is the pair working: one tree, two dependents, two answers |
+| `calendarHold()`'s `open.every(a => a.calendar)` weakened to `open.some(…)` — WO-1.28, same method | **1 red**: the mixed-boxes plant. Nothing else — every other 📆 plant marks its whole list, so `some` and `every` agree on all of them, which is exactly why the mixed fixture had to exist |
+| `calendarHold()`'s 🔨 fence inverted to "anything but ✅ DONE" — WO-1.28, same method | **1 red**: the four-status plant, on all four of ⬜, 🤖, 🚫 and ⏳ at once, including the two that lose WO-1.21's *"will never be ✅ DONE"* wording |
+| `calendarHold()`'s empty-list fence dropped, so a 🔨 work order with nothing open defers — WO-1.28, same method | **1 red**: the vacuous-truth plant. The other five stay green: every one of them has at least one open line, so the fence never fires in them |
+| `applyTick()`'s open-line filter taught to skip 📆, so the mark closes the box it describes — WO-1.28, same method | **1 red**: the tick plant, on all of it — `--tick` exits 0, writes `✅ DONE` over a `- [ ]` line, and ticks the roadmap box. This is the mutation that matters most of the five: it is the mark becoming a `- [x]` spelled with a calendar, which is the thing 👤 has spent three weeks not being |
 
-Seven mutations, all reverted or driven over a copy, none of them touching a plant it was not aimed at. **The sixth row is a
+**And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
+paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —
+the two that assert the new *acceptance* — and leaves the four that assert a *refusal* green, because
+the old script refuses too, for a different reason. That is why the four one-line mutations above
+exist rather than the broad run standing alone.
+
+Twelve mutations, all reverted or driven over a copy, none of them touching a plant it was not aimed at. **The sixth row is a
 different kind of thing and says so in its own cell.** The guard precondition WO-2.47 added runs in the
 **invoking** script rather than in the subject, because the invoking script is the one that makes the
 sandbox and writes the plants — so it is the one whose `assertOutsideRepo()` is actually protecting the

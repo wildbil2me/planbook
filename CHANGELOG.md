@@ -13,6 +13,26 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A line can now say it is waiting on the calendar — 2026-08-26
+
+**A work order can say that an Acceptance line is waiting on the calendar, and stop blocking work
+that is ready to build.** WO-4.3's praise column shipped on 24 August with one Acceptance line open
+that no amount of building can close — it wants a fortnight of a real term. The gate tool read that
+as *unfinished* and refused WO-4.5, which needs nothing from WO-4.3 but its praise rules.
+
+An Acceptance line can now carry `📆`, the way it has always been able to carry `👤`: **👤 means *no
+headless browser can close this*, 📆 means *no build can close this*.** A dependency whose every open
+line is 📆 reports as **code-complete** and stops gating the work orders that only need its code.
+
+**It closes nothing.** The box stays open, the work order stays 🔨 IN PROGRESS, `--tick` refuses the
+line, and the Ship 3 **gate** refuses the work order outright — because the gate is where the wait is
+actually paid, and a mark that could open one would have eaten the only check that reads these lines
+on the far side of the wait. Every hop of a chain is named out loud, so a two-hop wait cannot report
+as a one-hop pass. The mark is defined in `plans/work-orders/README.md` § "Acceptance-line marks",
+which is also the first place 👤 is written down; the reasoning for enforcing it in the tool rather
+than stating it in a table is in `plans/verification-tooling.md`. `--self-check` went 18 plants to
+**24**.
+
 ### The harness stops being one file — 2026-08-25
 
 `tools/verify-shell.mjs` had reached **32,853 lines**, about three quarters the size of everything

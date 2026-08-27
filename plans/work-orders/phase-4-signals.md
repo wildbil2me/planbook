@@ -139,7 +139,7 @@ through to the student.
   **opens on**, not which options are absent.
 
 **Acceptance**
-- [x] Every flag is reproducible by hand from the numbers it shows. Verify all nine.
+- [x] 👤 Every flag is reproducible by hand from the numbers it shows. Verify all nine.
       *(**Closed 2026-08-20, by the owner, against a test install carrying test grades and test
       attendance.** Four fire on the harness fixture and are reproducible from what they print — the
       absence run, the absence window, attendance-below and grade-below — and the behavior rule is
@@ -254,7 +254,7 @@ stale.
       on the roster. **Derived, not stored** — the document is byte-identical either side of the
       pass and carries no key shaped like a remembered flag, which is asserted separately. **Proved
       by mutation**: sampling the window at today instead of at its far edge reddens five checks.)*
-- [ ] Running the praise list two weeks apart on real data surfaces a materially different set of
+- [ ] 📆 Running the praise list two weeks apart on real data surfaces a materially different set of
       students. *(If it doesn't, the ranking is wrong — this is the acceptance test that matters.)*
       *(**Left open deliberately — it wants a real term and there is not one until Sep 2.** What
       exists is the mechanism, measured: the same document evaluated through `{ through }` a
@@ -375,7 +375,7 @@ thirty seconds will never be used during a class period.
   `@media print { display: none }` for nothing.
 
 **Acceptance**
-- [x] An entry is logged in under five seconds from the roster.
+- [x] 👤 An entry is logged in under five seconds from the roster.
       *(**The taps were measured and the clock was not, until 2026-08-24.** The harness opens the
       roster, taps the ✎, taps a chip and reads a complete record off the document — two taps, sheet
       closed. The five seconds are a stopwatch and a thumb: **run by the owner on the iPad on
@@ -402,7 +402,7 @@ thirty seconds will never be used during a class period.
       the note to self still there — the owner's ruling of 2026-08-20. No count and no "hidden"
       line, and **the empty sentence is the same sentence in both modes**, so a card whose every
       entry is suppressed cannot be told from one with none.)*
-- [x] Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
+- [x] 👤 Marking a student absent for the Nth time surfaces an attendance-related plan clause if one
       exists, and nothing appears in presentation mode. *(Re-homed from WO-3.8, 2026-08-13. That work
       order built the accommodation prompt in the assignment editor and could not build this half:
       `supports` has no attendance-clause field to read and `signals` has no threshold to compare
@@ -493,7 +493,7 @@ failing nor excelling, and no threshold will ever surface them.
 - [ ] The cooldown reads the log rather than a separate suppression store — verify by restoring a
       backup and confirming cooldowns survive.
 - [ ] The quiet-middle list excludes anyone flagged, praised, or contacted this term.
-- [ ] Two consecutive weekly runs on real data produce visibly different concern lists.
+- [ ] 📆 Two consecutive weekly runs on real data produce visibly different concern lists.
 - [ ] Suppressed hits are recoverable and counted, never silently dropped.
 
 **Traps** — Cooldown keyed on the student rather than the *signal* will hide a new problem because

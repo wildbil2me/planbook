@@ -388,6 +388,19 @@ on 2026-08-16 — that is a green run and not a tick, and the first sentence sti
 from a flat "cannot" that day, WO-1.21, so this file and `AGENTS.md` say one thing: a rule that calls
 a true report impossible teaches its reader to disbelieve one.)*
 
+**An Acceptance line can also say it is waiting on the calendar, and 📆 is the mark for it** (WO-1.28,
+2026-08-26). 👤 means *no headless browser can close this*; **📆 means *no build can close this*** — the
+line wants a date, usually a fortnight of a real term. `--tick` refuses both. What 📆 changes is
+**dependency gating and nothing else**: a work order whose every open Acceptance line is 📆 reports as
+**code-complete**, so it stops blocking work orders that need only its code — WO-4.3's open praise box
+was refusing WO-4.5, which wants nothing from it but its rules. **It closes nothing.** The box stays
+open, the work order stays 🔨 IN PROGRESS, and the ship **gate** refuses it outright, because the gate
+is where the wait is actually paid and a mark that could open one would have eaten the only check that
+reads these lines on the far side of the wait. Every hop of a chain is named, so a two-hop wait cannot
+report as a one-hop pass. Defined in [`plans/work-orders/README.md`](plans/work-orders/README.md)
+§ "Acceptance-line marks" — which is also the first place 👤 was ever written down — and argued in
+[`plans/verification-tooling.md`](plans/verification-tooling.md).
+
 **Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
 neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over
 and deletes the old cache the moment it activates — but it does not re-render the open window, whose

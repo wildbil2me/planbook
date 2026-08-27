@@ -107,9 +107,10 @@ tracker that is current is worth more than one that is ceremonially clean.
 **What replaced it is narrower and harder: a tick has to be true.** Anything you tick must be
 something you actually checked, and a tick you cannot point at evidence for is worse than a blank
 box — WO-1.8's real defect was ticking three lines its own result file listed under "what I could
-not verify." Two carve-outs survive the retirement whole: **never tick a 👤 line** (see the bottom of
-this section — that is a claim about hardware, not about authority), and **leave the `CHANGELOG.md`
-entry to the teacher**, who decides what a change means to a classroom.
+not verify." Two carve-outs survive the retirement whole: **never tick a 👤 or 📆 line** (see the
+bottom of this section — those are claims about hardware and about the calendar, not about
+authority), and **leave the `CHANGELOG.md` entry to the teacher**, who decides what a change means to
+a classroom.
 
 A separate verifier reads your work cold against the **Acceptance** list, so report honestly:
 what you did, what you could not satisfy, and anything you were unsure about. Claiming an acceptance
@@ -121,6 +122,15 @@ an environment report, not a result, and the teacher re-runs it locally before a
 Never infer a pass from a harness you could not execute.
 
 **Never tick a 👤 line.** Those need a real iPad, a thumb, or the live SIS, and you have none of them.
+
+**Never tick a 📆 line either — and do not read one as work you owe.** 📆 says *no build can close
+this line*: it is waiting on a date, usually a fortnight of a real term. `--tick` refuses it exactly
+as it refuses 👤. What is new since 2026-08-26 (WO-1.28) is what the mark does to a **dependency** —
+a work order whose every open line is 📆 reports as **code-complete** and no longer gates the work
+orders that need only its code, so a gate report naming one is telling you the wait is real and
+already accounted for. Build against it. It still closes nothing: the box stays open, the work order
+stays 🔨 IN PROGRESS, and the ship **gate** refuses it outright. The mark is defined in
+`plans/work-orders/README.md` § "Acceptance-line marks".
 
 **When you hand a 👤 iPad line back, say "force-quit from the app switcher first."** A reload will not
 do it. `sw.js` uses `skipWaiting` + `clients.claim`: the new worker takes over and deletes the old

@@ -63,10 +63,13 @@ a different hat: in a phase file the acceptance criterion **is** the checkbox, o
 write access there would let the judge reword the test it just failed. Its read-only tool grant is
 what makes that impossible rather than merely discouraged.
 
-Two things nobody closes on evidence they do not have. **👤 lines** need a real iPad and stay
+Three things nobody closes on evidence they do not have. **👤 lines** need a real iPad and stay
 `- [ ]` however good the desk-side evidence looks — a rule about hardware rather than about
-authority, so retiring the implementer's tick ban left it untouched. **The `CHANGELOG.md` entry** is
-prose about what a change means; draft it freely, but it lands on the teacher's say-so.
+authority, so retiring the implementer's tick ban left it untouched. **📆 lines** need a date that has
+not arrived (WO-1.28, 2026-08-26) and stay `- [ ]` for the same kind of reason; what they *do* release
+is the gate on work that needs only the code, so a dependency whose every open line is 📆 reports
+code-complete rather than refusing. **The `CHANGELOG.md` entry** is prose about what a change means;
+draft it freely, but it lands on the teacher's say-so.
 
 The rule this serves is the project's own — *do not tick a work order that is written but
 unverified* ([`../ROADMAP.md`](../ROADMAP.md) → maintenance protocol). Note what it actually
@@ -388,6 +391,7 @@ into every brief, verbatim:
   calendar days.
 - Stay inside the work order's **Out of scope** line.
 - You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go. Two
-  exceptions: **never tick a 👤 line** — it needs a real iPad and you do not have one — and leave the
-  `CHANGELOG.md` entry to the teacher, who decides what a change means. Anything you do tick must be
+  exceptions: **never tick a 👤 or 📆 line** — one needs a real iPad you do not have, the other a date
+  that has not arrived — and leave the `CHANGELOG.md` entry to the teacher, who decides what a change
+  means. Anything you do tick must be
   something you actually checked; a tick you cannot point at evidence for is worse than a blank box.

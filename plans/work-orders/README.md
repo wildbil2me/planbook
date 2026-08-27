@@ -153,6 +153,78 @@ order whose author had moved on. Which is exactly what happened to WO-2.5 on 202
 
 ---
 
+## Acceptance-line marks
+
+*(2026-08-26, WO-1.28.)* The section above describes the **header paragraph**. This one describes a
+mark on a **box**, which is a different thing about a different part of the work order, and that is
+why it is a section of its own rather than a tenth row in that table.
+
+Two marks, and the pair is the point: each says what **kind of evidence** closes a line, in the one
+case where the answer is *"not a build"*. Everything else in an Acceptance list is closed by writing
+code and running `verify-shell.mjs` over it.
+
+| Mark | The line says | Who can close it |
+|---|---|---|
+| 👤 | No headless browser can close this — it wants a person, on real hardware, with a thumb | The owner, on an iPad or a laptop, written up in [`TESTING.md`](../../TESTING.md) |
+| 📆 | **No build can close this — it waits on the calendar.** A fortnight of a real term, two consecutive weekly runs on real grades, four weeks of real attendance | Time, and then the owner re-running it |
+
+**Write the mark straight after the checkbox** — `- [ ] 📆 Two consecutive weekly runs on real
+data …`. `wo-gate.mjs` accepts it anywhere on the line, because 👤 has been written at both ends
+across this directory for three weeks depending on whether the whole line or one clause is the
+human's, and a position rule invented now would silently unmark half of them. A mark **inside
+backticks is prose about the mark, not a mark** — the same rule `→ WO-x.y` markers already carry, and
+the reason this section can discuss 📆 without every paragraph of it becoming a deferred box.
+
+**Neither mark closes anything, and `--tick` treats the two identically.** A marked line stays
+`- [ ]`, holds its work order at 🔨 IN PROGRESS, and closes no roadmap box, on a green harness and a
+green sweep, exactly as an unmarked one does. That equivalence is load-bearing: the moment a mark
+becomes a way to *close* a box by describing it, both marks are worth nothing.
+
+**📆 changes exactly one thing: whether the work order it sits in gates its dependents.** A dependency
+that is 🔨 IN PROGRESS and whose **every open** Acceptance line is 📆 reports as *code-complete* — a
+NOTE naming what it is still waiting for, instead of the `FAIL | dependency … is 🔨 IN PROGRESS, not
+✅ DONE` it used to earn. **This is derived from the boxes, never asserted by a hand.** A header field
+saying the same thing — `**Soft depends on**`, or any spelling of it — was the tidy version and is
+refused: a field is an assertion *about* the boxes underneath it and drifts from them, which is the
+failure the table above already records three times. A derived answer cannot drift, because there is
+nothing to drift from.
+
+**Five fences, and each is a way the mark could eat something it must not.**
+
+1. **A gate work order never accepts a 📆 dependency.** [WO-G3](gates.md#wo-g3--ship-3-gate-signals)
+   exists precisely to check what the mark defers, so it is the one dependent for which
+   *code-complete* answers nothing it was written to ask. `node tools/wo-gate.mjs WO-4.5` passes on
+   WO-4.3 and `node tools/wo-gate.mjs WO-G3` refuses the same work order on the same tree; the two
+   together are what says the mark did not eat the gate.
+2. **Only 🔨 IN PROGRESS qualifies.** ⬜ has no code for the mark to be about; 🤖 CLAIMED is in flight
+   and its tree is moving under whoever is reading it; 🚫 STRUCK and ⏳ DEFERRED are **dead ends
+   rather than waits** and keep WO-1.21's own wording — *"it will never be ✅ DONE"* — because a dead
+   end reported as a wait is the confusion that whole work order exists to prevent.
+3. **Mark the line, not the work order.** One unmarked open box and the dependency blocks again.
+   That is what stops the mark waving through genuinely part-built work, and it is why this is not a
+   status word: a status is about the work order, and the question is about each line.
+4. **A 🔨 work order with nothing open is not code-complete-and-waiting** — it is a work order
+   somebody forgot to `--tick`. "Every open line is marked" is trivially true of an empty list, and a
+   defer reported over nothing reads like a pass.
+5. **It chains, and every hop is said out loud.** WO-4.5 will itself be 🔨-with-a-📆-box from ~Sep 13
+   to ~Sep 23, and [WO-6.4](phase-6-calendar-glance.md#wo-64--the-glance-page) depends on WO-4.5. The
+   gate report names the near hop, then each far one with `(through WO-x.y)` beside it — a two-hop
+   defer that reads like a one-hop pass is worse than the refusal it replaced.
+
+**Why not `**Owes**`.** That field means *another work order will do this work*, and every pointer
+under it has to land on exactly one open box beneath a named target. WO-4.3's real-data box is not
+work anyone else does; it is the **same** work, waiting on a term that starts Sep 2. Re-homing it to
+WO-G3 would invent a debtor to satisfy a parser, and would file the box under the one work order that
+must not be able to open without it. **Owes** is untouched by any of this, in both directions: an
+open re-homed line still counts as open when 📆 is being asked about.
+
+**Marks are on the boxes, and the running order says so in prose too** — § Ship 3's *"Rows 4 and 5
+are rowed twice on purpose — built before the term, closed after it"* is the same fact, written for a
+reader. The prose came first, on 2026-08-19; the tool refused WO-4.5 over it on 2026-08-25. When the
+two disagree, the boxes are the record.
+
+---
+
 ## Citing code
 
 **Cite a symbol, not a line number.** `src/classes.js`'s `dateField()`, `.term-date` in
@@ -212,7 +284,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 28 | 26 | — | 🔨 IN PROGRESS (reopened nine times; last on 2026-08-25) |
+| 1 — Shell, store, roster | 28 | 27 | — | 🔨 IN PROGRESS (reopened nine times; last on 2026-08-25) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -221,7 +293,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **140** | **116** | **2** | `[████████░░] 83%` |
+| | **140** | **117** | **2** | `[████████░░] 84%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
