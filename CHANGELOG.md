@@ -13,6 +13,42 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The list stops repeating itself, and the students nobody flags — 2026-08-27
+
+**A signal a teacher has already acted on stops asking.** Write to a guardian about a student's
+missing work and that student comes off that signal for fourteen days — off **that** signal, and off
+no other. The same student's attendance rule keeps its row, because a conversation about missing work
+is not a conversation about absence, and collapsing the two is how a list starts lying about what it
+has covered.
+
+**The cooldown reads the outreach log and stores nothing.** There is no suppression table, no
+`suppressedUntil` field, no second truth to be kept in step — `src/signals.js` gained no writer, the
+year document is byte-identical either side of a pass, and the cooldowns therefore survive a backup
+round trip for free, because the log that produced them is in the backup. Restore a file written by
+an earlier build and it still opens.
+
+**Suppressed hits are hidden, never dropped.** Each column's foot carries the count in both states,
+and one tap opens a muted row per suppressed hit naming who was contacted and when the student comes
+back. Every one of those rows carries its own *Write anyway* — three deliberate acts deep, so the
+cooldown can never be the reason a teacher failed to reach a student she meant to reach, and the
+empty state cannot claim "nobody is flagged" over a column the cooldown itself has emptied.
+
+**The quiet middle is the other half of the same insight.** Students neither flagged, nor praised,
+nor contacted all term — the ones a busy teacher genuinely loses track of, because no threshold will
+ever surface someone who is fine. Listed per class with how long it has been.
+
+**One box is open and cannot be closed by building.** *Two consecutive weekly runs on real data
+produce visibly different concern lists* wants a week of a real term to pass with a real message sent
+inside it; the mechanism under it is measured — the same document at `cooldownDays` 0, 14 and 30
+returns three different lists — but a threshold moved by hand is not a week going by. It carries 📆
+and is re-run against the owner's own classes in the term.
+
+Three thumb readings on the iPad closed 2026-08-28: the cooldown foot, *Write anyway* on a muted row,
+and the class card carrying both chips across five classes. A fourth — whether the quiet middle is
+useful or a wall at real length — was read on an empty term, answered *"a wall this early"*, and
+deliberately left open: the panel is at its longest exactly when it has least to sort by, which
+inverts as the term fills. Watched rather than acted on.
+
 ### A line can now say it is waiting on the calendar — 2026-08-26
 
 **A work order can say that an Acceptance line is waiting on the calendar, and stop blocking work

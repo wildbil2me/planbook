@@ -301,8 +301,18 @@ the owner's real classes, before the numbers matter.
 
 ## WO-G3 — Ship 3 gate: signals
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
+**Ship** 3 · **Status** 🔒 GATED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
 **Target** October 2026, once 4–6 weeks of real data exist
+
+*(**`🔒 GATED` from 2026-08-28, and what it waits on is the term — put it back to `⬜` when four weeks
+of real grades and attendance exist.** Ship 3's build queue emptied on 2026-08-27 when WO-4.5 landed,
+which made this gate the first `⬜` in the running order — so `next` began answering with a work
+order nobody can start before ~Sep 30, hiding four buildable rows in § After Ship 3 behind it.
+**That is WO-G2's situation on 2026-08-20 exactly**, and this is the same repair: `🔒` is the word the
+vocabulary already has for *do not start it*, `next` skips it, and the gate report refuses it in
+those words. It is not `🚫` or `⏳` — the work is coming and it is counted. **`--tick` refuses this
+status**, so the gate cannot close while wearing it, which is what makes the mark safe to apply to
+the one work order whose whole job is to be un-fakeable.)*
 
 *(That line read `Phase 4` until 2026-08-19, WO-1.24, and **"Phase 4" is not a token** — `depsOf()`
 reads `WO-` ids, found none, and so this gate reported **`PASS`** with all five of the work orders it

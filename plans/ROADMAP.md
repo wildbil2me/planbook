@@ -455,6 +455,23 @@ different student every time, and it's the message that actually lands at home.
 - [x] "Why is this student here?" — every flag explains itself in a sentence with the real numbers.
 - [x] Behavior/note logging fast enough to do mid-class, feeding the behavior signals.
 
+*(**Three boxes above describe code that is built, and all three are deliberately open — 2026-08-28.**
+`Contact cooldown` and `The quiet middle` landed 2026-08-27 under
+[WO-4.5](work-orders/phase-4-signals.md#wo-45--cooldown--the-quiet-middle); `Praise signals` landed
+2026-08-24 under [WO-4.3](work-orders/phase-4-signals.md#wo-43--praise-signals). Each is built,
+harnessed and mutation-proved, and each is held open by **one Acceptance line wearing 📆** — a
+fortnight of a real term, and the term begins Sep 2. **📆 closes no roadmap box**, which is the whole
+point of the mark: it moves a wait past the work orders that need only the code, and changes nothing
+about what has been delivered. See `work-orders/README.md` § Acceptance-line marks. **The dashboard
+above is unchanged for the same reason**, so Phase 4 reads 4/8 while seven eighths of its code is on
+disk — read the work orders for what exists, and these boxes for what has been **proved on real
+data**, which is a different question and the one this phase is least able to fake.)*
+
+*(**WO-4.3's half of this note is four days late**, added here in WO-4.5's sitting rather than in its
+own. The praise column shipped on the 24th and nothing in this file said so, which is exactly the rot
+the maintenance protocol exists to prevent — a reader of the roadmap alone would have concluded the
+praise half did not exist. Booked nowhere: it is fixed above.)*
+
 *(**Built 2026-08-24, WO-4.4, and deliberately not ticked — the box has two halves and only one of
 them is closed.** The log exists, the sheet is two taps off a roster row, the card is on the student
 record, and* **"feeding the behavior signals" is measured**: *the ninth concern rule counts entries
