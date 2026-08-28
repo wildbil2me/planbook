@@ -13,6 +13,35 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### § 20's claim 5 now reads the whole file, and the header stopped overclaiming — twice — 2026-08-28
+
+**The check that forbids a dynamic property read in the merge-field resolver scanned member position
+one line at a time, and three spellings walked around it.** A subscript reached through `?.`, a
+computed key in an object literal, and a `root` on one line with `[name]` on the next — the last of
+which put nothing at all in front of the `[` for a scanner reading one trimmed line at a time. None
+is a shape anybody writes here by accident, so this was never a live hole the way WO-5.1's was.
+Widening the check for those three was the easy half.
+
+**The instructive half was the sentence above it.** `src/merge-fields.js` claimed the greps prove
+nothing there could resolve a support field **on any input**, and the first fix retired that phrase
+only to re-pitch it one size smaller — *wherever in the file the `[` sits*. Two more spellings walked
+through the smaller claim: a newline inside the brackets, and a `[` after `}`. Its own verifier found
+them and failed the work order on it. Both are closed now, and the header no longer claims a
+universal at all: it lists the spellings the check covers and names the ones a grep over a crude
+comment strip cannot see — `Object.entries(root).find(([k]) => k === name)[1]` is the honest example,
+and it passes. **A universal with an exception hung off the end is not a narrower claim; it is the
+same claim with a footnote, and a reader believes the sentence.**
+
+**None of this ever touched the fence.** The fence is the whitelist — sixteen names matched by exact
+string — and these greps are only what stops it being walked around quietly. `src/merge-fields.js`
+has a header-comment diff and no code line changed in either round.
+
+**A ride-along, verified by the sweep but not by WO-1.34's verifier.** § 20's opening banner in
+`tools/wo-sweep.mjs` still carried the retired universal eighty-odd lines above the new paragraph
+denying it in capitals — the same overclaim the work order existed to kill, alive in the file the
+check lives in. Retired in the same landing, since it is a comment in a tooling file that changes no
+check outcome; re-run of the sweep, `--self-check` and `--audit` after it is what stands behind it.
+
 ### A dropped `studentId` filter now names the leak instead of failing a string compare — 2026-08-28
 
 **Plant a signal hit on the merge-field harness's second fixture student.** `{{signals.list}}` filters

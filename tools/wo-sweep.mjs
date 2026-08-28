@@ -1978,8 +1978,13 @@ function commentLines(file) {
    blacklist the forbidden paths**, because a blacklist fails open the moment somebody adds a field
    to the data model. That is a claim about what is NOT in a file, and a browser harness cannot make
    it — `tools/verify/merge-fields.mjs` proves what today's paths resolved on today's fixture, and
-   this proves there is nothing in the file that could resolve one on any input. Same division of
-   labour as § 17 makes over src/calendar-derived.js, for the same reason: a lookup somebody adds
+   this proves that none of the spellings claim 5 enumerates appears in it. THAT IS A WIDENING AND
+   NOT A CLOSURE: claim 5's own note at the foot of this header names what a grep over a crude strip
+   still cannot see, and it is what to read before citing this section as coverage. This paragraph
+   claimed "on any input" until WO-1.34 (2026-08-28) retired that wording from src/merge-fields.js
+   and left it standing here — the same overclaim the work order existed to kill, alive in the file
+   the check lives in. Same division of labour as § 17 makes over src/calendar-derived.js, for the
+   same reason: a lookup somebody adds
    later "just for this one field" is invisible to a fixture that does not happen to name it.
 
    AND THE STRUCTURAL HALF OF THAT DIVISION WAS ITSELF HALF-BUILT UNTIL WO-1.32 (2026-08-28). Claim
@@ -2009,11 +2014,46 @@ function commentLines(file) {
       refusal would be a field the resolver answers and the error path describes as forbidden.
    4. The resolver has no writer, the same clause § 17 makes and for the same reason — this module
       answers a question about a document and must never be a second way to change one.
-   5. NO DYNAMIC PROPERTY READ ANYWHERE IN THE CODE — the shape, where claim 2 is the name. A
-      bracket subscript that is not an integer literal, a split, a fold, `eval(`, `new Function(`
-      or `Reflect.get(`. A whitelist that answers by `===` over an array needs none of them, and
-      any one of them hands the token back the power to choose what gets read, which is the one
-      thing the whitelist exists to take away from it.
+   5. NO DYNAMIC PROPERTY READ IN THE CODE, IN ANY OF THESE SPELLINGS — the shape, where claim 2
+      is the name. A bracket subscript in member position whose key is not an integer literal,
+      optionally chained through `?.` and free to have a newline either side of the `[`; a COMPUTED
+      KEY; a split; a fold; `eval(`; `new Function(`; `Reflect.get(`. A whitelist that answers by
+      `===` over an array needs none of them, and any one of them hands the token back the power to
+      choose what gets read, which is the one thing the whitelist exists to take away from it. It is
+      a LIST rather than a universal, and the paragraph below headed STILL A WIDENING RATHER THAN A
+      CLOSURE says what is not on it.
+
+   AND CLAIM 5 READ MEMBER POSITION ONE LINE AT A TIME UNTIL WO-1.34 (2026-08-28), WHICH THREE
+   SPELLINGS WALKED AROUND. `root?.[name]` puts a `.` in front of the bracket, which is not in the
+   member class; `const { [name]: got } = root` puts the bracket after a `{`, where nothing is being
+   subscripted and a property is still being named by a value; and `root` on one line with `[name]`
+   on the next puts nothing at all in front of it, because the scanner read one trimmed line at a
+   time. None of the three is a shape somebody writes here by accident — `grep -rn '?\.' src/*.js`
+   returns nothing, and a computed key is not this codebase's style either — so this was never a live
+   hole in the way WO-5.1's was. What made it worth an hour is a SENTENCE: src/merge-fields.js's own
+   header said these greps "prove there is nothing here that could resolve one on any input", and
+   three spellings falsified that as written. The whole argument for a structural check over a
+   fixture is that the structural one holds on any input, so either the check gets wide enough for
+   the sentence or the sentence gets narrowed to the check. This section did the first for the
+   three; the header did the second for what a grep over a crude strip can still never see.
+
+   SO THE SCAN READS THE STRIPPED SOURCE WHOLE, AND CHECKS WHAT PRECEDES THE `[` RATHER THAN MERELY
+   THAT SOMETHING DOES. Crossing newlines is what catches the third spelling, and it is also the way
+   to reach the file's array literals and its two regex character classes by accident: the guard is
+   that what sits in front of the bracket is still the MEMBER class, widened by `?.`, by `}` and by
+   whitespace, never loosened to "anything". A match offset is mapped back to a line number, so the
+   fault still cites src/merge-fields.js:<line> — WO-1.32's own deliverable, which may not regress to
+   an offset or to a guess.
+
+   TWO MORE SPELLINGS OF THE SAME FAMILY CAME BACK FROM WO-1.34'S OWN VERIFIER, and they are the
+   reason for the `}` and for a key bounded by the `]` alone. `root[` on one line with `name]` on
+   the next is the INVERSE of the third spelling above — the `[` is in member position, hard against
+   its identifier — and it passed because the gap in front of the bracket had been widened to cross
+   a newline while the KEY class was left forbidding one. `{ ...root }[name]` passed because `}` was
+   not in the member class. Both read a property by a token-named key; both go red now. The lesson is
+   the one this section keeps relearning: WHEN A COMMENT SAYS "WHEREVER THE `[` SITS", SOMEBODY WILL
+   READ IT AS A PROMISE, so the enumeration in src/merge-fields.js's header is now written as a LIST
+   OF SPELLINGS COVERED rather than as a universal with an exception hanging off it.
 
    THE STRIPPER IS CRUDE AND SAYS SO: it removes block comments, line comments and the three kinds
    of string literal, and it does not model regular-expression literals. A regex holding a quote
@@ -2023,7 +2063,21 @@ function commentLines(file) {
    pretending to close it: the two character classes in the file (`[^{}]` in TOKEN, `[^a-z]` in
    refusalFor()) survive the strip, and they are not read as subscripts only because a `[` after a
    `/` or a `(` is not in member position. A regex whose character class sat directly after an
-   identifier would be misread as one.
+   identifier would be misread as one — and since WO-1.34 that includes one on the line BELOW an
+   identifier, which is the price of catching a subscript that opens its own line.
+
+   AND WHAT WO-1.34 WIDENED IS STILL A WIDENING RATHER THAN A CLOSURE. A property whose name is a
+   value can be reached without a bracket in member position, without a computed key and without any
+   of the five walkers: `Object.entries(root).find(([k]) => k === name)[1]` is the honest example,
+   and it passes this section — the destructured `[k]` sits after a `(`, and the subscript that
+   survives it has an integer key. `Object.values`, `Object.getOwnPropertyDescriptor`, a `for…in`
+   that compares and returns, a `Map` built from the object — the family is open-ended, and that is
+   the point: NOBODY SHOULD BE ABLE TO READ THIS SECTION AS "NO DYNAMIC READ IS POSSIBLE". A grep
+   over a crude strip cannot close it; a parser could, and a parser in a grep tool is what WO-1.34's
+   Traps line forbids outright. What answers it instead is that this is one half of a pair —
+   `tools/verify/merge-fields.mjs` asks what the module DID on a fixture, and a human reads the file,
+   which is what found WO-5.1's hole — and that src/merge-fields.js's header states the spellings
+   this side covers, positively and by name, instead of claiming all of them.
 
    A BLOCK COMMENT IS BLANKED LINE FOR LINE rather than collapsed to a space (WO-1.32), so a line
    number this section cites is the line number of the file a reader is about to open. It was a
@@ -2031,7 +2085,10 @@ function commentLines(file) {
    have printed was hundreds of lines short — a fault that names the wrong line teaches its reader
    to distrust the next one. What survives a blanked comment is its newlines and nothing else, so
    the stripped LENGTH moves by the comment's line count alone and the plausibility guard at the
-   foot still measures what it always measured (0.23 of the file today, against a 0.9 ceiling). */
+   foot still measures what it always measured (0.23 of the file today, against a 0.9 ceiling).
+   WO-1.34 leans on that a second time and harder: the whole-source scan takes its line numbers by
+   counting the newlines in front of a match offset, so a stripper that collapsed a comment — or a
+   string, or anything else — would move every number this section prints rather than just claim 2's. */
 
 {
   const NAME = 'the merge-field resolver whitelists, and has no path into a support block';
@@ -2073,17 +2130,40 @@ function commentLines(file) {
     const codeLines = stripped.split('\n').map((line, i) => ({ line: i + 1, text: line.trim() }));
     const reached = codeLines.filter(row => SENSITIVE.test(row.text));
 
-    /* ─────────────── claim 5: no dynamic property read (WO-1.32) ───────────────
-       Three families, over the same stripped code claim 2 reads.
+    /* ─────────────── claim 5: no dynamic property read (WO-1.32, widened WO-1.34) ───────────────
+       Four families, over the same stripped code claim 2 reads — but over the WHOLE of it rather
+       than one line at a time, because a `[` that opens its own line has nothing before it on its
+       own line and walked straight through the per-line read.
 
        · A BRACKET SUBSCRIPT WHOSE KEY IS NOT AN INTEGER LITERAL. Matched only in MEMBER POSITION —
-         directly after an identifier, a `)` or a `]` — which is what keeps the file's array
-         literals out of it: `const FIELDS = [`, `REFUSED_WORDS`, `['behavior']` and every bare
-         `[]` sit after `=`, `,`, `:` or `?`, and the two surviving regex character classes sit
-         after `/` or `(`. What IS in member position is `FIELDS.filter(…)[0]` and `all[0]` — the
-         file's one lookup shape, seven of them — and an integer key is allowed. A QUOTED key
-         fails with the rest, deliberately: this module answers by `===` over an array and has no
-         use for a property read by key at all, and `doc['students']` is one edit from `doc[name]`.
+         after an identifier, a `)`, a `]` or a `}`, optionally through a `?.` and through any run
+         of whitespace including newlines — which is what keeps the file's array literals out of it:
+         `const FIELDS = [`, `REFUSED_WORDS`, `['behavior']` and every bare `[]` sit after `=`,
+         `,`, `:` or `?`, and the two surviving regex character classes sit after `/` or `(`. The
+         newline crossing is the WO-1.34 half and it is the dangerous one, so the rule is CHECK
+         WHAT PRECEDES THE `[`, NEVER MERELY THAT SOMETHING DOES: the class stays the member class
+         and only the gap in front of it grew. What IS in member position is `FIELDS.filter(…)[0]`
+         and `all[0]` — the file's one lookup shape, seven of them — and an integer key is allowed,
+         chained or not, because a literal key is not the token choosing. A QUOTED key fails with
+         the rest, deliberately: this module answers by `===` over an array and has no use for a
+         property read by key at all, and `doc['students']` is one edit from `doc[name]`.
+         THE KEY ITSELF MAY STRADDLE A NEWLINE TOO (WO-1.34's verifier): `root[` on one line and
+         `name]` on the next is a subscript squarely in member position, and a key class that
+         forbade a newline read straight past it while the comment above claimed the `[` could sit
+         anywhere. So the key is bounded by the `]` alone. `}` joined the member class in the same
+         breath and for the same reason — `{ ...root }[name]` is a subscript whose object happens
+         to be spelled as a literal. Neither widening moves this file: seven subscripts before,
+         the same seven after, all `[0]`.
+       · A COMPUTED KEY: a `[…]` after a `{` or a `,` and followed by a `:`. That is a destructuring
+         pattern (`const { [name]: got } = root`, which reads the property) and an object literal's
+         computed key (`{ [name]: value }`, which writes one) in a single shape, and neither is in
+         member position, so the family above never sees either. Anchored on the `{`/`,` in front
+         rather than on the `]:` alone, because `req.hit ? [req.hit] : []` is a ternary and not a
+         key, and it is in `contextOf()` in the file this runs over. NAMED BY ITS FUNCTION AND NOT
+         BY ITS LINE ON PURPOSE: it was cited as line 261 here and rotted twice inside WO-1.34 alone,
+         once when the fix added header lines above it and again when the correction round added
+         more. A comment that cites a line it does not compute is a fault message's own failure mode
+         arriving in prose — grep for the ternary instead.
        · A SPLIT OR A FOLD OF ANY KIND. Not `.split('.')` in particular — the stripper has already
          turned that into `.split('')` — but any split, because cutting a token into segments has
          exactly one use here, and any reduce, because the file's own header says two hundred lines
@@ -2094,14 +2174,41 @@ function commentLines(file) {
        NON-VACUITY comes from two places. The shared plausibility guard at the foot of this section
        covers the haystack, and the subscript scanner carries its own anchor: the file holds several
        `…filter(…)[0]` lookups, so ZERO subscripts found means the pattern stopped matching rather
-       than that the file got cleaner — the same loud-when-it-moves rule § 11's count lives by. */
-    const SUBSCRIPT = /[A-Za-z0-9_$)\]][ \t]*\[([^\]\n]*)\]/g;
+       than that the file got cleaner — the same loud-when-it-moves rule § 11's count lives by. The
+       computed-key family has NO such anchor and cannot have one, because the file contains no
+       computed key of any kind and a check whose only proof is a mutation says so out loud rather
+       than borrowing the subscript count's confidence. */
+    /* Offset → line, over a stripped source that holds one newline for every newline in the file:
+       the block-comment blanker above keeps them and neither the line-comment nor the string
+       replacement removes one. So a number taken here is a line of the file a reader opens. */
+    const lineStarts = [0];
+    for (let i = 0; i < stripped.length; i++) if (stripped[i] === '\n') lineStarts.push(i + 1);
+    const lineAt = (index) => {
+      let lo = 0, hi = lineStarts.length - 1;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (lineStarts[mid] <= index) lo = mid; else hi = mid - 1; }
+      return lo + 1;
+    };
+    /* A finding can now straddle a newline, so what the fault prints is the stripped line(s) the
+       match covers rather than one row of code — the citation is still a single line, the one the
+       `[` is on, which is where a reader's eye needs to land. */
+    const spanText = (from, to) => codeLines.slice(from - 1, to).map(r => r.text).filter(Boolean).join(' ⏎ ');
+
+    const SUBSCRIPT = /[A-Za-z0-9_$)\]}](?:\s*\?\.)?\s*\[([^\]]*)\]/g;
+    const COMPUTED_KEY = /[{,]\s*\[([^\]]*)\]\s*:/g;
+    /* A key may straddle a newline of its own, so it is flattened for the fault text — the
+       finding is about the shape, and a message with a line break in the middle of it reads as
+       two findings. */
+    const flat = (key) => key.trim().replace(/\s+/g, ' ');
     const subscripts = [];
-    codeLines.forEach(row => {
-      for (const m of row.text.matchAll(SUBSCRIPT)) {
-        subscripts.push({ line: row.line, key: m[1].trim(), text: row.text });
-      }
-    });
+    for (const m of stripped.matchAll(SUBSCRIPT)) {
+      const bracket = m.index + m[0].indexOf('[');
+      subscripts.push({ line: lineAt(bracket), key: flat(m[1]), chained: m[0].includes('?.'), from: lineAt(m.index), to: lineAt(m.index + m[0].length - 1) });
+    }
+    const computedKeys = [];
+    for (const m of stripped.matchAll(COMPUTED_KEY)) {
+      const bracket = m.index + m[0].indexOf('[');
+      computedKeys.push({ line: lineAt(bracket), key: flat(m[1]), from: lineAt(m.index), to: lineAt(m.index + m[0].length - 1) });
+    }
     const WALKERS = [
       { re: /\.\s*split\s*\(/, what: 'it splits a string into segments, which is how a token becomes a path' },
       { re: /\breduce\s*\(/, what: 'it folds a list, and the fold this file has no other use for is a walk down one' },
@@ -2111,7 +2218,16 @@ function commentLines(file) {
     ];
     const dynamic = subscripts
       .filter(s => !/^\d+$/.test(s.key))
-      .map(s => ({ line: s.line, text: s.text, why: `\`[${s.key}]\` reads a property whose key is a value` }));
+      .map(s => ({
+        line: s.line,
+        text: spanText(s.from, s.to),
+        why: `\`${s.chained ? '?.' : ''}[${s.key}]\` reads a property whose key is a value${s.chained ? ', and an optional chain in front of a subscript is still a subscript' : ''}`,
+      }));
+    computedKeys.filter(c => !/^\d+$/.test(c.key)).forEach(c => dynamic.push({
+      line: c.line,
+      text: spanText(c.from, c.to),
+      why: `\`[${c.key}]:\` is a COMPUTED KEY — a destructuring pattern or an object literal naming a property with a value, which hands the token the same choice a subscript does`,
+    }));
     codeLines.forEach(row => WALKERS.forEach(w => {
       if (w.re.test(row.text)) dynamic.push({ line: row.line, text: row.text, why: w.what });
     }));
@@ -2150,7 +2266,7 @@ function commentLines(file) {
     if (stripped.length > src.length * 0.9) faults.push(`the comment and string stripper removed only ${src.length - stripped.length} of ${src.length} characters, which is implausible for a file in this repository — it has stopped working, and the two absence claims above are being made over an unstripped file`);
 
     check(NAME, !faults.length, faults.length ? faults.join(' · ')
-      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier, no writer and no dynamic property read in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; all ${subscripts.length} bracket subscript(s) are integer literals and there is no split, fold, eval, Function or Reflect.get among them; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
+      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier, no writer and no dynamic property read in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; all ${subscripts.length} bracket subscript(s) in member position are integer literals, ${computedKeys.length} computed key(s) name a property with a value, and there is no split, fold, eval, Function or Reflect.get among them; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
   }
 }
 

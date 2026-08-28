@@ -31,16 +31,41 @@
     TEST SURFACE — every path in it must be provably unreachable — rather than a runtime filter, and
     `tools/wo-sweep.mjs` § 20 asserts the absence structurally, in two claims that are two halves of
     one sentence. **Claim 2** is the NAME: no support identifier appears in this file's code at all,
-    only inside string literals and prose. **Claim 5** is the SHAPE: no dynamic property read — no
-    bracket subscript whose key is not an integer literal, no split, no fold, no `eval`, no
-    `new Function`, no `Reflect.get`. The harness proves what today's paths resolved on today's
-    fixture; the two greps prove there is nothing here that could resolve one on any input, which is
-    the difference that matters for a "just this once" lookup somebody adds later.
+    only inside string literals and prose. **Claim 5** is the SHAPE, and it is a LIST OF SPELLINGS
+    rather than a claim about every way JavaScript can read a property. What it asserts is absent
+    from this file's code, by name: a bracket subscript in member position whose key is not an
+    integer literal — after an identifier, a `)`, a `]` or a `}`, through an optional `?.`, and with
+    a newline allowed on either side of the `[` — a computed key in a destructuring pattern or an
+    object literal, a split, a fold, `eval`, `new Function`, `Reflect.get`. The harness proves what
+    today's paths resolved on today's fixture; the two greps prove that none of THOSE spellings is
+    in this file whatever it comes to contain, which is the difference that matters for a "just this
+    once" lookup somebody adds later. What they do not prove — and a grep over a crude comment strip
+    cannot — is that no other spelling gets past. `Object.entries(root).find(([k]) => k === name)[1]`
+    reads a property by a token-named key and passes § 20 today, because the destructured `[k]` sits
+    after a `(` and the subscript that survives it has an integer key; `Object.values`, a `for…in`
+    that compares and returns, and a `Map` built out of the object are the same story. So read claim
+    5 as *these spellings are absent*, never as *no dynamic read is possible*. What makes a dynamic
+    read impossible is the whitelist above; § 20 is only what stops it being walked around quietly.
     *(Claim 5 arrived with WO-1.32 and this paragraph was five days ahead of it. Claim 2 on its own
     is a check on names, and a path walk names nothing — which is not hypothetical: WO-5.1's
     dispatch was killed holding one right here in `resolveText()`, the delivered tree resolved every
     support field to the roster string, and § 20 was green over it. A sentence in a header is worth
     what the check under it asserts, and this one was not until claim 5.)*
+    *(**This paragraph used to end "on any input", and the wording was the failure rather than a
+    slip** — WO-1.34, 2026-08-28, finished by its own verifier the same day. It said the greps prove
+    there is nothing here that could resolve a field ON ANY INPUT, and **five** spellings falsified
+    it as written. Three were found when the work order was booked — `root?.[name]`,
+    `const { [name]: got } = root`, and a subscript whose `[` opens its own line. Two more came back
+    from the verifier of the fix: `root[` on one line with `name]` on the next — the exact inverse of
+    the third, and squarely in member position — and `{ ...root }[name]`, whose object is spelled as
+    a literal. All five are closed in § 20 now. **The instructive half is why the first attempt
+    missed the last two.** It closed the three spellings and then re-pitched the universal one size
+    smaller — *wherever in the file the `[` sits* — which is the same overclaim in a smaller box, and
+    it is precisely the gap those two walked through. A universal with an exception hung off the end
+    is not a narrower claim; it is the same claim with a footnote, and a reader believes the
+    sentence. Hence the enumeration above: what the check covers, positively, and the limit stated as
+    a limit. A parser would settle the rest, and a parser inside a grep tool is forbidden outright.
+    **None of this touches the fence**: the fence is the whitelist above.)*
   · **A key on `Object.prototype` is not a field.** `FIELDS` is an ARRAY scanned by `===`, not an
     object indexed by the token. Indexed by the token, `{{constructor}}`, `{{toString}}` and
     `{{__proto__}}` all find something truthy, and the first build of a resolver that looks like this

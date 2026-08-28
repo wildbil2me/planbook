@@ -3116,7 +3116,7 @@ applied, read and reverted by name in a single command; the delivered tree runs
 
 ## WO-1.34 — claim 5 reads member position, and three spellings walk around it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.32 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** S · **Depends on** WO-1.32 · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.33
 made. Booked 2026-08-28, owner-directed, found by WO-1.32's verifier the hour claim 5 landed.)*
 
@@ -3177,18 +3177,57 @@ designs:
   bumps `CACHE` in `sw.js`. It is at `planbook-shell-v100` as of WO-1.32.
 
 **Acceptance**
-- [ ] `root?.[name]`, `const { [name]: got } = root`, and a subscript whose `[` opens its own line
+- [x] `root?.[name]`, `const { [name]: got } = root`, and a subscript whose `[` opens its own line
       each turn § 20 **red** on their own, each naming the line.
-- [ ] The file as it stands passes, with all seven integer-literal subscripts, both array literals,
+- [x] The file as it stands passes, with all seven integer-literal subscripts, both array literals,
       `['behavior']` and both regex character classes intact.
-- [ ] WO-5.1's own mutation and the three one-liners WO-1.32 closed — `eval(`, `new Function(`,
+- [x] WO-5.1's own mutation and the three one-liners WO-1.32 closed — `eval(`, `new Function(`,
       `Reflect.get(` — still fail, and the fault still cites a line number that is the line number of
       the file a reader opens.
-- [ ] The non-vacuity anchor still fires: a scanner that finds no bracket subscript at all is a fault.
-- [ ] `src/merge-fields.js:37`'s "on any input" is true of the check as it now stands, or says which
+- [x] The non-vacuity anchor still fires: a scanner that finds no bracket subscript at all is a fault.
+- [x] `src/merge-fields.js:37`'s "on any input" is true of the check as it now stands, or says which
       spellings it does not cover — and if that file was touched, `CACHE` in `sw.js` moved.
-- [ ] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
+- [x] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
       recomputed by the sweep.
+
+*(**Built 2026-08-28, and the sentence was answered from both ends rather than one.** § 20's claim 5
+now scans the stripped source WHOLE — a `lineStarts` index maps a match offset back to a line, so the
+fault still cites `src/merge-fields.js:<line>` and WO-1.32's deliverable did not regress — with the
+member class widened by `?.`, by `}` and by any run of whitespace, a key bounded by its own `]`
+rather than by the end of the line, and a fourth family for a computed key.
+**The computed key is anchored on the `{` or `,` in front of the bracket, not on `]` followed by
+`:`**, which is a departure from the shape-to-build line above; the reason is `contextOf()`'s
+`req.hit ? [req.hit] : []` in the file it reads — a ternary, whose `]` is followed by ` : `, so a
+bare `]:` pattern turns today's file red. *(That reason was cited by line number twice and rotted
+twice in one work order, both times because prose was added above it. It is named by its function
+now, and `tools/wo-sweep.mjs` says why at the point of departure.)*
+
+**The correction round is the instructive half, and it is why this landed with five spellings closed
+rather than three.** *The first fix widened the gap in FRONT of the bracket to cross a newline and
+left the KEY class forbidding one, and it added "wherever in the file the `[` sits" to the header — a
+universal one size smaller than the one it had just retired. Its verifier planted the two spellings
+that walk through exactly that: `root[` on one line with `name]` on the next (the inverse of the
+third booked spelling, and squarely in member position), and `{ ...root }[name]`, whose object is
+spelled as a literal. Both passed green. Closed by adding `}` to the member class and bounding the
+key with `]` alone — seven subscripts before, the same seven after, all `[0]` — and, more to the
+point, by rewriting the header to* **enumerate the spellings the check covers instead of claiming all
+of them.** *A universal with an exception hung off the end is not a narrower claim; it is the same
+claim with a footnote, and a reader believes the sentence.* **The Acceptance line above calls that
+sentence `src/merge-fields.js:37`; it is at :34 now**, both rounds having added comment lines above
+it — grep for *"**Claim 5** is the SHAPE"* rather than for the number.
+
+Thirteen plants, each applied and reverted inside one process and each asserted byte-identical on the
+way out: the three booked spellings go red naming :505, :505 and :506, the verifier's two go red at
+:505, WO-5.1's own `split().reduce()` and `eval(` · `new Function(` · `Reflect.get(` go red at :505,
+blinding the subscript pattern trips the zero-subscripts anchor, and three controls — an array
+literal opening its own line after a `(`, a multi-line array literal, and that ternary — stay green.
+A finding may now straddle a newline, so the fault prints the lines it covers joined by ` ⏎ `
+(`const root = FIELDS; return root[ ⏎ name] || null;`) and cites the line the `[` is on.
+`Object.entries(root).find(([k]) => k === name)[1]` still passes and is named in both files as a
+limit rather than left implied; a parser would settle it and a parser in a grep tool is forbidden
+outright. `CACHE` v100 → v101, one bump for both rounds. Delivered tree: sweep 34 · 31 · 0 · 3,
+`wo-gate --audit` PASS at overall row 58/81, `--self-check` 24 of 24, and `verify-shell.mjs`
+1197 checks · 1197 passed · 0 failed · 0 skipped, 407s, exit 0.)*
 
 ---
 
