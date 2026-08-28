@@ -2817,8 +2817,9 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
 
 ## WO-1.30 — a Depends on that names no work order clears its own gate
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing; every
-gate report in the directory runs through the function this fixes
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.27 — which rewrites the
+function this one reads its input from; see Traps · **Blocks** nothing; every gate report in the
+directory runs through the function this fixes
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
 makes, the way WO-1.26 through WO-1.29 are not. Booked 2026-08-28, owner-directed, found while
 reading WO-8.1's gate report during an unrelated sitting.)*
@@ -2870,6 +2871,12 @@ once it means something.**
 
 **Traps**
 
+- **WO-1.27 lands first, and the dependency above is not a courtesy.** `depsOf()` reads
+  `wo.dependsRaw`, which is set from `fieldRe('Depends on', present)` at `tools/wo-gate.mjs:267` —
+  **the function WO-1.27 rewrites to be position-aware.** Every count in the table above was
+  measured against today's `fieldRe`, so if the value a work order's field resolves to changes, the
+  sentinel arm is being built against numbers that have moved. Re-measure after WO-1.27 lands rather
+  than trusting the table; it is evidence with a date on it, not a constant.
 - **Widen the sentinels before turning on the refusal, never after.** `/^nothing$/i` is tested
   against the **whole trimmed value**, so `nothing — no domain, no name, no policy` (WO-3.10) does
   not match it and neither do WO-2.19, WO-2.20, WO-2.37 or WO-8.7. A prefix test, plus `—`, `–`,
