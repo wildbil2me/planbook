@@ -3189,3 +3189,87 @@ designs:
       spellings it does not cover — and if that file was touched, `CACHE` in `sw.js` moved.
 - [ ] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
       recomputed by the sweep.
+
+---
+
+## WO-1.35 — a ride-along row rises to the top when the rows above it clear
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.34
+made. Booked 2026-08-28, owner-directed, found by reading `next` against the table it answers from.)*
+
+**Why it exists.** Some rows in the running order are not work to schedule, they are work to **fold
+into a sitting that is already open** — an hour of `index.html` while someone is in `index.html`
+anyway. `plans/work-orders/README.md` has said that in prose for a week, in the `Suggested` column
+and nowhere a tool can read: row 18 reads *"Rides along with anything…"*, row 34 read *"Rides along
+with row 33"*, and row 10 — [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)
+— spends a paragraph on it:
+
+> *Row 10 was booked 2026-08-21, and it is **last on purpose**. Nothing blocks it and nothing depends
+> on it, which is exactly why it sits at the foot of the table: `next` stops at the first `⬜` in
+> document order, so a row placed higher would put an hour of `index.html` in front of an M of sync
+> work and five signal boxes that race the term.*
+
+**The mitigation was its position in the table, and position is not stable.** The rows that were
+meant to sit above it have cleared — row 7 ✅, row 8 ✅, row 9 🔒 and not startable — so on
+2026-08-28 WO-8.13 became the first `⬜` in document order and `next` began answering with it. It
+rose by attrition, not by readiness, and it did so **silently**: nothing in the report says the row
+it just named spent a paragraph arguing it should not be named. The row's own note is the fence, and
+`wo-gate.mjs` cannot read it.
+
+**This is the fifth time a real ordering constraint has been found somewhere other than the header
+fields**, and § Ship 3's own preamble keeps the count: *"A `Depends on` line is not the whole
+dependency graph in this directory — that is the fourth time … and `wo-gate.mjs` reads only the
+field."* The first four were dependencies. **This one is not a dependency** — nothing blocks WO-8.13
+and it blocks nothing — which is why no amount of work on `Depends on` would have caught it, and why
+it wants a mark of its own rather than a sixth reading of that field.
+
+**The shape to build.** A mark in the `Suggested` column that says *this row is a ride-along*, and
+names what it rides with — a file, or a work order. `next` **skips a marked row and says so**, in
+the same shape it already prints `skipped WO-4.3 — Praise signals` for a 🔨. `--audit` reports a
+marked row that has become the **first `⬜` in its section**, because that is precisely the state
+this work order was written out of: the shelf above it emptied and the fold-it-in plan ran out of
+hosts. 🎒 is the suggested glyph and the **glyph is the owner's to change; the behaviour is not.**
+
+**Out of scope.** Teaching `next` to read the `Suggested` column. It is free prose by design — thirty
+rows of argument in thirty different shapes — and a parser over it would be the second truth the
+`--audit` rules exist to prevent. The mark is the parseable half of a sentence the column already
+writes, and the column keeps the sentence.
+
+**Traps**
+
+- **It is not a status, and it must not become one.** A ride-along row is `⬜ NOT STARTED` and fully
+  buildable. The mark rides beside the status the way 📆 rides beside a checkbox — and per WO-1.28's
+  equivalence sentence, it **changes ordering and nothing else**: it closes no box, opens no gate,
+  satisfies no dependency, and holds no work order at 🔨.
+- **Naming the ID must still start it.** `node tools/wo-gate.mjs WO-8.13` produces a full gate report
+  and clears, exactly as it does today. A mark that refuses by ID is 🔒 under a new name, and 🔒
+  already exists for the thing it means. This is the line that separates *deprioritised* from
+  *forbidden*, and it is the one worth a plant of its own.
+- **`next` must never skip silently.** A row that vanishes from the report is a row nobody
+  remembers — which is the defect, inverted. The 🔨 skip lines are the model: name it, and say why.
+- **Do not retro-fit the mark to a row whose `Suggested` column merely says "After row 21."** That is
+  a sequence, and `Depends on` already carries it. Only a row whose argument is *fold this into a
+  sitting that has X open* earns the mark. Rows 10 and 18 are the two live cases; read every other
+  candidate against that sentence rather than against the word "after".
+- **A mark inside backticks is prose about the mark, not a mark** — the rule 📆 and `→ WO-x.y`
+  already carry, and the reason § Header fields can describe 🎒 without every row of it becoming one.
+- **The audit check needs a plant.** `--self-check` is 24 claims about 24 plants and says so in as
+  many words; a twenty-fifth check with no plant behind it is the vacuous-fixture defect WO-1.33 was
+  written about, arriving in the tool that polices it.
+
+**Acceptance**
+- [ ] The mark is defined in `plans/work-orders/README.md` in a section of its own — the same call
+      § "Acceptance-line marks" made about being a section rather than a tenth row in the header
+      table — carrying WO-1.28's "changes ordering and nothing else" sentence in as many words.
+- [ ] `next` skips a marked row, names it, and prints what it rides with, in the same shape it
+      already prints a skipped 🔨.
+- [ ] `node tools/wo-gate.mjs WO-8.13` still produces a full gate report and still reports its gates
+      clear — the mark blocks nothing when the row is asked for by name.
+- [ ] `--audit` reports a marked row that is the first `⬜` in its section, and **fires on WO-8.13 in
+      the tree as it stands today** before that row is re-placed.
+- [ ] WO-8.13 and row 18 (WO-6.5) wear the mark, and `node tools/wo-gate.mjs next` returns
+      **WO-5.2**.
+- [ ] `--self-check` is green with a plant behind each new check, and the count in its own report
+      goes up by that many.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.

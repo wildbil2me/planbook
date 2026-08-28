@@ -256,7 +256,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.34 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.35 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -284,7 +284,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 34 | 29 | — | 🔨 IN PROGRESS (reopened thirteen times; last on 2026-08-28) |
+| 1 — Shell, store, roster | 35 | 29 | — | 🔨 IN PROGRESS (reopened fourteen times; last on 2026-08-28) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -293,7 +293,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **146** | **120** | **2** | `[████████░░] 82%` |
+| | **147** | **120** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1638,6 +1638,7 @@ it, never from a reading taken earlier in the same session.)*
 | 33 | [WO-1.32](phase-1-shell-store-roster.md#wo-132--the-sweep-proves-the-name-and-not-the-shape) The sweep proves the name and not the shape | S | — | ✅ **2026-08-28** — all six boxes, no 👤 and no 📆, built the same day it was booked. § 20 carries a **fifth claim**: no dynamic property read in `src/merge-fields.js`. WO-5.1's own mutation, pasted back in, turns it red at the line; `eval(`, `new Function(` and `Reflect.get(` each do the same. **Row 34 did not ride along** — it is a different file (`tools/verify/merge-fields.mjs`) and this work order's Out of scope forbade touching it |
 | 34 | [WO-1.33](phase-1-shell-store-roster.md#wo-133--the-second-fixture-student-fires-no-rules) The second fixture student fires no rules | S | — | ✅ **2026-08-28** — all five boxes, no 👤 and no 📆, built the same day it was booked. Three checks inside the existing § *the merge-field resolver (WO-5.1)*: the second student gains sentences of his own, the first student's sixteen-field draft is byte-identical either side of that, and neither his sentences nor his surname reaches it — searched over the whole resolved draft, not just `{{signals.list}}`. Cutting the `studentId` filter turns **four** red. **This row's own title is wrong and it keeps it:** he fired two praise rules all along (`no-missing`, `attendance-window`), so the instrument was never vacuous — it could not *name* what it proved, which is what the three new checks do |
 | 35 | [WO-1.34](phase-1-shell-store-roster.md#wo-134--claim-5-reads-member-position-and-three-spellings-walk-around-it) Claim 5 reads member position | S | — | **Whenever the tracker is quiet, and it can wait behind row 34.** Row 33's own verifier found it: `?.[name]`, a computed destructuring key and a `[` that opens its own line each resolve a property by a token-named key and pass § 20 claim 5 green. **Narrow, not vacuous** — seven mutations still go red and no spelling here is this codebase's style — so what it is really paying off is a sentence: `src/merge-fields.js:37` says the greps hold *on any input*, and three spellings say otherwise. Either the check widens or the sentence does |
+| 36 | [WO-1.35](phase-1-shell-store-roster.md#wo-135--a-ride-along-row-rises-to-the-top-when-the-rows-above-it-clear) A ride-along row rises to the top | M | — | **Before the next time `next` is trusted without reading the row it names.** Row 10 argues at length that it is last on purpose and must not lead; **its only fence is its position in this table**, and on 2026-08-28 rows 7, 8 and 9 cleared and it led anyway — silently, with nothing in the report saying the row it named had spent a paragraph asking not to be. **A fifth ordering constraint found outside the header fields, and the first that is not a dependency**: nothing blocks WO-8.13 and it blocks nothing, so no reading of `Depends on` would ever have caught it. Gives the `Suggested` column's *"rides along"* a parseable half, and makes `--audit` say when the shelf above a ride-along has emptied |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
