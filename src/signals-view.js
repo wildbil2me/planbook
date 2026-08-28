@@ -1,5 +1,6 @@
 /*
-  Who needs you — the concern list and the praise list, drawn (WO-4.2, WO-4.3).
+  Who needs you — the concern list, the praise list, and the two things WO-4.5 added under them:
+  the rows the cooldown took out of each column, and the quiet middle (WO-4.2, WO-4.3, WO-4.5).
 
   ── BOTH COLUMNS, AT EQUAL WIDTH, AND THAT IS AN ARGUMENT RATHER THAN A LAYOUT (WO-4.3) ──
 
@@ -32,10 +33,28 @@
   this screen that changes the document is the thresholds panel, which is src/signal-settings.js's,
   reached through the door in the panel header and chained back here by src/shell.js.
 
+  ── AND THE TWO LISTS THAT ARE NOT COLUMNS (WO-4.5) ──
+
+  A COOLDOWN FOOT PER COLUMN, and it is at the foot rather than in the list because the rows it
+  counts are rows the engine has decided not to ask for again yet. It says the COUNT in both states
+  and the expansion NAMES each student and the contact that silenced her: "3 suppressed" with no
+  names is indistinguishable from a list that has quietly lost three students, and a teacher who
+  cannot check a suppression stops trusting the list it was taken from.
+
+  AND THE QUIET MIDDLE IS A PANEL UNDER THE PAIR (the owner, 2026-08-20), so this view has one
+  state and the switcher never has to say which of two you are on. It is a THIRD LIST AND NOT A
+  THIRD COLUMN: the two columns share a ranking and this one does not — it is ordered by how long
+  it has been, which is a different question with a different unit.
+
+  NEITHER OF THEM IS DECIDED HERE. src/signals.js's applyCooldown() says which hits are silenced
+  and quietMiddle() says who is on the third list, for severityOrder()'s reason: WO-6.4's glance
+  page asks both questions too, and three surfaces answering them is three answers.
+
   ── WHAT IS HELD HERE, AND WHY NONE OF IT IS REMEMBERED ──
 
-  Three values: which class the list is about, what it is sorted by, and which rule it is filtered
-  to. None of the three is written to localStorage, and that is the owner's ruling of 2026-08-20
+  Five values: which class the list is about, what it is sorted by, which rule it is filtered
+  to, whether each column's cooldown expansion is open, and which suppressed rows *Write anyway*
+  has taken back. None of them is written to localStorage, and that is the owner's ruling of 2026-08-20
   ("neither is written to a preference: both recompute on arrival") resting on src/calendar-view.js's
   reason — a remembered filter is a list quietly hiding four fifths of what a teacher asked for,
   set by nobody she can remember, on the screen she opened to find out who needs her.
@@ -88,13 +107,20 @@ import { presentationMode } from './supports.js';
 /* `praiseOrder` and `orderHits` joined at WO-4.3 and are the same kind of thing as `severityOrder`:
    the engine's answer to "which of these matters most", asked once and inherited by every surface
    rather than re-decided per screen. */
+/* `applyCooldown` and `quietMiddle` joined at WO-4.5, and both are the engine's for
+   severityOrder()'s reason: WO-6.4's glance page and the home screen's card ask the same two
+   questions, and three surfaces filtering a list for themselves is three answers. */
 import { evaluate, severityOrder, praiseOrder, orderHits, signalFigure, signalRules, ruleText,
-  ruleThresholdText, inertRules } from './signals.js';
+  ruleThresholdText, inertRules, applyCooldown, quietMiddle } from './signals.js';
 /* The grade beside a name on the card, and the key the *Lowest grade* sort reads. It is the same
    engine every other grade in this app comes out of; nothing here sums a cell. */
 import { weightedClassGrade } from './grade-engine.js';
 import { formatPercent } from './scores.js';
 import { formatWeight } from './categories.js';
+/* The app's one date formatter (WO-3.20). A suppressed row prints two dates — when the contact
+   went out and when the student comes back — and a second spelling of `Sep 6` on a screen that
+   already has one is the five-copies state that file exists to end. */
+import { shortDate } from './date-text.js';
 
 const CLASSES_ID = 'signalsClasses';
 const RULES_ID = 'signalsRules';
@@ -108,6 +134,16 @@ const CONCERN_EMPTY_ID = 'signalsConcernEmpty';
 const PRAISE_LIST_ID = 'signalsPraiseList';
 const PRAISE_HEAD_ID = 'signalsPraiseHead';
 const PRAISE_EMPTY_ID = 'signalsPraiseEmpty';
+/* WO-4.5's, and they come in pairs: a foot that counts what the cooldown took out of the column,
+   and the container it expands into. */
+const CONCERN_HIDDEN_ID = 'signalsConcernHidden';
+const CONCERN_QUIET_ID = 'signalsConcernQuiet';
+const PRAISE_HIDDEN_ID = 'signalsPraiseHidden';
+const PRAISE_QUIET_ID = 'signalsPraiseQuiet';
+const QUIET_ID = 'signalsQuiet';
+const QUIET_HEAD_ID = 'signalsQuietHead';
+const QUIET_LIST_ID = 'signalsQuietList';
+const QUIET_EMPTY_ID = 'signalsQuietEmpty';
 const COLUMN_ID = 'signalsColumns';
 const INERT_ID = 'signalsInert';
 const EMPTY_ID = 'signalsEmpty';
@@ -156,10 +192,28 @@ const RULE_DIRECTION = Object.create(null);
 signalRules().forEach((rule) => { RULE_DIRECTION[rule.id] = rule.direction; });
 
 /* ── THE VIEW STATE ──
-   Three values, none of them student data and none of them persisted — the header says why. */
+   Five values since WO-4.5, none of them student data and none of them persisted — the header
+   says why, and the two new ones are the plainest case it makes: whether a teacher opened the
+   cooldown's expansion, and which rows she took back out of it, are facts about this minute. A
+   remembered *Write anyway* would be a cooldown a teacher had switched off in March and could not
+   remember switching off, which is the same failure a remembered filter is. */
 let filterClassId = '';
 let sortBy = RULED;
 let filterRuleId = '';
+
+/* Which column's suppressed rows are open, per direction. Closed on every arrival: the rows the
+   engine wants read are the ones in the column, and an expansion that was open when she left is an
+   expansion she has to close again before the list means what it says. */
+const expanded = { concern: false, praise: false };
+
+/* THE ROWS *WRITE ANYWAY* HAS TAKEN BACK, keyed `studentId|ruleId|classId`.
+
+   THE CLASS IS IN THE KEY AND IT IS NOT IN THE COOLDOWN'S. The suppression is student + rule and
+   nothing else, because `log[]` carries no `classId` and cannot say which section an email was
+   about (src/log.js). This is the other half of the same fact read from the screen's side: the
+   same student in two classes is TWO ROWS and two conversations — this file's own collect() says
+   so — so taking one of them back is not a decision about the other. */
+const writtenAnyway = Object.create(null);
 
 /* Which student's card is open, as `studentId|classId`. Not persisted either, and not a selection:
    it is which dialog is on screen this second, and it is cleared when the list is rebuilt under it. */
@@ -213,12 +267,60 @@ function rowKey(hit) { return hit.studentId + '|' + hit.classId; }
 function collect(doc) {
   const rows = [];
   const byKey = Object.create(null);
+  const held = [];
+  const quiet = [];
   classesShown().forEach((cls) => {
     const termId = getOpenTermId(cls.id);
     const term = getTerms(cls.id).filter((t) => t.id === termId)[0] || null;
     const hits = evaluate(doc, cls, termId);
+
+    /* THE QUIET MIDDLE IS TAKEN OFF THE SAME PASS, and off the FULL pass rather than the
+       post-cooldown one: a student whose only signal is currently silenced has been both flagged
+       and written home about, which is two of the three things this list excludes. */
+    quietMiddle(doc, cls, termId, { hits: hits }).forEach((row) => {
+      const student = studentIn(doc, row.studentId);
+      quiet.push(Object.assign({}, row, {
+        key: row.studentId + '|' + cls.id,
+        className: cls.name,
+        name: student ? fullName(student) : '',
+        avatar: avatarClass(cls.id),
+      }));
+    });
+
     if (!hits.length) return;
-    orderHits(hits).forEach((hit) => {
+
+    /*
+      AND THE COOLDOWN IS APPLIED HERE, ONCE, BEFORE ANYTHING IS GROUPED INTO A ROW.
+
+      A student's row carries every rule she tripped, so a suppression applied after the grouping
+      would have to reach inside a row and take one hit out of it — leaving a row whose headline is
+      a rule the teacher was told is silenced. Applied to the hits, the arithmetic stays the engine's
+      and the grouping below is unchanged: a student silenced on her only signal has no row at all,
+      and a student silenced on one of three has a row about the other two.
+    */
+    const cool = applyCooldown(doc, hits);
+    const stillHeld = new Set();
+    cool.suppressed.forEach((row) => {
+      const key = row.hit.studentId + '|' + row.hit.ruleId + '|' + cls.id;
+      /* Taken back by *Write anyway*, so it goes back on the list as an ordinary hit and is not
+         counted at the foot: it is not suppressed any more. */
+      if (writtenAnyway[key]) return;
+      stillHeld.add(row.hit);
+      const student = studentIn(doc, row.hit.studentId);
+      held.push(Object.assign({}, row, {
+        key: key,
+        direction: row.hit.direction,
+        className: cls.name,
+        name: student ? fullName(student) : '',
+        avatar: avatarClass(cls.id),
+      }));
+    });
+    /* Filtered out of the ORIGINAL array rather than read off `cool.shown`, so the hits stay in the
+       order the pass produced them — roster order, which is the tiebreak every sort below rests on. */
+    const live = hits.filter((hit) => !stillHeld.has(hit));
+    if (!live.length) return;
+
+    orderHits(live).forEach((hit) => {
       const key = rowKey(hit);
       if (!byKey[key]) {
         const student = studentIn(doc, hit.studentId);
@@ -242,7 +344,12 @@ function collect(doc) {
       byKey[key].hits.push(hit);
     });
   });
-  return rows;
+  /* THE QUIET LIST IS RANKED ACROSS EVERY CLASS ON SCREEN, not within each one. quietMiddle()
+     orders one class; five of them concatenated would read as five short lists pretending to be
+     one, with a student nobody has spoken to in forty days sitting under one nobody has spoken to
+     in three. A row with no clock at all leads, for the reason the engine gives. */
+  quiet.sort((a, b) => (b.days === null ? Infinity : b.days) - (a.days === null ? Infinity : a.days));
+  return { rows: rows, held: held, quiet: quiet };
 }
 
 /* How much missing work a row is carrying, read off the hit that measured it rather than counted
@@ -375,8 +482,11 @@ export function signalsModel() {
   if (filterClassId && !classes.some((c) => c.id === filterClassId)) filterClassId = '';
 
   /* Nothing is evaluated at all while the mode is on. The refusal is not a filter over a list that
-     was built anyway: a list that exists in memory is a list a later screen can render. */
-  const all = blocked || !doc ? [] : collect(doc);
+     was built anyway: a list that exists in memory is a list a later screen can render. And the
+     quiet middle inherits that refusal rather than testing for it — there is one asker of
+     presentationMode() on this screen and it is the line above (src/supports.js owns the rule). */
+  const pass = blocked || !doc ? { rows: [], held: [], quiet: [] } : collect(doc);
+  const all = pass.rows;
 
   /* The chips count STUDENTS, not hits, and they count them BEFORE the rule filter is applied — a
      chip whose number changed when you pressed it would be a chip nobody could use to compare two
@@ -421,13 +531,25 @@ export function signalsModel() {
       count: concern.length,
       total: columnTotal(all, 'concern'),
       note: SORT_NOTES[sortBy] || SORT_NOTES[RULED],
+      /* WHAT THE COOLDOWN TOOK OUT OF THIS COLUMN, and it is on the model rather than counted from
+         the rows for the acceptance line's own reason: a suppressed hit is RECOVERABLE and COUNTED,
+         never silently dropped, and a number the screen could only get by subtracting two other
+         numbers is a number nobody can put a name to. */
+      suppressed: pass.held.filter((row) => row.direction === 'concern'),
+      expanded: expanded.concern,
     },
     praise: {
       rows: orderPraise(praise),
       count: praise.length,
       total: columnTotal(all, 'praise'),
       note: PRAISE_NOTE,
+      suppressed: pass.held.filter((row) => row.direction === 'praise'),
+      expanded: expanded.praise,
     },
+    /* THE THIRD LIST, AND IT IS NOT A THIRD COLUMN (the drawing, and the owner's 2026-08-20
+       ruling). It is ranked by how long it has been rather than by how much changed, which is a
+       different question with a different unit, and it is drawn as a panel under the pair. */
+    quiet: { rows: pass.quiet, count: pass.quiet.length },
     /* Every base row, both directions, unfiltered — what the card is built from. It is here rather
        than re-collected because opening a card would otherwise be a second full evaluation, and
        because the card must show a student's whole picture even when a rule chip has narrowed the
@@ -506,6 +628,115 @@ function rowButton(row) {
 }
 
 /*
+  WHO A CONTACT WENT TO, in the words a suppressed row says it in.
+
+  `audience` IS AN ENUM AND THIS IS THE ONLY PLACE IT BECOMES A SENTENCE — the same arrangement
+  every other vocabulary in this app has, and the reason it is a small table rather than four
+  branches: a value this build has never heard of falls through to a sentence that names no
+  recipient rather than to `undefined`, which is what a restored file from a later build would
+  otherwise put on the screen.
+
+  NOTHING ELSE OF THE ENTRY REACHES HERE. src/signals.js hands the screen a date and this enum and
+  nothing more — no subject, no body — so this function could not print what a teacher wrote if it
+  wanted to.
+*/
+const AUDIENCE_TEXT = {
+  guardian: 'their guardian', counselor: 'their counselor',
+  admin: 'an administrator', student: 'them',
+};
+
+/*
+  THE SENTENCE UNDER A SUPPRESSED NAME, and it is the screen's rather than a rule's — which is a
+  departure from this file's header and is deliberate.
+
+  The header's rule is that every line of prose under a name is `hit.explanation`, so that an
+  explanation cannot drift from the arithmetic behind it. That rule is unbroken: the hit's own
+  sentence is printed FIRST and unchanged, and what this adds after it is a fact about the APP's
+  behaviour — you wrote about this, and here is when it comes back — which no rule measured and
+  none could. It also must not live on the hit: `hit.explanation` is drafted into mail through
+  WO-5.1's `{{signals.list}}`, and an email home that opened "you emailed his guardian about this on
+  Sep 6" would be the cooldown's bookkeeping arriving in a guardian's inbox.
+*/
+function cooldownWhy(row) {
+  const who = AUDIENCE_TEXT[row.audience] || '';
+  const when = row.days === 0 ? 'today'
+    : row.days === 1 ? 'yesterday'
+      : 'on ' + (shortDate(row.on) || row.on) + ', ' + row.days + ' days ago';
+  return (who ? 'You wrote to ' + who + ' about this ' : 'You wrote about this ') + when
+    + '. Back on the list on ' + (shortDate(row.until) || row.until) + '.';
+}
+
+/*
+  ONE SUPPRESSED ROW, AND IT IS NOT A BUTTON.
+
+  The whole point of the cooldown is that this student is not being asked for again yet, so the row
+  STATES the fact and the contact that caused it; the one thing on it that acts is the control at
+  its end. That is design/mockups/proposed-phase4.css's ruling at its own class, and it is also what
+  makes *Write anyway* survivable — quiet, small, at the end of a muted row, behind an expansion the
+  teacher opened on purpose. Three deliberate acts against one tap for the rows the engine wants
+  read.
+
+  IT NAMES THE CONTACT AND THE DATE SHE COMES BACK, which is the Surface deliverable in as many
+  words: "3 suppressed" with no names is indistinguishable from a list that has quietly lost three
+  students.
+*/
+function mutedRow(row) {
+  const box = el('div', 'sig-muted');
+  box.setAttribute('data-signal-held', row.key);
+
+  const avatar = el('span', 'avatar ' + row.avatar, initials(row.name));
+  avatar.setAttribute('aria-hidden', 'true');
+  box.append(avatar);
+
+  const main = el('span', 'sig-row-main');
+  const name = el('span', 'sig-row-name');
+  name.append(document.createTextNode(row.name));
+  name.append(el('span', 'sig-row-class', row.className));
+  main.append(name);
+  main.append(el('span', 'sig-row-why', row.hit.explanation + ' ' + cooldownWhy(row)));
+  box.append(main);
+
+  const undo = el('button', 'sig-undo', 'Write anyway');
+  undo.type = 'button';
+  undo.setAttribute('data-signal-undo', row.key);
+  /* Three buttons all called "Write anyway" is three controls a screen reader cannot tell apart,
+     which is the same failure the row button's own aria-label fixes one list up. */
+  undo.setAttribute('aria-label', 'Write anyway about ' + row.name + ' — '
+    + ruleText(row.hit.ruleId).toLowerCase() + ', in ' + row.className);
+  box.append(undo);
+  return box;
+}
+
+/*
+  THE FOOT OF A COLUMN THE COOLDOWN TOOK ROWS OUT OF: the count, and the door onto it.
+
+  IT SAYS THE COUNT IN BOTH STATES, open and closed, because the acceptance line is that a
+  suppressed hit is COUNTED as well as recoverable — a control that stopped saying how many once you
+  opened it would be a count you had to close the thing to read.
+
+  IT SAYS WHY IN PLAIN WORDS AND NOT "COOLDOWN". The teacher never set a thing called a cooldown;
+  what she did was write to somebody recently, and that is what the button says.
+*/
+function paintHidden(column, buttonId, listId) {
+  const button = document.getElementById(buttonId);
+  const list = document.getElementById(listId);
+  const rows = column.suppressed || [];
+  if (button) {
+    button.classList.toggle('hidden', rows.length === 0);
+    button.setAttribute('aria-expanded', column.expanded ? 'true' : 'false');
+    button.textContent = rows.length + ' you wrote about recently · '
+      + (column.expanded ? (rows.length === 1 ? 'hide it' : 'hide them')
+        : (rows.length === 1 ? 'show it' : 'show them'));
+  }
+  if (list) {
+    list.textContent = '';
+    const open = rows.length > 0 && column.expanded;
+    list.classList.toggle('hidden', !open);
+    if (open) rows.forEach((row) => list.append(mutedRow(row)));
+  }
+}
+
+/*
   ONE COLUMN: its head, its rows, and the quiet line that stands in for them when it has none.
 
   BOTH COLUMNS GO THROUGH THIS, which is what stops the praise half becoming the concern half with
@@ -515,7 +746,7 @@ function rowButton(row) {
   side that inference is *the top of the class*, which is the whole thing this phase exists to
   refuse (design/mockups/signals.html).
 */
-function paintColumn(headId, label, column, list, emptyId) {
+function paintColumn(headId, label, column, list, emptyId, hiddenId, heldListId) {
   const head = document.getElementById(headId);
   if (head) {
     head.textContent = '';
@@ -531,6 +762,7 @@ function paintColumn(headId, label, column, list, emptyId) {
      it should be revisable without opening a JavaScript file (the install banner's rule, and the
      calendar's). What this owns is whether it is on screen. */
   if (empty) empty.classList.toggle('hidden', column.rows.length > 0);
+  paintHidden(column, hiddenId, heldListId);
 }
 
 /* Paint the screen from the open document. Called on every arrival and from the chains in
@@ -556,9 +788,11 @@ export function renderSignals() {
   paintRuleFilter(model);
   paintSort(model);
 
-  paintColumn(HEAD_ID, 'Concern', model.concern, list, CONCERN_EMPTY_ID);
+  paintColumn(HEAD_ID, 'Concern', model.concern, list, CONCERN_EMPTY_ID,
+    CONCERN_HIDDEN_ID, CONCERN_QUIET_ID);
   paintColumn(PRAISE_HEAD_ID, 'Praise', model.praise,
-    document.getElementById(PRAISE_LIST_ID), PRAISE_EMPTY_ID);
+    document.getElementById(PRAISE_LIST_ID), PRAISE_EMPTY_ID,
+    PRAISE_HIDDEN_ID, PRAISE_QUIET_ID);
 
   /*
     THE BIG EMPTY STATE IS FOR A SCREEN WITH NOTHING ON EITHER SIDE, and a column that is empty
@@ -567,7 +801,11 @@ export function renderSignals() {
     climbing this week" is one column's news that must not take the other column off the screen to
     tell. Drawn in that order, so the columns come down only when both are silent.
   */
-  const nothing = model.concern.rows.length === 0 && model.praise.rows.length === 0;
+  /* AND A SUPPRESSED ROW KEEPS THE COLUMNS UP (WO-4.5). "Every rule ran and none fired" is a good
+     day worth a paragraph; a screen that said it over two rows the cooldown had just silenced would
+     be telling a teacher nobody is flagged while holding the names of the students who are. */
+  const nothing = model.concern.rows.length === 0 && model.praise.rows.length === 0
+    && model.concern.suppressed.length === 0 && model.praise.suppressed.length === 0;
   if (column) column.classList.toggle('hidden', model.blocked || nothing);
   const empty = document.getElementById(EMPTY_ID);
   if (empty) empty.classList.toggle('hidden', model.blocked || !nothing);
@@ -584,7 +822,99 @@ export function renderSignals() {
         + (cls ? ' in ' + cls : '') + '.';
   }
 
+  paintQuiet(model);
   paintInert(model);
+}
+
+/*
+  HOW LONG IT HAS BEEN, in the slot the delta holds on the other two lists.
+
+  QUIET GREY AND NEVER RED OR GREEN, which is the stylesheet's ruling and the reason this list is
+  not a third column: there is no direction to a silence. A student nobody has written about in
+  forty days is neither falling nor climbing, and that is precisely why no threshold produces her.
+
+  `days === null` IS NOT ZERO AND IS NOT DRAWN AS ONE. It is the engine's answer for a class whose
+  term carries no dates and a student nothing has ever been written about — there is no clock to
+  read, and a `0 days` there would say something happened today.
+*/
+function sinceFigure(row) {
+  const box = el('span', 'sig-since');
+  if (row.days === null) {
+    box.append(document.createTextNode('Nothing'));
+    box.append(el('span', 'sig-delta-unit', 'ever written'));
+    return box;
+  }
+  box.append(document.createTextNode(row.days + (row.days === 1 ? ' day' : ' days')));
+  box.append(el('span', 'sig-delta-unit', 'since anything'));
+  return box;
+}
+
+/*
+  ONE QUIET ROW, AND IT IS A `.sig-row` LIKE EVERY OTHER ROW ON THIS SCREEN — same avatar, same
+  name-and-sentence block, same chevron, a different figure on the end. A row that goes somewhere
+  and a row that does not must not look alike, and the way to guarantee that is for there to be no
+  second kind (WO-6.4's rule, applied here as it is one list up).
+
+  WHERE IT GOES IS THE STUDENT'S RECORD AND NOT THE SIGNAL CARD, and that is the one place this row
+  parts company with the two columns. The card answers "why is this student on the list", and the
+  whole of what is true about a quiet student is that she is on no list; the thing that resolves
+  "I have lost track of her" is her record. src/shell.js owns where the tap goes, as it owns every
+  other order-of-operations answer in this app.
+*/
+function quietRow(row) {
+  const button = el('button', 'sig-row');
+  button.type = 'button';
+  button.setAttribute('data-signal-quiet', row.key);
+
+  const avatar = el('span', 'avatar ' + row.avatar, initials(row.name));
+  avatar.setAttribute('aria-hidden', 'true');
+  button.append(avatar);
+
+  const main = el('span', 'sig-row-main');
+  const name = el('span', 'sig-row-name');
+  name.append(document.createTextNode(row.name));
+  name.append(el('span', 'sig-row-class', row.className));
+  main.append(name);
+  main.append(el('span', 'sig-row-why', row.explanation));
+  button.append(main);
+
+  button.append(sinceFigure(row));
+  const go = el('span', 'sig-row-go', '›');
+  go.setAttribute('aria-hidden', 'true');
+  button.append(go);
+
+  button.setAttribute('aria-label', row.explanation + ' Opens ' + row.name + '\u2019s record.');
+  return button;
+}
+
+/*
+  THE QUIET MIDDLE, DRAWN — a panel under the two columns, on this same screen (the owner,
+  2026-08-20).
+
+  ITS HEAD CARRIES THE COUNT IN THE WORDS WO-6.4 DRAWS ON THE GLANCE PAGE, `The quiet middle · N`,
+  because that control is a door onto this panel and the two must not be one number apart.
+
+  IT DOES NOT ASK presentationMode(). The panel goes down with the rest of the screen because
+  `model.blocked` is the one answer this view took, one function up — a second test here is the
+  second opinion tools/wo-sweep.mjs counts.
+*/
+function paintQuiet(model) {
+  const panel = document.getElementById(QUIET_ID);
+  if (!panel) return;
+  panel.classList.toggle('hidden', model.blocked);
+
+  const head = document.getElementById(QUIET_HEAD_ID);
+  if (head) {
+    head.textContent = model.quiet.count
+      ? 'The quiet middle · ' + model.quiet.count : 'The quiet middle';
+  }
+  const list = document.getElementById(QUIET_LIST_ID);
+  if (list) {
+    list.textContent = '';
+    model.quiet.rows.forEach((row) => list.append(quietRow(row)));
+  }
+  const empty = document.getElementById(QUIET_EMPTY_ID);
+  if (empty) empty.classList.toggle('hidden', model.quiet.rows.length > 0);
 }
 
 /*
@@ -846,6 +1176,54 @@ export function resetSignals(classId) {
   sortBy = RULED;
   filterRuleId = '';
   openCardKey = '';
+  /* AND THE COOLDOWN CLOSES AGAIN (WO-4.5). Both of these are the arrival rule above applied to the
+     two controls this work order added: an expansion left open is a list that is not the list the
+     engine wants read, and a *Write anyway* carried across an arrival is a suppression a teacher
+     turned off once and cannot remember turning off. */
+  expanded.concern = false;
+  expanded.praise = false;
+  Object.keys(writtenAnyway).forEach((key) => { delete writtenAnyway[key]; });
+}
+
+/* OPEN OR CLOSE ONE COLUMN'S SUPPRESSED ROWS. Nothing is written and nothing is remembered — what
+   changes is which rows are on screen, which is a fact about this browser and this minute. */
+export function toggleSuppressed(direction) {
+  const which = direction === 'praise' ? 'praise' : 'concern';
+  expanded[which] = !expanded[which];
+  renderSignals();
+  const model = signalsModel();
+  const column = which === 'praise' ? model.praise : model.concern;
+  announce(expanded[which]
+    ? column.suppressed.length + ' you wrote about recently, shown.'
+    : 'Hidden again.');
+}
+
+/*
+  *WRITE ANYWAY* — the owner's ruling, 2026-08-20. The cooldown suggests; it does not hold the door
+  shut.
+
+  IT WRITES NOTHING. This screen has no update() in it and this control does not give it one: what
+  it does is put one row back on the list for as long as this arrival lasts, which is the same kind
+  of state the class filter and the sort are. A teacher who has just had a phone call has a real
+  reason to write again, and a feature that told her she may not is one she routes around outside
+  the app; a feature that recorded her decision in the year document would be a suppression she
+  could not find to undo.
+*/
+export function writeAnyway(key) {
+  const id = String(key || '');
+  if (!id) return false;
+  writtenAnyway[id] = true;
+  renderSignals();
+  announce('Back on the list.');
+  return true;
+}
+
+/* Which student a quiet row is about, read back for src/shell.js — the same split
+   signalCardTarget() makes, and for the same reason: this module knows who the row is about and
+   deliberately does not know how to open a class. */
+export function quietRowTarget(key) {
+  const parts = String(key || '').split('|');
+  return parts[0] ? { studentId: parts[0], classId: parts[1] || '' } : null;
 }
 
 export function setSignalsFilter(classId) {

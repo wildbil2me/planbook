@@ -142,7 +142,8 @@ nag, and nothing noticed until a verifier read the line for another reason.
   "log": [{ "id": "l_…", "studentId": "s_…", "at": "…",
             "kind": "behavior|contact|note",
             "audience": "guardian|counselor|admin|student",
-            "subject": "", "body": "" }],
+            "subject": "", "body": "",
+            "ruleId": "" }],   // `contact` only — which signal prompted it. See § log below.
 
   /* Hall passes, in two collections — state and history. See the shape decision below.
      `note` is optional on both and absent where unused, the same rule as a mark cell's. */
@@ -266,6 +267,26 @@ Seven shape decisions that matter:
   back the whole array**. The second half of that firewall is `audience`: an entry written by the
   teacher for herself carries `audience: ""` — it went to nobody, which is the truth — rather than a
   value the cooldown could count as outreach.
+- **`ruleId` is on a `contact` entry and on nothing else, and it is what makes the cooldown
+  possible** *(named WO-4.5, 2026-08-27; written by WO-5.3)*. It carries `src/signals.js`'s own
+  `hit.ruleId` unchanged — `grade-fell`, `absence-run`, `grade-rose` — so the two vocabularies are
+  one and nothing has to map between them. **The cooldown keys on `studentId + ruleId`**, which is
+  that work order's stated trap: keyed on the student alone it hides a NEW problem because you
+  emailed about an OLD one, so a student written home about for a grade fall on Monday is still on
+  Tuesday's list for four missing assignments.
+
+  **Nothing in this build writes one.** `newLogEntry()` writes the seven fields above for the two
+  kinds this app authors, and a `ruleId: ""` on every behavior note would be an eighth field that
+  never means anything, paid for by every document, for a kind Phase 5 owns. So **the reader
+  tolerates its absence and a contact without one silences nothing** — it is about no signal anybody
+  can name. That under-fires rather than over-claims, which is the same posture the turnaround rule
+  takes: a duplicate email costs a teacher a minute, and a contact of unknown subject silencing
+  every signal is this work order's trap arriving through a missing field.
+
+  **The cooldown is therefore class-blind, because the record is** (see the bullet below). An email
+  about a grade fall silences that student's grade-fall row in every section she is in, since
+  `log[]` cannot say which one it was about. WO-5.3 may decide otherwise when it writes the first
+  one; what it must not do is infer a class from whichever roster the send was started on.
 - **A log entry carries no `classId`, and that is the shape rather than an omission.** It is a
   record about a child, so "two behavior notes in the last 30 days" counts across every class she is
   in, and the concern rule fires in both sections of a student the teacher has twice. Inferring a
@@ -551,6 +572,42 @@ reads both apps' numbers this year and they have to agree. See
 Every signal carries a cooldown read from the outreach `log`: a student contacted about the same
 signal within N days (default 14) is suppressed. Without it the list is identical every week, the
 teacher stops reading it, and the feature is dead — quietly, and without anyone deciding to kill it.
+
+**It is derived at read time and there is no suppression store** *(WO-4.5)*. `src/signals.js`'s
+`applyCooldown()` reads `log[]` and `cooldownDays` and returns two arrays — what the column draws,
+and what it took out — and it writes nothing. `newYearDocument()` gained no field, the document is
+byte-identical either side of a pass, and **restoring a backup restores the cooldowns** because the
+log that produced them is in the backup. A `suppressedUntil` on a hit would be a second truth about
+who is on the list, sitting beside the log that decides it, going stale the first time a threshold
+moved — the same argument `wasFlagged` loses under § Praise above.
+
+**The window is inclusive and counted off the day being asked about**, exactly as the behavior
+window is: `cooldownDays` of 14 covers the day the contact went out and the thirteen after it, and
+the student is back on the fourteenth. A suppressed row on the list **names the contact that
+silenced it and the date it comes back** — "3 suppressed" with no names is indistinguishable from a
+list that has quietly lost three students — and carries *Write anyway*, because the cooldown
+suggests and does not hold the door shut *(the owner, 2026-08-20)*.
+
+### The quiet middle
+
+Students who are **neither flagged, nor praised, nor contacted this term**, listed per class and
+ranked by **how long it has been** since anything was written down, said, or sent about them.
+`src/signals.js`'s `quietMiddle()` is the one answer: it is the list the signals screen's third
+panel draws and the count WO-6.4's `The quiet middle · N` opens onto, so the two cannot be a
+student apart.
+
+Three rulings in it are decisions rather than plumbing:
+
+- **A note to self is not an exclusion, it is the clock.** "Flagged, praised, or contacted" is the
+  whole of what takes a student off this list; a teacher who wrote *ask about the science fair* has
+  not been in touch with anybody. What the note does is move her down the ranking, which is the
+  right place for her rather than off the page.
+- **It is a third list and not a third column.** The concern and praise columns share a ranking —
+  how much changed — and this one does not. Drawing it beside them would say it shares theirs.
+- **It costs one grade per quiet student and nothing else.** The sentence names the grade because
+  that is the fact that answers *why did I lose track of her*; it does not say "and steady", or
+  "no missing work, no absences", because each of those is a rule the engine already has, run a
+  second time outside the pass that owns it, to report that it did not fire.
 
 ## Outreach templates
 

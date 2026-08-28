@@ -427,6 +427,25 @@ export function shiftDays(iso, days) {
   return at.getUTCFullYear() + '-' + pad(at.getUTCMonth() + 1) + '-' + pad(at.getUTCDate());
 }
 
+/*
+  HOW MANY DAYS FROM ONE ISO DATE TO ANOTHER — `daysBetween('2026-09-01', '2026-09-08')` is 7, and
+  it is negative when the second date is the earlier one.
+
+  IT IS HERE FOR THE REASON shiftDays() IS, and not because a second caller earned it: this file's
+  header forbids a `Date` object anywhere outside utcOf(), and the alternative was src/signals.js
+  parsing two dates for itself — a second site touching the one construct that has already cost
+  src/attendance.js twice. A subtraction of two UTC instants built from three numbers each cannot
+  land on a DST seam, which is exactly the property shiftDays() is trusted for; a local-clock
+  subtraction across a spring-forward is off by an hour and floors to the wrong day.
+
+  ONE CALLER TODAY — the cooldown, which says how many days ago a contact went out (WO-4.5). The
+  export is stated as a departure from the note above shiftDays() rather than left to look like the
+  third-caller rule being applied loosely.
+*/
+export function daysBetween(fromISO, toISO) {
+  return Math.round((utcOf(toISO) - utcOf(fromISO)) / DAY_MS);
+}
+
 /* WHICH DAY OF THE WEEK AN ISO DATE IS — 0 for Sunday, 6 for Saturday, and −1 for anything this
    file cannot read as a date. WO-6.3's month grid needs it to know which column a month starts in;
    nothing else in the app has ever asked.

@@ -1037,17 +1037,23 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1141 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1160 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-one files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
+WO-4.5 moved it from 1141 to 1160: nineteen literal call sites in one new section at the foot of
+the run order (`verify/cooldown-quiet.mjs`), none of them inside a loop and none of them a failure
+arm — so the section contributes nineteen executed results to a green run. Its two guards are
+`skip()` calls rather than `check()` calls (no `window.planbook`, and a fixture that did not
+install), which is why they move this number by nothing and show up in the run's own skip
+accounting instead.
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
 line-anchored, and comment lines are excluded because the harness quotes call names in its prose

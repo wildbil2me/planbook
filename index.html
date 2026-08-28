@@ -1574,6 +1574,16 @@
         <p class="sig-col-empty hidden" id="signalsConcernEmpty">
           Nobody is flagged here right now.
         </p>
+        <!-- THE COOLDOWN'S FOOT (WO-4.5). Hidden, counted, never silently dropped: the count sits
+             at the bottom of the column the rows were taken out of, and the expansion under it says
+             which student, which contact and the date she comes back. "3 suppressed" with no names
+             is indistinguishable from a list that has quietly lost three students, which is why
+             this is a control rather than a line of text. Both halves are painted from the model;
+             what is here is the shape and the wiring. -->
+        <button class="sig-hidden hidden" type="button" id="signalsConcernHidden"
+                data-signals-hidden="concern" aria-expanded="false"
+                aria-controls="signalsConcernQuiet"></button>
+        <div class="sig-list hidden" id="signalsConcernQuiet"></div>
       </div>
 
       <div class="sig-col praise" id="signalsPraise">
@@ -1583,6 +1593,13 @@
           Nobody is climbing yet. Every rule on this side needs a window of work or of meetings
           behind it — the praise list fills up as the term does.
         </p>
+        <!-- The praise column's own cooldown foot. Symmetrical with the concern one above and for
+             the same reason paintColumn() is one function: a suppression a teacher can see on one
+             list and not on the other is a list she stops trusting. -->
+        <button class="sig-hidden hidden" type="button" id="signalsPraiseHidden"
+                data-signals-hidden="praise" aria-expanded="false"
+                aria-controls="signalsPraiseQuiet"></button>
+        <div class="sig-list hidden" id="signalsPraiseQuiet"></div>
       </div>
     </div>
 
@@ -1615,6 +1632,49 @@
         with the screen button in the header and this comes straight back.
       </p>
     </div>
+  </div>
+
+  <!--
+    THE QUIET MIDDLE (WO-4.5) — a PANEL under the two columns, on this same screen, which is the
+    owner's ruling of 2026-08-20: this view then has one state and the switcher never has to say
+    which of two you are on. The consequence is WO-6.4's — the glance page's `The quiet middle · N`
+    is a door onto this panel, landing here and scrolled to it, rather than a surface of its own.
+    One list, one place, two ways in.
+
+    A THIRD LIST AND NOT A THIRD COLUMN, which is the drawing's argument rather than its layout: the
+    two columns above share a ranking and this one does not. It is ordered by how long it has been,
+    a different question with a different unit, and drawing it beside them would say it shares
+    theirs.
+
+    IT IS OUTSIDE `#signalsColumns` ON PURPOSE, so that the big empty state above — "every rule ran
+    and none fired" — takes the columns down and leaves this list standing. A day with nothing
+    flagged is exactly the day this panel is the most useful thing on the screen.
+  -->
+  <div class="panel hidden" id="signalsQuiet">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2 id="signalsQuietHead">The quiet middle</h2>
+          <p>
+            Neither flagged, nor praised, nor contacted this term — and how long that has been
+            true. Every row opens that student's record.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- The copy is here rather than in the renderer for the reason the install banner's is: it is
+         the part a teacher actually reads, and it should be revisable without opening a JavaScript
+         file. -->
+    <p class="sig-quiet-note">
+      No threshold will ever produce this list. These are the students a busy teacher loses track
+      of because nothing about them is wrong — ranked by how long it has been since anything was
+      written down, said, or sent.
+    </p>
+    <div class="sig-list" id="signalsQuietList"></div>
+    <p class="sig-col-empty hidden" id="signalsQuietEmpty">
+      Nobody is in the quiet middle right now — every student on these rosters is flagged, is
+      being praised, or has been written home about this term.
+    </p>
   </div>
 </div>
 

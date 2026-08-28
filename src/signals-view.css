@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════════════════
    Who needs you — the signals lists, their toolbar, and the card behind a row
-   (WO-4.2, and the second column since WO-4.3).
+   (WO-4.2, the second column since WO-4.3, and the cooldown and the quiet middle
+   since WO-4.5).
 
    LIFTED FROM design/mockups/proposed-phase4.css RATHER THAN RE-DERIVED, which is
    CLAUDE.md § "Reference implementation"'s rule applied to this repo's own drawing:
@@ -14,12 +15,9 @@
    drawing draws the whole room — three work orders' worth — and this file is one of
    them:
 
-     `.sig-hidden` `.sig-muted` `.sig-undo` WO-4.5. The cooldown, which suppresses a
-                                            hit and says which contact silenced it.
-     `.sig-quiet-note` `.sig-since`         WO-4.5's other half, the quiet middle.
      `.log-*`                               WO-4.4. Those are the log sheet's and the
                                             student record's, and their banners in the
-                                            drawing still say `not yet lifted`.
+                                            drawing say so.
      `.sig-dot`                             declined outright, and the note
                                             design/mockups/PROTOCOL.md asks for is this
                                             one. The drawing puts a coloured dot AND a
@@ -30,6 +28,22 @@
                                             component that already carries a colour per
                                             class (src/classes.js's avatarClass) and the
                                             student's initials inside it.
+
+   `.sig-hidden`, `.sig-muted`, `.sig-undo`, `.sig-quiet-note` AND `.sig-since` CAME
+   ACROSS AT WO-4.5, 2026-08-27, under the names they were drawn with and with the
+   drawing's own values — which empties the list above of everything but one deliberate
+   refusal and another work order's section. That is § SIGNALS finished: three work
+   orders share it and all three have now lifted their half.
+
+   ONE CLASS IN THIS BLOCK IS THIS SHEET'S OWN AND IS NOT IN THE DRAWING, the same kind
+   of addition `.sig-col-empty` was: `.sig-quiet-empty` does not exist — the quiet
+   panel's empty line wears `.sig-col-empty`, because "nobody is quiet" and "nobody is
+   flagged" are the same shape of news in the same grey, and a second class for it would
+   be a second thing to keep in step. What the build DECLINED from the drawing is the
+   quiet panel's *Back to the list* button: it is drawn as though the panel were a
+   surface you arrive on, and the owner's 2026-08-20 ruling makes it a panel on the
+   screen you are already on, so there is nothing to go back from. WO-6.4 owns the
+   arrival that would make it mean something.
 
    `.sig-two` AND `.sig-col.praise` CAME ACROSS AT WO-4.3, 2026-08-24, which is where
    this list used to name them: the two-column grid, the phone breakpoint that drops
@@ -53,7 +67,7 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6. */
-.sig-row, .sig-card-act, .sig-sort {
+.sig-row, .sig-hidden, .sig-undo, .sig-card-act, .sig-sort {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -224,6 +238,90 @@
 .sig-delta.flat { color: #8a9bb0; font-size: 13px; }
 .sig-delta-unit { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; letter-spacing: 0.4px; text-transform: uppercase; }
 
+/* ────────────── suppressed by cooldown — "hidden, not deleted" (WO-4.5) ──────────────
+
+   LIFTED FROM design/mockups/proposed-phase4.css § SIGNALS, value for value, which is the
+   half of this sheet's header rule this work order collects on.
+
+   A SUPPRESSED HIT IS HIDDEN AND COUNTED, NEVER SILENTLY DROPPED — the work order's fifth
+   acceptance line — so the count sits at the FOOT of the column it was taken out of, and
+   the expansion says which student, which contact, and the date she comes back. "3
+   suppressed" with no names is indistinguishable from a list that has quietly lost three
+   students, which is the drawing's own caption and the reason this is a control and not a
+   line of text.
+
+   `margin-top: auto` pins it to the bottom of a short column, so two columns of unequal
+   length still line their footers up.
+*/
+.sig-hidden {
+  margin-top: auto; padding: 10px 20px; border: none; border-top: 1px solid #f3f4f6;
+  background: none; font-family: inherit; text-align: left;
+  font-size: 11px; font-weight: 700; color: #8a9bb0; cursor: pointer; transition: all 0.15s;
+}
+.sig-hidden:hover { background: #f8f9fb; color: #5b6fcc; }
+
+/*
+  AN EXPANDED SUPPRESSED ROW. Quieter than a live one and NOT a button: the whole point of the
+  cooldown is that this student is not being asked for again yet, so the row STATES the fact and the
+  contact that caused it, and the way to act anyway is the one control at the end rather than the
+  whole row. That is the drawing's ruling and it is also what makes *Write anyway* survivable —
+  three deliberate acts against one tap for the rows the engine actually wants read.
+
+  It borrows `.sig-row-name` and `.sig-row-why` from the live row above rather than restating them,
+  and overrides the two colours: a suppressed row must read as the same kind of object as the row it
+  was taken out of, quieter. Two shapes would make it a different animal, which is exactly what it
+  is not.
+*/
+.sig-muted {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px; border-top: 1px solid #f3f4f6; background: #fbfcfd;
+}
+.sig-muted .sig-row-name { color: #8a9bb0; font-weight: 600; }
+.sig-muted .sig-row-why { color: #a0aab8; }
+
+/* *WRITE ANYWAY* — the owner's ruling, 2026-08-20. The cooldown suggests; it does not hold the door
+   shut, because a teacher who has just had a phone call has a real reason to write again and a
+   feature that tells her she may not is one she routes around outside the app. What keeps it from
+   dissolving the cooldown is WHERE IT SITS, which is this rule: quiet, small, at the end of a muted
+   row, behind an expansion she opened on purpose. */
+.sig-undo {
+  flex: 0 0 auto; padding: 4px 10px; border-radius: 6px;
+  border: 1.5px solid #e0e4ea; background: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 700; color: #6b7a8d; cursor: pointer;
+}
+.sig-undo:hover { border-color: #5b6fcc; color: #5b6fcc; }
+
+/* ────────────────────────────── the quiet middle (WO-4.5) ──────────────────────────────
+
+   A THIRD LIST AND NOT A THIRD COLUMN, and that is the drawing's argument rather than its
+   layout: the two columns above share a ranking — how much changed — and this one does not.
+   It is ranked by how long it has been, which is a different question with a different unit,
+   and putting it beside them would imply it shares their order.
+
+   IT IS A PANEL ON THIS SAME SCREEN, under the two columns (the owner, 2026-08-20), so this
+   view has one state and the switcher never has to say which of two you are on. WO-6.4's
+   `The quiet middle · N` is a door onto this panel rather than a surface of its own — one
+   list, one place, two ways in — which is why nothing here is written to be reusable
+   somewhere else.
+
+   The rows are `.sig-row` as shipped, so a row here and a row above are the same object with
+   a different figure on the end; what this sheet adds is the note over the list and that
+   figure.
+*/
+.sig-quiet-note {
+  padding: 10px 20px; border-bottom: 1px solid #eef0f4;
+  font-size: 11px; line-height: 1.6; color: #8a9bb0;
+}
+/* HOW LONG IT HAS BEEN, in the slot `.sig-delta` holds on the two columns above — and quiet grey
+   rather than red or green, because it is neither. There is no direction to a silence: a student
+   nobody has written about in forty days is not falling and is not climbing, which is the whole
+   reason no threshold produces this list. It wears `.sig-delta-unit` for the small line under it,
+   as the delta does, so the two figures read as the same kind of object. */
+.sig-since {
+  flex: 0 0 auto; text-align: right;
+  font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums;
+}
+
 /* ────────────────────── two states that are not empty states ──────────────────────
 
    A RULE THAT CANNOT FIRE YET SAYS SO. WO-4.2's last acceptance line: the behavior rule is inert
@@ -334,7 +432,8 @@
   .sig-col.praise { order: 1; }
   .sig-col.concern { order: 2; }
   .sig-toolbar { padding: 10px 14px; }
-  .sig-row, .sig-inert, .sig-col-head, .sig-col-empty {
+  .sig-row, .sig-inert, .sig-col-head, .sig-col-empty,
+  .sig-hidden, .sig-muted, .sig-quiet-note {
     padding-left: 14px; padding-right: 14px;
   }
 }
@@ -347,6 +446,13 @@
 @media (pointer: coarse) {
   .sig-row { min-height: 56px; }
   .sig-inert { min-height: 44px; }
+  /* WO-4.5's three, at the drawing's own floors. `.sig-muted` is not a control — it is a row that
+     states a fact, and the one thing on it a thumb can reach is the button at its end — but it
+     takes the floor anyway, because a 26px band between two 56px rows is a strip a thumb lands on
+     by accident on the way to the one below it. */
+  .sig-hidden { min-height: 44px; }
+  .sig-muted { min-height: 44px; }
+  .sig-undo { min-height: 44px; padding: 0 14px; }
   .sig-card-act { min-height: 44px; }
   /* The native picker iOS opens is already thumb-sized; what this owes is a target to open it. */
   .sig-sort { min-height: 44px; }

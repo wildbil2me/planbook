@@ -134,6 +134,24 @@
                                       hook on this screen that navigates, and WHERE it goes is
                                       resolved in the listener because the row may be about a class
                                       that is not the open one: the class is selected first
+      data-signals-hidden="<dir>"     opens or closes one column's cooldown rows (WO-4.5). The count
+                                      of them is on the button in both states, because a suppressed
+                                      hit is COUNTED as well as recoverable and a control that
+                                      stopped saying how many once you opened it would be a number
+                                      you had to close the thing to read
+      data-signal-undo="<key>"        *Write anyway* — one suppressed row put back on the list for
+                                      this arrival (the owner, 2026-08-20). It writes NOTHING: the
+                                      cooldown suggests and does not hold the door shut, and a
+                                      decision recorded in the year document would be a suppression
+                                      a teacher could not find to undo. The key is
+                                      `student|rule|class`, which is the cooldown's own key plus the
+                                      class, because the same student in two sections is two rows
+                                      and two conversations
+      data-signal-quiet="<id>|<cls>"  a quiet-middle row, and it is the only row on this screen that
+                                      does NOT open the signal card: the card answers "why is she on
+                                      the list" and the whole of what is true about a quiet student
+                                      is that she is on none. It goes to her record, resolved here
+                                      for data-signal-card-detail's reason
       data-class-screen="<view>"      moves between the open class's screens — Attendance ·
                                       Assignments · Scores · Calendar (WO-6.6) · Signals (WO-4.2).
                                       Drawn by src/screen-nav.js on every one of them, and it never
@@ -1769,6 +1787,37 @@ document.addEventListener('click', (e) => {
   const signalRow = e.target.closest('[data-signal-row]');
   if (signalRow) {
     signalsView.openSignalCard(signalRow.getAttribute('data-signal-row'), signalRow);
+    return;
+  }
+
+  /* ── the cooldown and the quiet middle (WO-4.5) ──
+     Three more, and none of them writes anything either. The first two change which rows are on
+     screen; the third navigates, and where it GOES is resolved here for the reason the signal
+     card's own detail door is: the row may be about a class that is not the open one.
+
+     THE QUIET ROW OPENS THE STUDENT'S RECORD AND NOT THE SIGNAL CARD, which is the one place a row
+     on this screen parts company with the two columns above it. The card answers "why is this
+     student on the list"; the whole of what is true about a quiet student is that she is on no
+     list, and the thing that resolves "I have lost track of her" is her record. */
+  const signalsHidden = e.target.closest('[data-signals-hidden]');
+  if (signalsHidden) {
+    signalsView.toggleSuppressed(signalsHidden.getAttribute('data-signals-hidden'));
+    return;
+  }
+  const signalUndo = e.target.closest('[data-signal-undo]');
+  if (signalUndo) {
+    signalsView.writeAnyway(signalUndo.getAttribute('data-signal-undo'));
+    return;
+  }
+  const quietRow = e.target.closest('[data-signal-quiet]');
+  if (quietRow) {
+    const quiet = signalsView.quietRowTarget(quietRow.getAttribute('data-signal-quiet'));
+    if (quiet) {
+      if (quiet.classId && quiet.classId !== classes.getSelectedClassId()) {
+        classes.selectClass(quiet.classId);
+      }
+      showStudentDetail(quiet.studentId, quietRow);
+    }
     return;
   }
   if (e.target.closest('[data-signal-card-detail]')) {

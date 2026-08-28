@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 /* ── the sections, in run order ─────────────────────────────────────────────────────────────
- * Sixty files, named after the surface they drive rather than after the work order that added
+ * Sixty-one files, named after the surface they drive rather than after the work order that added
  * them, so that a reader looking for "where do I put a check about the score grid" answers it
  * from the list. Two of them are not sections: lib-dates.mjs is a pure helper library, and
  * attendance-passes.mjs is the second half of the attendance section, called by the first half
@@ -118,6 +118,7 @@ import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as policyUrl } from './verify/policy-url.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
+import { run as cooldownQuiet } from './verify/cooldown-quiet.mjs';
 
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
    below which say "the document came out at the current version" are claims about a NUMBER and not
@@ -297,6 +298,12 @@ const BROWSER_SECTIONS = [
   { file: 'verify/policy-url.mjs', run: policyUrl },
   { file: 'verify/drive-sign-in.mjs', run: driveSignIn },
   { file: 'verify/log-entries.mjs', run: logEntries },
+  /* LAST, AND ON PURPOSE (WO-4.5). It is the only section that drives a real restore of the whole
+     year document through backup.restoreFromText() and the confirm button — its acceptance line
+     asks for exactly that — and a section that replaces the document is a section nothing should
+     run after. The file it restores is this run's own, so the content is unchanged either way;
+     what this ordering buys is that the claim does not have to be true of the next fixture too. */
+  { file: 'verify/cooldown-quiet.mjs', run: cooldownQuiet },
 ];
 
 /* Part of the harness, counted in the lines-per-check figure below, and not a section: a pure

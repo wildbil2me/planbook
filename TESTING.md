@@ -7405,6 +7405,101 @@ above is owed in full.
 
 ---
 
+### WO-4.5 — Cooldown & the quiet middle
+
+**What this adds.** Two things under WO-4.2's two columns. A **cooldown** takes a student off one
+signal for 14 days after she has been written to about that signal, and says so at the foot of the
+column it took her out of: the count is on a control, the expansion names each student, the contact
+that silenced her and the date she comes back, and **Write anyway** at the end of the row puts her
+back for as long as this arrival lasts. And the **quiet middle** — a third list and not a third
+column — holds the students who are neither flagged, nor praised, nor contacted this term, ranked by
+how long it has been since anything was written down, said, or sent about them.
+
+**It keys on `student + rule`, which is the whole feature.** Keyed on the student, the cooldown
+hides a new problem because you emailed about an old one; the fixture makes that falsifiable in one
+student, who was written to about her grade three days ago and is still on the list for three missing
+assignments.
+
+**It stores nothing, and that is what makes the restore line pay.** `applyCooldown()` reads `log[]`
+and `cooldownDays` and returns two arrays. `newYearDocument()` gained nothing, the year is
+byte-identical either side of a pass, and the cooldowns survive a backup round trip because the log
+that produced them is in the backup.
+
+**The field it reads does not exist yet, and that is named rather than worked around.** A `contact`
+entry carries `ruleId` — `docs/data-model.md` § log defines it, WO-5.3 writes it, and nothing in this
+build writes one. The reader tolerates its absence, and it tolerates it by silencing **nothing**: a
+contact whose signal cannot be named under-fires rather than over-claiming, which is the same posture
+the turnaround rule takes. The harness plants the record WO-5.3 will write, in the documented shape,
+rather than building Phase 5's outreach flow to make one check possible.
+
+- [x] Logging a contact about a concern removes that student from that signal for 14 days and not
+      from other signals. *(Measured on the planted record: the student written to about her grade
+      keeps her row and leads on the missing rule, with the grade rule at the foot; a student whose
+      only rule was contacted about has no row at all; a student contacted twenty days ago about the
+      same rule is on the list. Mutation-proved by keying on the student alone.)*
+- [x] The cooldown reads the log rather than a separate suppression store — verify by restoring a
+      backup and confirming cooldowns survive. *(Measured twice: the document is byte-identical
+      either side of a pass that silences three hits across both columns and holds no
+      suppression-shaped key, and the same three come back with the same return dates after a real
+      `restoreFromText()` round trip through a file and the confirm button.)*
+- [x] The quiet-middle list excludes anyone flagged, praised, or contacted this term. *(Measured:
+      two of seven students, and the five excluded include the one whose only signal is currently
+      SUPPRESSED — flagged and contacted both — and the one who has a note to self, which is not
+      contact and moves her clock instead. Mutation-proved by dropping the contact exclusion.)*
+- [ ] 📆 Two consecutive weekly runs on real data produce visibly different concern lists. **→ the
+      term.** *(Nothing in a fixture can pay this: it wants the same five classes read a week apart
+      with a real email sent in between. The mechanism under it is measured — the same document with
+      `cooldownDays` at 0, 14 and 30 returns three different concern lists — but a threshold moved by
+      hand is not a week passing. Re-run against the owner's own classes once there are two weeks of
+      the term and at least one contact logged in between.)*
+- [x] Suppressed hits are recoverable and counted, never silently dropped. *(Measured on the markup:
+      the foot says the count in both states, the expansion draws one muted row per suppressed hit
+      naming the contact and the return date, each carries its own *Write anyway*, and the big empty
+      state cannot claim "nobody is flagged" over a column the cooldown has emptied.)*
+
+**Still owed to a human on the iPad** — nothing here is closed by a green harness:
+
+- [x] The cooldown's foot under a thumb: the count is readable at the bottom of a column, and one
+      tap opens the rows without moving the list under the finger that is already travelling. 👤
+- [x] *Write anyway* at the end of a muted row on a portrait iPad — reachable, and not so reachable
+      that it is the thing a thumb hits on the way past. The ruling that pays for the control is
+      **where it sits**, and only a thumb can say whether it sits there. 👤
+- [ ] The quiet middle at real length. The fixture holds two rows; a real class holds most of a
+      roster in the first fortnight, and whether that panel is useful or a wall is the reading this
+      build cannot take. 👤 *(**Read once, 2026-08-27, on an empty term: "a wall this early", and
+      likely useful once student data starts piling in. The owner's call is to WATCH IT RATHER THAN
+      ACT** — the panel is at its longest exactly when it has least to say, because almost nothing
+      has been written down yet and most of a roster ties at the term's own start, so the ranking
+      has nothing to sort by. That inverts as the term fills, which is why the answer is not to
+      change what qualifies. Note that the class filter is NOT the escape hatch the build thought
+      it was: filtered to one class, this early, it is still most of that class's roster. **Re-read
+      it in the term, not before** — the box stays open on purpose, and nothing here is booked. If
+      the wall survives real data, the first thing to reach for is collapsing the panel behind its
+      own head — `The quiet middle · N` as the control, closed by default, which is the shape the
+      two cooldown feet on this same screen already teach, and which drops nobody and invents no
+      threshold. Capping the list and suppressing it while the ranking is degenerate were both
+      considered and both set aside; the reasons are in the same sitting's notes.)*
+- [x] The class card with both chips on it, on a portrait iPad, across five classes: the slot still
+      holds one row and no card is taller than its neighbour. Measured headless at a 202px card —
+      24px slot around a 21px chip — but the coarse block bumps both and nobody has seen it. 👤
+
+*(**Run by the owner on 2026-08-28, on the iPad, and the three thumb readings passed** — the cooldown
+foot, *Write anyway* on a muted row, and the class card with both chips across five classes. **The
+quiet middle stays open and that is not an oversight**: it was read the day before, the answer was
+"a wall this early", and the ruling in its own note is to re-read it in the term rather than act on
+a panel that is at its longest exactly when it has least to sort by. A second reading on an
+empty term is the same reading. It closes when there is a fortnight of real data under it, which is
+the same wait its 📆 sibling above is serving.)*
+
+**Where this stands.** Both tools are green on the delivered tree: `1175 checks · 1175 passed ·
+0 failed · 0 skipped`, 403s, and `33 checks · 29 passed · 0 failed · 4 to review` on the sweep. The
+harness is § *"the cooldown and the quiet middle (WO-4.5)"* at the foot of the run order —
+nineteen call sites against a fixture built for it, and it runs LAST because it is the only section
+that drives a real restore of the whole year document. Two mutations, both reverted and both turning
+the checks that carry the acceptance lines red.
+
+---
+
 ## Phase 5 — Outreach
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*

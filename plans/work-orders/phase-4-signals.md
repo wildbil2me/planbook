@@ -453,7 +453,7 @@ which puts the judgement where the knowledge is. **Not booked.**)*
 
 ## WO-4.5 — Cooldown & the quiet middle
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-4.2, WO-4.3
+**Ship** 3 · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-4.2, WO-4.3
 **Closes roadmap** Phase 4 → "Contact cooldown" and "The quiet middle."
 
 **Why it exists.** Without the cooldown the list is identical every week, the teacher stops reading
@@ -488,13 +488,48 @@ failing nor excelling, and no threshold will ever surface them.
   One list, one place, two ways in.
 
 **Acceptance**
-- [ ] Logging a contact about a concern removes that student from that signal for 14 days and not
+- [x] Logging a contact about a concern removes that student from that signal for 14 days and not
       from other signals.
-- [ ] The cooldown reads the log rather than a separate suppression store — verify by restoring a
+- [x] The cooldown reads the log rather than a separate suppression store — verify by restoring a
       backup and confirming cooldowns survive.
-- [ ] The quiet-middle list excludes anyone flagged, praised, or contacted this term.
+- [x] The quiet-middle list excludes anyone flagged, praised, or contacted this term.
 - [ ] 📆 Two consecutive weekly runs on real data produce visibly different concern lists.
-- [ ] Suppressed hits are recoverable and counted, never silently dropped.
+- [x] Suppressed hits are recoverable and counted, never silently dropped.
 
 **Traps** — Cooldown keyed on the student rather than the *signal* will hide a new problem because
 you emailed about an old one. Key on `student + rule`.
+
+*(**Built 2026-08-27. Four of five boxes closed; the fifth is 📆 and wants two weeks of a real
+term.** Three things in it were decisions the work order did not settle, and all three are recorded
+where the next reader will hit them rather than only here.*
+
+*— **The field the cooldown reads did not exist, and it is now named rather than inferred.** A
+`contact` entry carries* `ruleId`*, carrying* `src/signals.js`*'s own* `hit.ruleId` *unchanged;
+`docs/data-model.md` § log defines it and* **WO-5.3 fills it**. *Nothing in this build writes one —*
+`newLogEntry()` *is untouched, because a* `ruleId: ""` *on every behavior note is an eighth field
+paid for by every document for a kind Phase 5 owns — so the reader tolerates its absence, and it
+tolerates it by silencing* **nothing**. *A contact whose signal cannot be named under-fires rather
+than over-claiming, which is the turnaround rule's posture and the only reading that does not walk
+into this work order's own trap through the back door. A consequence worth knowing before WO-5.3
+writes the first one:* **the cooldown is class-blind, because the record is** — `log[]` *carries no*
+`classId`*, so an email about a grade fall silences that student's grade-fall row in every section
+she is in.)*
+
+*(— **The home-screen slot took one chip and not two, and the reason is a measurement.**
+`.class-card-signals` *reserves 24px for ONE row of chips (WO-1.10, WO-3.26) so that the first real
+datum on a page of five cards reflows nothing. Two* `.class-card-count` *chips and their gap are
+~160px inside a content box that is 172–222px on this grid, and a third wraps the slot onto a line
+the reserved height does not cover — the invariant broken on every card at once. So the card carries
+the* **post-cooldown** *attention count and the quiet middle's home-screen presence stays* [WO-6.4](../work-orders/phase-6-calendar-glance.md#wo-64--the-glance-page)*'s*
+`The quiet middle · N`*, which that work order already draws by name as a door onto the panel this
+one built. The harness measures the slot rather than trusting the arithmetic:* `slotHeight <
+chipHeight * 2` *at a 202px card.)*
+
+*(— **And the pass is skipped while the grid is not on screen**, which is the only guard of its kind
+in* `src/home.js`. `src/shell.js`*'s* `afterAttendanceChange()` *calls* `refreshHome()` *on EVERY
+mark, and five full signal passes per keystroke — each doubled by the turnaround rule's historical
+context — is WO-2.13's defect reached from a third direction on the one flow CLAUDE.md calls the
+critical path. Everything that puts the grid on screen calls* `refreshHome()` *straight after, so
+the chip is never stale when a teacher can see it.* **This one is asserted by reading and not by
+measurement**: *timing it from outside would want* `home` *and* `views` *on the* `window.planbook`
+*seam, and two new seam entries for one performance guard was declined.)*

@@ -170,8 +170,14 @@
   The height is one row of chips: a `.pill`-shaped count is 24. That was a prediction about how tall
   one line of content would be and never about what it would SAY, and WO-3.26 is where it gets
   collected on — the ungraded chip below is built to fit inside this number rather than to set it.
-  The rule is therefore unchanged, and the half of it still owed is WO-4.x's: whatever goes in
-  beside the count wears the same ceiling.
+
+  WO-4.5 PAID THE OTHER HALF, AND IT PAID IT IN WIDTH RATHER THAN IN HEIGHT. The signals count wears
+  `.class-card-count` as it stands — no second class, no second set of numbers to keep in step — so
+  it fits the ceiling by construction. What it cost instead is the room for a THIRD chip: two counts
+  and their gap are ~160px of a card whose content box is 172–222px on this grid, and ~180px once
+  the coarse block has bumped the font. src/home.js's header carries that arithmetic and the
+  decision it forced. A later work order that wants a third number here is asking for a second row,
+  which is a change to the height of every card on the screen and not an addition to one.
 */
 .class-card-signals { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 24px; }
 

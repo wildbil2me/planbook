@@ -11,18 +11,30 @@
   SO THE CARD IS A SLOT. classCard() below renders a class's identity and then two containers:
 
     .class-card-state    WO-2.1 — whether today's attendance is taken, dropped, or not taken yet
-    .class-card-signals  WO-3.26 — ungraded work · WO-4.x — the students who need attention
+    .class-card-signals  WO-3.26 — ungraded work · WO-4.5 — the students who need attention
 
-  THE SECOND SLOT HAS ITS FIRST OCCUPANT (WO-3.26) and still holds space for the other one. A card
-  with ungraded work in the open term wears one chip in it, and a card with none wears nothing —
+  THE SECOND SLOT IS FULL (WO-4.5), and "full" is a statement about its WIDTH rather than about
+  there being nothing left to say. A card with ungraded work in the open term wears one chip, a
+  class with students on the signals list wears a second, and a card with neither wears nothing —
   not `0 ungraded`, because a zero is a datum a teacher has to read to learn there is nothing to
   read. That is the same call this file already made about the slot when it was empty, and it is
   the opposite of the honest-empty-state rule only in appearance: an empty state is what a PAGE
   says when it has nothing, and this is one chip on a card that has plenty.
 
-  Which is why the slot's HEIGHT (src/home.css) is still the point rather than a leftover. The chip
-  fits inside the 24px that was already reserved, so the first count to appear on a page of five
-  cards reflows nothing, and a class that finishes its grading does not shrink its own card.
+  Which is why the slot's HEIGHT (src/home.css) is still the point rather than a leftover. Both
+  chips fit inside the 24px that was already reserved, so the first count to appear on a page of
+  five cards reflows nothing, and a class that finishes its grading does not shrink its own card.
+
+  A THIRD CHIP DOES NOT FIT, AND THAT IS THE MEASUREMENT RATHER THAN AN OPINION. `.class-card` sits
+  on a `minmax(200px, 1fr)` grid, which is 200–250px of card and ~172–222px of content once its
+  padding is off; two `.class-card-count` chips and their gap are about 160px of it at 11px/700 and
+  ~180px at the coarse block's 12px. WO-4.5 arrived wanting two of its own — the students who need
+  attention, and the quiet middle — and the second would have wrapped the slot onto a line the
+  reserved height does not cover, which is the invariant above broken on every card at once. So the
+  card carries the signals count and the quiet middle's page-level control is WO-6.4's, which draws
+  it by name as `The quiet middle · N` and lands on the panel WO-4.5 built for it. If a later work
+  order needs a third number here, it needs a second row and a new height, and that is a change to
+  every card on the screen rather than an addition to one.
 
   THE FIRST SLOT WAS FILLED BY WO-2.1, and it cost this card its shape — which was foreseen here
   and paid for twice, so the whole of it is worth reading before the next slot is filled. The state
@@ -54,8 +66,8 @@
   NO SUPPORT DATA REACHES THIS SCREEN, which is why this module never asks src/supports.js its one
   visibility question and is deliberately absent from shell.js's flipPresentationMode() redraw
   list. A class name and a colour are not a student's file. The moment a card shows anything out of
-  a student's `supports` block — WO-4.x quoting a behavior note into .class-card-signals is the
-  obvious way it happens — it asks that module like every other screen does, and it joins that
+  a student's `supports` block — a later phase quoting a behavior note into .class-card-signals is
+  the obvious way it happens — it asks that module like every other screen does, and it joins that
   list. WO-1.9's own acceptance says to re-verify that inheritance at every later phase; this
   paragraph is where the next reader starts.
 
@@ -69,6 +81,30 @@
   the flip to suppress, and a card that redrew on the flip would redraw identically. THE TEST THAT
   WOULD CHANGE THE ANSWER is unchanged: the first datum on this card that varies with WHO a student
   is puts this module on that list, in the same pass that adds it.
+
+  RE-VERIFIED AGAIN AT WO-4.5, AND THE ANSWER IS STILL "STAYS OFF THE LIST" — but this is the
+  closest call the test has had and it is worth the next reader's time. The signals chip is a COUNT
+  OF STUDENTS on a screen whose own list of those students REFUSES to draw under a projector
+  (src/signals-view.js), so the obvious reading is that the card should refuse too. It does not,
+  and the reason is the owner's own grammar for this page, ruled on 2026-08-19 for the review count
+  in WO-6.4: *a launcher says how much is waiting and the surface it launches says what*. Four
+  students needing attention in Biology I names nobody, is identical whichever four they are, and
+  discloses strictly less than the roster's support dot, which has shipped since WO-1.7 and says
+  that one named student has something on file. The signals SCREEN closes because its entire content
+  is a ranked list of NAMED students in trouble; a number is not that list, and it cannot be turned
+  back into one. The test above therefore still answers "no": nothing on this card varies with who a
+  student is. **The line that would change it is a card that named one, and there is no reading of
+  this slot's 24px in which that fits.**
+
+  AND THE SIGNALS PASS IS THE ONE EXPENSIVE THING ON THIS SCREEN, so it is skipped while the grid is
+  not the view on screen — the only guard of its kind in this file, and it is here because
+  src/shell.js's afterAttendanceChange() calls refreshHome() on EVERY mark. Attendance marking is on
+  the critical path (CLAUDE.md: fast enough to do while students arrive), and five full signal
+  passes per keystroke, each one doubled by the turnaround rule's historical context, is WO-2.13's
+  defect reached from a third direction. Everything that puts this grid on screen calls this
+  function — src/shell.js's showHome() does it in the line after views.showView('home') — so the
+  chip is never stale when a teacher can see it. Asked of src/views.js rather than by reading a
+  class off the DOM, because that module owns the answer and two askers is two answers.
 
   (The function is not named here on purpose. tools/wo-sweep.mjs greps for calls to it to report
   which screens ask, and a mention in a comment saying this one does NOT would show up in that list
@@ -104,11 +140,19 @@ import { getActiveClasses, getSelectedClassId, getOpenTermId, initials, avatarCl
    and for the grade detail both, which is what stops a card and the screen it opens disagreeing
    about the same class's unfinished work. */
 import { openWork } from './grade-engine.js';
+/* The students who need attention, POST-COOLDOWN, from the module that owns both answers. Nothing
+   here decides whether a rule fired or whether a signal is silenced: src/signals.js decides it once,
+   for this card and for the list the card's own class opens onto, which is what stops a chip saying
+   four and the screen behind it showing two. */
+import { evaluate, applyCooldown } from './signals.js';
 /* The state slot's whole content, from the module that owns what a state IS. Nothing here decides
    whether a class was taken, dropped or forgotten; src/attendance.js's stateSummary() decides it
    once, for this card and for the marking screen both, which is what stops the two disagreeing
    about the same class on the same day. */
 import { stateSummary, todayISO } from './attendance.js';
+/* Which view is on screen, asked rather than read off a class name — see the header's last
+   paragraph for what this guards and why the cost of not guarding it lands on attendance marking. */
+import { currentView } from './views.js';
 
 const GRID_ID = 'homeGrid';
 const EMPTY_ID = 'homeEmpty';
@@ -216,6 +260,10 @@ function classCard(cls, isOpen) {
   signals.className = 'class-card-signals';
   const count = ungradedChip(cls);
   if (count) signals.append(count);
+  /* WO-4.5's, and second because that is the order a teacher reads the card in: what is waiting on
+     her desk, then who is waiting on her. */
+  const attention = attentionChip(cls);
+  if (attention) signals.append(attention);
   open.append(signals);
 
   card.append(open);
@@ -352,6 +400,53 @@ function ungradedChip(cls) {
   const chip = document.createElement('span');
   chip.className = 'class-card-count';
   chip.textContent = n + ' to grade';
+  return chip;
+}
+
+/*
+  HOW MANY STUDENTS IN THIS CLASS ARE ON THE SIGNALS LIST TODAY (WO-4.5), after the cooldown.
+
+  IT COUNTS STUDENTS AND NOT HITS, which is the same call ungradedCount() makes one function up: a
+  student who is failing AND absent AND missing three is one conversation, and "6 need you" over
+  four students would be a number a teacher cannot act on. It is the count the list itself shows,
+  because the list groups the same way (src/signals-view.js's collect).
+
+  BOTH DIRECTIONS. The screen this card opens onto is called "Who needs you" and it has two columns;
+  a chip that counted only the concern half would take the praise half off the one page a teacher
+  opens every morning, which is precisely how the praise half dies (plans/ROADMAP.md Phase 4).
+
+  POST-COOLDOWN, and that is the whole reason this chip belongs to this work order rather than to
+  WO-4.2. A count that included the students the engine has decided not to ask about again would be
+  the same number every week — the failure the cooldown exists to prevent, arriving on the screen a
+  teacher looks at most.
+
+  AND IT IS SKIPPED WHILE THE GRID IS NOT ON SCREEN. The header's last paragraph is the whole of the
+  reason; what matters here is that the skip is not a fallback for a missing answer, it is a refusal
+  to compute one nobody can see.
+*/
+function attentionCount(cls) {
+  if (currentView() !== 'home') return 0;
+  const doc = getDoc();
+  if (!doc || !cls) return 0;
+  const termId = getOpenTermId(cls.id);
+  if (!termId) return 0;
+  const waiting = new Set();
+  applyCooldown(doc, evaluate(doc, cls, termId)).shown
+    .forEach((hit) => waiting.add(hit.studentId));
+  return waiting.size;
+}
+
+/* THE CHIP, OR NOTHING AT ALL — ungradedChip()'s rule, unchanged, and it is not a control for that
+   function's reason either: it is text inside the one button that opens the class, and the tap that
+   acts on what it says is the card's own. What that tap lands on is the class's working surface
+   rather than the signals list, which is a real limit of this chip and the reason WO-6.4's
+   page-level panel exists: this says how many, and the screen behind the Signals segment says who. */
+function attentionChip(cls) {
+  const n = attentionCount(cls);
+  if (!n) return null;
+  const chip = document.createElement('span');
+  chip.className = 'class-card-count';
+  chip.textContent = n + (n === 1 ? ' needs you' : ' need you');
   return chip;
 }
 

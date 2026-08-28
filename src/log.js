@@ -35,9 +35,10 @@
   ── WHAT THIS FILE IS NOT ──
 
   IT HAS NO DOM. `src/log-sheet.js` owns the sheet a teacher writes in and the card the record is
-  read on; this file owns the shape, the write, and the two questions a reader can ask. Same split
-  `src/calendar.js` and `src/calendar-view.js` make, and the import runs one way — nothing in
-  src/log-sheet.js is imported back here.
+  read on; this file owns the shape, the write, and the questions a reader can ask — two at WO-4.4
+  and five since WO-4.5, whose three are dates and an `audience` and are argued at their own block
+  below. Same split `src/calendar.js` and `src/calendar-view.js` make, and the import runs one way
+  — nothing in src/log-sheet.js is imported back here.
 
   IT DECIDES NOTHING ABOUT PRESENTATION MODE. `visibleEntriesFor()` below asks src/supports.js and
   hands back a shorter list; the rule about WHICH kinds go quiet lives there, in the one function
@@ -255,4 +256,93 @@ export function behaviorCountSince(doc, studentId, throughISO, days) {
       const on = String(e.at || '').slice(0, 10);
       return on >= from && on <= throughISO;
     }).length;
+}
+
+/* ────────────────────── what the cooldown and the quiet middle read (WO-4.5) ──────────────────────
+
+  ── `ruleId`, THE EIGHTH FIELD, WHICH THIS BUILD READS AND NEVER WRITES ──
+
+  The cooldown suppresses a student on ONE SIGNAL — WO-4.5's trap in one line: keyed on the student
+  rather than the signal, it hides a new problem because you emailed about an old one. So it has to
+  know which signal a contact was about, and `{ id, studentId, at, kind, audience, subject, body }`
+  has nowhere to say it. `ruleId` is that field: `docs/data-model.md` § log names it, WO-5.3 fills
+  it, and it carries `src/signals.js`'s own `hit.ruleId` unchanged so that nothing anywhere has to
+  map one vocabulary onto the other.
+
+  NOTHING IN THIS BUILD WRITES ONE, and newLogEntry() above is deliberately not touched. It writes
+  the seven fields the data model names for the two kinds this app authors, and a `ruleId: ''` on a
+  behavior note would be an eighth field on every record that never means anything — a shape change
+  paid by every document, for a field belonging to a kind Phase 5 owns. The reader below therefore
+  has to tolerate its absence, and does: an entry with no `ruleId` is about no signal this can name,
+  so it silences nothing.
+
+  THAT TOLERANCE UNDER-FIRES RATHER THAN OVER-CLAIMS, which is the same posture the turnaround rule
+  takes at src/signals.js. A contact whose signal is unknown suppressing NOTHING costs a teacher one
+  duplicate email; a contact whose signal is unknown suppressing EVERYTHING is the trap this work
+  order names, arrived at through the back door of a missing field.
+
+  ── AND THE FIREWALL IS UNCHANGED ──
+
+  A reader here still names the kinds it wants, and there is still no exported reader that hands
+  back an entry. What crosses these three functions is a DATE, and — for the cooldown alone — the
+  `audience` enum, because the suppressed row on the list has to say *which* contact silenced it and
+  "you emailed his guardian" is the useful half of that sentence. A subject and a body do not cross:
+  the list screen would then be one careless template away from putting what a teacher wrote about a
+  child into an email about that child.
+*/
+
+/* Behavior, note, and Phase 5's contact — the whole of what `log[]` may hold. It is separate from
+   LOG_KINDS above for that array's own stated reason: LOG_KINDS is what the SHEET offers and what
+   this build's surfaces read back, and folding `contact` into it would put an email's subject line
+   on a card headed "What you have written down". This one is used by the two date readers below,
+   which read every kind because "nothing has been written down, said, or sent" is a claim about all
+   three and would be a lie if it quietly meant two. */
+const ALL_KINDS = ['behavior', 'note', 'contact'];
+
+/*
+  WHEN THIS STUDENT WAS LAST CONTACTED ABOUT THIS SIGNAL — `{ on, audience }`, or null.
+
+  IT REFUSES AN EMPTY `ruleId` RATHER THAN ANSWERING "ANY CONTACT", and that refusal is the trap
+  made structural. A caller who wants "when did I last write about her at all" cannot get it out of
+  this function and hand the answer to a cooldown, which is precisely the mistake WO-4.5 exists to
+  warn against; lastContactDate() below answers that different question under a name that says so.
+
+  `on` IS A DATE AND NOT A TIMESTAMP. Both ends of every window in this file are compared as the
+  first ten characters of `at` — behaviorCountSince() says why — so the offset stays out of an
+  arithmetic it has nothing to do with.
+
+  Newest first out of entriesOfKind(), so the first match is the most recent contact about that
+  signal, which is the one the cooldown counts from.
+*/
+export function lastContactAbout(doc, studentId, ruleId, throughISO) {
+  const rule = String(ruleId || '');
+  if (!rule || !throughISO) return null;
+  const found = entriesOfKind(doc, studentId, ['contact'])
+    .filter((e) => String(e.ruleId || '') === rule
+      && String(e.at || '').slice(0, 10) <= throughISO)[0];
+  return found
+    ? { on: String(found.at).slice(0, 10), audience: String(found.audience || '') }
+    : null;
+}
+
+/* WHEN THIS STUDENT WAS LAST CONTACTED ABOUT ANYTHING — a date, or ''. The quiet middle's
+   exclusion and nothing else: a student written home about this term is not a student her teacher
+   has lost track of, whichever signal prompted it, and that question is about the student where the
+   cooldown's is about the pair. */
+export function lastContactDate(doc, studentId, throughISO) {
+  if (!throughISO) return '';
+  const found = entriesOfKind(doc, studentId, ['contact'])
+    .filter((e) => String(e.at || '').slice(0, 10) <= throughISO)[0];
+  return found ? String(found.at).slice(0, 10) : '';
+}
+
+/* WHEN ANYTHING WAS LAST WRITTEN DOWN, SAID OR SENT ABOUT THIS STUDENT — a date, or ''. The quiet
+   middle's clock. It takes no `kinds` argument on purpose: the whole of what it measures is "has
+   anything happened", and a caller able to narrow it could ask about two kinds and print the answer
+   under a heading that claims three. */
+export function lastEntryDate(doc, studentId, throughISO) {
+  if (!throughISO) return '';
+  const found = entriesOfKind(doc, studentId, ALL_KINDS)
+    .filter((e) => String(e.at || '').slice(0, 10) <= throughISO)[0];
+  return found ? String(found.at).slice(0, 10) : '';
 }

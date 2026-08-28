@@ -33,8 +33,11 @@
 
   THE RULES THEMSELVES, all but two — UNTIL WO-4.2, WHICH IS WHERE THE NINE CONCERN RULES LANDED
   (2026-08-20), AND WO-4.3, WHICH LANDED THE OTHER FOUR PRAISE RULES ON 2026-08-24. All fourteen
-  the data model tabulates are now here, and WO-4.5 still owns the cooldown; WO-4.4 owned
-  the behavior log and delivered it on 2026-08-24, so the ninth concern rule counts something now. Two rules were registered at WO-4.1 — `grade-below` and `attendance-window` — as
+  the data model tabulates are now here; WO-4.4 owned
+  the behavior log and delivered it on 2026-08-24, so the ninth concern rule counts something now.
+  WO-4.5 LANDED THE COOLDOWN AND THE QUIET MIDDLE ON 2026-08-27, and neither of them is a rule —
+  applyCooldown() is a filter over the hits a pass produced and quietMiddle() is a list of the
+  students it did NOT produce, both at the foot of this file, both reads. Two rules were registered at WO-4.1 — `grade-below` and `attendance-window` — as
   proofs of the contract above rather than as the feature: an engine with no rules in it cannot
   demonstrate both directions from one pass, and one with a single rule cannot demonstrate a
   student on both lists. Both survived WO-4.2 unaltered except for the `figure` every rule now
@@ -99,6 +102,18 @@
   one-keystroke mistake — the same reason no merge field resolves those paths. Grades, scores,
   marks, meetings and the log are the whole of what a rule may see, and of the log a rule sees a
   COUNT of one kind and never a word of what was written.
+
+  THE COOLDOWN AND THE QUIET MIDDLE READ ONE FIELD MORE, AND IT IS STILL NOT A WORD ANYBODY TYPED
+  (WO-4.5). What crosses out of src/log.js is three DATES and the `audience` enum — no subject, no
+  body, no entry. A suppressed row has to say which contact silenced it, and *you emailed his
+  guardian about this on Sep 6* is that sentence with nothing of the teacher's own writing in it.
+  Neither function is a rule, so neither can put any of it into an explanation Phase 5 drafts into
+  mail; the suppression record is a wrapper AROUND a hit and the hit is unchanged.
+
+  AND THERE IS STILL NO WRITER IN THIS FILE. WO-4.3's line holds through WO-4.5 without an
+  exception: the cooldown derives its suppression from `log[]` at read time and stores nothing, so
+  the document is byte-identical either side of a pass and a restored backup restores the cooldowns
+  with the log that produced them.
 */
 
 /* The grade half, and BOTH of these are reads of the same arithmetic rather than two of them
@@ -124,7 +139,10 @@ import { termIsDated } from './classes.js';
    leaves UTC, so a whole number of days cannot land on a DST seam — the scar its own comment
    carries, and the reason src/log.js takes it rather than doing the arithmetic locally. The
    turnaround rule needs one date and one only: the far edge of its own window. */
-import { shiftDays } from './calendar.js';
+/* `daysBetween` arrives with it at WO-4.5, from the same file and for the same reason it lives
+   there: src/calendar.js's header forbids a Date object outside its own utcOf(), and the cooldown
+   needs to say how many days ago a contact went out. */
+import { shiftDays, daysBetween } from './calendar.js';
 /* The app's two number formatters, imported rather than re-declared. formatPercent() is how every
    percentage in Planbook is written down — two fixed decimals, because the SIS carries two and this
    number is re-keyed into it by hand (src/scores.js) — and src/detail.js already imports it from
@@ -142,7 +160,14 @@ import { formatPercent, scoreMark } from './scores.js';
    itself for why the entries themselves never cross this import. src/log.js is a model with no DOM
    in it and it imports nothing from here, so the arrow runs one way exactly as it does for
    src/grade-engine.js above. */
-import { behaviorCountSince } from './log.js';
+/* THREE MORE JOINED AT WO-4.5, and every one of them hands back a date. `lastContactAbout` is the
+   cooldown's whole reading — when this student was last written to about THIS rule, plus the
+   `audience` the suppressed row names — and it refuses an empty rule id, which is this work order's
+   trap made structural in the file that owns the record. `lastContactDate` and `lastEntryDate` are
+   the quiet middle's two: has anybody been written to about this student this term, and when was
+   anything last written down about her at all. No subject and no body crosses this import, exactly
+   as no entry crosses it for the behavior rule. */
+import { behaviorCountSince, lastContactAbout, lastContactDate, lastEntryDate } from './log.js';
 import { formatWeight } from './categories.js';
 
 /* ────────────────────────────── the thresholds ──────────────────────────────
@@ -1361,6 +1386,34 @@ function studentsIn(doc) { return doc && Array.isArray(doc.students) ? doc.stude
 function rosterOf(cls) { return cls && Array.isArray(cls.roster) ? cls.roster : []; }
 
 /*
+  ONE TERM'S RANGE, AND IT IS DEFINED IN EXACTLY ONE PLACE.
+
+  `from` is `''` when the class's term is not dated — which reads as "every recorded meeting of this
+  class", exactly as the printed attendance record does (src/attendance.js's classRecord).
+  src/classes.js's termIsDated() is the shape test; nothing here repairs or sorts a term's dates,
+  which is that file's rule 2.
+
+  THE END IS CLIPPED TO `through`. The evaluator takes that argument so a pass can be run as of a
+  date — the harness does exactly this — and a term range that ran past it would count meetings from
+  after the moment being asked about. Today it changes nothing, because a meeting in the future is a
+  record nobody has written; it is what keeps an as-of pass honest.
+
+  IT IS A FUNCTION SINCE WO-4.5 and was five lines inside makeContext() before it. The quiet middle
+  asks the same question — "was this student contacted THIS TERM" — from outside a context, and a
+  second copy of a clip against `through` is a second answer about which days a term covers, on two
+  halves of one screen.
+*/
+function termRangeOf(cls, termId, through) {
+  const term = (cls && Array.isArray(cls.terms) ? cls.terms : [])
+    .filter((t) => t && t.id === termId)[0] || null;
+  const dated = termIsDated(term);
+  return {
+    from: dated ? term.start : '',
+    to: dated ? (term.end < through ? term.end : through) : through,
+  };
+}
+
+/*
   THE CONTEXT, AND WHY IT IS MEMOIZED RATHER THAN A BAG OF ARGUMENTS.
 
   Fourteen rules over twenty-five students is the shape this ends up in, and every attendance rule
@@ -1411,22 +1464,12 @@ function makeContext(doc, cls, termId, through, historical) {
   const flaggedThen = new Map();
   const pasts = new Map();
 
-  /*
-    THE TERM'S RANGE, RESOLVED ONCE, and `null` when this class's term is not dated — which reads
-    as "every recorded meeting of this class", exactly as the printed attendance record does
-    (src/attendance.js's classRecord). src/classes.js's termIsDated() is the shape test; nothing
-    here repairs or sorts a term's dates, which is that file's rule 2.
-
-    THE END IS CLIPPED TO `through`. The evaluator takes that argument so a pass can be run as of a
-    date — the harness does exactly this — and a term range that ran past it would count meetings
-    from after the moment being asked about. Today it changes nothing, because a meeting in the
-    future is a record nobody has written; it is what keeps an as-of pass honest.
-  */
-  const term = (cls && Array.isArray(cls.terms) ? cls.terms : [])
-    .filter((t) => t && t.id === termId)[0] || null;
-  const dated = termIsDated(term);
-  const termFrom = dated ? term.start : '';
-  const termTo = dated ? (term.end < through ? term.end : through) : through;
+  /* THE TERM'S RANGE, RESOLVED ONCE — termRangeOf() below, which is where the reasoning is and
+     which the quiet middle reads through as well, so the two cannot come to disagree about which
+     days a term covers. */
+  const range = termRangeOf(cls, termId, through);
+  const termFrom = range.from;
+  const termTo = range.to;
 
   /* Every assignment of this class and term, in the order the document holds them. Once per pass,
      because it is the same list for every student — what differs per student is which of its cells
@@ -1695,4 +1738,209 @@ export function evaluate(doc, cls, termId, options) {
     });
   });
   return hits;
+}
+
+/* ────────────────────────────── the cooldown (WO-4.5) ──────────────────────────────
+
+  ── WHY IT IS HERE AND NOT ON THE SCREEN ──
+
+  severityOrder()'s reason, unchanged: WO-6.4's glance panel, the home screen's card and Phase 5's
+  send flow all ask "who is on this list today", and three surfaces filtering for themselves is
+  three answers — with the two that are wrong being the ones nobody is looking at. A cooldown that
+  lived in src/signals-view.js would be a suppression the card on the home screen had never heard
+  of, on the same morning, about the same student.
+
+  ── IT KEYS ON `student + rule`, WHICH IS THE WHOLE FEATURE ──
+
+  WO-4.5's trap in one line: keyed on the student, it hides a NEW problem because you emailed about
+  an OLD one. A student you wrote home about for a grade fall on Monday is still on this list on
+  Tuesday for four missing assignments, and that is not a bug to be tidied away — it is the reason
+  the pair is the key. `src/log.js`'s lastContactAbout() refuses an empty rule id so that the
+  student-only question cannot be asked of it by accident.
+
+  ── AND IT SUPPRESSES, IT DOES NOT DELETE ──
+
+  Both lists come back: `shown` is what the column draws and `suppressed` is what it counts at its
+  foot and expands. WO-4.5's fifth acceptance line is that a suppressed hit is recoverable and
+  counted rather than silently dropped, and the shape of this return is that line made structural —
+  there is no arm of this function that drops a hit on the floor.
+
+  ── NOTHING IS WRITTEN, AND THERE IS NO SUPPRESSION STORE ──
+
+  This reads `log[]` and the thresholds and returns two arrays. The document is byte-identical
+  either side of it, `newYearDocument()` gained nothing, and the second acceptance line — restore a
+  backup and the cooldowns come back — is paid by the log being in the backup rather than by
+  anything here. A `suppressedUntil` field would be a second truth about who is on the list, sitting
+  beside the log that decides it, going stale the moment the teacher moved the threshold.
+
+  ── THE WINDOW, AND THE TWO EDGES ──
+
+  Inclusive and counted off `through`, exactly as behaviorCountSince() counts a behavior window: a
+  contact ON the day being asked about is inside, and `cooldownDays` of 14 covers the day of the
+  contact and the thirteen after it. `until` is therefore the contact's date plus the whole span,
+  which is the first day the student is back — the date the suppressed row prints.
+
+  ── WHAT CROSSES OUT OF THE LOG, AND WHAT DOES NOT ──
+
+  A date and the `audience` enum. Not the subject, not the body: a suppressed row says *you emailed
+  his guardian about this on Sep 6*, which is what makes the suppression checkable, and it says
+  nothing a teacher typed. That is src/log.js's firewall holding one function further out.
+*/
+export function applyCooldown(doc, hits, options) {
+  const opts = options || {};
+  const through = opts.through || todayISO();
+  const days = Math.max(0, Math.floor(Number(thresholdOf(doc, 'cooldownDays')) || 0));
+  const shown = [];
+  const suppressed = [];
+  (Array.isArray(hits) ? hits : []).forEach((hit) => {
+    const held = days && hit ? silencedBy(doc, hit, through, days) : null;
+    if (held) suppressed.push(held); else shown.push(hit);
+  });
+  return { shown: shown, suppressed: suppressed };
+}
+
+/* One hit against one contact, or null for a hit nothing silences. `days` is how long ago the
+   contact went out — 0 on the day itself — and it is a subtraction of two dates rather than a walk,
+   through the one function in this app that touches a Date (src/calendar.js's daysBetween). */
+function silencedBy(doc, hit, through, days) {
+  const seen = lastContactAbout(doc, hit.studentId, hit.ruleId, through);
+  if (!seen) return null;
+  if (seen.on < shiftDays(through, -(days - 1))) return null;
+  return {
+    hit: hit,
+    on: seen.on,
+    audience: seen.audience,
+    until: shiftDays(seen.on, days),
+    days: daysBetween(seen.on, through),
+    span: days,
+  };
+}
+
+/* ────────────────────────────── the quiet middle (WO-4.5) ──────────────────────────────
+
+  THE STUDENTS NO THRESHOLD WILL EVER PRODUCE. Neither flagged, nor praised, nor contacted this
+  term — plans/ROADMAP.md Phase 4's other half, and the work order's own sentence: the students a
+  busy teacher genuinely loses track of are the ones nothing about whom is wrong.
+
+  IT IS RANKED BY HOW LONG IT HAS BEEN, and that is why the drawing makes it a THIRD LIST AND NOT A
+  THIRD COLUMN. The two columns share a ranking — how much changed — and this one does not; putting
+  it beside them would imply it shares one. The order here is longest-quiet first, ties broken by
+  roster order underneath a stable sort, which is the order evaluate() returns a class in.
+
+  ── WHY IT IS IN THE ENGINE ──
+
+  applyCooldown()'s reason and severityOrder()'s: WO-6.4's glance page draws `The quiet middle · N`
+  as a door onto the list this returns, so the count on that page and the rows on this one have to
+  come out of one function. A screen that answered "how many" for itself would be the second answer,
+  and the one nobody checks.
+
+  ── THREE THINGS IT DOES NOT DO ──
+
+  IT DOES NOT RE-EVALUATE WHEN IT IS GIVEN THE HITS. `options.hits` is the pass the caller has
+  already run — the FULL pass, before any cooldown, because a student whose only signal is currently
+  suppressed has been both flagged and contacted and belongs on neither list. Without it this runs
+  its own pass, which is what a caller that wants only this list should do.
+
+  IT DOES NOT COUNT A NOTE AS AN EXCLUSION. "Flagged, praised, or contacted" is the acceptance
+  line's own list and a note to self is none of the three: a teacher who wrote *ask about the
+  science fair* three weeks ago has not been in touch with anybody. What a note does is move the
+  CLOCK, which is what sinks that student down the list rather than off it.
+
+  AND IT DOES NOT READ A SUPPORT, A PLAN OR A MEDICAL NEED, exactly as no rule above does. What it
+  reads is the roster, the grade, the hits, and three dates out of src/log.js — of which two are
+  dates with no kind attached and the third is the date of a contact. Nothing it returns could name
+  what was written.
+*/
+export function quietMiddle(doc, cls, termId, options) {
+  if (!doc || !cls) return [];
+  const opts = options || {};
+  const through = opts.through || todayISO();
+  const hits = Array.isArray(opts.hits) ? opts.hits : evaluate(doc, cls, termId, { through });
+  const range = termRangeOf(cls, termId, through);
+
+  const busy = Object.create(null);
+  hits.forEach((hit) => { if (hit) busy[hit.studentId] = true; });
+
+  const people = studentsIn(doc);
+  const rows = [];
+  rosterOf(cls)
+    .map((id) => people.filter((s) => s && s.id === id)[0])
+    .filter(Boolean)
+    .forEach((student) => {
+      if (busy[student.id]) return;
+      /* CONTACTED THIS TERM, and a `range.from` of '' — an undated term — reads as "ever", which is
+         the same reading every other term-shaped question in this file gives an undated term. */
+      const wrote = lastContactDate(doc, student.id, through);
+      if (wrote && wrote >= range.from) return;
+
+      /* THE CLOCK. The last thing of any kind written down about this student, and the term's own
+         start when there is nothing — which is what "all term" means and what the drawing's figure
+         says. An undated term has no start to measure from, so the row says so rather than
+         inventing a number. */
+      const said = lastEntryDate(doc, student.id, through);
+      const from = said || range.from;
+      const days = from ? Math.max(0, daysBetween(from, through)) : null;
+      const grade = weightedClassGrade(doc, cls, termId, student.id);
+      const percent = grade && grade.percentage !== null ? grade.percentage : null;
+      rows.push({
+        studentId: student.id,
+        classId: cls.id,
+        termId: termId,
+        /* `since` is the date the clock runs from and '' is "nothing to run it from"; `days` is
+           null in the same case rather than 0, because a zero here would read as "something
+           happened today" — the exact opposite of what an undated term with no entries means. */
+        since: from,
+        days: days,
+        wrote: !!said,
+        percentage: percent,
+        letter: grade ? grade.letter : null,
+        explanation: quietSentence(percent, !!said, days, whoOf(cls, student)),
+      });
+    });
+
+  /* Longest quiet first. A row with no clock at all leads: "nothing has ever been written down and
+     this term has no dates on it" is more unknown than any number of days, not less.
+
+     AND THE LIST IS NOT CAPPED, which was read on an empty term on 2026-08-27 and left alone
+     deliberately — the owner's call is to watch it rather than act, and TESTING.md § WO-4.5 carries
+     the reading. Early in a term this returns most of a roster, because almost nothing has been
+     written down yet and most students tie at the term's own start, so the ranking above has little
+     to sort by; that inverts as the term fills. Capping it here would invent a threshold the work
+     order did not ask for and would drop students silently, which is the failure the suppressed-row
+     half of WO-4.5 exists to prevent. If the wall survives real data the fix is the VIEW's — the
+     panel collapsing behind its own head, the shape the two cooldown feet already teach — and not
+     a number in this function. */
+  return rows.sort((a, b) => {
+    const da = a.days === null ? Infinity : a.days;
+    const db = b.days === null ? Infinity : b.days;
+    return db - da;
+  });
+}
+
+/*
+  ONE QUIET ROW'S SENTENCE, built here for the reason every other sentence on this screen is built
+  in this file: a renderer that composed it would be free to disagree with the numbers beside it.
+
+  IT IS NOT A RULE'S say() AND THERE IS NO RULE BEHIND IT — nothing fired, which is the whole point
+  — so it is not handed a `numbers` object. What it is handed is the same shape a rule's say() is:
+  measured figures, and `who`, which is names and strings only.
+
+  WHAT IT DOES NOT SAY, and this is the one place this work order departs from
+  design/mockups/signals.html. The drawing's rows read *"78% and steady"* and *"83%, no missing
+  work, no absences"*. "and steady" is a claim about a delta, and "no missing work, no absences" is
+  two more measurements per student on a list that can hold most of a class — and every one of them
+  would be a rule this file already has, run again outside the pass that owns it, to report that it
+  did not fire. The grade is kept because it is one read and it is the thing that answers "why did I
+  lose track of her"; the rest is one tap away on the row's own destination.
+*/
+function quietSentence(percentage, said, days, who) {
+  const where = 'In ' + who.className + ', ' + who.name;
+  const standing = percentage === null
+    ? ' has no graded work yet'
+    : ' is at ' + formatPercent(percentage);
+  if (days === null) {
+    return where + standing + ' and nothing has been written down, said or sent about them at all.';
+  }
+  return where + standing + ' and nothing has been written down, said or sent about them '
+    + (said ? 'in ' : 'all term — ') + plural(days, 'day', 'days') + '.';
 }

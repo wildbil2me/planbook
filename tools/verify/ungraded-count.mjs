@@ -160,6 +160,15 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
           found: !!card,
           said: chip ? chip.textContent : '',
           chips: slot ? slot.querySelectorAll('.class-card-count').length : -1,
+          /* HOW MANY OF THEM ARE THIS WORK ORDER'S, which is what the two assertions below mean by
+             "one chip" and what they asserted with a bare count until WO-4.5 put a second occupant
+             in the slot. The claim was never "the slot holds exactly one thing" — it is that the
+             ungraded count appears ONCE and is the first chip in the slot. A bare count could not
+             tell those apart, and it went red on a work order that added a neighbour rather than on
+             a build that double-counted. */
+          gradeChips: slot ? Array.prototype.filter.call(
+            slot.querySelectorAll('.class-card-count'), function(n){
+              return / to grade$/.test(n.textContent || ''); }).length : -1,
           inControl: !!(chip && b && b.contains(chip)),
           controls: card ? card.querySelectorAll('button').length : -1,
           chipH: chip ? chip.getBoundingClientRect().height : 0,
@@ -180,10 +189,11 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
     check('a class with three pieces of ungraded work worth points wears one chip saying so — and '
       + 'an excused column, a late carrying a score, a teacher-typed 0, a column marked missing, '
       + 'zero-point bonus work and another term\'s untouched work are none of them in the number',
-      seen.waiting.found && seen.waiting.said === CHIP && seen.waiting.chips === 1
+      seen.waiting.found && seen.waiting.said === CHIP && seen.waiting.gradeChips === 1
         && seen.waiting.inControl && seen.waiting.controls === 1,
       'the card says ' + JSON.stringify(seen.waiting.said) + ' (wanted ' + JSON.stringify(CHIP)
-        + '), ' + seen.waiting.chips + ' chip(s), inside the one control = '
+        + '), ' + seen.waiting.gradeChips + ' ungraded chip(s) of ' + seen.waiting.chips
+        + ' in the slot, inside the one control = '
         + seen.waiting.inControl + ', controls on the card = ' + seen.waiting.controls);
 
     /* ACCEPTANCE LINE 3, first half. A zero is a datum a teacher has to read to learn there is
@@ -284,7 +294,7 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
     check('entering the last blank score on one of the three takes the count to two, with no '
       + 'reload — the card is redrawn by the same chain that brings the teacher back to it',
       typed.cell === '{"v":60}' && typed.stillBlank === 0
-        && after.waiting.said === AFTER && after.waiting.chips === 1,
+        && after.waiting.said === AFTER && after.waiting.gradeChips === 1,
       'the cell now holds ' + typed.cell + ', ' + typed.stillBlank
         + ' blank(s) left in that column, and the card says '
         + JSON.stringify(after.waiting.said) + ' (wanted ' + JSON.stringify(AFTER) + ')');

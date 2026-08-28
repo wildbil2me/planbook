@@ -23,7 +23,7 @@
    WHERE IT SPLITS ON LIFT:
 
      § SIGNALS       →  src/signals-view.css  (WO-4.2 lifted 2026-08-20 · WO-4.3 lifted
-                                              2026-08-24 · WO-4.5 pending)
+                                              2026-08-24 · WO-4.5 lifted 2026-08-27)
      § SIGNAL CARD   →  src/signals-view.css  (WO-4.2 — lifted 2026-08-20)
      § LOG SHEET     →  src/shell.css         (WO-4.4 — lifted 2026-08-24)
      § LOG RECORD    →  src/detail.css        (WO-4.4 — lifted 2026-08-24)
@@ -50,6 +50,22 @@
    at src/detail.js's own import. What the build DECLINED is nothing: all fifteen names are
    in the app.
 
+   WO-4.5 LIFTED THE LAST OF § SIGNALS, on 2026-08-27 — `.sig-hidden`, `.sig-muted`,
+   `.sig-undo`, `.sig-quiet-note` and `.sig-since`, all five under the names they were
+   drawn with and with these values, which finishes a section three work orders shared.
+   Two things to report (PROTOCOL.md § When the drawing lands). What the build ADDED is
+   nothing: the quiet panel's empty line wears `.sig-col-empty`, which WO-4.3 added for
+   the same shape of news one list up, rather than earning a class of its own. What the
+   build DECLINED is the *Back to the list* button drawn in the quiet middle's panel
+   header — it is drawn as though that panel were a surface you arrive on, and the
+   owner's 2026-08-20 ruling makes it a panel on the screen you are already on, so there
+   is nothing to go back from. WO-6.4 owns the arrival that would give it a meaning. Two
+   sentences in the quiet ROWS did not come across either, and that is a note rather than
+   a decline: *"78% and steady"* and *"83%, no missing work, no absences"* each carry a
+   claim the engine would have to re-measure per student, outside the pass that owns it,
+   to report that a rule did NOT fire — the grade is kept and the rest is one tap away on
+   the row's own destination (src/signals.js's quietSentence).
+
    WO-4.3 LIFTED THE REST OF § SIGNALS, on 2026-08-24 — `.sig-two`, `.sig-col.praise` and
    the phone breakpoint that drops to one column with PRAISE FIRST, all three under the
    names they were drawn with. Two things to report (PROTOCOL.md § When the drawing lands).
@@ -67,8 +83,8 @@
    the banners above and below say so in the same sitting as the lift (PROTOCOL.md rule 4).
    § SIGNALS went across in HALF, which is the honest reading of a section three work orders
    share: the concern column, the toolbar, the row, the delta and the inert line are in the
-   app; the praise column, the two-column grid and the cooldown's suppressed rows are not, and
-   they are named in that file's own header as the things it declined to take. What the build
+   app; the praise column and the two-column grid followed at WO-4.3, and the cooldown's
+   suppressed rows and the quiet middle at WO-4.5 — that file's own header records each lift. What the build
    declined ALTOGETHER is `.sig-dot` — one class, with its reason written at the same place —
    because the row already carries a class-coloured `.avatar` and this drawing's own caption
    says the dot is not what answers "which class". Everything else arrived under the name it
@@ -145,7 +161,7 @@
 .sig-delta-unit { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; letter-spacing: 0.4px; text-transform: uppercase; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SIGNALS — src/signals-view.css (WO-4.2 lifted 2026-08-20 · WO-4.3 lifted 2026-08-24 · WO-4.5 pending)
+   § SIGNALS — src/signals-view.css (WO-4.2 lifted 2026-08-20 · WO-4.3 lifted 2026-08-24 · WO-4.5 lifted 2026-08-27)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── THE TOOLBAR: WHICH CLASS, AND WHAT THIS LIST IS SORTED BY ── */
