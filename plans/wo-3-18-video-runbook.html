@@ -1,0 +1,927 @@
+<title>WO-3.18 Demo Video Runbook</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. Every value below is a literal for that reason.
+     tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block here is a red
+     sweep. This file inherits its identity wholesale from plans/wo-3-18-runbook.html and
+     plans/wo-7-1-runbook.html rather than re-deriving one — CLAUDE.md, "copy, don't re-derive". */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  code, .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 { font-size: clamp(30px, 5.2vw, 46px); font-weight: 700; letter-spacing: -0.015em; }
+  .band .standfirst { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 62ch; margin: 0; }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+
+  .band-meta {
+    display: flex; flex-wrap: wrap; gap: 8px 22px;
+    padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px; color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8a9bb0; display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+  }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: #e0e4f0; }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  h2.head { font-size: 25px; font-weight: 650; letter-spacing: -0.01em; margin-bottom: 14px; }
+  h3.sub { font-size: 18px; font-weight: 650; margin: 22px 0 10px; }
+
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 68ch; }
+  li { margin-bottom: 7px; }
+  li:last-child { margin-bottom: 0; }
+
+  /* ── Verdict callouts ─────────────────────────────────────── */
+  .note {
+    border-radius: 6px; padding: 16px 18px; margin: 0 0 18px;
+    border: 1px solid #dfe4ee; background: #ffffff;
+  }
+  .note:last-child { margin-bottom: 0; }
+  .note h4 {
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    margin-bottom: 8px; color: #5a6478;
+  }
+  .note p { max-width: 66ch; }
+  .note.stop  { border-left: 4px solid #a3283c; background: #fdf1f3; }
+  .note.stop h4 { color: #8e2235; }
+  .note.warn  { border-left: 4px solid #b07d12; background: #fdf7e9; }
+  .note.warn h4 { color: #8a6410; }
+  .note.go    { border-left: 4px solid #1f6b4a; background: #edf6f1; }
+  .note.go h4 { color: #1a5a3e; }
+  .note.info  { border-left: 4px solid #4a5fbb; background: #f3f5fd; }
+  .note.info h4 { color: #3d4fa0; }
+
+  /* ── Status strip ─────────────────────────────────────────── */
+  .strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(198px, 1fr));
+    gap: 12px; margin-bottom: 22px;
+  }
+  .cell {
+    background: #ffffff; border: 1px solid #dfe4ee; border-radius: 6px; padding: 13px 15px;
+  }
+  .cell .k {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase;
+    color: #8a9bb0; display: block; margin-bottom: 5px;
+  }
+  .cell .v { font-size: 14.5px; font-weight: 600; display: block; line-height: 1.35; }
+  .cell .n { font-size: 13px; color: #5a6478; display: block; margin-top: 4px; line-height: 1.45; }
+  .ok   { color: #1a5a3e; }
+  .bad  { color: #8e2235; }
+  .hold { color: #8a6410; }
+
+  /* ── Two-column split ─────────────────────────────────────── */
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .col {
+    background: #ffffff; border: 1px solid #dfe4ee; border-radius: 6px; padding: 18px 20px;
+  }
+  .col.me   { border-top: 3px solid #4a5fbb; }
+  .col.you  { border-top: 3px solid #b07d12; }
+  .col.now  { border-top: 3px solid #1f6b4a; }
+  .col h3 { font-size: 17px; font-weight: 650; margin: 0 0 4px; }
+  .col .tag {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase;
+    color: #8a9bb0; display: block; margin-bottom: 12px;
+  }
+  .col ul { padding-left: 20px; margin-bottom: 0; }
+  .col p { font-size: 15px; }
+
+  /* ── Shot cards ───────────────────────────────────────────── */
+  .shots { display: flex; flex-direction: column; gap: 14px; }
+
+  .shot {
+    display: grid; grid-template-columns: 92px 1fr;
+    background: #ffffff; border: 1px solid #dfe4ee; border-radius: 6px; overflow: hidden;
+  }
+  .rail {
+    background: #f5f7fb; border-right: 1px solid #e5eaf3;
+    padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+    text-align: center;
+  }
+  .rail .num {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 21px; font-weight: 700; color: #2a3a5e; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .rail .dur {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px; color: #6b7688; font-variant-numeric: tabular-nums;
+  }
+  .rail .who {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 3px; font-weight: 600;
+  }
+  .who-you { background: #f6e8c8; color: #7a5810; }
+
+  .shot.blocked .rail { background: #fbeef0; border-right-color: #f0d5da; }
+  .shot.blocked .rail .num { color: #8e2235; }
+
+  .shot-body { padding: 16px 20px; }
+  .shot-body h3 { font-size: 17px; font-weight: 650; margin: 0 0 12px; }
+  .shot-body .flag {
+    display: inline-block;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+    background: #a3283c; color: #ffffff; padding: 2px 7px; border-radius: 3px;
+    margin-left: 8px; vertical-align: 2px;
+  }
+  .shot-body .flag.soft { background: #b07d12; }
+  .shot-body dl { margin: 0; display: flex; flex-direction: column; gap: 11px; }
+  .shot-body dt {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a9bb0;
+    margin-bottom: 3px;
+  }
+  .shot-body dd { margin: 0; font-size: 15px; line-height: 1.55; max-width: 66ch; }
+  .shot-body dd.say {
+    border-left: 3px solid #cfd7e8; padding-left: 12px; color: #333d55; font-style: italic;
+  }
+  .shot-body dd.why { color: #5a6478; font-size: 14px; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .tbl-wrap { overflow-x: auto; border: 1px solid #dfe4ee; border-radius: 6px; background: #ffffff; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 520px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid #eaeef6; vertical-align: top; }
+  th {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #6b7688; background: #f5f7fb; font-weight: 600;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; }
+
+  /* ── Checklist ────────────────────────────────────────────── */
+  .checks { list-style: none; padding: 0; margin: 0; max-width: 70ch; }
+  .checks li {
+    padding: 9px 0 9px 30px; border-bottom: 1px solid #e5eaf3; position: relative;
+    margin-bottom: 0; font-size: 15px;
+  }
+  .checks li:last-child { border-bottom: none; }
+  .checks li::before {
+    content: ""; position: absolute; left: 2px; top: 14px;
+    width: 13px; height: 13px; border: 1.5px solid #9aa7bd; border-radius: 2.5px;
+  }
+
+  /* ── Sample links ─────────────────────────────────────────── */
+  .samples { display: flex; flex-direction: column; gap: 10px; }
+  .sample {
+    display: block; background: #ffffff; border: 1px solid #dfe4ee; border-radius: 6px;
+    padding: 14px 17px; text-decoration: none; color: #1a1a2e;
+  }
+  .sample:hover { border-color: #b9c4dc; background: #fafbfe; color: #1a1a2e; }
+  .sample .t { font-weight: 650; font-size: 15.5px; color: #4a5fbb; display: block; }
+  .sample:hover .t { color: #5b6fcc; }
+  .sample .m {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px; color: #8a9bb0; display: block; margin-top: 3px;
+  }
+  .sample .d { font-size: 14px; color: #5a6478; display: block; margin-top: 6px; line-height: 1.5; }
+
+  footer {
+    border-top: 1px solid #dfe4ee; padding: 24px 0 40px;
+    font-size: 13.5px; color: #6b7688;
+  }
+  footer .wrap { display: flex; flex-direction: column; gap: 6px; }
+
+  @media (max-width: 560px) {
+    .shot { grid-template-columns: 1fr; }
+    .rail {
+      flex-direction: row; justify-content: flex-start; gap: 12px;
+      border-right: none; border-bottom: 1px solid #e5eaf3; padding: 10px 16px;
+    }
+    .rail .num { font-size: 17px; }
+  }
+</style>
+
+<div class="band">
+  <div class="wrap">
+    <span class="eyebrow">WO-3.18 · deliverable 2 of 5 · the demo video</span>
+    <h1>Filming the demo video</h1>
+    <p class="standfirst">
+      Every declared gate on this work order is clear and <strong>the video still cannot be shot to
+      completion today</strong> — for a reason the gate tool cannot see. Read the first section
+      before you set anything up.
+    </p>
+    <div class="band-meta">
+      <span><b>drafted</b> 2026-08-28</span>
+      <span><b>work order</b> WO-3.18 🔒 GATED on WO-7.2 · S</span>
+      <span><b>acceptance</b> 1 of 4 closed</span>
+      <span><b>companion</b> plans/wo-3-18-runbook.html</span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ═══════════════ 1. STATE ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">Where this actually stands</div>
+    <h2 class="head">Three things have moved since the last runbook, and two of them stop the camera</h2>
+
+    <p>
+      <code>node tools/wo-gate.mjs next</code> returns WO-3.18 and reports
+      <code>PASS | gates clear</code>. All four declared dependencies are ✅ DONE. That is true and
+      it is not the whole picture: <strong>the thing the video has to film is not in the
+      <code>Depends on</code> line.</strong>
+    </p>
+
+    <div class="strip">
+      <div class="cell">
+        <span class="k">WO-8.12 · the policy</span>
+        <span class="v ok">✅ done · live</span>
+        <span class="n">Fetched cold today: <code>200</code>, 24,423 bytes, title reads
+          <em>Planbook — Privacy Policy</em>. Not the app shell.</span>
+      </div>
+      <div class="cell">
+        <span class="k">WO-7.1 · the sign-in</span>
+        <span class="v ok">✅ done 2026-08-24</span>
+        <span class="n">Real handshake, one permission line, token in memory. Signs in and stops.</span>
+      </div>
+      <div class="cell">
+        <span class="k">WO-7.2 · transfer</span>
+        <span class="v bad">⬜ not started · L</span>
+        <span class="n">Nothing uploads, nothing downloads, no file is ever created in Drive.
+          <strong>Unblocked 2026-08-28</strong> — its <code>🔒</code> named no gate and had gone
+          circular; now row 18 and the thing this shoot waits on.</span>
+      </div>
+      <div class="cell">
+        <span class="k">WO-7.3 · the flag</span>
+        <span class="v hold">🔒 gated · one function</span>
+        <span class="n"><code>hostAllowsSignIn()</code> still answers false for the deployed host.</span>
+      </div>
+    </div>
+
+    <div class="note stop">
+      <h4>Blocker 1 — there is no "scope in use" to film</h4>
+      <p>
+        Google's demo-video requirement is not "show the consent screen." It is
+        <strong>show how each sensitive scope's granted data is actually used functionally</strong>.
+        WO-7.2 — upload, download, the <code>rev</code>/<code>baseRev</code> comparison, the
+        keep-both conflict — is <code>🔒 GATED</code> and unbuilt. <code>src/auth.js</code> exports
+        no writer, and a grep for <code>files.create</code> across <code>src/</code> returns nothing.
+        The Drive panel says so on screen, in as many words: <em>"Nothing is uploaded yet."</em>
+      </p>
+      <p>
+        So the most a camera can capture today is a teacher granting a permission the app then does
+        not exercise. <strong>That is the "filming a stub" objection this work order already
+        recorded on 2026-08-20</strong>, arriving one level up — it was written about a missing
+        sign-in, and the sign-in now exists while the use of it does not.
+      </p>
+    </div>
+
+    <div class="note stop">
+      <h4>Blocker 2 — the deployed app has no sign-in to film</h4>
+      <p>
+        <code>hostAllowsSignIn()</code> at <code>src/auth.js:209</code> returns true for
+        <code>localhost</code> and <code>127.0.0.1</code> and nothing else. On
+        <code>planbook.hwgteach.com</code> the Drive section is never drawn, Google's script is
+        never fetched, and that is exactly what keeps <code>privacy.html</code>'s "no third-party
+        code of any kind" true word for word.
+      </p>
+      <p>
+        The console half is already paid — both origins registered 2026-08-21, confirmed 2026-08-24.
+        What is left is the one function, and it belongs to WO-7.3, <strong>which depends on
+        WO-3.18</strong>. The paperwork wants a recording of a screen the code will not draw until
+        the paperwork clears.
+      </p>
+    </div>
+
+    <div class="note warn">
+      <h4>Blocker 3 — the client ID cannot appear in the address bar, and Google asks for it there</h4>
+      <p>
+        Google's sensitive-scope page lists <em>"your OAuth client ID visible in the browser address
+        bar"</em>. Planbook uses the GIS token flow — <code>initTokenClient(...)</code> then
+        <code>requestAccessToken()</code> with no <code>ux_mode</code>, which means
+        <strong>a popup</strong>. A popup shows a truncated, non-editable origin bar:
+        <code>accounts.google.com</code> and no query string. The <code>client_id</code> is in that
+        URL and is not readable on camera.
+      </p>
+      <p>
+        This one has a clean answer rather than a blocker's answer — <strong>shot 03</strong> films
+        the client ID off the Cloud console instead and the narration ties the two together. Do not
+        switch the app to a redirect flow to satisfy a video; the popup is load-bearing.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 2. RECOMMENDATION ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">What I would do</div>
+    <h2 class="head">Shoot it once, after WO-7.2 — and spend the next two days on the half with no camera in it</h2>
+
+    <p>
+      A demo video earns no partial credit. A rejection costs another 3–5 business day round trip,
+      and the two commonest rejection reasons are <em>"insufficient functionality demonstration
+      relative to requested scopes"</em> and <em>"demo app differs from submitted application"</em>
+      — which are precisely blockers 1 and 2. Filming this week buys a resubmission.
+    </p>
+
+    <div class="split">
+      <div class="col now">
+        <h3>Do now — no camera needed</h3>
+        <span class="tag">this week</span>
+        <ul>
+          <li><strong>Build the demo year.</strong> A throwaway class with invented students. The
+            longest lead item nobody schedules — see § "the fictional class" below.</li>
+          <li><strong>Set up the clean browser profile and the demo Google account.</strong> That
+            account should <em>not</em> be a test user on the client if you want shot 07 to look
+            like what a stranger sees.</li>
+          <li><strong>Install OBS and shoot one throwaway take</strong> of shots 02–05, which are
+            all unblocked, purely to find out what your setup gets wrong.</li>
+          <li><strong>Reuse the scope justification</strong> — the paragraph in
+            <code>plans/wo-3-18-runbook.html</code> is still accurate against
+            <code>docs/sync.md</code>.</li>
+        </ul>
+      </div>
+      <div class="col you">
+        <h3>Decide before you shoot</h3>
+        <span class="tag">owner's call, not mine</span>
+        <p>Blocker 2 has three ways out and they are not equal:</p>
+        <ul>
+          <li><strong>Split WO-7.3's function off</strong> and widen
+            <code>hostAllowsSignIn()</code> ahead of approval. Cost:
+            <code>privacy.html</code>'s third-party-code sentence stops being true the moment it
+            deploys, and § Accommodations says that file and <code>docs/FERPA.md</code> change in
+            the same sitting.</li>
+          <li><strong>Film entirely at <code>https://localhost:8443</code></strong> and narrate the
+            difference. Cheapest, and carries the real rejection risk.</li>
+          <li><strong>Film the homepage at the real domain</strong> (shot 02) and the flow at
+            localhost. The middle path, and what the shot list below assumes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 3. WHO SHOOTS WHAT ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">Division of labour</div>
+    <h2 class="head">What I can capture, and what has to be you with a recorder running</h2>
+
+    <div class="split">
+      <div class="col me">
+        <h3>Me, over CDP</h3>
+        <span class="tag">stills only — proven, not theoretical</span>
+        <p>
+          I drove the real app headlessly while writing this and captured the About modal at 2×,
+          Drive panel and all. So I can produce <strong>reference frames</strong> for any screen
+          that does not need a Google token:
+        </p>
+        <ul>
+          <li>The signed-out app — home, a class, roster, gradebook (shot 04)</li>
+          <li>The About modal's Drive panel, "Not connected" (shots 05, 14)</li>
+          <li>The privacy policy as the app links to it (shot 15)</li>
+          <li>Any framing you want checked before you commit a take to it</li>
+        </ul>
+        <p style="margin-top: 12px;">
+          <strong>What I cannot do is produce the video.</strong> There is no <code>ffmpeg</code> on
+          this machine to mux frames into one, and more to the point Google blocks OAuth in
+          automated browsers — an automated take would be both a fake and a failed one. Every shot
+          with Google's own chrome in it is yours.
+        </p>
+      </div>
+      <div class="col you">
+        <h3>You, with OBS</h3>
+        <span class="tag">everything with a Google surface in it</span>
+        <ul>
+          <li>The Cloud console, client ID readable (03)</li>
+          <li>The account chooser (06)</li>
+          <li><strong>The consent screen</strong> (07) — the shot the submission turns on</li>
+          <li>The unverified-app interstitial (08)</li>
+          <li>The connected state with a real expiry clock (09)</li>
+          <li>Every WO-7.2 shot: the upload, the file in Drive, the read-back (10–12)</li>
+          <li>Drive holding the app's file <em>and</em> unrelated ones, for the negative proof (13)</li>
+        </ul>
+        <p style="margin-top: 12px;">
+          <strong>Use display capture, not window capture.</strong> Game Bar records one window and
+          this shoot crosses four — the app, a popup, the console, Drive. A popup that opens outside
+          a captured window is a take you find out about in playback.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 4. BEFORE YOU RECORD ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">Setup</div>
+    <h2 class="head">Before you press record</h2>
+
+    <h3 class="sub">The fictional class</h3>
+    <p>
+      This ends up on YouTube, and it is your own FERPA rule before it is Google's. Invent the
+      roster — names, scores, an absence or two, one behaviour entry so the log has something in it.
+      <strong>Give it enough life that the gradebook looks used</strong>: a reviewer who sees three
+      students and one assignment reads it as a mock-up, and "demo app differs from submitted
+      application" is a real rejection line.
+    </p>
+    <p>
+      Leave <code>supports</code> empty on every student. There is no reason to have IEP or medical
+      fields on camera, and presentation mode is not a defence you want to be relying on in a take.
+    </p>
+
+    <h3 class="sub">The environment</h3>
+    <ul class="checks">
+      <li>A <strong>clean browser profile</strong> signed into the demo Google account and nothing
+        else — the account chooser in shot 06 shows every signed-in account.</li>
+      <li>Bookmarks bar hidden, other tabs closed, Windows Focus Assist on so no toast lands
+        mid-take.</li>
+      <li>Browser windowed, not full-screen — <strong>the URL bar must be visible in every
+        shot.</strong></li>
+      <li>UI language English. Google names it explicitly, and it applies to the consent screen,
+        which follows the account's locale rather than the app's.</li>
+      <li>Display scaling such that text is readable at 1080p. If it is not comfortable at 100% zoom
+        on playback, it is not readable for a reviewer.</li>
+      <li>OBS: display capture, 1920×1080, 30 fps, mic track recording — narration is the cheapest
+        thing you can do to help a reviewer, and Google asks for it by name.</li>
+      <li><code>node tools/serve-https.mjs</code> running and the app reachable at
+        <code>https://localhost:8443</code>. Accept the certificate warning <em>before</em> you
+        start recording.</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════ 5. THE SHOT LIST ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">The shot list</div>
+    <h2 class="head">Fifteen shots, about four and a half minutes</h2>
+
+    <p>
+      Shoot in order. Each shot names what is on screen, roughly what you say over it, and which
+      requirement it pays — because a shot that pays nothing is a shot that makes a reviewer go
+      looking for the one it replaced. The three marked
+      <span style="color:#8e2235;font-weight:600;">WO-7.2</span> are the ones that do not exist yet.
+    </p>
+
+    <div class="shots">
+
+      <article class="shot">
+        <div class="rail"><span class="num">01</span><span class="dur">0:12</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>Title card</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>A static card: <strong>Planbook</strong> · the client ID ·
+              <code>https://www.googleapis.com/auth/drive.file</code> · the date.</dd></div>
+            <div><dt>Say</dt><dd class="say">"This is Planbook, a local-first gradebook for
+              classroom teachers. It requests one scope, drive.file, and this video shows where it
+              is granted and what it is used for."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Frames the video for a reviewer watching forty of
+              these a week. Also puts the client ID on screen a second time, which is cheap
+              insurance against blocker 3.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">02</span><span class="dur">0:20</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The public homepage</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>A fresh tab to <code>https://planbook.hwgteach.com/</code>.
+              URL bar readable. Let it load and sit for a beat.</dd></div>
+            <div><dt>Say</dt><dd class="say">"The app is at planbook.hwgteach.com. There is no
+              account and no server — it runs entirely in the browser."</dd></div>
+            <div><dt>Pays</dt><dd class="why">"Your application's homepage must be publicly
+              accessible and clearly relevant to your app." This is the shot proving the submitted
+              homepage is the submitted app.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">03</span><span class="dur">0:25</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The OAuth client in the Cloud console</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>The client detail page. <strong>Zoom in on the client
+              ID</strong> until it is unambiguously readable, then scroll so both authorized
+              JavaScript origins show.</dd></div>
+            <div><dt>Say</dt><dd class="say">"This is the OAuth client being submitted. Planbook
+              uses the Google Identity Services popup flow, so the client ID is not visible in the
+              address bar during the grant — here it is at source."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Blocker 3, directly. Naming the popup rather than
+              hoping nobody notices is what turns a missing requirement into an answered one.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">04</span><span class="dur">0:30</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The app in use, signed out</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Open a class. Roster, then attendance, then the gradebook with
+              real-looking scores. Move at working speed, not a click every four seconds.</dd></div>
+            <div><dt>Say</dt><dd class="say">"Everything here works with no Google account at all.
+              Attendance, the roster, weighted grading — all of it lives in this browser's own
+              storage. Drive sync is optional, and it is off."</dd></div>
+            <div><dt>Pays</dt><dd class="why">"App functionalities that utilize the requested OAuth
+              scopes" needs context before it needs the scope. It also makes the architecture's
+              strongest claim in thirty seconds, which is worth more here than anywhere else.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">05</span><span class="dur">0:15</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The Drive panel, not connected</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Header ⓘ → About Planbook → scroll to <strong>Google Drive
+              Sync</strong>. Hold on "Not connected. Planbook works exactly the same either way."
+              and on the sentence naming the one permission.</dd></div>
+            <div><dt>Say</dt><dd class="say">"Sync lives here, in About, and it is off. The app
+              tells the teacher exactly what it will ask Google for before it asks."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Shows the grant is user-initiated and disclosed in
+              advance. Also the screen I can hand you a reference still of.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">06</span><span class="dur">0:10</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>Connect → the account chooser</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Click <strong>Connect Google Drive</strong>. The popup opens.
+              Pick the demo account.</dd></div>
+            <div><dt>Say</dt><dd class="say">"The teacher taps Connect and chooses their own Google
+              account."</dd></div>
+            <div><dt>Pays</dt><dd class="why">The start of "the end-to-end flow of your app including
+              the OAuth grant process." Do not cut between 06 and 07 — an unbroken take is what
+              makes the grant legible as one flow.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">07</span><span class="dur">0:20</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The consent screen — hold it</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>The full consent screen. App name reading
+              <strong>Planbook</strong>. <strong>Exactly one permission line.</strong> Hold a slow
+              five seconds without dragging the mouse across the text.</dd></div>
+            <div><dt>Say</dt><dd class="say">"One permission, and only one: see, edit, create and
+              delete only the files you use with this app. Planbook requests no other scope and no
+              other Google API."</dd></div>
+            <div><dt>Pays</dt><dd class="why"><strong>"The complete OAuth Consent Screen, which must
+              show the same exact scopes you are requesting."</strong> If one shot gets reshot until
+              it is right, it is this one. Confirm the app name matches the console branding
+              exactly.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">08</span><span class="dur">0:12</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The unverified-app interstitial</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Advanced → continue through. Do not cut it out.</dd></div>
+            <div><dt>Say</dt><dd class="say">"This warning appears because the client is still
+              unverified — which is what this submission is asking you to change."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Nothing, formally. It is in the list because editing it
+              out leaves a jump cut in the middle of the grant flow, and a jump cut in the grant flow
+              is a reviewer wondering what was removed.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">09</span><span class="dur">0:15</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>Back in the app, connected</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>The popup closes. The panel reads <strong>Connected to Google
+              Drive</strong> with an expiry time about an hour out.</dd></div>
+            <div><dt>Say</dt><dd class="say">"The grant comes back as an access token held in memory
+              for about an hour. There is no refresh token and nothing is written to storage —
+              closing the tab signs the teacher out."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Closes the grant loop, and volunteers a
+              credential-handling fact reviewers otherwise have to ask about.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot blocked">
+        <div class="rail"><span class="num">10</span><span class="dur">0:30</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The scope in use — creating the file <span class="flag">WO-7.2</span></h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Trigger the first sync. The app creates its year document in
+              Drive. Show whatever confirmation WO-7.2 ends up drawing.</dd></div>
+            <div><dt>Say</dt><dd class="say">"Here is what that permission is for. Planbook creates
+              one file — the teacher's year document, a single JSON file — using the drive.file
+              scope."</dd></div>
+            <div><dt>Pays</dt><dd class="why"><strong>The requirement blocker 1 is about.</strong>
+              Everything before this shot is preamble as far as scope justification goes.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot blocked">
+        <div class="rail"><span class="num">11</span><span class="dur">0:25</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The file, in Drive <span class="flag">WO-7.2</span></h3>
+          <dl>
+            <div><dt>On screen</dt><dd>New tab, <code>drive.google.com</code>. Find the file Planbook
+              just made. Open the details pane so the name and modified time are visible.</dd></div>
+            <div><dt>Say</dt><dd class="say">"That's the file, in the teacher's own Drive. One file.
+              They own it, they can delete it, and deleting it does not touch their gradebook."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Independent confirmation that the scope did what the
+              narration claims. A reviewer trusts Drive's own UI more than yours.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot blocked">
+        <div class="rail"><span class="num">12</span><span class="dur">0:30</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>Reading it back on a second device <span class="flag">WO-7.2</span></h3>
+          <dl>
+            <div><dt>On screen</dt><dd>A second browser profile — or the iPad, if WO-7.3's function
+              has been widened by then. Sign in, pull the document down, show the same grades
+              arriving.</dd></div>
+            <div><dt>Say</dt><dd class="say">"On the teacher's second device, the same scope reads
+              back the same file. That is the entire feature: one document, two devices, nothing
+              else in Drive touched."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Closes the read half. It is also the answer to
+              "couldn't a narrower scope do this?" — the app must create and then re-open its own
+              file across sessions and devices, which is exactly what <code>drive.file</code> is
+              for.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">13</span><span class="dur">0:20</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The negative proof <span class="flag soft">Optional</span></h3>
+          <dl>
+            <div><dt>On screen</dt><dd>The demo account's Drive with several unrelated files in it —
+              put a few there beforehand. Then Drive → Settings → Manage apps, showing Planbook
+              listed.</dd></div>
+            <div><dt>Say</dt><dd class="say">"These other files are invisible to Planbook. drive.file
+              grants access only to files this app created, so nothing here can be listed, opened or
+              changed by it."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Not required. It answers the reviewer's real question —
+              <em>could this app reach further than it says?</em> — and it costs twenty
+              seconds.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">14</span><span class="dur">0:15</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>Disconnect, and the app carries on</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>Back to About → <strong>Disconnect</strong>. Then use the
+              gradebook again, signed out.</dd></div>
+            <div><dt>Say</dt><dd class="say">"The teacher can disconnect at any time, and the app
+              works exactly as it did before. Sync is a feature, not a prerequisite."</dd></div>
+            <div><dt>Pays</dt><dd class="why">Revocability. Not on Google's checklist; on every
+              reviewer's.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="shot">
+        <div class="rail"><span class="num">15</span><span class="dur">0:15</span><span class="who who-you">You</span></div>
+        <div class="shot-body">
+          <h3>The privacy policy, reached from inside the app</h3>
+          <dl>
+            <div><dt>On screen</dt><dd>About → <strong>Privacy policy →</strong>. Let
+              <code>/privacy</code> load with the URL bar visible, then scroll far enough to show
+              the data-flow section.</dd></div>
+            <div><dt>Say</dt><dd class="say">"The privacy policy is linked from inside the app and
+              hosted on the same domain. It says plainly that no vendor server ever receives student
+              data."</dd></div>
+            <div><dt>Pays</dt><dd class="why">"Privacy policies must be visible, hosted on your app's
+              domain, and linked from the consent screen." It also happens to demonstrate
+              <strong>WO-7.3's second Acceptance line</strong> on camera.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ 6. AFTER ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">After the shoot</div>
+    <h2 class="head">Upload, then the form</h2>
+
+    <div class="note warn">
+      <h4>Unlisted, never Private</h4>
+      <p>
+        Upload to YouTube Studio and set visibility to <strong>Unlisted</strong>. Private is
+        rejection reason number one — <em>"inaccessible video link"</em> — because the reviewer is
+        not on your share list and will not ask. Unlisted is what Google's own page names. Check the
+        link in a browser you are not signed into before you paste it anywhere.
+      </p>
+    </div>
+
+    <p>Then the four fields that reference this shoot:</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Value</th><th>Where it comes from</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>App name</td><td class="mono">Planbook</td><td>Matches <code>manifest.webmanifest</code> and the README. Must match shot 07 exactly.</td></tr>
+          <tr><td>Homepage</td><td class="mono">https://planbook.hwgteach.com/</td><td>Shot 02</td></tr>
+          <tr><td>Privacy policy</td><td class="mono">https://planbook.hwgteach.com/privacy</td><td>Shot 15. Verified live today — 200, correct title.</td></tr>
+          <tr><td>Demo video</td><td>the unlisted link</td><td>This shoot</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:18px;">
+      The scope-justification paragraph and the console click-path are in
+      <a href="wo-3-18-runbook.html">plans/wo-3-18-runbook.html</a> and are still accurate. Its
+      steps 1 and 3 are done now, though, and its step 2 shipped on 2026-08-24 — read it knowing
+      that.
+    </p>
+
+    <div class="note info">
+      <h4>The moment you submit</h4>
+      <p>
+        Write the submission date into WO-3.18's third Acceptance line in
+        <code>plans/work-orders/phase-3-gradebook.md</code>. That box is carrying WO-G2's re-homed
+        promise from 2026-08-20, so it is a gate's line and not a note. Move the status to
+        <code>🔨 IN PROGRESS</code> — submitted, three boxes still open, which is what that glyph
+        means here. Then expect 3–5 business days, and at least one round of questions.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 7. SAMPLES ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">Samples</div>
+    <h2 class="head">What one of these looks like when somebody else made it</h2>
+
+    <p>
+      Two worth twenty minutes before you shoot, plus the two Google pages every "pays" line above
+      is quoted from. I found the videos by search and <strong>could not play them from here</strong>
+      — YouTube returns no transcript to the fetch tool — so the descriptions are the search
+      engine's, not mine.
+    </p>
+
+    <div class="samples">
+      <a class="sample" href="https://support.google.com/cloud/answer/13804565?hl=en">
+        <span class="t">Demo Video — Google Cloud Platform Console Help</span>
+        <span class="m">support.google.com · the actual requirement</span>
+        <span class="d">The source for most of the "pays" lines above, and for the five rejection
+          reasons below. Short. Read it first and again last.</span>
+      </a>
+      <a class="sample" href="https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification">
+        <span class="t">Sensitive scope verification</span>
+        <span class="m">developers.google.com · the process around the video</span>
+        <span class="d">Where the client-ID-in-the-address-bar line comes from, plus the 3–5
+          business day figure and the branding-verification step that has to clear before the scope
+          review even starts.</span>
+      </a>
+      <a class="sample" href="https://www.youtube.com/watch?v=s5NqPeJZOuQ">
+        <span class="t">OAuth Consent Screen Workflow – App Verification</span>
+        <span class="m">youtube.com · January 2026 · the most recent one I found</span>
+        <span class="d">Described as demonstrating the consent-screen workflow end to end, sign-in
+          included. Closest in shape to shots 06–09, and recent enough to show the current console
+          and consent UI.</span>
+      </a>
+      <a class="sample" href="https://www.youtube.com/watch?v=evD9X34Ahus">
+        <span class="t">How To (Correctly) Make An OAuth Demo Video For Google Verification</span>
+        <span class="m">youtube.com · older, but it is about the video itself</span>
+        <span class="d">Advice on what Google wants to see rather than a specimen to copy. The
+          console has changed since — Branding, Audience and Data Access are three pages now — but
+          what a reviewer is looking for has not.</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 8. FAILURE MODES ═══════════════ -->
+  <section class="wrap">
+    <div class="sec-label">Ways this gets bounced</div>
+    <h2 class="head">Five, in the order they are likely</h2>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>What comes back</th><th>Why, and the fix</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Insufficient functionality demonstration</strong></td>
+            <td>Blocker 1. The video showed a grant and no use of what was granted. No wording fixes
+              this — only WO-7.2 does.</td>
+          </tr>
+          <tr>
+            <td><strong>Demo app differs from submitted application</strong></td>
+            <td>Blocker 2. The homepage field says <code>planbook.hwgteach.com</code> and the footage
+              says <code>localhost:8443</code>. Shot 02 is the mitigation; narrating the difference
+              out loud is the rest of it.</td>
+          </tr>
+          <tr>
+            <td><strong>Inaccessible video link</strong></td>
+            <td>Private instead of Unlisted, or a link that only works while you are signed in.</td>
+          </tr>
+          <tr>
+            <td><strong>App name mismatch</strong></td>
+            <td>The consent screen renders the console's branding name. If shot 07 shows anything
+              other than <code>Planbook</code>, fix the console and reshoot — do not annotate over
+              it.</td>
+          </tr>
+          <tr>
+            <td><strong>Branding not verified yet</strong></td>
+            <td>Scope review does not start until branding review passes, and they are two separate
+              submissions in the current console. Submit branding first, wait, then declare
+              scopes.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note stop" style="margin-top: 22px;">
+      <h4>And the one that costs months rather than days</h4>
+      <p>
+        Adding a scope resets everything. A <code>spreadsheets</code> scope to read Roll Call!'s
+        sheets, or a mail scope instead of <code>mailto:</code>, re-opens verification and puts the
+        warning back in front of a teacher. <code>drive.file</code> is sensitive, not restricted, so
+        there is no CASA assessment and no third-party audit — <strong>days, not months, provided
+        the list stays at one.</strong>
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Drafted 2026-08-28 for WO-3.18. Companion to
+      <a href="wo-3-18-runbook.html">plans/wo-3-18-runbook.html</a>, which covers the console
+      click-path and the submission form; this one covers the video.</span>
+    <span>Requirements quoted from Google's Demo Video help page and its sensitive-scope
+      verification guide, both read 2026-08-28. Repository facts re-derived from the tree the same
+      day rather than from the earlier runbook.</span>
+  </div>
+</footer>
