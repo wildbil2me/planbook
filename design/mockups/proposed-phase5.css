@@ -1,0 +1,350 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — Phase 5, the outreach templates: what a message says before
+   it says it about anybody.
+
+   Fourth room. `proposed.css` is Phase 3 (shipped), `proposed-phase6.css` is
+   Phase 6, `proposed-phase4.css` is Phase 4 (shipped), and this is Phase 5 —
+   drawn 2026-08-28 against a phase whose first row landed the same day. WO-5.1
+   built the resolver: sixteen fields, matched by exact string, with three named
+   ways to fail and no path into a support block. It has no screen at all. This
+   is the drawing of where.
+
+   IT DRAWS ONE WORK ORDER AND STOPS. WO-5.2 is the template editor, its field
+   palette and its live preview. WO-5.3's send flow — audience picker, copy to
+   self, the `mailto:` handoff — is NOT here, deliberately: a drawing that
+   outruns its build is already a live REVIEW in this directory
+   (`proposed-phase6.css` § CALENDAR, re-derived rather than lifted), and Phase 5
+   does not need a second one.
+
+   THE ONE THING IT DRAWS FOR TWO WORK ORDERS IS § UNRESOLVED, and that is the
+   reason this room was drawn at all. `phase-5-outreach.md` states at its head
+   that **an unresolved merge field never renders blank**, and WO-5.2's own
+   Acceptance line says its preview shows unresolved fields *"exactly as the send
+   flow will"* — a different work order, weeks later, reading the same sentence.
+   Prose cannot settle what "visibly" looks like. So the treatment is drawn once,
+   named once, and lifted into `src/shell.css` rather than into either screen's
+   own sheet, which is the posture `§ LOG SHEET` took for the same reason.
+
+   THE RULE THIS FILE OBEYS, from design/mockups/PROTOCOL.md rule 5: a section
+   whose target stylesheet does not exist yet may style no class `src/*.css`
+   already styles. Checked by `tools/wo-sweep.mjs` § 19, not by reading. Every
+   class below is prefixed `tpl-` or `mf-`; neither prefix appears anywhere in
+   src/. Where a drawing needs something the app already ships — `.panel`,
+   `.panel-header`, `.panel-title*`, `.pill`, `.class-action-btn`, `.search-box`,
+   `.empty-state`, `.avatar`, `.av0`–`.av9` — it wears it as shipped rather than
+   restating it here.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § TEMPLATE LIST  →  src/templates.css  (WO-5.2)
+     § EDITOR         →  src/templates.css  (WO-5.2)
+     § PALETTE        →  src/templates.css  (WO-5.2)
+     § PREVIEW        →  src/templates.css  (WO-5.2)
+     § UNRESOLVED     →  src/shell.css      (WO-5.2 — not yet lifted)
+
+   FOUR OF THE FIVE PROPOSE A STYLESHEET THAT DOES NOT EXIST. The fifth names one
+   that has shipped since Phase 1, so it carries the `not yet lifted` token
+   PROTOCOL.md rule 4 requires — without it § 19 reads "target exists" as "this
+   section has landed" and stops checking the four names that most need it, since
+   they are new names going into an old sheet.
+
+   Follows src/shell.css's own rules from the first line: colours written out
+   inline, never as custom properties, no dark mode, one grouped touch-action
+   selector at the top, and a `@media (pointer: coarse)` block at the end naming
+   every control this file adds. Values come from design/style-guide.md and from
+   the three sheets above; nothing here is a new hex.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6. */
+.tpl-tone-btn, .tpl-item, .tpl-new, .tpl-chip, .tpl-student-pick, .tpl-select,
+.tpl-preview-refresh, .mf-jump {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TEMPLATE LIST — src/templates.css (WO-5.2)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  THREE COLUMNS AT DESK WIDTH, and the order is the order of the work: pick the
+  template, write it, watch it resolve. The preview is not a modal you open and
+  dismiss — WO-5.2's Deliverables ask for it so that "a broken field is caught at
+  authoring time rather than at send time", and a preview behind a button is a
+  preview a teacher stops opening by the third template.
+*/
+.tpl-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.tpl-list { display: flex; flex-direction: column; gap: 10px; }
+
+.tpl-list-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.tpl-list-head h3 { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+
+/*
+  THE TONE SWITCH, AND IT IS A FILTER RATHER THAN A MODE. Concern and praise
+  templates are two lists in one place; the switch narrows which you are looking
+  at. `All` is first and is the state a teacher lands in, because the question
+  "which of my templates says this" does not know its own tone yet.
+*/
+.tpl-tone-switch {
+  display: inline-flex; gap: 4px; padding: 3px;
+  background: #f3f4f6; border-radius: 8px;
+}
+.tpl-tone-btn {
+  border: none; background: transparent; cursor: pointer;
+  padding: 5px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; color: #6b7a8d;
+}
+.tpl-tone-btn.active { background: #fff; color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+.tpl-item {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: #fff; border: 1.5px solid #e0e4ea; border-radius: 10px;
+  padding: 10px 12px;
+}
+.tpl-item:hover { border-color: #b0bcf0; }
+.tpl-item.active { border-color: #5b6fcc; background: #eef2ff; }
+.tpl-item-name { font-size: 13px; font-weight: 700; color: #1a1a2e; display: block; }
+.tpl-item-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 4px;
+  font-size: 11px; color: #8a9bb0;
+}
+
+/*
+  THE TONE DOT is a state word compound-qualified by this sheet's own class,
+  which is the posture PROTOCOL.md rule 5 allows and `.gl-row.warn` set. Green is
+  praise and amber is concern, and neither is red: a concern template is a
+  conversation, not an alarm, and the colour it wears in a list of the teacher's
+  own writing should not say otherwise.
+*/
+.tpl-tone-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.tpl-tone-dot.concern { background: #e67e22; }
+.tpl-tone-dot.praise  { background: #27ae60; }
+
+.tpl-audience {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+  color: #6b7a8d; background: #f3f4f6; border-radius: 4px; padding: 2px 6px;
+}
+
+.tpl-new {
+  border: 1.5px dashed #d0d8e4; background: transparent; cursor: pointer;
+  border-radius: 10px; padding: 10px 12px;
+  font-size: 12px; font-weight: 700; color: #6b7a8d;
+}
+.tpl-new:hover { border-color: #5b6fcc; color: #5b6fcc; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § EDITOR — src/templates.css (WO-5.2)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.tpl-editor { display: flex; flex-direction: column; gap: 12px; }
+
+.tpl-meta-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tpl-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; min-width: 0; }
+.tpl-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+  color: #8a9bb0;
+}
+.tpl-input, .tpl-select {
+  border: 1.5px solid #e0e4ea; border-radius: 8px; background: #fff;
+  padding: 8px 10px; font-size: 13px; color: #1a1a2e; font-family: inherit;
+  width: 100%; min-width: 0;
+}
+/* The focus ring is src/shell.css:103's `:focus-visible` outline and is NOT overridden here — the
+   app has one global ring, it is never removed, and bare `:focus` is never styled beyond this. The
+   tint is `.scores-input:focus`'s, copied rather than re-derived. */
+.tpl-input:focus, .tpl-select:focus { border-color: #5b6fcc; background: #eef2ff; }
+
+/*
+  THE BODY IS A PLAIN TEXTAREA AND THE TOKENS IN IT ARE NOT HIGHLIGHTED. Drawing
+  them coloured here would have been one line of CSS and a contenteditable in the
+  build — this app has none, and the first one arrives with its own selection,
+  paste and undo problems on an iPad. The preview is where a token stops being
+  text, which is also where a teacher can see whether it was the right one.
+*/
+.tpl-body {
+  border: 1.5px solid #e0e4ea; border-radius: 8px; background: #fff;
+  padding: 12px; font-family: inherit; font-size: 13px; line-height: 1.7;
+  color: #1a1a2e; min-height: 260px; width: 100%; resize: vertical;
+}
+.tpl-body:focus { border-color: #5b6fcc; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § PALETTE — src/templates.css (WO-5.2)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  THE PALETTE IS A DISCLOSURE CONTROL AND IS DRAWN AS ONE. WO-5.2's Deliverables
+  call it "documentation of the refusal list, by omission", and CLAUDE.md
+  § Accommodations is the standard it has to meet. Omission alone is a weak way to
+  document a rule nobody has been told exists, so the head says it in words: these
+  sixteen are the whole of what a message can say, and nothing on the supports
+  block is among them. That sentence is the palette's, not a tooltip's.
+*/
+.tpl-palette { display: flex; flex-direction: column; gap: 10px; }
+
+.tpl-palette-head h3 { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.tpl-palette-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 4px; }
+
+/*
+  THE FENCE. Amber rather than red, and stated as a property of the app rather
+  than as a warning to the teacher: she is not being cautioned against doing
+  something, she is being told the door does not exist.
+*/
+.tpl-palette-fence {
+  border: 1.5px solid #f0dfa8; background: #fff8e6; border-radius: 8px;
+  padding: 10px 12px; font-size: 11px; line-height: 1.6; color: #8a6d1a;
+}
+.tpl-palette-fence strong { color: #8a6d1a; font-weight: 700; }
+
+.tpl-chip {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; background: #fff;
+  padding: 7px 10px;
+}
+.tpl-chip:hover { border-color: #5b6fcc; background: #eef2ff; }
+.tpl-chip code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px; color: #5b6fcc; font-weight: 700;
+}
+.tpl-chip-about { display: block; font-size: 11px; color: #8a9bb0; margin-top: 2px; line-height: 1.5; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § PREVIEW — src/templates.css (WO-5.2)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.tpl-preview { display: flex; flex-direction: column; gap: 10px; }
+.tpl-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tpl-preview-head h3 { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+
+/*
+  THE PREVIEW RESOLVES AGAINST A REAL STUDENT, WHICH IS THE POINT AND ALSO THE
+  RISK. A template that reads perfectly against the first student on the roster
+  can be blocked for the fourth, so the student is a control rather than a
+  caption — and the one drawn is deliberately not the first alphabetically.
+*/
+.tpl-student-pick {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  border: 1.5px solid #e0e4ea; border-radius: 999px; background: #fff;
+  padding: 4px 10px 4px 4px; font-size: 12px; font-weight: 700; color: #1a1a2e;
+}
+.tpl-student-pick:hover { border-color: #5b6fcc; }
+
+.tpl-preview-refresh {
+  border: none; background: transparent; cursor: pointer;
+  font-size: 11px; font-weight: 700; color: #5b6fcc; padding: 4px 6px;
+}
+
+.tpl-draft {
+  border: 1.5px solid #e0e4ea; border-radius: 10px; background: #f8f9fb;
+  padding: 12px 14px;
+}
+.tpl-draft-subject {
+  font-size: 12px; font-weight: 700; color: #1a1a2e;
+  padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #e0e4ea;
+}
+.tpl-draft-body { font-size: 12px; line-height: 1.8; color: #1a1a2e; white-space: pre-wrap; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § UNRESOLVED — src/shell.css (WO-5.2 — not yet lifted)
+
+   THE SHARED HALF, AND THE REASON THIS ROOM WAS DRAWN. Two screens render a
+   resolved draft: WO-5.2's preview and WO-5.3's send flow. The phase rule they
+   both answer to — "an unresolved merge field never renders blank" — is one
+   sentence, so it gets one treatment, in the sheet they both already load.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  ONE TREATMENT FOR ALL THREE FAILURES, AND THAT IS A RULING RATHER THAN A
+  SHORTCUT. src/merge-fields.js tells the three apart by a NAMED CODE and never
+  by the shape of the output: refused, unknown and unresolved all hand the
+  teacher's own token back intact. Drawing three different in-body treatments
+  would put the distinction where the message is, which is the one place it must
+  not be — a body that renders a refusal differently from a typo is a body that
+  reads as though the refusal were a kind of value.
+
+  So: the token as the teacher typed it, braces and all, on a background that
+  says it did not become anything. It is never blanked, never greyed to
+  invisibility, and never replaced with a placeholder that could read as prose.
+*/
+.mf-token {
+  display: inline;
+  background: #fff8e6; border-bottom: 2px solid #e67e22; border-radius: 3px;
+  padding: 0 3px; color: #8a6d1a; font-weight: 700;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 0.92em;
+}
+
+/*
+  THE BLOCK STRIP is where the three differ, because this is the layer that is
+  allowed to explain. It carries the count, the reason per field, and the student
+  the draft was resolved against — a field can be fine for one student and empty
+  for the next, and a message that does not name the student sends its reader
+  looking in the template for a fault that is not there.
+*/
+.mf-block {
+  border: 1.5px solid #f0dfa8; background: #fff8e6; border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.mf-block-head { font-size: 12px; font-weight: 700; color: #8a6d1a; }
+.mf-reason { display: flex; align-items: baseline; gap: 8px; font-size: 11px; line-height: 1.6; color: #8a6d1a; }
+.mf-reason code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px; font-weight: 700; color: #8a6d1a;
+  background: rgba(255,255,255,0.7); border-radius: 3px; padding: 1px 5px;
+}
+.mf-jump {
+  border: none; background: transparent; cursor: pointer; padding: 2px 4px;
+  font-size: 11px; font-weight: 700; color: #5b6fcc; margin-left: auto;
+}
+
+/*
+  THE SENDABLE STATE IS DRAWN TOO, and it says the same thing in the same place.
+  A strip that appears only when something is wrong is a strip a teacher learns
+  to read as an error banner; one that is always there, saying "sixteen fields
+  resolved, nothing blocked", is a report. WO-5.3 reads `blocked` off the same
+  call to decide whether its own button is live.
+*/
+.mf-block.clear { border-color: #a3e4bc; background: #eafaf1; }
+.mf-block.clear .mf-block-head { color: #1a6b3a; }
+.mf-block.clear .mf-reason { color: #1a6b3a; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § RESPONSIVE — the three columns become one, and the order changes
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/*
+  ON A PHONE THE PREVIEW GOES ABOVE THE PALETTE, not below it. The palette is a
+  reference a teacher consults; the preview is the thing she is watching while she
+  types. Re-mentions names declared above and introduces none of its own, which is
+  the cross-cutting posture § 19 allowlists.
+*/
+@media (max-width: 1100px) {
+  .tpl-layout { grid-template-columns: 220px minmax(0, 1fr); }
+  .tpl-palette { grid-column: 1 / -1; }
+  .tpl-preview { grid-column: 1 / -1; }
+}
+
+@media (max-width: 700px) {
+  .tpl-layout { grid-template-columns: minmax(0, 1fr); }
+  .tpl-body { min-height: 200px; }
+}
+
+@media (pointer: coarse) {
+  .tpl-tone-btn { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; }
+  .tpl-item { min-height: 56px; }
+  .tpl-new { min-height: 44px; }
+  .tpl-chip { min-height: 44px; }
+  .tpl-student-pick { min-height: 44px; }
+  .tpl-preview-refresh { min-height: 44px; display: inline-flex; align-items: center; }
+  .mf-jump { min-height: 44px; display: inline-flex; align-items: center; }
+  /* The native picker iOS opens is already thumb-sized; what this owes is a target to open it. */
+  .tpl-select { min-height: 44px; }
+}

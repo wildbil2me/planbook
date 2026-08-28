@@ -11,6 +11,16 @@ templates. Two rules dominate this phase, and both are about what must never lea
 - **No merge field ever resolves accommodation, medical, or plan data.**
 - **An unresolved merge field never renders blank.**
 
+**The editor is drawn, and the drawing is not a work order.**
+[`outreach.html`](../../design/mockups/outreach.html) in
+[`design/mockups/`](../../design/mockups/README.md) was made 2026-08-28, the day WO-5.1 landed and
+before a line of WO-5.2 existed, under [`PROTOCOL.md`](../../design/mockups/PROTOCOL.md). **Read it
+before building WO-5.2.** It draws that work order and stops — WO-5.3's send flow is deliberately
+not in it — but one section of `proposed-phase5.css` is drawn for **both**: `§ UNRESOLVED`, the
+treatment of a field that did not resolve, which WO-5.2's preview and WO-5.3's send flow both render
+and which the second rule above is the whole of the specification for. It lifts into
+`src/shell.css` rather than into either screen's sheet, for the reason `§ LOG SHEET` did.
+
 ---
 
 ## WO-5.1 — Merge-field resolver
@@ -106,6 +116,27 @@ a warning.
   list, by omission.
 - Starter templates for both tones and each audience, written in the suite's voice: friendly-
   utilitarian, sentence case.
+- **Surface** — [`design/mockups/outreach.html`](../../design/mockups/outreach.html), drawn
+  2026-08-28. It settles: three columns in the order of the work (list · editor · preview) with the
+  preview never behind a button; **one in-body treatment for all three failures**, the token handed
+  back intact and the block strip carrying the named reason and the student; the palette stating the
+  supports rule in words rather than by omission; a plain `textarea` body with no token highlighting,
+  because the alternative is this app's first `contenteditable`; and the 390px stacking order
+  list · editor · preview · palette. The CSS is `design/mockups/proposed-phase5.css`, five sections,
+  and `§ UNRESOLVED` is the one WO-5.3 inherits.
+
+**Open** — *where is this screen reached from?* The drawing shows it with *All classes* selected,
+because a template is not about one class, which makes the class switcher wrong; *Your details* is
+the nearest existing home; a sixth screen-nav segment is what WO-6.6 ruled against twice. **Answer
+this when cutting the row, not in the editor.**
+
+**Open** — *does the block strip stay when nothing is wrong?* Drawn green and permanent, on the
+argument that a strip appearing only on failure reads as an error banner while one always present is
+a report, and WO-5.3 reads the same `blocked` flag. The cost is permanent chrome on a narrow screen.
+
+**Open** — *do the starter templates ship filled in, and how many?* Written well they teach what a
+merge field is faster than any help text; written once they are also the sentences a hundred
+guardians read in the same words.
 
 **Traps** *(added 2026-08-28, out of WO-1.32's verification — see its note and WO-1.34)*
 

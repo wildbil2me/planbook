@@ -1,17 +1,18 @@
 # Mockups
 
-Three rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
+Four rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
 **the Phase 6 drawings** were made 2026-08-19, before any of Phase 6 existed at all; **the Phase 4
-drawings** were made 2026-08-20, three days before the work order they are for was due to start.
+drawings** were made 2026-08-20, three days before the work order they are for was due to start; and
+**the Phase 5 drawing** was made 2026-08-28, the same day its resolver landed with no screen on it.
 Open [`index.html`](index.html) — or, with `node tools/serve-https.mjs` running,
 `https://<your-lan-ip>:8443/design/mockups/`.
 
-Everything below the next divider is about the gradebook drawings, which came first. The Phase 6 and
-Phase 4 rooms have their own sections at the bottom of this file; the rules — no JavaScript, the
-black band, `src/shell.css` linked rather than copied, never in `sw.js`'s precache — are the same for
-all three, and are written out once in [`PROTOCOL.md`](PROTOCOL.md).
+Everything below the next divider is about the gradebook drawings, which came first. The Phase 6,
+Phase 4 and Phase 5 rooms have their own sections at the bottom of this file; the rules — no
+JavaScript, the black band, `src/shell.css` linked rather than copied, never in `sw.js`'s precache —
+are the same for all four, and are written out once in [`PROTOCOL.md`](PROTOCOL.md).
 
-**Before drawing a third round, read [`PROTOCOL.md`](PROTOCOL.md).** This file describes the drawings
+**Before drawing another round, read [`PROTOCOL.md`](PROTOCOL.md).** This file describes the drawings
 that exist; that one is the procedure for making one, written 2026-08-20 out of the two rounds below
 after both had been reconstructed from scratch by different sittings. `node tools/wo-sweep.mjs` § 19
 is the half of it a grep settles — including the selector check this file used to describe as a
@@ -433,3 +434,72 @@ now: the clause is `supports.attendanceClause` (above) and the *N* is the attend
 to six weeks of real data before they fire, and the term starts 2026-09-02. Everything drawn here is
 the screen as it looks in mid-October; what the owner will actually see for the first fortnight is
 two empty columns, and no state on either page draws that.
+
+
+# Phase 5 — the template editor, and the door it does not open
+
+**Drawn 2026-08-28**, the fourth room, the same day WO-5.1's merge-field resolver landed. Like Phase
+4's room it is drawn against the phase being built next, and for a sharper reason than precedent: the
+resolver has sixteen fields, three named ways to fail and no screen at all, and **the rule two of its
+work orders share is a visual one.** `phase-5-outreach.md` says at its head that *an unresolved merge
+field never renders blank*, and WO-5.2's own Acceptance line says its preview shows unresolved fields
+*"exactly as the send flow will"* — a different work order, weeks later, reading the same sentence.
+Prose cannot settle what "visibly" looks like. That is what this room is for.
+
+| File | What |
+|---|---|
+| `outreach.html` | The editor with its list, palette and preview; the same template blocked one student later; a template carrying a typo and a supports field; and the stacking order at 390px — WO-5.2 |
+| `proposed-phase5.css` | **The half that lifts.** Five sections, all pending, one of them targeting a stylesheet that already ships |
+
+**It draws one work order and stops.** WO-5.3's send flow — audience picker, copy to self, the
+`mailto:` handoff — is not here. A drawing that outruns its build is already a live REVIEW in this
+directory, and Phase 5 does not need a second one.
+
+## What the drawing proposes
+
+1. **Three columns, in the order of the work:** pick the template, write it, watch it resolve. The
+   preview is not behind a button, because WO-5.2 asks for it so a broken field is caught at
+   authoring time, and a preview a teacher has to open is one she stops opening by the third
+   template.
+2. **One in-body treatment for all three failures.** `src/merge-fields.js` tells refused, unknown and
+   unresolved apart by a named code and never by the shape of the output. The token comes back
+   intact, on a background that says it did not become anything; the block strip is the layer that is
+   allowed to explain, and it names the student in every line.
+3. **§ UNRESOLVED lifts into `src/shell.css`, not into either screen's own sheet** — the posture
+   `§ LOG SHEET` took, and for the same reason: two screens render a resolved draft and the rule they
+   answer to is one sentence.
+4. **The palette says the rule out loud.** WO-5.2's Deliverables call it documentation of the refusal
+   list *by omission*; omission alone is a weak way to document a rule nobody has been told exists,
+   so the head of the palette states that nothing on the supports block can be merged, in words. It
+   is drawn amber and phrased as a property of the app rather than as a caution to the teacher.
+5. **The body is a plain `textarea`, with no token highlighting.** Colouring tokens as you type means
+   a `contenteditable`; this app has none, and the first one arrives with its own selection, paste
+   and undo problems on an iPad. The preview is where a token stops being text.
+6. **The tone switch is a filter, not a mode**, and `All` is the state a teacher lands in — the
+   question *which of my templates says this* does not know its own tone yet.
+
+## The open questions, collected
+
+**Where is this screen reached from?** It is drawn with *All classes* selected, because a template is
+not about one class — `{{class.name}}` resolves per draft, at send time. The class switcher is
+therefore wrong; *Your details* is the nearest existing home; a sixth screen-nav segment is the thing
+WO-6.6 ruled against twice. **The owner's call, and an `Open` line on WO-5.2.**
+
+**Does the block strip stay when nothing is wrong?** Drawn green and permanent, on the argument that
+a strip appearing only on failure reads as an error banner while one that is always there is a
+report — and WO-5.3 reads the same `blocked` flag for its own send button. The cost is permanent
+chrome on a narrow screen. **The owner's call, and an `Open` line on WO-5.2.**
+
+**Should the starter templates ship filled in, or empty?** Five are drawn. Written well they are the
+fastest way to teach what a merge field is; written once they are also the sentences a hundred
+guardians read in the same words. The drawing takes no position on how many, or on whether the first
+launch opens with one loaded.
+
+## The one thing in it that no thumb has touched
+
+**The palette at the foot of a phone screen is the weakest thing in this drawing, and it says so on
+the page.** *Tap a chip to insert at the cursor* is a desk gesture: on a phone the keyboard is up,
+the palette is below the fold, and tapping it may well dismiss the field it is meant to type into.
+Nothing about it is measured. It wants a reading on the real tablet before WO-5.2 is dispatched, and
+the alternative worth having in hand is a palette that opens as a sheet over the keyboard rather than
+a column under it.

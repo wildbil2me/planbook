@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Outreach templates (WO-5.2)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase5.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Every name, number and sentence below is typed in — no template was resolved to produce any of it.</span>
+  <span>The template editor · its field palette · its live preview ·
+    <a href="../../plans/work-orders/phase-5-outreach.md">WO-5.2</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="outreach.html" class="here">Outreach templates</a>
+  <a href="signals.html">Who needs you</a>
+  <a href="behavior.html">Behavior log</a>
+  <a href="glance.html">Glance page</a>
+  <a href="calendar.html">Calendar</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!-- The app frame, copied from index.html rather than re-derived.
+
+     THE CLASS STRIP IS DRAWN WITH "ALL CLASSES" SELECTED, and that is the honest reading rather
+     than a dodge: a template is not about one class. `{{class.name}}` resolves per draft, at send
+     time, from the class the signal row came out of — so a template written under Biology I would
+     be the same template written under Anatomy, and a tab row that implies otherwise teaches the
+     wrong model on the first screen. Where this surface is actually REACHED from is the drawing's
+     one open question and is amber below the first frame. -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📓</div>
+      <div class="header-title">
+        <h1>Planbook</h1>
+        <p>Ms Toomey · St John's High School</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-year-btn" type="button"><span>2026–2027</span> <span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" type="button" title="Backup and restore" aria-label="Backup and restore">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hdr-icon-btn hdr-mode-btn" type="button" title="Presentation mode is off" aria-label="Presentation mode is off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="About Planbook" aria-label="About Planbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab active" type="button">All classes</button>
+      <button class="cls-tab" type="button">Biology I</button>
+      <button class="cls-tab" type="button">Biology I · P4</button>
+      <button class="cls-tab" type="button">Anatomy</button>
+      <button class="cls-tab" type="button">Env Science</button>
+      <button class="cls-tab" type="button">Research</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn active" type="button">Quarter 1</button>
+      <button class="q-btn" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+    <div class="hdr-right-controls">
+      <button class="hdr-icon-btn" type="button" title="Roster and contacts" aria-label="Roster and contacts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Classes and terms" aria-label="Classes and terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="hdr-icon-btn" type="button" title="Your details" aria-label="Your details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mk-section">The editor — WO-5.2, a concern template on a Sunday afternoon in October</div>
+
+<main class="main">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Message templates</h2>
+          <p>
+            What a message says before it says it about anybody. Concern and praise are written
+            separately, because a good praise message reads nothing like a good concern message.
+            The preview on the right resolves against a real student as you type.
+          </p>
+        </div>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">Duplicate</button>
+          <button class="class-action-btn primary" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:0 20px 20px">
+      <div class="tpl-layout">
+
+        <!-- ── the list ─────────────────────────────────────────────────────────────── -->
+        <div class="tpl-list">
+          <div class="tpl-list-head">
+            <h3>Templates</h3>
+            <div class="tpl-tone-switch" role="tablist" aria-label="Tone">
+              <button class="tpl-tone-btn active" type="button" role="tab" aria-selected="true">All</button>
+              <button class="tpl-tone-btn" type="button" role="tab" aria-selected="false">Concern</button>
+              <button class="tpl-tone-btn" type="button" role="tab" aria-selected="false">Praise</button>
+            </div>
+          </div>
+
+          <button class="tpl-item active" type="button">
+            <span class="tpl-item-name">Missing work — first contact</span>
+            <span class="tpl-item-meta">
+              <span class="tpl-tone-dot concern" aria-hidden="true"></span>
+              Concern
+              <span class="tpl-audience">Guardian</span>
+            </span>
+          </button>
+
+          <button class="tpl-item" type="button">
+            <span class="tpl-item-name">Grade slipping — check in</span>
+            <span class="tpl-item-meta">
+              <span class="tpl-tone-dot concern" aria-hidden="true"></span>
+              Concern
+              <span class="tpl-audience">Guardian</span>
+            </span>
+          </button>
+
+          <button class="tpl-item" type="button">
+            <span class="tpl-item-name">Attendance — counselor referral</span>
+            <span class="tpl-item-meta">
+              <span class="tpl-tone-dot concern" aria-hidden="true"></span>
+              Concern
+              <span class="tpl-audience">Counselor</span>
+            </span>
+          </button>
+
+          <button class="tpl-item" type="button">
+            <span class="tpl-item-name">Turned it around</span>
+            <span class="tpl-item-meta">
+              <span class="tpl-tone-dot praise" aria-hidden="true"></span>
+              Praise
+              <span class="tpl-audience">Guardian</span>
+            </span>
+          </button>
+
+          <button class="tpl-item" type="button">
+            <span class="tpl-item-name">Strong stretch — well done</span>
+            <span class="tpl-item-meta">
+              <span class="tpl-tone-dot praise" aria-hidden="true"></span>
+              Praise
+              <span class="tpl-audience">Student</span>
+            </span>
+          </button>
+
+          <button class="tpl-new" type="button">+ New template</button>
+        </div>
+
+        <!-- ── the editor ───────────────────────────────────────────────────────────── -->
+        <div class="tpl-editor">
+          <div class="tpl-meta-row">
+            <div class="tpl-field" style="flex:2 1 200px">
+              <label class="tpl-label" for="mk-name">Name</label>
+              <input class="tpl-input" id="mk-name" type="text" value="Missing work — first contact" readonly>
+            </div>
+            <div class="tpl-field">
+              <label class="tpl-label" for="mk-tone">Tone</label>
+              <select class="tpl-select" id="mk-tone">
+                <option selected>Concern</option>
+                <option>Praise</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label class="tpl-label" for="mk-aud">Audience</label>
+              <select class="tpl-select" id="mk-aud">
+                <option selected>Guardian</option>
+                <option>Counselor</option>
+                <option>Admin</option>
+                <option>Student</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tpl-field">
+            <label class="tpl-label" for="mk-subject">Subject</label>
+            <input class="tpl-input" id="mk-subject" type="text"
+                   value="{{class.name}} — checking in about {{student.first}}" readonly>
+          </div>
+
+          <div class="tpl-field">
+            <label class="tpl-label" for="mk-body">Body</label>
+            <textarea class="tpl-body" id="mk-body" readonly>Dear {{guardian.name}},
+
+I wanted to reach out about {{student.first}}'s work in {{class.name}}. She currently has
+{{missing.count}} assignments marked missing: {{missing.list}}.
+
+Her grade for this quarter is {{grade.percent}} ({{grade.letter}}). Nothing here is a
+crisis — I would just rather mention it now than in December.
+
+If it would help to talk, I am free most afternoons.
+
+{{teacher.name}}</textarea>
+          </div>
+        </div>
+
+        <!-- ── the palette and the preview ──────────────────────────────────────────── -->
+        <div class="tpl-palette">
+          <div class="tpl-palette-head">
+            <h3>Fields</h3>
+            <p class="tpl-palette-note">Tap one to drop it in at the cursor. These sixteen are the
+              whole of what a message can say.</p>
+          </div>
+
+          <div class="tpl-palette-fence">
+            <strong>Nothing on the supports block can be merged.</strong> Accommodations, IEP and 504
+            details, medical needs, behavior plans, the case manager and the review date are not on
+            this list and cannot be added to it. A message that names one has to be typed by you.
+          </div>
+
+          <button class="tpl-chip" type="button">
+            <code>{{student.first}}</code>
+            <span class="tpl-chip-about">The student's first name, as the roster has it</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{student.last}}</code>
+            <span class="tpl-chip-about">The student's last name</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{student.nickname}}</code>
+            <span class="tpl-chip-about">What the student goes by, when the roster records one</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{guardian.name}}</code>
+            <span class="tpl-chip-about">The guardian this message is addressed to</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{class.name}}</code>
+            <span class="tpl-chip-about">The class this message is about</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{teacher.name}}</code>
+            <span class="tpl-chip-about">Your name, from Settings</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{grade.percent}}</code>
+            <span class="tpl-chip-about">The current weighted grade for this class and term</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{grade.letter}}</code>
+            <span class="tpl-chip-about">The letter that percentage falls in</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{grade.delta}}</code>
+            <span class="tpl-chip-about">How far the grade moved, from the signal that opened this draft</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{missing.count}}</code>
+            <span class="tpl-chip-about">How many pieces of work you have marked missing</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{missing.list}}</code>
+            <span class="tpl-chip-about">Those assignments by name</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{attendance.percent}}</code>
+            <span class="tpl-chip-about">Attendance for this term, over recorded meetings</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{attendance.absences}}</code>
+            <span class="tpl-chip-about">Absences this term</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{attendance.tardies}}</code>
+            <span class="tpl-chip-about">Times late this term</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{signals.list}}</code>
+            <span class="tpl-chip-about">Why this student surfaced, in the app's own sentences</span>
+          </button>
+          <button class="tpl-chip" type="button">
+            <code>{{behavior.recent}}</code>
+            <span class="tpl-chip-about">Your last few behavior entries — the date and the heading</span>
+          </button>
+        </div>
+
+        <div class="tpl-preview">
+          <div class="tpl-preview-head">
+            <h3>Preview</h3>
+            <button class="tpl-preview-refresh" type="button">Another student</button>
+          </div>
+
+          <button class="tpl-student-pick" type="button">
+            <span class="avatar av6" aria-hidden="true" style="width:26px;height:26px;font-size:10px">RE</span>
+            Ruth Egan · Biology I <span aria-hidden="true">▾</span>
+          </button>
+
+          <div class="tpl-draft">
+            <div class="tpl-draft-subject">Biology I — checking in about Ruth</div>
+            <div class="tpl-draft-body">Dear Marie Egan,
+
+I wanted to reach out about Ruth's work in Biology I. She currently has 3 assignments marked
+missing: Cell transport lab, Osmosis worksheet, Unit 2 review.
+
+Her grade for this quarter is 71% (C-). Nothing here is a crisis — I would just rather mention
+it now than in December.
+
+If it would help to talk, I am free most afternoons.
+
+Ms Toomey</div>
+          </div>
+
+          <div class="mf-block clear">
+            <div class="mf-block-head">Nothing blocked · 8 fields resolved</div>
+            <div class="mf-reason">Every field in this template has a value for Ruth Egan.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Three columns, and the order is the order of the work.</strong> Pick the template, write
+    it, watch it resolve. The preview is not behind a button: WO-5.2 asks for it so that
+    <em>"a broken field is caught at authoring time rather than at send time"</em>, and a preview a
+    teacher has to open is a preview she stops opening by the third template.
+  </div>
+
+  <div class="mk-caption">
+    <strong>The body is a plain <code>textarea</code> and the tokens in it are not highlighted.</strong>
+    Colouring them here would have been one line of CSS and a <code>contenteditable</code> in the
+    build — this app has none, and the first one arrives with its own selection, paste and undo
+    problems on an iPad. The preview is where a token stops being text, which is also where a teacher
+    can see whether it was the right one.
+  </div>
+
+  <div class="mk-caption">
+    <strong>The palette says the rule out loud rather than documenting it by omission.</strong>
+    WO-5.2's Deliverables call the palette <em>"documentation of the refusal list, by omission"</em>,
+    and omission alone is a weak way to document a rule nobody has been told exists. The amber block
+    is not a warning to the teacher — she is not being cautioned against doing something, she is
+    being told the door does not exist. <code>CLAUDE.md</code> § Accommodations is the standard this
+    control has to meet.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Where is this screen reached from?</strong> It is drawn with <em>All classes</em>
+    selected, because a template is not about one class — <code>{{class.name}}</code> resolves per
+    draft, at send time, from the class the signal row came out of. But that leaves the arrival
+    unanswered: the class switcher is wrong for the same reason, <em>Your details</em> holds the
+    teacher's name and email and is the nearest existing home, and a sixth screen-nav segment is the
+    thing WO-6.6 already ruled against twice. <strong>This is the owner's call and it is an
+    <code>Open</code> line on WO-5.2</strong>, not something a drawing settles.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Should the starter templates ship filled in, or empty?</strong> Five are drawn in the
+    list and WO-5.2's Deliverables ask for <em>"starter templates for both tones and each
+    audience"</em>. Written well they are the fastest way to teach what a merge field is; written
+    once they are also the sentences a hundred guardians will read in the same words. The drawing
+    takes no position on how many, or whether the first launch should open on one of them already
+    loaded.
+  </div>
+
+  <div class="mk-section">One student later — the same template, nothing else changed</div>
+
+  <div class="mk-caption">
+    <strong>Only the preview column is drawn below</strong>, because only the preview column changes.
+    The list, the editor and the palette are exactly as above.
+  </div>
+
+  <div class="panel" style="max-width:420px;margin-top:12px">
+    <div style="padding:16px 20px 20px">
+      <div class="tpl-preview">
+        <div class="tpl-preview-head">
+          <h3>Preview</h3>
+          <button class="tpl-preview-refresh" type="button">Another student</button>
+        </div>
+
+        <button class="tpl-student-pick" type="button">
+          <span class="avatar av1" aria-hidden="true" style="width:26px;height:26px;font-size:10px">TM</span>
+          Theo Marsh · Biology I <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="tpl-draft">
+          <div class="tpl-draft-subject">Biology I — checking in about Theo</div>
+          <div class="tpl-draft-body">Dear <span class="mf-token">{{guardian.name}}</span>,
+
+I wanted to reach out about Theo's work in Biology I. He currently has 0 assignments marked
+missing: <span class="mf-token">{{missing.list}}</span>.
+
+His grade for this quarter is 88% (B+). Nothing here is a crisis — I would just rather mention
+it now than in December.
+
+If it would help to talk, I am free most afternoons.
+
+Ms Toomey</div>
+        </div>
+
+        <div class="mf-block">
+          <div class="mf-block-head">This draft cannot be sent · 2 fields did not resolve</div>
+          <div class="mf-reason">
+            <code>{{guardian.name}}</code>
+            <span>No guardian on file for Theo Marsh.</span>
+            <button class="mf-jump" type="button">Roster</button>
+          </div>
+          <div class="mf-reason">
+            <code>{{missing.list}}</code>
+            <span>Theo Marsh has no missing work to list.</span>
+            <button class="mf-jump" type="button">Body</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>This is the state the whole room was drawn for.</strong> A template that reads perfectly
+    against the first student on the roster is blocked for the fourth, and nothing about the template
+    is wrong. So the student is a control rather than a caption, and the block strip names the
+    student in every line — a message that says only <em>"guardian.name did not resolve"</em> sends
+    its reader looking in the template for a fault that is not there.
+  </div>
+
+  <div class="mk-caption">
+    <strong><code>{{missing.count}}</code> resolved to <em>0</em> and <code>{{missing.list}}</code>
+    did not resolve at all</strong>, in the same sentence, and that is
+    <code>src/merge-fields.js</code>'s ruling rather than this drawing's: a count is a value at zero
+    and a list of nothing is not. It draws badly on purpose here — <em>"0 assignments marked missing:
+    {{missing.list}}"</em> is what that template says about a student with none, which is the
+    template being wrong for this row and exactly what a preview is for.
+  </div>
+
+  <div class="mk-section">A template being written badly — the two failures that are not about the student</div>
+
+  <div class="panel" style="max-width:420px;margin-top:12px">
+    <div style="padding:16px 20px 20px">
+      <div class="tpl-preview">
+        <div class="tpl-preview-head">
+          <h3>Preview</h3>
+          <button class="tpl-preview-refresh" type="button">Another student</button>
+        </div>
+
+        <button class="tpl-student-pick" type="button">
+          <span class="avatar av6" aria-hidden="true" style="width:26px;height:26px;font-size:10px">RE</span>
+          Ruth Egan · Biology I <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="tpl-draft">
+          <div class="tpl-draft-subject">Biology I — about <span class="mf-token">{{studnet.first}}</span></div>
+          <div class="tpl-draft-body">Dear Marie Egan,
+
+Ruth has been struggling this month. Her plan says
+<span class="mf-token">{{student.supports.accommodations}}</span>, so I wanted to make sure we
+are doing the same things at home and at school.
+
+Ms Toomey</div>
+        </div>
+
+        <div class="mf-block">
+          <div class="mf-block-head">This draft cannot be sent · 2 fields did not resolve</div>
+          <div class="mf-reason">
+            <code>{{studnet.first}}</code>
+            <span>Not a merge field. Check the spelling against the list.</span>
+            <button class="mf-jump" type="button">Subject</button>
+          </div>
+          <div class="mf-reason">
+            <code>{{student.supports.accommodations}}</code>
+            <span>Accommodation, medical and plan details can never be merged into a message.</span>
+            <button class="mf-jump" type="button">Body</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mk-caption">
+    <strong>Three ways to fail, one treatment in the body, and that is a ruling rather than a
+    shortcut.</strong> <code>src/merge-fields.js</code> tells refused, unknown and unresolved apart
+    by a <em>named code</em> and never by the shape of the output — all three hand the teacher's own
+    token back intact. Drawing three different in-body treatments would put the distinction where
+    the message is, which is the one place it must not be: a body that renders a refusal differently
+    from a typo reads as though the refusal were a kind of value. The strip is the layer that is
+    allowed to explain.
+  </div>
+
+  <div class="mk-caption">
+    <strong>The refused line says what the rule is, not that something went wrong.</strong> The
+    teacher typed that field on purpose; the honest answer is that the app will not carry it, in one
+    sentence, with the token still visible so she can delete it herself. Nothing is deleted for her
+    and nothing is silently blanked — a body that came back reading clean would be a body she could
+    send.
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>Does the strip stay when nothing is wrong?</strong> It is drawn that way — green, saying
+    <em>"nothing blocked · 8 fields resolved"</em> — on the argument that a strip appearing only on
+    failure is read as an error banner, while one that is always there is a report, and WO-5.3 reads
+    the same <code>blocked</code> flag to decide whether its own send button is live. The cost is a
+    permanent block of chrome on a narrow screen. <strong>Owner's call, and an <code>Open</code> line
+    on WO-5.2.</strong>
+  </div>
+
+  <div class="mk-section">At 390px — the stacking order, which is a decision and not a fallback</div>
+
+  <div class="mk-caption">
+    <strong>The strip below is 390px wide, the narrowest phone the suite supports.</strong> One
+    column, and the order is list · editor · preview · palette: the palette is a reference a teacher
+    consults, the preview is the thing she is watching while she types, so the preview goes above it
+    rather than below. Drawn as a strip rather than argued in prose because the order is the whole
+    decision.
+  </div>
+
+  <div style="max-width:390px;margin:12px auto 0;border:1px dashed #c0cad5;padding:8px;background:#fff">
+    <div class="tpl-list" style="margin-bottom:12px">
+      <div class="tpl-list-head">
+        <h3>Templates</h3>
+        <div class="tpl-tone-switch">
+          <button class="tpl-tone-btn active" type="button">All</button>
+          <button class="tpl-tone-btn" type="button">Concern</button>
+          <button class="tpl-tone-btn" type="button">Praise</button>
+        </div>
+      </div>
+      <button class="tpl-item active" type="button">
+        <span class="tpl-item-name">Missing work — first contact</span>
+        <span class="tpl-item-meta">
+          <span class="tpl-tone-dot concern" aria-hidden="true"></span>
+          Concern
+          <span class="tpl-audience">Guardian</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="tpl-field" style="margin-bottom:12px">
+      <label class="tpl-label" for="mk-body-narrow">Body</label>
+      <textarea class="tpl-body" id="mk-body-narrow" readonly>Dear {{guardian.name}},
+
+I wanted to reach out about {{student.first}}'s work in {{class.name}}.</textarea>
+    </div>
+
+    <div class="tpl-preview" style="margin-bottom:12px">
+      <div class="tpl-preview-head">
+        <h3>Preview</h3>
+        <button class="tpl-preview-refresh" type="button">Another student</button>
+      </div>
+      <button class="tpl-student-pick" type="button">
+        <span class="avatar av6" aria-hidden="true" style="width:26px;height:26px;font-size:10px">RE</span>
+        Ruth Egan · Biology I <span aria-hidden="true">▾</span>
+      </button>
+      <div class="tpl-draft">
+        <div class="tpl-draft-body">Dear Marie Egan,
+
+I wanted to reach out about Ruth's work in Biology I.</div>
+      </div>
+      <div class="mf-block clear">
+        <div class="mf-block-head">Nothing blocked · 3 fields resolved</div>
+      </div>
+    </div>
+
+    <div class="tpl-palette">
+      <div class="tpl-palette-head">
+        <h3>Fields</h3>
+        <p class="tpl-palette-note">Tap one to drop it in at the cursor.</p>
+      </div>
+      <button class="tpl-chip" type="button">
+        <code>{{student.first}}</code>
+        <span class="tpl-chip-about">The student's first name, as the roster has it</span>
+      </button>
+      <button class="tpl-chip" type="button">
+        <code>{{guardian.name}}</code>
+        <span class="tpl-chip-about">The guardian this message is addressed to</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mk-caption ask">
+    <strong>The palette at the foot of a phone screen is the weakest thing in this drawing.</strong>
+    "Tap a chip to insert at the cursor" is a desk gesture; on a phone the keyboard is up, the
+    palette is below the fold, and tapping it may well close the field it is meant to type into.
+    Nothing here is measured — no thumb has touched it. <strong>It wants a reading on the real
+    tablet before WO-5.2 is dispatched</strong>, and the alternative worth having in hand is a
+    palette that opens as a sheet over the keyboard rather than a column under it.
+  </div>
+
+</main>
+
+</body>
+</html>
