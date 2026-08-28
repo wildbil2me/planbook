@@ -256,7 +256,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.31 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.33 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -284,7 +284,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 31 | 27 | — | 🔨 IN PROGRESS (reopened twelve times; last on 2026-08-28) |
+| 1 — Shell, store, roster | 33 | 27 | — | 🔨 IN PROGRESS (reopened twelve times; last on 2026-08-28) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -293,7 +293,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **143** | **118** | **2** | `[████████░░] 83%` |
+| | **145** | **118** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1635,6 +1635,8 @@ it, never from a reading taken earlier in the same session.)*
 | 30 | [WO-8.5](phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations) README, FERPA, and known limitations | S | — | After row 27. Dropped M → S when [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) took the FERPA half; what is left is the README, which **quotes** `LICENSE.md`'s copyright line rather than composing its own |
 | 31 | [WO-8.6](phase-8-packaging.md#wo-86--onboarding) Onboarding | M | — | After row 30 |
 | 32 | [WO-G4](gates.md#wo-g4--the-100-call) **The 1.0.0 call** | S | — | The end of the road. Depends on everything above it — **though not in a way `wo-gate.mjs` can read**, which is row 15's live instance |
+| 33 | [WO-1.32](phase-1-shell-store-roster.md#wo-132--the-sweep-proves-the-name-and-not-the-shape) The sweep proves the name and not the shape | S | — | **Whenever the tracker is quiet, and it belongs with the tracker cluster at rows 12, 14, 15 and 16 rather than here at the foot** — the number is an index, the scheduling is this column. Booked out of WO-5.1's recovery: § 20 checks forbidden *names* and the mutation that shipped used a forbidden *shape*, so the sweep was green over a resolver handing back every support field. Pairs naturally with row 34, same sitting |
+| 34 | [WO-1.33](phase-1-shell-store-roster.md#wo-133--the-second-fixture-student-fires-no-rules) The second fixture student fires no rules | S | — | **Rides along with row 33.** The `{{signals.list}}` `studentId` filter is correct and cannot be proved by its own harness — the second fixture student fires no rules, so dropping the filter changes no output. One planted hit closes it. Found by WO-5.1's verifier, which tested the filter by hand because the instrument could not |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

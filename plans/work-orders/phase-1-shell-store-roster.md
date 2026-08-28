@@ -2972,3 +2972,115 @@ it (`--self-check` writes `'🔒 GATED — waiting on a fixture'` in its own fix
       their bodies, and `--audit` passes.
 - [ ] § "Header fields" records the suffix in its `🔒 GATED` row.
 - [ ] `--self-check` gains a plant for the bare-lock refusal.
+
+---
+
+## WO-1.32 — the sweep proves the name and not the shape
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.31
+made. Booked 2026-08-28, owner-directed, out of WO-5.1's recovery.)*
+
+**Why it exists.** [`src/merge-fields.js`](../../src/merge-fields.js) tells its reader, at its own
+line 30, that **there is no `doc[a][b]` anywhere in this file** — and credits `tools/wo-sweep.mjs`
+§ 20 with asserting it structurally. **§ 20 does not assert it.** Its claim 2 is narrower than the
+sentence that cites it: *no support identifier appears in the resolver's code*, which is a check on
+**names**. A path expression that splits a key off the token at runtime names nothing, so it passes.
+
+**This is not hypothetical; it shipped.** WO-5.1's dispatch was killed by a quota holding an
+unreverted mutation proof — precisely a runtime path walk in `resolveText()` — and the delivered tree
+resolved `{{student.supports.medical}}` and every other support field to the roster string. **§ 20
+was green over it.** So were `--self-check`, `--audit` and the whole 34-check sweep. The behavioural
+half caught it (`tools/verify/merge-fields.mjs`'s seventeen-path refusal check would have gone red on
+a run nobody got to make), and what actually found it was a human reading the file.
+
+**So the division of labour § 20 claims for itself is real and is half-built.** The harness proves
+what today's paths resolved on today's fixture; the grep is supposed to prove *there is nothing in
+the file that could resolve one on any input*. Against a "just this once" lookup somebody adds later
+— which is the exact thing the section's own comment says it exists to catch — **a name check is the
+wrong instrument.** The forbidden thing is a shape.
+
+**The shape to build.** A fifth claim in § 20: the resolver contains **no dynamic property read**.
+Over the same stripped code § 20 already computes, fail on
+
+- bracket indexing where the subscript is not a literal — `o[k]`, `root[name]`, `d[parts[i]]` — while
+  allowing `[0]`, `[1]` and the array literals the file legitimately holds;
+- `.split('.')` or any split on a token, and `reduce(` used to walk one;
+- `eval(`, `new Function(`, and `Reflect.get(`.
+
+**Traps**
+
+- **Allow the literal subscripts or the check is unlandable.** `FIELDS.filter(…)[0]` is the file's
+  one lookup and appears several times; `REFUSED_WORDS` and `FIELDS` are array literals.
+- **Name the claim after the defect, not after the tool.** The fault message should say *a dynamic
+  property read is what a whitelist is supposed to make impossible*, and quote the offending line —
+  a reader who trips this needs to know it is the WO-5.1 hole, not a style rule.
+- **The stripper is shared and is crude.** § 20's own comment says it does not model regex literals.
+  This claim inherits that limit and should not pretend otherwise; keep the existing non-vacuity
+  guard that reports an implausible strip rather than passing over an empty haystack.
+- **Do not widen it to the whole of `src/`.** Every other module in this repo indexes objects by
+  computed keys legitimately, and a repo-wide version of this check is noise that gets switched off.
+  It is a claim about **one file** whose whole thesis is that it does not do this.
+- **`tools/README.md` records the `check()` call-site count** and the sweep asserts the sentence.
+  Recompute it with the sweep rather than by arithmetic.
+
+**Acceptance**
+- [ ] A resolver carrying `name.split('.').reduce((o, k) => o[k], root)` — WO-5.1's actual mutation,
+      pasted back in — turns § 20 **red**, naming the line and the rule.
+- [ ] The file as it stands today passes, with `FIELDS.filter(…)[0]` and both array literals intact.
+- [ ] `eval(`, `new Function(` and a `Reflect.get(` on a token each fail the same claim.
+- [ ] § 20's fault message names what the shape defeats, not just that it matched.
+- [ ] `src/merge-fields.js`'s header sentence at line 30 is true of the sweep for the first time, and
+      says which claim now carries it.
+- [ ] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
+      recomputed by the sweep.
+
+---
+
+## WO-1.33 — the second fixture student fires no rules
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app. Booked 2026-08-28, owner-directed, found by
+WO-5.1's verifier.)*
+
+**Why it exists.** `{{signals.list}}` filters hits by `studentId` and — deliberately, and with a
+comment saying so — **not by class**. `tools/verify/merge-fields.mjs` cannot prove that filter is
+there. Its second fixture student is described in its own comment as *"deliberately unremarkable"*,
+meaning **he fires no rules at all**, so a build that dropped the `studentId` filter entirely would
+produce byte-identical output on this fixture. Every one of the nineteen WO-5.1 checks would stay
+green while one student's signal sentences leaked into another student's draft.
+
+**The code is correct.** WO-5.1's verifier tested it by hand, out of the browser, with a constructed
+`hits` array carrying a sentence tagged to the other student: `{{signals.list}}` resolved to this
+student's sentence only. **It is the instrument that cannot express the failure**, which is the same
+shape as the backup-nag escape recorded in `TESTING.md` § WO-1.10 and the redraw gap beside it — a
+green run over a fixture that cannot fail is this project's recurring defect, and it is worth one
+planted hit to stop it recurring here.
+
+**The shape to build.** Give the second fixture student **one signal hit of his own**, with an
+explanation string that occurs nowhere else in the repository, and assert it is absent from the first
+student's resolved `{{signals.list}}`. It is a fixture change and an assertion, not a new section.
+
+**Traps**
+
+- **The planted sentence must be searched for in the whole resolved draft**, not only in
+  `{{signals.list}}` — the leak this guards against would arrive through any field that walks hits.
+- **Do not disturb the sixteen-field draft check.** A sibling assertion requires every field to
+  resolve with `blocked === false` for the probe student; a second student gaining a hit must not
+  change what the first one resolves to. Assert the before and after are identical.
+- **The teardown already counts two students** and every assignment, attendance row, log entry and
+  score bag it plants. A hit that arrives through a new log entry or score has to come back off, or
+  the foot check goes red on a run that was otherwise fine.
+- **Prove it non-vacuously.** Deleting the `studentId` filter in `src/merge-fields.js` must turn the
+  new assertion red; a fixture change that cannot fail is the defect being fixed, arriving again.
+
+**Acceptance**
+- [ ] The second fixture student carries at least one signal hit whose explanation string is unique
+      in the repository.
+- [ ] Removing `{{signals.list}}`'s `studentId` filter turns the new assertion **red**; restoring it
+      turns it green.
+- [ ] The first student's sixteen-field draft resolves byte-identically to what it did before the
+      fixture gained the hit.
+- [ ] The fixture teardown leaves nothing behind, and the foot check still reports zero of everything.
+- [ ] `node tools/verify-shell.mjs` is green, and `tools/README.md`'s call-site count is recomputed
+      by the sweep.
