@@ -107,6 +107,30 @@ a warning.
 - Starter templates for both tones and each audience, written in the suite's voice: friendly-
   utilitarian, sentence case.
 
+**Traps** *(added 2026-08-28, out of WO-1.32's verification — see its note and WO-1.34)*
+
+- **The resolver is already built for you, and you have no reason to open it.**
+  `mergeFieldPalette()` returns `{ name, about }` for all sixteen fields in the documented order, a
+  fresh copy each call, with **no `resolve` on it** — WO-5.1 built it for this work order by name,
+  and its own comment says why it carries no resolver: a screen that could reach one through the
+  palette could resolve a field outside a draft, which is a second door into the same room. Map over
+  what it hands you. Do not import `FIELDS`, do not add an export, and do not index anything by a
+  token.
+- **If you find yourself wanting `FIELDS[name]`, stop and say so — do not write it.**
+  `wo-sweep.mjs` § 20 claim 5 forbids every dynamic property read in that file: a bracket subscript
+  whose key is not an integer literal, a split, a fold, `eval`, `new Function`, `Reflect.get`. It
+  goes red and names the line, so this is not a rule you can discover late cheaply — you would
+  discover it after the screen was built. It exists because WO-5.1's dispatch shipped a path walk
+  that resolved `{{student.supports.medical}}` to the roster string while every tool was green. **A
+  palette that needs a lookup by key is a finding, not a workaround:** say so in your result file and
+  name [WO-1.34](phase-1-shell-store-roster.md#wo-134--claim-5-reads-member-position-and-three-spellings-walk-around-it),
+  which is the booked work order for the one gap in that check. **If this work order's result file
+  names WO-1.34, that row goes next** — the finding is the only thing that moves it up the queue.
+
+**Out of scope** — any change to `src/merge-fields.js`, including its exports: the palette this work
+order needs was built by WO-5.1 and is already there. Any resolver of your own, anywhere, including
+one behind the live preview.
+
 **Acceptance**
 - [ ] A concern template and a praise template can exist for the same audience and are offered
       separately at send time.
