@@ -8,8 +8,28 @@ The 1.0.0 call itself is [WO-G4](gates.md#wo-g4--the-100-call).
 
 ## WO-8.1 — `TESTING.md` complete and passing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** every phase
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.3 — which stands for every
+work order from WO-1.1 through WO-7.3, the span the first Acceptance line names
 **Closes roadmap** Phase 8 → "`TESTING.md` complete and fully passing."
+
+*(**`**Depends on** every phase` until 2026-08-28, and it reported `PASS | gates clear`.** The field
+held prose and no work-order id, so it parsed to* **zero dependencies** *— and zero dependencies is
+indistinguishable, to `wo-gate.mjs`, from every dependency satisfied. The tool was not silent about
+it: it printed* `NOTE | "Depends on" carries a non-work-order clause — read it yourself` *and then
+passed anyway. **A note beside a PASS is read as a footnote, not a refusal**, which is how a work
+order that cannot begin until Phases 5, 6 and 7 exist sat green in every audit since it was written.*
+
+***This is the same rot § Ship 2 named on 2026-08-09, in a third place.*** *There, an absent
+`**Ship**` field read as* **"in no ship"** *when it meant* **"nobody has said."** *Here an
+unparseable `**Depends on**` reads as* **"nothing blocks this"** *when it means* **"everything
+does."** *Absence and unparseability both resolve to the permissive answer, and in a directory whose
+whole job is refusing work that is not ready, the permissive answer is the wrong default.*
+**WO-7.3 is named because it is the last work order of the span the Acceptance line already
+quotes** *— it is `🔒 GATED`, so the gate now refuses this work order for a reason a reader can
+check, instead of clearing it for a reason nobody wrote. The prose clause is kept beside the id so
+the* NOTE *still prints; what changed is that the id makes the note redundant rather than
+load-bearing.* **The general hole is not closed** *— any other field holding only prose still passes,
+and nothing counts them. It is rowed with the two tracker work orders it belongs beside.)*
 
 **Why it exists.** This is the regression gate. **There is no automated suite and that is a
 decision, not an omission** — which puts all the weight on this checklist being real.

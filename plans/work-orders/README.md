@@ -1611,12 +1611,51 @@ it, never from a reading taken earlier in the same session.)*
 |---|---|---|---|---|
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — six of seven boxes; line 1 waits on the push and the deploy |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
-| 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Startable now** — all four dependencies ✅ as of 2026-08-24. Then somebody else's queue, which is why it is worth starting ahead of its row. **Read its second deliverable first:** the app signs in and touches no file yet |
+| 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Gate-clear and not startable — behind row 18.** All four declared dependencies ✅ since 2026-08-24, and its second deliverable is a demo video **showing the scope in use** while nothing in the app uses it: WO-7.2 is unbuilt, so `files.create` greps to zero and the Drive panel reads "Nothing is uploaded yet." *(Read "**Startable now**" until 2026-08-28 — see the note below the table.)* |
 | 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 | 11 | [WO-1.26](phase-1-shell-store-roster.md#wo-126--verify-shellmjs-is-32000-lines-and-most-runs-never-see-it-green) verify-shell.mjs is 32,000 lines | L | — | ✅ **2026-08-25** — booked and built inside one day. `verify-shell.mjs` 32,218 → **738 lines**, the checks in `tools/verify/` one file per surface, check count and exit code unchanged |
 | 12 | [WO-1.27](phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule) A field name in prose is read as a field | M | — | **Whenever the tracker is quiet.** Nothing depends on it and the tree is clean today — it is the plant that stops the next italic note doing it again |
 | 13 | [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build) A calendar-bound dependency blocks buildable work | M | — | **Ahead of WO-4.5, which it unblocks.** The only row here on anything's critical path: it pulls WO-4.5's own real-data box from ~Sep 23 to ~Sep 16, and what it actually buys is **capacity rather than schedule** — an M of signal work moves off a teaching-week weekend into the last days of full capacity. *(Corrected 2026-08-27: this row read "and takes ten days off WO-G3" and that does not hold — see the note under § Ship 3's table.)* |
 | 14 | [WO-1.29](phase-1-shell-store-roster.md#wo-129--the-owes-field-on-wo-43-names-no-work-order-and-nothing-notices) An Owes field that names no work order passes its own check | S | — | **Whenever the tracker is quiet, and it pairs with row 12** — same field, same file, one sitting. Nothing depends on it and the only live instance is WO-4.3's, which it removes |
+| 15 | [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) **Merge-field resolver** | M | — | **Before Sep 2, and it is the row to spend the fortnight's capacity on.** Head of Phase 5 and gate-clear as of 2026-08-28 — see the note below. Unblocks rows 19–21. It carries the rule that **no merge field ever resolves accommodation, medical or plan data**, refused *by construction* rather than by a filter, which is work that wants full capacity and not a teaching-week evening |
+| 16 | [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day) A tapped day opens on that day | S | — | **Rides along with anything.** Depends only on WO-6.3 ✅; nothing else waits on it |
+| 17 | [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why) The overdue tone is silent on the iPad | M | — | **When there is an iPad sitting anyway.** Carries [WO-2.31](phase-2-attendance.md#wo-231--the-overdue-alert)'s `**Owes**` from the 👤 run that failed 2026-08-16 — the only open pointer of the three `--audit` tracks |
+| 18 | [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) **Document transfer & conflicts** | L | — | **After Sep 2.** `⬜` since 2026-08-28, when a `🔒` that named no gate came off — see its own note. **Row 9 cannot be filmed until this exists**, and row 24 needs both. An L with six Acceptance lines, several wanting two real devices: it is the wrong shape for the five days before a class starts, and nothing dates it sooner — Phase 7 has no deadline and Google's queue does not start until row 9 is submitted either way |
+| 19 | [WO-5.2](phase-5-outreach.md#wo-52--templates) Templates | M | — | After row 15 |
+| 20 | [WO-5.3](phase-5-outreach.md#wo-53--send-flow) Send flow | M | — | After row 19. `mailto:` only — a mail scope reads "Send email as you," and the architecture table forbids it |
+| 21 | [WO-5.4](phase-5-outreach.md#wo-54--contact-log--history) Contact log & history | M | — | After row 20 |
+| 22 | [WO-6.4](phase-6-calendar-glance.md#wo-64--the-glance-page) The glance page | L | — | **Not before ~Sep 16, though its gates clear today.** It depends on WO-4.5, whose one open box is 📆 — so 📆 reports it code-complete and the tool lets this through. That is the mark working as designed and it is **not** a recommendation: the glance page draws Phase 4's signals, and drawing them before a real term has confirmed they fire correctly is building on a promise |
+| 23 | [WO-8.4](phase-8-packaging.md#wo-84--print-stylesheets) Print stylesheets | S | — | **Read the code before dispatching.** Its premise may already be satisfied — `wo-sweep.mjs` § "no print-gate attribute is also a delegated click hook" already finds four registered gates each with an `@media print` block behind it. This work order cost a commit and a correction once before for exactly that reason |
+| 24 | [WO-7.3](phase-7-sync.md#wo-73--verification-complete) Verification complete | S | — | **Google's queue, then one function.** Depends on rows 9 and 18. Its code half is a single edit to `hostAllowsSignIn()`, paired with the console origins — already registered, so this side is the one behind |
+| 25 | [WO-8.1](phase-8-packaging.md#wo-81--testingmd-complete-and-passing) `TESTING.md` complete and passing | M | — | **After Phase 7.** Reported gates-clear until 2026-08-28 on a `**Depends on**` field holding prose and no id — see its own note. Now gated on row 24, which is where it always belonged |
+| 26 | [WO-8.2](phase-8-packaging.md#wo-82--demo-build) Demo build | M | — | After row 25 |
+| 27 | [WO-8.3](phase-8-packaging.md#wo-83--accessibility-pass) Accessibility pass | M | — | After row 26 |
+| 28 | [WO-8.5](phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations) README, FERPA, and known limitations | S | — | After row 25. Dropped M → S when [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) took the FERPA half; what is left is the README, which **quotes** `LICENSE.md`'s copyright line rather than composing its own |
+| 29 | [WO-8.6](phase-8-packaging.md#wo-86--onboarding) Onboarding | M | — | After row 28 |
+| 30 | [WO-G4](gates.md#wo-g4--the-100-call) **The 1.0.0 call** | S | — | The end of the road. Depends on everything above it |
+
+***Rows 15 through 30 were added 2026-08-28, and the reason is the third occurrence of the failure
+this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
+any running-order table** *— every one of Phases 5, 7 and 8, both open rows of Phase 6, WO-2.33 and
+WO-G4. `next` walks these tables in document order, so a work order with no row is a work order the
+tool cannot reach:* [WO-1.24](phase-1-shell-store-roster.md#wo-124--the-ships-past-2-have-no-running-order)
+*was written about exactly that and this section was its answer. **Four rows remained readable** —
+9, 10, 12 and 14 — so the order was one short sitting from running dry again, which is the same
+warning § Ship 3 and § After Ship 3 were each written under. **The lesson is that a running order
+decays by completion, not by error**: nothing was ever wrong here, the rows were simply used up, and
+no check counts the survivors. Booked beside the two tracker rows it belongs with.*
+
+***Phase 5 opened on 2026-08-28 without anybody building anything, and that is 📆 working.***
+*Row 15's `Depends on` is WO-3.4 and WO-4.1, both ✅ — but* [WO-4.3](phase-4-signals.md#wo-43--praise-signals)
+*and* [WO-4.5](phase-4-signals.md#wo-45--cooldown--the-quiet-middle) *are the rows Phase 5 actually
+waits on in substance, and both are* `🔨` *with **only their 📆 real-data boxes left**, unclosable
+before ~Sep 16. Under the rule* [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build)
+*wrote, a work order whose every open Acceptance line is 📆 reports as* **code-complete** *and stops
+blocking work that needs only its code. **So the outreach half of this app became buildable the day
+the signals half stopped being buildable**, and neither fact required a human to notice. That is the
+whole of what 📆 was for, and this is its first use on something other than the WO-4.3 → WO-4.5 pair
+it was booked to unstick. It still closes nothing: rows 4 and 5 stay* `🔨`*, and* **WO-G3 refuses
+them outright**, *because the gate is where the wait is actually paid.*
 
 ***Row 7 was booked the same day this section was, and it is the row to start with.***
 [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) *is the privacy

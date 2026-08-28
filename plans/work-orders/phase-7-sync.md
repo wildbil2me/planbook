@@ -189,9 +189,30 @@ here. Sync is a foreground act, while the app is open and the teacher is signed 
 
 ## WO-7.2 — Document transfer & conflicts
 
-**Ship** — · **Status** 🔒 GATED · **Size** L · **Depends on** WO-7.1
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-7.1
 **Closes roadmap** Phase 7 → "Upload/download the year document", "`rev`/`baseRev` comparison",
 "Conflict: keep both", "Handle token expiry gracefully."
+
+*(**`🔒 GATED` until 2026-08-28, and by then it was gating nothing.** The glyph is Phase 7's
+original blanket — `docs/sync.md`'s "sync stays behind a flag until it is verified" read as *do not
+build any of it yet* — and
+[WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) demolished
+that argument on 2026-08-11 for the whole phase: **verification gates public launch, not
+development**, and a Testing-mode client issues real `drive.file` tokens to the owner today.
+[WO-7.1](#wo-71--auth) took the glyph off on that reasoning and shipped 2026-08-24; this work order
+kept it, with its one `Depends on` ✅ DONE and* **nothing in its body naming a gate** *— which the
+§ Header fields rule requires:* `🔒` *means do not start it, and what it is gated **on** is the work
+order's to say. It said nothing, so there was nothing to re-check and nothing to lift it.*
+
+**It had also gone circular, exactly as WO-7.1's did.**
+[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) *owes Google a demo video* **showing
+the scope in use**, *and the only thing that uses the scope is this work order. WO-7.1's note records
+the first turn of that loop — the paperwork could not film a sign-in marked do-not-start — and this
+is the second: the paperwork cannot film a* file transfer *marked do-not-start. **The lesson is not
+about Phase 7.** A `🔒` that names no gate cannot be audited, cannot expire, and outlives the
+argument that put it there;* `--audit` *reads fragments, `Owes` pointers and dashboards, and has
+never once asked a gated work order what it is waiting for. **Booked as a check nobody has written:**
+if a `🔒` must state its gate, something should refuse one that does not.)*
 
 **Why it exists.** The teacher never edits two devices at once — established up front, and it is
 what makes whole-document last-writer-wins sound rather than lazy. But "never" is a habit, not a

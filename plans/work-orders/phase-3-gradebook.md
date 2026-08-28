@@ -1418,9 +1418,10 @@ the thing the no-timetable rule actually forbids.
 
 ## WO-3.18 — verification submitted 🔒
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-8.12 —
-the client to verify, the domain to verify it at, the sign-in the demo video has to film, and the policy
-whose URL goes in the form · **Blocks** a stranger seeing a clean consent screen
+**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-7.2,
+WO-8.12 — the client to verify, the domain to verify it at, the sign-in the demo video has to film,
+**the file transfer it has to film being used**, and the policy whose URL goes in the form ·
+**Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
 
@@ -1457,6 +1458,32 @@ points at the third Acceptance line below, which is the same promise in the work
 this work order since Phase 7 was cut. The `~Sep 15` submit-by went with the row; what replaces it is
 WO-7.1's build date, and **Phase 7 has no date yet** — that is the honest cost of this move, and it is
 paid in Phase 7 rather than in Ship 2.)*
+
+*(**`⬜ NOT STARTED` until 2026-08-28, and the status is what `next` reads.** With the dependency
+above added, a gate report on this work order correctly answers* `FAIL | dependency WO-7.2 is ⬜ NOT
+STARTED` *— but* `next` *stops at the first* `⬜` *in document order and only then prints the
+verdict, so it parked here and* **hid every buildable row behind it**. *That is
+[WO-G2](gates.md#wo-g2--ship-2-gate-first-grades)'s 2026-08-20 problem exactly, and this is its
+remedy: the vocabulary already had the word, and* `🔒` *is the one that makes `next` walk on. **Put
+it back to** `⬜` **when WO-7.2 lands** — `--tick` refuses this status, so the paperwork cannot be
+closed while wearing it, and the gate it is named for cannot be quietly skipped.)*
+
+*(**WO-7.2 became the fifth dependency on 2026-08-28, and it is the same discovery as the block
+above, one work order further on.** That note was written when the second deliverable — a demo video
+**showing the scope in use** — had no sign-in to film, and it added WO-7.1. WO-7.1 shipped
+2026-08-24 and* **the deliverable is still unfilmable**, *because a sign-in is not a use: Google's
+demo-video requirement is to show* **how each sensitive scope's granted data is actually used
+functionally**, *and the only thing that uses the data is* [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts).
+`files.create` *greps to zero across* `src/`*,* `src/auth.js` *exports no writer, and the Drive panel
+says so on screen in as many words —* **"Nothing is uploaded yet."** *So the 2026-08-20 refusal to
+film a stub was never discharged; it was moved. **This is the sixth time a real ordering constraint
+has turned up somewhere other than `Depends on`**, and the second time on this work order — which is
+the argument for reading the count rather than the field. Two smaller things a shoot should know
+before it books a room:* `hostAllowsSignIn()` *still answers false for the deployed host, so the flow
+can only be filmed at* `https://localhost:8443` *until WO-7.3 widens it — and the GIS* **popup**
+*shows a truncated origin bar, so the* `client_id` *Google asks to see in the address bar cannot
+appear there and has to be filmed off the console instead. Both are written up, with a shot list, in*
+[`plans/wo-3-18-video-runbook.html`](../wo-3-18-video-runbook.html)*.)*
 
 **Split out of WO-3.10 on 2026-08-10**, which is where the full reasoning sits. This is the half that
 **cannot start until there is a domain**, and it is booked separately so that the half which can start
