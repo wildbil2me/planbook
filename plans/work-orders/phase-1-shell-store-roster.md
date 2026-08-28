@@ -2812,3 +2812,156 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
   other; both are small and neither changes what the field *means*.
 - **The 📆 mechanism is not reopened.** WO-1.28 is done and this work order depends on its output
   being correct, not on its code changing.
+
+---
+
+## WO-1.30 — a Depends on that names no work order clears its own gate
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing; every
+gate report in the directory runs through the function this fixes
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
+makes, the way WO-1.26 through WO-1.29 are not. Booked 2026-08-28, owner-directed, found while
+reading WO-8.1's gate report during an unrelated sitting.)*
+
+**Why it exists.** `depsOf()` at `tools/wo-gate.mjs` extracts dependencies with one match and reports
+whatever is left over as prose:
+
+```js
+const ids = [...(wo.dependsRaw.match(/WO-[\dG][\w.]*/g) || [])];
+const prose = wo.dependsRaw.replace(/WO-[\dG][\w.]*/g, '').replace(/[…,\s·]/g, '');
+return { ids: [...new Set(ids)], hasProse: prose.length > 0 && !/^nothing$/i.test(wo.dependsRaw.trim()) };
+```
+
+When `ids` comes back empty the gate has nothing to check, and **an empty dependency list is
+indistinguishable from a satisfied one.** The work order clears. `hasProse` is true, so a
+`NOTE` prints beside the `PASS` — and **a note beside a PASS reads as a footnote, not a refusal.**
+
+**The live instance is the last gate of the whole project.**
+[WO-G4](gates.md#wo-g4--the-100-call) — the 1.0.0 call — reads `**Depends on** every work order`.
+That is the truest dependency line in this directory and it resolves to **zero**. Its sibling,
+WO-8.1's `every phase`, was found and repaired by hand on 2026-08-28; **this one is deliberately
+left standing as the reproduction**, and closing it is an Acceptance line below. WO-1.27 had to
+build a fixture because its defect was repaired the day it was found — this one does not.
+
+***The rot is the same one § Ship 2 named on 2026-08-09, and this is its third face.*** *There, an
+absent* `**Ship**` *read as* **"in no ship"** *when it meant* **"nobody has said."** *In WO-8.1 an
+unparseable* `**Depends on**` *read as* **"nothing blocks this"** *when it meant* **"everything
+does."** *Absence and unparseability keep resolving to the permissive answer, in a directory whose
+entire job is refusing work that is not ready.*
+
+**What makes this an M rather than an S, and it is the whole of the risk.** The obvious fix —
+*zero ids plus prose is a refusal* — **refuses thirty-odd work orders that are correct today**,
+including the three written to repair this family. Measured 2026-08-28 across all 143:
+
+| Shape | Count | What it means | Today |
+|---|---|---|---|
+| Real `WO-` ids | 111 | a dependency | resolved, correct |
+| `—` | 14 | **no dependencies** | `NOTE`, wrongly |
+| `nothing` | ~11 | **no dependencies** | silent, correct |
+| `nothing — <reason>` | 5 | **no dependencies, and why** | `NOTE`, wrongly |
+| a clause naming a real constraint | 1 | **everything** | `NOTE` + `PASS` — the defect |
+
+Only the last row is the bug. **The em dash is this directory's own "no dependencies" marker** —
+WO-1.15, WO-1.17, WO-1.18, WO-1.19, WO-1.21, WO-1.24, WO-1.25, WO-1.26, WO-1.27, WO-1.28, WO-1.29,
+WO-3.22, WO-8.9 and WO-8.10 all use it, and § "Header fields" uses `—` the same way for **Ship**.
+It has been raising a spurious `NOTE` on every one of those runs since the check was written, which
+is the other half of why the real one was never read: **the note is noise fourteen times for every
+once it means something.**
+
+**Traps**
+
+- **Widen the sentinels before turning on the refusal, never after.** `/^nothing$/i` is tested
+  against the **whole trimmed value**, so `nothing — no domain, no name, no policy` (WO-3.10) does
+  not match it and neither do WO-2.19, WO-2.20, WO-2.37 or WO-8.7. A prefix test, plus `—`, `–`,
+  `-` and `none`. Get this arm green on all thirty before the refusal arm is written, or the run
+  that proves the fix is a run that refuses the directory.
+- **Do not teach it to expand a range.** WO-2.16 settled that `WO-2.5 … WO-2.7` is two dependencies
+  and a WARNING, never three. Nothing here may start inventing ids nobody typed.
+- **Do not invent a field.** § "Header fields" records three fields — **Amends roadmap**,
+  **Blocks**, **Target** — each invented by a hand and absorbed in silence. The answer lives inside
+  the existing field.
+- **Do not write a bold `Depends on` in this work order's own prose.** WO-1.27 is unbuilt, so
+  `fieldRe()` still matches a field name anywhere in the collapsed header block. The heading and the
+  table above say it unbolded for that reason.
+- **`--self-check` is at 24 plants and each arm wants one.** A plant that only proves the refusal
+  fires is half a check: the sentinel arm is the one that would have caught the naive fix.
+
+**Acceptance**
+- [ ] A `Depends on` holding no `WO-` id and a clause that is not a no-dependency sentinel is a
+      **problem**, not a note — the gate report refuses it.
+- [ ] `—`, `-`, `–`, `none`, `nothing`, and `nothing — <any reason>` raise neither a problem nor the
+      prose `NOTE`. All thirty work orders using them report exactly as they do today, minus the note.
+- [ ] `WO-G4`'s field names a work order, and its gate report refuses it for a reason a reader can
+      check rather than clearing it.
+- [ ] A `Depends on` carrying **both** ids and prose still raises the `NOTE` and still gates on the
+      ids — that is the correct case and there are dozens of it.
+- [ ] `--audit` and `--self-check` both pass, and `--self-check` gains a plant per arm.
+
+---
+
+## WO-1.31 — a 🔒 GATED work order that never says what it is gated on
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.30
+made. Booked 2026-08-28, owner-directed, found when WO-7.2's lock came off.)*
+
+**Why it exists.** `plans/work-orders/README.md` § "Header fields" states the rule and puts the
+obligation on the document: **`🔒 GATED` means do not start it, and what it is gated *on* is the
+work order's to say.** `wo-gate.mjs` enforces the first half in one line —
+
+```js
+if (wo.status.startsWith('🔒 GATED')) problems.push(`${wo.id} is 🔒 GATED — do not start it`);
+```
+
+— and **nothing anywhere enforces the second.** A lock with no stated gate cannot be audited, cannot
+expire, and outlives the argument that put it there. `--audit` reads fragments, `Owes` pointers,
+§ The files and the dashboards; it has never once asked a gated work order what it is waiting for.
+
+**What that cost, concretely.** [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) wore
+`🔒` from the day Phase 7 was cut until 2026-08-28. The glyph was the phase's original blanket —
+*sync stays behind a flag until it is verified* — and
+[WO-3.10](phase-3-gradebook.md#wo-310--the-oauth-client-exists-and-asks-for-one-scope) demolished
+that reasoning **for the whole phase** on 2026-08-11: verification gates public launch, not
+development. WO-7.1 took its lock off on that argument and shipped. WO-7.2 kept one, with its single
+`Depends on` ✅ DONE and no sentence in its body naming a gate — **so there was nothing to re-check
+and nothing to lift it.**
+
+It then went circular, which is how it was finally found:
+[WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) owes Google a demo video **showing
+the scope in use**, and the only work order that uses the scope was the locked one. That is the
+second turn of a loop WO-7.1's note records the first turn of — **the paperwork could not film a
+sign-in marked do-not-start, and then could not film a file transfer marked do-not-start.**
+
+**There is no live instance, and that is worth saying out loud.** All four gated work orders today —
+WO-G2, WO-G3, WO-3.18, WO-7.3 — name their gate in their bodies, the last two as of 2026-08-28.
+**This work order is a plant, not a repair.** It is booked because the failure took seventeen days to
+notice, was invisible to every tool, and was found by a human reading an unrelated runbook.
+
+**The shape to build, and why it is not a new field.** Put the gate on the **status line**, as a
+suffix: `🔒 GATED — <what it waits for>`. Three statuses already take one — `✅ DONE — <date>`,
+`🚫 STRUCK — <date>`, `⏳ DEFERRED — <date>` — so the grammar exists, the parser already tolerates
+it (`--self-check` writes `'🔒 GATED — waiting on a fixture'` in its own fixture at
+`tools/wo-gate.mjs:2227`), and § "Header fields" needs a row rather than a rewrite. A new
+**Gated on** field is the alternative and is refused for the reason that table records three times.
+
+**Traps**
+
+- **All four gated work orders read bare `🔒 GATED` today** and will need the suffix in the same
+  sitting, or the check lands red on a directory that is otherwise correct. They are WO-G2, WO-G3,
+  WO-3.18 and WO-7.3; each already has the sentence in its body to copy from.
+- **The suffix must not be mistaken for a date.** `✅ DONE` parses one; this does not, and whatever
+  reads statuses must not start expecting one here.
+- **A refusal, not a note.** The gate report already refuses a `🔒` outright, so this adds a second
+  sentence to a report that is failing anyway — it costs a reader nothing and is the only way the
+  omission is ever seen.
+- **Do not make it retroactive to `🚧 BLOCKED`.** That status has its own vocabulary row and is not
+  in scope; widening this to every non-⬜ status is how a small check becomes an M.
+
+**Acceptance**
+- [ ] A work order whose status is `🔒 GATED` with no `—` suffix is reported as a problem naming the
+      § "Header fields" rule it breaks.
+- [ ] `🔒 GATED — <text>` passes that check and still refuses the work order for being gated.
+- [ ] WO-G2, WO-G3, WO-3.18 and WO-7.3 each carry a suffix that matches the gate already stated in
+      their bodies, and `--audit` passes.
+- [ ] § "Header fields" records the suffix in its `🔒 GATED` row.
+- [ ] `--self-check` gains a plant for the bare-lock refusal.

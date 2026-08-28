@@ -256,7 +256,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.29 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.31 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -284,7 +284,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 29 | 27 | — | 🔨 IN PROGRESS (reopened ten times; last on 2026-08-27) |
+| 1 — Shell, store, roster | 31 | 27 | — | 🔨 IN PROGRESS (reopened twelve times; last on 2026-08-28) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -1632,7 +1632,9 @@ it, never from a reading taken earlier in the same session.)*
 | 27 | [WO-8.3](phase-8-packaging.md#wo-83--accessibility-pass) Accessibility pass | M | — | After row 26 |
 | 28 | [WO-8.5](phase-8-packaging.md#wo-85--readme-ferpa-and-known-limitations) README, FERPA, and known limitations | S | — | After row 25. Dropped M → S when [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) took the FERPA half; what is left is the README, which **quotes** `LICENSE.md`'s copyright line rather than composing its own |
 | 29 | [WO-8.6](phase-8-packaging.md#wo-86--onboarding) Onboarding | M | — | After row 28 |
-| 30 | [WO-G4](gates.md#wo-g4--the-100-call) **The 1.0.0 call** | S | — | The end of the road. Depends on everything above it |
+| 30 | [WO-G4](gates.md#wo-g4--the-100-call) **The 1.0.0 call** | S | — | The end of the road. Depends on everything above it — **though not in a way `wo-gate.mjs` can read**, which is row 31's live instance |
+| 31 | [WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate) A Depends on that names no work order clears its own gate | M | — | **Whenever the tracker is quiet, and it is the third of the four tracker rows** — 12, 14, 31, 32. Its live instance is row 30, left standing on purpose so the fix has something real to fail against. **Read its table before writing a line:** the obvious fix refuses thirty work orders that are correct today, fourteen of which use `—` to mean "no dependencies" |
+| 32 | [WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on) A 🔒 GATED work order that never says what it is gated on | S | — | **Pairs with row 31 — same file, same neighbourhood, one sitting.** A plant rather than a repair: all four gated work orders name their gate today, and the one that did not — WO-7.2 — cost seventeen days and was found by a human reading an unrelated runbook |
 
 ***Rows 15 through 30 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
