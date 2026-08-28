@@ -120,6 +120,10 @@ that gap on 2026-08-28: the mutation was a path expression walked against the do
 resolver's whitelist missed, so the delivered tree handed back every student's medical need, IEP
 accommodations and behavior plan on request, while all six Acceptance boxes read `[x]` and the row
 read ✅ DONE. Every tool was green over it — a mutation names nothing a grep is looking for.
+*(WO-1.32 taught `wo-sweep.mjs` § 20 to catch **that** mutation in **that** file on 2026-08-28 — it
+now forbids any dynamic property read in `src/merge-fields.js`. Every other file in the tree is
+exactly as it was, so nothing in this paragraph relaxes: a green sweep still clears no dispatch of
+this.)*
 **Revert first, re-run the tool, and only then write the result file**, which should say the proof
 was made and reverted. If you cannot revert — the harness is red for a reason you do not understand,
 say — then say so in the FIRST line of your result and leave the boxes blank. A dispatch that dies

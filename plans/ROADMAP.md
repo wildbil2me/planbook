@@ -514,7 +514,8 @@ granting a mail scope.
       than because it is on one — and so is a field added to the data model next year. The refusal
       list survives as the wording of an error and as a test surface; deleting it would change no
       outcome. `tools/wo-sweep.mjs` § 20 asserts there is no support identifier in the module's code
-      at all.)*
+      at all, and since WO-1.32 that there is no dynamic property read in it either — the name and
+      the shape, because the path walk WO-5.1's killed dispatch shipped names nothing.)*
 - [ ] Separate concern and praise templates. A good praise message reads nothing like a good
       concern message.
 - [ ] Audience picker: guardian 1/2, **counselor, admin**. Contacts already live on the roster.

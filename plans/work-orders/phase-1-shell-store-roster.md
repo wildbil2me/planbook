@@ -2977,7 +2977,7 @@ it (`--self-check` writes `'🔒 GATED — waiting on a fixture'` in its own fix
 
 ## WO-1.32 — the sweep proves the name and not the shape
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.31
 made. Booked 2026-08-28, owner-directed, out of WO-5.1's recovery.)*
 
@@ -3025,15 +3025,25 @@ Over the same stripped code § 20 already computes, fail on
   Recompute it with the sweep rather than by arithmetic.
 
 **Acceptance**
-- [ ] A resolver carrying `name.split('.').reduce((o, k) => o[k], root)` — WO-5.1's actual mutation,
+- [x] A resolver carrying `name.split('.').reduce((o, k) => o[k], root)` — WO-5.1's actual mutation,
       pasted back in — turns § 20 **red**, naming the line and the rule.
-- [ ] The file as it stands today passes, with `FIELDS.filter(…)[0]` and both array literals intact.
-- [ ] `eval(`, `new Function(` and a `Reflect.get(` on a token each fail the same claim.
-- [ ] § 20's fault message names what the shape defeats, not just that it matched.
-- [ ] `src/merge-fields.js`'s header sentence at line 30 is true of the sweep for the first time, and
+- [x] The file as it stands today passes, with `FIELDS.filter(…)[0]` and both array literals intact.
+- [x] `eval(`, `new Function(` and a `Reflect.get(` on a token each fail the same claim.
+- [x] § 20's fault message names what the shape defeats, not just that it matched.
+- [x] `src/merge-fields.js`'s header sentence at line 30 is true of the sweep for the first time, and
       says which claim now carries it.
-- [ ] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
+- [x] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
       recomputed by the sweep.
+
+*(**All six closed 2026-08-28, and the verifier found the edge the same hour.** Claim 5 reads*
+**member position, one stripped line at a time**, *so* `?.[name]`*, a computed destructuring key, and
+a* `[` *that opens its own line all pass green while resolving a property by a token-named key. It is
+narrow rather than vacuous — seven distinct mutations go red, WO-5.1's own among them, and no
+spelling in that list is one this codebase uses — but* `src/merge-fields.js:37` *claims the greps
+prove nothing here could resolve one* **on any input**, *which those three falsify as written. Booked
+as* [WO-1.34](#wo-134--claim-5-reads-member-position-and-three-spellings-walk-around-it) *rather than
+absorbed here: widening the scanner is a different edit from adding the claim, and a work order that
+grows to cover its own verifier's findings stops being a thing anybody can review.)*
 
 ---
 
@@ -3084,3 +3094,81 @@ student's resolved `{{signals.list}}`. It is a fixture change and an assertion, 
 - [ ] The fixture teardown leaves nothing behind, and the foot check still reports zero of everything.
 - [ ] `node tools/verify-shell.mjs` is green, and `tools/README.md`'s call-site count is recomputed
       by the sweep.
+
+---
+
+## WO-1.34 — claim 5 reads member position, and three spellings walk around it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.32 · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.33
+made. Booked 2026-08-28, owner-directed, found by WO-1.32's verifier the hour claim 5 landed.)*
+
+**Why it exists.** `wo-sweep.mjs` § 20 claim 5 forbids a dynamic property read in
+`src/merge-fields.js`, and it finds one by scanning **member position, one stripped line at a time**:
+`/[A-Za-z0-9_$)\]][ \t]*\[([^\]\n]*)\]/`. That is deliberately narrow — it is what keeps the file's
+own array literals, its `['behavior']` and its two regex character classes out of the fault — and the
+narrowness is exactly the surface area. **Three spellings resolve a property by a token-named key and
+pass the scanner green**, verified against the live regex rather than reasoned about:
+
+| Spelling | Why it passes |
+|---|---|
+| `root?.[name]` | the character before the `[` is `.`, which is not in the member class |
+| `const { [name]: got } = root` | a computed key in a destructuring pattern or an object literal sits after `{`, `,` or a space |
+| `root\n  [name]` | the scanner reads one trimmed line at a time, so a `[` that opens its own line has nothing before it |
+
+**This is narrow, not vacuous, and the difference is the reason this is an S rather than an alarm.**
+Seven distinct mutations go red today, WO-5.1's actual one among them, and `grep -rn '?\.' src/*.js`
+returns **nothing** — optional chaining is not this codebase's style, and neither is a computed key.
+No spelling here is one somebody writes by accident.
+
+**What makes it worth an hour anyway is a sentence, not a risk.** `src/merge-fields.js:37` says the
+two greps *"prove there is nothing here that could resolve one **on any input**"*. Three spellings
+falsify that as written, and this repository's whole argument for a structural check over a fixture
+is that the structural one holds on any input. **Either the check gets wide enough for the sentence
+or the sentence gets narrowed to the check** — a header that overclaims is the failure mode WO-1.32
+was booked to fix, arriving one layer up.
+
+**The shape to build.** Three edits, in rising order of cost, and the first two are lines rather than
+designs:
+
+- **Optional chaining into the member class.** `?.` between the identifier and the `[` — an array
+  literal never follows `?.`, so this cannot false-positive.
+- **A computed key is its own pattern.** `]` followed by `:` catches a destructuring pattern and an
+  object literal's computed key in one, and nothing in this file is a bracket group followed by a
+  colon.
+- **The line-at-a-time read is what actually has to change.** Scan the stripped source **whole**,
+  allowing newlines between the identifier and the `[`, and map the match offset back to a line
+  number so the fault still cites `src/merge-fields.js:<line>`. That line number is WO-1.32's own
+  deliverable and may not regress to an offset or a guess.
+
+**Traps**
+
+- **Today's file must stay green, and the exemptions it relies on are not all the same kind.** Seven
+  integer-literal subscripts, two array literals, `['behavior']`, and **two regex character classes**
+  — `[^{}]` in `TOKEN` and `[^a-z]` in `refusalFor()` — which pass only because a `[` after `/` or
+  `(` is not in member position. A whole-file scan that crosses newlines must not start reaching
+  them: check what precedes the `[`, never merely that something does.
+- **Do not answer this with a tokeniser.** § 20's stripper is crude and says so at its own head; the
+  fix for an overclaiming sentence is not a JavaScript parser in a grep tool, and a dependency to
+  get one is forbidden outright.
+- **Every spelling in the table above must go red on its own**, and each must go red for a reason
+  the fault message names — the WO-1.32 fault text explains what a dynamic read *defeats*, and a new
+  family that prints "matched" has undone that.
+- **The non-vacuity anchor stays.** Zero bracket subscripts found is still a fault; a widened scanner
+  that stopped matching `FIELDS.filter(…)[0]` would be silently green.
+- **`src/merge-fields.js` is a `SHELL` entry.** Any edit to it — including the sentence at line 37 —
+  bumps `CACHE` in `sw.js`. It is at `planbook-shell-v100` as of WO-1.32.
+
+**Acceptance**
+- [ ] `root?.[name]`, `const { [name]: got } = root`, and a subscript whose `[` opens its own line
+      each turn § 20 **red** on their own, each naming the line.
+- [ ] The file as it stands passes, with all seven integer-literal subscripts, both array literals,
+      `['behavior']` and both regex character classes intact.
+- [ ] WO-5.1's own mutation and the three one-liners WO-1.32 closed — `eval(`, `new Function(`,
+      `Reflect.get(` — still fail, and the fault still cites a line number that is the line number of
+      the file a reader opens.
+- [ ] The non-vacuity anchor still fires: a scanner that finds no bracket subscript at all is a fault.
+- [ ] `src/merge-fields.js:37`'s "on any input" is true of the check as it now stands, or says which
+      spellings it does not cover — and if that file was touched, `CACHE` in `sw.js` moved.
+- [ ] `node tools/wo-sweep.mjs` is green on a clean tree and `tools/README.md`'s call-site count is
+      recomputed by the sweep.

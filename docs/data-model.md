@@ -642,8 +642,11 @@ document root, which is the difference this phase turns on: a blacklist of forbi
 open the moment a field is added to this document, and a whitelist fails closed. `tools/wo-sweep.mjs`
 § 20 reconciles the table above against that list name for name and in both directions, and asserts
 separately that no support identifier appears in the module's code at all — only inside string
-literals and prose. **Change a row of that table and change the module in the same sitting**; the
-sweep says which way it went.
+literals and prose — and, since WO-1.32, that there is no dynamic property read in it either: no
+bracket subscript whose key is not an integer literal, no split, no fold, no `eval`, no
+`new Function`, no `Reflect.get`. The two are the name and the shape, and the second was added
+because a path expression names nothing the first is looking for. **Change a row of that table and
+change the module in the same sitting**; the sweep says which way it went.
 
 Five rulings inside it are decisions rather than plumbing:
 

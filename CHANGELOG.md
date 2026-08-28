@@ -13,6 +13,39 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep proves the resolver's shape, not just its names — 2026-08-28
+
+**The standing check over the merge-field resolver could not see the defect that actually shipped.**
+`wo-sweep.mjs` § 20 made four claims about `src/merge-fields.js`, and the structural one — no support
+identifier anywhere in the code — checks **names**. A path expression names nothing. WO-5.1's
+dispatch was killed by a quota holding an unreverted mutation proof, and the tree it left behind
+resolved `{{student.supports.medical}}` and every other support field to the roster string, unblocked
+and with no error code, while § 20, `--self-check`, `--audit` and all thirty-four checks stayed green
+over it. What found it was a human reading the file.
+
+**§ 20 now carries a fifth claim: no dynamic property read anywhere in that file.** No bracket
+subscript whose key is not an integer literal, no split, no fold, no `eval(`, no `new Function(`, no
+`Reflect.get(`. WO-5.1's own mutation, pasted back in, turns the section red and names the line, the
+incident and what it disclosed; the three one-liners each fail on their own; and the file as it
+stands passes with its seven `…filter(…)[0]` lookups intact. **Claims 2 and 5 are two halves of one
+sentence** — one says the file never names a support field, the other says it could not read one if
+it did. A whitelist that can be walked around is not a whitelist.
+
+**Two smaller things came with it.** A block comment is now blanked line for line rather than
+collapsed to a space, so a line number the section prints is the line number of the file you are
+about to open — in a file that is two thirds comment, every number it could have printed before was
+hundreds of lines short, and a fault that names the wrong line teaches its reader to distrust the
+next one. And the subscript scanner carries its own non-vacuity anchor: finding **zero** subscripts
+is itself a fault, because the file has several.
+
+**The claim is narrow, and the file says so rather than claiming the limit away.** The scanner reads
+member position, one line at a time, so `?.[name]`, a computed destructuring, and a `[` that opens
+its own line would pass — no spelling this codebase uses, and all three are booked as **WO-1.34**.
+It changes nothing about the recovery rule the incident wrote: claim 5 is about one file,
+deliberately, because every other module here indexes by computed keys legitimately — so a mutation
+anywhere else still names nothing a grep is looking for, and `grep -rn MUTATION` is still the first
+move on a dead dispatch.
+
 ### The machinery that writes home, and the door it cannot open — 2026-08-28
 
 **A template becomes an email one student at a time, and sixteen fields is the whole of what it can

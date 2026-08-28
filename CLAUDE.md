@@ -161,7 +161,12 @@ that generalise.* **Re-running the tools would not have caught it:** `wo-sweep.m
 34 · 31 · 0 · 3 with the hole open, and so were both gate tools, because* **a mutation names nothing
 a grep is looking for** *— so the standing recovery rule (re-run every command the prose cites)
 walks straight past this one, and the first move on a dead dispatch is now* `grep -rn MUTATION` *over
-its delivered files.* **And a green harness number in a dead dispatch's prose is a timestamp, not a
+its delivered files.* **WO-1.32 closed that for this one file the same week** *— § 20 gained a fifth
+claim on 2026-08-28,* no dynamic property read in `src/merge-fields.js`*, and this exact mutation now
+turns the sweep red at the line.* **It changes nothing in the sentence before it:** *claim 5 is about
+one file on purpose, because every other module here indexes by a computed key legitimately, so a
+mutation anywhere else in the tree still names nothing a grep is looking for and* `grep -rn MUTATION`
+*is still the first move.* **And a green harness number in a dead dispatch's prose is a timestamp, not a
 state:** *the implementer's cited 1194/1194 was real, taken before the mutation went in. Recovered,
 repaired and re-verified by a separate verifier on 2026-08-28 — 1194 checks green, sweep green, both
 gate tools PASS.)*

@@ -29,10 +29,18 @@
 
   · **There is no `doc[a][b]` anywhere in this file.** The refusal list in the Deliverables is a
     TEST SURFACE — every path in it must be provably unreachable — rather than a runtime filter, and
-    `tools/wo-sweep.mjs` § 20 asserts the absence structurally: no support identifier appears in this
-    file's code at all, only inside string literals and prose. The harness proves what today's paths
-    resolved on today's fixture; the grep proves there is nothing here that could resolve one on any
-    input, which is the difference that matters for a "just this once" lookup somebody adds later.
+    `tools/wo-sweep.mjs` § 20 asserts the absence structurally, in two claims that are two halves of
+    one sentence. **Claim 2** is the NAME: no support identifier appears in this file's code at all,
+    only inside string literals and prose. **Claim 5** is the SHAPE: no dynamic property read — no
+    bracket subscript whose key is not an integer literal, no split, no fold, no `eval`, no
+    `new Function`, no `Reflect.get`. The harness proves what today's paths resolved on today's
+    fixture; the two greps prove there is nothing here that could resolve one on any input, which is
+    the difference that matters for a "just this once" lookup somebody adds later.
+    *(Claim 5 arrived with WO-1.32 and this paragraph was five days ahead of it. Claim 2 on its own
+    is a check on names, and a path walk names nothing — which is not hypothetical: WO-5.1's
+    dispatch was killed holding one right here in `resolveText()`, the delivered tree resolved every
+    support field to the roster string, and § 20 was green over it. A sentence in a header is worth
+    what the check under it asserts, and this one was not until claim 5.)*
   · **A key on `Object.prototype` is not a field.** `FIELDS` is an ARRAY scanned by `===`, not an
     object indexed by the token. Indexed by the token, `{{constructor}}`, `{{toString}}` and
     `{{__proto__}}` all find something truthy, and the first build of a resolver that looks like this

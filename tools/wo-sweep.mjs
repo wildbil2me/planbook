@@ -1982,7 +1982,18 @@ function commentLines(file) {
    labour as § 17 makes over src/calendar-derived.js, for the same reason: a lookup somebody adds
    later "just for this one field" is invisible to a fixture that does not happen to name it.
 
-   FOUR CLAIMS, AND EACH ONE FAILS A DIFFERENT WRONG BUILD:
+   AND THE STRUCTURAL HALF OF THAT DIVISION WAS ITSELF HALF-BUILT UNTIL WO-1.32 (2026-08-28). Claim
+   2 was the whole of it, and claim 2 checks NAMES: no support identifier appears in the code. A
+   path expression names nothing. WO-5.1's dispatch was killed by a quota holding an unreverted
+   mutation proof — `name.split('.').reduce((o, k) => o[k], root)` in resolveText() — and the tree
+   it left behind resolved `{{student.supports.medical}}` and every other support field straight to
+   the roster string, unblocked and with no error code, while THIS SECTION was green over it, and so
+   were `--self-check`, `--audit` and all 34 checks. What found it was a human reading the file. So
+   the thing this section has to forbid is a SHAPE and not a name, and claim 5 is the shape. Claims
+   2 and 5 are two halves of one sentence and belong beside each other: one says the file never
+   names a support field, the other says it could not read one if it did.
+
+   FIVE CLAIMS, AND EACH ONE FAILS A DIFFERENT WRONG BUILD:
 
    1. The whitelist IS the table in docs/data-model.md § Outreach templates, name for name and in
       order, in both directions. A field resolvable but undocumented is a field WO-5.2's palette
@@ -1998,12 +2009,29 @@ function commentLines(file) {
       refusal would be a field the resolver answers and the error path describes as forbidden.
    4. The resolver has no writer, the same clause § 17 makes and for the same reason — this module
       answers a question about a document and must never be a second way to change one.
+   5. NO DYNAMIC PROPERTY READ ANYWHERE IN THE CODE — the shape, where claim 2 is the name. A
+      bracket subscript that is not an integer literal, a split, a fold, `eval(`, `new Function(`
+      or `Reflect.get(`. A whitelist that answers by `===` over an array needs none of them, and
+      any one of them hands the token back the power to choose what gets read, which is the one
+      thing the whitelist exists to take away from it.
 
    THE STRIPPER IS CRUDE AND SAYS SO: it removes block comments, line comments and the three kinds
    of string literal, and it does not model regular-expression literals. A regex holding a quote
    character would confuse it. There is none in the file today and the check names how much it
    stripped, so a stripper that stopped working reports an implausible number rather than a green
-   run over an empty haystack — this file's own first rule. */
+   run over an empty haystack — this file's own first rule. Claim 5 INHERITS that limit rather than
+   pretending to close it: the two character classes in the file (`[^{}]` in TOKEN, `[^a-z]` in
+   refusalFor()) survive the strip, and they are not read as subscripts only because a `[` after a
+   `/` or a `(` is not in member position. A regex whose character class sat directly after an
+   identifier would be misread as one.
+
+   A BLOCK COMMENT IS BLANKED LINE FOR LINE rather than collapsed to a space (WO-1.32), so a line
+   number this section cites is the line number of the file a reader is about to open. It was a
+   space until then, which in a file that is two thirds comment meant every number claim 2 could
+   have printed was hundreds of lines short — a fault that names the wrong line teaches its reader
+   to distrust the next one. What survives a blanked comment is its newlines and nothing else, so
+   the stripped LENGTH moves by the comment's line count alone and the plausibility guard at the
+   foot still measures what it always measured (0.23 of the file today, against a 0.9 ceiling). */
 
 {
   const NAME = 'the merge-field resolver whitelists, and has no path into a support block';
@@ -2033,9 +2061,10 @@ function commentLines(file) {
     const block = src.match(/const FIELDS = \[([\s\S]*?)\n\];/);
     const resolvable = block ? [...block[1].matchAll(/\bname: '([^']+)'/g)].map(m => m[1]) : [];
 
-    /* Comments and string literals out, so what is left is code. See the note above about regexes. */
+    /* Comments and string literals out, so what is left is code. See the note above about regexes,
+       and about why a block comment leaves its newlines behind. */
     const stripped = src
-      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]+/g, ''))
       .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
       .replace(/'(?:\\.|[^'\\])*'/g, "''")
       .replace(/"(?:\\.|[^"\\])*"/g, '""');
@@ -2043,6 +2072,50 @@ function commentLines(file) {
     const SENSITIVE = /\b(supports?|accommodations?|medical|behaviou?rPlan|plan|caseManager|reviewDate|attendanceClause)\b/i;
     const codeLines = stripped.split('\n').map((line, i) => ({ line: i + 1, text: line.trim() }));
     const reached = codeLines.filter(row => SENSITIVE.test(row.text));
+
+    /* ─────────────── claim 5: no dynamic property read (WO-1.32) ───────────────
+       Three families, over the same stripped code claim 2 reads.
+
+       · A BRACKET SUBSCRIPT WHOSE KEY IS NOT AN INTEGER LITERAL. Matched only in MEMBER POSITION —
+         directly after an identifier, a `)` or a `]` — which is what keeps the file's array
+         literals out of it: `const FIELDS = [`, `REFUSED_WORDS`, `['behavior']` and every bare
+         `[]` sit after `=`, `,`, `:` or `?`, and the two surviving regex character classes sit
+         after `/` or `(`. What IS in member position is `FIELDS.filter(…)[0]` and `all[0]` — the
+         file's one lookup shape, seven of them — and an integer key is allowed. A QUOTED key
+         fails with the rest, deliberately: this module answers by `===` over an array and has no
+         use for a property read by key at all, and `doc['students']` is one edit from `doc[name]`.
+       · A SPLIT OR A FOLD OF ANY KIND. Not `.split('.')` in particular — the stripper has already
+         turned that into `.split('')` — but any split, because cutting a token into segments has
+         exactly one use here, and any reduce, because the file's own header says two hundred lines
+         up that there is no arithmetic in it at all.
+       · `eval(`, `new Function(`, `Reflect.get(` — the three ways to read a property whose name is
+         a value without writing a bracket.
+
+       NON-VACUITY comes from two places. The shared plausibility guard at the foot of this section
+       covers the haystack, and the subscript scanner carries its own anchor: the file holds several
+       `…filter(…)[0]` lookups, so ZERO subscripts found means the pattern stopped matching rather
+       than that the file got cleaner — the same loud-when-it-moves rule § 11's count lives by. */
+    const SUBSCRIPT = /[A-Za-z0-9_$)\]][ \t]*\[([^\]\n]*)\]/g;
+    const subscripts = [];
+    codeLines.forEach(row => {
+      for (const m of row.text.matchAll(SUBSCRIPT)) {
+        subscripts.push({ line: row.line, key: m[1].trim(), text: row.text });
+      }
+    });
+    const WALKERS = [
+      { re: /\.\s*split\s*\(/, what: 'it splits a string into segments, which is how a token becomes a path' },
+      { re: /\breduce\s*\(/, what: 'it folds a list, and the fold this file has no other use for is a walk down one' },
+      { re: /\beval\s*\(/, what: 'it calls eval()' },
+      { re: /\bnew\s+Function\s*\(/, what: 'it builds a function out of text' },
+      { re: /\bReflect\s*\.\s*get\s*\(/, what: 'it calls Reflect.get(), which is a bracket subscript wearing a method name' },
+    ];
+    const dynamic = subscripts
+      .filter(s => !/^\d+$/.test(s.key))
+      .map(s => ({ line: s.line, text: s.text, why: `\`[${s.key}]\` reads a property whose key is a value` }));
+    codeLines.forEach(row => WALKERS.forEach(w => {
+      if (w.re.test(row.text)) dynamic.push({ line: row.line, text: row.text, why: w.what });
+    }));
+    dynamic.sort((a, b) => a.line - b.line);
 
     const WRITER = /\b(update|getDoc|setPref|setPresentationMode|writeEntry|restoreDocument|newYearDocument)\s*\(/;
     const writers = codeLines.filter(row => WRITER.test(row.text));
@@ -2069,13 +2142,15 @@ function commentLines(file) {
       faults.push(`the whitelist and docs/data-model.md § Outreach templates disagree — ${extra.length ? 'resolvable but undocumented: ' + extra.join(', ') + '. ' : ''}${absent.length ? 'documented but not resolvable: ' + absent.join(', ') + '. ' : ''}${!extra.length && !absent.length ? 'same names, different ORDER — the palette prints in this order and the table is what it documents. ' : ''}Change both in the same sitting`);
     }
     if (reached.length) faults.push(`${reached.length} line(s) of CODE in src/merge-fields.js name a support field — ${reached.slice(0, 4).map(r => 'src/merge-fields.js:' + r.line).join(', ')} — and the refusal list is supposed to be DATA the module compares names against, never a property it reaches for. A resolver with a path into a support block has stopped being a whitelist however the refusal list is written`);
+    if (dynamic.length) faults.push(`src/merge-fields.js:${dynamic[0].line} makes a DYNAMIC PROPERTY READ — ${dynamic[0].why} — and a dynamic property read is exactly what a whitelist is supposed to make impossible: the token gets to choose what is read, so every name the FIELDS list refuses is reachable again and the fence has become a filter. THIS IS THE WO-5.1 HOLE, not a style rule — the tree that dispatch left behind carried \`name.split('.').reduce((o, k) => o[k], root)\` and resolved {{student.supports.medical}} to the roster string while claim 2 above, which checks NAMES, stayed green over it. Answer by exact string over the whitelist and index nothing. The line: ${dynamic[0].text}${dynamic.length > 1 ? ` · ${dynamic.length} finding(s) in all, on line(s) ${[...new Set(dynamic.map(d => d.line))].slice(0, 6).join(', ')} — one shape can trip several of them at once, and every one of them has to go` : ''}`);
+    if (!subscripts.length) faults.push('no bracket subscript of any kind was found in src/merge-fields.js — the file holds several `…filter(…)[0]` lookups, so the pattern that reads them has stopped matching and the no-dynamic-property-read claim is being made over nothing rather than being satisfied');
     if (overlap.length) faults.push(`${overlap.join(', ')} is on the whitelist AND reads as a refusal — the resolver would answer a field its own error path calls forbidden`);
     if (missingRoots.length) faults.push(`REFUSED_WORDS does not name ${missingRoots.join(', ')} — WO-5.1 lists ${ROOTS.length} roots and this list is what names the refusal in the error a teacher reads. Nothing resolves either way, because the whitelist is the fence, so this is a wording gap rather than a leak`);
     if (writers.length || storeImport) faults.push(`src/merge-fields.js ${storeImport ? 'imports ./store.js' : ''}${storeImport && writers.length ? ' and ' : ''}${writers.length ? writers.map(w => 'writes at :' + w.line).join(', ') : ''} — resolving a draft answers a question about a document and may never be a second way to change one`);
     if (stripped.length > src.length * 0.9) faults.push(`the comment and string stripper removed only ${src.length - stripped.length} of ${src.length} characters, which is implausible for a file in this repository — it has stopped working, and the two absence claims above are being made over an unstripped file`);
 
     check(NAME, !faults.length, faults.length ? faults.join(' · ')
-      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier and no writer in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
+      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier, no writer and no dynamic property read in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; all ${subscripts.length} bracket subscript(s) are integer literals and there is no split, fold, eval, Function or Reflect.get among them; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
   }
 }
 

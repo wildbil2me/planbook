@@ -251,6 +251,14 @@ anywhere in this file"*, is the claim that would have failed, and **nothing asse
 structural check that looks for forbidden *names* cannot see a forbidden *shape*; the check and the
 prose it was written from had drifted, and only the prose was right.
 
+*(**"Nothing asserts it" was true for five days.** WO-1.32 added § 20 claim 5 — no dynamic property
+read in `src/merge-fields.js`: no bracket subscript whose key is not an integer literal, no split,
+no fold, no `eval`, no `new Function`, no `Reflect.get` — and this mutation, pasted back in, turns
+that section red at the line. **It changes nothing about the recovery rule two paragraphs up.**
+Claim 5 is a claim about ONE file, deliberately, because every other module here indexes objects by
+computed keys legitimately; a mutation anywhere else in the tree still names nothing any grep is
+looking for, and `grep -rn MUTATION` is still the first move on a dead dispatch.)*
+
 **The behavioural check did have teeth, and that is what makes the near-miss legible.** The harness
 tests seventeen refusal spellings individually — `student.supports.medical` among them — and requires
 each to block, to keep its token intact, and to carry no roster string. Against the delivered tree
