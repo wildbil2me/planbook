@@ -13,6 +13,33 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A dropped `studentId` filter now names the leak instead of failing a string compare — 2026-08-28
+
+**Plant a signal hit on the merge-field harness's second fixture student.** `{{signals.list}}` filters
+its hits to the student the draft is about, and that filter could not be proved by the instrument
+watching it: cutting it changed the output only enough to fail a joined-string comparison whose
+failure detail read `{"matches":false}` — no leak named, no sentence, no student. Three new
+`check()` sites in the existing WO-5.1 section close it, and they name the sentences, the surname and
+the field that carried them. Found by WO-5.1's verifier, which had to test the filter by hand
+because the harness could not.
+
+**The work order's premise was wrong, and the correction is worth more than the fix.** WO-1.33 was
+booked on *"the second fixture student fires no rules at all."* Nobody had run it. He fired two
+already — `no-missing` and `attendance-window`, both praise, both a consequence of nine clean scores
+and ten meetings he was present at — so the old instrument was **narrow, not vacuous**, and the
+mutation turns four checks red rather than three: the three new ones and a pre-existing WO-5.1 check
+whose `matches` goes false. That fourth red is this work order's own premise failing in front of it.
+The title was left standing with a note saying so rather than quietly rewritten. `src/` has a
+zero-line diff; the mutation went in and came back out by name.
+
+**Two pieces of documentation maintenance came with it.** The call-site ledger in `tools/README.md`
+had an unexplained step — WO-5.1 moved it 1160 → 1179 and wrote no paragraph, the one gap in a chain
+of fifty-one — which now has its entry, with its run figures marked as recovered rather than measured
+at the time. And `design/mockups/proposed-phase6.css` § CALENDAR carries an amendment: WO-6.3 renamed
+every class in it (`cal-` → `calendar-`), which `wo-sweep.mjs` § 22 reports as a re-derivation because
+comparing names is all it can do. It was a lift — the shapes and six of seven colours came across —
+and the banner now says so, so the standing REVIEW reads as a note rather than an open question.
+
 ### The sweep proves the resolver's shape, not just its names — 2026-08-28
 
 **The standing check over the merge-field resolver could not see the defect that actually shipped.**

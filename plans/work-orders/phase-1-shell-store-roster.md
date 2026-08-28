@@ -3049,7 +3049,7 @@ grows to cover its own verifier's findings stops being a thing anybody can revie
 
 ## WO-1.33 — the second fixture student fires no rules
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app. Booked 2026-08-28, owner-directed, found by
 WO-5.1's verifier.)*
 
@@ -3085,15 +3085,32 @@ student's resolved `{{signals.list}}`. It is a fixture change and an assertion, 
   new assertion red; a fixture change that cannot fail is the defect being fixed, arriving again.
 
 **Acceptance**
-- [ ] The second fixture student carries at least one signal hit whose explanation string is unique
+- [x] The second fixture student carries at least one signal hit whose explanation string is unique
       in the repository.
-- [ ] Removing `{{signals.list}}`'s `studentId` filter turns the new assertion **red**; restoring it
+- [x] Removing `{{signals.list}}`'s `studentId` filter turns the new assertion **red**; restoring it
       turns it green.
-- [ ] The first student's sixteen-field draft resolves byte-identically to what it did before the
+- [x] The first student's sixteen-field draft resolves byte-identically to what it did before the
       fixture gained the hit.
-- [ ] The fixture teardown leaves nothing behind, and the foot check still reports zero of everything.
-- [ ] `node tools/verify-shell.mjs` is green, and `tools/README.md`'s call-site count is recomputed
+- [x] The fixture teardown leaves nothing behind, and the foot check still reports zero of everything.
+- [x] `node tools/verify-shell.mjs` is green, and `tools/README.md`'s call-site count is recomputed
       by the sweep.
+
+*(**Landed 2026-08-28 — and this work order's own premise was wrong, which is the finding worth
+keeping.** "He fires no rules at all" had never been run. The second fixture student fired **two**
+before anything was planted — `no-missing` and `attendance-window`, both praise, both a consequence
+of the nine clean scores and ten present meetings WO-5.1's plant already gave him — so cutting the
+`studentId` filter turns the **pre-existing** `{{signals.list}}` check red as well as the three new
+ones: `1197 checks · 1193 passed · 4 failed`, exit 1. **So the instrument was not vacuous. What it
+could not do was say what it was proving** — a check that goes red because a joined string stopped
+matching names no leak, no sentence and no student — and the remedy is unchanged by the correction.
+The second student's hit is now **deliberate and asserted by name**: three of his nine scores written
+under the low-score line, in a second update taken **after** the first student's sixteen-field draft
+has been read, so "byte-identical" is a comparison of two readings in one run rather than a claim
+about a build nobody ran. No new assignment, log entry, attendance row or score bag, so the teardown
+counts what it always counted. The `firedBefore` half of the first new check's detail line now
+prints what he fired before the plant, which turns the premise into a reading. The mutation was
+applied, read and reverted by name in a single command; the delivered tree runs
+`1197 checks · 1197 passed · 0 failed · 0 skipped`, exit 0, and the sweep 34 · 31 · 0 · 3.)*
 
 ---
 

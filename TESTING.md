@@ -7621,6 +7621,23 @@ whether a mention EMITS is a reading question, and the reading here is that ever
 name being refused rather than a value being fetched. § 20 is the half that settles it by grep: no
 support identifier appears in that file's **code** at all.)*
 
+*(**The section is twenty-two call sites since WO-1.33, 2026-08-28, and that work order corrected a
+premise this one left behind.** WO-5.1's verifier reported that the second fixture student fires no
+rules, so `{{signals.list}}`'s `studentId` filter could not be proved from the browser and was
+tested by hand instead. **He fired two** — `no-missing` and `attendance-window`, both praise, both
+falling out of the nine clean scores and ten present meetings the plant already gave him — which
+nothing had ever printed. So the section could always tell that a build had dropped the filter; what
+it could not do was **say so**, because the only check that moved was the one comparing a joined
+string to a joined string. Three checks now name it: he gets three scores under the low-score line
+after the sixteen-field draft has been read, that draft is asserted byte-identical either side of it,
+and his sentences and his surname are searched for across the **whole** resolved subject and body
+rather than in `{{signals.list}}` alone. Cutting the filter reads
+`1197 checks · 1193 passed · 4 failed`, exit 1 — the three new ones and the pre-existing
+`{{signals.list}}` check — and the delivered tree reads
+`1197 checks · 1197 passed · 0 failed · 0 skipped`, 35,697 lines, 29.8 lines per check, 408s,
+exit 0. Nothing in `src/` moved for it; the fixture plants no new assignment, log entry, attendance
+row or score bag, so the foot check still reports zero of everything.)*
+
 ---
 
 ## Phase 6 — Calendar & the glance page

@@ -1037,7 +1037,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1179 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1182 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1054,6 +1054,56 @@ arm — so the section contributes nineteen executed results to a green run. Its
 `skip()` calls rather than `check()` calls (no `window.planbook`, and a fixture that did not
 install), which is why they move this number by nothing and show up in the run's own skip
 accounting instead.
+
+**WO-5.1 moved it from 1160 to 1179**: nineteen literal call sites, the whole of
+`verify/merge-fields.mjs` — a file that work order created — none of them inside a loop and none a
+failure arm, so the section contributes nineteen executed results to a green run. Its two guards are
+`skip()` calls again (no `window.planbook`, and a fixture that did not install), on the WO-4.5
+pattern directly above; the harness's one `else check(` is in `verify/touch-targets.mjs` and not
+here. **This entry was written three work orders late, at WO-1.33, and its run figures are recovered
+rather than measured at the time**: `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0
+— WO-1.33's before-run, which is this harness unchanged, since 1179 is what the sweep asserted on
+every run between the two and nothing in between touched `tools/verify/`. **Its printed LINE figure
+is the one that cannot be trusted**; the honest length is 35,593, taken out of `git`, and the trap is
+written up under WO-1.33 below. The gap between sites and results sits at −15 here too.
+*(Why it was missed, because the reason generalises: WO-5.1's dispatch was killed by a quota at the
+implementer's return, and the recovery went looking for the live mutation it had left in `src/` —
+correctly, that being the dangerous half — rather than for the paragraph it had not yet written.*
+**A dead dispatch loses its bookkeeping as well as its claims**, *and the bookkeeping is the half
+nothing turns red over: the sweep asserts the count at the top of this section, never that a count
+which moved was explained.)*
+
+**WO-1.33 moved it from 1179 to 1182**: three literal call sites, none of them inside a loop and
+none a fixture-guard arm, added *inside* the existing § *"the merge-field resolver (WO-5.1)"* rather
+than as a section of its own — it is a fixture change and an assertion, not a new surface — so the
+block contributes three executed results and **the run prints 1197**:
+`1197 checks · 1197 passed · 0 failed · 0 skipped`, 35,697 lines, 29.8 lines per check, 408s,
+exit 0, measured 2026-08-28 on the delivered tree. **The gap between sites and results stays
+at −15.** *(1179 itself arrived with WO-5.1's nineteen sites and no paragraph of its own; this is the
+first entry to say where it came from.)*
+
+**The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
+its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after
+the last check has run, so a "before" run left going while the fixture is being edited reports the
+*edited* file's length: that run printed the same 35,697 the run after it did, and the honest
+pre-change number is 35,593. **The check count is unharmed** — the modules are imported at process
+start, so what ran is the tree as it was — but the length is not, and the two numbers on that line
+are measured at opposite ends of the run. Take a before-and-after length out of `git`, or take it
+before you start typing.
+
+**The mutation that proves those three sites is the whole of WO-1.33's second acceptance line.**
+`{{signals.list}}`'s `studentId` filter in `src/merge-fields.js` cut to
+`ctx.hits.filter((h) => h)` reads `1197 checks · 1193 passed · 4 failed`, exit 1, and **which
+four is the part worth keeping**: the three new sites, and the pre-existing *"`{{signals.list}}` …
+emits no plan reference"* check, whose `matches` goes false. **That fourth one is this work order's
+own premise failing.** WO-1.33 was booked on *"the second fixture student fires no rules at all"*,
+and he fired two before anything was planted — `no-missing` and `attendance-window`, both praise,
+both a consequence of nine clean scores and ten meetings he was present at, printed in the
+`firedBefore` half of the first new check's detail line. So the instrument was never quite
+vacuous. What it could not do was **say what it was proving**: a check that goes red because a joined
+string stopped matching names no leak, and the three new ones name the sentences, the surname and the
+field that carried them. Reverted by name — `git checkout -- src/merge-fields.js`, never
+`git checkout .` — before a word of this paragraph was written.
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
 line-anchored, and comment lines are excluded because the harness quotes call names in its prose

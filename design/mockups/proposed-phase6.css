@@ -124,6 +124,27 @@
 
 /* ══════════════════════════════════════════════════════════════════════════════
    § CALENDAR — src/calendar-view.css (WO-6.3)
+
+   THE BUILD RENAMED EVERY CLASS IN THIS SECTION, and the target above is still right.
+   WO-6.3 lifted the design and changed the prefix: `cal-` became `calendar-` throughout, so
+   not one of the twenty-seven names below appears in src/calendar-view.css and
+   tools/wo-sweep.mjs § 22 reports the section as re-derived rather than lifted. Read that
+   report as the tool's inference from a zero-name overlap, not as a finding: § 22 compares
+   names and has no way to see anything else, so a rename and a re-derivation look identical
+   to it. **This was a rename.** `.cal-bar` → `.calendar-toolbar` is the same wrapping flex
+   row with the same padding under the panel title, doing the job this section's own comment
+   describes; `.cal-grid` → `.calendar-table`, `.cal-chip` → `.calendar-chip`,
+   `.cal-steps` → `.calendar-pager`. And the palette came across — six of the seven
+   distinctive colours in the chip rules above are in the built sheet — which is the thing a
+   re-derivation does not do, and the reason this is an amendment rather than a defect. One
+   honest wrinkle in that evidence: the term-boundary green pair #a3e4bc / #eafaf1 is in
+   src/calendar-view.css at a DIFFERENT role, on `.calendar-chip.meeting.state-taken`, so the
+   colours survived the crossing and one of their meanings did not. Written down 2026-08-28
+   per design/mockups/PROTOCOL.md § When the drawing lands, which offers exactly two answers
+   when a banner and the build disagree — amend the banner, or say in the drawing that the
+   build renamed it. This is the second, and **the REVIEW stays green-adjacent rather than
+   going away**: leave it standing, and do not "fix" it by editing the target above to a file
+   that holds none of these names either.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* The bar under the panel title: month name, the two steppers, today, and the view switch. */

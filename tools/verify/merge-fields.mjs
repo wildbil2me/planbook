@@ -151,9 +151,12 @@ if (!seam) {
       for (var a = 1; a <= 4; a++) put('a_wo51_' + a, '${PROBE}', { v: 62 });
       put('a_wo51_5', '${PROBE}', { v: null, flag: 'missing' });
       for (var b = 6; b <= 9; b++) put('a_wo51_' + b, '${PROBE}', { v: 98 });
-      /* ORPHAN: nine flat 80s. He exists to have no guardian; everything else about him is
-         deliberately unremarkable so that the one field that fails to resolve is the one under
-         test rather than one of six. */
+      /* ORPHAN: nine flat 80s TO BEGIN WITH. He exists to have no guardian, and everything else
+         about him is unremarkable here so that the one field that fails to resolve is the one under
+         test rather than one of six — but only as far as the WO-1.33 block below, which writes
+         three of these nine under the low-score line to give him sentences of his own. The reading
+         that proves the OTHER student's draft did not move is taken before that happens, which is
+         why the change is there and not in this plant. */
       for (var c = 1; c <= 9; c++) put('a_wo51_' + c, '${ORPHAN}', { v: 80 });
 
       /* Ten recorded meetings, every other day. Probe is absent once and late once, which is 90%
@@ -296,6 +299,107 @@ if (!seam) {
       Array.isArray(full.leaks) && full.leaks.length === 0,
       full.leaks && full.leaks.length ? 'LEAKED: ' + full.leaks.join(', ')
         : 'none of ' + SECRETS.join(', ') + ' in ' + (full.body || '').length + ' characters');
+
+    /*
+      WO-1.33 — THE SECOND STUDENT GETS SENTENCES OF HIS OWN, AND THE POINT IS WHAT DOES NOT MOVE.
+
+      Everything above proves what a field resolves TO. ONE check above can notice the filter going
+      missing — the joined-string comparison against the engine's own explanations — and all it says
+      when it goes red is that two strings differ: no sentence, no student, no leak named. That is
+      the hole WO-1.33 fills. A sentence belonging to somebody else has to EXIST, and has to be
+      searched for BY NAME, before its absence from her draft means anything; the filter is
+      deliberate, is commented as deliberate at src/merge-fields.js, and is all that stands between.
+
+      THE HIT IS PLANTED HERE RATHER THAN IN THE PLANT ABOVE, and that is what makes the middle
+      check honest: `beforeDraft` is the sixteen-field draft this fixture produced while he had
+      nothing of his own, so "byte-identical" below is a COMPARISON of two readings taken in this
+      run rather than an assertion about a build nobody ran.
+
+      HIS SENTENCES CARRY HIS SURNAME, which is the searchable half — the same technique the eight
+      roster strings above are searched for by. `Wo51Orphan` occurs in no file the app SERVES — not
+      src/, not index.html, not sw.js — so a draft about the OTHER student that holds it could only
+      have got it out of the hits this fixture handed the resolver.
+
+      AND THE PREMISE WO-1.33 WAS WRITTEN ON WAS WRONG, WHICH IS WHY `was` IS REPORTED. He fired
+      TWO rules before anything was planted — no-missing and attendance-window, off nine clean
+      scores and ten meetings he was present at — and no run had ever printed it. The first check's
+      detail line prints that list on every run, so the next reader gets a reading and not a claim:
+      a fixture's own arithmetic is the last thing to take on trust in a file that exists for that.
+    */
+    const beforeDraft = { subject: full.subject, body: full.body };
+    const his = await evalJs(`(function(){
+      ${DRAFT}
+      var s = window.planbook.store;
+      var hitsOf = function(sid){
+        var d = s.getDoc();
+        var c = (d.classes || []).filter(function(x){ return x.id === '${CLS}'; })[0];
+        return window.planbook.signals.orderHits(
+          window.planbook.signals.evaluate(d, c, '${TERM}').filter(function(h){
+            return h.studentId === sid; })); };
+      var was = hitsOf('${ORPHAN}').map(function(h){ return h.ruleId; });
+      /* Three scores under the low-score line, written over the flat 80s the plant left him. NO NEW
+         ASSIGNMENT, NO NEW LOG ENTRY, NO NEW ATTENDANCE ROW AND NO NEW SCORE BAG: the teardown at
+         the foot counts every one of those, and a hit that arrived as a new row would leave one
+         behind on a run that was otherwise fine. Six of his nine scores are untouched, so his grade
+         stays above the concern line and this is a run of low scores rather than four rules at
+         once — a smaller fixture change says the same thing about the filter. */
+      s.update(function(doc){
+        for (var n = 7; n <= 9; n++) doc.scores['a_wo51_' + n]['${ORPHAN}'] = { v: 41 };
+      });
+      var now = hitsOf('${ORPHAN}');
+      var out = draft('S', '{{signals.list}}', '${ORPHAN}', null);
+      return { was: was, rules: now.map(function(h){ return h.ruleId; }),
+        sentences: now.map(function(h){ return h.explanation; }),
+        named: now.filter(function(h){
+          return String(h.explanation).indexOf('${ORPHAN_N}') >= 0; }).length,
+        resolved: out.body, blocked: out.blocked }; })()`);
+    check('the second fixture student carries signal hits of HIS OWN, and every sentence names him '
+      + '— three scores under the low-score line written over the flat 80s the plant left him, and '
+      + 'his own `{{signals.list}}` says them back in the app’s own order. A sentence belonging to '
+      + 'somebody else has to exist before its absence from her draft means anything',
+      Array.isArray(his.rules) && his.rules.indexOf('low-score-run') >= 0
+        && his.sentences.length >= 1 && his.named === his.sentences.length
+        && his.blocked === false && his.resolved === his.sentences.join('\n'),
+      JSON.stringify({ firedBefore: his.was, firesNow: his.rules }));
+
+    const after = await evalJs(`(function(){
+      ${DRAFT}
+      var d = window.planbook.store.getDoc();
+      var c = (d.classes || []).filter(function(x){ return x.id === '${CLS}'; })[0];
+      /* Recomputed page-side rather than quoted in from the reading above: an explanation is
+         engine-composed text, and interpolating it into this template literal would put a string
+         nobody controls where a backtick would end the program. */
+      var his = window.planbook.signals.orderHits(
+        window.planbook.signals.evaluate(d, c, '${TERM}').filter(function(h){
+          return h.studentId === '${ORPHAN}'; })).map(function(h){ return h.explanation; });
+      var body = window.planbook.mergeFields.mergeFieldNames().map(function(n){
+        return n + ' = {{' + n + '}}'; }).join('\\n');
+      var out = draft('About {{student.first}} {{student.last}}', body, '${PROBE}', 'grade-rose');
+      var all = out.subject + '\\n' + out.body;
+      var list = draft('S', '{{signals.list}}', '${PROBE}', 'grade-rose');
+      return { subject: out.subject, body: out.body, blocked: out.blocked, his: his.length,
+        found: his.filter(function(t){ return all.indexOf(t) >= 0; }),
+        name: all.indexOf('${ORPHAN_N}') >= 0,
+        inList: his.filter(function(t){ return list.body.indexOf(t) >= 0; }).length }; })()`);
+    check('and her sixteen-field draft is byte-identical either side of it — subject and body both, '
+      + 'against the reading taken while he had nothing — so the second student gaining a hit moved '
+      + 'nothing that any check on either side of this line is measuring',
+      after.blocked === false && after.subject === beforeDraft.subject
+        && after.body === beforeDraft.body,
+      after.subject === beforeDraft.subject && after.body === beforeDraft.body
+        ? (beforeDraft.subject + beforeDraft.body).length + ' characters, unchanged'
+        : 'THE DRAFT MOVED — was ' + JSON.stringify(beforeDraft) + ', now '
+          + JSON.stringify({ subject: after.subject, body: after.body }));
+    check('and NOT ONE WORD of his sentences reaches her draft — every one of them, and his surname '
+      + 'as well, searched for across the WHOLE resolved subject and body of all sixteen fields '
+      + 'rather than in `{{signals.list}}` alone, because the leak would arrive through any field '
+      + 'that walks hits. `{{signals.list}}`’s `studentId` filter is the only thing standing '
+      + 'between the two students, and deleting it turns this red',
+      after.his >= 1 && after.found.length === 0 && after.name === false && after.inList === 0,
+      after.found.length || after.name
+        ? 'LEAKED: ' + (after.found.join(' | ') || 'the surname "' + ORPHAN_N + '"')
+        : after.his + ' sentence(s) of his, not one of them and no "' + ORPHAN_N + '" anywhere in '
+          + (after.subject + '\n' + after.body).length + ' characters of her draft');
 
     /*
       ACCEPTANCE LINE 1, AND "VERIFY EVERY PATH IN THE REFUSAL LIST INDIVIDUALLY" TAKEN LITERALLY.
