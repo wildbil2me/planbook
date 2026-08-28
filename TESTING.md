@@ -7504,10 +7504,122 @@ the checks that carry the acceptance lines red.
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*
 
-Nothing here yet — WO-5.1 through WO-5.4 append their acceptance lines as they land.
+WO-5.2 through WO-5.4 append their acceptance lines here as they land.
 
 Two checks here are containment rather than function: no merge field resolves accommodation,
-medical, or plan data, and an unresolved field never renders blank.
+medical, or plan data, and an unresolved field never renders blank. **WO-5.1 is where both of
+them landed**, and it is the resolver rather than a screen — the editor and the send flow are
+still ahead of it.
+
+---
+
+### WO-5.1 — Merge-field resolver
+
+**What this adds.** `src/merge-fields.js` — the one place a template's `{{field}}` becomes text for
+one student at send time. Sixteen fields, exactly the table in `docs/data-model.md` § Outreach
+templates, every number of them read out of the module that owns it. No screen: the template editor
+is WO-5.2 and the `mailto:` handoff is WO-5.3, so *"blocks the send"* here means the draft comes
+back carrying a named error and a flag that a later work order acts on.
+
+**The whitelist is the fence and it is the whole of the fence.** `FIELDS` is a flat list of the
+sixteen names, matched by an exact string comparison, and there is no path expression anywhere in
+the file — no split on `.`, no walk from the document root, and no property read named after a
+token. `{{supports.accommodations}}` does not resolve because it is not in the list, and neither
+does a support field somebody adds to the data model next year. **`REFUSED_WORDS` is not the gate**:
+it runs only over names the whitelist has already refused and decides which of two error messages a
+teacher reads. Delete it and every one of those paths still resolves to nothing.
+
+**A key on `Object.prototype` is not a field.** `FIELDS` is an array scanned by `===` rather than an
+object indexed by the token, which is the difference between this build and the one where
+`{{constructor}}` finds something truthy.
+
+**Three outcomes, not one, and all three leave the token visibly intact.** A refusal, an unknown
+name and a real field with nothing behind it are `refused-field`, `unknown-field` and
+`unresolved-field`; the output is the teacher's own typing handed back in every case. That is the
+safe reading of *"it does not render"* — a literal `{{supports.medical}}` in a body carries no
+student's data and cannot be mistaken for a finished sentence, where a dropped or blanked token
+produces a draft that reads clean and could be sent.
+
+**Two rulings the work order did not settle**, both argued at their own point of departure in the
+module and both recorded in `docs/data-model.md` § Outreach templates:
+
+- **`{{behavior.recent}}` carries a date and a `subject`, three of them, newest first — never a
+  `body`, and only the `behavior` kind.** The body is the long free-text half and the place a plan
+  reference would actually be written. **The limit is stated rather than claimed away:** a subject
+  is still free text, and a teacher who types a plan reference into one will see it in her draft —
+  the same open edge `CLAUDE.md` § Accommodations records for a note under a projector.
+- **Presentation mode is not asked.** It is the *screen's* suppression and an email to a guardian is
+  not a projector; a resolver reading through `visibleEntriesFor()` would hand a teacher who left
+  the header switch on a draft with its behavior paragraph silently gone. The obligation lands on
+  WO-5.2's live preview, which is a screen and asks `src/supports.js` — the one function, never a
+  second copy — before it draws a resolved body.
+
+- [x] A template containing `{{supports.accommodations}}` (or any refused path) refuses with a named
+      error and renders nothing sensitive. Verify every path in the refusal list individually.
+      *(Measured on seventeen spellings across all six roots plus `accommodations` and
+      `attendanceClause` — bare, under `student.`, capitalised, and with a leaf on the end — each
+      raising `refused-field`, each blocking, each leaving its token as typed. "Renders nothing
+      sensitive" is a search: the fixture student's case manager, accommodation detail, medical
+      need, behavior plan, attendance clause, review date, accommodation kind and plan type are
+      eight strings that occur nowhere else in this repository, and none of them appears in any of
+      the thirty-four resolved strings — nor in a draft that uses all sixteen fields about that same
+      student. `tools/wo-sweep.mjs` § 20 is the structural half: no support identifier appears in
+      the module's code at all, only in string literals and prose.)*
+- [x] `{{signals.list}}` for a student with an accommodation-derived signal emits no plan reference.
+      *(**There is no accommodation-derived signal and there cannot be one** — `src/signals.js`
+      reads no support, no plan and no medical need, and WO-4.4 put the one reader of
+      `supports.attendanceClause` in `src/accommodation-prompt.js` precisely so that it did not live
+      in the engine. The strongest available reading was measured instead: a student with the whole
+      block on file whose signals fire, one of them the behavior rule — the only rule whose input is
+      something a teacher typed. The sentences carry none of the eight strings and none of the
+      behavior bodies, and they are exactly the engine's own explanations in `orderHits()` order, so
+      a build that composed its own sentence out of the hits fails whether or not that sentence
+      happened to be clean.)*
+- [x] A student with no guardian on file blocks the send naming the missing field; the draft is not
+      sendable in that state. *(Measured: `blocked` is true, the one error is
+      `unresolved-field:guardian.name`, its message names both `{{guardian.name}}` and the student
+      by name, the body reads `Dear {{guardian.name}},` rather than `Dear ,` and the subject around
+      it still resolves.)*
+- [x] `{{grade.percent}}` matches the gradebook exactly for the same student and term. *(Measured
+      against `gradesRecord()` — `src/grades-report.js`'s own model for the printed class grade
+      sheet and the CSV — character for character, on both the percentage and the letter, rather
+      than against a second call to the engine.)*
+- [x] `{{grade.delta}}` matches the delta shown on the praise signal that produced the draft.
+      *(Measured against the rendered row: the signals screen is opened, the student's praise row is
+      found by its own `data-signal-row` key and the number is read out of `.sig-delta` in the
+      markup. And the other half — a signal whose figure is not in points, a run of strong scores or
+      a behavior window, resolves nothing and blocks, because a count of scores riding out under a
+      field called `grade.delta` is the subtraction `PRAISE_RANK` exists to prevent arriving in a
+      guardian's inbox.)*
+- [x] An unknown field name is refused, not silently blanked. *(Measured on ten names, including a
+      plausible typo, four keys that live on every object's prototype and the empty token — each
+      blocking with `unknown-field` and each left on the page as typed. And the three outcomes are
+      proved distinct in one body that carries all of them.)*
+
+**Nothing here is owed to a human.** All six lines are mechanically checkable and all six were
+checked; there is no 👤 reading and no 📆 wait in this work order. What it does hand forward is one
+question a screen has to answer and this module cannot: **WO-5.2's live preview draws a resolved
+body on a screen a projector may be pointed at**, and it owes `src/supports.js` the visibility
+question before it does — asked through `logKindVisible()`, never a second copy of the test.
+
+**Where this stands.** Both tools are green on the delivered tree: `verify-shell.mjs` at
+`1194 checks · 1194 passed · 0 failed · 0 skipped`, 35,593 lines, 29.8 lines per check, 396s,
+exit 0; and `wo-sweep.mjs` at `34 checks · 31 passed · 0 failed · 3 to review`, all three
+pre-existing. The resolver is measured in § *"the merge-field resolver (WO-5.1)"*, nineteen call
+sites near the foot of the run order, none inside a loop and none a failure arm — the section sits
+before § *"the cooldown and the quiet middle"*, which keeps its own claim to run last. The grep half
+is `tools/wo-sweep.mjs` § 20.
+
+*(**One of the three sweep REVIEWs grew because of this work order and is worth reading rather than
+counting.** § 5 — *sensitive field names outside `src/backup.js`* — went from 388 mentions to 400,
+and the twelve new ones are all in `src/merge-fields.js`. **The check counts matching LINES, not
+matches**, which is what makes the split surprising: exactly ONE of the twelve is the
+`REFUSED_WORDS` declaration — all nine words sit on one line, and its continuation line is
+case-sensitively invisible to the regex — while eleven are comment prose and one is an error-message
+string. That check REVIEWs rather than FAILs precisely because
+whether a mention EMITS is a reading question, and the reading here is that every one of them is a
+name being refused rather than a value being fetched. § 20 is the half that settles it by grep: no
+support identifier appears in that file's **code** at all.)*
 
 ---
 

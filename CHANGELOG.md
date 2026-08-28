@@ -13,6 +13,31 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The machinery that writes home, and the door it cannot open — 2026-08-28
+
+**A template becomes an email one student at a time, and sixteen fields is the whole of what it can
+say.** Name, guardian, class, your name, the current grade and letter, how far it moved, missing work
+and what it is, attendance and absences and times late, why the student surfaced, and your last few
+behavior entries. Every number comes out of the screen that already shows it — the grade is the
+gradebook's, the delta is the one on the praise row — because two grade implementations disagree
+eventually and the email is the copy that goes home wrong.
+
+**It cannot resolve an accommodation, a medical need, a behavior plan, a case manager or a review
+date — and not because a filter catches them.** There is no list of forbidden paths standing between
+a template and the roster. There is a list of the sixteen things that work, matched by exact name,
+and everything else is refused for the same reason a typo is: it is not on the list. A support field
+added to the data model next year is refused on the day it is added, by code nobody edits.
+
+**A field that cannot be filled leaves your own typing on the page and stops the send.** `Dear
+{{guardian.name}},` for a student with no guardian on file stays exactly that — it does not quietly
+become `Dear ,` — and the draft comes back naming the field and the student. The same is true of a
+refused field and of a name that does not exist: three different reasons, three named errors, and in
+every one of them what you see is the text you wrote rather than a sentence that reads finished and
+is wrong.
+
+**No screen yet.** The template editor and the `mailto:` handoff are the next two work orders; this
+is the part underneath them, and it is the part that had to be impossible to get wrong.
+
 ### The list stops repeating itself, and the students nobody flags — 2026-08-27
 
 **A signal a teacher has already acted on stops asking.** Write to a guardian about a student's

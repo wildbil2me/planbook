@@ -535,6 +535,12 @@ import * as signalsView from './signals-view.js';
    which is why it does not appear below. The import runs one way in both cases. */
 import * as log from './log.js';
 import * as logSheet from './log-sheet.js';
+/* WO-5.1's resolver, and it is imported HERE FOR THE SEAM AND FOR NOTHING ELSE — this build has no
+   template editor (WO-5.2) and no send flow (WO-5.3), so there is no screen to dispatch to and no
+   control below routes to it. Without this line the module would not be in the graph at all:
+   tools/verify/precache.mjs walks index.html's imports, so an unreferenced file is neither
+   precached nor loadable, and the sixteen fields it resolves could not be asked anything. */
+import * as mergeFields from './merge-fields.js';
 import * as home from './home.js';
 import * as attendance from './attendance.js';
 /* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
@@ -3421,6 +3427,18 @@ window.planbook = {
      Nothing in the app reads window.planbook — see the block above for why the seam outlived the
      shelf. */
   log, logSheet,
+  /* `mergeFields` joined at WO-5.1, and its reason is `signals`' and `calendarDerived`'s rather
+     than the reading reason `classes` gives: the resolver is a pure function over a document and a
+     draft with NO SCREEN AT ALL in this work order — the template editor is WO-5.2 and the send
+     flow is WO-5.3 — so there is no control anywhere a harness could tap to make it answer. What
+     has to be asked is the pair of claims the acceptance lines make about REFUSAL and about
+     BLANKS: that every path in the refusal list comes back with a named error and nothing off the
+     roster in the text, and that an unresolvable field leaves its token visibly intact and reports
+     which field and which student. A build that resolved a plan and a build that refused one look
+     identical from outside a function neither this build nor a teacher can reach any other way.
+     Nothing in the app reads window.planbook — see the block above for why the seam outlived the
+     shelf. */
+  mergeFields,
   /* isInstalled() is here for one reason: the banner's whole behavior turns on it, and on a
      desktop there is no way to ask the question except by installing. */
   isInstalled, refreshInstallBanner,

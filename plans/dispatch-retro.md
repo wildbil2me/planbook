@@ -197,6 +197,72 @@ is worth running too, and for a reason that is not obvious: two of its eighteen 
 and both were contamination from a real `--audit` problem in the trackers rather than a tool fault —
 so a red self-check is a reason to run `--audit`, not to distrust the gate.
 
+## The mutation that was still in the file — WO-5.1, 2026-08-28
+
+**The tree was left in the deliberately-broken state that proves a check has teeth, and every
+document in it said ✅ DONE.** This is the fourth dead dispatch here and the second killed by a
+quota, but it is the first whose corpse was *dangerous* rather than merely incomplete: the earlier
+three left work unfinished, and this one left a disclosure hole in the shipped module with the
+paperwork already claiming the hole was impossible by construction.
+
+The dispatch died at the API session limit, and the orchestrator's last line — *"Dispatching the
+implementer now, and blocking on its return"* — is the only thing it ever said about the run. The
+implementer's writes were all present: `src/merge-fields.js`, a 745-line harness section, sweep § 20,
+the `sw.js` bump, and § WO-5.1 written into `TESTING.md`, `docs/data-model.md`, `plans/ROADMAP.md`
+and both trackers with all six Acceptance boxes ticked. No result file, so nothing had been verified.
+
+**What was actually in `resolveText()`:**
+
+```js
+if (!field) {
+  /* MUTATION (WO-5.1 proof, not shipped): the Traps line's own forbidden build — a path
+     expression walked against the document whenever the whitelist misses. Names nothing. */
+  const root = { student: ctx.student, guardian: ctx.guardian, doc: ctx.doc };
+  const walked = name.split('.').reduce((o, k) => (o === null || o === undefined ? o : o[k]), root);
+  if (walked !== null && walked !== undefined && String(walked).trim()) return String(walked);
+```
+
+That is the mutation the implementer inserted to prove the refusal check was non-vacuous — the
+Traps line's own forbidden build, a blacklist failing open — and it was killed between *the check
+went red* and *the mutation came out*. Measured on the delivered tree, `{{student.supports.medical}}`,
+`{{student.supports.accommodations}}`, `{{student.supports.behaviorPlan}}`,
+`{{student.supports.caseManager}}`, `{{student.supports.attendanceClause}}` and
+`{{student.supports.reviewDate}}` all resolved to the roster string, `blocked: false`, no error code
+— every category of data CLAUDE.md § Accommodations calls the most sensitive here, through the exact
+door WO-5.1 exists to weld shut, in the file whose own header says *"there is no path expression
+anywhere in this file."*
+
+**Three things about it worth keeping.**
+
+**A mutation proof inverts the usual dead-dispatch arithmetic.** The standing rule is that a dead
+dispatch's writes are all there and none of its claims are — true again here, and the docs were
+*accurate about the intended build* while being false about the tree. But the recovery rule that
+follows from the other three scars is *re-run every command the prose cites*, and *that would not
+have caught this*: `wo-sweep.mjs` was green at 34 · 31 · 0 · 3 with the mutation in place, and both
+gate tools passed. A dispatch killed mid-proof is the one case where the tree is worse than the
+report, so **the first question of a dead-dispatch recovery is not "what did it fail to do" but
+"what did it deliberately break, and did it put it back."** Grep the delivered files for the word
+`MUTATION` before reading anything else.
+
+**The greps were green because a mutation names nothing.** Sweep § 20's claim 2 is *no support
+identifier appears in the resolver's code*, and the mutation contains none — it walks `o[k]` with a
+key split off the token at runtime. The module header's stronger sentence, *"there is no `doc[a][b]`
+anywhere in this file"*, is the claim that would have failed, and **nothing asserts it**. A
+structural check that looks for forbidden *names* cannot see a forbidden *shape*; the check and the
+prose it was written from had drifted, and only the prose was right.
+
+**The behavioural check did have teeth, and that is what makes the near-miss legible.** The harness
+tests seventeen refusal spellings individually — `student.supports.medical` among them — and requires
+each to block, to keep its token intact, and to carry no roster string. Against the delivered tree
+that check fails on all counts, which is why the implementer's own cited run of
+`1194 checks · 1194 passed` was real: it was taken *before* the mutation went in. **A green harness
+number in a dead dispatch's prose is a timestamp, not a state.**
+
+**The rule this adds:** a work order that mutation-proves its claims must be recovered from the
+tree by *re-reading the file it mutated*, not by re-running the tools — the tools are what the
+mutation was measured against, and a mutation the author intended to remove is invisible to every
+one of them that stayed green. Where the deliverable is a fence, read the fence.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

@@ -16,7 +16,11 @@ Built first for its author's own five classes, but intended to be marketable to 
 That second goal is what drives the architecture below.
 
 **Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate waiting on the term;**
-**Ship 3 building, its first four rows landed.**
+**Ship 3 building, and Phase 5 opened inside it on 2026-08-28.**
+*(This line carried "its first four rows landed" until that day, when a fifth made it wrong. It now
+names no count for the reason stated two paragraphs down —* **take the numbers from the roadmap's
+dashboard** *— because a count written here is one nothing maintains, and this one had already rotted
+once.)*
 The day-one gate (WO-G1) closed 2026-08-08, ahead of its ~2026-08-24 target: install,
 backup/restore, classes and terms, roster with
 accommodations, attendance marking, days off, home screen. The app is deployed at
@@ -138,6 +142,29 @@ API session limit at the handoff to its verifier** *— the third dead dispatch 
 killed by a quota; the implementer's writes were all present and none of its claims were, so every
 command its result file cited was re-run from the tree before anything was ticked. See*
 `.claude/dispatch/WO-4.3-status.md`*.)*
+
+*(**Phase 5 opened on 2026-08-28 and its head row is ✅ the same day** —*
+[WO-5.1](plans/work-orders/phase-5-outreach.md#wo-51--merge-field-resolver)*, the merge-field
+resolver, all six Acceptance lines closed, no* 👤 *and no* 📆*. What it is and the ruling behind it
+are in § Accommodations below; what belongs here is* **how it nearly went out.** *The dispatch was*
+**killed by an API session limit at the handoff to the implementer's return** *— the fourth dead
+dispatch here and the second killed by a quota — and it is the first whose corpse was* **dangerous
+rather than merely incomplete.** *The implementer had inserted a mutation to prove its own refusal
+check non-vacuous — a path expression walked against the document whenever the whitelist missed —
+and was killed between* the check went red *and* the mutation came out. *So the delivered tree
+resolved* `{{student.supports.medical}}`*,* `.accommodations`*,* `.behaviorPlan`*,* `.caseManager`*,*
+`.attendanceClause` *and* `.reviewDate` *to the roster string, unblocked, with no error code —*
+**while every document in it already read ✅ DONE with all six boxes ticked.** *The rule this adds is
+in* [`AGENTS.md`](AGENTS.md) *§ "If you were dispatched with a work order" — revert the mutation
+before writing anything else — and the scar is in* `plans/dispatch-retro.md`*. Two things about it
+that generalise.* **Re-running the tools would not have caught it:** `wo-sweep.mjs` *was green at
+34 · 31 · 0 · 3 with the hole open, and so were both gate tools, because* **a mutation names nothing
+a grep is looking for** *— so the standing recovery rule (re-run every command the prose cites)
+walks straight past this one, and the first move on a dead dispatch is now* `grep -rn MUTATION` *over
+its delivered files.* **And a green harness number in a dead dispatch's prose is a timestamp, not a
+state:** *the implementer's cited 1194/1194 was real, taken before the mutation went in. Recovered,
+repaired and re-verified by a separate verifier on 2026-08-28 — 1194 checks green, sweep green, both
+gate tools PASS.)*
 
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
@@ -328,6 +355,20 @@ negotiable and are easy to break by accident:
   classroom walls. IEP status on that wall is a disclosure to thirty students.
 - **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses those
   paths by construction — otherwise a template makes disclosure a one-keystroke mistake.
+  *(**Built 2026-08-28, WO-5.1, and "by construction" turned out to mean a whitelist rather than a
+  refusal list.** `src/merge-fields.js` holds the sixteen documented names and matches a token
+  against them by **exact string over an array** — no path expression, no split on `.`, no property
+  read named after a token — so `{{supports.medical}}` is refused for the same reason a typo is, and
+  **a support field added to the data model next year is refused on the day it is added**.
+  `REFUSED_WORDS` survives as the wording of an error and as a test surface; deleting it would
+  change no outcome, which is the difference between a fence and a filter. Two consequences worth
+  keeping: the whitelist is an **array scanned by `===`**, because indexed by the token
+  `{{constructor}}` and `{{__proto__}}` both find something truthy; and **a refused token stays
+  visibly intact**, told apart from the other two failures by a named `code` and never by the shape
+  of the output — dropping or blanking it produces a body that reads clean and could be sent. The
+  module owns no writer and no screen. **`{{behavior.recent}}` carries a date and a subject and
+  never a `body`**, and the limit is stated rather than claimed away: a subject is free text, the
+  same open edge the note-under-a-projector ruling below records.)*
 - **A note to self is the one thing here a projector does not hide, and that is a ruling rather than
   an oversight** (WO-4.4, the owner, 2026-08-20, seen on hardware 2026-08-24). `logKindVisible()`
   returns `true` for `note` unconditionally: **behavior** entries are absent from the page in

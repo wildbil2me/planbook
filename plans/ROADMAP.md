@@ -84,11 +84,11 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
-| 5 | Outreach | ⬜ NOT STARTED | 0/9 `[░░░░░░░░░░] 0%` |
+| 5 | Outreach | 🔨 IN PROGRESS | 2/9 `[██░░░░░░░░] 22%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **56/81 `[███████░░░] 69%`** · ⏳ 1 deferred |
+| | | **Overall** | **58/81 `[███████░░░] 72%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -499,11 +499,22 @@ granting a mail scope.
 
 - [ ] **Templates with merge fields**, per [`../docs/data-model.md`](../docs/data-model.md) —
       student, guardian, grade, delta, missing work, attendance, signals, behavior.
-- [ ] **An unresolved merge field never renders blank.** "Dear ," going home is worse than sending
+- [x] **An unresolved merge field never renders blank.** "Dear ," going home is worse than sending
       nothing: unresolved fields stay visible and block the send with a named error.
-- [ ] **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses
+      *(WO-5.1. **Three outcomes rather than one** — a refused path, an unknown name and a real
+      field with nothing behind it — and all three leave the token exactly as the teacher typed it,
+      including the refused one. `blocked` is what a later work order reads; there is no send here
+      to stop.)*
+- [x] **No merge field ever resolves accommodation, medical, or plan data.** The resolver refuses
       those paths by construction — a template system makes an IEP disclosure a one-keystroke
       mistake otherwise.
+      *(WO-5.1, and* **"by construction" turned out to mean a whitelist rather than a refusal
+      list**: *`src/merge-fields.js` holds the sixteen documented names and matches a token against
+      them by exact string, so a path into `supports` is refused because it is not on a list rather
+      than because it is on one — and so is a field added to the data model next year. The refusal
+      list survives as the wording of an error and as a test surface; deleting it would change no
+      outcome. `tools/wo-sweep.mjs` § 20 asserts there is no support identifier in the module's code
+      at all.)*
 - [ ] Separate concern and praise templates. A good praise message reads nothing like a good
       concern message.
 - [ ] Audience picker: guardian 1/2, **counselor, admin**. Contacts already live on the roster.

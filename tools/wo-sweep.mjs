@@ -1973,6 +1973,112 @@ function commentLines(file) {
 }
 
 
+/* ══════ 20. the merge-field resolver whitelists, and has no path into a support block ══════
+   WO-5.1's Traps line is the whole of this section: **whitelist the resolvable field names; do not
+   blacklist the forbidden paths**, because a blacklist fails open the moment somebody adds a field
+   to the data model. That is a claim about what is NOT in a file, and a browser harness cannot make
+   it — `tools/verify/merge-fields.mjs` proves what today's paths resolved on today's fixture, and
+   this proves there is nothing in the file that could resolve one on any input. Same division of
+   labour as § 17 makes over src/calendar-derived.js, for the same reason: a lookup somebody adds
+   later "just for this one field" is invisible to a fixture that does not happen to name it.
+
+   FOUR CLAIMS, AND EACH ONE FAILS A DIFFERENT WRONG BUILD:
+
+   1. The whitelist IS the table in docs/data-model.md § Outreach templates, name for name and in
+      order, in both directions. A field resolvable but undocumented is a field WO-5.2's palette
+      would offer with nothing behind it; a field documented but unresolvable is a template that
+      renders a token and blocks the send. Read off the TABLE ROWS of that section rather than the
+      whole of it, so prose underneath is free to quote a refused path as an example.
+   2. No support identifier appears in the resolver's CODE — only inside string literals and prose.
+      That is what "refused by construction" means here: the refusal list is data the module compares
+      names against, never a property it reaches for. A build that read `student.supports` to decide
+      whether to refuse it would fail this while passing every behavioural check written against it.
+   3. The whitelist and the refusal words are DISJOINT, and every root WO-5.1 names is in the
+      refusal list. The first half is the one that matters: a resolvable name that also reads as a
+      refusal would be a field the resolver answers and the error path describes as forbidden.
+   4. The resolver has no writer, the same clause § 17 makes and for the same reason — this module
+      answers a question about a document and must never be a second way to change one.
+
+   THE STRIPPER IS CRUDE AND SAYS SO: it removes block comments, line comments and the three kinds
+   of string literal, and it does not model regular-expression literals. A regex holding a quote
+   character would confuse it. There is none in the file today and the check names how much it
+   stripped, so a stripper that stopped working reports an implausible number rather than a green
+   run over an empty haystack — this file's own first rule. */
+
+{
+  const NAME = 'the merge-field resolver whitelists, and has no path into a support block';
+  const modulePath = path.join(REPO, 'src', 'merge-fields.js');
+  const modelPath = path.join(REPO, 'docs', 'data-model.md');
+  if (!fs.existsSync(modulePath) || !fs.existsSync(modelPath)) {
+    check(NAME, false, !fs.existsSync(modulePath)
+      ? 'src/merge-fields.js is not where this check expects it — WO-5.1 landed the resolver there, and a missing file means every claim below is void rather than satisfied'
+      : 'docs/data-model.md is not where this check expects it — the documented field table is the whitelist this reconciles against');
+  } else {
+    const src = fs.readFileSync(modulePath, 'utf8');
+
+    /* The documented table, off the rows of § Outreach templates and nothing else. Deduped keeping
+       first appearance, because that table names three student fields in one cell. */
+    const model = fs.readFileSync(modelPath, 'utf8');
+    const section = model.split(/^## /m).filter(s => /^Outreach templates\b/.test(s))[0] || '';
+    const documented = [];
+    section.split('\n').filter(l => /^\s*\|/.test(l)).forEach(line => {
+      for (const m of line.matchAll(/\{\{([^{}]+)\}\}/g)) {
+        if (!documented.includes(m[1])) documented.push(m[1]);
+      }
+    });
+
+    /* The whitelist, off the `const FIELDS = [ … ];` block. Anchored on that declaration rather than
+       on `name:` anywhere in the file, so an error object or a palette mapper cannot be read as a
+       seventeenth field. */
+    const block = src.match(/const FIELDS = \[([\s\S]*?)\n\];/);
+    const resolvable = block ? [...block[1].matchAll(/\bname: '([^']+)'/g)].map(m => m[1]) : [];
+
+    /* Comments and string literals out, so what is left is code. See the note above about regexes. */
+    const stripped = src
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+      .replace(/'(?:\\.|[^'\\])*'/g, "''")
+      .replace(/"(?:\\.|[^"\\])*"/g, '""');
+
+    const SENSITIVE = /\b(supports?|accommodations?|medical|behaviou?rPlan|plan|caseManager|reviewDate|attendanceClause)\b/i;
+    const codeLines = stripped.split('\n').map((line, i) => ({ line: i + 1, text: line.trim() }));
+    const reached = codeLines.filter(row => SENSITIVE.test(row.text));
+
+    const WRITER = /\b(update|getDoc|setPref|setPresentationMode|writeEntry|restoreDocument|newYearDocument)\s*\(/;
+    const writers = codeLines.filter(row => WRITER.test(row.text));
+    const storeImport = /from '\.\/store\.js'/.test(src);
+
+    /* The refusal words, off their own declaration. Compared against the whitelist rather than
+       against a list written out here a second time. */
+    const refusedBlock = src.match(/const REFUSED_WORDS = \[([\s\S]*?)\];/);
+    const refusedWords = refusedBlock
+      ? [...refusedBlock[1].matchAll(/'([^']+)'/g)].map(m => m[1]) : [];
+    const ROOTS = ['supports', 'medical', 'behaviorplan', 'plan', 'casemanager', 'reviewdate'];
+    const missingRoots = ROOTS.filter(r => !refusedWords.includes(r));
+    const overlap = resolvable.filter(n => {
+      const flat = n.toLowerCase().replace(/[^a-z]/g, '');
+      return refusedWords.some(w => flat.includes(w));
+    });
+
+    const faults = [];
+    if (!documented.length) faults.push('docs/data-model.md § Outreach templates has no `{{field}}` in any table row — the pattern in this check has stopped matching, which reads green from a distance and is not');
+    if (!resolvable.length) faults.push('src/merge-fields.js has no `const FIELDS = [ … ];` block this check can read — the whitelist is now being asserted against nothing');
+    if (documented.length && resolvable.length && JSON.stringify(documented) !== JSON.stringify(resolvable)) {
+      const extra = resolvable.filter(n => !documented.includes(n));
+      const absent = documented.filter(n => !resolvable.includes(n));
+      faults.push(`the whitelist and docs/data-model.md § Outreach templates disagree — ${extra.length ? 'resolvable but undocumented: ' + extra.join(', ') + '. ' : ''}${absent.length ? 'documented but not resolvable: ' + absent.join(', ') + '. ' : ''}${!extra.length && !absent.length ? 'same names, different ORDER — the palette prints in this order and the table is what it documents. ' : ''}Change both in the same sitting`);
+    }
+    if (reached.length) faults.push(`${reached.length} line(s) of CODE in src/merge-fields.js name a support field — ${reached.slice(0, 4).map(r => 'src/merge-fields.js:' + r.line).join(', ')} — and the refusal list is supposed to be DATA the module compares names against, never a property it reaches for. A resolver with a path into a support block has stopped being a whitelist however the refusal list is written`);
+    if (overlap.length) faults.push(`${overlap.join(', ')} is on the whitelist AND reads as a refusal — the resolver would answer a field its own error path calls forbidden`);
+    if (missingRoots.length) faults.push(`REFUSED_WORDS does not name ${missingRoots.join(', ')} — WO-5.1 lists ${ROOTS.length} roots and this list is what names the refusal in the error a teacher reads. Nothing resolves either way, because the whitelist is the fence, so this is a wording gap rather than a leak`);
+    if (writers.length || storeImport) faults.push(`src/merge-fields.js ${storeImport ? 'imports ./store.js' : ''}${storeImport && writers.length ? ' and ' : ''}${writers.length ? writers.map(w => 'writes at :' + w.line).join(', ') : ''} — resolving a draft answers a question about a document and may never be a second way to change one`);
+    if (stripped.length > src.length * 0.9) faults.push(`the comment and string stripper removed only ${src.length - stripped.length} of ${src.length} characters, which is implausible for a file in this repository — it has stopped working, and the two absence claims above are being made over an unstripped file`);
+
+    check(NAME, !faults.length, faults.length ? faults.join(' · ')
+      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier and no writer in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');

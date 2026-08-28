@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 /* ── the sections, in run order ─────────────────────────────────────────────────────────────
- * Sixty-one files, named after the surface they drive rather than after the work order that added
+ * Sixty-two files, named after the surface they drive rather than after the work order that added
  * them, so that a reader looking for "where do I put a check about the score grid" answers it
  * from the list. Two of them are not sections: lib-dates.mjs is a pure helper library, and
  * attendance-passes.mjs is the second half of the attendance section, called by the first half
@@ -118,6 +118,7 @@ import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as policyUrl } from './verify/policy-url.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
+import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as cooldownQuiet } from './verify/cooldown-quiet.mjs';
 
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
@@ -298,6 +299,7 @@ const BROWSER_SECTIONS = [
   { file: 'verify/policy-url.mjs', run: policyUrl },
   { file: 'verify/drive-sign-in.mjs', run: driveSignIn },
   { file: 'verify/log-entries.mjs', run: logEntries },
+  { file: 'verify/merge-fields.mjs', run: mergeFields },
   /* LAST, AND ON PURPOSE (WO-4.5). It is the only section that drives a real restore of the whole
      year document through backup.restoreFromText() and the confirm button — its acceptance line
      asks for exactly that — and a section that replaces the document is a section nothing should

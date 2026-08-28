@@ -442,7 +442,13 @@ view is *not showing it*.
 not `{{signals.list}}`, not `{{behavior.recent}}`, nothing. An email to an administrator that
 happens to quote a 504 plan is a disclosure incident, and a template system makes that a
 one-keystroke mistake unless it's impossible by construction. **The merge-field resolver refuses
-these paths rather than rendering them.**
+these paths rather than rendering them.** It is `src/merge-fields.js` since WO-5.1, and *how* it
+refuses is the part worth carrying: it holds a **whitelist** of the sixteen names § Outreach
+templates tabulates and matches a token against it by exact string, so a path into this block is
+refused because it is not on a list rather than because it is on one. A blacklist of forbidden
+paths would fail open the day a field is added to this block; a whitelist fails closed. `{{signals.list}}`
+and `{{behavior.recent}}` are argued field by field in that section, including the one limit the
+code cannot close.
 
 **3. Surfaced where the work happens.** Creating a test prompts *"3 students have extended time,
 2 need a separate setting."* Marking a student absent for the fourth time shows their plan has an
@@ -628,6 +634,44 @@ A template is subject + body with **merge fields**, resolved against one student
 **An unresolved field must never render blank.** "Dear ," going home is worse than sending
 nothing. Unresolved fields render visibly (`{{guardian.name}}` intact) and block the send with a
 named error. Every draft is editable before it goes, always.
+
+**`src/merge-fields.js` is the one resolver** *(WO-5.1)*, and **that table is its whitelist** — a
+flat list of exactly those sixteen names, each with the function that answers it, matched by exact
+string and by nothing else. There is no path expression anywhere in the file and no walk from the
+document root, which is the difference this phase turns on: a blacklist of forbidden paths fails
+open the moment a field is added to this document, and a whitelist fails closed. `tools/wo-sweep.mjs`
+§ 20 reconciles the table above against that list name for name and in both directions, and asserts
+separately that no support identifier appears in the module's code at all — only inside string
+literals and prose. **Change a row of that table and change the module in the same sitting**; the
+sweep says which way it went.
+
+Five rulings inside it are decisions rather than plumbing:
+
+- **A refused path, an unknown name and an unresolvable field are three outcomes**, named
+  `refused-field`, `unknown-field` and `unresolved-field`. All three block, and **all three leave
+  the token on the page exactly as the teacher typed it** — including the refused one, which is the
+  safe reading of *"it does not render"*: a literal `{{supports.medical}}` in a body carries no
+  student's data and cannot be mistaken for a finished sentence, where a dropped or blanked token
+  produces a draft that reads clean and could be sent.
+- **The empty string is not an answer.** A resolver hands back a string or `null`, and a blank is
+  rounded to `null` at one choke point rather than in sixteen places. That is the rule above made
+  structural.
+- **A count resolves at zero and a list does not.** `{{missing.count}}` answers `0`, which is a true
+  sentence; `{{missing.list}}` with nothing in it is *"he is missing: "* going home.
+- **`{{signals.list}}` is safe by construction and is not re-filtered.** A signal rule is handed its
+  own measured numbers and a small object of names, so an explanation is arithmetic and two names —
+  see § Signal thresholds and `src/signals.js`'s own header. A substring filter over it here would
+  go green forever while teaching the next reader that the engine is untrusted. If a rule is ever
+  found putting a string it was handed into a sentence, that is a defect in `src/signals.js`.
+- **`{{behavior.recent}}` carries a date and a `subject`, three entries, newest first — never a
+  `body`, and only the `behavior` kind.** The body is the long free-text half and the place a plan
+  reference would actually be written; the kind is asked for by name, so a note to self and a
+  `contact` cannot arrive through a widened default. **The limit this cannot close is stated rather
+  than glossed:** a subject is still free text, and a teacher who types a plan reference into one
+  will see it in her draft. That is the same open edge § Accommodations records for a note under a
+  projector. **Presentation mode is deliberately not asked** — it is the *screen's* suppression and
+  an email to a guardian is not a projector, so the obligation lands on the live preview
+  (WO-5.2), which asks `src/supports.js` before it draws a resolved body.
 
 ## Events: only what can't be derived
 

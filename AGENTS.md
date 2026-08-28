@@ -112,6 +112,20 @@ bottom of this section — those are claims about hardware and about the calenda
 authority), and **leave the `CHANGELOG.md` entry to the teacher**, who decides what a change means to
 a classroom.
 
+**If you break the code on purpose to prove a check has teeth, put it back BEFORE you write anything
+else** — not at the end of the run, and never after the paperwork. A mutation proof is two edits and
+the second one is the one that matters; between them the tree contains the exact defect the work
+order exists to prevent, and **you do not control when you stop**. WO-5.1 was killed by a quota in
+that gap on 2026-08-28: the mutation was a path expression walked against the document whenever the
+resolver's whitelist missed, so the delivered tree handed back every student's medical need, IEP
+accommodations and behavior plan on request, while all six Acceptance boxes read `[x]` and the row
+read ✅ DONE. Every tool was green over it — a mutation names nothing a grep is looking for.
+**Revert first, re-run the tool, and only then write the result file**, which should say the proof
+was made and reverted. If you cannot revert — the harness is red for a reason you do not understand,
+say — then say so in the FIRST line of your result and leave the boxes blank. A dispatch that dies
+holding an unreverted mutation is the one failure mode here where the tree is more dangerous than
+the report, and the report is what everybody reads.
+
 A separate verifier reads your work cold against the **Acceptance** list, so report honestly:
 what you did, what you could not satisfy, and anything you were unsure about. Claiming an acceptance
 line you did not actually meet costs you a correction round, not a pass.

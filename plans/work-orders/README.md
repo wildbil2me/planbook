@@ -288,12 +288,12 @@ indexes is a file nobody reads.
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
-| 5 — Outreach | 4 | 0 | — | ⬜ NOT STARTED |
+| 5 — Outreach | 4 | 1 | — | 🔨 IN PROGRESS — WO-5.1 ✅ DONE 2026-08-28, all six lines closed the same day; WO-5.2 through WO-5.4 ⬜ |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **141** | **117** | **2** | `[████████░░] 83%` |
+| | **143** | **118** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1619,7 +1619,7 @@ it, never from a reading taken earlier in the same session.)*
 | 14 | [WO-1.29](phase-1-shell-store-roster.md#wo-129--the-owes-field-on-wo-43-names-no-work-order-and-nothing-notices) An Owes field that names no work order passes its own check | S | — | **Whenever the tracker is quiet, and it pairs with row 12** — same field, same file, one sitting. Nothing depends on it and the only live instance is WO-4.3's, which it removes |
 | 15 | [WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate) A Depends on that names no work order clears its own gate | M | — | **Whenever the tracker is quiet, and it is the third of the four tracker rows** — 12, 14, 15, 16. Its live instance is row 32, left standing on purpose so the fix has something real to fail against. **Read its table before writing a line:** the obvious fix refuses thirty work orders that are correct today, fourteen of which use `—` to mean "no dependencies" |
 | 16 | [WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on) A 🔒 GATED work order that never says what it is gated on | S | — | **Pairs with row 15 — same file, same neighbourhood, one sitting.** A plant rather than a repair: all four gated work orders name their gate today, and the one that did not — WO-7.2 — cost seventeen days and was found by a human reading an unrelated runbook |
-| 17 | [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) **Merge-field resolver** | M | — | **Before Sep 2, and it is the row to spend the fortnight's capacity on.** Head of Phase 5 and gate-clear as of 2026-08-28 — see the note below. Unblocks rows 21–23. It carries the rule that **no merge field ever resolves accommodation, medical or plan data**, refused *by construction* rather than by a filter, which is work that wants full capacity and not a teaching-week evening |
+| 17 | [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) **Merge-field resolver** | M | — | ✅ **2026-08-28** — booked and built the same day, all six Acceptance lines closed. *By construction* turned out to mean a **whitelist**: `src/merge-fields.js` holds the sixteen documented names and matches a token against them by exact string, with no path expression anywhere in it, so a support field added to the data model next year is refused on the day it is added. **Rows 21–23 are unblocked** |
 | 18 | [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day) A tapped day opens on that day | S | — | **Rides along with anything.** Depends only on WO-6.3 ✅; nothing else waits on it |
 | 19 | [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why) The overdue tone is silent on the iPad | M | — | **When there is an iPad sitting anyway.** Carries [WO-2.31](phase-2-attendance.md#wo-231--the-overdue-alert)'s `**Owes**` from the 👤 run that failed 2026-08-16 — the only open pointer of the three `--audit` tracks |
 | 20 | [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) **Document transfer & conflicts** | L | — | **After Sep 2.** `⬜` since 2026-08-28, when a `🔒` that named no gate came off — see its own note. **Row 9 cannot be filmed until this exists**, and row 26 needs both. An L with six Acceptance lines, several wanting two real devices: it is the wrong shape for the five days before a class starts, and nothing dates it sooner — Phase 7 has no deadline and Google's queue does not start until row 9 is submitted either way |

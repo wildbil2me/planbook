@@ -15,7 +15,7 @@ templates. Two rules dominate this phase, and both are about what must never lea
 
 ## WO-5.1 — Merge-field resolver
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4, WO-4.1
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-3.4, WO-4.1
 **Closes roadmap** Phase 5 → "An unresolved merge field never renders blank" and "No merge field
 ever resolves accommodation, medical, or plan data."
 
@@ -48,17 +48,42 @@ disclosure incident. And separately: "Dear ," going home is worse than sending n
   disagree eventually, and the email is the copy that's wrong.
 
 **Acceptance**
-- [ ] A template containing `{{supports.accommodations}}` (or any refused path) refuses with a named
+- [x] A template containing `{{supports.accommodations}}` (or any refused path) refuses with a named
       error and renders nothing sensitive. Verify every path in the refusal list individually.
-- [ ] `{{signals.list}}` for a student with an accommodation-derived signal emits no plan reference.
-- [ ] A student with no guardian on file blocks the send naming the missing field; the draft is not
+- [x] `{{signals.list}}` for a student with an accommodation-derived signal emits no plan reference.
+- [x] A student with no guardian on file blocks the send naming the missing field; the draft is not
       sendable in that state.
-- [ ] `{{grade.percent}}` matches the gradebook exactly for the same student and term.
-- [ ] `{{grade.delta}}` matches the delta shown on the praise signal that produced the draft.
-- [ ] An unknown field name is refused, not silently blanked.
+- [x] `{{grade.percent}}` matches the gradebook exactly for the same student and term.
+- [x] `{{grade.delta}}` matches the delta shown on the praise signal that produced the draft.
+- [x] An unknown field name is refused, not silently blanked.
+
+**Where this stands.** ✅ on 2026-08-28, all six Acceptance lines closed — none of them wanted a
+human or a date. `src/merge-fields.js` is the resolver; both tools are green on the delivered tree
+(`verify-shell.mjs` `1194 checks · 1194 passed · 0 failed · 0 skipped`, 396s, exit 0; `wo-sweep.mjs`
+`34 checks · 31 passed · 0 failed · 3 to review`, all three pre-existing), with nineteen new checks
+in § *"the merge-field resolver (WO-5.1)"* and a new sweep § 20. `TESTING.md` § WO-5.1 carries the
+readings.
+
+**Four things it decided that this work order did not**, each argued at its own point of departure
+and recorded in [`../../docs/data-model.md`](../../docs/data-model.md) § Outreach templates:
+
+- **The refusal list is a test surface and the wording of an error, not the fence.** `REFUSED_WORDS`
+  runs only over names the whitelist has *already* refused, and deleting it would change no outcome.
+  That is what makes the Traps line structural rather than promised.
+- **A refused token stays visibly intact, exactly as an unresolved one does** — three outcomes told
+  apart by a named `code`, never by the shape of the output. Dropping or blanking a refused token
+  produces a body that reads clean and could be sent; a literal `{{supports.medical}}` carries no
+  student's data and cannot be mistaken for a finished sentence.
+- **`{{behavior.recent}}` carries a date and a `subject`, three entries, newest first — never a
+  `body`.** The limit that leaves is stated rather than claimed away: a subject is free text.
+- **Presentation mode is not asked here.** It is the screen's suppression; **WO-5.2's live preview
+  is the screen that owes `src/supports.js` the question** before it draws a resolved body.
 
 **Traps** — Whitelist the resolvable paths; do not blacklist the forbidden ones. A blacklist fails
-open the moment someone adds a field to the data model.
+open the moment someone adds a field to the data model. *(Held, and* **the whitelist is an ARRAY
+scanned by `===` rather than an object indexed by the token** *— indexed, `{{constructor}}`,
+`{{toString}}` and `{{__proto__}}` all find something truthy, which is the first build of a resolver
+of this shape and is measured against here.)*
 
 ---
 
