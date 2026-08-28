@@ -447,6 +447,22 @@ report as a one-hop pass. Defined in [`plans/work-orders/README.md`](plans/work-
 § "Acceptance-line marks" — which is also the first place 👤 was ever written down — and argued in
 [`plans/verification-tooling.md`](plans/verification-tooling.md).
 
+**A row in the running order can also say it is a ride-along, and 🎒 is the mark for it** (WO-1.35,
+2026-08-28). 👤 and 📆 sit beside an Acceptance line; **🎒 sits in the `Suggested` column and is not
+about a checkbox at all.** It says the row is `⬜ NOT STARTED` and fully buildable but is **not work to
+schedule** — an hour to fold into a sitting that already has that file open. `next` **steps over a
+marked row, names it, says what it rides with, and prints the `--start` that takes it anyway**:
+nothing is in flight, so nothing needs `--release`, and a row that vanished from the report would be
+a row nobody remembers, which is the defect inverted. **It changes ordering and nothing else** — it
+closes no box, opens no gate, satisfies no dependency, and naming the ID produces exactly the gate
+report it always did. It exists because **position is not a fence**: WO-8.13 spends a paragraph
+arguing it must not lead the running order, its only protection was sitting at the foot of the table,
+and on 2026-08-28 the three rows above it cleared and it led anyway, silently. So `--audit` reports a
+ride-along that has become the first `⬜` in its section — as a **note and not a failure**, because
+*re-place it*, *start it* and *take the mark off* are all correct answers and only a person can pick.
+Defined in [`plans/work-orders/README.md`](plans/work-orders/README.md) § "Ride-along rows"; the
+glyph is the owner's to change and the behaviour is not.
+
 **Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
 neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over
 and deletes the old cache the moment it activates — but it does not re-render the open window, whose

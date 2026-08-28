@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A row can now say it is a ride-along, and the tracker stops offering it as the next thing to build — 2026-08-28
+
+**Some work orders are not an hour to schedule, they are an hour to fold into a sitting that is
+already open** — a link in the About modal, while somebody is in `index.html` anyway. The running
+order had said that in prose for a week, in a column no tool reads, and the only thing keeping such a
+row out of `next`'s way was its *position* at the foot of a table. Position is undone by the rows
+above it succeeding: on 2026-08-28 three of them cleared and `next` began answering with the one row
+that spends a paragraph arguing it should not be answered with. 🎒 in the `Suggested` column now says
+it in a form the tool can read.
+
+**`next` steps over a marked row, names it, says what it rides with, and prints the command that
+starts it anyway** — because a row that vanishes from the report is a row nobody remembers, which is
+the same defect upside down. `--audit` says when the shelf above a ride-along has emptied, as a note
+rather than a failure, because *re-place it*, *start it* and *take the mark off* are all correct
+answers and only a person can pick. The mark changes ordering and nothing else: it closes no box,
+opens no gate, satisfies no dependency, and naming the work order by ID produces exactly the gate
+report it always did.
+
+**One Acceptance line was wrong when it was written, and re-cutting it was the owner's call rather
+than the pipeline's.** The line predicted `next` would return WO-5.2 once the two live ride-alongs
+wore the mark; the implementer and the verifier walked the table separately and both landed on
+WO-1.27, six `⬜` rows short of it — and reaching WO-5.2 needs every one of those marked, which the
+work order's own fourth trap forbids for a row whose note is a date rather than a fold-it-in
+argument. A correction round would have spent a build arriving back at the same place. The
+mis-derivation is recorded at the line it broke.
+
 ### § 20's claim 5 now reads the whole file, and the header stopped overclaiming — twice — 2026-08-28
 
 **The check that forbids a dynamic property read in the merge-field resolver scanned member position

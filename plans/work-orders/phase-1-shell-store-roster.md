@@ -3233,7 +3233,7 @@ outright. `CACHE` v100 → v101, one bump for both rounds. Delivered tree: sweep
 
 ## WO-1.35 — a ride-along row rises to the top when the rows above it clear
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.34
 made. Booked 2026-08-28, owner-directed, found by reading `next` against the table it answers from.)*
 
@@ -3298,17 +3298,26 @@ writes, and the column keeps the sentence.
   written about, arriving in the tool that polices it.
 
 **Acceptance**
-- [ ] The mark is defined in `plans/work-orders/README.md` in a section of its own — the same call
+- [x] The mark is defined in `plans/work-orders/README.md` in a section of its own — the same call
       § "Acceptance-line marks" made about being a section rather than a tenth row in the header
       table — carrying WO-1.28's "changes ordering and nothing else" sentence in as many words.
-- [ ] `next` skips a marked row, names it, and prints what it rides with, in the same shape it
+- [x] `next` skips a marked row, names it, and prints what it rides with, in the same shape it
       already prints a skipped 🔨.
-- [ ] `node tools/wo-gate.mjs WO-8.13` still produces a full gate report and still reports its gates
+- [x] `node tools/wo-gate.mjs WO-8.13` still produces a full gate report and still reports its gates
       clear — the mark blocks nothing when the row is asked for by name.
-- [ ] `--audit` reports a marked row that is the first `⬜` in its section, and **fires on WO-8.13 in
+- [x] `--audit` reports a marked row that is the first `⬜` in its section, and **fires on WO-8.13 in
       the tree as it stands today** before that row is re-placed.
-- [ ] WO-8.13 and row 18 (WO-6.5) wear the mark, and `node tools/wo-gate.mjs next` returns
-      **WO-5.2**.
-- [ ] `--self-check` is green with a plant behind each new check, and the count in its own report
+- [x] WO-8.13 and row 18 (WO-6.5) wear the mark, and `node tools/wo-gate.mjs next` returns
+      **WO-1.27**. *(**This line was booked naming WO-5.2 and re-cut on 2026-08-28, the owner's
+      call** — the expected value was mis-derived when the work order was written, and the code met
+      the line it should have carried. The implementer and the verifier walked the table separately
+      and reached the same row: six `⬜` rows sit between row 10 and row 21 — WO-1.27, WO-1.29,
+      WO-1.30, WO-1.31, WO-2.33 and WO-7.2 — so reaching WO-5.2 needs every one of them marked, and
+      even then `next` stops at WO-7.2, whose `Suggested` cell says "After Sep 2." That is a date,
+      and Trap 4 forbids marking it. **The scar worth keeping is that an Acceptance line can be
+      wrong** — this one named a row no legal marking reaches, so a correction round would have
+      spent a build arriving back at the same place. Rewording a test is the owner's, never the
+      pipeline's.)*
+- [x] `--self-check` is green with a plant behind each new check, and the count in its own report
       goes up by that many.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.

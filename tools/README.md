@@ -63,14 +63,15 @@ node tools/wo-gate.mjs --audit         every **Closes roadmap** fragment against
                                        every **Owes** pointer against the box it names, every 🚫/⏳
                                        work order against the box it takes out of the count,
                                        `README.md` § The files against the work orders each file
-                                       actually holds, and ROADMAP.md's dashboard against its own
-                                       box counts
+                                       actually holds, ROADMAP.md's dashboard against its own
+                                       box counts, and — as a NOTE, never a problem — every 🎒
+                                       ride-along row whose shelf has emptied
 node tools/wo-gate.mjs --self-check    plant every violation this script is supposed to catch, in a
                                        temp copy of plans/, and fail if one stops being caught
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants twenty-four violations against them, runs the script over the copy, and deletes the directory on
+plants twenty-seven violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -79,8 +80,14 @@ never carry the defect. **WO-1.28 added six on 2026-08-26**, all about 📆 — 
 line wears when no build can close it — and they are the first plants here to exercise `gate()`'s
 dependency walk at all, which the run's closing summary had listed as uncovered since WO-2.14. They
 brought two more synthetic work orders with them: a **gate** fixture that must refuse what the other
-dependent accepts, and a **chain** fixture so a two-hop defer has a second hop to name.
-`24 plants, 24 caught, 0 missed` / `PASS | 24 of 24 plants were caught`, read
+dependent accepts, and a **chain** fixture so a two-hop defer has a second hop to name. **WO-1.35
+added three on 2026-08-28**, all about 🎒 — the mark a running-order ROW wears when it is not work to
+schedule but an hour to fold into a sitting that is already open — and they are the first plants here
+to read a `Suggested` cell and the first to write into a `README.md` table row rather than into a work
+order. They brought no fixture with them: step 2b has put both fixture rows above every real row since
+WO-2.16, which is already the pair a 🎒 plant needs — one row with an empty shelf above it, and the row
+below it with a shelf.
+`27 plants, 27 caught, 0 missed` / `PASS | 27 of 27 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -160,6 +167,10 @@ part is what did **not** go red beside it:
 | `calendarHold()`'s 🔨 fence inverted to "anything but ✅ DONE" — WO-1.28, same method | **1 red**: the four-status plant, on all four of ⬜, 🤖, 🚫 and ⏳ at once, including the two that lose WO-1.21's *"will never be ✅ DONE"* wording |
 | `calendarHold()`'s empty-list fence dropped, so a 🔨 work order with nothing open defers — WO-1.28, same method | **1 red**: the vacuous-truth plant. The other five stay green: every one of them has at least one open line, so the fence never fires in them |
 | `applyTick()`'s open-line filter taught to skip 📆, so the mark closes the box it describes — WO-1.28, same method | **1 red**: the tick plant, on all of it — `--tick` exits 0, writes `✅ DONE` over a `- [ ]` line, and ticks the roadmap box. This is the mutation that matters most of the five: it is the mark becoming a `- [x]` spelled with a calendar, which is the thing 👤 has spent three weeks not being |
+| the 🎒 skip deleted from `next()`, so a ride-along row is offered like any other — WO-1.35, `--against` over a copy in `TMP` | **1 red**: the `next` plant. Nothing else, including the two `--audit` plants beside it — the mark is read in exactly one place in `next()` and the audit reads the rows for itself |
+| `gate()` taught to refuse a marked row — WO-1.35, same method | **1 red**: the ordering plant, on its whole-report compare. This is the mutation that matters most of the three: it is 🎒 becoming 🔒 GATED under a new name, which is the line between *deprioritised* and *forbidden* |
+| `rideAlongReport()`'s `if (above)` forced true, so no row is ever reported as having run out of shelf — WO-1.35, same method | **1 red**: the audit plant, on its first case. Its second and third cases stay green — a report that says `ok` to everything passes both of those, which is why the first case exists |
+| the 🎒 NOTE counted into `--audit`'s problem total — WO-1.35, same method | **3 red**, and the two unintended ones are the argument for reporting rather than refusing: the audit plant's *"--audit failed over an empty shelf"*, plus WO-1.21's `--audit` plant and the § The files plant, both of which assert that `--audit` exits 0 on a healthy fixture. The sandbox is a copy of the real `plans/`, so a live NOTE in the running order would be a live `FAIL` inside every plant that runs `--audit` |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
 paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —
@@ -167,7 +178,9 @@ the two that assert the new *acceptance* — and leaves the four that assert a *
 the old script refuses too, for a different reason. That is why the four one-line mutations above
 exist rather than the broad run standing alone.
 
-Twelve mutations, all reverted or driven over a copy, none of them touching a plant it was not aimed at. **The sixth row is a
+Sixteen mutations, all reverted or driven over a copy, and every one of them red on the plant it was
+aimed at. **Fifteen touched nothing else; the sixteenth touched two more and that is the row's
+finding rather than its failure** — see its cell. **The sixth row is a
 different kind of thing and says so in its own cell.** The guard precondition WO-2.47 added runs in the
 **invoking** script rather than in the subject, because the invoking script is the one that makes the
 sandbox and writes the plants — so it is the one whose `assertOutsideRepo()` is actually protecting the

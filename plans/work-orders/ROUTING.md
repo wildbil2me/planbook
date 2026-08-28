@@ -36,7 +36,10 @@ status and `--tick` is the last step. A second `/wo` with no argument would have
 work order and built it in the same working tree. **A dispatch that dies gets `--release <WO-ID>`** —
 a claim outlives the run that made it, and one nobody released hides a work order from `next` forever
 while the tracker looks healthy. `next` names every claimed row it stepped over for exactly that
-reason.
+reason. *(Since WO-1.35 there is a third kind of skip and it is not a claim at all: a row wearing 🎒
+in the `Suggested` column is a **ride-along** — `⬜ NOT STARTED`, fully buildable, and not work to
+schedule. `next` names it, says what it rides with, and prints the `--start` that takes it anyway.
+Nothing is in flight and nothing needs releasing. See [README.md](README.md) § "Ride-along rows".)*
 
 *(`--start` wrote `🔨 IN PROGRESS` until 2026-08-09, when WO-3.11 split the glyph: `--release` could
 not be run safely while a dead dispatch and a work order that landed with lines owed were spelled the

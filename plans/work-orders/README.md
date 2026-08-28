@@ -225,6 +225,76 @@ two disagree, the boxes are the record.
 
 ---
 
+## Ride-along rows
+
+*(2026-08-28, WO-1.35.)* The two sections above describe the **header paragraph** and a mark on a
+**box**. This one describes a mark on a **row of the running order** — a third thing, about a third
+part of the tracker — and it is a section of its own for the reason the one above is: it is not a
+field, so a tenth row in that table would file it under fields and teach the next reader to look for
+it in a header block.
+
+**Some rows here are not work to schedule. They are work to fold into a sitting that is already
+open** — an hour of `index.html` while somebody is in `index.html` anyway. 🎒 in the `Suggested`
+column says that, and names what the row rides with.
+
+| Written in the `Suggested` cell | Read as |
+|---|---|
+| 🎒 `index.html` — **Nothing blocks it.** An hour, whenever … | a ride-along, riding with `index.html` |
+| 🎒 anything — **Rides along with anything.** Depends only on … | a ride-along, riding with anything |
+| **After row 21** | **not** a ride-along. That is a sequence, and **Depends on** carries it |
+
+**`next` steps over a marked row and says so.** Named, with what it rides with and the command that
+starts it anyway, in the same shape it already prints a skipped 🔨 — because *a row that vanishes
+from the report is a row nobody remembers*, which is this section's own defect inverted.
+
+**🎒 changes ordering and nothing else.** It closes no box, opens no gate, satisfies no dependency,
+and holds no work order at 🔨 IN PROGRESS. A marked row is `⬜ NOT STARTED` and fully buildable:
+`node tools/wo-gate.mjs WO-8.13` produces the gate report it produced before the mark went on, word
+for word, and still clears. **That equivalence is load-bearing**, exactly as the one above it is — a
+mark that could refuse by ID is 🔒 GATED under a new name, and 🔒 already exists for the thing it
+means. The line this draws is between *deprioritised* and *forbidden*, and only the first of those
+is a scheduling note.
+
+**Write it at the start of the cell; what it rides with runs to the first em dash.** Backticks and
+bold are stripped off, so `` 🎒 `index.html` — … `` rides with `index.html`. **This has a position
+rule where 📆 refused one, and the difference is the subject.** 👤 had been written at both ends of
+forty-two Acceptance lines before anybody wrote a rule down, so a position rule invented then would
+have silently unmarked half of them. A `Suggested` cell is free prose in thirty shapes and 🎒 has
+never been written in one before today — so there is nothing to unmark, and *"anywhere in the cell"*
+would read a cell that **mentions** a ride-along as being one. **A mark inside backticks is prose
+about the mark, not a mark**, the rule 📆 and `→ WO-x.y` already carry, and the reason this section
+can write the glyph while explaining it.
+
+**`--audit` reports a marked row that has become the first `⬜` in its section — as a NOTE, never as
+a problem.** That state is precisely what this mark was written out of: the shelf above WO-8.13
+emptied on 2026-08-28, `next` began answering with the one row that spends a paragraph asking not to
+be answered with, and nothing said so. But an empty shelf is not two documents disagreeing. It has
+**three** correct answers — re-place the row, start it, or take the mark off — and which is right is
+a call about somebody's week, so the audit names it and stops. A tracker that goes red until a human
+makes a judgment call teaches its reader to clear it without making one.
+
+**Do not mark a row whose `Suggested` column merely says "After row 21."** That is a sequence and
+`Depends on` already carries it. Only a row whose argument is *fold this into a sitting that has X
+open* earns the mark. The two live cases on the day this was written are
+[WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) —
+row 10, an hour of `index.html` — and [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day),
+row 18, which rides with anything. Read every other candidate against that sentence rather than
+against the word "after".
+
+**The `Suggested` column keeps its sentence, and nothing parses it.** The mark is the parseable half
+of something the column has been writing in prose for a week; a parser over the column itself was
+this work order's **Out of scope**, because thirty rows of argument in thirty shapes is the second
+truth the `--audit` rules exist to prevent. **The glyph is the owner's to change; the behaviour is
+not.**
+
+*(**Why a mark and not a fifth reading of `Depends on`.** § Ship 3's preamble keeps a count of real
+ordering constraints found somewhere other than the header fields, and this is the fifth — but it is
+**the first that is not a dependency**. Nothing blocks WO-8.13 and it blocks nothing, so no amount
+of work on that field would ever have caught it. The mitigation had been the row's **position** at
+the foot of a table, and position is not stable: it is undone by the rows above it succeeding.)*
+
+---
+
 ## Citing code
 
 **Cite a symbol, not a line number.** `src/classes.js`'s `dateField()`, `.term-date` in
@@ -284,7 +354,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 35 | 30 | — | 🔨 IN PROGRESS (reopened fourteen times; last on 2026-08-28) |
+| 1 — Shell, store, roster | 35 | 31 | — | 🔨 IN PROGRESS (reopened fourteen times; last on 2026-08-28) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -293,7 +363,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **147** | **121** | **2** | `[████████░░] 82%` |
+| | **147** | **122** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1612,7 +1682,7 @@ it, never from a reading taken earlier in the same session.)*
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — **all seven boxes**, including the 👤. *(This cell read "six of seven boxes; line 1 waits on the push and the deploy" until 2026-08-28. It was stale on the day it was written: line 1 was ticked in the same sitting, against `verify-deploy.mjs` at `16 checks · 16 passed · 0 failed` on the live origin. **A row that says a work order is waiting invites somebody to go and pay a debt that does not exist** — it cost exactly that here, one session later.)* |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Gate-clear and not startable — behind row 20.** All four declared dependencies ✅ since 2026-08-24, and its second deliverable is a demo video **showing the scope in use** while nothing in the app uses it: WO-7.2 is unbuilt, so `files.create` greps to zero and the Drive panel reads "Nothing is uploaded yet." *(Read "**Startable now**" until 2026-08-28 — see the note below the table.)* |
-| 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
+| 10 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | 🎒 `index.html` — **Nothing blocks it.** An hour, whenever `index.html` is open for something else |
 | 11 | [WO-1.26](phase-1-shell-store-roster.md#wo-126--verify-shellmjs-is-32000-lines-and-most-runs-never-see-it-green) verify-shell.mjs is 32,000 lines | L | — | ✅ **2026-08-25** — booked and built inside one day. `verify-shell.mjs` 32,218 → **738 lines**, the checks in `tools/verify/` one file per surface, check count and exit code unchanged |
 | 12 | [WO-1.27](phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule) A field name in prose is read as a field | M | — | **Whenever the tracker is quiet.** Nothing depends on it and the tree is clean today — it is the plant that stops the next italic note doing it again |
 | 13 | [WO-1.28](phase-1-shell-store-roster.md#wo-128--a-dependency-waiting-on-the-calendar-blocks-work-that-is-ready-to-build) A calendar-bound dependency blocks buildable work | M | — | **Ahead of WO-4.5, which it unblocks.** The only row here on anything's critical path: it pulls WO-4.5's own real-data box from ~Sep 23 to ~Sep 16, and what it actually buys is **capacity rather than schedule** — an M of signal work moves off a teaching-week weekend into the last days of full capacity. *(Corrected 2026-08-27: this row read "and takes ten days off WO-G3" and that does not hold — see the note under § Ship 3's table.)* |
@@ -1620,7 +1690,7 @@ it, never from a reading taken earlier in the same session.)*
 | 15 | [WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate) A Depends on that names no work order clears its own gate | M | — | **Whenever the tracker is quiet, and it is the third of the four tracker rows** — 12, 14, 15, 16. Its live instance is row 32, left standing on purpose so the fix has something real to fail against. **Read its table before writing a line:** the obvious fix refuses thirty work orders that are correct today, fourteen of which use `—` to mean "no dependencies" |
 | 16 | [WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on) A 🔒 GATED work order that never says what it is gated on | S | — | **Pairs with row 15 — same file, same neighbourhood, one sitting.** A plant rather than a repair: all four gated work orders name their gate today, and the one that did not — WO-7.2 — cost seventeen days and was found by a human reading an unrelated runbook |
 | 17 | [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) **Merge-field resolver** | M | — | ✅ **2026-08-28** — booked and built the same day, all six Acceptance lines closed. *By construction* turned out to mean a **whitelist**: `src/merge-fields.js` holds the sixteen documented names and matches a token against them by exact string, with no path expression anywhere in it, so a support field added to the data model next year is refused on the day it is added. **Rows 21–23 are unblocked** |
-| 18 | [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day) A tapped day opens on that day | S | — | **Rides along with anything.** Depends only on WO-6.3 ✅; nothing else waits on it |
+| 18 | [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day) A tapped day opens on that day | S | — | 🎒 anything — **Rides along with anything.** Depends only on WO-6.3 ✅; nothing else waits on it |
 | 19 | [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why) The overdue tone is silent on the iPad | M | — | **When there is an iPad sitting anyway.** Carries [WO-2.31](phase-2-attendance.md#wo-231--the-overdue-alert)'s `**Owes**` from the 👤 run that failed 2026-08-16 — the only open pointer of the three `--audit` tracks |
 | 20 | [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) **Document transfer & conflicts** | L | — | **After Sep 2.** `⬜` since 2026-08-28, when a `🔒` that named no gate came off — see its own note. **Row 9 cannot be filmed until this exists**, and row 26 needs both. An L with six Acceptance lines, several wanting two real devices: it is the wrong shape for the five days before a class starts, and nothing dates it sooner — Phase 7 has no deadline and Google's queue does not start until row 9 is submitted either way |
 | 21 | [WO-5.2](phase-5-outreach.md#wo-52--templates) Templates | M | — | After row 17 |
@@ -1676,9 +1746,11 @@ iPad — and* **the contact line on a public policy is the owner's call**, *beca
 *rules that an address in a public file is a spam target. Both are written up as traps in the work
 order.*
 
-***The numbering continues § Ship 3's rather than restarting, and that is deliberate.*** `shipOneOrder()`
+***The numbering continues § Ship 3's rather than restarting, and that is deliberate.*** `runningOrder()`
 *reads document order and ignores the number entirely — `tools/wo-gate.mjs` says so at its own
-definition — so the digits are for a human. Restarting at 1 under a heading that is not a ship would
+definition — so the digits are for a human. (It was `shipOneOrder()` until WO-1.35, which renamed it
+where it stood: the name said "the Ship 1 table" and the function had read every table in this file
+since 2026-08-09.) Restarting at 1 under a heading that is not a ship would
 read as a fourth ship, which is the thing the paragraph above is at pains to deny.*
 
 ***Why these two sit after Ship 3 rather than inside it.*** *WO-7.1 is buildable today — the

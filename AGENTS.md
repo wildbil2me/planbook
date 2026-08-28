@@ -164,3 +164,13 @@ worker and no update check ever starts. And an app that comes back showing an ol
 warning has been resumed, not broken.
 **If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
 so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.
+
+**A `next` report can skip a row that nothing is wrong with.** Since WO-1.35 (2026-08-28) a row
+wearing 🎒 in the running order's `Suggested` column is a **ride-along**: `⬜ NOT STARTED`, fully
+buildable, and not work to schedule — an hour to fold into a sitting that already has that file open.
+`next` names it, says what it rides with, and prints the `--start` that takes it anyway. **It is not a
+status and not a claim**, so nothing is in flight and nothing needs `--release`; and it is **not an
+Acceptance-line mark**, so the two rules above about 👤 and 📆 have no bearing on it — it never touches
+a checkbox. **If you were handed one by ID, build it**: the mark deprioritises and refuses nothing,
+which is the whole line between it and 🔒. Defined in `plans/work-orders/README.md` § "Ride-along
+rows".

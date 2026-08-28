@@ -46,6 +46,15 @@
 // closes nothing: --tick treats a 📆 line exactly as it treats any other open box, and a GATE work
 // order refuses a 📆 dependency outright, because the gate is where the wait is actually paid.
 //
+// WO-1.35 added the second mark, and it is on a ROW rather than on a box or a header field: 🎒 in the
+// `Suggested` cell of a running-order row says *this is not work to schedule, it is work to fold into a
+// sitting that is already open*, and names what it rides with. It is defined at rideAlongOf(),
+// documented in plans/work-orders/README.md § "Ride-along rows", and it CHANGES ORDERING AND NOTHING
+// ELSE: `next` steps over the row and says so, --audit says when the shelf above one has emptied, and
+// nothing else in this file reads it. It closes no box, opens no gate, satisfies no dependency, and
+// holds no work order at 🔨 — naming the ID still produces a full gate report and still clears, which
+// is the line between *deprioritised* and *forbidden*, and 🔒 GATED already exists for the second one.
+//
 // --audit and --self-check (WO-2.15) write nothing anywhere. --audit reads the two trackers and
 // reports where they have drifted apart; --self-check copies plans/ to a temp directory, plants the
 // violations WO-2.14 and WO-2.15 proved by hand, and fails if any of them stops being caught. Since
@@ -468,14 +477,70 @@ function depsOf(wo) {
 // The running order in README.md. Rows look like:
 //   | 6 | [WO-1.6](phase-1-...#wo-16--classes--terms) Classes & terms | M | 🚩 | Aug 10–11 |
 //
-// Named for the Ship 1 table it was written against, and it has read EVERY numbered work-order row
-// in that file since the Ship 2 table was written on 2026-08-09 — document order, so Ship 1 first
-// and then Ship 2. Worth knowing before writing a check against it, because the name says otherwise.
-function shipOneOrder() {
+// **It was `shipOneOrder()` until WO-1.35**, named for the Ship 1 table it was written against, and it
+// had read EVERY numbered work-order row in the file since the Ship 2 table was written on 2026-08-09
+// — so the name said one thing and the function did another, and a check written against it by name
+// would have been written against the wrong assumption. WO-2.16's result file proposed this rename and
+// nothing took it; WO-1.35 needed a second field off each row and took it then, because a function
+// gaining a return shape is the one moment a rename costs nothing extra. The two live citations of the
+// old name — the plant comment at step 2b below, and README.md § After Ship 3 on why the numbering
+// continues — were changed in the same sitting.
+//
+// ------------------------------------------------- 🎒, the ride-along mark (WO-1.35)
+//
+// **What it says.** Some rows in the running order are not work to schedule, they are work to fold
+// into a sitting that is already open — an hour of `index.html` while somebody is in `index.html`
+// anyway. README.md said that in the `Suggested` column and nowhere a tool could read, and the fence
+// on WO-8.13 was its POSITION at the foot of a table. Position is not stable: rows 7, 8 and 9 cleared,
+// WO-8.13 became the first ⬜ in document order, and `next` began answering with the one row that
+// spends a paragraph asking not to be answered with — silently, because prose is not parsed.
+//
+// **It is not a dependency and it is not a status**, which is why it is neither a header field nor a
+// status word. Nothing blocks WO-8.13 and it blocks nothing, so no reading of **Depends on** would
+// ever have caught this; and the row is ⬜ NOT STARTED and fully buildable, so a status that refused
+// it would be 🔒 GATED under a new name. It changes ordering and nothing else.
+//
+// **THE POSITION RULE IS REAL HERE, WHERE 📆 REFUSED ONE, AND THE DIFFERENCE IS THE SUBJECT.** 📆 sits
+// on an Acceptance line, and 👤 had been written at both ends of forty-two of those before anyone
+// wrote a rule — so a position rule invented then would have silently unmarked half of them. A
+// `Suggested` cell is free prose in thirty shapes, and 🎒 has never been written in one before this
+// work order, so there is nothing to unmark and everything to gain: "anywhere in the cell" would read
+// a cell that MENTIONS a ride-along as being one. The mark opens the cell, or it is not the mark.
+//
+// **A mark inside backticks is prose about the mark, not a mark** — REHOME_MARKER's rule and 📆's,
+// inherited whole rather than re-argued, and here it has a live payer for once: README.md § "Ride-along
+// rows" writes `🎒` in a code span while describing it, and that section sits in the same file these
+// rows do. Strip the code spans and ask whether what is LEFT opens with the glyph.
+//
+// **What it rides with is read out of the cell and nothing else is.** Everything from the glyph to the
+// first em dash, backticks and bold stripped: a file, or a work order, or `anything`. The sentence
+// after the dash stays the column's, unparsed — a parser over the `Suggested` column is this work
+// order's own Out of scope, and it would be the second truth the --audit rules exist to prevent.
+const RIDE_ALONG_MARK = '🎒';
+
+function rideAlongOf(cell) {
+  if (!cell.replace(CODE_SPAN, '').trimStart().startsWith(RIDE_ALONG_MARK)) return null;
+  const m = new RegExp(`^\\s*${RIDE_ALONG_MARK}\\s*(.*?)\\s*(?:—|$)`).exec(cell);
+  return { rides: (m ? m[1] : '').replace(/[`*]/g, '').trim() };
+}
+
+// Every numbered work-order row in README.md, in document order, with the § heading it sits under and
+// whatever its `Suggested` cell marks. The heading is carried because --audit's question is "first ⬜
+// in its SECTION" — § Ship 3 and § After Ship 3 are different shelves, and a ride-along at the head of
+// one is not excused by an open row in the other.
+//
+// The trailing `|` is stripped before the split so the last cell is the last cell: `a|b|`.split('|')
+// ends in an empty string, and reading the mark out of that finds nothing on every row forever.
+function runningOrder() {
   const rows = [];
+  let section = '(above the first heading)';
   for (const line of read(README).split('\n')) {
-    const m = /^\|\s*\d+\s*\|\s*\[(WO-[\dG][\w.]*)\]/.exec(line);
-    if (m) rows.push(m[1]);
+    const h = /^##\s+(.+?)\s*$/.exec(line);
+    if (h) { section = h[1]; continue; }
+    const m = /^\|\s*(\d+)\s*\|\s*\[(WO-[\dG][\w.]*)\]/.exec(line);
+    if (!m) continue;
+    const cells = line.replace(/\|\s*$/, '').split('|');
+    rows.push({ id: m[2], num: m[1], section, rideAlong: rideAlongOf(cells[cells.length - 1] || '') });
   }
   return rows;
 }
@@ -755,25 +820,40 @@ function gate(id, wos) {
 // because they want two different things done about them. A 🤖 claim has a way back — `--release`.
 // A 🔨 does not and must not: it is part-built work, `--release` refuses it by design, and the way
 // back is to finish it. One line for both was exactly the confusion the split removed.
-function reportSkips(claimed, quiet) {
+//
+// WO-1.35 added a third reason and a third sentence, on the same argument: 🎒 is neither of the other
+// two — the row is ⬜ NOT STARTED and nothing is in flight — so a shared line would say the one thing
+// about it that is false. What it wants done is a fourth thing again: not released, not finished, but
+// FOLDED IN, and the way to do that is to name the ID, which is the one command the mark never
+// refuses. Every skip line here ends with what to do about it, and this one is no exception.
+function reportSkips(skipped, quiet) {
   const say = quiet ? console.error : console.log;
-  for (const wo of claimed) {
+  for (const { wo, rideAlong } of skipped) {
     say(`skipped ${wo.id} — ${wo.title}`);
+    if (rideAlong) {
+      const rides = rideAlong.rides || '(nothing named — write what it rides with after the 🎒)';
+      say(`  ${RIDE_ALONG_MARK} rides along with ${rides}: ⬜ NOT STARTED and fully buildable, but not work to schedule — fold it into a sitting that already has that open. Nothing here refuses it: node tools/wo-gate.mjs --start ${wo.id}`);
+      continue;
+    }
     say(wo.status.startsWith('🤖 CLAIMED')
       ? `  ${wo.status}: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`
       : `  🔨 IN PROGRESS: part-built work, not a claim — nothing is in flight and --release refuses this status. Pick it up where it stopped, or finish and --tick it`);
   }
-  if (claimed.length && !quiet) console.log('');
+  if (skipped.length && !quiet) console.log('');
 }
 
 function next(wos, quiet) {
-  const claimed = [];
-  for (const id of shipOneOrder()) {
-    const wo = wos.get(id);
+  const skipped = [];
+  for (const row of runningOrder()) {
+    const wo = wos.get(row.id);
     if (!wo) continue;
-    if (wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED')) { claimed.push(wo); continue; }
+    if (wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED')) { skipped.push({ wo }); continue; }
     if (wo.status.startsWith('⬜ NOT STARTED')) {
-      reportSkips(claimed, quiet);
+      // The mark is read only here, and only on a row this loop would otherwise have RETURNED. A 🎒 on
+      // a ✅ DONE row is spent prose and says nothing; a 🎒 on a 🔨 row is answered by the status,
+      // because "somebody stopped halfway through this" is the more urgent of the two facts.
+      if (row.rideAlong) { skipped.push({ wo, rideAlong: row.rideAlong }); continue; }
+      reportSkips(skipped, quiet);
       if (quiet) { console.log(wo.id); return 0; }
       console.log(`next: ${wo.id} — ${wo.title}`);
       console.log(`  size ${wo.size || '—'}${wo.flag ? '   🚩 go-live blocker' : ''}`);
@@ -782,7 +862,7 @@ function next(wos, quiet) {
       return gate(wo.id, wos);
     }
   }
-  reportSkips(claimed, quiet);
+  reportSkips(skipped, quiet);
   console.log('next: nothing ⬜ NOT STARTED left in the running order in work-orders/README.md');
   return 0;
 }
@@ -1261,6 +1341,42 @@ function fileRowProblems() {
   return { problems, ok };
 }
 
+// Every 🎒 row, and how much shelf is left above it (WO-1.35). A ride-along is a plan to fold an hour
+// of work into somebody else's sitting, and the plan runs out when the rows above it clear: the row is
+// then the first ⬜ in its section, `next` steps over it, and nothing is left for it to fold into.
+//
+// **THIS REPORTS AND DOES NOT FAIL, AND THAT IS A RULING RATHER THAN A SOFT TOUCH.** Every other thing
+// --audit prints BAD for is two documents disagreeing — a fragment matching no box, a pointer landing
+// on a ticked one, a dashboard that does not add up — and each has exactly one correct repair, which is
+// why a script can insist on it. An empty shelf is not a disagreement. It is a scheduling fact with
+// THREE correct answers — re-place the row, start it, or take the mark off — and which one is right is
+// the owner's call about her own week. A red tracker that a human can only clear by making a judgment
+// call teaches its reader to clear it without making one, which is the failure "a control that goes red
+// for a reason the reader learns to dismiss is worse than no control" (WO-1.12) already names.
+//
+// Two consequences worth knowing before this is "tightened" to a BAD. --self-check copies the real
+// plans/ into its sandbox, so a live NOTE here would be a live FAIL there, and two plants that assert
+// `--audit` exits 0 on a healthy fixture would go red for something no fixture did. And the mark's own
+// bite is in `next`, which steps over the row whether or not anybody has read this section.
+function rideAlongReport(wos) {
+  const rows = runningOrder();
+  const openAbove = new Map();                       // section → ⬜ rows seen so far in it
+  const lines = [], notes = [];
+  for (const row of rows) {
+    const wo = wos.get(row.id);
+    const open = !!wo && wo.status.startsWith('⬜ NOT STARTED');
+    const above = openAbove.get(row.section) || 0;
+    if (open) openAbove.set(row.section, above + 1);
+    if (!row.rideAlong) continue;
+    const rides = row.rideAlong.rides || '(nothing named)';
+    if (!wo) { lines.push(`  —    ${row.id.padEnd(8)} a ${RIDE_ALONG_MARK} row naming a work order this directory does not hold`); continue; }
+    if (!open) { lines.push(`  ok   ${row.id.padEnd(8)} ${wo.status.trim()} — the mark is spent; it rode with ${rides}`); continue; }
+    if (above) { lines.push(`  ok   ${row.id.padEnd(8)} rides with ${rides}   ${above} open row(s) above it in § ${clip(row.section, 50)}`); continue; }
+    notes.push(`${row.id.padEnd(8)} the shelf above it has emptied. It is the first ⬜ in § ${clip(row.section, 50)} (row ${row.num}) and it rides with ${rides}, so \`next\` steps over it and there is nothing left to fold it into. Re-place it, start it by name, or take the ${RIDE_ALONG_MARK} off — which of the three is a human's call, so this is a NOTE and never a problem`);
+  }
+  return { lines, notes };
+}
+
 // One Acceptance line, short enough to read in a list of them. The file:line beside it is how you
 // get to the whole thing, and WO-2.1's second item is 900 characters of blockquote.
 function clip(s, n = 100) {
@@ -1603,6 +1719,19 @@ function audit(wos) {
   for (const l of fr.ok) console.log(`  ok   ${l}`);
   for (const p of fr.problems) console.log(`  BAD  ${p}`);
 
+  // WO-1.35. The one section here that can only ever print `ok` and `NOTE` — see rideAlongReport()
+  // for why an empty shelf is reported rather than refused, and why tightening it would redden two
+  // plants in --self-check that no fixture broke.
+  console.log('');
+  console.log(`${RIDE_ALONG_MARK} ride-along rows in the running order, against the shelf above each one`);
+  console.log('');
+  const ride = rideAlongReport(wos);
+  for (const l of ride.lines) console.log(l);
+  for (const n of ride.notes) console.log(`  NOTE ${n}`);
+  if (!ride.lines.length && !ride.notes.length) console.log(`  —    no row in the running order wears ${RIDE_ALONG_MARK}`);
+  console.log('');
+  console.log(`  ${ride.lines.length + ride.notes.length} ride-along row(s), ${ride.notes.length} with nothing open above them — reported, never a problem`);
+
   console.log('');
   console.log('ROADMAP.md progress dashboard, against the boxes under each `## Phase N`');
   console.log('');
@@ -1624,7 +1753,7 @@ function audit(wos) {
   console.log('');
   console.log(problems
     ? `FAIL | ${problems} problem(s) across the two trackers. Nothing was written; all of it is a hand edit.`
-    : 'PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, and every dashboard row matches its own boxes.');
+    : `PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, and every dashboard row matches its own boxes.${ride.notes.length ? `\n     | ${ride.notes.length} ${RIDE_ALONG_MARK} row(s) above have run out of shelf. That is a NOTE and not one of the problems counted here — read the section and decide.` : ''}`);
   return problems ? 1 : 0;
 }
 
@@ -2077,7 +2206,7 @@ function runPlants(subject, sandbox) {
   //     From the top, the fixture is the first row `next` reads whatever the live tables contain:
   //     claimed, it is the skip that gets named; unclaimed, it is what `next` offers. Neither
   //     assertion depends on a real row's status any more. The number in the cell is decoration —
-  //     `shipOneOrder()` reads document order, not the number — and 0 says so.
+  //     `runningOrder()` reads document order, not the number — and 0 says so.
   {
     const p = path.join('work-orders', 'README.md');
     const lines = readSb(p).split('\n');
@@ -2175,6 +2304,31 @@ function runPlants(subject, sandbox) {
     drop(overall.line, /\*\*(\d+)\s*\/\s*(\d+)/);
     plantWrite('ROADMAP.md', lines.join('\n'));
   };
+
+  // The `Suggested` cell of a fixture's running-order row, rewritten whole (WO-1.35). Step 2b puts
+  // both fixture rows ABOVE every real one, so WO-9.9 is the first ⬜ in the first table and WO-9.8 is
+  // the row below it — which is exactly the pair a 🎒 plant needs: one row with an empty shelf above it
+  // and one with a shelf. The write is unconditional and asserted to have moved the line, on WO-1.21's
+  // scar: a plant that quietly plants nothing accuses the wrong file.
+  const markFixtureRow = (cell, id = FIXTURE_ID) => {
+    const p = path.join('work-orders', 'README.md');
+    const lines = readSb(p).split('\n');
+    const rowRe = new RegExp(`^\\|\\s*\\d+\\s*\\|\\s*\\[${id.replace(/\./g, '\\.')}\\]`);
+    const i = lines.findIndex(l => rowRe.test(l));
+    if (i < 0) throw new Error(`--self-check found no running-order row for ${id}`);
+    const cells = lines[i].replace(/\|\s*$/, '').split('|');
+    const was = lines[i];
+    cells[cells.length - 1] = ` ${cell} `;
+    lines[i] = `${cells.join('|')}|`;
+    if (lines[i] === was) throw new Error(`the 🎒 row plant rewrote ${id}'s Suggested cell with what was already in it`);
+    plantWrite(p, lines.join('\n'));
+  };
+
+  // The 🎒 section of an --audit run, cut out of the whole. Every assertion below is about a FIXTURE
+  // id inside this slice: the sandbox is a copy of the real plans/, so the real running order's own
+  // ride-along rows are in this output too, and a plant that counted lines would be asserting against
+  // whatever the trackers happen to carry that week.
+  const rideSection = out => (out.split(`${RIDE_ALONG_MARK} ride-along rows`)[1] || '').split('ROADMAP.md progress dashboard')[0];
 
   const OK = '⬜ NOT STARTED', RUN = '🔨 IN PROGRESS', CLAIM = '🤖 CLAIMED';
   const STRUCK_AT = `${STRUCK} — 2026-01-01`, DEFERRED_AT = `${DEFERRED} — 2026-01-01`;
@@ -2818,6 +2972,134 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+
+    // ------------------------------------------------------------ 🎒, WO-1.35
+    //
+    // Three plants, one per thing the mark does and one for the thing it must not do. They are the
+    // first plants here to read the running order's `Suggested` column at all, and the first to write
+    // into a README.md row rather than into a work order — see markFixtureRow() above.
+    {
+      name: '`next` steps over a 🎒 ride-along row, names what it rides with, and offers the row below it',
+      run: () => {
+        const bad = [];
+
+        // 1. The baseline every assertion below is a difference from: unmarked, the fixture is the
+        //    first row in the copy and `next` offers it.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const plain = run(['next']);
+        if (!new RegExp(`next: ${FIXTURE_ID}`).test(plain.out)) bad.push('`next` did not offer the unmarked fixture row — the rest of this plant is measuring nothing');
+
+        // 2. Marked. A row that vanishes from the report is a row nobody remembers, which is the
+        //    defect this work order was written about, inverted — so the skip is named, it says what
+        //    it rides with, and it carries the command that starts it anyway.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — the column keeps its own sentence`);
+        const marked = run(['next']);
+        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(marked.out)) bad.push('`next` stepped over a 🎒 row without naming it');
+        if (!/rides along with a file that is open anyway/.test(marked.out)) bad.push('`next` skipped a 🎒 row without saying what it rides with');
+        if (!new RegExp(`--start ${FIXTURE_ID}`).test(marked.out)) bad.push('`next` skipped a 🎒 row without the way to start it anyway — the mark deprioritises, it does not forbid');
+        if (new RegExp(`next: ${FIXTURE_ID}`).test(marked.out)) bad.push('`next` offered the 🎒 row it had just skipped');
+        if (!new RegExp(`next: ${TARGET_ID}`).test(marked.out)) bad.push(`\`next\` did not reach ${TARGET_ID} behind the 🎒 row`);
+
+        // 3. The backtick fence, and this is the one plant in the file that has a live payer for it:
+        //    README.md § "Ride-along rows" writes the glyph in a code span while explaining it, in the
+        //    same file these rows live in.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`\`${RIDE_ALONG_MARK}\` is the mark this row explains and does not wear`);
+        const quoted = run(['next']);
+        if (!new RegExp(`next: ${FIXTURE_ID}`).test(quoted.out)) bad.push('a 🎒 inside backticks was read as a mark — that is prose about the mark, not a mark');
+
+        // 4. The status wins on a row that has both. "Somebody stopped halfway through this" is the
+        //    more urgent of the two facts, and a 🎒 sentence in its place loses it.
+        reset({ status: RUN, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} anything`);
+        const part = run(['next']);
+        if (!/part-built/.test(part.out)) bad.push('a 🎒 row at 🔨 IN PROGRESS lost the status sentence to the mark');
+        if (/rides along with anything/.test(part.out)) bad.push('a 🔨 row was reported as a ride-along — the mark is read only on a row `next` would otherwise have returned');
+        return bad;
+      },
+    },
+    {
+      name: '🎒 changes ordering and nothing else — the ID still gates clear, --start and --tick are untouched, and it satisfies no dependency',
+      run: () => {
+        const bad = [];
+        // A mark that refuses by ID is 🔒 GATED under a new name, and 🔒 already exists for the thing
+        // it means. This is the line between *deprioritised* and *forbidden*.
+        //
+        // The two reports are compared whole rather than probed for a PASS, because "exactly as it
+        // does today" is the claim — minus the `git` block, which is the one part of a gate report
+        // that moves when a file under it is written, and writing a file is what this plant does.
+        const withoutGit = out => {
+          const lines = out.split('\n');
+          const at = lines.findIndex(l => /^\s+git\s/.test(l));
+          if (at < 0) { bad.push('the gate report carries no `git` line — this plant cuts the moving half there and has just cut nothing'); return out; }
+          return [...lines.slice(0, at), ...lines.filter(l => /^(PASS|FAIL|NOTE)\s\|/.test(l))].join('\n');
+        };
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const before = run([FIXTURE_ID]);
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — deprioritised, never forbidden`);
+        const after = run([FIXTURE_ID]);
+        if (after.code !== 0) bad.push(`the gate on a 🎒 row exited ${after.code}:`, ...verdict(after.out));
+        if (!new RegExp(`PASS \\| gates clear for ${FIXTURE_ID}`).test(after.out)) bad.push('the gate report on a 🎒 row did not clear');
+        if (withoutGit(before.out) !== withoutGit(after.out)) bad.push('the gate report changed when the row gained a 🎒 — naming the ID must produce exactly the report it produced before');
+
+        // It satisfies no dependency: WO-9.8 waits on WO-9.9, and a mark on WO-9.9's row is not
+        // WO-9.9 being done.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} anything`);
+        const dep = run([TARGET_ID]);
+        if (dep.code === 0) bad.push(`${TARGET_ID}'s gate opened on a 🎒 dependency — the mark satisfies no dependency`);
+
+        // It holds no work order at 🔨: a claim and a tick both go through, and the tick reaches ✅.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} anything`);
+        const started = run(['--start', FIXTURE_ID]);
+        if (started.code !== 0) bad.push(`--start refused a 🎒 row (exit ${started.code}):`, ...verdict(started.out));
+        if (!fixtureStatus().startsWith(CLAIM)) bad.push(`--start on a 🎒 row left the status at "${fixtureStatus()}"`);
+
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} anything`);
+        const ticked = run(['--tick', FIXTURE_ID]);
+        if (ticked.code !== 0) bad.push(`--tick refused a 🎒 row (exit ${ticked.code}):`, ...verdict(ticked.out));
+        if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`--tick on a 🎒 row left the status at "${fixtureStatus()}" — the mark closes no box and opens no gate, and it holds none shut either`);
+        if (!/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('the roadmap box of a fully ticked 🎒 row was left unticked');
+        return bad;
+      },
+    },
+    {
+      name: '--audit says when the shelf above a 🎒 row has emptied, reports it as a NOTE rather than a problem, and writes nothing',
+      run: () => {
+        const bad = [];
+
+        // 1. The state this work order was written out of: the rows meant to sit above the ride-along
+        //    have cleared, so it is the first ⬜ in its section and there is nothing left to fold it
+        //    into. Every Ship 1 row in the copy is ✅ DONE and the fixture sits above all of them.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — nothing open above this one`);
+        const before = snapshot();
+        let r = run(['--audit']);
+        let section = rideSection(r.out);
+        if (!new RegExp(`NOTE ${FIXTURE_ID}\\s`).test(section)) bad.push('--audit did not report the 🎒 row that had become the first ⬜ in its section');
+        if (!/shelf above it has emptied/.test(section)) bad.push('--audit reported the row without saying what about it needs a decision');
+        if (r.code !== 0) bad.push('--audit failed over an empty shelf — re-place, start, or unmark are all correct answers and a script may not pick one');
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
+
+        // 2. The half that stops this being a check that fires on the word 🎒: the SAME mark one row
+        //    lower, with an open row above it, is an `ok` and not a NOTE.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — one open row above this one`, TARGET_ID);
+        section = rideSection(run(['--audit']).out);
+        if (new RegExp(`NOTE\\s+${TARGET_ID}`).test(section)) bad.push(`--audit called ${TARGET_ID}'s shelf empty with ${FIXTURE_ID} still ⬜ above it`);
+        if (!new RegExp(`ok\\s+${TARGET_ID}\\s+rides with`).test(section)) bad.push(`--audit did not report ${TARGET_ID} as a ride-along with room above it`);
+
+        // 3. And an unmarked row is not a ride-along, however empty the shelf above it.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        section = rideSection(run(['--audit']).out);
+        if (new RegExp(`(ok|NOTE)\\s+${FIXTURE_ID}\\s`).test(section)) bad.push('--audit reported an unmarked row as a ride-along');
+        return bad;
+      },
+    },
   ];
 
   // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
@@ -2855,6 +3137,14 @@ function runPlants(subject, sandbox) {
   console.log('  marked, with 🚫/⏳ keeping WO-1.21\'s "will never be ✅ DONE" wording; a two-hop defer');
   console.log('  names both hops and which one the far one was reached through; and a 🔨 dependency');
   console.log('  with NO open line is refused rather than deferred over an empty list.');
+  console.log('  And WO-1.35\'s THREE, the first here to read a running-order row\'s `Suggested` cell and');
+  console.log('  the first to write into a README.md table row: `next` steps over a 🎒 ride-along row,');
+  console.log('  names what it rides with and offers the row below it, while the same glyph inside');
+  console.log('  backticks is prose and a 🔨 row keeps its status sentence; the mark changes ordering and');
+  console.log('  NOTHING else — the ID gates clear with a report identical to the unmarked one, --start');
+  console.log('  and --tick go through to ✅ DONE, and a dependent\'s gate still refuses it; and --audit');
+  console.log('  reports the row whose shelf has emptied as a NOTE rather than a problem, says nothing');
+  console.log('  about the same mark one row lower, and writes nothing either way.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
@@ -2920,6 +3210,15 @@ naming what it is waiting for, and stops gating its dependents. It closes nothin
 work order at 🔨 over a 📆 line exactly as over any other, one unmarked open box blocks again, and a
 GATE work order refuses a 📆 dependency by design — WO-G3 is what checks the lines the mark defers.
 See plans/work-orders/README.md § "Acceptance-line marks".
+
+One mark on a running-order ROW changes what "next" answers (WO-1.35). 🎒 opening a row's Suggested
+cell says the row is a ride-along — not work to schedule, but an hour to fold into a sitting that is
+already open — and names what it rides with. "next" steps over it and says so, with what it rides
+with and the command that starts it anyway; --audit says when the shelf above one has emptied and
+the fold-it-in plan has run out of hosts, as a NOTE, because re-place / start / unmark is a human's
+call. It changes ordering and nothing else: naming the ID gives the same full gate report it always
+did, and the mark closes no box, opens no gate and satisfies no dependency.
+See plans/work-orders/README.md § "Ride-along rows".
 
 Two statuses this NEVER writes (WO-1.21), because both are the owner's decision and a hand edit:
 🚫 STRUCK — <date, reason> is a *whether*: do not build it, and the roadmap box it closes stops
