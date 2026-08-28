@@ -3321,3 +3321,86 @@ writes, and the column keeps the sentence.
 - [x] `--self-check` is green with a plant behind each new check, and the count in its own report
       goes up by that many.
 - [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.36 — two fixtures in one table cannot prove a per-section shelf
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.35 ✅ · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.35 made.
+Booked 2026-08-28 by WO-1.35's own verifier, which **proved** this rather than suspecting it.)*
+
+**Why it exists.** `rideAlongReport()` counts the open rows above a 🎒 row **per section** —
+`openAbove` is a `Map` keyed by `row.section` — and the comment above it says in as many words that
+*§ Ship 3 and § After Ship 3 are different shelves*. **Nothing proves that.** WO-1.35's 🎒 plants
+write both fixture rows into the **same** table: step 2b splices `WO-9.9` and `WO-9.8` in adjacent,
+above every real row in the first section, and the pair that separates *empty shelf* from *shelf* —
+`NOTE` on one, `ok` on the other — is therefore two adjacent rows of one section. **Collapse
+`openAbove` to a single global counter and `--self-check` still reports 27 of 27.** WO-1.35's
+verifier established that by mutation, not by reading.
+
+**The tree cannot tell the two apart either, and that is the half that makes this a work order rather
+than a plant.** WO-8.13 is row 10 of § After Ship 3 and it is the first `⬜` **both** in that section
+and in the whole document — everything above it is ✅, 🔒 or 🔨. So the NOTE `--audit` prints today is
+the same NOTE under either keying, and stays that way until a `⬜` row sits above a 🎒 row **from an
+earlier section**. There is no live symptom to work from, which is exactly the condition under which
+a claim nobody can check goes on being believed.
+
+**It is WO-1.33's defect in a second instrument.** There the fixture student was *narrow, not
+vacuous* and the harness could not see the filter it claimed to watch; here the fixture rows are
+*adjacent, not absent*, and the harness cannot see the keying it claims to watch. Both are an
+instrument whose fixtures agree with each other, which is the shape to go looking for next.
+
+**Rule the keying before proving it, because the two readings disagree about a sentence that is
+already printed.** They are:
+
+- **Per-section, what the code does today.** A section is its own running order — a ride-along parked
+  in § After Ship 3 is a plan to fold an hour into an *After Ship 3* sitting, and Ship 3's rows are a
+  different body of work. The NOTE names the section it measured, so it is section-local by
+  construction.
+- **Global, what `next` does.** `next` walks document order and stops at the first `⬜` **anywhere**,
+  ignoring headings entirely; the mark's whole bite lives there. Under this reading a 🎒 row's shelf
+  is every `⬜` above it in the file.
+
+**The NOTE's own words are the evidence, and they cut toward global**: *"there is nothing left to
+fold it into"* is a claim about work that will actually be done, and under per-section keying it can
+be printed while five open rows sit above it in an earlier section — each of them a sitting that
+could host the fold. WO-8.13 rides with `index.html`, and a Ship 3 row that opens `index.html` hosts
+it exactly as well as an After-Ship-3 one. **That is an argument and not the ruling.** Whichever
+reading wins, the loser is named where the code makes the choice, and the sentence that survives is
+one a plant pays for.
+
+**Out of scope.** What `next` does. It reads document order and ignores headings, and nothing here
+touches that — this work order is about `--audit`'s NOTE and the count behind it. Also out of scope:
+tightening the NOTE to a `BAD`. `rideAlongReport()` argues that at its own definition and two plants
+assert `--audit` exits 0 over it.
+
+**Traps**
+
+- **A plant may not borrow a real section.** The sandbox copies the real `plans/`, so a later
+  section's `⬜` content is whatever the trackers happen to carry that week — the scar `rideSection()`
+  already names, one step further in. A plant that needs a second shelf **plants its own heading and
+  its own rows** rather than reaching into § Ship 2.
+- **Step 2b's guarantee has to survive.** Four existing plants depend on the fixture being the first
+  row `next` reads. `reset()` rewrites every pristine file, so a relocation inside one plant is undone
+  before the next — but a plant that inherits a previous plant's placement instead of doing its own
+  breaks all four for a reason that is not a defect.
+- **The new plant must fail under the losing keying, and be shown to.** A plant that passes under both
+  is the defect this work order was written about, arriving in the fix for it. The mutation goes in
+  `tools/README.md`'s table with the rest.
+- **`--audit` must stay green on the real tree.** Both keyings agree there today; if the ruling
+  changes what WO-8.13 reports, that is a finding to hand back, not a number to adjust.
+
+**Acceptance**
+- [ ] The keying is **ruled on in prose where the code makes the choice** — at `rideAlongReport()` —
+      naming the reading that lost and why, so the surviving sentence is one a reader can check.
+- [ ] A plant puts a 🎒 row in a **later section than an open `⬜` row**, on a shelf it planted
+      itself, and asserts the ruled behaviour.
+- [ ] That plant goes **red** under the other keying — collapsing `openAbove` to one global bucket if
+      per-section won, restoring the per-section `Map` if global won — recorded in `tools/README.md`'s
+      mutation table with the rest.
+- [ ] No comment in `tools/wo-gate.mjs` claims a distinction no plant pays for; the
+      *"different shelves"* sentence either has a plant behind it or is gone.
+- [ ] `--self-check` is green and its own count goes up by the number of checks added.
+- [ ] `node tools/wo-sweep.mjs` is green, and `--audit` is green on a clean tree with WO-8.13's NOTE
+      reading as it does today.

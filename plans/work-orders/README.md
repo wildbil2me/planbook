@@ -326,7 +326,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.35 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.36 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -354,7 +354,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 35 | 31 | — | 🔨 IN PROGRESS (reopened fourteen times; last on 2026-08-28) |
+| 1 — Shell, store, roster | 36 | 31 | — | 🔨 IN PROGRESS (reopened fifteen times; last on 2026-08-28) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -363,7 +363,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **147** | **122** | **2** | `[████████░░] 83%` |
+| | **148** | **122** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1709,6 +1709,7 @@ it, never from a reading taken earlier in the same session.)*
 | 34 | [WO-1.33](phase-1-shell-store-roster.md#wo-133--the-second-fixture-student-fires-no-rules) The second fixture student fires no rules | S | — | ✅ **2026-08-28** — all five boxes, no 👤 and no 📆, built the same day it was booked. Three checks inside the existing § *the merge-field resolver (WO-5.1)*: the second student gains sentences of his own, the first student's sixteen-field draft is byte-identical either side of that, and neither his sentences nor his surname reaches it — searched over the whole resolved draft, not just `{{signals.list}}`. Cutting the `studentId` filter turns **four** red. **This row's own title is wrong and it keeps it:** he fired two praise rules all along (`no-missing`, `attendance-window`), so the instrument was never vacuous — it could not *name* what it proved, which is what the three new checks do |
 | 35 | [WO-1.34](phase-1-shell-store-roster.md#wo-134--claim-5-reads-member-position-and-three-spellings-walk-around-it) Claim 5 reads member position | S | — | ✅ **2026-08-28** — all six boxes, no 👤 and no 📆, booked and built the same day, and **closed one correction round later by its own verifier**. § 20 claim 5 now reads the stripped source *whole*: the member class gained `?.`, `}` and any run of whitespace including newlines, the key may straddle a newline of its own, a fourth family catches a computed key, and a match offset is mapped back to a line so the fault still cites `src/merge-fields.js:<line>`. **Five spellings closed, not the three it was booked for** — the verifier planted `root[` ⏎ `name]` and `{ ...root }[name]` against the first fix and both passed green, because the gap in *front* of the bracket had been widened and the key class had not. **The lasting half is a sentence**: the header now enumerates the spellings the check covers and names one it cannot see (`Object.entries(root).find(([k]) => k === name)[1]`), because a universal with an exception hung off the end is the same claim with a footnote — which is exactly what the last two spellings walked through |
 | 36 | [WO-1.35](phase-1-shell-store-roster.md#wo-135--a-ride-along-row-rises-to-the-top-when-the-rows-above-it-clear) A ride-along row rises to the top | M | — | **Before the next time `next` is trusted without reading the row it names.** Row 10 argues at length that it is last on purpose and must not lead; **its only fence is its position in this table**, and on 2026-08-28 rows 7, 8 and 9 cleared and it led anyway — silently, with nothing in the report saying the row it named had spent a paragraph asking not to be. **A fifth ordering constraint found outside the header fields, and the first that is not a dependency**: nothing blocks WO-8.13 and it blocks nothing, so no reading of `Depends on` would ever have caught it. Gives the `Suggested` column's *"rides along"* a parseable half, and makes `--audit` say when the shelf above a ride-along has emptied |
+| 37 | [WO-1.36](phase-1-shell-store-roster.md#wo-136--two-fixtures-in-one-table-cannot-prove-a-per-section-shelf) Two fixtures in one table cannot prove a per-section shelf | S | — | 🎒 `tools/wo-gate.mjs` — **Rides along with the next sitting in the gate tool.** Booked by WO-1.35's verifier, which proved by mutation that collapsing `openAbove` to one global bucket leaves `--self-check` at 27 of 27: both 🎒 fixture rows sit adjacent in the **same** table, so the per-section keying the comment claims has no plant behind it. **No live symptom to work from** — WO-8.13 is the first `⬜` in its section *and* in the document, so both readings agree on today's tree. Rule the keying first; the two disagree about a sentence `--audit` already prints |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
