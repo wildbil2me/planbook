@@ -120,6 +120,7 @@ import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
+import { run as outreach } from './verify/outreach.mjs';
 import { run as cooldownQuiet } from './verify/cooldown-quiet.mjs';
 
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
@@ -306,6 +307,11 @@ const BROWSER_SECTIONS = [
      backup and a real restore of its own, which is the one thing the section below it also does.
      That one stays last for its own reason. */
   { file: 'verify/templates.mjs', run: templates },
+  /* AND THE SEND FLOW AFTER THE EDITOR THAT FEEDS IT (WO-5.3). It reads `templatesFor()` the way
+     that screen writes it, and it drives the signal card — so it wants both of them behind it. It
+     is not last for the reason the section below is: it restores nothing, and its own fixture is
+     put back by hand at the foot of it. */
+  { file: 'verify/outreach.mjs', run: outreach },
   /* LAST, AND ON PURPOSE (WO-4.5). It is the only section that drives a real restore of the whole
      year document through backup.restoreFromText() and the confirm button — its acceptance line
      asks for exactly that — and a section that replaces the document is a section nothing should

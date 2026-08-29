@@ -7713,6 +7713,20 @@ element a screenshot or an accessibility tree can reach.
       identical byte for byte. Then through the REAL restore: `restoreFromText()` and the confirm
       button a teacher taps, after which both records are still in the document, still offered
       separately by tone, and drawn on the list.)*
+- [x] **There is a way out of this screen.** *(Added 2026-08-29 — a fifth line on a work order that
+      was already ✅, because the owner opened the editor on hardware and could not leave it:*
+      "There's no way out of the message template screen." *This view is the only full screen in the
+      app that is not a `CLASS_SCREENS` entry, so the header's class strip did not draw over it and
+      the caption branch put a dead* `<span>Your classes</span>` *— a control-shaped thing that
+      answers no tap — over a panel headed* Message templates*, leaving the panel's own back button
+      as the only real door. **The identical bug was fixed for the calendar by WO-6.6**, whose own
+      TESTING line asks exactly this question, and `src/classes.js` had written down in advance that
+      a third view would cause it. The strip now carries the* All classes *door and one tab per
+      class, and* **no tab is marked active** *— the editor takes the tabs without becoming a class
+      screen, so there is no class it is "in"; templates are global and `templatesFor(doc, tone,
+      audience)` takes no `classId`. Asserted in* `tools/verify/templates.mjs` *— the fix landed
+      with the harness printing the same 1251 either side of it, which proved it broke nothing and
+      proved nothing about the fix, and that is why the check exists.)*
 
 **One reading is owed to a human and is NOT closed here.** 👤 The last caption of
 `design/mockups/outreach.html` asks in bold for a thumb on a real tablet: *"tap a chip to insert at
@@ -7745,6 +7759,135 @@ containers and type. **Every control this work order adds is in a coarse block**
 controls on the screen at 390px, none under 44. § 5's review grew by three files for the same reason
 WO-5.1's grew by twelve: the palette's fence and this file's own prose NAME the fields that cannot
 be merged, which is the disclosure control working rather than a leak.)*
+
+### WO-5.3 — Send flow
+
+**What this adds.** The last surface before a message leaves the building: an audience picker, a
+draft resolved from one of the teacher's own templates, and a `mailto:` handoff. `src/outreach.js`
+owns who a draft can go to, the URL and how long one may be; `src/outreach-view.js` is the modal
+over it, reached from the signal card and from the student record; `src/shell.css` § THE SEND FLOW
+is the four rules that panel needed on top of components this sheet already owned, and § UNRESOLVED
+— which WO-5.2 put there for exactly this — is the block strip both surfaces draw.
+
+**It sends nothing, and that is the architecture rather than this screen's preference.** A mail
+scope reads "Send email as you" on the consent screen, and the teacher's own sent-mail record — what
+a school asks for when it asks — only stays intact if the message leaves from her client. There is
+no SMTP here, no API, no scope and no `fetch` of any kind: what this work order produces is a
+STRING, and the operating system decides what to do with it.
+
+**It resolves nothing and writes nothing.** `{{field}}` becomes text in exactly one place, and this
+flow asks `resolveDraft()` for a whole draft and puts what comes back in a box. `wo-sweep.mjs`
+§ 20's five claims over `src/merge-fields.js` are green on the delivered tree, unchanged: that file
+was not opened. And `rev` does not move across a whole flow of picking, toggling, typing and
+blocking — **the `contact` entry in `log[]` is WO-5.4's**, including the stale line in
+`src/merge-fields.js`'s own header that still says otherwise.
+
+**The handoff is an `<a href="mailto:…">` and that is the point of departure worth reading.** A
+blocked draft's link has **no `href` at all** — not focusable, not clickable, carrying no address —
+which is a stronger refusal than a disabled button and is the same posture the live preview takes
+when it returns before resolving. It is also what made the encoding measurable: the string the
+operating system will receive is sitting in the DOM, so the Traps line could be settled by reading
+rather than by promising. Tapping it is the one thing a harness must never do.
+
+- [x] 👤 The draft opens in the default mail client on desktop and on iPad with subject and body
+      intact. *(**Everything up to that edge is closed and the edge itself is not.** The URL is read
+      off the link and the body decoded back out of it matches the box character for character; what
+      no headless browser can do is press it, because following a `mailto:` hands the page to the
+      operating system. **Read it on the laptop and on the iPad**: open a draft from a signal card,
+      tap *Open in my mail app*, and check that the recipient, the subject and every paragraph of
+      the body arrived — paragraph breaks especially, which is the half that goes wrong quietly.)*
+      **✅ Read 2026-08-29, owner, on the laptop and the iPad.** The draft opened in the default
+      client on both, with the subject and the body intact.
+- [x] A long body survives the handoff, or the app warns before truncation. *(**The practical
+      ceiling is 2,000 characters of assembled, percent-encoded URL**, and the binding constraint is
+      the Windows desktop rather than the iPad: `ShellExecute` caps at 2,083, Outlook's handler has
+      cut at ~2,048 for two decades, and macOS and iOS Mail carry several thousand. The number and
+      its working are at `MAILTO_CEILING` in `src/outreach.js`. Measured on a fixture template whose
+      body is 2,622 characters and whose URL is 3,618: the warning appears, names the number and
+      names Outlook, and **the link stays live** — the app truncates nothing and says so, because
+      silent truncation is what this line is written against. The two numbers are also the reason it
+      is measured on the URL: a line break costs six characters and an em dash nine, so what the
+      teacher typed is not what gets cut.)*
+- [x] 👤 Copy-to-self is on by default and lands in the teacher's sent folder after sending.
+      *(**Half closed, half owed to a person who has actually sent one.** `teacher.defaultCc` seeds
+      the toggle at open time; the harness reads a real `cc=` header carrying the teacher's own
+      address off the link, watches it come off when the toggle goes off and back when it goes on,
+      and asserts the per-draft toggle writes nothing back to the year — a decision about one
+      message must not change the next forty. **Whether the copy lands in a sent folder is a fact
+      about a mail client and an account.** Send one to yourself from the iPad and look.)*
+      **✅ Read 2026-08-29, owner.** The copy arrived and the message was in the sent folder.
+- [x] Every draft is editable in-app before handoff. *(The resolved subject and body land in a real
+      `<input>` and a real `<textarea>` and are the teacher's from the first keystroke. Typed
+      through the delegated `input` listener, which is the path a keystroke takes: the URL is
+      rebuilt on the keystroke and carries what is in the box, and **nothing re-resolves behind
+      her** — the subject she did not touch is still the one the resolver produced. That last part
+      is a ruling rather than a detail: re-resolving her edits would either overwrite what she typed
+      or report `{{grade.percent}}` as resolved while that literal sat in the body on its way out.)*
+- [x] No Google scope is requested anywhere in this flow. *(Asked two ways. Both modules are
+      **fetched and read** by the harness — no scope, no `gapi`, no `accounts.google`, no
+      `googleapis`, no OAuth call, no `access_token`, and **no `fetch` of any kind in either file**
+      — and the page is asked what it actually loaded: no Google script was ever pulled in and
+      `accessToken()` is empty. The handoff is a link and the operating system does the rest.)*
+- [x] A blocked draft (unresolved field) cannot reach the handoff. *(**Structural rather than
+      disabled.** A template carrying `{{supports.medical}}` is drafted against a student who has a
+      medical need on file: the token comes back visibly intact, the roster string does not appear
+      anywhere, the strip carries the resolver's own sentence — accommodation, medical and plan
+      details never leave the roster — and the link has no `href`, is not focusable and carries no
+      address. Then the other half, which is what makes the first honest: **typing over the token
+      unblocks it**, because the resolver's own message says the draft cannot be sent "until it is
+      corrected or removed" and only the end that can see the correction can answer that. A second
+      block with no merge field in it at all is measured too — a guardian with a name and no email
+      address — so the app never opens a mail window with an empty To field.)*
+- [x] A concern template and a praise template written for the same audience are offered
+      **separately** in the picker. *(Four numbers off `templatesFor(doc, tone, audience)`, called
+      with both arguments: praise/guardian 3, concern/guardian 1 with no record in common, and
+      **praise/counselor 0 — the number a tone-only filter would answer 3 to**. Then the same
+      question of the `<select>` a teacher taps: three praise templates in it, tapping *Concern*
+      replaces them with the one concern template written for the same guardian, and the draft is
+      rebuilt from it rather than left as the old words under a new heading.)*
+
+**Presentation mode closes this flow outright**, which is `src/signals-view.js`'s refusal rather than
+the template screen's one-column suppression — there is no half of this modal that does not name a
+child. Measured both ways round, and the second is the one that could have been faked: turning the
+projector on over an open draft empties the boxes, the picker, the template list and the strip and
+takes the `href` off the link; and **opening the flow with the mode already on — from the student
+record, the one door that does not refuse — resolves nothing at all**, with the draft built by the
+paint that happens when the mode comes off. A draft that existed in memory would be a draft a later
+render could draw.
+
+**Nothing from the supports block reaches this surface**, searched over everything the modal drew
+and over the URL, against a student whose case manager, accommodation detail, medical need, behavior
+plan, attendance clause and review date each hold a string that appears nowhere else in this
+repository. The counselor beside them is a roster contact and is offered as a recipient; the case
+manager is not, and there is no path from the picker to one.
+
+**Where this stands.** 🔨 on 2026-08-28: five of the seven Acceptance lines closed, and **the two
+that are open are both 👤 and neither is a build**. Both tools are green on the **recovered** tree:
+`verify-shell.mjs` at `1251 checks · 1251 passed · 0 failed · 0 skipped`, 37,466 lines,
+29.9 lines per check, 409s, exit 0; and `wo-sweep.mjs` at
+`34 checks · 31 passed · 0 failed · 3 to review`, all three of those reviews pre-existing. **Both
+readings were taken after the recovery rather than before it**, which is why this line no longer
+says "the delivered tree": the dispatch that built this work order was killed mid-mutation-proof
+with five mutations still in the files, so the figures it wrote down — 37,455 lines, 410s — were
+honest when taken and describe a tree that never shipped. The eleven lines between the two are the
+`flush()` comment in `tools/verify/outreach.mjs`, and
+`.claude/dispatch/WO-5.3-status.md` carries the whole round. The flow
+is measured in § *"the send flow (WO-5.3)"*, twenty-eight sites between § *"message templates"* and
+§ *"the cooldown and the quiet middle"* — the second of those keeps its claim to run last. It adds
+no `byHand` row to `tools/verify/touch-targets.mjs`'s `VIEW_PLAN`: that loop walks views in
+`<main>` and this is a modal over two of them, so its controls are measured inside its own section
+at 390px under a coarse pointer, on a draft that is ready — which is the only state in which the
+handoff link exists to be measured at all.
+
+*(**One check in this section is driven by `.click()` rather than by a coordinate click, and the
+reason generalises.** A modal is open for most of it, and a CDP mouse click at the header's
+coordinates lands on the overlay's own backdrop — which `src/modal.js` reads as a dismissal. The
+first run of this section closed the draft instead of projecting it, and reported four failures that
+were the harness's rather than the app's. **The fourth of those four was real**, and it is the reason
+the run was worth having: `signals.evaluate(getDoc(), …)` in the student record's door referenced a
+`getDoc` that `src/shell.js` does not import — it is `store.getDoc()` — so that door threw a
+`ReferenceError` and opened nothing, while the model behind it still held the previous draft and
+read as ready. A check that had asked the model alone would have passed over it.)*
 
 ---
 

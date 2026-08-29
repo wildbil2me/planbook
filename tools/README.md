@@ -1050,14 +1050,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1208 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1237 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-three files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-four files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1106,6 +1106,34 @@ also the fourth `byHand` in `verify/touch-targets.mjs`'s `VIEW_PLAN`, and the fi
 there because the LOOP HAS NO DOOR to the screen rather than because the document is empty by then:
 `openView()` knows the "All classes" door and a `data-class-screen` segment, and the template editor
 is reached from a header icon and is not a class screen.)*
+
+**WO-5.3 moved it from 1208 to 1236**: twenty-eight literal call sites, the whole of
+`verify/outreach.mjs` — a file that work order created — none of them inside a loop and none a
+failure arm, so the section contributes twenty-eight executed results to a green run. Its two guards
+are `skip()` calls again (no `window.planbook`, and a fixture that did not install), on the WO-4.5,
+WO-5.1 and WO-5.2 pattern directly above, which is why they move this number by nothing.
+**The run prints
+1252**: `1252 checks · 1252 passed · 0 failed · 0 skipped`, 37,502 lines, 30.0 lines per check,
+432s, exit 0, measured 2026-08-29. The gap between sites and results stays at
+−15. *(**1251 of those are WO-5.3's; the 1252nd belongs to WO-5.2 and arrived a day late.** The
+template editor had no way out of it — see `plans/work-orders/phase-5-outreach.md` § WO-5.2 — and
+the fix landed with this harness printing **the same 1251 either side of it**, which proved it broke
+nothing and proved nothing whatever about the fix. `verify/templates.mjs` now asserts the header
+strip over that view carries the *All classes* door and one tab per class **with none marked
+active**. It is counted here rather than in WO-5.3's paragraph below because it is not WO-5.3's
+check.)* *(The figure read 37,455 / 410s for most of that day and was written by a dispatch that died
+mid-mutation-proof with five mutations still in the tree — so it was a reading taken before them,
+honest when written and describing a tree that no longer existed. The eleven lines between the two
+are the comment on the `flush()` this section's `rev` check gained when the mutation round was
+re-run: `update()` only SCHEDULES a save, so the check could not see a write made in the last 800ms
+of the flow — which is where the copy-to-self toggle sits. It is green above and red under a no-op
+`update()` planted in `toggleOutreachCopy`, which it was not before.)* *(That section adds no `byHand` row to
+`verify/touch-targets.mjs`'s `VIEW_PLAN`, and the reason is worth knowing before somebody looks for
+one: the send flow is a MODAL over two different screens rather than a view in `<main>`, and that
+loop walks views. Its controls are measured inside its own section instead, at 390px under a coarse
+pointer, with the panel open on a real draft — which is the only state in which the handoff link
+exists to be measured at all, because a blocked draft's link has no `href` and is therefore not a
+control.)*
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

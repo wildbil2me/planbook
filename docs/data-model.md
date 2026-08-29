@@ -708,6 +708,46 @@ Four rulings there are decisions rather than plumbing:
   report. WO-5.3 reads the same `blocked` flag off the same call to decide whether its send button
   is live.
 
+### Where a draft is sent from, and what leaves the app
+
+**`src/outreach.js` owns who a draft can go to and `src/outreach-view.js` is the modal over it**
+*(WO-5.3)*. The flow is reached from the signal card and from the student record, resolves one
+template against one student through `src/merge-fields.js`, and ends at an
+`<a href="mailto:…">` — **the app sends nothing, ever, in any form**. That is CLAUDE.md's
+architecture rather than this screen's preference: a mail scope reads "Send email as you" on the
+consent screen, and the teacher's own sent-mail record only stays intact if the message leaves from
+her own client.
+
+**It writes nothing to this document.** No collection is touched, `newYearDocument()` gained
+nothing, and `rev` is unchanged across a whole draft. The `contact` entry in `log[]` — with the
+`ruleId` the cooldown keys on — is WO-5.4's and is the only thing this flow will ever write.
+
+Five rulings there are decisions rather than plumbing:
+
+- **A RECIPIENT is a person with an address; an AUDIENCE is the drawer a template is filed under.**
+  `students[].guardians[]` is an array and the picker offers one chip per guardian, by POSITION —
+  *Guardian 1*, *Guardian 2* — plus the counselor, the administrator from `teacher.adminEmail`, and
+  the student herself. All of them map onto the four `AUDIENCES` values, both guardians onto
+  `guardian`, and **that enum is not widened**: what makes a message personal is
+  `{{guardian.name}}`, which resolves to the guardian the teacher picked rather than to the
+  preferred one.
+- **`students[].counselor` is a roster contact and `supports.caseManager` is not.** They are two
+  different people in this schema and one of them is behind the fence in § Accommodations. Nothing
+  in the send flow reads a support block, and there is no path from the picker to one.
+- **A recipient with no email address is offered and blocks.** Left off the list he reads as a
+  missing feature; on it with a named reason he reads as a missing address. The app never opens a
+  mail window with an empty To field.
+- **The draft is resolved once and is the teacher's from the first keystroke.** Editable before
+  sending, always. After the resolve, what blocks the handoff is any `{{…}}` still in the boxes —
+  the resolver's own sentence, *"until it is corrected or removed"*, answered at the end that can
+  see the correction. Nothing re-resolves her edits: that would either overwrite what she typed or
+  call a literal `{{grade.percent}}` resolved on its way out.
+- **`mailto:` has a practical ceiling of about 2,000 characters** of assembled, percent-encoded URL,
+  and the binding constraint is the Windows desktop — `ShellExecute` caps at 2,083 and Outlook's
+  handler cuts at ~2,048, where macOS and iOS Mail carry several thousand. **Planbook truncates
+  nothing**: it warns before the fact and hands the whole URL over. `src/outreach.js`'s
+  `MAILTO_CEILING` carries the number and the working.
+
 ## Events: only what can't be derived
 
 `events` holds what the teacher types in — conferences, meetings, grades-due deadlines, breaks,

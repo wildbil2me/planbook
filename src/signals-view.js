@@ -1072,13 +1072,14 @@ function cardActions() {
   thresholds.setAttribute('aria-haspopup', 'dialog');
   box.append(thresholds);
 
-  /* Phase 5's whole presence on this card, and it is a door rather than a feature: WO-5.3 and
-     WO-5.4 both reach for "the signal card" by name, and what this buys is that the shape of the
-     card does not change when outreach lands. */
+  /* Phase 5's whole presence on this card, and THE DOOR IS OPEN (WO-5.3, 2026-08-28). It was drawn
+     disabled at WO-4.2 so that the shape of the card would not have to change when outreach landed,
+     and it did not: one attribute replaced `disabled` and the title, and nothing else on this card
+     moved. Where it goes is resolved in src/shell.js, which is where the order things happen in is
+     stated — this screen does not know what a draft is. */
   const draft = el('button', 'sig-card-act', 'Draft an email');
   draft.type = 'button';
-  draft.disabled = true;
-  draft.title = 'Outreach arrives with Phase 5.';
+  draft.setAttribute('data-signal-card-draft', '');
   box.append(draft);
   return box;
 }
@@ -1092,6 +1093,23 @@ function cardActions() {
 */
 function rowFor(key) {
   return signalsModel().all.filter((row) => row.key === key)[0] || null;
+}
+
+/*
+  THE ROW BEHIND THE OPEN CARD, AS A DRAFT'S FOUR FACTS (WO-5.3) — the student, her class, the term
+  and the hits. Read by src/shell.js on the way to the send flow and by nothing else.
+
+  THE HITS ARE THE ONES ALREADY ON THE ROW rather than a second evaluate() pass. The draft speaks
+  from the signals the card in front of the teacher is drawn from — `{{grade.delta}}` reads one of
+  them — and a fresh pass would answer about the document as it stands now, which is a different
+  question from the one she tapped. src/merge-fields.js's contextOf() states the same rule from the
+  far end.
+*/
+export function openCardTarget() {
+  const row = rowFor(openCardKey);
+  if (!row) return null;
+  return { studentId: row.studentId, classId: row.classId,
+    termId: getOpenTermId(row.classId), hits: row.hits };
 }
 
 /*

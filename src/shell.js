@@ -507,6 +507,41 @@
       data-template-another           steps the preview to the next student on the roster
       data-template-jump="subject|body"  from one line of the block strip to the half of the template
                                       the field that failed is in
+      data-signal-card-draft          the signal card's third action, and the door WO-4.2 drew
+                                      disabled so the card's shape would not change when outreach
+                                      landed (WO-5.3). It does NOT select the class first, unlike
+                                      `data-signal-card-detail` beside it: a draft carries the class
+                                      and the term it was opened from, so nothing on screen has to
+                                      move to make one
+      data-outreach-draft             the same door on the student record. Same modal, same student,
+                                      and the signals it speaks from are the open class's — run once
+                                      here, at the tap, and never again behind the draft
+      data-outreach-tone="<tone>"     concern or praise: which of the teacher's two lists of
+                                      templates the draft is built from. It REBUILDS the draft and
+                                      says so, because a tone is not a filter over a message that
+                                      has already been written
+      data-outreach-to="<key>"        who the message goes to — one guardian, another guardian, the
+                                      counselor, the administrator or the student. A recipient is a
+                                      person with an address; the AUDIENCE a template is filed under
+                                      is a different list and src/outreach.js maps one to the other
+      data-outreach-copy              whether this draft copies the teacher. It starts from
+                                      `teacher.defaultCc` and writes nothing back: a change here is
+                                      about this message, and *Your details* is where the default
+                                      lives
+      data-outreach-field="subject|body"  an input; edits the DRAFT as it is typed and writes
+                                      nothing to the document. Every draft is editable before it
+                                      goes, always — WO-5.3's Deliverables — and what the keystroke
+                                      repaints is the block strip and the link, never the box
+      data-outreach-jump="subject|body"  from one line of the block strip to the half of the draft
+                                      the merge field still sitting on the page is in
+      data-outreach-template          a <select>; which of the templates offered for this tone and
+                                      this audience the draft is built from. Read on `change` for
+                                      `data-support-kind`'s reason
+      (no hook on the handoff itself)  #outreachOpen is an `<a href="mailto:...">` and the
+                                      navigation is the browser's. A blocked draft's link has no
+                                      `href` at all, which is why "a blocked draft cannot reach the
+                                      handoff" is a property of the markup rather than of a
+                                      listener
       data-drive-connect              signs in to Google Drive — silent first, a visible Google
                                       prompt when that fails (WO-7.1). It lives in the About
                                       modal and is HIDDEN on every origin but loopback, which
@@ -677,6 +712,13 @@ import * as auth from './auth.js';
    field: that is src/merge-fields.js's and only its, and the editor asks it for a whole draft. */
 import * as templates from './templates.js';
 import * as templatesView from './templates-view.js';
+/* WO-5.3's two, and they are two for the reason the pair above is: `outreach` is the MODEL — who a
+   draft can be addressed to, the `mailto:` URL and how long one may be — and `outreachView` is the
+   modal over it, opened from the signal card and from the student record. Neither sends anything
+   and neither writes to the document; the URL is a string this file never assembles and never
+   navigates to, because the control that carries it is a link. */
+import * as outreach from './outreach.js';
+import * as outreachView from './outreach-view.js';
 
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
@@ -1352,8 +1394,13 @@ function afterCalendarChange() {
 function afterRestore() {
   classes.refreshClassBar();
   /* The template editor, emptied for afterYearChange()'s reason exactly: a restore replaces the
-     document, so an open record's id belongs to the file that was just replaced. */
+     document, so an open record's id belongs to the file that was just replaced. And an open draft
+     goes with it, for the same reason and by the same argument. */
   templatesView.resetTemplates();
+  outreachView.resetOutreach();
+  /* And an open draft is dropped and its modal closed, for the same reason one line up: a draft is
+     about a student in the document that has just been put away. */
+  outreachView.resetOutreach();
   afterClassChange();
   teacher.refreshHeaderIdentity();
 }
@@ -1481,6 +1528,19 @@ function flipPresentationMode() {
     resolved draft on the glass is a teacher whose iPad is about to face the room.
   */
   if (views.currentView() === 'templates') templatesView.renderTemplates({ fields: false });
+  /*
+    AND THE SEND FLOW, WHICH IS THE SEVENTH ENTRY AND THE WIDEST OF THEM (WO-5.3). It is not guarded
+    on a view, because it is not one: it is a modal that can be open over the signal card or over the
+    student record, and what is in it is a named student, her guardians and their email addresses.
+    So it takes the line above's screen-wide refusal rather than the line above THAT's one-column
+    suppression — src/outreach-view.js argues the departure at its own header — and its own paint is
+    what empties the two boxes rather than merely hiding them.
+
+    Unconditional, like the absence prompt below: a repaint of a closed modal writes nothing to a
+    screen anybody is looking at, and guarding it on "is it open" would be a second answer to a
+    question the modal itself already holds.
+  */
+  outreachView.renderOutreach();
   /*
     AND THE ABSENCE PROMPT GOES, WHEREVER IT IS (WO-4.4). It is the fifth entry and the only one that
     is not guarded on a view, because it is not a view: it is a box on the registry that a mark put
@@ -1933,6 +1993,17 @@ document.addEventListener('click', (e) => {
     }
     return;
   }
+  /* THE SEND FLOW, FROM THE CARD (WO-5.3). No class is selected on the way — the draft carries the
+     class and the term the row came from, so a teacher drafting about a student in her third period
+     while standing on her first does not have the screen behind the modal swapped under her. The
+     card is handed over as the opener and STAYS OPEN behind the draft: src/modal.js stacks, Escape
+     closes the top one, and closing the draft puts her back on the card she was reading. */
+  const cardDraft = e.target.closest('[data-signal-card-draft]');
+  if (cardDraft) {
+    const target = signalsView.openCardTarget();
+    if (target) outreachView.openOutreach(target, cardDraft);
+    return;
+  }
   if (e.target.closest('[data-signal-card-detail]')) {
     const target = signalsView.signalCardTarget();
     if (target) {
@@ -2112,6 +2183,24 @@ document.addEventListener('click', (e) => {
      file and the markup comment in index.html. */
   if (e.target.closest('[data-detail-sheet-print]')) { detail.printDetail(); return; }
   if (e.target.closest('[data-detail-csv]')) { detail.downloadDetailCsv(); return; }
+  /* THE SEND FLOW, FROM THE STUDENT RECORD (WO-5.3) — the second of its two doors. The signals it
+     speaks from are collected HERE, once, at the tap: the card hands over the hits its row is drawn
+     from and this screen has no row, so the engine is run for the open class and filtered to the
+     student on screen. Nothing re-runs it behind the draft — src/merge-fields.js's contextOf() says
+     why in as many words, and src/outreach-view.js inherits that rather than re-deciding it. */
+  const detailDraft = e.target.closest('[data-outreach-draft]');
+  if (detailDraft) {
+    const studentId = detail.openDetailStudentId();
+    const cls = classes.getSelectedClass();
+    const termId = (classes.getSelectedTerm() || {}).id || '';
+    if (studentId && cls) {
+      const hits = signals.evaluate(store.getDoc(), cls, termId)
+        .filter((hit) => hit.studentId === studentId);
+      outreachView.openOutreach({ studentId: studentId, classId: cls.id, termId: termId,
+        hits: hits }, detailDraft);
+    }
+    return;
+  }
 
   /* ── days off & planned drops (WO-2.3) ──
      Above the attendance block because the panel is opened from a control ON the registry as well
@@ -2491,6 +2580,22 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-template-another]')) { templatesView.nextPreviewStudent(); return; }
+  const outreachTone = e.target.closest('[data-outreach-tone]');
+  if (outreachTone) {
+    outreachView.setOutreachTone(outreachTone.getAttribute('data-outreach-tone'));
+    return;
+  }
+  const outreachTo = e.target.closest('[data-outreach-to]');
+  if (outreachTo) {
+    outreachView.setOutreachRecipient(outreachTo.getAttribute('data-outreach-to'));
+    return;
+  }
+  if (e.target.closest('[data-outreach-copy]')) { outreachView.toggleOutreachCopy(); return; }
+  const outreachJump = e.target.closest('[data-outreach-jump]');
+  if (outreachJump) {
+    outreachView.jumpTo(outreachJump.getAttribute('data-outreach-jump'));
+    return;
+  }
   const templateJump = e.target.closest('[data-template-jump]');
   if (templateJump) {
     templatesView.jumpTo(templateJump.getAttribute('data-template-jump'));
@@ -2750,6 +2855,16 @@ document.addEventListener('input', (e) => {
   const templateField = e.target.closest('[data-template-field]');
   if (templateField) { templatesView.editTemplateField(templateField); return; }
 
+  /* THE SECOND FIELD THAT IS NOT SAVED AS IT IS TYPED (WO-5.3), and it is not saved at all: a draft
+     is a message on its way out of the app rather than a row of the year document. Every draft is
+     editable before it goes, always, so this writes to the flow's own copy and repaints the block
+     strip, the handoff link and the length warning — never the box, for the reason directly above.
+     What a keystroke can change here is whether the draft is sendable: a merge field the teacher
+     types over stops blocking it, which is the resolver's own sentence honoured at the end that can
+     see the correction (src/outreach-view.js). */
+  const outreachField = e.target.closest('[data-outreach-field]');
+  if (outreachField) { outreachView.editOutreachField(outreachField); return; }
+
   /* A category's name or its weight, saved as it is typed and by the same debounce. The chain runs
      per keystroke on purpose: the total is what the teacher is watching while she types the number,
      and a running total that lags the field it is adding up is worse than no total. The row itself
@@ -2941,6 +3056,12 @@ document.addEventListener('change', (e) => {
      the same kind of state the concern list's class filter is. */
   const templateStudent = e.target.closest('[data-template-student]');
   if (templateStudent) templatesView.setPreviewStudent(templateStudent.value);
+  /* Which of the teacher's templates the draft is built from (WO-5.3). Read HERE for
+     `data-support-kind`'s reason: a <select> commits on `change`, and hooking `input` as well would
+     rebuild the draft twice for one tap — which on this control means resolving twice and throwing
+     her edits away twice. It writes nothing to the document. */
+  const outreachTemplate = e.target.closest('[data-outreach-template]');
+  if (outreachTemplate) outreachView.setOutreachTemplate(outreachTemplate.value);
   /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);
@@ -3639,4 +3760,14 @@ window.planbook = {
      preview nobody drew still fails. Nothing in the app reads window.planbook — see the block above
      for why the seam outlived the shelf. */
   templates, templatesView,
+  /* `outreach` and `outreachView` joined at WO-5.3, and their reasons are the two this list already
+     has. THE MODEL is `mergeFields`': a `mailto:` URL is a pure function of a draft and there is no
+     control anywhere that can be tapped to READ one — tapping the handoff hands the page to the
+     operating system, which is the one thing a harness must not do, so the percent-encoding this
+     work order's Traps line is about can only be asked of the function that produces it. THE SCREEN
+     is `templatesView`'s: outreachModel() is the same build-it / hand-it-over split, so "a blocked
+     draft cannot reach the handoff" can be asked of the model AND of the DOM, and a model that is
+     right about a link nobody drew still fails. Nothing in the app reads window.planbook — see the
+     block above for why the seam outlived the shelf. */
+  outreach, outreachView,
 };

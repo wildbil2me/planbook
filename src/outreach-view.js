@@ -1,0 +1,774 @@
+/*
+  The send flow — the audience picker, the draft, and the handoff to the teacher's own mail client
+  (WO-5.3).
+
+  ── WHAT THIS FILE IS, AND THE THREE IT IS NOT ──
+
+  It is the SCREEN over src/outreach.js, the same split src/templates-view.js makes with
+  src/templates.js: that file owns who a recipient is, what a `mailto:` URL is and how long one may
+  be; this one owns the pixels, the order things happen in, and the one control that hands the draft
+  over.
+
+  IT IS NOT A RESOLVER. `{{field}}` becomes text in exactly one place — src/merge-fields.js — and
+  this file asks `resolveDraft()` for a whole draft and puts what comes back in a box. Nothing here
+  splits a token, indexes anything by one, or reads a property named after one.
+
+  IT IS NOT A SECOND OPINION ABOUT WHY A FIELD FAILED. Every sentence in the block strip about a
+  merge field is the `message` the resolver built, printed as it was handed over. What this file
+  adds to that list are the two reasons the resolver knows nothing about — a recipient with no
+  address on the roster, and no template chosen — and they are different sentences about different
+  objects rather than a re-diagnosis of the same one.
+
+  IT IS NOT A WRITER. Nothing here calls `update()`, nothing pushes to a collection, and the
+  document is byte-identical either side of a draft. **The contact log is WO-5.4** — `log[]` with
+  `kind: "contact"`, the audience, the subject, the body and the `ruleId` its cooldown keys on —
+  and this work order's Out of scope is what keeps it out of this file. src/merge-fields.js's header
+  says WO-5.3 writes that entry; that line is stale and the boundary is WO-5.4's Deliverables.
+
+  ── A MODAL, AND IT OPENS OVER THE CARD RATHER THAN REPLACING IT ──
+
+  plans/gradebook-surfaces.md's test, applied rather than re-argued: a surface a teacher works in is
+  a view, and a task she finishes and dismisses is a modal. Drafting one message is a task. Opened
+  from the signal card it is a modal over a modal, which src/modal.js supports by construction — the
+  stack is built at open time, Escape closes the top-most, and focus returns to the button that
+  opened it, so dismissing the draft puts her back on the card she was reading.
+
+  ── PRESENTATION MODE CLOSES THIS FLOW OUTRIGHT, AND THAT IS src/signals-view.js's RULE ──
+
+  Not src/templates-view.js's. That screen suppresses ONE COLUMN because the list, the editor and
+  the palette are the teacher's own writing and name nobody, while only the preview names a child.
+  **There is no such column here.** The title names the student, the picker names her guardians, the
+  subject and the body are about her, and the recipient line carries her guardian's email address —
+  every part of this modal is one child's business, which is the shape the concern list is in and
+  the reason that screen closes rather than filters.
+
+  So while the mode is on: the form is not drawn, nothing is resolved, and **the fields are emptied
+  rather than merely hidden** — src/supports.js's sensitiveValue() rule, in src/templates-view.js's
+  own words: an element with `display: none` is still an element a screenshot tool, a find-in-page
+  or an accessibility tree can reach, and a guardian's address is not a thing to leave sitting in a
+  hidden control on a screen that is facing a room. What stays is one sentence naming the control
+  that undoes it, which is what WO-4.2 shipped and what makes a refusal something other than a bug.
+
+  ── WHAT IS HELD HERE, AND WHY NONE OF IT IS REMEMBERED ──
+
+  Which student the draft is about, which tone, which recipient, which template, the draft itself,
+  whether it copies the teacher, and one status sentence. Not one of them reaches localStorage —
+  src/signals-view.js's and src/templates-view.js's ruling, and their reason: a remembered choice is
+  a choice made by nobody the teacher can remember. Every arrival starts from the row she tapped.
+
+  ── THE DRAFT IS RESOLVED ONCE PER CHOICE, AND EDITED FROM THERE ──
+
+  `resolveDraft()` runs when the template, the recipient or the tone changes, and NOT on every
+  keystroke. After that the text in the box is the teacher's, exactly as she left it, and the thing
+  that is handed to her mail client is the text she is looking at — a flow that re-resolved her
+  edits would either overwrite what she typed or report a field as resolved while a literal
+  `{{grade.percent}}` sat in the body on its way out.
+
+  What the block strip watches after that is `tokensLeftIn()` (src/outreach.js): arithmetic over the
+  string, no lookup of any kind. A token still on the page blocks the handoff, and a token she has
+  typed over does not — which is the resolver's own sentence, *"cannot be sent until it is corrected
+  or removed"*, honoured at the end that can see the correction.
+
+  ── THE HANDOFF IS A REAL LINK, AND THAT IS THE POINT OF DEPARTURE WORTH READING ──
+
+  `#outreachOpen` is an `<a href="mailto:…">` wearing `.class-action-btn`, not a button that assigns
+  `window.location`. Three reasons, in the order they bite:
+
+    · **A blocked draft cannot reach the handoff, and with a link that is structural.** When the
+      draft is blocked the anchor has no `href` at all — it is not focusable, not clickable and not
+      a link, which is a stronger refusal than a disabled button and is the same posture the preview
+      column takes when it returns before resolving.
+    · **iOS opens a `mailto:` link more reliably than a scripted navigation**, which matters because
+      the iPad is the device that decides go-live.
+    · **The URL is readable.** What the operating system will receive is sitting in the DOM, so the
+      percent-encoding WO-5.3's Traps line is about can be measured rather than promised.
+
+  It is the app's third anchor — src/shell.css records the first two and the rule they set: a link
+  standing on its own line is a thing you tap and takes the touch pass. This one wears a button's
+  class, so it takes `.class-action-btn`'s 44px floor with it.
+*/
+
+import { getDoc } from './store.js';
+import { getActiveClasses, getTerms, termName } from './classes.js';
+import { fullName } from './roster.js';
+import { announce } from './live-region.js';
+import { openModal, closeModal } from './modal.js';
+/* The switch, and only the switch — see this file's header for why it is this accessor and not the
+   visibility rule beside it. src/templates-view.js and src/signals-view.js import the same one from
+   the same place, so this is that switch rather than a second copy of it. */
+import { presentationMode } from './supports.js';
+/* The resolver. `resolveDraft` is the whole of what this file asks of it, and `blocked` is that
+   module's whole say in the send — its header says so in as many words, and the button below is
+   what reads it. Nothing else is imported from there and nothing here indexes by a token. */
+import { resolveDraft } from './merge-fields.js';
+/* The engine's own ranking, asked rather than re-decided: which of this student's signals leads is
+   src/signals.js's answer, and the draft speaks from the same row the card put at the top. The
+   engine itself is not imported and is never run here — the hits arrive with the row that was
+   tapped, and re-running would answer about today rather than about that row. */
+import { orderHits } from './signals.js';
+import * as templates from './templates.js';
+import * as outreach from './outreach.js';
+
+const MODAL_ID = 'outreachModal';
+const TITLE_ID = 'outreachTitle';
+const SUB_ID = 'outreachSub';
+const PROJECTING_ID = 'outreachProjecting';
+const FORM_ID = 'outreachForm';
+const TONES_ID = 'outreachTones';
+const TO_ID = 'outreachRecipients';
+const TO_NOTE_ID = 'outreachRecipientNote';
+const TEMPLATE_ID = 'outreachTemplate';
+const TEMPLATE_NOTE_ID = 'outreachTemplateNote';
+const SUBJECT_ID = 'outreachSubject';
+const BODY_ID = 'outreachBody';
+const CC_ID = 'outreachCc';
+const CC_NOTE_ID = 'outreachCcNote';
+const BLOCK_ID = 'outreachBlock';
+const LENGTH_ID = 'outreachLength';
+const OPEN_ID = 'outreachOpen';
+const STATUS_ID = 'outreachStatus';
+
+/* ── THE FLOW STATE ── */
+
+/* Which student this draft is about, and the facts that came with the row it was opened from. Null
+   when the modal has never been opened. `hits` is captured ONCE, at open time, and the engine is
+   never re-run behind it: src/merge-fields.js's contextOf() says why in as many words — re-running
+   would answer about today, and the draft is about the row the teacher tapped. */
+let subject = null;
+
+let tone = templates.TONES[0];
+let recipientKey = '';
+let templateId = '';
+
+/* What is in the two boxes RIGHT NOW. It starts as whatever the resolver handed back and is the
+   teacher's from the first keystroke — WO-5.3's "editable before sending, always". */
+let draft = { subject: '', body: '' };
+
+/* Whether the draft above has been resolved yet. It is false between opening the flow and the
+   first paint that is ALLOWED to resolve one — see openOutreach() and renderOutreach(), where the
+   rule is that nothing is resolved at all while the projector is on. */
+let built = false;
+
+/* What the last resolve said, kept for its ERRORS and for nothing else. The text of it is already
+   in `draft` above; these are the sentences src/merge-fields.js wrote about the fields that did not
+   resolve, printed as it wrote them. */
+let errors = [];
+
+/* Whether this draft copies the teacher. Seeded from `teacher.defaultCc` at open time and toggled
+   per draft — a change here is a fact about this message and is deliberately not written back to
+   the year: *Your details* is where that default lives, and a per-draft toggle that rewrote it
+   would change the next forty messages because of one. */
+let copySelf = true;
+
+/* One sentence under the actions — what the last thing pressed did. One line rather than a banner,
+   so the eye has one place to go back to (src/templates-view.js's status line, one screen over).
+   Every sentence it can hold is about a draft being rebuilt, which is why there is no error tone
+   here: what is wrong with a draft is the block strip's to say, in the resolver's own words. */
+let status = '';
+
+/* ────────────────────────────── the model ──────────────────────────────
+
+   THE WHOLE OF WHAT IS ON SCREEN, AS DATA, WITH NO DOM IN IT — the build-it / hand-it-over split
+   src/signals-view.js's signalsModel(), src/templates-view.js's templatesModel() and
+   src/detail.js's detailModel() all make. Every decision about who this can go to, which templates
+   are on offer, what is blocking it and what URL the link carries is made once, here, and
+   tools/verify/outreach.mjs can assert it without a check that also has to be right about markup —
+   and then reads the DOM as well, so a model that is right about a draft nobody drew still fails. */
+
+function classById(doc, classId) {
+  return getActiveClasses().filter((c) => c.id === classId)[0]
+    || ((doc && Array.isArray(doc.classes) ? doc.classes : []).filter((c) => c && c.id === classId)[0]
+      || null);
+}
+
+function studentById(doc, studentId) {
+  return (doc && Array.isArray(doc.students) ? doc.students : [])
+    .filter((s) => s && s.id === studentId)[0] || null;
+}
+
+/* The signal this draft speaks from: the first of the student's hits, in the ENGINE's order, whose
+   direction matches the tone. `{{grade.delta}}` reads it and nothing else, so a praise draft speaks
+   from her praise row and a concern draft from her concern row — which is src/templates-view.js's
+   ruling about the live preview, inherited rather than re-made, and the two surfaces therefore
+   rehearse the same draft. A student with no hit in that direction gets none, and the field does
+   not resolve: the honest answer rather than an invented row. */
+function hitFor(direction) {
+  const hits = subject && Array.isArray(subject.hits) ? subject.hits : [];
+  return orderHits(hits.filter((h) => h && h.direction === direction))[0] || null;
+}
+
+export function outreachModel() {
+  const blocked = presentationMode();
+  const doc = getDoc();
+  const student = subject ? studentById(doc, subject.studentId) : null;
+  const cls = subject ? classById(doc, subject.classId) : null;
+  const base = {
+    open: !!subject,
+    blocked: blocked,
+    name: '', className: '', termLabel: '',
+    tone: tone,
+    recipients: [], recipient: null, audience: '',
+    templates: [], templateId: '', templateName: '',
+    subject: '', body: '',
+    cc: { on: false, email: '', ok: false },
+    reasons: [], ready: false,
+    url: '', length: 0, long: false,
+    status: status,
+  };
+  /* NOTHING IS RESOLVED, LISTED OR ADDRESSED WHILE THE PROJECTOR IS ON. Returned before a recipient
+     is built, not filtered out of a model that was built anyway — src/signals-view.js's rule, and
+     its reason: a list that exists in memory is a list a later render can draw. */
+  if (blocked || !subject || !student) return base;
+
+  const term = cls ? getTerms(cls.id).filter((t) => t.id === subject.termId)[0] : null;
+  const recipients = outreach.recipientsFor(doc, student);
+  const chosen = outreach.recipientByKey(recipients, recipientKey) || recipients[0] || null;
+  const audience = chosen ? outreach.audienceOf(chosen) : '';
+  /* THE SEVENTH ACCEPTANCE LINE, AND IT IS ONE CALL WITH BOTH ARGUMENTS. A concern template and a
+     praise template written for the same audience are two records and are offered separately,
+     because this read is filtered on the tone AND the audience — never on the audience alone, which
+     would hand a guardian's concern template back for a praise draft. src/templates.js owns that
+     question so that this flow and the editor cannot come to disagree about what is on offer.
+
+     THE EIGHT STARTERS ARE NOT HERE, AND THAT IS THE OWNER'S RULING RATHER THAN AN OVERSIGHT
+     (2026-08-28, WO-5.2). They are shipped TEXT offered in the editor's list, and a Save is what
+     makes one a record — "the one keystroke between a shipped sentence and a hundred guardians
+     reading it in the same words". Offering them at send time would be that keystroke removed. A
+     teacher with nothing saved for this pair is told so and pointed at the door. */
+  const offered = templates.templatesFor(doc, tone, audience);
+  const record = offered.filter((t) => t.id === templateId)[0] || null;
+
+  const cc = {
+    on: copySelf,
+    email: String((doc && doc.teacher && doc.teacher.email) || '').trim(),
+    ok: false,
+  };
+  cc.ok = !!cc.email;
+
+  /* WHAT IS STOPPING THIS DRAFT, in the order a teacher can act on them. Three kinds, and only the
+     first is the resolver's: it names a merge field and carries the sentence src/merge-fields.js
+     wrote about it. The other two are about this flow's own objects — a person with no address, and
+     no message chosen — which the resolver has never heard of and must not be asked about. */
+  const reasons = [];
+  if (!record) {
+    reasons.push({
+      kind: 'template',
+      text: offered.length
+        ? 'Pick which message this is, above.'
+        : 'You have not saved a ' + templates.toneLabel(tone).toLowerCase() + ' template for a '
+          + templates.audienceLabel(audience).toLowerCase() + ' yet. Write one on the Message '
+          + 'templates screen — Planbook ships one you can start from.',
+    });
+  }
+  if (!chosen) {
+    reasons.push({ kind: 'recipient', text: 'There is nobody on this student’s roster entry to '
+      + 'write to. Add a guardian, a counselor or your administrator’s address first.' });
+  } else if (!chosen.email) {
+    reasons.push({ kind: 'recipient', text: chosen.kind === 'admin'
+      ? 'There is no administrator address in Your details, so there is nowhere to send this.'
+      : 'There is no email address on file for ' + (chosen.name || chosen.label.toLowerCase())
+        + ', so there is nowhere to send this. Add one on the roster.' });
+  }
+  if (cc.on && !cc.ok) {
+    reasons.push({ kind: 'cc', text: 'Copy me is on and there is no email address in Your details, '
+      + 'so there is nothing to copy you at. Add one, or turn the copy off for this message.' });
+  }
+  /* EVERY MERGE FIELD STILL ON THE PAGE, WITH THE RESOLVER'S OWN SENTENCE UNDER IT. The list is what
+     is in the boxes NOW rather than what the resolve found, so a token the teacher has typed over is
+     gone from it and a token she has typed IN is on it. Where the resolver named the field, its
+     message is printed word for word; where it did not — a name she typed after the resolve — the
+     sentence says the one thing this file can honestly say about it, which is that nothing will fill
+     it in a mail app. */
+  const left = outreach.tokensLeftIn(draft.subject);
+  outreach.tokensLeftIn(draft.body).forEach((name) => {
+    if (left.indexOf(name) < 0) left.push(name);
+  });
+  left.forEach((field) => {
+    const named = errors.filter((e) => e.field === field)[0] || null;
+    reasons.push({
+      kind: 'field',
+      field: field,
+      where: named && named.where === 'subject' ? 'subject' : 'body',
+      text: named ? named.message
+        : '{{' + field + '}} is still in this draft. Nothing fills a merge field once the message '
+          + 'is in your mail app, so type what it should say or take it out.',
+    });
+  });
+
+  const to = chosen ? chosen.email : '';
+  const ready = reasons.length === 0;
+  const url = ready ? outreach.mailtoUrl({
+    to: to,
+    cc: cc.on && cc.ok ? cc.email : '',
+    subject: draft.subject,
+    body: draft.body,
+  }) : '';
+
+  return Object.assign(base, {
+    name: fullName(student),
+    className: cls ? cls.name : '',
+    termLabel: termName(term),
+    recipients: recipients.map((r) => ({ key: r.key, label: r.label, name: r.name, email: r.email,
+      active: !!chosen && r.key === chosen.key, has: !!r.email })),
+    recipient: chosen ? { key: chosen.key, label: chosen.label, name: chosen.name,
+      email: chosen.email } : null,
+    audience: audience,
+    templates: offered.map((t) => ({ id: t.id, name: t.name, active: !!record && t.id === record.id })),
+    templateId: record ? record.id : '',
+    templateName: record ? record.name : '',
+    subject: draft.subject,
+    body: draft.body,
+    cc: cc,
+    reasons: reasons,
+    ready: ready,
+    url: url,
+    length: url.length,
+    long: outreach.overCeiling(url),
+  });
+}
+
+/* ────────────────────────────── drawing it ────────────────────────────── */
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function paintRecipients(model) {
+  const host = document.getElementById(TO_ID);
+  if (host) {
+    host.textContent = '';
+    model.recipients.forEach((row) => {
+      const button = el('button', 'toggle-btn' + (row.active ? ' active' : ''), row.label);
+      button.type = 'button';
+      button.setAttribute('data-outreach-to', row.key);
+      button.setAttribute('aria-pressed', row.active ? 'true' : 'false');
+      /* The whole row said in one string, because the chip is a position and the person is on the
+         line below it: a screen reader on the chip alone would hear "Guardian 2" and nothing about
+         who that is or whether there is an address for her. */
+      button.setAttribute('aria-label', row.label + (row.name ? ' — ' + row.name : '')
+        + (row.email ? ', ' + row.email : ', no email address on file'));
+      host.append(button);
+    });
+  }
+  const note = document.getElementById(TO_NOTE_ID);
+  if (!note) return;
+  const to = model.recipient;
+  note.textContent = !to ? ''
+    : (to.name ? to.name + (to.email ? ' · ' + to.email : '') : (to.email || ''))
+      || 'No name and no address on file for this one yet.';
+}
+
+/*
+  THE TEMPLATE PICKER IS A `<select>` AND THE OTHER TWO ARE CHIPS, and the difference is whose words
+  they are. A tone and a recipient are the app's own short strings; a template name is whatever the
+  teacher typed, and a row of nowrap chips holding "Missing work — first contact, second attempt"
+  puts a 390px modal into sideways scroll. src/templates-view.js reached for a `<select>` one screen
+  over for the same reason and named it at its own line.
+*/
+function paintTemplates(model) {
+  const picker = document.getElementById(TEMPLATE_ID);
+  if (picker) {
+    /* REBUILT ONLY WHEN THE LIST ACTUALLY CHANGED. On iPadOS a `<select>` replaced while its wheel
+       is open loses the wheel, and this paint runs on every keystroke — src/templates-view.js's
+       rule about the same control, and src/categories.js's about an input under a caret. */
+    const wanted = model.templates.map((t) => t.id + '|' + (t.name || 'Untitled template'));
+    const there = Array.prototype.map.call(picker.options, (o) => o.value + '|' + o.textContent);
+    if (JSON.stringify(wanted) !== JSON.stringify(there)) {
+      picker.textContent = '';
+      model.templates.forEach((t) => {
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.textContent = t.name || 'Untitled template';
+        picker.append(option);
+      });
+    }
+    picker.value = model.templateId;
+    picker.classList.toggle('hidden', model.templates.length === 0);
+  }
+  const note = document.getElementById(TEMPLATE_NOTE_ID);
+  if (note) {
+    note.textContent = model.templates.length
+      ? model.templates.length + (model.templates.length === 1 ? ' template' : ' templates')
+        + ' written for a ' + templates.audienceLabel(model.audience).toLowerCase() + ' in the '
+        + templates.toneLabel(model.tone).toLowerCase() + ' tone.'
+      : 'Nothing saved for this pair yet.';
+  }
+}
+
+function paintTones(model) {
+  const host = document.getElementById(TONES_ID);
+  if (!host) return;
+  host.querySelectorAll('[data-outreach-tone]').forEach((button) => {
+    const on = (button.getAttribute('data-outreach-tone') || '') === model.tone;
+    button.classList.toggle('active', on);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+/*
+  THE BLOCK STRIP, LIFTED FROM src/shell.css § UNRESOLVED RATHER THAN RE-CUT. It is the same
+  component the live preview draws — WO-5.2 put it in the shell's own sheet precisely because this
+  surface renders one too — and it is permanent here for the reason it is permanent there: a strip
+  that appears only on failure is read as an error banner, and one that is always there is a report.
+
+  WHAT IS DIFFERENT IS WHAT IT COUNTS. The preview counts fields, because a template is what it is
+  about. This one counts THINGS TO FIX, because a draft can also be blocked by a recipient with no
+  address or by no message being chosen, and calling those "fields" would be this screen pretending
+  the resolver had an opinion about them.
+*/
+function paintBlock(model) {
+  const host = document.getElementById(BLOCK_ID);
+  if (!host) return;
+  host.textContent = '';
+  host.classList.toggle('clear', model.ready);
+  const count = model.reasons.length;
+  host.append(el('div', 'mf-block-head', model.ready
+    ? 'Nothing blocked · this draft is ready for your mail app'
+    : 'This draft cannot be sent · ' + count + (count === 1 ? ' thing to fix' : ' things to fix')));
+
+  if (model.ready) {
+    host.append(el('div', 'mf-reason', 'It opens in your own mail app, addressed to '
+      + (model.recipient ? (model.recipient.name || model.recipient.email) : '')
+      + (model.cc.on && model.cc.ok ? ', copied to you' : '')
+      + '. Nothing is sent until you send it there.'));
+    return;
+  }
+  model.reasons.forEach((reason) => {
+    const row = el('div', 'mf-reason');
+    if (reason.field) row.append(el('code', '', '{{' + reason.field + '}}'));
+    row.append(el('span', '', reason.text));
+    /* The one control on the row, and it goes to the half of the draft the field is in — the same
+       gesture the preview's strip offers, wearing the same class and carrying this flow's own hook.
+       Only a merge field gets one: there is nothing on this screen for "add a guardian's email" to
+       jump to, and a button that went nowhere would be worse than no button. */
+    if (reason.field) {
+      const jump = el('button', 'mf-jump', reason.where === 'subject' ? 'Subject' : 'Body');
+      jump.type = 'button';
+      jump.setAttribute('data-outreach-jump', reason.where);
+      jump.setAttribute('aria-label', 'Go to the ' + reason.where + ' and fix ' + reason.field);
+      row.append(jump);
+    }
+    host.append(row);
+  });
+}
+
+/*
+  THE HANDOFF ITSELF. The link carries the URL when the draft is ready and carries NO `href` at all
+  when it is not — see this file's header for why that is the refusal rather than a disabled button.
+*/
+function paintOpen(model) {
+  const link = document.getElementById(OPEN_ID);
+  if (!link) return;
+  if (model.ready && model.url) {
+    link.setAttribute('href', model.url);
+    link.removeAttribute('aria-disabled');
+    link.setAttribute('aria-label', 'Open this draft in your mail app, addressed to '
+      + (model.recipient ? (model.recipient.name || model.recipient.email) : ''));
+  } else {
+    link.removeAttribute('href');
+    link.setAttribute('aria-disabled', 'true');
+    link.setAttribute('aria-label', 'Open in my mail app — not until the draft is unblocked');
+  }
+
+  const length = document.getElementById(LENGTH_ID);
+  if (length) {
+    /* THE WARNING IS BEFORE THE FACT, because truncation leaves no gap and no error — see
+       src/outreach.js's MAILTO_CEILING for where 2,000 comes from and why it is measured on the
+       encoded URL rather than on what the teacher typed. Nothing in this app cuts the message. */
+    length.classList.toggle('hidden', !model.long);
+    length.textContent = model.long
+      ? 'This draft is ' + model.length + ' characters once it is encoded for your mail app, which '
+        + 'is over the ' + outreach.MAILTO_CEILING + ' some apps carry — Outlook on Windows cuts '
+        + 'there, silently. Planbook does not shorten it: send it and check what arrived, or trim '
+        + 'it here first.'
+      : '';
+  }
+}
+
+/*
+  PAINT THE FLOW. `opts.fields === false` leaves the subject and the body alone, and that is the
+  rule src/templates-view.js's paintEditor() and src/categories.js both keep: replacing the value of
+  a field while somebody is typing into it moves the caret to the end, and on iPadOS it can close
+  the software keyboard. So a keystroke repaints the strip, the link and the length warning and
+  touches neither box; rebuilding the draft is what re-fills them.
+*/
+export function renderOutreach(opts) {
+  const host = document.getElementById(FORM_ID);
+  if (!host) return;
+  const fields = !opts || opts.fields !== false;
+  /*
+    THE DRAFT IS RESOLVED ON THE FIRST PAINT THAT IS ALLOWED TO DRAW ONE, which is what makes
+    "nothing is resolved at all while the projector is on" true of the flow rather than only of the
+    screen. The send flow can be opened from the student record with the mode already on — that
+    screen does not refuse — and a draft built there would be a resolved draft sitting in memory for
+    a later render to draw, which is exactly what src/signals-view.js's rule forbids.
+
+    So openOutreach() sets the state and stops, and the resolve happens here, on the paint the
+    header switch chains into when the mode comes off.
+  */
+  if (subject && !built && !presentationMode()) { buildDraft(); built = true; }
+  const model = outreachModel();
+
+  const title = document.getElementById(TITLE_ID);
+  if (title) title.textContent = model.blocked || !model.name ? 'Draft an email'
+    : 'Draft an email — ' + model.name;
+  const sub = document.getElementById(SUB_ID);
+  if (sub) {
+    sub.textContent = model.blocked ? '' : model.className
+      + (model.termLabel ? ' · ' + model.termLabel : '');
+    sub.classList.toggle('hidden', model.blocked || !model.className);
+  }
+
+  const projecting = document.getElementById(PROJECTING_ID);
+  if (projecting) projecting.classList.toggle('hidden', !model.blocked);
+  /* NO SUBJECT AND THE PROJECTOR ARE THE SAME PAINT, deliberately: both are states in which nothing
+     about a student may be on the glass. The first is only reachable by a year switch or a restore
+     under an open modal, which resetOutreach() below also closes. */
+  host.classList.toggle('hidden', model.blocked || !model.open);
+
+  /* EMPTIED RATHER THAN HIDDEN. The two boxes hold a named student's business and a guardian's
+     address, and `display: none` is not a redaction — see this file's header. */
+  const subjectField = document.getElementById(SUBJECT_ID);
+  const bodyField = document.getElementById(BODY_ID);
+  if (model.blocked || !model.open) {
+    if (subjectField) subjectField.value = '';
+    if (bodyField) bodyField.value = '';
+    const to = document.getElementById(TO_ID);
+    if (to) to.textContent = '';
+    const note = document.getElementById(TO_NOTE_ID);
+    if (note) note.textContent = '';
+    const picker = document.getElementById(TEMPLATE_ID);
+    if (picker) picker.textContent = '';
+    /* The two lines of type under the pickers go with them. Neither names a student, and both are
+       emptied anyway: what a projected room learns from "3 templates written for a guardian" is
+       that somebody is being written about, and the teacher's own address is not a thing to leave
+       on a wall either. */
+    const templateNote = document.getElementById(TEMPLATE_NOTE_ID);
+    if (templateNote) templateNote.textContent = '';
+    const ccNote = document.getElementById(CC_NOTE_ID);
+    if (ccNote) ccNote.textContent = '';
+    const block = document.getElementById(BLOCK_ID);
+    if (block) block.textContent = '';
+    const link = document.getElementById(OPEN_ID);
+    if (link) { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
+    return;
+  }
+
+  paintTones(model);
+  paintRecipients(model);
+  paintTemplates(model);
+  /* THE TWO BOXES, WRITTEN ONLY WHEN THE DRAFT CHANGED UNDER THE TEACHER — see this function's
+     own comment for the rule and the reason. */
+  if (fields && subjectField) subjectField.value = model.subject;
+  if (fields && bodyField) bodyField.value = model.body;
+
+  const cc = document.getElementById(CC_ID);
+  if (cc) {
+    cc.classList.toggle('active', model.cc.on);
+    cc.setAttribute('aria-pressed', model.cc.on ? 'true' : 'false');
+    cc.textContent = model.cc.on ? 'Copy me: on' : 'Copy me: off';
+  }
+  const ccNote = document.getElementById(CC_NOTE_ID);
+  if (ccNote) {
+    ccNote.textContent = !model.cc.on
+      ? 'This one will not copy you. Your sent-mail folder still holds it once you send it.'
+      : (model.cc.ok
+        ? 'You are copied at ' + model.cc.email + ', so you keep your own record of what went home.'
+        : 'There is no email address in Your details yet, so there is nothing to copy you at.');
+  }
+
+  paintBlock(model);
+  paintOpen(model);
+
+  const line = document.getElementById(STATUS_ID);
+  if (line) {
+    line.textContent = model.status;
+    line.classList.toggle('hidden', !model.status);
+  }
+}
+
+/*
+  EVERYTHING THIS FLOW HOLDS, DROPPED — and the modal closed with it. Called by src/shell.js after a
+  year switch and after a restore, for the reason resetTemplates() is called there: a draft about a
+  student in the document that was just replaced is a draft about nobody. Closing rather than
+  emptying, because the state behind this modal is a row the teacher tapped and that row is gone.
+*/
+export function resetOutreach() {
+  subject = null;
+  tone = templates.TONES[0];
+  recipientKey = '';
+  templateId = '';
+  draft = { subject: '', body: '' };
+  errors = [];
+  built = false;
+  status = '';
+  closeModal(MODAL_ID);
+  renderOutreach();
+}
+
+/* ────────────────────────────── the controls ────────────────────────────── */
+
+/*
+  THE ONE RESOLVE. Called when the template, the recipient or the tone changes and never on a
+  keystroke — see this file's header. It replaces whatever is in the two boxes, which is why every
+  caller of it says so in the status line: a teacher who has typed four lines and then changes the
+  recipient has to be told her draft was rebuilt rather than left to notice.
+*/
+function buildDraft() {
+  const doc = getDoc();
+  const model = outreachModel();
+  const record = model.templateId
+    ? templates.templateById(doc, model.templateId) : null;
+  if (!record || !subject) {
+    draft = { subject: '', body: '' };
+    errors = [];
+    return;
+  }
+  const chosen = outreach.recipientByKey(
+    outreach.recipientsFor(doc, studentById(doc, subject.studentId)), model.recipient
+      ? model.recipient.key : '');
+  const out = resolveDraft({
+    doc: doc,
+    classId: subject.classId,
+    termId: subject.termId,
+    studentId: subject.studentId,
+    /* WHICH GUARDIAN `{{guardian.name}}` MEANS — the parameter src/merge-fields.js left open for
+       this work order by name. A guardian recipient hands her own record over; every other
+       recipient hands none, and that field falls back to the preferred guardian, which is that
+       module's own documented answer rather than a decision made here. */
+    guardian: chosen ? chosen.guardian : null,
+    hit: hitFor(tone === 'praise' ? 'praise' : 'concern'),
+    hits: subject.hits,
+    template: { subject: record.subject, body: record.body },
+  });
+  draft = { subject: out.subject, body: out.body };
+  errors = out.errors;
+}
+
+/*
+  OPEN THE FLOW FOR ONE STUDENT. `where` carries the row the draft was opened from:
+
+      { studentId, classId, termId, hits }
+
+  `hits` is the student's own signals, captured by the caller at the moment of the tap — the signal
+  card hands over the hits its row is drawn from, and the student record runs the engine once for
+  the class it is standing in. Nothing here re-runs it afterwards.
+*/
+export function openOutreach(where, opener) {
+  const w = where || {};
+  const doc = getDoc();
+  const student = studentById(doc, w.studentId);
+  if (!student) return false;
+  subject = {
+    studentId: w.studentId,
+    classId: w.classId || '',
+    termId: w.termId || '',
+    hits: Array.isArray(w.hits) ? w.hits.filter(Boolean) : [],
+  };
+  /* THE TONE OPENS ON THE DIRECTION OF THE ROW SHE TAPPED, which is the whole of what the two
+     columns mean: a draft opened from a praise row is a praise message. With no signals at all —
+     the student record, for a student nothing has fired for — it opens on concern, because that is
+     the tone every audience has a starter for and the switch is one tap. */
+  const lead = orderHits(subject.hits)[0] || null;
+  tone = lead && lead.direction === 'praise' ? 'praise' : 'concern';
+  /* THE FIRST RECIPIENT WITH AN ADDRESS, rather than the first row: a modal that opens on a
+     guardian with no email and a dead button teaches that the feature is broken. The order is
+     src/outreach.js's — guardians first, in roster order. */
+  const people = outreach.recipientsFor(doc, student);
+  const first = people.filter((r) => r.email)[0] || people[0] || null;
+  recipientKey = first ? first.key : '';
+  const offered = templates.templatesFor(doc, tone, first ? outreach.audienceOf(first) : '');
+  templateId = offered.length ? offered[0].id : '';
+  copySelf = !!(doc && doc.teacher && doc.teacher.defaultCc !== false);
+  status = '';
+  /* NOT RESOLVED HERE. renderOutreach() below does it, and only when it is allowed to — see the
+     note at that function. The announcement follows the same rule: with the projector on it names
+     the control that undoes the refusal rather than the student, because a live region is part of
+     the page and "the fields are emptied rather than hidden" would mean nothing beside a spoken
+     name. */
+  built = false;
+  renderOutreach();
+  openModal(MODAL_ID, opener);
+  announce(presentationMode()
+    ? 'Not while you are projecting. Turn presentation mode off with the screen button in the '
+      + 'header and the draft comes back.'
+    : 'Drafting an email about ' + fullName(student) + '.');
+  return true;
+}
+
+export function setOutreachTone(next) {
+  if (!templates.isTone(next) || next === tone) return;
+  tone = next;
+  const doc = getDoc();
+  const model = outreachModel();
+  const offered = templates.templatesFor(doc, tone, model.audience);
+  templateId = offered.length ? offered[0].id : '';
+  buildDraft();
+  status = 'The draft was rebuilt from a ' + templates.toneLabel(tone).toLowerCase()
+    + ' template. Anything you had typed is gone.';
+  renderOutreach();
+  announce(templates.toneLabel(tone) + '.');
+}
+
+export function setOutreachRecipient(key) {
+  const doc = getDoc();
+  const model = outreachModel();
+  if (!key || key === (model.recipient ? model.recipient.key : '')) return;
+  recipientKey = String(key);
+  const next = outreachModel();
+  /* The template list is filtered by the audience, so a template written for a guardian cannot
+     survive a switch to the counselor — it is not on offer any more. Whichever is first for the new
+     pair is what the draft is rebuilt from. */
+  const offered = templates.templatesFor(doc, tone, next.audience);
+  if (!offered.filter((t) => t.id === templateId)[0]) {
+    templateId = offered.length ? offered[0].id : '';
+  }
+  buildDraft();
+  status = 'The draft was rebuilt for ' + (next.recipient
+    ? (next.recipient.name || next.recipient.label) : 'that recipient')
+    + '. Anything you had typed is gone.';
+  renderOutreach();
+  announce('Writing to ' + (next.recipient ? (next.recipient.name || next.recipient.label) : '')
+    + '.');
+}
+
+export function setOutreachTemplate(id) {
+  const want = String(id || '');
+  if (!want || want === templateId) return;
+  templateId = want;
+  buildDraft();
+  const model = outreachModel();
+  status = 'The draft was rebuilt from ' + (model.templateName || 'that template')
+    + '. Anything you had typed is gone.';
+  renderOutreach();
+  announce(model.templateName + ' is in the draft.');
+}
+
+/* A field of the draft, as it is typed. It writes to the DRAFT and never to the document, and it
+   repaints everything but the two boxes — so the strip, the link and the length warning follow the
+   keystroke and the caret stays where the teacher put it. */
+export function editOutreachField(input) {
+  if (!input) return;
+  const which = input.getAttribute('data-outreach-field');
+  if (which !== 'subject' && which !== 'body') return;
+  draft[which] = input.value;
+  status = '';
+  renderOutreach({ fields: false });
+}
+
+export function toggleOutreachCopy() {
+  copySelf = !copySelf;
+  renderOutreach({ fields: false });
+  announce(copySelf ? 'This draft will copy you.' : 'This draft will not copy you.');
+}
+
+/* The block strip's one control: to the half of the draft the field is in. It does not select the
+   token — the field is the answer to "where do I fix this", and a selection made from here would be
+   a caret moved out from under a teacher who was already typing (src/templates-view.js's jumpTo). */
+export function jumpTo(where) {
+  const node = document.getElementById(where === 'subject' ? SUBJECT_ID : BODY_ID);
+  if (node && typeof node.focus === 'function') node.focus({ preventScroll: true });
+}

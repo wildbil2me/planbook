@@ -171,6 +171,38 @@ state:** *the implementer's cited 1194/1194 was real, taken before the mutation 
 repaired and re-verified by a separate verifier on 2026-08-28 — 1194 checks green, sweep green, both
 gate tools PASS.)*
 
+*(**Phase 5 has a send flow as of 2026-08-29, and the way it got there is the fifth dead dispatch
+and the third killed by a quota.** [WO-5.3](plans/work-orders/phase-5-outreach.md#wo-53--send-flow)
+is ✅ — all seven Acceptance lines, the last two closed by the owner on hardware. **The corpse left
+FIVE live mutations**, where WO-5.1's left one, and the shape was identical: the implementer had
+finished its whole doc pass and died mid-mutation-proof, so every document read finished over a tree
+that was deliberately broken. `grep -rn MUTATION` found them in one command — **it has now paid for
+itself twice and is still the first move on any dead dispatch.** Two of the five mattered: a deleted
+CRLF normalisation, invisible on screen and producing exactly the mangled-paragraph email the work
+order's Traps line exists to catch, and a presentation-mode disclosure leaving a student's business
+and a guardian's address on the glass. **All five sat under already-ticked boxes.** Two things
+generalise. **A recovered tree that reproduces the corpse's own figures is the evidence the
+reconstruction was right** — 1251/1251 at 37,466 lines matched what the implementer had written
+down, and a wrong rebuild fails a check rather than matching a total. And **the owed mutation round
+is worth re-running rather than writing off**: three of the five bit, one was correctly not caught
+(defence in depth), and one exposed a real defect in the delivered harness — `update()` only
+SCHEDULES a save and `rev` advances 800ms later, so the check claiming "the whole flow wrote nothing
+at all" had a blind spot at exactly the point the flow ends. It awaits `flush()` now. The record is
+`.claude/dispatch/WO-5.3-status.md`.)*
+
+*(**The template editor takes the class tabs without being a class screen, and that is a third kind
+this app did not have** — 2026-08-29, the owner's call after finding no way out of it.
+`src/classes.js` drew the header strip only for `CLASS_SCREENS` entries; `#templatesView` is not one,
+so it landed in the caption branch and showed a dead `<span>Your classes</span>` over a panel headed
+*Message templates*. **That is word for word the bug WO-6.6 fixed for the calendar**, and
+`src/classes.js` had written down in advance that a third view would produce it. **The fix is not the
+one that comment predicted**: templates are global — `templatesFor(doc, tone, audience)` takes no
+`classId` — so putting it in `CLASS_SCREENS` would hand it a switcher segment and a
+`paintClassScreen()` branch it has no use for. It takes the TABS without the KIND, via `carriesTabs`,
+and **no tab is marked active** because there is no class it is in. Before adding a fourth view to
+either branch, read that note: a screen genuinely about nothing still wants a caption, and the
+lookup that used to provide one is gone.)*
+
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
 from its dashboard, never from this file**; a count written here is a count nothing maintains. The

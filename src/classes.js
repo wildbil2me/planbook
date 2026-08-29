@@ -499,7 +499,32 @@ export function refreshClassBar() {
     the class I am in", NOT "this is the class the grid is drawing" — the toolbar's own filter answers
     that second question and keeps *All classes*, which a tab row cannot say.
   */
-  const onClassView = isClassScreen(currentView());
+  const view = currentView();
+  const onClassView = isClassScreen(view);
+  /*
+    ONE VIEW CARRIES THIS STRIP WITHOUT BEING IN A CLASS, and it is the third kind the branch below
+    said would turn up (the owner, 2026-08-29, reading WO-5.2's editor on hardware: "there's no way
+    out of the message template screen").
+
+    The template editor is not a class screen and must not become one — templates are written once
+    and offered to every class, `templatesFor(doc, tone, audience)` takes no `classId`, and putting
+    it in `CLASS_SCREENS` would also hand it a segment on the class switcher (src/screen-nav.js) and
+    a paintClassScreen() branch it has no use for. So it takes the TABS without taking the KIND.
+
+    What it was doing instead was landing in the caption branch below and drawing a dead
+    `<span>Your classes</span>` over a panel headed *Message templates* — word for word the defect
+    WO-6.6 fixed for the calendar, arriving again the day WO-5.2 added a `<div>` and no line here.
+    A caption that reads like a control and answers no tap is worse than an empty strip, which is
+    why the way out could not be found: the panel's own `data-view-home` button was the only one,
+    and at 390px it is the second door index.html says is never enough on its own.
+
+    NO TAB IS MARKED ACTIVE HERE, and that is the honest half. On a class screen the active tab
+    means "this is the class I am in"; on this screen there is no such class, and lighting up
+    whichever one was open last would say so falsely over a panel that is about none of them. What
+    the row is for here is the *All classes* door and five ways into a class — navigation, not a
+    statement about where you are.
+  */
+  const carriesTabs = onClassView || view === 'templates';
 
   bar.textContent = '';
   if (!list.length) {
@@ -510,7 +535,7 @@ export function refreshClassBar() {
     empty.textContent = doc ? 'No classes yet.' : 'No school year open.';
     bar.append(empty);
     if (doc) bar.append(addClassTab('Add a class'));
-  } else if (!onClassView) {
+  } else if (!carriesTabs) {
     /*
       THE HOME VIEW, WHERE THIS STRIP HAS NO CLASSES ON IT AND MUST STILL NOT LOOK BROKEN.
 
@@ -542,18 +567,30 @@ export function refreshClassBar() {
        reaches this line. The lookup came out WITH it rather than being left to hold one entry: a
        one-key map of the only screen that cannot reach it is a thing to read and disbelieve. The
        constant is back, and it is the home panel's own title. A third view that belongs to neither
-       kind would put the lookup back in the same sitting that adds its `<div>`. */
+       kind would put the lookup back in the same sitting that adds its `<div>`.
+
+       THAT SENTENCE WAS WRONG FOR NINE DAYS AND IS TRUE AGAIN (2026-08-29). WO-5.2 added
+       `#templatesView` on 2026-08-28 and no line here, so the third view arrived, took this branch
+       and drew *Your classes* over a panel headed *Message templates* — the calendar's own bug, in
+       the sitting that was told how to avoid it. The answer was not the lookup after all: the owner
+       read it on hardware and asked for the class buttons, so the editor takes the `else` below
+       instead and this branch is the home view's alone again. Read `carriesTabs` above before
+       adding a fourth view — a screen that is genuinely captionable still wants the lookup. */
     here.textContent = 'Your classes';
     bar.append(here);
   } else {
-    /* The way back to the class grid, at the head of the row a teacher navigates with, and only
-       ever on the class view — on the home view it would be a way back to where you already are.
+    /* The way back to the class grid, at the head of the row a teacher navigates with, and never
+       on the home view — there it would be a way back to where you already are. Since 2026-08-29
+       this row is also drawn on the template editor, which is the one screen that reaches it
+       without being in a class; the door is the whole reason it does.
        The class view's own panel header carries the second door onto this same hook — see
        index.html for why "always reachable" needs two at 390px, and why two doors onto one route
        is not two controls. */
     bar.append(homeTab());
     list.forEach((cls) => {
-      const isOpen = cls.id === selectedId;
+      /* `onClassView` and not `carriesTabs`: the template editor draws this row to navigate WITH,
+         and is in no class to mark. See the note over `carriesTabs`. */
+      const isOpen = onClassView && cls.id === selectedId;
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.className = 'cls-tab' + (isOpen ? ' active' : '');

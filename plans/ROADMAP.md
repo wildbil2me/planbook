@@ -84,11 +84,11 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
-| 5 | Outreach | 🔨 IN PROGRESS | 4/9 `[████░░░░░░] 44%` |
+| 5 | Outreach | 🔨 IN PROGRESS | 8/9 `[█████████░] 89%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **60/81 `[███████░░░] 74%`** · ⏳ 1 deferred |
+| | | **Overall** | **64/81 `[████████░░] 79%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -530,15 +530,47 @@ granting a mail scope.
       rather than document rows: the editor opens empty, opening one fills it, and a Save is what
       writes a record, because identical sentences one keystroke from a hundred guardians is the
       cost of auto-loading one.)*
-- [ ] Audience picker: guardian 1/2, **counselor, admin**. Contacts already live on the roster.
-- [ ] **Copy to self**, on by default — a real message in the owner's sent folder is what a school
+- [x] Audience picker: guardian 1/2, **counselor, admin**. Contacts already live on the roster.
+- [x] **Copy to self**, on by default — a real message in the owner's sent folder is what a school
       asks for when it asks.
-- [ ] **`mailto:` handoff** — never a mail scope. It opens the teacher's own client, so the sent
+- [x] **`mailto:` handoff** — never a mail scope. It opens the teacher's own client, so the sent
       record lands where a school expects to find it.
-- [ ] Editable before sending. Always. A generated message going out unread is the failure mode
+- [x] Editable before sending. Always. A generated message going out unread is the failure mode
       that ends trust in the feature.
 - [ ] Log the contact (append-only) and show contact history per student, from the roster and the
       signal card.
+
+*(**Four boxes above were built on 2026-08-28, deliberately left open, and closed on 2026-08-29 when
+the owner read them on hardware.**
+`Audience picker`, `Copy to self`, the `mailto:` handoff and `Editable before sending` all landed
+that day under [WO-5.3](work-orders/phase-5-outreach.md#wo-53--send-flow): `src/outreach.js` is the
+model, `src/outreach-view.js` is the modal over it, reached from the signal card and from the
+student record, and `tools/verify/outreach.mjs` is twenty-eight checks over it. **The work order is
+held open by two Acceptance lines wearing 👤**, and both of them end outside this app — a draft
+opening in a real mail client on a desktop and on an iPad, and a copy actually landing in a sent
+folder. **A mark closes no roadmap box**, which is the whole point of the pair: the same posture
+Phase 4's three built-but-open boxes take four sections up, and for the same reason. **The dashboard
+above sat at 4/9 for a day with eight ninths of the code on disk**, and moved to 8/9 only once a
+person had actually sent one — read the work orders for what exists, and these boxes for what has
+been proved on a real device, which is a different question and the one a `mailto:` handoff is least
+able to fake. The readings, both 2026-08-29: the draft opened in the default client on the laptop
+and the iPad with subject and body intact, and the copy arrived in the sent folder.
+
+**The same sitting turned up seven things the boxes above do not say, and none of them is a failure
+of these four.** One was a defect and is fixed in that sitting — the template editor had no class
+tabs and so no way out, which is [WO-5.2](work-orders/phase-5-outreach.md#wo-52--templates)'s screen
+rather than this work order's. The other six are changes the owner asked for after using the flow —
+a copy-to-clipboard door for webmail, several recipients at once, and four smaller ones — and they
+are **booked rather than folded in silently**, because a work order that grows to absorb everything
+its own demo suggests is a work order that never closes. See the phase file.*
+
+*Two things it settled that these boxes do not say.* **A recipient is not an audience**: the picker
+offers five people — both guardians by position, the counselor, the administrator and the student
+herself — over the four drawers a template is filed under, and `AUDIENCES` was not widened to make
+that true. And **the practical `mailto:` ceiling is ~2,000 characters of encoded URL**, set by
+Windows rather than by the iPad; past it the app warns and truncates nothing, because a message cut
+silently is the failure this feature would not survive. `docs/data-model.md` § "Where a draft is
+sent from" carries both.)*
 
 ---
 

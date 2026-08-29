@@ -289,6 +289,15 @@ export function openDetailName() {
   return student ? fullName(student) : '';
 }
 
+/* And the same question answered as an id, for src/shell.js's outreach door (WO-5.3) and for
+   nothing else. It goes through openStudent() like everything else here, so a student who has left
+   this class's roster is nobody to draft about as well as nobody to draw. This screen does not know
+   what a draft is: what it hands over is who is on it. */
+export function openDetailStudentId() {
+  const student = openStudent(getSelectedClass());
+  return student ? student.id : '';
+}
+
 /* ────────────────────────────── the breakdown ──────────────────────────────
 
    Every category, its weight, what the student earned in it, and what that contributes to the

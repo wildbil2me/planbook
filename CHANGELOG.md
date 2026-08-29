@@ -13,6 +13,48 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The message actually leaves — pick who it goes to, edit it, hand it to your own mail app — 2026-08-29
+
+**From a student who needs a conversation to a draft sitting in your mail client, without leaving
+the app and without granting anything.** Open a signal card or a student's record, tap *Draft an
+email*, and choose who it goes to — either guardian, the counselor, the administrator or the student
+herself, read straight off the roster. Pick one of your saved templates, and the whole message
+arrives resolved against that student: her name, her grade, what she is missing, why she surfaced.
+Then **you edit it**, because a message going out unread is the thing that ends trust in a feature
+like this. *Open in my mail app* hands the finished text to whatever you already use.
+
+**It asks Google for nothing, and it never will.** Sending mail on your behalf would mean a
+permission screen reading "Send email as you," which is not a thing to ask a teacher to click. The
+message leaves from your own client instead — which also means **your sent folder is your record**,
+which is what a school asks for when it asks. Copy-to-self is on by default for the same reason.
+
+**A draft with a hole in it cannot be sent, and not by being told off.** If a field did not resolve
+— a guardian with no name on file, say — the message keeps the `{{field}}` visibly intact and the
+handoff link **is not a link at all**: nothing to tap, nothing focusable, no address behind it. Type
+over the field and it comes back. A message that quietly dropped the broken part would read fine and
+go out wrong, which is the failure this is written against.
+
+**Projecting closes the whole thing.** Every part of a draft is one child's business — the title, the
+picker, the subject, the body, a guardian's email address — so there is no half of it worth keeping
+on screen, and presentation mode empties the boxes rather than hiding them.
+
+**A long message warns instead of being cut.** Past about 2,000 characters some mail clients — the
+Windows ones, mostly — truncate a handoff silently. The app tells you before you tap, names the
+number, and **shortens nothing**, because a message trimmed on your behalf is a message you send
+without knowing what came off.
+
+**And the template screen has a way out again.** It was the one full screen in the app the header's
+class buttons did not appear over, so it showed a dead *Your classes* caption above a panel headed
+*Message templates* and left the panel's own back button doing the work alone. The class tabs and
+the *All classes* door are on it now — no tab lit, because you are not in a class while you are
+writing a template.
+
+*(**Six more things came out of the first real sitting with this and are booked rather than folded
+in.** Being able to write to several people at once, a copy-to-clipboard door for anyone whose mail
+is a browser tab, a confirm before a changed template throws away what you typed, and clearer words
+in two places. They are WO-5.5 through WO-5.8 in `plans/work-orders/phase-5-outreach.md`. Sending
+mail from inside the app is a **2.0** question, not a 1.0 one.)*
+
 ### Message templates, with a preview that resolves against a real student before anyone is written to — 2026-08-28
 
 **Write what a message says before it says it about anybody.** Concern and praise are written

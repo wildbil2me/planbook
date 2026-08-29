@@ -1282,6 +1282,13 @@
         <button class="class-action-btn" type="button" data-detail-csv>
           <span aria-hidden="true">⬇</span> Download CSV
         </button>
+        <!-- THE SECOND DOOR ONTO THE SEND FLOW (WO-5.3). The first is the signal card, which is
+             where a draft usually starts; this one is for the conversation that begins on the
+             student's own page, in the middle of a conference. It opens a modal over this screen
+             and changes nothing on it. -->
+        <button class="class-action-btn" type="button" data-outreach-draft>
+          <span aria-hidden="true">✉</span> Draft an email
+        </button>
       </div>
 
       <p class="detail-empty hidden" id="detailEmpty"></p>
@@ -2549,6 +2556,115 @@
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body" id="signalCardBody"></div>
+  </div>
+</div>
+
+<!--
+  THE SEND FLOW (WO-5.3) — one student, one recipient, one of the teacher's own templates, and the
+  handoff to her own mail client.
+
+  A MODAL, AND IT OPENS OVER THE SIGNAL CARD RATHER THAN REPLACING IT. plans/gradebook-surfaces.md's
+  test applied rather than re-argued: drafting one message is a task a teacher finishes and
+  dismisses. src/modal.js stacks by construction, so Escape closes this and puts her back on the
+  card she opened it from. The other door is the student record's action row.
+
+  NOTHING IS SENT FROM HERE, EVER. `mailto:` is an architectural commitment rather than a shortcut
+  (CLAUDE.md): a mail scope reads "Send email as you" on a consent screen, and the teacher's own
+  sent-mail record — which is what a school asks for when it asks — only stays intact if the message
+  leaves from her client. So the last control in this panel is a LINK, and what it carries is a URL.
+
+  EVERYTHING THAT COMES OUT OF THE DOCUMENT IS EMPTY IN THIS MARKUP and is drawn by
+  src/outreach-view.js — the recipient chips, the template list, the draft itself, the block strip
+  and the length warning. What IS markup is what does not change with the document: the controls and
+  the copy a teacher reads, which lives here rather than in a module for the reason the template
+  screen's does — it should be revisable without opening a JavaScript file.
+
+  THE WHOLE PANEL GOES DOWN IN PRESENTATION MODE, which is src/signals-view.js's refusal rather than
+  the template screen's one-column suppression, and src/outreach-view.js argues that at its own
+  header: there is no column here that names nobody. The fields are EMPTIED as well as hidden.
+-->
+<div class="modal-overlay hidden" id="outreachModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="outreachTitle">
+    <div class="modal-header">
+      <h2 id="outreachTitle">Draft an email</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="outreachSub" class="hidden"></p>
+
+      <p id="outreachProjecting" class="hidden">
+        <strong>Not while you are projecting.</strong>
+        A draft names a student, her guardians and their email addresses, and there is no half of
+        this panel that does not. Presentation mode is on, so nothing here is drawn or resolved;
+        turn it off with the screen button in the header and the draft comes straight back.
+      </p>
+
+      <div id="outreachForm">
+        <div class="modal-section-label">What kind of message</div>
+        <!-- CONCERN AND PRAISE ARE TWO LISTS, NOT ONE WITH A SWITCH IN IT — a good praise message
+             reads nothing like a good concern message (WO-5.2). This chooses which of the two the
+             templates below come from, and it opens on the direction of the row that was tapped. -->
+        <div class="roster-actions" id="outreachTones" role="group" aria-label="What kind of message">
+          <button class="toggle-btn" type="button" data-outreach-tone="concern"
+                  aria-pressed="true">Concern</button>
+          <button class="toggle-btn" type="button" data-outreach-tone="praise"
+                  aria-pressed="false">Praise</button>
+        </div>
+
+        <div class="modal-section-label">Who it goes to</div>
+        <!-- The chips are POSITIONS — Guardian 1, Guardian 2, Counselor, Admin, Student — and the
+             person behind the chosen one is named on the line under them, where a long name can
+             wrap. src/outreach.js says why a recipient and a template's audience are two different
+             lists, and why nobody with no address on file is quietly left out. -->
+        <div class="roster-actions" id="outreachRecipients" role="group"
+             aria-label="Who this message goes to"></div>
+        <p class="roster-hint" id="outreachRecipientNote"></p>
+
+        <div class="modal-section-label">Which of your templates</div>
+        <select class="student-select" id="outreachTemplate" data-outreach-template
+                aria-label="Which of your templates"></select>
+        <p class="roster-hint" id="outreachTemplateNote"></p>
+
+        <div class="modal-section-label">The draft — yours to change before it goes</div>
+        <div class="class-form">
+          <input class="class-input" type="text" id="outreachSubject" autocomplete="off"
+                 data-outreach-field="subject" aria-label="Subject">
+        </div>
+        <textarea class="student-notes" id="outreachBody" data-outreach-field="body"
+                  aria-label="The message"></textarea>
+
+        <div class="modal-section-label">Copy yourself</div>
+        <div class="roster-actions">
+          <button class="toggle-btn" type="button" id="outreachCc" data-outreach-copy
+                  aria-pressed="true">Copy me: on</button>
+        </div>
+        <p class="roster-hint" id="outreachCcNote"></p>
+
+        <!-- THE BLOCK STRIP, THE SAME COMPONENT THE LIVE PREVIEW DRAWS. Green when nothing is
+             wrong, amber when something is, and always there: a strip that appeared only on failure
+             would read as an error banner, and one that is always there is a report (the owner,
+             2026-08-28). It reads the same `blocked` flag off the same resolver. -->
+        <div class="mf-block" id="outreachBlock"></div>
+        <p class="class-hint warn hidden" id="outreachLength"></p>
+
+        <div class="modal-actions">
+          <!-- A REAL LINK, AND THE REFUSAL IS THAT IT HAS NO href. src/outreach-view.js argues it
+               at its own header: a blocked draft's handoff is not a dimmed button, it is not a link
+               at all — unclickable, unfocusable, and carrying no address. -->
+          <a class="class-action-btn primary" id="outreachOpen"
+             aria-disabled="true">Open in my mail app</a>
+          <button class="class-action-btn" type="button" data-modal-close>Close</button>
+        </div>
+        <p class="roster-hint hidden" id="outreachStatus"></p>
+
+        <p class="class-hint">
+          <strong>Planbook does not send anything.</strong> This opens the draft in your own mail
+          app, where you read it, change it and press send yourself — so what went out is in your
+          own sent-mail folder, which is what a school asks for when it asks. It also means Planbook
+          cannot tell whether you sent it.
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 

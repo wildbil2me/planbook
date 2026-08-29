@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v102';
+const CACHE = 'planbook-shell-v104';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -109,6 +109,11 @@ const SHELL = [
      in index.html, and easier to forget (tools/verify/precache.mjs). */
   './src/templates.js',
   './src/templates-view.js',
+  /* WO-5.3. The send flow: the model and the modal over it. Reached only through an import from
+     src/shell.js, which is exactly as absent offline as one named in index.html and easier to
+     forget (tools/verify/precache.mjs). */
+  './src/outreach.js',
+  './src/outreach-view.js',
   './src/roster.js',
   './src/roster-import.js',
   './src/supports.js',

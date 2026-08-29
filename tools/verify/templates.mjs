@@ -244,6 +244,42 @@ if (!seam) {
         && arrived.rows === 0 && arrived.starters === 8 && arrived.starterRows === 8
         && arrived.emptyShown === true && arrived.tone === '',
       JSON.stringify(arrived));
+
+    /*
+      AND THERE IS A WAY OUT OF IT, which is not a thing this section thought to ask until a person
+      could not find one (the owner, on hardware, 2026-08-29). This view is the only full screen in
+      the app that is not a `CLASS_SCREENS` entry, so it used to land in src/classes.js's caption
+      branch and draw a dead `<span>Your classes</span>` — a control-shaped thing that answers no
+      tap — over a panel headed *Message templates*, leaving the panel's own button as the only
+      real door. The strip carries the *All classes* door and the class tabs now.
+
+      THE ACTIVE TAB IS THE HALF WORTH ASSERTING. The editor takes the tabs WITHOUT becoming a
+      class screen — templates are global and `templatesFor(doc, tone, audience)` takes no
+      `classId` — so no tab may be marked, and marking whichever class was open last would say "you
+      are in this class" over a panel that is about none of them. A `cls-tab` count that came back
+      right with an `.active` among them would be this fix half-made.
+    */
+    const wayOut = await evalJs(`(function(){
+      var bar = document.getElementById('classTabBar');
+      var tabs = bar.querySelectorAll('[data-class-tab]');
+      return { home: bar.querySelectorAll('[data-view-home]').length,
+        homeText: (bar.querySelector('[data-view-home]') || {}).textContent || '',
+        tabs: tabs.length,
+        active: bar.querySelectorAll('[data-class-tab].active').length,
+        current: bar.querySelectorAll('[data-class-tab][aria-current]').length,
+        caption: bar.querySelectorAll('.hdr-empty').length,
+        captionText: (bar.querySelector('.hdr-empty') || {}).textContent || '',
+        classes: window.planbook.classes.getActiveClasses().length,
+        panelDoor: document.querySelectorAll('#templatesView [data-view-home]').length }; })()`);
+    check('and the header strip over it carries the *All classes* door and one tab per class, with '
+      + '**no tab marked active** — the editor takes the tabs without becoming a class screen, so '
+      + 'there is no class it is "in" to light up, and the dead *Your classes* caption that used to '
+      + 'sit here over a panel headed *Message templates* is gone',
+      wayOut.home === 1 && /All classes/.test(wayOut.homeText)
+        && wayOut.tabs === wayOut.classes && wayOut.tabs > 0
+        && wayOut.active === 0 && wayOut.current === 0
+        && wayOut.caption === 0 && wayOut.panelDoor === 1,
+      JSON.stringify(wayOut));
     check('and it is not a class screen: the switcher draws no segment on it, which is what keeps '
       + 'a template from reading as a property of one class',
       arrived.nav === 0, arrived.nav + ' [data-class-screen] control(s) on this view');

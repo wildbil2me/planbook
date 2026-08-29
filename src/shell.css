@@ -1520,6 +1520,59 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .mf-block.clear .mf-block-head { color: #1a6b3a; }
 .mf-block.clear .mf-reason { color: #1a6b3a; }
 
+/* ── THE SEND FLOW (WO-5.3) ── */
+/*
+  #outreachModal — the audience picker, the draft and the handoff — and the reason there is so
+  little of it here: **this app does not give a modal its own stylesheet.** `.event-form`,
+  `.student-field` and `.dayoff-kinds` are all in this sheet for the same reason § LOG SHEET is, and
+  every control in that panel is a component this sheet already owns. The tone chips and the
+  recipient chips are `.toggle-btn`; the subject is `.class-input` in a `.class-form` row; the draft
+  is `.student-notes`; *Copy me* is the same `.toggle-btn` the teacher's own details panel uses for
+  the same switch; the block strip is § UNRESOLVED's `.mf-block`, worn exactly as WO-5.2's live
+  preview wears it and for the reason that section is in this sheet at all; and the two actions sit
+  in a `.modal-actions` row. What is written out below is the four things that are not true of any
+  of them.
+
+  ID SELECTORS RATHER THAN A NEW CLASS, which is `#loadingScreen`'s and `#saveIndicator`'s posture
+  in this sheet: there is exactly one of this panel, what follows is spacing inside it rather than a
+  component anything else could wear, and an `.outreach-*` class would be a name to remember for
+  three declarations.
+*/
+#outreachModal .modal-section-label { margin-top: 16px; }
+/* The draft is the tallest thing in the panel and the one thing in it a teacher has to actually
+   read before she sends it — nine or ten lines of a real message, where the log sheet's detail
+   field wants two. Same control, taller, which is why this is a height and not a second class. */
+#outreachModal .student-notes { min-height: 210px; margin-top: 8px; }
+#outreachModal .mf-block { margin-top: 14px; }
+
+/*
+  THE HANDOFF IS AN ANCHOR WEARING A BUTTON'S CLASS, and these two rules are the whole of what that
+  costs. `display: inline-flex` is not decoration: an inline element ignores `min-height`, so
+  without it the 44px floor `.class-action-btn` takes in the coarse block below would never reach
+  this control. The underline goes because this reads as a button to the teacher and the button
+  beside it has none.
+
+  THE REFUSED STATE IS `aria-disabled` AND NOT A CLASS, because the refusal itself is not a class
+  either: a blocked draft's link has no `href` at all, which is what makes it unclickable and
+  unfocusable rather than merely dimmed (src/outreach-view.js's header). This is what stops it
+  looking live while it is not.
+*/
+a.class-action-btn {
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+}
+a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+/*
+  THE TRUNCATION WARNING, and it is amber rather than red on this sheet's own grammar: amber means
+  "act on this" and red means "this destroys something" (src/assignments.css). A draft that some
+  mail apps will cut is the first of those. The three colours are the style guide's §1 caution
+  banner — the same wash the install banner, the backup nag and the block strip above already wear.
+*/
+.modal-body .class-hint.warn {
+  padding: 8px 11px; border-radius: 8px;
+  border: 1.5px solid #f0dfa8; background: #fff8e6; color: #8a6d1a;
+}
+
 /* ── RESPONSIVE ── */
 /* Declaration order is from design/style-guide.md §6 and is not alphabetical or
    arbitrary: coarse pointer first, then 1024, then 640. */
@@ -1542,6 +1595,17 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   .mf-jump { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center;
     justify-content: flex-end; }
   .mf-reason { gap: 10px; }
+  /* WO-5.3's one new control, and the only one in the send flow that is not already carried by its
+     own class: the handoff link. It wears `.class-action-btn`, whose floor is above, and the
+     `display: inline-flex` in § THE SEND FLOW is what lets that floor reach an anchor at all. Named
+     here anyway, for the reason `.cls-tab-home` is: every control appears in this block by its own
+     name, and one covered only by another rule is one the next reader has to go and prove. */
+  a.class-action-btn { min-height: 44px; min-width: 44px; }
+  /* The two rows in that panel which are not targets themselves — the chips and the actions. The
+     gap between 44px targets is part of the touch pass, which is `.panel-title-row`'s note above
+     applied to a modal that holds three rows of them. */
+  #outreachModal .roster-actions { gap: 10px; }
+  #outreachModal .modal-actions { gap: 10px; }
   .log-door { width: 44px; height: 44px; font-size: 18px; }
   .log-quick { min-height: 56px; }
   .log-kind { min-height: 44px; display: inline-flex; align-items: center; }
