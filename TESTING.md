@@ -7965,6 +7965,18 @@ shape of the disclosure WO-5.3's own mutation round found. Both are asserted —
 text is searched against the seven planted `supports` strings plus the student's name, her
 guardian's name and the address itself, and the projector is turned on over an open ask.
 
+**Read on an iPad on 2026-08-29, and it closed no box because there was none to close.** WO-5.6
+carries no 👤 line — every Acceptance line on it is machine-checkable and all five were green before
+the device was touched. What the harness could not answer is the thing the verifier named as the one
+unmeasurable on this work order: **whether a confirm at that point in the gesture reads as
+protection or as an interruption.** It was read on hardware against the local server, after a
+force-quit, on v105: the ask over a typed draft, the cancel and what came back with it — the body
+character for character and **the template picker snapped back**, which is the half most likely to
+look wrong on a real screen — the ✕ as a way out, and the two silent cases, nothing typed and a
+character typed then deleted. All read as intended. *This is a reading and not a tick: no box moved,
+because none of these is a box. It is recorded because a work order with no* 👤 *tells the next
+session nothing about whether anybody ever looked, and somebody did.*
+
 **Escape and the ✕ are left to `src/modal.js`.** Neither comes through this module, and neither
 needs to: the screen behind the dialog was put back at the moment the question was asked, so a
 dismissal already lands on the correct state. What they leave behind is a proposal nothing reads —
