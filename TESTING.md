@@ -7504,7 +7504,7 @@ the checks that carry the acceptance lines red.
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*
 
-WO-5.3 and WO-5.4 append their acceptance lines here as they land.
+WO-5.4 appends its acceptance lines here as it lands.
 
 Two checks here are containment rather than function: no merge field resolves accommodation,
 medical, or plan data, and an unresolved field never renders blank. **WO-5.1 is where both of
@@ -7888,6 +7888,112 @@ the run was worth having: `signals.evaluate(getDoc(), …)` in the student recor
 `getDoc` that `src/shell.js` does not import — it is `store.getDoc()` — so that door threw a
 `ReferenceError` and opened nothing, while the model behind it still held the previous draft and
 read as ready. A check that had asked the model alone would have passed over it.)*
+
+---
+
+### WO-5.6 — A draft survives a change of mind
+
+**What this adds.** The panel that stands between a change of mind and a lost draft. WO-5.3 settled
+*when* the draft is resolved — on a template, a tone or a recipient change, and never on a keystroke
+— and left one question open: what happens to work already done. The answer until 2026-08-29 was
+that it went, silently, with a status line afterwards saying *"Anything you had typed is gone."*
+That is the loss reported rather than prevented, and the owner found it the expensive way. It is all
+in `src/outreach-view.js` and one new overlay in `index.html`; **no stylesheet was opened**, because
+every control in the panel is a component `src/shell.css` already owns.
+
+**The test is a comparison, not a keystroke flag**, and that shape is what makes two of the five
+Acceptance lines true rather than nearly true. `resolved` holds what the last resolve put in the two
+boxes, `draft` holds what is in them now, and the draft counts as edited when they differ — so a
+character typed and removed again leaves it untouched, where a flag set on the first keypress would
+have stayed set. **Both boxes are compared**: a rewritten subject over an untouched body is an
+edited draft, and a confirm watching only the body would lose it silently.
+
+**Nothing moves until she says so.** All three doors used to mutate module state and then call
+`buildDraft()`, so there was no moment at which the change had been proposed and not yet made. Each
+is now a pair — a `set…` that decides whether to ask and an `apply…` that does the work — and
+*cancel* is the absence of a call rather than an undo. The one line that carries most of "a cancel
+leaves everything as it was" is the repaint taken **at the moment the question is asked**: a
+`<select>` has already taken its new value by the time its `change` event arrives, so without it the
+picker would sit behind the dialog claiming a rebuild that had not happened.
+
+- [x] Typing in the body, then changing the template, asks before rebuilding; cancelling leaves the
+      typed text exactly as it was. *(Driven through the real controls: a paragraph typed through
+      the delegated `input` listener, then a real `change` on the template picker. While the
+      question is up the model still holds the old template, the body still holds the typed words,
+      and **the `<select>` has been put back** — the half that would go wrong quietly. After the
+      cancel the body is compared **character for character** against the string that was typed, and
+      the tone, the recipient, the template picker and the live `mailto:` link are all what they
+      were.)*
+- [x] Confirming rebuilds the draft from the new template, as today. *(The same tap again and then
+      the button in the panel: the body is the new template resolved, not one word of hers survives,
+      the picker and the model agree on which template it came from, no merge field is left, and the
+      status line says the replacement happened **at her word** rather than reporting a loss she was
+      never asked about.)*
+- [x] An untouched draft rebuilds with no prompt at all, on all three controls. *(Template picker,
+      tone pill and recipient chip in one pass, each asserted to have **actually rebuilt** as well
+      as to have stayed quiet — three different templates and three different bodies — because a
+      control that had silently done nothing would pass a check that only counted dialogs. **The
+      tone tap is the one that hides here**: it changes which templates are on offer and therefore
+      which one is selected, so it replaces the draft without anything having named a template. This
+      half is as deliberate as the other: a confirm on every tap while nothing has been typed is a
+      dialog that teaches people to dismiss dialogs, and the tap after that is the one that destroys
+      something.)*
+- [x] Typing a character and removing it again counts as untouched. *(Asserted as a **pair**, so it
+      cannot pass vacuously: the same recipient chip is tapped twice over the same draft, once with
+      one stray `z` in the body and once with it removed. The first asks, the second does not. A
+      check that only did the second half would pass over a flow that had stopped asking
+      altogether.)*
+- [x] The document is not written at any point — this flow still holds `rev` still, per WO-5.3.
+      *(A second `rev` reading of its own, taken across the asking, the cancelling, the confirming,
+      three silent rebuilds, a projector cycle and a touch pass, with `log[]` and `templates[]`
+      compared too. **Flushed first**, for the reason WO-5.3's own check gained a `flush()` on its
+      mutation round: `update()` only schedules a save and `rev` advances ~800ms later.)*
+
+**The Traps line is measured rather than reasoned about.** A rewritten subject over an untouched
+body asks, and the panel lists **the subject and only the subject** — the fact list is built from
+the same comparison that decided to open the dialog, so the panel cannot disagree with the test
+behind it.
+
+**Two things it decided that the work order did not.**
+
+**The dialog names nobody.** The recipient case is written in terms of the chip's **position** —
+*"Writing to Guardian 1 instead…"* — and never the person on the line below it, who is a named
+guardian with an email address beside her. The reason is the second decision: **presentation mode
+closes the ask as well as emptying the form**. A dialog stacked over a panel that has just emptied
+itself is the one thing on this screen the mode could otherwise leave on the glass, which is the
+shape of the disclosure WO-5.3's own mutation round found. Both are asserted — the panel's whole
+text is searched against the seven planted `supports` strings plus the student's name, her
+guardian's name and the address itself, and the projector is turned on over an open ask.
+
+**Escape and the ✕ are left to `src/modal.js`.** Neither comes through this module, and neither
+needs to: the screen behind the dialog was put back at the moment the question was asked, so a
+dismissal already lands on the correct state. What they leave behind is a proposal nothing reads —
+the only thing that reads it is the button inside the panel they just closed — which is the same
+inert corpse `src/assignments.js`'s copy and delete confirms leave, for the same reason.
+
+**The mutation round is one line and it reddens ten checks.** `draftEdited()` cut to `return false`
+— the app never asks, which is the behaviour this work order exists to end — reads
+`1263 checks · 1253 passed · 10 failed`, exit 1. Six are the new ones. **The other four are WO-5.3's
+own**, through the `agree()` helper that answers the confirm for the two of its checks that drive a
+control over a draft they have just typed into: that helper hands back *whether the dialog appeared*
+and both callers assert that it did, so a build that stopped asking is caught by the very helper
+added to accommodate the asking rather than absorbed by it. *(One of the six was red on the
+delivered tree's first run and was right to be: the touch pass tapped the tone pill the flow was
+already on, every door returns early on a value it already holds, and the check measured **0
+controls, 0 of them under 44px** — a clean pass over an empty set. It asserts the panel is open now.)*
+
+**Where this stands.** ✅ on 2026-08-29: all five Acceptance lines closed, **no 👤 and no 📆**. Both
+tools green on the delivered tree: `verify-shell.mjs` at
+`1263 checks · 1263 passed · 0 failed · 0 skipped`, 37,943 lines, 30.0 lines per check, 421s,
+exit 0; and `wo-sweep.mjs` at `34 checks · 31 passed · 0 failed · 3 to review`, all three of those
+reviews pre-existing and unchanged. The
+flow is measured inside § *"the send flow (WO-5.3)"* rather than in a section of its own — it is a
+confirm dialog over a surface that already has a section and a fixture, not a new surface — eleven
+sites, standing on that section's own fixture guard. It adds no `byHand` row to
+`tools/verify/touch-targets.mjs`'s `VIEW_PLAN` for WO-5.3's reason: this is a modal over a modal
+over two different screens and that loop walks views in `<main>`. Its three controls are measured in
+the same block at 390px under a coarse pointer, **with the panel open on an edited draft** — the
+only state in which it exists to be measured, since an untouched draft rebuilds without it.
 
 ---
 

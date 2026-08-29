@@ -537,6 +537,16 @@
       data-outreach-template          a <select>; which of the templates offered for this tone and
                                       this audience the draft is built from. Read on `change` for
                                       `data-support-kind`'s reason
+      data-outreach-rebuild-confirm   yes, rebuild the draft and replace what I typed (WO-5.6).
+                                      The three controls above ASK before they rebuild an EDITED
+                                      draft and go straight through on an untouched one, so this
+                                      is the only path by which a teacher's own words are
+                                      replaced. Nothing has moved when the dialog is up: the
+                                      change is held as a proposal and this is what applies it
+      data-outreach-rebuild-cancel    no. There is nothing to undo — the screen was put back when
+                                      the question was asked — so this closes the panel and says
+                                      so. Escape and the ✕ take the same outcome through
+                                      src/modal.js without coming through here
       (no hook on the handoff itself)  #outreachOpen is an `<a href="mailto:...">` and the
                                       navigation is the browser's. A blocked draft's link has no
                                       `href` at all, which is why "a blocked draft cannot reach the
@@ -2580,14 +2590,28 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-template-another]')) { templatesView.nextPreviewStudent(); return; }
+  /* THE CONTROL IS PASSED ALONG AS WELL AS ITS VALUE, and that is WO-5.6 rather than decoration:
+     either of these can open the rebuild confirm, and src/modal.js hands focus back to whatever
+     opened a dialog. Safari does not focus a <button> on a click, so `document.activeElement` is
+     <body> and the fallback returns focus nowhere — the iPad is the device that decides go-live. */
   const outreachTone = e.target.closest('[data-outreach-tone]');
   if (outreachTone) {
-    outreachView.setOutreachTone(outreachTone.getAttribute('data-outreach-tone'));
+    outreachView.setOutreachTone(outreachTone.getAttribute('data-outreach-tone'), outreachTone);
     return;
   }
   const outreachTo = e.target.closest('[data-outreach-to]');
   if (outreachTo) {
-    outreachView.setOutreachRecipient(outreachTo.getAttribute('data-outreach-to'));
+    outreachView.setOutreachRecipient(outreachTo.getAttribute('data-outreach-to'), outreachTo);
+    return;
+  }
+  /* The two answers to that dialog. Beside the controls that raise it rather than with the other
+     confirms further down, because what they are about is this flow and nothing else. */
+  if (e.target.closest('[data-outreach-rebuild-confirm]')) {
+    outreachView.confirmOutreachRebuild();
+    return;
+  }
+  if (e.target.closest('[data-outreach-rebuild-cancel]')) {
+    outreachView.cancelOutreachRebuild();
     return;
   }
   if (e.target.closest('[data-outreach-copy]')) { outreachView.toggleOutreachCopy(); return; }
@@ -3058,10 +3082,15 @@ document.addEventListener('change', (e) => {
   if (templateStudent) templatesView.setPreviewStudent(templateStudent.value);
   /* Which of the teacher's templates the draft is built from (WO-5.3). Read HERE for
      `data-support-kind`'s reason: a <select> commits on `change`, and hooking `input` as well would
-     rebuild the draft twice for one tap — which on this control means resolving twice and throwing
-     her edits away twice. It writes nothing to the document. */
+     rebuild the draft twice for one tap — which on this control means resolving twice and, on an
+     edited draft, raising the rebuild confirm twice. It writes nothing to the document.
+
+     The picker itself is handed over as the opener (WO-5.6): this is one of the three controls that
+     can raise that confirm, and focus has to come back to it when the panel closes. */
   const outreachTemplate = e.target.closest('[data-outreach-template]');
-  if (outreachTemplate) outreachView.setOutreachTemplate(outreachTemplate.value);
+  if (outreachTemplate) {
+    outreachView.setOutreachTemplate(outreachTemplate.value, outreachTemplate);
+  }
   /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);

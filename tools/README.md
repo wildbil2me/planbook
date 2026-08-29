@@ -1050,7 +1050,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1237 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1248 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1134,6 +1134,38 @@ loop walks views. Its controls are measured inside its own section instead, at 3
 pointer, with the panel open on a real draft — which is the only state in which the handoff link
 exists to be measured at all, because a blocked draft's link has no `href` and is therefore not a
 control.)*
+
+**WO-5.6 moved it from 1237 to 1248**: eleven literal call sites, added *inside* the existing
+§ *"the send flow (WO-5.3)"* rather than as a section of its own — it is a confirm dialog over a
+surface that already has a section and a fixture, not a new surface — so the block contributes
+eleven executed results to a green run and adds no fixture guard, because it stands on the guard
+that section already has. **The run prints 1263**: `1263 checks · 1263 passed · 0 failed ·
+0 skipped`, 37,943 lines, 30.0 lines per check, 421s, exit 0, measured 2026-08-29 on the delivered
+tree. The gap between sites and results stays at −15. *(It adds no `byHand` row to
+`verify/touch-targets.mjs`'s `VIEW_PLAN` for the reason WO-5.3 does not: this is a modal over a
+modal over two different screens, and that loop walks views in `<main>`. Its three controls are
+measured in the same block at 390px under a coarse pointer, with the panel **open on an edited
+draft** — the only state in which it exists to be measured, since an untouched draft rebuilds
+without it. **That measurement is the whole 44px pass for this work order**, because the panel added
+no CSS rule of any kind: two `.class-action-btn`s and a `.modal-close`, all three already inside the
+coarse block's shared selector, which is a floor worth measuring precisely because it is inherited
+rather than written.)*
+
+**Its mutation round is one line and it reddens ten checks, and the interesting number is that four
+of them are WO-5.3's.** `draftEdited()` in `src/outreach-view.js` cut to `return false` — the app
+never asks, which is the behaviour this work order exists to end — reads
+`1263 checks · 1253 passed · 10 failed`, exit 1. Six are the new ones and go red the obvious way. The
+other four are **`agree()`'s two assertions inside the WO-5.3 checks and the two readings that follow
+them**, and they are the reason that helper hands back whether the dialog appeared instead of
+swallowing it: a build that stopped asking over an edited draft would otherwise have been absorbed by
+the very helper added to accommodate the asking. *(**One of the six was found red before the
+mutation, on the delivered tree's first run, and it was right to be.** The touch pass sets up its own
+dialog by tapping a tone pill, and the pill it tapped was the tone the flow was already on — every
+one of the three doors returns early on a value it already holds, so the panel never opened and the
+check measured **0 controls, 0 of them under 44px**: a clean pass over an empty set, this file's own
+first trap wearing new clothes. It asserts the panel is open now, and the setup taps the other
+pill.)* Reverted by name — `git checkout -- src/outreach-view.js`, never `git checkout .`, and with
+the rest of the work order staged first — before a word of this paragraph was written.
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

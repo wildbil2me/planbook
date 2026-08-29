@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A draft survives a change of mind — 2026-08-29
+
+**Changing the template, the tone or the recipient used to throw away whatever you had typed — no
+warning, no undo, and then a line telling you it had.** It went wrong at exactly the moment you were
+most likely to be mid-sentence: two lines of your own written, then the realisation that the concern
+template was the wrong one. Re-resolving the draft on those three changes is deliberate — the
+alternative re-resolves on every keystroke and overwrites you continuously, which is worse — but it
+never asked what should happen to work already done.
+
+**It asks now.** A change that would discard text you have written puts a question up, names what it
+is about to replace and **which of the two boxes you wrote in** — the subject counts as much as the
+message — and does nothing until you say so. *Cancel* leaves everything as it was, including the
+template picker, which had already moved. Confirm and it rebuilds from the new template exactly as
+before, and the line underneath says which of the two just happened rather than always reading like
+a near miss.
+
+**A draft you have not touched still rebuilds on the tap, in silence.** The test is a comparison
+against what the resolver produced, not a flag tripped by the first keystroke, so a character typed
+and deleted again counts as nothing. A dialog on every tap is a dialog nobody reads.
+
+Two smaller things that follow from the rules this app already keeps: the question **names a
+position and never a person** — *Guardian 1*, not the guardian — because it is an overlay inside the
+panel presentation mode empties, and switching the projector on while it is up closes the question
+with it. No stylesheet was opened for any of this; every control in the panel is one the shell
+already owns, and the 44px floor under a coarse pointer was measured rather than assumed.
+
 ### The message actually leaves — pick who it goes to, edit it, hand it to your own mail app — 2026-08-29
 
 **From a student who needs a conversation to a draft sitting in your mail client, without leaving

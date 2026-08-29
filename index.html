@@ -2668,6 +2668,54 @@
   </div>
 </div>
 
+<!--
+  THE REBUILD CONFIRM (WO-5.6) — the panel that stands between a change of mind and a lost draft.
+
+  IT OPENS OVER THE SEND FLOW, which opens over the signal card, which is three deep and is what
+  src/modal.js's stack is for. Escape closes this one and leaves the draft exactly as it was: the
+  screen behind was put back at the moment the question was asked, so a dismissal needs no handler
+  of its own — src/outreach-view.js's askBeforeRebuild() says why in as many words.
+
+  IT IS NOT SHOWN FOR EVERY REBUILD. An untouched draft rebuilds in silence, because a confirm on
+  every tap of a tone pill while nothing has been typed is a dialog that teaches people to dismiss
+  dialogs — and the tap after that is the one that destroys something. What decides is a comparison
+  between what is in the two boxes and what the last resolve put there, so a word typed and deleted
+  again is not an edit.
+
+  IT IS A REAL DIALOG RATHER THAN `window.confirm()`, for the reason the class and assignment
+  deletes are: "OK?" is a question a tired teacher answers yes to. So the lead names the change, the
+  red list names which of the two boxes she rewrote, and the button says what it will rebuild.
+
+  THE TWO EMPTY ELEMENTS ARE FILLED BY src/outreach-view.js and a specimen here would be a second
+  truth. NOTHING IN THIS PANEL EVER NAMES A STUDENT, A GUARDIAN OR AN ADDRESS — the recipient case
+  is written in terms of the chip's position ("Guardian 2") and never the person on the line below
+  it, and the panel is closed outright when presentation mode comes on.
+-->
+<div class="modal-overlay hidden" id="outreachConfirmModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="outreachConfirmTitle">
+    <div class="modal-header">
+      <h2 id="outreachConfirmTitle">Rebuild this draft?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="outreachConfirmLead"></p>
+      <div class="modal-section-label">What you have written by hand</div>
+      <div class="class-delete-facts" id="outreachConfirmFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn danger" type="button" id="outreachConfirmBtn"
+                data-outreach-rebuild-confirm>Rebuild the draft</button>
+        <button class="class-action-btn" type="button"
+                data-outreach-rebuild-cancel>Keep what I wrote</button>
+      </div>
+      <p class="class-hint">
+        A draft lives on this screen and nowhere else until you hand it to your mail app, so
+        rebuilding it is not something Planbook can undo. If you want to keep both, copy what you
+        wrote somewhere first.
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- ONE ASSIGNMENT (WO-3.3), and the reason this is a dialog while the list behind it is not.
      The list is a surface a teacher scans and works down; writing one assignment down is a task she
      finishes and dismisses. plans/gradebook-surfaces.md holds the rule and the record.

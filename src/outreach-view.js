@@ -69,6 +69,30 @@
   typed over does not — which is the resolver's own sentence, *"cannot be sent until it is corrected
   or removed"*, honoured at the end that can see the correction.
 
+  ── AND A REBUILD ASKS FIRST WHEN THERE IS SOMETHING TO LOSE (WO-5.6) ──
+
+  The paragraph above settles WHEN the resolve runs. It never settled what happens to work already
+  done, and until 2026-08-29 the answer was: it goes, with no warning and no undo, and a status line
+  afterwards saying so. That is the loss reported rather than prevented, and the owner's ruling is
+  that the flow asks first — *"don't blank the template automatically on changing anything, put a
+  confirm button up so work isn't lost."*
+
+  THE TEST IS A COMPARISON, NOT A KEYSTROKE FLAG. `resolved` below holds what the last resolve put
+  in the two boxes; `draft` holds what is in them now; and the draft counts as edited when they
+  differ. So a word typed and deleted again leaves the draft UNEDITED and rebuilds in silence, where
+  a flag set on the first keypress would have asked about a draft nobody had changed. **Both boxes
+  are compared**, because a rewritten subject over an untouched body is an edited draft and a
+  confirm that watched only the body would lose it silently.
+
+  AN UNEDITED DRAFT STILL REBUILDS ON THE TAP, and that half is as deliberate as the other. A
+  confirm on every tap of a tone pill while nothing has been typed is a dialog that teaches people
+  to dismiss dialogs, and the tap after that is the one that destroys something.
+
+  IT IS A REAL DIALOG AND NOT `window.confirm()` — src/classes.js § "delete, and what it costs" in
+  as many words: *"OK to delete Period 3?" is a question a tired teacher answers yes to*. The panel
+  names the change, lists which of the two boxes she has changed, and its confirm button says what
+  it is about to rebuild rather than *OK*.
+
   ── THE HANDOFF IS A REAL LINK, AND THAT IS THE POINT OF DEPARTURE WORTH READING ──
 
   `#outreachOpen` is an `<a href="mailto:…">` wearing `.class-action-btn`, not a button that assigns
@@ -128,6 +152,14 @@ const LENGTH_ID = 'outreachLength';
 const OPEN_ID = 'outreachOpen';
 const STATUS_ID = 'outreachStatus';
 
+/* The rebuild confirm (WO-5.6) — a second overlay, opened OVER this one when a rebuild would throw
+   away something the teacher typed. src/modal.js stacks by construction, so it can sit three deep
+   over the signal card without anything here knowing about the card. */
+const CONFIRM_ID = 'outreachConfirmModal';
+const CONFIRM_LEAD_ID = 'outreachConfirmLead';
+const CONFIRM_FACTS_ID = 'outreachConfirmFacts';
+const CONFIRM_BTN_ID = 'outreachConfirmBtn';
+
 /* ── THE FLOW STATE ── */
 
 /* Which student this draft is about, and the facts that came with the row it was opened from. Null
@@ -143,6 +175,25 @@ let templateId = '';
 /* What is in the two boxes RIGHT NOW. It starts as whatever the resolver handed back and is the
    teacher's from the first keystroke — WO-5.3's "editable before sending, always". */
 let draft = { subject: '', body: '' };
+
+/* WHAT THE LAST RESOLVE PUT IN THOSE TWO BOXES, and the only thing it is for is the comparison in
+   draftEdited() (WO-5.6). It is written in exactly one place — buildDraft(), which is the one
+   resolve — and it is a SEPARATE object rather than a second reference to `draft`, because
+   editOutreachField() writes into `draft` and a shared object would leave every draft eternally
+   unedited: the comparison would be a string against itself. */
+let resolved = { subject: '', body: '' };
+
+/* THE CHANGE SHE HAS ASKED FOR AND NOT YET AGREED TO PAY FOR — `{ kind, value }`, where `kind` is
+   one of the three doors below and `value` is the tone, the recipient key or the template id.
+   Null whenever nothing is being asked.
+
+   A PROPOSAL AND NOT A COMMITMENT: nothing in the document, in the draft or on the screen has moved
+   while this is set, which is what makes Escape and the ✕ safe to leave to src/modal.js. Both close
+   the dialog without coming through this module, and both leave a `pending` behind — inert, because
+   the only thing that reads it is the button inside the panel they just closed, and the next ask
+   overwrites it. src/assignments.js's copy and delete confirms leave the same kind of corpse for
+   the same reason. */
+let pending = null;
 
 /* Whether the draft above has been resolved yet. It is false between opening the flow and the
    first paint that is ALLOWED to resolve one — see openOutreach() and renderOutreach(), where the
@@ -534,6 +585,13 @@ export function renderOutreach(opts) {
   const subjectField = document.getElementById(SUBJECT_ID);
   const bodyField = document.getElementById(BODY_ID);
   if (model.blocked || !model.open) {
+    /* THE ASK GOES DOWN WITH THE FORM (WO-5.6). The rebuild confirm sits OVER this panel, so a
+       projector switched on while it is up would leave a dialog on the glass over a modal that had
+       just emptied itself — the shape of the disclosure WO-5.3's mutation round found. It names no
+       student and no guardian by construction (see the three doors below, which hand it the chip's
+       POSITION and never the person), so this is the second fence rather than the only one. */
+    pending = null;
+    closeModal(CONFIRM_ID);
     if (subjectField) subjectField.value = '';
     if (bodyField) bodyField.value = '';
     const to = document.getElementById(TO_ID);
@@ -602,9 +660,15 @@ export function resetOutreach() {
   recipientKey = '';
   templateId = '';
   draft = { subject: '', body: '' };
+  /* The snapshot and the proposal go with everything else, and the reason is the one this function
+     already had: a stale snapshot surviving a reset makes the NEXT student's untouched draft read
+     as edited, and the first tone tap over it opens a confirm dialog about nothing. */
+  resolved = { subject: '', body: '' };
+  pending = null;
   errors = [];
   built = false;
   status = '';
+  closeModal(CONFIRM_ID);
   closeModal(MODAL_ID);
   renderOutreach();
 }
@@ -625,6 +689,10 @@ function buildDraft() {
   if (!record || !subject) {
     draft = { subject: '', body: '' };
     errors = [];
+    /* THE SNAPSHOT IS TAKEN ON THIS PATH TOO. An empty pair is still what the last resolve
+       produced, and leaving the previous draft's snapshot here would make an empty draft read as
+       edited — a confirm dialog over two empty boxes. */
+    resolved = { subject: '', body: '' };
     return;
   }
   const chosen = outreach.recipientByKey(
@@ -646,6 +714,20 @@ function buildDraft() {
   });
   draft = { subject: out.subject, body: out.body };
   errors = out.errors;
+  /* WHAT WO-5.6 COMPARES AGAINST, recorded at the one resolve because this is the only moment the
+     two boxes are known to hold nobody's words but the resolver's. */
+  resolved = { subject: out.subject, body: out.body };
+}
+
+/*
+  HAS THE TEACHER TYPED IN THIS DRAFT — the whole of WO-5.6's third Deliverable, and it is a string
+  comparison rather than a bit somebody sets. Two Acceptance lines fall straight out of that shape:
+  a character typed and removed again counts as UNTOUCHED, because the string is back where it
+  started; and a rewritten SUBJECT counts as edited over an untouched body, because both halves are
+  compared and a confirm watching only the body is the same bug one field further along.
+*/
+function draftEdited() {
+  return draft.subject !== resolved.subject || draft.body !== resolved.body;
 }
 
 /*
@@ -690,6 +772,11 @@ export function openOutreach(where, opener) {
      the page and "the fields are emptied rather than hidden" would mean nothing beside a spoken
      name. */
   built = false;
+  /* A new student, so nothing is being asked about the last one's draft. Closed rather than merely
+     forgotten: the dialog is an overlay, and one left up over a flow that has just changed subject
+     would be a question about a draft that no longer exists. */
+  pending = null;
+  closeModal(CONFIRM_ID);
   renderOutreach();
   openModal(MODAL_ID, opener);
   announce(presentationMode()
@@ -699,24 +786,122 @@ export function openOutreach(where, opener) {
   return true;
 }
 
-export function setOutreachTone(next) {
+/*
+  ── THE THREE DOORS, AND THE ONE QUESTION THEY ALL ASK FIRST (WO-5.6) ──
+
+  Each of the three is now a PAIR: a `set…` that decides whether to ask, and an `apply…` that does
+  the work. The split is not tidiness — it is the fix. All three used to mutate module state and
+  then call buildDraft(), so there was no moment at which the change had been proposed and not yet
+  made, and a cancel would have had to put four things back by hand. Now nothing moves until either
+  the draft turns out to be untouched or the teacher presses the button, and *cancel* is the absence
+  of a call rather than an undo.
+
+  WO-5.8 EXTENDS THIS RATHER THAN INVENTING A SECOND ONE. Several recipients change what "changing
+  the recipient" means; what it must not change is where the question is asked, which is here.
+*/
+
+/* One line of the dialog's fact list, the shape src/assignments.js's factLine() draws. */
+function confirmLine(parent, text) {
+  const node = document.createElement('div');
+  node.className = 'class-delete-line';
+  node.textContent = text;
+  parent.append(node);
+}
+
+/*
+  ASK, IF THERE IS ANYTHING TO LOSE. Returns true when the question was put — the caller's cue to
+  stop and change nothing — and false when the draft is untouched and the rebuild may go straight
+  through, which is WO-5.6's second Deliverable and the reason this is not a dialog on every tap.
+
+  `change` is `{ kind, value, lead, action }`: the two the confirm needs to apply it, and the two
+  sentences a teacher reads. Neither sentence names a student, a guardian or an address — the
+  recipient door hands over the chip's POSITION ("Guardian 2") and never the person on the line
+  below it — because this panel sits over a modal that presentation mode empties.
+*/
+function askBeforeRebuild(change, opener) {
+  if (!draftEdited()) return false;
+  pending = change;
+  /* THE SCREEN GOES BACK BEFORE THE QUESTION IS PUT, and this one line is most of "a cancel leaves
+     everything as it was". A `<select>` has ALREADY taken the new template by the time its `change`
+     event arrives, so a dialog opened over it would be asking about a rebuild while the picker
+     behind it claimed to have done one. Repainting from module state — which has not moved — puts
+     the tone pill, the recipient chips and the template picker back to what they read before the
+     tap. It is also what makes Escape and the ✕ safe to leave to src/modal.js: the screen behind
+     them is already correct, so they need no handler here. */
+  renderOutreach();
+  const lead = document.getElementById(CONFIRM_LEAD_ID);
+  if (lead) lead.textContent = change.lead;
+  /* WHICH BOXES SHE HAS CHANGED, counted the same way draftEdited() decides, so the panel cannot
+     disagree with the test that opened it. Both are listed when both differ: the subject is the
+     half that goes missing quietly. */
+  const facts = document.getElementById(CONFIRM_FACTS_ID);
+  if (facts) {
+    facts.textContent = '';
+    if (draft.subject !== resolved.subject) confirmLine(facts, 'You have rewritten the subject.');
+    if (draft.body !== resolved.body) confirmLine(facts, 'You have rewritten the message.');
+  }
+  /* The button says what it will do, never *OK* — src/classes.js § "delete, and what it costs". */
+  const button = document.getElementById(CONFIRM_BTN_ID);
+  if (button) button.textContent = change.action;
+  openModal(CONFIRM_ID, opener);
+  return true;
+}
+
+/*
+  ONE SENTENCE FOR ALL THREE DOORS, and its second half is what WO-5.6 changed. Every one of them
+  used to end *"Anything you had typed is gone"* — honest reporting of a loss the teacher had not
+  been asked about. A rebuild is now either one she agreed to or one that cost her nothing, and the
+  line says which; the same sentence for both would leave the silent case sounding like a near miss.
+*/
+function rebuiltNote(what, replaced) {
+  return 'The draft was rebuilt ' + what + (replaced
+    ? '. What you had typed was replaced, as you asked.'
+    : '. Nothing had been typed into it, so nothing was lost.');
+}
+
+export function setOutreachTone(next, opener) {
   if (!templates.isTone(next) || next === tone) return;
+  const label = templates.toneLabel(next).toLowerCase();
+  /* A TONE TAP IS A REBUILD TOO, and the easiest one to forget: it changes which templates are on
+     offer and therefore which one is selected, so the draft is replaced even though nothing named
+     a template. It asks on the same terms as the other two, and stays silent on the same terms. */
+  if (askBeforeRebuild({ kind: 'tone', value: next,
+    lead: 'Switching to ' + label + ' rebuilds this draft from a ' + label + ' template of yours. '
+      + 'Planbook keeps no copy of what is in the boxes now, so what you have written here goes.',
+    action: 'Rebuild as ' + label }, opener)) return;
+  applyTone(next, false);
+}
+
+function applyTone(next, replaced) {
   tone = next;
   const doc = getDoc();
   const model = outreachModel();
   const offered = templates.templatesFor(doc, tone, model.audience);
   templateId = offered.length ? offered[0].id : '';
   buildDraft();
-  status = 'The draft was rebuilt from a ' + templates.toneLabel(tone).toLowerCase()
-    + ' template. Anything you had typed is gone.';
+  status = rebuiltNote('from a ' + templates.toneLabel(tone).toLowerCase() + ' template', replaced);
   renderOutreach();
   announce(templates.toneLabel(tone) + '.');
 }
 
-export function setOutreachRecipient(key) {
-  const doc = getDoc();
+export function setOutreachRecipient(key, opener) {
   const model = outreachModel();
-  if (!key || key === (model.recipient ? model.recipient.key : '')) return;
+  const want = String(key || '');
+  if (!want || want === (model.recipient ? model.recipient.key : '')) return;
+  /* THE POSITION, NEVER THE PERSON — see askBeforeRebuild(). The chip's own label is one of the
+     app's five short strings and names nobody; the line under the chips names a guardian and
+     carries her address, and that is the half this dialog must never quote. */
+  const row = model.recipients.filter((r) => r.key === want)[0] || null;
+  const label = row ? row.label : 'that recipient';
+  if (askBeforeRebuild({ kind: 'recipient', value: want,
+    lead: 'Writing to ' + label + ' instead rebuilds this draft from a template written for them. '
+      + 'Planbook keeps no copy of what is in the boxes now, so what you have written here goes.',
+    action: 'Rebuild for ' + label }, opener)) return;
+  applyRecipient(want, false);
+}
+
+function applyRecipient(key, replaced) {
+  const doc = getDoc();
   recipientKey = String(key);
   const next = outreachModel();
   /* The template list is filtered by the audience, so a template written for a guardian cannot
@@ -727,24 +912,66 @@ export function setOutreachRecipient(key) {
     templateId = offered.length ? offered[0].id : '';
   }
   buildDraft();
-  status = 'The draft was rebuilt for ' + (next.recipient
-    ? (next.recipient.name || next.recipient.label) : 'that recipient')
-    + '. Anything you had typed is gone.';
+  /* The STATUS line names the person, where the dialog above named the position. It is drawn inside
+     the panel presentation mode empties and is cleared with it, which is the difference. */
+  status = rebuiltNote('for ' + (next.recipient
+    ? (next.recipient.name || next.recipient.label) : 'that recipient'), replaced);
   renderOutreach();
   announce('Writing to ' + (next.recipient ? (next.recipient.name || next.recipient.label) : '')
     + '.');
 }
 
-export function setOutreachTemplate(id) {
+export function setOutreachTemplate(id, opener) {
   const want = String(id || '');
   if (!want || want === templateId) return;
-  templateId = want;
+  /* The template's own name, which is the teacher's writing about her own message and names no
+     child — the same reading src/templates-view.js makes when it leaves the list drawn under a
+     projector and suppresses only the preview. */
+  const record = templates.templateById(getDoc(), want);
+  const name = (record && record.name) || 'that template';
+  if (askBeforeRebuild({ kind: 'template', value: want,
+    lead: 'Rebuilding from “' + name + '” replaces the subject and the message with that '
+      + 'template’s. Planbook keeps no copy of what is in the boxes now, so what you have written '
+      + 'here goes.',
+    action: 'Rebuild from “' + name + '”' }, opener)) return;
+  applyTemplate(want, false);
+}
+
+function applyTemplate(id, replaced) {
+  templateId = String(id);
   buildDraft();
   const model = outreachModel();
-  status = 'The draft was rebuilt from ' + (model.templateName || 'that template')
-    + '. Anything you had typed is gone.';
+  status = rebuiltNote('from ' + (model.templateName || 'that template'), replaced);
   renderOutreach();
   announce(model.templateName + ' is in the draft.');
+}
+
+/*
+  YES — and `true` is passed through to every status line, because a rebuild she agreed to and a
+  rebuild that cost her nothing are two different sentences.
+*/
+export function confirmOutreachRebuild() {
+  const change = pending;
+  pending = null;
+  closeModal(CONFIRM_ID);
+  if (!change) return;
+  if (change.kind === 'tone') applyTone(change.value, true);
+  else if (change.kind === 'recipient') applyRecipient(change.value, true);
+  else if (change.kind === 'template') applyTemplate(change.value, true);
+}
+
+/*
+  NO. Nothing has been changed, so there is nothing to undo — which is the point of proposing before
+  rebuilding rather than rebuilding and offering an undo there is no way to build (src/assignments.js
+  's cancelCopy(), the same sentence). The screen was put back at the moment the question was asked,
+  so this closes the panel and says so out loud and repaints NOTHING — a paint here would write both
+  boxes again for no reason, and writing a field's value while somebody may be in it is the one
+  thing renderOutreach()'s `fields: false` exists to avoid.
+*/
+export function cancelOutreachRebuild() {
+  pending = null;
+  closeModal(CONFIRM_ID);
+  announce('Nothing was rebuilt. The draft is exactly as you left it.');
 }
 
 /* A field of the draft, as it is typed. It writes to the DRAFT and never to the document, and it

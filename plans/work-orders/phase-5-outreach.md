@@ -482,7 +482,7 @@ in one and not the other is this phase's own "two askers" defect. Change it once
 
 ## WO-5.6 — A draft survives a change of mind
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3
+**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** Changing the template, the tone or the recipient rebuilds the draft from
 `resolveDraft()` and **throws away whatever the teacher had typed**, with no warning and no undo.
@@ -505,17 +505,94 @@ this one stops the app destroying something a teacher wrote.
   leaves the draft unedited.
 
 **Acceptance**
-- [ ] Typing in the body, then changing the template, asks before rebuilding; cancelling leaves the
-      typed text exactly as it was.
-- [ ] Confirming rebuilds the draft from the new template, as today.
-- [ ] An untouched draft rebuilds with no prompt at all, on all three controls.
-- [ ] Typing a character and removing it again counts as untouched.
-- [ ] The document is not written at any point — this flow still holds `rev` still, per WO-5.3.
+- [x] Typing in the body, then changing the template, asks before rebuilding; cancelling leaves the
+      typed text exactly as it was. *(Driven through the real controls. While the question is up the
+      model still holds the old template, the body still holds the typed words, and* **the
+      `<select>` has been put back** *— a select takes its new value before its `change` event is
+      delivered, so a flow that asked without repainting would leave the picker claiming a rebuild
+      that had not happened. After the cancel the body is compared* **character for character**
+      *against the string that was typed, and the tone, the recipient, the picker and the live
+      `mailto:` link are all what they were.)*
+- [x] Confirming rebuilds the draft from the new template, as today. *(The body is the new template
+      resolved, not one word of hers survives, no merge field is left, and the status line says the
+      replacement happened* **at her word** *rather than reporting a loss she was never asked
+      about.)*
+- [x] An untouched draft rebuilds with no prompt at all, on all three controls. *(All three in one
+      pass, each asserted to have* **actually rebuilt** *as well as to have stayed quiet — three
+      different templates, three different bodies — because a control that had silently done nothing
+      would pass a check that only counted dialogs.* **The tone tap is the one that hides here**:
+      *it changes which templates are on offer and therefore which one is selected, so it replaces
+      the draft without anything having named a template.)*
+- [x] Typing a character and removing it again counts as untouched. *(Asserted as a* **pair**, *so
+      it cannot pass vacuously: the same chip is tapped twice over the same draft, once with one
+      stray `z` in the body and once with it removed. The first asks and the second does not. A
+      check that only did the second half would pass over a flow that had stopped asking
+      altogether.)*
+- [x] The document is not written at any point — this flow still holds `rev` still, per WO-5.3.
+      *(A second `rev` reading of its own across the asking, the cancelling, the confirming, three
+      silent rebuilds, a projector cycle and a touch pass, with `log[]` and `templates[]` compared
+      too —* **flushed first**, *for the reason WO-5.3's own check gained a `flush()` on its
+      mutation round.)*
 
 **Traps** — The subject and the body are two boxes and either can be edited; a confirm that watches
 only the body loses a rewritten subject silently, which is the same bug one field further along.
+*(Held, and measured rather than reasoned about: a rewritten subject over an untouched body asks,
+and the panel lists* **the subject and only the subject** — *the fact list is built from the same
+comparison that decided to open the dialog, so the panel cannot disagree with the test behind it.)*
 **Build this before WO-5.8**: several recipients change what "changing the recipient" means, and
 that work order extends this rule rather than inventing a second one.
+
+**Where this stands.** ✅ on 2026-08-29: all five Acceptance lines closed, **no 👤 and no 📆**. It is
+`src/outreach-view.js` and one new overlay in `index.html`; **no stylesheet was opened**, because
+every control in the panel is a component `src/shell.css` already owns. `tools/verify/outreach.mjs`
+gained eleven checks *inside* § *"the send flow (WO-5.3)"* rather than a section of its own — a
+confirm dialog over a surface that already has a section and a fixture is not a new surface. Both
+tools green on the delivered tree: `verify-shell.mjs` at
+`1263 checks · 1263 passed · 0 failed · 0 skipped`, 37,943 lines, 421s, exit 0, and `wo-sweep.mjs`
+at `34 checks · 31 passed · 0 failed · 3 to review`, all three reviews pre-existing.
+`TESTING.md` § WO-5.6 carries the readings.
+
+**The mutation round is one line and it reddens ten, four of them WO-5.3's.** `draftEdited()` cut to
+`return false` — the app never asks, which is the behaviour this work order exists to end — reads
+`1263 checks · 1253 passed · 10 failed`, exit 1. **The four are the point**: two of WO-5.3's own
+checks now drive a control over a draft they have just typed into, so they go through a helper that
+answers the confirm — and that helper hands back *whether the dialog appeared*, which both callers
+assert, so a build that stopped asking is caught by the thing added to accommodate the asking rather
+than swallowed by it. *(A sixth new check was red on the first run of the delivered tree and was
+right to be: its setup tapped the tone pill the flow was already on, every one of the three doors
+returns early on a value it already holds, so no panel opened and it measured* **0 controls, 0 of
+them under 44px** *— a clean pass over an empty set, which is `tools/README.md`'s own first CDP trap.
+It asserts the panel is open now.)*
+
+**Four things it decided that this work order did not.**
+
+- **The test is a comparison and the state that makes it one is written in exactly one place.**
+  `resolved` is set by `buildDraft()`, which is the one resolve, and by nothing else; `draftEdited()`
+  is the only reader. A keystroke flag was the obvious alternative and fails the fourth Acceptance
+  line by construction. It is a **separate object** rather than a second reference to `draft`,
+  because `editOutreachField()` writes into `draft` and a shared object would leave every draft
+  eternally unedited — the comparison would be a string against itself.
+- **The three doors are now `set…` / `apply…` pairs, and that split is the fix rather than
+  tidiness.** All three used to mutate module state and then call `buildDraft()`, so there was no
+  moment at which the change had been proposed and not yet made, and a cancel would have had to put
+  four things back by hand. Now nothing moves until the draft turns out to be untouched or the
+  teacher presses the button, and *cancel* is the absence of a call.
+- **The dialog names nobody, and presentation mode closes it.** The recipient case is written in
+  terms of the chip's **position** — *"Writing to Guardian 1 instead…"* — and never the person on
+  the line below it, who is a named guardian with an address beside her; and the ask goes down with
+  the form when the projector comes on. A dialog stacked over a panel that has just emptied itself
+  is the one thing on this screen the mode could otherwise leave on the glass, which is the shape of
+  the disclosure WO-5.3's own mutation round found. Both are asserted.
+- **Escape and the ✕ are left to `src/modal.js`.** Neither comes through this module and neither
+  needs to: the screen behind the dialog is put back **at the moment the question is asked**, so a
+  dismissal already lands on the correct state. What they leave behind is a proposal nothing reads —
+  the only reader is the button inside the panel they just closed — which is the same inert corpse
+  `src/assignments.js`'s copy and delete confirms leave, for the same reason.
+
+**And one sentence it rewrote in all three places rather than in none.** Every rebuild used to end
+its status line *"Anything you had typed is gone."* A rebuild is now either one she agreed to or one
+that cost her nothing, so the line says which; the same sentence for both would leave the silent
+case sounding like a near miss.
 
 ---
 

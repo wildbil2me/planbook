@@ -130,6 +130,25 @@ if (!seam) {
       bodyField: document.getElementById('outreachBody').value,
       modalText: document.getElementById('outreachModal').textContent }; };`;
 
+  /*
+    WO-5.6 CHANGED WHAT A TEMPLATE PICK OR A RECIPIENT TAP DOES TO AN **EDITED** DRAFT: it asks
+    first, and rebuilds nothing until the teacher says so. Two of the checks below drive one of
+    those controls over a draft they have just typed into, and until that work order they read the
+    rebuilt draft straight back. They still assert exactly what they always asserted; this is the
+    tap a teacher now has to make in between.
+
+    IT IS DELIBERATELY NOT SILENT ABOUT IT. It hands back whether the dialog appeared and both
+    callers assert that it DID, so a build that stopped asking over an edited draft goes red here
+    rather than being absorbed into a helper. That is the whole difference between updating a check
+    for a behaviour change and quietly routing around one.
+  */
+  const AGREE = `var agree = function(act){
+    act();
+    var o = document.getElementById('outreachConfirmModal');
+    var asked = !o.classList.contains('hidden');
+    if (asked) document.querySelector('[data-outreach-rebuild-confirm]').click();
+    return asked; };`;
+
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Emulation.setDeviceMetricsOverride',
     { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -534,12 +553,17 @@ if (!seam) {
     const refused = await evalJs(`(function(){
       ${TYPE}
       ${DRAWN}
+      ${AGREE}
       var ids = window.planbook.store.getDoc().templates.filter(function(t){
         return t.name.indexOf('refused') >= 0; })[0].id;
-      pick('outreachTemplate', ids);
+      /* The check above rewrote the body by hand, so this pick asks before it rebuilds (WO-5.6)
+         and the answer is yes. What agree() hands back is asserted below rather than dropped.
+         (No backticks in here; it is inside a template literal and one would close it.) */
+      var askedFirst = agree(function(){ pick('outreachTemplate', ids); });
       var d = drawn();
       var m = window.planbook.outreachView.outreachModel();
-      return { hasHref: d.hasHref, href: d.href, disabled: d.disabled, head: d.head,
+      return { askedFirst: askedFirst,
+        hasHref: d.hasHref, href: d.href, disabled: d.disabled, head: d.head,
         clear: d.clear, reasons: d.reasons, body: d.bodyField, ready: m.ready,
         focusable: (function(){
           var link = document.getElementById('outreachOpen');
@@ -550,9 +574,10 @@ if (!seam) {
       + 'no address — where a disabled button would still be a control with a URL on it '
       + '(Acceptance line 6)',
       refused.ready === false && refused.hasHref === false && refused.href === null
-        && refused.disabled === 'true' && refused.focusable === false,
+        && refused.disabled === 'true' && refused.focusable === false
+        && refused.askedFirst === true,
       JSON.stringify({ href: refused.href, ariaDisabled: refused.disabled,
-        focusable: refused.focusable }));
+        focusable: refused.focusable, askedBeforeRebuilding: refused.askedFirst }));
     check('and the strip says why in the RESOLVER’S own words rather than in a second opinion '
       + 'of this screen’s — the token is still in the box exactly as the teacher typed it, and '
       + 'the sentence is the one src/merge-fields.js wrote about accommodation, medical and plan '
@@ -581,18 +606,25 @@ if (!seam) {
     /* ── a recipient with no address ── */
     const noAddress = await evalJs(`(function(){
       ${DRAWN}
-      document.querySelector('[data-outreach-to="guardian-1"]').click();
+      ${AGREE}
+      /* The check above typed over the refused token, so this recipient tap asks first (WO-5.6)
+         and the answer is yes. What agree() hands back is asserted below rather than dropped.
+         (No backticks in here; it is inside a template literal and one would close it.) */
+      var askedFirst = agree(function(){
+        document.querySelector('[data-outreach-to="guardian-1"]').click(); });
       var d = drawn();
       var m = window.planbook.outreachView.outreachModel();
-      return { hasHref: d.hasHref, head: d.head, reasons: d.reasons, ready: m.ready,
+      return { askedFirst: askedFirst,
+        hasHref: d.hasHref, head: d.head, reasons: d.reasons, ready: m.ready,
         toNote: d.toNote }; })()`);
     check('and a recipient with no email address blocks the handoff too, in this flow’s own '
       + 'words rather than the resolver’s — it has never heard of a recipient — so the app '
       + 'never opens a mail window with an empty To field',
       noAddress.ready === false && noAddress.hasHref === false
         && noAddress.reasons.some((r) => /no email address on file/.test(r))
-        && /Wo53Guardian Two/.test(noAddress.toNote),
-      (noAddress.reasons[0] || '').slice(0, 120));
+        && /Wo53Guardian Two/.test(noAddress.toNote) && noAddress.askedFirst === true,
+      (noAddress.reasons[0] || '').slice(0, 120)
+        + ' :: asked before rebuilding = ' + noAddress.askedFirst);
 
     /* ── the ceiling ── */
     const long = await evalJs(`(function(){
@@ -873,6 +905,415 @@ if (!seam) {
         && projectedFirst.bodyAfter > 0 && projectedFirst.tokensAfter === 0
         && projectedFirst.readyAfter === true,
       JSON.stringify(projectedFirst));
+
+    /*
+      ─────────── A DRAFT SURVIVES A CHANGE OF MIND (WO-5.6) ───────────
+
+      WO-5.3 settled WHEN the draft is resolved and left one question open: what happens to work
+      already done. Until 2026-08-29 the answer was that it went, silently, with a status line
+      afterwards saying so — which is the loss reported rather than prevented. These checks are
+      about the panel that now stands in the way, and every one of them is driven through the real
+      controls in the real order, because the failure this work order exists to prevent is a rebuild
+      the teacher never agreed to and only the wiring can produce one.
+
+      THE FIXTURE IS THE ONE ABOVE and the flow is already open on the student record's door, on a
+      resolved praise draft to Guardian 1. Nothing is re-seeded: what these checks want is a draft
+      with words in it, and the draft on screen is one.
+
+      `rev` IS READ AGAIN AT THE FOOT OF THIS BLOCK. The section already proves WO-5.3's flow wrote
+      nothing, but every control below is either new or re-cut, and a confirm dialog is exactly the
+      kind of place a save gets added by accident.
+    */
+    const beforeMind = await evalJs(`(async function(){
+      await window.planbook.store.flush();
+      var d = window.planbook.store.getDoc();
+      return { rev: d.rev, log: (d.log || []).length,
+        templates: JSON.stringify(d.templates || []) }; })()`);
+
+    /* The confirm panel, read off the DOM. Its two filled elements are the lead and the fact list,
+       and the fact list is what settles the Traps line about the two boxes. */
+    const CONFIRM = `var confirmPanel = function(){
+      var o = document.getElementById('outreachConfirmModal');
+      var facts = [];
+      Array.prototype.forEach.call(o.querySelectorAll('.class-delete-line'), function(n){
+        facts.push(n.textContent.replace(/\\s+/g, ' ').trim()); });
+      return { open: !o.classList.contains('hidden'),
+        lead: document.getElementById('outreachConfirmLead').textContent,
+        facts: facts,
+        action: document.getElementById('outreachConfirmBtn').textContent,
+        text: o.textContent.replace(/\\s+/g, ' ').trim() }; };`;
+    const MINE = 'I wrote this paragraph myself and I would like to keep it.';
+
+    /*
+      ACCEPTANCE LINE 1, FIRST HALF. Type in the body, then change the template. What is asserted is
+      not only that a dialog appeared but that NOTHING ELSE DID: the model still holds the old
+      template, the body still holds the typed words, and — the one that would go wrong quietly —
+      the `<select>` has been put back. A `<select>` takes its new value before the `change` event
+      is delivered, so a flow that asked without repainting would leave the picker claiming a
+      rebuild that had not happened, and the screen and the draft would disagree about which
+      template the body in front of her came from.
+    */
+    const asked = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      ${CONFIRM}
+      var before = window.planbook.outreachView.outreachModel();
+      var target = window.planbook.store.getDoc().templates.filter(function(t){
+        return t.name.indexOf('a long one') >= 0; })[0];
+      type('outreachBody', ${JSON.stringify(MINE)});
+      pick('outreachTemplate', target.id);
+      var c = confirmPanel();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { wasTemplate: before.templateId, wasName: before.templateName, wantId: target.id,
+        wantName: target.name, confirmOpen: c.open, lead: c.lead, facts: c.facts, action: c.action,
+        overlays: document.querySelectorAll('.modal-overlay:not(.hidden)').length,
+        bodyField: d.bodyField, modelBody: m.body, modelTemplate: m.templateId,
+        selectValue: document.getElementById('outreachTemplate').value,
+        focusInPanel: document.getElementById('outreachConfirmModal').contains(
+          document.activeElement) }; })()`);
+    check('typing in the body and then changing the template ASKS before it rebuilds — and while '
+      + 'the question is up nothing has moved: the model still holds the old template, the body '
+      + 'still holds the typed words, and the `<select>` has been put back to the template the '
+      + 'draft actually came from, which is the half that goes wrong quietly because a select '
+      + 'takes its new value before the `change` event is delivered (Acceptance line 1)',
+      asked.confirmOpen === true && asked.overlays === 2 && asked.bodyField === MINE
+        && asked.modelBody === MINE && asked.modelTemplate === asked.wasTemplate
+        && asked.selectValue === asked.wasTemplate && asked.focusInPanel === true,
+      JSON.stringify({ open: asked.confirmOpen, overlays: asked.overlays,
+        select: asked.selectValue === asked.wasTemplate ? 'put back' : asked.selectValue,
+        model: asked.modelTemplate === asked.wasTemplate ? 'unchanged' : asked.modelTemplate }));
+    check('and the panel names the change and lists WHICH BOX she has written in — the message and '
+      + 'not the subject, because only one of them differs from what the resolver produced — with '
+      + 'a confirm button that says what it will rebuild rather than OK, which is src/classes.js’s '
+      + 'ruling about a question a tired teacher answers yes to',
+      asked.facts.length === 1 && /rewritten the message/i.test(asked.facts[0])
+        && !asked.facts.some((f) => /subject/i.test(f))
+        && asked.action.indexOf(asked.wantName) >= 0 && !/^OK$/i.test(asked.action)
+        && asked.lead.indexOf(asked.wantName) >= 0 && /goes/.test(asked.lead),
+      JSON.stringify({ facts: asked.facts, action: asked.action }));
+
+    /*
+      ACCEPTANCE LINE 1, SECOND HALF. Cancel, and read everything again: the text, the model and the
+      three controls. "Exactly as it was" is asserted character for character against the string
+      that was typed, not against a length or a prefix.
+    */
+    const cancelled = await evalJs(`(function(){
+      ${DRAWN}
+      ${CONFIRM}
+      document.querySelector('[data-outreach-rebuild-cancel]').click();
+      var c = confirmPanel();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { confirmOpen: c.open,
+        overlays: document.querySelectorAll('.modal-overlay:not(.hidden)').length,
+        bodyField: d.bodyField, subjectField: d.subjectField, modelBody: m.body,
+        templateName: m.templateName, templateId: m.templateId, tone: m.tone,
+        to: m.recipient ? m.recipient.key : '',
+        selectValue: document.getElementById('outreachTemplate').value,
+        hasHref: d.hasHref }; })()`);
+    check('cancelling leaves the typed text EXACTLY as it was, character for character, and leaves '
+      + 'the tone, the recipient and the template picker reading what they read before the tap — '
+      + 'there is no undo here because nothing was done: the change was held as a proposal and the '
+      + 'cancel is the absence of a call (Acceptance line 1)',
+      cancelled.confirmOpen === false && cancelled.overlays === 1
+        && cancelled.bodyField === MINE && cancelled.modelBody === MINE
+        && cancelled.templateId === asked.wasTemplate
+        && cancelled.templateName === asked.wasName
+        && cancelled.selectValue === asked.wasTemplate
+        && cancelled.tone === 'praise' && cancelled.to === 'guardian-0'
+        && cancelled.hasHref === true,
+      JSON.stringify({ body: cancelled.bodyField === MINE ? 'exactly as typed' : cancelled.bodyField,
+        template: cancelled.templateName, tone: cancelled.tone, to: cancelled.to }));
+
+    /*
+      ACCEPTANCE LINE 2. The same tap again, and this time the button in the panel. What comes back
+      has to be the NEW template's text rather than anything of hers, and the status line has to say
+      the replacement happened at her word — the sentence that used to read "Anything you had typed
+      is gone" on every rebuild, agreed or not.
+    */
+    const confirmed = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      ${CONFIRM}
+      var target = window.planbook.store.getDoc().templates.filter(function(t){
+        return t.name.indexOf('a long one') >= 0; })[0];
+      pick('outreachTemplate', target.id);
+      var asking = confirmPanel().open;
+      document.querySelector('[data-outreach-rebuild-confirm]').click();
+      var c = confirmPanel();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { asking: asking, confirmOpen: c.open, wantId: target.id, wantName: target.name,
+        templateId: m.templateId, templateName: m.templateName,
+        bodyField: d.bodyField, keptMine: d.bodyField.indexOf(${JSON.stringify(MINE)}) >= 0,
+        fromTemplate: d.bodyField.indexOf('This paragraph exists to pass the ceiling') >= 0,
+        selectValue: document.getElementById('outreachTemplate').value,
+        status: document.getElementById('outreachStatus').textContent,
+        tokensLeft: window.planbook.outreach.tokensLeftIn(
+          d.subjectField + ' ' + d.bodyField).length }; })()`);
+    check('confirming rebuilds the draft from the new template exactly as it did before this work '
+      + 'order — the body is the new template resolved, not one word of hers survives, the picker '
+      + 'and the model agree on which template it came from, and the status line says the '
+      + 'replacement happened at her word rather than reporting a loss she was never asked about '
+      + '(Acceptance line 2)',
+      confirmed.asking === true && confirmed.confirmOpen === false
+        && confirmed.templateId === confirmed.wantId && confirmed.selectValue === confirmed.wantId
+        && confirmed.keptMine === false && confirmed.fromTemplate === true
+        && confirmed.tokensLeft === 0 && /rebuilt/i.test(confirmed.status)
+        && /as you asked/i.test(confirmed.status),
+      JSON.stringify({ template: confirmed.templateName, mineGone: !confirmed.keptMine,
+        status: confirmed.status }));
+
+    /*
+      ACCEPTANCE LINE 3, AND IT IS THE HALF THAT IS AS DELIBERATE AS THE OTHER. An untouched draft
+      rebuilds in silence on ALL THREE controls, because a confirm on every tap of a tone pill while
+      nothing has been typed is a dialog that teaches people to dismiss dialogs. Each step is
+      asserted to have actually REBUILT as well as to have stayed quiet — a control that had
+      silently done nothing would pass a check that only counted dialogs.
+
+      The tone step is the one worth naming: it changes which templates are on offer and therefore
+      which one is selected, so it replaces the draft without anything having named a template.
+    */
+    const silent = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      ${CONFIRM}
+      var steps = [];
+      var step = function(name){
+        var c = confirmPanel();
+        var m = window.planbook.outreachView.outreachModel();
+        steps.push({ name: name, asked: c.open, tone: m.tone,
+          to: m.recipient ? m.recipient.key : '', template: m.templateName,
+          body: drawn().bodyField.slice(0, 30),
+          status: document.getElementById('outreachStatus').textContent }); };
+      var praise = window.planbook.store.getDoc().templates.filter(function(t){
+        return t.name.indexOf('praise to a guardian') >= 0; })[0];
+      pick('outreachTemplate', praise.id); step('template');
+      document.querySelector('#outreachTones [data-outreach-tone="concern"]').click(); step('tone');
+      document.querySelector('[data-outreach-to="counselor"]').click(); step('recipient');
+      return { steps: steps }; })()`);
+    check('an untouched draft rebuilds with NO PROMPT AT ALL on all three controls — the template '
+      + 'picker, the tone pill and the recipient chip — and each of the three really did rebuild: '
+      + 'three different templates, three different bodies. The tone tap is the one that hides '
+      + 'here, because it changes which templates are on offer and so replaces the draft without '
+      + 'anything having named a template (Acceptance line 3)',
+      silent.steps.length === 3 && silent.steps.every((s) => s.asked === false)
+        && silent.steps[0].template === 'WO-5.3 praise to a guardian'
+        && silent.steps[1].template === 'WO-5.3 concern to a guardian'
+        && silent.steps[2].template === 'WO-5.3 to the counselor'
+        && silent.steps[1].tone === 'concern' && silent.steps[2].to === 'counselor'
+        && new Set(silent.steps.map((s) => s.body)).size === 3
+        && silent.steps.every((s) => /nothing was lost/i.test(s.status)),
+      silent.steps.map((s) => s.name + ': asked=' + s.asked + ' → ' + s.template).join(' · '));
+
+    /*
+      ACCEPTANCE LINE 4, ASSERTED AS A PAIR SO IT CANNOT PASS VACUOUSLY. The same control is tapped
+      twice over the same draft: once with a single stray character in the body, and once with that
+      character removed again. The first must ask and the second must not — a check that only did
+      the second half would pass over a flow that had stopped asking altogether.
+
+      This is what makes the test a COMPARISON rather than a keystroke flag: a flag set on the first
+      keypress stays set through the delete, and the second tap would ask about a draft that is
+      byte-for-byte the one the resolver produced.
+    */
+    const roundTrip = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      ${CONFIRM}
+      var was = drawn().bodyField;
+      type('outreachBody', was + 'z');
+      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      var withZ = confirmPanel();
+      document.querySelector('[data-outreach-rebuild-cancel]').click();
+      var mid = window.planbook.outreachView.outreachModel();
+      type('outreachBody', was);
+      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      var without = confirmPanel();
+      var m = window.planbook.outreachView.outreachModel();
+      return { withZ: withZ.open, panelText: withZ.text, panelLead: withZ.lead,
+        cancelledTo: mid.recipient ? mid.recipient.key : '',
+        withoutZ: without.open, to: m.recipient ? m.recipient.key : '',
+        template: m.templateName }; })()`);
+    check('a character typed and removed again counts as UNTOUCHED — the same recipient chip asks '
+      + 'while one stray "z" is in the body and goes straight through once it is gone, which is '
+      + 'only true because the test is a comparison against what the resolver produced and not a '
+      + 'flag set on the first keypress (Acceptance line 4)',
+      roundTrip.withZ === true && roundTrip.cancelledTo === 'counselor'
+        && roundTrip.withoutZ === false && roundTrip.to === 'guardian-0'
+        && roundTrip.template === 'WO-5.3 concern to a guardian',
+      'with the stray character the chip asked = ' + roundTrip.withZ + ', with it removed = '
+        + roundTrip.withoutZ + '; the cancel left the recipient on ' + roundTrip.cancelledTo);
+    /*
+      AND THE PANEL NAMES NOBODY. The recipient case is the one with something to lose: the chips
+      are positions but the line under them names a guardian and carries her address, and this
+      dialog can be on the glass when a projector goes on. It quotes the POSITION and never the
+      person — searched over the whole overlay's text, against the same planted strings the leak
+      check above uses plus the student's name, her guardian's name and the address itself.
+    */
+    check('and no sentence in that panel names a student, a guardian or an address — it says '
+      + '"Guardian 1", which is the chip’s own position and one of the app’s five short strings, '
+      + 'where the line under the chips names the person. This panel opens over a modal that '
+      + 'presentation mode empties, so a name in it would be a name left on the glass',
+      /Guardian 1/.test(roundTrip.panelLead)
+        && SECRETS.every((w) => roundTrip.panelText.indexOf(w) < 0)
+        && roundTrip.panelText.indexOf('Wo53Full') < 0
+        && roundTrip.panelText.indexOf('Wo53Guardian') < 0
+        && roundTrip.panelText.indexOf(G1_EMAIL) < 0
+        && roundTrip.panelText.indexOf('Ada') < 0,
+      roundTrip.panelLead.slice(0, 130));
+
+    /*
+      THE TRAPS LINE, AND IT IS THE SAME BUG ONE FIELD FURTHER ALONG. The subject and the body are
+      two boxes and either can be edited; a confirm that watched only the body would lose a
+      rewritten subject silently, which is this work order's own failure wearing a different hat.
+      So: rewrite the SUBJECT, leave the body alone, and tap a tone pill.
+    */
+    const subjectOnly = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      ${CONFIRM}
+      var wasSubject = drawn().subjectField;
+      var wasBody = drawn().bodyField;
+      var mine = 'A subject line I rewrote by hand';
+      type('outreachSubject', mine);
+      document.querySelector('#outreachTones [data-outreach-tone="praise"]').click();
+      var c = confirmPanel();
+      var m1 = window.planbook.outreachView.outreachModel();
+      document.querySelector('[data-outreach-rebuild-cancel]').click();
+      var d = drawn();
+      var m2 = window.planbook.outreachView.outreachModel();
+      type('outreachSubject', wasSubject);
+      return { asked: c.open, facts: c.facts, tone: m1.tone, toneAfter: m2.tone,
+        subjectAfter: d.subjectField, mine: mine,
+        bodyUnchanged: d.bodyField === wasBody }; })()`);
+    check('a rewritten SUBJECT over an untouched body still asks, and the panel lists the subject '
+      + 'and only the subject — a confirm that watched one box would lose the other one silently, '
+      + 'which is this work order’s own failure one field along. Cancelling leaves the rewritten '
+      + 'subject and the tone pill both exactly where they were',
+      subjectOnly.asked === true && subjectOnly.facts.length === 1
+        && /rewritten the subject/i.test(subjectOnly.facts[0])
+        && !subjectOnly.facts.some((f) => /message/i.test(f))
+        && subjectOnly.tone === 'concern' && subjectOnly.toneAfter === 'concern'
+        && subjectOnly.subjectAfter === subjectOnly.mine
+        && subjectOnly.bodyUnchanged === true,
+      JSON.stringify({ asked: subjectOnly.asked, facts: subjectOnly.facts,
+        tone: subjectOnly.toneAfter }));
+
+    /*
+      AND THE ASK GOES DOWN WITH THE FORM. Presentation mode takes this whole flow down, and a
+      dialog stacked over it would otherwise sit on the glass over a panel that had just emptied
+      itself — the shape of the disclosure WO-5.3's own mutation round found in this file. Driven
+      through the real header control with `.click()`, for the reason the projector checks above
+      are: a coordinate click at those coordinates lands on an overlay's backdrop.
+    */
+    await evalJs(`(function(){
+      var n = document.getElementById('outreachBody');
+      n.value = n.value + ' and one more sentence.';
+      n.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#outreachTones [data-outreach-tone="praise"]').click();
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 150));
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 250));
+    const projectedOverAsk = await evalJs(`(function(){
+      ${DRAWN}
+      ${CONFIRM}
+      var c = confirmPanel();
+      var d = drawn();
+      return { confirmOpen: c.open, formHidden: d.formHidden, projecting: d.projecting,
+        overlays: document.querySelectorAll('.modal-overlay:not(.hidden)').length,
+        subjectField: d.subjectField, bodyField: d.bodyField }; })()`);
+    check('turning the projector on while the ask is up CLOSES the ask as well as emptying the '
+      + 'form — a dialog stacked over a panel that has just emptied itself is the one thing on this '
+      + 'screen presentation mode could otherwise leave on the glass',
+      projectedOverAsk.confirmOpen === false && projectedOverAsk.formHidden === true
+        && projectedOverAsk.projecting === true && projectedOverAsk.overlays === 1
+        && projectedOverAsk.subjectField === '' && projectedOverAsk.bodyField === '',
+      JSON.stringify(projectedOverAsk));
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 250));
+
+    /*
+      THE TOUCH PASS FOR THE NEW PANEL, at 390px under a coarse pointer and measured rather than
+      read off the stylesheet. Every control in it is a component src/shell.css already owns — two
+      `.class-action-btn`s and the `.modal-close` — which is the reason this work order added no CSS
+      at all; that is a claim worth measuring rather than asserting, because a floor inherited by
+      sitting inside a shared selector is exactly the kind of thing a stylesheet review gets wrong.
+    */
+    /* THE TONE TAPPED HERE IS THE ONE THE FLOW IS NOT ALREADY ON, and that is not a detail: every
+       one of the three doors returns early when the value it is handed is the value it already
+       holds, so a tap on the current tone raises nothing and this pass would measure an empty
+       panel — 0 controls, 0 of them under 44px, green from a distance. The flow is on *concern*
+       here, so the pill is *praise*. `open` is asserted below for the same reason. */
+    await evalJs(`(function(){
+      var n = document.getElementById('outreachBody');
+      n.value = 'typed, so that the panel below has something to ask about';
+      n.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#outreachTones [data-outreach-tone="praise"]').click();
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 150));
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 300));
+    const confirmTouch = await evalJs(`(function(){
+      var out = [];
+      document.querySelectorAll('#outreachConfirmModal button, #outreachConfirmModal a[href]')
+        .forEach(function(e){
+          var r = e.getBoundingClientRect();
+          if (r.width === 0 && r.height === 0) return;
+          if (getComputedStyle(e).display === 'none') return;
+          out.push({ t: e.tagName + '.' + (e.className || ''),
+            w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100 }); });
+      var doc = document.documentElement;
+      return { open: !document.getElementById('outreachConfirmModal').classList.contains('hidden'),
+        controls: out, under: out.filter(function(m){ return m.h < 44 || m.w < 44; }),
+        coarse: matchMedia('(pointer: coarse)').matches,
+        sideways: doc.scrollWidth - doc.clientWidth }; })()`);
+    check('every control in the rebuild confirm measures at least 44px on both axes at 390px under '
+      + 'a coarse pointer — the two actions and the ✕ — and the panel puts the page into no '
+      + 'sideways scroll. This work order added no stylesheet rule of any kind: the floor is the '
+      + 'one `.class-action-btn` and `.modal-close` already carry, which is a claim to measure '
+      + 'rather than one to read',
+      confirmTouch.coarse === true && confirmTouch.open === true
+        && confirmTouch.controls.length >= 3 && confirmTouch.under.length === 0
+        && confirmTouch.sideways <= 0,
+      confirmTouch.controls.length + ' control(s) measured, ' + confirmTouch.under.length
+        + ' under 44px' + (confirmTouch.under.length ? ': ' + JSON.stringify(confirmTouch.under) : '')
+        + ', sideways scroll ' + confirmTouch.sideways + 'px');
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 200));
+    await evalJs(`(function(){
+      document.querySelector('[data-outreach-rebuild-cancel]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 150));
+
+    /*
+      ACCEPTANCE LINE 5. The whole of the above — typing, asking, cancelling, confirming, three
+      silent rebuilds, a projector cycle and a touch pass — and `rev` has not moved. Flushed first,
+      for the reason the check further up this file gives at length: update() only SCHEDULES a save
+      and `rev` advances 800ms later, so a read taken straight after the last control cannot see a
+      write made by it.
+    */
+    const afterMind = await evalJs(`(async function(){
+      await window.planbook.store.flush();
+      var d = window.planbook.store.getDoc();
+      return { rev: d.rev, log: (d.log || []).length,
+        templates: JSON.stringify(d.templates || []),
+        contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
+    check('and nothing in the change-of-mind flow wrote to the document either — `rev` has not '
+      + 'moved across the asking, the cancelling, the confirming, three silent rebuilds and a '
+      + 'projector cycle, `log[]` is the length it was and `templates[]` is byte-identical. A '
+      + 'confirm dialog is exactly the kind of place a save gets added by accident (Acceptance '
+      + 'line 5)',
+      afterMind.rev === beforeMind.rev && afterMind.log === beforeMind.log
+        && afterMind.contacts === 0 && afterMind.templates === beforeMind.templates,
+      'rev ' + beforeMind.rev + ' → ' + afterMind.rev + ', log ' + beforeMind.log + ' → '
+        + afterMind.log + ', contact entries ' + afterMind.contacts);
 
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its
