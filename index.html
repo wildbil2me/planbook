@@ -167,6 +167,13 @@
        app’s first REFUSAL — presentation mode closes this screen instead of redacting it — and the
        point of departure is written out there rather than here. -->
   <link rel="stylesheet" href="src/signals-view.css">
+  <!-- The template editor’s own sheet (WO-5.2), eighth instance of the same convention. It WEARS
+       `.panel*`, `.class-action-btn` and `.empty-state` from src/shell.css and restyles none of
+       them. The one thing it does NOT carry is the treatment of a field that did not resolve:
+       `.mf-token` and the block strip are in src/shell.css § UNRESOLVED, because WO-5.3’s send flow
+       renders a resolved draft too and one sentence — “an unresolved merge field never renders
+       blank” — gets one treatment in the sheet both screens already load. -->
+  <link rel="stylesheet" href="src/templates.css">
 </head>
 <body>
 
@@ -353,6 +360,25 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
+        </svg>
+      </button>
+      <!--
+        THE FOURTH ICON, AND IT IS THE ONE DOOR ONTO THE TEMPLATE EDITOR (WO-5.2, the owner's call
+        of 2026-08-28). This cluster already holds exactly the surfaces that are about no single
+        class — the roster, the classes and terms, the teacher's own details — so a template belongs
+        here rather than on the class switcher: `{{class.name}}` resolves per draft at send time, and
+        a tab row implying a template is a property of Biology I teaches the wrong model on the first
+        screen. A sixth screen-nav segment is what WO-6.6 ruled against twice, and *Your details* was
+        weighed and rejected — a message a hundred guardians read is not a setting.
+
+        IT CARRIES NO `aria-haspopup`, unlike the three beside it, and that is the difference rather
+        than an omission: those open dialogs and this one swaps the view in <main>.
+      -->
+      <button class="hdr-icon-btn" data-templates-open title="Message templates"
+              aria-label="Message templates">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+          <polyline points="22 6 12 13 2 6"/>
         </svg>
       </button>
     </div>
@@ -1675,6 +1701,226 @@
       Nobody is in the quiet middle right now — every student on these rosters is flagged, is
       being praised, or has been written home about this term.
     </p>
+  </div>
+</div>
+
+<!--
+  MESSAGE TEMPLATES (WO-5.2) — the eighth view, and the first one that is about no class at all.
+
+  IT IS A VIEW REACHED FROM A HEADER ICON, which is two decisions and both are the owner's
+  (2026-08-28). A surface a teacher works down for ten minutes is a view rather than a dialog
+  (plans/gradebook-surfaces.md's test, applied rather than re-argued), so it is here in <main> as a
+  sibling of the other seven, toggled by `.hidden`. And it is reached from the icon cluster in the
+  header rather than from the screen switcher, because a template is not about one class:
+  `{{class.name}}` resolves per draft at send time, from the class the signal row came out of. The
+  door's own comment up there carries the rest of the argument.
+
+  THREE COLUMNS IN THE ORDER OF THE WORK — list · editor · preview — with the palette under the
+  preview and the whole thing one column at 390px in the order list · editor · preview · palette.
+  design/mockups/outreach.html settles that; src/templates.css lifts it and names the two places the
+  build departed from the drawing.
+
+  EVERYTHING THAT COMES OUT OF THE DOCUMENT IS EMPTY IN THIS MARKUP and is drawn by
+  src/templates-view.js — the rows, the eight starters, the sixteen field chips, the resolved draft
+  and the block strip. What IS markup is what does not change with the document: the title row, the
+  controls, and the copy a teacher actually reads. That copy lives here rather than in a module for
+  the reason the install banner's and the calendar's do — it should be revisable without opening a
+  JavaScript file.
+
+  THE FENCE IN THE PALETTE IS THE ONE TO READ TWICE. It states the rule in words rather than
+  documenting it by omission: nothing on a student's supports block can be merged, and it cannot be
+  added to the list. CLAUDE.md § Accommodations is the standard that control has to meet, and the
+  refusal itself is src/merge-fields.js's whitelist rather than this sentence — the words are here
+  so a teacher knows the door does not exist instead of hunting for it.
+
+  AND THE PREVIEW IS THE HALF THE PROJECTOR TAKES. Presentation mode suppresses the preview column
+  and leaves the list, the editor and the palette working, which is narrower than #signalsView's
+  refusal and is argued at src/templates-view.js's own header: a template names nobody, and a
+  resolved draft names a child.
+-->
+<div id="templatesView" class="hidden">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Message templates</h2>
+          <p>
+            What a message says before it says it about anybody. Concern and praise are written
+            separately, because a good praise message reads nothing like a good concern message.
+            The preview resolves against a real student as you type, so a broken field turns up
+            here rather than in somebody’s inbox.
+          </p>
+        </div>
+        <!-- The way back, and the same one route every other screen uses: `data-view-home` is one
+             hook with several doors. -->
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" data-view-home>
+            <span aria-hidden="true">←</span> All classes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tpl-wrap">
+      <div class="tpl-layout">
+
+        <!-- ── the list ─────────────────────────────────────────────────────────── -->
+        <div class="tpl-list">
+          <div class="tpl-list-head">
+            <h3>Templates</h3>
+            <!-- A FILTER RATHER THAN A MODE, and *All* is what every arrival opens on: the question
+                 "which of my templates says this" does not know its own tone yet. `aria-selected`
+                 moves with the class, the way the pills' `aria-pressed` does — a visually active
+                 control that still reads unselected is the standard way this component goes wrong. -->
+            <div class="tpl-tone-switch" id="templatesTones" role="tablist" aria-label="Tone">
+              <button class="tpl-tone-btn active" type="button" role="tab" aria-selected="true"
+                      data-templates-tone="">All</button>
+              <button class="tpl-tone-btn" type="button" role="tab" aria-selected="false"
+                      data-templates-tone="concern">Concern</button>
+              <button class="tpl-tone-btn" type="button" role="tab" aria-selected="false"
+                      data-templates-tone="praise">Praise</button>
+            </div>
+          </div>
+
+          <div class="tpl-list-rows" id="templatesList"></div>
+          <p class="tpl-list-empty hidden" id="templatesMineEmpty">
+            You have not saved a template yet. Start from one of Planbook’s below, or write your own.
+          </p>
+
+          <button class="tpl-new" type="button" data-template-new>+ New template</button>
+
+          <!-- THE EIGHT THE APP SHIPS WITH. They are offered and never loaded: the editor opens
+               empty, opening one of these fills it, and saving is what puts a record in your year.
+               Written well they teach what a merge field is faster than any help text; loaded
+               automatically they would be identical sentences one Save away from a hundred
+               guardians (the owner, 2026-08-28). -->
+          <div id="templatesStartersHead">
+            <div class="tpl-group-head">Planbook’s own</div>
+            <p class="tpl-group-note">
+              Two tones for each of the four people you write to. Opening one fills the editor;
+              nothing is in your list until you save it, and it is yours to rewrite first.
+            </p>
+          </div>
+          <div class="tpl-list-rows" id="templatesStarters"></div>
+        </div>
+
+        <!-- ── the editor ───────────────────────────────────────────────────────── -->
+        <div class="tpl-editor">
+          <div class="tpl-meta-row">
+            <div class="tpl-field tpl-field-wide">
+              <label class="tpl-label" for="templateName">Name</label>
+              <input class="tpl-input" id="templateName" type="text" autocomplete="off"
+                     data-template-field="name" placeholder="What this message is for">
+            </div>
+            <div class="tpl-field">
+              <label class="tpl-label" for="templateTone">Tone</label>
+              <select class="tpl-select" id="templateTone" data-template-meta="tone">
+                <option value="concern">Concern</option>
+                <option value="praise">Praise</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label class="tpl-label" for="templateAudience">Audience</label>
+              <select class="tpl-select" id="templateAudience" data-template-meta="audience">
+                <option value="guardian">Guardian</option>
+                <option value="counselor">Counselor</option>
+                <option value="admin">Admin</option>
+                <option value="student">Student</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tpl-field">
+            <label class="tpl-label" for="templateSubject">Subject</label>
+            <input class="tpl-input" id="templateSubject" type="text" autocomplete="off"
+                   data-template-field="subject">
+          </div>
+
+          <!-- A PLAIN TEXTAREA, AND THE TOKENS IN IT ARE NOT HIGHLIGHTED. Colouring them would take
+               a `contenteditable`, which this app has none of and which arrives with its own
+               selection, paste and undo problems on an iPad. The preview is where a token stops
+               being text, which is also where a teacher can see whether it was the right one. -->
+          <div class="tpl-field">
+            <label class="tpl-label" for="templateBody">Body</label>
+            <textarea class="tpl-body" id="templateBody" data-template-field="body"></textarea>
+          </div>
+
+          <p class="tpl-editor-state" id="templateEditorState"></p>
+          <p class="tpl-status hidden" id="templateStatus"></p>
+
+          <div class="tpl-editor-actions">
+            <button class="class-action-btn primary" type="button" data-template-save>Save</button>
+            <button class="class-action-btn hidden" type="button" id="templateDuplicate"
+                    data-template-duplicate>Duplicate</button>
+            <button class="class-action-btn delete hidden" type="button" id="templateDelete"
+                    data-template-delete>Delete</button>
+          </div>
+        </div>
+
+        <!-- ── the preview ──────────────────────────────────────────────────────── -->
+        <div class="tpl-preview">
+          <div class="tpl-preview-head">
+            <h3>Preview</h3>
+            <button class="tpl-preview-refresh" type="button" id="templateAnother"
+                    data-template-another>Another student</button>
+          </div>
+
+          <!-- THE STUDENT IS A CONTROL RATHER THAN A CAPTION. A template that reads perfectly
+               against the first student on the roster is blocked for the fourth, and nothing about
+               the template is wrong. -->
+          <div class="tpl-preview-student" id="templatePreviewStudentRow">
+            <select class="tpl-select" id="templatePreviewStudent" data-template-student
+                    aria-label="Resolve this preview against"></select>
+          </div>
+
+          <div class="tpl-draft hidden" id="templatePreviewDraft">
+            <div class="tpl-draft-subject" id="templatePreviewSubject"></div>
+            <div class="tpl-draft-body" id="templatePreviewBody"></div>
+          </div>
+
+          <div class="tpl-preview-note hidden" id="templatePreviewEmpty">
+            <strong>Nobody to resolve against yet.</strong>
+            The preview needs a class with a roster in it. Add one and every field in this template
+            answers for a real student — which is the whole point of writing it here rather than in
+            an email.
+          </div>
+
+          <div class="tpl-preview-note hidden" id="templatePreviewBlocked">
+            <strong>Not while you are projecting.</strong>
+            A preview resolves this template against a named student — her grade, her missing work,
+            what she has been marked. Presentation mode is on, so it is not drawn; turn it off with
+            the screen button in the header and it comes straight back. The template itself is yours
+            to write either way.
+          </div>
+
+          <!-- THE BLOCK STRIP IS PERMANENT: green when nothing is wrong, amber when something is.
+               A strip that appeared only on failure would be read as an error banner; one that is
+               always there is a report, and WO-5.3 reads the same `blocked` flag to decide whether
+               its send button is live (the owner, 2026-08-28). -->
+          <div class="mf-block" id="templatePreviewBlock"></div>
+        </div>
+
+        <!-- ── the palette ──────────────────────────────────────────────────────── -->
+        <div class="tpl-palette">
+          <div class="tpl-palette-head">
+            <h3>Fields</h3>
+            <p class="tpl-palette-note">
+              Tap one to drop it in at the cursor. These sixteen are the whole of what a message can
+              say.
+            </p>
+          </div>
+
+          <div class="tpl-palette-fence">
+            <strong>Nothing on the supports block can be merged.</strong> Accommodations, IEP and 504
+            details, medical needs, behavior plans, the case manager and the review date are not on
+            this list and cannot be added to it. A message that names one has to be typed by you.
+          </div>
+
+          <div class="tpl-palette-chips" id="templatesPalette"></div>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 

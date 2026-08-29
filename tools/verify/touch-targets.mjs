@@ -242,6 +242,30 @@ if (coarse !== true) {
        door of its own now — the fourth segment on the switcher — so the walk openView() would take
        to it is a real one. Still `byHand`, for the two reasons below, which the ruling did not
        touch. */
+    /*
+      #templatesView (WO-5.2) IS ENUMERATED HERE AND MEASURED SOMEWHERE ELSE, and it is the FOURTH
+      `byHand` — for a reason none of the other three has: THIS LOOP CANNOT OPEN IT. openView()
+      knows two doors, the "All classes" one and a `data-class-screen` segment, and the template
+      editor has neither. It is not a class screen (src/views.js says why: a template is about no
+      class at all), so it carries no segment, and its one door is the fourth icon in the header's
+      right-hand cluster.
+
+      The second reason is this table's own arithmetic. The screen's controls are the eight starter
+      rows, the sixteen field chips and the editor — and by the time this block runs the assignments
+      section has emptied the document, so the loop would measure a screen with no roster behind its
+      preview and report that nothing was undersized. That is the vacuous pass this table's header
+      warns about.
+
+      SO IT IS MEASURED AT § "message templates (WO-5.2)", against a fixture built for it: opened
+      through the real icon, at 390px under a coarse pointer, with every button, select, input and
+      textarea on it measured and the page checked for sideways scroll. `byHand` IS A POINTER TO
+      COVERAGE AND NEVER A WAY OUT OF ONE — if that section is ever deleted, delete this line with
+      it and let the loop go red.
+    */
+    templatesView: { byHand: 'the template editor is reached from a header icon rather than from a '
+      + 'class screen, so this loop has no door to it — and the document is empty by the time this '
+      + 'block runs, so its preview would have no student. It is opened through its real icon and '
+      + 'measured at 390px in § "message templates (WO-5.2)"' },
     calendarView: { screen: 'calendar', floor: 5, byHand: 'the calendar\'s controls are chips over a '
       + 'fixture, and every assignment in the document is deleted by the time this block runs — so '
       + 'this loop would measure a toolbar over an empty grid. It is opened through its real door '

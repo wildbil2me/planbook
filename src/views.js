@@ -83,6 +83,7 @@ const VIEWS = {
   detail: 'detailView',
   calendar: 'calendarView',
   signals: 'signalsView',
+  templates: 'templatesView',
 };
 
 /*
@@ -117,6 +118,15 @@ const VIEWS = {
    twice: it is a screen ABOUT the open class — the header's class tabs belong over it, the *All
    classes* door belongs on it, and it earns a segment on the switcher — while its own toolbar
    filter keeps *All classes* and says what the LIST is about. Two controls, two questions. */
+/* AND WO-5.2's `templates` IS THE EIGHTH VIEW AND IS IN NEITHER LIST BELOW, which is the state
+   `calendar` was in until WO-6.6 and is the right one here for a reason that will not change. It is
+   not a screen OF a class and it is not a screen ABOUT one either: a template is not about any
+   class at all — `{{class.name}}` resolves per draft at send time, from the class the signal row
+   came out of — so the header's class tabs do not belong over it and it earns no segment on the
+   switcher (WO-6.6 ruled against a sixth twice). It is reached from the header's icon cluster,
+   beside the roster and the class manager, which is where this app already keeps the surfaces that
+   belong to no class. It DOES take a REMEMBERED_AS line, and that one has a reason of its own —
+   see below. */
 const CLASS_SCREENS = ['class', 'assignments', 'scores', 'detail', 'calendar', 'signals'];
 
 export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1; }
@@ -161,8 +171,22 @@ export function isClassScreen(name) { return CLASS_SCREENS.indexOf(name) !== -1;
   exactly the arrival nobody asked for. The screen refuses while presentation mode is on
   (src/signals-view.js), and this line is what stops a reload landing there at all.
 */
+/*
+  WO-5.2's `templates` IS THE SIXTH, AND IT IS THE FIRST ONE WRITTEN DOWN AS SOMETHING OTHER THAN
+  `class` — because it is not a class screen, so `class` would be a lie about where a reload should
+  land. It is written down as `home`, and its reason is `detail`'s rather than the others': the
+  screen carries a LIVE PREVIEW, resolved against a named student, showing her grade, her missing
+  work and what she has been marked. A browser that reopened onto it would be putting that on the
+  glass without anybody having asked for it — a reload is exactly the arrival nobody made. The
+  preview refuses while presentation mode is on (src/templates-view.js), and this line is what stops
+  a reload landing there at all.
+
+  It costs a teacher nothing she asked for: the screen is one tap from the header on every view, and
+  it holds no state worth restoring — every arrival opens on an empty editor by the owner's ruling
+  about the starters.
+*/
 const REMEMBERED_AS = { assignments: 'class', scores: 'class', detail: 'class', calendar: 'class',
-  signals: 'class' };
+  signals: 'class', templates: 'home' };
 
 /* Where a browser that has never been here lands, and where a stored name that no longer exists
    falls back to. The class grid rather than a class: on a fresh install there is no class to show,

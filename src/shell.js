@@ -471,6 +471,42 @@
       data-teacher-panel              fills the teacher's own details, then opens them
       data-teacher-field="<name>"     an input; edits that field as it is typed
       data-teacher-cc                 toggles whether outreach drafts copy the teacher
+      data-templates-open             puts the message-template editor in <main>. It is the FOURTH
+                                      icon in the header's right-hand cluster and the one door onto
+                                      that screen: a template is about no class at all, so it is not
+                                      on the class switcher (WO-6.6 ruled against a sixth segment
+                                      twice) and it is not a class screen (src/views.js)
+      data-templates-tone="<tone>"    which tone the template list is filtered to; an empty value is
+                                      every template. A filter rather than a mode, recomputed on
+                                      arrival and stored nowhere, like every other filter in this app
+      data-template-pick="<id>"       opens that saved template in the editor
+      data-template-starter="<key>"   opens one of the eight Planbook ships with, as an UNSAVED
+                                      draft. The record is written by the Save and by nothing else,
+                                      which is the one keystroke between a shipped sentence and a
+                                      hundred guardians reading it in the same words
+      data-template-new               empties the editor for a new one
+      data-template-save              writes the editor into `templates[]` — an add when it is new,
+                                      a replace when it is not. The one refusal is a missing name
+      data-template-duplicate         copies the open template and opens the copy, which is the short
+                                      path to the same words in the other tone
+      data-template-delete            removes the open template, with no confirm — src/events.js's
+                                      test, applied rather than re-argued: it destroys nothing on the
+                                      way out and putting it back costs one Save
+      data-template-field="name|subject|body"  an input; edits the DRAFT as it is typed and writes
+                                      NOTHING to the document. This editor has a Save button, which
+                                      is a departure from every other field in this app and is
+                                      argued at src/templates-view.js's own header. The `focusin`
+                                      listener reads the same hook, which is how a palette chip
+                                      knows where the caret was
+      data-template-meta="tone|audience"  a <select>; the two enums, on `change` rather than on
+                                      `input`, for the reason `data-support-kind` is
+      data-template-insert="<field>"  a palette chip: drops `{{field}}` in at the cursor. The name
+                                      comes off mergeFieldPalette(), which carries no resolver —
+                                      this hook moves text and resolves nothing
+      data-template-student           a <select>; which student the live preview resolves against
+      data-template-another           steps the preview to the next student on the roster
+      data-template-jump="subject|body"  from one line of the block strip to the half of the template
+                                      the field that failed is in
       data-drive-connect              signs in to Google Drive — silent first, a visible Google
                                       prompt when that fails (WO-7.1). It lives in the About
                                       modal and is HIDDEN on every origin but loopback, which
@@ -634,6 +670,14 @@ import * as gradesReport from './grades-report.js';
    src/supports.js's reason — one asker, so the screen cannot disagree with the rule. */
 import * as auth from './auth.js';
 
+/* WO-5.2, and it is TWO modules for the reason `signals` and `signalsView` are two: `templates` is
+   the model — what a record is, which templates exist for a tone and an audience, and the eight the
+   app ships with, all of which WO-5.3's send flow reads while standing on the signal card — and
+   `templatesView` is the screen over it. The import runs one way. Neither of them resolves a merge
+   field: that is src/merge-fields.js's and only its, and the editor asks it for a whole draft. */
+import * as templates from './templates.js';
+import * as templatesView from './templates-view.js';
+
 /* Everything that is a fact about the open year rather than about a save, re-evaluated wherever the
    open year can change: the backup nag (src/backup.js explains why it is not on every save), the
    class bar and the home screen, both of which are describing another year's classes the instant
@@ -644,6 +688,11 @@ import * as auth from './auth.js';
 function afterYearChange() {
   backup.refreshBackupNag();
   classes.refreshClassBar();
+  /* AND THE TEMPLATE EDITOR IS EMPTIED (WO-5.2), which is the one thing on this chain that is not a
+     repaint. `templates[]` is per year, so an editor left holding last year's record would be
+     pointing at an id the new document does not have — and a Save would then quietly do nothing.
+     The paint follows from afterClassChange() below, which has this view's line in it. */
+  templatesView.resetTemplates();
   afterClassChange();
   teacher.refreshHeaderIdentity();
 }
@@ -695,7 +744,16 @@ function afterClassChange() {
     that is still perfectly true. The paragraph above is the argument and it did not change when the
     list did; the branch being first is what keeps it enforced.
   */
-  if (views.currentView() === 'calendar') calendarView.renderCalendar();
+  /*
+    AND THE TEMPLATE EDITOR, WHEN THAT IS WHAT IS UP (WO-5.2), for the calendar's reason above and
+    one of its own. The reason above: this screen is not a class's and not the grid, so the branch
+    below it — "with no active class there is no working surface to be on" — would bounce a teacher
+    off a screen that is still perfectly true, and a document with no classes in it still holds her
+    templates. Its own: the live preview resolves against a real student in a real class, so
+    archiving one takes rows out of the picker under her thumb.
+  */
+  if (views.currentView() === 'templates') templatesView.renderTemplates();
+  else if (views.currentView() === 'calendar') calendarView.renderCalendar();
   else if (!classes.getSelectedClassId()) showHome();
   else if (views.isClassScreen(views.currentView())) paintClassScreen(views.currentView());
   /* AND THE STRIP THAT SAYS WHICH SCREEN OF IT (WO-3.3). Cheap enough to repaint when nothing
@@ -1075,6 +1133,36 @@ function showCalendar() {
 }
 
 /*
+  THE WAY ONTO THE TEMPLATE EDITOR (WO-5.2), and there is ONE door — the fourth icon in the header's
+  right-hand cluster, which is on screen on every view. The shape is showCalendar()'s one view over.
+
+  Five calls, each a fact about a different part of the screen. The screen is RESET first, and
+  before the view swaps, so the first paint is already of an empty editor rather than of whatever
+  this browser was left on: that is the owner's ruling about the eight starters arriving in the one
+  place it can be enforced — the editor opens EMPTY with the eight in the list, never opened on one
+  of them. The view swaps. The class tab strip repaints, because this is not a class screen and the
+  strip carries a caption on those (src/classes.js's refreshClassBar reads which view is up). The
+  switcher repaints, which empties it: a template is not a screen OF a class, so there is nothing
+  for it to switch between. Then the screen itself is painted, because a view that is shown and not
+  drawn is the last document's.
+
+  WHICH CLASS IS OPEN IS UNTOUCHED, and so is every preference except `openView` — which src/views.js
+  writes this view down as `home`, so a reload cannot land on a resolved draft about a named student.
+  That line has its own paragraph there.
+
+  Said out loud for the reason selectClass(), showHome() and showCalendar() are: this moves a screen
+  a screen-reader user cannot see move.
+*/
+function showTemplates() {
+  templatesView.resetTemplates();
+  views.showView('templates');
+  classes.refreshClassBar();
+  screenNav.refreshScreenNav();
+  templatesView.renderTemplates();
+  announce('Message templates.');
+}
+
+/*
   A TAP ON A CHIP, AND THE FIVE PLACES IT CAN LAND (WO-6.3's fourth acceptance line).
 
   "Every item taps through to its source" is one sentence about six kinds of item, and the six do
@@ -1263,6 +1351,9 @@ function afterCalendarChange() {
    itself on the path that just wrote the file. */
 function afterRestore() {
   classes.refreshClassBar();
+  /* The template editor, emptied for afterYearChange()'s reason exactly: a restore replaces the
+     document, so an open record's id belongs to the file that was just replaced. */
+  templatesView.resetTemplates();
   afterClassChange();
   teacher.refreshHeaderIdentity();
 }
@@ -1374,6 +1465,22 @@ function flipPresentationMode() {
     there is no support field anywhere on that screen to be visible.
   */
   if (views.currentView() === 'signals') signalsView.renderSignals();
+  /*
+    AND THE TEMPLATE EDITOR'S PREVIEW (WO-5.2), which is the sixth entry and the narrowest one.
+
+    Every line above suppresses a field and leaves the screen working; the line before this one takes
+    a whole screen off the glass. This one takes ONE COLUMN: the preview resolves a template against
+    a named student and draws her grade, her missing work and what she has been marked, while the
+    list, the editor and the palette are the teacher's own writing and name nobody. So the preview
+    goes and the rest stays, which src/templates-view.js argues at its own header as a departure from
+    the screen above.
+
+    The refusal is that module's own test of presentationMode() — the same switch through the
+    accessor that matches the question, which is src/pass-history.js's distinction rather than a new
+    one — and what this line buys is the word "next": a teacher who reaches for this switch with a
+    resolved draft on the glass is a teacher whose iPad is about to face the room.
+  */
+  if (views.currentView() === 'templates') templatesView.renderTemplates({ fields: false });
   /*
     AND THE ABSENCE PROMPT GOES, WHEREVER IT IS (WO-4.4). It is the fifth entry and the only one that
     is not guarded on a view, because it is not a view: it is a box on the registry that a mark put
@@ -2355,6 +2462,41 @@ document.addEventListener('click', (e) => {
   if (teacherPanel) { teacher.openTeacherSettings(teacherPanel); return; }
   if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
 
+  /* WO-5.2's fourteen hooks. The first is the door and the rest are on the screen behind it; three
+     of them write (`save`, `duplicate`, `delete`) and every other one changes what is drawn, which
+     is a fact about this browser and this minute. */
+  if (e.target.closest('[data-templates-open]')) { showTemplates(); return; }
+  const templatesTone = e.target.closest('[data-templates-tone]');
+  if (templatesTone) {
+    templatesView.setTemplatesTone(templatesTone.getAttribute('data-templates-tone'));
+    return;
+  }
+  const templatePick = e.target.closest('[data-template-pick]');
+  if (templatePick) {
+    templatesView.openTemplate(templatePick.getAttribute('data-template-pick'));
+    return;
+  }
+  const templateStarter = e.target.closest('[data-template-starter]');
+  if (templateStarter) {
+    templatesView.openStarter(templateStarter.getAttribute('data-template-starter'));
+    return;
+  }
+  if (e.target.closest('[data-template-new]')) { templatesView.newTemplateDraft(); return; }
+  if (e.target.closest('[data-template-save]')) { templatesView.saveTemplate(); return; }
+  if (e.target.closest('[data-template-duplicate]')) { templatesView.duplicateTemplate(); return; }
+  if (e.target.closest('[data-template-delete]')) { templatesView.deleteTemplate(); return; }
+  const templateInsert = e.target.closest('[data-template-insert]');
+  if (templateInsert) {
+    templatesView.insertField(templateInsert.getAttribute('data-template-insert'));
+    return;
+  }
+  if (e.target.closest('[data-template-another]')) { templatesView.nextPreviewStudent(); return; }
+  const templateJump = e.target.closest('[data-template-jump]');
+  if (templateJump) {
+    templatesView.jumpTo(templateJump.getAttribute('data-template-jump'));
+    return;
+  }
+
   /* Filter pills are single-select within their group. `aria-pressed` moves with the class
      — a visually active pill that still reads "not pressed" is the standard way this
      component goes wrong. */
@@ -2598,6 +2740,16 @@ document.addEventListener('input', (e) => {
   const field = e.target.closest('[data-term-field]');
   if (field) { classes.editTermField(field); return; }
 
+  /* THE ONE FIELD IN THIS APP THAT IS NOT SAVED AS IT IS TYPED (WO-5.2). It edits the editor's
+     DRAFT and the document is untouched until Save — src/templates-view.js argues why this surface
+     has a button where a term date does not — and what it repaints is the live preview, per
+     keystroke, for the reason the category weight and the signal threshold repaint theirs: the
+     words she is typing are the words the preview is resolving. The five controls are deliberately
+     NOT rewritten by that paint; replacing the value of an input under a caret is the failure
+     src/categories.js keeps its own rule for. */
+  const templateField = e.target.closest('[data-template-field]');
+  if (templateField) { templatesView.editTemplateField(templateField); return; }
+
   /* A category's name or its weight, saved as it is typed and by the same debounce. The chain runs
      per keystroke on purpose: the total is what the teacher is watching while she types the number,
      and a running total that lags the field it is adding up is worse than no total. The row itself
@@ -2780,6 +2932,15 @@ document.addEventListener('change', (e) => {
      preference (src/signals-view.js's header). */
   const signalsSort = e.target.closest('[data-signals-sort]');
   if (signalsSort) signalsView.setSignalsSort(signalsSort.value);
+  /* The template editor's tone and audience (WO-5.2), read HERE for `data-support-kind`'s reason: a
+     <select> commits on `change`, and hooking `input` as well would do the work twice for one tap.
+     Neither writes to the document — they move the draft, and the Save is what writes. */
+  const templateMeta = e.target.closest('[data-template-meta]');
+  if (templateMeta) templatesView.setTemplateMeta(templateMeta);
+  /* Which student the live preview resolves against. It writes nothing and is remembered nowhere:
+     the same kind of state the concern list's class filter is. */
+  const templateStudent = e.target.closest('[data-template-student]');
+  if (templateStudent) templatesView.setPreviewStudent(templateStudent.value);
   /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);
@@ -2806,6 +2967,14 @@ document.addEventListener('change', (e) => {
 document.addEventListener('focusin', (e) => {
   const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
   if (scoreCell) scores.noteFocusedCell(scoreCell);
+  /* WHICH HALF OF A TEMPLATE THE CARET IS IN (WO-5.2), and it is here for the score cell's reason
+     exactly: a palette chip says "put this in at the cursor", and by the time its click arrives the
+     field is no longer the active element — Safari does not focus a button when you tap it, so
+     document.activeElement is <body> on the iPad and the chip on a laptop, and neither is the
+     answer. So the FIELD says when it is entered and src/templates-view.js remembers which one and
+     where. */
+  const templateField = e.target.closest ? e.target.closest('[data-template-field]') : null;
+  if (templateField) templatesView.noteCaret(templateField);
 });
 
 /*
@@ -3457,4 +3626,17 @@ window.planbook = {
      app, to anything that could equally have called Google itself. Nothing in the app reads
      window.planbook — see the block above for why the seam outlived the shelf. */
   auth,
+  /* `templates` and `templatesView` joined at WO-5.2, and their reasons are the two this list
+     already has rather than a third. THE MODEL is `mergeFields`': what the acceptance lines ask
+     about is the collection — that a concern template and a praise template can exist for the same
+     audience and are offered SEPARATELY, which is a claim about what `templatesFor()` hands back
+     rather than about a row a teacher can see, and that the records survive a backup round trip,
+     which is a claim about `templates[]` on a document that has been through a FILE. THE SCREEN is
+     `calendarView`'s and `detail`'s: every control on it is a button a teacher can touch and
+     tools/verify-shell.mjs touches all of them, and templatesModel() is the same build-it /
+     hand-it-over split — the whole of what is on screen, as data, so "the preview shows unresolved
+     fields visibly" can be asked of the model AND of the DOM, and a model that is right about a
+     preview nobody drew still fails. Nothing in the app reads window.planbook — see the block above
+     for why the seam outlived the shelf. */
+  templates, templatesView,
 };

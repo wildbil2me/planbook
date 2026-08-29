@@ -1460,6 +1460,66 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   color: #c0392b; font-size: 12px; line-height: 1.5;
 }
 
+/* ── UNRESOLVED ── (WO-5.2, lifted from design/mockups/proposed-phase5.css § UNRESOLVED)
+
+   THE SHARED HALF OF PHASE 5, AND THE REASON IT IS IN THIS SHEET RATHER THAN A SCREEN'S. Two
+   surfaces render a resolved draft: WO-5.2's live preview and WO-5.3's send flow. The phase rule
+   they both answer to — "an unresolved merge field never renders blank" — is one sentence, so it
+   gets one treatment, in the sheet they both already load. That is the posture § LOG SHEET took at
+   WO-4.4 and the drawing's own banner named this sheet from the day it was drawn. */
+
+/*
+  ONE TREATMENT FOR ALL THREE FAILURES, AND THAT IS A RULING RATHER THAN A SHORTCUT.
+  src/merge-fields.js tells refused, unknown and unresolved apart by a NAMED CODE and never by the
+  shape of the output: all three hand the teacher's own token back intact. Drawing three different
+  in-body treatments would put the distinction where the message is, which is the one place it must
+  not be — a body that renders a refusal differently from a typo is a body that reads as though the
+  refusal were a kind of value.
+
+  So: the token as the teacher typed it, braces and all, on a background that says it did not become
+  anything. It is never blanked, never greyed to invisibility, and never replaced with a placeholder
+  that could read as prose.
+*/
+.mf-token {
+  display: inline;
+  background: #fff8e6; border-bottom: 2px solid #e67e22; border-radius: 3px;
+  padding: 0 3px; color: #8a6d1a; font-weight: 700;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 0.92em;
+}
+
+/*
+  THE BLOCK STRIP is where the three differ, because this is the layer that is allowed to explain.
+  It carries the count, the reason per field, and the student the draft was resolved against — a
+  field can be fine for one student and empty for the next, and a message that does not name the
+  student sends its reader looking in the template for a fault that is not there.
+*/
+.mf-block {
+  border: 1.5px solid #f0dfa8; background: #fff8e6; border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.mf-block-head { font-size: 12px; font-weight: 700; color: #8a6d1a; }
+.mf-reason { display: flex; align-items: baseline; gap: 8px; font-size: 11px; line-height: 1.6; color: #8a6d1a; }
+.mf-reason code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px; font-weight: 700; color: #8a6d1a;
+  background: rgba(255,255,255,0.7); border-radius: 3px; padding: 1px 5px;
+}
+.mf-jump {
+  border: none; background: transparent; cursor: pointer; padding: 2px 4px;
+  font-size: 11px; font-weight: 700; color: #5b6fcc; margin-left: auto;
+}
+
+/*
+  THE SENDABLE STATE IS DRAWN TOO, AND IT SAYS THE SAME THING IN THE SAME PLACE. A strip that
+  appears only when something is wrong is a strip a teacher learns to read as an error banner; one
+  that is always there, saying "nothing blocked · 8 fields resolved", is a report. WO-5.3 reads
+  `blocked` off the same call to decide whether its own button is live. The owner ruled it permanent
+  on 2026-08-28, and the cost — one line of chrome at 390px — was accepted with it.
+*/
+.mf-block.clear { border-color: #a3e4bc; background: #eafaf1; }
+.mf-block.clear .mf-block-head { color: #1a6b3a; }
+.mf-block.clear .mf-reason { color: #1a6b3a; }
+
 /* ── RESPONSIVE ── */
 /* Declaration order is from design/style-guide.md §6 and is not alphabetical or
    arbitrary: coarse pointer first, then 1024, then 640. */
@@ -1476,6 +1536,12 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
      picks from without reading, and the extra twelve pixels are what makes that true. Nothing here
      departs from 44: the one control in the app that does (the 28px month chip) is the owner's own
      ruling at its own point of departure and is not a precedent a new control may cite. */
+  /* WO-5.2's one control in this sheet: the block strip's jump to the half of the template a field
+     failed in. It sits at the end of a row of type rather than in a row of buttons, so it takes the
+     floor on both axes and the row is given room to hold it. */
+  .mf-jump { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center;
+    justify-content: flex-end; }
+  .mf-reason { gap: 10px; }
   .log-door { width: 44px; height: 44px; font-size: 18px; }
   .log-quick { min-height: 56px; }
   .log-kind { min-height: 44px; display: inline-flex; align-items: center; }
@@ -1860,6 +1926,40 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
   }
+  /*
+    WHAT THE FOURTH ICON COST, PAID HERE (WO-5.2), and it is a measurement rather than a taste — the
+    same shape as the block below, which spent the word "Planbook" to buy the presentation button.
+
+    At 390px under a coarse pointer this row is every one of its parts at its floor: 8+8 of padding,
+    the class strip's 96, the divider's 17, the term nav's 96, three 4px gaps, and the icon cluster,
+    which does not shrink by declaration. The class strip is `flex: 1 1 auto`, so it absorbs whatever
+    is left — ~109px with three icons, which is the number `.hdr-class-tabs`'s own comment records. A
+    FOURTH icon is 44 plus a gap, and it does not come out of the class strip: the strip is already
+    at 96 and the row went into horizontal overflow, 417 in 390. That reddened five sideways-scroll
+    checks in `verify-shell.mjs` across four screens, none of them this work order's.
+
+    So 49px is freed here, and from the two cheapest things in the row at phone width:
+
+      · THE DIVIDER GOES. It is one hairline plus 16px of margin, it separates two strips that
+        already look nothing alike, and it is the only thing in this row that is not a control.
+      · THE TERM NAV'S FLOOR DROPS 96 → 64. It scrolls, so nothing is unreachable, and a floor is
+        only about not collapsing beside a neighbour with content in it — 64px still shows most of a
+        "Quarter 1" button and its scroll. The class strip's floor is deliberately NOT touched: it
+        is the strip that has to hold a whole tab.
+
+    HOW MUCH THE CLASS STRIP ACTUALLY NEEDS IS keepInView()'s ARITHMETIC, and 41px was not enough —
+    the first attempt freed exactly that and left one check red by ONE PIXEL. `src/classes.js`
+    scrolls the open tab back into its strip with an 8px margin, so the strip has to be at least
+    **the widest tab plus 8** or the tab it just scrolled to lands with its left edge outside the
+    box. Six classes at 390px make a 99px tab, so the floor is 107 and 41px bought 106.
+    `verify-shell.mjs` § *"the open class is scrolled into view on the tab strip at 390x844"* is the
+    check that says so, and it passed by 2px before this icon existed.
+
+    49px lands the class strip at ~114px — seven clear of what that check needs, where it was two
+    before. Nothing above 640px moves: an iPad has the room and never reaches this block.
+  */
+  .hdr-divider { display: none; }
+  .hdr-term-nav { min-width: 64px; }
   .install-banner {
     padding-left: max(12px, env(safe-area-inset-left, 0px));
     padding-right: max(12px, env(safe-area-inset-right, 0px));

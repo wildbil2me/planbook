@@ -676,6 +676,38 @@ Five rulings inside it are decisions rather than plumbing:
   an email to a guardian is not a projector, so the obligation lands on the live preview
   (WO-5.2), which asks `src/supports.js` before it draws a resolved body.
 
+### Where a template is written, and where the eight come from
+
+**`src/templates.js` owns the record and `src/templates-view.js` is the screen over it** *(WO-5.2)*.
+The model holds what a record is, the two vocabularies it is filed under, three writers, and the
+question the send flow asks — `templatesFor(doc, tone, audience)`, filtered on **both**, which is
+what makes "a concern template and a praise template for the same audience are offered separately"
+a property of the collection rather than of a screen. The editor is reached from the **fourth icon
+in the header**, not from the class switcher: a template is about no class at all, and
+`{{class.name}}` resolves per draft at send time.
+
+Four rulings there are decisions rather than plumbing:
+
+- **The eight starter templates are shipped TEXT, not document rows.** Both tones for each of the
+  four audiences, written out in full, offered in the list — and **written into `templates[]` only
+  by a Save**. `newYearDocument()` gains nothing, so no backup written by an earlier build is
+  refused, and a teacher who deletes all eight does not get them back on the next restore. The
+  editor opens **empty**; auto-loading one would put identical sentences one keystroke away from a
+  hundred guardians (the owner, 2026-08-28).
+- **Every `{{token}}` in those eight is on the whitelist**, and it is reconciled against
+  `mergeFieldNames()` by `tools/verify/templates.mjs` rather than against a second list. They are
+  the app's own prose going into a teacher's document, so a starter naming a support field would be
+  *this app* suggesting the disclosure — a red run, not a draft that merely refuses to send.
+- **The preview asks `presentationMode()` and suppresses ONE COLUMN.** This is the obligation the
+  bullet above lands on WO-5.2, discharged. It is narrower than `src/signals-view.js`'s refusal on
+  purpose: the list, the editor and the palette are the teacher's own writing and name nobody, while
+  a resolved draft names a child. Nothing is resolved at all while the mode is on, and the student
+  picker is emptied rather than merely hidden.
+- **The block strip is permanent** — green when nothing is wrong, amber when something is — because
+  a strip that appears only on failure is read as an error banner and one that is always there is a
+  report. WO-5.3 reads the same `blocked` flag off the same call to decide whether its send button
+  is live.
+
 ## Events: only what can't be derived
 
 `events` holds what the teacher types in — conferences, meetings, grades-due deadlines, breaks,

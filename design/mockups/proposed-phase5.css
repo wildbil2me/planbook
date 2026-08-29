@@ -40,13 +40,21 @@
      § EDITOR         →  src/templates.css  (WO-5.2)
      § PALETTE        →  src/templates.css  (WO-5.2)
      § PREVIEW        →  src/templates.css  (WO-5.2)
-     § UNRESOLVED     →  src/shell.css      (WO-5.2 — not yet lifted)
+     § UNRESOLVED     →  src/shell.css      (WO-5.2)
 
-   FOUR OF THE FIVE PROPOSE A STYLESHEET THAT DOES NOT EXIST. The fifth names one
-   that has shipped since Phase 1, so it carries the `not yet lifted` token
-   PROTOCOL.md rule 4 requires — without it § 19 reads "target exists" as "this
-   section has landed" and stops checking the four names that most need it, since
-   they are new names going into an old sheet.
+   ALL FIVE LANDED ON 2026-08-28, WO-5.2, and the tokens came off in the same
+   sitting as the lift — PROTOCOL.md rule 4, and § 19 reads a banner rather than a
+   file. Four went into `src/templates.css`, which did not exist when this was
+   drawn; § UNRESOLVED went into `src/shell.css`, which has shipped since Phase 1,
+   so it carried the `not yet lifted` token until the day it was carried.
+
+   TWO THINGS THE BUILD DID NOT TAKE, NAMED HERE RATHER THAN LEFT TO BE NOTICED
+   (PROTOCOL.md § When the drawing lands):
+
+     · `.tpl-student-pick` DID NOT ARRIVE. See the note at its own rule below.
+     · The third column ships as PREVIEW over PALETTE at every width. This file's
+       markup put the palette first and its own 390px caption puts the preview
+       first; both could not be true, and the caption is the argument.
 
    Follows src/shell.css's own rules from the first line: colours written out
    inline, never as custom properties, no dark mode, one grouped touch-action
@@ -230,6 +238,14 @@
   RISK. A template that reads perfectly against the first student on the roster
   can be blocked for the fourth, so the student is a control rather than a
   caption — and the one drawn is deliberately not the first alphabetically.
+
+  THIS RULE DID NOT LAND, AND THE STUDENT IS STILL A CONTROL (WO-5.2,
+  2026-08-28). The pill below implies a menu, and this app has no menu component;
+  what shipped is a `<select>` wearing `.tpl-select` — the idiom src/events.js
+  already uses to choose a student, and the one iPadOS answers with a thumb-sized
+  wheel. The drawn rule stays drawn, per PROTOCOL.md § "What the build declined to
+  take stays drawn, and gets a note", and *Another student* beside it shipped
+  exactly as drawn.
 */
 .tpl-student-pick {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
@@ -254,7 +270,7 @@
 .tpl-draft-body { font-size: 12px; line-height: 1.8; color: #1a1a2e; white-space: pre-wrap; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § UNRESOLVED — src/shell.css (WO-5.2 — not yet lifted)
+   § UNRESOLVED — src/shell.css (WO-5.2)
 
    THE SHARED HALF, AND THE REASON THIS ROOM WAS DRAWN. Two screens render a
    resolved draft: WO-5.2's preview and WO-5.3's send flow. The phase rule they

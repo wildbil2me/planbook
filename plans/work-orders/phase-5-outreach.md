@@ -99,7 +99,7 @@ of this shape and is measured against here.)*
 
 ## WO-5.2 — Templates
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.1
+**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-5.1
 **Closes roadmap** Phase 5 → "Templates with merge fields" and "Separate concern and praise
 templates."
 
@@ -125,18 +125,35 @@ a warning.
   list · editor · preview · palette. The CSS is `design/mockups/proposed-phase5.css`, five sections,
   and `§ UNRESOLVED` is the one WO-5.3 inherits.
 
-**Open** — *where is this screen reached from?* The drawing shows it with *All classes* selected,
-because a template is not about one class, which makes the class switcher wrong; *Your details* is
-the nearest existing home; a sixth screen-nav segment is what WO-6.6 ruled against twice. **Answer
-this when cutting the row, not in the editor.**
+**Open — answered by the owner, 2026-08-28** — *where is this screen reached from?* The drawing
+shows it with *All classes* selected, because a template is not about one class, which makes the
+class switcher wrong; *Your details* is the nearest existing home; a sixth screen-nav segment is what
+WO-6.6 ruled against twice. **Answer this when cutting the row, not in the editor.**
+→ **A fourth icon in `hdr-right-controls`, opening a full main-area view.** That cluster already
+holds exactly the surfaces that belong to no class — the roster, the classes and terms, the
+teacher's own details — so this is an established pattern rather than a new one. Not *Your details*
+(a message a hundred guardians read is not a setting) and not a sixth segment. **It cost 49px of the
+header row at 390px**, paid in `src/shell.css`'s 640px block: the divider goes and the term nav's
+floor drops 96 → 64, because a fourth 44px control put the page into horizontal overflow and
+reddened five sideways-scroll checks across four screens. The class strip's own floor was
+deliberately not touched.
 
-**Open** — *does the block strip stay when nothing is wrong?* Drawn green and permanent, on the
-argument that a strip appearing only on failure reads as an error banner while one always present is
-a report, and WO-5.3 reads the same `blocked` flag. The cost is permanent chrome on a narrow screen.
+**Open — answered by the owner, 2026-08-28** — *does the block strip stay when nothing is wrong?*
+Drawn green and permanent, on the argument that a strip appearing only on failure reads as an error
+banner while one always present is a report, and WO-5.3 reads the same `blocked` flag. The cost is
+permanent chrome on a narrow screen.
+→ **Permanent, wording as drawn**, and the one line of chrome at 390px is accepted. It says
+*"Nothing blocked · N fields resolved"* in the green state and names the field, the reason and the
+student in the amber one.
 
-**Open** — *do the starter templates ship filled in, and how many?* Written well they teach what a
-merge field is faster than any help text; written once they are also the sentences a hundred
-guardians read in the same words.
+**Open — answered by the owner, 2026-08-28** — *do the starter templates ship filled in, and how
+many?* Written well they teach what a merge field is faster than any help text; written once they
+are also the sentences a hundred guardians read in the same words.
+→ **Eight, filled in — both tones × each of the four audiences — and NONE auto-loaded.** They are
+shipped TEXT rather than document rows: `newYearDocument()` gains nothing, the list offers them
+under the teacher's own, opening one fills the editor as an unsaved draft, and a **Save** is what
+writes a record. The editor opens empty. That one keystroke is the whole of the answer to "the same
+sentences to a hundred guardians".
 
 **Traps** *(added 2026-08-28, out of WO-1.32's verification — see its note and WO-1.34)*
 
@@ -163,11 +180,63 @@ order needs was built by WO-5.1 and is already there. Any resolver of your own, 
 one behind the live preview.
 
 **Acceptance**
-- [ ] A concern template and a praise template can exist for the same audience and are offered
-      separately at send time.
-- [ ] The live preview shows unresolved fields visibly, exactly as the send flow will.
-- [ ] The field palette contains no refused path.
-- [ ] Templates survive a backup round-trip.
+- [x] A concern template and a praise template can exist for the same audience and are offered
+      separately at send time. *(Both written through the real controls, then asked the question
+      WO-5.3 asks from the signal card: `templatesFor(doc, tone, audience)` filters on **both**, so
+      it hands back one record for `concern/guardian`, a different one for `praise/guardian`, two
+      when the tone is not named and none for an audience they were not written for. The list on
+      screen draws two rows and the tone switch narrows it to one and back. "At send time" is the
+      half this work order cannot finish — the send flow is WO-5.3 — so what is closed here is that
+      the collection can hold the pair and offers them apart; the button that reads it is that work
+      order's.)*
+- [x] The live preview shows unresolved fields visibly, exactly as the send flow will. *(**"Exactly"
+      is asked as an identity rather than as a screenshot**: what the column draws is character for
+      character what `resolveDraft()` returned for the same request, and WO-5.3 renders the same
+      string from the same call. All three failures are measured on screen — a real field with
+      nothing behind it for this student, a refused path and a typo — each handed back as the
+      teacher's own token, marked with `.mf-token` and told apart only by the sentence in the block
+      strip.)*
+- [x] The field palette contains no refused path. *(Sixteen chips drawn in the DOM, matching
+      `mergeFieldNames()` name for name and in order, none of them matching
+      `supports|accommodation|medical|behaviou?rPlan|plan|caseManager|reviewDate|attendanceClause`.
+      And the palette says the rule out loud as well as by omission: the fence names accommodations,
+      IEP and 504 details, medical needs, behavior plans, the case manager and the review date as
+      things that cannot be merged and cannot be added.)*
+- [x] Templates survive a backup round-trip. *(Twice. Through the FILE — `buildBackup()` then
+      `parseBackup()`, the validator that refuses a document whose shape does not match
+      `newYearDocument()` — byte for byte; and through the real restore, `restoreFromText()` and the
+      confirm button a teacher taps, after which both records are still there, still offered
+      separately by tone, and drawn on the list.)*
+
+**Where this stands.** ✅ on 2026-08-28, all four Acceptance lines closed — none of them wanted a
+human or a date. `src/templates.js` is the model, `src/templates-view.js` the screen,
+`src/templates.css` the sheet the drawing's four screen sections lifted into, and
+`src/shell.css` § UNRESOLVED the fifth section, which WO-5.3 inherits. `TESTING.md` § WO-5.2 carries
+the readings.
+
+**One reading was waived and is NOT closed here** (the owner, 2026-08-28). The last caption of
+[`outreach.html`](../../design/mockups/outreach.html) asks in bold for a thumb on a real tablet
+before this row was dispatched: *"tap a chip to insert at the cursor"* is a desk gesture, and on a
+phone the keyboard is up, the palette is below the fold, and tapping it may close the field it is
+meant to type into. **The palette ships as drawn** — chips in a column under the field — and the
+alternative in hand is a sheet over the keyboard. Nothing about it has been measured; the harness
+proves the insertion lands at the caret, which is a different claim from *it is reachable while the
+keyboard is up*. Written down here rather than closed quietly.
+
+**Three things it decided that this work order did not:**
+
+- **The starters are shipped text, not document rows.** See the answered `Open` above. It is what
+  keeps `newYearDocument()` unchanged, so no backup written by an earlier build is refused by name.
+- **Presentation mode suppresses ONE COLUMN, not the screen.** WO-4.2's signals list closes
+  outright; this screen's list, editor and palette are the teacher's own writing and name nobody,
+  while the preview names a child. Nothing is resolved at all while the mode is on and the student
+  picker is emptied rather than merely hidden. Argued at `src/templates-view.js`'s own header.
+- **The preview passes the real signal hits.** `{{grade.delta}}` reads the hit a draft was opened
+  from, so a preview that passed none would show two unresolvable fields on a template that is about
+  to work perfectly. It runs the engine over the previewed class and takes the first hit in the
+  engine's own order whose direction matches the template's TONE — which is what the signal card
+  will hand over. A student with no hit in that direction gets none, and the field blocks: that is
+  the honest answer rather than an invented row.
 
 ---
 
@@ -200,6 +269,16 @@ mail record — which is what a school asks for when it asks — stays intact th
 - [ ] Every draft is editable in-app before handoff.
 - [ ] No Google scope is requested anywhere in this flow.
 - [ ] A blocked draft (unresolved field) cannot reach the handoff.
+- [ ] A concern template and a praise template written for the same audience are offered
+      **separately** in the picker — read through `templatesFor(doc, tone, audience)` with both
+      arguments, never audience alone. *(**This line is WO-5.2's first Acceptance line finishing
+      here, and it is not a re-homed box** — no `**Owes**` pointer, because nothing was moved and
+      that box closed honestly. It reads "…and are offered separately **at send time**," and at send
+      time there was no send flow: what WO-5.2 could close is that the collection holds the pair and
+      hands them back apart, which its harness proves on four numbers including a `concern/admin` → 0
+      that a tone-only filter would pass. The other half had no owner — none of the five lines above
+      re-asks it — so it was booked here by WO-5.2's verifier on 2026-08-28 rather than left to the
+      reader who eventually notices the picker offering one template for two tones.)*
 
 **Traps** — Line breaks and non-ASCII characters in `mailto:` bodies need correct percent-encoding,
 and getting it wrong produces a mangled email a teacher sends without noticing. Test with an

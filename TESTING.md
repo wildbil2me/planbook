@@ -7504,7 +7504,7 @@ the checks that carry the acceptance lines red.
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*
 
-WO-5.2 through WO-5.4 append their acceptance lines here as they land.
+WO-5.3 and WO-5.4 append their acceptance lines here as they land.
 
 Two checks here are containment rather than function: no merge field resolves accommodation,
 medical, or plan data, and an unresolved field never renders blank. **WO-5.1 is where both of
@@ -7637,6 +7637,114 @@ rather than in `{{signals.list}}` alone. Cutting the filter reads
 `1197 checks · 1197 passed · 0 failed · 0 skipped`, 35,697 lines, 29.8 lines per check, 408s,
 exit 0. Nothing in `src/` moved for it; the fixture plants no new assignment, log entry, attendance
 row or score bag, so the foot check still reports zero of everything.)*
+
+---
+
+### WO-5.2 — Templates
+
+**What this adds.** The screen WO-5.1 had none of: a template list, an editor, a field palette and a
+live preview, as the eighth view in `<main>`. `src/templates.js` owns the record and the collection
+— `{ id, name, audience, tone, subject, body }`, three writers, and the question the send flow will
+ask; `src/templates-view.js` owns the pixels and the caret; `src/templates.css` is the sheet the
+drawing's four screen sections lifted into, and `src/shell.css` § UNRESOLVED is the fifth, which
+WO-5.3 inherits because both surfaces render a resolved draft.
+
+**It resolves nothing.** `{{field}}` becomes text in exactly one place, and the editor asks
+`resolveDraft()` for a whole draft and draws what comes back. The palette is `mergeFieldPalette()`
+mapped — sixteen names, sixteen sentences, **no `resolve` on them** — so a screen holding the palette
+cannot resolve a field outside a draft. Nothing anywhere in this work order splits a token, indexes
+by one, or reads a property named after one, and `wo-sweep.mjs` § 20's five claims over
+`src/merge-fields.js` are green on the delivered tree, unchanged: that file was not opened.
+
+**The three `Open` lines were answered by the owner before dispatch** and are recorded in place in
+the work order: a **fourth icon in `hdr-right-controls`** opening a full view, a **permanent** block
+strip, and **eight starters that ship filled in and are never auto-loaded.**
+
+**The fourth icon cost 49px of the header row, and that is the one thing here that reddened checks
+this work order did not write.** At 390px under a coarse pointer every part of `.header-bottom` is
+at its floor and the class strip absorbs what is left; a fourth 44px control put the page into
+horizontal overflow — `document 417 in 390` — and five sideways-scroll assertions across four
+screens went red, none of them Phase 5's. Paid in the 640px block: the divider goes and the term
+nav's floor drops 96 → 64. The class strip's own floor was deliberately not touched, because
+`verify-shell.mjs` asserts that the open class is scrolled into view on that strip at 390x844 and
+taking room off it is how that check goes red.
+
+**Presentation mode suppresses one COLUMN, not the screen, and that is the departure worth reading.**
+`src/signals-view.js` closes outright because the whole of its content is a ranked list of named
+students in trouble. The whole of this screen's content is the teacher's own writing — a template
+names nobody — except the preview, which resolves against a real student and draws her name, her
+grade and her missing work. So the preview goes, the list, editor and palette stay, nothing is
+resolved at all while the mode is on, and the student picker is **emptied rather than merely
+hidden**: `src/supports.js`'s own rule about an element that is `display: none` still being an
+element a screenshot or an accessibility tree can reach.
+
+- [x] A concern template and a praise template can exist for the same audience and are offered
+      separately at send time. *(Both written through the real controls — the `+ New template`
+      button, the two `<select>`s and the Save — then asked the question WO-5.3 will ask from the
+      signal card. `templatesFor(doc, tone, audience)` filters on **both**: one record for
+      `concern/guardian`, a different one for `praise/guardian`, two when the tone is not named,
+      none for an audience they were not written for. The list draws two rows and the tone switch
+      narrows it to one and back, taking the eight starters with it. **"At send time" is the half
+      this work order cannot finish** — the button that reads this is WO-5.3's — so what is closed
+      here is that the collection holds the pair and offers them apart.)*
+- [x] The live preview shows unresolved fields visibly, exactly as the send flow will.
+      *(**"Exactly" is asked as an identity rather than as a screenshot.** What the column draws is
+      character for character what `resolveDraft()` returned for the same request — subject and body
+      both — and WO-5.3 renders the same string from the same call, so a preview that agrees with
+      the resolver here cannot disagree with the send flow there. All three failures are measured on
+      screen against a real student: a real field with nothing behind it (`{{guardian.name}}` for
+      the student with no guardian), a refused path (`{{student.supports.accommodations}}` and
+      `{{supports.medical}}`) and a typo (`{{studnet.first}}`). Every one of them is handed back as
+      the teacher's own token, wrapped in `.mf-token`, and told apart **only** by the sentence in the
+      strip — the codes are `refused-field`, `refused-field`, `unknown-field`. The strip names the
+      field and the student.)*
+- [x] The field palette contains no refused path. *(Sixteen chips read out of the DOM, matching
+      `mergeFieldNames()` name for name and in order, each with the sentence WO-5.1 wrote for it,
+      and not one of them matching
+      `supports|accommodation|medical|behaviou?rPlan|plan|caseManager|reviewDate|attendanceClause`.
+      Two things beside it: the palette says the rule **out loud** as well as by omission — the fence
+      names accommodations, IEP and 504 details, medical needs, behavior plans, the case manager and
+      the review date as things that cannot be merged and cannot be added — and every `{{token}}` in
+      all eight shipped starters is reconciled against the same whitelist, because those eight are
+      the app's own prose going into a teacher's document.)*
+- [x] Templates survive a backup round-trip. *(Twice. Through the FILE: `buildBackup()` builds
+      exactly what the download button builds, `parseBackup()` reads it back through the validator
+      that refuses a document whose shape does not match `newYearDocument()`, and `templates[]` is
+      identical byte for byte. Then through the REAL restore: `restoreFromText()` and the confirm
+      button a teacher taps, after which both records are still in the document, still offered
+      separately by tone, and drawn on the list.)*
+
+**One reading is owed to a human and is NOT closed here.** 👤 The last caption of
+`design/mockups/outreach.html` asks in bold for a thumb on a real tablet: *"tap a chip to insert at
+the cursor"* is a desk gesture, and on a phone the keyboard is up, the palette is below the fold, and
+tapping a chip may close the field it is meant to type into. **The owner waived that reading and
+ruled the palette ships as drawn** — chips in a column under the field — with a sheet over the
+keyboard as the alternative in hand. The harness proves the insertion lands at the caret and that
+every control clears 44px at 390px; neither is the same claim as *it is reachable while the keyboard
+is up*. Nothing in this work order closes it, and no run can.
+
+**Where this stands.** ✅ on 2026-08-28, all four Acceptance lines closed — none of them wanted a
+human or a date. Both tools are green on the delivered tree: `verify-shell.mjs` at
+`1223 checks · 1223 passed · 0 failed · 0 skipped`, 36,525 lines, 29.9 lines per check, 413s,
+exit 0; and `wo-sweep.mjs` at `34 checks · 30 passed · 0 failed · 4 to review`, three of those
+reviews pre-existing. The screen is measured in § *"message templates (WO-5.2)"*, twenty-six sites
+between § *"the merge-field resolver"* and § *"the cooldown and the quiet middle"* — the second of
+those keeps its claim to run last, and this one drives a real restore of its own for the fourth
+acceptance line. `tools/verify/touch-targets.mjs`'s `VIEW_PLAN` carries `templatesView` as its
+**fourth `byHand`**, and it is the first one that is there because the loop has no door to the
+screen rather than because the document is empty: `openView()` knows the "All classes" door and a
+`data-class-screen` segment, and this view has neither.
+
+*(**The sweep's fourth REVIEW is this work order's and every line of it was read.** § 6 — CSS
+selectors added with no coarse-block rule — lists thirty-five names: `.mf-token` (an inline
+`<span>`), `.mf-block*` and `.mf-reason` (a box and its lines of type), `.hdr-divider` (an existing
+hairline, re-mentioned in the 640px block to hide it), and thirty `.tpl-*` that are layout,
+containers and type. **Every control this work order adds is in a coarse block** — `.tpl-tone-btn`,
+`.tpl-item`, `.tpl-new`, `.tpl-chip`, `.tpl-preview-refresh`, `.tpl-input`, `.tpl-select` and
+`.mf-jump` — and the measurement rather than the declaration is the check that settles it: forty
+controls on the screen at 390px, none under 44. § 5's review grew by three files for the same reason
+WO-5.1's grew by twelve: the palette's fence and this file's own prose NAME the fields that cannot
+be merged, which is the disclosure control working rather than a leak.)*
 
 ---
 

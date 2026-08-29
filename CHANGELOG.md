@@ -13,6 +13,39 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Message templates, with a preview that resolves against a real student before anyone is written to — 2026-08-28
+
+**Write what a message says before it says it about anybody.** Concern and praise are written
+separately, because a good praise message reads nothing like a good concern one, and both live under
+the new envelope icon in the header. The sixteen fields a message can fill in are a palette you tap
+to drop in at the cursor — and the preview beside it resolves the whole thing against a real student
+as you type, so a field with nothing behind it turns up **there** instead of in somebody's inbox.
+Eight templates ship with the app, two for each of the four people you write to; opening one fills
+the editor and nothing is yours until you save it.
+
+**Nothing on a student's supports block can be merged, and the palette says so out loud.** The
+sixteen chips are the whole of what a template can ask for — no accommodation, no medical need, no
+behavior plan, no case manager — and the fence under them states the rule in words as well as by
+omission. **The preview goes quiet while you are projecting**: presentation mode resolves nothing at
+all rather than resolving a draft and then hiding it, and the student picker is emptied rather than
+greyed, because an element that is `display: none` is still one a screenshot can reach.
+
+**There is no way to send anything yet, and that is the next work order.** The draft is composed,
+resolved and shown, and then it stops — no mail client opens, no copy button, no handoff. The
+`mailto:` half is WO-5.3.
+
+**The one thing this cost elsewhere: the header row is now full at phone width.** A fourth icon put
+the page into horizontal overflow at 390px and reddened five sideways-scroll checks on four screens
+that had nothing to do with templates. It was paid for by hiding the divider and dropping the term
+navigation's floor — 49px, not the 41px a first attempt bought, which failed the class-tab check by a
+single pixel. A fifth cross-class icon has nowhere left to go without taking room off the class tab
+strip, which is the one thing in that row that cannot give it.
+
+**One reading is owed to a human and was deliberately not taken**: whether a palette chip is
+reachable on a phone while the software keyboard is up. The owner waived it for this build and the
+gap is recorded rather than closed — in the work order, in `TESTING.md`, and in a comment at
+`insertField()`. Everything checkable from a desk checks out; what is left is a thumb.
+
 ### A row can now say it is a ride-along, and the tracker stops offering it as the next thing to build — 2026-08-28
 
 **Some work orders are not an hour to schedule, they are an hour to fold into a sitting that is

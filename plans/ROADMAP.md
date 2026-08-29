@@ -84,11 +84,11 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
-| 5 | Outreach | 🔨 IN PROGRESS | 2/9 `[██░░░░░░░░] 22%` |
+| 5 | Outreach | 🔨 IN PROGRESS | 4/9 `[████░░░░░░] 44%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **58/81 `[███████░░░] 72%`** · ⏳ 1 deferred |
+| | | **Overall** | **60/81 `[███████░░░] 74%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -497,8 +497,14 @@ register them — what is owed here is rules, not explanations.)*
 **Goal:** from "this student needs a conversation" to a sent message, without leaving the app or
 granting a mail scope.
 
-- [ ] **Templates with merge fields**, per [`../docs/data-model.md`](../docs/data-model.md) —
+- [x] **Templates with merge fields**, per [`../docs/data-model.md`](../docs/data-model.md) —
       student, guardian, grade, delta, missing work, attendance, signals, behavior.
+      *(WO-5.2. The editor is the eighth view, reached from a fourth header icon, with the sixteen
+      resolvable fields as a palette that inserts at the cursor and a live preview resolved against
+      a real student. The palette is the documentation of the refusal list twice over — by omission,
+      and in words. Nothing in the screen resolves anything: it hands a whole draft to
+      `src/merge-fields.js` and draws what comes back, so what the preview shows is character for
+      character what the send flow will.)*
 - [x] **An unresolved merge field never renders blank.** "Dear ," going home is worse than sending
       nothing: unresolved fields stay visible and block the send with a named error.
       *(WO-5.1. **Three outcomes rather than one** — a refused path, an unknown name and a real
@@ -516,8 +522,14 @@ granting a mail scope.
       outcome. `tools/wo-sweep.mjs` § 20 asserts there is no support identifier in the module's code
       at all, and since WO-1.32 that there is no dynamic property read in it either — the name and
       the shape, because the path walk WO-5.1's killed dispatch shipped names nothing.)*
-- [ ] Separate concern and praise templates. A good praise message reads nothing like a good
+- [x] Separate concern and praise templates. A good praise message reads nothing like a good
       concern message.
+      *(WO-5.2. `tone` is a field on the record and `templatesFor(doc, tone, audience)` filters on
+      both, so the same audience can hold one of each and the send flow cannot offer the wrong one.
+      **Eight starters ship filled in** — both tones × each of the four audiences — as shipped TEXT
+      rather than document rows: the editor opens empty, opening one fills it, and a Save is what
+      writes a record, because identical sentences one keystroke from a hundred guardians is the
+      cost of auto-loading one.)*
 - [ ] Audience picker: guardian 1/2, **counselor, admin**. Contacts already live on the roster.
 - [ ] **Copy to self**, on by default — a real message in the owner's sent folder is what a school
       asks for when it asks.
