@@ -1050,7 +1050,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1248 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1250 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1166,6 +1166,46 @@ check measured **0 controls, 0 of them under 44px**: a clean pass over an empty 
 first trap wearing new clothes. It asserts the panel is open now, and the setup taps the other
 pill.)* Reverted by name — `git checkout -- src/outreach-view.js`, never `git checkout .`, and with
 the rest of the work order staged first — before a word of this paragraph was written.
+
+**WO-5.5 moved it from 1248 to 1250**: two literal call sites, one *inside* § *"message templates
+(WO-5.2)"* and one *inside* § *"the send flow (WO-5.3)"* — a heading and two sentences over two
+surfaces that already have sections and fixtures, not a new surface — so the pair contributes two
+executed results to a green run and adds no fixture guard, standing on the two those sections
+already have. **The run prints 1265**: `1265 checks · 1265 passed · 0 failed · 0 skipped`,
+38,000 lines, 30.0 lines per check, 421s, exit 0, measured 2026-08-29 on the delivered tree. The gap
+between sites and results stays at −15. *(Two existing assertions were rewritten rather than added
+to the count: both sections tested the old head with a substring — `/cannot be sent/` and
+`/cannot be sent/i` — and both now test the new one* **whole**, *anchored `^…$` over the sentence and
+the count together, with every other conjunct kept. That is the WO-5.6 sitting's rule applied a
+second time: a check that goes red on new copy is strengthened to the new copy, never relaxed to fit
+it.)* *(Two DETAIL strings changed with them, for a reason worth knowing before writing a check that
+prints `reasons[0]`: the strip grew an instruction line at the TOP, so a detail that took whatever
+came first began quoting this screen's own sentence under a check about the resolver's. Both pick
+their row out by name now. Nothing they assert moved.)* *(It adds no `byHand` row to
+`verify/touch-targets.mjs`'s `VIEW_PLAN` and no 44px measurement of any kind, because it adds no
+control: the instruction is a `.mf-reason`, the class the strip's ready-state sentence already
+wears, and the editor's line is text in a `<p>` that was already there. No stylesheet was opened and
+`index.html` was not edited.)*
+
+**Its mutation round is three lines in `src/` and it reddens four checks, two of which are on the
+other screen from the line that broke them.** `UNDEFINED_FIELD_HEAD` put back to
+`'This draft cannot be sent'`, `FIELD_FIX_SENTENCE` cut to `'The draft is blocked.'`, and the
+editor's starter line put back to *"Saving makes it yours"* — WO-5.5 undone at the three points it
+exists — reads `1265 checks · 1261 passed · 4 failed`, exit 1. **The head is the one to read**: one
+constant in `src/block-strip.js` turns the template editor's head check AND the send flow's head
+check red together, which is the whole claim `src/block-strip.js` was created to make. Before it,
+the same edit would have reddened one screen and left the other quietly saying something else, which
+is the shape of the defect the work order's Traps line names.
+
+*(**Two clauses correctly did not fire, and both are absences.** The send flow's *typing over the
+field unblocks it* check carries a clause asserting the instruction row is GONE once the draft is
+clear, and the editor's head check carries one asserting that sentence never appears on the preview
+at all. Neither can fail when the sentence is merely emptied — what would break them is a strip that
+printed the instruction over a clean draft, or the editor growing a line it is ruled out of. A
+mutation that cannot express a failure is not evidence about it, which is why they are named here
+rather than counted.)* Reverted by name — `git checkout -- src/block-strip.js src/templates-view.js`
+with both staged first, per the standing note about a revert eating unstaged work in the same file —
+and `grep -rn MUTATION src/` was run after, not before, the revert.
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

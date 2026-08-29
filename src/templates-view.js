@@ -87,6 +87,11 @@ import { presentationMode } from './supports.js';
    what this file asks of it; `mergeFieldPalette` returns `{ name, about }` with no `resolve` on it
    (WO-5.1). Nothing else from that module is imported, and nothing here indexes by a token. */
 import { resolveDraft, mergeFieldPalette } from './merge-fields.js';
+/* The strip's shared words (WO-5.5). src/outreach-view.js imports the same constant from the same
+   place, which is the whole of the Traps line's "change it once": the two heads were separate
+   literals that happened to agree until one of them was rewritten. `FIELD_FIX_SENTENCE` is
+   deliberately NOT imported here — paintBlock() below says why. */
+import { UNDEFINED_FIELD_HEAD, blockHead } from './block-strip.js';
 /* The engine, for the two fields that are read off a signal rather than off the document —
    `{{grade.delta}}` and `{{signals.list}}`. A draft at send time is opened FROM a signal row, so a
    preview that passed no hits would show a teacher two unresolvable fields on a template that is
@@ -413,13 +418,22 @@ function paintEditor(model, fields) {
   set(BODY_ID, model.editing.body);
 
   /* What the editor is about to do, in words rather than left to be inferred from whether a field
-     filled itself in — src/events.js's paintEditingState() rule, and its reason. */
+     filled itself in — src/events.js's paintEditingState() rule, and its reason.
+
+     THE STARTER LINE SAYS WHAT THE SEND FLOW WILL NOT OFFER (WO-5.5), and that is the sentence
+     this screen was missing rather than a longer way of saying the old one. "Saving makes it
+     yours" is true and answers a question about ownership nobody was asking. The question a
+     teacher actually arrives with is the one src/outreach-view.js answers with an empty picker:
+     she reads a starter, likes it, goes to write a message, and cannot find it. WO-5.2's ruling —
+     the eight ship as TEXT and a Save is what makes one a record — is right, and its SILENCE was
+     the bug. It is said here, at the moment the question arises, because a rule a teacher meets
+     as an empty picker two screens later is a rule she experiences as a fault. */
   const state = document.getElementById(EDITOR_STATE_ID);
   if (state) {
     state.textContent = model.editing.isNew
       ? (model.editing.from
-        ? 'Starting from one of Planbook’s templates. Saving makes it yours — change anything in '
-          + 'it first.'
+        ? 'Starting from one of Planbook’s templates. It is not on offer when you write a message '
+          + 'until you save it — change anything in it first, then save to make it yours.'
         : 'A new template. It is not in your list until you save it.')
       : 'Editing a saved template. Changes are not stored until you save them.';
   }
@@ -498,6 +512,20 @@ function paintResolved(node, text) {
   one student and empty for the next, and a message that says only "guardian.name did not resolve"
   sends its reader looking in the template for a fault that is not there. The sentence is
   src/merge-fields.js's, which already carries the name.
+
+  ITS HEAD IS SHARED WITH THE SEND FLOW AND ITS INSTRUCTION IS NOT (WO-5.5), and the second half of
+  that is a ruling rather than a half-finished import. `UNDEFINED_FIELD_HEAD` comes from
+  src/block-strip.js because a heading changed on one screen and not the other is this phase's own
+  "two askers" defect — the work order says change it once, and one constant is the only shape in
+  which it cannot drift back apart. **`FIELD_FIX_SENTENCE` stays off this screen** because it is
+  advice about a BOX and the two boxes are not the same thing: the send flow's holds one message to
+  one person, so "remove the field or type what it should say over it" costs her nothing but this
+  draft. Here it would mean editing the TEMPLATE every later draft is cut from — so a teacher whose
+  one previewed student has no guardian on file would be told, by the app, to strip
+  `{{guardian.name}}` out of a template that works for the other twenty-nine. The resolver's own
+  sentence is the honest one on this screen: it says there is nothing to put there, which points at
+  the roster rather than at the template. WO-5.5's Why-it-exists locates the second defect "in the
+  send flow" in as many words, and this is that scope kept rather than widened by half a sentence.
 */
 function paintBlock(model) {
   const host = document.getElementById(BLOCK_ID);
@@ -510,10 +538,10 @@ function paintBlock(model) {
 
   const count = preview.errors.length;
   host.append(el('div', 'mf-block-head', preview.draftBlocked
-    ? 'This draft cannot be sent · ' + count + (count === 1 ? ' field did not resolve'
-      : ' fields did not resolve')
-    : 'Nothing blocked · ' + preview.resolved
-      + (preview.resolved === 1 ? ' field resolved' : ' fields resolved')));
+    ? blockHead(UNDEFINED_FIELD_HEAD, count, 'field did not resolve', 'fields did not resolve')
+    /* The sentence is this screen's and the shape is not — see src/block-strip.js's header for
+       where that line is drawn. The words are the ones that were here before WO-5.5. */
+    : blockHead('Nothing blocked', preview.resolved, 'field resolved', 'fields resolved')));
 
   if (!preview.draftBlocked) {
     host.append(el('div', 'mf-reason', preview.fields
@@ -683,8 +711,13 @@ export function openStarter(key) {
     subject: starter.subject, body: starter.body };
   status = { text: '', tone: '' };
   renderTemplates();
-  /* No focus, for openTemplate()'s reason above. */
-  announce(starter.name + ' is in the editor. Change it and save it to make it yours.');
+  /* No focus, for openTemplate()'s reason above. The announcement carries WO-5.5's sentence too:
+     the line under the editor is where it is written, and a teacher on a screen reader hears this
+     at the moment she opens the starter rather than only if she goes looking for that line. Both
+     say the same thing, because two surfaces saying different halves of one rule is the shape of
+     defect this work order exists to close. */
+  announce(starter.name + ' is in the editor. It is not on offer when you write a message until '
+    + 'you save it — change it and save it to make it yours.');
   return true;
 }
 

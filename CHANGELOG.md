@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The app now says the two things it was keeping to itself — 2026-08-29
+
+**Open one of the eight starter templates and the editor tells you, right there, that it is not on
+offer when you write a message until you save it.** The rule has always been that a Save is what
+makes a starter yours — it is the one keystroke between a shipped sentence and a hundred guardians
+reading it in the same words — and until now the only place you met it was an empty picker two
+screens later. The rule was right and its silence was the bug.
+
+**And a draft with a merge field still in it no longer just refuses.** It used to say *"This draft
+cannot be sent"*, which is true and no help at all. It now says *This draft has at least one
+undefined field*, and tells you that removing the field or typing what it should say over it will
+unblock the draft — a sentence about the box, which no per-field message can write. It describes the
+state rather than announcing a refusal, which is the whole of why it is better. A draft held up by
+something that is *not* a field — a guardian with no address on file, or no message chosen yet —
+still reads as it did, because heading that one *undefined field* would be the app telling you
+something untrue about your own draft.
+
+**And the two screens that draw that strip cannot drift apart any more.** The template preview and
+the send flow had been keeping the heading as two hand-written strings that happened to agree, so a
+change of wording had to remember to land twice. It is one sentence in one file now, beside the rule
+that already kept the strip's appearance in one place. What the two screens must *not* say alike is
+written down there too: they count different things, and they go on counting them.
+
 ### A draft survives a change of mind — 2026-08-29
 
 **Changing the template, the tone or the recipient used to throw away whatever you had typed — no

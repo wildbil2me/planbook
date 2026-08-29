@@ -582,26 +582,52 @@ if (!seam) {
       + 'of this screen’s — the token is still in the box exactly as the teacher typed it, and '
       + 'the sentence is the one src/merge-fields.js wrote about accommodation, medical and plan '
       + 'details never leaving the roster',
-      refused.clear === false && /cannot be sent/.test(refused.head)
+      refused.clear === false
+        && /^This draft has at least one undefined field · \d+ thing(s)? to fix$/
+          .test(refused.head)
         && refused.reasons.some((r) => /never leave the roster/.test(r))
         && refused.reasons.some((r) => /supports\.medical/.test(r))
         && refused.body.indexOf('{{supports.medical}}') >= 0
         && refused.body.indexOf('Wo53MedicalDetail') === -1,
-      refused.head + ' :: ' + (refused.reasons[0] || '').slice(0, 110));
+      /* The RESOLVER's row, picked out by name rather than taken as reasons[0]: WO-5.5 put an
+         instruction line at the top of the strip, and a detail string that printed whatever was
+         first would quote this screen's sentence under a check about the resolver's. */
+      refused.head + ' :: '
+        + (refused.reasons.filter((r) => /never leave the roster/.test(r))[0] || '').slice(0, 110));
+    /* WO-5.5 REWROTE THE HEAD ABOVE AND THIS CHECK IS THE OTHER HALF OF THAT LINE. The head is
+       asserted whole — the owner's sentence AND the count after the `·` — because relaxing it to
+       a substring is exactly the edit the work order's Traps line forbids, and because the count
+       is what makes "at least one" honest when a missing address is on the list beside the field.
+       The per-field sentences it sits over are src/merge-fields.js's, unchanged and asserted as
+       such by the check above: this work order added a sentence and rewrote a heading. */
+    check('and it says what to DO about it, which is the one sentence no resolver can write — '
+      + 'every per-field line above is about the TOKEN, and this one is about the box the teacher '
+      + 'types in, which is the only thing on the screen she can act on (WO-5.5)',
+      refused.reasons.some((r) => /Remove the field or type what it should say over it/.test(r)
+        && /unblocks the draft/.test(r)),
+      refused.head + ' :: '
+        + (refused.reasons.filter((r) => /unblocks the draft/.test(r))[0] || 'NO INSTRUCTION ROW'));
 
     const fixedUp = await evalJs(`(function(){
       ${TYPE}
       ${DRAWN}
       type('outreachBody', 'I took the field out and wrote the sentence myself.');
       var d = drawn();
-      return { hasHref: d.hasHref, clear: d.clear, head: d.head,
+      return { hasHref: d.hasHref, clear: d.clear, head: d.head, reasons: d.reasons,
         carried: decodeURIComponent((d.href || '').split('body=')[1] || '') }; })()`);
     check('and typing over that field unblocks it — which is the resolver’s own sentence '
       + '("until it is corrected or removed") honoured at the end that can see the correction, and '
       + 'the reason the gate is what is on the page rather than what the resolve found',
       fixedUp.hasHref === true && fixedUp.clear === true
-        && fixedUp.carried === 'I took the field out and wrote the sentence myself.',
-      fixedUp.head + ' :: link restored = ' + fixedUp.hasHref);
+        && fixedUp.carried === 'I took the field out and wrote the sentence myself.'
+        /* AND THE INSTRUCTION GOES WITH THE BLOCK (WO-5.5). Asserted here rather than in a check
+           of its own because this is the pair that makes the sentence non-vacuous: a strip that
+           printed it unconditionally would pass the check above it and would be telling a teacher
+           to fix a draft that has nothing wrong with it. */
+        && !fixedUp.reasons.some((r) => /unblocks the draft/.test(r)),
+      fixedUp.head + ' :: link restored = ' + fixedUp.hasHref
+        + ', instruction row(s) left = '
+        + fixedUp.reasons.filter((r) => /unblocks the draft/.test(r)).length);
 
     /* ── a recipient with no address ── */
     const noAddress = await evalJs(`(function(){
@@ -623,7 +649,10 @@ if (!seam) {
       noAddress.ready === false && noAddress.hasHref === false
         && noAddress.reasons.some((r) => /no email address on file/.test(r))
         && /Wo53Guardian Two/.test(noAddress.toNote) && noAddress.askedFirst === true,
-      (noAddress.reasons[0] || '').slice(0, 120)
+      /* This flow's own recipient row, by name and not by position — the rebuild puts the
+         template's merge fields back, so the strip is carrying WO-5.5's instruction line and a
+         field row as well by the time this reads it. */
+      (noAddress.reasons.filter((r) => /no email address on file/.test(r))[0] || '').slice(0, 120)
         + ' :: asked before rebuilding = ' + noAddress.askedFirst);
 
     /* ── the ceiling ── */

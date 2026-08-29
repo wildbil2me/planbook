@@ -130,6 +130,10 @@ import { resolveDraft } from './merge-fields.js';
    engine itself is not imported and is never run here — the hits arrive with the row that was
    tapped, and re-running would answer about today rather than about that row. */
 import { orderHits } from './signals.js';
+/* The two sentences the strip says on both screens (WO-5.5). src/templates-view.js imports the
+   same two from the same place, which is the whole of "change it once" — see that file's header
+   for why the words are shared where the pixels already were, in src/shell.css § UNRESOLVED. */
+import { UNDEFINED_FIELD_HEAD, FIELD_FIX_SENTENCE, blockHead } from './block-strip.js';
 import * as templates from './templates.js';
 import * as outreach from './outreach.js';
 
@@ -469,6 +473,11 @@ function paintTones(model) {
   about. This one counts THINGS TO FIX, because a draft can also be blocked by a recipient with no
   address or by no message being chosen, and calling those "fields" would be this screen pretending
   the resolver had an opinion about them.
+
+  AND SINCE WO-5.5 THE HEAD ITSELF IS NOT WRITTEN HERE. The sentence before the `·` comes from
+  src/block-strip.js, which the preview imports too — the strip's words kept in one place the way
+  its pixels already were. What stays this screen's own is everything after the `·` (see the
+  paragraph above) and the choice of WHICH head to print (see paintBlock() below).
 */
 function paintBlock(model) {
   const host = document.getElementById(BLOCK_ID);
@@ -476,9 +485,24 @@ function paintBlock(model) {
   host.textContent = '';
   host.classList.toggle('clear', model.ready);
   const count = model.reasons.length;
+  /*
+    THE HEAD IS CONDITIONAL ON THERE BEING A FIELD IN THE LIST, and that is a ruling WO-5.5 did not
+    make for this screen because the defect it was written from was a field one. The owner's
+    sentence is about an undefined field; this list also carries a recipient with no address, no
+    message chosen, and *Copy me* with nowhere to copy to — none of which is a field. Printing
+    "This draft has at least one undefined field" over a draft whose only fault is a missing
+    guardian address would be the strip stating something false about the draft, which is a worse
+    failure than the one this work order came to fix. So the new sentence heads the case it is true
+    of and the shipped one heads the rest. **`src/merge-fields.js` was not opened for either**, and
+    the phrase surviving here is this file's own head rather than a resolver sentence.
+  */
+  const fields = model.reasons.some((reason) => reason.kind === 'field');
+  /* The ready line is written out whole because it carries no count — the one head on either
+     screen that blockHead() has nothing to compose. */
   host.append(el('div', 'mf-block-head', model.ready
     ? 'Nothing blocked · this draft is ready for your mail app'
-    : 'This draft cannot be sent · ' + count + (count === 1 ? ' thing to fix' : ' things to fix')));
+    : blockHead(fields ? UNDEFINED_FIELD_HEAD : 'This draft cannot be sent',
+      count, 'thing to fix', 'things to fix')));
 
   if (model.ready) {
     host.append(el('div', 'mf-reason', 'It opens in your own mail app, addressed to '
@@ -487,6 +511,16 @@ function paintBlock(model) {
       + '. Nothing is sent until you send it there.'));
     return;
   }
+  /*
+    WHAT TO DO ABOUT IT, ONCE, ABOVE THE LIST RATHER THAN ON EVERY ROW (WO-5.5). The per-field rows
+    under this one are the resolver's sentences and they are about the TOKEN — what it was, why it
+    did not become anything. Not one of them can say what to DO, because the answer is about this
+    screen's own box: the teacher types in it, and the draft she is changing is one message to one
+    person. It is a `.mf-reason` and not a class of its own, which is what the ready state's own
+    sentence already is — one more line in the strip's own type, rather than a second treatment
+    inside a component whose whole ruling is that it has one.
+  */
+  if (fields) host.append(el('div', 'mf-reason', FIELD_FIX_SENTENCE));
   model.reasons.forEach((reason) => {
     const row = el('div', 'mf-reason');
     if (reason.field) row.append(el('code', '', '{{' + reason.field + '}}'));

@@ -3412,3 +3412,82 @@ assert `--audit` exits 0 over it.
 - [ ] `--self-check` is green and its own count goes up by the number of checks added.
 - [ ] `node tools/wo-sweep.mjs` is green, and `--audit` is green on a clean tree with WO-8.13's NOTE
       reading as it does today.
+
+---
+
+## WO-1.37 — the strip's other head is asserted nowhere, and no fixture can reach it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.5 ✅ · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.36 made.
+Booked 2026-08-29 by WO-5.5's own verifier, which found this and correctly declined to close it
+inside the row that made it.)*
+
+**Why it exists.** WO-5.5 made the send flow's block-strip head **conditional**, and that was the
+right call: three of the four things that block a draft are not merge fields — a recipient with no
+address, no message chosen, and *Copy me* with nowhere to copy to — so heading one of those
+*"This draft has at least one undefined field"* would be the strip stating something false about the
+draft. `src/outreach-view.js:504` reads
+`blockHead(fields ? UNDEFINED_FIELD_HEAD : 'This draft cannot be sent', …)`. **The true arm is
+asserted whole in both harnesses and the false arm is asserted nowhere:**
+`grep -rn "cannot be sent" tools/verify/` returns nothing at all.
+
+**And it is not an assertion somebody forgot — the fixture cannot express the failure.** Every
+blocked draft `tools/verify/outreach.mjs` builds carries a merge field, so `fields` is `true` on
+every strip the harness has ever read. An edit that made the head unconditional stays green at
+1265 checks while telling a teacher whose only fault is a missing guardian address that her draft
+has an undefined field. **That is the exact falsehood the ruling exists to prevent, and the ruling is
+a comment.** `paintBlock()` argues it at its own point of departure, at length, and nothing pays for
+it.
+
+**It is WO-1.33's defect a third time, and WO-1.36's shape a second.** There the fixture student was
+*narrow, not vacuous*; in WO-1.36 the fixture rows are *adjacent, not absent*; here every fixture
+draft is *blocked the same way*. All three are an instrument whose fixtures agree with each other,
+which is still the shape to go looking for next.
+
+**The shape to build.** One fixture draft that is **blocked with no `kind: 'field'` reason on the
+list**, and the head read off the DOM. Three routes exist and the implementer picks one and says
+which:
+
+- **A recipient with no address.** A template whose body resolves fully for the fixture student, and
+  a chosen recipient carrying a name and no `email` — `kind: 'recipient'`. The route WO-5.8 leaves
+  standing: its own fifth Acceptance line keeps WO-5.3's rule unchanged.
+- **No template offered for the pair.** `templateId = offered[0].id` on open, so this needs a
+  tone/audience pair with nothing saved — `kind: 'template'`.
+- **`Copy me` on with no address in Your details** — `kind: 'cc'`.
+
+**Out of scope.** `tools/verify/templates.mjs` and the preview. `src/templates-view.js:540` has no
+other arm — a template preview blocks on fields and on nothing else, so its blocked head is
+`UNDEFINED_FIELD_HEAD` unconditionally and there is no second sentence there to reach. Also out of
+scope: `src/`. This is an instrument that cannot see a branch, not a branch that is wrong; if the
+build finds a `src/` change is needed, that is a finding to hand back rather than a file to open.
+
+**Traps**
+
+- **Do not relax the two checks that already exist.** They assert the new head **whole and
+  anchored**, sentence and count together, because WO-5.5's Traps line forbids the substring. A new
+  check is added beside them; neither is edited to make room.
+- **The mutation has to be the one that proves this hole and not a different one.** Making the head
+  unconditional — `blockHead(UNDEFINED_FIELD_HEAD, …)` for every blocked draft — must turn the
+  **new** check red and leave both existing head checks **green**. A mutation that reddens all three
+  proves the harness reads a head, which was never in doubt.
+- **The instruction row has the same hole and rides on the same boolean.** `FIELD_FIX_SENTENCE` is
+  appended under `if (fields)`, so a strip with no field on it must be asserted to carry **neither**
+  the undefined-field sentence nor the instruction. One mutation can pay for both claims; two
+  assertions are still needed, because an absence that is never asserted is not a check.
+- **The teardown counts.** Whatever the fixture plants — a template, a recipient with no email, a
+  cleared address in Your details — comes back off, or the foot check goes red on a run that was
+  otherwise fine.
+- **`tools/README.md`'s mutation table is where this is recorded**, beside the WO-5.5 row at ~1192
+  that already names the head and `FIELD_FIX_SENTENCE`.
+
+**Acceptance**
+- [ ] A fixture draft in `tools/verify/outreach.mjs` is blocked with **no `kind: 'field'` reason on
+      the list**, and the check's own text names which of the three non-field reasons it used.
+- [ ] That strip's head is asserted **whole and anchored** —
+      `This draft cannot be sent · N thing(s) to fix` — and the sentence `UNDEFINED_FIELD_HEAD`
+      carries is asserted **absent** from it.
+- [ ] `FIELD_FIX_SENTENCE` is asserted absent from the same strip.
+- [ ] Making the head unconditional turns the new checks **red** and leaves WO-5.5's two existing
+      head checks **green**, recorded in `tools/README.md`'s mutation table.
+- [ ] `node tools/verify-shell.mjs` is green with its count up by the number of checks added, and
+      `node tools/wo-sweep.mjs` is green with `tools/README.md`'s call-site count recomputed by it.

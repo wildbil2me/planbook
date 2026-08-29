@@ -439,7 +439,7 @@ than as four independent ideas — WO-5.8 in particular reverses something WO-5.
 
 ## WO-5.5 — The two sentences the flow does not say
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3
+**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** Two places where the app knows something the teacher does not, and says nothing.
 Both were found by watching one person use it for the first time, which is the only way this kind of
@@ -467,12 +467,33 @@ field"* already knows more than one who reads *"cannot be sent."*
   sentence about what to DO, which no resolver can write because it is about the box, not the token.
 
 **Acceptance**
-- [ ] Opening a starter in the editor states that it must be saved before a draft can use it.
-- [ ] A draft with an unresolved field heads its strip *This draft has at least one undefined field*
+- [x] Opening a starter in the editor states that it must be saved before a draft can use it.
+      *(The line under the editor, which used to say* "Saving makes it yours" *— true, and an answer
+      to a question about ownership nobody was asking. It reads* **"Starting from one of Planbook’s
+      templates. It is not on offer when you write a message until you save it — change anything in
+      it first, then save to make it yours."** *`openStarter()`'s announcement carries the same
+      sentence, so a teacher on a screen reader hears it when she opens the starter rather than only
+      if she goes looking for that line. Asserted off the DOM rather than off the model, because the
+      claim is about what the screen says.)*
+- [x] A draft with an unresolved field heads its strip *This draft has at least one undefined field*
       and says, in words, that removing the field or typing over it will unblock the draft.
-- [ ] The resolver's own per-field sentences are unchanged — this work order adds a sentence and
-      rewrites a heading, and touches `src/merge-fields.js` not at all.
-- [ ] Neither new sentence names a student, so presentation mode is unaffected.
+      *(One constant in a new `src/block-strip.js`, imported by both screens — see the first of the
+      two rulings below. The instruction is* **"Remove the field or type what it should say over it
+      — either one unblocks the draft."** *and it is the send flow's; the second ruling below says
+      why it is not on the editor's preview. The head is asserted* **whole** *in both harnesses, the
+      sentence and the count after the `·` together, and the instruction is asserted* **gone** *once
+      the field is typed over — the pair that stops it passing vacuously.)*
+- [x] The resolver's own per-field sentences are unchanged — this work order adds a sentence and
+      rewrites a heading, and touches `src/merge-fields.js` not at all. *(That file is not in this
+      work order's diff at all, and `wo-sweep.mjs` § 20 reads it at the same 221 lines of stripped
+      code with the same sixteen fields and nine refusal words. The refused, unknown and unresolved
+      sentences are still printed word for word* **under** *the new head, which the check above the
+      new one in `tools/verify/outreach.mjs` asserts in the same breath as the head itself.)*
+- [x] Neither new sentence names a student, so presentation mode is unaffected. *(Neither
+      interpolates anything: both are constants with no student, guardian, class or support value
+      anywhere in them. Neither is reachable while the projector is on either — the send flow empties
+      the strip before `paintBlock()` runs and the preview hides it, both of which their own
+      projector checks already assert.)*
 
 **Traps** — The block strip is drawn by two screens (`src/templates-view.js`'s preview and
 `src/outreach-view.js`) over one shared section, § UNRESOLVED in `src/shell.css`. A heading changed
@@ -504,6 +525,72 @@ all — but the editor half may.* **If this sitting opens `index.html`, row 42 r
 [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)*,
 one About row, which is what the* 🎒 *mark is for. An* `index.html` *change also wants a* `CACHE`
 *bump in* `sw.js`*.)*
+
+**Where this stands.** ✅ on 2026-08-29: all four Acceptance lines closed, **no 👤 and no 📆**. It is
+`src/templates-view.js`, `src/outreach-view.js` and one new module; **no stylesheet was opened and
+`index.html` was not edited** — the instruction is a `.mf-reason`, which is what the strip's own
+ready-state sentence already is, and the editor's line is text in a `<p>` that was already there. So
+there is no new control and no `@media (pointer: coarse)` pass to take. Both tools green on the
+delivered tree: `verify-shell.mjs` at `1265 checks · 1265 passed · 0 failed · 0 skipped`, 38,000
+lines, 421s, exit 0, and `wo-sweep.mjs` at `34 checks · 31 passed · 0 failed · 3 to review`, all
+three reviews pre-existing and unchanged. `TESTING.md` § WO-5.5 carries the readings.
+
+**The two heads are one string now — `src/block-strip.js` — and the mutation round is what says
+that is structural rather than currently-true.** Putting `UNDEFINED_FIELD_HEAD` back to
+*"This draft cannot be sent"* turns **both** screens' head checks red from one line, which is
+exactly what could not happen before: the same edit made by hand would have reddened one and left
+the other quietly saying something else. Three lines undone — that head, the instruction, and the
+editor's starter sentence — read `1265 checks · 1261 passed · 4 failed`, exit 1. *(Two clauses
+correctly did not fire, and both are absences: that the instruction row is gone once the draft is
+clear, and that it never appears on the editor's preview. Neither can fail when the sentence is
+merely emptied. Named rather than counted, because a mutation that cannot express a failure is not
+evidence about it.)*
+
+**Three things it decided that this work order did not.**
+
+- **The new head is conditional on there being a field in the list, and the old sentence survives as
+  the other arm.** The send flow's strip counts *things to fix*, and three of the four kinds are not
+  merge fields: a recipient with no address, no message chosen, and *Copy me* with nowhere to copy
+  to. Heading a draft whose only fault is a missing guardian address with *"has at least one
+  undefined field"* would be the strip stating something false about the draft — a worse defect than
+  the one this row came to fix, and the opposite of the owner's own reason for preferring the new
+  wording, which is that **it describes the state**. So the owner's sentence heads the case it is
+  true of and the shipped one heads the rest. **The phrase surviving in `src/outreach-view.js` is
+  that arm and not a missed replacement**, and `src/merge-fields.js` was not opened for either.
+- **The instruction is on the send flow and not on the editor's preview.** It is advice about a BOX,
+  and the two boxes are not the same object: the send flow's holds one message to one person. The
+  editor's holds the template every later draft is cut from, so a teacher whose one previewed
+  student has no guardian on file would be told, by the app, to strip `{{guardian.name}}` out of a
+  template that works for the other twenty-nine — against the resolver's own sentence on the same
+  strip, which says there is nothing to put there and points at the roster. **Why it exists** puts
+  this half of the work order *"in the send flow"* in as many words, and the Traps line is about a
+  HEADING changed in one screen and not the other, which is held exactly. The absence is asserted in
+  `tools/verify/templates.mjs` rather than left to be noticed.
+- **The shared file holds the head's grammar as well as its words**, and that arrived through a
+  check rather than through taste. As two exported constants it was 175 characters of stripped code,
+  and `tools/verify/classes-terms.mjs`'s term-literal sweep guards itself with `shortest > 200` so
+  that a comment-stripper which ate a file cannot read green — so the run went red at a check with
+  nothing to do with this row. **Lowering the floor would have been relaxing a check to fit new
+  code.** `blockHead(sentence, count, singular, plural)` went in instead, which the two screens have
+  as much reason to agree about as they have about the sentence — the `·` and the plural were also
+  written out twice — and the module stands at 288, above `src/live-region.js`'s 250. The tree's
+  smallest module is the one it was before.
+
+**And the ride-along was not taken.** `index.html` was read in one `grep` and never opened to edit,
+so [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)
+is exactly where it was: still 🎒, still unbuilt, still owed its own dispatch.
+
+**One thing it found and did not close, and it is the first bullet above turning into a work order.**
+The head is conditional, and the surviving arm — `'This draft cannot be sent'` at
+`src/outreach-view.js:504` — **is asserted nowhere**: `grep -rn "cannot be sent" tools/verify/`
+returns nothing, and every blocked draft this harness builds carries a merge field, so the fixture
+cannot express a failure of the false branch. A later edit making the head unconditional reads green
+at 1265 while telling a teacher whose only fault is a missing guardian address that her draft has an
+undefined field — **the exact falsehood this row's own ruling was made to prevent, with the ruling
+sitting in a comment nothing pays for.** Booked as
+[WO-1.37](phase-1-shell-store-roster.md#wo-137--the-strips-other-head-is-asserted-nowhere-and-no-fixture-can-reach-it),
+row 43, rather than widened into this one: the fix is a fixture and a mutation in
+`tools/verify/outreach.mjs` and opens no file this work order owns.
 
 ---
 

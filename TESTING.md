@@ -7891,6 +7891,99 @@ read as ready. A check that had asked the model alone would have passed over it.
 
 ---
 
+### WO-5.5 — The two sentences the flow does not say
+
+**What this adds.** Two sentences and one heading, and nothing else on the glass. Both were found by
+watching one person use the flow for the first time, which is the only way this kind of defect is
+found: **the app knew something the teacher did not and said nothing.** A starter template is inert
+until it is saved — WO-5.2's ruling, and a good one — and the place she met that rule was an empty
+picker in the send flow two taps later. A draft holding a merge field that did not resolve said
+*"This draft cannot be sent"*, which is true and is no help at all. **The rules were right and their
+silence was the bug**, so nothing here changes a rule.
+
+**The strip's head is one string now, and that is the work order's Traps line held rather than
+promised.** It is drawn by two screens — `src/templates-view.js`'s live preview and
+`src/outreach-view.js`'s send flow — over one `src/shell.css` section, and the two heads were
+already **different strings that happened to open alike**: `'This draft cannot be sent · N things to
+fix'` against `'This draft cannot be sent · N fields did not resolve'`. So "change it once" was the
+intent and not the shape, and changing both by hand would have satisfied the Acceptance line today
+and left the next reader two hand-kept strings with no note saying they were meant to agree.
+`src/block-strip.js` is the answer: the sentence, the instruction, and the composer that puts the
+`·` and the singular-or-plural in one place. Each screen keeps the noun it counts, which is a
+difference `src/outreach-view.js` argued for at WO-5.3 and which is still right.
+
+- [x] Opening a starter in the editor states that it must be saved before a draft can use it.
+      *(Asserted off the DOM — the line under the editor, read after a real tap on a real starter row
+      in the list, because a claim about what the screen SAYS is not settled by a flag on the model.
+      It reads* **"Starting from one of Planbook’s templates. It is not on offer when you write a
+      message until you save it — change anything in it first, then save to make it yours."** *The
+      check sits directly under the one that proves the rule it is about — opening a starter writes
+      nothing, two templates in the document before and after — so the pair reads as the rule and
+      the app finally saying it. `openStarter()`'s live-region announcement carries the same
+      sentence, so it is heard as well as read.)*
+- [x] A draft with an unresolved field heads its strip *This draft has at least one undefined field*
+      and says, in words, that removing the field or typing over it will unblock the draft.
+      *(Asserted in* **both** *harnesses and* **whole** *— the sentence and the count after the `·`
+      together, anchored `^…$` — because a substring test is the relaxation the work order's own
+      note forbids. The instruction is the send flow's:* **"Remove the field or type what it should
+      say over it — either one unblocks the draft."** *It is asserted present while the draft is
+      blocked and* **absent once the field is typed over**, *which is the pair that stops it passing
+      vacuously: a strip that printed it unconditionally would be telling a teacher to fix a draft
+      that has nothing wrong with it.)*
+- [x] The resolver's own per-field sentences are unchanged — this work order adds a sentence and
+      rewrites a heading, and touches `src/merge-fields.js` not at all. *(That file is not in the
+      diff. `wo-sweep.mjs` § 20 reads it at the same 221 lines of stripped code, sixteen fields, nine
+      refusal words, no writer and no dynamic property read; and the check that reads the refused
+      sentence off the screen —* "never leave the roster"*, printed word for word under the new head
+      — is the one directly above the new instruction check, so both are read in one sitting.)*
+- [x] Neither new sentence names a student, so presentation mode is unaffected. *(Neither
+      interpolates anything at all: both are module constants, with no student, guardian, class,
+      grade or support value reachable from either. Neither is even drawn while the projector is on
+      — the send flow empties `#outreachBlock` before `paintBlock()` runs and the preview hides its
+      strip — which both sections' existing projector checks still assert, unchanged.)*
+
+**Two things it decided that the work order did not, and both are written into the code rather than
+only here.**
+
+**The new head is conditional on there being a field in the list, and the old sentence survives as
+the other arm.** The send flow's strip counts *things to fix*, and three of the four kinds are not
+merge fields: a recipient with no address, no message chosen, and *Copy me* with nowhere to copy to.
+Heading a draft whose only fault is a missing guardian address with *"has at least one undefined
+field"* would be the strip stating something false about the draft — a worse defect than the one
+this work order came to fix, and the opposite of the reason the owner preferred the new wording
+(*it describes the state*). So the owner's sentence heads the case it is true of, and
+*"This draft cannot be sent"* heads the rest. **The phrase surviving in `src/outreach-view.js` is
+that arm and not a missed replacement.**
+
+**The instruction is on the send flow and not on the editor's preview.** It is advice about a BOX,
+and the two boxes are not the same object: the send flow's holds one message to one person, so
+*remove it or type over it* costs her nothing but this draft. The editor's holds the template every
+later draft is cut from — so a teacher whose one previewed student has no guardian on file would be
+told, by the app, to strip `{{guardian.name}}` out of a template that works for the other
+twenty-nine. The resolver's own sentence is the honest one there: *there is nothing to put there*,
+which points at the roster. The work order locates this half of itself **"in the send flow"** in as
+many words, and its Traps line is about a HEADING changed in one screen and not the other, which is
+held exactly. The absence is asserted rather than assumed, in `tools/verify/templates.mjs`.
+
+**No stylesheet was opened, and `index.html` was not edited.** The instruction row is a `.mf-reason`
+— which is what the strip's own ready-state sentence already is — rather than a second treatment
+inside a component whose whole ruling is that it has one. So § UNRESOLVED is untouched and there is
+**no new control**, which is why this work order takes no `@media (pointer: coarse)` pass: both
+surfaces are text written by JS into elements that already existed.
+
+**A new module tripped a check that was right to trip, and the fix was not the check.**
+`tools/verify/classes-terms.mjs`'s term-literal sweep guards itself with `shortest > 200` — the
+smallest module's stripped code — so that a comment-stripper which ate a file cannot read green.
+`src/block-strip.js` as first written was two exported constants and 175 characters of code, and the
+run went red at that line, on a file that has nothing whatever to do with terms. **Lowering the floor
+would have been relaxing a check to fit new code**, which is the defect this directory exists to
+catch; the module took the head's grammar instead — `blockHead(sentence, count, singular, plural)`,
+which the two screens have exactly as much reason to agree about as they have about the sentence —
+and stands at 288, above `src/live-region.js`'s 250. **The tree's smallest module is the one it was
+before.**
+
+---
+
 ### WO-5.6 — A draft survives a change of mind
 
 **What this adds.** The panel that stands between a change of mind and a lost draft. WO-5.3 settled

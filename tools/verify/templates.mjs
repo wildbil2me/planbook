@@ -495,13 +495,26 @@ if (!seam) {
         && unresolved.direct.blocked === true,
       'tokens drawn = ' + JSON.stringify(unresolved.drawn.tokens)
         + '; errors = ' + JSON.stringify(unresolved.model.errors));
-    check('and the block strip says the draft cannot be sent, names the field and names the STUDENT '
-      + '— a field can be fine for one student and empty for the next, and a strip that did not '
-      + 'name her would send a teacher looking in the template for a fault that is not there',
+    /* THE HEAD IS THE SEND FLOW'S, WORD FOR WORD, AND THE INSTRUCTION UNDER IT IS NOT (WO-5.5).
+       Both halves are asserted, because both are rulings. The head comes from src/block-strip.js
+       and is asserted WHOLE — a substring test would pass over the very drift the work order's
+       Traps line calls this phase's own two-askers defect. The absence is the second half: the
+       send flow's *remove it or type over it* is advice about a box holding ONE message, and this
+       box holds the template every later draft is cut from, so printing it here would tell a
+       teacher whose one previewed student has no guardian on file to strip {{guardian.name}} out
+       of a template that works for the other twenty-nine. src/templates-view.js's paintBlock()
+       argues it at the point of departure. */
+    check('and the block strip heads itself in the send flow’s own words — one sentence out of '
+      + 'src/block-strip.js rather than two hand-kept strings — names the field and names the '
+      + 'STUDENT, because a field can be fine for one student and empty for the next and a strip '
+      + 'that did not name her would send a teacher looking in the template for a fault that is '
+      + 'not there',
       unresolved.drawn.blockShown === true && unresolved.drawn.clear === false
-        && /cannot be sent/i.test(unresolved.drawn.head)
+        && /^This draft has at least one undefined field · \d+ field(s)? did not resolve$/
+          .test(unresolved.drawn.head)
         && unresolved.drawn.reasons.some(r => r.indexOf('{{guardian.name}}') >= 0
-          && r.indexOf(ORPHAN_N) >= 0),
+          && r.indexOf(ORPHAN_N) >= 0)
+        && !unresolved.drawn.reasons.some(r => /unblocks the draft/.test(r)),
       unresolved.drawn.head + ' :: ' + JSON.stringify(unresolved.drawn.reasons));
 
     /*
@@ -573,6 +586,10 @@ if (!seam) {
       return { drawn: d, fields: m.preview.fields, resolved: m.preview.resolved,
         blocked: m.preview.draftBlocked, isNew: m.editing.isNew,
         stored: window.planbook.store.getDoc().templates.length,
+        /* The line under the editor, read off the DOM: WO-5.5's first Acceptance line is about
+           what the screen SAYS, so the model's own "from" flag would not settle it.
+           (No backticks in here; it is inside a template literal and one would close it.) */
+        state: document.getElementById('templateEditorState').textContent,
         name: m.editing.name }; })()`);
     check('the block strip is PERMANENT and goes green when nothing is wrong — it says how many '
       + 'fields resolved rather than disappearing, because a strip that appears only on failure is '
@@ -588,6 +605,17 @@ if (!seam) {
       + 'hundred guardians reading it in the same words',
       clear.isNew === true && clear.stored === 2 && clear.name.length > 0,
       'editor holds "' + clear.name + '", ' + clear.stored + ' template(s) in the document');
+    /* WO-5.5's FIRST ACCEPTANCE LINE. The check above proves the rule — a starter is inert until a
+       Save — and this one proves the screen SAYS so, which is the whole of that work order's first
+       half: the rule was right and its silence was the bug. It is asserted where the question
+       arises, on the line under the editor at the moment the starter is opened, because the place
+       a teacher currently learns it is an empty picker on another screen two taps later. */
+    check('and it SAYS so where the question arises — the line under the editor states that a '
+      + 'starter is not on offer when she writes a message until she saves it, rather than leaving '
+      + 'her to meet that rule as an empty picker in the send flow (WO-5.5, Acceptance line 1)',
+      /not on offer when you write a message until you save it/.test(clear.state)
+        && clear.state.indexOf('Planbook') >= 0,
+      'the editor state line reads: ' + JSON.stringify(clear.state));
 
     /*
       PRESENTATION MODE TAKES THE PREVIEW AND LEAVES THE REST — the obligation

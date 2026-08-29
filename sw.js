@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v105';
+const CACHE = 'planbook-shell-v106';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -114,6 +114,11 @@ const SHELL = [
      forget (tools/verify/precache.mjs). */
   './src/outreach.js',
   './src/outreach-view.js',
+  /* WO-5.5. The two sentences the block strip says on both of those screens, in one place because
+     the pixels already were (src/shell.css, the UNRESOLVED section). Imported by
+     src/templates-view.js and by src/outreach-view.js and reached no other way, which is exactly
+     as absent offline as a file named in index.html (tools/verify/precache.mjs). */
+  './src/block-strip.js',
   './src/roster.js',
   './src/roster-import.js',
   './src/supports.js',

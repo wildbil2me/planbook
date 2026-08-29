@@ -326,7 +326,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.36 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.37 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -354,16 +354,16 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 36 | 31 | — | 🔨 IN PROGRESS (reopened fifteen times; last on 2026-08-28) |
+| 1 — Shell, store, roster | 37 | 31 | — | 🔨 IN PROGRESS (reopened sixteen times; last on 2026-08-29) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
-| 5 — Outreach | 8 | 3 | — | 🔨 IN PROGRESS — WO-5.1, WO-5.2 and WO-5.3 all ✅ DONE; the first two 2026-08-28 and the send flow **2026-08-29, when the owner read its last two 👤 lines on hardware** — the draft opened in the default client on both devices and the copy reached the sent folder. **That sitting is also where rows 5.5–5.8 came from**: six changes asked for after using it, booked rather than folded in, plus one defect fixed the same day (WO-5.2's editor had no way out — see its note). WO-5.4 and the four new rows ⬜ |
+| 5 — Outreach | 8 | 5 | — | 🔨 IN PROGRESS — WO-5.1, WO-5.2 and WO-5.3 all ✅ DONE; the first two 2026-08-28 and the send flow **2026-08-29, when the owner read its last two 👤 lines on hardware** — the draft opened in the default client on both devices and the copy reached the sent folder. **That sitting is also where rows 5.5–5.8 came from**: six changes asked for after using it, booked rather than folded in, plus one defect fixed the same day (WO-5.2’s editor had no way out — see its note). **Two of those rows are already ✅ — WO-5.6 and WO-5.5, both 2026-08-29**; WO-5.4, WO-5.7 and WO-5.8 ⬜ |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **152** | **124** | **2** | `[████████░░] 82%` |
+| | **153** | **126** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1714,6 +1714,7 @@ it, never from a reading taken earlier in the same session.)*
 | 40 | [WO-5.7](phase-5-outreach.md#wo-57--copy-the-draft-to-the-clipboard) Copy the draft to the clipboard | S | — | The second honest door out of a draft, for a teacher whose real mail is webmail and whose `mailto:` default opens nothing she uses. **Not a workaround for a missing scope** — the architecture table forbids the scope, and this costs no permission at all. Sending mail from the app itself is a v2.0 question the owner named as one |
 | 41 | [WO-5.8](phase-5-outreach.md#wo-58--several-recipients-and-one-of-them-is-primary) **Several recipients, and one of them is primary** | L | — | **After row 38, and it reverses a verified Acceptance line.** WO-5.3's seventh — proved and mutation-tested — filters templates on tone AND audience; this drops the audience half, because a message to both guardians and the counselor has no single audience. The tone half stays. Whoever builds it amends that line in place. It also owes an argument nobody has made yet: which header the non-primary recipients ride in is a disclosure question, not a formatting one |
 | 42 | [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence) The About modal names two documents and not the licence | S | — | 🎒 `index.html` — **Nothing blocks it.** An hour, whenever `index.html` is open for something else. **Re-placed here from row 10 on 2026-08-29**, the owner’s call, after `--audit` reported its shelf had emptied — it was written to sit at the foot and thirty-one rows landed above it without moving it. **Row 41 is the shelf it is waiting for**: WO-5.8 opens `index.html` for the recipient picker |
+| 43 | [WO-1.37](phase-1-shell-store-roster.md#wo-137--the-strips-other-head-is-asserted-nowhere-and-no-fixture-can-reach-it) The strip's other head is asserted nowhere | S | — | Booked **2026-08-29** by WO-5.5's own verifier, which found it and declined to close it inside the row that made it. WO-5.5 made the send flow's block-strip head conditional — correctly, since three of the four things that block a draft are not merge fields — and `grep -rn "cannot be sent" tools/verify/` returns **nothing**: the surviving arm at `src/outreach-view.js:504` is asserted nowhere, and every blocked draft the fixture builds carries a field, so the harness cannot express the failure. An edit making the head unconditional stays green at 1265 while telling a teacher whose only fault is a missing address that her draft has an undefined field. **WO-1.33's defect a third time** — an instrument whose fixtures agree with each other |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
@@ -1796,6 +1797,13 @@ mark is what protects the row now; the position never did.** *It was re-placed b
 above is still good, not because the foot of a growing table was ever a fence — and it will be
 overtaken again the moment rows 43 and up exist. Read this before writing a row that protects itself
 by where it sits.)*
+
+*(**Row 43 landed the same day and the sentence above is now a reading rather than a prediction.**
+WO-1.37 was booked on 2026-08-29 and appended below WO-8.13 —* **deliberately, and this paragraph is
+why**: *the alternative was to splice it in at 42 and renumber, which preserves the foot and costs
+three prose references that name the number. The mark is what protects the row, so the row moved to
+43 and WO-8.13 stayed where it was written.* `--audit` *reports nothing new: rows 40 and 41 are still
+open above it, so its shelf is not empty either way.)*
 
 ***The section has three sizes and no shape.*** *§ Ship 3 is a plan; this is a shelf, and rows land
 on it because* **a work order with no row is a work order `next` cannot reach**. *Read the* `Suggested`
