@@ -478,6 +478,33 @@ field"* already knows more than one who reads *"cannot be sent."*
 `src/outreach-view.js`) over one shared section, § UNRESOLVED in `src/shell.css`. A heading changed
 in one and not the other is this phase's own "two askers" defect. Change it once.
 
+*(**Three things read off the tree on 2026-08-29, after WO-5.6 landed and the flow went live.**
+Added here rather than left for the implementer to hit, because two of them turn a green harness red
+and the third turns it green while breaking an Acceptance line above.*
+
+- ***"Change it once" is the intent and not yet the shape.*** *The two heads are already different
+  strings —* `src/outreach-view.js:481` *ends "· N things to fix",* `src/templates-view.js:513` *ends
+  "· N field did not resolve" — so there is no shared constant to edit and an implementer looking
+  for one will not find it.* **Whether to unify them into one place or change both in step is this
+  work order's call to make and to write down**, *but it cannot be made by accident.*
+- ***The old head is asserted in two harness files, and both go red.*** `tools/verify/outreach.mjs:585`
+  *tests* `/cannot be sent/` *on the strip head and* `tools/verify/templates.mjs:498-502` *tests*
+  `/cannot be sent/i` *on the preview's.* **Update the assertions to the new head and keep every
+  other conjunct** *— the WO-5.6 sitting reddened four WO-5.3 checks the same way and the answer was
+  to strengthen them, never to relax one to match new copy. A check edited down to fit is the defect
+  this directory exists to catch.*
+- ***`src/merge-fields.js` says "cannot be sent" too, and must not be touched.*** *Lines 549 and 552
+  are the resolver's own per-field sentences, which* **Acceptance line 3 protects in as many words**.
+  *A find-and-replace over the phrase satisfies the second Acceptance line and breaks the third in
+  the same keystroke.* `src/outreach.js:18` *and* `:178` *quote the resolver in prose and are not copy.*
+
+*And one thing that is an opportunity rather than a trap: the strip itself is an empty*
+`<div id="outreachBlock">` *filled by JS, so the send-flow half likely opens no* `index.html` *at
+all — but the editor half may.* **If this sitting opens `index.html`, row 42 rides with it** *—*
+[WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)*,
+one About row, which is what the* 🎒 *mark is for. An* `index.html` *change also wants a* `CACHE`
+*bump in* `sw.js`*.)*
+
 ---
 
 ## WO-5.6 — A draft survives a change of mind
