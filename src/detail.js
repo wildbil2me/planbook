@@ -203,6 +203,14 @@ import { studentPassCard } from './pass-history.js';
   boundary WO-2.26 drew around the file, with an argument this time instead of only a scope line.
 */
 import { studentLogCard } from './log-sheet.js';
+/* AND THE SECOND CARD OVER `log[]` (WO-5.4) — who this teacher has written to about this student,
+   read out of the contacts the send flow appends. It is a different module from the one above for
+   the reason src/contact-history.js opens with: the two lists never meet, and this screen draws
+   both. It is behind the SAME print gate and the same CSV boundary as the log card, and by the same
+   means — it wears `.log-card`, which is the class src/detail.css's print block already names. A
+   sheet a guardian carries out of the building is not where a teacher's messages to a counselor and
+   an administrator belong. */
+import { studentContactCard } from './contact-history.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -733,19 +741,29 @@ export function renderDetail() {
      not lifted (src/pass-history.js says so at the same seam): a missing block reads as "this build
      does not show that" rather than as "none". */
   right.append(studentLogCard(student.id));
+  /* AND WHO SHE HAS WRITTEN TO, UNDER IT (WO-5.4). Beside the log card rather than inside it: one
+     answers "what have I noticed about this child" and the other "what have I already said, to whom
+     and about which signal", and src/contact-history.js argues at its own head why folding the
+     second into the first would put an email's subject line under a heading that promises the
+     teacher nothing on it was sent anywhere. It is drawn even when it is empty, for the reason the
+     card above it is. */
+  right.append(studentContactCard(student.id));
   cols.append(left, right);
   content.append(cols);
 
   /* The sentence names what IS on the page as well as what is not, so it has to keep step with the
-     page: hall passes joined grades and attendance at WO-2.26, and the log at WO-4.4 — which is also
-     the first thing on this screen that is NOT on the printed sheet, so the sentence says that too.
+     page: hall passes joined grades and attendance at WO-2.26, the log at WO-4.4 — which is also
+     the first thing on this screen that is NOT on the printed sheet, so the sentence says that too —
+     and the contact history at WO-5.4, which is the second and is off the sheet by the same rule.
      A list that goes stale is a list that
      stops being read, and this one is the screen's own statement of the firewall in its header. */
   content.append(el('p', 'detail-note',
-    'This page is grades, attendance, hall passes and what you have written down, and nothing else. '
+    'This page is grades, attendance, hall passes, what you have written down and who you have '
+      + 'written to, and nothing else. '
       + 'Nothing from ' + person + '’s support details is on it, on the printed sheet or in the CSV, '
       + 'in either mode — those live on the roster and go nowhere but your own backup file. What you '
-      + 'have written down is on the screen only: it is not on the sheet and not in the CSV.'));
+      + 'have written down and who you have written to are on the screen only: neither is on the '
+      + 'sheet and neither is in the CSV.'));
 }
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */

@@ -84,11 +84,11 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
-| 5 | Outreach | 🔨 IN PROGRESS | 8/9 `[█████████░] 89%` |
+| 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **64/81 `[████████░░] 79%`** · ⏳ 1 deferred |
+| | | **Overall** | **65/81 `[████████░░] 80%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -537,8 +537,12 @@ granting a mail scope.
       record lands where a school expects to find it.
 - [x] Editable before sending. Always. A generated message going out unread is the failure mode
       that ends trust in the feature.
-- [ ] Log the contact (append-only) and show contact history per student, from the roster and the
-      signal card.
+- [x] Log the contact (append-only) and show contact history per student, from the roster and the
+      signal card. *(WO-5.4, 2026-08-29. The handoff appends a `contact` to `log[]` — audience,
+      subject, body and the signal's own `ruleId` — and `src/contact-history.js` draws it as a*
+      **second card** *on both surfaces, never folded into "What you have written down", whose
+      footer promises the teacher her notes are not printed, exported or put in a draft. It is what
+      WO-4.5's cooldown had been reading with nothing to read.)*
 
 *(**Four boxes above were built on 2026-08-28, deliberately left open, and closed on 2026-08-29 when
 the owner read them on hardware.**

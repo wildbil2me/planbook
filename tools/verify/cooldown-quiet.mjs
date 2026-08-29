@@ -17,13 +17,14 @@ const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
 /*
  * ───────── the cooldown and the quiet middle (WO-4.5) ─────────
  *
- * THE FIXTURE WRITES A RECORD THE APP CANNOT WRITE YET, AND THAT IS THE POINT RATHER THAN A CHEAT.
- * A `contact` entry is Phase 5's (WO-5.3) and nothing in this build authors one; `src/log.js` says
- * so at its own writer and `docs/data-model.md` § log names the `ruleId` field WO-4.5 defined for
- * it. So the harness plants the record the cooldown reads, in exactly the shape the data model
- * documents, and everything downstream of it — the suppression, the foot, the expansion, the
- * restore — is the real path. The alternative was building Phase 5's outreach flow to make one
- * check possible, which is the work order widening itself.
+ * THE FIXTURE PLANTS ITS CONTACTS BY HAND, AND STILL HAS TO. When this section was written nothing
+ * in the build could author one; **WO-5.4 changed that on 2026-08-29** — the handoff appends a real
+ * `contact` and `verify/contact-log.mjs` drives it — and this fixture is unchanged, because what it
+ * needs is contacts dated one, two, three, five and twenty days ago and the app can only ever write
+ * one dated NOW. Ben and Cal differ in nothing but that date, which is the whole of the check they
+ * exist for. So the records are planted in exactly the shape `docs/data-model.md` § log documents,
+ * and everything downstream of them — the suppression, the foot, the expansion, the restore — is
+ * the real path.
  *
  * SEVEN STUDENTS, AND EVERY ONE OF THEM MAKES ONE CLAIM FALSIFIABLE:
  *
@@ -175,7 +176,7 @@ if (!seam) {
          cannot fire and the two hits are exactly the two this check names. */
       for (var g = 1; g <= 8; g++) put('a_wo45_' + g, '${GUS}', { v: 95 });
 
-      /* THE RECORDS WO-5.3 WILL WRITE. Seven fields plus "ruleId", exactly as
+      /* THE RECORDS WO-5.4's HANDOFF WRITES. Seven fields plus "ruleId", exactly as
          docs/data-model.md § log documents them, and "audience" carrying a real value on every
          "contact" — which is the half of the firewall that keeps a note to self from ever being
          counted as outreach. */
@@ -203,8 +204,9 @@ if (!seam) {
       notes:(now.log || []).filter(function(e){
         return String(e.id).indexOf('l_wo45') === 0 && e.kind === 'note'; }).length }; })()`);
   check('WO-4.5 fixture: one class, seven students, eleven assignments, five `contact` entries '
-    + 'carrying the `ruleId` docs/data-model.md names and one note to self — the record WO-5.3 '
-    + 'will write, planted because nothing in this build writes one',
+    + 'carrying the `ruleId` docs/data-model.md names and one note to self — the record WO-5.4’s '
+    + 'handoff writes, planted here because these five are dated 1 to 20 days back and a real '
+    + 'handoff can only write one dated today',
     !!plant45 && plant45.ok === true && plant45.students === 7 && plant45.assignments === 11
       && plant45.contacts === 5 && plant45.notes === 1,
     plant45 && plant45.ok ? plant45.students + ' student(s), ' + plant45.assignments

@@ -4,25 +4,30 @@
   ── WHAT IS IN `log[]`, AND WHY THE `kind` FILTER IS THE WHOLE OF THE FIREWALL ──
 
   docs/data-model.md gives one collection, `{ id, studentId, at, kind, audience, subject, body }`,
-  and three kinds share it: `behavior` and `note` are WO-4.4's — this file writes them — and
-  `contact` is Phase 5's record of outreach that actually left the building, which the cooldown
-  (WO-4.5) reads and `{{behavior.recent}}` renders into an email. **Nothing else in the app reads
-  `log[]` today**; a grep for `doc.log` outside this file finds nothing. So the filter that stands
-  between a behavior note and an email home is `entriesOfKind()` below and the readers built on it,
-  and it is a filter rather than a promise: every read in this file names the kinds it wants, and
-  there is no exported reader that hands back the whole array.
+  and three kinds share it: `behavior` and `note` are WO-4.4's and `contact` is WO-5.4's — this file
+  writes all three, through two writers that share nothing but the `push` — and the contact is the
+  record of outreach that actually left the building, which the cooldown (WO-4.5) reads and
+  `{{behavior.recent}}` does not. **Nothing else in the app reads `log[]`**; a grep for `doc.log`
+  outside this file finds nothing. So the filter that stands between a behavior note and an email
+  home is `entriesOfKind()` below and the readers built on it, and it is a filter rather than a
+  promise: every read in this file names the kinds it wants, and there is no exported reader that
+  hands back the whole array.
 
-  THE SECOND HALF OF THAT FIREWALL IS `audience`. An entry written here carries `audience: ''` —
-  it went to nobody, which is the truth about a note a teacher wrote to herself. Writing
-  `"guardian"` on it because the field exists would put a behavior note one loose `filter` away
-  from being counted as outreach, and the cooldown's whole job is to count outreach.
+  THE SECOND HALF OF THAT FIREWALL IS `audience`. An entry written by the SHEET carries
+  `audience: ''` — it went to nobody, which is the truth about a note a teacher wrote to herself.
+  Writing `"guardian"` on it because the field exists would put a behavior note one loose `filter`
+  away from being counted as outreach, and the cooldown's whole job is to count outreach. A
+  `contact` carries a real one, which is the same rule read from the other side: it went to
+  somebody, and the suppressed row on the signal list says which.
 
   ── APPEND-ONLY, AND THERE IS NOTHING HERE TO EDIT WITH ──
 
   Roll Call! made hall passes append-only after matching rows by `name + time` proved fragile
   (docs/data-model.md § log). Same reasoning, same answer, and it is structural here: this module
-  exports one writer, `writeEntry()`, and it does exactly one thing to the document — `push`. There
-  is no update, no delete, no id lookup for a mutation, and no `correctsId` on the record.
+  exports two writers, `writeEntry()` and `writeContact()`, and each does exactly one thing to the
+  document — `push`. There is no update, no delete, no id lookup for a mutation, and no `correctsId`
+  on the record. **The second writer arrived at WO-5.4 and changed nothing about that**: a contact
+  is appended and a second handoff appends again, because two messages handed over are two facts.
 
   **A CORRECTION IS AN ORDINARY LATER ENTRY THAT SAYS SO** (the owner, 2026-08-20, after a round
   trip). The ruling first arrived as "don't worry about corrections — you can just delete and
@@ -35,10 +40,11 @@
   ── WHAT THIS FILE IS NOT ──
 
   IT HAS NO DOM. `src/log-sheet.js` owns the sheet a teacher writes in and the card the record is
-  read on; this file owns the shape, the write, and the questions a reader can ask — two at WO-4.4
-  and five since WO-4.5, whose three are dates and an `audience` and are argued at their own block
-  below. Same split `src/calendar.js` and `src/calendar-view.js` make, and the import runs one way
-  — nothing in src/log-sheet.js is imported back here.
+  read on, and `src/contact-history.js` owns the two surfaces the contacts are read on; this file
+  owns the shape, the writes, and the questions a reader can ask — two at WO-4.4, five since WO-4.5
+  whose three are dates and an `audience` and are argued at their own block below, and one at WO-5.4.
+  Same split `src/calendar.js` and `src/calendar-view.js` make, and the import runs one way —
+  nothing in either of those files is imported back here.
 
   IT DECIDES NOTHING ABOUT PRESENTATION MODE. `visibleEntriesFor()` below asks src/supports.js and
   hands back a shorter list; the rule about WHICH kinds go quiet lives there, in the one function
@@ -58,12 +64,14 @@ import { logKindVisible } from './supports.js';
 import { shiftDays } from './calendar.js';
 
 /*
-  THE TWO KINDS THIS WORK ORDER WRITES, in the order the sheet's strip offers them.
+  THE TWO KINDS THE SHEET OFFERS, in the order its strip offers them.
 
-  `contact` is deliberately not here. It is Phase 5's, nothing in this build writes one, and a
-  reader in this file that included it would put an email's subject line on a card headed *"What you
-  have written down"* the day that phase lands — which is a decision for that work order to make
-  with its own reasons, not one to inherit from an array both features happen to share.
+  `contact` is deliberately not here, and it stayed out on the day WO-5.4 landed — which is the
+  decision this comment reserved for that work order, made and written down. A reader here that
+  included it would put an email's subject line on a card headed *"What you have written down"*,
+  and that card's own footer promises the teacher that none of what is on it was sent anywhere. The
+  contacts are a second card over visibleContactsFor() below, and every caller of the readers built
+  on this array sees exactly what it saw before.
 */
 export const LOG_KINDS = [
   { value: 'behavior', label: 'Behavior' },
@@ -170,6 +178,81 @@ export function writeEntry(studentId, kind, subject, body) {
   return entry;
 }
 
+/* ──────────────────── the contact, and its own record (WO-5.4) ────────────────────
+
+  ── WHY THIS IS A SECOND RECORD BUILDER AND NOT AN EIGHTH ARGUMENT ──
+
+  newLogEntry() above writes the seven fields for the two kinds the SHEET authors, and the block at
+  the foot of this file has argued since WO-4.5 that a `ruleId: ''` on every behavior note would be
+  an eighth field paid for by every document, for a kind Phase 5 owns. That argument does not stop
+  being true on the day Phase 5 arrives — it is exactly why the contact gets its own builder here
+  rather than a defaulted parameter there. The seven-field writer is untouched, so a document full
+  of behavior notes written by this build is byte-identical to one written by the last.
+
+  ── IT TAKES AN OBJECT, WHERE writeEntry() TAKES POSITIONS ──
+
+  Five arguments of which three are free text is a call site nobody can read and two of them are
+  swappable without a type error — `subject` and `body` are both strings the teacher typed, and a
+  transposition would put a whole email into a card's first line and go unnoticed for a term. The
+  one caller (src/outreach-view.js) names each field at the call.
+
+  ── AND IT DOES NOT REFUSE AN EMPTY SUBJECT, WHICH writeEntry() DOES ──
+
+  A note with no subject is not an entry — the card's first line would be blank and the log would
+  carry a row saying nothing happened. A CONTACT with no subject is a message that went out with an
+  empty subject line, which is a thing a mail app will happily do, and refusing to record it would
+  lose the cooldown's only evidence that the teacher already wrote about this. **The event is the
+  entry here, where for a note the words are.** The card prints a stand-in for the missing line.
+
+  `audience` is written as it is handed over and is not checked against `AUDIENCES`: that vocabulary
+  is src/templates.js's — it is the drawer a TEMPLATE is filed under — and importing it here would
+  put the template model inside the log's. The caller maps a recipient onto it (src/outreach.js's
+  audienceOf), which is the one place in the app that mapping is made.
+*/
+export function newContactEntry(contact) {
+  const c = contact || {};
+  return {
+    id: newId('l'),
+    studentId: String(c.studentId || ''),
+    at: c.at || localStamp(),
+    kind: 'contact',
+    /* THE OTHER HALF OF THE FIREWALL, FILLED RATHER THAN EMPTIED. An entry written by the sheet
+       carries `audience: ''` because it went to nobody; this one went to somebody, and the
+       cooldown's suppressed row says which — "you wrote to their guardian about this on Sep 6". */
+    audience: String(c.audience == null ? '' : c.audience).trim(),
+    subject: String(c.subject == null ? '' : c.subject).trim(),
+    body: String(c.body == null ? '' : c.body).trim(),
+    /* THE EIGHTH FIELD, AND IT CARRIES src/signals.js's OWN `hit.ruleId` UNCHANGED. No mapping and
+       no second vocabulary — docs/data-model.md § log says so, and lastContactAbout() below reads
+       exactly this string. A draft opened with no hit in its direction has no rule and writes `''`,
+       which silences nothing: the under-fire posture the block at the foot of this file argues. */
+    ruleId: String(c.ruleId == null ? '' : c.ruleId).trim(),
+  };
+}
+
+/*
+  THE SECOND WRITER, AND STILL THE ONLY OTHER THING THIS MODULE DOES TO THE DOCUMENT — a `push`
+  inside one update(). There is no update of an entry, no delete, and no id lookup for a mutation
+  here either; the append-only rule in this file's header is a property of the two functions, not a
+  promise made about them.
+
+  **A SECOND HANDOFF IS A SECOND ENTRY** and that is the append-only rule rather than a gap in this
+  one. A teacher who presses *Open in my mail app* twice handed two messages over, which is two
+  facts, and the cooldown reads the newest of them; nothing here looks for an entry to reuse,
+  because looking for one is the first half of editing it.
+*/
+export function writeContact(contact) {
+  const doc = getDoc();
+  const c = contact || {};
+  if (!doc || !c.studentId) return null;
+  const entry = newContactEntry(c);
+  update((d) => {
+    if (!Array.isArray(d.log)) d.log = [];
+    d.log.push(entry);
+  });
+  return entry;
+}
+
 /* ────────────────────────────── reading it back ────────────────────────────── */
 
 /* The array, or an empty one for a document from a build or a hand-edit that has none. The same
@@ -227,6 +310,27 @@ export function visibleEntriesFor(doc, studentId) {
 }
 
 /*
+  ONE STUDENT'S CONTACTS, NEWEST FIRST, AND ONLY THE ONES THAT MAY BE ON SCREEN (WO-5.4).
+
+  **WHAT DID NOT HAPPEN HERE IS THE DECISION.** `contact` is still not in LOG_KINDS or OWN_KINDS, so
+  visibleEntriesFor() above and everything built on it hand back exactly behaviour and note, exactly
+  as they did before this work order — the card headed *"What you have written down"* does not
+  quietly gain an email's subject line, which is the outcome the array's own comment forbids. The
+  history is a SECOND card over a SECOND reader (src/contact-history.js), and the two lists never
+  meet.
+
+  **THERE IS NO UNFILTERED TWIN OF THIS EXPORTED**, unlike entriesFor()/visibleEntriesFor() one
+  function up. That pair exists because the sheet's card had a reason to name the whole list before
+  the projector took rows out of it; nothing has such a reason here, and an exported
+  `contactsFor()` would be the one call a later screen could make to draw a contact history that the
+  presentation-mode rule never touched. The suppression arrives as a SHORTER LIST — the same shape,
+  and the same reason: a caller cannot count what it was never handed.
+*/
+export function visibleContactsFor(doc, studentId) {
+  return entriesOfKind(doc, studentId, ['contact']).filter((e) => logKindVisible(e.kind));
+}
+
+/*
   HOW MANY BEHAVIOR ENTRIES A STUDENT HAS INSIDE THE LAST N DAYS — the one reading the signal engine
   takes, and the reason it is a count rather than a list: `src/signals.js`'s behavior rule is handed
   its own measured numbers and nothing else, so a rule that received the entries could put a
@@ -260,21 +364,23 @@ export function behaviorCountSince(doc, studentId, throughISO, days) {
 
 /* ────────────────────── what the cooldown and the quiet middle read (WO-4.5) ──────────────────────
 
-  ── `ruleId`, THE EIGHTH FIELD, WHICH THIS BUILD READS AND NEVER WRITES ──
+  ── `ruleId`, THE EIGHTH FIELD, WHICH ONE OF THE TWO WRITERS FILLS ──
 
   The cooldown suppresses a student on ONE SIGNAL — WO-4.5's trap in one line: keyed on the student
   rather than the signal, it hides a new problem because you emailed about an old one. So it has to
   know which signal a contact was about, and `{ id, studentId, at, kind, audience, subject, body }`
-  has nowhere to say it. `ruleId` is that field: `docs/data-model.md` § log names it, WO-5.3 fills
-  it, and it carries `src/signals.js`'s own `hit.ruleId` unchanged so that nothing anywhere has to
-  map one vocabulary onto the other.
+  has nowhere to say it. `ruleId` is that field: `docs/data-model.md` § log names it, WO-5.4's
+  newContactEntry() above fills it, and it carries `src/signals.js`'s own `hit.ruleId` unchanged so
+  that nothing anywhere has to map one vocabulary onto the other.
 
-  NOTHING IN THIS BUILD WRITES ONE, and newLogEntry() above is deliberately not touched. It writes
-  the seven fields the data model names for the two kinds this app authors, and a `ruleId: ''` on a
-  behavior note would be an eighth field on every record that never means anything — a shape change
-  paid by every document, for a field belonging to a kind Phase 5 owns. The reader below therefore
-  has to tolerate its absence, and does: an entry with no `ruleId` is about no signal this can name,
-  so it silences nothing.
+  ONLY A CONTACT CARRIES ONE, and newLogEntry() above was deliberately not touched when WO-5.4
+  landed. It writes the seven fields the data model names for the two kinds the sheet authors, and a
+  `ruleId: ''` on a behavior note would be an eighth field on every record that never means
+  anything — a shape change paid by every document, for a field belonging to a kind Phase 5 owns.
+  The reader below therefore has to tolerate its absence, and does: an entry with no `ruleId` is
+  about no signal this can name, so it silences nothing. **That absence is reachable through the
+  front door**: a draft opened about a student with no hit in the tone's direction has no rule to
+  name, and the handoff writes `''` rather than inventing one.
 
   THAT TOLERANCE UNDER-FIRES RATHER THAN OVER-CLAIMS, which is the same posture the turnaround rule
   takes at src/signals.js. A contact whose signal is unknown suppressing NOTHING costs a teacher one

@@ -401,7 +401,7 @@ blocking.
 
 ## WO-5.4 — Contact log & history
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3, WO-4.5
+**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3, WO-4.5
 **Closes roadmap** Phase 5 → "Log the contact (append-only) and show contact history per student."
 
 **Why it exists.** The log is what WO-4.5's cooldown reads. Without it the signal lists are
@@ -417,12 +417,48 @@ identical every week and the whole Phase 4 investment decays.
   handoff, not delivery.
 
 **Acceptance**
-- [ ] A contact appears in the student's history immediately after handoff.
-- [ ] The logged rule id is what WO-4.5's cooldown matches on, and suppression follows.
-- [ ] Log entries are never edited or deleted.
-- [ ] The UI is honest about what "logged" means given `mailto:` cannot confirm delivery.
-- [ ] Contact history is presentation-mode safe — a projected history of behavior contacts is a
+- [x] A contact appears in the student's history immediately after handoff.
+      *(Driven rather than reasoned: the handoff is pressed and the row is read back off the card
+      the draft was opened from, still open, with no reload and without the card being rebuilt
+      around it — the audience, the subject, the day and the rule that prompted it.* `rev 277 → 278`
+      *and the entry carries the eight fields* `docs/data-model.md` *§ log documents, in order, with
+      a local* `at` *stamp carrying its offset rather than a Z.)*
+- [x] The logged rule id is what WO-4.5's cooldown matches on, and suppression follows.
+      *(Off the handoff alone, on a student who trips two concern rules: her row comes back holding*
+      `["grade-below","grade-rose"]` *with the cooldown holding* `"missing-count"` *— 1 suppressed,
+      1 row drawn, the foot reading* "1 you wrote about recently · show it" *and the return date
+      Sep 12.* **The two-rule student is the check rather than a fixture detail**: *keyed on the
+      student alone she would have vanished from the screen altogether, and a one-rule fixture could
+      not tell the two apart.* **This is the line the dead dispatch's live mutation was aimed at** —
+      `ruleId: ''` *reaches* `lastContactAbout()`, *which returns* `null` *for an empty rule, so
+      every contact the app wrote would have silenced nothing and the screen would have looked
+      exactly as it does today. See the note under the section head in* `TESTING.md`.)*
+- [x] Log entries are never edited or deleted.
+      *(Two handoffs driven end to end: the log goes 1 → 2 and the first entry is still there byte
+      for byte, compared whole rather than by length.* **A second handoff is a second entry** *, which
+      is the append-only rule rather than a gap in it —* `src/log.js` *gained a second writer and it
+      is still a* `push` *inside one* `update()`*, with no id lookup anywhere in the file. The
+      harness pin is an* **equality**, `pushes === 2`, *raised from* `=== 1` *rather than loosened
+      to* `<=`*, which is the difference between a check that still bites and one edited down to
+      fit.)*
+- [x] The UI is honest about what "logged" means given `mailto:` cannot confirm delivery.
+      *(Deliverable 4 offered two answers and this took the second:* **honest copy, not a *mark
+      sent* control** *— a second write to an entry that already exists is what the line above
+      forbids, so the cheaper answer is also the only one that does not need a second entry to mean
+      "I sent it". It says so in four places —* `index.html:2680`*,* `src/outreach-view.js:1099`
+      *at the moment of the act, and* `src/contact-history.js:112` *and* `:214` *at the moment it is
+      read back. The card's own title carries it too:* **"Who you have written to"**, *never* sent.)*
+- [x] Contact history is presentation-mode safe — a projected history of behavior contacts is a
       disclosure.
+      *(**Absent rather than redacted**: the model hands back 0 of 2 contacts with the mode on and 2
+      with it off, the card draws no row, and no subject, body or guardian address is in any
+      container a projector can show. There is no* "N hidden" *line, because a count is the
+      disclosure — and the empty sentence is asserted* **character for character** *against a
+      student nobody has ever written to, which is the only way to prove the count did not arrive by
+      wording instead of by number.* `src/contact-history.js` *contains no* `presentationMode()`
+      *test and must never contain one: suppression arrives as a shorter list out of* `src/log.js`*,
+      so the rule stays in* `src/supports.js` *and the screen cannot disagree with it —*
+      `src/calendar-view.js`*'s ruling, and* `wo-sweep.mjs` *§ 5 counts the askers.)*
 
 ---
 
@@ -796,3 +832,77 @@ disagreeing — and `{{guardian.name}}` then has to resolve against *somebody*, 
 never `supports.caseManager`, and `AUDIENCES` is not widened to make a recipient list work. The
 `mailto:` ceiling is measured on the whole encoded URL, so several addresses eat into the same 2,000
 characters the body does.
+
+---
+
+## WO-5.9 — The hitless draft is written but never driven
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.4
+
+**Why it exists.** `recordHandoff()` writes `ruleId: hit ? hit.ruleId : ''`, and **the harness has
+never walked the false branch.** Both contacts `tools/verify/contact-log.mjs` writes are Ada's, and
+Ada trips two concern rules, so `hit` is truthy every time it is read. The branch is reachable in
+the real app and not rarely: the student record's door opens the outreach flow for **any** student,
+including one no rule has fired for, so a teacher writing home about a child nothing flagged takes
+this path on her first use of the feature.
+
+**The half that is proved, and why it is not the same half.** `tools/verify/cooldown-quiet.mjs`
+already checks that a `contact` with no `ruleId` silences nothing — but it runs off a **planted**
+record the fixture hand-writes. That proves the READER tolerates absence. Nothing anywhere proves
+the WRITER produces it. The two halves of one contract are each tested against a hand-made
+counterpart and have never been introduced to each other, which is the shape of gap that survives
+a green run indefinitely.
+
+**Two regressions that pass the harness as it stands**, failing in opposite directions — which is
+why this is worth an hour rather than a note:
+
+- **The guard is dropped** — `ruleId: hit.ruleId`. `hitFor()` returns `orderHits(...)[0] || null`,
+  so this throws a `TypeError` inside the click handler. The handler deliberately calls no
+  `preventDefault()`, so **the browser follows the `mailto:` anyway**: the mail app opens, the
+  teacher writes and sends, and nothing is logged. Silent loss on the path where she is least likely
+  to check, because she saw the draft open and has no reason to think anything failed.
+- **The gap is filled** — a fallback to a hit in the other direction, or a literal like `'manual'`.
+  Now `lastContactAbout()` matches it and **silences a signal nobody ever wrote about**. That is the
+  exact inverse of the mutation WO-5.4's dead dispatch left behind, and it is what the under-fire
+  posture at the foot of `src/log.js` exists to prevent: praise not sent is a missed opportunity, a
+  rule silenced by a message that was never about it is how a teacher stops trusting the list.
+
+**Deliverables**
+- One check in `tools/verify/contact-log.mjs` that drives a handoff for a student **no rule has
+  fired for**, opened through the student record's door — there is no signal card for her, which is
+  the point.
+- It asserts three things together: exactly one entry is appended (so the writer did not throw),
+  its `ruleId` is `''` — **empty, not `undefined`, and not invented** — and a signals pass over the
+  document afterwards suppresses nothing for her. The third conjunct is the one that matters: it
+  closes the loop from writer to reader on a record **the app itself wrote**, which is what
+  `cooldown-quiet.mjs` structurally cannot do.
+- The second, smaller hole in the same sitting: Acceptance line 1's *immediate, no reload* property
+  is asserted on the signal-card path only. A handoff made **from the student record** has its
+  repaint reached but not asserted.
+
+**Acceptance**
+- [ ] A handoff for a student with no hit in either direction appends exactly one entry, and its
+      `ruleId` is the empty string.
+- [ ] That contact suppresses nothing on a following signals pass — proved against a record the app
+      wrote, not a planted one.
+- [ ] Both new claims are mutation-proved: restoring `hit.ruleId` without the guard, and inventing a
+      rule id in the else branch, each turn a named check red.
+- [ ] A handoff made from the student record shows in that screen's history immediately, without a
+      reload.
+
+**Traps** — **The fixture's second student is already the right student and cannot be used as he
+stands.** Ben exists in `contact-log.mjs` solely so the empty-history sentence can be compared
+character for character against a suppressed one, and writing a contact for him populates his
+history and reddens that check. Run the new check strictly after the empty-sentence check, or give
+the fixture a third student — and say which, at the point of departure, because a harness that goes
+red for a reason that looks unrelated costs an hour of confusion.
+
+Second: **do not reach for the signal card to open this draft.** No rule fired, so there is no card;
+the record's door is the only way in and is itself the thing under test. `src/shell.js`'s door there
+threw a `ReferenceError` once already — `signals.evaluate(getDoc(), …)` against a `getDoc` that file
+does not import — and a check that asked the model instead of driving the screen would have walked
+straight past it (`TESTING.md` § WO-5.3).
+
+Third: this adds a check to `tools/verify/contact-log.mjs`, so `tools/README.md`'s `check()`
+call-site count moves and `wo-sweep.mjs` compares against it. Update the count in the same sitting —
+the WO-3.26 scar, where a green tree turned the sweep red on work being *done*.

@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v106';
+const CACHE = 'planbook-shell-v107';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -99,6 +99,10 @@ const SHELL = [
   './src/signals-view.js',
   './src/log.js',
   './src/log-sheet.js',
+  /* WO-5.4. The contact history: the card on the student record and the section on the signal card.
+     Imported by src/detail.js, src/signals-view.js and src/shell.js and reached no other way, which
+     is exactly as absent offline as a file named in index.html (tools/verify/precache.mjs). */
+  './src/contact-history.js',
   /* WO-5.1. The merge-field resolver. No screen imports it yet — the template editor is WO-5.2
      — but src/shell.js pulls it in for the read seam, so it is in the module graph and belongs on
      this list: a module reached only through an import is exactly as absent offline as one named

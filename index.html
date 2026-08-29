@@ -2650,18 +2650,33 @@
         <div class="modal-actions">
           <!-- A REAL LINK, AND THE REFUSAL IS THAT IT HAS NO href. src/outreach-view.js argues it
                at its own header: a blocked draft's handoff is not a dimmed button, it is not a link
-               at all — unclickable, unfocusable, and carrying no address. -->
-          <a class="class-action-btn primary" id="outreachOpen"
+               at all — unclickable, unfocusable, and carrying no address.
+
+               THE HOOK LOGS THE CONTACT AND DOES NOT INTERCEPT THE LINK (WO-5.4). Following the
+               `mailto:` stays the browser's job — nothing in src/shell.js calls preventDefault on
+               it — so the record is appended in the same gesture that opens the mail app, and a
+               draft with no `href` writes nothing because it is not a link to click. -->
+          <a class="class-action-btn primary" id="outreachOpen" data-outreach-handoff
              aria-disabled="true">Open in my mail app</a>
           <button class="class-action-btn" type="button" data-modal-close>Close</button>
         </div>
         <p class="roster-hint hidden" id="outreachStatus"></p>
 
+        <!-- WHAT "LOGGED" MEANS, SAID WHERE THE HANDOFF IS (WO-5.4's fourth acceptance line). The
+             work order offered two answers and this is the one taken: honest copy rather than a
+             *mark it sent* control. A control like that is either a second write to a record the
+             append-only rule forbids editing, or a second entry for one message — and both of them
+             ask the teacher to believe the app learned something it cannot learn, because `mailto:`
+             returns nothing. src/contact-history.js says the same thing where the log is read back.
+             The words live here rather than in a module for the reason this panel's other copy
+             does: they should be revisable without opening a JavaScript file. -->
         <p class="class-hint">
           <strong>Planbook does not send anything.</strong> This opens the draft in your own mail
           app, where you read it, change it and press send yourself — so what went out is in your
           own sent-mail folder, which is what a school asks for when it asks. It also means Planbook
-          cannot tell whether you sent it.
+          cannot tell whether you sent it. What it records on this student's page is that you handed
+          this message over, when, to whom, and which signal it was about — not that it was
+          delivered. Entries are never edited or deleted.
         </p>
       </div>
     </div>

@@ -547,11 +547,15 @@
                                       the question was asked — so this closes the panel and says
                                       so. Escape and the ✕ take the same outcome through
                                       src/modal.js without coming through here
-      (no hook on the handoff itself)  #outreachOpen is an `<a href="mailto:...">` and the
-                                      navigation is the browser's. A blocked draft's link has no
-                                      `href` at all, which is why "a blocked draft cannot reach the
-                                      handoff" is a property of the markup rather than of a
-                                      listener
+      data-outreach-handoff           #outreachOpen, which is an `<a href="mailto:...">`. The hook
+                                      LOGS the contact (WO-5.4) and the navigation stays the
+                                      browser's: nothing here calls preventDefault(), because iOS
+                                      opens a link more reliably than a scripted navigation and that
+                                      is the device that decides go-live. A blocked draft's link has
+                                      no `href` at all, so "a blocked draft cannot reach the
+                                      handoff" is still a property of the markup — and the writer
+                                      asks the model as well, rather than trusting the element it
+                                      was clicked on
       data-drive-connect              signs in to Google Drive — silent first, a visible Google
                                       prompt when that fails (WO-7.1). It lives in the About
                                       modal and is HIDDEN on every origin but loopback, which
@@ -616,6 +620,14 @@ import * as signalsView from './signals-view.js';
    which is why it does not appear below. The import runs one way in both cases. */
 import * as log from './log.js';
 import * as logSheet from './log-sheet.js';
+/* AND THE THIRD SURFACE OVER THE SAME RECORD (WO-5.4) — the contact history, drawn as a card on the
+   student record and as a section on the signal card. It is a module of its own rather than more of
+   `logSheet` because the two lists never meet: that file draws what the teacher wrote down and this
+   one draws what she sent, and src/contact-history.js's head argues why folding them together would
+   put an email's subject line under a heading that promises nothing on it was sent anywhere. This
+   file imports it for ONE call — the repaint after a handoff — and the two screens that draw it
+   import it themselves. */
+import * as contactHistory from './contact-history.js';
 /* WO-5.1's resolver, and it is imported HERE FOR THE SEAM AND FOR NOTHING ELSE — this build has no
    template editor (WO-5.2) and no send flow (WO-5.3), so there is no screen to dispatch to and no
    control below routes to it. Without this line the module would not be in the graph at all:
@@ -1367,6 +1379,32 @@ function afterMark(studentId) {
   in this file: painting a hidden screen is work nobody sees.
 */
 function afterLogWrite() {
+  if (views.currentView() === 'detail') detail.renderDetail();
+  if (views.currentView() === 'signals') signalsView.renderSignals();
+  home.refreshHome();
+}
+
+/*
+  A CONTACT WAS LOGGED ON THE HANDOFF (WO-5.4), and the three surfaces that read one redrawn.
+
+  IT IS A CHAIN OF ITS OWN RATHER THAN A CALL TO afterLogWrite(), and the difference is the third
+  line. A behavior note is written from a sheet over a roster row with nothing else open; a contact
+  is written from a modal standing OVER the signal card, and that card carries the same history the
+  student record does. Its section would otherwise be stale in the one place a teacher is certain to
+  look next — she closes the draft and is back on the card she opened it from.
+
+  THE CARD IS PATCHED AND NOT REBUILT, which is src/contact-history.js's own note and the reason
+  that function exists: the contact just written SILENCES the row the card was opened from, so by
+  the time this runs `signalsModel()` may hold no row for that student at all, and re-opening the
+  card would empty it exactly when the feature worked.
+
+  THE LIST BEHIND IT IS REDRAWN IN FULL, and that is the cooldown becoming visible: the row moves
+  out of the column and into the count at its foot, on the same screen, without a reload. Guarded on
+  the view for the reason every repaint in this file is — painting a hidden screen is work nobody
+  sees — and the home screen is asked because it counts what needs attention.
+*/
+function afterContactLogged() {
+  contactHistory.refreshContactSection();
   if (views.currentView() === 'detail') detail.renderDetail();
   if (views.currentView() === 'signals') signalsView.renderSignals();
   home.refreshHome();
@@ -2615,6 +2653,23 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-outreach-copy]')) { outreachView.toggleOutreachCopy(); return; }
+  /* THE HANDOFF, AND THE ONE WRITE IN THE WHOLE SEND FLOW (WO-5.4).
+
+     NOTHING HERE PREVENTS THE DEFAULT and nothing here navigates: the element is a real
+     `<a href="mailto:...">` and following it is the browser's job, which is WO-5.3's point of
+     departure and the reason it is a link at all — iOS opens one more reliably than a scripted
+     navigation. So this appends the contact and gets out of the way, in the same gesture.
+
+     A REFUSING ANCHOR HAS NO `href` AND WRITES NOTHING. That is the markup's guarantee, and
+     recordHandoff() asks the model the same question again rather than trusting it: an `<a>` with
+     no href is still an element and a click on it is still a click. It hands back null when the
+     draft is not ready, which is why the chain below is guarded on the entry rather than on the
+     tap. */
+  const outreachHandoff = e.target.closest('[data-outreach-handoff]');
+  if (outreachHandoff) {
+    if (outreachView.recordHandoff()) afterContactLogged();
+    return;
+  }
   const outreachJump = e.target.closest('[data-outreach-jump]');
   if (outreachJump) {
     outreachView.jumpTo(outreachJump.getAttribute('data-outreach-jump'));
@@ -3799,4 +3854,11 @@ window.planbook = {
      right about a link nobody drew still fails. Nothing in the app reads window.planbook — see the
      block above for why the seam outlived the shelf. */
   outreach, outreachView,
+  /* `contactHistory` joined at WO-5.4, and its reason is `logSheet`'s exactly: one path no control
+     can produce. With presentation mode on there is no contact on the card to tap, so the two
+     surfaces have to be called directly to find out whether the refusal is real — a card that built
+     the list and styled it away and a card that never received it look identical from the markup.
+     Nothing in the app reads window.planbook — see the block above for why the seam outlived the
+     shelf. */
+  contactHistory,
 };

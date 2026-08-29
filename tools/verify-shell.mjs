@@ -121,6 +121,7 @@ import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
 import { run as outreach } from './verify/outreach.mjs';
+import { run as contactLog } from './verify/contact-log.mjs';
 import { run as cooldownQuiet } from './verify/cooldown-quiet.mjs';
 
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
@@ -312,6 +313,13 @@ const BROWSER_SECTIONS = [
      is not last for the reason the section below is: it restores nothing, and its own fixture is
      put back by hand at the foot of it. */
   { file: 'verify/outreach.mjs', run: outreach },
+  /* AND THE CONTACT LOG DIRECTLY AFTER THE FLOW THAT WRITES IT (WO-5.4). It is the only section
+     that presses the handoff — the section above proves the same flow writes NOTHING while a draft
+     is being made, so the two read as one argument in this order and would read as two in any
+     other. It is not last for the reason the section below is: it restores nothing, and its own
+     fixture, including the two contacts it makes the app write, is put back by hand at the foot
+     of it. */
+  { file: 'verify/contact-log.mjs', run: contactLog },
   /* LAST, AND ON PURPOSE (WO-4.5). It is the only section that drives a real restore of the whole
      year document through backup.restoreFromText() and the confirm button — its acceptance line
      asks for exactly that — and a section that replaces the document is a section nothing should

@@ -127,8 +127,11 @@
 
   Nothing here imports `update`, `getDoc` or `setPref`, nothing pushes to a collection, and
   `newYearDocument()` gained nothing for this work order. The document is byte-identical either side
-  of a resolve. WO-5.3 is what writes a `contact` entry once a draft has actually left the building,
-  and it writes it through src/log.js's one writer.
+  of a resolve. **WO-5.4 is what writes a `contact` entry once a draft has actually left the
+  building** — src/outreach-view.js's recordHandoff(), on the click that opens the mail app,
+  through src/log.js's writeContact(). *(This line named WO-5.3 until 2026-08-29: that work order
+  built the flow and deliberately wrote nothing, said so at its own head, and left the correction
+  to the sitting that made it true.)*
 */
 
 import { weightedClassGrade, openWork } from './grade-engine.js';

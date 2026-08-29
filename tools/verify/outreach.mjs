@@ -769,10 +769,19 @@ if (!seam) {
     /*
       ─────────── AND NOTHING IN THE FLOW WROTE TO THE DOCUMENT ───────────
 
-      WO-5.4 owns the contact log — `log[]` with `kind: "contact"` and the `ruleId` its cooldown keys
-      on — and this work order's Out of scope is what keeps it out. `rev` is the store's own witness:
-      it moves on every save, so an unchanged `rev` after a whole flow of picking, toggling, typing
-      and blocking is a claim no reading of the source can make as cheaply.
+      **RE-SCOPED AT WO-5.4, WITH EVERY CONJUNCT KEPT.** This block was written when the send flow
+      wrote nothing at all; that work order gave it one write, on the handoff, and this check is now
+      the half that says DRAFTING still writes nothing — picking, toggling, typing, blocking, the
+      projector cycle. Nothing above this line clicks the handoff (it is focused, never pressed:
+      following a `mailto:` hands the page to the operating system), so the same three readings are
+      still the right ones and they still have to be zero. The other half — that the handoff writes
+      exactly one entry — is proved in `verify/contact-log.mjs`, where a click can be made safely.
+      Relaxing anything here to accommodate the new write would have been the check edited down to
+      fit, which is the defect this directory exists to catch.
+
+      `rev` is the store's own witness: it moves on every save, so an unchanged `rev` after a whole
+      flow of picking, toggling, typing and blocking is a claim no reading of the source can make as
+      cheaply.
 
       FLUSHED FIRST, AND THE MUTATION ROUND IS WHY. `rev` advances inside save(), which update()
       only SCHEDULES — `DEBOUNCE_MS` is 800ms — so reading it straight after the flow cannot see a
@@ -790,9 +799,10 @@ if (!seam) {
       return { rev: d.rev, log: (d.log || []).length,
         templates: JSON.stringify(d.templates || []),
         contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
-    check('and the whole flow wrote nothing at all — `rev` has not moved, `log[]` is the length it '
-      + 'was and holds no `contact` entry, and `templates[]` is byte-identical. The contact log is '
-      + 'WO-5.4’s and this work order stayed inside its Out of scope',
+    check('and DRAFTING wrote nothing at all — `rev` has not moved across picking, toggling, typing '
+      + 'and blocking, `log[]` is the length it was and holds no `contact` entry, and `templates[]` '
+      + 'is byte-identical. WO-5.4 writes on the HANDOFF and on nothing else, and nothing above this '
+      + 'line pressed it',
       after.rev === before.rev && after.log === before.log && after.contacts === 0
         && after.templates === before.templates,
       'rev ' + before.rev + ' → ' + after.rev + ', log ' + before.log + ' → ' + after.log
@@ -1323,7 +1333,10 @@ if (!seam) {
 
     /*
       ACCEPTANCE LINE 5. The whole of the above — typing, asking, cancelling, confirming, three
-      silent rebuilds, a projector cycle and a touch pass — and `rev` has not moved. Flushed first,
+      silent rebuilds, a projector cycle and a touch pass — and `rev` has not moved. **Still true
+      after WO-5.4**, and for the reason the block further up this file gives: a rebuild is not a
+      handoff, and the one control that writes is not pressed anywhere in this section. Flushed
+      first,
       for the reason the check further up this file gives at length: update() only SCHEDULES a save
       and `rev` advances 800ms later, so a read taken straight after the last control cannot see a
       write made by it.
@@ -1336,9 +1349,9 @@ if (!seam) {
         contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
     check('and nothing in the change-of-mind flow wrote to the document either — `rev` has not '
       + 'moved across the asking, the cancelling, the confirming, three silent rebuilds and a '
-      + 'projector cycle, `log[]` is the length it was and `templates[]` is byte-identical. A '
-      + 'confirm dialog is exactly the kind of place a save gets added by accident (Acceptance '
-      + 'line 5)',
+      + 'projector cycle, `log[]` is the length it was and holds no `contact`, and `templates[]` is '
+      + 'byte-identical. A confirm dialog is exactly the kind of place a save gets added by accident '
+      + '(Acceptance line 5), and WO-5.4’s one write is on the handoff rather than on a rebuild',
       afterMind.rev === beforeMind.rev && afterMind.log === beforeMind.log
         && afterMind.contacts === 0 && afterMind.templates === beforeMind.templates,
       'rev ' + beforeMind.rev + ' → ' + afterMind.rev + ', log ' + beforeMind.log + ' → '

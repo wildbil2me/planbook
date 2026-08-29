@@ -7504,7 +7504,9 @@ the checks that carry the acceptance lines red.
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*
 
-WO-5.4 appends its acceptance lines here as it lands.
+WO-5.4 appended its acceptance lines here on 2026-08-29 — § *"the contact log and the history over
+it (WO-5.4)"* below, which is where the `contact` entry two Phase 4 readers were already reading
+finally gets written by something in the app.
 
 Two checks here are containment rather than function: no merge field resolves accommodation,
 medical, or plan data, and an unresolved field never renders blank. **WO-5.1 is where both of
@@ -7780,7 +7782,12 @@ flow asks `resolveDraft()` for a whole draft and puts what comes back in a box. 
 § 20's five claims over `src/merge-fields.js` are green on the delivered tree, unchanged: that file
 was not opened. And `rev` does not move across a whole flow of picking, toggling, typing and
 blocking — **the `contact` entry in `log[]` is WO-5.4's**, including the stale line in
-`src/merge-fields.js`'s own header that still says otherwise.
+`src/merge-fields.js`'s own header that still said otherwise. *(**That line was corrected on
+2026-08-29**, by the work order that made it false: the header now names WO-5.4 and*
+`recordHandoff()`*. The sentence in front of it survives unchanged and is still the claim this
+section makes —* `rev` *does not move across picking, toggling, typing and blocking, and*
+`verify/outreach.mjs` *still asserts exactly that, re-scoped to say* drafting *with all four of its
+conjuncts kept.)*
 
 **The handoff is an `<a href="mailto:…">` and that is the point of departure worth reading.** A
 blocked draft's link has **no `href` at all** — not focusable, not clickable, carrying no address —
@@ -7888,6 +7895,116 @@ the run was worth having: `signals.evaluate(getDoc(), …)` in the student recor
 `getDoc` that `src/shell.js` does not import — it is `store.getDoc()` — so that door threw a
 `ReferenceError` and opened nothing, while the model behind it still held the previous draft and
 read as ready. A check that had asked the model alone would have passed over it.)*
+
+---
+
+### WO-5.4 — Contact log & history
+
+**What this adds.** The write the whole of Phase 4's cooldown was already reading and nobody was
+making. Two readers in `src/log.js` — `lastContactAbout()` at `:423` and the quiet middle's *"nor
+contacted all term"* — have been asking `log[]` for a `contact` entry since WO-4.5, and nothing in
+the app authored one; on Sep 2 that would have meant the cooldown never firing, every flagged
+student staying on the list every week, and WO-4.5's own 📆 fortnight measuring a rule with no
+input. The handoff now appends one: `src/log.js` gains a second writer, `src/outreach-view.js`
+gains `recordHandoff()`, and a new `src/contact-history.js` draws the history on the two screens
+that ask.
+
+**Contact history is a second card, and that was the decision this work order was left to make.**
+`src/log.js`'s `LOG_KINDS` reserved it in as many words. Folding `contact` into that array would
+have put an email's subject line onto the card headed *"What you have written down"* — under a
+footer promising the teacher *"None of this is printed, exported or put in a draft"*, a sentence
+about her own notes that a message she actually sent would falsify the moment it appeared beneath
+it. So the two lists never meet: `visibleEntriesFor()` hands back exactly behaviour and note, as it
+always did, and the new file reads `visibleContactsFor()` and nothing else. It is also a different
+question — the log card answers *what have I noticed about this child*, this one answers *what have
+I already said, to whom, and about which signal*, which is the question a teacher asks with a
+guardian on the phone.
+
+**A row shows the audience, the subject, the day and the signal — and deliberately not the body.**
+The record carries the whole message and the backup carries it too, but a card holding four full
+emails is a card nobody reads, and the message is already in the teacher's own sent mail, which is
+the entire reason *Copy me* exists. There is no *show older* control either, unlike the log card
+beside it: one-line rows do not need paging, and a control that hid outreach behind a tap would hide
+exactly what the card exists to make obvious. **This work order adds no control to any screen**,
+which is why it adds no stylesheet rule and no coarse-pointer line.
+
+**The one thing a harness must never do is press a `mailto:`,** and this section presses it anyway
+— behind a listener it installs and removes, because following one hands the page to the operating
+system. That is disclosed in the check's own evidence rather than hidden, and the claim it would
+otherwise weaken is answered a different way: *the app does not intercept the link* is proved by
+reading both sources, `src/shell.js`'s hook and `src/outreach-view.js`, and finding no
+`preventDefault` and no assignment to `location` in either. The write rides the click; the browser
+still follows the link. iOS opens one more reliably than a scripted navigation, and that is the
+device that decides go-live.
+
+**Three checks in `verify/outreach.mjs` asserted the opposite of this work order and were re-scoped
+rather than relaxed.** They were written when the send flow wrote nothing at all. All four conjuncts
+survive untouched — `rev` unmoved, `log[]` the length it was, no `contact` in it, `templates[]`
+byte-identical — and only the prose changed, to say that **drafting** writes nothing: picking,
+toggling, typing, blocking, the projector cycle. Nothing above those lines presses the handoff. The
+other half — that the handoff writes exactly one entry — is proved in `verify/contact-log.mjs`,
+where a click can be made safely. WO-5.5's precedent, and the reason it matters is that a check
+edited down to fit is the defect this directory exists to catch.
+
+- [x] A contact appears in the student's history immediately after handoff. *(Pressed, then read
+      back off the card the draft was opened from — still open, no reload, the card not rebuilt
+      around it.* `rev 277 → 278`*, one entry, eight keys in the order* `docs/data-model.md` *§ log
+      documents them, and an* `at` *stamp carrying its local offset rather than a Z.)*
+- [x] The logged rule id is what WO-4.5's cooldown matches on, and suppression follows. *(On a
+      student tripping two concern rules, off the handoff alone: her row comes back holding*
+      `["grade-below","grade-rose"]` *with the cooldown holding* `"missing-count"` *— 1 suppressed,
+      1 drawn, the foot reading* "1 you wrote about recently · show it"*, back on the list Sep 12.
+      The two-rule student is the check: keyed on the student alone she would have vanished
+      entirely.)*
+- [x] Log entries are never edited or deleted. *(Two handoffs: the log goes 1 → 2 and the first
+      entry is compared* whole *rather than by length, byte for byte.* `log-entries.mjs` *pins*
+      `pushes === 2` *— an equality raised from* `=== 1`*, not loosened to* `<=`*.)*
+- [x] The UI is honest about what "logged" means given `mailto:` cannot confirm delivery. *(Four
+      places, read off the DOM:* `index.html:2680`*,* `src/outreach-view.js:1099` *at the moment of
+      the act, and* `src/contact-history.js:112` *and* `:214` *at the moment it is read back. The
+      card is titled* **"Who you have written to"** *and never* sent*.)*
+- [x] Contact history is presentation-mode safe. *(0 of 2 contacts handed over with the mode on, 2
+      with it off; no row drawn; no subject, body or address in any container a projector can show;
+      and the empty sentence asserted* character for character *against a student nobody has written
+      to. No* "N hidden" *line, because a count is the disclosure.)*
+
+*(**Nothing here is 👤 and nothing is 📆** — unusually for a Phase 5 row, every line is machine-
+checkable, because the one edge that is not is WO-5.3's and was closed on hardware the day before:
+pressing a `mailto:` and finding a draft in the default client. The precondition worth ruling out
+was static and is gated —* `update()` *only schedules a save on an 800ms debounce while a* `mailto:`
+*backgrounds the app instantly, so* `src/store.js:549` *and* `:552` *register* `visibilitychange`
+*and* `pagehide`*, both calling* `flush()`*, naming iOS as the reason both are needed.)*
+
+**Where this stands.** ✅ on 2026-08-29: all five Acceptance lines closed, no 👤 and no 📆. Both
+tools green on the delivered tree — `verify-shell.mjs` at
+`1282 checks · 1282 passed · 0 failed · 0 skipped`, 38,751 lines, 30.2 lines per check, 427s,
+exit 0; and `wo-sweep.mjs` at `34 checks · 31 passed · 0 failed · 3 to review`, all three reviews
+pre-existing and unchanged except for one new file on the sensitive-field-name list —
+`src/contact-history.js`, whose only hit is prose naming `src/supports.js`. The section is
+§ *"the contact log and the history over it (WO-5.4)"*, seventeen call sites on a fixture of its
+own, and it runs before WO-4.5's because that one drives a real restore of the whole year document.
+**Zero skips is load-bearing here**: the whole section sits behind `if (!seam) skip(…)`, so a
+missing `window.planbook` would have collapsed seventeen checks into one silent SKIP and left a
+green run meaning nothing.
+
+*(**Read this before trusting anything above it.** The dispatch that built this work order was
+killed by an API session limit at the handoff back from the implementer — the sixth dead dispatch
+here and the fourth killed by a quota — and it died mid-mutation-proof, leaving **one live
+mutation** in the delivered tree:* `ruleId: '', /* MUTATION */` *in* `recordHandoff()`*, sitting
+under a comment specifying* `hitFor(tone)`*'s own* `hit.ruleId` *unchanged.* **It was aimed straight
+at the second Acceptance line and it is the worst-shaped one this repo has seen**: `lastContactAbout()`
+*returns* `null` *for an empty rule, so every contact the app wrote would have suppressed nothing
+— the cooldown dead in silence, with every screen looking exactly as it does when it works.* `grep
+-rn MUTATION` *found it in one command, which is the first move on a dead dispatch and has now paid
+for itself three times.* **Two things this one adds to the scar.** *It died* before *its doc pass
+rather than after, unlike WO-5.1's and WO-5.3's corpses — so no document was claiming work that had
+not happened, and the recovery was a repair rather than an unpicking. And the check that would have
+caught it,* `contact-log.mjs` *at* `:290` *and* `:401`*, compares against a* `before.led` *proved
+non-empty one check earlier — so it was red at the moment of death and green after the revert, which
+is the evidence both that the repair is right and that the check bites. The verifier re-derived the
+correct expression independently rather than accepting it, and deliberately did* not *re-plant the
+mutation to re-prove it: 21 uncommitted paths, and a* `git checkout` *revert would have taken the
+work order with it.)*
 
 ---
 

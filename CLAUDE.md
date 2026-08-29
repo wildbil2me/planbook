@@ -203,6 +203,28 @@ and **no tab is marked active** because there is no class it is in. Before addin
 either branch, read that note: a screen genuinely about nothing still wants a caption, and the
 lookup that used to provide one is gone.)*
 
+*(**The cooldown has an input as of 2026-08-29, and the sixth dead dispatch is a correction to the
+two blocks above rather than a repeat of them.**
+[WO-5.4](plans/work-orders/phase-5-outreach.md#wo-54--contact-log--history) *— the contact log — is
+✅, all five Acceptance lines, no* 👤 *and no* 📆*. It matters for Sep 2 more than its Size S
+suggests:* **two readers in `src/log.js` had been reading a `contact` entry nothing in the app
+wrote**, *so the concern list would have repeated itself every week and WO-4.5's own* 📆 *fortnight
+would have measured a rule with no input.* **Contact history is a second card and not a widened
+reader** *— folding* `contact` *into* `LOG_KINDS` *would put an email's subject onto the card headed*
+"What you have written down"*, under a footer promising the teacher those notes go nowhere; the rule
+is in § Accommodations' list above now. **The dispatch was killed by a session limit, the fourth
+quota death, and it left one live mutation** —* `ruleId: ''` *in* `recordHandoff()` *—* **aimed
+straight at the line that makes the cooldown work**: `lastContactAbout()` *returns* `null` *for an
+empty rule, so every contact the app wrote would have silenced nothing, with every screen looking
+exactly as it does when it works.* `grep -rn MUTATION` *found it in one command and has now paid for
+itself three times.* **Here is what corrects the WO-5.1 and WO-5.3 blocks above.** *Both of those
+corpses had finished their doc pass and died in the mutation round, so both blocks teach that the
+danger sign is* **a tree full of ticked boxes over broken code** *— and a reader who learned it that
+way would have under-audited this one, which died* before *its doc pass and presented as an honest,
+obviously-unfinished tree with not one box ticked.* **The tick state of a dead dispatch says nothing
+about whether its code is armed.** *Run the grep either way. The record is*
+`.claude/dispatch/WO-5.4-result.md` *and* `TESTING.md` *§ WO-5.4.)*
+
 The path to 1.0.0 is [`plans/ROADMAP.md`](plans/ROADMAP.md) — read its
 maintenance protocol and delivery plan before working a phase, and **take the current progress numbers
 from its dashboard, never from this file**; a count written here is a count nothing maintains. The
@@ -349,7 +371,15 @@ Seven things that will bite:
 - **The log is append-only, and nothing in the app can delete an entry** (WO-4.4). A correction is
   an ordinary later entry that says so — no `correctsId`, no strikethrough, and no rule about which
   of two entries a reader should believe, **because the reader believes the newest**. `src/log.js`
-  exports one writer and does exactly one thing to the document. That last clause is load-bearing:
+  exports **two** writers since WO-5.4 — `writeEntry()` for a behaviour note or a note to self, and
+  `writeContact()` for outreach that actually left the building — and **each does exactly one thing
+  to the document, a `push` inside one `update()`**. There is no updater, no delete and no id lookup
+  anywhere in the file, so append-only is a property of what is there rather than a promise made
+  about it; *a second handoff is a second entry.* **The `kind` filter is the whole of the firewall
+  between them**, and it is not optional: every reader names the kinds it wants, and there is no
+  exported reader that hands back all three — an email's subject line on the card headed *"What you
+  have written down"*, under a footer promising the teacher those notes go nowhere, is one missing
+  filter away. That last clause is load-bearing:
   entries are ordered newest-first by `at`, and **the tie is broken toward the later write** because
   `localStamp()` is second-granular, so two entries logged in one sitting carry the same stamp and a
   stable sort left alone resolves them *oldest* first — the opposite of the card's heading, and it

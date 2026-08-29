@@ -279,13 +279,21 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
        was LAST in the column, and the log card is under it now. Re-cut to name both, because this
        route is the one a teacher uses most and "was the card drawn here at all" is the claim — one
        card missing from this walk is a card missing from the common route while the rare one passes,
-       which is the whole reason this line exists. */
+       which is the whole reason this line exists.
+
+       WO-5.4 ADDED A SIXTH AND IT MOVED AGAIN, the same way and for the same reason: the contact
+       history is now the foot of the column, with the log card above it and the passes above that.
+       All three are named rather than only the new one — the point of this line is the whole tail
+       of the column on the common route, and a check that only ever asserted the newest card would
+       have stopped noticing the older ones the moment it was updated. */
     const passCard37 = d.attTitle.filter((t) => t.indexOf('Hall passes') === 0);
     const logCard37 = d.attTitle.filter((t) => t === 'What you have written down');
-    check('the hall-pass card is on the Student Report screen when that screen is reached from a name in the score grid, and not only from the door inside the attendance history dialog — and since WO-4.4 the log card is under it on that same route',
-      passCard37.length === 1 && logCard37.length === 1
-        && d.attTitle[d.attTitle.length - 1] === logCard37[0]
-        && d.attTitle[d.attTitle.length - 2] === passCard37[0],
+    const contactCard37 = d.attTitle.filter((t) => t === 'Who you have written to');
+    check('the hall-pass card is on the Student Report screen when that screen is reached from a name in the score grid, and not only from the door inside the attendance history dialog — with the log card under it since WO-4.4 and the contact history under that since WO-5.4, on that same route',
+      passCard37.length === 1 && logCard37.length === 1 && contactCard37.length === 1
+        && d.attTitle[d.attTitle.length - 1] === contactCard37[0]
+        && d.attTitle[d.attTitle.length - 2] === logCard37[0]
+        && d.attTitle[d.attTitle.length - 3] === passCard37[0],
       'the cards this route drew are ' + JSON.stringify(d.attTitle));
 
     /* ACCEPTANCE LINE 9, first half — the name is drawn on the strip, as a fourth segment that is

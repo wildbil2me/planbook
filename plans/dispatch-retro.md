@@ -271,6 +271,48 @@ tree by *re-reading the file it mutated*, not by re-running the tools — the to
 mutation was measured against, and a mutation the author intended to remove is invisible to every
 one of them that stayed green. Where the deliverable is a fence, read the fence.
 
+## The corpse with no ticked boxes — WO-5.4, 2026-08-29
+
+**The sixth dead dispatch, the fourth killed by a quota, and the one that breaks the pattern the two
+sections above teach.** WO-5.1's corpse and WO-5.3's had both finished their whole document pass and
+died in the mutation round, so both read as *✅ DONE everywhere, over a tree that is deliberately
+broken*. That shape is memorable, and it is the wrong thing to key on.
+
+**This one died at the handoff back from the implementer, before any doc pass at all.** No result
+file, `TESTING.md` untouched with its placeholder still in place, no Acceptance box ticked, the row
+still `🤖 CLAIMED`. It presented as an honest, obviously-unfinished tree — and it was carrying a
+live mutation in shipped code:
+
+```js
+  const entry = writeContact({
+    studentId: subject.studentId,
+    audience: model.audience,
+    subject: draft.subject,
+    body: draft.body,
+    ruleId: '', /* MUTATION */
+  });
+```
+
+`lastContactAbout()` matches a contact on that exact string and returns `null` for an empty one, so
+every contact the app wrote would have **suppressed nothing** — WO-4.5's cooldown dead in silence,
+with every screen looking exactly as it does when it works, and the failure only visible a week into
+a real term as a concern list that never changes.
+
+**The rule this adds:** *the tick state of a dead dispatch says nothing about whether its code is
+armed.* An unfinished-looking corpse invites a lighter audit and had earned none — the mutation sat
+under a comment specifying the correct expression two lines above it, in the file the work order
+exists to write. `grep -rn MUTATION` over the delivered files is the first move on **every** dead
+dispatch, tidy or not; it has now paid for itself three times and costs one command.
+
+**Two things from the recovery worth keeping.** The check that would have caught it —
+`tools/verify/contact-log.mjs` at `:290` and `:401`, comparing against a `before.led` proved
+non-empty one check earlier — was **red at the moment of death and green after the revert**, which is
+what makes a repair evidence rather than a guess: a wrong reconstruction fails a check instead of
+turning one green. And the verifier, re-dispatched alone and cold, **declined to re-plant the
+mutation to re-prove it**: with 21 uncommitted paths in the tree, a `git checkout` revert would have
+taken the whole work order with it. That is the right call and the same hazard the mutation round
+carries in any session sharing a working tree.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

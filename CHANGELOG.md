@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The app remembers who you have written to — 2026-08-29
+
+**Hand a message to your mail app and Planbook writes it down.** Who it went to, the subject, the
+day, and which signal prompted it — on the student's record and on the signal card you wrote from,
+immediately, without a reload. It is a card of its own, sitting next to *What you have written down*
+rather than inside it, because your notes to yourself and the messages you actually sent are two
+different questions and the note card promises those notes go nowhere.
+
+**This is what makes the concern list stop repeating itself.** Write home about a student's missing
+work and that rule goes quiet for a fortnight — while every *other* rule she trips stays on the
+list, because the app remembers what the message was about and not just who it was to.
+
+**It is honest about what it knows.** A `mailto:` hands your message to your mail app and the
+handover is the last thing Planbook can see, so the card says it records what you wrote and when —
+not proof you sent it. Entries are never edited or deleted; a second message is a second entry. And
+a projected screen shows no contact at all, reading exactly as it does for a student nobody has ever
+written to.
+
 ### The app now says the two things it was keeping to itself — 2026-08-29
 
 **Open one of the eight starter templates and the editor tells you, right there, that it is not on

@@ -355,8 +355,15 @@ if (!seam) {
       AND THERE IS NOTHING IN THE MODULE TO DELETE WITH — read off the file rather than driven,
       which is the posture tools/wo-sweep.mjs § 17 takes about src/calendar-derived.js and for the
       same reason: driving proves what today's paths did, and a grep proves there is nothing in the
-      file that could do otherwise on any input. One `push` and no `splice`, `pop`, `shift`, `delete`
-      or assignment into `d.log[...]`.
+      file that could do otherwise on any input. No `splice`, `pop`, `shift`, `delete` or assignment
+      into `d.log[...]`.
+
+      **THE PUSH COUNT WENT FROM ONE TO TWO AT WO-5.4, AND THAT IS THE ASSERTION UPDATED RATHER
+      THAN RELAXED.** That work order gave src/log.js a second writer — writeContact(), for the kind
+      the send flow appends — and it does the same one thing to the document that writeEntry() does.
+      What this check is about is that appending is ALL either of them can do, so the number is
+      pinned exactly: a third push is a writer nobody has argued for and turns this red, and so does
+      dropping back to one. It is an equality and never a `<=` for that reason.
     */
     const logSource = await fs.readFile(path.join(ROOT, 'src/log.js'), 'utf8');
     const bodyOnly = logSource.replace(/\/\*[\s\S]*?\*\//g, '\n').replace(/^\s*\/\/.*$/gm, '');
@@ -377,11 +384,12 @@ if (!seam) {
     const found = removers.filter((token) => searchable.indexOf(token) >= 0)
       .concat(/.logs*=[^=]/.test(searchable) ? ['reassignment of .log'] : [])
       .concat(/.logs*[[^]]*]s*=[^=]/.test(searchable) ? ['assignment into .log[...]'] : []);
-    check('append-only is structural rather than promised: src/log.js does exactly one thing to the '
-      + 'document, and there is no splice, pop, shift, delete or reassignment anywhere in its code '
-      + 'that could ever remove an entry',
-      pushes === 1 && found.length === 0,
-      pushes + ' push(s) in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present = ' + guarded + '; removers found: '
+    check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
+      + 'thing to the document — two appends, one per writer, and no third — and there is no '
+      + 'splice, pop, shift, delete or reassignment anywhere in its code that could ever remove an '
+      + 'entry',
+      pushes === 2 && found.length === 0,
+      pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present = ' + guarded + '; removers found: '
         + (found.length ? JSON.stringify(found) : 'none'));
 
     /* ══ the card on the student record ══ */
@@ -394,9 +402,15 @@ if (!seam) {
     await clickSel('#classView [data-student-detail="' + CYD + '"]');
     await new Promise(r => setTimeout(r, 300));
 
+    /* `:not([data-contact-card])` SINCE WO-5.4, AND IT IS NOT A FORMALITY. That work order put a
+       SECOND card over `log[]` on this screen — the contact history — and it wears `.log-card` on
+       purpose, because that is the class src/detail.css's print block names and neither card goes
+       home on paper. So the class no longer identifies one card, and a query that took the first
+       match would be reading whichever of the two src/detail.js happens to append first. Every
+       reading below names WO-4.4's card outright. */
     const card44 = await evalJs(`(function(){
-      var card = document.querySelector('#detailView .log-card');
-      if (!card) return { ok:false, why:'no .log-card on the student record' };
+      var card = document.querySelector('#detailView .log-card:not([data-contact-card])');
+      if (!card) return { ok:false, why:'no WO-4.4 log card on the student record' };
       var subs = Array.prototype.map.call(card.querySelectorAll('.log-entry-subject'),
         function(e){ return e.textContent; });
       var kinds = Array.prototype.map.call(card.querySelectorAll('.log-entry-kind'),
@@ -421,7 +435,7 @@ if (!seam) {
     await clickSel('#detailView [data-log-more]');
     await new Promise(r => setTimeout(r, 250));
     const opened44 = await evalJs(`(function(){
-      var card = document.querySelector('#detailView .log-card');
+      var card = document.querySelector('#detailView .log-card:not([data-contact-card])');
       return { subs: Array.prototype.map.call(card.querySelectorAll('.log-entry-subject'),
         function(e){ return e.textContent; }),
         bodies: Array.prototype.map.call(card.querySelectorAll('.log-entry-body'),
@@ -446,7 +460,7 @@ if (!seam) {
       + "window.planbook.detail.renderDetail(); 1");
     await new Promise(r => setTimeout(r, 200));
     const projected44 = await evalJs(`(function(){
-      var card = document.querySelector('#detailView .log-card');
+      var card = document.querySelector('#detailView .log-card:not([data-contact-card])');
       var page = document.body.innerHTML;
       var d = window.planbook.store.getDoc();
       return { card: !!card,

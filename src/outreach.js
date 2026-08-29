@@ -58,9 +58,11 @@
   ── AND THERE IS NO WRITER IN THIS FILE ──
 
   Nothing here imports the store, nothing pushes to a collection, and `newYearDocument()` gained
-  nothing for this work order. The document is byte-identical either side of a draft. **The contact
-  log is WO-5.4's** — `log[]`, `kind: "contact"`, and the `ruleId` its cooldown keys on — and it is
-  named here only so the next reader knows the omission is deliberate.
+  nothing for either work order that has touched this file. The document is byte-identical either
+  side of a draft, and it stayed that way when WO-5.4 landed: **the contact log is written by the
+  SCREEN** — src/outreach-view.js's recordHandoff(), through src/log.js's writeContact() — for the
+  reason this file and that one are two files at all. This one answers who a draft can go to and
+  what a `mailto:` URL is, and neither question has an answer that involves the document changing.
 */
 
 import { fullName } from './roster.js';

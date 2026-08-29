@@ -121,6 +121,12 @@ import { formatWeight } from './categories.js';
    went out and when the student comes back — and a second spelling of `Sep 6` on a screen that
    already has one is the five-copies state that file exists to end. */
 import { shortDate } from './date-text.js';
+/* WHO SHE HAS ALREADY WRITTEN TO ABOUT THIS STUDENT (WO-5.4) — the same section the student record
+   draws as a card, built there and handed here as DOM. This screen does not read `log[]`, does not
+   know what a contact looks like and does not decide what a projector may carry: src/log.js owns
+   the record and src/supports.js owns the visibility, exactly as they do for the card one screen
+   over. The import runs one way — nothing in src/contact-history.js knows this file exists. */
+import { signalContactSection } from './contact-history.js';
 
 const CLASSES_ID = 'signalsClasses';
 const RULES_ID = 'signalsRules';
@@ -1155,6 +1161,13 @@ export function openSignalCard(key, opener) {
 
   body.append(el('div', 'modal-section-label', 'Why they are on the list'));
   row.hits.forEach((hit) => body.append(cardRule(doc, hit)));
+
+  /* AND WHAT SHE HAS ALREADY SAID, BEFORE THE THING THAT SAYS MORE (WO-5.4). Above the actions
+     rather than under them, because "have I written home about her already" is a question with an
+     answer that changes what the teacher does next, and a history under the Draft button is a
+     history read afterwards. It is drawn even when it is empty, for the reason the card on the
+     student record is: a missing block reads as "this build does not show that". */
+  body.append(signalContactSection(row.studentId));
 
   body.append(el('div', 'modal-section-label', 'What to do'));
   body.append(cardActions());

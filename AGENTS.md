@@ -62,7 +62,15 @@ dependencies.
 - **The log is append-only, and nothing in the app can delete an entry** (WO-4.4). A correction is
   an ordinary later entry that says so — no `correctsId`, no strikethrough, and no rule about which
   of two entries a reader should believe, **because the reader believes the newest**. `src/log.js`
-  exports one writer and does exactly one thing to the document. That last clause is load-bearing:
+  exports **two** writers since WO-5.4 — `writeEntry()` for a behaviour note or a note to self, and
+  `writeContact()` for outreach that actually left the building — and **each does exactly one thing
+  to the document, a `push` inside one `update()`**. There is no updater, no delete and no id lookup
+  anywhere in the file, so append-only is a property of what is there rather than a promise made
+  about it; *a second handoff is a second entry.* **The `kind` filter is the whole of the firewall
+  between them**, and it is not optional: every reader names the kinds it wants, and there is no
+  exported reader that hands back all three — an email's subject line on the card headed *"What you
+  have written down"*, under a footer promising the teacher those notes go nowhere, is one missing
+  filter away. That last clause is load-bearing:
   entries are ordered newest-first by `at`, and **the tie is broken toward the later write** because
   `localStamp()` is second-granular, so two entries logged in one sitting carry the same stamp and a
   stable sort left alone resolves them *oldest* first — the opposite of the card's heading, and it

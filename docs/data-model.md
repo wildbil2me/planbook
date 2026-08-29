@@ -260,33 +260,42 @@ Seven shape decisions that matter:
   and settled the other way. **Nothing in the log is deletable.** `src/log.js` is the only writer and
   the only thing it does to the document is `push`.
 - **Three kinds share `log[]`, and the `kind` filter is the whole of the firewall between them.**
-  `behavior` and `note` are written by WO-4.4's sheet off a roster row; `contact` is Phase 5's record
-  of outreach that actually left the building, which the cooldown reads and `{{behavior.recent}}`
-  renders into an email. A behavior note is one missing filter away from going home in a message, so
+  `behavior` and `note` are written by WO-4.4's sheet off a roster row; `contact` is written by
+  WO-5.4's handoff — the click on `Open in my mail app` — and is the record of outreach that
+  actually left the building, which the cooldown reads and which `{{behavior.recent}}` does **not**
+  render into an email: that field asks `src/log.js` for `behavior` by name and can never be handed
+  a contact or a note. A behavior note is one missing filter away from going home in a message, so
   every reader in `src/log.js` names the kinds it wants and **there is no exported reader that hands
   back the whole array**. The second half of that firewall is `audience`: an entry written by the
   teacher for herself carries `audience: ""` — it went to nobody, which is the truth — rather than a
   value the cooldown could count as outreach.
 - **`ruleId` is on a `contact` entry and on nothing else, and it is what makes the cooldown
-  possible** *(named WO-4.5, 2026-08-27; written by WO-5.3)*. It carries `src/signals.js`'s own
+  possible** *(named WO-4.5, 2026-08-27; written by WO-5.4, 2026-08-29 — this line said WO-5.3
+  until that day, and that work order built the flow without writing anything at all)*. It carries `src/signals.js`'s own
   `hit.ruleId` unchanged — `grade-fell`, `absence-run`, `grade-rose` — so the two vocabularies are
   one and nothing has to map between them. **The cooldown keys on `studentId + ruleId`**, which is
   that work order's stated trap: keyed on the student alone it hides a NEW problem because you
   emailed about an OLD one, so a student written home about for a grade fall on Monday is still on
   Tuesday's list for four missing assignments.
 
-  **Nothing in this build writes one.** `newLogEntry()` writes the seven fields above for the two
-  kinds this app authors, and a `ruleId: ""` on every behavior note would be an eighth field that
-  never means anything, paid for by every document, for a kind Phase 5 owns. So **the reader
-  tolerates its absence and a contact without one silences nothing** — it is about no signal anybody
-  can name. That under-fires rather than over-claims, which is the same posture the turnaround rule
+  **Only the contact writer writes one.** `newLogEntry()` writes the seven fields above for the two
+  kinds the sheet authors and was not touched when WO-5.4 landed — a `ruleId: ""` on every behavior
+  note would be an eighth field that never means anything, paid for by every document, for a kind
+  Phase 5 owns — so `newContactEntry()` beside it is a second record builder rather than an eighth
+  argument. The value written is `hitFor(tone)`'s own `hit.ruleId`, which is the signal the DRAFT
+  spoke from, so the message and the suppression are about the same rule by construction. So **the
+  reader tolerates its absence and a contact without one silences nothing** — it is about no signal
+  anybody can name, which is the state a draft opened from the student record about a student
+  nothing has fired for actually reaches. That under-fires rather than over-claims, which is the same posture the turnaround rule
   takes: a duplicate email costs a teacher a minute, and a contact of unknown subject silencing
   every signal is this work order's trap arriving through a missing field.
 
   **The cooldown is therefore class-blind, because the record is** (see the bullet below). An email
   about a grade fall silences that student's grade-fall row in every section she is in, since
-  `log[]` cannot say which one it was about. WO-5.3 may decide otherwise when it writes the first
-  one; what it must not do is infer a class from whichever roster the send was started on.
+  `log[]` cannot say which one it was about. **WO-5.4 wrote the first one and did not decide
+  otherwise**: the handoff records the student, the audience, the words and the rule, and no class —
+  not even the one the draft was opened from, which is on the modal's own subtitle and was deliberately
+  not copied into the record. Inferring it would be a join on something the document does not store.
 - **A log entry carries no `classId`, and that is the shape rather than an omission.** It is a
   record about a child, so "two behavior notes in the last 30 days" counts across every class she is
   in, and the concern rule fires in both sections of a student the teacher has twice. Inferring a
@@ -718,9 +727,24 @@ architecture rather than this screen's preference: a mail scope reads "Send emai
 consent screen, and the teacher's own sent-mail record only stays intact if the message leaves from
 her own client.
 
-**It writes nothing to this document.** No collection is touched, `newYearDocument()` gained
-nothing, and `rev` is unchanged across a whole draft. The `contact` entry in `log[]` — with the
-`ruleId` the cooldown keys on — is WO-5.4's and is the only thing this flow will ever write.
+**It writes exactly one thing, and only on the handoff** *(WO-5.4)*. Drafting is a read: picking a
+recipient, switching the tone, typing in either box, cycling the projector and changing your mind
+about a rebuild leave the document byte-identical, and `newYearDocument()` gained nothing. **The
+click on the `mailto:` link appends one `contact` to `log[]`** — the audience, the subject, the
+body and the `ruleId` the cooldown keys on — through `src/log.js`'s `writeContact()`, and nothing
+in the app calls `preventDefault()` on that click: the navigation stays the browser's, because iOS
+opens a link more reliably than a scripted one. **A blocked draft has no `href` and writes
+nothing.**
+
+**And the record is read back on two screens** — `src/contact-history.js`, a card on the student
+record and a section on the signal card, both newest first. It is a **second** card rather than a
+widening of *"What you have written down"*: that card promises the teacher nothing on it was sent
+anywhere, which stops being true the moment a message she sent appears under it. A row shows the
+audience, the subject, the day and the rule; **it does not show the body**, which is in the record
+and in the backup but would put four full emails on a card a guardian may be sitting beside. Both
+surfaces read the contacts through `logKindVisible()`, so **presentation mode empties them** — the
+list arrives short, there is no *"N hidden"* line, and the empty sentence is the same sentence a
+student with no contacts at all gets.
 
 Five rulings there are decisions rather than plumbing:
 

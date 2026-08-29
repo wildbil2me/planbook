@@ -19,11 +19,14 @@
   address on the roster, and no template chosen — and they are different sentences about different
   objects rather than a re-diagnosis of the same one.
 
-  IT IS NOT A WRITER. Nothing here calls `update()`, nothing pushes to a collection, and the
-  document is byte-identical either side of a draft. **The contact log is WO-5.4** — `log[]` with
-  `kind: "contact"`, the audience, the subject, the body and the `ruleId` its cooldown keys on —
-  and this work order's Out of scope is what keeps it out of this file. src/merge-fields.js's header
-  says WO-5.3 writes that entry; that line is stale and the boundary is WO-5.4's Deliverables.
+  IT WRITES ONE THING, ON ONE GESTURE, AND WROTE NOTHING AT ALL UNTIL WO-5.4. Drafting is still a
+  read: picking a recipient, switching the tone, typing in either box, cycling the projector and
+  changing your mind about a rebuild leave the document byte-identical, and the harness asserts that
+  on `rev` across the whole of it. **What writes is the handoff** — recordHandoff() below, on the
+  click that opens the mail app — and what it writes is one `contact` in `log[]` through
+  src/log.js's writeContact(): the audience, the subject, the body and the `ruleId` the cooldown
+  keys on. This file holds no `update()` of its own and knows nothing about the shape of a log
+  entry; the split is src/log-sheet.js's with the sheet it draws.
 
   ── A MODAL, AND IT OPENS OVER THE CARD RATHER THAN REPLACING IT ──
 
@@ -107,6 +110,17 @@
     · **The URL is readable.** What the operating system will receive is sitting in the DOM, so the
       percent-encoding WO-5.3's Traps line is about can be measured rather than promised.
 
+  AND WO-5.4's WRITE RIDES THAT CLICK RATHER THAN REPLACING IT. The hook on the anchor is a plain
+  delegated listener in src/shell.js: it appends the contact and returns, and **nothing anywhere
+  calls preventDefault() on it** — the navigation stays the browser's, because the second bullet
+  above is about the device that decides go-live and a scripted `window.location` on iOS is the
+  thing it warns against. A log entry is not worth trading the handoff for.
+
+  It also means the refusal is unchanged: a blocked draft's anchor has no `href`, so the click that
+  writes cannot happen on it. recordHandoff() asks the model the same question paintOpen() asked
+  when it decided whether to put the `href` there — one answer, computed twice from one function,
+  rather than a listener that trusts the markup it is standing on.
+
   It is the app's third anchor — src/shell.css records the first two and the rule they set: a link
   standing on its own line is a thing you tap and takes the touch pass. This one wears a button's
   class, so it takes `.class-action-btn`'s 44px floor with it.
@@ -134,6 +148,12 @@ import { orderHits } from './signals.js';
    same two from the same place, which is the whole of "change it once" — see that file's header
    for why the words are shared where the pixels already were, in src/shell.css § UNRESOLVED. */
 import { UNDEFINED_FIELD_HEAD, FIELD_FIX_SENTENCE, blockHead } from './block-strip.js';
+/* THE ONE WRITER THIS FLOW REACHES (WO-5.4), and the whole of what this file knows about `log[]`.
+   It is handed five named fields and hands back the record it appended; the shape, the timestamp,
+   the id and the append-only rule are all src/log.js's, exactly as they are for the sheet in
+   src/log-sheet.js. Nothing else from that module is imported — no reader, no kind list — because
+   this screen has no reason to read the log it writes to. */
+import { writeContact } from './log.js';
 import * as templates from './templates.js';
 import * as outreach from './outreach.js';
 
@@ -1024,6 +1044,68 @@ export function toggleOutreachCopy() {
   copySelf = !copySelf;
   renderOutreach({ fields: false });
   announce(copySelf ? 'This draft will copy you.' : 'This draft will not copy you.');
+}
+
+/* ────────────────────────── the handoff (WO-5.4) ──────────────────────────
+
+  THE ONE WRITE IN THIS FLOW, ON THE ONE GESTURE THAT MEANS A MESSAGE LEFT THE APP.
+
+  It is called from the click on `#outreachOpen` and from nowhere else. The browser follows the
+  `mailto:` in the same gesture — see this file's header for why nothing here prevents that — so by
+  the time the mail app opens, the record is already in `log[]` and the cooldown can read it.
+
+  ── WHAT IT REFUSES, AND WHY IT ASKS THE MODEL RATHER THAN THE MARKUP ──
+
+  A blocked draft's anchor carries no `href`, so on a real page this cannot be reached with anything
+  to write. It still asks: `<a>` with no href is a normal element and a click on it is a normal
+  click, and "the markup says so" is not the kind of answer this app makes about a disclosure. Both
+  ends read the same `outreachModel()` — paintOpen() to decide the `href`, this to decide the write
+  — so a state where one says ready and the other does not cannot exist. Presentation mode arrives
+  through the same door: the model returns before it has a recipient, `ready` is false, and nothing
+  is written about a student whose name is not even on the screen.
+
+  ── WHAT IT WRITES, AND THE ONE FIELD THAT IS A DECISION ──
+
+  The audience, the subject and the body exactly as they stand in the two boxes — what the teacher
+  is looking at is what the mail app receives and what the log records, which is the same rule that
+  made `mailtoUrl()` read the boxes rather than the resolver's output.
+
+  `ruleId` IS `hitFor(tone)`'s OWN `hit.ruleId`, UNCHANGED. It is the same call `{{grade.delta}}`
+  resolves against, so the signal the draft SPEAKS from is the signal the cooldown will silence —
+  there is no second opinion about which of a student's rules this message was about. **A draft with
+  no hit in its direction writes `''` and nothing is invented to fill it**: the student record's
+  door opens this flow for a student nothing has fired for, that message is about no signal anybody
+  can name, and src/log.js's reader treats the absence as silencing nothing. Under-firing costs a
+  duplicate email; a rule id guessed here would silence a signal nobody ever wrote about.
+
+  ── IT SAYS SO ON SCREEN, AND WHAT IT SAYS IS THE HONEST HALF ──
+
+  The status line reports that the message was handed over and logged, and says in the same breath
+  that Planbook cannot tell whether it was sent — WO-5.4's fourth Acceptance line at the moment of
+  the act, where src/contact-history.js's note carries it at the moment it is read back. The status
+  line lives inside the panel presentation mode empties, so it goes down with everything else.
+*/
+export function recordHandoff() {
+  const model = outreachModel();
+  if (!model.open || !model.ready || !model.url || !subject) return null;
+  const hit = hitFor(tone === 'praise' ? 'praise' : 'concern');
+  const entry = writeContact({
+    studentId: subject.studentId,
+    audience: model.audience,
+    subject: draft.subject,
+    body: draft.body,
+    ruleId: hit ? hit.ruleId : '',
+  });
+  if (!entry) return null;
+  status = 'Handed to your mail app and logged on ' + (model.name || 'this student')
+    + '’s record. Planbook cannot tell whether you send it from there — the log says what you '
+    + 'wrote and when.';
+  /* `fields: false`, like every other repaint that is not a rebuild: the two boxes hold exactly what
+     was just handed over, and writing their values back would move the caret of a teacher who is
+     still reading them. */
+  renderOutreach({ fields: false });
+  announce('Logged. Entries are never edited or deleted.');
+  return entry;
 }
 
 /* The block strip's one control: to the half of the draft the field is in. It does not select the
