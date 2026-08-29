@@ -562,7 +562,11 @@ tabs and so no way out, which is [WO-5.2](work-orders/phase-5-outreach.md#wo-52-
 rather than this work order's. The other six are changes the owner asked for after using the flow —
 a copy-to-clipboard door for webmail, several recipients at once, and four smaller ones — and they
 are **booked rather than folded in silently**, because a work order that grows to absorb everything
-its own demo suggests is a work order that never closes. See the phase file.*
+its own demo suggests is a work order that never closes. See the phase file. **The first of
+the four landed the same day** — [WO-5.6](work-orders/phase-5-outreach.md#wo-56--a-draft-survives-a-change-of-mind),
+which stopped a change of template, tone or recipient discarding text a teacher had already typed.
+It moves no box here, and that is correct rather than an oversight: it fixes behaviour the four
+boxes above already claim.*
 
 *Two things it settled that these boxes do not say.* **A recipient is not an audience**: the picker
 offers five people — both guardians by position, the counselor, the administrator and the student
