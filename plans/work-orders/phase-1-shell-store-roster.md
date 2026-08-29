@@ -3346,6 +3346,14 @@ the same NOTE under either keying, and stays that way until a `⬜` row sits abo
 earlier section**. There is no live symptom to work from, which is exactly the condition under which
 a claim nobody can check goes on being believed.
 
+*(**Re-placed 2026-08-29, and the symptom moved further away rather than closer.** WO-8.13 is row
+**42** now — the foot of § After Ship 3, where its own paragraph had claimed it already sat — so no
+🎒 row is the first `⬜` in any section and `--audit` prints no NOTE at all. The two keyings agreed
+by printing the same NOTE; they now agree by printing nothing. **Nothing in the paragraph above
+changes**: both fixture rows are still adjacent in one table, `openAbove` still collapses to a global
+counter with `--self-check` green at 27 of 27, and there is still nothing in the tree that tells the
+keyings apart. What is gone is the one live reading that could have been mistaken for a check.)*
+
 **It is WO-1.33's defect in a second instrument.** There the fixture student was *narrow, not
 vacuous* and the harness could not see the filter it claimed to watch; here the fixture rows are
 *adjacent, not absent*, and the harness cannot see the keying it claims to watch. Both are an
