@@ -471,6 +471,20 @@ gates — `node tools/wo-gate.mjs next` — never by opening an editor.
 If you were dispatched *with* a work order, [`AGENTS.md`](AGENTS.md) has your rules. The two files
 must never drift apart: **a rule changed here is changed there in the same sitting.**
 
+**Before editing the pipeline, read `plans/work-orders/README.md` § "The pipeline's own files"**
+(WO-1.40, 2026-08-30). It is the map of which of these files are watched and by what, and two of its
+rows say **"Nothing"** on purpose. It exists because WO-1.38 changed the pipeline in six files, wrote
+five, and the sixth — `.claude/commands/wo.md`, *the file a human types* — spent two days giving a
+person an instruction the new shape had made wrong, with nothing in the repository able to notice:
+`.claude/` is in the sweep's `IGNORE_DIRS`, and `--audit` never reads it. **`wo.md` and
+`work-order-orchestrator.md` are now checked against each other** by `wo-sweep.mjs` § 21, which
+reaches them by path rather than by widening the walk. It tests for **contradiction, not symmetry** —
+a file may legitimately omit what the other says, and only disagreement about the pipeline's stops
+fires. Two things it does not do: green means *no unexcused occurrence* rather than *no
+contradiction*, and **`CLAUDE.md` and `AGENTS.md` are not yet a watched pair** — that is
+[WO-1.41](plans/work-orders/phase-1-shell-store-roster.md#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing),
+and until it lands the bolded rule above is enforced by nothing but the reader.
+
 ## Commands
 
 The toolchain is nearly nothing, by suite convention (`plans/b-hygiene.md` in Roll Call!): **no

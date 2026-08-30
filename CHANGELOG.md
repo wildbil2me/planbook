@@ -13,6 +13,49 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The file a human types is inside a fence now — 2026-08-30
+
+**WO-1.38 changed the pipeline in six files, wrote five, and the sixth went on giving a person the
+wrong instruction for two days.** `.claude/commands/wo.md` kept telling its caller to relay an
+Acceptance list from the one stop that now deliberately returns none — and the only material for
+obeying that is the implementer's own self-claims, which is the defect the split was built to
+prevent, arriving in the file with no agent between it and a person. Nothing had been watching:
+`.claude/` is in the sweep's `IGNORE_DIRS`, `--audit` never reads it, and `.claude/commands/` was
+named nowhere in the work-order system.
+
+**The check is a contradiction test, not a symmetry test, and that distinction is the whole design.**
+`wo-sweep.mjs` § 21 holds `DRIFT_PAIRS` — a list, so WO-1.41 adds an entry rather than a rewrite —
+and runs two checks per pair: `FAIL` where a grep settles it (does the claim list still match the
+file it is maintained against), `REVIEW` where prose needs a person. A line-count assertion was
+rejected in the work order's own Traps as an instrument that cries wolf, and the built thing holds
+that line: a legitimate wholesale rewrite of the verifier section — heading reworded, region anchor
+lost — still passes, because two independent excuses cover the same sentences. Asymmetry is legal;
+only disagreement is not.
+
+**It reaches the file by path and leaves the walk alone.** `.claude` stays in `IGNORE_DIRS`, §21
+opens its three files with `path.join(REPO, …)`, and the diff is 255 insertions with **zero
+deletions** — there is no `-` line anywhere in `wo-sweep.mjs`, so `walk()`, `ALL`, `CODE`, `STYLE`
+and `isCode` are provably untouched. Move the file and both checks fail loudly by name rather than
+going quiet.
+
+**Two honest limits, recorded because the green line does not show them.** Green means *no unexcused
+occurrence*, not *no contradiction* — a contradiction written into a sentence containing "not" or
+"verifier" is filtered by the allowlist and passes. And claim 1 is disarmed by its own `unless` while
+today's `wo.md` names the second invocation, so the line reads `3 shared claim(s)` with 2 live. The
+mechanical half is what stops that rotting into a green-from-a-distance pass: orphan a claim by
+rewording the orchestrator's anchor and it fails, naming the claim and saying the comparison is
+running one short.
+
+**`plans/work-orders/README.md` gained § "The pipeline's own files"** — five rows naming what watches
+each, two of them reading "Nothing" so the gaps stay visible. It took a `##` and not a `###` because
+`wo-gate.mjs:1483` scans § The files to the next `##`; a sub-heading would have pulled the row into
+the phase-file audit and broken `--audit`. Found by reading the parser first.
+
+*(The verifier died twice at the handoff before a third reported — two more at the seam WO-1.38 was
+written for. The tree it finally graded was byte-identical to the implementer's, all six lines
+re-derived rather than confirmed, and one of them closed on a different reading than it was written
+with; see the note on the work order.)*
+
 ### The verifier gets its own session, and the file that starts a dispatch gets told — 2026-08-30
 
 **Ten dispatches have died at a handoff and six of them at the same seam** — the orchestrator's
