@@ -3822,6 +3822,14 @@ one place it could have.
   would say one thing without saying it identically** — a rule that calls a true report impossible
   teaches its reader to disbelieve one. A string-equality check would go red on that repair, which is
   the repair working.
+- **This work order edits a file § 21 already watches, and that is new.** The folded repair to
+  `.claude/commands/wo.md:49-53` is inside `wo-sweep.mjs` § 21's own watched pair, so a rewrite there
+  can make the sweep go `REVIEW` **on the run that proves your change works** — while you are
+  extending the same section. **Read that as the fence reporting, not as a regression to code
+  around**, and do not touch § 21's allowlist to quiet it: settle the prose so the two files agree,
+  then re-run. WO-1.40 never had this interaction — nothing had yet edited a watched file — so
+  **re-run `wo-sweep.mjs` after the prose repair as well as after the code change**, and treat a
+  green run taken only after the code change as not having tested the repair at all.
 - **A `REVIEW` line that lists two hundred lines is a check nobody reads.** The sweep's existing
   review states name a bounded set and say what to do with it. Whatever this reports has to be small
   enough that a person actually reads it on the run where it matters.
