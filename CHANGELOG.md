@@ -37,7 +37,10 @@ the defect this pipeline was built out of, arriving one level above the orchestr
 with no agent between it and a person. Corrected the same day. **Nothing had been watching it:**
 `.claude/commands/` is named nowhere in the work-order system, `--audit` never reads it, and
 `.claude` sits in the sweep's `IGNORE_DIRS` — right for app code, and not a reason for no check at
-all. WO-1.40 is booked for the fence.
+all. WO-1.40 is booked for the fence, and **WO-1.41 for the same gap one size up** — `AGENTS.md`
+and `CLAUDE.md` carry the same never-drift rule, stated in bold, with nothing enforcing it either.
+It is booked before WO-1.40 is built on purpose: knowing a second pair is coming is what makes the
+first one build a comparison that takes a pair rather than hard-coding one.
 
 ### The contact log's two halves are introduced to each other — 2026-08-30
 

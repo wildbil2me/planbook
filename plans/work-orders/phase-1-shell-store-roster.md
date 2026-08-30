@@ -3715,6 +3715,14 @@ reading agent prose as app code, which is the thing § 2's comment exists to pre
 scope: the wording of `wo.md` itself, which is already correct — this builds the thing that would
 have caught it, not the thing it caught.
 
+**Build the comparison to take a pair.** [WO-1.41](#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing)
+was booked the same day and depends on this one: `AGENTS.md` and `CLAUDE.md` carry the same
+never-drift rule with nothing enforcing it either, and they are a second instance of exactly this
+check. **They need no path trick** — both sit at the repository root and the sweep already walks
+them — so the half that carries over is the **comparison**, which is the half worth building once.
+A single hard-coded pair is not a defect in this work order and will cost the next one a rewrite;
+taking a pair costs nothing here.
+
 **Traps**
 
 - **A line-count self-assertion does not transfer from the file next door.** The orchestrator's works
@@ -3744,6 +3752,76 @@ have caught it, not the thing it caught.
       orchestrator-only rule and nothing fires.
 - [ ] `.claude/commands/` is named in the work-order system's own map of what it watches, so the next
       pipeline change has somewhere to look before it edits.
+- [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
+      checks and its self-check is green.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.41 — the two files that must never drift apart are held together by nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.40 · **Blocks** nothing by
+name; it protects every dispatch after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.40
+made. Booked 2026-08-30, owner-directed, in the sitting that landed WO-1.38 and booked WO-1.40.)*
+
+**Why it exists.** `CLAUDE.md` § "How work is run here" states it in bold — *"The two files must
+never drift apart: **a rule changed here is changed there in the same sitting**"* — and **nothing
+enforces it.** A grep over `tools/*.mjs` finds two mentions of `AGENTS.md` and neither is a check:
+`wo-brief.mjs:117` picks which of the two to hand an implementer by route, and `wo-sweep.mjs:197` is
+a comment explaining why prose is *excluded* from the dark-mode grep. The rule is held by discipline
+alone, and WO-1.38 is the demonstration that discipline loses to a pipeline change: six files moved
+and one was forgotten, in the same week.
+
+**It is WO-1.40's defect on a surface an order of magnitude larger.** There it is 53 lines of
+`wo.md` against one agent file, with a handful of shared claims. Here it is **200 lines of
+`AGENTS.md` against 613 of `CLAUDE.md`**, and the shared rules are not one to one — accommodations,
+the log's append-only property, the threshold defaults, the 👤 rule and the dispatch recovery
+procedure all appear in both, in different words and at different lengths, on purpose.
+
+**Why it depends on WO-1.40 rather than duplicating it.** These two files are at the repository root
+and the sweep **already walks them** — only `.claude/` is in `IGNORE_DIRS` — so the half WO-1.40 has
+to invent for itself, reaching an ignored path, is not needed here. **What carries over is the
+comparison**, which is the hard half and the half worth building once. If WO-1.40 hard-codes a single
+pair, this work order pays to undo that; if it takes a pair, this is a second entry and a fixture.
+That is the whole reason this row is booked before WO-1.40 is built rather than after.
+
+**Out of scope.** Auditing whether the two files have *already* drifted. That is a reading, and a
+person's; this builds the instrument that would say so. If the instrument's first run finds real
+drift, that is a finding to hand back — **not a licence to edit either file to make the check pass**,
+which would be the tool silently correcting a summary that `wo-gate.mjs:1316` already forbids in the
+one place it could have.
+
+**Traps**
+
+- **Most of the difference between these files is correct, and here it is the majority of both.**
+  `AGENTS.md` is the dispatched agent's file and `CLAUDE.md` is the repository's: the architecture
+  reasoning, the Roll Call! pointers, the status line, the scars and the roadmap links have no
+  business being repeated into a briefing document, and a check demanding symmetry fails on nearly
+  every line of both. WO-1.38's verifier already named the correct reading for the pair —
+  **narrower telling, not drift.**
+- **The rule is about rules, not text, and the two are deliberately worded differently.** WO-1.21
+  narrowed a flat *"cannot run in a sandboxed agent"* in both files on the same day **so that they
+  would say one thing without saying it identically** — a rule that calls a true report impossible
+  teaches its reader to disbelieve one. A string-equality check would go red on that repair, which is
+  the repair working.
+- **A `REVIEW` line that lists two hundred lines is a check nobody reads.** The sweep's existing
+  review states name a bounded set and say what to do with it. Whatever this reports has to be small
+  enough that a person actually reads it on the run where it matters.
+- **The set of shared rules cannot be inferred from the prose, and pretending otherwise is the
+  failure mode.** Any heuristic over two documents this size will both miss rules and invent them.
+  A hand-maintained list of what the two files hold in common is the honest mechanism — it is a
+  fourth thing to keep in step, and it is the only one small enough to be kept.
+
+**Acceptance**
+- [ ] The harness compares `AGENTS.md` and `CLAUDE.md` on the rules both are meant to carry, and goes
+      red or `REVIEW` when they contradict — **driven against a planted contradiction**, not asserted.
+- [ ] It reuses the comparison WO-1.40 built, extended to a second pair rather than reimplemented; if
+      reuse was not possible, the reason is written where the second copy lives.
+- [ ] Legitimate asymmetry stays green — proved with a fixture where `CLAUDE.md` carries a rule
+      `AGENTS.md` has no business repeating, and nothing fires.
+- [ ] The set of rules held in common is **named in one place a person can read and amend**, not
+      inferred by the tool from prose, and that place says it is a fourth thing to keep in step.
 - [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
       checks and its self-check is green.
 - [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
