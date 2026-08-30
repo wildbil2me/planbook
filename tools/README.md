@@ -8,7 +8,7 @@
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
 | `wo-sweep.mjs` | The verifier's 33-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md`. `node tools/wo-sweep.mjs` |
-| `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
+| `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, handing it to the verifier at the implementer's return (`--handoff`, WO-1.38), the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
 | `codex-invoke.mjs` | The Codex exec-time probe and the real dispatch, one file so the `codex-resources\` `PATH` fix can't drift between copies — and, since WO-2.40, a `--self-check` that drives its own refusals against a stand-in child. Since WO-2.45 the dispatch is **detached and polled**, because the caller's own timeout used to kill it first. `node tools/codex-invoke.mjs --probe` / `--brief <path> --out <path> [--budget <minutes>] --detach` / `--status <path> [--wait <seconds>]` / `--self-check` |
@@ -19,9 +19,9 @@ read `plans/` and the agent transcripts, and none of them touches `src/`. They e
 pipeline was re-deriving the same work every run: gate parsing, brief assembly, sweep allowlists, and
 a cost analysis that was rebuilt from scratch four times in one afternoon and thrown away each time.
 Same failure mode as the two throwaway browser harnesses that became `verify-shell.mjs`.
-`wo-gate.mjs` is the only one that writes to the repo, and only ever to `plans/`: `--start` and
-`--release` write one status line, `--tick` writes the status, the roadmap boxes and the dashboard —
-and all three refuse to touch a 👤 line or `CHANGELOG.md`. Since WO-2.14 `--tick` reads the work
+`wo-gate.mjs` is the only one that writes to the repo, and only ever to `plans/`: `--start`,
+`--release` and `--handoff` write one status line, `--tick` writes the status, the roadmap boxes and
+the dashboard — and all four refuse to touch a 👤 line or `CHANGELOG.md`. Since WO-2.14 `--tick` reads the work
 order's own Acceptance list first and writes `🔨 IN PROGRESS` rather than `✅ DONE` when a line is
 still open, because the one script that edits the tracker is the one nothing else checks.
 
@@ -34,6 +34,18 @@ will close is `✅ DONE` with a `**Owes**` field, and those lines stay `- [ ]` w
 `--tick` honours a marker **only while it can find the matching open box under the named target** —
 resolve or hold, because a marker taken on trust is a `- [x]` spelled with an arrow, and the hand-ticked
 version with a paragraph under it explaining that ☑ did not mean "verified" is what WO-3.11 replaced.
+
+**Since WO-1.38 there is a fourth, and it exists because of how the pipeline dies rather than how a
+work order goes.** The verifier is now dispatched from a **fresh session on every work order** — ten
+dispatches carry a session-limit death and every one died at a handoff, six at the implementer/verifier
+seam — so a row spends real time claimed with nothing in flight and a *finished* implementer behind it.
+`--handoff` writes `🔍 AWAITING VERDICT — <dispatch>` over the claim at the implementer's return, and
+**`--release` refuses that status and names the result file it would orphan**: from the running order
+it looks exactly like the abandoned claim `--release` exists to clear, and releasing it would put a
+complete unverified tree back to `⬜ NOT STARTED`. `--tick` accepts it — the tick *is* the verdict path,
+and a status the tick refused would end every dispatch at a hand edit — and a dependent's gate still
+refuses it, because built is not verified. `--audit` says nothing about it, deliberately: `--audit`
+reports two documents disagreeing, and a status word is one document's own fact.
 
 **Since WO-2.15 it also refuses, writing nothing at all, when the trackers are wrong about
 themselves** — a `**Closes roadmap**` fragment that closes no box, or a `ROADMAP.md` dashboard row
@@ -71,7 +83,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants twenty-seven violations against them, runs the script over the copy, and deletes the directory on
+plants thirty-one violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -86,8 +98,14 @@ schedule but an hour to fold into a sitting that is already open — and they ar
 to read a `Suggested` cell and the first to write into a `README.md` table row rather than into a work
 order. They brought no fixture with them: step 2b has put both fixture rows above every real row since
 WO-2.16, which is already the pair a 🎒 plant needs — one row with an empty shelf above it, and the row
-below it with a shelf.
-`27 plants, 27 caught, 0 missed` / `PASS | 27 of 27 plants were caught`, read
+below it with a shelf. **WO-1.38 added four on 2026-08-30**, all about `🔍 AWAITING VERDICT` — the
+status a row wears between the implementer's return and the verifier's verdict, now that the verifier
+is a fresh session on every work order. They are the first plants here to write outside `plans/` in the
+sandbox: one of them puts a `<WO>-result.md` in the copy's `.claude/dispatch/`, because the `--release`
+refusal names the file it would orphan and a plant with no such file would be asserting against a path
+rather than against a report. That is why they run **last** in the array — a gate report run after them
+would carry a `dispatch result` line no earlier plant has ever seen.
+`31 plants, 31 caught, 0 missed` / `PASS | 31 of 31 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -170,6 +188,12 @@ part is what did **not** go red beside it:
 | the 🎒 skip deleted from `next()`, so a ride-along row is offered like any other — WO-1.35, `--against` over a copy in `TMP` | **1 red**: the `next` plant. Nothing else, including the two `--audit` plants beside it — the mark is read in exactly one place in `next()` and the audit reads the rows for itself |
 | `gate()` taught to refuse a marked row — WO-1.35, same method | **1 red**: the ordering plant, on its whole-report compare. This is the mutation that matters most of the three: it is 🎒 becoming 🔒 GATED under a new name, which is the line between *deprioritised* and *forbidden* |
 | `rideAlongReport()`'s `if (above)` forced true, so no row is ever reported as having run out of shelf — WO-1.35, same method | **1 red**: the audit plant, on its first case. Its second and third cases stay green — a report that says `ok` to everything passes both of those, which is why the first case exists |
+| `--release`'s fence widened to accept `🔍 AWAITING VERDICT` as well as `🤖 CLAIMED` — WO-1.38, `--against` over a copy in the scratchpad | **1 red**: the release plant. **This is the mutation that matters most of WO-1.38's twelve** — it is a finished, unverified tree being set back to `⬜ NOT STARTED` where `next` hands it to somebody as unstarted, which is the entire reason the status exists. Nothing else moves, including the three plants beside it |
+| the `--release` refusal stops naming the result file it would orphan — WO-1.38, same method | **1 red**: the same plant, on that assertion alone. The refusal itself stays **green**, which is why the two assertions are separate — a refusal nobody can act on is how a reader ends up hand-editing the status line instead |
+| `--handoff`'s "only `🤖 CLAIMED`" fence dropped — WO-1.38, same method | **1 red**: the handoff plant, on all eight refused statuses at once, `⬜ NOT STARTED` included — a handoff over `⬜` records a build that never happened. Nothing else: no other plant runs `--handoff` |
+| the `🔍` branch removed from `reportSkips()`, so the row falls through to 🔨's sentence — WO-1.38, same method | **1 red**: the `next` plant. The row is still skipped and still named, and it now reads *"part-built work, not a claim"* over work that is finished — which is why that plant asserts the **wording** and not just the skip |
+| `gate()`'s `ok` widened to `✅ DONE` **or** `🔍 AWAITING VERDICT` — WO-1.38, same method | **1 red**: the dependency plant. This is the one defect none of WO-1.38's own Acceptance lines names — a new status that silently satisfies a dependency hands unchecked code to whatever is built on top of it, and every other report stays green |
+| `applyTick()` taught to write `✅ DONE` over an open Acceptance line when the status is `🔍` — WO-1.38, same method | **1 red**: the same plant, on its held-tick half. The handoff records who is holding the work, never whether it is finished, and the tick's own refusal has to survive the new status arriving in front of it |
 | the 🎒 NOTE counted into `--audit`'s problem total — WO-1.35, same method | **3 red**, and the two unintended ones are the argument for reporting rather than refusing: the audit plant's *"--audit failed over an empty shelf"*, plus WO-1.21's `--audit` plant and the § The files plant, both of which assert that `--audit` exits 0 on a healthy fixture. The sandbox is a copy of the real `plans/`, so a live NOTE in the running order would be a live `FAIL` inside every plant that runs `--audit` |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
@@ -178,9 +202,14 @@ the two that assert the new *acceptance* — and leaves the four that assert a *
 the old script refuses too, for a different reason. That is why the four one-line mutations above
 exist rather than the broad run standing alone.
 
-Sixteen mutations, all reverted or driven over a copy, and every one of them red on the plant it was
-aimed at. **Fifteen touched nothing else; the sixteenth touched two more and that is the row's
-finding rather than its failure** — see its cell. **The sixth row is a
+Twenty-two mutations, all reverted or driven over a copy, and every one of them red on the plant it
+was aimed at. **Twenty-one touched nothing else; the one that did touched two more and that is the
+row's finding rather than its failure** — see the 🎒-NOTE cell. *(WO-1.38's six are six of **twelve**
+run against its four plants, all with `--against` over a copy in the scratchpad, so the tree was never
+mutated. The six not tabulated are the same shapes one fence over — `--handoff` writing on `--dry-run`
+or moving a dashboard, `next` not skipping the status at all, the "abandoned claim" sentence deleted
+from the refusal, the claim's skip losing its pointer at the handoff, `--tick` refusing the status
+outright — and each reddened exactly the one plant it was aimed at and nothing else.)* **The sixth row is a
 different kind of thing and says so in its own cell.** The guard precondition WO-2.47 added runs in the
 **invoking** script rather than in the subject, because the invoking script is the one that makes the
 sandbox and writes the plants — so it is the one whose `assertOutsideRepo()` is actually protecting the

@@ -27,6 +27,18 @@ than what someone meant.
 The orchestrator does not grade its own dispatch. It chose the route and wrote the brief, which
 makes it the wrong party to mark the homework.
 
+**The three do not run in one session, and since 2026-08-30 (WO-1.38) that is a rule rather than an
+accident.** The orchestrator stops when the implementer returns: it runs
+`node tools/wo-gate.mjs --handoff <WO-ID>`, writes a report saying the verifier is **owed**, and the
+verifier is opened as a **new dispatch in a new session** — on every work order, uniformly, because
+`Size` predicts nothing. Ten dispatches carry a session-limit death and every one died at a handoff,
+six of them at this seam; the verifier is the one role whose value does not depend on having watched
+the build, so a planned cold start is strictly better than the accidental one the quota has imposed
+ten times. It is told in as many words that it is a **first pass**, and the implementer's self-claims
+cross the boundary as claims to *check* rather than findings to confirm (WO-2.46). Nothing about
+§ 4b moves: the child has returned and been recorded before anything happens. The evidence is
+[`../session-limits.md`](../session-limits.md) § P2.
+
 **Claiming comes first.** After the routing decision and before the brief, the orchestrator runs
 `node tools/wo-gate.mjs --start <WO-ID>`. It writes `🤖 CLAIMED — <dispatch>` and nothing else — no dashboard,
 no checkbox, because a claim is not progress. It is also the only thing that arms the collision guard
@@ -36,7 +48,9 @@ status and `--tick` is the last step. A second `/wo` with no argument would have
 work order and built it in the same working tree. **A dispatch that dies gets `--release <WO-ID>`** —
 a claim outlives the run that made it, and one nobody released hides a work order from `next` forever
 while the tracker looks healthy. `next` names every claimed row it stepped over for exactly that
-reason. *(Since WO-1.35 there is a third kind of skip and it is not a claim at all: a row wearing 🎒
+reason. **Read the tree before acting on that cue**: since WO-1.38 a row whose implementer *finished*
+is `🔍 AWAITING VERDICT`, not a claim, and `--release` refuses it rather than throwing the build away —
+see [README.md](README.md) § "Status vocabulary". *(Since WO-1.35 there is a third kind of skip and it is not a claim at all: a row wearing 🎒
 in the `Suggested` column is a **ride-along** — `⬜ NOT STARTED`, fully buildable, and not work to
 schedule. `next` names it, says what it rides with, and prints the `--start` that takes it anyway.
 Nothing is in flight and nothing needs releasing. See [README.md](README.md) § "Ride-along rows".)*

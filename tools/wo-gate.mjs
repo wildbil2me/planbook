@@ -7,6 +7,8 @@
 //   node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run]
 //                                                         claim it: ⬜ NOT STARTED → 🤖 CLAIMED
 //   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🤖 CLAIMED → ⬜ NOT STARTED
+//   node tools/wo-gate.mjs --handoff WO-1.7 [--dispatch <label>] [--dry-run]
+//                              the implementer returned: 🤖 CLAIMED → 🔍 AWAITING VERDICT
 //   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
 //   node tools/wo-gate.mjs --audit                        the trackers' standing rot check
 //   node tools/wo-gate.mjs --self-check [--against <path>] this file's standing check on itself
@@ -15,7 +17,8 @@
 // reasoning to interpret them, every dispatch. All of it is deterministic parsing of a header line
 // that is already machine-readable, so it lives here instead.
 //
-// --start, --release and --tick write into plans/, which every other agent is forbidden to touch.
+// --start, --release, --handoff and --tick write into plans/, which every other agent is forbidden
+// to touch.
 // The fences are at each of them: one named work order, never a 👤 line, never CHANGELOG.md, and
 // --dry-run prints the exact edit first. See plans/work-orders/ROUTING.md for who runs them and when.
 //
@@ -55,6 +58,35 @@
 // holds no work order at 🔨 — naming the ID still produces a full gate report and still clears, which
 // is the line between *deprioritised* and *forbidden*, and 🔒 GATED already exists for the second one.
 //
+// WO-1.38 added the FOURTH status, and it is the first one here that exists because of how the
+// PIPELINE dies rather than because of how a work order goes. Ten dispatches carry a session-limit
+// death and every one of them died at a handoff, six at the implementer/verifier seam — so the
+// verifier is now dispatched from a fresh session on every work order, deliberately rather than
+// accidentally. That leaves a row the vocabulary could not say: claimed, nothing in flight, and a
+// FINISHED implementer behind it. Today that reads exactly like an abandoned claim, and --release on
+// it puts a complete unverified tree back to ⬜ NOT STARTED, where `next` hands it to somebody as
+// unstarted. The two have to be told apart BY THE TOOL, not by whoever is reading the row.
+//
+// So: **🔍 AWAITING VERDICT — <dispatch>**, written by --handoff at the implementer's return and left
+// behind by --tick on the verdict. It is a third fact beside the two WO-3.11 split — 🤖 is a run in
+// flight, 🔨 is part-built with nobody in flight, and this is BUILT, with nobody in flight and no
+// verdict. What it does everywhere else, decided at WO-1.38 rather than left to be discovered:
+//
+//   --release  REFUSES it by name, and names the result file it would orphan. This is the trap.
+//   --tick     ACCEPTS it, because the tick IS the verdict path: a status --tick refused would end
+//              every dispatch under this rule at a hand edit, and an open Acceptance line still
+//              holds it at 🔨 IN PROGRESS exactly as it does from a claim.
+//   --start    refuses it, as it refuses every status that is not ⬜ NOT STARTED.
+//   a gate     still refuses it as a dependency — it is not ✅ DONE, and built is not verified. A
+//              new status that silently satisfied a dependency would hand unchecked code to whatever
+//              was built on top of it, which is the one defect no Acceptance line here would catch.
+//   --audit    says NOTHING about it, deliberately. --audit reports two documents disagreeing, and a
+//              status word is one document's own fact — it says nothing about 🤖 or 🔨 either.
+//
+// **A verifier FAIL does not leave this status.** The correction goes back to the same implementer
+// and the verdict is still owed, so the row stays 🔍 AWAITING VERDICT until --tick. There is no fifth
+// status for "being corrected", and inventing one would put a row in a state --tick has never seen.
+//
 // --audit and --self-check (WO-2.15) write nothing anywhere. --audit reads the two trackers and
 // reports where they have drifted apart; --self-check copies plans/ to a temp directory, plants the
 // violations WO-2.14 and WO-2.15 proved by hand, and fails if any of them stops being caught. Since
@@ -92,14 +124,25 @@ const DISPATCH = path.join(REPO, '.claude', 'dispatch');
 // the distinction in their own words and WO-3.13 names it outright ("it is struck rather than
 // deferred, and that is a different thing from WO-2.7"), so a single NOT-HAPPENING status would have
 // been simpler and would have thrown away the only fact anybody needs from either of them later.
-const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🤖 CLAIMED', '🚧 BLOCKED', '🔒 GATED',
-                  '🚫 STRUCK', '⏳ DEFERRED'];
+//
+// WO-1.38 added 🔍 AWAITING VERDICT last, and it carries the same compound `— <dispatch>` suffix
+// 🤖 CLAIMED does, read the same way: the suffix answers *how long has this been sitting*, which is
+// the question a row waiting on a verdict raises exactly as loudly as a stale claim does.
+const STATUSES = ['✅ DONE', '⬜ NOT STARTED', '🔨 IN PROGRESS', '🤖 CLAIMED', '🔍 AWAITING VERDICT',
+                  '🚧 BLOCKED', '🔒 GATED', '🚫 STRUCK', '⏳ DEFERRED'];
 
 // The pair, asked as one question, wherever the two behave alike: neither is counted, neither can be
 // started, ticked or released, and neither will ever satisfy a dependency. Everywhere they differ,
 // the two are named separately on purpose — a helper that flattens them is how the distinction dies.
 const STRUCK = '🚫 STRUCK', DEFERRED = '⏳ DEFERRED';
 function notComing(status) { return status.startsWith(STRUCK) || status.startsWith(DEFERRED); }
+
+// WO-1.38's status, named once rather than written out at each of the fences, the two reports and the
+// plants that read it. **This is not a convention change** — 🤖 CLAIMED and 🔨 IN PROGRESS are string
+// literals throughout this file and stay that way. It is that this one is long and carries a glyph a
+// reader cannot see a typo in, and a fence spelled wrong in one of eight places is a fence that
+// silently stops biting on the one status whose whole job is refusing --release.
+const AWAITING = '🔍 AWAITING VERDICT';
 
 // The glyph a roadmap box wears when the work order that closes it is not coming (WO-1.21). It sits
 // immediately after the checkbox — `- [ ] ⏳ **DEFERRED …** — the box text` — and the position is the
@@ -709,6 +752,13 @@ function gate(id, wos) {
       } else if (!ok && hold) {
         notes.push(`dependency ${dep} is ${st} and every open Acceptance line on it is ${CALENDAR_MARK} — code-complete, so it does not gate ${wo.id}. It is NOT done: ${CALENDAR_MARK} changes dependency gating and nothing else, --tick still refuses to close these lines, and a gate work order still refuses ${dep}. Still waiting on:`);
         nameHeldLines();
+      } else if (!ok && d && d.status.startsWith(AWAITING)) {
+        // WO-1.38. It refuses for the same reason every non-✅ dependency does, and it is said in its
+        // own words because this is the one refusal a reader is tempted to argue with: the code IS on
+        // disk, whole, and it looks buildable. Nothing has checked it. A status that quietly satisfied
+        // a dependency here would hand unverified work to whatever is built on top of it, and no
+        // Acceptance line anywhere would have gone red.
+        problems.push(`dependency ${dep} is ${st}, not ✅ DONE — its implementer returned and the verifier is owed, so its code is on disk and nothing has checked it. Wait for the verdict and the tick; built is not verified`);
       } else if (!ok) {
         problems.push(`dependency ${dep} is ${st}, not ✅ DONE`);
       }
@@ -779,6 +829,9 @@ function gate(id, wos) {
   // way back and a part-built work order does not, so the advice under them is not the same advice.
   if (wo.status.startsWith('🤖 CLAIMED')) notes.push(`${wo.id} is 🤖 CLAIMED — a dispatch has it in flight. Ask before proceeding; if that dispatch is gone, --release ${wo.id} puts it back to ⬜ NOT STARTED`);
   if (wo.status.startsWith('🔨 IN PROGRESS')) notes.push(`${wo.id} is 🔨 IN PROGRESS — part-built, and nobody is claiming to be working on it. This is what --tick writes over an open Acceptance list, so pick it up where it stopped; --release refuses this status by design`);
+  // The third of them (WO-1.38), and the sentence has to do the work the glyph cannot: this row is
+  // NOT a stale claim, however much it looks like one from the running order.
+  if (wo.status.startsWith(AWAITING)) notes.push(`${wo.id} is ${wo.status} — its implementer returned and the verifier is owed. Nothing is in flight and nothing was abandoned, so --release refuses it: releasing this one throws away a finished tree nobody has checked. What it wants is the verifier, dispatched from a fresh session as a FIRST pass, and then --tick ${wo.id} on its verdict`);
   if (wo.status.startsWith('🚧 BLOCKED')) problems.push(`${wo.id} is 🚧 BLOCKED`);
   // WO-1.21's two, and they fail rather than note for the same reason 🔒 GATED does: the gate report
   // is read by somebody about to start, and both answers are "not this one". The refusals say who
@@ -826,6 +879,13 @@ function gate(id, wos) {
 // about it that is false. What it wants done is a fourth thing again: not released, not finished, but
 // FOLDED IN, and the way to do that is to name the ID, which is the one command the mark never
 // refuses. Every skip line here ends with what to do about it, and this one is no exception.
+//
+// WO-1.38 added a fourth, and it is the second one that is a STATUS rather than a mark: 🔍 AWAITING
+// VERDICT. It gets its own sentence on the rule the three above already made — the thing to do about
+// it is a fourth thing again (dispatch the verifier), and it is the only skip here where the work is
+// finished. The claim's sentence gained a line in the same edit, pointing at it: the row this work
+// order exists to protect is a claim whose implementer finished, and whoever reads *"if that dispatch
+// is gone: --release"* over one of those is one keystroke from unclaiming a complete unverified tree.
 function reportSkips(skipped, quiet) {
   const say = quiet ? console.error : console.log;
   for (const { wo, rideAlong } of skipped) {
@@ -835,9 +895,17 @@ function reportSkips(skipped, quiet) {
       say(`  ${RIDE_ALONG_MARK} rides along with ${rides}: ⬜ NOT STARTED and fully buildable, but not work to schedule — fold it into a sitting that already has that open. Nothing here refuses it: node tools/wo-gate.mjs --start ${wo.id}`);
       continue;
     }
-    say(wo.status.startsWith('🤖 CLAIMED')
-      ? `  ${wo.status}: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`
-      : `  🔨 IN PROGRESS: part-built work, not a claim — nothing is in flight and --release refuses this status. Pick it up where it stopped, or finish and --tick it`);
+    if (wo.status.startsWith('🤖 CLAIMED')) {
+      say(`  ${wo.status}: a dispatch has claimed it, so this steps over it. If that dispatch is gone: node tools/wo-gate.mjs --release ${wo.id}`);
+      // WO-1.38's trap, aimed at the reader of THIS line: an orchestrator killed between the
+      // implementer's return and --handoff leaves a finished tree wearing a claim, and the way back
+      // from that one is the handoff, not the release.
+      say(`    Read the tree before you release it. A claim whose implementer FINISHED is ${AWAITING} — one row down in this list if it has been marked, and node tools/wo-gate.mjs --handoff ${wo.id} if it has not. Releasing that one throws the build away`);
+    } else if (wo.status.startsWith(AWAITING)) {
+      say(`  ${wo.status}: the implementer returned and the verifier is owed. A row that looks claimed is one of three things, and this is the third — not a dispatch in flight, not an abandoned claim, but a FINISHED build with no verdict on it. So --release refuses it: it would orphan the result file and offer a complete unverified tree as unstarted work. Dispatch the verifier from a fresh session, then: node tools/wo-gate.mjs --tick ${wo.id}`);
+    } else {
+      say('  🔨 IN PROGRESS: part-built work, not a claim — nothing is in flight and --release refuses this status. Pick it up where it stopped, or finish and --tick it');
+    }
   }
   if (skipped.length && !quiet) console.log('');
 }
@@ -847,7 +915,8 @@ function next(wos, quiet) {
   for (const row of runningOrder()) {
     const wo = wos.get(row.id);
     if (!wo) continue;
-    if (wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED')) { skipped.push({ wo }); continue; }
+    if (wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED')
+        || wo.status.startsWith(AWAITING)) { skipped.push({ wo }); continue; }
     if (wo.status.startsWith('⬜ NOT STARTED')) {
       // The mark is read only here, and only on a row this loop would otherwise have RETURNED. A 🎒 on
       // a ✅ DONE row is spent prose and says nothing; a 🎒 on a 🔨 row is answered by the status,
@@ -992,6 +1061,10 @@ function applyStart(id, wos, dryRun, label) {
       console.error(`     | this one is part-built rather than claimed — nothing is in flight, and --release refuses it (WO-3.11).`);
       console.error(`     | Picking it up is a hand edit of the status line, deliberately: it is a judgement about half-finished work.`);
     }
+    if (wo.status.startsWith(AWAITING)) {
+      console.error(`     | this one is built and waiting on a verdict (WO-1.38) — its implementer returned. There is nothing to claim:`);
+      console.error(`     | dispatch the verifier from a fresh session, then --tick ${id} on the verdict it brings back.`);
+    }
     // The two that are not a position on the road (WO-1.21). Claiming one is a caller with a stale
     // running order or a stale memory, and the answer is not "try again" — it is a decision the owner
     // takes, in the work order's own prose, before anything here is run.
@@ -1051,6 +1124,19 @@ function applyRelease(id, wos, dryRun) {
     if (wo.status.startsWith('✅ DONE')) {
       console.error(`     | ${id} landed. If it landed with Acceptance lines owed elsewhere, that is what its **Owes** field and its "→ WO-x.y" lines are for — not a status change.`);
     }
+    // **The refusal WO-1.38 was written for.** From the running order this status looks exactly like a
+    // stale claim, and the reader who has just been told "if that dispatch is gone, --release" is one
+    // keystroke from unclaiming a finished tree that nobody has checked — WO-3.26's *artifacts read as
+    // finished work* arriving from the opposite direction. The result file is named because it is the
+    // thing that would be orphaned: a report about a work order that is back at ⬜ NOT STARTED.
+    if (wo.status.startsWith(AWAITING)) {
+      const result = path.join(DISPATCH, `${id}-result.md`);
+      const rel = path.relative(REPO, result).split(path.sep).join('/');
+      console.error(`     | ${AWAITING} is NOT an abandoned claim (WO-1.38). Its implementer returned and the verifier is owed, so`);
+      console.error(`     | releasing it would put a complete, unverified tree back to ⬜ NOT STARTED — where \`next\` offers it to the next dispatch as unstarted work.`);
+      console.error(`     | ${rel} is the report it would orphan${fs.existsSync(result) ? '' : ' — and there is no such file, which is its own thing to find out before touching this row'}.`);
+      console.error(`     | What this state wants is the verifier, from a fresh session, and then --tick ${id}. If the build really is to be thrown away, that is a hand edit of the status line with a note saying who decided.`);
+    }
     return 1;
   }
 
@@ -1071,6 +1157,83 @@ function applyRelease(id, wos, dryRun) {
   console.log('');
   console.log(dryRun ? 'DRY RUN | re-run without --dry-run to apply.'
                      : `PASS | ${id} released — the claim is gone, it is ⬜ NOT STARTED again and back in \`next\`. Nothing else was touched.`);
+  return 0;
+}
+
+// --handoff: the implementer returned, and the verifier has not been dispatched yet (WO-1.38).
+//
+// **This is a boundary the pipeline already had and could not write down.** § 5 of
+// work-order-orchestrator.md now stops when the implementer returns and the status line is written;
+// the verifier is a new dispatch, from a fresh session, on every work order — because ten dispatches
+// have died at a handoff and six of those at this exact seam, and the verifier is the one role whose
+// value does not depend on having watched the build.
+//
+// So the row spends real time claimed with nothing in flight, which is indistinguishable from the
+// abandoned claim --release exists to clear. This is the flag that makes them different documents
+// rather than different readings of one.
+//
+// **It writes the status and nothing else**, exactly as --start does: a handoff is not a verdict any
+// more than a claim is progress, and both dashboards count ✅ DONE. It is run BEFORE the verifier is
+// spawned, not after, so a dispatch killed at the spawn leaves the row saying what is true.
+function applyHandoff(id, wos, dryRun, label) {
+  const wo = wos.get(id);
+  if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
+
+  // Fence: only a claim can be handed off, because only a claim had an implementer to return from.
+  // Every other status is a caller with the wrong ID or a pipeline out of order, and both want a
+  // human before a status line says a build exists.
+  if (!wo.status.startsWith('🤖 CLAIMED')) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only a claimed (🤖 CLAIMED) work order can be handed off to the verifier`);
+    if (wo.status.startsWith(AWAITING)) {
+      console.error(`     | it is already there: the verifier is owed on it. --tick ${id} is what closes it, once the verdict is in.`);
+    }
+    if (wo.status.startsWith('⬜ NOT STARTED')) {
+      console.error(`     | nothing ever claimed it, so no implementer returned from it. --start ${id} first — a handoff over ⬜ would record a build that did not happen.`);
+    }
+    if (wo.status.startsWith('🔨 IN PROGRESS')) {
+      console.error(`     | part-built with nobody in flight (WO-3.11) — there is no implementer to have returned. Picking it up is a hand edit, deliberately.`);
+    }
+    if (wo.status.startsWith('✅ DONE')) {
+      console.error(`     | ${id} landed: the verdict was in and --tick recorded it. A handoff after the tick would reopen a closed work order.`);
+    }
+    if (notComing(wo.status)) {
+      console.error(`     | ${wo.status.startsWith(STRUCK) ? 'struck' : 'deferred'}: this work order is not coming, and nothing was built to hand over.`);
+    }
+    return 1;
+  }
+
+  // The same guard --start puts on its label, for the same reason: `·` separates one header field
+  // from the next, and a status that swallows the field after it is worse than no label at all.
+  if (label && /[·*\n|]/.test(label)) {
+    console.error(`FAIL | --dispatch label "${label}" carries one of · * | or a newline — those break the header field parse. Nothing was written`);
+    return 1;
+  }
+
+  const phaseText = read(wo.file);
+  const phaseLines = phaseText.split('\n');
+  const e = statusEdit(phaseLines, wo, `${AWAITING} — ${label || today()}`);
+  if (!e) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
+
+  console.log(`handoff ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
+  console.log('');
+  printEdit(wo.file, e);
+
+  if (!dryRun) {
+    phaseLines[e.line] = e.after;
+    fs.writeFileSync(wo.file, phaseLines.join('\n'));
+  }
+
+  console.log('');
+  console.log('NOT touched: the roadmap, the dashboard, and every checkbox. A handoff is not a verdict — the dashboards count ✅ DONE and nothing else.');
+  if (dryRun) {
+    console.log('DRY RUN | re-run without --dry-run to apply.');
+  } else {
+    const files = dispatchFiles(id);
+    if (!files.result) console.log(`NOTE | there is no .claude/dispatch/${id}-result.md. The implementer's report is what the verifier is handed; if it never landed, say so rather than reconstructing it.`);
+    console.log(`PASS | ${id} is now ${AWAITING} — the implementer returned and the verifier is owed.`);
+    console.log(`     | Dispatch the verifier from a FRESH session, and tell it in as many words that it is a first pass: the implementer's self-claims go over as claims to CHECK, never as findings to confirm (WO-2.46's scar).`);
+    console.log(`     | --release refuses this status by design. The way out is --tick ${id}, on the verdict.`);
+  }
   return 0;
 }
 
@@ -1390,8 +1553,14 @@ function applyTick(id, wos, dryRun) {
   // Fence: only a work order that is open may be ticked. Re-ticking a done one, or ticking one
   // that is BLOCKED or GATED, is a sign the caller has the wrong ID. 🤖 CLAIMED joined the list at
   // WO-3.11 and had to: it is what every dispatch now runs under, and --tick is its last step.
-  if (!(wo.status.startsWith('⬜ NOT STARTED') || wo.status.startsWith('🔨 IN PROGRESS') || wo.status.startsWith('🤖 CLAIMED'))) {
-    console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED, 🤖 CLAIMED or 🔨 IN PROGRESS may be ticked`);
+  //
+  // 🔍 AWAITING VERDICT joined it at WO-1.38 and had to for the same reason one step later: under that
+  // rule the verifier runs from a fresh session, so by the time anything is ticked the row has left
+  // 🤖 CLAIMED. A --tick that refused this status would end every dispatch at a hand edit of the line
+  // this script exists to write.
+  if (!(wo.status.startsWith('⬜ NOT STARTED') || wo.status.startsWith('🔨 IN PROGRESS')
+        || wo.status.startsWith('🤖 CLAIMED') || wo.status.startsWith(AWAITING))) {
+    console.error(`FAIL | ${id} is "${wo.status}" — only ⬜ NOT STARTED, 🤖 CLAIMED, ${AWAITING} or 🔨 IN PROGRESS may be ticked`);
     if (notComing(wo.status)) {
       console.error(`     | there is nothing here to tick: no status means "finished" for work nobody did, and the roadmap box it names (if any) stays [ ] and marked.`);
     }
@@ -3100,6 +3269,155 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+
+    // ------------------------------------------------------------ 🔍 AWAITING VERDICT, WO-1.38
+    //
+    // Four plants, one per thing the status does and one for the thing it must not do. They run LAST
+    // in this array on purpose: the second of them writes a result file into the sandbox's
+    // .claude/dispatch/, which is the only thing any plant here puts outside plans/, and a gate report
+    // run after it would carry a `dispatch result` line the earlier plants have never seen.
+    //
+    // The status is written as `AWAITING` rather than aliased beside OK/RUN/CLAIM above, because the
+    // fences under test read the same constant — an alias here would let a plant and a fence disagree
+    // about the spelling of a glyph and both look right.
+    {
+      name: '--handoff writes 🔍 AWAITING VERDICT over a claim, refuses every other status, and its --dry-run writes nothing',
+      run: () => {
+        const bad = [];
+
+        // The write itself, from the one status it accepts. A handoff is not a verdict, so nothing
+        // outside the work order's own file may move — the same assertion --start carries, for the
+        // same reason: both dashboards count ✅ DONE and nothing else.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const claimed = snapshot();
+        const r = run(['--handoff', FIXTURE_ID]);
+        if (r.code !== 0) bad.push(`--handoff on a claimed work order exited ${r.code}:`, ...verdict(r.out));
+        if (!fixtureStatus().startsWith(AWAITING)) bad.push(`--handoff left the status at "${fixtureStatus()}"`);
+        const moved = changedSince(claimed).filter(f => !f.endsWith(FIXTURE_FILE));
+        if (moved.length) bad.push(`a handoff moved ${moved.join(', ')} — it may only touch the work order's own status line`);
+
+        // Every other status. ⬜ is the one that matters most: nothing claimed it, so no implementer
+        // returned from it, and a handoff over it would record a build that never happened.
+        for (const status of [OK, RUN, '✅ DONE — 2026-01-01', `${AWAITING} — 2026-01-01`,
+                              '🚧 BLOCKED', '🔒 GATED — waiting on a fixture', STRUCK_AT, DEFERRED_AT]) {
+          reset({ status, fragment: FIXTURE_BOX, open: false });
+          const before = snapshot();
+          const x = run(['--handoff', FIXTURE_ID]);
+          if (x.code === 0) bad.push(`--handoff on a "${status}" work order exited 0`);
+          const changed = changedSince(before);
+          if (changed.length) bad.push(`--handoff on "${status}" wrote ${changed.join(', ')}`);
+        }
+
+        // And the dry run, held to WO-2.14's rule: print the edit, compare the file, don't trust the
+        // banner.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const before = snapshot();
+        const dry = run(['--handoff', FIXTURE_ID, '--dry-run']);
+        if (dry.code !== 0) bad.push(`--handoff --dry-run exited ${dry.code}:`, ...verdict(dry.out));
+        if (!/DRY RUN/.test(dry.out)) bad.push('--handoff --dry-run never said DRY RUN');
+        if (!dry.out.split('\n').some(l => l.trim().startsWith('+') && l.includes(AWAITING))) {
+          bad.push(`--handoff --dry-run never printed the edit it would make (a "+" line reading ${AWAITING})`);
+        }
+        if (changedSince(before).length) bad.push(`--handoff --dry-run wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
+    {
+      // **The trap the status exists for.** Someone reads `next`'s stale-claim cue over a row whose
+      // implementer finished, releases it, and a tree full of complete unverified work is unclaimed
+      // and unremembered. The refusal is what tells an abandoned claim apart from this one BY THE
+      // TOOL, and it is proved here rather than asserted in the comment above --release.
+      name: '--release refuses 🔍 AWAITING VERDICT, names the result file it would orphan, and writes nothing',
+      run: () => {
+        const bad = [];
+
+        // The result file is written into the SANDBOX's dispatch directory — the refusal names the
+        // file it would orphan, and a plant with no such file would be asserting against a path
+        // rather than against a report. It goes through the same guard every plant path does.
+        const dispatchDir = assertOutsideRepo(path.join(sandbox, '.claude', 'dispatch'));
+        fs.mkdirSync(dispatchDir, { recursive: true });
+        fs.writeFileSync(assertOutsideRepo(path.join(dispatchDir, `${FIXTURE_ID}-result.md`)),
+                         'the implementer report a --release on this row would orphan\n');
+
+        reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const before = snapshot();
+        const r = run(['--release', FIXTURE_ID]);
+        if (r.code === 0) bad.push('--release on a 🔍 AWAITING VERDICT work order exited 0 — that is a finished implementer\'s tree set back to ⬜ NOT STARTED');
+        if (!fixtureStatus().startsWith(AWAITING)) bad.push(`the refused --release left the status at "${fixtureStatus()}"`);
+        if (changedSince(before).length) bad.push(`the refused --release wrote ${changedSince(before).join(', ')} — it may write nothing at all`);
+        if (!new RegExp(`${FIXTURE_ID}-result\\.md`).test(r.out)) bad.push('the refusal did not name the result file it would orphan');
+        if (!/abandoned claim/.test(r.out)) bad.push('the refusal did not say what this state is NOT — an abandoned claim is what --release is for, and telling the two apart is the whole of this status');
+
+        // And the half that stops the refusal being a blanket one: --release still does its job on a
+        // real claim, on the same tree, in the same plant. A fence that refused everything would pass
+        // every assertion above and would have deleted the way back out of a dead dispatch.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const back = run(['--release', FIXTURE_ID]);
+        if (back.code !== 0) bad.push(`--release stopped working on a real claim (exit ${back.code}):`, ...verdict(back.out));
+        if (!fixtureStatus().startsWith(OK)) bad.push(`--release on a claim left the status at "${fixtureStatus()}"`);
+        return bad;
+      },
+    },
+    {
+      name: '`next` steps over a 🔍 AWAITING VERDICT row with its own sentence — not the claim\'s, not the part-built one — and reaches the row below it',
+      run: () => {
+        const bad = [];
+
+        reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const r = run(['next']);
+        if (!new RegExp(`skipped ${FIXTURE_ID}`).test(r.out)) bad.push('`next` stepped over a 🔍 AWAITING VERDICT row without naming it');
+        if (!/the verifier is owed/.test(r.out)) bad.push('`next` skipped it without saying which of the three kinds of skip it is');
+        // The 🔨 sentence's own opening, not the bare word: the 🔍 sentence says *it is not
+        // part-built* in as many words, which is the useful half of telling the two apart, and a
+        // plant that forbade the word would forbid the distinction it is checking for.
+        if (/part-built work, not a claim/.test(r.out)) bad.push('a 🔍 AWAITING VERDICT row was reported with 🔨 IN PROGRESS\'s sentence — the work is finished, not half-done');
+        if (new RegExp(`node tools/wo-gate\\.mjs --release ${FIXTURE_ID}`).test(r.out)) {
+          bad.push('`next` offered --release as the way out of 🔍 AWAITING VERDICT, which refuses it — and which would throw the build away if it did not');
+        }
+        if (!new RegExp(`next: ${TARGET_ID}`).test(r.out)) bad.push(`\`next\` did not reach ${TARGET_ID} behind the 🔍 AWAITING VERDICT row`);
+
+        // The row it must not be confused with, on the same table one status apart: a claim still
+        // offers the way back, and it now also names the handoff, because an orchestrator killed
+        // before --handoff leaves a finished tree wearing 🤖 and that reader is one keystroke away.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const claim = run(['next']);
+        if (!new RegExp(`--release ${FIXTURE_ID}`).test(claim.out)) bad.push('the 🤖 CLAIMED skip stopped offering the way back — the assertion above is then measuring nothing');
+        if (!new RegExp(`--handoff ${FIXTURE_ID}`).test(claim.out)) bad.push('the 🤖 CLAIMED skip does not name the handoff, so a claim whose implementer finished still reads as one to release');
+        return bad;
+      },
+    },
+    {
+      // The two ends of the state machine, and the first of them is the defect nothing in this work
+      // order's Acceptance list would have caught: a new status that silently satisfied a dependency
+      // hands unverified code to whatever is built on top of it, and every report stays green.
+      name: '🔍 AWAITING VERDICT is not ✅ DONE where it counts — a dependent\'s gate still refuses it, and the tick path still runs from it',
+      run: () => {
+        const bad = [];
+
+        reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const dep = run([TARGET_ID]);                          // WO-9.8 depends on WO-9.9
+        if (dep.code === 0) bad.push(`${TARGET_ID}'s gate opened on a 🔍 AWAITING VERDICT dependency — built is not verified`);
+        if (!/not ✅ DONE/.test(dep.out)) bad.push('the refusal did not read as the ordinary "not ✅ DONE" one');
+        if (/code-complete/.test(dep.out)) bad.push('a 🔍 AWAITING VERDICT dependency was called code-complete — 📆 qualifies 🔨 and nothing else (WO-1.28, fence 1)');
+
+        // The far end: --tick has to run from here, or every dispatch under this rule ends at a hand
+        // edit of the one line this script exists to write.
+        reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const t = run(['--tick', FIXTURE_ID]);
+        if (t.code !== 0) bad.push(`--tick exited ${t.code} on a fully ticked 🔍 AWAITING VERDICT work order:`, ...verdict(t.out));
+        if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`a tick from 🔍 AWAITING VERDICT left the status at "${fixtureStatus()}"`);
+        if (!/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('a tick from 🔍 AWAITING VERDICT left the roadmap box it closes unticked');
+
+        // And it is no shortcut past the Acceptance list: an open line still holds it at 🔨, exactly
+        // as it does from a claim. The handoff records who is holding the work, never whether it is
+        // finished.
+        reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: true });
+        const held = run(['--tick', FIXTURE_ID]);
+        if (held.code === 0) bad.push('--tick from 🔍 AWAITING VERDICT exited 0 over an open Acceptance line');
+        if (!fixtureStatus().startsWith(RUN)) bad.push(`a held tick from 🔍 AWAITING VERDICT left the status at "${fixtureStatus()}", not 🔨 IN PROGRESS`);
+        return bad;
+      },
+    },
   ];
 
   // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
@@ -3122,8 +3440,8 @@ function runPlants(subject, sandbox) {
 
   console.log('');
   console.log(`  ${plants.length} plants, ${plants.length - failed} caught, ${failed} missed.`);
-  console.log('  Covers what WO-2.14, WO-2.15, WO-3.11, WO-1.21 and WO-2.49 built: the four refusals,');
-  console.log('  the fences on each of --start, --release and --tick, the dry runs, one tick that works,');
+  console.log('  Covers what WO-2.14, WO-2.15, WO-3.11, WO-1.21, WO-2.49 and WO-1.38 built: the four');
+  console.log('  refusals, the fences on --start, --release, --handoff and --tick, the dry runs, one tick that works,');
   console.log('  both kinds of skip, the four about **Owes** and its pointers, WO-1.21\'s four — 🚫/⏳');
   console.log('  refused, out of the count and named where it left, held against the box they stopped');
   console.log('  counting, and § The files against the files — and ONE FAULT in the Acceptance parser:');
@@ -3145,6 +3463,15 @@ function runPlants(subject, sandbox) {
   console.log('  and --tick go through to ✅ DONE, and a dependent\'s gate still refuses it; and --audit');
   console.log('  reports the row whose shelf has emptied as a NOTE rather than a problem, says nothing');
   console.log('  about the same mark one row lower, and writes nothing either way.');
+  console.log('  And WO-1.38\'s FOUR, for the fourth status — 🔍 AWAITING VERDICT, the row whose');
+  console.log('  implementer returned and whose verifier is owed: --handoff writes it over a claim and');
+  console.log('  refuses the other eight statuses, moving nothing but the status line and nothing at all');
+  console.log('  on --dry-run; --release REFUSES it, names the result file it would orphan, and still');
+  console.log('  releases a real claim on the same tree; `next` skips it in its own sentence, without');
+  console.log('  the part-built wording and without offering the --release that would throw the build');
+  console.log('  away, while the claim beside it keeps its way back and gains the handoff; and it is');
+  console.log('  not ✅ DONE where that matters — a dependent\'s gate still refuses it, and --tick runs');
+  console.log('  from it to ✅ DONE with a full list and holds at 🔨 with an open one.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
@@ -3174,6 +3501,9 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
                                                         <label, or today's date>
   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back, for a dispatch that died.
                                                         🤖 CLAIMED only; it refuses every other status
+  node tools/wo-gate.mjs --handoff WO-1.7 [--dispatch <label>] [--dry-run]
+                                                        the implementer returned and the verifier is
+                                                        owed — 🤖 CLAIMED → 🔍 AWAITING VERDICT
   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
   node tools/wo-gate.mjs --audit                        every **Closes roadmap** fragment against
                                                         ROADMAP.md, every **Owes** pointer against
@@ -3188,18 +3518,28 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
                                                         the trackers to be clean first, and says so
                                                         instead of planting if they are not
 
---start, --release and --tick write into plans/. Run each with --dry-run first and read the diff.
+--start, --release, --handoff and --tick write into plans/. Run each with --dry-run first and read
+the diff.
 --start claims a work order so a second dispatch can see one is in flight; it moves no dashboard.
 --tick reads the work order's own Acceptance list: any line still [ ] and it writes 🔨 IN PROGRESS
 instead of ✅ DONE, names the lines, and leaves the roadmap alone. It also refuses, writing nothing,
 when a **Closes roadmap** fragment closes no box or ROADMAP.md's dashboard does not match its own
 boxes — both are the tracker being wrong about itself, and no status makes that true.
 
-The four statuses this writes are four different facts (WO-3.11). 🤖 CLAIMED — <dispatch>: a run has
-it in flight, and --release is the way back. 🔨 IN PROGRESS: part-built, nobody in flight, --release
+The five statuses this writes are five different facts (WO-3.11, WO-1.38). 🤖 CLAIMED — <dispatch>: a
+run has it in flight, and --release is the way back. 🔍 AWAITING VERDICT — <dispatch>: the implementer
+returned and the verifier is owed — nothing in flight, nothing abandoned, and --release REFUSES it
+because releasing it would put a finished unverified tree back to ⬜ NOT STARTED and orphan the result
+file. 🔨 IN PROGRESS: part-built, nobody in flight, --release
 refuses it. ✅ DONE plus a **Owes** field: landed, with Acceptance lines owed to the work orders that
 will actually close them — those lines stay - [ ] and carry a "→ WO-x.y" marker, and --tick honours
 one only while it can find the matching OPEN box under that target.
+
+The verifier is dispatched from a FRESH SESSION on every work order (WO-1.38), so the seam between the
+implementer's return and the verdict is a real gap in wall-clock time, and 🔍 AWAITING VERDICT is what
+the row wears across it. --handoff writes it and --tick is the only way out; a verifier FAIL does not
+change it, because the correction goes back to the same implementer and the verdict is still owed. It
+is not ✅ DONE, so a dependent's gate still refuses it: built is not verified.
 None of them touches a 👤 line in TESTING.md, and none touches CHANGELOG.md, and none of them
 writes ROADMAP.md's progress dashboard — that stays a hand edit (ROADMAP.md, maintenance step 3).
 
@@ -3263,6 +3603,13 @@ if (argv[0] === '--release') {
   const id = argv[1];
   if (!id || !/^WO-/.test(id)) { console.error('FAIL | --release needs an explicit work order ID, e.g. --release WO-1.7'); process.exit(1); }
   process.exit(applyRelease(id, wos, argv.includes('--dry-run')));
+}
+
+if (argv[0] === '--handoff') {
+  const id = argv[1];
+  if (!id || !/^WO-/.test(id)) { console.error('FAIL | --handoff needs an explicit work order ID, e.g. --handoff WO-1.7'); process.exit(1); }
+  const d = argv.indexOf('--dispatch');
+  process.exit(applyHandoff(id, wos, argv.includes('--dry-run'), d >= 0 ? argv[d + 1] : ''));
 }
 
 if (argv[0] === '--tick') {

@@ -3399,6 +3399,16 @@ assert `--audit` exits 0 over it.
 - **`--audit` must stay green on the real tree.** Both keyings agree there today; if the ruling
   changes what WO-8.13 reports, that is a finding to hand back, not a number to adjust.
 
+**A second instance in the same file, folded in 2026-08-30.** WO-1.38's verifier reported one branch
+of `applyRelease()` that no plant reaches: the `fs.existsSync(result)` arm at `tools/wo-gate.mjs:1137`,
+which appends *"and there is no such file, which is its own thing to find out before touching this
+row"* when the result file the refusal names is missing. **It is this work order's shape exactly** —
+two behaviours behind one check, with no fixture separating them — so it rides here rather than
+taking a row of its own. It is not a defect in WO-1.38: no Acceptance line of that work order asked
+for it, and the verifier said so when it reported it. **The missing-file arm is the one worth a
+plant**, because it fires precisely when a row's dispatch trail is *already* damaged, which is when a
+reader is least able to tell a real refusal from a malformed one.
+
 **Acceptance**
 - [ ] The keying is **ruled on in prose where the code makes the choice** — at `rideAlongReport()` —
       naming the reading that lost and why, so the surviving sentence is one a reader can check.
@@ -3409,6 +3419,9 @@ assert `--audit` exits 0 over it.
       mutation table with the rest.
 - [ ] No comment in `tools/wo-gate.mjs` claims a distinction no plant pays for; the
       *"different shelves"* sentence either has a plant behind it or is gone.
+- [ ] `applyRelease()`'s missing-result-file arm is reached by a plant — a row at `🔍 AWAITING
+      VERDICT` with **no** `.claude/dispatch/<ID>-result.md` behind it — and the two arms are proved
+      to print differently rather than assumed to.
 - [ ] `--self-check` is green and its own count goes up by the number of checks added.
 - [ ] `node tools/wo-sweep.mjs` is green, and `--audit` is green on a clean tree with WO-8.13's NOTE
       reading as it does today.
@@ -3496,7 +3509,7 @@ build finds a `src/` change is needed, that is a finding to hand back rather tha
 
 ## WO-1.38 — the verifier is spawned on the far side of the implementer's spend
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing by name;
+**Ship** — · **Status** ✅ DONE — 2026-08-30 · **Size** S · **Depends on** — · **Blocks** nothing by name;
 it protects every dispatch after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.37
 made. Booked 2026-08-30, owner-directed, out of a transcript audit of all 124 dispatches this
@@ -3568,18 +3581,18 @@ this does not narrow by one turn — see the third trap.
   write a spawn-time report by accident, which is the WO-3.5 defect this pipeline was built out of.
 
 **Acceptance**
-- [ ] § 5 of `.claude/agents/work-order-orchestrator.md` says the verifier is dispatched from a fresh
+- [x] § 5 of `.claude/agents/work-order-orchestrator.md` says the verifier is dispatched from a fresh
       session on **every** work order, and § 6 says the report at that boundary names the verifier as
       owed.
-- [ ] `AGENTS.md` carries the same rule — the two must never drift apart, and this one is a rule.
-- [ ] A row whose implementer has returned and whose verifier is owed is a state `wo-gate.mjs`
+- [x] `AGENTS.md` carries the same rule — the two must never drift apart, and this one is a rule.
+- [x] A row whose implementer has returned and whose verifier is owed is a state `wo-gate.mjs`
       writes and reads, distinct from both an in-flight claim and an abandoned one.
-- [ ] `next` skips such a row and **says which of the three it is**, in the same shape it already
+- [x] `next` skips such a row and **says which of the three it is**, in the same shape it already
       prints a skipped 🔨 and a skipped 🎒.
-- [ ] `--release` on that state refuses, or warns naming the result file it would orphan; the
+- [x] `--release` on that state refuses, or warns naming the result file it would orphan; the
       refusal is driven and proved, not asserted in a comment.
-- [ ] `--self-check` is green with a plant behind each new check and its own count up by that many.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `--self-check` is green with a plant behind each new check and its own count up by that many.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 ---
 
@@ -3660,4 +3673,77 @@ approximate it, it measures something else and says so.
 - [ ] `node tools/wo-gate.mjs --start <WO>` prints the window line, and **the gate still clears on
       any number** — driven at a figure past the death cluster and proved to clear.
 - [ ] `--self-check` is green with a plant behind each new check and its own count up by that many.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.40 — the file a human types is outside every fence
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.38 ✅ · **Blocks** nothing by
+name; it protects every dispatch after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.39
+made. Booked 2026-08-30 by WO-1.38's verifier, which reported it as a thing nobody had claimed, and
+by the session that ticked WO-1.38 and confirmed it.)*
+
+**Why it exists.** WO-1.38 changed the pipeline's shape in **six** files and wrote five of them.
+[`.claude/commands/wo.md`](../../.claude/commands/wo.md) — the file a human types to start a dispatch
+— still told its caller to relay *"the Acceptance list with each item marked verified / failed /
+needs-a-human"* from a run that, under the new rule, deliberately returns no Acceptance list at all.
+
+**The two instructions were in direct conflict, and the session in the middle had to resolve it.**
+§ 6 of `work-order-orchestrator.md` says the boundary report *"does not say the work verified, it
+marks no Acceptance list, and it relays no self-claim as a finding."* `wo.md` demanded exactly that
+list, and pressed: *"do not summarize the Acceptance list; the marks are the point."* The only
+material available to satisfy it is the implementer's self-claims — **which is the WO-3.5 defect
+arriving one level above the orchestrator, in the one file with no agent standing between it and a
+human.** The prose was corrected on 2026-08-30, directly, in the sitting that ticked WO-1.38, on the
+same footing as the running-order corrections in `c43eef2` and `b3b0cd7`. **This work order is not
+that repair.**
+
+**It is the fence, and the absence of one is the finding.** `.claude/commands/` is named **nowhere**
+in the work-order system: no work order references it, `--audit` never reads it, and
+`wo-sweep.mjs:53` puts `.claude` in `IGNORE_DIRS` outright. That ignore is *correct for what the
+sweep does* — § 2's own comment records that `.claude/` prose is excluded because every dark-mode hit
+there is a **statement of the prohibition**, and the same holds for every other app-code claim in the
+file. **Correct for app code is not the same as no check at all.** The contrast next door is the
+argument: `work-order-orchestrator.md` carries a self-asserting line count precisely because somebody
+knew agent files drift, and it had already gone stale once. `wo.md` carries nothing, and went stale
+the first time the pipeline moved under it.
+
+**Out of scope.** Un-ignoring `.claude/` in the sweep's file walk. Every § from 1 to 20 would begin
+reading agent prose as app code, which is the thing § 2's comment exists to prevent. Also out of
+scope: the wording of `wo.md` itself, which is already correct — this builds the thing that would
+have caught it, not the thing it caught.
+
+**Traps**
+
+- **A line-count self-assertion does not transfer from the file next door.** The orchestrator's works
+  because that file grows by accretion; `wo.md` is short prose that is rewritten wholesale, so a
+  count would go red on every legitimate edit and be deleted within two dispatches. **An instrument
+  that cries wolf gets ignored at the moment it is right** — WO-1.39's own trap, in a second place.
+- **The two files must be allowed to differ, and most of the difference is correct.** `wo.md` is the
+  caller's file and the orchestrator's is the dispatcher's; the orchestrator-only rules have no
+  business here, exactly as WO-1.38's verifier found for `AGENTS.md` and called *narrower telling,
+  not drift*. A check demanding symmetry would force the pipeline to be restated a third time. **What
+  is wanted is contradiction, not asymmetry** — and on prose only a person can reliably tell those
+  apart, so `REVIEW` may be the honest state here rather than `PASS`/`FAIL`. The sweep already has
+  one, and already prints *"greppable evidence, not a verdict"* over it.
+- **Reach the file by path, not by widening the walk.** A one-line edit to `IGNORE_DIRS` is the
+  obvious way in and pulls every agent file into all twenty sections at once.
+- **A fence nobody is pointed at is the same defect one level up.** If the only record of this check
+  is the check, the next pipeline change looks in `.claude/agents/` and stops there — which is what
+  just happened. Something a person reads before editing the pipeline has to name this file.
+
+**Acceptance**
+- [ ] The harness reads `.claude/commands/wo.md` and goes red or `REVIEW` when it contradicts
+      `.claude/agents/work-order-orchestrator.md` about the pipeline's stops — **driven against a
+      planted contradiction**, not asserted in a comment.
+- [ ] It gets there by naming the path: `.claude` stays in `wo-sweep.mjs`'s `IGNORE_DIRS` and the
+      file walk is unchanged.
+- [ ] Legitimate asymmetry stays green — proved with a fixture where `wo.md` omits an
+      orchestrator-only rule and nothing fires.
+- [ ] `.claude/commands/` is named in the work-order system's own map of what it watches, so the next
+      pipeline change has somewhere to look before it edits.
+- [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
+      checks and its self-check is green.
 - [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.

@@ -173,6 +173,22 @@ warning has been resumed, not broken.
 **If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
 so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.
 
+**The verifier is a fresh session, on every work order, and there is a status for the gap.**
+*(2026-08-30, WO-1.38, owner's call — uniform, not size-gated, because `Size` predicts nothing.)* The
+orchestrator now stops when you return: it runs `node tools/wo-gate.mjs --handoff <WO-ID>`, writes a
+report saying the verifier is **owed**, and the verifier is opened as a new dispatch in a new session.
+Ten dispatches have died at a handoff, six of them at this exact seam — the parent's first API call
+after the child has spent the window — and the verifier is the one role built for cold eyes, so a
+planned cold start is strictly better than the accidental one. **Three things follow for you.** The
+row you were handed reads `🤖 CLAIMED` while you work and `🔍 AWAITING VERDICT` after you return; the
+second is **not** an abandoned claim and `--release` refuses it, because releasing it would put your
+finished, unchecked tree back to `⬜ NOT STARTED` and orphan your result file. **Your self-claims cross
+that boundary as claims to CHECK, never as findings to confirm** — the verifier is a first pass and is
+told so, so a result file that overstates what you proved costs a correction round rather than a pass.
+And **it buys nothing against a live mutation**: the armed window is inside *your* run and is exactly
+as long as it was, so the rule above — *put it back BEFORE you write anything else* — is untouched,
+and `grep -rn MUTATION` is still the first move on any dead dispatch.
+
 **A `next` report can skip a row that nothing is wrong with.** Since WO-1.35 (2026-08-28) a row
 wearing 🎒 in the running order's `Suggested` column is a **ride-along**: `⬜ NOT STARTED`, fully
 buildable, and not work to schedule — an hour to fold into a sitting that already has that file open.

@@ -34,6 +34,10 @@ already exist. **It exits non-zero if a gate fails** — if it does, say plainly
 Then **read the work order itself in full** — every section, not just Deliverables. The script
 checks the gates; it does not tell you what the work is.
 
+**A row already reading `🔍 AWAITING VERDICT` is not a new dispatch.** Its implementer returned and
+this session is the verifier's: go straight to the second half of step 5. Do not route it, do not
+re-brief it, do not `--release` it — the tool refuses that, and says why.
+
 Two things the script reports and you must judge:
 
 - **An interrupted run.** A dirty tree plus a brief with no result file is an unverified draft. Do
@@ -159,6 +163,12 @@ non-zero exit means someone already claimed it — stop and ask.**
 `next` while the tracker looks healthy. `next` names every claimed row it steps over; that line is
 your cue that one is stale, not a decoration.
 
+**Read the tree before you act on that cue.** Since step 5 stops at the implementer's return, a row
+whose build is *finished* is `🔍 AWAITING VERDICT`, not `🤖 CLAIMED`, and `--release` refuses it — it
+would put a complete unverified tree back to `⬜` and orphan the result file. A claim still wearing
+`🤖` over a finished implementer means the orchestrator died before `--handoff`: the answer there is
+the handoff, not the release.
+
 ### 3. Write the brief
 
 ```
@@ -202,8 +212,10 @@ largest work orders** — the ones a duplicate dispatch hurts most. The story is
 
 - **Append one timestamped line to `.claude/dispatch/<WO-ID>-status.md` at every step boundary** —
   gates passed, route chosen, brief written, **implementer spawned and awaited**, implementer
-  returned, verifier dispatched, verdict in. It is pollable from outside while you run, and it is
-  what a resumed run reads. Delete it once the result file exists; the result supersedes it.
+  returned, **handoff written**, verifier dispatched, verdict in. It is pollable from outside while
+  you run, and it is what a resumed run reads. **Keep it until the verdict is in** — since step 5 the
+  verifier is a different session, and deleting the trail at the implementer's return deletes it at
+  exactly the boundary it exists for. The result file supersedes it once the work order is ticked.
 - **Keep a `TodoWrite` list**, one item per step. It is the only thing that renders live.
 
 Do both even when the run is going well. A silent 30 minutes and a stuck 30 minutes should not look
@@ -324,36 +336,78 @@ status file looks frozen, not because no result file has appeared, not because i
 half an hour. The claim means a dispatch is in flight and says nothing about how long it has been
 silent. If you have real evidence it is dead, clear it the one way a live claim is ever cleared —
 `node tools/wo-gate.mjs --release <WO-ID>` (step 2c) — and say in your report that you did. Nothing
-else releases a claim; the only other exit from `🤖 CLAIMED` is `--tick` on work that landed.
+else releases a claim; the only other exit from `🤖 CLAIMED` is `--handoff`, at step 5, when the
+implementer has actually returned.
 `--release` is deliberate and leaves a record; a second silent spawn is neither, and WO-3.5 paid for
 one with two verifier defects and a correction round.
 
-### 5. Hand it to the verifier — do not grade your own dispatch
+### 5. Record the handoff and stop — the verifier is a fresh session, on every work order
 
-Spawn the `work-order-verifier` subagent with the work order ID, and **wait for its verdict exactly
-as you waited at 4b** — a verifier that has been spawned has found nothing yet. You chose the route
-and wrote the brief; you have a stake in this having worked, which is exactly the wrong person to
-mark the Acceptance list. Never relay an agent's self-assessment as the outcome — the verifier's
-included — but it is the only one of the three asked to find problems rather than produce work, so
-its verdict is the one that counts.
+**This run ends when the implementer returns.** *(WO-1.38, 2026-08-30, owner's call — uniform, not
+size-gated, because `Size` does not predict cost.)* The verifier is a **new dispatch from a new
+session**, always. Do not spawn it from here.
+
+```
+node tools/wo-gate.mjs --handoff <WO-ID>
+```
+
+Run it as soon as 4b's *implementer returned* line is true, **before** the boundary report, so a run
+killed at that turn leaves a row saying what is true. It writes `🔍 AWAITING VERDICT — <date>` over
+the claim and nothing else — no dashboard, no checkbox, because a handoff is not a verdict. That
+status is what keeps the row from reading as an abandoned claim while it waits: `--release` refuses
+it and names the result file it would orphan, `next` names it as the one skip where the work is
+*finished*, a dependent's gate still refuses it because built is not verified, and `--tick` is the
+only way out.
+
+**Why the split.** Ten dispatches have died at a handoff and six at this seam — the parent's first
+API call after the child has spent the window, carrying the largest context it will ever hold. The
+verifier is the one role whose value does not depend on having watched the build: WO-5.2 and WO-5.4
+both had it re-dispatched cold against a recovered tree and both returned real verdicts, one finding
+a defect nobody else had. A planned cold start is strictly better than the accidental one the quota
+has imposed ten times. Evidence: [`plans/session-limits.md`](../../plans/session-limits.md) § P2.
+**This is not § 4b renegotiation** — the child has returned and been recorded before anything moves;
+what changed is only when the *next* child is spawned. It buys nothing against a live mutation
+either: that window is inside the implementer's run and is exactly as long as it was, and
+`grep -rn MUTATION` is still the first move on any dead dispatch.
+
+**In the fresh session** — which enters here, at a row reading `🔍 AWAITING VERDICT` — spawn the
+`work-order-verifier` subagent at Opus with the work order ID, and **wait for its verdict exactly as
+you waited at 4b**: a verifier that has been spawned has found nothing yet. **Tell it in as many
+words that it is a first pass.** It reads cold and will find traces of a run that reported nothing to
+it — a result file, a status file, a dirty tree — and the failure to avoid is reconciling with them:
+the implementer's self-claims go over as **claims to check, never findings to confirm** (WO-2.46).
+You chose the route and wrote the brief; you have a stake in this having worked, which is exactly the
+wrong person to mark the Acceptance list. Never relay an agent's self-assessment as the outcome — the
+verifier's included — but it is the only one of the three asked to find problems rather than produce
+work, so its verdict is the one that counts.
 
 On **FAIL**, dispatch a correction to the **same** implementer, quoting the verifier's ❌ lines
 verbatim. Don't re-route on a first miss, don't argue with the verdict, don't quietly fix it
 yourself. Then send it back through the verifier. If it fails twice, stop and bring the user in —
-two failures usually means the work order is ambiguous, not that the agent is careless.
+two failures usually means the work order is ambiguous, not that the agent is careless. **The row
+stays `🔍 AWAITING VERDICT` through a correction round**: the verdict is still owed, and there is no
+status for *being corrected*.
 
-### 6. Report, tee up the next one, and stop
+### 6. Report — two of them now, one at each stop
 
-**You are not at this step until step 4b's child returned and step 5's verifier reported.** The test
-is the tense: if a sentence about *this dispatch* is in the future or the progressive — *is running*,
-*should finish*, *expect* — you are still at step 4b and the report is premature. Every claim here is
-something you watched happen. (Naming what comes next is the one forward-looking item on the list,
-and it is about a different work order.)
+**The tense test governs both.** If a sentence about *this dispatch* is in the future or the
+progressive — *is running*, *should finish*, *expect* — you are still at 4b and the report is
+premature. Every claim in either report is something you watched happen. (Naming what comes next is
+the one forward-looking item, and it is about a different work order.)
 
-Return to the user: the route and why · what landed, as file paths · the verifier's verdict and its
-Acceptance list marked ✅ / ❌ / 🙋 · the 🙋 items as one iPad checklist runnable in a single sitting
-· the maintenance protocol split into **what you can apply** and **what is owed to a human** · and
-what's next, from `node tools/wo-gate.mjs next`.
+**The boundary report, at § 5, when the implementer has returned and the row is `🔍 AWAITING
+VERDICT`.** It says the verifier is **owed**. It does not say the work verified, it marks no
+Acceptance list, and it relays no self-claim as a finding — a boundary is the easiest place in this
+pipeline to write a spawn-time report by accident, which is the WO-3.5 defect the pipeline was built
+out of. Return: the route and why · what landed, as file paths · the implementer's own account of
+what it could not close, **labelled as its claim** · *the verifier is owed and this session stops
+here* · and how to start it: a new session, against this work order ID. Then stop.
+
+**The final report, in that fresh session, once the verifier has reported.** Return to the user: the
+route and why · what landed, as file paths · the verifier's verdict and its Acceptance list marked
+✅ / ❌ / 🙋 · the 🙋 items as one iPad checklist runnable in a single sitting · the maintenance
+protocol split into **what you can apply** and **what is owed to a human** · and what's next, from
+`node tools/wo-gate.mjs next`.
 
 Then **ask whether to continue, and stop there.** A `PASS WITH MANUAL CHECKS` is not done until
 someone picks up an iPad, and the maintenance on this one is owed before the next one starts.
@@ -406,7 +460,10 @@ You never inspected the work, so recording someone else's verdict is transcripti
   can make, that is a proposed follow-up in your report, not a throwaway script.
 - **Keep this file short.** It grew 169 → 274 lines in one day, WO-2.20's wait rule took it to 322,
   WO-2.37's `--budget` line and exit-3 rule to 330, WO-2.40's `--self-check` at step 2b to 341, and
-  WO-2.45's detach-and-poll at step 4 to **354** — every dispatch pays to read all of it. New lessons go
-  to `plans/dispatch-retro.md`; only the imperative belongs here. **If you edit this file, correct
-  that number in the same edit.** It was already stale when WO-2.20 read it, and a length rule that
-  misstates the length is the first rule a reader discounts.
+  WO-2.45's detach-and-poll at step 4 to 354. **It then read 354 while the file stood at 412** —
+  uncorrected through every edit between, which is this rule failing on itself in exactly the way its
+  last sentence predicts. WO-1.38's fresh-session verifier at steps 1, 2c, 3b, 4b, 5 and 6 takes it to
+  **469** — every dispatch pays to read all of it. New lessons go to `plans/dispatch-retro.md`; only
+  the imperative belongs here. **If you edit this file, correct that number in the same edit** — count
+  it with `wc -l`, do not estimate it. A length rule that misstates the length is the first rule a
+  reader discounts.

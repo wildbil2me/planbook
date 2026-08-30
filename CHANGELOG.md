@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The verifier gets its own session, and the file that starts a dispatch gets told — 2026-08-30
+
+**Ten dispatches have died at a handoff and six of them at the same seam** — the orchestrator's
+first API call after the implementer has spent the window, carrying the largest context it will
+ever hold. The verifier is now a fresh session on every work order, uniformly rather than by
+size, because `Size` predicts nothing: Size S has run 6.8–13.3M units and Size M 7.2–15.7M.
+A planned cold start is strictly better than the accidental one the quota has imposed ten times,
+and WO-5.2 and WO-5.4 both proved the verifier survives it — one of them finding a defect nobody
+else had.
+
+**This needed a state the trackers could not express**: a row whose implementer has returned and
+whose verifier is owed. It read as an abandoned claim, and `--release` on it would have put a
+complete, unverified tree back to `⬜ NOT STARTED` where `next` offers it as unstarted work.
+`🔍 AWAITING VERDICT` is that state — `--release` refuses it and names the result file it would
+orphan, `next` names it as the one skip where the work is finished, and `--tick` is the only way out.
+
+**The pipeline changed in six files and five of them were written.** `.claude/commands/wo.md` —
+the file a human types — went on telling its caller to relay "the Acceptance list with each item
+marked verified / failed / needs-a-human" from the one stop that now deliberately returns none.
+The only material for satisfying that instruction is the implementer's own self-claims, which is
+the defect this pipeline was built out of, arriving one level above the orchestrator in the file
+with no agent between it and a person. Corrected the same day. **Nothing had been watching it:**
+`.claude/commands/` is named nowhere in the work-order system, `--audit` never reads it, and
+`.claude` sits in the sweep's `IGNORE_DIRS` — right for app code, and not a reason for no check at
+all. WO-1.40 is booked for the fence.
+
 ### The contact log's two halves are introduced to each other — 2026-08-30
 
 **Write home about a student no rule has flagged, and nothing had ever proved the app writes it down
