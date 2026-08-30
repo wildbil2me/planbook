@@ -1057,6 +1057,74 @@ than an installed app, and a green run here still closes no 👤 item anywhere e
 
 ---
 
+### WO-1.40 — the file a human types is outside every fence
+
+**What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are
+byte-identical to HEAD, and no `CACHE` bump is owed. `tools/wo-sweep.mjs` gains **§ 21**, which is the
+first thing in this repository ever to read `.claude/commands/wo.md` — the file a human types to start
+a dispatch, and until now the one file in the pipeline with nothing standing between it and a person.
+It reaches that file and `.claude/agents/work-order-orchestrator.md` **by naming their paths**:
+`.claude` is still in `IGNORE_DIRS` at `wo-sweep.mjs:53` and the file walk is untouched, so no other
+section sees either file. The reasoning is in the § 21 header; the map a person reads before editing
+the pipeline is `plans/work-orders/README.md` § The pipeline's own files.
+
+**It reports a `REVIEW`, not a `FAIL`, and that is the ruling.** The two files are *supposed* to
+differ — the caller's has no business restating the dispatcher's — so silence is green and only a
+positive instruction one file gives that the other forbids is reported. The mechanical half (do the
+claims still match the file they are maintained against; does the map still name both) is a **second**
+check beside it and does go red.
+
+- [x] **It catches the defect it was built for, driven against the real historical file.**
+      `git show 63c5e00:.claude/commands/wo.md` — `wo.md` exactly as WO-1.38 left it — dropped into a
+      copy of the tree in `TMP`: `REVIEW`, naming **all three** claims, at `wo.md:23`, `:24` and `:25`,
+      each against the sentence in the orchestrator that settles it (`:346`, `:399`, `:408`). The
+      middle one is the defect the work order quotes: *"When the completion notification arrives,
+      relay the report in full — … the Acceptance list with each item marked verified / failed /
+      needs-a-human"*.
+- [x] **And in the current shape, not only against a file with no shape.** The same tree with
+      *"**Do not mark an Acceptance list at this stop**"* flipped to *"**Mark the Acceptance list at
+      this stop**"*: `REVIEW`, one claim, `wo.md:35`. That is the plant that matters, because the
+      historical file has no *Second invocation* passage at all and could have been caught by its
+      absence rather than by its instruction.
+- [x] **Legitimate asymmetry stays green, proved four ways.** A `wo.md` with the whole *One work order
+      is two invocations* section replaced by *"the orchestrator's own file governs what each report
+      contains; it is not restated here"* — **PASS**, and the run says the passage was not found
+      rather than going quiet about it. A `wo.md` with the implementer's paragraph deleted and only
+      the verifier's kept, still demanding its Acceptance list — **PASS**, 4 occurrences read. And the
+      pair that settles it: **the same invented sentence**, *"Mark that Acceptance list item by item,
+      and relay the maintenance protocol beside it."*, is **PASS** inside the verifier's passage and
+      **REVIEW** in the implementer's. Same file, same sentence, two answers.
+- [x] **The mechanical half fails loudly, three ways, exit 1 on each.** The orchestrator reworded so
+      *"it marks no Acceptance list"* is gone → `FAIL`, naming the claim left behind and saying the
+      comparison is running one short. The map section stopped naming `wo.md` → `FAIL`. The map
+      section deleted outright → `FAIL`. The map check reads **the section and not the file**, because
+      both paths are quoted elsewhere in that README already.
+- [x] **Every guard was mutated and each is load-bearing on some fixture.** `denies` forced off →
+      `REVIEW` on the **clean** tree (it is what keeps today's file green). The region skip forced off
+      → the in-region fixture goes `REVIEW`. The italic-parenthetical skip forced off → the fixture
+      whose closing note quotes the old demand without a negation goes `REVIEW`. Claim 1's whole-file
+      excuse: *"When it comes back, relay the report in full."* is **PASS** in a file that names the
+      second stop and **REVIEW** in one that does not. The `excuse` word is the one guard that reddens
+      nothing today — it and the region overlap on both of the caller's real demands, which is
+      defence in depth rather than coverage, and it is written down here rather than claimed away.
+- [x] `node tools/wo-sweep.mjs` is **`36 checks · 33 passed · 0 failed · 3 to review`**, exit 0 —
+      **no new REVIEW line**; the three are the standing sensitive-field-name census, the
+      due-date/late-missing census and the mockup-banner one, none of which this work order touches.
+      It was `34 · 31 · 0 · 3` before. `node tools/wo-gate.mjs --audit` is `PASS`, exit 0, with
+      § The files still reading its ten rows — the new `## The pipeline's own files` heading bounds
+      that parse rather than joining it. `node tools/wo-gate.mjs --self-check` is
+      `PASS | 31 of 31 plants were caught`, exit 0.
+- [x] **The recorded count was already stale and is corrected in the same pass.** `tools/README.md`
+      read `33-check` against a tree printing `34` — § 20 landed at WO-5.1 and the line did not move.
+      It reads `36-check` now, with a note saying nothing checks it.
+
+*No 👤 line and no 📆 line. Nothing here renders, nothing reaches a device, and every claim above is
+a command that was run and read. The fixtures are copies of the tracked tree in the session
+scratchpad, driven with `node tools/wo-sweep.mjs` from inside each copy — the repository's own
+`.claude/` files were never edited to make a check fire.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

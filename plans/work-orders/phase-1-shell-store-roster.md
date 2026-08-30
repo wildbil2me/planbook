@@ -3679,7 +3679,7 @@ approximate it, it measures something else and says so.
 
 ## WO-1.40 — the file a human types is outside every fence
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.38 ✅ · **Blocks** nothing by
+**Ship** — · **Status** ✅ DONE — 2026-08-30 · **Size** S · **Depends on** WO-1.38 ✅ · **Blocks** nothing by
 name; it protects every dispatch after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.39
 made. Booked 2026-08-30 by WO-1.38's verifier, which reported it as a thing nobody had claimed, and
@@ -3743,18 +3743,35 @@ taking a pair costs nothing here.
   just happened. Something a person reads before editing the pipeline has to name this file.
 
 **Acceptance**
-- [ ] The harness reads `.claude/commands/wo.md` and goes red or `REVIEW` when it contradicts
+- [x] The harness reads `.claude/commands/wo.md` and goes red or `REVIEW` when it contradicts
       `.claude/agents/work-order-orchestrator.md` about the pipeline's stops — **driven against a
       planted contradiction**, not asserted in a comment.
-- [ ] It gets there by naming the path: `.claude` stays in `wo-sweep.mjs`'s `IGNORE_DIRS` and the
+- [x] It gets there by naming the path: `.claude` stays in `wo-sweep.mjs`'s `IGNORE_DIRS` and the
       file walk is unchanged.
-- [ ] Legitimate asymmetry stays green — proved with a fixture where `wo.md` omits an
+- [x] Legitimate asymmetry stays green — proved with a fixture where `wo.md` omits an
       orchestrator-only rule and nothing fires.
-- [ ] `.claude/commands/` is named in the work-order system's own map of what it watches, so the next
+- [x] `.claude/commands/` is named in the work-order system's own map of what it watches, so the next
       pipeline change has somewhere to look before it edits.
-- [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
+- [x] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
       checks and its self-check is green.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+*(**Two lines closed differently than they were written, 2026-08-30, and both readings are the
+verifier's.** **Line 5's second clause had no referent**: `wo-sweep.mjs` has no plants, no fixtures
+and no `--self-check` — its only flag is `--verbose` — so the tool the work landed in could not
+satisfy the clause, and building one would have been the second harness the brief forbids. It closed
+on the count clause alone, against a baseline measured rather than taken on trust — `git show
+HEAD:tools/wo-sweep.mjs` run from a temp copy prints `34 · 31 · 0 · 3`, the new tree prints 36, so
+`+2` is exactly the two new checks and the 33 recorded in `tools/README.md` **was already stale by
+one** before this work order touched it. What the clause protects — new checks **driven**, not
+asserted — was paid under line 1 with eight drives, the strongest of which is not a plant at all but
+the real historical file: `git show 63c5e00:.claude/commands/wo.md` fires all three claims. `wo-gate
+--self-check` was run and given **no** weight here; it is a different tool's harness. **And claim 1
+is disarmed by its own `unless`** while `wo.md` contains "Second invocation," so the green line reads
+`3 shared claim(s)` and only 2 are live against the current file. The design is right — a file naming
+the second stop has said the thing — but the count misleads a reader who has not read the allowlist.
+Green means* **no unexcused occurrence**, *not* no contradiction: *a contradiction written into a
+sentence containing "not" or "verifier" is filtered and passes silently.)*
 
 ---
 

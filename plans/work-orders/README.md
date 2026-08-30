@@ -364,7 +364,48 @@ work orders, WO-2.2 having been merged into WO-2.1 on 2026-08-06. **Nine rows ro
 per phase, every time a phase gains a work order**: the Phase 1 row read `WO-1.1 … WO-1.19` from the
 day WO-1.20 was booked, and it was fixed here as a check rather than as a row because the next
 booking breaks it again otherwise. A file with work orders and no row is caught too — a file nothing
-indexes is a file nobody reads.
+indexes is a file nobody reads. **The table above is the work this system tracks; the section below
+is the files it is made of**, and those rot the same way.
+
+---
+
+## The pipeline's own files
+
+**Read this before editing the pipeline.** WO-1.38 changed the shape of a dispatch in **six** files
+and wrote five of them; the one it left behind was `.claude/commands/wo.md`, which went on telling a
+human to relay an Acceptance list from the stop that had just stopped producing one. Nothing noticed,
+because nothing was reading it — and *"named nowhere"* is the state this table exists to end.
+
+| File | What it is | What watches it |
+|---|---|---|
+| [work-order-orchestrator.md](../../.claude/agents/work-order-orchestrator.md) | The dispatcher's own instructions: the gates, the route, the brief, the wait, the handoff, and the two reports | Its own line count, self-asserted at the foot of the file — and `tools/wo-sweep.mjs` § 21, as the **reference** half of a pair |
+| [wo.md](../../.claude/commands/wo.md) | **The file a human types** to start a dispatch, and the one file in the pipeline with no agent standing between it and a person | `tools/wo-sweep.mjs` § 21, against the orchestrator's file, on three claims about **the pipeline's stops** |
+| [work-order-implementer.md](../../.claude/agents/work-order-implementer.md) | What a Claude implementer is dispatched with | Nothing |
+| [work-order-verifier.md](../../.claude/agents/work-order-verifier.md) | What the verifier reads, cold, on a fresh session | Nothing |
+| [AGENTS.md](../../AGENTS.md) | What a dispatched agent is told — Codex reads this and not `CLAUDE.md` | Nothing yet. [WO-1.41](phase-1-shell-store-roster.md#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing) is the second pair, against `CLAUDE.md` |
+
+*The scripts are not here — they are in [`tools/README.md`](../../tools/README.md), which is their
+own map and says which of them checks itself.*
+
+**`.claude/` is in `wo-sweep.mjs`'s `IGNORE_DIRS` and stays there.** Every app-code claim in that
+directory is prose *stating the prohibition*, so a walk that reached it would have all twenty
+sections above § 21 reading agent instructions as source. § 21 gets to its two files by **naming
+their paths** instead, which is also why two of the five rows are watched and three are not: a pair
+is a hand-maintained thing and not a directory scan. Adding a row here watches nothing on its own.
+
+**What § 21 checks is contradiction, not symmetry** *(WO-1.40, 2026-08-30)*. These files are
+*supposed* to differ — the caller's file has no business restating the dispatcher's, and demanding
+that it did would force the pipeline to be written out a third time — so **silence is green**, and
+what gets reported is one file giving an instruction the other forbids. It reports it as a `REVIEW`
+rather than a `FAIL`, because on prose only a person can tell a contradiction from narrower telling;
+the mechanical half — whether the claims still match the file they are maintained against, and
+whether this table still names both halves of every pair — is a second check beside it and **does**
+go red. The claim list is in `tools/wo-sweep.mjs` § 21, three entries long, and is meant to be
+amended by hand.
+
+**So: change the shape of the pipeline in one of these files and change it in the others in the same
+sitting.** § 21 is a fence and not a reading — it knows three claims about where a dispatch stops and
+nothing else, and the two rows reading *Nothing* are watched by no one at all.
 
 ---
 
@@ -372,7 +413,7 @@ indexes is a file nobody reads.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 41 | 32 | — | 🔨 IN PROGRESS (reopened seventeen times; last on 2026-08-30) |
+| 1 — Shell, store, roster | 41 | 33 | — | 🔨 IN PROGRESS (reopened seventeen times; last on 2026-08-30) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -381,7 +422,7 @@ indexes is a file nobody reads.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **158** | **129** | **2** | `[████████░░] 82%` |
+| | **158** | **130** | **2** | `[████████░░] 82%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being

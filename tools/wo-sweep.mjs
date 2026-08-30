@@ -2270,6 +2270,261 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 21. the file a human types does not contradict the file that dispatches ══════
+   WO-1.40. `.claude/commands/wo.md` is the file a human types to start a dispatch, and until this
+   section nothing in the repository read it — no work order named it, `--audit` never opened it, and
+   `.claude` sits in IGNORE_DIRS at the head of this file. THAT IGNORE STAYS. § 2's comment is right
+   about what it is for: every app-code claim in that directory is prose *stating the prohibition*,
+   so un-ignoring it would hand all twenty sections above a directory of agent instructions to read
+   as source. This section reaches its two files BY PATH instead. The walk is untouched and nothing
+   else in this file sees them.
+
+   WHAT IS CHECKED IS CONTRADICTION, NOT SYMMETRY, and that is the whole of the design. `wo.md` is
+   the caller's file; `work-order-orchestrator.md` is the dispatcher's. The routing rubric, the Codex
+   probe, `--release`, the wait rule and the maintenance ticks have no business being restated for a
+   human who types one line, and a check that asked the two to agree everywhere would force the
+   pipeline to be written out a third time — where the third copy is the one that rots first. So
+   SILENCE IS ALWAYS GREEN HERE. What is reported is a positive instruction in one file that the
+   other file positively forbids, and nothing else.
+
+   AND IT IS REPORTED AS A `REVIEW`. Two documents in prose cannot be shown to contradict each other
+   by a grep; what a grep can do is put the two sentences side by side with their line numbers and
+   stop guessing, which is this file's own definition of REVIEW at its head — "greppable evidence
+   that needs a human decision". A `FAIL` was refused for the reason WO-1.40's first trap gives:
+   `wo.md` is short prose that gets rewritten wholesale, and an instrument that reddens a legitimate
+   rewrite is deleted within two dispatches and gone at the moment it is right. The line-count
+   self-assertion the orchestrator's own file carries does not transfer for the same reason: that
+   file grows by accretion, this one does not.
+
+   THE MECHANICAL HALF IS A SEPARATE CHECK AND IT DOES FAIL, LOUDLY. Whether the claims below still
+   describe the dispatcher's file is not a prose judgement — it is a grep for a sentence — so the
+   first check of the pair reddens when a claim's anchor stops matching, when either file is not
+   where this expects it, or when the map that points a person here stops naming them. Two checks per
+   pair rather than one, because a rotted claim list masking a live contradiction would be the same
+   green-from-a-distance failure § 11 guards against, one document up.
+
+   EVERY ANCHOR THAT MUST MATCH LIVES IN THE FILE THAT GROWS BY ACCRETION. The `settled` patterns are
+   all in `work-order-orchestrator.md`, which is added to and rarely rewritten, and a change to one
+   of them IS the pipeline change this fence exists to notice — so a FAIL there is the instrument
+   working, not crying wolf. The file that gets rewritten wholesale carries NO pattern that has to
+   match: its tokens may all be absent, and absent is green.
+
+   THE CLAIM LIST IS HAND-MAINTAINED AND HAS TO BE. The set of rules two prose documents are both
+   meant to carry cannot be inferred from the prose — any heuristic over them both misses rules and
+   invents them — so it is written out below, one entry per claim, with the sentence that settles it
+   in the reference file. It is a thing to keep in step; it is also the only part small enough to be
+   kept.
+
+   ALLOWLIST, so the next reader does not re-derive it:
+   - AN EMPTY GREP IS THE GREEN STATE HERE, which is the opposite of § 11's rule and is deliberate.
+     A claim whose token appears nowhere in the caller's file is that file telling less, which is
+     `wo.md`'s job — WO-1.38's verifier called the same shape "narrower telling, not drift". What
+     stops that from being a check over nothing is that the claim's OTHER half is anchored in the
+     reference file and does FAIL when it moves.
+   - POLARITY IS READ OVER THE SENTENCE, not a character window. The neighbour of an instruction in
+     both these files is very often the prohibition it is an exception to, and a window reaches into
+     it. A sentence ends at `.`, `;`, `!` or `?` followed by whitespace or by a closing mark — `**`
+     and `)` included, because a bolded sentence ends `.**` and this repo writes a great many of
+     them — or at a blank line.
+   - A SENTENCE THAT STATES THE PROHIBITION IS NOT AN INSTRUCTION TO BREAK IT. `no`, `not`, `never`,
+     `nothing` and `without` are read as the file agreeing, and they are read first, before the
+     instruction words. "Do not mark an Acceptance list at this stop" holds both readings and only
+     one of them is right.
+   - A SENTENCE THAT NAMES THE OTHER STOP IS TALKING ABOUT THE OTHER STOP. `verifier` is the excuse
+     word for this pair, because every claim below is about WHICH stop a thing belongs to, and a
+     sentence that says which stop it means has answered the question this section asks.
+   - THE ITALIC PARENTHETICAL BLOCKS ARE SKIPPED — `*(` … `)*` at the start and end of a line, this
+     repo's idiom for a note ABOUT a rule rather than a statement of one. `wo.md` ends with one that
+     quotes the very defect WO-1.40 was booked over, in the words the defect used. § 2's comment is
+     the same lesson one directory over: prose stating a rule reads exactly like the rule.
+   - THE MAP IS ASSERTED, not assumed. WO-1.40's fourth trap — a fence nobody is pointed at is the
+     same defect one level up — so `plans/work-orders/README.md` § The files has to name both halves
+     of every pair, and this reddens when it stops.
+
+   STILL A WIDENING RATHER THAN A CLOSURE. This finds a contradiction it has been told the shape of.
+   Claim 1 names one instruction — the single-return one that was actually in the file — and a
+   rewrite that invents new wording for the same mistake escapes it; claims 2 and 3 are scoped by
+   REGION rather than by phrase and are the ones that survive a rewrite, which is why there are two
+   of that kind and one of the other. Nothing here reads meaning. A person still has to read both
+   files when the pipeline moves, and the note at the foot of `wo.md` still says so. */
+
+{
+  // A pair is two files, one subject they both speak about, and a hand-maintained list of the claims
+  // they share. It is a LIST because WO-1.41 adds a second entry — `AGENTS.md` against `CLAUDE.md`,
+  // which needs no path trick because the walk already reaches both — and a single hard-coded pair
+  // would cost that work order a rewrite of everything below.
+  //
+  // Fields, once, here rather than at each use:
+  //   subject     what the two files are being compared ABOUT. It names both checks.
+  //   reference   the file the claims are maintained against. Every `settled` pattern is in it, and
+  //               every one of them must match or the first check reddens.
+  //   against     the file that must not contradict it. Nothing here is required to match.
+  //   mappedIn    the section a person is pointed at this pair from before they edit either
+  //               file, as a file and the heading of a section IN it. The heading is half of
+  //               it and not a nicety: both these paths appear in that README already, in the
+  //               running-order row that booked this check, so a search of the whole file
+  //               passes on a mention nobody could act on.
+  //   regions     named passages of `against` where a claim's instruction is CORRECT.
+  //   claims      the hand-maintained list. One entry per shared claim:
+  //                 claim       the claim in words, printed in the REVIEW
+  //                 settled     the sentence in `reference` that settles it
+  //                 token       what to look for in `against` (global)
+  //                 denies      sentence words that read as `against` agreeing
+  //                 excuse      sentence words that put the sentence at the other stop
+  //                 demands     sentence words that make a mention an instruction
+  //                 confinedTo  region name where the instruction is correct
+  //                 unless      whole-file text that excuses every occurrence
+  const DRIFT_PAIRS = [{
+    subject: "the pipeline's stops",
+    reference: '.claude/agents/work-order-orchestrator.md',
+    against: '.claude/commands/wo.md',
+    mappedIn: { file: 'plans/work-orders/README.md', heading: "## The pipeline's own files" },
+    regions: [{
+      name: "the verifier's stop",
+      from: /^\*\*Second invocation/m,
+      to: /^For `route only`/m,
+    }],
+    claims: [
+      {
+        claim: 'a dispatch returns twice and the second return is a separate session, so there is no one report to relay',
+        settled: /\*\*This run ends when the implementer returns\.\*\*/,
+        token: /relay the report in full/gi,
+        denies: /\b(no|not|never|nothing|without)\b/i,
+        demands: /\b(relay|relays)\b/i,
+        // The single-return instruction is only wrong while the file knows of one stop. A caller's
+        // file that names the second one has said the thing this claim is about, wherever it then
+        // asks for a report.
+        unless: /\bsecond invocation\b|\b(?:fresh|new|second)\s+session\b|\brun twice\b/i,
+      },
+      {
+        claim: "the Acceptance list is the verifier's, and nothing marks one when the implementer returns",
+        settled: /it marks no Acceptance list/,
+        token: /Acceptance list/g,
+        denies: /\b(no|not|never|nothing|without)\b/i,
+        excuse: /\bverifier\b/i,
+        demands: /\b(relay|relays|mark|marks|marked|marking|summari[sz]e|include|list|full)\b/i,
+        confinedTo: "the verifier's stop",
+      },
+      {
+        claim: 'the maintenance protocol belongs to the verifier\'s report, not to the implementer\'s return',
+        settled: /the maintenance protocol split into/,
+        token: /maintenance protocol/g,
+        denies: /\b(no|not|never|nothing|without)\b/i,
+        excuse: /\bverifier\b/i,
+        demands: /\b(relay|relays|owed|apply|applied|split|report)\b/i,
+        confinedTo: "the verifier's stop",
+      },
+    ],
+  }];
+
+  const lineAt = (text, index) => text.slice(0, index).split('\n').length;
+
+  // Every literal space in a `settled`, `token`, `unless` or region pattern above means WHITESPACE,
+  // newline included. Both files are hard-wrapped near 100 columns and neither wraps in the same
+  // place twice: the sentence that settles claim 2 sits as "it marks no\nAcceptance list"
+  // today and as one line the next time a word is added in front of it. A claim a line wrap can
+  // hide is a claim nothing makes, and both anchors below went red exactly that way on first run.
+  const wrapped = re => new RegExp(re.source.replace(/ /g, '\\s+'), re.flags);
+
+  // A sentence ends at `.`, `;`, `!` or `?` followed by whitespace or a closing mark, or at a blank
+  // line. The closing marks matter more here than they look: half the sentences in both files end
+  // `.**`, and a splitter that misses those runs three instructions together and reads the negation
+  // in the first as covering the third.
+  const SENTENCE_END = /[.;!?](?=[\s*_"'’)\]]|$)|\n\s*\n/g;
+  function sentenceAround(text, index) {
+    let start = 0;
+    for (const m of text.matchAll(SENTENCE_END)) {
+      if (m.index >= index) break;
+      start = m.index + m[0].length;
+    }
+    let end = text.length;
+    for (const m of text.matchAll(SENTENCE_END)) {
+      if (m.index >= index) { end = m.index + 1; break; }
+    }
+    return text.slice(start, end).replace(/\s+/g, ' ').trim();
+  }
+
+  const within = (ranges, i) => ranges.some(([a, b]) => i >= a && i < b);
+  const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
+
+  for (const pair of DRIFT_PAIRS) {
+    const anchorName = `${pair.subject} — the shared-claim list still matches ${pair.reference}`;
+    const compareName = `${pair.subject} — ${pair.against} does not contradict ${pair.reference}`;
+    const named = [pair.reference, pair.against, pair.mappedIn.file]
+      .map(r => ({ rel: r, abs: path.join(REPO, ...r.split('/')) }));
+    const missing = named.filter(f => !fs.existsSync(f.abs));
+
+    if (missing.length) {
+      // Reached by name because `.claude` is in IGNORE_DIRS by design, so a moved or renamed file
+      // cannot be found by the walk the way every other section's subject can. It FAILs for § 11's
+      // reason: a pair this cannot open is a pair nothing is comparing, which reads green from a
+      // distance and is not.
+      const detail = `${missing.map(f => f.rel).join(', ')} is not where tools/wo-sweep.mjs § 21 expects it — this section names its paths rather than walking to them (.claude is in IGNORE_DIRS on purpose), so nothing is comparing ${pair.reference} and ${pair.against} at all. Restore the file or re-point the pair`;
+      check(anchorName, false, detail);
+      check(compareName, false, detail);
+      continue;
+    }
+
+    const refText = fs.readFileSync(named[0].abs, 'utf8');
+    const againstText = fs.readFileSync(named[1].abs, 'utf8');
+    // The MAP SECTION and not the whole file — see the field note above.
+    const wholeMap = fs.readFileSync(named[2].abs, 'utf8');
+    const mapFrom = wholeMap.indexOf(pair.mappedIn.heading);
+    const mapTo = mapFrom < 0 ? -1 : wholeMap.indexOf('\n## ', mapFrom + 1);
+    const mapText = mapFrom < 0 ? '' : wholeMap.slice(mapFrom, mapTo < 0 ? undefined : mapTo);
+
+    /* the mechanical half — anchors, and the map that points a person here */
+    const faults = [];
+    const settledAt = new Map();
+    for (const c of pair.claims) {
+      const m = wrapped(c.settled).exec(refText);
+      if (m) settledAt.set(c, lineAt(refText, m.index));
+      else faults.push(`${pair.reference} no longer says "${c.settled.source}" — the claim "${c.claim}" is maintained against that sentence, so either the rule moved (and ${pair.against} wants reading in the same sitting, which is the whole point of this section) or it was reworded and this entry needs re-anchoring. The comparison below is running one claim short`);
+    }
+    const unmapped = [pair.reference, pair.against].filter(f => !mapText.includes(f));
+    if (mapFrom < 0) faults.push(`${pair.mappedIn.file} has no "${pair.mappedIn.heading}" section — that section is where a person is pointed at this pair before editing either half, and a fence nobody is pointed at is WO-1.40's defect one level up. Restore it, or re-point this pair at wherever it went`);
+    else if (unmapped.length) faults.push(`${pair.mappedIn.file} ${pair.mappedIn.heading} does not name ${unmapped.join(' or ')} — a fence nobody is pointed at is WO-1.40's defect one level up, and the whole file is not enough: both paths are quoted elsewhere in it already, in prose nobody edits the pipeline from`);
+    check(anchorName, !faults.length, faults.length ? faults.join(' · ')
+      : `${pair.claims.length} shared claim(s), each anchored to a sentence in ${pair.reference} (line(s) ${pair.claims.map(c => settledAt.get(c)).join(', ')}), and ${pair.mappedIn.file} ${pair.mappedIn.heading} names both files`);
+
+    /* the prose half — a positive instruction the other file positively forbids */
+    const regions = new Map();
+    for (const r of pair.regions || []) {
+      const m = wrapped(r.from).exec(againstText);
+      if (!m) { regions.set(r.name, null); continue; }
+      const after = againstText.slice(m.index + m[0].length);
+      const end = r.to ? wrapped(r.to).exec(after) : null;
+      regions.set(r.name, [m.index, end ? m.index + m[0].length + end.index : againstText.length]);
+    }
+    // The italic parentheticals, this repo's idiom for prose ABOUT a rule. See the allowlist.
+    const retrospect = [...againstText.matchAll(/^\*\([\s\S]*?\)\*$/gm)].map(m => [m.index, m.index + m[0].length]);
+
+    const found = [];
+    let occurrences = 0;
+    for (const c of pair.claims) {
+      for (const m of againstText.matchAll(wrapped(c.token))) {
+        occurrences++;
+        if (within(retrospect, m.index)) continue;
+        const sentence = sentenceAround(againstText, m.index);
+        if (c.denies && c.denies.test(sentence)) continue;
+        if (c.excuse && c.excuse.test(sentence)) continue;
+        if (c.unless && wrapped(c.unless).test(againstText)) continue;
+        const region = c.confinedTo ? regions.get(c.confinedTo) : null;
+        if (region && within([region], m.index)) continue;
+        if (c.demands && !c.demands.test(sentence)) continue;
+        found.push({ claim: c, at: lineAt(againstText, m.index), sentence });
+      }
+    }
+
+    const lost = [...regions].filter(([, v]) => !v).map(([k]) => k);
+    if (found.length) {
+      review(compareName, `${found.map(f => `${pair.against}:${f.at} "${clip(f.sentence)}" against ${pair.reference}:${settledAt.get(f.claim) || '?'}, which settles that ${f.claim.claim}`).join(' · ')} — read both and decide. This is evidence, not a verdict: the two files are SUPPOSED to differ, and only a contradiction about ${pair.subject} is a defect. If it is one, the caller's file is the one to change`);
+    } else {
+      check(compareName, true, `${pair.claims.length} shared claim(s) about ${pair.subject}, ${occurrences} occurrence(s) read in ${pair.against}, none of them an instruction ${pair.reference} forbids${lost.length ? ` — but the passage "${lost.join('", "')}" was not found, so every occurrence was read as unscoped` : ''}; ${retrospect.length} italic parenthetical(s) and ${(pair.regions || []).length - lost.length} named passage(s) excluded, and silence is the green state — this pair may tell less than the other, never the opposite`);
+    }
+  }
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');
