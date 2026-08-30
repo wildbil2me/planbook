@@ -837,7 +837,7 @@ characters the body does.
 
 ## WO-5.9 — The hitless draft is written but never driven
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.4
+**Ship** — · **Status** ✅ DONE — 2026-08-30 · **Size** S · **Depends on** WO-5.4
 
 **Why it exists.** `recordHandoff()` writes `ruleId: hit ? hit.ruleId : ''`, and **the harness has
 never walked the false branch.** Both contacts `tools/verify/contact-log.mjs` writes are Ada's, and
@@ -881,14 +881,31 @@ why this is worth an hour rather than a note:
   repaint reached but not asserted.
 
 **Acceptance**
-- [ ] A handoff for a student with no hit in either direction appends exactly one entry, and its
-      `ruleId` is the empty string.
-- [ ] That contact suppresses nothing on a following signals pass — proved against a record the app
-      wrote, not a planted one.
-- [ ] Both new claims are mutation-proved: restoring `hit.ruleId` without the guard, and inventing a
-      rule id in the else branch, each turn a named check red.
-- [ ] A handoff made from the student record shows in that screen's history immediately, without a
-      reload.
+- [x] A handoff for a student with no hit in either direction appends exactly one entry, and its
+      `ruleId` is the empty string. *(A third student — Ben plus one guardian with an address, so
+      the draft becomes ready — driven through the student record's own door. The engine fired* `[]`
+      *for her at the tap, the draft opened* ready *on the* concern *tone, one entry was written
+      (*`rev 278 → 279`*), and the id is asserted as an* **own property**, `typeof === 'string'`
+      *and* `=== ''`*, so absent, undefined and invented fail differently.)*
+- [x] That contact suppresses nothing on a following signals pass — proved against a record the app
+      wrote, not a planted one. *(The concern list is identical either side of the write —*
+      `{"rows":1,"drawn":1,"held":1,"hers":0,"hersHeld":0}` *— with* `held > 0` *asserted so the
+      claim is made about a list that is suppressing something. And* `lastContactAbout()` *is asked
+      with the id the WRITER produced and hands back* `null`*: the loop*
+      `cooldown-quiet.mjs` *cannot close, closed.)*
+- [x] Both new claims are mutation-proved: restoring `hit.ruleId` without the guard, and inventing a
+      rule id in the else branch, each turn a named check red. *(Two real runs.* **Guard dropped**:
+      `1284 checks · 1282 passed · 2 failed`*, exit 1 — the handler throws, both new checks redden,
+      and* `pressed.had` *is still true, which is the silent loss in one reading.* **Id invented**
+      (`'manual'`): `1284 checks · 1283 passed · 1 failed`*, exit 1 — both conjuncts catch it, and
+      the one that names the cost is the READER:* `{"on":"2026-08-30","audience":"guardian"}` *where
+      a correct build hands back* `null`*. Each
+      was reverted by hand the moment it went red, and* `grep -rn MUTATION` *was run over the tree
+      after the second revert.)*
+- [x] A handoff made from the student record shows in that screen's history immediately, without a
+      reload. *(One row on the card, the empty sentence gone, the record still open on her — and a
+      mark set on* `window` *before the press still there after it, which is the only thing here
+      that can tell a repaint from a reload.)*
 
 **Traps** — **The fixture's second student is already the right student and cannot be used as he
 stands.** Ben exists in `contact-log.mjs` solely so the empty-history sentence can be compared
@@ -906,3 +923,22 @@ straight past it (`TESTING.md` § WO-5.3).
 Third: this adds a check to `tools/verify/contact-log.mjs`, so `tools/README.md`'s `check()`
 call-site count moves and `wo-sweep.mjs` compares against it. Update the count in the same sitting —
 the WO-3.26 scar, where a green tree turned the sweep red on work being *done*.
+
+*(**All three held.** The fixture took a **third student** rather than running after the empty
+sentence, and the reason is written at the point of departure in `tools/verify/contact-log.mjs`
+together with a second one the Traps line does not name: three checks above it count contacts
+rather than name them — `entries === 2`, `inDoc === 2` — so the block runs last regardless of which
+student it uses, and a contact written earlier would move numbers belonging to other claims. Her id
+keeps the `s_wo54` prefix because the section's cleanup sweeps by exactly that string. The draft is
+opened by clicking the record's own button, never through the seam. And the count moved 1267 → 1269
+in the same sitting, with a paragraph beside it —* **which also records that 1267 arrived with
+WO-5.4's seventeen sites and no paragraph at all**, *the same bookkeeping a dead dispatch lost at
+WO-5.1.)*
+
+**Where this stands.** ✅ on 2026-08-30, all four Acceptance lines closed — **no 👤 and no 📆**, and
+nothing here could want either: the work order writes no app code, adds no control and opens no
+stylesheet. `verify-shell.mjs` `1284 checks · 1284 passed · 0 failed · 0 skipped`, 38,923 lines,
+429s, exit 0 (before-run on the same machine: `1282 · 1282 · 0 · 0`, 38,751 lines, 429s);
+`wo-sweep.mjs` `34 checks · 31 passed · 0 failed · 3 to review`, all three reviews pre-existing and
+byte-identical to the before-run's. `TESTING.md` § WO-5.9 carries the readings and both mutation
+runs.

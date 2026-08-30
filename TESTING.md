@@ -8219,6 +8219,86 @@ only state in which it exists to be measured, since an untouched draft rebuilds 
 
 ---
 
+### WO-5.9 — The hitless draft is written but never driven
+
+**What this adds.** No app code at all — two checks and one more student in a fixture. What it
+closes is a hole of a shape that survives a green run indefinitely: **the two halves of one contract
+were each tested against a hand-made counterpart and had never been introduced to each other.**
+`recordHandoff()` writes `ruleId: hit ? hit.ruleId : ''`, and the false branch had never been
+walked, because both contacts `tools/verify/contact-log.mjs` presses are Ada's and Ada trips two
+concern rules. `tools/verify/cooldown-quiet.mjs` proves that a `contact` with no `ruleId` silences
+nothing — off a record its own fixture hand-writes. So the READER was proved to tolerate absence and
+the WRITER was never proved to produce it.
+
+**The branch is not an edge case.** The student record's door opens the send flow for *any* student,
+so a teacher writing home about a child nothing flagged takes it on her first use of the feature.
+
+**A third student rather than the second one**, which is the choice the work order's Traps line
+leaves open and asks to be justified at the point of departure. Ben exists in that fixture for one
+sentence — his empty history is what Ada's projected history is compared against character for
+character — and writing a contact for him populates it and reddens that check for a reason that
+looks nothing like the reason. Cara is Ben plus one guardian with an address, which is the only
+thing a draft needs to become ready. **The block runs last anyway**, for a second reason the Traps
+line does not name: three checks above it count contacts rather than name them (`entries === 2`,
+`inDoc === 2`), so a contact written earlier would move numbers belonging to other claims. Her id
+keeps the `s_wo54` prefix, because the section's cleanup sweeps students, scores and log entries by
+exactly that string.
+
+**The premise is measured, not assumed.** *No rule has fired for her* is the whole basis of the
+check, so the engine is asked for her hits and the answer is printed either way — WO-1.33's lesson,
+where the student booked as firing no rules turned out to fire two. It printed `[]`.
+
+**And the door is driven rather than asked.** There is no signal card for her, so the record's door
+is the only way in — and it is itself the thing under test: it threw a `ReferenceError` once
+(§ WO-5.3 above), which a check calling `openOutreach()` through the seam would have walked straight
+past.
+
+- [x] A handoff for a student with no hit in either direction appends exactly one entry, and its
+      `ruleId` is the empty string. *(Driven from the student record, the only door there is for
+      her. The engine fired* `[]` *for her at the moment of the tap; the draft opened* ready *and on
+      the* concern *tone, which is what a hitless student gets; one entry was written,* `rev 278 →
+      279`*, and its* `ruleId` *is asserted three ways —* **an own property**, `typeof === 'string'`,
+      *and equal to* `''` *— so absent, undefined and invented are three different failures rather
+      than one.)*
+- [x] That contact suppresses nothing on a following signals pass — proved against a record the app
+      wrote, not a planted one. *(Two assertions, and the second is the one that bites.* **The
+      list**: `signalsModel()` *is read either side of the write and is identical —*
+      `{"rows":1,"drawn":1,"held":1,"hers":0,"hersHeld":0}` *both times — with* `held > 0` *asserted
+      so that "it suppressed nothing" is a statement about a list that is suppressing something at
+      that moment rather than about an empty one.* **The reader**: `lastContactAbout()` *is asked
+      with the id the WRITER produced, on the record the APP wrote, and hands back* `null`*. That is
+      the loop* `cooldown-quiet.mjs` *structurally cannot close.)*
+- [x] Both new claims are mutation-proved: restoring `hit.ruleId` without the guard, and inventing a
+      rule id in the else branch, each turn a named check red. *(Two real runs, each reverted by
+      hand the moment it went red.* **Guard dropped** — `ruleId: hit.ruleId` *—*
+      `1284 checks · 1282 passed · 2 failed`*, exit 1: the handler throws, both new checks go red,
+      and the evidence line still reads* `pressed.had = true` *— the anchor kept its* `href`*, so the
+      mail app opens and nothing is logged.* **Id invented** — `: 'manual'` *—*
+      `1284 checks · 1283 passed · 1 failed`*, exit 1. Both conjuncts catch it —* `ruleId === ''`
+      *reddens on* `'manual'` *as it would on a typo — but the one that names the cost is the
+      reader:* `lastContactAbout()` *hands back* `{"on":"2026-08-30","audience":"guardian"}` *where a
+      correct build hands back* `null`*.)*
+- [x] A handoff made from the student record shows in that screen's history immediately, without a
+      reload. *(The repaint on this screen had been reached and never asserted; Acceptance line 1 of
+      WO-5.4 covers the signal card only. One row on the card, the empty sentence gone, the record
+      still open on her —* **and a mark set on `window` before the press still there afterwards**,
+      *which is the only thing in this section that can tell a repaint from a reload, both of which
+      leave one correct row on the card.)*
+
+**Where this stands.** ✅ on 2026-08-30: all four Acceptance lines closed, **no 👤 and no 📆** — this
+work order touches no screen, adds no control, opens no stylesheet and writes no app code, so there
+is nothing on it a thumb could read that a headless browser cannot. Both tools green on the
+delivered tree: `verify-shell.mjs` at `1284 checks · 1284 passed · 0 failed · 0 skipped`,
+38,923 lines, 30.3 lines per check, 429s, exit 0; and `wo-sweep.mjs` at
+`34 checks · 31 passed · 0 failed · 3 to review`, all three reviews pre-existing and byte-identical
+to the before-run's. The before-run on the same machine printed
+`1282 checks · 1282 passed · 0 failed · 0 skipped`, 38,751 lines, 429s, exit 0. The two checks live
+inside § *"the contact log and the history over it (WO-5.4)"* rather than in a section of their own
+— a branch of a writer that section already drives, on a fixture it already installs — which is why
+`tools/README.md`'s call-site count moved 1267 → 1269 and not by a section's worth.
+
+---
+
 ## Phase 6 — Calendar & the glance page
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*

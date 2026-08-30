@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The contact log's two halves are introduced to each other — 2026-08-30
+
+**Write home about a student no rule has flagged, and nothing had ever proved the app writes it down
+correctly.** `recordHandoff()` records an empty rule id when there is no signal behind the message,
+and the harness had never walked that branch — both contacts the fixture presses belong to a student
+who trips two concern rules, so the guard was true every time it was read. The branch is not an edge
+case: the student record's door opens the send flow for **any** student, so a teacher writing home
+about a child nothing flagged takes it on her first use of the feature.
+
+**The reader was proved and the writer never was.** A separate check already showed that a contact
+carrying no rule id silences nothing — but off a record its own fixture hand-writes. That proves the
+reader tolerates absence; nothing proved the writer produces it. Two halves of one contract, each
+tested against a hand-made counterpart and never introduced to each other, which is the shape of gap
+that survives a green run indefinitely. The new check asks the cooldown with the id **the writer
+actually produced**, on a record **the app itself wrote**, and drives the record's own button to get
+there rather than calling the flow through a seam — that door threw a `ReferenceError` once already.
+The premise is measured rather than assumed: the engine is asked for her hits and prints the answer
+whether the check passes or fails, which is WO-1.33's lesson applied before it could bite again.
+
+**Two regressions that used to pass now go red, in opposite directions.** Dropping the guard loses
+the entry altogether — and the mail app still opens, so the teacher writes and sends and nothing is
+logged, a silent loss the evidence line now names. Inventing a rule id instead writes a contact that
+would silence a rule nobody wrote about. Both were run for real and reverted by hand. A handoff made
+from the student record is also asserted to appear on that screen immediately, which had been reached
+by an earlier work order and never checked.
+
 ### The app remembers who you have written to — 2026-08-29
 
 **Hand a message to your mail app and Planbook writes it down.** Who it went to, the subject, the

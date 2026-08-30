@@ -11,6 +11,12 @@
  * re-scoping WO-5.4 owed that section. It is also the only place in the harness where the handoff
  * link is actually pressed.
  *
+ * AND SINCE WO-5.9, BOTH BRANCHES OF THE ONE FIELD THAT DECIDES WHETHER A CONTACT SILENCES ANYTHING.
+ * `cooldown-quiet.mjs` proves the READER tolerates a contact with no `ruleId`, off a record its own
+ * fixture hand-writes; the two checks at the foot of this file prove the WRITER produces one, on a
+ * record the app wrote, and then hand that record back to the reader. Each half was tested against a
+ * hand-made counterpart for a fortnight and the two had never been introduced.
+ *
  * PRESSING IT IS SAFE HERE, AND THE ONE LINE THAT MAKES IT SAFE IS THE HARNESS'S OWN. Following a
  * `mailto:` hands the page to the operating system, which is the thing a harness must never do — so
  * this section installs a capture-phase listener OF ITS OWN that calls preventDefault(), clicks, and
@@ -31,7 +37,7 @@ const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
 /*
  * ───────── the contact log and the history over it (WO-5.4) ─────────
  *
- * TWO STUDENTS, AND THE SECOND ONE EXISTS FOR ONE SENTENCE:
+ * THREE STUDENTS, AND THE SECOND AND THIRD EACH EXIST FOR ONE SENTENCE:
  *
  *   Ada   one guardian with an address, three pieces of work marked missing and two halves of a
  *         hundred — 43.5%, which is under the 65% line — so she trips `grade-below` AND
@@ -41,6 +47,11 @@ const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
  *         sentence is what Ada's card under a projector is compared against, character for
  *         character — if the two ever differ, the count has arrived by wording instead of by
  *         number (Acceptance line 5).
+ *   Cara  Ben plus one guardian with an address, added by WO-5.9 for the one branch of
+ *         recordHandoff() nothing had ever driven: a draft for a student NO RULE HAS FIRED FOR,
+ *         which writes `ruleId: ''` and must silence nothing. She is a third student rather than
+ *         Ben himself because writing a contact for him populates the history his own sentence is
+ *         measured on; the block at the foot of this file says so at the point of departure.
  *
  * THE CLASS HAS NO ATTENDANCE RECORDS AT ALL, deliberately, and `cooldown-quiet.mjs` gives the
  * reason: with meetings on the ledger the praise `attendance-window` rule fires at 100% for anyone
@@ -54,11 +65,16 @@ if (!seam) {
 } else {
   const CLS = 'c_wo54';
   const TERM = 'tm_wo54';
-  const ADA = 's_wo54ada', BEN = 's_wo54ben';
+  /* CARA IS WO-5.9's AND SHE KEEPS THE `s_wo54` PREFIX ON PURPOSE: the cleanup at the foot of this
+     section sweeps students, scores and log entries by that prefix, so a third student named for
+     the work order that added her would have to be swept by a second rule that nobody would
+     remember to write. The block that uses her says why she is a third student and not Ben. */
+  const ADA = 's_wo54ada', BEN = 's_wo54ben', CARA = 's_wo54cara';
   const CLASS_NAME = 'WO-5.4 Contact log';
   const TEACHER = 'Wo54Teacher Name';
   const TEACHER_EMAIL = 'wo54teacher@example.invalid';
   const G1_EMAIL = 'wo54guardian@example.invalid';
+  const G2_EMAIL = 'wo59guardian@example.invalid';
   /* Strings nothing else in this repository contains, so "is this on the page" is a search over
      everything that was rendered rather than an inspection of the fields somebody remembered to
      look at — WO-6.3's technique, borrowed here as the two sections above it borrow it. */
@@ -137,9 +153,19 @@ if (!seam) {
         counselor:{ name:'', email:'' }, notes:'' });
       doc.students.push({ id:'${BEN}', first:'Ben', last:'Wo54Never', nickname:'',
         email:'', phone:'', phone2:'', guardians:[], counselor:{ name:'', email:'' }, notes:'' });
+      /* THE THIRD STUDENT (WO-5.9): Ben plus one guardian with an address, and nothing else. The
+         address is the only thing she has that he does not, because a draft with no addressable
+         recipient never becomes ready and the handoff under test cannot be reached. Nothing scored,
+         nothing marked and no attendance in the class at all, so no rule fires for her in either
+         direction — which is the branch of recordHandoff() nobody has ever walked. */
+      doc.students.push({ id:'${CARA}', first:'Cara', last:'Wo59Unflagged', nickname:'',
+        email:'', phone:'', phone2:'',
+        guardians:[{ name:'Wo59Guardian One', relation:'Mother', email:'${G2_EMAIL}',
+          phone:'', phone2:'', language:'en', preferred:true }],
+        counselor:{ name:'', email:'' }, notes:'' });
 
       doc.classes.push({ id:'${CLS}', name:'${CLASS_NAME}', archived:false,
-        roster:['${ADA}','${BEN}'], letterScale:null,
+        roster:['${ADA}','${BEN}','${CARA}'], letterScale:null,
         terms:[{ id:'${TERM}', label:'WO-5.4 Term', start:back(40),
           end:window.planbook.calendar.shiftDays(today, 40) }],
         categories:[{ id:'k_wo54', name:'All work', weight:100 }]});
@@ -182,11 +208,13 @@ if (!seam) {
         return String(p.id).indexOf('s_wo54') === 0; }).length,
       templates:(now.templates || []).length,
       contacts:(now.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
-  check('WO-5.4 fixture: one class, two students — one with a guardian who has an address, three '
+  check('WO-5.4 fixture: one class, three students — one with a guardian who has an address, three '
     + 'pieces of work marked missing and a grade under the line, so she trips TWO concern rules; '
     + 'one with nothing at all, whose empty history is what a projected history is compared '
-    + 'against — and one guardian template every merge field of which resolves',
-    !!plant && plant.ok === true && plant.students === 2 && plant.templates === 1
+    + 'against; and one who is that second student plus an address, so a draft about her is ready '
+    + 'and no rule has fired (WO-5.9) — and one guardian template every merge field of which '
+    + 'resolves',
+    !!plant && plant.ok === true && plant.students === 3 && plant.templates === 1
       && plant.contacts === 0,
     plant && plant.ok ? plant.students + ' student(s), ' + plant.templates + ' template(s), '
       + plant.contacts + ' contact(s) in the log to start with' : JSON.stringify(plant));
@@ -642,6 +670,150 @@ if (!seam) {
         && /visibleContactsFor/.test(readOnly.imports),
       'its imports are ' + JSON.stringify(readOnly.imports.slice(0, 200)));
 
+    /* ── THE HITLESS DRAFT, DRIVEN (WO-5.9) ──
+
+       `recordHandoff()` writes `ruleId: hit ? hit.ruleId : ''`, and nothing above this line has
+       ever walked the false branch: both contacts pressed so far are Ada's, and Ada trips two
+       concern rules, so `hit` is truthy every time it is read. The consequence of an empty id is
+       proved in `cooldown-quiet.mjs` — but off a record that fixture hand-writes, so the READER is
+       proved to tolerate absence and the WRITER has never been proved to produce it. These two
+       checks introduce the halves to each other, on a record the app itself wrote.
+
+       A THIRD STUDENT RATHER THAN BEN, which is the choice this section's Traps line leaves open.
+       Ben's whole job is the empty sentence the check above compares Ada's projected card against
+       character for character, and a contact written for him populates his history and reddens that
+       check for a reason that looks nothing like the reason. Cara is Ben plus one guardian with an
+       address — the only thing a draft needs to become ready — so no rule fires for her in either
+       direction and Ben's sentence is still nobody's but his.
+
+       AND IT RUNS LAST ANYWAY, for a second reason the Traps line does not name: three checks above
+       count contacts rather than name them — the blocked draft's `entries === 2`, the projector's
+       `inDoc === 2` — so a contact written earlier would move numbers that belong to other claims.
+       Written here it moves nothing above it, and the cleanup below takes it off with the rest,
+       because her id carries the same `s_wo54` prefix every one of those filters is written on.
+
+       THE DOOR IS THE STUDENT RECORD'S, AND IT IS DRIVEN RATHER THAN ASKED. No rule fired, so there
+       is no signal card to open: the record's door is the only way in and is itself the thing under
+       test. It threw a ReferenceError once (`TESTING.md` § WO-5.3), which a check that called
+       openOutreach() through the seam would have walked straight past. */
+    await evalJs(`(function(){
+      document.querySelectorAll('.modal-overlay:not(.hidden) [data-modal-close]').forEach(
+        function(b){ b.click(); });
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    if ((await onView()) !== 'homeView') await goHome();
+    await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    /* The register segment by name, exactly as the block above does it and for its reason:
+       `openClassScreen` is a remembered preference and the row carrying the door is only there. */
+    await clickSel('#classView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#classView [data-student-detail="' + CARA + '"]');
+    await new Promise(r => setTimeout(r, 350));
+    await evalJs(`(function(){
+      document.querySelector('#detailActions [data-outreach-draft]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 350));
+    const hitless = await evalJs(`(async function(){
+      ${PRESS}
+      var s = window.planbook.store, v = window.planbook.signalsView;
+      var cls = window.planbook.classes.getSelectedClass();
+      var termId = (window.planbook.classes.getSelectedTerm() || {}).id || '';
+      var rev0 = s.getDoc().rev;
+      /* THE PREMISE, MEASURED RATHER THAN ASSUMED. A rule that started firing for a student planted
+         to trip none would make every claim under it vacuous and leave the check green, so the
+         engine is asked for her hits and the answer is printed either way — WO-1.33's lesson, where
+         the "fires no rules" student turned out to fire two. */
+      var fired = window.planbook.signals.evaluate(s.getDoc(), cls, termId)
+        .filter(function(h){ return h.studentId === '${CARA}'; })
+        .map(function(h){ return h.direction + ':' + h.ruleId; });
+      var hers = function(m){ return m.all.filter(function(r){
+        return r.studentId === '${CARA}'; }).length; };
+      var hersHeld = function(m){ return m.concern.suppressed.filter(function(r){
+        return r.hit.studentId === '${CARA}'; }).length; };
+      var shape = function(m){ return { rows: m.all.length, drawn: m.concern.rows.length,
+        held: m.concern.suppressed.length, hers: hers(m), hersHeld: hersHeld(m) }; };
+      var before = shape(v.signalsModel());
+      var model = window.planbook.outreachView.outreachModel();
+      /* A MARK ON THE WINDOW, AND IT IS THE WHOLE OF "WITHOUT A RELOAD" IN THE CHECK AFTER THIS
+         ONE. A document that went away and came back carries no property somebody set on it, and
+         nothing else here can tell a repaint from a reload — both leave one correct row on the
+         card. (No backticks in here; it is inside a template literal and one would close it.) */
+      window.__wo59NoReload = 'wo59';
+      var pressed = press();
+      await s.flush();
+      var d = s.getDoc();
+      var mine = (d.log || []).filter(function(e){ return e.studentId === '${CARA}'; });
+      var entry = mine[0] || null;
+      /* THE LOOP CLOSED ON THE APP'S OWN RECORD, and it is asked with the entry's OWN ruleId
+         rather than with a string this file chose: an invented id is then handed straight back to
+         the function that would silence a rule with it, where a probe for the empty string could
+         only re-prove what cooldown-quiet.mjs already proves against a planted record. (No
+         backticks in here; it is inside a template literal and one would close it.) */
+      var reader = entry
+        ? window.planbook.log.lastContactAbout(d, '${CARA}', entry.ruleId,
+          window.planbook.attendance.todayISO())
+        : 'there was no entry to ask about';
+      return { fired: fired, tone: model.tone, ready: model.ready, audience: model.audience,
+        pressed: pressed, entries: mine.length, entry: entry,
+        hasRuleId: !!entry && Object.prototype.hasOwnProperty.call(entry, 'ruleId'),
+        ruleIdType: entry ? typeof entry.ruleId : '',
+        reader: reader, before: before, after: shape(v.signalsModel()),
+        rev0: rev0, rev: d.rev }; })()`);
+    check('a handoff for a student NO RULE HAS FIRED FOR appends exactly one entry, and its '
+      + '`ruleId` is the EMPTY STRING — present, a string, and not invented (WO-5.9). The cooldown '
+      + 'is then asked about the id the WRITER produced, on the record the APP wrote, and hands '
+      + 'back nothing; the concern list is the same list either side of the write. Opened from the '
+      + 'student record, because with no signal there is no card to open',
+      hitless.fired.length === 0 && hitless.ready === true && hitless.tone === 'concern'
+        && hitless.pressed.had === true && hitless.entries === 1 && !!hitless.entry
+        && hitless.entry.kind === 'contact' && hitless.entry.studentId === CARA
+        && hitless.entry.audience === 'guardian'
+        && hitless.hasRuleId === true && hitless.ruleIdType === 'string'
+        && hitless.entry.ruleId === '' && hitless.reader === null
+        && hitless.before.hers === 0 && hitless.after.hers === 0
+        && hitless.after.hersHeld === 0
+        && hitless.after.rows === hitless.before.rows
+        && hitless.after.drawn === hitless.before.drawn
+        && hitless.after.held === hitless.before.held
+        /* AND THE LIST IT SUPPRESSED NOTHING ON IS A LIST THAT SUPPRESSES: Ada's leading rule is
+           being held back at this very moment, off the two handoffs above. A model holding nothing
+           would satisfy every equality on this line and measure nothing at all. */
+        && hitless.before.held > 0 && hitless.rev > hitless.rev0,
+      'the engine fired ' + JSON.stringify(hitless.fired) + ' for her; ' + hitless.entries
+        + ' entr(y/ies) written, ruleId ' + JSON.stringify(hitless.entry && hitless.entry.ruleId)
+        + ' (' + hitless.ruleIdType + ', own property = ' + hitless.hasRuleId
+        + '), the cooldown reader hands back ' + JSON.stringify(hitless.reader)
+        + '; the concern list went ' + JSON.stringify(hitless.before) + ' → '
+        + JSON.stringify(hitless.after) + ', rev ' + hitless.rev0 + ' → ' + hitless.rev);
+    const onRecord = await evalJs(`(function(){
+      var v = document.getElementById('detailView');
+      var card = v.querySelector('[data-contact-card]');
+      var rows = card ? Array.prototype.map.call(card.querySelectorAll('.log-entry'),
+        function(r){ return { kind: (r.querySelector('.log-entry-kind') || {}).textContent || '',
+          subject: (r.querySelector('.log-entry-subject') || {}).textContent || '',
+          when: (r.querySelector('.log-entry-when') || {}).textContent || '' }; }) : [];
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        openFor: window.planbook.detail.openDetailStudentId(),
+        card: !!card, rows: rows,
+        empty: !!(card && card.querySelector('.attendance-report-empty')),
+        stillOpen: !document.getElementById('outreachModal').classList.contains('hidden'),
+        sameDocument: window.__wo59NoReload === 'wo59' }; })()`);
+    check('and it is on the STUDENT RECORD immediately, with no reload — the other half of '
+      + 'Acceptance line 1 (WO-5.9), which was asserted on the signal card and only REACHED on '
+      + 'this screen. The page under the draft still carries a mark set before the press, which is '
+      + 'what tells a repaint from a reload; the empty sentence is gone and one row stands where '
+      + 'it was',
+      onRecord.view === 'detailView' && onRecord.openFor === CARA && onRecord.card === true
+        && onRecord.rows.length === 1 && onRecord.empty === false
+        && onRecord.rows[0].kind === 'Guardian'
+        && onRecord.rows[0].subject.indexOf(SUBJECT_MARK) === 0
+        && onRecord.rows[0].when.length > 0
+        && onRecord.sameDocument === true,
+      JSON.stringify(onRecord.rows) + '; the record is open on ' + JSON.stringify(onRecord.openFor)
+        + ', the draft is still up = ' + onRecord.stillOpen
+        + ', and the window still carries the mark set before the press = '
+        + onRecord.sameDocument);
+
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason outreach.mjs and templates.mjs both give: the class
        being removed is the one the screen is drawn from, and a store update under an open view
@@ -685,8 +857,8 @@ if (!seam) {
         mode: window.planbook.supports.presentationMode(),
         overlays: document.querySelectorAll('.modal-overlay:not(.hidden)').length }; })()`);
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
-    check('the WO-5.4 fixture came back off the document — the class, both students, five '
-      + 'assignments, every score bag AND both contacts this section made the app write; '
+    check('the WO-5.4 fixture came back off the document — the class, all three students, five '
+      + 'assignments, every score bag AND all three contacts this section made the app write; '
       + '`templates[]` and the teacher’s own details were put back exactly as they were found, '
       + 'presentation mode was left OFF, every modal is closed and the page was left on the grid',
       cleaned.classes === 0 && cleaned.students === 0 && cleaned.assignments === 0

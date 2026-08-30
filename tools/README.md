@@ -1050,7 +1050,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1267 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1269 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1206,6 +1206,47 @@ mutation that cannot express a failure is not evidence about it, which is why th
 rather than counted.)* Reverted by name — `git checkout -- src/block-strip.js src/templates-view.js`
 with both staged first, per the standing note about a revert eating unstaged work in the same file —
 and `grep -rn MUTATION src/` was run after, not before, the revert.
+
+**WO-5.9 moved it from 1267 to 1269**: two literal call sites, added *inside* the existing
+§ *"the contact log and the history over it (WO-5.4)"* rather than as a section of its own — it is a
+branch of a writer that section already drives, on a fixture that section already installs, not a
+new surface — so the block contributes two executed results to a green run and adds no fixture
+guard, standing on the one that section already has. **The run prints 1284**:
+`1284 checks · 1284 passed · 0 failed · 0 skipped`, 38,923 lines, 30.3 lines per check, 429s,
+exit 0, measured 2026-08-30 on the delivered tree; the before-run on the same machine printed
+`1282 checks · 1282 passed · 0 failed · 0 skipped`, 38,751 lines, 429s. The gap between sites and
+results stays at −15. *(**1267 itself arrived with WO-5.4's seventeen sites and no paragraph of its
+own** — the count line was moved and the entry was never written, which is WO-5.1's omission a
+second time and for a related reason: that dispatch died too. Nothing turns red over a count that
+moved and was not explained, so this is the second entry to say where its own starting number came
+from.)* *(It adds no `byHand` row to `tools/verify/touch-targets.mjs`'s `VIEW_PLAN` and makes no
+44px measurement, because WO-5.9 adds no control to any screen and opens no stylesheet: it is two
+checks and one more student in a fixture. The third student is Cara — Ben plus a guardian with an
+address, so a draft about her becomes ready and no rule fires for her — and she carries the
+`s_wo54` id prefix on purpose, because the section's cleanup sweeps students, scores and log
+entries by exactly that string.)*
+
+**Its mutation round is one line in `src/outreach-view.js`, run twice, in opposite directions, and
+each direction reddens a different number of checks.** `recordHandoff()`'s
+`ruleId: hit ? hit.ruleId : ''` is the whole of what WO-5.9 exists to pin. **Dropping the guard** —
+`ruleId: hit.ruleId` — reads `1284 checks · 1282 passed · 2 failed`, exit 1: `hitFor()` hands back
+`orderHits(…)[0] || null`, so the handler throws on a student with no hit, and **both** new checks
+go red at once — `0 entr(y/ies) written … rev 278 → 278` on the first and an empty row list on the
+second. The evidence line is worth reading for what it does *not* say: `pressed.had` is still true
+and the anchor still carried its `href`, which is the silent loss in one reading — the mail app
+opens, the teacher writes and sends, and nothing was logged. **Inventing an id** —
+`ruleId: hit ? hit.ruleId : 'manual'` — reads `1284 checks · 1283 passed · 1 failed`, exit 1, and
+**two conjuncts of the one check catch it, and the one worth having is not the string comparison.**
+`entry.ruleId === ''` reddens on `'manual'` exactly as it reddens on a typo, and says only that the
+write was not what was written down. `lastContactAbout()`, asked with the id the writer actually
+produced, hands back `{"on":"2026-08-30","audience":"guardian"}` where a correct build hands back
+`null` — a contact that would silence a rule nobody wrote about, caught on a record the app itself
+wrote rather than on a planted one. *(This paragraph read "the conjunct that catches it is not the
+string comparison" until 2026-08-30, which was false as written on a check whose conjuncts are*
+`&&`*-joined: both catch it. The distinction is which one names the cost.)* That is the half `cooldown-quiet.mjs`
+structurally cannot ask. Each mutation was reverted **by hand, immediately, before a word of this
+paragraph was written** — never `git checkout`, with the rest of the work order staged first — and
+`grep -rn MUTATION` was run over the tree after the second revert, not before it.
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after
