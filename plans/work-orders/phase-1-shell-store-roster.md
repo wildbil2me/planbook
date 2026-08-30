@@ -3842,3 +3842,71 @@ one place it could have.
 - [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
       checks and its self-check is green.
 - [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+*(**Two prose repairs were folded in on 2026-08-30**, the owner's call, in the sitting that landed
+WO-1.40. Both are stale sentences in files this work order already has open, and both were correctly
+refused by WO-1.40's implementer and verifier as out of its scope — they are recorded here so they
+are not done twice or forgotten.* **`.claude/commands/wo.md:49-53` still reads *"Nothing checks this
+file … until WO-1.40 gives this a fence"*** *— WO-1.40 landed, so the sentence is false, and it is
+false in the file a human types about the safety model of that file. Worth the care: it names a
+fence that now exists as work still pending.* **And the WO-1.40 row in `plans/work-orders/README.md`
+still says `.claude/commands/` is named nowhere, in the present tense** *— § "The pipeline's own
+files" names it. Both are inside `wo-sweep.mjs` § 21's watched pair or the file that documents it,
+so the repair proves itself.)*
+
+- [ ] `.claude/commands/wo.md:49-53` no longer claims nothing checks it, and says what does.
+- [ ] The WO-1.40 row in `plans/work-orders/README.md` reads in the past tense.
+
+---
+
+## WO-1.42 — the sweep's own check count is maintained by hand
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.40 ✅ · **Blocks** nothing;
+it protects every reading of the sweep after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.41
+made. Booked 2026-08-30, owner-directed, on WO-1.40's verifier's proposal.)*
+
+**Why it exists.** `tools/README.md` records how many checks `wo-sweep.mjs` runs, and **a person
+types that number.** WO-1.40's verification found it reading **33 against a tool that ran 34** — the
+count was already stale by one *before* WO-1.40 touched it, and nothing in the repository could say
+so. The work order's own Acceptance line 5 asked for the count to go up by the number of new checks,
+which is a real property to want and was settled by hand: `git show HEAD:tools/wo-sweep.mjs` run out
+of a temp copy, compared against the working tree.
+
+**A stale count in `tools/README.md` is not a cosmetic defect here — it is a known tell.** It is what
+betrayed the dead dispatch on WO-3.26 and again on WO-4.4, where `plans/dispatch-retro.md` calls it
+*"the same stale-count tell … and the cheapest single thing to look at."* A tell only works while the
+number is otherwise maintained. One that drifts on its own is a tell that has quietly stopped
+reporting, and the recovery procedure in `AGENTS.md` still sends readers to look at it.
+
+**This is § 11's census turned on the sweep itself.** § 11 already holds documented figures against
+what the tree actually contains; the sweep's own count is the one figure of that kind that nothing
+audits, which is the WO-1.40 shape one more level in: *the instrument that checks the documentation
+is documented by hand.*
+
+**Traps**
+
+- **Assert against `results.length` at runtime — never against a second hard-coded number.** A
+  literal in the check that must be edited whenever the count changes is one more hand-maintained
+  figure claiming to police a hand-maintained figure, and it fails in exactly the same way, silently
+  and a build later. The tool already knows how many checks it ran. Ask it.
+- **Mind the ordering problem this creates.** The census runs *inside* the sweep, so the number it
+  must compare against is not final until every section has run. Where the assertion is emitted
+  matters, and a check that reads `results.length` too early reports its own position rather than
+  the total.
+- **The failure state is a person's, not a grep's — but the comparison is a grep's.** A drifted count
+  is settled arithmetic and should go **red**, not `REVIEW`; § 21's split is the model, and this half
+  is the mechanical one.
+- **Do not widen this into a general "every number in `tools/README.md`" census.** That is a
+  different work order with a different argument, and the value here is that one specific number is
+  load-bearing for a recovery procedure.
+
+**Acceptance**
+- [ ] The check count recorded in `tools/README.md` is asserted against `wo-sweep.mjs`'s own
+      `results.length` at runtime, and a wrong number goes **red** — driven against a planted wrong
+      count, not asserted in a comment.
+- [ ] No second hard-coded total exists anywhere in the check; editing the sweep's real count is the
+      only edit a maintainer makes.
+- [ ] The assertion reads the total after every section has run, proved by a fixture that would catch
+      an early read.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
