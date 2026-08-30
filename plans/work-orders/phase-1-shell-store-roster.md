@@ -3491,3 +3491,173 @@ build finds a `src/` change is needed, that is a finding to hand back rather tha
       head checks **green**, recorded in `tools/README.md`'s mutation table.
 - [ ] `node tools/verify-shell.mjs` is green with its count up by the number of checks added, and
       `node tools/wo-sweep.mjs` is green with `tools/README.md`'s call-site count recomputed by it.
+
+---
+
+## WO-1.38 — the verifier is spawned on the far side of the implementer's spend
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing by name;
+it protects every dispatch after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.37
+made. Booked 2026-08-30, owner-directed, out of a transcript audit of all 124 dispatches this
+project has run. The findings are in [`../session-limits.md`](../session-limits.md).)*
+
+**Why it exists.** Ten dispatches carry a session-limit death, and **every one of them died at a
+handoff** — the parent's first API call after a child returned:
+
+| WO | Where it died |
+|---|---|
+| WO-1.4 | orchestrator, mid-run, while the implementer kept working |
+| WO-2.46 | step 5, moments after spawning the verifier |
+| WO-3.26 | between the implementer's writes and any verdict |
+| WO-4.2 | between the last write and anybody's first reading |
+| WO-4.4 | between the last write and verification |
+| WO-4.5 | at the handoff to the verifier |
+| WO-5.1 | at the handoff to the implementer's return |
+| WO-5.2 | between the implementer's return and the verifier's spawn |
+| WO-5.3 | at the handoff to its verifier |
+| WO-5.4 | at the handoff back from the implementer |
+
+**Six of the ten are the implementer/verifier seam.** That is mechanical rather than unlucky: the
+seam is where the parent resumes carrying the largest context it will ever hold, immediately after
+the child has spent the window. § 3b already records that orchestrators carry a session-limit
+message in 22% of runs against 11% and 10% for the other two roles, and reads it as *the
+orchestrator idles longest*. The cost data says something sharper — the orchestrator is **15.3%** of
+a dispatch's spend and the implementer **69.3%**. The role that dies twice as often as the others
+spends a fifth as much. **It is not dying of its own consumption.**
+
+**And the seam is already proven to survive a break.** WO-5.2 and WO-5.4 both had the verifier
+re-dispatched alone, cold, against a recovered tree, and both returned real verdicts — WO-5.2's
+found a defect nobody else had. The verifier is *built* for cold eyes; it is the one role whose
+value does not depend on having watched the build.
+
+**The shape to build.** The verifier is dispatched from a **fresh session, always** — the owner's
+call on 2026-08-30, uniform rather than size-gated, because `Size` does not predict cost (WO-1.39's
+own table: Size S ran 6.8–13.3M units and Size M ran 7.2–15.7M, overlapping almost entirely). § 5
+of [`work-order-orchestrator.md`](../../.claude/agents/work-order-orchestrator.md) stops at *the
+implementer returned and the status line is written*; the verifier is a new dispatch. A planned cold
+start is strictly better than the accidental one the quota has imposed ten times.
+
+**This creates a state the trackers cannot currently express**, and that is the real deliverable: a
+row that is `🤖 CLAIMED` with **nothing in flight and a finished implementer behind it**. Today that
+reads as an abandoned claim — § 2c says an abandoned claim hides a work order from `next` while the
+tracker looks healthy, and `next` names claimed rows as the cue that one is stale. Under this rule
+that cue fires on healthy rows, routinely.
+
+**Out of scope.** Renegotiating § 4b. It forbids *reporting on a child that has not returned*, and
+nothing here touches that: the child has returned and been recorded before anything moves. What
+moves is only when the next child is spawned. Also out of scope: the armed-mutation window, which
+this does not narrow by one turn — see the third trap.
+
+**Traps**
+
+- **`--release` on the new state would throw away a finished implementer's work.** Someone reads the
+  stale-claim cue, releases the row to `⬜`, and a tree full of complete unverified work is now
+  unclaimed and unremembered — WO-3.26's *artifacts read as finished work* arriving from the
+  opposite direction. The new state must be told apart from an abandoned claim **by the tool**, not
+  by whoever is reading.
+- **The verifier is a first pass and must be told so in as many words.** WO-2.46's scar exactly: a
+  fresh verifier that finds traces of a run which returned nothing will try to reconcile with them.
+  The implementer's self-claims are handed over as *claims to check*, never as findings to confirm.
+- **This does not cover the mutation round, and must not be read as covering it.** The armed window
+  is inside the implementer's run and is exactly as long as it was. WO-5.1 and WO-5.4 both died
+  holding a live mutation, and a later verifier is no help to a tree that is already dangerous.
+  `grep -rn MUTATION` stays the first move on every dead dispatch, tidy or not.
+- **§ 6's tense test still governs the boundary report.** The report written when the implementer
+  returns says the verifier is **owed**, never that the work verified. A boundary is a good place to
+  write a spawn-time report by accident, which is the WO-3.5 defect this pipeline was built out of.
+
+**Acceptance**
+- [ ] § 5 of `.claude/agents/work-order-orchestrator.md` says the verifier is dispatched from a fresh
+      session on **every** work order, and § 6 says the report at that boundary names the verifier as
+      owed.
+- [ ] `AGENTS.md` carries the same rule — the two must never drift apart, and this one is a rule.
+- [ ] A row whose implementer has returned and whose verifier is owed is a state `wo-gate.mjs`
+      writes and reads, distinct from both an in-flight claim and an abandoned one.
+- [ ] `next` skips such a row and **says which of the three it is**, in the same shape it already
+      prints a skipped 🔨 and a skipped 🎒.
+- [ ] `--release` on that state refuses, or warns naming the result file it would orphan; the
+      refusal is driven and proved, not asserted in a comment.
+- [ ] `--self-check` is green with a plant behind each new check and its own count up by that many.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.39 — the window is spent by measure and read by feel
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.38
+made. Booked 2026-08-30, owner-directed, alongside WO-1.38.)*
+
+**Why it exists.** The question asked at `--start` is *are the gates clear*. The question that
+decides whether the dispatch survives is *is there a window to fit it in*, and *nothing anywhere
+answers it* — not the gate report, not the tracker, not the size column.
+
+**The `Size` field looks like a capacity estimate and is not one.** Measured against the transcripts:
+
+| WO | Size | M units | |
+|---|---|---|---|
+| WO-5.5 | S | 6.8 | clean |
+| WO-5.6 | S | 7.9 | clean |
+| WO-5.4 | S | 13.3 | died |
+| WO-5.1 | M | 7.2 | died |
+| WO-4.5 | M | 11.5 | died |
+| WO-4.3 | M | 11.6 | clean, two verifier passes |
+| WO-5.3 | M | 12.2 | died |
+| WO-5.2 | M | 15.7 | died |
+
+The ranges overlap almost entirely and the priciest S outran five of the six Ms. Some of that spread
+is recovery cost on the rows that died — **which is the point rather than a confound**: the size
+column describes the work, and the window pays for the run, including the part where it goes wrong.
+So a budget rule that fires on "the big ones" fires on the wrong ones.
+
+**The data is already on disk.** `wo-cost.mjs` reads the transcripts Claude Code writes; those same
+records carry per-response token usage, and a rolling-five-hour sum over them was measured during
+this audit at a **two-second lag**. Across 124 dispatches the median costs 6.0M weighted units and
+the 48 grouped session-limit episodes cluster from 16.4M (p25) through 20.3M (median). The
+instrument is a flag, not a research project.
+
+**The shape to build.** `node tools/wo-cost.mjs --window` prints rolling-5h usage with those
+reference points beside it, and `wo-gate.mjs --start` prints one line of it where the decision is
+actually made. **Advisory, never refusing** — the same call `--audit` makes about a ride-along whose
+shelf has emptied: *re-place it, start it, take the mark off* are all correct answers and only a
+person can pick. Here the threshold is the owner's and the unit is a proxy; a tool that refused on
+either would be a second opinion with a worse instrument.
+
+**Out of scope.** Refusing a dispatch on the number, and any attempt to read `/usage`. That is a
+terminal command rendered for a human and no agent can invoke it; this work order does not
+approximate it, it measures something else and says so.
+
+**Traps**
+
+- **A project-scoped reading under-reads, and under-reading is worse than not measuring.** There are
+  16 directories under `~/.claude/projects/` and three were active in the last 24 hours. That usage
+  burns the same account window and would be invisible to a tool that walks only
+  `c--dev-planbook`. Walk them all.
+- **An account swap makes the count over-read, and nothing on disk records the swap.** The
+  transcripts do not name which account served a request, and this project has swapped repeatedly.
+  Without a way to restart the count the tool cries wolf after every swap, which is how an
+  instrument gets ignored at the moment it is right.
+- **A zero that means "no data" and a zero that means "fresh window" must not look the same.**
+  `wo-cost.mjs`'s own header states that its transcript path is per-user and per-machine; `--window`
+  inherits that, and a wrong path must exit non-zero rather than print `0.0M`. This is WO-2.4's
+  round-two defect — *a check that cannot run and a check that cannot fail are the same defect
+  wearing different signs* — arriving in the tool that measures the pipeline.
+- **The unit is a proxy and has to say so where it prints.** It is calibrated against this project's
+  own deaths, not a published ceiling, and it moved whenever the plan did. A four-digit number that
+  looks authoritative and is not is the comment-ahead-of-its-code defect in a new place.
+- **Do not sum output and cached reads into one number.** `wo-cost.mjs` forbids it at its own top,
+  in as many words, because it makes the pipeline look ten times more expensive than it is.
+
+**Acceptance**
+- [ ] `node tools/wo-cost.mjs --window` reports rolling-5h weighted usage across **every** directory
+      under `~/.claude/projects/`, with the median-dispatch and death-cluster figures beside it.
+- [ ] It names its unit as a proxy at the point it prints the number.
+- [ ] An unreadable or empty transcript path exits non-zero with a message and never prints `0.0M`;
+      the failure is driven, not asserted.
+- [ ] An account swap can be recorded so the count restarts, and the mechanism is named where the
+      number prints.
+- [ ] `node tools/wo-gate.mjs --start <WO>` prints the window line, and **the gate still clears on
+      any number** — driven at a figure past the death cluster and proved to clear.
+- [ ] `--self-check` is green with a plant behind each new check and its own count up by that many.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
