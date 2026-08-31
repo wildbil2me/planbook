@@ -13,6 +13,40 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The two files that must never drift apart are held together by something — 2026-08-30
+
+**`CLAUDE.md` said *"a rule changed here is changed there in the same sitting"* in bold, and nothing
+enforced it.** A grep over `tools/*.mjs` found two mentions of `AGENTS.md`, neither a check. It is the
+same defect WO-1.40 fenced on the pipeline's own files, on a surface an order of magnitude larger —
+627 lines against 207, with the shared rules deliberately worded differently in each.
+
+**`wo-sweep.mjs` § 21 takes a second pair.** `AGENTS.md` against `CLAUDE.md`, on four hand-maintained
+claims: no merge field resolves accommodation data, `localStorage` holds UI preferences and never
+student data, `late`/`missing` are teacher-marked and never inferred from a date, and a green harness
+closes no 👤 line. It checks for **contradiction, not symmetry** — omitting most of `CLAUDE.md` is
+`AGENTS.md`'s whole job, so absent is green, and only a positive instruction the reference forbids is
+reported, as a `REVIEW` for a person rather than a verdict. The sweep runs **38 checks**.
+
+**The change is +88 lines, every one of them inside the `DRIFT_PAIRS` array literal.** WO-1.40 built
+that list to take a second entry and it did; the comparison engine below is byte-untouched, so the
+first pair's four green states are not standing on anything this work order moved.
+
+**The claim list is a fourth thing that has to be kept in step** — after `CLAUDE.md`, `AGENTS.md` and
+the map row in `plans/work-orders/README.md` — so it is short on purpose and every addition costs
+something. The set kept is where a contradiction is paid for by a student's privacy or a teacher's
+grades *and* where the code-side check is a `REVIEW` a person must read rather than a `FAIL`. The
+rules left out are named in the comment with their reasons, the mutation-revert procedure among them:
+it is a procedure rather than a prohibition, and its correct statement reads to a negation test
+exactly like its reversal.
+
+**Two stale sentences were repaired alongside it** — the file a human types no longer says nothing
+checks it, and the WO-1.40 row reads in the past tense. **Two more were made false by this landing
+and neither is catchable by what it built:** `AGENTS.md`'s *"nothing enforces that sentence yet"* is
+an italic parenthetical the engine skips by construction, and `CLAUDE.md` is the reference half,
+searched for anchors and never scanned for contradiction. Both were repaired by hand in the same
+sitting, and both files now say so at the point where a reader would otherwise trust a green § 21
+further than its four claims.
+
 ### The file a human types is inside a fence now — 2026-08-30
 
 **WO-1.38 changed the pipeline in six files, wrote five, and the sixth went on giving a person the

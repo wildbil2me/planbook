@@ -3777,7 +3777,7 @@ sentence containing "not" or "verifier" is filtered and passes silently.)*
 
 ## WO-1.41 — the two files that must never drift apart are held together by nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.40 · **Blocks** nothing by
+**Ship** — · **Status** ✅ DONE — 2026-08-30 · **Size** M · **Depends on** WO-1.40 · **Blocks** nothing by
 name; it protects every dispatch after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.40
 made. Booked 2026-08-30, owner-directed, in the sitting that landed WO-1.38 and booked WO-1.40.)*
@@ -3839,17 +3839,17 @@ one place it could have.
   fourth thing to keep in step, and it is the only one small enough to be kept.
 
 **Acceptance**
-- [ ] The harness compares `AGENTS.md` and `CLAUDE.md` on the rules both are meant to carry, and goes
+- [x] The harness compares `AGENTS.md` and `CLAUDE.md` on the rules both are meant to carry, and goes
       red or `REVIEW` when they contradict — **driven against a planted contradiction**, not asserted.
-- [ ] It reuses the comparison WO-1.40 built, extended to a second pair rather than reimplemented; if
+- [x] It reuses the comparison WO-1.40 built, extended to a second pair rather than reimplemented; if
       reuse was not possible, the reason is written where the second copy lives.
-- [ ] Legitimate asymmetry stays green — proved with a fixture where `CLAUDE.md` carries a rule
+- [x] Legitimate asymmetry stays green — proved with a fixture where `CLAUDE.md` carries a rule
       `AGENTS.md` has no business repeating, and nothing fires.
-- [ ] The set of rules held in common is **named in one place a person can read and amend**, not
+- [x] The set of rules held in common is **named in one place a person can read and amend**, not
       inferred by the tool from prose, and that place says it is a fourth thing to keep in step.
-- [ ] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
+- [x] Whichever tool it lands in, that tool's plant or fixture count is up by the number of new
       checks and its self-check is green.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 *(**Two prose repairs were folded in on 2026-08-30**, the owner's call, in the sitting that landed
 WO-1.40. Both are stale sentences in files this work order already has open, and both were correctly
@@ -3862,8 +3862,8 @@ still says `.claude/commands/` is named nowhere, in the present tense** *— § 
 files" names it. Both are inside `wo-sweep.mjs` § 21's watched pair or the file that documents it,
 so the repair proves itself.)*
 
-- [ ] `.claude/commands/wo.md:49-53` no longer claims nothing checks it, and says what does.
-- [ ] The WO-1.40 row in `plans/work-orders/README.md` reads in the past tense.
+- [x] `.claude/commands/wo.md:49-53` no longer claims nothing checks it, and says what does.
+- [x] The WO-1.40 row in `plans/work-orders/README.md` reads in the past tense.
 
 ---
 

@@ -46,8 +46,14 @@ Acceptance list in full — do not summarize it; the marks are the point.**
 
 For `route only`, foreground is fine — it stops after step 3 and returns in under a minute.
 
-*(**Nothing checks this file.** `wo-sweep.mjs` skips `.claude/` by construction and `--audit` never
-reads it, so a pipeline change in `.claude/agents/` that leaves this one alone goes unnoticed — which
-is how this file spent WO-1.38 asking a caller to relay an Acceptance list that no longer existed at
-the first stop. **Change the shape there and change it here in the same sitting**, until WO-1.40 gives this a
-fence that can say so on its own.)*
+*(**`wo-sweep.mjs` § 21 checks this file** — against `.claude/agents/work-order-orchestrator.md`,
+reached by **naming both paths**, because the sweep still skips `.claude/` by construction and
+`--audit` still never reads it. It looks for **contradiction, not symmetry**: this file is the
+caller's and has no business restating the dispatcher's, so **silence is green** and what gets
+reported is a positive instruction the other file forbids — as a `REVIEW`, for a person to settle.
+It knows **three claims** about where a dispatch stops and nothing else, which is why WO-1.40 built
+it: this file spent WO-1.38 asking a caller to relay an Acceptance list that no longer existed at
+the first stop, and nothing in the repository could notice. **A fence is not a reading — change the
+shape there and change it here in the same sitting**, and read
+[plans/work-orders/README.md](../../plans/work-orders/README.md) § "The pipeline's own files" first:
+it is the map of which of these files are watched and by what, and two of its rows say *Nothing*.)*

@@ -481,9 +481,23 @@ person an instruction the new shape had made wrong, with nothing in the reposito
 reaches them by path rather than by widening the walk. It tests for **contradiction, not symmetry** —
 a file may legitimately omit what the other says, and only disagreement about the pipeline's stops
 fires. Two things it does not do: green means *no unexcused occurrence* rather than *no
-contradiction*, and **`CLAUDE.md` and `AGENTS.md` are not yet a watched pair** — that is
-[WO-1.41](plans/work-orders/phase-1-shell-store-roster.md#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing),
-and until it lands the bolded rule above is enforced by nothing but the reader.
+contradiction*, and it reads a hand-written list of claims rather than two whole files.
+
+**`CLAUDE.md` and `AGENTS.md` are the second watched pair as of 2026-08-30**
+([WO-1.41](plans/work-orders/phase-1-shell-store-roster.md#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing))
+— four claims about rules both files carry, with **`CLAUDE.md` as the reference half**, because this
+is where the rules are maintained and it is the file that grows by accretion. **It is a fence, not a
+reading:** it knows four rules, and the bolded rule above still rests on the reader for the rest. The
+claim list at `tools/wo-sweep.mjs` § 21 is **a fourth thing to keep in step** — after these two files
+and the map row — so it is short on purpose and every addition costs something; the rules left out are
+named there with their reasons. *(**And it cannot see itself.** The sentence you are reading replaced
+one saying this pair was unfenced, and its twin in `AGENTS.md` replaced another — both made false by
+the landing that fenced them, both repaired by hand, and* **neither catchable by the thing just
+built**: `CLAUDE.md` *is searched for anchors and never scanned for contradiction, and the*
+`AGENTS.md` *twin was an italic parenthetical the engine skips by construction. The first false
+statement in the pipeline's own files after this landed was a false statement about this fence, in
+both halves, structurally invisible to it. Read that before trusting a green § 21 further than its
+four claims.)*
 
 ## Commands
 

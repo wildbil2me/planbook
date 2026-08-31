@@ -4,12 +4,16 @@
 and other agents look for `AGENTS.md` by name; everything of substance is in `CLAUDE.md`, and the
 two must never drift apart. If you change a rule, change it there.
 
-*(**Nothing enforces that sentence yet** — it is [WO-1.41](plans/work-orders/phase-1-shell-store-roster.md).
-Its sibling pair is fenced as of 2026-08-30: `wo-sweep.mjs` § 21 checks `.claude/commands/wo.md`
-against `.claude/agents/work-order-orchestrator.md` for **contradiction, not symmetry**. If you are
-changing the pipeline, `plans/work-orders/README.md` § "The pipeline's own files" is the map of what
-is watched and what is not — WO-1.40 exists because a pipeline change edited five of six files and
-nothing could tell.)*
+*(**`wo-sweep.mjs` § 21 enforces that sentence as of 2026-08-30** —
+[WO-1.41](plans/work-orders/phase-1-shell-store-roster.md#wo-141--the-two-files-that-must-never-drift-apart-are-held-together-by-nothing)
+— on **four claims** about rules both files carry, with `CLAUDE.md` as the **reference** half. It
+tests for **contradiction, not symmetry**: omitting most of `CLAUDE.md` is this file's whole job, so
+absent is green and only a positive instruction the reference forbids is reported. **Four claims is
+not two files** — outside them, "change it there" is still enforced by nothing but you. The sibling
+pair is fenced the same way: § 21 also checks `.claude/commands/wo.md` against
+`.claude/agents/work-order-orchestrator.md`. If you are changing the pipeline,
+`plans/work-orders/README.md` § "The pipeline's own files" is the map of what is watched and what is
+not — WO-1.40 exists because a pipeline change edited five of six files and nothing could tell.)*
 
 Planbook is a local-first PWA gradebook for classroom teachers. No account, no backend, no
 dependencies.

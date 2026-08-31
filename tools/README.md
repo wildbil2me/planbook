@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 36-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 38-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there — and, since WO-1.41 the same day, `AGENTS.md` against `CLAUDE.md` as § 21's **second pair**, on four claims about the rules both files carry, which needs no path trick (the walk already reaches the repository root) and is named all the same, because a pair is a hand-maintained list rather than a directory scan. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, handing it to the verifier at the implementer's return (`--handoff`, WO-1.38), the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -16,7 +16,9 @@
 
 ***That count is hand-maintained and nothing checks it.*** *It read `33` from WO-5.1's § 20 on
 2026-08-28 until WO-1.40 corrected it on 2026-08-30, which is one section's worth of rot in two days
-— so read the `N checks ·` line the run itself prints before citing this one. `wo-sweep.mjs` § 11
+— and WO-1.41 moved it from `36` to `38` later that same day, two checks for one new pair in § 21, by
+the same hand and with the same nothing watching. So read the `N checks ·` line the run itself prints
+before citing this one. `wo-sweep.mjs` § 11
 checks the number recorded for `verify-shell.mjs` and there is no section checking this one; a
 `wo-sweep.mjs` § 21 that had been asked to also count its own siblings would have been a second
 subject in a work order that had one.*

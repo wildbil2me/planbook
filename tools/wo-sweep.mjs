@@ -2415,6 +2415,95 @@ function commentLines(file) {
         confinedTo: "the verifier's stop",
       },
     ],
+  }, {
+    // WO-1.41's pair, and the reason this is a list. `CLAUDE.md` § "How work is run here" says in
+    // bold that these two "must never drift apart: a rule changed here is changed there in the same
+    // sitting", and until this entry nothing enforced it — a grep over `tools/*.mjs` found two
+    // mentions of `AGENTS.md` and neither was a check. Everything below the pair list is WO-1.40's
+    // and unchanged; this is a second entry, not a second mechanism.
+    //
+    // NO PATH TRICK IS NEEDED HERE. Both files are at the repository root and the walk already
+    // reaches them; they are still named rather than walked to, because a pair is a hand-maintained
+    // thing and every other section reads these two files as prose about code, not as code.
+    //
+    // WHICH FILE IS `reference` IS THE SAME SHAPE AS THE FIRST PAIR'S, for a different reason.
+    // `CLAUDE.md` is where the rules are maintained — `AGENTS.md`'s own first paragraph says "If you
+    // change a rule, change it there" — and it is the file that GROWS BY ACCRETION: every scar is
+    // appended and none removed, which is why it runs three times `AGENTS.md`'s length (627 lines
+    // to 207 on 2026-08-30, and the gap only widens). `AGENTS.md` is
+    // the narrower telling, rewritten as the briefing is re-tuned, and it carries no pattern that
+    // has to match: absent is green, because omitting most of `CLAUDE.md` is its whole job. So the
+    // rule the first pair set — every anchor lives in the accreting file — holds unchanged.
+    //
+    // FOUR CLAIMS, AND THE ONES LEFT OUT WERE LEFT OUT ON PURPOSE. This list is the FOURTH thing
+    // that has to be kept in step for this pair — `CLAUDE.md`, `AGENTS.md`, the map row in
+    // `plans/work-orders/README.md`, and then these entries — so it is short by design and every
+    // addition costs something. What is here is the set where a contradiction is paid for by a
+    // student's privacy or a teacher's grades and where the code-side check that would catch the
+    // resulting code is a REVIEW a person has to read (§ 5, § 7) rather than a FAIL:
+    //   - the rules whose code-side fence FAILS LOUDLY are out — a `package.json`, a
+    //     `prefers-color-scheme`, a CSS variable or a control under 44px go red at §§ 1, 2, 3 and 6
+    //     the moment the code lands, so a briefing that contradicted `CLAUDE.md` about one of them
+    //     costs a rebuild, not a defect;
+    //   - the rules fenced STRUCTURALLY are out for the same reason one level down — the calendar's
+    //     read-only half is § 17 and the merge-field whitelist is § 20, and both assert over the
+    //     file rather than over the prose about it;
+    //   - the log's append-only property, the threshold defaults and the settings-block rule are
+    //     out because they are stated in both files at very different lengths and a contradiction
+    //     about them is a shape a token cannot carry: the sentence that states each correctly
+    //     already names the mistake it forbids;
+    //   - and the mutation-revert procedure is out because it is a PROCEDURE, not a prohibition.
+    //     Its correct statement — "Revert first, re-run the tool, and only then write the result
+    //     file" — reads to a negation test exactly like its opposite, so the one check that could
+    //     be written here would fire on the rule and stay silent on its reversal.
+    // Claim 4 is the only one with no code behind it at all: nothing in the tree can catch an agent
+    // that ticks a 👤 line by hand, and these two files plus `--tick`'s refusal are the whole fence.
+    subject: 'the rules both files carry',
+    reference: 'CLAUDE.md',
+    against: 'AGENTS.md',
+    mappedIn: { file: 'plans/work-orders/README.md', heading: "## The pipeline's own files" },
+    regions: [{
+      // The one place the clock may be read. `src/past-due.js` OFFERS to mark past-due blanks
+      // missing, so the exception is written in `AGENTS.md` as an instruction to mark on a date —
+      // which is claim 3's contradiction word for word, and correct here and only here.
+      name: 'the past-due exception',
+      from: /The date may still \*\*ask\*\*/,
+      to: /^- \*\*Empty categories/m,
+    }],
+    claims: [
+      {
+        claim: 'accommodation, medical and plan data never leaves the roster — not by merge field, log line, print surface or export, and the JSON backup is the only exception',
+        settled: /\*\*No merge field ever resolves accommodation, medical, or plan data\.\*\*/,
+        token: /\b(accommodations?|medical|behaviou?r plans?)\b/gi,
+        denies: /\b(no|not|never|nothing|without|refuse|refuses|refused|forbid|forbids)\b/i,
+        demands: /\b(resolve|resolves|emit|emits|print|prints|export|exports|include|includes|leave|leaves|send|sends|copy|copies)\b/i,
+      },
+      {
+        claim: '`localStorage` holds UI preferences only and never student data, under the `planbook_` prefix',
+        settled: /\*\*`localStorage` prefix:\*\* `planbook_`, and \*\*UI preferences only\*\*/,
+        token: /localStorage/g,
+        denies: /\b(no|not|never|nothing|without|refuse|refuses|refused|forbid|forbids)\b/i,
+        demands: /\b(store|stores|stored|save|saves|saved|keep|keeps|kept|persist|persists|persisted|write|writes|written|remember|remembers|remembered|cache|caches|put|puts)\b/i,
+      },
+      {
+        claim: '`late` and `missing` are teacher-marked and never inferred from a due date; blank means ungraded and affects nothing',
+        settled: /\*\*`late` and `missing` are marked by the teacher, never inferred from a due date\.\*\*/,
+        token: /\b(due dates?|past-due)\b/gi,
+        denies: /\b(no|not|never|nothing|without|refuse|refuses|refused|forbid|forbids)\b/i,
+        demands: /\b(infer|infers|inferred|derive|derives|derived|mark|marks|marked|marking|flag|flags|flagged|sweep|sweeps|swept)\b/i,
+        confinedTo: 'the past-due exception',
+      },
+      {
+        claim: 'a green harness closes no 👤 line, and no agent ticks one — those need a real iPad',
+        settled: /\*\*A green harness closes no 👤 item\.\*\*/,
+        token: /👤/g,
+        // `refuses` earns its place beside the negations here: `--tick` refuses the mark, and the
+        // sentence saying so is the file agreeing at its loudest while reading, to a bare word
+        // test, as an instruction about ticking.
+        denies: /\b(no|not|never|nothing|without|refuse|refuses|refused|forbid|forbids|owed)\b/i,
+        demands: /\b(tick|ticks|ticked|ticking|close|closes|closed|mark|marks|marked|satisfy|satisfies|infer|infers)\b/i,
+      },
+    ],
   }];
 
   const lineAt = (text, index) => text.slice(0, index).split('\n').length;

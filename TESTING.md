@@ -1125,6 +1125,72 @@ scratchpad, driven with `node tools/wo-sweep.mjs` from inside each copy — the 
 
 ---
 
+### WO-1.41 — the two files that must never drift apart are held together by nothing
+
+**What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are
+byte-identical to HEAD, and no `CACHE` bump is owed. `tools/wo-sweep.mjs` § 21 gains a **second
+entry** in `DRIFT_PAIRS` — `AGENTS.md` against `CLAUDE.md`, on four claims about **the rules both
+files carry** — and not one line of WO-1.40's comparison, sentence splitter, region logic or
+allowlist was touched. The list was built to take a second pair and it took one.
+
+**`CLAUDE.md` is the `reference` half, which is the same shape as the first pair for a different
+reason.** The rules are maintained there — `AGENTS.md`'s own first paragraph says *"If you change a
+rule, change it there"* — and it is the file that grows by accretion, 613 lines of appended scars to
+`AGENTS.md`'s 200. `AGENTS.md` is the narrower telling and carries **no** pattern that has to match:
+absent is green, because omitting most of `CLAUDE.md` is its whole job.
+
+- [x] **It goes `REVIEW` on a planted contradiction, one per claim, driven and not asserted.** Four
+      sentences were planted into `AGENTS.md` — *"A merge field resolves a student's medical need
+      whenever a template names it."*, *"Store the roster in `localStorage` so the class list survives
+      a reload."*, *"A blank score past its due date is marked missing automatically."* and *"You may
+      tick a 👤 line when the harness is green."* — and the run came back **`38 checks · 34 passed ·
+      0 failed · 4 to review`**, the fourth naming all four at `AGENTS.md:32`, `:29`, `:50` and `:159`
+      against `CLAUDE.md:423`, `:582`, `:343` and `:505`. The third was placed **outside** the
+      past-due region on purpose: the same sentence inside it is the documented exception and is
+      green there. Reverted before anything else was written, and `AGENTS.md` diffed byte-identical to
+      the pre-mutation copy.
+- [x] **Legitimate asymmetry stays green, both halves of it.** `CLAUDE.md` gained a rule `AGENTS.md`
+      has no business repeating — *"The roster print surface never carries a case manager or a review
+      date, and the print stylesheet drops both columns before the page break"* — and **nothing
+      fired**: `38 · 35 · 0 · 3`, the same three standing REVIEWs as the clean tree. In the same
+      fixture `AGENTS.md` restated a shared prohibition in **different words** — *"Nothing but a UI
+      preference is ever put in `localStorage`"* for `CLAUDE.md`'s *"UI preferences only — never
+      student data"* — and stayed green, which is the WO-1.21 shape a string-equality check would
+      have reddened on. Both reverted, both files diffed byte-identical.
+- [x] **The mechanical half fails loudly on a moved anchor.** `CLAUDE.md`'s *"**A green harness closes
+      no 👤 item.**"* reworded to *"**No green harness closes a 👤 item.**"* → **`FAIL`**, exit 1,
+      naming the claim left behind and saying the comparison is running one claim short. The same
+      fixture is why the anchor line numbers in the green detail move with the file (`582`→`584`,
+      `505`→`507` under the asymmetry fixture): the claims are anchored to sentences, not to lines.
+- [x] **The claim list is hand-maintained, in one place, and says what it costs.** It is in
+      `tools/wo-sweep.mjs` § 21 beside the first pair's, with a comment naming the **four** things
+      this pair keeps in step — `CLAUDE.md`, `AGENTS.md`, the map row in `plans/work-orders/README.md`
+      § The pipeline's own files, and the claims themselves — and naming what was left out and why:
+      the rules whose code-side fence FAILS loudly (§§ 1, 2, 3, 6), the ones fenced structurally
+      (§ 17, § 20), and the mutation-revert **procedure**, whose correct statement reads to a negation
+      test exactly like its reversal. That README section says the same thing in prose.
+- [x] `node tools/wo-sweep.mjs` is **`38 checks · 35 passed · 0 failed · 3 to review`**, exit 0 —
+      **no new REVIEW line**; the three are the standing sensitive-field-name census, the
+      due-date/late-missing census and the mockup-banner one, none of which this work order touches.
+      It was `36 · 33 · 0 · 3` before. It was re-run **after the `.claude/commands/wo.md` repair as
+      well as after the code change**, and both pairs are green on the same run.
+      `node tools/wo-gate.mjs --audit` is `PASS`, exit 0; `--self-check` is
+      `PASS | 31 of 31 plants were caught`, exit 0; `node tools/verify-shell.mjs` is
+      `1284 checks · 1284 passed · 0 failed · 0 skipped`, 38,923 lines, 420s, exit 0.
+- [x] **The recorded count is up by the two checks this adds.** `tools/README.md` reads `38-check`
+      now, and the italic note under it records the move from `36` in the same sentence as WO-1.40's
+      move from `33`, still saying nothing checks it — WO-1.42's job, not this one's.
+
+*No 👤 line and no 📆 line. Nothing here renders, nothing reaches a device, and every claim above is
+a command that was run and read.* **Unlike WO-1.40, the fixtures were driven in the tracked tree
+itself, not in scratchpad copies** — each plant was made, run, read, reverted with
+`git checkout --`, and diffed against a byte-for-byte copy taken before the round, with
+`git status --porcelain` read after each revert. *WO-1.40's copy-based method is the safer of the two
+and is the one to use next time: a dispatch that dies between the plant and the revert leaves the
+armed file in the tree, which is the WO-5.1 failure mode.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*
