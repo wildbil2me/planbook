@@ -4050,6 +4050,23 @@ weekday line is third and may slide past 2026-09-02 without costing anything.
 
 **Traps**
 
+- **The harness this work order is about is usually the one thing a dispatch cannot run.**
+  `verify-shell.mjs` drives headless Edge over CDP, and a dispatched agent reporting *"could not
+  run"* has reported **an environment, not a result** — `CLAUDE.md` § Commands and `AGENTS.md` both
+  say so, and on every other work order it is a nuisance. **Here it is the task.** Three things
+  follow, and they are the difference between a useful dispatch and a confident one. **Do not infer
+  the harness's behaviour from reading it** — this work order exists because what it does and what it
+  looks like it does came apart. **Do not report a run you did not take**, and mark every claim that
+  is un-run as un-run, by name; a green figure in a result file is a timestamp at best and a fiction
+  at worst, which is the WO-5.1 scar in `plans/dispatch-retro.md`. And **say plainly what you could
+  not drive**, because the boxes it would have closed are then closed locally by the owner rather
+  than quietly left looking closed. This is not 👤: 👤 means no headless browser can settle it, and
+  this wants a browser — just not one in your sandbox.
+- **The diagnosis in the Why is evidence, not a starting hypothesis.** It was taken on the owner's
+  machine on 2026-08-31: two full runs, identical results, both diffs against `703af0a` empty, the
+  WO-2.50 term gate ruled out by `tools/verify/attendance.mjs:110`. **Build on it rather than
+  re-deriving it** — and if a run of yours contradicts any of it, that disagreement is a finding
+  worth more than the rest of this work order and gets reported rather than reconciled.
 - **Do not make the five assertions pass.** The fixture is the accused as much as the app is, and the
   cheapest way to a green run is to move whichever number disagrees — which would delete the only
   evidence that anything was ever wrong. Settle *harness or app* per failure, in writing, with the
