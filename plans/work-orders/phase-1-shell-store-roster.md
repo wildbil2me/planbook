@@ -3997,6 +3997,15 @@ FAIL, and then stops.** The run is 1,284 checks. **766 of them have not executed
 least 2026-08-30**, and the summary line that would have said so never prints, because the process
 dies before it.
 
+**What that does and does not put at risk — corrected the same day it was booked.** It is exposure to
+the **next app change**, not to Wednesday's deploy. `git diff 703af0a HEAD` over `src/`,
+`index.html`, `sw.js`, `privacy.html`, `manifest.json` and `icons/` is **empty**, so the build that
+meets students on 2026-09-02 is byte-for-byte the build that passed 1,284/1,284. *This row was first
+argued as go-live exposure, and that was overstated — repaired here rather than left standing,
+because an overstatement in a Why is the kind a reader inherits and repeats.* **The urgency is real
+and it is a different urgency:** the first app change to land after this one is verified against two
+fifths of a harness, and nothing in the output will say so.
+
 **The five failures are the symptom and the crash is the defect.** A harness that goes red has
 reported. A harness that *stops* has stopped reporting — on grades, signals, outreach and everything
 else downstream of attendance — while still looking like it ran, because 513 PASS lines scroll past
@@ -4029,6 +4038,16 @@ classes read `covered` rather than `not-taken` after a snow day. Those are count
 Whether the app or the fixture is wrong about them is **the open question this work order answers
 first**, and it must be answered per failure before a line of either is changed.
 
+**Take the snow-day question before the crash — the row's order is not the working order**
+(2026-08-31, the owner's call at booking). The crash is the bigger defect; the diagnosis is the more
+urgent errand. The confirm that named **2 periods against 4 recorded** is reachable in week one: a
+teacher laying a snow day over a day she really taught is told which periods it touches, and if the
+app is the half that is wrong, that wants knowing before Wednesday. It is an hour to find out, and it
+is the only part of this work order with a consequence a teacher meets. **The crash containment is
+second, and it is also the fallback if the diagnosis runs long** — bounded, needs no verdict on any of
+the five, and it is what stops the next unsatisfied selector costing 766 unrelated checks. The
+weekday line is third and may slide past 2026-09-02 without costing anything.
+
 **Traps**
 
 - **Do not make the five assertions pass.** The fixture is the accused as much as the app is, and the
@@ -4053,12 +4072,13 @@ first**, and it must be answered per failure before a line of either is changed.
   head; a repair here that is not driven is a repair that moves the blind spot rather than closing it.
 
 **Acceptance**
+- [ ] Each of the five current failures is settled **in writing as harness or app**, with the
+      evidence, before either side is edited — **the snow-day confirm first**, because it is the one
+      with a consequence a teacher meets; any app defect found is fixed here or booked as its own row
+      and named on this one.
 - [ ] `node tools/verify-shell.mjs` runs to completion and prints its summary line, with no throw out
       of the process — driven against a **planted** missing selector as well as the real one, so the
       claim is about the mechanism and not about this one element.
-- [ ] Each of the five current failures is settled **in writing as harness or app**, with the
-      evidence, before either side is edited; any app defect found is fixed here or booked as its own
-      row and named on this one.
 - [ ] The section no longer depends on which weekday it is run on, proved on **at least three
       different weekdays** — by moving the clock or by making *today* an input whose default is still
       the real clock, never by asserting it in a comment.
