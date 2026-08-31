@@ -3869,7 +3869,7 @@ so the repair proves itself.)*
 
 ## WO-1.42 — the sweep's own check count is maintained by hand
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.40 ✅ · **Blocks** nothing;
+**Ship** — · **Status** ✅ DONE — 2026-08-31 · **Size** S · **Depends on** WO-1.40 ✅ · **Blocks** nothing;
 it protects every reading of the sweep after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.41
 made. Booked 2026-08-30, owner-directed, on WO-1.40's verifier's proposal.)*
@@ -3910,14 +3910,14 @@ is documented by hand.*
   load-bearing for a recovery procedure.
 
 **Acceptance**
-- [ ] The check count recorded in `tools/README.md` is asserted against `wo-sweep.mjs`'s own
+- [x] The check count recorded in `tools/README.md` is asserted against `wo-sweep.mjs`'s own
       `results.length` at runtime, and a wrong number goes **red** — driven against a planted wrong
       count, not asserted in a comment.
-- [ ] No second hard-coded total exists anywhere in the check; editing the sweep's real count is the
+- [x] No second hard-coded total exists anywhere in the check; editing the sweep's real count is the
       only edit a maintainer makes.
-- [ ] The assertion reads the total after every section has run, proved by a fixture that would catch
+- [x] The assertion reads the total after every section has run, proved by a fixture that would catch
       an early read.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 ---
 

@@ -13,6 +13,34 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep's own check count is checked by the sweep — 2026-08-31
+
+**`tools/README.md` records how many checks `wo-sweep.mjs` runs, and a person typed that number.**
+WO-1.40's verification found it reading `33` against a tool that ran `34` — stale *before* that work
+order touched it — and WO-1.41 moved it to `38` later the same day with the same nothing watching. A
+stale count there is not cosmetic: it is the tell that betrayed the dead dispatches on WO-3.26 and
+WO-4.4, and `plans/dispatch-retro.md` calls it the cheapest single thing to look at. A tell that
+drifts on its own has quietly stopped reporting while the recovery procedure still points at it.
+
+**`wo-sweep.mjs` § 22 is § 11's census turned on the sweep itself.** It reads the number out of the
+row at the head of `tools/README.md` and holds it against `results.length` — what this run actually
+pushed — so a drifted count is a **red** run, not a `REVIEW`: the comparison is settled arithmetic
+and there is nothing for a person to judge. The failure names the one edit to make and says there is
+no second figure inside the tool to keep in step with it.
+
+**There is no hard-coded total anywhere in the check**, which is the whole point — a literal that had
+to be edited whenever the count changed would be one more hand-maintained figure policing a
+hand-maintained figure, failing the same way and a build later. The single integer in the section is
+a `+ 1` for the census's own not-yet-pushed result, and **a second check pays for it**: an ordering
+fixture asserts the census is the last of the file's 72 result-pushing call sites, so reading the
+total early reports its own position rather than the total. The sweep runs **40 checks**.
+
+**Two things it deliberately does not do.** The recorded number describes a healthy tree, so a run
+already red elsewhere can emit a different count and be red here as a consequence rather than a
+cause — read the other failures first. And it watches that one number, not every figure on the page;
+widening it to a general census of `tools/README.md` is a different work order with a different
+argument.
+
 ### The two files that must never drift apart are held together by something — 2026-08-30
 
 **`CLAUDE.md` said *"a rule changed here is changed there in the same sitting"* in bold, and nothing

@@ -1191,6 +1191,72 @@ armed file in the tree, which is the WO-5.1 failure mode.*
 
 ---
 
+### WO-1.42 — the sweep's own check count is maintained by hand
+
+**What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are
+byte-identical to HEAD, and no `CACHE` bump is owed. `tools/wo-sweep.mjs` gains **§ 22**, at the foot
+of the file below every other section, and `tools/README.md` gains a repaired paragraph. The recorded
+count moves `38` → `40`, which is the two checks § 22 adds, and it is the **last** time that number
+is changed by remembering to.
+
+**The figure is taken from `results.length` and there is no total written down in the tool.** The one
+literal in the section is `+ 1`, and it is the shape of a call site rather than a figure to maintain:
+`check()` pushes as it prints, so at the moment the census computes, `results` is short by exactly the
+entry the census itself is about to add. It does not move when the sweep gains a section. What makes
+it sound is the ordering check beside it, which is why the two are one section and not one check.
+
+- [x] **A planted wrong count goes red, driven.** `tools/README.md` was edited to read
+      `The verifier's 39-check standing sweep` → **`FAIL | the recorded sweep-check count matches this
+      run :: tools/README.md:10 records a 39-check sweep and this run emitted 40, up 1 — change that
+      one number to 40 and change nothing here`**, `40 checks · 36 passed · 1 failed · 3 to review`,
+      exit **1**. Two more fixtures on the same anchor: the sentence **reworded** to *"The verifier's
+      standing sweep of 40 checks, as greps"* → `FAIL … tools/README.md no longer contains the
+      sentence this section reads`, exit 1 — the loud failure § 11's rule asks for, never a quiet
+      pass; and the number stated **twice**, a second sentence planted at the head of the file →
+      `FAIL … states the count 2 times (tools/README.md:3, tools/README.md:12) — one sentence holds
+      it, or the sweep cannot say which one it is asserting`, exit 1.
+- [x] **The early read is caught by a fixture, and the fixture is what proves the ordering.** A
+      stand-in section that pushes a result was planted **below** § 22 —
+      `{ check('MUTATION planted section 23', true, …); }` immediately above the summary block — and
+      the run came back `41 checks · 37 passed · 1 failed · 3 to review`, exit 1, with
+      **`FAIL | the sweep-count census is the last thing this sweep pushes :: the last result-pushing
+      call site in this file is tools/wo-sweep.mjs:2751 "check('MUTATION planted section 23', …", not
+      the census at the foot of § 22`**. *The census beside it stayed* **`PASS` at 40** *while the
+      summary printed 41* — which is the exact silent failure the work order's second trap names, and
+      the reason the ordering premise is asserted rather than reasoned about in a comment.
+- [x] **No second hard-coded total.** The section reads the number out of `tools/README.md` by its
+      sentence and compares it to `results.length`. The integers in the section are the `+ 1` above,
+      the `+ 1`/`- 1` of line numbering and array indexing, and the `90`/`87` that clip an offending
+      line for the message — **no count of checks is written down anywhere in it**. Adding a check to
+      the sweep is therefore one edit, the number in `tools/README.md`, and the failure detail names
+      both the line and the value to write.
+- [x] `node tools/wo-sweep.mjs` is **`40 checks · 37 passed · 0 failed · 3 to review`**, exit 0, on
+      the restored tree — **no new REVIEW line**; the three are the standing sensitive-field-name
+      census, the due-date/late-missing census and the mockup-banner one, none of which this work
+      order touches. It was `38 · 35 · 0 · 3` before. `node tools/wo-gate.mjs --audit` is `PASS`,
+      exit 0.
+
+*No 👤 line and no 📆 line. Nothing here renders and nothing reaches a device.* **Every fixture was
+driven against copies taken before the round** — `tools/README.md` and `tools/wo-sweep.mjs` were
+copied to the scratchpad first and restored from those copies rather than with `git checkout --`,
+which is WO-1.40's method and the one WO-1.41 recommended for the reason it gave: a dispatch that
+dies between the plant and the revert leaves the armed file in the tree. `grep -rn MUTATION tools/`
+was read after the last revert and returns only the standing prose in `tools/README.md`,
+`tools/wo-gate.mjs` and four `tools/verify/` modules — no hit in `tools/wo-sweep.mjs`.
+
+***`node tools/verify-shell.mjs` is NOT green on this tree, and it is not this work order's doing.***
+*Run twice on 2026-08-31, it died both times in the same place —* `Error: nothing to click for
+#daysOffList [data-dayoff-remove="undefined"]` *at* `tools/verify/attendance-passes.mjs:2481`*, exit
+1, with* **five FAILs before the crash**, *all in the days-off and planned-drop flow (the first reads*
+"the event is {} on 2026-09-09 (today is 2026-08-31)"*). It is deterministic rather than a flake, and*
+**the app tree this ran against is byte-identical to HEAD** — `git diff --numstat` *lists only*
+`TESTING.md`*,* `plans/work-orders/phase-1-shell-store-roster.md`*,* `tools/README.md` *and*
+`tools/wo-sweep.mjs`*, none of which the harness loads — so it fails at HEAD too and wants its own
+look before 2026-09-02. It is named here rather than in this work order's boxes because* **no
+Acceptance line of WO-1.42 asks for it**: *the fourth names* `wo-sweep.mjs` *and* `--audit`*.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

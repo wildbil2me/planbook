@@ -2614,6 +2614,139 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
+   WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
+   actually contains. This is that census turned on the sweep itself. The same file records how many
+   checks THIS tool runs — `The verifier's N-check standing sweep`, in the table at its head — and
+   until this section a person typed that number and nothing in the repository read it. WO-1.40's
+   verification found it reading 33 against a tool that ran 34, stale by one before that work order
+   touched it, and the only way anybody could tell was to run the tool and compare by eye.
+
+   THAT NUMBER IS NOT COSMETIC. `plans/dispatch-retro.md` calls a stale count in `tools/README.md`
+   "the same stale-count tell … and the cheapest single thing to look at" — it is what betrayed the
+   dead dispatches on WO-3.26 and on WO-4.4 — the harness's count both times, which is § 11's, and
+   the reason this one is worth the same fence is that a reader sent to the page cannot tell the two
+   numbers apart. `AGENTS.md` still sends that reader there first. A tell
+   only works while the number is otherwise maintained; one that drifts on its own has stopped
+   reporting without saying so, which is worse than never having been written down.
+
+   THERE IS NO SECOND NUMBER HERE, AND THAT IS THE WHOLE POINT OF THE SECTION. The count is taken
+   from `results.length` at runtime — what this run actually pushed — and never from a literal in
+   this file. A literal would be one more hand-maintained figure claiming to police a hand-maintained
+   figure, and it would rot in exactly the same way, silently and a build later. So the ONE EDIT a
+   maintainer makes when the sweep gains or loses a check is the number in `tools/README.md`. There
+   is nothing here to keep in step with it.
+
+   IT IS THE LAST SECTION IN THIS FILE OUT OF NECESSITY, AND THE FIRST CHECK BELOW ASSERTS THAT.
+   `results` grows as the sweep runs, so a census that reads it from anywhere but the end reports its
+   own position rather than the total — and it fails toward looking fine. A section added BELOW this
+   one leaves the census reading a short number that can still MATCH a `tools/README.md` nobody has
+   touched, green, while the summary line further down prints a larger one. Nothing about being last
+   is enforced by the language, so it is asserted against this file's own text: the last call site in
+   `tools/wo-sweep.mjs` that pushes a result must be the census at the foot of this block. Move this
+   section, or push a result after it, and that check goes red and names the line.
+
+   THE PUSH HAPPENS AS THE LINE PRINTS, which is where the `+ 1` below comes from: at the moment the
+   census is computed, `results` is short by exactly one entry — its own, not yet pushed. That `+ 1`
+   is the shape of a call site and not a figure to maintain. It does not move when the sweep gains a
+   section, and the ordering check above it is what makes it sound, because it is true only while
+   nothing else pushes afterwards.
+
+   ALLOWLIST, so the next reader does not re-derive it:
+   - WHAT IS COUNTED IS RESULTS EMITTED, NOT CALL SITES IN THIS FILE, which is the opposite of § 11's
+     choice and is deliberate. This file holds far more call sites than a green run pushes, because
+     most sections carry a failure arm that pushes INSTEAD OF the passing one rather than as well as
+     it — a text census here would be counting arms that never fire. § 11 counts text because it
+     cannot run the harness; this one can just ask the run, so the two are not one function with two
+     callers, and no number of this kind is written down where it would rot.
+   - A RUN THAT IS ALREADY RED CAN EMIT A DIFFERENT NUMBER. Several sections push a different count
+     down their catastrophic arms — a subject file that is not there, a pattern that has stopped
+     matching — so a sweep that is red for another reason can be red here as a consequence rather
+     than a cause. The recorded figure describes a healthy tree, which is the tree it is quoted
+     about. Read the other failures first; this one may go green again on its own.
+   - THE NUMBER IS READ OUT OF `tools/README.md` BY ITS SENTENCE rather than by a marker comment,
+     which is § 11's rule and is taken for its reason: a marker is one more thing to keep in sync
+     with the prose beside it. Reword the sentence and this goes RED saying so — the loud failure,
+     never a quiet pass. Two sentences carrying the number is also red: the sweep cannot say which
+     one it is asserting.
+   - IT IS A FAIL AND NOT A REVIEW. § 21 splits a prose judgement from a mechanical one and reports
+     the first as evidence for a person; this is entirely the second half. Two integers that are
+     equal or are not is settled arithmetic, and nobody is being asked to decide anything.
+   - IT COUNTS ONLY ITSELF. The harness's `check()` call-site count is § 11's; every other figure
+     on that page — the executed-check prose beside it, the line counts, the section numbers — is
+     watched by nobody, and this is deliberately not a general census of the numbers in that file.
+     The value here is that ONE number is load-bearing for a recovery procedure other documents
+     point at, and a census of the rest is a different work order with a different argument.
+   - IT READS CALL SITES AND NOT THE CALL GRAPH, which is the one hole in it. A section added
+     below that pushed its result through a HELPER defined above this one — rather than by naming
+     the call at its own line — would leave the last call site in the file still standing at the
+     census, green, while the census read short. No such helper exists: every push in this file is a
+     literal call at its own site, which is the same property § 11 rests on one file over. If one
+     ever arrives, this is the check to widen.
+   - THE ORDERING CHECK NAMES THE CENSUS BY THE IDENTIFIER IT IS CALLED WITH, so renaming that
+     constant reddens it. That is the § 11 anchor rule again: a rename is a re-pointing, and the
+     alternative — matching on position, or counting the call sites this block is expected to hold —
+     is the hand-maintained number this whole section exists to refuse. */
+
+{
+  const readmePath = path.join(REPO, 'tools', 'README.md');
+  const ORDERED = 'the sweep-count census is the last thing this sweep pushes';
+  const SWEEP_COUNT = 'the recorded sweep-check count matches this run';
+
+  // The ordering premise, asserted rather than assumed. Read off this file's own text, with comment
+  // lines taken off first for § 11's reason: the banner above names a call a dozen times, and every
+  // mention would otherwise arrive here as a call site that does not run.
+  const SELF = fileURLToPath(import.meta.url);
+  const CALL = /(^|[^A-Za-z0-9_$.])(check|review)\s*\(/;
+  const DEFINITION = /function\s+(check|review)\s*\(/;
+  const selfComments = commentLines(SELF);
+  const sites = [];
+  fs.readFileSync(SELF, 'utf8').split('\n').forEach((line, i) => {
+    if (selfComments.has(i + 1) || DEFINITION.test(line) || !CALL.test(line)) return;
+    sites.push({ line: i + 1, text: line.trim() });
+  });
+  const last = sites.length ? sites[sites.length - 1] : null;
+  // The census below is emitted from exactly ONE call site, at the foot of this block, so the check
+  // here has one unambiguous target. That is a departure from § 11, which calls out of each branch
+  // arm in turn; the reason is that the thing being asserted is the position of a single line.
+  const CENSUS_CALL = /^check\(\s*SWEEP_COUNT\s*,/;
+  const shown = last ? (last.text.length > 90 ? last.text.slice(0, 87) + '…' : last.text) : '';
+  check(ORDERED, !!last && CENSUS_CALL.test(last.text),
+    !last
+      ? 'no result-pushing call site was found in tools/wo-sweep.mjs at all — the pattern in § 22 has stopped matching this file, so nothing is holding the census at the end of the run, which reads green from a distance and is not'
+      : CENSUS_CALL.test(last.text)
+        ? `the last of ${sites.length} result-pushing call site(s) in this file is the census at tools/wo-sweep.mjs:${last.line}, so the total it reads is short by its own entry and nothing else`
+        : `the last result-pushing call site in this file is tools/wo-sweep.mjs:${last.line} "${shown}", not the census at the foot of § 22 — anything that pushes after the census makes it read its own position rather than the total, and it can stay GREEN against an untouched tools/README.md while the summary line prints a larger number. Move § 22 back below every other section, or re-point the pattern in § 22 if the census call was renamed`);
+
+  // `check()` pushes as it prints, so `results` is short by exactly the one entry the call at the
+  // foot of this block is about to add — its own. See the banner for why that `+ 1` is not a figure
+  // anybody maintains, and why the check above is what makes it true.
+  const ran = results.length + 1;
+  const RECORDED = /The verifier's (\d+)-check standing sweep/g;
+  let ok = false;
+  let detail = '';
+  if (!fs.existsSync(readmePath)) {
+    detail = 'tools/README.md is not where § 22 expects it — the number recording how big this sweep is has nothing holding it, and that number is where plans/dispatch-retro.md and AGENTS.md send a reader recovering a dead dispatch. Restore the file, or re-point this section';
+  } else {
+    const stated = [];
+    fs.readFileSync(readmePath, 'utf8').split('\n').forEach((line, i) => {
+      RECORDED.lastIndex = 0;
+      for (const m of line.matchAll(RECORDED)) stated.push({ n: Number(m[1]), at: `tools/README.md:${i + 1}` });
+    });
+    if (stated.length !== 1) {
+      detail = stated.length
+        ? `tools/README.md states the count ${stated.length} times (${stated.map(s => s.at).join(', ')}) — one sentence holds it, or the sweep cannot say which one it is asserting`
+        : "tools/README.md no longer contains the sentence this section reads (`The verifier's N-check standing sweep`) — restore the wording or re-point this section; a reworded sentence must not read as a passing count";
+    } else if (stated[0].n !== ran) {
+      detail = `${stated[0].at} records a ${stated[0].n}-check sweep and this run emitted ${ran}, ${ran > stated[0].n ? 'up' : 'down'} ${Math.abs(ran - stated[0].n)} — change that one number to ${ran} and change nothing here; there is no figure in tools/wo-sweep.mjs to keep in step with it. If this run is red elsewhere, read those failures first: a section that falls into its catastrophic arm can emit a different number of results than a healthy one`;
+    } else {
+      ok = true;
+      detail = `${ran} results emitted this run, matching ${stated[0].at} — taken from this run's own results at the foot of the file, never from a number written down in tools/wo-sweep.mjs`;
+    }
+  }
+  check(SWEEP_COUNT, ok, detail);
+}
+
 /* ────────────────────────────── summary ────────────────────────────── */
 
 const fails = results.filter(r => r.state === 'fail');
