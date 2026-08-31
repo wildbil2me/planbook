@@ -3978,3 +3978,90 @@ rewritten most.
 - [ ] Both existing pairs still behave as WO-1.40 and WO-1.41 left them, proved by re-running their
       fixtures rather than by inspection.
 - [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.44 — the browser harness dies at check 518 and 766 checks never run
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing formally,
+and read that as the defect rather than the scope: nothing depends on this because nothing *can*
+depend on a harness, which is exactly why it went two days without anyone noticing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.43
+made. Booked 2026-08-31, owner-directed, out of WO-1.42's dispatch, which reported it as a finding
+outside its own scope and correctly refused to fold it in.)*
+
+**Why it exists.** `node tools/verify-shell.mjs` throws out of the run at
+`tools/verify-shell.mjs:465` — `nothing to click for #daysOffList [data-dayoff-remove="undefined"]`
+— reached from `tools/verify/attendance-passes.mjs:2481`. It emits **518 results, 513 PASS and 5
+FAIL, and then stops.** The run is 1,284 checks. **766 of them have not executed on any run since at
+least 2026-08-30**, and the summary line that would have said so never prints, because the process
+dies before it.
+
+**The five failures are the symptom and the crash is the defect.** A harness that goes red has
+reported. A harness that *stops* has stopped reporting — on grades, signals, outreach and everything
+else downstream of attendance — while still looking like it ran, because 513 PASS lines scroll past
+first. The 👤 rule in `CLAUDE.md` says a green harness closes no human item; this is the other half
+of that sentence, and nothing here says it: **a harness that never reaches its summary has not gone
+green or red, and no reader of its output can tell.**
+
+**It is not a regression, and the next reader will assume it is.** `git diff 703af0a HEAD` is
+**empty** over `src/`, `index.html`, `sw.js` and `privacy.html`, and equally empty over
+`tools/verify-shell.mjs` and `tools/verify/`. The commit at `703af0a` records `verify-shell
+1284/1284` in its own message. **The bytes that ran green are the bytes running red** — so the
+variable is outside the repository, and an afternoon spent bisecting `src/` is an afternoon spent
+proving something this paragraph already proves. Two runs on 2026-08-31 produced **identical**
+results — same 513, same five assertions, same crash — so it is deterministic and not a flake.
+
+**The likeliest variable is the weekday, and it is not proved.** The last green run was
+**Sunday 2026-08-30**; both red runs are **Monday 2026-08-31**. The failing section builds its
+fixture from *today* — `preDropDay` is today + 9 at `tools/verify/attendance-passes.mjs:2182`,
+`nodeToday` at `tools/verify/lib-dates.mjs:37` — and its assertions reason about which periods were
+taught **today**, a quantity that is structurally different on a weekend. `taughtToday.length > 0` is
+asserted at `:2431`, so the section is not vacuous on a Sunday and the mechanism is not simply
+"nothing recorded". **The WO-2.50 term gate is already ruled out**: this section blanks every term
+date on entry, at `tools/verify/attendance.mjs:110`, and says why. *Go-live is Wednesday 2026-09-02 —
+a weekday — so a fix that is only green on the day it was written is not a fix.*
+
+**What the failures do and do not threaten.** Three of the five print `attendance byte-identical` and
+the other two assert it inside the check: **no path here is losing or rewriting a mark.** What is
+wrong on screen is what the confirm *names* — 2 periods listed against 4 recorded today — and which
+classes read `covered` rather than `not-taken` after a snow day. Those are count and display claims.
+Whether the app or the fixture is wrong about them is **the open question this work order answers
+first**, and it must be answered per failure before a line of either is changed.
+
+**Traps**
+
+- **Do not make the five assertions pass.** The fixture is the accused as much as the app is, and the
+  cheapest way to a green run is to move whichever number disagrees — which would delete the only
+  evidence that anything was ever wrong. Settle *harness or app* per failure, in writing, with the
+  reasoning, **before** editing either side. If it is the app, that is its own row and this one names
+  it rather than absorbing it.
+- **The crash is worth fixing even if all five failures turn out to be fixture noise.** One
+  unsatisfied selector currently costs 766 unrelated checks. `clickSel` throwing is correct for a
+  harness that wants to fail loudly; **throwing all the way out of the process is not**, because the
+  blast radius is every section registered after this one. A missing element should redden its own
+  check and let the run reach its summary. That is the half of this work order that pays off on every
+  future dispatch, not just this one.
+- **Do not go looking for the commit that broke it.** There isn't one; the paragraph above proves it
+  with two empty diffs. A bisect here finds nothing and costs a sitting.
+- **A single green run does not close this.** The failure is date-coupled on the current evidence, so
+  a run on one day proves one day. Either move the clock or make the section's notion of *today* an
+  input — and if it is made an input, the default must stay the real clock, or the harness stops
+  measuring the case the teacher is actually in.
+- **Mind what this file is.** `verify-shell.mjs` and `tools/verify/` are the instrument every 👤 and
+  every Acceptance line is read through. WO-1.26 already found this surface too big to hold in the
+  head; a repair here that is not driven is a repair that moves the blind spot rather than closing it.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs` runs to completion and prints its summary line, with no throw out
+      of the process — driven against a **planted** missing selector as well as the real one, so the
+      claim is about the mechanism and not about this one element.
+- [ ] Each of the five current failures is settled **in writing as harness or app**, with the
+      evidence, before either side is edited; any app defect found is fixed here or booked as its own
+      row and named on this one.
+- [ ] The section no longer depends on which weekday it is run on, proved on **at least three
+      different weekdays** — by moving the clock or by making *today* an input whose default is still
+      the real clock, never by asserting it in a comment.
+- [ ] The check count the run reports is stated in `tools/README.md` and matches, so § 11 and § 22
+      are both reading a number a full run actually produced.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.

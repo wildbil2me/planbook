@@ -344,7 +344,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.43 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.44 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -418,7 +418,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 43 | 35 | — | 🔨 IN PROGRESS (reopened eighteen times; last on 2026-08-30) |
+| 1 — Shell, store, roster | 44 | 35 | — | 🔨 IN PROGRESS (reopened eighteen times; last on 2026-08-30) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -427,7 +427,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **160** | **132** | **2** | `[████████░░] 83%` |
+| | **161** | **132** | **2** | `[████████░░] 83%` |
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1743,6 +1743,7 @@ it, never from a reading taken earlier in the same session.)*
 
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
+| 50 | [WO-1.44](phase-1-shell-store-roster.md#wo-144--the-browser-harness-dies-at-check-518-and-766-checks-never-run) **The browser harness dies at check 518** | M | — | **Next — and the number is a label, not the position.** Booked **2026-08-31**, owner-directed, out of WO-1.42's dispatch. It sits at the **head of this table** rather than at the foot because `next` walks document order — `runningOrder()` reads the row's place and never its `#`, which `tools/wo-gate.mjs:2378` says in as many words — and renumbering 12–49 to open a slot would break the prose cross-references that name rows by number ("behind row 20", "Pairs with row 15"). So the label continues the sequence and the position carries the priority. **Why it leads:** `verify-shell.mjs` throws out of the run partway through and **766 of its 1,284 checks have not executed since at least 2026-08-30**, with no summary line printed to say so — two days before the app meets students. Not 🚩: 🚩 is a claim about a surface a teacher touches, and this is the instrument, not the app. Read its second trap before writing a line — **the crash is worth fixing even if all five failures turn out to be fixture noise**, because one unsatisfied selector currently costs 766 unrelated checks |
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — **all seven boxes**, including the 👤. *(This cell read "six of seven boxes; line 1 waits on the push and the deploy" until 2026-08-28. It was stale on the day it was written: line 1 was ticked in the same sitting, against `verify-deploy.mjs` at `16 checks · 16 passed · 0 failed` on the live origin. **A row that says a work order is waiting invites somebody to go and pay a debt that does not exist** — it cost exactly that here, one session later.)* |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Gate-clear and not startable — behind row 20.** All four declared dependencies ✅ since 2026-08-24, and its second deliverable is a demo video **showing the scope in use** while nothing in the app uses it: WO-7.2 is unbuilt, so `files.create` greps to zero and the Drive panel reads "Nothing is uploaded yet." *(Read "**Startable now**" until 2026-08-28 — see the note below the table.)* |
