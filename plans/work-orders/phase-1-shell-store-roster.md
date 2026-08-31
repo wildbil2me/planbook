@@ -3918,3 +3918,63 @@ is documented by hand.*
 - [ ] The assertion reads the total after every section has run, proved by a fixture that would catch
       an early read.
 - [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.43 — a broken excuse reads as a contradiction, and a vanished claim reads as green
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.41 ✅ · **Blocks** nothing;
+it protects every reading of § 21 after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.42
+made. Booked 2026-08-30, owner-directed, on WO-1.41's verifier's two proposals, taken as one row
+because they are two messages inside the same twenty lines of § 21.)*
+
+**Why it exists.** § 21 runs two pairs and reported honestly on the day each was built. It has two
+silences, **both failing toward looking fine**, and neither is visible from the summary line.
+
+**The first is a broken excuse printing as a defect.** `lost` — the named passages a pair declared
+and the walk could not find — is computed at `tools/wo-sweep.mjs:2608` and consumed **only in the
+green branch** at `:2611`. So when a `confinedTo` region goes missing, every occurrence inside it is
+read as unscoped and each is reported as a contradiction **with no hint that the excuse mechanism is
+what broke.** The green branch already says it in as many words — *"but the passage X was not found,
+so every occurrence was read as unscoped"* — and the `REVIEW` branch, the one a person actually acts
+on, says nothing. A reader sent to compare two files will find them agreeing and have nowhere to go.
+
+**The second is a claim that has quietly stopped testing anything.** The green message reports
+`occurrences`, **one aggregate across every claim in the pair**. A claim whose token is reworded out
+of the compared file contributes zero and the total still reads healthy: 18 occurrences across four
+claims and 18 across three are the same number. The **reference** side is already fenced — reword an
+anchor sentence in `CLAUDE.md` and the paired FAIL check names the orphaned claim, which WO-1.41's
+verifier drove — so the **compared** side is the only silent half, and it is the half that gets
+rewritten most.
+
+**Traps**
+
+- **Do not make a zero-occurrence claim a `FAIL`, and do not make it a `REVIEW`.** *Absent is green*
+  is this pair's premise, written at `DRIFT_PAIRS` and in `AGENTS.md`'s own first paragraph: omitting
+  most of `CLAUDE.md` is that file's entire job, and a rule it correctly does not restate must not
+  turn the tracker amber. **Report the number and assert nothing.** A zero becomes visible without
+  being called wrong, and the honest reading — *this claim is currently checking nothing* — is left
+  to a person, which is the division § 21 already draws between `FAIL` and `REVIEW`.
+- **The detail line is read by a person under a summary, so length is a cost.** WO-1.41's verifier
+  recorded that a four-claim `REVIEW` is about as long as this should ever get. Four counts is not a
+  table; do not print a claim's text beside its number.
+- **The `lost` clause is a repair to a message, not to the walk.** Nothing about which occurrences
+  are found or excused changes. If the fix reaches the loop above `:2606`, it has grown past this
+  work order — a lost region already *behaves* correctly, it just does not say so on the branch that
+  matters.
+- **Both pairs share this code, so the first pair is the regression surface.** WO-1.41 proved its
+  own change safe by leaving the engine byte-untouched and this one cannot. Re-run WO-1.40's
+  fixtures rather than reasoning that a message change is safe.
+
+**Acceptance**
+- [ ] A pair whose `confinedTo` region cannot be found reports that fact in the **`REVIEW`** branch
+      as well as the green one — driven against a planted missing region, with the message read.
+- [ ] The green detail line reports occurrences **per claim** rather than as one total, and a claim
+      contributing zero is visible in it — driven against a compared file with one claim's token
+      removed.
+- [ ] A zero-occurrence claim leaves the check **green**: no `FAIL`, no `REVIEW`, and the exit code
+      is unchanged.
+- [ ] Both existing pairs still behave as WO-1.40 and WO-1.41 left them, proved by re-running their
+      fixtures rather than by inspection.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
