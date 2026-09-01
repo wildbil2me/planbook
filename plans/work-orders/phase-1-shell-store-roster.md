@@ -4133,3 +4133,120 @@ weekday line is third and may slide past 2026-09-02 without costing anything.
 - [x] The check count the run reports is stated in `tools/README.md` and matches, so § 11 and § 22
       are both reading a number a full run actually produced.
 - [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.45 — a green run cannot say whether the containment is still there
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing;
+it protects every reading of `verify-shell.mjs` after it
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.44
+made. Booked 2026-08-31, owner-directed, on WO-1.44's verifier's first proposal.)*
+
+**Why it exists.** WO-1.44 put a throwing section inside `runSection()` so one bad selector costs its
+own section rather than the 766 checks after it. **Nothing asserts that it is still wired in.**
+`grep -rn runSection tools/wo-sweep.mjs` returns nothing today. Restore the bare
+`for (const s of BROWSER_SECTIONS) await s.run(h)` and the harness prints `1284 · 1284 · 0 · 0`, the
+sweep stays green, and **every tracker in the repository agrees that nothing is wrong** — because a
+green run is exactly what a healthy harness and an uncontained one both produce. The containment is
+only visible when something throws, which is the one condition nobody runs on purpose.
+
+**This is the third instance of one shape in four days**, and that is the argument for spending an
+hour on it rather than trusting the prose. WO-1.40 found a hand-typed count nothing checked; WO-1.42
+fenced the sweep's own count against `results.length`; this is the same defect one level out — **the
+instrument that contains failures is itself contained by nothing.** The prose defending it is good
+and it is still prose: `tools/verify-shell.mjs:43-61`, `CLAUDE.md`, `AGENTS.md` and the changelog all
+describe the containment, and not one of them fails a build.
+
+**Traps**
+
+- **A grep for `runSection(` is a tripwire, not a proof — decide which you are building and say so.**
+  It catches the call being deleted. It catches **nothing** about whether the containment inside it
+  still works: a `runSection()` that swallowed the throw, or lost the section from the count, or
+  stopped naming the lost checks, passes that grep wearing a green summary. **The failure mode here
+  is a check that reads like a guarantee and is a smoke alarm.** Either accept that in as many words
+  — in the section comment and in `tools/README.md`, so the next reader is not misled by their own
+  tool — or assert something stronger. Do not ship the weak version described as the strong one.
+- **Do not make this a second harness.** The thing that would actually prove containment is a run
+  with a planted throw, and that is `verify-shell.mjs`'s job and takes 432 seconds. `wo-sweep.mjs` is
+  the grep half by construction (`plans/verification-tooling.md`), and a section here that shells out
+  to a browser has crossed the line the two tools exist either side of.
+- **Red, not `REVIEW`.** A missing containment is settled arithmetic, not a reading — the same call
+  WO-1.42's § 22 made, and § 21's split is the model for when the other answer is right.
+- **This adds a check, so it moves the count.** `tools/README.md`'s number is fenced by § 22 as of
+  WO-1.42: change that one number and change nothing inside the tool. The sweep will tell you.
+
+**Acceptance**
+- [ ] `wo-sweep.mjs` goes **red** when `verify-shell.mjs` no longer routes `BROWSER_SECTIONS` through
+      `runSection()` — driven against a planted restoration of the bare loop, reverted after.
+- [ ] What the check does **not** prove is written down where a reader of a green run will meet it —
+      in the section comment and in `tools/README.md` — in terms specific enough that nobody reads it
+      as proof the containment works.
+- [ ] The check stays inside the grep half: no browser, no `verify-shell.mjs` invocation, no section
+      that cannot answer from the file's text.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree, with the count in
+      `tools/README.md` moved to match.
+
+---
+
+## WO-1.46 — four fixtures still guess a date, and one of them is the twin of the one that broke
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.45
+made. Booked 2026-08-31, owner-directed, on WO-1.44's verifier's second proposal.)*
+
+**Why it exists.** WO-1.44's defect was a fixture that **guessed** a date — *today + 9* — and collided
+with a record another section had planted on a hard-coded `2026-09-09`, on exactly one day of the
+year. The repair derived the date instead: `preDropDayFrom()` walks past any day already holding a
+record and asserts its own precondition. **It repaired two sites of six.** Four still guess:
+`tools/verify/register-opens-on-term.mjs:75`, `term-edges-marking.mjs`, `term-ended.mjs` and
+`today-goes-to-term.mjs`. All four were green on the five weekdays WO-1.44 drove, and **none of them
+is immune by construction** — which is precisely the evidence that failed us on 2026-08-30, when a
+green Sunday run was taken as a healthy harness.
+
+**One of the four is a twin and three are cousins, and a row that treats them as four equal jobs will
+spend its time in the wrong place.** `register-opens-on-term.mjs:75` is
+`const DAY_OFF = nodeWeekdayAhead(9)` — **the same construct on the same offset** that just cost a
+day: an event authored onto a future date that may already hold a record. The other three use
+`nodeWeekdayAhead()` for term **start and end** dates, which is a weaker risk: a term boundary landing
+on a planted record is a fixture reading oddly, where authoring an event onto one is the case that
+produced five cascading failures and a crash. **Fix the twin first.**
+
+**The urgency dropped the day it was found, and the row should be read with that in mind.** Before
+WO-1.44 a collision like this killed the run and hid 766 checks behind a stack trace. It now reddens
+its own section, names what it lost, and lets every later section finish — so this is a real defect
+that **fails safely**, which is why it is booked here rather than scheduled ahead of the term.
+*(**Not before 2026-09-02**, owner-directed: this edits four fixture files inside `tools/verify/`,
+the surface WO-1.44 just stabilised on the strength of five green weekdays, and re-opening it two
+days before the app meets students trades a real risk for a downgraded one. WO-1.45 carries no such
+constraint — it touches `wo-sweep.mjs` and cannot affect a run.)*
+
+**Traps**
+
+- **Derive, do not widen the guess.** Adding a bigger offset — *today + 20* instead of *+ 9* — moves
+  the collision rather than removing it, and moves it somewhere nobody has driven. The helper
+  `firstClearDayFrom(records, start)` is the shape WO-1.44 settled on, in `lib-dates.mjs` this time
+  rather than inline, and a **ceiling rather than an unbounded walk**: a document holding a record on
+  every one of the next sixty days should fail a precondition loudly, not hang the run.
+- **Assert the precondition at each site.** The derived date is worth little without the check that
+  says what was assumed — WO-1.44's site asserts zero records and a future date, and that assertion
+  is what turns the next collision into a named red line instead of a cascade.
+- **A term boundary is not an event, and the fix may differ.** The three cousins plant term
+  start/end dates, and forcing them through a helper built for "a day with nothing on it" may say
+  something false about what a term edge needs. Read each before assuming the twin's answer fits.
+- **Routing through `nodeNow()` is not immunity, and the two are easy to confuse.**
+  `today-goes-to-term.mjs` already respects `--today` and is still on this list: honouring a shifted
+  clock and choosing a date that cannot collide are different properties, and WO-1.44 gave it the
+  first and not the second.
+
+**Acceptance**
+- [ ] `register-opens-on-term.mjs`'s day-off date is **derived from the document** rather than
+      guessed, with its precondition asserted at the site — driven against a planted record on the
+      date it would otherwise have chosen.
+- [ ] The other three sites are each **read and settled in writing**: derived the same way, or left
+      as they are with the reason named at the line. Four sites, four decisions, none silent.
+- [ ] The helper lives in `lib-dates.mjs`, carries a ceiling rather than an unbounded walk, and is
+      used by WO-1.44's site too, so there is one of it rather than two.
+- [ ] `node tools/verify-shell.mjs` is green on **at least three weekdays** including one driven with
+      `--today` onto a date the fixtures plant records on.
+- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
